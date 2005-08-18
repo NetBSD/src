@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+
+# postconffix - add HTML paragraphs
+
+# Basic operation:
+#
+# - Process input as text blocks separated by one or more empty
+# (or all whitespace) lines.
+#
+# - Don't touch blocks that start with `<' in column zero.
+#
+# The only changes made are:
+#
+# - Put <p>..</p> around text blocks that start in column zero.
+#
+# - Put <pre>..</pre> around text blocks that start elsewhere.
+
+#use Getopt::Std;
+
+#$opt_h = undef;
+#$opt_v = undef;
+#getopts("hv");
+
+#die "Usage: $0 [-hv]\n" if ($opt_h);
+
+#push @ARGV, "/dev/null"; # XXX
+
+while(<>) {
+
+    # Pass through comments and blank linkes before a text block.
+    if (/^(#|\s*$)/) {
+	print;
+	next;
+    }
+
+    # Gobble up the next text block.
+    $block = "";
+    do {
+	$_ =~ s/\s+\n$/\n/;
+	$block .= $_;
+    } while(($_ = <>) && /\S/);
+
+    # Don't touch a text block starting with < in column zero.
+    if ($block =~ /^</) {
+	print "$block\n";
+    }
+
+    # Meta block.
+    elsif ($block =~ /^%/) {
+	print "$block\n";
+    }
+
+    # Example block.
+    elsif ($block =~ /^\S+\s=/) {
+	print "<pre>\n$block</pre>\n\n";
+    }
+
+    # Pre-formatted block.
+    elsif ($block =~ /^\s/) {
+	print "<pre>\n$block</pre>\n\n";
+    }
+
+    # Paragraph block.
+    elsif ($block =~ /^\S/) {
+	print "<p>\n$block</p>\n\n";
+    }
+
+    # Can't happen.
+    else {
+	die "Unrecognized text block:\n$block";
+    }
+}

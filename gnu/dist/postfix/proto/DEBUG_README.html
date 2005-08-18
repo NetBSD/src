@@ -78,7 +78,7 @@ properly:  </p>
 
 <blockquote>
 <pre>
-% egrep '(warning|error|fatal|panic):' /some/log/file | more
+% <b>egrep '(warning|error|fatal|panic):' /some/log/file | more</b>
 </pre>
 </blockquote>
 
@@ -126,7 +126,7 @@ debugging: </p>
 deliver mail. This mode of operation is requested with: </p>
 
 <pre>
-$ <b>/usr/sbin/sendmail -bv address...</b>
+% <b>/usr/sbin/sendmail -bv address...</b>
 Mail Delivery Status Report will be mailed to &lt;your login name&gt;.
 </pre>
 
@@ -135,7 +135,7 @@ failures, including replies from remote SMTP servers.  This mode
 of operation is requested with: </p>
 
 <pre>
-$ <b>/usr/sbin/sendmail -v address...</b>
+% <b>/usr/sbin/sendmail -v address...</b>
 Mail Delivery Status Report will be mailed to &lt;your login name&gt;.
 </pre>
 
@@ -211,7 +211,7 @@ else you will miss some or all of the packet payload. </p>
 
 <blockquote>
 <pre>
-# tcpdump -w /file/name -s 2000 host example.com and port 25
+# <b>tcpdump -w /file/name -s 2000 host example.com and port 25</b>
 </pre>
 </blockquote>
 
@@ -248,10 +248,10 @@ system call tracer. For example: </p>
 
 <blockquote>
 <pre>
-# trace -p process-id (SunOS 4)
-# strace -p process-id (Linux and many others)
-# truss -p process-id (Solaris, FreeBSD)
-# ktrace -p process-id (generic 4.4BSD)
+# <b>trace -p process-id</b> (SunOS 4)
+# <b>strace -p process-id</b> (Linux and many others)
+# <b>truss -p process-id</b> (Solaris, FreeBSD)
+# <b>ktrace -p process-id</b> (generic 4.4BSD)
 </pre>
 </blockquote>
 
@@ -260,8 +260,8 @@ Examples: </p>
 
 <blockquote>
 <pre>
-# ltrace -p process-id (Linux, also ported to FreeBSD and BSD/OS)
-# sotruss -p process-id (Solaris)
+# <b>ltrace -p process-id</b> (Linux, also ported to FreeBSD and BSD/OS)
+# <b>sotruss -p process-id</b> (Solaris)
 </pre>
 </blockquote>
 
@@ -340,8 +340,8 @@ export <b>XAUTHORITY</b> so that X access control works, for example:
 
 <blockquote>
 <pre>
-% setenv XAUTHORITY ~/.Xauthority (csh syntax)
-$ export XAUTHORITY=$HOME/.Xauthority (sh syntax)
+% <b>setenv XAUTHORITY ~/.Xauthority</b> (csh syntax)
+$ <b>export XAUTHORITY=$HOME/.Xauthority</b> (sh syntax)
 </pre>
 </blockquote>
 
@@ -377,8 +377,9 @@ so that it invokes the <b>gdb</b> debugger: </p>
 <pre>
 /etc/postfix/main.cf:
     debugger_command =
-        PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
-        echo where) | gdb $daemon_directory/$process_name $process_id 2&gt&amp;1
+        PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont; echo
+        where; sleep 8640000) | gdb $daemon_directory/$process_name 
+        $process_id 2&gt&amp;1
         &gt;$config_directory/$process_name.$process_id.log &amp; sleep 5
 </pre>
 </blockquote>
@@ -445,8 +446,8 @@ makes a difference. </p>
 
 <blockquote>
 <pre>
-% make tidy
-% make makefiles OPT=
+% <b>make tidy</b>
+% <b>make makefiles OPT=</b>
 </pre>
 </blockquote>
 
@@ -457,9 +458,10 @@ optimization.  </p>
 
 <blockquote>
 <pre>
-% make
-% su
-# make install
+% <b>make</b>
+% <b>su</b>
+Password:
+# <b>make install</b>
 </pre>
 </blockquote>
 
@@ -468,7 +470,7 @@ for help. </p>
 
 <h2><a name="mail">Reporting problems to postfix-users@postfix.org</a></h2>
 
-<p> The people who participate on the postfix-users@postfix.org
+<p> The people who participate on postfix-users@postfix.org
 are very helpful, especially if YOU provide them with sufficient
 information.  Remember, these volunteers are willing to help, but
 their time is limited. </p>
@@ -481,14 +483,6 @@ information. </p>
 <li> <p> A summary of the problem. Please do not just send some
 logging without explanation of what YOU believe is wrong. </p>
 
-<li> <p> Consider using a test email address so that you don't have
-to reveal email addresses of innocent people. </p>
-
-<li> <p> If you can't use a test email address, please anonymize
-information consistently. Replace each letter by "A", each digit
-by "D" so that the helpers can still recognize syntactical errors.
-</p>
-
 <li> <p> Complete error messages. Please use cut-and-paste, or use
 attachments, instead of reciting information from memory.
 </p>
@@ -497,17 +491,32 @@ attachments, instead of reciting information from memory.
 document to find out where logging is stored. Please do not frustrate
 the helpers by word wrapping the logging. </p>
 
-<li> <p> Output from "postconf -n". Please do not send your main.cf
-file.  Or better, provide output from the "postfinger" tool.  </p>
+<li> <p> Consider using a test email address so that you don't have
+to reveal email addresses or passwords of innocent people. </p>
+
+<li> <p> If you can't use a test email address, please anonymize
+information consistently. Replace each letter by "A", each digit
+by "D" so that the helpers can still recognize syntactical errors.
+</p>
+
+<li> <p> Output from "<b>postconf -n</b>". Please do not send your
+main.cf file or 400+ lines of <b>postconf</b> output. </p>
+
+<li> <p>  Better, provide output from the <b>postfinger</b> tool.
+This can be found at http://ftp.wl0.org/SOURCES/postfinger.  </p>
+
+<li> <p> If the problem is SASL related, consider including the
+output from the <b>saslfinger</b> tool. This can be found at
+http://postfix.state-of-mind.de/patrick.koetter/saslfinger/. </p>
 
 <li> <p> If the problem is about too much mail in the queue, consider
-including output from the qshape tool, as described in the
+including output from the <b>qshape</b> tool, as described in the
 QSHAPE_README file. </p>
 
 <li> <p> If the problem is protocol related (connections time out
 or an SMTP server complains about syntax errors etc.) consider
-recording a session with tcpdump, as described in the DEBUG_README
-document.  </ul>
+recording a session with <b>tcpdump</b>, as described in the <a
+href="#sniffer">DEBUG_README</a> document.  </ul>
 
 </body>
 

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - postkick(1) </title>
 </head> <body> <pre>
-POSTKICK(1)                                           POSTKICK(1)
+POSTKICK(1)                                                        POSTKICK(1)
 
 <b>NAME</b>
        postkick - kick a Postfix service
@@ -13,10 +13,10 @@ POSTKICK(1)                                           POSTKICK(1)
        <b>postkick</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-v</b>] <i>class service request</i>
 
 <b>DESCRIPTION</b>
-       The  <b>postkick</b>  command sends <i>request</i> to the specified <i>ser-</i>
-       <i>vice</i> over a local transport channel.  This  command  makes
-       Postfix  private  IPC  accessible for use in, for example,
-       shell scripts.
+       The  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  sends  <i>request</i> to the specified
+       <i>service</i> over a  local  transport  channel.   This  command
+       makes Postfix private IPC accessible for use in, for exam-
+       ple, shell scripts.
 
        Options:
 
@@ -57,7 +57,7 @@ POSTKICK(1)                                           POSTKICK(1)
 <b>CONFIGURATION PARAMETERS</b>
        The  following  <b>main.cf</b> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html">postconf(5)</a> for more details including exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
@@ -65,7 +65,7 @@ POSTKICK(1)                                           POSTKICK(1)
               master.cf configuration files.
 
        <b><a href="postconf.5.html#application_event_drain_time">application_event_drain_time</a> (100s)</b>
-              How  long  the  <a href="postkick.1.html">postkick(1)</a>  command  waits  for  a
+              How  long  the  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  waits  for  a
               request to enter the server's input  buffer  before
               giving up.
 
@@ -92,5 +92,5 @@ POSTKICK(1)                                           POSTKICK(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                      POSTKICK(1)
+                                                                   POSTKICK(1)
 </pre> </body> </html>

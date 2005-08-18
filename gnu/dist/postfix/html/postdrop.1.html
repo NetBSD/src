@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - postdrop(1) </title>
 </head> <body> <pre>
-POSTDROP(1)                                           POSTDROP(1)
+POSTDROP(1)                                                        POSTDROP(1)
 
 <b>NAME</b>
        postdrop - Postfix mail posting utility
@@ -13,8 +13,8 @@ POSTDROP(1)                                           POSTDROP(1)
        <b>postdrop</b> [<b>-rv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>]
 
 <b>DESCRIPTION</b>
-       The <b>postdrop</b> command creates a file in the <b>maildrop</b> direc-
-       tory and copies its standard input to the file.
+       The  <a href="postdrop.1.html"><b>postdrop</b>(1)</a>  command  creates  a file in the <b>maildrop</b>
+       directory and copies its standard input to the file.
 
        Options:
 
@@ -61,7 +61,7 @@ POSTDROP(1)                                           POSTDROP(1)
 <b>CONFIGURATION PARAMETERS</b>
        The  following  <b>main.cf</b> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html">postconf(5)</a> for more details including exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
@@ -76,8 +76,8 @@ POSTDROP(1)                                           POSTDROP(1)
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
               The list of environment parameters that  a  Postfix
-              process  will import from a non-Postfix parent pro-
-              cess.
+              process  will  import  from  a  non-Postfix  parent
+              process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The location of the Postfix top-level queue  direc-
@@ -87,14 +87,21 @@ POSTDROP(1)                                           POSTDROP(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
               The  time  limit for sending a trigger to a Postfix
-              daemon (for example, the <a href="pickup.8.html">pickup(8)</a> or <a href="qmgr.8.html">qmgr(8)</a>  dae-
+              daemon (for example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  dae-
               mon).
+
+       Available in Postfix version 2.2 and later:
+
+       <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (static:anyone)</b>
+              List  of  users  who  are authorized to submit mail
+              with the <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command (and with  the  privi-
+              leged <a href="postdrop.1.html"><b>postdrop</b>(1)</a> helper command).
 
 <b>FILES</b>
        /var/spool/postfix/<a href="QSHAPE_README.html#maildrop_queue">maildrop</a>, <a href="QSHAPE_README.html#maildrop_queue">maildrop queue</a>
@@ -114,5 +121,5 @@ POSTDROP(1)                                           POSTDROP(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                      POSTDROP(1)
+                                                                   POSTDROP(1)
 </pre> </body> </html>

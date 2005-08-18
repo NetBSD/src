@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.c,v 1.1.1.3 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: dict_proxy.c,v 1.1.1.4 2005/08/18 21:06:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -175,12 +175,17 @@ DICT   *dict_proxy_open(const char *map, int open_flags, int dict_flags)
     /*
      * Sanity checks.
      */
-    if (dict_flags & DICT_FLAG_NO_PROXY)
-	msg_fatal("%s: %s map is not allowed for security sensitive data",
-		  map, DICT_TYPE_PROXY);
     if (open_flags != O_RDONLY)
 	msg_fatal("%s: %s map open requires O_RDONLY access mode",
 		  map, DICT_TYPE_PROXY);
+
+    /*
+     * OK. If this map can't be proxied then we silently do a direct open.
+     * This allows sites to benefit from proxying the virtual mailbox maps
+     * without unnecessary pain.
+     */
+    if (dict_flags & DICT_FLAG_NO_PROXY)
+	return (dict_open(map, open_flags, dict_flags));
 
     /*
      * Local initialization.

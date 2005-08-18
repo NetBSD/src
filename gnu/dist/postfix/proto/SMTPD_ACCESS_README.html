@@ -179,6 +179,12 @@ described in the postconf(5) manual page. </p>
 
     # Whitelisting: local clients may specify any destination. Others may not.
     smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+
+    # Block clients that speak too early.
+    smtpd_data_restrictions = reject_unauth_pipelining
+
+    # Enforce mail volume quota via policy service callouts.
+    smtpd_end_of_data_restrictions = check_policy_service unix:private/policy
 </pre>
 
 <p> Each restriction list is evaluated from left to right until
@@ -216,6 +222,9 @@ Reject MAIL FROM information </td> </tr>
 <tr> <td> smtpd_data_restrictions </td> <td> Optional </td> <td>
 Reject DATA command </td> </tr>
 
+<tr> <td> smtpd_end_of_data_restrictions </td> <td> Optional </td> <td>
+Reject END-OF-DATA command </td> </tr>
+
 <tr> <td> smtpd_etrn_restrictions </td> <td> Optional </td> <td>
 Reject ETRN command </td> </tr>
 
@@ -238,7 +247,8 @@ and so on. This approach turned out to be difficult to use. </p>
 helo and sender restriction lists until the RCPT TO or ETRN command.
 This behavior is controlled by the smtpd_delay_reject parameter.
 Restriction lists are still evaluated in the proper order of (client,
-helo, etrn) or (client, helo, sender, recipient, data) restrictions.
+helo, etrn) or (client, helo, sender, recipient, data, or end-of-data)
+restrictions.
 When a restriction list (example: client) evaluates to REJECT or
 DEFER the other restriction lists (example: helo, sender, etc.)
 are skipped.  </p>

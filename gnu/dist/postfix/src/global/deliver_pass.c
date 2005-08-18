@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.6 2005/08/18 21:06:11 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -113,6 +113,10 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, request->client_addr,
 	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, request->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, request->client_helo,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, request->sasl_method,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
+	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
+	       ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
 	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, offs,
 	       ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orcpt,
 	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, addr,

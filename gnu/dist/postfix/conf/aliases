@@ -39,17 +39,17 @@ decode:		root
 # ALIASES(5)                                             ALIASES(5)
 # 
 # NAME
-#        aliases - format of the Postfix alias database
+#        aliases - Postfix local alias database format
 # 
 # SYNOPSIS
 #        newaliases
 # 
 # DESCRIPTION
-#        The  aliases  table  provides  a  system-wide mechanism to
+#        The  aliases(5)  table provides a system-wide mechanism to
 #        redirect mail for local recipients. The  redirections  are
 #        processed by the Postfix local(8) delivery agent.
 # 
-#        Normally,  the  aliases  table is specified as a text file
+#        Normally, the aliases(5) table is specified as a text file
 #        that serves as input  to  the  postalias(1)  command.  The
 #        result,  an  indexed file in dbm or db format, is used for
 #        fast lookup  by  the  mail  system.  Execute  the  command
@@ -63,7 +63,7 @@ decode:		root
 #        Users can control delivery of their own mail by setting up
 #        .forward files in their home directory.  Lines in per-user
 #        .forward files have the same syntax as the right-hand side
-#        of aliases entries.
+#        of aliases(5) entries.
 # 
 #        The format of the alias database input file is as follows:
 # 
@@ -134,6 +134,21 @@ decode:		root
 #        user+foo),  the  search  is  repeated  for  the unextended
 #        address (e.g., user).
 # 
+#        The  propagate_unmatched_extensions   parameter   controls
+#        whether  an  unmatched  address extension (+foo) is propa-
+#        gated to the result of table lookup.
+# 
+# SECURITY
+#        The local(8) delivery agent disallows  regular  expression
+#        substitution  of $1 etc. in alias_maps, because that would
+#        open a security hole.
+# 
+#        The local(8) delivery agent will silently ignore  requests
+#        to  use  the proxymap(8) server within alias_maps. Instead
+#        it will open the table directly.  Before  Postfix  version
+#        2.2,  the  local(8)  delivery  agent will terminate with a
+#        fatal error.
+# 
 # CONFIGURATION PARAMETERS
 #        The following main.cf parameters are especially  relevant.
 #        The  text  below  provides  only  a parameter summary. See
@@ -161,6 +176,13 @@ decode:		root
 #               the right-hand side of  the  owner  alias,  instead
 #               using of the left-hand side address.
 # 
+#        propagate_unmatched_extensions
+#               A  list  of  address rewriting or forwarding mecha-
+#               nisms that propagate an address extension from  the
+#               original  address  to  the  result. Specify zero or
+#               more  of  canonical,   virtual,   alias,   forward,
+#               include, or generic.
+# 
 #        owner_request_special
 #               Give  special treatment to owner-listname and list-
 #               name-request addresses.
@@ -168,11 +190,6 @@ decode:		root
 #        recipient_delimiter
 #               Delimiter that separates  recipients  from  address
 #               extensions.
-# 
-# BUGS
-#        Regular  expression  alias  lookup tables are allowed, but
-#        substitution of $1 etc. is forbidden  because  that  would
-#        open a security loophole.
 # 
 # STANDARDS
 #        RFC 822 (ARPA Internet Text Messages)

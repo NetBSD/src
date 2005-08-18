@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - bounce(8) </title>
 </head> <body> <pre>
-BOUNCE(8)                                               BOUNCE(8)
+BOUNCE(8)                                                            BOUNCE(8)
 
 <b>NAME</b>
        bounce - Postfix message bounce or defer daemon
@@ -13,7 +13,7 @@ BOUNCE(8)                                               BOUNCE(8)
        <b>bounce</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  <b>bounce</b>  daemon  maintains  per-message log files with
+       The  <a href="bounce.8.html"><b>bounce</b>(8)</a> daemon maintains per-message log files with
        non-delivery status information. Each log  file  is  named
        after  the  queue file that it corresponds to, and is kept
        in a queue subdirectory named after the  service  name  in
@@ -21,7 +21,8 @@ BOUNCE(8)                                               BOUNCE(8)
        program expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process  man-
        ager.
 
-       The <b>bounce</b> daemon processes two types of service requests:
+       The  <a href="bounce.8.html"><b>bounce</b>(8)</a>  daemon  processes  two  types  of  service
+       requests:
 
        <b>o</b>      Append a recipient (non-)delivery status record  to
               a per-message log file.
@@ -51,19 +52,19 @@ BOUNCE(8)                                               BOUNCE(8)
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes  to  <b>main.cf</b>  are  picked  up  automatically,   as
-       <a href="bounce.8.html">bounce(8)</a> processes run for only a limited amount of time.
+       <a href="bounce.8.html"><b>bounce</b>(8)</a> processes run for only a limited amount of time.
        Use the command "<b>postfix reload</b>" to speed up a change.
 
        The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#2bounce_notice_recipient">2bounce_notice_recipient</a> (postmaster)</b>
               The  recipient of undeliverable mail that cannot be
               returned to the sender.
 
        <b><a href="postconf.5.html#backwards_bounce_logfile_compatibility">backwards_bounce_logfile_compatibility</a> (yes)</b>
-              Produce additional <a href="bounce.8.html">bounce(8)</a> logfile  records  that
-              can be read by older Postfix versions.
+              Produce additional <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile  records  that
+              can be read by Postfix versions before 2.0.
 
        <b><a href="postconf.5.html#bounce_notice_recipient">bounce_notice_recipient</a> (postmaster)</b>
               The  recipient of postmaster notifications with the
@@ -91,11 +92,11 @@ BOUNCE(8)                                               BOUNCE(8)
 
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
               The maximal number of attempts to acquire an exclu-
-              sive lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              sive lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#deliver_lock_delay">deliver_lock_delay</a> (1s)</b>
               The  time  between attempts to acquire an exclusive
-              lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
               The time limit for sending or receiving information
@@ -120,8 +121,8 @@ BOUNCE(8)                                               BOUNCE(8)
               postmaster.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process ID of a Postfix command or daemon pro-
-              cess.
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
               The process name of a  Postfix  command  or  daemon
@@ -135,8 +136,8 @@ BOUNCE(8)                                               BOUNCE(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system name that is prepended to the  pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
@@ -147,6 +148,7 @@ BOUNCE(8)                                               BOUNCE(8)
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
        syslogd(8), system logging
 
@@ -160,5 +162,5 @@ BOUNCE(8)                                               BOUNCE(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                        BOUNCE(8)
+                                                                     BOUNCE(8)
 </pre> </body> </html>

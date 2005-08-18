@@ -36,10 +36,12 @@ The expressions "$name", "${name}" or "$(name)" are
 recursively replaced by the value of the named parameter.
 .IP \(bu
 The expression "${name?value}" expands to "value" when
-"$name" is non-empty.
+"$name" is non-empty. This form is supported with Postfix
+version 2.2 and later.
 .IP \(bu
 The expression "${name:value}" expands to "value" when
-"$name" is empty.
+"$name" is empty. This form is supported with Postfix
+version 2.2 and later.
 .RE
 .IP \(bu
 When the same parameter is defined multiple times, only the last
@@ -50,7 +52,7 @@ Otherwise, the order of main.cf parameter definitions does not matter.
 The remainder of this document is a description of all Postfix
 configuration parameters. Default values are shown after the 
 parameter name in parentheses, and can be looked up with the
-\fBpostconf -d\fR command. 
+"\fBpostconf -d\fR" command. 
 .PP
 Note: this is not an invitation to make changes to Postfix
 configuration parameters. Unnecessary changes can impair the

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_trouble.c,v 1.1.1.4 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_trouble.c,v 1.1.1.5 2005/08/18 21:07:22 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -315,6 +315,8 @@ int     lmtp_stream_except(LMTP_STATE *state, int code, char *description)
 				      request->arrival_time,
 				      "%s", vstring_str(why));
     }
+    if (request->hop_status == 0)
+	request->hop_status = mystrdup(vstring_str(why));
 
     /*
      * Cleanup.

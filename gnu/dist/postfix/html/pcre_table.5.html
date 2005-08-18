@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - pcre_table(5) </title>
 </head> <body> <pre>
-PCRE_TABLE(5)                                       PCRE_TABLE(5)
+PCRE_TABLE(5)                                                    PCRE_TABLE(5)
 
 <b>NAME</b>
        pcre_table - format of Postfix PCRE tables
@@ -25,9 +25,9 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
        is found the corresponding result is returned.
 
        To find out what types of lookup tables your Postfix  sys-
-       tem supports use the <b>postconf -m</b> command.
+       tem supports use the "<b>postconf -m</b>" command.
 
-       To  test  lookup  tables,  use  the <b>postmap -fq</b> command as
+       To  test  lookup  tables, use the "<b>postmap -fq</b>" command as
        described in the SYNOPSIS above.
 
 <b>TABLE FORMAT</b>
@@ -67,8 +67,8 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
               cal line.
 
        Each  pattern  is  a  perl-like  regular  expression.  The
-       expression delimiter can be any character, except  whites-
-       pace  or  characters that have special meaning (tradition-
+       expression delimiter can be any character,  except  white-
+       space  or characters that have special meaning (tradition-
        ally the forward slash is used).  The  regular  expression
        can contain whitespace.
 
@@ -91,9 +91,9 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
        <b>s</b> (default: on)
               Toggles the PCRE_DOTALL flag. When this flag is on,
               the <b>.</b>  metacharacter matches the newline character.
-              With  Postfix  versions prior to 20020528, The flag
-              is off by default, which is inconvenient for multi-
-              line message header matching.
+              With Postfix versions prior to 2.0, The flag is off
+              by default, which is  inconvenient  for  multi-line
+              message header matching.
 
        <b>x</b> (default: off)
               Toggles  the  pcre extended flag. When this flag is
@@ -138,8 +138,8 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
               sion.
 
 <b>SEARCH ORDER</b>
-       Patterns are applied in the  order  as  specified  in  the
-       table,  until  a  pattern  is found that matches the input
+       Patterns are applied in the order as specified in the  ta-
+       ble,  until  a  pattern  is  found  that matches the input
        string.
 
        Each pattern  is  applied  to  the  entire  input  string.
@@ -208,5 +208,5 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                    PCRE_TABLE(5)
+                                                                 PCRE_TABLE(5)
 </pre> </body> </html>

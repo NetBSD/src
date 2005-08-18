@@ -1,4 +1,4 @@
-.\"	$NetBSD: postqueue.1,v 1.1.1.5 2004/05/31 00:24:16 heas Exp $
+.\"	$NetBSD: postqueue.1,v 1.1.1.6 2005/08/18 21:03:49 rpaulo Exp $
 .\"
 .TH POSTQUEUE 1 
 .ad
@@ -18,7 +18,7 @@ Postfix queue control
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostqueue\fR program implements the Postfix user interface
+The \fBpostqueue\fR(1) command implements the Postfix user interface
 for queue management. It implements operations that are
 traditionally available via the \fBsendmail\fR(1) command.
 See the \fBpostsuper\fR(1) command for queue operations
@@ -33,7 +33,7 @@ MAIL_CONFIG environment setting below.
 .IP \fB-f\fR
 Flush the queue: attempt to deliver all queued mail.
 
-This option implements the traditional \fBsendmail -q\fR command,
+This option implements the traditional "\fBsendmail -q\fR" command,
 by contacting the Postfix \fBqmgr\fR(8) daemon.
 
 Warning: flushing undeliverable mail frequently will result in
@@ -59,11 +59,13 @@ attempt will be made until the mail is taken off hold.
 .RE
 .IP "\fB-s \fIsite\fR"
 Schedule immediate delivery of all mail that is queued for the named
-\fIsite\fR. The site must be eligible for the "fast flush" service.
+\fIsite\fR. A numerical site must be specified as a valid RFC 2821
+address literal enclosed in [], just like in email addresses.
+The site must be eligible for the "fast flush" service.
 See \fBflush\fR(8) for more information about the "fast flush"
 service.
 
-This option implements the traditional \fBsendmail -qR\fIsite\fR
+This option implements the traditional "\fBsendmail -qR\fIsite\fR"
 command, by contacting the Postfix \fBflush\fR(8) daemon.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
@@ -104,7 +106,7 @@ The command is invoked by the super-user.
 The following \fBmain.cf\fR parameters are especially relevant to
 this program.
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .IP "\fBalternate_config_directories (empty)\fR"
 A list of non-default Postfix configuration directories that may
 be specified with "-c config_directory" on the command line, or
@@ -129,7 +131,13 @@ The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .IP "\fBtrigger_timeout (10s)\fR"
 The time limit for sending a trigger to a Postfix daemon (for
-example, the pickup(8) or qmgr(8) daemon).
+example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
+.PP
+Available in Postfix version 2.2 and later:
+.IP "\fBauthorized_flush_users (static:anyone)\fR"
+List of users who are authorized to flush the queue.
+.IP "\fBauthorized_mailq_users (static:anyone)\fR"
+List of users who are authorized to view the queue.
 .SH "FILES"
 .na
 .nf

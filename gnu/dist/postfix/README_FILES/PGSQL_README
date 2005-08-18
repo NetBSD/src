@@ -63,25 +63,15 @@ password = some_password
 # The database name on the servers.
 dbname = customer_database
 
-# The table name.
-table = mxaliases
+# Postfix 2.2 and later The SQL query template. See pgsql_table(5).
+query = SELECT forw_addr FROM mxaliases WHERE alias='%s' AND status='paid'
 
-# Query components, see below.
+# For Postfix releases prior to 2.2. See pgsql_table(5) for details.
 select_field = forw_addr
+table = mxaliases
 where_field = alias
-
-# You may specify additional_conditions or leave this empty.
-additional_conditions = and status = 'paid'
-
-# The above variables will result in a query of the form:
-#
-# select forw_addr from mxaliases where alias = '$lookup' and status = 'paid'
-#
-# ($lookup is escaped so if it contains single quotes or other odd
-# characters, it will not cause problems).
-#
-# You may also override the built-in SELECT template. See pgsql_table(5)
-# for details.
+# Don't forget the leading "AND"!
+additional_conditions = AND status = 'paid'
 
 UUssiinngg mmiirrrroorreedd ddaattaabbaasseess
 
@@ -107,4 +97,9 @@ CCrreeddiittss
   * LaMont Jones was the initial Postfix pgsql maintainer.
   * Liviu Daia revised the configuration interface and added the main.cf
     configuration feature.
+  * Liviu Daia revised the configuration interface and added the main.cf
+    configuration feature.
+  * Liviu Daia with further refinements from Jose Luis Tallon and Victor
+    Duchovni developed the common query, result_format, domain and
+    expansion_limit interface for LDAP, MySQL and PosgreSQL.
 

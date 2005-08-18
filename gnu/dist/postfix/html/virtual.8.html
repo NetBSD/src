@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - virtual(8) </title>
 </head> <body> <pre>
-VIRTUAL(8)                                             VIRTUAL(8)
+VIRTUAL(8)                                                          VIRTUAL(8)
 
 <b>NAME</b>
        virtual - Postfix virtual domain mail delivery agent
@@ -14,7 +14,7 @@ VIRTUAL(8)                                             VIRTUAL(8)
 
 <b>DESCRIPTION</b>
        The <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent is designed for virtual mail
-       hosting services. Originally based on the Postfix <a href="local.8.html">local(8)</a>
+       hosting services. Originally based on the Postfix <a href="local.8.html"><b>local</b>(8)</a>
        delivery  agent,  this  agent looks up recipients with map
        lookups of their full recipient address, instead of  using
        hard-coded unix password file lookups of the address local
@@ -43,7 +43,7 @@ VIRTUAL(8)                                             VIRTUAL(8)
        is delivered in UNIX mailbox format.   This format  stores
        multiple messages in one textfile.
 
-       The   <b>virtual</b>  delivery  agent  prepends  a  "<b>From</b>  <i>sender</i>
+       The  <a href="virtual.8.html"><b>virtual</b>(8)</a>  delivery  agent  prepends  a "<b>From</b> <i>sender</i>
        <i>time</i><b>_</b><i>stamp</i>" envelope header to each  message,  prepends  a
        <b>Delivered-To:</b>  message  header with the envelope recipient
        address, prepends an <b>X-Original-To:</b> header with the recip-
@@ -61,7 +61,7 @@ VIRTUAL(8)                                             VIRTUAL(8)
        ered  in qmail <b>maildir</b> format. This format stores one mes-
        sage per file.
 
-       The <b>virtual</b> delivery agent daemon prepends a <b>Delivered-To:</b>
+       The <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery  agent  prepends  a  <b>Delivered-To:</b>
        message  header with the final envelope recipient address,
        prepends  an  <b>X-Original-To:</b>  header  with  the  recipient
        address  as  given to Postfix, and prepends a <b>Return-Path:</b>
@@ -111,10 +111,19 @@ VIRTUAL(8)                                             VIRTUAL(8)
        given to the regular-expression map.
 
 <b>SECURITY</b>
-       The virtual delivery agent is not security sensitive, pro-
-       vided  that the lookup tables with recipient user/group ID
-       information are adequately protected. This program is  not
-       designed to run chrooted.
+       The <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent is not  security  sensitive,
+       provided  that the lookup tables with recipient user/group
+       ID information are adequately protected. This  program  is
+       not designed to run chrooted.
+
+       The <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent disallows regular expression
+       substitution of  $1  etc.  in  regular  expression  lookup
+       tables, because that would open a security hole.
+
+       The   <a href="virtual.8.html"><b>virtual</b>(8)</a>   delivery  agent  will  silently  ignore
+       requests to use the <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server.  Instead  it  will
+       open  the  table directly. Before Postfix version 2.2, the
+       virtual delivery agent will terminate with a fatal  error.
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
@@ -143,16 +152,16 @@ VIRTUAL(8)                                             VIRTUAL(8)
        maintaining three tables, use an LDAP or MYSQL database.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <b>main.cf</b>  are picked up automatically, as vir-
-       tual(8) processes run for only a limited amount  of  time.
+       Changes  to  <b>main.cf</b>  are picked up automatically, as <a href="virtual.8.html"><b>vir-</b></a>
+       <a href="virtual.8.html"><b>tual</b>(8)</a> processes run for only a limited amount  of  time.
        Use the command "<b>postfix reload</b>" to speed up a change.
 
        The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>MAILBOX DELIVERY CONTROLS</b>
        <b><a href="postconf.5.html#virtual_mailbox_base">virtual_mailbox_base</a> (empty)</b>
-              A  prefix  that  the  <a href="virtual.8.html">virtual(8)</a>   delivery   agent
+              A  prefix  that  the  <a href="virtual.8.html"><b>virtual</b>(8)</a>   delivery   agent
               prepends   to   all  pathname  results  from  $<a href="postconf.5.html#virtual_mailbox_maps">vir</a>-
               <a href="postconf.5.html#virtual_mailbox_maps">tual_mailbox_maps</a> table lookups.
 
@@ -161,71 +170,72 @@ VIRTUAL(8)                                             VIRTUAL(8)
               the domains that match $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
 
        <b><a href="postconf.5.html#virtual_minimum_uid">virtual_minimum_uid</a> (100)</b>
-              The  minimum  user  ID  value  that  the <a href="virtual.8.html">virtual(8)</a>
-              delivery agent  accepts  as  a  result  from  <b>$<a href="postconf.5.html#virtual_uid_maps">vir</a>-</b>
-              <b><a href="postconf.5.html#virtual_uid_maps">tual_uid_maps</a></b> table lookup.
+              The  minimum  user  ID  value  that  the <a href="virtual.8.html"><b>virtual</b>(8)</a>
+              delivery agent  accepts  as  a  result  from  $<a href="postconf.5.html#virtual_uid_maps">vir</a>-
+              <a href="postconf.5.html#virtual_uid_maps">tual_uid_maps</a> table lookup.
 
        <b><a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> (empty)</b>
               Lookup  tables  with the per-recipient user ID that
-              the <a href="virtual.8.html">virtual(8)</a> delivery agent uses while writing to
+              the <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent uses while writing to
               the recipient's mailbox.
 
        <b><a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a> (empty)</b>
               Lookup  tables  with the per-recipient group ID for
-              <a href="virtual.8.html">virtual(8)</a> mailbox delivery.
+              <a href="virtual.8.html"><b>virtual</b>(8)</a> mailbox delivery.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> ($<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>)</b>
-              The list of domains  that  are  delivered  via  the
-              $<a href="postconf.5.html#virtual_transport">virtual_transport</a> mail delivery transport.
+              Postfix is final destination for the specified list
+              of   domains;  mail  is  delivered  via  the  $<a href="postconf.5.html#virtual_transport">vir</a>-
+              <a href="postconf.5.html#virtual_transport">tual_transport</a> mail delivery transport.
 
        <b><a href="postconf.5.html#virtual_transport">virtual_transport</a> (virtual)</b>
-              The  default  mail  delivery  transport for domains
-              that match the  $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>  parameter
+              The default mail  delivery  transport  for  domains
+              that  match  the $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> parameter
               value.
 
 <b>LOCKING CONTROLS</b>
        <b><a href="postconf.5.html#virtual_mailbox_lock">virtual_mailbox_lock</a> (see 'postconf -d' output)</b>
-              How  to lock a UNIX-style <a href="virtual.8.html">virtual(8)</a> mailbox before
+              How to lock a UNIX-style <a href="virtual.8.html"><b>virtual</b>(8)</a> mailbox  before
               attempting delivery.
 
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
               The maximal number of attempts to acquire an exclu-
-              sive lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              sive lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#deliver_lock_delay">deliver_lock_delay</a> (1s)</b>
-              The  time  between attempts to acquire an exclusive
-              lock on a mailbox file or <a href="bounce.8.html">bounce(8)</a> logfile.
+              The time between attempts to acquire  an  exclusive
+              lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#stale_lock_time">stale_lock_time</a> (500s)</b>
-              The time after  which  a  stale  exclusive  mailbox
+              The  time  after  which  a  stale exclusive mailbox
               lockfile is removed.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#virtual_destination_concurrency_limit">virtual_destination_concurrency_limit</a>   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">tion_concurrency_limit</a>)</b>
-              The  maximal  number  of parallel deliveries to the
-              same destination via the virtual  message  delivery
+              The maximal number of parallel  deliveries  to  the
+              same  destination  via the virtual message delivery
               transport.
 
        <b><a href="postconf.5.html#virtual_destination_recipient_limit">virtual_destination_recipient_limit</a>     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">tion_recipient_limit</a>)</b>
-              The  maximal  number of recipients per delivery via
+              The maximal number of recipients per  delivery  via
               the virtual message delivery transport.
 
        <b><a href="postconf.5.html#virtual_mailbox_limit">virtual_mailbox_limit</a> (51200000)</b>
-              The maximal size in bytes of an individual  mailbox
+              The  maximal size in bytes of an individual mailbox
               or maildir file, or zero (no limit).
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix main.cf and
+              The default location of  the  Postfix  main.cf  and
               master.cf configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -233,32 +243,32 @@ VIRTUAL(8)                                             VIRTUAL(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits for the next service request
               before exiting.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
+              The maximal number of connection requests before  a
               Postfix daemon process terminates.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID of a Postfix command or daemon  pro-
-              cess.
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -271,20 +281,20 @@ VIRTUAL(8)                                             VIRTUAL(8)
        <a href="VIRTUAL_README.html">VIRTUAL_README</a>, domain hosting howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>
-       This delivery agent was originally based  on  the  Postfix
-       local  delivery  agent.  Modifications mainly consisted of
-       removing code that either was not applicable or  that  was
-       not  safe  in this context: aliases, ~user/.forward files,
+       This  delivery  agent  was originally based on the Postfix
+       local delivery agent. Modifications  mainly  consisted  of
+       removing  code  that either was not applicable or that was
+       not safe in this context: aliases,  ~user/.forward  files,
        delivery to "|command" or to /file/name.
 
        The <b>Delivered-To:</b> message header appears in the <b>qmail</b> sys-
        tem by Daniel Bernstein.
 
-       The  <b>maildir</b>  structure  appears  in  the  <b>qmail</b> system by
+       The <b>maildir</b> structure  appears  in  the  <b>qmail</b>  system  by
        Daniel Bernstein.
 
 <b>AUTHOR(S)</b>
@@ -299,5 +309,5 @@ VIRTUAL(8)                                             VIRTUAL(8)
        Level 3, 213 Miller St
        North Sydney 2060, NSW, Australia
 
-                                                       VIRTUAL(8)
+                                                                    VIRTUAL(8)
 </pre> </body> </html>

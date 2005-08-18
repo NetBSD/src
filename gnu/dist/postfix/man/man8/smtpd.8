@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.10 2004/07/28 22:49:06 heas Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.11 2005/08/18 21:04:25 rpaulo Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -51,6 +51,7 @@ RFC 1985 (ETRN command)
 RFC 2554 (AUTH command)
 RFC 2821 (SMTP protocol)
 RFC 2920 (SMTP Pipelining)
+RFC 3207 (STARTTLS command)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -64,12 +65,12 @@ policy violations, and of other trouble.
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically, as smtpd(8)
+Changes to \fBmain.cf\fR are picked up automatically, as \fBsmtpd\fR(8)
 processes run for only a limited amount of time. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .SH "COMPATIBILITY CONTROLS"
 .na
 .nf
@@ -104,6 +105,36 @@ sender addresses, even when no explicit reject_unlisted_sender
 access restriction is specified.
 .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
 What SMTP clients Postfix will not offer AUTH support to.
+.PP
+Available in Postfix version 2.2 and later:
+.IP "\fBsmtpd_discard_ehlo_keyword_address_maps (empty)\fR"
+Lookup tables, indexed by the remote SMTP client address, with
+case insensitive lists of EHLO keywords (pipelining, starttls,
+auth, etc.) that the SMTP server will not send in the EHLO response
+to a remote SMTP client.
+.IP "\fBsmtpd_discard_ehlo_keywords (empty)\fR"
+A case insensitive list of EHLO keywords (pipelining, starttls,
+auth, etc.) that the SMTP server will not send in the EHLO response
+to a remote SMTP client.
+.SH "ADDRESS REWRITING CONTROLS"
+.na
+.nf
+.ad
+.fi
+See the ADDRESS_REWRITING_README document for a detailed
+discussion of Postfix address rewriting.
+.IP "\fBreceive_override_options (empty)\fR"
+Enable or disable recipient validation, built-in content
+filtering, or address mapping.
+.PP
+Available in Postfix version 2.2 and later:
+.IP "\fBlocal_header_rewrite_clients (permit_inet_interfaces)\fR"
+Rewrite message header addresses in mail from these clients and
+update incomplete addresses with the domain name in $myorigin or
+$mydomain; either don't rewrite message headers from other clients
+at all, or rewrite message headers and update incomplete addresses
+with the domain specified in the remote_header_rewrite_domain
+parameter.
 .SH "AFTER QUEUE EXTERNAL CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -144,7 +175,7 @@ and external content filters.
 Available in Postfix version 2.1 and later:
 .IP "\fBreceive_override_options (empty)\fR"
 Enable or disable recipient validation, built-in content
-filtering, or address rewriting.
+filtering, or address mapping.
 .SH "EXTERNAL CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -184,6 +215,78 @@ Optional lookup table with the SASL login names that own sender
 Available in Postfix version 2.1 and later:
 .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
 What SMTP clients Postfix will not offer AUTH support to.
+.SH "STARTTLS SUPPORT CONTROLS"
+.na
+.nf
+.ad
+.fi
+Detailed information about STARTTLS configuration may be
+found in the TLS_README document.
+.IP "\fBsmtpd_use_tls (no)\fR"
+Opportunistic mode: announce STARTTLS support to SMTP clients,
+but do not require that clients use TLS encryption.
+.IP "\fBsmtpd_enforce_tls (no)\fR"
+Enforcement mode: announce STARTTLS support to SMTP clients,
+and require that clients use TLS encryption.
+.IP "\fBsmtpd_sasl_tls_security_options ($smtpd_sasl_security_options)\fR"
+The SASL authentication security options that the Postfix SMTP
+server uses for TLS encrypted SMTP sessions.
+.IP "\fBsmtpd_starttls_timeout (300s)\fR"
+The time limit for Postfix SMTP server write and read operations
+during TLS startup and shutdown handshake procedures.
+.IP "\fBsmtpd_tls_CAfile (empty)\fR"
+The file with the certificate of the certification authority
+(CA) that issued the Postfix SMTP server certificate.
+.IP "\fBsmtpd_tls_CAfile (empty)\fR"
+The file with the certificate of the certification authority
+(CA) that issued the Postfix SMTP server certificate.
+.IP "\fBsmtpd_tls_ask_ccert (no)\fR"
+Ask a remote SMTP client for a client certificate.
+.IP "\fBsmtpd_tls_auth_only (no)\fR"
+When TLS encryption is optional in the Postfix SMTP server, do
+not announce or accept SASL authentication over unencrypted
+connections.
+.IP "\fBsmtpd_tls_ccert_verifydepth (5)\fR"
+The verification depth for remote SMTP client certificates.
+.IP "\fBsmtpd_tls_cert_file (empty)\fR"
+File with the Postfix SMTP server RSA certificate in PEM format.
+.IP "\fBsmtpd_tls_cipherlist (empty)\fR"
+Controls the Postfix SMTP server TLS cipher selection scheme.
+.IP "\fBsmtpd_tls_dcert_file (empty)\fR"
+File with the Postfix SMTP server DSA certificate in PEM format.
+.IP "\fBsmtpd_tls_dh1024_param_file (empty)\fR"
+File with DH parameters that the Postfix SMTP server should
+use with EDH ciphers.
+.IP "\fBsmtpd_tls_dh512_param_file (empty)\fR"
+File with DH parameters that the Postfix SMTP server should
+use with EDH ciphers.
+.IP "\fBsmtpd_tls_dkey_file ($smtpd_tls_dcert_file)\fR"
+File with the Postfix SMTP server DSA private key in PEM format.
+.IP "\fBsmtpd_tls_key_file ($smtpd_tls_cert_file)\fR"
+File with the Postfix SMTP server RSA private key in PEM format.
+.IP "\fBsmtpd_tls_loglevel (0)\fR"
+Enable additional Postfix SMTP server logging of TLS activity.
+.IP "\fBsmtpd_tls_received_header (no)\fR"
+Request that the Postfix SMTP server produces Received:  message
+headers that include information about the protocol and cipher used,
+as well as the client CommonName and client certificate issuer
+CommonName.
+.IP "\fBsmtpd_tls_req_ccert (no)\fR"
+When TLS encryption is enforced, require a remote SMTP client
+certificate in order to allow TLS connections to proceed.
+.IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
+Name of the file containing the optional Postfix SMTP server
+TLS session cache.
+.IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
+The expiration time of Postfix SMTP server TLS session cache
+information.
+.IP "\fBsmtpd_tls_wrappermode (no)\fR"
+Run the Postfix SMTP server in the non-standard "wrapper" mode,
+instead of using the STARTTLS command.
+.IP "\fBtls_daemon_random_bytes (32)\fR"
+The number of pseudo-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
+process requests from the \fBtlsmgr\fR(8) server in order to seed its
+internal pseudo random number generator (PRNG).
 .SH "VERP SUPPORT CONTROLS"
 .na
 .nf
@@ -201,7 +304,7 @@ and later.
 The two default VERP delimiter characters.
 .IP "\fBverp_delimiter_filter (-=+)\fR"
 The characters Postfix accepts as VERP delimiter characters on the
-Postfix sendmail(1) command line and in SMTP commands.
+Postfix \fBsendmail\fR(1) command line and in SMTP commands.
 .PP
 Available in Postfix version 1.1 and 2.0:
 .IP "\fBauthorized_verp_clients ($mynetworks)\fR"
@@ -264,11 +367,14 @@ Parameters concerning known/unknown local recipients:
 The list of domains that are delivered via the $local_transport
 mail delivery transport.
 .IP "\fBinet_interfaces (all)\fR"
-The network interface addresses that this mail system receives mail
-on.
+The network interface addresses that this mail system receives
+mail on.
 .IP "\fBproxy_interfaces (empty)\fR"
 The network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
+.IP "\fBinet_protocols (ipv4)\fR"
+The Internet protocols Postfix will attempt to use when making
+or accepting connections.
 .IP "\fBlocal_recipient_maps (proxy:unix:passwd.byname $alias_maps)\fR"
 Lookup tables with all names or addresses of local recipients:
 a recipient address is local when its domain matches $mydestination,
@@ -293,9 +399,9 @@ a list of lookup tables that does not match the recipient address.
 Parameters concerning known/unknown recipients in virtual alias
 domains:
 .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
-Optional list of names of virtual alias domains, that is,
-domains for which all addresses are aliased to addresses in other
-local or remote domains.
+Postfix is final destination for the specified list of virtual
+alias domains, that is, domains for which all addresses are aliased
+to addresses in other local or remote domains.
 .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
 Optional lookup tables that alias specific mail addresses or domains
 to other local or remote address.
@@ -307,8 +413,8 @@ of lookup tables that does not match the recipient address.
 Parameters concerning known/unknown recipients in virtual mailbox
 domains:
 .IP "\fBvirtual_mailbox_domains ($virtual_mailbox_maps)\fR"
-The list of domains that are delivered via the $virtual_transport
-mail delivery transport.
+Postfix is final destination for the specified list of domains;
+mail is delivered via the $virtual_transport mail delivery transport.
 .IP "\fBvirtual_mailbox_maps (empty)\fR"
 Optional lookup tables with all valid addresses in the domains that
 match $virtual_mailbox_domains.
@@ -341,16 +447,26 @@ receiving a remote SMTP client request.
 The maximal number of lines in the Postfix SMTP server command history
 before it is flushed upon receipt of EHLO, RSET, or end of DATA.
 .PP
-Not available in Postfix version 2.1:
+The per SMTP client connection count and request rate limits are
+implemented in co-operation with the \fBanvil\fR(8) service, and
+are available in Postfix version 2.2 and later.
 .IP "\fBsmtpd_client_connection_count_limit (50)\fR"
-How many simultaneous connections any SMTP client is allowed to
-make to the SMTP service.
+How many simultaneous connections any client is allowed to
+make to this service.
 .IP "\fBsmtpd_client_connection_rate_limit (0)\fR"
 The maximal number of connection attempts any client is allowed to
 make to this service per time unit.
-.IP "\fBsmtpd_client_connection_limit_exceptions ($mynetworks)\fR"
-Clients that are excluded from connection count or connection rate
-restrictions.
+.IP "\fBsmtpd_client_message_rate_limit (0)\fR"
+The maximal number of message delivery requests that any client is
+allowed to make to this service per time unit, regardless of whether
+or not Postfix actually accepts those messages.
+.IP "\fBsmtpd_client_recipient_rate_limit (0)\fR"
+The maximal number of recipient addresses that any client is allowed
+to send to this service per time unit, regardless of whether or not
+Postfix actually accepts those recipients.
+.IP "\fBsmtpd_client_event_limit_exceptions ($mynetworks)\fR"
+Clients that are excluded from connection count, connection rate,
+or SMTP request rate restrictions.
 .SH "TARPIT CONTROLS"
 .na
 .nf
@@ -439,7 +555,7 @@ from untrusted clients to destinations matching $relay_domains.
 .IP "\fBsmtpd_restriction_classes (empty)\fR"
 User-defined aliases for groups of access restrictions.
 .IP "\fBsmtpd_null_access_lookup_key (<>)\fR"
-The lookup key to be used in SMTP access(5) tables instead of the
+The lookup key to be used in SMTP \fBaccess\fR(5) tables instead of the
 null sender address.
 .IP "\fBpermit_mx_backup_networks (empty)\fR"
 Restrict the use of the permit_mx_backup SMTP access feature to
@@ -462,6 +578,11 @@ access restriction is specified.
 Request that the Postfix SMTP server rejects mail for unknown
 recipient addresses, even when no explicit reject_unlisted_recipient
 access restriction is specified.
+.PP
+Available in Postfix version 2.2 and later:
+.IP "\fBsmtpd_end_of_data_restrictions (empty)\fR"
+Optional access restrictions that the Postfix SMTP server
+applies in the context of the SMTP END-OF-DATA command.
 .SH "SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS"
 .na
 .nf
@@ -472,12 +593,12 @@ This feature is implemented by sending probe email messages that
 are not actually delivered.
 This feature is requested via the reject_unverified_sender and
 reject_unverified_recipient access restrictions.  The status of
-verification probes is maintained by the verify(8) server.
+verification probes is maintained by the \fBverify\fR(8) server.
 See the file ADDRESS_VERIFICATION_README for information
 about how to configure and operate the Postfix sender/recipient
 address verification service.
 .IP "\fBaddress_verify_poll_count (3)\fR"
-How many times to query the verify(8) service for the completion
+How many times to query the \fBverify\fR(8) service for the completion
 of an address verification request in progress.
 .IP "\fBaddress_verify_poll_delay (3s)\fR"
 The delay between queries for the completion of an address
@@ -499,7 +620,7 @@ The following parameters control numerical SMTP reply codes
 and/or text responses.
 .IP "\fBaccess_map_reject_code (554)\fR"
 The numerical Postfix SMTP server response code when a client
-is rejected by an access(5) map restriction.
+is rejected by an \fBaccess\fR(5) map restriction.
 .IP "\fBdefer_code (450)\fR"
 The numerical Postfix SMTP server response code when a remote SMTP
 client request is rejected by the "defer" restriction.
@@ -517,7 +638,7 @@ is rejected by the reject_non_fqdn_hostname, reject_non_fqdn_sender
 or reject_non_fqdn_recipient restriction.
 .IP "\fBreject_code (554)\fR"
 The numerical Postfix SMTP server response code when a remote SMTP
-client request is rejected by the "\fBreject\fR" restriction.
+client request is rejected by the "reject" restriction.
 .IP "\fBrelay_domains_reject_code (554)\fR"
 The numerical Postfix SMTP server response code when a client
 request is rejected by the reject_unauth_destination recipient
@@ -600,13 +721,21 @@ The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (postfix)\fR"
 The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
+.PP
+Available in Postfix version 2.2 and later:
+.IP "\fBsmtpd_forbidden_commands (CONNECT, GET, POST)\fR"
+List of commands that causes the Postfix SMTP server to immediately
+terminate the session with a 221 code.
 .SH "SEE ALSO"
 .na
 .nf
+anvil(8), connection/rate limiting
 cleanup(8), message canonicalization
+tlsmgr(8), TLS session and PRNG management
 trivial-rewrite(8), address resolver
 verify(8), address verification service
 postconf(5), configuration parameters
+master(5), generic daemon options
 master(8), process manager
 syslogd(8), system logging
 .SH "README FILES"
@@ -619,12 +748,14 @@ Use "\fBpostconf readme_directory\fR" or
 .na
 .nf
 ADDRESS_CLASS_README, blocking unknown hosted or relay recipients
+ADDRESS_REWRITING_README Postfix address manipulation
 FILTER_README, external after-queue content filter
 LOCAL_RECIPIENT_README, blocking unknown local recipients
 SMTPD_ACCESS_README, built-in access policies
 SMTPD_POLICY_README, external policy server
 SMTPD_PROXY_README, external before-queue content filter
 SASL_README, Postfix SASL howto
+TLS_README, Postfix STARTTLS howto
 VERP_README, Postfix XVERP extension
 XCLIENT_README, Postfix XCLIENT extension
 XFORWARD_README, Postfix XFORWARD extension
@@ -641,3 +772,10 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+TLS support originally by:
+Lutz Jaenicke
+BTU Cottbus
+Allgemeine Elektrotechnik
+Universitaetsplatz 3-4
+D-03044 Cottbus, Germany

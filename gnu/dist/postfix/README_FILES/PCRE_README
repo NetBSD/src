@@ -38,6 +38,12 @@ AUXLIBS, for example:
         "CCARGS=-DHAS_PCRE -I/usr/local/include" \
         "AUXLIBS=-L/usr/local/lib -lpcre"
 
+Solaris needs run-time path information too:
+
+    make -f Makefile.init makefiles \
+        "CCARGS=-DHAS_PCRE -I/usr/local/include" \
+        "AUXLIBS=-L/usr/local/lib -R/usr/local/lib -lpcre"
+
 TThhiinnggss ttoo kknnooww
 
   * When Postfix searches a pcre: or regexp: lookup table, each pattern is

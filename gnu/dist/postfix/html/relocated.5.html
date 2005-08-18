@@ -4,24 +4,24 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - relocated(5) </title>
 </head> <body> <pre>
-RELOCATED(5)                                         RELOCATED(5)
+RELOCATED(5)                                                      RELOCATED(5)
 
 <b>NAME</b>
-       relocated - format of Postfix relocated table
+       relocated - Postfix relocated table format
 
 <b>SYNOPSIS</b>
        <b>postmap /etc/postfix/relocated</b>
 
 <b>DESCRIPTION</b>
-       The optional <b>relocated</b> table provides the information that
-       is used in "user has moved to  <i>new</i><b>_</b><i>location</i>"  bounce  mes-
-       sages.
+       The  optional  <a href="relocated.5.html"><b>relocated</b>(5)</a> table provides the information
+       that is used in "user has moved  to  <i>new</i><b>_</b><i>location</i>"  bounce
+       messages.
 
-       Normally,  the <b>relocated</b> table is specified as a text file
-       that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
+       Normally,  the  <a href="relocated.5.html"><b>relocated</b>(5)</a>  table is specified as a text
+       file that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.   The
        result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
        fast searching by the mail  system.  Execute  the  command
-       <b>postmap  /etc/postfix/relocated</b>  in  order  to rebuild the
+       "<b>postmap  /etc/postfix/relocated</b>"  in order to rebuild the
        indexed file after changing the relocated table.
 
        When the table is provided via other means  such  as  NIS,
@@ -54,6 +54,7 @@ RELOCATED(5)                                         RELOCATED(5)
               line  that starts with whitespace continues a logi-
               cal line.
 
+<b>TABLE SEARCH ORDER</b>
        With lookups from indexed files such as DB or DBM, or from
        networked  tables  such  as NIS, LDAP or SQL, patterns are
        tried in the order as listed below:
@@ -67,8 +68,8 @@ RELOCATED(5)                                         RELOCATED(5)
               in $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
        @<i>domain</i>
-              Matches  every address in <i>domain</i>. This form has the
-              lowest precedence.
+              Matches  other  addresses  in <i>domain</i>. This form has
+              the lowest precedence.
 
 <b>ADDRESS EXTENSION</b>
        When a mail address localpart contains the optional recip-
@@ -83,42 +84,44 @@ RELOCATED(5)                                         RELOCATED(5)
        description of regular expression lookup table syntax, see
        <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>. For a description of the
        TCP client/server table lookup protocol, see <b>tcp_table</b>(5).
+       This  feature is not available up to and including Postfix
+       version 2.2.
 
-       Each  pattern  is  a regular expression that is applied to
+       Each pattern is a regular expression that  is  applied  to
        the entire address being looked up. Thus, <i>user@domain</i> mail
-       addresses  are  not  broken up into their <i>user</i> and <i>@domain</i>
+       addresses are not broken up into their  <i>user</i>  and  <i>@domain</i>
        constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and
        <i>foo</i>.
 
-       Patterns  are  applied  in  the  order as specified in the
-       table, until a pattern is found that  matches  the  search
+       Patterns are applied in the order as specified in the  ta-
+       ble,  until  a  pattern  is  found that matches the search
        string.
 
-       Results  are  the  same as with indexed file lookups, with
-       the additional feature that parenthesized substrings  from
+       Results are the same as with indexed  file  lookups,  with
+       the  additional feature that parenthesized substrings from
        the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>TCP-BASED TABLES</b>
-       This  section  describes how the table lookups change when
+       This section describes how the table lookups  change  when
        lookups are directed to a TCP-based server. For a descrip-
-       tion   of  the  TCP  client/server  lookup  protocol,  see
-       <b>tcp_table</b>(5).  This feature is not  available  in  Postfix
-       version 2.1.
+       tion of the TCP client/server lookup protocol, see <b>tcp_ta-</b>
+       <b>ble</b>(5).  This feature is not available up to and including
+       Postfix version 2.2.
 
        Each lookup operation uses the entire address once.  Thus,
-       <i>user@domain</i> mail addresses are not broken  up  into  their
+       <i>user@domain</i>  mail  addresses  are not broken up into their
        <i>user</i> and <i>@domain</i> constituent parts, nor is <i>user+foo</i> broken
        up into <i>user</i> and <i>foo</i>.
 
        Results are the same as with indexed file lookups.
 
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The  table format does not understand quoting conventions.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following <b>main.cf</b> parameters are especially relevant.
-       The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+       The following <b>main.cf</b> parameters are especially  relevant.
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#relocated_maps">relocated_maps</a></b>
               List of lookup tables for relocated users or sites.
@@ -126,12 +129,12 @@ RELOCATED(5)                                         RELOCATED(5)
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
-              The network interface addresses  that  this  system
+              The  network  interface  addresses that this system
               receives mail on.  You need to stop and start Post-
               fix when this parameter changes.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              List of domains that  this  mail  system  considers
+              List  of  domains  that  this mail system considers
               local.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a></b>
@@ -152,7 +155,7 @@ RELOCATED(5)                                         RELOCATED(5)
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -161,5 +164,5 @@ RELOCATED(5)                                         RELOCATED(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                     RELOCATED(5)
+                                                                  RELOCATED(5)
 </pre> </body> </html>

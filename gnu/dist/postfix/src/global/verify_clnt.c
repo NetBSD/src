@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_clnt.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: verify_clnt.c,v 1.1.1.3 2005/08/18 21:07:09 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -25,7 +25,7 @@
 /*	va_list	ap;
 /* DESCRIPTION
 /*	verify_clnt_query() requests information about the given address.
-/*	The result value is one of the valud status values (see
+/*	The result value is one of the valid status values (see
 /*	status description below).
 /*	In all cases the \fBwhy\fR argument provides additional
 /*	information.

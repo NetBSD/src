@@ -125,6 +125,12 @@ Examples of simple restriction lists are:
     # Whitelisting: local clients may specify any destination. Others may not.
     smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
 
+    # Block clients that speak too early.
+    smtpd_data_restrictions = reject_unauth_pipelining
+
+    # Enforce mail volume quota via policy service callouts.
+    smtpd_end_of_data_restrictions = check_policy_service unix:private/policy
+
 Each restriction list is evaluated from left to right until some restriction
 produces a result of PERMIT, REJECT or DEFER (try again later). The end of the
 list is equivalent to a PERMIT result. By placing a PERMIT restriction before a
@@ -136,21 +142,23 @@ The table below summarizes the purpose of each SMTP access restriction list.
 All lists use the exact same syntax; they differ only in the time of evaluation
 and in the effect of a REJECT or DEFER result.
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |RReessttrriiccttiioonn lliisstt nnaammee       |SSttaattuuss  |EEffffeecctt ooff RREEJJEECCTT oorr DDEEFFEERR rreessuulltt|
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_client_restrictions   |Optional|Reject all client commands      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_helo_restrictions     |Optional|Reject HELO/EHLO information    |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_sender_restrictions   |Optional|Reject MAIL FROM information    |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_recipient_restrictions|Required|Reject RCPT TO information      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_data_restrictions     |Optional|Reject DATA command             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_etrn_restrictions     |Optional|Reject ETRN command             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |RReessttrriiccttiioonn lliisstt nnaammee         |SSttaattuuss  |EEffffeecctt ooff RREEJJEECCTT oorr DDEEFFEERR rreessuulltt|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_client_restrictions     |Optional|Reject all client commands      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_helo_restrictions       |Optional|Reject HELO/EHLO information    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_sender_restrictions     |Optional|Reject MAIL FROM information    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_recipient_restrictions  |Required|Reject RCPT TO information      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_data_restrictions       |Optional|Reject DATA command             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_end_of_data_restrictions|Optional|Reject END-OF-DATA command      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_etrn_restrictions       |Optional|Reject ETRN command             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 DDeellaayyeedd eevvaalluuaattiioonn ooff SSMMTTPP aacccceessss rreessttrriiccttiioonn lliissttss
 
@@ -165,9 +173,9 @@ Current Postfix versions postpone the evaluation of client, helo and sender
 restriction lists until the RCPT TO or ETRN command. This behavior is
 controlled by the smtpd_delay_reject parameter. Restriction lists are still
 evaluated in the proper order of (client, helo, etrn) or (client, helo, sender,
-recipient, data) restrictions. When a restriction list (example: client)
-evaluates to REJECT or DEFER the other restriction lists (example: helo,
-sender, etc.) are skipped.
+recipient, data, or end-of-data) restrictions. When a restriction list
+(example: client) evaluates to REJECT or DEFER the other restriction lists
+(example: helo, sender, etc.) are skipped.
 
 Around the time that smtpd_delay_reject was introduced, Postfix was also
 changed to support mixed restriction lists that combine information about the

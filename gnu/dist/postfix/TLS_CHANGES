@@ -1,0 +1,2418 @@
+2004/09/12	== Released 0.8.19 ==
+
+2004/09/01
+  - Finished updating the code by adjusting to postfix-2.2-20040829
+    and started using it at my own site.
+
+2004/08/01
+  - Started adjusting the patch to postfix-2.2-20040729.
+
+2004/06/21	== Re-released 0.8.18 ==
+
+2004/06/21
+  - Postfix 2.1.3 has been released. Shortlived 2.1.2 did bring an
+    incompatibel change (patch conflict) which has been resolved.
+  - Fixed some typos in the tlsmgr.8 manual page (Chris Pepper
+    <pepper@reppep.com>).
+
+2004/04/27	== Re-released 0.8.18 ==
+
+2004/04/27
+  - Postfix 2.1.0 has been released. Some minor patch conflicts with respect
+    to the actual code and build environment.
+  - Due to the restructuring of the documentation the old sample-*.cf
+    files are no longer available.
+    Took documentation already adopted by Wietse for the 2.1-RC2-IPV6+TLS
+    snapshot.
+
+2004/02/09	== Re-released 0.8.18 ==
+
+2004/02/09
+  - Postfix 2.0.18-20040205 is available, patchkit applies without
+    problems.
+
+2004/02/02	== Release 0.8.18 ==
+
+2004/02/02
+  - Incorporated Luca Berra's information into the patchkit and ran tests
+    with my own versions.
+
+2004/02/01
+  - Reports about server side SMTP failure with Carsten's patch can be
+    found on postfix-users.
+    'Luca Berra' <bluca@comedia.it> informs, that he discoverd another
+    failure of the GNU patch program with a misplaced patch hunk in
+    smtpd.c
+
+2004/01/30
+  - Edited in additional #ifdef USE_TLS conditionals. If the TLS patch
+    is applied but not activated (USE_TLS is not defined), a warning is
+    printed as soon as TLS shall be used.
+
+2004/01/23
+  - Postfix 2.0.18-20040122 is now available. Several patch conflicts occur.
+    Even more: one hunk of the patch (which is provided in unified diff)
+    fails in smtp.c and causes a segmentation violation.
+    Carsten Hoeger <choeger@suse.de> provides an adapted patch kit.
+
+2004/01/02	== Released 0.8.17 ==
+
+2004/01/02
+  - Postfix-2.0.16-20031231 is released. No patch conflicts.
+  - Changed autoresponder for TLS tests to "The Postfix Book" echo
+    responder (provided by Patrick Koetter and Ralf Hildebrandt).
+
+2003/12/30
+  - Postfix-2.0.16-20031226 is released. No patch conflicts.
+
+2003/12/26
+  - Postfix-2.0.16-20031224 is released. Resolved patch conflicts.
+
+2003/12/16
+  - Postfix-2.0.16-20031215 is released. Resolved patch conflicts.
+  - src/global/pfixtls.c: changed occurance of "ssize_t" to "size_t"
+    as some quite old operating systems do no have ssize_t
+    (Reported by Klaus Jaehne <kj@uue.org> for SunOS 4.1.4).
+  - src/global/pfixtls.c: both the client and the server engine did
+    print out messages even when tls_loglevel was set to 0 (reported
+    by Florian Effenberger <florian@effenberger.org>): evaluate loglevel
+    before printing any message.
+
+2003/11/17	== Re-released 0.8.16 ==
+
+2003/11/17
+  - Postfix 2.0.16-20031113 is released. Some minor patch conflicts.
+
+2003/10/27	== Re-released 0.8.16 ==
+
+2003/10/24
+  - Postfix 2.0.16-20031022 is released. Some minor patch conflicts.
+
+2003/09/23	== Re-released 0.8.16 ==
+
+2003/09/23
+  - Postfix 2.0.16 and 2.0.16-20030921 are now available.
+    Resolved some minor patch conflicts.
+
+2003/09/10	== Released 0.8.16 ==
+
+2003/09/09
+  - Postfix 2.0.15 has been released including another workaround for
+    select() on Solaris problems. It contains additional code to catch
+    EAGAIN on read() in the timed_read() routine (and the respective
+    precautions in timed_write()
+  - Note: this fix is not yet part of Postfix 2.0.14-20030812.
+  - Added corresponding code to pfixtls_timed_read()/_write().
+  - Changed SSL wrappermode behaviour: use smtpd_sasl_tls_security_options
+    instead of smtpd_sasl_security_options as is to be expected because TLS
+    is active. (Bug reported by Bob Snyder <rsnyder@toontown.erial.nj.us>.)
+
+2003/08/29      == Re-released 0.8.15 ==
+
+2003/08/29
+  - Adapted patchkit to Postfix 2.0.14. No patch conflicts.
+
+2003/07/17	== Re-released 0.8.15a (-20030715 only) ==
+
+2003/07/16
+  - Experimental version Postfix 2.0.14-20030715 is released, including
+    the SASL changes. Resolved some minor patch conflicts.
+
+2003/07/11	== Released 0.8.15a (-20030706 only) ==
+
+2003/07/11
+  - Received error report about about TLS failing with the new smtpd_proxy
+    feature including instructions on how to reproduce.
+    (Did receive an earlier report on 2003/07/09, that however indicated other
+    setup problems, so that the actual problem was not visible.)
+  - Analysis: when introducing the new smtpd_proxy feature, different mechnisms
+    where introduced to either write to the cleanup daemon (as before) or to
+    the smtpd_proxy connection. Functions and streams are now expressed in
+    out_fprintf() function pointers etc. being assigned accordingly.
+    When updating to 0.8.15/2.0.13-20030706 this change was missed and the
+    routine adding the TLS information to the Received: headers did use the
+    older rec_fprintf() functions etc. This did work fine for the traditional
+    connection to the cleanup service, but naturally failed for smtpd_proxy
+    (with a segmentation violation).
+    Solution: access out_stream via the according pointers.
+  - The 2.0.13 stable version is not affected.
+
+2003/07/08	== Released 0.8.15 ==
+
+2003/07/07
+  - Postfix 2.0.13 and 2.0.13-20030706 are released.
+    Patchkit for 2.0.13 applies cleanly.
+    Patchkit for 2.0.13-20030607 requires several adaptations (patch conflicts,
+    no functional changes).
+  - Slightly modified SASL interface code (smpt[d]_sasl_glue layer) to
+    allow setting the security policy during session setup instead of
+    process start. This allows to actually choose SASL mechanisms available
+    depending on the availability of TLS encryption and authentication.
+    New parameters: smtpd_sasl_tls_security_options,
+    smtp_sasl_tls_security_options, smtp_sasl_tls_verified_security_options
+  - Submitted change to SASL interface to Wietse, who accepted the change
+    as part of the Snapshot line.
+
+2003/06/19	== Released 0.8.14 ==
+
+2003/06/19
+  - Add support for SubjectAlternativeName "dNSName" entries in certificate
+    checking (applies for client mode only).
+    If the client connects to the server, it does check the list of dNSName
+    entries against the expected hostname (therefore allowing the server to
+    have multiple identities). As described in RFC2818 (HTTP over TLS),
+    CommonName (CN) entries are only checked, if no dNSName entries are found
+    at all.
+    Initial patch proposed by Deti Fliegl <fliegl@cs.tum.edu>, reworked to
+    follow the RFC2818 rules and some cleanup.
+
+2003/06/18
+  - Checked out similar settings, found another missing entry:
+    var_smtp_scert_vd was missing src/smtp/smtp.c.
+  - Renamed HAS_SSL to USE_TLS for compilation (have to use -DUSE_SSL
+    in the future). Currently pfixtls.h will take care of setting
+    USE_TLS, when HAS_SSL has been defined.
+
+2003/06/17
+  - Received bug reports about Postfix/TLS failing (connection closing)
+    after having finished the "STARTTLS"/"220 Ready to start TLS"
+    dialogue. (Actually the first report came in via private mail on
+    2003/06/12, but the information was too diffuse to track down).
+    Tracking down became possible after it became clear, that only Solaris
+    systems are affected.
+    Analysis:
+    * As of 2003/06/09 postfix uses non-blocking socket I/O for the SMTP
+      connection on Solaris platforms. This requires using "select()" style
+      waiting before read() or write() access (which are not prepared EAGAIN
+      or EWOULDBLOCK in the Postfix case and therefore indicate error).
+    * As the var_smtpd_starttls_tmout variable is not correctly initialized
+      (value is 0), the select() style function is not called, therefore
+      read() fails with EAGAIN and the connection is closed due to a
+      presumed error condition.
+    * The initialization of the variable should be done in the time_table[]
+      list during main().
+      The entry however was lost during the patch adaptation from 0.7.13e
+      to 0.7.14-snap20020107 on 2002/01/07.
+    Impact:
+    * On Solaris systems, STARTTLS fails during handshake (server only).
+    * On other systems, the TLS negotiation phase is not protected by the
+      smtpd_starttls_tmout (default 300s) value and may hang until the
+      watchdog kills smtpd, if the client does not continue the handshake.
+    Restored var_smtpd_starttls_tmout variable initialization.
+
+2003/06/12	== Re-released 0.8.13 ==
+
+2003/06/11
+  - Adapted to snapshot 2.0.12-20030611. No patch conflicts.
+
+2003/06/11
+  - Adapted to snapshot 2.0.11-20030609. One minor patch conflict.
+
+2003/05/23	== Re-released 0.8.13 ==
+
+2003/05/23
+  - First release against snapshot 2.0.10-20030523.
+
+2003/04/26	== Re-released 0.8.13 ==
+
+2003/04/26
+  - Updated patchkit to apply to Postfix 2.0.9.
+  - Updated patchkit-name to reflect the release of OpenSSL 0.9.7b.
+
+2003/03/06	== Re-released 0.8.13 ==
+
+2003/03/06
+  - Postfix 2.0.6 has been released. No patch conflicts.
+
+2003/03/02	== Re-released 0.8.13 ==
+
+2003/03/02
+  - Postfix 2.0.4 has been released. "patch" should work with some warnings
+    about moved line numbers.
+  - OpenSSL 0.9.7a has been released. No visible changes with respect to
+    Postfix/TLS.
+
+2003/01/26	== Re-released 0.8.13 ==
+
+2003/01/26
+  - Postfix 2.0.3 has been released. One minor patch-conflict.
+
+2003/01/13	== Released 0.8.13 ==
+
+2003/01/13
+  - Postfix 2.0.1 has been released. Some minor patch conflicts resolved.
+  - Added HOWTO documents contributed by Justin Davies <justin@palmcoder.net>
+    to the contribution area.
+  - Added RFC3207 (SMTP Service Extension for Secure SMTP over Transport Layer
+    Security) to the documentation. RFC3207 is the successor of RFC2487.
+  - Updated TODO list to reflect release ideas up to the release of
+    Postfix/TLS 0.9.0. (Or will it finally be 1.0.0? :-)
+
+2002/12/30
+  - OpenSSL 0.9.7 has been released. Postfix/TLS works best with the new
+    0.9.7 release.
+
+2002/12/24	== Re-released 0.8.12 ==
+
+2002/12/24
+  - Postfix 2.0.0.1 has been released. Resolved one minor patch conflict.
+
+2002/12/20	== Re-released 0.8.12 ==
+
+2002/12/20
+  - Postfix snapshot 1.1.12-20021214 has been released. Resolved minor
+    patch conflicts.
+
+2002/12/15	== Re-released 0.8.12 ==
+
+2002/12/15
+  - Postfix snapshot 1.1.12-20021214 has been released. Two minor patch
+    conflicts.
+
+2002/12/06	== Released 0.8.12 ==
+
+2002/12/06
+  - OpenSSL 0.9.6h has been released. Update documentation and filenames
+    to reflect this new release.
+  - Minor bug fix: when calling "sendmail -bs", smtpd is not run with
+    superuser permissions, therefore the loading of the private key fails.
+    STARTTLS is not used anyway, so the key is not needed anyway, but the
+    failure to load creates a misleading warning.
+    Do not initialize TLS engine at all when not started with superuser
+    permissions.
+
+2002/12/03
+  - Postfix snapshot 1.1.12-20021203 has been released. Resolved one patch
+    conflict.
+
+2002/11/01	== Re-released 0.8.11a ==
+
+2002/11/01
+  - Postfix snapshot 1.1.11-20021031 has been released. No patch conflicts.
+
+2002/10/30	== Re-released 0.8.11a ==
+
+2002/10/30
+  - Postfix snapshot 1.1.11-20021029 has been released. No patch conflicts.
+
+2002/09/30      == Re-released 0.8.11a ==
+
+2002/09/30
+  - Postfix snapshot 1.1.11-20020928 has been released. No patch conflices.
+
+2002/09/24
+  - Postfix snapshot 1.1.11-20020923 has been released. Adapt patchkit.
+
+2002/09/19	== Re-released 0.8.11a ==
+
+2002/09/18
+  - Postfix snapshot 1.1.11-20020917 has been released. Adapt patchkit.
+
+2002/08/23	== Re-released 0.8.11a ==
+
+2002/08/23
+  - Postfix snapshot 1.1.11-20020822 has been released. Adapt patchkit.
+
+2002/08/20
+  - Postfix snapshot 1.1.11-20020819 has been released with several
+    enhancements and changes. Adapt patchkit (minor issues).
+
+2002/08/12
+  - OpenSSL has experienced several (security critical) updates.
+
+2002/07/26	== Re-released 0.8.11a ==
+
+2002/07/26
+  - On popular demand, a new diff for the snapshot version of Postfix
+    is created: postfix-1.1.11-20020719.
+
+2002/06/18	== Re-released 0.8.11a ==
+
+2002/06/18
+  - On popular demand, a new diff for the snapshot versions of Postfix
+    is created: postfix-1.1.11-20020613.
+
+2002/06/03	== Released 0.8.11a ==
+
+2002/06/03
+  - When compiling with SSL but without SASL, compilation fails due to
+    the modification of state->sasl_mechanism_list that is not part of the
+    "state" structure when SASL is not compiled in.
+    This bug was introduced in version 0.8.11.
+    Bug reported and patch supplied by Bernd Matthes
+    <bernd.matthes@gemplus.com>.
+
+2002/05/29	== Released 0.8.11 ==
+
+2002/05/29
+  - Postfix 1.1.11 is released.
+
+2002/05/25
+  - Fix processing of options after STARTTLS handshaking: AUTH= was not
+    handled, as the "=" was not recognized as for the extension list for
+    the case without TLS. (The TLS case was a copy of an older version
+    of the code not yet containing the "=" and the change in the main
+    code slipped through without noting the difference, hence the option
+    as not added to the TLS part.
+    Found by "Christoph Vogel" <Christoph.Vogel@Corbach.de>.
+
+2002/05/24
+  - Bug reported by "Christoph Vogel" <Christoph.Vogel@Corbach.de>:
+    Client side AUTH does not work, if STARTTLS is used: if a server
+    announces AUTH and STARTTLS, AUTH is being used if TLS is disabled.
+    Once TLS is enabled, AUTH is still offered by the server, but the
+    client does not use it any longer.
+    Reason: when AUTH is offered, not only the SMTP_REATURE_AUTH flag
+    is set in state->features, but also the available mechanisms are
+    remembered in state->sasl_mechanism_list. As AUTH may be offered
+    twice by some hosts (in the correct "AUTH mech" form and the older
+    and deprecated "AUTH=mech" form), a check against processing the
+    line twice is included in smtp_sasl_helo_auth(). This check now
+    prevented the correct processing in the second evaluation of the
+    ESMTP extensions offered after the STARTTLS activation.
+    Solution: reset state->sasl_mechanism_list before processing the
+    extension list just like state->features.
+
+2002/05/15	== Released 0.8.10 ==
+
+2002/05/15
+  - Postfix 1.1.10 has been released. No changes.
+
+2002/05/14	== Released 0.8.9 ==
+
+2002/05/14
+  - Postfix 1.1.9 has been released. Patchkit requires a small adjustment
+    (supplied by Tuomo Soini <tis@foobar.fi>).
+
+2002/05/10	== Released 0.8.8 ==
+
+2002/05/10
+  - OpenSSL 0.9.6d has been released. Release the unchanged patchkit
+    with a new version number and under a new filename to indicate
+    that it should be built against 0.9.6d (it has the session caching
+    failure of 0.9.6c fixed). Update documentation accordingly.
+
+2002/05/05
+  - Postfix 1.1.8 has been released, the patchkit applies cleanly.
+
+2002/04/03	== Re-released 0.8.7 ==
+
+2002/04/03
+  - Postfix 1.1.7 has been released, the patchkit applies cleanly.
+    Re-released the patchkit.
+
+2002/03/29	== Released 0.8.7 ==
+
+2002/03/29
+  - Postfix/TLS did not honor the per-recipient-switching-off in SMTP
+    client mode via tls_per_site (per-host-switching off was honored).
+    Patch by Will Day <wd@hpgx.net>.
+
+2002/03/27	== Released 0.8.6 ==
+
+2002/03/27
+  - Postfix 1.1.6 has been released. Adapted patchkit to resolve minor
+    patch conflict. (Template provided by Simon Matter
+    <simon.matter@ch.sauter-bc.com>)
+
+2002/03/13	== Released 0.8.5 ==
+
+2002/03/13
+  - Postfix 1.1.5 has been released. The patchkit would apply cleanly, but
+    obviously the "lock_fd" change that applies to dict_dbm.c (Wietse)
+    also has to be applied to dict_sdbm.c. Tuomo Soini <tis@foobar.fi>
+    kindly provided this change.
+
+2002/02/25	== Released 0.8.4 ==
+
+2002/02/25
+  - Postfix 1.1.4 became visible. One patch conflict in a Makefile
+    (Carsten Hoeger <choeger@suse.de>).
+
+2002/02/21
+  - Dates in this CHANGES document were showing 2001 even though 2002 already
+    began :-). Fixed. (Marvin Solomon <solomon@conceptshopping.com>)
+
+2002/02/07
+  - Bug in the documentation (setup.html): the main.cf variables for the
+    SMTP server process have to be named smtpd_* instead of smtp_*.
+    Found by Andreas Piesk <a.piesk@gmx.net>.
+
+2002/02/03	== Released 0.8.3 ==
+
+2002/02/03
+  - Patch from Andreas Piesk <a.piesk@gmx.net>: remove some compiler warnings
+    by using explicit type casts in hexdump print statements.
+  - Re-released otherwise unchanged patchkit against Postfix-1.1.3.
+
+2002/01/30	== Released 0.8.2 ==
+
+2002/01/30
+  - Re-released unchanged patchkit against Postfix-1.1.2.
+
+2002/01/24	== Released 0.8.1 ==
+
+2002/01/24
+  - Postfix-1.1.1 has been released. The patchkit needed some small adjustment.
+  - Both Tuomo Soini <tis@foobar.fi> and Carsten Hoeger <choeger@suse.de>
+    helped out with this small adjustment. As a side effect of Carsten's
+    complete pfixtls.diff, which I compared after applying Tuomo's adjustment,
+    I found that pfixtls.c contained several wrong "'" characters: on the
+    german keyboard there is an accent looking like the apostroph but producing
+    a different binary code. Obviously on Carsten's machine the code was
+    changed which became obvious during the comparison.
+    (Conclusion: I wrote the comments affected on my SuSE-Linux PC at home with
+    german keyboard. In my university-office I do have HP-UX workstations
+    with US keyboards.)
+
+2002/01/22	== Released 0.8.0 ==
+
+2002/01/22
+  - Received a comment from Wietse on the mailing list, that it is better
+    to resolve the "standalone" issue by using the already available
+    SMTPD_STAND_ALONE() macro in smtpd. Undid 0.7.16 change and made
+    new change in smtpd.c.
+  - Updated links in the References section of the documentation.
+
+2002/01/21	== Released 0.7.16 ==
+
+2002/01/21
+  - When calling "sendmail -bs" and STARTTLS is enabled, smtpd tries to
+    read the private key and fails due to insufficient permissions (smtpd
+    is run with the privileges of the user). This case is caught since
+    version 0.6.18 of the Postfix/TLS patchkit: STARTTLS is still being
+    offered but a "465 temporary failure" message is issued. Some mailers
+    (read this: PINE) will then refuse to continue. (And an irritating
+    error message indicating the failure to read the key will be logged.)
+    Experienced by "Lucky Green" <shamrock@cypherpunks.to> .
+  - Solution: Disable STARTTLS when running "sendmail -bs" by adding
+    "-o smtpd_use_tls=no -o smtpd_enforce_tls=no" to smtpd's arguments
+    upon startup. Using STARTTLS does not make sense in simulated
+    SMTP mode.
+
+2002/01/18	== Released 0.7.15 ==
+
+2002/01/18
+  - Postfix 1.1.0 has been released. The patchkit for the former snapshot
+    version applied cleanly and now becomes the patchkit for the stable
+    version.
+
+2002/01/16	== Released 0.7.14a ==
+
+2002/01/16
+  - Snapshot-20020115 is released. Adapted patchkit.
+  - Add Postfix/TLS entries into the new conf/postfix-files
+    (Tuomo Soini <tis@s.foobar.fi>, Carsten Hoeger <choeger@suse.de>).
+
+2002/01/14
+   - OpenSSL: a user reported that session caching stopped working for him
+     with OpenSSL 0.9.6c. I found that this is also true for my own
+     Postfix/TLS installation.
+     Solution: server side session caching is broken in OpenSSL 0.9.6c when
+     using non-blocking semantics (Postfix/TLS is affected as it uses
+     BIO-pairs); sessions are simply not added to the cache. This bug
+     is not security relevant. A fix has been applied to the OpenSSL source
+     tree for the next release.
+
+2002/01/08	== Released 0.7.14 ==
+
+2002/01/07
+  - New snapshots released as release candidates. Adapted the patchkit
+    to snapshot-20020107. Moved our production servers from 20010228-pl08
+    to snapshot-20020107 with the adapted patchkit.
+  - Fix documentation: tlsmgr can be run chrooted since a long time.
+
+2001/12/21
+  - OpenSSL 0.9.6c is released. Postfix/TLS is fully compatible.
+
+2001/12/19	== Released 0.7.13e ==
+
+2001/12/19
+  - Adapted patchkit to snapshot-20011217.
+
+2001/12/12	== Released 0.7.13d ==
+
+2001/12/12
+  - Adapted patchkit to snapshot-20011210. Adaption provided by
+    Tuomo Soini <tis@foobar.fi>.
+
+2001/11/28	== Released 0.7.13c ==
+
+2001/11/28
+  - Adapted patchkit to snapshot-20011127.
+
+2001/11/26	== Released 0.7.13b ==
+
+2001/11/26
+  - Adapted patchkit to snapshot-20011125.
+
+2001/11/22	== Released 0.7.13a ==
+
+2001/11/22
+  - Adapted patchkit to snapshot-20011121.
+
+2001/11/15	== Released 0.7.13 ==
+
+2001/11/15
+  - Adapted patchkit to postfix-20010228-pl08 and snapshot-20011115.
+
+2001/11/06	== Re-released 0.7.12 ==
+
+2001/11/06
+  - Snapshot-20011105 released. No patch conflicts, but in order to have
+    the pfixtls-* filename and home page entry reflect the new version,
+    I'll re-release 0.7.12.
+
+2001/11/05	== Released 0.7.12 ==
+
+2001/11/05
+  - Release of Postfix-20010228-pl06 and snapshot-20011104. The snapshot
+    version had some minor patch conflicts to be resolved.
+
+2001/10/14	== Released 0.7.11 ==
+
+2001/10/14
+  - Bug fix (client mode): when the peername is checked against the CommonName
+    in the certificate, the comparison does not correclty ignore the case
+    (the peername as returned by DNS query or set in the transport map
+    is not transformed to lower case). This bug was introduced in 0.7.5.
+
+2001/10/09	== Released 0.7.10 ==
+
+2001/10/09
+  - Snapshot-20011008 is released. Some minor adaptions are required to
+    sort out patch conflicts.
+
+2001/09/28
+  - Received patch from Uwe Ohse <use@ohse.de>: There is a bug in sdbm's
+    handling of the .dir file, that also applies to Postfix/TLS.
+    The problem only appears for large databases.
+  - The example entries in conf/master.cf for the submission and smtps services
+    use "chroot=y" flags, while the Postfix default is "chroot=n". This could
+    lead to hardly explainable problems when users did not note this fact
+    during setup.
+    Fixed example entries to also use "chroot=n" default.
+
+2001/09/18
+  - Wietse releases Postfix-20010228-pl05. The patch applies cleanly with
+    "patch -p1 ...", so it is not necessary to release a new patchkit.
+
+2001/09/04	== Released 0.7.9 ==
+
+2001/09/04
+  - Due to unititialized variable in smtpd_state.c, AUTH may not be offered
+    without TLS even though smtpd_tls_auth_only was not enabled.
+    (Patch from Nick Simicich <njs@scifi.squawk.com>.)
+
+2001/08/29
+  - In the snapshot-20010808 version of 0.7.9, the "tlsmgr" line in the sample
+    conf/master.cf is missing (reported by Will Day <wd@hpgx.net>). Fixed.
+
+2001/08/27	== Released 0.7.8 ==
+
+2001/08/27
+  - Received bugreport about issuer_CN imprints consisting of long strings
+    of nonsense. This only appeard with certificates issued from a certain
+    CA (RSA Data Security Inc., Secure Server Certification Authority).
+    (Will Day <wd@hpgx.net>)
+  - The problem: the issuer data of this certificate is:
+        Issuer
+          C=US
+          O=RSA Data Security, Inc.
+          OU=Secure Server Certification Authority
+    It does not contain a CN (CommonName) field. OpenSSL's
+    X509_NAME_get_text_by_NID() function does not catch this condition
+    (no error flag set), but it also does not set the name in the memory
+    location specified.
+  - Solution:
+    1. Preset the memory for the string to '\0', so that a string of length
+       0 is obtained on the failure described above.
+    2. When no CN data is available, use the O (Organization) field
+       instead. The data are used for logging only (it is the issuer, not
+       the subject name), so this change does not affect functionality.
+
+2001/08/22	== Released 0.7.7 ==
+
+2001/08/22
+  - Found one more bug: erronously called SSL_get_ex_new_index() instead
+    of SSL_SESSION_get_ex_new_index() (note the _SESSION missing). This
+    could be responsible for the failure at the locations found during
+    debugging. Works fine on HP-UX (did also before), must cross check
+    at home...
+
+2001/08/21
+  - Received report, that smtp (client) fails with signal 11 (platform:
+    linux redhat). Cannot reproduce any problem on HP-UX (did run 1
+    week in production before release). But malloc() and stack strategies
+    are different between platforms.
+  - Can reproduce the failure on my Linux PC at home :-(.
+  - Found one bug in new_session_cb(): on successfull external caching,
+    success is reported by a return value of 1. This however must be another
+    bug, as it has nothing to do with the locations of the failure, when
+    analyzing the core dumps/running under debugger.
+    Still getting SIGSEGV...
+
+2001/08/20	== Released 0.7.6 ==
+
+2001/08/20
+  - Following "popular demand" implemented new feature and configuration option
+    "smtpd_tls_auth_only": Only allow authentication using the AUTH protocol,
+    when the TLS encryption layer is active. Default is "no" in order to
+    keep compatiblity to postfix without TLS patch.
+    This option does not distinguish between different AUTH mechanisms.
+
+2001/08/16	== Released 0.7.5 ==
+
+2001/08/15
+  - The new session cache handling is working now at my site for quite some
+    time.
+  - Client side: modified peername matching code, such that wildcard
+    certificates can be used. Matching is done as in HTTP/TLS: only the
+    leftmost part of the hostname may be replaced by a '*'.
+
+2001/08/09
+  - Further debugged the CRYPTO_set_ex_data() functionality.
+  - Unified "external cache write" and "external cache remove" callbacks
+    for client and server side. The "external cache read" functions are not
+    that easy to combine, as the lookup keys are quite different and do not
+    match the fixed interface to the callback function.
+  - Change shutdown behaviour according to SSL_shutdown(). When SSL_shutdown()
+    returns, the shutdown handshake may not be complete, if we were the first
+    party to send the shutdown alert. We must call SSL_shutdown() again,
+    to wait for the peer's alert.
+
+2001/08/08
+  - Postfix snapshot 20010808 is being released.
+
+2001/08/08
+  - Rewrite server side to remove externally cached sessions via callback.
+  - Rewrite client side to remove externally cached sessions via callback.
+    This turns out to be more difficult as expected, as the client side
+    session cache is sorted by hostnames, but the callbacks are called
+    with the SSL_SESSION objects. The information must be stored into the
+    SSL_SESSION objects by using the CRYPTO_set_ex_data() functionality,
+    the documentation of which, ahem, ...
+  - Reloading sessions stays separate, as the functionality is different.
+
+2001/08/07
+  - Started reworking the session cache code.
+    * On the server side the retrieval from the external cache and the writing
+      to the cache are handled by callback functions. The removal is handled
+      directly.
+    * On the client side, all session cache operations are performed explicitly.
+    * The explicit handling is on the client side is bad, as it requires a
+      quite complicated logic to detect session reuse and the appropriate
+      handling.
+    * The explicit handling of session removal on both sides is bad, as
+      the OpenSSL library will remove sessions (on session failure) according
+      to the TLS specifications automatically, so we want to take advantage
+      of this feature and have the externally cached sessions removed as
+      required via callback.
+  - First step: on the client side, also use the new_session_cb(), so that
+    new sessions are automatically saved to the external cache on creation.
+
+2001/08/01
+  - Postfix-20010228-pl04 is being released.
+
+2001/07/11	== Released 0.7.4 ==
+
+2001/07/10
+  - Postfix snapshot 20010709 was released. Resolved some minor patch
+    conflicts.
+
+2001/07/10
+  - OpenSSL 0.9.6b has been released including a security fix for the
+    libraries internal pseudo random number generator.
+    * Note: to exploit the weakness, an attacker must be able to retrieve
+      single random bytes. As in Postfix/TLS random bytes are only used
+      indirectly during the SSL handshake, an attacker could never access
+      the PRNG in the way required to exploit the weakness.
+    * Postfix/TLS is therefore not vulnerable (as are most (all?) applications
+      utilizing the SSL layer).
+    * The OpenSSL team however recommends to upgrade or install the bugfix
+      included in the announcement in any case.
+    * Details can be found at http://www.openssl.org/
+
+2001/05/31	== Released 0.7.3a ==
+
+2001/05/30
+  - Report from <Andre.Konopka@Presse-Data.de>: TLS logging does not work.
+    Reason: parameters are not evaluated in mail_params.c, as the corresponding
+    lines for other_int_defaults[] were missing from the patch. This
+    only affected the 0.7.3-snapshot version, the version for "stable"
+    is correct.
+    I will release 0.7.3a with this fix only for the snapshot version to keep
+    version numbering consistent with the "stable" version.
+
+2001/05/28	== Released 0.7.3 ==
+
+2001/05/28
+  - Upgraded to snapshot-20010425: resolved some minor patch conflicts.
+    No functional changes.
+
+2001/05/16
+  - Received french documentation (doc_french/) contributed by
+    Etienne Roulland <Etienne.Roulland@univ-poitiers.fr>.
+
+2001/05/03	== Released 0.7.2 ==
+
+2001/05/03
+  - Postfix-Snapshot 20010502 is released. Bernhard Rosenkraenzer
+    <bero@redhat.de> supplies an adapted patch for Postfix/TLS, as the
+    normal patch has several rejections because of code changes;
+    functionality has not changed.
+
+2001/05/01
+  - Patchlevel 02 of Postfix 20010228 is being released. The Postfix/TLS
+    patchkit applies cleanly when using the "-p1" switch to patch.
+
+2001/04/09	== Released 0.7.1 ==
+
+2001/04/06
+  - OpenSSL 0.9.6a is released. It contains several bugfixes and will become
+    the recommended version to be used with Postfix/TLS.
+    I will run some more test and then re-release Postfix/TLS (without
+    additional changes to the source) as 0.7.1 to make people aware of the
+    new versions of Postfix and OpenSSL.
+
+2001/04/05
+  - Hint from Bodo Moeller <moeller@cdc.informatik.tu-darmstadt.de>:
+    the "Known Bugs" section in doc/test.html actually contains bugs
+    of clients and/or interoperatbility problems. Better name it
+    "Known interoperability problems" and rename the entries
+    "Postfix/TLS server" and "Postfix/TLS client" to improve clarity.
+
+2001/03/29
+  - Patchlevel 01 of Postfix 20010228 is being released. The Postfix/TLS
+    patchkit applies cleanly when using the "-p1" switch to patch.
+    OpenSSL 0.9.6a will be out within the next handful of days, so I will
+    delay the release of a new patchlevel until then.
+
+2001/03/01	== Released 0.7.0 ==
+  - IMPORTANT: If you are upgrading from a much older version, you will find
+    that some configuration options have changed over time (fingerprints are
+    now handled with ':'. check_relay_ccerts is now permit_tls_clientcerts.
+    Session caching has been reworked.)
+    It is recommended to re-read the sample-tls.cf file or the html version
+    in the documentation.
+
+2001/03/01
+  - Wietse has announced the _release_ version (non-beta) or postfix:
+    20010228!
+  - Applied the Patchkit to the _release_ version (not the snapshot version).
+    Resolved one minor patch conflict.
+  - So, it's time to call this Postfix/TLS 0.7.0.
+
+2001/02/26	== Released 0.6.38 ==
+
+2001/02/26
+  - Snapshot-20010225 has been released. Resolved one minor patch conflict.
+
+2001/02/23	== Released 0.6.37 ==
+
+2001/02/23
+  - Snapshot-20010222 has been announced as RELEASE CANDIDAT. Resolved one
+    minor patch conflict.
+  - Removed "check_relay_ccerts" restriction which has been replaced
+    by "permit_tls_clientcerts" in 0.6.24. (Was left in until now for
+    transition.)
+  - Do not try to save session data > 8kB, since this cannot be handled
+    by SDBM. (This is more or less academical, since I have never met a
+    session even half that large.)
+
+2001/02/19	== Released 0.6.36 ==
+
+2001/02/05
+  - Snapshot-20010204 has been released. Resolved one minor patch conflict.
+
+2001/02/03	== Released 0.6.35 ==
+
+2001/02/03
+  - Snapshot-20010202 has been released. Resolved one minor patch conflict.
+
+2001/01/29	== Released 0.6.34 ==
+
+2001/01/29
+  - Snapshot-20010128 has been released. Resolved some minor patch conflicts.
+
+2001/01/11	== Released 0.6.33 ==
+
+2001/01/10
+  - Discussion in Thread "When to get peer certificate?" continues and it
+    comes out, that cross references between datastructures are well maintained
+    inside OpenSSL. A fact not well known due to lack of documentation
+    (seems I am facing some more work on the OpenSSL manpages :-).
+  - Moved around data needed for the certificate verification: a lot of
+    "static" entries globally needed inside pfixtls.c could now be moved
+    into the connection specific TLScontext.
+
+2001/01/07	== Released 0.6.32 ==
+
+2001/01/07
+  - Since now the checks at handshake stage (in pfixtls.c) are more strict,
+    some of the checks in smptd.c and smtp_proto.c could be removed.
+    At a later point I can probably move even more checks into pfixtls.c...
+
+2001/01/05
+  - Had a discussion with Ari Pirinen <aripirin@europe.com> on openssl-users
+    (Thread: When to get peer certificate?) about the earliest possible
+    place to check the CommonName of the peer against the expected name.
+    (This is what smtp does when enforcing the peername of the server it
+    is connecting to.)
+    The final result was, that the check can already been done inside the
+    verifiy_callback() routine even before the handshake is completed.
+    The positive side effect is, that since the session is never completly
+    established, it is also not cached on either client or server.
+  - Since this is a good idea, I have extended the verify_callback in
+    src/global/pfixtls.c to check the CommonName of the peer (if applicable)
+    and have the handshake shut down immediatly on failure. I have also
+    changed the behaviour so that whenever a positive certificate verification
+    is required, the handshake is shut down immediatly.
+    (The versions up to now did delay these checks until the session was
+    established and then shut down the connection. I had established this
+    practice while working on BIO-pairs and running into a bug in
+    OpenSSL 0.9.5 (fixed now) and with the verify depth.)
+
+2000/12/23	== Released 0.6.31 ==
+
+2000/12/23
+  - Bug: When only enabling smtpd_tls_wrappermode and not additionally setting
+    smtpd_use_tls or smtpd_enforce_tls, the TLS engine was not fired up on
+    startup of smtpd
+    Fixed: also start TLS engine when only smtpd_tls_wrappermode is enabled.
+    (Experienced by "Fiamingo, Frank" <FiamingF@strsoh.org>)
+
+2000/12/18	== Released 0.6.30 ==
+
+2000/12/18
+  - New snapshot 20001217 has been released. Due to the change of "timeout"
+    parameters now being its own class and table, the old patchkit does not
+    apply cleanly!
+  - Checked out Postfix/TLS parameters being timeout values and put them into
+    the new style time parameter table. This allows to specify time values
+    like 3600s or 1h. Updated sample configuration to reflect this new style.
+  - "Fiamingo, Frank" <FiamingF@strsoh.org> pointed out to me, that there are
+    three parameters in src/global/mail_params.h (namely DEF_TLS_RAND_EXCH_NAME,
+    DEF_SMTPD_TLS_CERT_FILE, DEF_SMTPD_TLS_CA_FILE) that are hardcoded as
+    "/etc/postfix/something".
+    This does not match the usual style of postfix, where no paths are
+    hardcoded this way. I have removed the defaults for CERT_FILE and CA_FILE.
+    The RAND_EXCH is needed for good PRNG seeding on systems without
+    /dev/urandom, I however don't know yet, how to rearrange this requirement.
+    I could use the Postfix internal mechanisms to enforce a parameter, but
+    this would annoy people having compiled in TLS but not activated. 
+
+2000/12/13	== Released 0.6.29 ==
+
+2000/12/13
+  - Snapshot-20001212 has been released.
+  - Undid bugfixes for 20001210 which now are included in the new snapshot.
+
+2000/12/12	== Released 0.6.28 ==
+
+2000/12/12
+  - Added bugfix provided by Wietse on postfix-users@postfix.org for
+    "postconf -m" behaviour.
+
+2000/12/11
+  - New snapshot-20001210 released. Some patch conflicts occur. Additionally
+    * adjusted calls to myflock() to changed interface,
+    * fixed bug in smtpd_sasl_glue(), where a change to the name_mask()
+      call was not applied in the original snapshot.
+
+2000/12/05	== Released 0.6.27 ==
+
+2000/12/04
+  - Print informational message "SSL session removed" only when
+    var_smtp[d]_loglevel >= 2. (Proposed by Craig Sanders <cas@taz.net.au>.)
+  - Extend logging of "setting up TLS connection from/to" and corresponding
+    success/failure messages so that they include the hostname/ip address.
+    This way it is much easier to automatically analyze errors by simply
+    grepping for e.g. "SSL_accept error" and immediately get the peer
+    causing the problem without further logfile processing.
+    (Proposed by Craig Sanders <cas@taz.net.au>.)
+  - When experiencing a TLS failure due to TLS-enforced failure in client mode
+    (no certificate or hostname/certificate mismatch etc), immediately shut
+    down the TLS mode with "failure" indication, so that the SSL session is
+    removed immediately. This way a new session is always enforced in the
+    case the peer has fixed the problem; no need to wait for the timeout.
+
+2000/11/29	== Released 0.6.26 ==
+
+2000/11/29
+  - Found security relevant bug in the OpenSSL library: the verify_result
+    stating whether or not the certificate verification succeeded is not
+    stored in the session data to be cached and reused.
+  - This bug was found during the development of Postfix/TLS around one
+    year ago, the bug in the library was however only fixed for the server
+    side. At that time I also tested the server side behaviour but ommitted
+    to check the client side, too.
+  - Versions before Postfix/TLS 0.4.4 experienced this problem for both
+    server and client side. Before 0.6.0 a workaround was active for both
+    sides, which has been removed at 0.6.0 in the believe that the bug
+    was gone (I only tested the server side, which was fixed).
+  - Fixed that bug in OpenSSL also for the client side (I can do this myelf
+    now that I have been invited to join the OpenSSL developers team :-).
+    The fix is availabe as of today and will be part of the 0.9.7 release
+    of OpenSSL (or 0.9.6a, if this release will be published).
+  - Included a workaround inside Postfix/TLS for OpenSSL library versions
+    before 0.9.6a or 0.9.7, respectively.
+
+********************** Begin Description
+
+  - By not caching the verify_result for the client side, the following
+    behaviour could appear:
+  * The problem can only appear when smtp_tls_session_cache_database
+    is activated.
+  * smtp_use_tls = yes
+   X On the first connection, the certificate fails verification, failure
+     is logged:
+      smtp[*]: Unverified: subject_CN=serv01.aet.tu-cottbus.de, issuer_CN=BTU-CA
+     For any following connections until the session times out (default 1 hour),
+     the peer certificate seems to pass verification:
+      smtp[*]: Verified: subject_CN=serv01.aet.tu-cottbus.de, issuer_CN=BTU-CA
+   X Security Impact:
+     Unverified certificates are logged as if verification had succeeded.
+  * smtp_enforce_tls = yes
+   X After the verification failure, the session is never correctly established
+     and hence not reused.
+   X Security impact:
+     None, as the session is never reused.
+  * smtp_enforce_tls = yes after smtp_tls_enforce_tls = yes for a server.
+   X If the session has been recorded with use_tls and then for this server
+     enforce_tls is set, the wrong verify_result could be used within the
+     session cache timeout (default = 1 hour).
+   X Security impact:
+     If TLS shall be enforced for a recipient, there is a window of approx.
+     one hour from setting the "enforce_tls" switch until a verification
+     failure is noted. For this to happen, a TLS session to that server must
+     have been used with use_tls set and the not-verifiable certificate must
+     have been recorded in that session.
+  - Evaluation:
+    Even though this _is_ a security problem, I consider risk to be *low*,
+    given the conditions under which the problem might occur.
+
+********************** End Description
+
+2000/11/27	== Released 0.6.25 ==
+
+2000/11/26
+  - Added "permit_tls_all_clientcerts" for smtpd_recipient_restrictions.
+    When this option is enabled, any valid client certificate allows relaying.
+    This can be practical, if e.g. a company has a special CA to create
+    these certificates and only this CA is "trusted". It however does not
+    allow finer control, so if e.g. an employee leaves, he could still
+    relay. Postfix/TLS does not (yet) allow CRL (certificate revocation lists).
+    (Added on popular demand.)
+  - Make the client behaviour more configurabe: when enforcing TLS connections,
+    the peer's name is checked against the CommonName in its certificate.
+    New configuration variable "smtp_tls_enforce_peername" (default=yes)
+    can now be used to accept peername!=CommonName. The server's certificate
+    must still pass the verifcation process against a trusted CA!
+    In tls_per_site, the according key is MUST_NOPEERMATCH.
+    (Added on demand.)
+
+2000/11/24
+  - If the server requires a client certificate and no certificate is presented
+    or the certificate fails verification, the connection is shut down but
+    no information is logged.
+    -> add according msg_info() in smtpd/smtpd.c:startls_cmd().
+  - If TLS is not enforced, it does not make sense for a server to require a
+    client certificate. If no STARTTLS is issued, the SMTP would continue
+    anyway, so why shut down when TLS is activated without verifyable client
+    certificate?
+    -> ignore smtpd_tls_req_ccert=yes, if TLS is not enforced and only treat
+       like smtpd_tls_ask_ccert = yes with an according information logged.
+
+2000/11/22	== Released 0.6.24 ==
+
+2000/11/22
+  - Installed on my own servers and changed configuration to use the new
+    "permit_tls_clientcerts" option name. Patchkit will be released after
+    some hours of successfull operation.
+
+2000/11/21
+  - New snapshot-20001121 is being released. The patch applies without any
+    conflict when applied with "patch -p1", so no need to rush out an updated
+    patchkit.
+  - Rename the smtpd_recipient_restrictions option from "check_relay_ccerts"
+    to "permit_tls_clientcerts" to better match the naming scheme.
+    Leave in the old option for now to not break existing configurations.
+    The final incompatible removing is scheduled of release 0.7.0 of the
+    patchkit which will be matching the next "stable" release of postfix.
+  - There is no manual page for tlsmgr.8 (pointed out by Terje Elde
+    <terje@thinksec.com>).
+    Fix the comments at the beginning of tlsmgr.c and create tlsmgr.8.
+  - In the session cache code an additional 20 bytes were allocated when
+    converting SSL_SESSION data to binary using i2d_SSL_SESSION().
+    In adding these 20 bytes to the size listed by i2d_SSL_SESSION() I followed
+    the example in the OpenSSL source (PEM_ASN1_write()). These 20 bytes are
+    only added since when writing the PEM, a 20 byte checksum is added, so
+    we don't need it in our case -> removed.
+    (Researched after Carlos Vicente <cvicente@mat.upc.es> asked what these
+    20 bytes are good for :-)
+
+2000/10/30	== Re-Released 0.6.23 ==
+
+2000/10/30
+  - Postfix snapshot-20001030 with an important bug fix is made available.
+    The patchkit applies without any problem (patch -p1).
+    Hence, I re-release the 0.66.23 release for the new snapshot.
+
+2000/10/30	== Released 0.6.23 ==
+
+2000/10/30
+  - New Postfix snapshot 20001029 available with some important bug fix.
+    Adjusted patchkit (only minor conflicts).
+
+2000/10/27
+  - The CN_sanitize function (src/smtpd/smtpd.c) that shall make sure that
+    no illegal sign is included into the Received: header does not work
+    on systems were "char" is unsigned by default.
+    (Linux on s390, found by Carsten Hoeger <choeger@suse.de>)
+    -> Worked out a more precise (even though not looking elegant) solution
+    that checks out all acceptable characters.
+  - Sent new smptd.c to Carsten Hoeger for testing, will wait with new
+    Postfix/TLS release.
+
+2000/10/06	== Released 0.6.22 ==
+
+2000/10/06
+  - snapshot-20001005 has been released, featuring fast ETRN. Only some minor
+    patch conflicts needed to be resolved.
+
+2000/09/28	== Released 0.6.21 ==
+
+2000/09/28
+  - snapshot-20000924 seems to be somewhat longer lasting. I have been asked
+    for a new Postfix/TLS release against snapshot-20000924, hence I will
+    create one.
+  - Running OpenSSL 0.9.6 for a week now to my full satisfaction. I will bump
+    bump up the Postfix/TLS version counting to include "0.9.6", even though
+    it will still run fine with 0.9.5a.
+
+2000/09/25/
+  - snapshot-20000924 is available; only small adjustments.
+  - Wietse seems to release new snaphots on a daily basis, it doesn't make
+    sense to follow with a new Postfix/TLS release every day.
+
+2000/09/23	== Released 0.6.20 ==
+
+2000/09/23
+  - Recompile OpenSSL-0.9.6-beta3 with the change and reinstall old pfixtls.c:
+    works again. Hence, all versions of Postfix/TLS working against 0.9.5a
+    will also work again 0.9.6-final, which shall be released on 2000/09/24!
+  - Wietse releases snapshot-20000923, patchkit adapted.
+  - Went through the "install.html" document to add a remark about
+    OpenSSL-0.9.6. This document is of historic quality but did not fit
+    actual versions of Postfix/TLS, we are far beyond OpenSSL 0.9.2: Updated.
+
+2000/09/22
+  - Wietse releases snapshot-20000922. The source directory hierarchie has
+    changed, so the patch needs to be adjusted at several places.
+  - Run tests against OpenSSL 0.9.6-beta3: problems occur!
+    * Certificates are no longer verified, since an informationa flag about the
+      CA certificate search process is written into the error storage and
+      thus misinterpreted as verification failure.
+    * Changed Postfix/TLS source to maintain its own error storage based on
+      the verify_callback, send out according warning to Postfix/TLS mailing
+      list.
+    * Unfortunately, this will break all older versions of Postfix/TLS.
+      Sent out analysis to OpenSSL-bugs@openssl.org.
+    * Additional change is made to OpenSSL: the new behaviour is only activated
+      when a special flag is set, so compatibility is restored!
+
+2000/09/21
+  - Wietse releases snapshot-20000921. Some minor patch conflicts resolved.
+
+2000/09/14	== Released 0.6.19 ==
+
+2000/09/14
+  - Received a bug report: Postfix/TLS will accept a mail even though
+    smtpd_req_ccert=yes (require use of client certificate) and no
+    client certificate is presented.
+    Reason: when no client certificate is presented SSL_get_verify_result()
+    will return X509_V_OK, since this is the default value.
+    Solution: only set "peer_verified" internal information, if the
+    verify_result is X509_V_OK _and_ a peer certificate is available.
+    Remark: This default value does not make too much sense. I will file
+    a bug report/patch before the next release of OpenSSL...
+
+2000/09/03	== Released 0.6.18 ==
+
+2000/09/03
+  - When calling "sendmail -bs", smtpd is started without root privileges,
+    hence it cannot open the private key file and the session cache database.
+    Since the database routines do not offer a graceful return (only fatal
+    and abort), this leads to a failure when TLS and session caching is
+    activated.
+    This affects PINE users (noted by Craig Sanders <cas@taz.net.au>).
+    Solution: Try to read the private key first; if that fails, we can
+    gracefully recover and won't touch the session cache database at all.
+  - When STARTTLS is configured for smtpd but does not work (e.g. because of
+    unaccessible keys), smtpd answers with "465 TLS not available due to
+    temporary reasons". After that the connection was closed, this is however
+    not necessary, as the client may decide to continue without TLS activated.
+  - Craig Sanders <cas@taz.net.au> contributes a script to automatically
+    generate the keys and certificates for Postfix/TLS usage. Added
+    "make-postfix-cert.sh" to the contributed/ directory.
+
+2000/09/02	== Released 0.6.17 ==
+
+2000/09/02
+  - Craig Sanders <cas@taz.net.au> reports that he has connection problems
+    with a site; the message in the log is:
+    SSL_connect error 0
+    8847:error:140943F2:SSL routines:SSL3_READ_BYTES:sslv3 alert unexpected message:s3_pkt.c:956:SSL alert number 10:
+    * This is the error caused by the faulty TLS implementation with
+      CommunigatePro. The bug is fixed in later versions of CommunigatePro,
+      The site shall be contacted, they should update.
+  - More important, he reports a segmentation fault immediately after this
+    problem.
+  - Bug: when not using session caching and an error occurs during the TLS
+    handshake, pfixtls_start_clienttls() tried to remove the erronous
+    session from a non-existant session cache.
+    Fix: check the existence of the session cache before trying to access it.
+    Comment: at all other places in the code this condition was already
+             caught.
+  - Remark: actually session caching was configured, but the configuration
+    variable was mistyped because...
+       it was wrong in conf/sample-tls.cf and doc/conf.html.
+    The correct values are "smtp[d]_tls_session_cache_database" instead of
+    "smtp[d]_tls_use_session_cache_database".
+    Unfortunately this is not flagged by Postfix...
+
+2000/08/25	== Released 0.6.16 ==
+
+2000/08/25
+  - Make sure, that the smtp[d] processes will try to access the "daemon"
+    entropy sources, but will only print an info when not available. Using
+    the PRNG-exchange file, they can happily run without.
+  - Moved HAS_SSL checks, such that the package compiles also when configured
+    without -DHAS_SSL.
+
+2000/08/24
+  - Changed the handling of the PRNG-exchange file. Until now it was written
+    by tlsmgr and read by the smtp[d] daemons. This had the disadvantage, that
+    until tlsmgr rewrote new bytes to the file, all starting daemons read the
+    same seed (to which some more bits, but not too much were added).
+  - Now the file is handled in read->stir into pool->write back mode, so that
+    every daemon will add its own entropy bits.
+  - The smtp[d] processes will do so when starting, when opening a TLS
+    connection and when closing.
+  - The tlsmgr will also read back the file and add it to its pool, so that
+    no entropy is lost.
+  - This change significantly increases the "self seeding" capability of
+    the TLS service.
+
+2000/08/09
+  - Cleaned up the new PRNG-seeding.
+  - When tlsmgr looses connection to an EGD-source (because it was restarted),
+    tlsmgr performes an exit(0), so that a newly started tlsmgr can reconnect.
+    [chroot/dropped privileges].
+
+2000/08/04
+  - Introduced new entropy sources for single daemons:
+    * tls_daemon_random_source
+    Using this source (same style as for tlsmgr), each starting daemon can
+    obtain additional entropy (32 bytes by default). The PRNG-exchange file
+    is still read.
+  - I am not sure about the policy for this feature. If such a source is
+    given, should a failure be considered fatal?
+
+2000/07/23
+  - Started reworking the PRNG seeding:
+    * tlsmgr now recognizes tls_random_source as
+      dev:/dev/urandom		/* Direct read from device file */
+      egd:/path/to/socket       /* Connection via EGD-socket */
+      /path/of/plain-file
+    * If a dev: or egd: is given, tlsmgr will connect and keep the connection
+      open, so that it now can run in chroot-mode with dropped privileges.
+  - Since EGD can be drained, but the connection is permanently open, only
+    suck a small number of bytes (default 32) at a time, but do it more
+    often.
+
+2000/08/09	== Released 0.6.15 ==
+
+2000/08/09
+  - Traced through OpenSSL to learn more about the verify_callback-feature.
+    The callback is called several times. When it returns "1", the handshake
+    will continue, when it calls "0", the handshake will immediately fail
+    (and Postfix/TLS will also close the TCP connection).
+  - Following the sample in the OpenSSL-apps, the verification chain depth
+    was the only property triggering this effect, so this stood hidden until
+    now. Obviously, users having longer chains did set the verifcation
+    depth accordingly or they gave up, since this was never reported...
+  - Changed the behaviour of verify_callback() to never return "0", such that
+    we can deal with the verification result later in a more consistent manner.
+    If we only enable and not enforce, we simply want to ignore problems with
+    the certificate.
+  - verify_callback() did not print out all information, since the wrong
+    state variables (pfixtls_*active instead of pfixtls_*engine) were
+    checked. The *active state variables are only set later.
+    As the verify process now became rather narrative, the normal logging
+    is only done in loglevel 2!
+  - Arrrghhh. The conf/sample-tls.cf _and_ the html-docu (which is actually
+    copied from conf/sample-tls.cf) has wrong names for the verification-
+    depth parameters. *_vd instead of *_verifydepth and ccert<->scert.
+    [Wondering, why this never popped up before...]
+  - Changed the default-verifydepth to "5" which should suffice for most
+    cases. Maybe the limit could also be completely removed, but we should
+    at least receive a warning hint when something goes wild.
+    Since OpenSSL>=0.9.5 is required for Postfix/TLS anyway, certificate chain
+    verification can now be used, so the caution applied before is no longer
+    necessary.
+
+2000/08/08
+  - Tracked down the double-free() call in smtp with Efence. SSL_free()
+    does call SSL_SESSION_free() on the negotiated session. Hence, I must
+    not call SSL_SESSION_free() on the session in question, it will be
+    removed anyway.
+  - Also tracked down the certificate chain feature. Reason is the
+    verify_callback() in global/pfixtls.c. It flags a chain depth that
+    is too long as fatal, hence the connection is immediately closed.
+
+2000/08/04
+  - Received information from Alain Thivillon <Alain.Thivillon@hsc.fr>:
+    FreeBSD-CURRENT offers malloc() with additional checks enabled.
+    After successfully delivering, smtp dumps core with free() called
+    twice in TLS mode.
+  - I noted, that there is a communication problem with his site an my new
+    certificate issued by the universities computer center (which has a chain
+    depth of 2). Step back to the old self certificate for the time being.
+
+2000/07/27	== Released 0.6.14 ==
+
+2000/07/27
+  - Introduced new configuration parameter "smtpd_tls_wrappermode" that
+    enables the (deprecated) old style SSL-wrapping around SMTP. It could
+    be run on a different port (once smtps=465) was recommended for this
+    services.
+    This method is used by old versions of Outlook (Express), the Mac versions
+    and even actual versions, when not run on port 25.
+    [Actually it was only a handful of lines, so it doesn't hurt too much,
+    even though it does not follow any RFC.]
+  - I recommend using this option only from master.cf. Example lines added
+    to conf/master.cf and description added to Postfix/TLS-doc/conf.html.
+  - When having SASL enabled and TLS-enforce mode in "smtpd", only offer
+    AUTH, when TLS has been activated. Otherwise the client might simply
+    send the unencrypted credentials before it receives
+      530 Must issue a STARTTLS command first
+    and an eavesdropper already has what he was looking for.
+
+2000/07/19	== Released 0.6.13 ==
+
+2000/07/19
+  - Changed the library-initializaton call to new naming scheme
+    (SSLeay_add_ssl_algorithms() to OpenSSL_add_ssl_algorithms() :-).
+  - Updated documentation to reflect the use of chain certificates with
+    CAfile and smtp[d]_tls_cert_file (see 2000/07/06).
+  - Documentation: the interoperability problem with CommunigatePro has been
+    solved: CommunigatePro violated the TLS-RFC and has been fixed.
+  - Typo: It is "to stir" not "to stirl" :-)
+
+2000/07/06
+  - Received certificate for our site from our computer center. It's a chain
+    certificate. Now load the cert with SSL_CTX_use_certificate_chain_file(),
+    in order to better load the chain CA certificates.
+
+2000/07/04
+  - Reported Wietse about a possible problem in the SASL code, a relay check
+    may also be performed if sasl was not enabled and might lead to unwanted
+    relay.
+    As the fix is in my own codebase, I will leave it Postfix/TLS until a
+    new snapshot (or final release) is available.
+
+2000/06/02	== Released 0.6.12 ==
+
+2000/06/02
+  - Adapted to Snapshot-20000531 (minor patch conflict).
+  - Cleaned up some old header file dependencies in global/pfixtls.c and
+    global/Makefile.in that are no longer needed due to the interface changes
+    (timed_read()/write()) in 0.6.7.
+
+2000/05/29	== Released 0.6.11 ==
+
+2000/05/29
+  - Following Bodo Moeller's analysis, the error is due to a mismatch between
+    the CA certificate accessible in the smtp[d]_tls_CAfile and the one used
+    in the actual certificate (smtp[d]_tls_cert_file).
+    Daniel Miller fixed his setup and the problem is gone.
+  - Introduced a workaround into Postfix/TLS: if the padding error is found,
+    it is removed from the error-queue by Postfix/TLS, in order to protect
+    more sites from experiencing this problem.
+  - Added a warning to conf/sample-tls.cf
+  - Updated to the latest snapshot-20000528.
+
+2000/05/27
+  - After some fiddling around working through the binary certificate data to
+    see where it is modified at 0.6.10, I actually note, that both 0.6.9 and
+    0.6.10 choke on the data. Now going back up through the functions very
+    fast reveals the problem:
+    * The certificate supplied triggers the "RSA-padding" error in any case.
+      Since the certificate authencity is not enforced on OpenSSL-library level
+      but inside postfix later, the error is not enforced.
+      The error messages generated stay however in the error queue.
+      - For blocking sockets, the SSL_accept()/connect() calls return
+	"success", so the error-queue is never checked.
+      - With BIO-pairs, the error queue is checked to find out, whether the
+	function has just to be called again to continue the handshake, so
+	the error messages are found and the connection is shut down due to
+	the error condition.
+  - Submitted bug report to Bodo Moeller. Bug fix is checked into the OpenSSL
+    CVS archive: if the error is ignored during the handshake, clear the
+    error-queue.
+    * The next release of OpenSSL will behave consistently.
+  - This leaves open the question, why the RSA-padding error is issued in the
+    first place. Sent a query to the OpenSSL-* mailing lists.
+
+2000/05/26
+  - A second site experiencing this problem pops up.
+    -> Issued a warning to the postfix_tls mailing list.
+
+2000/05/24
+  - Contacted Damien Miller <djm@mindrot.org>. He did not change his TLS setup
+    in the last time. He is running Postfix/TLS-0.6.6.
+  - Contacted Bodo Moeller <moeller@cdc.informatik.tu-darmstadt.de>, the author
+    of the BIO-pair part of OpenSSL for some debugging hints. Received several
+    worthful remarks on what to look for.
+  - Checked byte-for-byte the data fed into the OpenSSL-library. It does not
+    differ between 0.6.9 and 0.6.10, so my handling seems to be actually
+    correct.
+
+2000/05/23
+  - A communication error occurs when talking to mail.mindrot.org:
+    SSL_accept error -1
+    10264:error:0407006A:rsa routines:RSA_padding_check_PKCS1_type_1:block type is not 01:rsa_pk1.c:100:
+    10264:error:04067072:rsa routines:RSA_EAY_PUBLIC_DECRYPT:padding check failed:rsa_eay.c:396:
+    10264:error:0D079006:asn1 encoding routines:ASN1_verify:bad get asn1 object call:a_verify.c:109:
+  - The error occurs both in client and server mode. 0.6.9 does not show
+    this problem.
+  - Tried to connect with several other sites, all connections are fine,
+    this includes sendmail and qmail peers; hence decided to not recall 0.6.10.
+
+2000/05/23	== Released 0.6.10 ==
+
+2000/05/23
+  - Sent a note to openssl-dev@openssl.org about the behaviour of SSL_free()
+    and BIO_free(), hoping for some clarification whether my way of doing
+    it is the recommended way.
+  - Run the software in production mode on my own servers...
+  - Finished writing the in-source documentation.
+  - Updated sample-tls.cf and sample-smtp[d].cf to reflect the new timeout
+    parameters.
+
+2000/05/21
+  - Removed error messages produced by the now non-blocking behaviour of the
+    TLS layer [apps_ssl_info_callback()].
+
+2000/05/20
+  - Took results home and tried to run it on my Linux-box: SEGV after
+    successfully handling the SMTP session!!
+    * It seems that the SSL_free() and BIO_free() functions interact.
+      SSL_free() releases the underlying BIO and it will bomb out when
+      it is then explicitely BIO_free()'ed again and vice versa.
+    * It did not bomb out on HP-UX, but such things happen. I however want to
+      know, why the example program does not fail...
+    * With respect to the bevaviour as is, SSL_free(TLScontext->con);
+      BIO_free(TLScontext->network_bio) and not touching
+      TLScontext->internal_bio works.
+  - Introduced special timeout values for the TLS negotiation stage, as the
+    timeout values may change with protocol state (suggested by Wietse).
+  - Started writing a full description of the BIO-pair concept and its
+    special treatment into the pfixtls.c sourcecode.
+
+2000/05/19
+  - Systematicly implemented a generalized layer handling:
+    * do_tls_operation() is the generic handler for all SSL_*() input/output
+      functions. It deals with the non-blocking behaviour of this functions,
+      requiring appropriate retrys.
+    * network_biopair_interop() handles the interaction between the socket/fd
+      and the buffering BIO-pair.
+
+2000/05/18
+  - Based on the example in openssl-0.9.5a/ssl/ssltest.c realized the first
+    usage of BIO-pairs. (Can do server handshaking.)
+  - Learned, that the BIO-pair has its own buffering that needs its own
+    flushing. It is not enough to relay on the SSL_ERROR_WANT_READ/WRITE
+    state information.
+
+2000/05/17	== Released 0.6.9 ==
+  - Important: the seperator in the relay-fingerprints is now ':'!!!
+    Don't forget to change your relay_clientcerts databases.
+
+2000/05/16
+  - Changed pfixtls.c to only use the interface described in util/vstream.c
+    for handling the VSTREAM.
+    * Added vstream_context() macro to the VSTREAM-interface.
+  - Introduce TLScontext to identify the connection instead of the file
+    descriptor. Move all static data (SSL structure and information gathered
+    about the connection) into the context.
+    The TLScontext is allocated on TLS-start for a connection and saved with
+    the VSTREAM, so several streams can be used at the same time.
+  - Removed "pfixtls_setfd()" as it is no longer needed.
+  - Changed the relay_clientcerts list from string_list_* to maps_* interface
+    to allow usage of ":" in the list.
+    THIS IS AN INCOMPATIBLE CHANGE!!!!
+  - Updated documentation accordingly.
+
+2000/05/12	== Re-released 0.6.8 ==
+
+2000/05/12
+  - Wietse announces snapshot-20000511 with an important bugfix.
+  - Since upgrading from 20000507 to 20000511 is highly recommended,
+    Postfix/TLS 0.6.8 is re-released for this snapshot (the patch applied
+    cleanly, just the name of the toplevel directory has changed).
+
+2000/05/11	== Released 0.6.8 ==
+
+2000/05/11
+  - Unlike expected I found some time to install the latest cyrus-sasl-1.5.21
+    and test some parts the integration. It does, well, work as advertised
+    (and the advertisement in SASL_README is not too optimistic).
+  - When checking all of the rejected patch-snippets for 0.6.6->0.6.7
+    I missed the parameter "smtpd_enforce_tls" (noted since I wanted to
+    enforce TLS encryption while playing around with plaintext passwords)
+    in the static CONFIG_BOOL_TABLE bool_table[] = {..} in smtpd/smtpd.c
+    -> I will immediately release a corrected version 0.6.8.
+
+2000/05/11	== Released 0.6.7 ==
+
+2000/05/11
+  - The latest sendmail.8.11.0.Beta1 includes STARTTLS support; it is available
+    in source code and also uses OpenSSL.
+
+2000/05/10
+  - After having it running at home (Linux) I also install it at work for
+    the field test.
+  - No time to install the SASL kit, so this part stays untested as of now.
+
+2000/05/09
+  - Downloaded snaphot and apply the patchkit.
+  - Straightened out the rejected parts of the patch.
+  - Due to the new layering with timed_read() and timed_write() functions
+    the integration of the TLS layer needed special adjustment.
+    * When TLS is active, the timed_read() and timed_write() functions are
+      replaced by the corresponding pfixtls_timed_read() and
+      pfixtls_timed_write() functions. When the TLS functionality is stopped,
+      the old functions are restored.
+    * The names of the pfixtls_timed_*() functions are looking into the future,
+      because they are working as before, the timeout functionality is not
+      in, yet.
+
+2000/05/08
+  - Wietse announces snapshot-20000507 with a lot of changes. Especially
+    important: the I/O handling of the smtp-stream has been changed to
+    a more layered technique that allows easier integration of the TLS layer.
+
+2000/04/27	== Released 0.6.6 ==
+
+2000/04/27
+  - Fixed inconsistency between documentation and actual behaviour: peer
+    certificate information was not logged at level 1 (found by
+    Damien Miller <djm@mindrot.org>).
+    * While at it: the logged information did not say whether the certificate
+      data logged passed verification or not: fixed. (The information logged
+      in the Received: header already contained that information.)
+  - Backported dict_dbm.c from snapshot-20000309 with the updated
+    dict_delete() behaviour (key not found is not considered fatal).
+    Maintained dict_sdbm.c accordingly.
+
+2000/04/18	== Released 0.6.5 ==
+  - Important:
+    * New session cache mechanism SDBM. Please adapt your main.cf and delete
+      any old ".db" session cache files manually.
+
+2000/04/18
+  - I am using the SDBM session cache for a week right now and did not have
+    any trouble, so I think its worth pushing it out.
+  - I am not completely happy with the dict_del() behaviour of considering
+    a not-found key fatal. It might happen when the smtp[d] processes would
+    be allowed to delete themselves. They are not as of now, so I accept it
+    for now but will reconsider it.
+  - Updated documentation accordingly.
+
+2000/04/17
+  - Received corrections for the HTML-docs from Ralf Hildebrandt
+    <R.Hildebrandt@tu-bs.de>.
+
+2000/04/11
+  - Transfered SDBM from home (Linux-testbed :-) to work [found and fixed some
+    small items when compiling on HP-UX]. Started running it under
+    "real life" conditions.
+
+2000/04/07
+  - Implemented "SDBM" Simple Database Management routines as also utilized in
+    ModSSL. Of course, it requires reopening of the databases, so the
+    routines are changed, that the _file_descriptors_ are left open, but
+    the _in_memory_ database stuff (especially the cached data) is closed
+    and reopened on access. This is what is really needed. The pagesize
+    is increased from standard DBM compatibility to hold the session
+    information.
+    Additionally, this software is in the public domain, so no additional
+    license problems arise.
+  - The access goes through the dict_* interface, hence the locking is
+    performed by myflock().
+
+2000/04/01	== Released 0.6.4 ==
+
+2000/04/01
+  - Updated to the new patchlevel of Postfix (19991231-pl06), some parts of
+    the patch were rejected due to changes in smtpd.
+  - Changed patch name with respect of today's release of OpenSSL-0.9.5a.
+    The code remained unchanged.
+    
+2000/03/25-31
+  - The cached informations are not deleted by "tlsmgr" even though stored
+    and retrieved by the smtp[d] processess. Strange.
+  - Spend some large amount of time digging through the Berkeley DB
+    documentation and code.
+    * It claims that Berkeley DB is multi-process capable. Caveat: it takes
+      the very complicated "transaction model", that I did not use until now.
+      Hence the session cache does not work as is.
+    * Even with transaction model, Berkeley DB requires re-opening of the
+      databases to get rid of cached information. F*ck.
+  - Finally, I give up on Berkeley DB for session caching. It will never
+    work for us. Even if it would, it requires a large amount of helper files
+    and it seems, that the transaction environment is somewhat fragile when it
+    comes to some problem. I won't rely on it.
+
+2000/03/28	== Released 0.6.3 ==
+
+2000/03/28
+  - As has been pointed out to me, the TLS information in the Received:
+    header is not conform to RFC822.
+  - The TLS protocol and peer CN information is now included in '()', so
+    that it is a comment.
+
+2000/03/21	== Released 0.6.2 ==
+
+2000/03/21
+  - I have been running DB based session caching with the changes for some
+    more time now without problems. Am I really confident? No, not really.
+    I remember the trouble I had with Berkeley DB and sendmail on HP-UX.
+    I don't think I really trust it.
+  - Realized single "smtp_tls_per_site" lookup. I cannot use the more or
+    less comfortable "domain_list" lookups as before, since these do not
+    return the value, just found or not :-(.
+    Hence the lookup is realized with maps and exact lookup. I never tried
+    regexp. But if I understand the docs correctly, it should be possible to
+    use it here to realize wildcard lookups, if it would not have been
+    disabled :-(.
+  - Summary:
+    * Session Cache will be cleaned at "postfix reload" or "postfix start"
+    * New table "smtp_tls_per_site"
+    * Gone: "smtp_tls_[use/enforce]_[recipients/sites]"
+
+
+2000/03/16
+  - Changed pfixtls.c, so that it will only open Session Cache databases,
+    that are already available. tlsmgr is responsible for creation.
+  - Change tlsmgr.c, such that session cache databases will be removed before
+    opening, so that fresh databases are used whenever postfix is restarted.
+    This means, that session information is not kept over a postfix stop/start
+    or reload sequence, but it also means, that issuing a postfix reload will
+    clean the session cache.
+    I don't use simple dict_open with O_TRUNC, because this would not help
+    against database files, that are locked by hanging smtp[d] processes.
+    If you think it will also solve the "hang" problem described for
+    2000/03/15: in a certain sense it can, since tlsmgr will be killed by
+    the watchdog and new, fresh cache files are installed, but that is not
+    more than an ugly hack. It must be solved in a clean manner.
+
+2000/03/15
+  - Experienced some strange problem with Berkeley DB based session cache.
+    The DB routines hang while trying to delete an entry. I did save the
+    corresponding "hash:" file and could reproduce it (and walk through
+    the endless loop with a debugger), but I didn't find the reason why.
+    Since during "db->del" the database is exclusively locked all other
+    processes hang however, so this is really bad!!!!!!!!
+
+2000/03/12	== Released 0.6.1 ==
+
+2000/03/12
+  - Created tls_info_t structure to hold all information about the active
+    TLS connection. Remove all global variables except those for the
+    running client/server engines (those might be replaced with global
+    variables in smtpd/smtp, though).
+  - Added field "dNSName" to the structure (still unused). This will be
+    used with X503v3 extensions.
+  - Cleaned up TODO, since some items are now done...
+
+2000/03/11
+  - Added missing #include <sys/time.h> to tlsmgr.c. (Worked without on HP-UX,
+    showed up on Linux.)
+  - Bug: removal of server side sessions from the cache in case of trouble
+    failed, because uppercase hex was used instead of lowercase for the key.
+    This does not affect removal of expired sessions by tlsmgr.
+  - Stepped up to postfix-19991231-pl05.
+
+2000/03/09	== Released 0.6.0 ==
+  - Important:
+    * This release features an additional daemon, the "tlsmgr", please update
+      your master.cf accordingly.
+    * This release does not use the /var/spool/postfix/TLS* directories
+      anymore. Remove them and re-install the original postfix-script.
+    * Check the new/changed configuration parameters tls_random* and
+      smtp[d]_tls_session_cache*.
+    * This release will only work with OpenSSL >= 0.9.5!!!!!
+
+2000/03/09
+  - Testcompilation of Postfix/TLS without -DSSL and the OpenSSL includes and
+    libraries passed.
+  - Worked through tlsmgr.c to remove unneeded header files.
+  - Wrote documentation for tlsmgr.c.
+  - Updated documentation on top of pfixtls.c.
+  - Put (char *) casts into the myfree() calls, where necessary, to make the
+    HP compiler happy.
+  - Updated html PRNG documentation in Postfix/TLS.
+
+2000/03/08
+  - Finished first version of "tlsmgr". Does run through session cache
+    databases and detects and deletes (*) old sessions.
+  * Had to realize SYNC_UPDATES for the dict_db_delete() function and patch
+    the flag handling within the function. Changes sent to Wietse.
+  - Restored qmgr to its original state.
+  - Extended pfixtls.c to need an additional "needs_095_or_later()" function
+    when compiled with an older version of postfix.
+  - The session cache is now enabled, when a database filename is given.
+    smtp[d]_tls_use_session_cache configuration parameters removed,
+    updated documenation accordingly.
+  - Moved the PRNG handling to tlsmgr, applying the new model. tlsmgr will
+    query external sources at startup and will then feed a PRNG exchange
+    file with random data in intervals of configurable (but random driven)
+    length.
+    If running outside chroot, tlsmgr can query the entropy source (e.g.
+    EGD or /dev/urandom) again and so increase entropy with time. If the
+    entropy sources don't limit access, the tlsmgr can run with "postfix"
+    privileges. Mine does.
+    -> master.cf became a new entry.
+  - tlsmgr is realized as a trigger server and has the "fifo" entry. Actually,
+    it does not take any input. One could utilize it to feed back some entropy
+    from running smtp[d] processes, but I think this would overload the
+    issue.
+  - I will release a 0.6.0 pre-version as is. tlsmgr still lacks the detailed
+    information in the header and the interface description in pfixtls.c
+    probably is also not longer up do date.
+
+2000/03/07
+  - Since defective session data can cause SEGFAULTs, it is now armored
+    by a leading structure that does contain a session cache version and
+    the postfix library version before the timestamp. If a session does
+    not match exactly the version numbers, it is immediately discarded
+    and deleted to avoid harm.
+  - Removed the seperate storage of the peer's certificate verify_result,
+    so starting from this moment, Postfix/TLS will only work safely with
+    OpenSSL >= 0.9.5!!!
+  - Ported server side session cache routines to the client side; works.
+  - Analyzed structure of "qmgr" to understand consequences for the planned
+    "tlsmgr" daemon. Transferred the sceleton.
+  - Received word from sendmail, a (at least preliminary) TLS enabled test
+    address is "bounce@esmtp.org".
+
+2000/03/06
+  - Wietse supplied a change to the dict/dict_db mechanism to allow for
+    synchronous updates.
+    Session cache updates for the server side seem to work now, removal of
+    old sessions (when called from the client) integrated.
+
+2000/03/05
+  - Got the database style session cache to run for the server side (at least
+    partial). The removal of old sessions is not yet realized.
+    [There are several man pages for OpenSSL as of 0.9.5, but the i2d etc
+    interfaces are not belong them, so I had to study the source code instead.]
+  * What is not working by now is the synchronization of the memory database
+    to disk. It only is synchronized automatically upon close. It would be
+    necessary to sync after each update or delete, but this is not implemented
+    in Wietse's dict library. I will post an according proposal.
+
+2000/03/04
+  - Wietse posts a patch to select "EHLO" negotiation even if ESMTP is
+    not recognized from the 220 greeting. Activating this flag will however
+    break compatibility with mailers, that simply close the connection
+    upon EHLO. I don't know how the large the number of these broken mailers
+    is, but activating "smtp_always_send_ehlo" is a tradeoff.
+  - Integrated Wietse's patch into Postfix/TLS.
+
+2000/03/03
+  - Received update from Matti Aarnio (Zmailer) is now for some time able
+    to do server _and_ client side TLS. Updated documenation accordingly.
+    When testing, Postfix client to Zmailer server failed, because
+    Zmailer announces with "ESMTP+IDENT" and Postfix does not recognize
+    the ESMTP token (must be seperate), so only HELO is used and STARTTLS
+    is not offered by the Zmailer server. Informed Matti accordingly,
+    will wait until the problem is resolved before actually publishing
+    the update.
+  - Enhanced the documentation by listing automatic reply services at which
+    interoperability can be tested.
+
+2000/03/02
+  - Went through the Postfix source to check out the database routines.
+    It should be possible to move session caching from directory/file-
+    based to database. Since DBM only allows blocks (key+contents) of
+    1024 bytes and a session is larger, only Berkeley DB can be used.
+    Put some first bits into Postfix/TLS.
+
+2000/02/29	== Released 0.5.5 ==
+
+2000/02/29
+  - OpenSSL 0.9.5 has been released. Since I want to promote 0.9.5, as it
+    contains several bugfixes and enhancements, I release a new version
+    of Postfix/TLS. My personal highlights:
+    * The bug with Win32 Netscape not commencing after certificate storage
+      unlocking should be fixed. (I will leave the not in however, as long
+      as I have not positively checked it myself. Reproducibility...)
+    * The bug, that the certificate verifiation result is not stored in the
+      session cache (discovered for Postfix/TLS 0.4.4) is fixed. I will leave
+      the Postfix/TLS workaround in as long as it will run with older versions
+      of OpenSSL.
+    * The OpenSSL commandline tools like "openssl gendh" now support EGD, so
+      that the examples for generating the DH parameters now will really work
+      with high quality random data :-)
+    * The support of 56bit ciphers has lost its importance since 128bit
+      versions of Netscape etc are now easily available...
+  - This version does not feature source code changes but updated documenation
+    when compared with 0.5.4:
+    * List examples on how to generate good entropy for the PRNG seed in
+      /etc/postfix/random_file.
+  - Update the TODO document with respect to the discussion about session
+    caching and other security items. This document is a very short summary,
+    for the full discussion check the mail archive at
+      http://www.aet.tu-cottbus.de/mailman/listinfo/postfix_tls/
+
+2000/02/26-28
+  - Wietse considers including Postfix/TLS into the main release. A discussion
+    about security relevant features, especially the session cache inside
+    the chroot jail takes place.
+    The discussion will definetely lead to some changes; I have however not
+    decided on the first step, yet :-)
+
+2000/02/21	== RELEASED 0.5.4 ==
+  - Important: Another directoy is created in /var/spool/postfix, so don't
+    forget to install the new versions of conf/postfix-script-*sgid.
+
+2000/02/21
+  - Finished the seed-exchange architecture by saving the random seed at exit
+    of smtp and smtpd.
+  - Wrote documentation for the PRNG handling to the documentation.
+  - Tested on HP-UX (with a current OpenSSL-pre-0.9.5 snapshot and 0.9.4)
+    and on SuSE-Linux (with 0.9.4).
+  * THIS VERSION WILL STILL RUN WITH OPENSSL-0.9.4, but it will also run
+    with OpenSSL-0.9.5. Older versions of Postfix/TLS will not, because the
+    PRNG is not seeded!
+
+2000/02/19
+  - Start to implement my own model of collecting entropy. All smtp and smtpd
+    processes will record some items (mainly the time of actions) to add
+    some entropy into the PRNG. The state is saved and used to re-seed by the
+    smtp and smtpd processes, so that entropy adds up into the pool.
+    The seeding by external file is additionally kept in order to be able
+    to inject additional entropy.
+
+2000/02/18
+  - Included routines to add random seed from a configurable file
+    "rand_file_name". I don't want to retrieve the entropy from a real
+    random system source, because the amount of entropy that can be collected
+    is limited. We might hence stall. Let's think about this problem.
+  - The SSL_CTX_load_verify_locations() has been fixed in the latest
+    OpenSSL snapshot.
+
+2000/02/17
+  - Tracked down the SSL_CTX_load_verify_locations() problem in the OpenSSL
+    library. If more than one CA-certificate is loaded, a bogus return value 0
+    is created, because the count of certs is checked to be "1" instead of
+    allowing ">=1". Reported to openssl-dev.
+
+2000/02/16
+  - Downloaded the latest openssl-SNAPSHOT-20000215 and installed it on
+    my development machine, then recompiled Postfix/TLS and try to run it.
+    * Failure: SSL_CTX_load_verify_locations() fails on reading the CAfile with
+      return value 0, but no actual error is displayed.
+      If the return value is not checked, the CA-certificates work, so that
+      they are loaded and the error indicator seems to be bogus.
+      Reported to openssl-dev mailing list.
+    * Failure: OpenSSL has become picky about correct seeding of the PRNG
+      Pseudo Random Number Generator. Installed some "testseed" that is
+      actually not random, but then Postfix/TLS starts to work again. We
+      will need some good random seed setup, probably reading from either
+      /dev/random (if available) or from EGD.
+      Found out during the experiments, that EGD is not that simple to use
+      as described in some of my Postfix/TLS docs. Must be upgraded.
+      Asked in the openssl-dev mailing list about the recommended amount
+      of random data needed for seeding the PRNG. Ulf Moeller recommends
+      a minimum of 128bit.
+
+2000/02/14	== Released 0.5.3 ==
+
+2000/02/14
+  - OpenSSL 0.9.5 is to be released within the next hours/days. Since I intend
+    to use some of its new features soon, I will re-release 0.5.2 as the last
+    version that will run with 0.9.4 but for the latest postfix patchlevel.
+  - No functional changes.
+  - Updated patch for postfix-19991231-pl04.
+
+2000/01/28	== Released 0.5.2 ==
+
+2000/01/28
+  - Stepped up the next postfix patchlevel postfix-19991231-pl03.
+    No functional changes.
+
+2000/01/03	== Released 0.5.1 ==
+
+2000/01/03
+  - Bug fixed: Don't specify a default value for "smtpd_tls_dcert_file",
+    assuming that typically a DSA certificate is not used.
+    Otherwise smtpd will try to read it on startup and the TLS engine won't
+    start since it is not found.
+    I didn't note this bug before today, because I could not install this
+    release in a larger scale on my own servers due to a network failure
+    of our campus backbone lastring from Dec 31 until today.
+  - Stepped up to the just released postfix-19991231-pl01.
+
+2000/01/01	== Released 0.5.0 ==
+
+2000/01/01
+  - Upgraded to the new postfix release 19991231.
+
+1999/12/30
+  - Enabled support for DSA certificate and key for the server side. One
+    can have both at the same time, the selected cipher decides which one
+    is used. OpenSSL clients (like Postfix/TLS) will prefer the RSA cipher
+    suites, if not especially changed in the cipher selection list.
+    Netscape will only use the RSA cert.
+  - The client side can only have one certificate. There is a way out by using
+    a callback function, that will receive the list of acceptable CAs and
+    then do some clever selection: SSL_CTX_set_client_cert_cb().
+    I will however have to figure out, how it has to be prepared, it seems,
+    that there is no example available.
+  - I have been able to successfully generate a DSA CA and certificates for
+    some Postfix hosts and to do authentication and relaying as expected.
+    So now I have to document how it is done in a practical manner...
+  - Moved up prerelease 0.5.0pre02 to the download site.
+
+1999/12/28
+  - Moved up to SNAPSHOT-19991227.
+  - Don't forget to check the return value when calling
+    SSL_CTX_set_cipherlist().
+  - Add code to load DH-parameters from disk.
+  - Add configuration information for the new functionality: DH paramter
+    support, possibility to influence the cipherlist.
+  - Moved up prerelease 0.5.0pre01 to the download site.
+
+1999/12/25
+  - Found some minutes to relax from the christmas business.
+  - Applied the 0.4.7 patch to SNAPSHOT-19991223 and included the new changes
+    of 1999/12/19.
+    Once the new stable release of postfix is out, this minimum state will be
+    the new Postfix/TLS patch: the new functionality will not influence
+    stability, so it can stay in even if still unfinished.
+
+1999/12/23
+  - Wietse announces SNAPSHOT-19991223: if no severe bugs are found, it will
+    be promoted as next stable release soon. Good to have kept everything
+    from yesterday.
+
+1999/12/22
+  - Got a query from a Postfix/TLS user: the patch does not apply cleanly to
+    SNAPSHOT-19991216 and he somehow messed up to integrate the rejected
+    parts (it later turned out he just forgot on reject).
+    Applied the patch myself and generated a diff, sent it to the user
+    and of course kept a copy for myself, since I will have to apply it
+    myself eventually once the next "stable" release of postfix is out.
+
+1999/12/19
+  - Began modifications for 0.5.x:
+    * Added configuration variables for specifying the cipherlist to be used
+      smtpd_tls_cipherlist and smtp_tls_cipherlist. For the format, there
+      is some (however sparse) documentation in the openssl package.
+    * Call SSL_CTX_set_cipherlist() with these data.
+    * Added default temporary DH parameters to pfixtls.c (only server side is
+      necessary) and configuration variables to specify user generated
+      parameters; they are however not used, yet.
+      The default parameters were generated using the presumably good
+      /dev/random source.
+
+1999/12/13	== Released 0.4.7 ==
+
+1999/12/13
+  - Addendum to the last change: do also remove sessions, that could _not_
+    be reused.
+  - Updated configuration information:
+    * As of OpenSSL 0.9.4, certificate chain verification is not sufficient,
+      since the certificate purpose is not checked, so I recommend to add
+      all intermediate CAs the the list of CAs and stay with a verification
+      depth of 1.
+      Work is in progress for 0.9.5.
+  - Stepped up to the just released new patchlevel postfix-19990906-pl09.
+
+1999/12/10	== Released 0.4.6 ==
+
+1999/12/10
+  - Realized changes implied below: Removed SSL_CTX_add_session() in the
+    client startup; remove session on stop with SSL_SESSION_free().
+  - In the morning there is a mail on the list, that Postfix might be
+    crashed with a single "\" on the "CC:" line. Hence, we should expect
+    a new patchlevel soon. Release the actual change anyway.
+
+1999/12/09
+  - Read in the "openssl-users" mailing list, that SSL_CTX_add_session()
+    is only intended for servers. On the client side, SSL_set_session()
+    is sufficient.
+    Additionally, the session should be explicitely freed, since
+    SSL_set_session() will increment the usage count for the session.
+    Explained by Bodo Moeller.
+
+1999/12/xx
+  - Had a discussion (by email) with Bodo Moeller about DH/DSS. It seems
+    I understand better now (after the discussion) how it works :-).
+    Implementing it should not be too difficult but might take some more
+    hours. Mentally scheduled it for Version "0.5.0" whenever this might
+    be (rough guess: christmas vacation).
+    Decided to hence not discuss this topic in the docs, since it might
+    change in the near future anyway.
+
+1999/11/23
+  - Discussion with rch@writeme.com (Richard) about implementing DH ciphers
+    and DSA keys and certificates on the Postfix/TLS list: It does not work
+    as of now.
+
+1999/11/15	== Released 0.4.5 ==
+
+1999/11/15
+  - Applied patch to postfix-19990906-pl07 without problems. Well, let's
+    release new version of Postfix/TLS, so that we look up to date.
+  - Add the "DO NOT EDIT THIS FILE" to conf/sample-tls.cf.
+
+1999/11/08
+  - Applied patch to the fresh release of postfix-19990906-pl06 without
+    problems. Nothing else, so no new release of Postfix/TLS.
+
+1999/11/07	== Released 0.4.4 ==
+
+1999/11/07
+  - Played around some more with the X509_verify_cert() function: when saving
+    a session, neither the verify_result is saved nor the certificate chain
+    necessary to re-verify. So there were two possibilities left: do a full
+    renegotiation negating the benefit of session caching or
+  - save the verify_result into to the session cache file and set the value
+    when rereading from disk. This way the positive result of session caching
+    is kept.
+  - Make sure, the verify_result value is propagated as pfixtls_peer_verified
+    and used where needed.
+  - After experiencing some failures at TLS connection setup, the SSL_sessions
+    are now freed again when closing. It seems, something is left over in the
+    session structures, even though SSL_clear() is called.
+
+1999/11/06
+  - When not asking for a client certificate, the "Received:" header will show
+    the protocol and cipher, but silently omit the client CN (because they
+    where not supplied). Noted by Craig Sanders <craig@taz.net.au>.
+    The same holds, if a certificate is asked for, but none supplied.
+    Now, in any case an appropriate information is added in the "Received:"
+    header.
+  - Added a hint to remove sessions from the cache during testing, since
+    old information may still be in the cache. Also proposed by Craig
+    Sanders <craig@taz.net.au>.
+  - While at it: client CN and issuer CN are printed, but the verification
+    state is not, so that the trust value of this data is not known.
+    * Added (verify OK/not verified) to the Received: header.
+    * Obtained information using the SSL_get_verify_result(SSL *con) call.
+    * Learned, that the state is not saved in the session information, so
+      that a recalled old session will always return "OK" even if the
+      certificate failed the verification! Call it a bug in OpenSSL.
+      Still investigating on a good way to work around this problem.
+  - Fixed a bug in the syslog entries: The client CN is logged, but the
+    issuer CN is not, because of a missing "%s" in the format string.
+
+1999/11/03	== Released 0.4.3 ==
+
+1999/11/03
+  - Added some hints about security to the html documentation.
+  - Tested the changes made two weeks ago at home in the large university
+    setup. I was to a conference in between and didn't want to release
+    the new version without having done some more tests.
+
+1999/10/17
+  - Added another half a ton of comments (this time for the client side),
+    yielding one ton alltogether...
+
+1999/10/16
+  - Rearranged some of the TLS-engine initialization to improve readability.
+  - Do not "free" the SSL connection, when it is not really necessary. Do only
+    reset information about the TLS connection, when there was one. This is
+    the better way instead of the quick fix applied for 0.4.2.
+  - Added half a ton of comments to the TLS code (server side) to document
+    what is done when and why, since there is no real documentation about
+    the OpenSSL library.
+
+1999/10/11	== Released 0.4.2 ==
+
+1999/10/11
+  - Fixed a severe bug introduced in 0.4.0: smtpd and smtp tried to flush
+    old session from the session cache even when TLS was not enabled. Since
+    no SSL-context was allocated, smtp would segfault on connection close.
+
+1999/10/10	== Released 0.4.1 ==
+
+1999/10/10
+  - Added a long description of the session cache handling to the top of
+    global/pfixtls.c.
+  - There is a race condition when cleaning up the session cache in qmgr, that
+    might lead to lost sessions in client mode. The worst consequence is an
+    additional session negotiation, so we can live with it as of now.
+    Bug described in qmgr/qmgr_tls.c.
+  - Implemented immediate removal of session cache files with expired sessions
+    when these are called. No need to first load and then discard them.
+  - Implemented the requirement from RFC2246 to remove sessions, when
+    connection failures occure (well actually, when TLS layer failures
+    occur, but I cannot seperate this from another) for the server side.
+    the client side is under work.
+
+1999/10/09
+  - Set an absolut maximum length of 32 for the IDs used for session caching.
+    This matches the default in OpenSSL, but I don´t want to see surprises
+    when somebody sometimes will run into a longer session id.
+
+1999/10/05	== Released 0.4.0 ==
+  - The new disk based session cache is a major step, so the minor release
+    number is pushed to 0.4.
+  - By now I think all necessary bells and whistles are in the code. What
+    is left is a big code cleanup and some more testing before calling this
+    patchkit "1.0.0".
+  - Initiated Mailing List at
+	http://www.aet.tu-cottbus.de/mailman/listinfo/postfix_tls
+
+1999/10/05
+  - Some code cleanup.
+  - Added new options to the documentation and the hint to update
+    "postfix-script", because otherwise qmgr might fail!
+
+1999/10/03
+  - Realized disc based session caching also for the Postfix/TLS client.
+    Must go to real world testing now between hosts.
+    And, of course, tune up the documentation, because users will have to
+    install a new postfix-script, too.
+
+1999/10/02
+  - The old sessions must be removed once they have timed out, so a process
+    is needed that will scan through the list of old sessions and remove
+    once they have expired.
+    Lucky me: this is what qmgr usually does with deferred messages, so
+    qmgr is extended only a little bit and will now also clean up the
+    old sessions from the cache directory.
+    And hey: it is good to see how easily this thing can be extended and
+    functions can easily be reused. Postfix is an excellent peace of
+    software engineering and there is no line of C++ or other "object
+    oriented modern junk" in it. It should be recommended as an example
+    to computer sience students.
+
+1999/09/28
+  - I cannot use the mod_ssl way for session caching and I don´t want to
+    spend an extra "gcache" daemon as ApacheSSL does. So I follow Wietse´s
+    idea realized for his mail queues and create hash level based subdirectory
+    structures. The good thing: I can cannibalize the mail_queue code.
+    The bad thing: there is a path length of 100 chars fix coded in Wietse´s
+    routines. It does hold for 32byte session ideas.
+    Status: can save sessions to disk and recall them (server side).
+
+1999/09/26
+  - Created new call backs for external session caching for the server side.
+    In a first step, they can print out the session ids for the newly created
+    session and when recalling a session.
+    As the OpenSSL documentation on this is pretty sparse, Ben Laurie´s
+    ApacheSSL code is very helpful, Ralph Engelschall´s Mod_SSL code for
+    session caching is far more complicated.
+
+1999/09/23	== Released 0.3.10 ==
+
+1999/09/23
+  - Debugging for 0.3.8/0.3.9 would have been so much easier, if the error
+    messages put onto the error message stack from the OpenSSL library would
+    have been printed out. The error was clearly stated from the library, I
+    just didn't print it. Added pfixtls_print_errors() calls where missing
+    after calls to the OpenSSL library.
+    Sometimes I feel so old...
+  - Used opportunity to upgrade to the latest postfix patchlevel 05:
+    postfix-19990906-pl05.
+
+1999/09/19	== Released 0.3.9 ==
+
+1999/09/19
+  - Added a "smtp_no_tls_sites" table to allow people to enable TLS negotiation
+    globally and only omit it on a per site basis.
+
+1999/09/18
+  - Finally found the bug described for 0.3.8: In the server setup, the
+    SSL_CTX_set_session_id_context() call was missing. To find this, I
+    had to trace through the OpenSSL library and when I finally found it
+    in ssl/ssl_sess.c, there was an appropriate comment about this. I however
+    have to find out why I didn´t receive the appropriate error message...
+  - This bug was hidden during the first developing stages, as the shutdown
+    sequence was not working correct, so the session was not cached.
+
+1999/09/17	== Released 0.3.8 ==
+
+1999/09/17
+  - Something is strange with the session caching in smtpd server mode
+    with Netscape 4.61 client. The first connection is fine, the next
+    one hangs after the server fails with errors while reading the
+    SSLv3 client hello C. (Found by Michael Stroeder <x_mst@propack-data.de>)
+    Reproducable with OpenSSL 0.9.3a, 0.9.4 and SNAPSHOT 19990915, so
+    the problem seems to be persistent. I will try to figure out the
+    problem myself before reporting it to the developers. If I don't find
+    it, maybe they do :-)
+    Workaround: the cached session is removed after connection is closed.
+    This will impose some time penalty on the negotiation. As the caching
+    is local in the smtp processes and they time out anyway, the penalty
+    should not be significant.
+    The problem does not occure with Postfix/TLS clients.
+
+1999/09/13	== Released 0.3.7 ==
+
+1999/09/13
+  - Ran tests, seems no further conflicts between Wietse's changes and my
+    extensions.
+
+1999/09/09
+  - Applied the patchkit 0.3.6 to postfix-19990906-pl02 and worked out
+    the rejected part of the patch. From this point of view the patch
+    is included. Now everything has to be retested.
+
+1999/09/09	== Released 0.3.6 ==
+
+1999/09/09
+  - Added a missing ´#ifdef HAS_SSL #endif´ in smtp_connect.c.
+    Noted by Jeff Johnson <jeff@websitefactory.net>.
+  - HINT:
+    On 1999/09/06 a new "stable" version of postfix was released.
+    Future Postfix/TLS enhancements will be against this new version 19990906.
+
+1999/08/25	== Released 0.3.5 ==
+
+1999/08/25
+  - Added Wietse's patch for postfix-19990601 to prevent crashing smtpd when
+    VRFY is called without setting the sender with "MAIL FROM:" first.
+
+1999/08/13
+  - Small changes to global/pfixtls.[ch]: Since we also support client STARTLS,
+    we check the peers certificate, which may also be a "server" certificate
+    (not just client). Hence I renamed "*ccert*" to "*peer*".
+  - global/pfixtls.c: add some "const" to "char *" for OpenSSL library calls,
+    to make gcc happy.
+  - Extended comments in pfixtls.[ch] to better match Wietse's style.
+
+1999/08/12	== Released 0.3.4 ==
+
+1999/08/12
+  - Enabled workarounds for known bugs in SSL-engines.
+  - Tested with OpenSSL 0.9.4.
+  - Windows95/NT: Problem with Netscape hanging on first connection when
+    the client certificate database has to be unlocked cannot be reproduced
+    anymore.
+    I am happy, but I am also not sure what caused the problem to go away
+    and I cannot figure out the security settings manually from the files...
+
+1999/08/11
+  - Corrected loglevel handling: At some points smtpd_tls_loglevel was used
+    instead of smtp_tls_loglevel (only noted at loglevels >= 2).
+
+1999/08/09	== Released 0.3.3 ==
+
+1999/08/09
+  - Removed SSL_CTX_set_quiet_shutdown() as it does prevent the shutdown
+    from actually being performed. In order to remove the annoying
+    "SSL3 alert write:warning:close notify" it is now explicitly handled
+    in apps_ssl_info_callback().
+    Bug found by Bodo Moeller <bodo@openssl.org>.
+
+1999/08/06	== Released 0.3.2 ==
+
+1999/08/06
+  - Add option "smtp_tls_note_starttls_offer" to collect information about
+    hosts, that offered the STARTTLS feature without using it.
+  - Shut up smtpd. Only print information about relaying based on certs
+    when msg_verbose is true.
+
+1999/07/20
+  - Added missing "const" in pfixtls.h (found by Juergen Scheiderer
+    <jnschei@suse.de>). HP-UX ANSI-C didn't complain.
+
+1999/07/08	== Released 0.3.1 ==
+
+1999/07/08
+  - New config variable "smtpd_tls_received_header". When "true", the protocol
+    and cipher data as well as subject and issuer CN of the client certificate
+    are included into the "Received:" header.
+
+1999/07/07
+  - "starting TLS engine" message will only be printed when loglevel >=2
+    to reduce unnecessary noise in the log files.
+  - Added code to fetch the protocol (e.g. TLSv1) and the cipher used (by name
+    and bits). Information is printed to the logfile.
+
+1999/07/01	== Released 0.3.0 ==
+
+1999/07/01
+  - (Client mode) Bug fix: Don't try to use STARTTLS if it is not offered. The
+    server we are connected to might not understand it and respond with a
+    "500 command not understood", causing the email to bounce back, even
+    when the lack of STARTTLS is just a temporary problem.
+  - Updated documentation for the new per recipient/site TLS decisions.
+
+1999/06/30
+  - Client mode: Added variables and routines to decide "per recipient" or
+    "per host/site" whether to use/enforce TLS or not.
+
+1999/06/18	== Released 0.2.8 ==
+
+1999/06/18
+  - In client mode the "use_tls" and "enforce_tls" internal variables were
+    not initialized correctly, such that the client could try to use the
+    STARTTLS negotiation even if not wanted. This error was introduced
+    in 0.2.7.
+    Noted by "Cerebus" <cerebus@sackheads.org>.
+
+1999/06/08	== Released 0.2.7 ==
+
+1999/06/08
+  - Studied discussions in the IETF-apps-TLS mailing list: MS Exchange
+    seems to offer STARTTLS even if not configured. Added this info to the
+    documentation.
+  - Updated Documentation regarding the changes made.
+
+1999/06/03
+  - The subject-CommonName (CN) of the server certificate is extracted when
+    connecting to a TLS server.
+  - In "smtp_*_tls" mode, this subject-CommonName is matched against the
+    hostname of the server. In "enforce" mode, the connection is droppend
+    when the certified server name and the real hostname differ.
+  - Added missing dependencies in smtp/Makefile.in (missing pfixtls.h since
+    0.2.0).
+
+1999/06/02	== Released 0.2.6 ==
+
+1999/06/02
+  - Adapted patchkit to postfix-19990601.
+
+1999/06/01	== Released 0.2.5 ==
+
+1999/06/01
+  - Updated OpenSSL API to 0.9.3a -> position of include files has changed
+    from <xxx.h> to <openssl/xxx.h>. No functional changes.
+  - pkcs12 utility is now part of OpenSSL -> changed documentation
+    accordingly.
+
+1999/05/20	== Released 0.2.4 ==
+
+1999/05/20
+  - Updated postfix base 19990317 from pl04 to pl05.
+
+1999/05/14	== Released 0.2.3 ==
+
+1999/05/14
+  - Fixed a bug in pfixtls_stop_*(): there was a ";" to much directly
+    after "if (con);". This check is only done as a safety measure:
+    When SSL is not started you should not stop it. This case could however
+    only happen when the code in smtp[d] would be wrong, so it should never
+    be necessary. (Bug found by Uwe Ohse <uwe@ohse.de>)
+
+1999/05/11	== Released 0.2.2 ==
+
+1999/05/11
+  - Matti Aarnio: Reworked pfixtls_dump() to use fewer strcpy and strcat calls.
+  - Added information about Matti Aarnio (author/maintainer of ZMailer)
+    working on RFC2487 for ZMailer.
+
+1999/05/04	== Released 0.2.1 ==
+
+1999/05/04
+  - Stuffed up the documenation to reflect the actual status. No change
+    in functionality.
+
+1999/04/30	== Released 0.2.0 ==
+
+1999/04/30
+  - Adjusted the changes in smtp*.c to Wietse's indentation style.
+  - Sorry, the documentation about the client side has by now to be
+    taken from sample-tls.conf. The documenation has to be rearranged
+    in a larger scale.
+
+1999/04/29
+  - Finished client support for STARTTLS in smtp; some testing done.
+  - Fixed a race condition in smtpd: When in PIPELINE mode, the connection
+    was switched back from SSL to normal mode before the buffers were
+    flashed.
+  - Adjusted the code in pfixtls.[ch] and additions in smtpd*.c to
+    Wietse's indentation style.
+
+1999/04/28
+  - Incorporated skeleton of STARTTLS support into smtp.
+  - Introduced variables to control client STARTTLS to configuration.
+
+1999/04/15	== Released 0.1.5 ==
+
+1999/04/15
+  - Adjusted pfixtls.diff to postfix-19990317-pl04.
+
+1999/04/14
+  - Ported from OpenSSL the BIO_callback functions to dump out the negotiation
+    and transmission for debugging purposes. The functions are triggered
+    by the the new loglevels 3 and 4.
+  - Call SSL_free() to get rid of the SSL connection structure not used
+    anymore.
+
+1999/04/13	== Released 0.1.4 ==
+
+1999/04/13
+  - Based on a hint in the openssl-users list added an SSL_set_accept_state()
+    before the actual SSL_accept(). I don't really understand why, but the
+    documentation of SSL is a bit short anyway.
+
+1999/04/11
+  - Some more comments on certificates in the documentation.
+
+1999/04/10
+  - Moved initialization of the pfixtls_server_engine to the pre_jail_init()
+    section of smtpd, so that it is called with root privileges to read the
+    key and cert information. The secret key of the server can now be protected
+    by "chown root secretkey.pem; chmod 400 secretkey.pem".
+    Additionally, this makes it possible to run smtpd in chroot jail, even
+    though I didn't test that, yet. All information is read at smtpd startup
+    time except the CAcerts in tls_CApath, which are checked at runtime.
+    I have to look into that.
+  - Updated documentation accordingly.
+  - Rewrote the documentation with regard to the certificate setup and
+    explaining the different types of certificates.
+
+1999/04/09
+  - Introduced pfixtls_print_errors() which imitates BIO_print_errors()
+    (the typical way to print error information in OpenSSL) but writes
+    to syslog instead of a file handle.
+    Hence we can get more informative error information.
+
+1999/04/08	== Released 0.1.3 ==
+
+1999/04/08
+  - Stuffed up the documentation by reworking the references.
+  - Added contributed script for automatic addition of fingerprints.
+  - Added ACKNOWLEDGEMENTS file
+
+1999/04/06	== Released 0.1.2 ==
+
+1999/04/06
+  - Portability: removed call of "snprintf()", as it is not available on
+    some (older) UNIX versions (in this case Solaris 2.5).
+  - Removed calls to "select()" when in TLS mode: Even though no new bytes
+    arrive, there might be bytes left in the SSL buffer -> possible hang.
+
+1999/03/30	== Released 0.1.1 ==
+
+1999/03/30
+  - Added disclaimer about export restrictions.
+  - Fixed a bug in util/match_ops.c:
+    When using dictionary lookup the compare was case sensitive by accident.
+    Effect: Fingerprint matching did not work with databases, only for plain
+    file.
+    Bug report submitted to postfix author.
+
+1999/03/29	== Released first version 0.1.0 ==

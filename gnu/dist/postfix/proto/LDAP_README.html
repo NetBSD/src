@@ -257,7 +257,7 @@ maildrop: this, that, theother
   make sure the lookup makes sense. In the case of virtual lookups,
   maildrops other than mail addresses are pretty useless, because
   Postfix can't know how to set the ownership for program or file
-  delivery. Your query_filter should probably look something like this: </p>
+  delivery. Your <b>query_filter</b> should probably look something like this: </p>
 
 <blockquote>
 <pre>
@@ -276,7 +276,7 @@ query_filter = (&amp;(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")(maildrop="*
   require some thought on your part to implement safely, considering the
   ramifications of this type of delivery. You may decide it's not worth
   the bother to allow any of that nonsense in LDAP lookups, ban it in
-  the query_filter, and keep things like majordomo lists in local alias
+  the <b>query_filter</b>, and keep things like majordomo lists in local alias
   databases. </p>
 
 <blockquote>
@@ -334,12 +334,19 @@ contents, please include the applicable bits of some directory entries. </p>
 
 <li>Victor Duchovni: ldap_bind() timeout. With fixes from LaMont Jones:
                  OpenLDAP cache deprecation. Limits on recursion, expansion
-                 and query results size. LDAP connection sharing for maps
+                 and search results size. LDAP connection sharing for maps
                  differing only in the query parameters.
 
 <li>Liviu Daia: Support for SSL/STARTTLS. Support for storing map definitions in
             external files (ldap:/path/ldap.cf) needed to securely store
             passwords for plain auth.
+
+<li>Liviu Daia revised the configuration interface and added the main.cf
+    configuration feature.</li>
+    
+<li>Liviu Daia with further refinements from Jose Luis Tallon and
+Victor Duchovni developed the common query, result_format, domain and
+expansion_limit interface for LDAP, MySQL and PosgreSQL.</li>
 
 </ul>
 

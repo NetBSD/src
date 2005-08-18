@@ -2,7 +2,7 @@ PPoossttffiixx SSAASSLL HHoowwttoo
 
 -------------------------------------------------------------------------------
 
-WWAARRNNIINNGG WWAARRNNIINNGG WWAARRNNIINNGG
+WWAARRNNIINNGG
 
 People who go to the trouble of installing Postfix may have the expectation
 that Postfix is more secure than some other mailers. The Cyrus SASL library is
@@ -318,6 +318,12 @@ plaintext authentication specify, for example:
 
 The SASL client password file is opened before the SMTP server enters the
 optional chroot jail, so you can keep the file in /etc/postfix.
+
+Note: Some SMTP servers support authentication mechanisms that, although
+available on the client system, may not in practice work or possess the
+appropriate credentials to authenticate to the server. It is possible via the
+smtp_sasl_mechanism_filter parameter to further restrict the list of server
+mechanisms that the smtp(8) client will take into consideration.
 
 The Postfix SMTP client is backwards compatible with SMTP servers that use the
 non-standard "AUTH=method..." syntax in response to the EHLO command; there is

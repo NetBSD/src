@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_addr.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_addr.c,v 1.1.1.3 2005/08/18 21:07:17 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -69,10 +69,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef INADDR_NONE
-#define INADDR_NONE 0xffffffff
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -80,6 +76,9 @@
 #include <mymalloc.h>
 #include <inet_addr_list.h>
 #include <stringops.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -100,17 +99,16 @@
 static void lmtp_print_addr(char *what, DNS_RR *addr_list)
 {
     DNS_RR *addr;
-    struct in_addr in_addr;
+    MAI_HOSTADDR_STR hostaddr;
 
     msg_info("begin %s address list", what);
     for (addr = addr_list; addr; addr = addr->next) {
-	if (addr->data_len > sizeof(addr)) {
-	    msg_warn("skipping address length %d", addr->data_len);
+	if (dns_rr_to_pa(addr, &hostaddr) == 0) {
+	    msg_warn("skipping record type %s: %m", dns_strtype(addr->type));
 	} else {
-	    memcpy((char *) &in_addr, addr->data, sizeof(in_addr));
 	    msg_info("pref %4d host %s/%s",
 		     addr->pref, addr->name,
-		     inet_ntoa(in_addr));
+		     hostaddr.buf);
 	}
     }
     msg_info("end %s address list", what);
@@ -121,11 +119,13 @@ static void lmtp_print_addr(char *what, DNS_RR *addr_list)
 static DNS_RR *lmtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRING *why)
 {
     char   *myname = "lmtp_addr_one";
-    struct in_addr inaddr;
-    DNS_FIXED fixed;
     DNS_RR *addr = 0;
     DNS_RR *rr;
-    struct hostent *hp;
+    int     aierr;
+    struct addrinfo *res0;
+    struct addrinfo *res;
+    INET_PROTO_INFO *proto_info = inet_proto_info();
+    int     found;
 
     if (msg_verbose)
 	msg_info("%s: host %s", myname, host);
@@ -133,42 +133,53 @@ static DNS_RR *lmtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     /*
      * Interpret a numerical name as an address.
      */
-    if (ISDIGIT(host[0]) && (inaddr.s_addr = inet_addr(host)) != INADDR_NONE) {
-	memset((char *) &fixed, 0, sizeof(fixed));
-	return (dns_rr_append(addr_list,
-			      dns_rr_create(host, &fixed, pref,
-					(char *) &inaddr, sizeof(inaddr))));
+    if (hostaddr_to_sockaddr(host, (char *) 0, 0, &res0) == 0
+	&& strchr((char *) proto_info->sa_family_list, res0->ai_family) != 0) {
+	if ((addr = dns_sa_to_rr(host, pref, res0->ai_addr)) == 0)
+	    msg_fatal("host %s: conversion error for address family %d: %m",
+		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
+	addr_list = dns_rr_append(addr_list, addr);
+	freeaddrinfo(res0);
+	return (addr_list);
     }
 
     /*
-     * Use gethostbyname() when DNS is disabled.
+     * Use native name service when DNS is disabled.
      */
+#define RETRY_AI_ERROR(e) \
+	((e) == EAI_AGAIN || (e) == EAI_MEMORY || (e) == EAI_SYSTEM)
+
     if (var_disable_dns) {
-	memset((char *) &fixed, 0, sizeof(fixed));
-	if ((hp = gethostbyname(host)) == 0) {
-	    vstring_sprintf(why, "%s: host not found", host);
-	    lmtp_errno = LMTP_FAIL;
-	} else if (hp->h_addrtype != AF_INET) {
-	    vstring_sprintf(why, "%s: host not found", host);
-	    msg_warn("%s: unknown address family %d for %s",
-		     myname, hp->h_addrtype, host);
-	    lmtp_errno = LMTP_FAIL;
+	if ((aierr = hostname_to_sockaddr(host, (char *) 0, 0, &res0)) != 0) {
+	    vstring_sprintf(why, "%s: %s", host, MAI_STRERROR(aierr));
+	    lmtp_errno = (RETRY_AI_ERROR(aierr) ? LMTP_RETRY : LMTP_FAIL);
 	} else {
-	    while (hp->h_addr_list[0]) {
-		addr_list = dns_rr_append(addr_list,
-					  dns_rr_create(host, &fixed, pref,
-							hp->h_addr_list[0],
-							sizeof(inaddr)));
-		hp->h_addr_list++;
+	    for (found = 0, res = res0; res != 0; res = res->ai_next) {
+		if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+		    msg_info("skipping address family %d for host %s",
+			     res->ai_family, host);
+		    continue;
+		}
+		found++;
+		if ((addr = dns_sa_to_rr(host, pref, res->ai_addr)) == 0)
+		    msg_fatal("host %s: conversion error for address family %d: %m",
+		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
+		addr_list = dns_rr_append(addr_list, addr);
 	    }
+	    freeaddrinfo(res0);
+	    if (found == 0) {
+		vstring_sprintf(why, "%s: host not found", host);
+		lmtp_errno = LMTP_FAIL;
+	    }
+	    return (addr_list);
 	}
-	return (addr_list);
     }
 
     /*
      * Append the addresses for this host to the address list.
      */
-    switch (dns_lookup(host, T_A, RES_DEFNAMES, &addr, (VSTRING *) 0, why)) {
+    switch (dns_lookup_v(host, RES_DEFNAMES, &addr, (VSTRING *) 0, why,
+			 DNS_REQ_FLAG_ALL, proto_info->dns_atype_list)) {
     case DNS_OK:
 	for (rr = addr; rr; rr = rr->next)
 	    rr->pref = pref;

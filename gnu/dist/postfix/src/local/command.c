@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.1.1.5 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: command.c,v 1.1.1.6 2005/08/18 21:07:23 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -64,6 +64,7 @@
 #include <vstring.h>
 #include <vstream.h>
 #include <argv.h>
+#include <mac_parse.h>
 
 /* Global library. */
 
@@ -92,6 +93,8 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
     char  **cpp;
     char   *cp;
     ARGV   *export_env;
+    VSTRING *exec_dir;
+    int     expand_status;
 
     /*
      * Make verbose logging easier to understand.
@@ -105,7 +108,8 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
      * 
      * Skip this command if it was already delivered to as this user.
      */
-    if (been_here(state.dup_filter, "command %ld %s", (long) usr_attr.uid, command))
+    if (been_here(state.dup_filter, "command %s:%ld %s",
+		  state.msg_attr.user, (long) usr_attr.uid, command))
 	return (0);
 
     /*
@@ -161,6 +165,18 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 	argv_add(env, "DOMAIN", state.msg_attr.domain, ARGV_END);
     if (state.msg_attr.extension)
 	argv_add(env, "EXTENSION", state.msg_attr.extension, ARGV_END);
+
+#define EXPORT_REQUEST(name, value) \
+	if ((value)[0]) argv_add(env, (name), (value), ARGV_END);
+
+    EXPORT_REQUEST("CLIENT_HOSTNAME", state.msg_attr.request->client_name);
+    EXPORT_REQUEST("CLIENT_ADDRESS", state.msg_attr.request->client_addr);
+    EXPORT_REQUEST("CLIENT_HELO", state.msg_attr.request->client_helo);
+    EXPORT_REQUEST("CLIENT_PROTOCOL", state.msg_attr.request->client_proto);
+    EXPORT_REQUEST("SASL_METHOD", state.msg_attr.request->sasl_method);
+    EXPORT_REQUEST("SASL_SENDER", state.msg_attr.request->sasl_sender);
+    EXPORT_REQUEST("SASL_USERNAME", state.msg_attr.request->sasl_username);
+
     argv_terminate(env);
 
     /*
@@ -170,22 +186,38 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 	for (cp = cpp[1]; *(cp += strspn(cp, var_cmd_exp_filter)) != 0;)
 	    *cp++ = '_';
 
+    /*
+     * Evaluate the command execution directory. Defer delivery if expansion
+     * fails.
+     */
     export_env = argv_split(var_export_environ, ", \t\r\n");
+    exec_dir = vstring_alloc(10);
+    expand_status = local_expand(exec_dir, var_exec_directory,
+				 &state, &usr_attr, var_exec_exp_filter);
 
-    cmd_status = pipe_command(state.msg_attr.fp, why,
-			      PIPE_CMD_UID, usr_attr.uid,
-			      PIPE_CMD_GID, usr_attr.gid,
-			      PIPE_CMD_COMMAND, command,
-			      PIPE_CMD_COPY_FLAGS, copy_flags,
-			      PIPE_CMD_SENDER, state.msg_attr.sender,
-			      PIPE_CMD_ORIG_RCPT, state.msg_attr.orig_rcpt,
-			      PIPE_CMD_DELIVERED, state.msg_attr.delivered,
-			      PIPE_CMD_TIME_LIMIT, var_command_maxtime,
-			      PIPE_CMD_ENV, env->argv,
-			      PIPE_CMD_EXPORT, export_env->argv,
-			      PIPE_CMD_SHELL, var_local_cmd_shell,
-			      PIPE_CMD_END);
-
+    if (expand_status & MAC_PARSE_ERROR) {
+	cmd_status = PIPE_STAT_DEFER;
+	vstring_strcpy(why, "Server configuration error");
+	msg_warn("bad parameter value syntax for %s: %s",
+		 VAR_EXEC_DIRECTORY, var_exec_directory);
+    } else {
+	cmd_status = pipe_command(state.msg_attr.fp, why,
+				  PIPE_CMD_UID, usr_attr.uid,
+				  PIPE_CMD_GID, usr_attr.gid,
+				  PIPE_CMD_COMMAND, command,
+				  PIPE_CMD_COPY_FLAGS, copy_flags,
+				  PIPE_CMD_SENDER, state.msg_attr.sender,
+			       PIPE_CMD_ORIG_RCPT, state.msg_attr.orig_rcpt,
+			       PIPE_CMD_DELIVERED, state.msg_attr.delivered,
+				  PIPE_CMD_TIME_LIMIT, var_command_maxtime,
+				  PIPE_CMD_ENV, env->argv,
+				  PIPE_CMD_EXPORT, export_env->argv,
+				  PIPE_CMD_SHELL, var_local_cmd_shell,
+				  PIPE_CMD_CWD, *vstring_str(exec_dir) ?
+				  vstring_str(exec_dir) : (char *) 0,
+				  PIPE_CMD_END);
+    }
+    vstring_free(exec_dir);
     argv_free(export_env);
     argv_free(env);
 

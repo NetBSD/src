@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.2 2004/05/31 00:24:27 heas Exp $	*/
+/*	$NetBSD: cleanup_map11.c,v 1.1.1.3 2005/08/18 21:05:54 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -8,19 +8,19 @@
 /* SYNOPSIS
 /*	#include <cleanup.h>
 /*
-/*	void	cleanup_map11_external(state, addr, maps, propagate)
+/*	int	cleanup_map11_external(state, addr, maps, propagate)
 /*	CLEANUP_STATE *state;
 /*	VSTRING	*addr;
 /*	MAPS	*maps;
 /*	int	propagate;
 /*
-/*	void	cleanup_map11_internal(state, addr, maps, propagate)
+/*	int	cleanup_map11_internal(state, addr, maps, propagate)
 /*	CLEANUP_STATE *state;
 /*	VSTRING	*addr;
 /*	MAPS	*maps;
 /*	int	propagate;
 /*
-/*	void	cleanup_map11_tree(state, tree, maps, propagate)
+/*	int	cleanup_map11_tree(state, tree, maps, propagate)
 /*	CLEANUP_STATE *state;
 /*	TOK822	*tree;
 /*	MAPS	*maps;
@@ -34,6 +34,7 @@
 /*	or until an unreasonable recursion level is reached.
 /*	An unmatched address extension is propagated when
 /*	\fIpropagate\fR is non-zero.
+/*	These functions return non-zero when the address was changed.
 /*
 /*	cleanup_map11_external() looks up the external (quoted) string
 /*	form of an address in the maps specified via the \fImaps\fR argument.
@@ -92,13 +93,14 @@
 
 /* cleanup_map11_external - one-to-one table lookups */
 
-void    cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
+int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 			               MAPS *maps, int propagate)
 {
     int     count;
     int     expand_to_self;
     ARGV   *new_addr;
     char   *saved_addr;
+    int     did_rewrite = 0;
 
     /*
      * Produce sensible output even in the face of a recoverable error. This
@@ -112,31 +114,34 @@ void    cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 		msg_warn("%s: multi-valued %s entry for %s",
 			 state->queue_id, maps->title, STR(addr));
 	    saved_addr = mystrdup(STR(addr));
+	    did_rewrite |= strcmp(new_addr->argv[0], STR(addr));
 	    vstring_strcpy(addr, new_addr->argv[0]);
 	    expand_to_self = !strcasecmp(saved_addr, STR(addr));
 	    myfree(saved_addr);
 	    argv_free(new_addr);
 	    if (expand_to_self)
-		return;
+		return (did_rewrite);
 	} else if (dict_errno != 0) {
 	    msg_warn("%s: %s map lookup problem for %s",
 		     state->queue_id, maps->title, STR(addr));
 	    state->errs |= CLEANUP_STAT_WRITE;
-	    return;
+	    return (did_rewrite);
 	} else {
-	    return;
+	    return (did_rewrite);
 	}
     }
     msg_warn("%s: unreasonable %s map nesting for %s",
 	     state->queue_id, maps->title, STR(addr));
+    return (did_rewrite);
 }
 
 /* cleanup_map11_tree - rewrite address node */
 
-void    cleanup_map11_tree(CLEANUP_STATE *state, TOK822 *tree,
+int     cleanup_map11_tree(CLEANUP_STATE *state, TOK822 *tree,
 			           MAPS *maps, int propagate)
 {
     VSTRING *temp = vstring_alloc(100);
+    int     did_rewrite;
 
     /*
      * Produce sensible output even in the face of a recoverable error. This
@@ -145,18 +150,20 @@ void    cleanup_map11_tree(CLEANUP_STATE *state, TOK822 *tree,
      * the place.
      */
     tok822_externalize(temp, tree->head, TOK822_STR_DEFL);
-    cleanup_map11_external(state, temp, maps, propagate);
+    did_rewrite = cleanup_map11_external(state, temp, maps, propagate);
     tok822_free_tree(tree->head);
     tree->head = tok822_scan(STR(temp), &tree->tail);
     vstring_free(temp);
+    return (did_rewrite);
 }
 
 /* cleanup_map11_internal - rewrite address internal form */
 
-void    cleanup_map11_internal(CLEANUP_STATE *state, VSTRING *addr,
+int     cleanup_map11_internal(CLEANUP_STATE *state, VSTRING *addr,
 			               MAPS *maps, int propagate)
 {
     VSTRING *temp = vstring_alloc(100);
+    int     did_rewrite;
 
     /*
      * Produce sensible output even in the face of a recoverable error. This
@@ -165,7 +172,8 @@ void    cleanup_map11_internal(CLEANUP_STATE *state, VSTRING *addr,
      * the place.
      */
     quote_822_local(temp, STR(addr));
-    cleanup_map11_external(state, temp, maps, propagate);
+    did_rewrite = cleanup_map11_external(state, temp, maps, propagate);
     unquote_822_local(addr, STR(temp));
     vstring_free(temp);
+    return (did_rewrite);
 }

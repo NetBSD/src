@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.6 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.7 2005/08/18 21:06:31 rpaulo Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -44,6 +44,7 @@
 #define MAIL_SERVICE_LOCAL	"local"
 #define MAIL_SERVICE_PICKUP	"pickup"
 #define MAIL_SERVICE_QUEUE	"qmgr"
+#define MAIL_SERVICE_TLSMGR	"tlsmgr"
 #define MAIL_SERVICE_RESOLVE	"resolve"
 #define MAIL_SERVICE_REWRITE	"rewrite"
 #define MAIL_SERVICE_VIRTUAL	"virtual"
@@ -56,6 +57,7 @@
 #define MAIL_SERVICE_TRACE	"trace"
 #define MAIL_SERVICE_RELAY	"relay"
 #define MAIL_SERVICE_PROXYMAP	"proxymap"
+#define MAIL_SERVICE_SCACHE	"scache"
 
  /*
   * Well-known socket or FIFO directories. The main difference is in file
@@ -122,6 +124,18 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_SASL_METHOD	"sasl_method"
 #define MAIL_ATTR_SASL_USERNAME	"sasl_username"
 #define MAIL_ATTR_SASL_SENDER	"sasl_sender"
+#define MAIL_ATTR_DUMMY		"dummy"
+#define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
+
+#define MAIL_ATTR_RWR_LOCAL	"local"
+#define MAIL_ATTR_RWR_REMOTE	"remote"
+
+#define MAIL_ATTR_TTL		"ttl"
+#define MAIL_ATTR_LABEL		"label"
+#define MAIL_ATTR_PROP		"property"
+#define MAIL_ATTR_CCERT_SUBJECT	"ccert_subject"
+#define MAIL_ATTR_CCERT_ISSSUER	"ccert_issuer"
+#define MAIL_ATTR_CCERT_FINGERPRINT "ccert_fingerprint"
 
  /*
   * Suffixes for sender_name, sender_domain etc.
@@ -175,6 +189,9 @@ extern char *mail_pathname(const char *, const char *);
 #define XFORWARD_PROTO		"PROTO"		/* client protocol */
 #define XFORWARD_HELO		"HELO"		/* client helo */
 #define XFORWARD_IDENT		"IDENT"		/* message identifier */
+#define XFORWARD_DOMAIN		"SOURCE"	/* origin type */
+#define XFORWARD_DOM_LOCAL	"LOCAL"		/* local origin */
+#define XFORWARD_DOM_REMOTE	"REMOTE"	/* remote origin */
 
 #define XFORWARD_UNAVAILABLE	"[UNAVAILABLE]"	/* attribute unavailable */
 

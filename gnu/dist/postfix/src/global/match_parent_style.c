@@ -1,4 +1,4 @@
-/*	$NetBSD: match_parent_style.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: match_parent_style.c,v 1.1.1.3 2005/08/18 21:06:35 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,8 @@
 /*
 /*	match_parent_style() looks up "name" in the
 /*      parent_domain_matches_subdomain configuration parameter
-/*	and returns either MATCH_FLAG_PARENT or MATCH_PARENT_NONE.
+/*	and returns either MATCH_FLAG_PARENT (parent domain matches
+/*	subdomains) or MATCH_FLAG_NONE.
 /* DIAGNOSTICS
 /*	Fatal error: out of memory, name listed under both parent wild card
 /*	matching policies.

@@ -23,8 +23,10 @@ LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a
 $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
+$(OBJS): ../../conf/makedefs.out
+
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	(cat ../../conf/makedefs.out $?) >$@
 
 test:	$(TESTPROG)
 
@@ -75,7 +77,7 @@ cleanup_masquerade_test: cleanup_masquerade cleanup_masq.ref
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
-	    $(CC) -E $(DEFS) $(INCL) $$i | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
+	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' -e 'p' -e '}'; \
 	done) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
@@ -130,6 +132,9 @@ cleanup_addr.o: ../../include/mail_addr_find.h
 cleanup_addr.o: ../../include/maps.h
 cleanup_addr.o: ../../include/dict.h
 cleanup_addr.o: ../../include/argv.h
+cleanup_addr.o: ../../include/mail_proto.h
+cleanup_addr.o: ../../include/iostuff.h
+cleanup_addr.o: ../../include/attr.h
 cleanup_addr.o: cleanup.h
 cleanup_addr.o: ../../include/nvtable.h
 cleanup_addr.o: ../../include/htable.h
@@ -192,6 +197,9 @@ cleanup_envelope.o: ../../include/cleanup_user.h
 cleanup_envelope.o: ../../include/qmgr_user.h
 cleanup_envelope.o: ../../include/mail_params.h
 cleanup_envelope.o: ../../include/verp_sender.h
+cleanup_envelope.o: ../../include/mail_proto.h
+cleanup_envelope.o: ../../include/iostuff.h
+cleanup_envelope.o: ../../include/attr.h
 cleanup_envelope.o: cleanup.h
 cleanup_envelope.o: ../../include/argv.h
 cleanup_envelope.o: ../../include/maps.h
@@ -448,10 +456,13 @@ cleanup_rewrite.o: ../../include/vbuf.h
 cleanup_rewrite.o: ../../include/tok822.h
 cleanup_rewrite.o: ../../include/resolve_clnt.h
 cleanup_rewrite.o: ../../include/rewrite_clnt.h
+cleanup_rewrite.o: ../../include/mail_proto.h
+cleanup_rewrite.o: ../../include/vstream.h
+cleanup_rewrite.o: ../../include/iostuff.h
+cleanup_rewrite.o: ../../include/attr.h
 cleanup_rewrite.o: ../../include/quote_822_local.h
 cleanup_rewrite.o: ../../include/quote_flags.h
 cleanup_rewrite.o: cleanup.h
-cleanup_rewrite.o: ../../include/vstream.h
 cleanup_rewrite.o: ../../include/argv.h
 cleanup_rewrite.o: ../../include/nvtable.h
 cleanup_rewrite.o: ../../include/htable.h
@@ -476,8 +487,11 @@ cleanup_state.o: ../../include/been_here.h
 cleanup_state.o: ../../include/mail_params.h
 cleanup_state.o: ../../include/mime_state.h
 cleanup_state.o: ../../include/header_opts.h
-cleanup_state.o: cleanup.h
+cleanup_state.o: ../../include/mail_proto.h
 cleanup_state.o: ../../include/vstream.h
+cleanup_state.o: ../../include/iostuff.h
+cleanup_state.o: ../../include/attr.h
+cleanup_state.o: cleanup.h
 cleanup_state.o: ../../include/argv.h
 cleanup_state.o: ../../include/nvtable.h
 cleanup_state.o: ../../include/maps.h

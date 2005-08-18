@@ -1,7 +1,8 @@
 .SH SEE ALSO
 .na
 .nf
-postconf(1) postfix configuration maintenance
+postconf(1), Postfix configuration parameter maintenance
+master(5), Postfix daemon configuration maintenance
 .SH LICENSE
 .ad
 .fi

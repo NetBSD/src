@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - sendmail(1) </title>
 </head> <body> <pre>
-SENDMAIL(1)                                           SENDMAIL(1)
+SENDMAIL(1)                                                        SENDMAIL(1)
 
 <b>NAME</b>
        sendmail - Postfix to Sendmail compatibility interface
@@ -19,16 +19,16 @@ SENDMAIL(1)                                           SENDMAIL(1)
        <b>sendmail -I</b>
 
 <b>DESCRIPTION</b>
-       The  Postfix  <b>sendmail</b>  command  implements the Postfix to
+       The  Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command implements the Postfix to
        Sendmail compatibility interface.  For the sake of compat-
        ibility with existing applications, some Sendmail command-
        line options are recognized but silently ignored.
 
-       By default, Postfix <b>sendmail</b> reads a message from standard
-       input  until  EOF  or  until it reads a line with only a <b>.</b>
-       character, and arranges for  delivery.   Postfix  <b>sendmail</b>
-       relies  on  the <a href="postdrop.1.html"><b>postdrop</b>(1)</a> command to create a queue file
-       in the <b>maildrop</b> directory.
+       By default, Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> reads a message from stan-
+       dard  input until EOF or until it reads a line with only a
+       <b>.</b> character, and arranges  for  delivery.   Postfix  <a href="sendmail.1.html"><b>send-</b></a>
+       <a href="sendmail.1.html"><b>mail</b>(1)</a>  relies  on  the  <a href="postdrop.1.html"><b>postdrop</b>(1)</a>  command to create a
+       queue file in the <b>maildrop</b> directory.
 
        Specific command aliases are  provided  for  other  common
        modes of operation:
@@ -52,8 +52,8 @@ SENDMAIL(1)                                           SENDMAIL(1)
               implemented by running the <a href="postalias.1.html"><b>postalias</b>(1)</a> command.
 
               Note: it may take a minute or so  before  an  alias
-              database  update  becomes  visible. Use the <b>postfix</b>
-              <b>reload</b> command to eliminate this delay.
+              database  update  becomes visible. Use the "<b>postfix</b>
+              <b>reload</b>" command to eliminate this delay.
 
        These and other features can be selected by specifying the
        appropriate combination of command-line options. Some fea-
@@ -73,7 +73,8 @@ SENDMAIL(1)                                           SENDMAIL(1)
               The message body MIME type: <b>7BIT</b> or <b>8BITMIME</b>.
 
        <b>-bd</b>    Go  into  daemon  mode.  This  mode of operation is
-              implemented by executing the <b>postfix start</b> command.
+              implemented by executing the "<b>postfix  start</b>"  com-
+              mand.
 
        <b>-bh</b> (ignored)
 
@@ -117,8 +118,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b>-f</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
-              address where delivery problems are sent to, unless
-              the message contains an <b>Errors-To:</b> message  header.
+              address  where  delivery problems are sent to. With
+              Postfix versions before 2.1, the <b>Errors-To:</b> message
+              header overrides the error return address.
 
        <b>-G</b> (ignored)
               Gateway  (relay)  submission, as opposed to initial
@@ -153,6 +155,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
               Non-default alias  database.  Specify  <i>pathname</i>  or
               <i>type</i>:<i>pathname</i>. See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
 
+       <b>-O</b> <i>option=value</i> (ignored)
+              Backwards compatibility.
+
        <b>-o7</b> (ignored)
 
        <b>-o8</b> (ignored)
@@ -174,8 +179,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b>-r</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
-              address where delivery problems are sent to, unless
-              the  message contains an <b>Errors-To:</b> message header.
+              address where delivery problems are sent  to.  With
+              Postfix versions before 2.1, the <b>Errors-To:</b> message
+              header overrides the error return address.
 
        <b>-R</b> <i>return</i><b>_</b><i>limit</i> (ignored)
               Limit  the  size   of   bounced   mail.   Use   the
@@ -202,7 +208,7 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b>-qS</b><i>site</i>
               This  command  is  not  implemented. Use the slower
-              <b>sendmail -q</b> command instead.
+              "<b>sendmail -q</b>" command instead.
 
        <b>-t</b>     Extract recipients from message headers. These  are
               added  to  any  recipients specified on the command
@@ -269,7 +275,7 @@ SENDMAIL(1)                                           SENDMAIL(1)
 <b>CONFIGURATION PARAMETERS</b>
        The  following  <b>main.cf</b> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html">postconf(5)</a> for more details including exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
 <b>TROUBLE SHOOTING CONTROLS</b>
@@ -291,6 +297,21 @@ SENDMAIL(1)                                           SENDMAIL(1)
               logging level to increase by the  amount  specified
               in $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
 
+<b>ACCESS CONTROLS</b>
+       Available in Postfix version 2.2 and later:
+
+       <b><a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> (static:anyone)</b>
+              List  of  users  who  are  authorized  to flush the
+              queue.
+
+       <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (static:anyone)</b>
+              List of users who are authorized to view the queue.
+
+       <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (static:anyone)</b>
+              List  of  users  who  are authorized to submit mail
+              with the <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command (and with  the  privi-
+              leged <a href="postdrop.1.html"><b>postdrop</b>(1)</a> helper command).
+
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#bounce_size_limit">bounce_size_limit</a> (50000)</b>
               The maximal amount of original message text that is
@@ -301,8 +322,8 @@ SENDMAIL(1)                                           SENDMAIL(1)
               process.
 
        <b><a href="postconf.5.html#fork_delay">fork_delay</a> (1s)</b>
-              The  delay  between attempts to fork() a child pro-
-              cess.
+              The  delay  between  attempts  to  fork()  a  child
+              process.
 
        <b><a href="postconf.5.html#hopcount_limit">hopcount_limit</a> (50)</b>
               The maximal number of  Received:   message  headers
@@ -331,12 +352,12 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
               The  characters  Postfix  accepts as VERP delimiter
-              characters on the Postfix <a href="sendmail.1.html">sendmail(1)</a> command  line
+              characters on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command  line
               and in SMTP commands.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#alias_database">alias_database</a> (see 'postconf -d' output)</b>
-              The  alias databases for <a href="local.8.html">local(8)</a> delivery that are
+              The  alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are
               updated with "<b>newaliases</b>" or with "<b>sendmail -bi</b>".
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
@@ -352,32 +373,40 @@ SENDMAIL(1)                                           SENDMAIL(1)
               daemon programs.
 
        <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
-              The default database type for use in <a href="newaliases.1.html">newaliases(1)</a>,
-              <a href="postalias.1.html">postalias(1)</a> and <a href="postmap.1.html">postmap(1)</a> commands.
+              The default database type for use in <a href="newaliases.1.html"><b>newaliases</b>(1)</a>,
+              <a href="postalias.1.html"><b>postalias</b>(1)</a> and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
               The time after which the sender receives  the  mes-
               sage headers of mail that is still queued.
+
+       <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
+              Report  mail  delivery errors to the address speci-
+              fied  with  the  non-standard  Errors-To:   message
+              header,  instead  of  the  envelope  sender address
+              (this feature  is  removed  with  Postfix  2.2,  is
+              turned  off  by  default  with  Postfix 2.1, and is
+              always turned on with older Postfix versions).
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
               The UNIX system account that owns the Postfix queue
               and most Postfix daemon processes.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail system name that is prepended to the pro-
-              cess  name  in  syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The  time  limit for sending a trigger to a Postfix
-              daemon (for example, the <a href="pickup.8.html">pickup(8)</a> or <a href="qmgr.8.html">qmgr(8)</a>  dae-
+              The time limit for sending a trigger to  a  Postfix
+              daemon  (for example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> dae-
               mon).
 
 <b>FILES</b>
@@ -402,7 +431,7 @@ SENDMAIL(1)                                           SENDMAIL(1)
        <a href="VERP_README.html">VERP_README</a>, Postfix VERP howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -411,5 +440,5 @@ SENDMAIL(1)                                           SENDMAIL(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                      SENDMAIL(1)
+                                                                   SENDMAIL(1)
 </pre> </body> </html>

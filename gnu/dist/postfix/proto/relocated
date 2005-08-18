@@ -2,18 +2,18 @@
 # NAME
 #	relocated 5
 # SUMMARY
-#	format of Postfix relocated table
+#	Postfix relocated table format
 # SYNOPSIS
 #	\fBpostmap /etc/postfix/relocated\fR
 # DESCRIPTION
-#	The optional \fBrelocated\fR table provides the information that is
+#	The optional \fBrelocated\fR(5) table provides the information that is
 #	used in "user has moved to \fInew_location\fR" bounce messages.
 #
-#	Normally, the \fBrelocated\fR table is specified as a text file
+#	Normally, the \fBrelocated\fR(5) table is specified as a text file
 #	that serves as input to the \fBpostmap\fR(1) command.
 #	The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 #	is used for fast searching by the mail system. Execute the command
-#	\fBpostmap /etc/postfix/relocated\fR in order to rebuild the indexed
+#	"\fBpostmap /etc/postfix/relocated\fR" in order to rebuild the indexed
 #	file after changing the relocated table.
 #
 #	When the table is provided via other means such as NIS, LDAP
@@ -43,7 +43,9 @@
 # .IP \(bu
 #	A logical line starts with non-whitespace text. A line that
 #	starts with whitespace continues a logical line.
-# .PP
+# TABLE SEARCH ORDER
+# .ad
+# .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
 #	tables such as NIS, LDAP or SQL, patterns are tried in the order as
 #	listed below:
@@ -55,7 +57,7 @@
 #	when \fIsite\fR is listed in $\fBmydestination\fR, or when \fIsite\fR
 #	is listed in $\fBinet_interfaces\fR or $\fBproxy_interfaces\fR.
 # .IP @\fIdomain\fR
-#	Matches every address in \fIdomain\fR. This form has the lowest
+#	Matches other addresses in \fIdomain\fR. This form has the lowest
 #	precedence.
 # ADDRESS EXTENSION
 # .fi
@@ -73,6 +75,7 @@
 #	expression lookup table syntax, see \fBregexp_table\fR(5) or
 #	\fBpcre_table\fR(5). For a description of the TCP client/server
 #	table lookup protocol, see \fBtcp_table\fR(5).
+#	This feature is not available up to and including Postfix version 2.2.
 #
 #	Each pattern is a regular expression that is applied to the entire
 #	address being looked up. Thus, \fIuser@domain\fR mail addresses are not
@@ -91,7 +94,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available in Postfix version 2.1.
+#	This feature is not available up to and including Postfix version 2.2.
 #
 #	Each lookup operation uses the entire address once.  Thus,
 #	\fIuser@domain\fR mail addresses are not broken up into their
@@ -106,7 +109,7 @@
 # .fi
 #	The following \fBmain.cf\fR parameters are especially relevant.  
 #	The text below provides only a parameter summary. See
-#	postconf(5) for more details including examples.
+#	\fBpostconf\fR(5) for more details including examples.
 # .IP \fBrelocated_maps\fR
 #	List of lookup tables for relocated users or sites.
 # .PP

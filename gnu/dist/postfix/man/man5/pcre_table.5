@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcre_table.5,v 1.1.1.7 2004/05/31 00:24:18 heas Exp $
+.\"	$NetBSD: pcre_table.5,v 1.1.1.8 2005/08/18 21:03:56 rpaulo Exp $
 .\"
 .TH PCRE_TABLE 5 
 .ad
@@ -26,9 +26,9 @@ against a list of patterns, and when a match is found the
 corresponding result is returned.
 
 To find out what types of lookup tables your Postfix system
-supports use the \fBpostconf -m\fR command.
+supports use the "\fBpostconf -m\fR" command.
 
-To test lookup tables, use the \fBpostmap -fq\fR command as
+To test lookup tables, use the "\fBpostmap -fq\fR" command as
 described in the SYNOPSIS above.
 .SH "TABLE FORMAT"
 .na
@@ -82,7 +82,7 @@ matching at the start and end of the subject string.
 .IP "\fBs\fR (default: on)"
 Toggles the PCRE_DOTALL flag. When this flag is on, the \fB.\fR
 metacharacter matches the newline character. With
-Postfix versions prior to 20020528, The flag is off by
+Postfix versions prior to 2.0, The flag is off by
 default, which is inconvenient for multi-line message header
 matching.
 .IP "\fBx\fR (default: off)"

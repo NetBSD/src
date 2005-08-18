@@ -19,17 +19,23 @@
 
 <h2>Berkeley DB issues</h2>
 
-<p> On RedHat Linux 7.0 you must install the db3-devel RPM before
-you can compile the Postfix source code.  </p>
+<p> Warning: if you can't compile Postfix because the file "db.h"
+isn't found, then you MUST install the Berkeley DB development
+package (package name: db???-devel-???) that comes with your Linux
+system. Only that package contains the files that correspond to the
+Berkeley DB version that is used by the system library routines.
+</p>
 
-<p> Warning: do not use multiple Berkeley DB versions. Every Postfix
-program will dump core when it is built with a different Berkeley
-DB version than the version that is used by the system library
-routines.  See the DB_README file for further information. </p>
+<p> DO NOT download some Berkeley DB version from the network.
+Every Postfix program will dump core when it is built with a different
+Berkeley DB version than the version that is used by the system
+library routines.  See the DB_README file for further information.
+</p>
 
 <h2>Procmail issues</h2>
 
-<p> On RedHat Linux 7.1 <b>procmail</b> no longer has permission
+<p> On RedHat Linux 7.1 and later <b>procmail</b> no longer has
+permission
 to write the mail spool directory. Workaround: chmod 1777
 /var/spool/mail.
 </p>

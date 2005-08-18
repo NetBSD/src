@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: deliver_request.c,v 1.1.1.6 2005/08/18 21:06:12 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -28,6 +28,10 @@
 /*		char	*client_addr;
 /*		char	*client_proto;
 /*		char	*client_helo;
+/*		char	*sasl_method;
+/*		char	*sasl_username;
+/*		char	*sasl_sender;
+/*		char	*rewrite_context;
 /* .in -5
 /*	} DELIVER_REQUEST;
 /*
@@ -185,6 +189,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     static VSTRING *client_addr;
     static VSTRING *client_proto;
     static VSTRING *client_helo;
+    static VSTRING *sasl_method;
+    static VSTRING *sasl_username;
+    static VSTRING *sasl_sender;
+    static VSTRING *rewrite_context;
     long    offset;
 
     /*
@@ -205,6 +213,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 	client_addr = vstring_alloc(10);
 	client_proto = vstring_alloc(10);
 	client_helo = vstring_alloc(10);
+	sasl_method = vstring_alloc(10);
+	sasl_username = vstring_alloc(10);
+	sasl_sender = vstring_alloc(10);
+	rewrite_context = vstring_alloc(10);
     }
 
     /*
@@ -227,7 +239,11 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 		  ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, client_addr,
 		  ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, client_proto,
 		  ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, client_helo,
-		  ATTR_TYPE_END) != 15) {
+		  ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, sasl_method,
+		  ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, sasl_username,
+		  ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, sasl_sender,
+		  ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, rewrite_context,
+		  ATTR_TYPE_END) != 19) {
 	msg_warn("%s: error receiving common attributes", myname);
 	return (-1);
     }
@@ -246,6 +262,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     request->client_addr = mystrdup(vstring_str(client_addr));
     request->client_proto = mystrdup(vstring_str(client_proto));
     request->client_helo = mystrdup(vstring_str(client_helo));
+    request->sasl_method = mystrdup(vstring_str(sasl_method));
+    request->sasl_username = mystrdup(vstring_str(sasl_username));
+    request->sasl_sender = mystrdup(vstring_str(sasl_sender));
+    request->rewrite_context = mystrdup(vstring_str(rewrite_context));
 
     /*
      * Extract the recipient offset and address list. Skip over any
@@ -324,6 +344,10 @@ static DELIVER_REQUEST *deliver_request_alloc(void)
     request->client_addr = 0;
     request->client_proto = 0;
     request->client_helo = 0;
+    request->sasl_method = 0;
+    request->sasl_username = 0;
+    request->sasl_sender = 0;
+    request->rewrite_context = 0;
     return (request);
 }
 
@@ -358,6 +382,14 @@ static void deliver_request_free(DELIVER_REQUEST *request)
 	myfree(request->client_proto);
     if (request->client_helo)
 	myfree(request->client_helo);
+    if (request->sasl_method)
+	myfree(request->sasl_method);
+    if (request->sasl_username)
+	myfree(request->sasl_username);
+    if (request->sasl_sender)
+	myfree(request->sasl_sender);
+    if (request->rewrite_context)
+	myfree(request->rewrite_context);
     myfree((char *) request);
 }
 

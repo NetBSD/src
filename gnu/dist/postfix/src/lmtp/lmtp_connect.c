@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_connect.c,v 1.1.1.5 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: lmtp_connect.c,v 1.1.1.6 2005/08/18 21:07:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -96,16 +96,20 @@
 #include <stringops.h>
 #include <host_port.h>
 #include <sane_connect.h>
+#include <inet_addr_list.h>
+#include <myaddrinfo.h>
+#include <sock_addr.h>
 
 /* Global library. */
 
 #include <mail_params.h>
 #include <mail_proto.h>
+#include <own_inet_addr.h>
 
 /* DNS library. */
 
 #include <dns.h>
-
+	
 /* Application-specific. */
 
 #include "lmtp.h"
@@ -170,14 +174,18 @@ static LMTP_SESSION *lmtp_connect_addr(DNS_RR *addr, unsigned port,
 			              const char *destination, VSTRING *why)
 {
     char   *myname = "lmtp_connect_addr";
-    struct sockaddr_in sin;
+    struct sockaddr_storage ss;
+    struct sockaddr *sa = SOCK_ADDR_PTR(&ss);
+    SOCKADDR_SIZE salen = sizeof(ss);
+    MAI_HOSTADDR_STR hostaddr;
     int     sock;
 
     /*
      * Sanity checks.
      */
-    if (addr->data_len > sizeof(sin.sin_addr)) {
-	msg_warn("%s: skip address with length %d", myname, addr->data_len);
+    if (dns_rr_to_sa(addr, port, sa, &salen) != 0) {
+	msg_warn("%s: skip address type %s: %m",
+		 myname, dns_strtype(addr->type));
 	lmtp_errno = LMTP_RETRY;
 	return (0);
     }
@@ -185,25 +193,19 @@ static LMTP_SESSION *lmtp_connect_addr(DNS_RR *addr, unsigned port,
     /*
      * Initialize.
      */
-    memset((char *) &sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-
-    if ((sock = socket(sin.sin_family, SOCK_STREAM, 0)) < 0)
+    if ((sock = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
 	msg_fatal("%s: socket: %m", myname);
 
     /*
      * Connect to the LMTP server.
      */
-    sin.sin_port = port;
-    memcpy((char *) &sin.sin_addr, addr->data, sizeof(sin.sin_addr));
-
+    SOCKADDR_TO_HOSTADDR(sa, salen, &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
     if (msg_verbose)
 	msg_info("%s: trying: %s[%s] port %d...",
-		 myname, addr->name, inet_ntoa(sin.sin_addr), ntohs(port));
+		 myname, addr->name, hostaddr.buf, ntohs(port));
 
-    return (lmtp_connect_sock(sock, (struct sockaddr *) & sin, sizeof(sin),
-			      addr->name, inet_ntoa(sin.sin_addr),
-			      destination, why));
+    return (lmtp_connect_sock(sock, sa, salen,
+			      addr->name, hostaddr.buf, destination, why));
 }
 
 /* lmtp_connect_sock - connect a socket over some transport */
@@ -315,7 +317,7 @@ static char *lmtp_parse_destination(const char *destination, char *def_service,
      * Parse the host/port information. We're working with a copy of the
      * destination argument so the parsing can be destructive.
      */
-    if ((err = host_port(buf, hostp, &service, def_service)) != 0)
+    if ((err = host_port(buf, hostp, (char *) 0, &service, def_service)) != 0)
 	msg_fatal("%s in LMTP server description: %s", err, destination);
 
     /*
@@ -323,9 +325,11 @@ static char *lmtp_parse_destination(const char *destination, char *def_service,
      * aren't going to have lmtp defined as a service, use a default value
      * instead of just blowing up.
      */
-    if (alldig(service) && (port = atoi(service)) != 0)
+    if (alldig(service)) {
+	if ((port = atoi(service)) >= 65536)
+	    msg_fatal("bad numeric port in destination: %s", destination);
 	*portp = htons(port);
-    else if ((sp = getservbyname(service, protocol)) != 0)
+    } else if ((sp = getservbyname(service, protocol)) != 0)
 	*portp = sp->s_port;
     else
 	*portp = htons(var_lmtp_tcp_port);
