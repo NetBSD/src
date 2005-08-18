@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/27 05:33:55 heas Exp $
+#	$NetBSD: Makefile,v 1.7 2005/08/18 22:30:37 rpaulo Exp $
 
 NOMAN=	# defined
 
@@ -15,7 +15,15 @@ SRCS=	smtpd.c smtpd_token.c smtpd_check.c smtpd_chat.c smtpd_state.c \
 	smtpd_peer.c smtpd_sasl_proto.c smtpd_sasl_glue.c smtpd_proxy.c \
 	smtpd_xforward.c
 
-DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
-LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
+DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} 
+LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
+
+.if ${MKCRYPTO} != "no"
+DPADD+=	${LIBPTLS} ${LIBSSL}
+LDADD+=	${LIBPTLS} -lssl
+.endif
+
+DPADD+=	${LIBPUTIL}
+LDADD+=	${LIBPUTIL}
 
 .include <bsd.prog.mk>

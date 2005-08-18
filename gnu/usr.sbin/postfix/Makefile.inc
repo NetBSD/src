@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2004/05/31 03:54:20 heas Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2005/08/18 22:30:36 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -8,13 +8,27 @@ PFIX_DISTDIR=	${NETBSDSRCDIR}/gnu/dist/postfix
 
 CPPFLAGS+= -DNETBSD1 -I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
-	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util
-# IPv6
-#CPPFLAGS+= -DINET6
+	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
+	-I${PFIX_DISTDIR}/src/tls
+
+# TLS support.
+.if ${MKCRYPTO} != "no"
+CPPFLAGS+=	-DUSE_TLS
+.endif
+
+# IPv6 support.
+.if ${MKINET6} == "no"
+CPPFLAGS+=	-DNO_IPV6
+.endif
 
 PFIX_SRCDIR=	${NETBSDSRCDIR}/gnu/usr.sbin/postfix
+PFIX_LIBSDIRS=	dns dns masterlib master global global util util
 
-.for _LD _LL in	dns dns masterlib master global global util util
+.if ${MKCRYPTO} != "no" 
+PFIX_LIBSDIRS+=	tls tls
+.endif
+
+.for _LD _LL in	${PFIX_LIBSDIRS}
 .if !defined(POBJDIR.${_LL})
 POBJDIR.${_LL}!=cd ${PFIX_SRCDIR}/${_LD} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=POBJDIR.${_LL}

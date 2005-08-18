@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2005/08/18 22:30:37 rpaulo Exp $
 
 MKPRIVATELIB=	yes
 
@@ -9,9 +9,9 @@ LIB=	global
 DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
-SRCS=	abounce.c been_here.c bounce.c bounce_log.c \
+SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	canon_addr.c cfg_parser.c cleanup_strerror.c cleanup_strflags.c \
-	clnt_stream.c debug_peer.c debug_process.c defer.c \
+	clnt_stream.c debug_peer.c debug_process.c defer.c db_common.c\
 	deliver_completed.c deliver_flock.c deliver_pass.c deliver_request.c \
 	dict_ldap.c dict_mysql.c dict_pgsql.c dict_proxy.c domain_list.c \
 	dot_lockfile.c dot_lockfile_as.c ext_prop.c file_id.c flush_clnt.c \
@@ -32,9 +32,8 @@ SRCS=	abounce.c been_here.c bounce.c bounce_log.c \
 	sent.c smtp_stream.c split_addr.c string_list.c strip_addr.c \
 	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c trace.c verify.c \
-	verify_clnt.c verp_sender.c virtual8_maps.c xtext.c
-
-# IPv6
-#SRCS+=	wildcard_inet_addr.c
+	verify_clnt.c verp_sender.c virtual8_maps.c xtext.c scache_single.c \
+	scache_clnt.c scache_multi.c user_acl.c mkmap_cdb.c mkmap_sdbm.c \
+	ehlo_mask.c wildcard_inet_addr.c valid_mailhost_addr.c
 
 .include <bsd.lib.mk>
