@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.815 2005/08/18 22:31:47 rpaulo Exp $
+# $NetBSD: mi,v 1.816 2005/08/18 23:06:15 rpaulo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1470,6 +1470,7 @@
 ./usr/share/man/cat5/ftpd.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ftpusers.0			man-netutil-catman	.cat
 ./usr/share/man/cat5/genassym.cf.0		man-sys-catman		.cat
+./usr/share/man/cat5/generic.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/gettytab.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/group.0			man-sys-catman		.cat
 ./usr/share/man/cat5/header_checks.0		man-postfix-catman	postfix,.cat
@@ -1519,6 +1520,7 @@
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
 ./usr/share/man/cat5/map3270.0			man-tn3270-catman	.cat
+./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
 ./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman	.cat
 ./usr/share/man/cat5/moduli.0			man-secsh-catman	crypto,.cat
@@ -1530,6 +1532,7 @@
 ./usr/share/man/cat5/netid.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat5/networks.0			man-net-catman		.cat
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
@@ -3726,6 +3729,7 @@
 ./usr/share/man/man5/ftpd.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ftpusers.5			man-netutil-man		.man
 ./usr/share/man/man5/genassym.cf.5		man-sys-man		.man
+./usr/share/man/man5/generic.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/gettytab.5			man-sysutil-man		.man
 ./usr/share/man/man5/group.5			man-sys-man		.man
 ./usr/share/man/man5/header_checks.5		man-postfix-man		postfix,.man
@@ -3777,6 +3781,7 @@
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
 ./usr/share/man/man5/man.conf.5			man-man-man		.man
 ./usr/share/man/man5/map3270.5			man-tn3270-man		.man
+./usr/share/man/man5/master.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/master.passwd.5		man-sys-man		.man
 ./usr/share/man/man5/mixerctl.conf.5		man-audio-man		.man
 ./usr/share/man/man5/moduli.5			man-secsh-man		crypto,.man
@@ -3788,6 +3793,7 @@
 ./usr/share/man/man5/netid.5			man-nis-man		yp,.man
 ./usr/share/man/man5/networks.5			man-net-man		.man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man		.man
+./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
 ./usr/share/man/man5/pam.conf.5			man-sys-man		.man
