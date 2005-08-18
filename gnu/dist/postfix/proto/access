@@ -2,7 +2,7 @@
 # NAME
 #	access 5
 # SUMMARY
-#	format of Postfix access table
+#	Postfix access table format
 # SYNOPSIS
 #	\fBpostmap /etc/postfix/access\fR
 #
@@ -10,19 +10,19 @@
 #
 #	\fBpostmap -q - /etc/postfix/access <\fIinputfile\fR
 # DESCRIPTION
-#	The optional \fBaccess\fR table directs the Postfix SMTP server
+#	The optional \fBaccess\fR(5) table directs the Postfix SMTP server
 #	to selectively reject or accept mail. Access can be allowed or
 #	denied for specific host names, domain names, networks, host
-#	network addresses or mail addresses.
+#	addresses or mail addresses.
 #
 #	For an example, see the EXAMPLE section at the end of this
 #	manual page.
 #
-#	Normally, the \fBaccess\fR table is specified as a text file
+#	Normally, the \fBaccess\fR(5) table is specified as a text file
 #	that serves as input to the \fBpostmap\fR(1) command.
 #	The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 #	is used for fast searching by the mail system. Execute the command
-#	\fBpostmap /etc/postfix/access\fR in order to rebuild the indexed
+#	"\fBpostmap /etc/postfix/access\fR" in order to rebuild the indexed
 #	file after changing the access table.
 #
 #	When the table is provided via other means such as NIS, LDAP
@@ -96,11 +96,46 @@
 # .IP \fInet.work.addr\fR
 # .IP \fInet.work\fR
 # .IP \fInet\fR
-#	Matches any host address in the specified network. A network
-#	address is a sequence of one or more octets separated by ".".
+#	Matches the specified IPv4 host address or subnetwork. An
+#	IPv4 host address is a sequence of four decimal octets
+#	separated by ".".
 #
-#	NOTE: use the \fBcidr\fR lookup table type to specify
-#	network/netmask patterns. See cidr_table(5) for details.
+#	Subnetworks are matched by repeatedly truncating the last
+#	".octet" from the remote IPv4 host address string until a
+#	match is found in the access table, or until further
+#	truncation is not possible.
+#
+#	NOTE 1: The information in the access map should be in
+#	canonical form, with unnecessary null characters eliminated.
+#	Address information must not be enclosed with "[]" characters.
+#
+#	NOTE 2: use the \fBcidr\fR lookup table type to specify
+#	network/netmask patterns. See \fBcidr_table\fR(5) for details.
+# .IP \fInet:work:addr:ess\fR
+# .IP \fInet:work:addr\fR
+# .IP \fInet:work\fR
+# .IP \fInet\fR
+#	Matches the specified IPv6 host address or subnetwork. An
+#	IPv6 host address is a sequence of three to eight hexadecimal
+#	octet pairs separated by ":".
+#
+#	Subnetworks are matched by repeatedly truncating the last
+#	":octetpair" from the remote IPv6 host address string until
+#	a match is found in the access table, or until further
+#	truncation is not possible.
+#
+#	NOTE 1: the truncation and comparison are done with the
+#	string representation of the IPv6 host address. Thus, not
+#	all the ":" subnetworks will be tried.
+#
+#	NOTE 2: The information in the access map should be in
+#	canonical form, with unnecessary null characters eliminated.
+#	Address information must not be enclosed with "[]" characters.
+#
+#	NOTE 3: use the \fBcidr\fR lookup table type to specify
+#	network/netmask patterns. See \fBcidr_table\fR(5) for details.
+#
+#	IPv6 support is available in Postfix 2.2 and later.
 # ACCEPT ACTIONS
 # .ad
 # .fi
@@ -159,7 +194,8 @@
 # .IP "\fBFILTER \fItransport:destination\fR"
 #	After the message is queued, send the entire message through
 #       the specified external content filter. The \fItransport:destination\fR
-#	syntax is described in the transport(5) manual page.  More information
+#	syntax is described in the \fBtransport\fR(5) manual page.
+#	More information
 #	about external content filters is in the Postfix FILTER_README file.
 # .sp
 #	Note: this action overrides the \fBmain.cf content_filter\fR setting,
@@ -174,7 +210,11 @@
 #
 #	Mail that is placed on hold can be examined with the
 #	\fBpostcat\fR(1) command, and can be destroyed or released with
-#	the \fBpostsuper\fR(1) command.
+#	the \fBpostsuper\fR(1) command. 
+# .sp
+#	Note: use "\fBpostsuper -r\fR" to release mail that was kept on
+#	hold for a significant fraction of \fB$maximal_queue_lifetime\fR
+#	or \fB$bounce_queue_lifetime\fR, or longer.
 # .sp
 #	Note: this action currently affects all recipients of the message.
 # .sp
@@ -228,7 +268,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available in Postfix version 2.1.
+#	This feature is not available up to and including Postfix version 2.2.
 #
 #	Each lookup operation uses the entire query string once.
 #	Depending on the application, that string is an entire client
@@ -245,8 +285,8 @@
 #	The following example uses an indexed file, so that the
 #	order of table entries does not matter. The example permits
 #	access by the client at address 1.2.3.4 but rejects all
-#	other clients in 1.2.3.0/24. Instead of "\fBhash\fR" lookup
-#	tables, some systems use "\fBdbm\fR".  Use the command
+#	other clients in 1.2.3.0/24. Instead of \fBhash\fR lookup
+#	tables, some systems use \fBdbm\fR.  Use the command
 #	"\fBpostconf -m\fR" to find out what lookup tables Postfix
 #	supports on your system.
 #

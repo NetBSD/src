@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.h,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: pipe_command.h,v 1.1.1.5 2005/08/18 21:06:55 rpaulo Exp $	*/
 
 #ifndef _PIPE_COMMAND_H_INCLUDED_
 #define _PIPE_COMMAND_H_INCLUDED_
@@ -41,6 +41,7 @@
 #define PIPE_CMD_EOL		11	/* record delimiter */
 #define PIPE_CMD_EXPORT		12	/* exportable environment */
 #define PIPE_CMD_ORIG_RCPT	13	/* mail_copy() original recipient */
+#define PIPE_CMD_CWD		14	/* working directory */
 
  /*
   * Command completion status.

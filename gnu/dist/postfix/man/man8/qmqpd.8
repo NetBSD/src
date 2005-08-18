@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmqpd.8,v 1.1.1.4 2004/05/31 00:24:19 heas Exp $
+.\"	$NetBSD: qmqpd.8,v 1.1.1.5 2005/08/18 21:04:22 rpaulo Exp $
 .\"
 .TH QMQPD 8 
 .ad
@@ -51,12 +51,12 @@ client to handle the situation.
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically, as qmqpd(8)
+Changes to \fBmain.cf\fR are picked up automatically, as \fBqmqpd\fR(8)
 processes run for only a limited amount of time. Use the command
 "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
-postconf(5) for more details including examples.
+\fBpostconf\fR(5) for more details including examples.
 .SH "CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -67,7 +67,7 @@ The name of a mail delivery transport that filters mail after
 it is queued.
 .IP "\fBreceive_override_options (empty)\fR"
 Enable or disable recipient validation, built-in content
-filtering, or address rewriting.
+filtering, or address mapping.
 .SH "RESOURCE AND RATE CONTROLS"
 .na
 .nf
@@ -141,7 +141,7 @@ The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .IP "\fBverp_delimiter_filter (-=+)\fR"
 The characters Postfix accepts as VERP delimiter characters on the
-Postfix sendmail(1) command line and in SMTP commands.
+Postfix \fBsendmail\fR(1) command line and in SMTP commands.
 .SH "SEE ALSO"
 .na
 .nf

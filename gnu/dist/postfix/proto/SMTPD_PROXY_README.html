@@ -17,7 +17,7 @@
 
 <hr>
 
-<h2>WARNING WARNING WARNING </h2>
+<h2>WARNING </h2>
 
 <p> The before-queue content filtering feature described in
 this document is suitable only for low-traffic sites. See the "<a
@@ -240,7 +240,7 @@ http://bent.latency.net/smtpprox/. </p>
     # After-filter SMTP server. Receive mail from the content filter
     # on localhost port 10026.
     #
-    :10026    inet  n       -       n       -        -      smtpd
+    127.0.0.1:10026 inet n  -       n       -        -      smtpd
         -o smtpd_authorized_xforward_hosts=127.0.0.0/8
         -o smtpd_client_restrictions=
         -o smtpd_helo_restrictions=
@@ -283,7 +283,8 @@ the top of the master.cf file: </p>
 
 <ul>
 
-    <li> <p> The ":10026" makes the after-filter SMTP server listen
+    <li> <p> The "127.0.0.1:10026" makes the after-filter SMTP
+    server listen
     on the localhost address only, without exposing it to the
     network.  NEVER expose the after-filter SMTP server to the
     Internet :-) </p>
@@ -314,7 +315,7 @@ can't control when the remote SMTP client times out. </p>
 
 <li> <p> smtpd_proxy_filter (syntax: host:port): The host and TCP
 port of the before-queue content filter.  When no host or host:
-is specified, localhost is assumed. </p>
+is specified here, localhost is assumed. </p>
 
 <li> <p> smtpd_proxy_timeout (default: 100s): Timeout for connecting
 to the before-queue content filter and for sending and receiving

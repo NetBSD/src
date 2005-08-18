@@ -1,4 +1,4 @@
-/*	$NetBSD: ext_prop.c,v 1.1.1.3 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: ext_prop.c,v 1.1.1.4 2005/08/18 21:06:18 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -33,6 +33,9 @@
 /* .IP "include (EXT_PROP_INCLUDE)"
 /*	Propagate unmatched address extensions to the right-hand side
 /*	of :include: file entries.
+/* .IP "generic (EXT_PROP_GENERIC)"
+/*	Propagate unmatched address extensions to the right-hand side
+/*	of smtp_generic_maps entries.
 /* DIAGNOSTICS
 /*	Panic: inappropriate use.
 /* LICENSE
@@ -69,6 +72,7 @@ int     ext_prop_mask(const char *param_name, const char *pattern)
 	"alias", EXT_PROP_ALIAS,
 	"forward", EXT_PROP_FORWARD,
 	"include", EXT_PROP_INCLUDE,
+	"generic", EXT_PROP_GENERIC,
 	0,
     };
 

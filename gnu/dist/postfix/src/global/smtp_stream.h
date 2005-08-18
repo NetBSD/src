@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.h,v 1.1.1.3 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: smtp_stream.h,v 1.1.1.4 2005/08/18 21:07:02 rpaulo Exp $	*/
 
 #ifndef _SMTP_STREAM_H_INCLUDED_
 #define _SMTP_STREAM_H_INCLUDED_
@@ -34,6 +34,7 @@
 extern void smtp_timeout_setup(VSTREAM *, int);
 extern void PRINTFLIKE(2, 3) smtp_printf(VSTREAM *, const char *,...);
 extern void smtp_flush(VSTREAM *);
+extern int smtp_fgetc(VSTREAM *);
 extern int smtp_get(VSTRING *, VSTREAM *, int);
 extern void smtp_fputs(const char *, int len, VSTREAM *);
 extern void smtp_fwrite(const char *, int len, VSTREAM *);

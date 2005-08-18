@@ -1,4 +1,4 @@
-/*	$NetBSD: ext_prop.h,v 1.1.1.3 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: ext_prop.h,v 1.1.1.4 2005/08/18 21:06:18 rpaulo Exp $	*/
 
 #ifndef _EXT_PROP_INCLUDED_
 #define _EXT_PROP_INCLUDED_
@@ -21,6 +21,7 @@
 #define EXT_PROP_ALIAS		(1<<2)
 #define EXT_PROP_FORWARD	(1<<3)
 #define EXT_PROP_INCLUDE	(1<<4)
+#define EXT_PROP_GENERIC	(1<<5)
 
 extern int ext_prop_mask(const char *, const char *);
 

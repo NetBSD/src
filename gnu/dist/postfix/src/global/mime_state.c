@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.3 2004/05/31 00:24:33 heas Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.4 2005/08/18 21:06:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -101,7 +101,7 @@
 /*	Report errors that set the MIME_ERR_TRUNC_HEADER error flag
 /*	(see above).
 /* .IP MIME_OPT_REPORT_8BIT_IN_HEADER
-/*	Report errors that set the MIME_ERR_8BIT_IN_7BIT_BODY error
+/*	Report errors that set the MIME_ERR_8BIT_IN_HEADER error
 /*	flag (see above). This rarely stops legitimate mail.
 /* .IP MIME_OPT_REPORT_8BIT_IN_7BIT_BODY
 /*	Report errors that set the MIME_ERR_8BIT_IN_7BIT_BODY error
@@ -1088,7 +1088,7 @@ static void body_end(void *context)
     vstream_fprintf(stream, "BODY END\n");
 }
 
-static void err_print(void *context, int err_flag, const char *text)
+static void err_print(void *unused_context, int err_flag, const char *text)
 {
     msg_warn("%s: %.100s", mime_state_error(err_flag), text);
 }
