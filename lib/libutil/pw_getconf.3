@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_getconf.3,v 1.7 2003/04/16 13:35:15 wiz Exp $
+.\"	$NetBSD: pw_getconf.3,v 1.8 2005/08/18 21:07:23 elad Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" from OpenBSD: pw_getconf.3,v 1.5 1999/09/21 04:52:46 csapuntz Exp
 .\"
-.Dd July 6, 2000
+.Dd August 18, 2005
 .Dt PW_GETCONF 3
 .Os
 .Sh NAME
@@ -76,6 +76,20 @@ An empty string is returned for all errors.
 .Sh FILES
 .Bl -tag -width /etc/passwd.conf -compact
 .It Pa /etc/passwd.conf
+.El
+.Sh ERRORS
+.Fn pw_getconf
+will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOTDIR
+If there is no key in
+.Pa /etc/passwd.conf
+named
+.Pa key .
+.It Bq Er ENOENT
+If there is no option named
+.Pa option
+in the specified key.
 .El
 .Sh SEE ALSO
 .Xr passwd 5 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.39 2005/01/15 03:07:56 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.40 2005/08/18 21:07:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.39 2005/01/15 03:07:56 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.40 2005/08/18 21:07:23 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -576,6 +576,11 @@ pw_getconf(char *data, size_t max, const char *key, const char *option)
 		}
 	}
 	fclose(fp);
+
+	if (!found)
+		errno = ENOENT;
+	if (!got)
+		errno = ENOTDIR;
 
 	/* 
 	 * If we got no result and were looking for a default
