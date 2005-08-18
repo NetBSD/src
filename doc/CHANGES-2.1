@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.161 2005/08/17 16:53:39 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.162 2005/08/18 21:24:22 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -154,14 +154,6 @@ sys/dev/pci/if_wmreg.h				1.13
 
 	Largest Tx descriptor buffer size is actually 4K.
 	[thorpej, ticket #898]
-
-sys/dev/pci/if_wm.c				1.80 via patch
-
-	Restructure the loop in wm_start() that passes over the
-	DMA map segments slightly to make it easier to drop in
-	errata work-arounds that require adding extra descriptors
-	onto the end of the packet.
-	[thorpej, ticket #899]
 
 dist/ntp/ntpd/ntp_io.c				1.11
 dist/ntp/ntpd/ntp_proto.c			1.4
