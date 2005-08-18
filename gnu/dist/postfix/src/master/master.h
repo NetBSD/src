@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.7 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: master.h,v 1.8 2005/08/18 22:06:00 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -25,14 +25,17 @@ typedef struct MASTER_SERV {
     int     wakeup_time;		/* wakeup interval */
     int    *listen_fd;			/* incoming requests */
     int     listen_fd_count;		/* nr of descriptors */
+#ifdef MASTER_SERV_TYPE_PASS
+    struct PASS_INFO *pass_info;	/* descriptor passing state */
+#endif
     union {
 	struct {
 	    char   *port;		/* inet listen port */
 	    struct INET_ADDR_LIST *addr;/* inet listen address */
-	} inet_ep;
+	}       inet_ep;
 #define MASTER_INET_ADDRLIST(s)	((s)->endpoint.inet_ep.addr)
 #define MASTER_INET_PORT(s)	((s)->endpoint.inet_ep.port)
-    } endpoint;
+    }       endpoint;
     int     max_proc;			/* upper bound on # processes */
     char   *path;			/* command pathname */
     struct ARGV *args;			/* argument vector */
@@ -64,6 +67,7 @@ typedef struct MASTER_SERV {
 #define MASTER_SERV_TYPE_UNIX	1	/* AF_UNIX domain socket */
 #define MASTER_SERV_TYPE_INET	2	/* AF_INET domain socket */
 #define MASTER_SERV_TYPE_FIFO	3	/* fifo (named pipe) */
+/*#define MASTER_SERV_TYPE_PASS	4	/* AF_UNIX domain socket */
 
  /*
   * Default process management policy values. This is only the bare minimum.
@@ -79,6 +83,7 @@ typedef int MASTER_PID;			/* pid is key into binhash table */
 
 typedef struct MASTER_PROC {
     MASTER_PID pid;			/* child process id */
+    unsigned gen;			/* child generation number */
     int     avail;			/* availability */
     MASTER_SERV *serv;			/* parent linkage */
     int     use_count;			/* number of service requests */

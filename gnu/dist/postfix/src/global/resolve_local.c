@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_local.c,v 1.7 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: resolve_local.c,v 1.8 2005/08/18 22:04:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -16,8 +16,8 @@
 /*	resolve_local() determines if the named domain resolves to the
 /*	local mail system, either by case-insensitive exact match
 /*	against the domains, files or tables listed in $mydestination,
-/*	or by any of the network addresses listed in $inet_interfaces
-/*	or in $proxy_interfaces.
+/*	or by a match of an [address-literal] against of the network
+/*	addresses listed in $inet_interfaces or in $proxy_interfaces.
 /*
 /*	resolve_local_init() performs initialization. If this routine is
 /*	not called explicitly ahead of time, it will be called on the fly.
@@ -42,26 +42,20 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-
-#ifndef INADDR_NONE
-#define INADDR_NONE 0xffffffff
-#endif
 
 /* Utility library. */
 
 #include <msg.h>
 #include <mymalloc.h>
 #include <string_list.h>
+#include <myaddrinfo.h>
+#include <valid_mailhost_addr.h>
 
 /* Global library. */
 
 #include <mail_params.h>
 #include <own_inet_addr.h>
 #include <resolve_local.h>
-#include <match_parent_style.h>
 
 /* Application-specific */
 
@@ -82,19 +76,26 @@ int     resolve_local(const char *addr)
 {
     char   *saved_addr = mystrdup(addr);
     char   *dest;
-    struct in_addr ipaddr;
+    const char *bare_dest;
+    struct addrinfo *res0 = 0;
     int     len;
 
-#define RETURN(x) { myfree(saved_addr); return(x); }
+#define RETURN(x) \
+    do { \
+	myfree(saved_addr); \
+	if (res0) \
+	    freeaddrinfo(res0); \
+	return(x); \
+    } while (0)
 
     if (resolve_local_list == 0)
 	resolve_local_init();
 
     /*
      * Strip one trailing dot but not dot-dot.
-     *
+     * 
      * XXX This should not be distributed all over the code. Problem is,
-     * addresses can enter the system via multiple paths: networks, local  
+     * addresses can enter the system via multiple paths: networks, local
      * forward/alias/include files, even as the result of address rewriting.
      */
     len = strlen(saved_addr);
@@ -115,14 +116,42 @@ int     resolve_local(const char *addr)
     /*
      * Compare the destination against the list of interface addresses that
      * we are supposed to listen on.
+     * 
+     * The destination may be an IPv6 address literal that was buried somewhere
+     * inside a deeply recursively nested address. This information comes
+     * from an untrusted source, and Wietse is not confident that everyone's
+     * getaddrinfo() etc. implementation is sufficiently robust. The syntax
+     * is complex enough with null field compression and with IPv4-in-IPv6
+     * addresses that errors are likely.
+     * 
+     * The solution below is ad-hoc. We neutralize the string as soon as we
+     * realize that its contents could be harmful. We neutralize the string
+     * here, instead of neutralizing it in every resolve_local() caller.
+     * That's because resolve_local knows how the address is going to be
+     * parsed and converted into binary form.
+     * 
+     * There are several more structural solutions to this.
+     * 
+     * - One solution is to disallow address literals. This is not as bad as it
+     * seems: I have never seen actual legitimate use of address literals.
+     * 
+     * - Another solution is to label each string with a trustworthiness label
+     * and to expect that all Postfix infrastructure will exercise additional
+     * caution when given a string with untrusted content. This is not likely
+     * to happen.
+     * 
+     * FIX 200501 IPv6 patch did not require "IPv6:" prefix in numerical
+     * addresses.
      */
     dest = saved_addr;
     if (*dest == '[' && dest[len - 1] == ']') {
 	dest++;
 	dest[len -= 2] = 0;
-	if ((ipaddr.s_addr = inet_addr(dest)) != INADDR_NONE
-	    && (own_inet_addr(&ipaddr) || proxy_inet_addr(&ipaddr)))
-	    RETURN(1);
+	if ((bare_dest = valid_mailhost_addr(dest, DO_GRIPE)) != 0
+	    && hostaddr_to_sockaddr(bare_dest, (char *) 0, 0, &res0) == 0) {
+	    if (own_inet_addr(res0->ai_addr) || proxy_inet_addr(res0->ai_addr))
+		RETURN(1);
+	}
     }
 
     /*
