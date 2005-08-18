@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.565 2005/07/31 19:26:06 xtraeme Exp $
+# $NetBSD: mi,v 1.566 2005/08/18 22:31:47 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -867,8 +867,10 @@
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/postfix				base-postfix-usr
+./usr/libexec/postfix/anvil			base-postfix-bin	postfix
 ./usr/libexec/postfix/bounce			base-postfix-bin	postfix
 ./usr/libexec/postfix/cleanup			base-postfix-bin	postfix
+./usr/libexec/postfix/discard			base-postfix-bin	postfix
 ./usr/libexec/postfix/error			base-postfix-bin	postfix
 ./usr/libexec/postfix/flush			base-postfix-bin	postfix
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
@@ -880,11 +882,13 @@
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
+./usr/libexec/postfix/scache			base-postfix-bin	postfix
 ./usr/libexec/postfix/sendmail			base-postfix-bin	postfix
 ./usr/libexec/postfix/showq			base-postfix-bin	postfix
 ./usr/libexec/postfix/smtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/smtpd			base-postfix-bin	postfix
 ./usr/libexec/postfix/spawn			base-postfix-bin	postfix
+./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin	postfix
 ./usr/libexec/postfix/verify			base-postfix-bin	postfix
 ./usr/libexec/postfix/virtual			base-postfix-bin	postfix
