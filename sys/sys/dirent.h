@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.19 2005/08/19 02:04:04 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.20 2005/08/19 05:06:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -76,12 +76,9 @@ struct dirent {
 /*
  * The _DIRENT_ALIGN macro returns the alignment of struct dirent.
  * struct direct and struct dirent12 used 4 byte alignment but
- * struct dirent uses 16. We deduce the alignment by checking the
- * size of the d_namlen field which used to be u_int8_t in the former
- * two and is u_int16_t now.
+ * struct dirent uses 8.
  */
-#define _DIRENT_ALIGN(dp) \
-    (/*CONSTCOND*/sizeof((dp)->d_namlen) == sizeof(uint8_t) ? 0x3 : 0xf)
+#define _DIRENT_ALIGN(dp) (sizeof((dp)->d_fileno) - 1)
 /*
  * The _DIRENT_NAMEOFF macro returns the offset of the d_name field in 
  * struct dirent
