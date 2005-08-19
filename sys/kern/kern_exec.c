@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.208 2005/08/05 11:14:32 junyoung Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.209 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.208 2005/08/05 11:14:32 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.209 2005/08/19 02:04:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -775,8 +775,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		p_sugid(p);
 
 		/* Make sure file descriptors 0..2 are in use. */
-		if ((error = fdcheckstd(p)) != 0)
+		if ((error = fdcheckstd(p)) != 0) {
+			DPRINTF(("execve: fdcheckstd failed %d\n", error));
 			goto exec_abort;
+		}
 
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
@@ -818,8 +820,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_es->es_emul))
+	if (exec_sigcode_map(p, pack.ep_es->es_emul)) {
+		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
+	}
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
