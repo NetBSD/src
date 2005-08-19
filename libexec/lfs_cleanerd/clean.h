@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.20 2005/02/26 05:43:04 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.21 2005/08/19 02:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,21 +114,22 @@ typedef struct fs_info {
  * USEFUL DEBUGGING FUNCTIONS:
  */
 #define PRINT_FINFO(fp, ip) if(debug > 1) { \
-	syslog(LOG_DEBUG,"    %s %s%d version %d nblocks %d\n", \
+	syslog(LOG_DEBUG,"    %s %s%u version %d nblocks %d\n", \
 	    (ip)->if_version > (fp)->fi_version ? "TOSSING" : "KEEPING", \
 	    "FINFO for inode: ", (fp)->fi_ino, \
 	    (fp)->fi_version, (fp)->fi_nblocks); \
 }
 
 #define PRINT_INODE(b, bip) if(debug > 1) { \
-	syslog(LOG_DEBUG,"\t%s inode: %d daddr: 0x%lx create: %s\n", \
-	    b ? "KEEPING" : "TOSSING", (bip)->bi_inode, (long)(bip)->bi_daddr, \
-	    ctime((time_t *)&(bip)->bi_segcreate)); \
+	syslog(LOG_DEBUG,"\t%s inode: %llu daddr: 0x%lx create: %s\n", \
+	    b ? "KEEPING" : "TOSSING", (unsigned long long)(bip)->bi_inode, \
+	    (long)(bip)->bi_daddr, ctime((time_t *)&(bip)->bi_segcreate)); \
 }
 
 #define PRINT_BINFO(bip) if(debug > 1 ) { \
-	syslog(LOG_DEBUG,"\tinode: %d lbn: %d daddr: 0x%lx create: %s\n", \
-	    (bip)->bi_inode, (bip)->bi_lbn, (unsigned long)(bip)->bi_daddr, \
+	syslog(LOG_DEBUG,"\tinode: %llu lbn: %d daddr: 0x%lx create: %s\n", \
+	    (unsigned long long)(bip)->bi_inode, (bip)->bi_lbn, \
+	    (unsigned long)(bip)->bi_daddr, \
 	    ctime((time_t *)&(bip)->bi_segcreate)); \
 }
 

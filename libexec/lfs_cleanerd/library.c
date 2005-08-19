@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.43 2005/05/03 00:20:17 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.44 2005/08/19 02:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.43 2005/05/03 00:20:17 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.44 2005/08/19 02:06:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,8 +215,8 @@ get_dinode(FS_INFO *fsp, ino_t ino)
 			break;
 	if (dip == dib + lfsp->lfs_inopb) {
 		free(dib);
-		syslog(LOG_WARNING, "dinode %d not found at fsb 0x%x",
-		    ino, bi.bi_daddr);
+		syslog(LOG_WARNING, "dinode %llu not found at fsb 0x%x",
+		    (unsigned long long)ino, bi.bi_daddr);
 		return NULL;
 	}
         dino = *dip; /* structure copy */
@@ -798,7 +798,8 @@ bi_compare(const void *a, const void *b)
 	if ((diff = (int)(ba->bi_daddr - bb->bi_daddr)))
 		return (diff);
 	if(ba->bi_inode != LFS_IFILE_INUM && debug)
-		syslog(LOG_DEBUG,"bi_compare: using kludge on ino %d!", ba->bi_inode);
+		syslog(LOG_DEBUG,"bi_compare: using kludge on ino %llu!",
+		    ba->bi_inode);
 	diff = ba->bi_size - bb->bi_size;
 	return diff;
 }

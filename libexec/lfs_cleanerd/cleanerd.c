@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.54 2005/04/23 19:47:51 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.55 2005/08/19 02:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.54 2005/04/23 19:47:51 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.55 2005/08/19 02:06:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -838,13 +838,14 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 				(long long)fsbtob(lfsp, tba[i].bi_daddr - seg_addr),
 				tba[i].bi_bp, seg_buf,
 				(long)(((char *)(tba[i].bi_bp) - seg_buf)));
-			syslog(LOG_ERR, "seg %d (0x%llx), ino %d lbn %d, 0x%x != 0x%llx",
-			       id, (long long)seg_addr,
-			       tba[i].bi_inode,
-			       tba[i].bi_lbn,
-			       tba[i].bi_daddr,
-			       (long long)(seg_addr +
-			       btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)));
+			syslog(LOG_ERR, "seg %d (0x%llx), ino %llu lbn %d, "
+			    "0x%x != 0x%llx",
+			    id, (long long)seg_addr,
+			    (unsigned long long)tba[i].bi_inode,
+			    tba[i].bi_lbn,
+			    tba[i].bi_daddr,
+			    (long long)(seg_addr +
+			    btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)));
 			error = EFAULT;
 			goto out;
 
@@ -864,8 +865,10 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 					}
 				}
 				if(j<0) {
-					syslog(LOG_ERR, "lost inode %d in the shuffle! (blk %d)",
-					       tba[i].bi_inode, tba[i].bi_daddr);
+					syslog(LOG_ERR, "lost inode %llu in "
+					    "the shuffle! (blk %d)",
+					    (unsigned long long)tba[i].bi_inode,
+					    tba[i].bi_daddr);
 					if (debug) {
 						syslog(LOG_DEBUG,
 						   "inode numbers found were:");
@@ -876,9 +879,10 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 					}
 					errx(1, "lost inode");
 				} else if (debug > 1) {
-					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x",
-					       tba[i].bi_inode,
-					       tba[i].bi_daddr);
+					syslog(LOG_DEBUG,"Ino %llu corrected "
+					    "to 0x%x",
+					    (unsigned long long)tba[i].bi_inode,
+					    tba[i].bi_daddr);
 				}
 			} else {
 				tba[i].bi_bp = seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr);
