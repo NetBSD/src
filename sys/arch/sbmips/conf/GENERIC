@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.42 2005/07/31 04:04:44 yamt Exp $
+# $NetBSD: GENERIC,v 1.43 2005/08/19 02:03:53 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -48,6 +48,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.22 2005/07/25 00:48:22 christos Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.23 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.22 2005/07/25 00:48:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.23 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,8 +306,9 @@ ntfs_print(ap)
 {
 	struct ntnode *ip = VTONT(ap->a_vp);
 
-	printf("tag VT_NTFS, ino %u, flag %#x, usecount %d, nlink %ld\n",
-	    ip->i_number, ip->i_flag, ip->i_usecount, ip->i_nlink);
+	printf("tag VT_NTFS, ino %llu, flag %#x, usecount %d, nlink %ld\n",
+	    (unsigned long long)ip->i_number, ip->i_flag, ip->i_usecount,
+	    ip->i_nlink);
 	printf("       ");
 	lockmgr_printinfo(ap->a_vp->v_vnlock);
 	printf("\n");

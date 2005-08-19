@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2005/07/31 04:04:31 yamt Exp $
+# $NetBSD: GENERIC,v 1.59 2005/08/19 02:03:51 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -64,6 +64,7 @@ options 	SYMTAB_SPACE=220000
 # Compatibility options
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

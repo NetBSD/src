@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.119 2005/08/18 22:06:25 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.120 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.119 2005/08/18 22:06:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.120 2005/08/19 02:04:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -801,6 +801,26 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
+static int
+vnd_cget(struct proc *p, int unit, int *un, struct vattr *va)
+{
+	struct vnd_softc *vnd;
+
+	if (*un == -1)
+		*un = unit;
+	if (*un >= numvnd)
+		return ENXIO;
+	if (*un < 0)
+		return EINVAL;
+
+	vnd = &vnd_softc[*un];
+
+	if ((vnd->sc_flags & VNF_INITED) == 0)
+		return 0;
+
+	return VOP_GETATTR(vnd->sc_vp, va, p->p_ucred, p);
+}
+
 /* ARGSUSED */
 static int
 vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
@@ -1163,34 +1183,44 @@ unlock_and_exit:
 
 		break;
 
-	case VNDIOCGET: {
-		struct vnd_user *vnu;
+#ifdef COMPAT_30
+	case VNDIOOCGET: {
+		struct vnd_ouser *vnu;
 		struct vattr va;
-
-		vnu = (struct vnd_user *)data;
-
-		if (vnu->vnu_unit == -1)
-			vnu->vnu_unit = unit;
-		if (vnu->vnu_unit >= numvnd)
-			return (ENXIO);
-		if (vnu->vnu_unit < 0)
-			return (EINVAL);
-
-		vnd = &vnd_softc[vnu->vnu_unit];
-
-		if (vnd->sc_flags & VNF_INITED) {
-			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, p);
-			if (error)
-				return (error);
+		vnu = (struct vnd_ouser *)data;
+		switch (error = vnd_cget(p, unit, &vnu->vnu_unit, &va)) {
+		case 0:
 			vnu->vnu_dev = va.va_fsid;
 			vnu->vnu_ino = va.va_fileid;
-		}
-		else {
+			break;
+		case -1:
 			/* unused is not an error */
 			vnu->vnu_dev = 0;
 			vnu->vnu_ino = 0;
+			break;
+		default:
+			return error;
 		}
-
+		break;
+	}
+#endif
+	case VNDIOCGET: {
+		struct vnd_user *vnu;
+		struct vattr va;
+		vnu = (struct vnd_user *)data;
+		switch (error = vnd_cget(p, unit, &vnu->vnu_unit, &va)) {
+		case 0:
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+			break;
+		case -1:
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+			break;
+		default:
+			return error;
+		}
 		break;
 	}
 

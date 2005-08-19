@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.39 2005/08/05 09:23:17 skrll Exp $
+#	$NetBSD: NATSUMI,v 1.40 2005/08/19 02:03:53 christos Exp $
 #
 #	for development
 #
@@ -50,6 +50,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_LINUX	# binary compatibility with Linux

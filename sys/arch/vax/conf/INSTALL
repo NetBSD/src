@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.37 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: INSTALL,v 1.38 2005/08/19 02:03:57 christos Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -95,6 +95,7 @@ options 	WSEMUL_VT100
 options 	COMPAT_14
 options 	COMPAT_15
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

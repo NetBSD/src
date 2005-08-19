@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.46 2005/07/31 04:04:43 yamt Exp $
+#	$NetBSD: GENERICSBC,v 1.47 2005/08/19 02:03:52 christos Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.46 $"
+#ident 		"GENERICSBC-$Revision: 1.47 $"
 
 maxusers	16		# estimated number of users
 
@@ -66,6 +66,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
