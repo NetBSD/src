@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.133 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.134 2005/08/19 10:08:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.133 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.134 2005/08/19 10:08:48 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -326,7 +326,7 @@ diragain:
 		 * stale. Flush it and try again (i.e. go to
 		 * the server).
 		 */
-		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(edp) > edp ||
+		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(dp) > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
 		    	printf("invalid cache: %p %p %p off %lx %lx\n",
