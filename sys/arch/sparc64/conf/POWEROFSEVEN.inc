@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.38 2005/08/19 02:03:53 christos Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.39 2005/08/19 05:20:03 christos Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -145,6 +145,7 @@ file-system	MFS		# memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server

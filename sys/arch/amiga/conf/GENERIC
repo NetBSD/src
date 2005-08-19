@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.224 2005/08/19 02:03:49 christos Exp $
+# $NetBSD: GENERIC,v 1.225 2005/08/19 05:19:49 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.224 $"
+#ident 		"GENERIC-$Revision: 1.225 $"
 
 
 maxusers	8
@@ -120,7 +120,7 @@ file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system    PTYFS           # experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 

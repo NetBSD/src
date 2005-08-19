@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17 2005/02/18 21:05:52 dsl Exp $
+# 	$NetBSD: INSTALL,v 1.18 2005/08/19 05:19:53 christos Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -42,6 +42,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Options for saving space in install kernels
 options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS

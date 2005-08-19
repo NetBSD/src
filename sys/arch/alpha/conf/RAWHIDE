@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.25 2005/08/19 02:03:49 christos Exp $
+# $NetBSD: RAWHIDE,v 1.26 2005/08/19 05:19:49 christos Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -28,6 +28,7 @@ file-system	PORTAL		# Portal file system
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 

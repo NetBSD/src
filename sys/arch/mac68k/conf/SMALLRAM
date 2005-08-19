@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.21 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: SMALLRAM,v 1.22 2005/08/19 05:19:53 christos Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.21 $"
+#ident 		"SMALLRAM-$Revision: 1.22 $"
 
 maxusers	8
 
@@ -105,6 +105,7 @@ file-system 	NFS		# Network File System client
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system 	CODA		# Venus/Coda distributed file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas

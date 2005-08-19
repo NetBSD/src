@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.22 2005/07/07 17:05:58 tron Exp $
+# $NetBSD: INSTALL,v 1.23 2005/08/19 05:20:03 christos Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.22 $"
+#ident 		"INSTALL-$Revision: 1.23 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -62,6 +62,7 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	MFS		# memory-based filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas

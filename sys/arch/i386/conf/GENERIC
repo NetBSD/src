@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.695 2005/08/19 02:03:51 christos Exp $
+# $NetBSD: GENERIC,v 1.696 2005/08/19 05:19:50 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.695 $"
+#ident 		"GENERIC-$Revision: 1.696 $"
 
 maxusers	32		# estimated number of users
 
@@ -162,7 +162,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/ptm support
 
 # File system options
 options 	QUOTA		# UFS quotas

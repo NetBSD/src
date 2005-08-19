@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2005/08/19 02:03:57 christos Exp $
+#	$NetBSD: INSTALL,v 1.39 2005/08/19 05:20:03 christos Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -60,6 +60,7 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 file-system 	CD9660
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	QUOTA

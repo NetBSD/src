@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.31 2005/07/31 04:04:43 yamt Exp $
+#	$NetBSD: MMTAROMNEW,v 1.32 2005/08/19 05:19:53 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -85,6 +85,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

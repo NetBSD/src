@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.22 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: RAMDISK,v 1.23 2005/08/19 05:19:53 christos Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -34,6 +34,7 @@ file-system 	FFS
 file-system 	NFS
 file-system 	KERNFS
 file-system 	CD9660
+#file-system	PTYFS		# /dev/pts/N support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options

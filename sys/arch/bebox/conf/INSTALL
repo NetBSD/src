@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 2005/08/19 02:03:49 christos Exp $
+#	$NetBSD: INSTALL,v 1.33 2005/08/19 05:19:50 christos Exp $
 #
 # First try for BEBOX config file
 #
@@ -62,6 +62,7 @@ file-system 	KERNFS
 #file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space

@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.40 2005/08/19 02:03:49 christos Exp $
+# $NetBSD: BASIL,v 1.41 2005/08/19 05:19:49 christos Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.40 $"
+#ident 		"BASIL-$Revision: 1.41 $"
 
 maxusers 64
 
@@ -50,6 +50,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 file-system	FDESC		# File descriptor file system (/dev/fd)
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server

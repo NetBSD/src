@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.50 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: POWERMAC,v 1.51 2005/08/19 05:19:53 christos Exp $
 #
 # POWERMAC config file
 #
@@ -39,6 +39,7 @@ file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
 #file-system 	NFS		# Network File System client
 file-system 	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Network File System server

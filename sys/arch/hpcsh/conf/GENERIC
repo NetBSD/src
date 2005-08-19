@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2005/08/19 02:03:51 christos Exp $
+# $NetBSD: GENERIC,v 1.55 2005/08/19 05:19:50 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -130,7 +130,7 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support

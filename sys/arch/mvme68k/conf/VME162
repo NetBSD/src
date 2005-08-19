@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.22 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: VME162,v 1.23 2005/08/19 05:19:53 christos Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -29,6 +29,7 @@ file-system 	MFS
 file-system 	CD9660
 #file-system	MSDOSFS
 #file-system	UNION
+#file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support

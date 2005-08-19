@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.27 2005/08/19 02:03:53 christos Exp $
+#	$NetBSD: SALMON,v 1.28 2005/08/19 05:19:54 christos Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -43,6 +43,7 @@ file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
 file-system	MSDOSFS			# MS-DOS FAT file system
 file-system 	FDESC			# /dev/fd
 file-system 	KERNFS			# kernel file system; recommended
+file-system	PTYFS			# /dev/pts/N support
 
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server

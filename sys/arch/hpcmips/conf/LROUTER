@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.27 2005/07/31 04:04:31 yamt Exp $
+# 	$NetBSD: LROUTER,v 1.28 2005/08/19 05:19:50 christos Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -73,6 +73,7 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.

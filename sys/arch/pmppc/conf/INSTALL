@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 2005/08/19 02:03:53 christos Exp $
+#	$NetBSD: INSTALL,v 1.19 2005/08/19 05:19:54 christos Exp $
 #
 #	INSTALL
 #
@@ -79,6 +79,7 @@ file-system 	NFS		# Network File System client
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

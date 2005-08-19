@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.68 2005/08/05 09:23:16 skrll Exp $
+#	$NetBSD: TX3922,v 1.69 2005/08/19 05:19:50 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -64,6 +64,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.66 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: IOPENER,v 1.67 2005/08/19 05:19:51 christos Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.66 $"
+#ident 		"IOPENER-$Revision: 1.67 $"
 
 maxusers	32		# estimated number of users
 
@@ -99,6 +99,7 @@ file-system 	KERNFS		# /kern
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

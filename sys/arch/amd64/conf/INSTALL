@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.37 2005/08/05 09:23:16 skrll Exp $
+# $NetBSD: INSTALL,v 1.38 2005/08/19 05:19:49 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.37 $"
+#ident 		"INSTALL-$Revision: 1.38 $"
 
 maxusers	32		# estimated number of users
 
@@ -86,6 +86,7 @@ file-system 	KERNFS		# /kern
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

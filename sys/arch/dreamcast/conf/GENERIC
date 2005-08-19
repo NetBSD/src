@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2005/08/19 02:03:51 christos Exp $
+# $NetBSD: GENERIC,v 1.60 2005/08/19 05:19:50 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -89,7 +89,7 @@ file-system 	PROCFS		# /proc
 #file-system	PORTAL		# portal file system (still experimental)
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
-#file-system	PTYFS		# experimental - /dev/ptm support
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
