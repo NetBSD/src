@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.143 2005/04/12 16:27:42 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.144 2005/08/19 02:04:54 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
-SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
-	closefrom.c confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
-	disklabel.c err.c errx.c __errlist14.c errlist.c errno.c execl.c \
-	execle.c execlp.c execv.c execvp.c extattr.c \
-	fmtcheck.c fmtmsg.c fnmatch.c \
-	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
+SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
+	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
+	devname.c dirname.c disklabel.c err.c errx.c __errlist14.c errlist.c \
+	errno.c execl.c execle.c execlp.c execv.c execvp.c extattr.c \
+	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c __fts13.c __fts30.c \
+	fts.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c __getmntinfo13.c \
@@ -18,9 +18,9 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	getusershell.c __glob13.c glob.c humanize_number.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	pause.c popen.c psignal.c pthread_atfork.c pwcache.c pw_scan.c \
-	raise.c randomid.c readdir.c rewinddir.c \
-	scandir.c seekdir.c setdomainname.c \
+	__opendir30.c pause.c popen.c psignal.c pthread_atfork.c pwcache.c \
+	pw_scan.c raise.c randomid.c readdir.c __readdir30.c rewinddir.c \
+	scandir.c __scandir30.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	__siglist14.c siglist.c signal.c __signame14.c signame.c sigrelse.c \
