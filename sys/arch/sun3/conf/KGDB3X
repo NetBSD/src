@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.46 2005/08/19 02:03:57 christos Exp $
+# $NetBSD: KGDB3X,v 1.47 2005/08/19 05:20:03 christos Exp $
 
 # KGDB3X Sun3X (3/80, 3/470)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -73,6 +73,7 @@ file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas

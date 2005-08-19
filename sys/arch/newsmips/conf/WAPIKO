@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.30 2005/08/19 02:03:52 christos Exp $
+# 	$NetBSD: WAPIKO,v 1.31 2005/08/19 05:19:54 christos Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -46,6 +46,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	MFS		# memory-based filesystem
 file-system	PROCFS		# /proc
 options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+#file-system	PTYFS		# /dev/pts/N support
 
 # Networking options
 options 	INET		# Internet protocols

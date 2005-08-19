@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.27 2005/08/19 02:03:51 christos Exp $
+#	$NetBSD: SMDK2800,v 1.28 2005/08/19 05:19:50 christos Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -50,6 +50,7 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

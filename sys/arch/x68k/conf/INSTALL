@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.69 2005/08/19 02:03:57 christos Exp $
+#	$NetBSD: INSTALL,v 1.70 2005/08/19 05:20:03 christos Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.69 $"
+#ident 		"INSTALL-$Revision: 1.70 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -173,6 +173,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system (a little buggy)
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server

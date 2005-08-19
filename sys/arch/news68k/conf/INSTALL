@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.32 2005/08/19 02:03:52 christos Exp $
+# 	$NetBSD: INSTALL,v 1.33 2005/08/19 05:19:54 christos Exp $
 
 #	config for bootable floppy kernel
 #
@@ -62,6 +62,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #file-system	FDESC		# /dev/fd/*
 #file-system	NULLFS		# loopback file system
 #file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	NFSSERVER	# nfs server support
