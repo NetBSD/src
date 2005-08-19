@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.13 2005/08/01 15:14:54 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.14 2005/08/19 08:50:06 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.13 2005/08/01 15:14:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.14 2005/08/19 08:50:06 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -90,16 +90,28 @@ static const struct ieee80211_rateset iwi_rateset_11g =
 static int iwi_match(struct device *, struct cfdata *, void *);
 static void iwi_attach(struct device *, struct device *, void *);
 static int iwi_detach(struct device *, int);
-static int iwi_dma_alloc(struct iwi_softc *);
-static void iwi_release(struct iwi_softc *);
+
+static int iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
+    int);
+static void iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
+static void iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
+static int iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
+    int);
+static void iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
+static void iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
+static int iwi_alloc_rx_ring(struct iwi_softc *, struct iwi_rx_ring *,
+    int);
+static void iwi_reset_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
+static void iwi_free_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
+
 static int iwi_media_change(struct ifnet *);
 static void iwi_media_status(struct ifnet *, struct ifmediareq *);
 static u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
 static int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void iwi_fix_channel(struct ieee80211com *, struct mbuf *);
-static void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_buf *, int,
+static void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_data *, int,
     struct iwi_frame *);
-static void iwi_notification_intr(struct iwi_softc *, struct iwi_rx_buf *,
+static void iwi_notification_intr(struct iwi_softc *, struct iwi_rx_data *,
     struct iwi_notif *);
 static void iwi_rx_intr(struct iwi_softc *);
 static void iwi_tx_intr(struct iwi_softc *);
@@ -242,10 +254,25 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (iwi_dma_alloc(sc) != 0) {
-		aprint_error("%s: could not allocate DMA resources\n",
+	/*
+	 * Allocate rings.
+	 */
+	if (iwi_alloc_cmd_ring(sc, &sc->cmdq, IWI_CMD_RING_COUNT) != 0) {
+		aprint_error("%s: could not allocate command ring\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto fail;
+	}
+
+	if (iwi_alloc_tx_ring(sc, &sc->txq, IWI_TX_RING_COUNT) != 0) {
+		aprint_error("%s: could not allocate Tx ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	if (iwi_alloc_rx_ring(sc, &sc->rxq, IWI_RX_RING_COUNT) != 0) {
+		aprint_error("%s: could not allocate Rx ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
 	}
 
 	ic->ic_ifp = ifp;
@@ -339,6 +366,10 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->dwelltime = 100;
 	sc->bluetooth = 1;
 	sc->antenna = 0;
+
+	return;
+
+fail:	iwi_detach(self, 0);
 }
 
 static int
@@ -356,7 +387,9 @@ iwi_detach(struct device* self, int flags)
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 
-	iwi_release(sc);
+	iwi_free_cmd_ring(sc, &sc->cmdq);
+	iwi_free_tx_ring(sc, &sc->txq);
+	iwi_free_rx_ring(sc, &sc->rxq);
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
@@ -369,59 +402,22 @@ iwi_detach(struct device* self, int flags)
 }
 
 static int
-iwi_dma_alloc(struct iwi_softc *sc)
+iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
+    int count)
 {
-	int i, nsegs, error;
+	int error, nsegs;
 
-	/*
-	 * Allocate and map Tx ring
-	 */
-	error = bus_dmamap_create(sc->sc_dmat,
-	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE, 1,
-	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE, 0, BUS_DMA_NOWAIT,
-	    &sc->tx_ring_map);
-	if (error != 0) {
-		aprint_error("%s: could not create tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE, PAGE_SIZE, 0,
-	    &sc->tx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not allocate tx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &sc->tx_ring_seg, nsegs,
-	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE,
-	    (caddr_t *)&sc->tx_desc, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not map tx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->tx_ring_map, sc->tx_desc,
-	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE, NULL,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not load tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	memset(sc->tx_desc, 0, sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE);
+	ring->count = count;
+	ring->queued = 0;
+	ring->cur = ring->next = 0;
 
 	/*
 	 * Allocate and map command ring
 	 */
 	error = bus_dmamap_create(sc->sc_dmat,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE, 1,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE, 0,
-	    BUS_DMA_NOWAIT, &sc->cmd_ring_map);
+	    sizeof (struct iwi_cmd_desc) * count, 1,
+	    sizeof (struct iwi_cmd_desc) * count, 0,
+	    BUS_DMA_NOWAIT, &ring->desc_map);
 	if (error != 0) {
 		aprint_error("%s: could not create command ring DMA map\n",
 		    sc->sc_dev.dv_xname);
@@ -429,25 +425,25 @@ iwi_dma_alloc(struct iwi_softc *sc)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE, PAGE_SIZE, 0,
-	    &sc->cmd_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	    sizeof (struct iwi_cmd_desc) * count, PAGE_SIZE, 0,
+	    &sc->cmdq.desc_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not allocate command ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &sc->cmd_ring_seg, nsegs,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE,
-	    (caddr_t *)&sc->cmd_desc, BUS_DMA_NOWAIT);
+	error = bus_dmamem_map(sc->sc_dmat, &sc->cmdq.desc_seg, nsegs,
+	    sizeof (struct iwi_cmd_desc) * count,
+	    (caddr_t *)&sc->cmdq.desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map command ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, sc->cmd_ring_map, sc->cmd_desc,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE, NULL,
+	error = bus_dmamap_load(sc->sc_dmat, sc->cmdq.desc_map, sc->cmdq.desc,
+	    sizeof (struct iwi_cmd_desc) * count, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not load command ring DMA map\n",
@@ -455,54 +451,216 @@ iwi_dma_alloc(struct iwi_softc *sc)
 		goto fail;
 	}
 
-	memset(sc->cmd_desc, 0,
-	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE);
+	memset(sc->cmdq.desc, 0,
+	    sizeof (struct iwi_cmd_desc) * count);
+
+	return 0;
+
+fail:	iwi_free_cmd_ring(sc, ring);
+	return error;
+}
+
+static void
+iwi_reset_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
+{
+	ring->queued = 0;
+	ring->cur = ring->next = 0;
+}
+
+static void
+iwi_free_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
+{
+	if (ring->desc_map != NULL) {
+		if (ring->desc != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ring->desc_map);
+			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+			    sizeof (struct iwi_cmd_desc) * ring->count);
+			bus_dmamem_free(sc->sc_dmat, &ring->desc_seg, 1);
+		}
+		bus_dmamap_destroy(sc->sc_dmat, ring->desc_map);
+	}
+}
+
+static int
+iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
+    int count)
+{
+	int i, error, nsegs;
+
+	ring->count = count;
+	ring->queued = 0;
+	ring->cur = ring->next = 0;
+
+	/*
+	 * Allocate and map Tx ring
+	 */
+	error = bus_dmamap_create(sc->sc_dmat,
+	    sizeof (struct iwi_tx_desc) * count, 1,
+	    sizeof (struct iwi_tx_desc) * count, 0, BUS_DMA_NOWAIT,
+	    &ring->desc_map);
+	if (error != 0) {
+		aprint_error("%s: could not create tx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof (struct iwi_tx_desc) * count, PAGE_SIZE, 0,
+	    &ring->desc_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: could not allocate tx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &ring->desc_seg, nsegs,
+	    sizeof (struct iwi_tx_desc) * count,
+	    (caddr_t *)&ring->desc, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: could not map tx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, ring->desc_map, ring->desc,
+	    sizeof (struct iwi_tx_desc) * count, NULL,
+	    BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: could not load tx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	memset(ring->desc, 0, sizeof (struct iwi_tx_desc) * count);
+
+	ring->data = malloc(count * sizeof (struct iwi_tx_data), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (ring->data == NULL) {
+		aprint_error("%s: could not allocate soft data\n",
+		    sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto fail;
+	}
 
 	/*
 	 * Allocate Tx buffers DMA maps
 	 */
-	for (i = 0; i < IWI_TX_RING_SIZE; i++) {
+	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, IWI_MAX_NSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_buf[i].map);
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &ring->data[i].map);
 		if (error != 0) {
 			aprint_error("%s: could not create tx buf DMA map",
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 	}
+	return 0;
+
+fail:	iwi_free_tx_ring(sc, ring);
+	return error;
+}
+
+static void
+iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
+{
+	struct iwi_tx_data *data;
+	int i;
+
+	for (i = 0; i < ring->count; i++) {
+		data = &ring->data[i];
+
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
+			data->m = NULL;
+		}
+
+		if (data->ni != NULL) {
+			ieee80211_free_node(data->ni);
+			data->ni = NULL;
+		}
+	}
+
+	ring->queued = 0;
+	ring->cur = ring->next = 0;
+}
+
+static void
+iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
+{
+	int i;
+
+	if (ring->desc_map != NULL) {
+		if (ring->desc != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ring->desc_map);
+			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+			    sizeof (struct iwi_tx_desc) * ring->count);
+			bus_dmamem_free(sc->sc_dmat, &ring->desc_seg, 1);
+		}
+		bus_dmamap_destroy(sc->sc_dmat, ring->desc_map);
+	}
+
+	for (i = 0; i < ring->count; i++) {
+		if (ring->data[i].m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ring->data[i].map);
+			m_freem(ring->data[i].m);
+		}
+		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
+	}
+}
+
+static int
+iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
+    int count)
+{
+	int i, error;
+
+	ring->count = count;
+	ring->cur = 0;
+
+	ring->data = malloc(count * sizeof (struct iwi_rx_data), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (ring->data == NULL) {
+		aprint_error("%s: could not allocate soft data\n",
+		    sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto fail;
+	}
 
 	/*
 	 * Allocate and map Rx buffers
 	 */
-	for (i = 0; i < IWI_RX_RING_SIZE; i++) {
+	for (i = 0; i < count; i++) {
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &sc->rx_buf[i].map);
+		    0, BUS_DMA_NOWAIT, &ring->data[i].map);
 		if (error != 0) {
 			aprint_error("%s: could not create rx buf DMA map",
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 
-		MGETHDR(sc->rx_buf[i].m, M_DONTWAIT, MT_DATA);
-		if (sc->rx_buf[i].m == NULL) {
+		MGETHDR(ring->data[i].m, M_DONTWAIT, MT_DATA);
+		if (ring->data[i].m == NULL) {
 			aprint_error("%s: could not allocate rx mbuf\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
 
-		MCLGET(sc->rx_buf[i].m, M_DONTWAIT);
-		if (!(sc->rx_buf[i].m->m_flags & M_EXT)) {
-			m_freem(sc->rx_buf[i].m);
+		MCLGET(ring->data[i].m, M_DONTWAIT);
+		if (!(ring->data[i].m->m_flags & M_EXT)) {
+			m_freem(ring->data[i].m);
 			aprint_error("%s: could not allocate rx mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
 
-		error = bus_dmamap_load(sc->sc_dmat, sc->rx_buf[i].map,
-		    mtod(sc->rx_buf[i].m, void *), MCLBYTES, NULL,
+		error = bus_dmamap_load(sc->sc_dmat, ring->data[i].map,
+		    mtod(ring->data[i].m, void *), MCLBYTES, NULL,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			aprint_error("%s: could not load rx buffer DMA map\n",
@@ -513,49 +671,27 @@ iwi_dma_alloc(struct iwi_softc *sc)
 
 	return 0;
 
-fail:	iwi_release(sc);
+fail:	iwi_free_rx_ring(sc, ring);
 	return error;
 }
 
 static void
-iwi_release(struct iwi_softc *sc)
+iwi_reset_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
+{
+	ring->cur = 0;
+}
+
+static void
+iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 {
 	int i;
 
-	if (sc->tx_ring_map != NULL) {
-		if (sc->tx_desc != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->tx_ring_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->tx_desc,
-			    sizeof (struct iwi_tx_desc) * IWI_TX_RING_SIZE);
-			bus_dmamem_free(sc->sc_dmat, &sc->tx_ring_seg, 1);
+	for (i = 0; i < ring->count; i++) {
+		if (ring->data[i].m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ring->data[i].map);
+			m_freem(ring->data[i].m);
 		}
-		bus_dmamap_destroy(sc->sc_dmat, sc->tx_ring_map);
-	}
-
-	if (sc->cmd_ring_map != NULL) {
-		if (sc->cmd_desc != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->cmd_ring_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->cmd_desc,
-			    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_SIZE);
-			bus_dmamem_free(sc->sc_dmat, &sc->cmd_ring_seg, 1);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, sc->cmd_ring_map);
-	}
-
-	for (i = 0; i < IWI_TX_RING_SIZE; i++) {
-		if (sc->tx_buf[i].m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->tx_buf[i].map);
-			m_freem(sc->tx_buf[i].m);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, sc->tx_buf[i].map);
-	}
-
-	for (i = 0; i < IWI_RX_RING_SIZE; i++) {
-		if (sc->rx_buf[i].m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->rx_buf[i].map);
-			m_freem(sc->rx_buf[i].m);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, sc->rx_buf[i].map);
+		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
 	}
 }
 
@@ -661,7 +797,6 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		return (*sc->sc_newstate)(ic, nstate,
 		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
-		break;
 
 	case IEEE80211_S_ASSOC:
 		break;
@@ -769,7 +904,7 @@ iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 }
 
 static void
-iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
+iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
     struct iwi_frame *frame)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -779,22 +914,24 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	struct ieee80211_node *ni;
 	int error;
 
-	DPRINTFN(5, ("RX!DATA!%u!%u!%u\n", le16toh(frame->len), frame->chan,
-	    frame->rssi_dbm));
+	DPRINTFN(5, ("received frame len=%u chan=%u rssi=%u\n",
+	    le16toh(frame->len), frame->chan, frame->rssi_dbm));
 
-	bus_dmamap_sync(sc->sc_dmat, buf->map, sizeof (struct iwi_hdr),
+	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (struct iwi_hdr),
 	    sizeof (struct iwi_frame) + le16toh(frame->len),
 	    BUS_DMASYNC_POSTREAD);
 
 	if (le16toh(frame->len) < sizeof (struct ieee80211_frame) ||
 	    le16toh(frame->len) > MCLBYTES) {
-		aprint_error("%s: bad frame length\n", sc->sc_dev.dv_xname);
+		DPRINTF(("%s: bad frame length\n", sc->sc_dev.dv_xname));
+		ifp->if_ierrors++;
+		return;
 	}
 
-	bus_dmamap_unload(sc->sc_dmat, buf->map);
+	bus_dmamap_unload(sc->sc_dmat, data->map);
 
 	/* Finalize mbuf */
-	m = buf->m;
+	m = data->m;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = sizeof (struct iwi_hdr) +
 	    sizeof (struct iwi_frame) + le16toh(frame->len);
@@ -807,6 +944,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwi_rx_radiotap_header *tap = &sc->sc_rxtap;
+
 		tap->wr_flags = 0;
 		tap->wr_rate = frame->rate;
 		tap->wr_chan_freq =
@@ -829,37 +967,37 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	/* node is no longer needed */
 	ieee80211_free_node(ni);
 
-	MGETHDR(buf->m, M_DONTWAIT, MT_DATA);
-	if (buf->m == NULL) {
+	MGETHDR(data->m, M_DONTWAIT, MT_DATA);
+	if (data->m == NULL) {
 		aprint_error("%s: could not allocate rx mbuf\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	MCLGET(buf->m, M_DONTWAIT);
-	if (!(buf->m->m_flags & M_EXT)) {
+	MCLGET(data->m, M_DONTWAIT);
+	if (!(data->m->m_flags & M_EXT)) {
 		aprint_error("%s: could not allocate rx mbuf cluster\n",
 		    sc->sc_dev.dv_xname);
-		m_freem(buf->m);
-		buf->m = NULL;
+		m_freem(data->m);
+		data->m = NULL;
 		return;
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, buf->map, mtod(buf->m, void *),
+	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(data->m, void *),
 	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not load rx buf DMA map\n",
 		    sc->sc_dev.dv_xname);
-		m_freem(buf->m);
-		buf->m = NULL;
+		m_freem(data->m);
+		data->m = NULL;
 		return;
 	}
 
-	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, data->map->dm_segs[0].ds_addr);
 }
 
 static void
-iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
+iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *buf,
     struct iwi_notif *notif)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -876,7 +1014,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 	case IWI_NOTIF_TYPE_SCAN_CHANNEL:
 		chan = (struct iwi_notif_scan_channel *)(notif + 1);
 
-		DPRINTFN(2, ("Scan channel (%u)\n", chan->nchan));
+		DPRINTFN(2, ("Scanning channel (%u)\n", chan->nchan));
 		break;
 
 	case IWI_NOTIF_TYPE_SCAN_COMPLETE:
@@ -953,30 +1091,28 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 static void
 iwi_rx_intr(struct iwi_softc *sc)
 {
-	struct iwi_rx_buf *buf;
+	struct iwi_rx_data *data;
 	struct iwi_hdr *hdr;
-	u_int32_t r, i;
+	uint32_t hw;
 
-	r = CSR_READ_4(sc, IWI_CSR_RX_READ_INDEX);
+	hw = CSR_READ_4(sc, IWI_CSR_RX_RIDX);
 
-	for (i = (sc->rx_cur + 1) % IWI_RX_RING_SIZE; i != r;
-	     i = (i + 1) % IWI_RX_RING_SIZE) {
+	for (; sc->rxq.cur != hw;) {
+		data = &sc->rxq.data[sc->rxq.cur];
 
-		buf = &sc->rx_buf[i];
-
-		bus_dmamap_sync(sc->sc_dmat, buf->map, 0,
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    sizeof (struct iwi_hdr), BUS_DMASYNC_POSTREAD);
 
-		hdr = mtod(buf->m, struct iwi_hdr *);
+		hdr = mtod(data->m, struct iwi_hdr *);
 
 		switch (hdr->type) {
 		case IWI_HDR_TYPE_FRAME:
-			iwi_frame_intr(sc, buf, i,
+			iwi_frame_intr(sc, data, sc->rxq.cur,
 			    (struct iwi_frame *)(hdr + 1));
 			break;
 
 		case IWI_HDR_TYPE_NOTIF:
-			iwi_notification_intr(sc, buf,
+			iwi_notification_intr(sc, data,
 			    (struct iwi_notif *)(hdr + 1));
 			break;
 
@@ -984,45 +1120,50 @@ iwi_rx_intr(struct iwi_softc *sc)
 			aprint_error("%s: unknown hdr type %u\n",
 			    sc->sc_dev.dv_xname, hdr->type);
 		}
+
+		DPRINTFN(15, ("rx done idx=%u\n", sc->rxq.cur));
+
+		sc->rxq.cur = (sc->rxq.cur + 1) % sc->rxq.count;
 	}
 
+
 	/* Tell the firmware what we have processed */
-	sc->rx_cur = (r == 0) ? IWI_RX_RING_SIZE - 1 : r - 1;
-	CSR_WRITE_4(sc, IWI_CSR_RX_WRITE_INDEX, sc->rx_cur);
+	hw = (hw == 0) ? sc->rxq.count - 1 : hw - 1;
+	CSR_WRITE_4(sc, IWI_CSR_RX_WIDX, hw);
 }
 
 static void
 iwi_tx_intr(struct iwi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct iwi_tx_buf *buf;
-	u_int32_t r, i;
+	struct iwi_tx_data *data;
+	u_int32_t hw;
 
-	r = CSR_READ_4(sc, IWI_CSR_TX1_READ_INDEX);
+	hw = CSR_READ_4(sc, IWI_CSR_TX1_RIDX);
 
-	for (i = (sc->tx_old + 1) % IWI_TX_RING_SIZE; i != r;
-	     i = (i + 1) % IWI_TX_RING_SIZE) {
+	for (; sc->txq.next != hw;) {
+		data = &sc->txq.data[sc->txq.next];
 
-		buf = &sc->tx_buf[i];
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, data->map);
+		m_freem(data->m);
+		data->m = NULL;
+		ieee80211_free_node(data->ni);
+		data->ni = NULL;
 
-		bus_dmamap_unload(sc->sc_dmat, buf->map);
-		m_freem(buf->m);
-		buf->m = NULL;
-		ieee80211_free_node(buf->ni);
-		buf->ni = NULL;
+		DPRINTFN(15, ("tx done idx=%u\n", sc->txq.next));
 
-		sc->tx_queued--;
 		ifp->if_opackets++;
 
-		/* kill watchdog timer */
-		sc->sc_tx_timer = 0;
+		sc->txq.queued--;
+		sc->txq.next = (sc->txq.next + 1) % sc->txq.count;
 	}
 
-	/* Remember what the firmware has processed */
-	sc->tx_old = (r == 0) ? IWI_TX_RING_SIZE - 1 : r - 1;
+	sc->sc_tx_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Call start() since some buffer descriptors have been released */
-	ifp->if_flags &= ~IFF_OACTIVE;
 	(*ifp->if_start)(ifp);
 }
 
@@ -1037,8 +1178,6 @@ iwi_intr(void *arg)
 
 	/* Disable interrupts */
 	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
-
-	DPRINTFN(8, ("INTR!0x%08x\n", r));
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
@@ -1057,13 +1196,13 @@ iwi_intr(void *arg)
 		iwi_stop(&sc->sc_if, 1);
 	}
 
-	if (r & IWI_INTR_RX_TRANSFER)
+	if (r & IWI_INTR_RX_DONE)
 		iwi_rx_intr(sc);
 
-	if (r & IWI_INTR_CMD_TRANSFER)
+	if (r & IWI_INTR_CMD_DONE)
 		wakeup(sc);
 
-	if (r & IWI_INTR_TX1_TRANSFER)
+	if (r & IWI_INTR_TX1_DONE)
 		iwi_tx_intr(sc);
 
 	/* Acknowledge interrupts */
@@ -1081,21 +1220,23 @@ iwi_cmd(struct iwi_softc *sc, u_int8_t type, void *data, u_int8_t len,
 {
 	struct iwi_cmd_desc *desc;
 
-	DPRINTFN(2, ("TX!CMD!%u!%u\n", type, len));
+	desc = &sc->cmdq.desc[sc->cmdq.cur];
 
-	desc = &sc->cmd_desc[sc->cmd_cur];
 	desc->hdr.type = IWI_HDR_TYPE_COMMAND;
 	desc->hdr.flags = IWI_HDR_FLAG_IRQ;
 	desc->type = type;
 	desc->len = len;
 	memcpy(desc->data, data, len);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->cmd_ring_map,
-	    sc->cmd_cur * sizeof (struct iwi_cmd_desc),
+	bus_dmamap_sync(sc->sc_dmat, sc->cmdq.desc_map,
+	    sc->cmdq.cur * sizeof (struct iwi_cmd_desc),
 	    sizeof (struct iwi_cmd_desc), BUS_DMASYNC_PREWRITE);
 
-	sc->cmd_cur = (sc->cmd_cur + 1) % IWI_CMD_RING_SIZE;
-	CSR_WRITE_4(sc, IWI_CSR_CMD_WRITE_INDEX, sc->cmd_cur);
+	DPRINTFN(2, ("sending command type=%u len=%u\n",
+	    type, len));
+
+	sc->cmdq.cur = (sc->cmdq.cur + 1) % sc->cmdq.count;
+	CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.cur);
 
 	return async ? 0 : tsleep(sc, 0, "iwicmd", hz);
 }
@@ -1107,7 +1248,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame wh;
 	struct ieee80211_key *k;
-	struct iwi_tx_buf *buf;
+	struct iwi_tx_data *data;
 	struct iwi_tx_desc *desc;
 	struct mbuf *mnew;
 	int error, i;
@@ -1133,13 +1274,13 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-	buf = &sc->tx_buf[sc->tx_cur];
-	desc = &sc->tx_desc[sc->tx_cur];
+	data = &sc->txq.data[sc->txq.cur];
+	desc = &sc->txq.desc[sc->txq.cur];
 
 	/* trim IEEE802.11 header */
 	m_adj(m0, sizeof (struct ieee80211_frame));
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		aprint_error("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1168,7 +1309,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			aprint_error("%s: could not map mbuf (error %d)\n",
@@ -1178,8 +1319,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		}
 	}
 
-	buf->m = m0;
-	buf->ni = ni;
+	data->m = m0;
+	data->ni = ni;
 
 	desc->hdr.type = IWI_HDR_TYPE_DATA;
 	desc->hdr.flags = IWI_HDR_FLAG_IRQ;
@@ -1201,25 +1342,26 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->flags |= IWI_DATA_FLAG_SHPREAMBLE;
 
-	desc->nseg = htole32(buf->map->dm_nsegs);
-	for (i = 0; i < buf->map->dm_nsegs; i++) {
-		desc->seg_addr[i] = htole32(buf->map->dm_segs[i].ds_addr);
-		desc->seg_len[i]  = htole32(buf->map->dm_segs[i].ds_len);
+	desc->nseg = htole32(data->map->dm_nsegs);
+	for (i = 0; i < data->map->dm_nsegs; i++) {
+		desc->seg_addr[i] = htole32(data->map->dm_segs[i].ds_addr);
+		desc->seg_len[i]  = htole32(data->map->dm_segs[i].ds_len);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->tx_ring_map,
-	    sc->tx_cur * sizeof (struct iwi_tx_desc),
+	bus_dmamap_sync(sc->sc_dmat, sc->txq.desc_map,
+	    sc->txq.cur * sizeof (struct iwi_tx_desc),
 	    sizeof (struct iwi_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->sc_dmat, buf->map, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, MCLBYTES,
 	    BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(5, ("TX!DATA!%u!%u\n", desc->len, desc->nseg));
+	DPRINTFN(5, ("sending data frame len=%u nseg=%u\n",
+	    desc->len, desc->nseg));
 
 	/* Inform firmware about this new packet */
-	sc->tx_queued++;
-	sc->tx_cur = (sc->tx_cur + 1) % IWI_TX_RING_SIZE;
-	CSR_WRITE_4(sc, IWI_CSR_TX1_WRITE_INDEX, sc->tx_cur);
+	sc->txq.queued++;
+	sc->txq.cur = (sc->txq.cur + 1) % sc->txq.count;
+	CSR_WRITE_4(sc, IWI_CSR_TX1_WIDX, sc->txq.cur);
 
 	return 0;
 }
@@ -1241,11 +1383,15 @@ iwi_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (sc->tx_queued >= IWI_TX_RING_SIZE - 4) {
+		if (sc->txq.queued >= sc->txq.count - 4) {
 			IF_PREPEND(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		if (m0->m_len < sizeof (struct ether_header) &&
+		    (m0 = m_pullup(m0, sizeof (struct ether_header))) == NULL)
+				continue;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
@@ -1487,6 +1633,7 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 	DELAY(1000);
 	MEM_WRITE_1(sc, 0x200000, 0x00);
 	MEM_WRITE_1(sc, 0x200000, 0x40);
+	DELAY(1000);
 
 	/* Adapter is buggy, we must set the address for each word */
 	for (w = uc; size > 0; w++, size -= 2)
@@ -1860,13 +2007,12 @@ iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
 	scan.type = IWI_SCAN_TYPE_PASSIVE;
 	scan.dwelltime = htole16(2000);
 	scan.channels[0] = 1 | (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ :
-		IWI_CHAN_2GHZ);
+	    IWI_CHAN_2GHZ);
 	scan.channels[1] = ieee80211_chan2ieee(ic, chan);
 
 	DPRINTF(("Setting channel to %u\n", ieee80211_chan2ieee(ic, chan)));
 	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, 1);
 }
-
 
 static int
 iwi_scan(struct iwi_softc *sc)
@@ -1923,11 +2069,6 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		config.bluetooth_coexistence = sc->bluetooth;
 		config.antenna = sc->antenna;
 		config.multicast_enabled = 1;
-#if 0
-		/* enable b/g autodection */
-		config.bg_autodetection = 1;
-		config.noise_reported = 1;
-#endif
 		config.use_protection = 1;
 		config.answer_pbreq =
 		    (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 : 0;
@@ -2050,46 +2191,31 @@ iwi_init(struct ifnet *ifp)
 
 	iwi_stop_master(sc);
 
-	sc->tx_cur = 0;
-	sc->tx_queued = 0;
-	sc->tx_old = IWI_TX_RING_SIZE - 1;
-	sc->cmd_cur = 0;
-	sc->rx_cur = IWI_RX_RING_SIZE - 1;
+	CSR_WRITE_4(sc, IWI_CSR_CMD_BASE, sc->cmdq.desc_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_CMD_SIZE, sc->cmdq.count);
+	CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_CMD_BASE, sc->cmd_ring_map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_CMD_SIZE, IWI_CMD_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_CMD_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_CMD_WRITE_INDEX, sc->cmd_cur);
+	CSR_WRITE_4(sc, IWI_CSR_TX1_BASE, sc->txq.desc_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX1_SIZE, sc->txq.count);
+	CSR_WRITE_4(sc, IWI_CSR_TX1_WIDX, sc->txq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX1_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_WRITE_INDEX, sc->tx_cur);
+	CSR_WRITE_4(sc, IWI_CSR_TX2_BASE, sc->txq.desc_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX2_SIZE, sc->txq.count);
+	CSR_WRITE_4(sc, IWI_CSR_TX2_WIDX, sc->txq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX2_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_WRITE_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_TX3_BASE, sc->txq.desc_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX3_SIZE, sc->txq.count);
+	CSR_WRITE_4(sc, IWI_CSR_TX3_WIDX, sc->txq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX3_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_WRITE_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_TX4_BASE, sc->txq.desc_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX4_SIZE, sc->txq.count);
+	CSR_WRITE_4(sc, IWI_CSR_TX4_WIDX, sc->txq.cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX4_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_WRITE_INDEX, 0);
-
-	for (i = 0; i < IWI_RX_RING_SIZE; i++)
+	for (i = 0; i < sc->rxq.count; i++)
 		CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4,
-		    sc->rx_buf[i].map->dm_segs[0].ds_addr);
+		    sc->rxq.data[i].map->dm_segs[0].ds_addr);
 
-	/*
-	 * Kick Rx
-	 */
-	CSR_WRITE_4(sc, IWI_CSR_RX_WRITE_INDEX, sc->rx_cur);
-	CSR_WRITE_4(sc, IWI_CSR_RX_READ_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_RX_WIDX, sc->rxq.count -1);
 
 	if ((error = iwi_load_firmware(sc, fw->main, fw->main_size)) != 0) {
 		aprint_error("%s: could not load main firmware\n",
@@ -2115,7 +2241,8 @@ iwi_init(struct ifnet *ifp)
 
 	return 0;
 
-fail:	iwi_stop(ifp, 0);
+fail:	ifp->if_flags &= ~IFF_UP;
+	iwi_stop(ifp, 0);
 
 	return error;
 }
@@ -2125,29 +2252,14 @@ iwi_stop(struct ifnet *ifp, int disable)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwi_tx_buf *buf;
-	int i;
 
 	iwi_stop_master(sc);
 	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
 
-	/*
-	 * Release Tx buffers
-	 */
-	for (i = 0; i < IWI_TX_RING_SIZE; i++) {
-		buf = &sc->tx_buf[i];
-
-		if (buf->m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, buf->map);
-			m_freem(buf->m);
-			buf->m = NULL;
-
-			if (buf->ni != NULL) {
-				ieee80211_free_node(buf->ni);
-				buf->ni = NULL;
-			}
-		}
-	}
+	/* reset rings */
+	iwi_reset_cmd_ring(sc, &sc->cmdq);
+	iwi_reset_tx_ring(sc, &sc->txq);
+	iwi_reset_rx_ring(sc, &sc->rxq);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

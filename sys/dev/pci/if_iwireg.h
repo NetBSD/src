@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.4 2005/07/30 21:15:51 christos Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.5 2005/08/19 08:50:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -27,9 +27,9 @@
  * SUCH DAMAGE.
  */
 
-#define IWI_TX_RING_SIZE	64
-#define IWI_CMD_RING_SIZE	16
-#define IWI_RX_RING_SIZE	32
+#define IWI_CMD_RING_COUNT	16
+#define IWI_TX_RING_COUNT	64
+#define IWI_RX_RING_COUNT	32
 
 #define IWI_CSR_INTR		0x0008
 #define IWI_CSR_INTR_MASK	0x000c
@@ -50,41 +50,41 @@
 #define IWI_CSR_TX3_SIZE	0x021c
 #define IWI_CSR_TX4_BASE	0x0220
 #define IWI_CSR_TX4_SIZE	0x0224
-#define IWI_CSR_CMD_READ_INDEX	0x0280
-#define IWI_CSR_TX1_READ_INDEX	0x0284
-#define IWI_CSR_TX2_READ_INDEX	0x0288
-#define IWI_CSR_TX3_READ_INDEX	0x028c
-#define IWI_CSR_TX4_READ_INDEX	0x0290
-#define IWI_CSR_RX_READ_INDEX	0x02a0
+#define IWI_CSR_CMD_RIDX	0x0280
+#define IWI_CSR_TX1_RIDX	0x0284
+#define IWI_CSR_TX2_RIDX	0x0288
+#define IWI_CSR_TX3_RIDX	0x028c
+#define IWI_CSR_TX4_RIDX	0x0290
+#define IWI_CSR_RX_RIDX		0x02a0
 #define IWI_CSR_RX_BASE		0x0500
 #define IWI_CSR_TABLE0_SIZE	0x0700
 #define IWI_CSR_TABLE0_BASE	0x0704
 #define IWI_CSR_CURRENT_TX_RATE	IWI_CSR_TABLE0_BASE
-#define IWI_CSR_CMD_WRITE_INDEX	0x0f80
-#define IWI_CSR_TX1_WRITE_INDEX	0x0f84
-#define IWI_CSR_TX2_WRITE_INDEX	0x0f88
-#define IWI_CSR_TX3_WRITE_INDEX	0x0f8c
-#define IWI_CSR_TX4_WRITE_INDEX	0x0f90
-#define IWI_CSR_RX_WRITE_INDEX	0x0fa0
+#define IWI_CSR_CMD_WIDX	0x0f80
+#define IWI_CSR_TX1_WIDX	0x0f84
+#define IWI_CSR_TX2_WIDX	0x0f88
+#define IWI_CSR_TX3_WIDX	0x0f8c
+#define IWI_CSR_TX4_WIDX	0x0f90
+#define IWI_CSR_RX_WIDX		0x0fa0
 #define IWI_CSR_READ_INT	0x0ff4
 
 /* possible flags for IWI_CSR_INTR */
-#define IWI_INTR_RX_TRANSFER	0x00000002
-#define IWI_INTR_CMD_TRANSFER	0x00000800
-#define IWI_INTR_TX1_TRANSFER	0x00001000
-#define IWI_INTR_TX2_TRANSFER	0x00002000
-#define IWI_INTR_TX3_TRANSFER	0x00004000
-#define IWI_INTR_TX4_TRANSFER	0x00008000
+#define IWI_INTR_RX_DONE	0x00000002
+#define IWI_INTR_CMD_DONE	0x00000800
+#define IWI_INTR_TX1_DONE	0x00001000
+#define IWI_INTR_TX2_DONE	0x00002000
+#define IWI_INTR_TX3_DONE	0x00004000
+#define IWI_INTR_TX4_DONE	0x00008000
 #define IWI_INTR_FW_INITED	0x01000000
 #define IWI_INTR_RADIO_OFF	0x04000000
 #define IWI_INTR_FATAL_ERROR	0x40000000
 #define IWI_INTR_PARITY_ERROR	0x80000000
 
-#define IWI_INTR_MASK							\
-	(IWI_INTR_RX_TRANSFER |	IWI_INTR_CMD_TRANSFER |			\
-	 IWI_INTR_TX1_TRANSFER | IWI_INTR_TX2_TRANSFER |		\
-	 IWI_INTR_TX3_TRANSFER | IWI_INTR_TX4_TRANSFER |		\
-	 IWI_INTR_FW_INITED | IWI_INTR_RADIO_OFF |			\
+#define IWI_INTR_MASK						\
+	(IWI_INTR_RX_DONE | IWI_INTR_CMD_DONE |			\
+	 IWI_INTR_TX1_DONE | IWI_INTR_TX2_DONE |		\
+	 IWI_INTR_TX3_DONE | IWI_INTR_TX4_DONE |		\
+	 IWI_INTR_FW_INITED | IWI_INTR_RADIO_OFF |		\
 	 IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)
 
 /* possible flags for register IWI_CSR_RST */
@@ -163,6 +163,7 @@ struct iwi_notif_association {
 	u_int8_t		state;
 #define IWI_DEASSOCIATED	0
 #define IWI_ASSOCIATED		12
+
 	struct ieee80211_frame	frame;
 	u_int16_t		capinfo;
 	u_int16_t		status;
@@ -203,7 +204,9 @@ struct iwi_frame {
 /* header for transmission */
 struct iwi_tx_desc {
 	struct iwi_hdr	hdr;
-	u_int32_t	reserved1[2];
+	u_int32_t	reserved1;
+	u_int8_t	station;
+	u_int8_t	reserved2[3];
 	u_int8_t	cmd;
 #define IWI_DATA_CMD_TX	0x0b
 	u_int8_t	seq;
@@ -218,10 +221,11 @@ struct iwi_tx_desc {
 	u_int8_t	wepkey[IEEE80211_KEYBUF_SIZE];
 	u_int8_t	rate;
 	u_int8_t	antenna;
-	u_int8_t	reserved2[10];
+	u_int8_t	reserved3[10];
 
 	struct ieee80211_qosframe_addr4	wh;
-	u_int32_t	iv[2];
+	u_int32_t	iv;
+	u_int32_t	eiv;
 
 	u_int32_t	nseg;
 #define IWI_MAX_NSEG	6
@@ -310,15 +314,19 @@ struct iwi_associate {
 	u_int16_t	reserved4;
 } __attribute__((__packed__));
 
+#define IWI_SCAN_CHANNELS	54
+
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
 	u_int8_t	type;
-#define IWI_SCAN_TYPE_PASSIVE	1
-#define IWI_SCAN_TYPE_BROADCAST	3
+#define IWI_SCAN_TYPE_PASSIVE		1
+#define IWI_SCAN_TYPE_BROADCAST		3
+
 	u_int16_t	dwelltime;
-	u_int8_t	channels[54];
+	u_int8_t	channels[IWI_SCAN_CHANNELS];
 #define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
+
 	u_int8_t	reserved[3];
 } __attribute__((__packed__));
 
