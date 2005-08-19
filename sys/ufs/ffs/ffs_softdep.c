@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.66 2005/05/30 22:13:22 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.67 2005/08/19 02:04:09 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.66 2005/05/30 22:13:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.67 2005/08/19 02:04:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3051,8 +3051,9 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	if ((dap->da_state & ATTACHED) == 0)
 		panic("newdirrem: not ATTACHED");
 	if (dap->da_newinum != ip->i_number)
-		panic("newdirrem: inum %d should be %d",
-		    ip->i_number, dap->da_newinum);
+		panic("newdirrem: inum %llu should be %llu",
+		    (unsigned long long)ip->i_number,
+		    (unsigned long long)dap->da_newinum);
 	/*
 	 * If we are deleting a changed name that never made it to disk,
 	 * then return the dirrem describing the previous inode (which
@@ -3517,10 +3518,10 @@ initiate_write_filepage(pagedep, bp)
 			ep = (struct direct *)
 			    ((char *)bp->b_data + dap->da_offset);
 			if (ufs_rw32(ep->d_ino, needswap) != dap->da_newinum)
-				panic("%s: dir inum %d != new %d",
+				panic("%s: dir inum %d != new %llu",
 				    "initiate_write_filepage",
 				    ufs_rw32(ep->d_ino, needswap),
-				    dap->da_newinum);
+				    (unsigned long long)dap->da_newinum);
 			if (dap->da_state & DIRCHG)
 				ep->d_ino =
 				    ufs_rw32(dap->da_previous->dm_oldinum,

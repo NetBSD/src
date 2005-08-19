@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.31 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.32 2005/08/19 02:04:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.31 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.32 2005/08/19 02:04:09 christos Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -292,11 +292,13 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 				       (*bpp)->b_blkno,
 				       blkno);
 			} else {
-				printf("%s:%d: misplace ino %d lbn %" PRId64
+				printf("%s:%d: misplace ino %llu lbn %" PRId64
 				       " at 0x%" PRIx64 " instead of "
 				       "0x%" PRIx64 "\n",
 				       file, line,
-				       VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
+				       (unsigned long long)
+				       VTOI((*bpp)->b_vp)->i_number,
+				       (*bpp)->b_lblkno,
 				       blkno,
 				       (*bpp)->b_blkno);
 			}
