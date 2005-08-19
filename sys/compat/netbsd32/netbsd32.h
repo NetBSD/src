@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.38 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.39 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -474,8 +474,8 @@ struct netbsd32_stat43 {			/* BSD-4.3 stat struct */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-typedef netbsd32_pointer_t netbsd32_stat30p_t;
-struct netbsd32_stat30 {
+typedef netbsd32_pointer_t netbsd32_stat13p_t;
+struct netbsd32_stat13 {
 	dev_t	  st_dev;		/* inode's device */
 	u_int32_t st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
@@ -494,7 +494,7 @@ struct netbsd32_stat30 {
 	u_int32_t st_spare;		/* file generation number */
 	struct	  netbsd32_timespec st_birthtimespec;
 	u_int32_t st_spare2;
-}
+};
 
 typedef netbsd32_pointer_t netbsd32_statp_t;
 struct netbsd32_stat {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.7 2005/07/09 22:40:13 cube Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.8 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.7 2005/07/09 22:40:13 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.8 2005/08/19 04:24:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.7 2005/07/09 22:40:13 cube Exp
 #include <sys/filedesc.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <sys/dirent.h>
 
 #include <sys/proc.h>
 

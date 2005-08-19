@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.1 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.2 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.1 2005/08/19 02:03:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.2 2005/08/19 04:24:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.1 2005/08/19 02:03:57 chris
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -83,7 +84,7 @@ netbsd32_getdents(l, v, retval)
 		goto out;
 	}
 	buf = malloc(SCARG(uap, count), M_TEMP, M_WAITOK);
-	error = vn_readdir(fp, obuf,
+	error = vn_readdir(fp, buf,
 	    UIO_SYSSPACE, SCARG(uap, count), &done, p, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
@@ -105,7 +106,7 @@ netbsd32___stat13(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat30 sb32;
+	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
 	struct nameidata nd;
@@ -144,7 +145,7 @@ netbsd32___fstat13(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	struct netbsd32_stat sb32;
+	struct netbsd32_stat13 sb32;
 	struct stat ub;
 	int error = 0;
 
@@ -173,7 +174,7 @@ netbsd32___lstat13(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
 	} */ *uap = v;
-	struct netbsd32_stat sb32;
+	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
 	struct nameidata nd;

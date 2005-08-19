@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.14 2005/05/31 00:41:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.15 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14 2005/05/31 00:41:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.15 2005/08/19 04:24:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14 2005/05/31 00:41:09 christo
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
