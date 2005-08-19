@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.10 2005/04/09 13:04:35 dsl Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.11 2005/08/19 02:04:03 christos Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -65,10 +65,12 @@
 
 #define NELEM(x) (sizeof (x) / sizeof(*x))
 
+
+typedef uint32_t ino32_t;
 typedef struct entry_t entry_t;
 struct entry_t {
 	entry_t	*e_next;
-	ino_t	e_ino;
+	ino32_t	e_ino;
 	uint8_t	e_type;
 	char	e_name[1];
 };

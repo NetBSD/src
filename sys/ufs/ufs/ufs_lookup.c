@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.65 2005/07/10 01:08:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.66 2005/08/19 02:04:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.65 2005/07/10 01:08:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.66 2005/08/19 02:04:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -656,8 +656,9 @@ ufs_dirbad(struct inode *ip, doff_t offset, const char *how)
 	struct mount *mp;
 
 	mp = ITOV(ip)->v_mount;
-	printf("%s: bad dir ino %d at offset %d: %s\n",
-	    mp->mnt_stat.f_mntonname, ip->i_number, offset, how);
+	printf("%s: bad dir ino %llu at offset %d: %s\n",
+	    mp->mnt_stat.f_mntonname, (unsigned long long)ip->i_number,
+	    offset, how);
 	if ((mp->mnt_stat.f_flag & MNT_RDONLY) == 0)
 		panic("bad dir");
 }
