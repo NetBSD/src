@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.15 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: getdents.2,v 1.16 2005/08/19 02:04:54 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd August 15, 2005
 .Dt GETDENTS 2
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ The data in the buffer is a series of
 .Em dirent
 structures each containing the following entries:
 .Bd -literal -offset indent
-u_int32_t	d_fileno;
+ino_t		d_fileno;
 u_int16_t	d_reclen;
 u_int8_t	d_type;
 u_int8_t	d_namlen;

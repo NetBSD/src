@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.5 2005/08/19 02:04:54 christos Exp $	*/
+/*	$NetBSD: __stat13.c,v 1.1 2005/08/19 02:04:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.5 2005/08/19 02:04:54 christos Exp $");
+__RCSID("$NetBSD: __stat13.c,v 1.1 2005/08/19 02:04:54 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -41,40 +41,36 @@ __RCSID("$NetBSD: stat.c,v 1.5 2005/08/19 02:04:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
-__warn_references(stat,
-    "warning: reference to compatibility stat(); include <sys/stat.h> to generate correct reference")
+__warn_references(__stat13,
+    "warning: reference to compatibility __stat13(); include <sys/stat.h> to generate correct reference")
 
-__warn_references(fstat,
-    "warning: reference to compatibility fstat(); include <sys/stat.h> to generate correct reference")
+__warn_references(__fstat13,
+    "warning: reference to compatibility __fstat13(); include <sys/stat.h> to generate correct reference")
 
-__warn_references(lstat,
-    "warning: reference to compatibility lstat(); include <sys/stat.h> to generate correct reference")
+__warn_references(__lstat13,
+    "warning: reference to compatibility __lstat13(); include <sys/stat.h> to generate correct reference")
 
 /*
  * Convert from a new to an old stat structure.
  */
 
-static void cvtstat __P((struct stat *, struct stat12 *));
+static void cvtstat(struct stat13 *, const struct stat *);
 
 static void
-cvtstat(st, ost)
-	struct stat *st;
-	struct stat12 *ost;
+cvtstat(struct stat13 *ost, const struct stat *st)
 {
 
 	ost->st_dev = st->st_dev;
-	ost->st_ino = (u_int32_t)st->st_ino;
+	ost->st_ino = (uint32_t)st->st_ino;
 	ost->st_mode = st->st_mode;
-	if (st->st_nlink >= (1 << 15))
-		ost->st_nlink = (1 << 15) - 1;
-	else
-		ost->st_nlink = st->st_nlink;
+	ost->st_nlink = st->st_nlink;
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
 	ost->st_atimespec = st->st_atimespec;
 	ost->st_mtimespec = st->st_mtimespec;
 	ost->st_ctimespec = st->st_ctimespec;
+	ost->st_birthtimespec = st->st_birthtimespec;
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;
@@ -83,43 +79,37 @@ cvtstat(st, ost)
 }
 
 int
-stat(file, ost)
-	const char *file;
-	struct stat12 *ost;
+__stat13(const char *file, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
 
-	if ((ret = __stat30(file, &nst)) < 0)
+	if ((ret = __stat30(file, &nst)) == -1)
 		return ret;
-	cvtstat(&nst, ost);
+	cvtstat(ost, &nst);
 	return ret;
 }
 
 int
-fstat(f, ost)
-	int f;
-	struct stat12 *ost;
+__fstat13(int f, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
 
-	if ((ret = __fstat30(f, &nst)) < 0)
+	if ((ret = __fstat30(f, &nst)) == -1)
 		return ret;
-	cvtstat(&nst, ost);
+	cvtstat(ost, &nst);
 	return ret;
 }
 
 int
-lstat(file, ost)
-	const char *file;
-	struct stat12 *ost;
+__lstat13(const char *file, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
 
-	if ((ret = __lstat30(file, &nst)) < 0)
+	if ((ret = __lstat30(file, &nst)) == -1)
 		return ret;
-	cvtstat(&nst, ost);
+	cvtstat(ost, &nst);
 	return ret;
 }

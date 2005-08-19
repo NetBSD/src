@@ -1,4 +1,4 @@
-/*	$NetBSD: getdirentries.c,v 1.4 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: getdirentries.c,v 1.5 2005/08/19 02:04:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -34,9 +34,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getdirentries.c,v 1.4 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: getdirentries.c,v 1.5 2005/08/19 02:04:54 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#define __LIBC12_SOURCE__
 #include "namespace.h"
 #include <sys/types.h>
 #include <dirent.h>
