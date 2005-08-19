@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.22 2005/07/31 04:04:30 yamt Exp $
+# $NetBSD: FOURMEG,v 1.23 2005/08/19 05:19:49 christos Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -46,6 +46,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	PROCFS		# /proc
 file-system	KERNFS		# /kern
 file-system	FDESC		# /dev/fd
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

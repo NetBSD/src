@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.13 2005/07/31 04:04:43 yamt Exp $
+# 	$NetBSD: config.playstation2,v 1.14 2005/08/19 05:19:54 christos Exp $
 #
 
 maxusers	16
@@ -16,6 +16,7 @@ file-system 	NULLFS
 file-system 	UNION		# union file system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
 
 options 	SOFTDEP		# FFS soft updates support.
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls

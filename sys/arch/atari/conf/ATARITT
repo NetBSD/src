@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.72 2005/08/19 02:03:49 christos Exp $
+# $NetBSD: ATARITT,v 1.73 2005/08/19 05:19:49 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -55,6 +55,7 @@ file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
+file-system PTYFS # /dev/pts/N support
 
 options QUOTA # Disk quotas for local disks
 

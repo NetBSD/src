@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.30 2005/08/19 02:03:53 christos Exp $
+# $NetBSD: KRUPS,v 1.31 2005/08/19 05:20:03 christos Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.30 $"
+#ident 		"KRUPS-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -189,6 +189,7 @@ file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server

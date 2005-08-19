@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2005/08/19 02:03:57 christos Exp $
+# $NetBSD: GENERIC,v 1.119 2005/08/19 05:20:03 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+#ident 		"GENERIC-$Revision: 1.119 $"
 
 maxusers	8
 
@@ -189,7 +189,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system (a little buggy)
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
