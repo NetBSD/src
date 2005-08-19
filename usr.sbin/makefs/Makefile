@@ -1,16 +1,20 @@
-#	$NetBSD: Makefile,v 1.15 2005/08/13 01:53:01 fvdl Exp $
+#	$NetBSD: Makefile,v 1.16 2005/08/19 01:09:54 dyoung Exp $
 #
+#PKG_DEVELOPER=1
 
 .include <bsd.own.mk>
 
 PROG=	makefs
-SRCS=	makefs.c walk.c \
-	ffs.c mkfs.c buf.c \
-	getid.c misc.c spec.c pack_dev.c stat_flags.c \
-	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c \
-	ufs_bmap.c \
+SRCS=	buf.c \
 	cd9660.c cd9660_strings.c cd9660_debug.c cd9660_eltorito.c \
-	cd9660_write.c cd9660_conversion.c iso9660_rrip.c
+	cd9660_write.c cd9660_conversion.c iso9660_rrip.c \
+	ffs.c ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c \
+	getid.c \
+	makefs.c misc.c mkfs.c \
+	pack_dev.c \
+	spec.c stat_flags.c \
+	ufs_bmap.c \
+	walk.c
 MAN=	makefs.8
 
 LSSRC=		${NETBSDSRCDIR}/bin/ls
