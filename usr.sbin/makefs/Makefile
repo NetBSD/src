@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.16 2005/08/19 01:09:54 dyoung Exp $
+#	$NetBSD: Makefile,v 1.17 2005/08/19 01:26:59 dyoung Exp $
 #
-#PKG_DEVELOPER=1
 
 .include <bsd.own.mk>
 
