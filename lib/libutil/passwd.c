@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.40 2005/08/18 21:07:23 elad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.41 2005/08/19 10:10:08 elad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.40 2005/08/18 21:07:23 elad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.41 2005/08/19 10:10:08 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -298,7 +298,7 @@ static int
 pw_equal(char *buf, struct passwd *pw)
 {
 	struct passwd buf_pw;
-	int len;
+	size_t len;
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(pw != NULL);
@@ -367,7 +367,7 @@ pw_copyx(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw,
 		return (0);
 	}
 
-	for (done = 0; fgets(buf, sizeof(buf), from);) {
+	for (done = 0; fgets(buf, (int)sizeof(buf), from);) {
 		if (!strchr(buf, '\n')) {
 			snprintf(errbuf, errbufsz, "%s: line too long", mpwd);
 			return (0);
