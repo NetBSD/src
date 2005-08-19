@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.204 2005/08/05 11:03:18 junyoung Exp $	*/
+/*	$NetBSD: proc.h,v 1.205 2005/08/19 20:24:33 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -169,7 +169,7 @@ struct proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
-	int		p_exitsig;	/* signal to sent to parent on exit */
+	int		p_exitsig;	/* signal to send to parent on exit */
 	int		p_flag;		/* P_* flags. */
 	char		p_stat;		/* S* process status. */
 	char		p_pad1[3];
