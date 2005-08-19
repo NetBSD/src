@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.50 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.51 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.50 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.51 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,8 @@ inoinfo(ino_t inum)
 	int iloff;
 
 	if (inum > maxino)
-		errx(EEXIT, "inoinfo: inumber %d out of range", inum);
+		errx(EEXIT, "inoinfo: inumber %llu out of range",
+		    (unsigned long long)inum);
 	ilp = &inostathead[inum / sblock->fs_ipg];
 	iloff = inum % sblock->fs_ipg;
 	if (iloff >= ilp->il_numalloced)

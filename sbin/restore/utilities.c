@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.21 2005/06/27 02:03:28 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.22 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.21 2005/06/27 02:03:28 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.22 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,8 +115,8 @@ gentempname(struct entry *ep)
 		i++;
 	if (np == NULL)
 		badentry(ep, "not on ino list");
-	(void) snprintf(name, sizeof(name), "%s%ld%d", TMPHDR, (long) i,
-	    ep->e_ino);
+	(void)snprintf(name, sizeof(name), "%s%ld%llu", TMPHDR, (long) i,
+	    (unsigned long long)ep->e_ino);
 	return (name);
 }
 

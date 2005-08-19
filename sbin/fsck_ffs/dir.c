@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.45 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.46 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.45 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.46 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -602,9 +602,10 @@ linkup(ino_t orphan, ino_t parentdir, char *name)
 		inodirty();
 		inoinfo(lfdir)->ino_linkcnt++;
 		reparent(orphan, lfdir);
-		pwarn("DIR I=%u CONNECTED. ", orphan);
+		pwarn("DIR I=%llu CONNECTED. ", (unsigned long long)orphan);
 		if (parentdir != (ino_t)-1)
-			printf("PARENT WAS I=%u\n", parentdir);
+			printf("PARENT WAS I=%llu\n",
+			    (unsigned long long)parentdir);
 		if (preen == 0)
 			printf("\n");
 	}

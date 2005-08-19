@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.89 2005/06/03 01:10:50 dbj Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.90 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.89 2005/06/03 01:10:50 dbj Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.90 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1217,7 +1217,8 @@ iput(union dinode *ip, ino_t ino)
 	sblock.fs_cstotal.cs_nifree--;
 	fscs_0->cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
-		printf("fsinit: inode value out of range (%d).\n", ino);
+		printf("fsinit: inode value out of range (%llu).\n",
+		    (unsigned long long)ino);
 		exit(32);
 	}
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));

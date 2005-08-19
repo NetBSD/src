@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.22 2005/07/17 09:45:50 he Exp $	*/
+/*	$NetBSD: dump.c,v 1.23 2005/08/19 02:09:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.22 2005/07/17 09:45:50 he Exp $");
+__RCSID("$NetBSD: dump.c,v 1.23 2005/08/19 02:09:22 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -481,8 +481,8 @@ syscallprint(struct ktr_header *kth)
 	case SYS_lchmod:
 	case SYS_lchown:
 	case SYS_lutimes:
-	case SYS___stat13:
-	case SYS___lstat13:
+	case SYS___stat30:
+	case SYS___lstat30:
 	case SYS___posix_chown:
 	case SYS___posix_lchown:
 	case SYS_lchflags:
