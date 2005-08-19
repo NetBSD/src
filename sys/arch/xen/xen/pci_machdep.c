@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.4 2005/04/16 22:49:38 bouyer Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.5 2005/08/19 17:17:53 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -38,9 +38,11 @@
 #include <machine/bus_private.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <machine/evtchn.h>
 
+#include "locators.h"
 #include "opt_ddb.h"
 
 /* mask of already-known busses */
@@ -220,4 +222,77 @@ pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
 void
 pci_intr_disestablish(pci_chipset_tag_t pcitag, void *cookie)
 {
+}
+
+/*
+ * We can't use the generic pci_enumerate_bus, because the hypervisor
+ * may hide the function 0 from us, while other functions are
+ * available
+ */
+int
+xen_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	int device, function, nfunctions, ret;
+	const struct pci_quirkdata *qd;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (device = 0; device < sc->sc_maxndevs; device++)
+	{
+		if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
+		    (locators[PCICF_DEV] != device))
+			continue;
+
+		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		qd = NULL;
+
+		if (PCI_VENDOR(id) != PCI_VENDOR_INVALID) {
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+			
+			if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+				continue;
+
+			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
+			    PCI_PRODUCT(id));
+
+			if (qd != NULL &&
+			      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0)
+				nfunctions = 8;
+			else if (qd != NULL &&
+			      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
+				nfunctions = 1;
+			else
+				nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
+		} else {
+			/*
+			 * Vendor ID invalid. This may be because there's no
+			 * device, or because the hypervisor is hidding
+			 * function 0 from us. Try to probe other functions
+			 * anyway.
+			 */
+			nfunctions = 8;
+		}
+
+		for (function = 0; function < nfunctions; function++) {
+			if ((locators[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT)
+			    && (locators[PCICF_FUNCTION] != function))
+				continue;
+
+			if (qd != NULL &&
+			    (qd->quirks & PCI_QUIRK_SKIP_FUNC(function)) != 0)
+				continue;
+			tag = pci_make_tag(pc, sc->sc_bus, device, function);
+			ret = pci_probe_device(sc, tag, match, pap);
+			if (match != NULL && ret != 0)
+				return (ret);
+		}
+	}
+	return (0);
 }
