@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2004/11/28 06:57:14 jmc Exp $
+#	$NetBSD: Makefile,v 1.33 2005/08/19 02:08:24 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -11,7 +11,7 @@ SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
 		setpassent.c setprogname.c sha1.c sha1hl.c snprintf.c \
 		strlcat.c strlcpy.c strmode.c strsep.c strsuftoll.c \
 		strtoll.c unvis.c vis.c _err.c _errx.c _verr.c _verrx.c \
-		_vwarn.c _vwarnx.c _warn.c _warnx.c __fts13.c __glob13.c
+		_vwarn.c _vwarnx.c _warn.c _warnx.c __fts30.c __glob13.c
 
 BUILD_OSTYPE!=  uname -s
 

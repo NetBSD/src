@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.17 2003/08/07 10:31:16 agc Exp $
+.\"	$NetBSD: dir.5,v 1.18 2005/08/19 02:07:49 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd August 12, 2002
+.Dd August 15, 2005
 .Dt DIRENT 5
 .Os
 .Sh NAME
@@ -86,11 +86,11 @@ The directory entry format is defined in the file
  */
 
 struct dirent {
-	u_int32_t d_fileno;	/* file number of entry */
+	ino_t     d_fileno;	/* file number of entry */
 	u_int16_t d_reclen;	/* length of this record */
 	u_int8_t  d_type;	/* file type, see below */
 	u_int8_t  d_namlen;	/* length of string in d_name */
-#define MAXNAMLEN       255
+#define MAXNAMLEN       511
 	char d_name[MAXNAMLEN + 1]; /* name must be no longer than this */
 };
 

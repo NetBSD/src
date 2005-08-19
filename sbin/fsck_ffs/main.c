@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,8 +332,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	n_ffree = sblock->fs_cstotal.cs_nffree;
 	n_bfree = sblock->fs_cstotal.cs_nbfree;
-	pwarn("%d files, %lld used, %lld free ",
-	    n_files, (long long)n_blks,
+	pwarn("%llu files, %lld used, %lld free ",
+	    (unsigned long long)n_files, (long long)n_blks,
 	    (long long)(n_ffree + sblock->fs_frag * n_bfree));
 	printf("(%lld frags, %lld blocks, %lld.%lld%% fragmentation)\n",
 	    (long long)n_ffree, (long long)n_bfree,
@@ -342,7 +342,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		/ (daddr_t)sblock->fs_dsize) % 10));
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock->fs_cstotal.cs_nifree))
-		printf("%d files missing\n", n_files);
+		printf("%llu files missing\n", (unsigned long long)n_files);
 	if (debug) {
 		n_blks += sblock->fs_ncg *
 			(cgdmin(sblock, 0) - cgsblock(sblock, 0));
@@ -359,7 +359,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		if (zlnhead != NULL) {
 			printf("The following zero link count inodes remain:");
 			for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
-				printf(" %u,", zlnp->zlncnt);
+				printf(" %llu,",
+				    (unsigned long long)zlnp->zlncnt);
 			printf("\n");
 		}
 	}

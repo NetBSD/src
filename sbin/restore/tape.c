@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.53 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.54 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.53 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.54 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ setup(void)
 		exit(1);
 	}
 	maxino = (spcl.c_count * TP_BSIZE * NBBY) + 1;
-	dprintf(stdout, "maxino = %d\n", maxino);
+	dprintf(stdout, "maxino = %llu\n", (unsigned long long)maxino);
 	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
 	if (map == NULL)
 		panic("no memory for active inode map\n");
@@ -898,8 +898,9 @@ xtrfile(char *buf, long size)
 		return;
 	if (write(ofile, buf, (int) size) == -1) {
 		fprintf(stderr,
-		    "write error extracting inode %d, name %s\nwrite: %s\n",
-			curfile.ino, curfile.name, strerror(errno));
+		    "write error extracting inode %llu, name %s\nwrite: %s\n",
+			(unsigned long long)curfile.ino, curfile.name,
+			strerror(errno));
 		exit(1);
 	}
 }
@@ -918,8 +919,9 @@ xtrskip(char *buf, long size)
 		return;
 	if (lseek(ofile, size, SEEK_CUR) == -1) {
 		fprintf(stderr,
-		    "seek error extracting inode %d, name %s\nlseek: %s\n",
-			curfile.ino, curfile.name, strerror(errno));
+		    "seek error extracting inode %llu, name %s\nlseek: %s\n",
+			(unsigned long long)curfile.ino, curfile.name,
+			strerror(errno));
 		exit(1);
 	}
 }
@@ -1063,8 +1065,8 @@ getmore:
 			fprintf(stderr, "restoring %s\n", curfile.name);
 			break;
 		case SKIP:
-			fprintf(stderr, "skipping over inode %d\n",
-				curfile.ino);
+			fprintf(stderr, "skipping over inode %llu\n",
+			    (unsigned long long)curfile.ino);
 			break;
 		}
 		if (!yflag && !reply("continue"))
@@ -1301,10 +1303,12 @@ accthdr(struct s_spcl *header)
 		fprintf(stderr, "Used inodes map header");
 		break;
 	case TS_INODE:
-		fprintf(stderr, "File header, ino %d", previno);
+		fprintf(stderr, "File header, ino %llu",
+		    (unsigned long long)previno);
 		break;
 	case TS_ADDR:
-		fprintf(stderr, "File continuation header, ino %d", previno);
+		fprintf(stderr, "File continuation header, ino %llu",
+		    (unsigned long long)previno);
 		break;
 	case TS_END:
 		fprintf(stderr, "End of tape header");
@@ -1435,8 +1439,8 @@ checksum(int *buf)
 	}
 			
 	if (i != CHECKSUM) {
-		fprintf(stderr, "Checksum error %o, inode %d file %s\n", i,
-			curfile.ino, curfile.name);
+		fprintf(stderr, "Checksum error %o, inode %llu file %s\n", i,
+		    (unsigned long long)curfile.ino, curfile.name);
 		return(FAIL);
 	}
 	return(GOOD);

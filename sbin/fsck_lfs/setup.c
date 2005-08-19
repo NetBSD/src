@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.24 2005/06/08 19:09:55 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.25 2005/08/19 02:07:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ setup(const char *dev)
 	maxino = ((VTOI(ivp)->i_ffs1_size - (fs->lfs_cleansz + fs->lfs_segtabsz)
 		* fs->lfs_bsize) / fs->lfs_bsize) * fs->lfs_ifpb;
 	if (debug)
-		printf("maxino    = %d\n", maxino);
+		printf("maxino    = %llu\n", (unsigned long long)maxino);
 	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += fs->lfs_bsize) {
 		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, &bp);
 		/* XXX check B_ERROR */
