@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.94 2005/08/05 09:21:25 elad Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.95 2005/08/19 12:29:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.94 2005/08/05 09:21:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.95 2005/08/19 12:29:18 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -236,7 +236,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		printf("icmp_error(%x, %d, %d)\n", oip, type, code);
+		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type,
+			code);
 #endif
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
@@ -395,10 +396,10 @@ icmp_input(struct mbuf *m, ...)
 	 */
 	icmplen = ntohs(ip->ip_len) - hlen;
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_input from %x to %x, len %d\n",
-		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
-		    icmplen);
+	if (icmpprintfs) {
+		printf("icmp_input from `%s' to ", inet_ntoa(ip->ip_src));
+		printf("`%s', len %d\n", inet_ntoa(ip->ip_dst), icmplen);
+	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
 		icmpstat.icps_tooshort++;
@@ -426,7 +427,7 @@ icmp_input(struct mbuf *m, ...)
 	 * Message type specific processing.
 	 */
 	if (icmpprintfs)
-		printf("icmp_input, type %d code %d\n", icp->icmp_type,
+		printf("icmp_input(type:%d, code:%d)\n", icp->icmp_type,
 		    icp->icmp_code);
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
@@ -579,9 +580,10 @@ reflect:
 		icmpgw.sin_addr = ip->ip_src;
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
-		if (icmpprintfs)
-			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
-			    icp->icmp_gwaddr);
+		if (icmpprintfs) {
+			printf("redirect dst `%s' to ", inet_ntoa(icp->icmp_ip.ip_dst));
+			printf("`%s'\n", inet_ntoa(icp->icmp_gwaddr));
+		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rt = NULL;
@@ -863,8 +865,10 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	m->m_data -= hlen;
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
+	if (icmpprintfs) {
+		printf("icmp_send to destination `%s' from ", inet_ntoa(ip->ip_dst));
+		printf("`%s'\n", inet_ntoa(ip->ip_src));
+	}
 #endif
 	(void) ip_output(m, opts, NULL, 0,
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
