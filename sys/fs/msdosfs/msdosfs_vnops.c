@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.15 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.16 2005/08/19 12:24:54 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.15 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.16 2005/08/19 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +370,9 @@ msdosfs_setattr(v)
 	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
-		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
-		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
+		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %llx\n",
+		    vap->va_type, vap->va_nlink, vap->va_fsid,
+		    (unsigned long long)vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
 		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
 #endif
