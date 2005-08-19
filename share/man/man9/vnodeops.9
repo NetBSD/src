@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.35 2005/08/11 10:49:47 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.36 2005/08/19 10:56:29 jmmv Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2005
+.Dd August 19, 2005
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@
 "struct componentname *cnp" "struct vattr *vap" "char *target"
 .Ft int
 .Fn VOP_READDIR "struct vnode *vp" "struct uio *uio" \
-"struct ucred *cred" "int *eofflag" "cookies" "ncookies"
+"struct ucred *cred" "int *eofflag" "off_t **cookies" "int *ncookies"
 .Ft int
 .Fn VOP_READLINK "struct vnode *vp" "struct uio *uio" "struct ucred *cred"
 .Ft int
