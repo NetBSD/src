@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.140 2005/07/10 22:05:24 thorpej Exp $ */
+/* $NetBSD: syscallargs.h,v 1.141 2005/08/19 02:04:04 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -1157,7 +1157,7 @@ struct sys_swapctl_args {
 	syscallarg(int) misc;
 };
 
-struct sys_getdents_args {
+struct compat_30_sys_getdents_args {
 	syscallarg(int) fd;
 	syscallarg(char *) buf;
 	syscallarg(size_t) count;
@@ -1191,19 +1191,19 @@ struct sys___msync13_args {
 	syscallarg(int) flags;
 };
 
-struct sys___stat13_args {
+struct compat_30_sys___stat13_args {
 	syscallarg(const char *) path;
-	syscallarg(struct stat *) ub;
+	syscallarg(struct stat30 *) ub;
 };
 
-struct sys___fstat13_args {
+struct compat_30_sys___fstat13_args {
 	syscallarg(int) fd;
-	syscallarg(struct stat *) sb;
+	syscallarg(struct stat30 *) sb;
 };
 
-struct sys___lstat13_args {
+struct compat_30_sys___lstat13_args {
 	syscallarg(const char *) path;
-	syscallarg(struct stat *) ub;
+	syscallarg(struct stat30 *) ub;
 };
 
 struct sys___sigaltstack14_args {
@@ -1664,6 +1664,27 @@ struct sys_lremovexattr_args {
 struct sys_fremovexattr_args {
 	syscallarg(int) fd;
 	syscallarg(const char *) name;
+};
+
+struct sys___stat30_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
+};
+
+struct sys___fstat30_args {
+	syscallarg(int) fd;
+	syscallarg(struct stat *) sb;
+};
+
+struct sys___lstat30_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
+};
+
+struct sys___getdents30_args {
+	syscallarg(int) fd;
+	syscallarg(char *) buf;
+	syscallarg(size_t) count;
 };
 
 /*
@@ -2159,7 +2180,7 @@ int	sys___posix_rename(struct lwp *, void *, register_t *);
 
 int	sys_swapctl(struct lwp *, void *, register_t *);
 
-int	sys_getdents(struct lwp *, void *, register_t *);
+int	compat_30_sys_getdents(struct lwp *, void *, register_t *);
 
 int	sys_minherit(struct lwp *, void *, register_t *);
 
@@ -2171,11 +2192,11 @@ int	sys_lutimes(struct lwp *, void *, register_t *);
 
 int	sys___msync13(struct lwp *, void *, register_t *);
 
-int	sys___stat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___stat13(struct lwp *, void *, register_t *);
 
-int	sys___fstat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___fstat13(struct lwp *, void *, register_t *);
 
-int	sys___lstat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___lstat13(struct lwp *, void *, register_t *);
 
 int	sys___sigaltstack14(struct lwp *, void *, register_t *);
 
@@ -2352,5 +2373,13 @@ int	sys_removexattr(struct lwp *, void *, register_t *);
 int	sys_lremovexattr(struct lwp *, void *, register_t *);
 
 int	sys_fremovexattr(struct lwp *, void *, register_t *);
+
+int	sys___stat30(struct lwp *, void *, register_t *);
+
+int	sys___fstat30(struct lwp *, void *, register_t *);
+
+int	sys___lstat30(struct lwp *, void *, register_t *);
+
+int	sys___getdents30(struct lwp *, void *, register_t *);
 
 #endif /* _SYS__SYSCALLARGS_H_ */

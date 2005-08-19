@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.132 2005/07/21 10:39:46 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.133 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.132 2005/07/21 10:39:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.133 2005/08/19 02:04:03 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -88,10 +88,10 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct proc *p = uio->uio_procp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
-	caddr_t baddr, ep, edp;
+	caddr_t baddr;
 	int got_buf = 0, error = 0, n = 0, on = 0, en, enn;
 	int enough = 0;
-	struct dirent *dp, *pdp;
+	struct dirent *dp, *pdp, *edp, *ep;
 	off_t curoff = 0;
 
 #ifdef DIAGNOSTIC
@@ -310,11 +310,12 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = bp->b_data + bp->b_bcount - bp->b_resid;
+		edp = (struct dirent *)(void *)(bp->b_data + bp->b_bcount -
+		    bp->b_resid);
 		enn = 0;
-		while (enn < en && (caddr_t)dp < edp) {
+		while (enn < en && dp < edp) {
 			pdp = dp;
-			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 
@@ -325,7 +326,7 @@ diragain:
 		 * stale. Flush it and try again (i.e. go to
 		 * the server).
 		 */
-		if ((caddr_t)dp >= edp || (caddr_t)dp + dp->d_reclen > edp ||
+		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(edp) > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
 		    	printf("invalid cache: %p %p %p off %lx %lx\n",
@@ -350,8 +351,7 @@ diragain:
 		 */
 
 		if (en == 0 && pdp == dp) {
-			dp = (struct dirent *)
-			    ((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 
@@ -361,14 +361,14 @@ diragain:
 		} else
 			n = bp->b_bcount - bp->b_resid - on;
 
-		ep = bp->b_data + on + n;
+		ep = (struct dirent *)(void *)(bp->b_data + on + n);
 
 		/*
 		 * Find last complete entry to copy, caching entries
 		 * (if requested) as we go.
 		 */
 
-		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {
+		while (dp < ep && (struct dirent *)_DIRENT_NEXT(dp) <= ep) {
 			if (cflag & NFSBIO_CACHECOOKIES) {
 				nndp = nfs_enterdircache(vp, NFS_GETCOOKIE(pdp),
 				    ndp->dc_blkcookie, enn, bp->b_lblkno);
@@ -379,7 +379,7 @@ diragain:
 				nfs_putdircache(np, nndp);
 			}
 			pdp = dp;
-			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 		nfs_putdircache(np, ndp);
@@ -415,7 +415,7 @@ diragain:
 			}
 		}
 
-		n = ((caddr_t)pdp + pdp->d_reclen) - (bp->b_data + on);
+		n = (char *)_DIRENT_NEXT(pdp) - (bp->b_data + on);
 
 		/*
 		 * If not eof and read aheads are enabled, start one.

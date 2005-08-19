@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.85 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.86 2005/08/19 02:04:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.85 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.86 2005/08/19 02:04:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -700,7 +700,8 @@ ffs_valloc(void *v)
 		    DIP(ip, gen), ip->i_gen);
 		printf("size %llx blocks %llx\n",
 		    (long long)DIP(ip, size), (long long)DIP(ip, blocks));
-		printf("ino %u ipref %u\n", ino, ipref);
+		printf("ino %llu ipref %llu\n", (unsigned long long)ino,
+		    (unsigned long long)ipref);
 #if 0
 		error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 		    (int)fs->fs_bsize, NOCRED, &bp);
@@ -710,8 +711,8 @@ ffs_valloc(void *v)
 		panic("ffs_valloc: dup alloc");
 	}
 	if (DIP(ip, blocks)) {				/* XXX */
-		printf("free inode %s/%d had %" PRId64 " blocks\n",
-		    fs->fs_fsmnt, ino, DIP(ip, blocks));
+		printf("free inode %s/%llu had %" PRId64 " blocks\n",
+		    fs->fs_fsmnt, (unsigned long long)ino, DIP(ip, blocks));
 		DIP_ASSIGN(ip, blocks, 0);
 	}
 	ip->i_flag &= ~IN_SPACECOUNTED;
@@ -1528,7 +1529,8 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	}
 
 	if (bno >= fs->fs_size) {
-		printf("bad block %" PRId64 ", ino %d\n", bno, inum);
+		printf("bad block %" PRId64 ", ino %llu\n", bno,
+		    (unsigned long long)inum);
 		ffs_fserr(fs, inum, "bad block");
 		return;
 	}
@@ -1732,8 +1734,8 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	}
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
-		    dev, ino, fs->fs_fsmnt);
+		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
+		    dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
@@ -1751,8 +1753,9 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
-		printf("ifree: dev = 0x%x, ino = %d, fs = %s\n",
-		    dev, ino + cg * fs->fs_ipg, fs->fs_fsmnt);
+		printf("ifree: dev = 0x%x, ino = %llu, fs = %s\n",
+		    dev, (unsigned long long)ino + cg * fs->fs_ipg,
+		    fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
