@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.287 2005/07/31 04:13:20 yamt Exp $
+.\"	$NetBSD: options.4,v 1.288 2005/08/19 12:28:37 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 16, 2005
+.Dd August 19, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1438,6 +1438,13 @@ or
 .Tn XNS ) .
 .Em GATEWAY
 option also compiles IPv4 fast forwarding code into the kernel.
+.It Cd options ICMPPRINTFS
+The
+.Em ICMPPRINTFS
+option will enable debugging information to be printed about
+the
+.Xr icmp 4
+protocol.
 .It Cd options IPFORWARDING=value
 If
 .Em value
