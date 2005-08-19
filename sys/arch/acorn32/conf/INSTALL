@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 2005/07/07 17:05:46 tron Exp $
+#	$NetBSD: INSTALL,v 1.33 2005/08/19 02:03:49 christos Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.32 $"
+#ident		"INSTALL-$Revision: 1.33 $"
 
 # estimated number of users
 maxusers	32
@@ -100,6 +100,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options		COMPAT_15	# NetBSD 1.5 compatibility.

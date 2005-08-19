@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 2005/07/07 17:05:58 tron Exp $
+#	$NetBSD: INSTALL,v 1.18 2005/08/19 02:03:53 christos Exp $
 #
 #	INSTALL
 #
@@ -57,6 +57,7 @@ no makeoptions	NEED_SYMTAB
 #options 	COMPAT_14	# NetBSD 1.4,
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_20	# NetBSD 2.0,
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.17 2005/07/25 00:48:22 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.18 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.17 2005/07/25 00:48:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.18 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
 		       ip->i_number));
 		error = ntfs_loadntnode(ntmp,ip);
 		if (error) {
-			printf("ntfs_findvattr: FAILED TO LOAD INO: %d\n",
-			       ip->i_number);
+			printf("ntfs_findvattr: FAILED TO LOAD INO: %llu\n",
+			    (unsigned long long)ip->i_number);
 			return (error);
 		}
 	}
@@ -346,8 +346,8 @@ ntfs_loadntnode(
 		ap = (struct attr *) ((caddr_t)mfrp + off);
 	}
 	if (error) {
-		printf("ntfs_loadntnode: failed to load attr ino: %d\n",
-		       ip->i_number);
+		printf("ntfs_loadntnode: failed to load attr ino: %llu\n",
+		    (unsigned long long)ip->i_number);
 		goto out;
 	}
 
@@ -457,8 +457,8 @@ ntfs_ntput(ip)
 
 #ifdef DIAGNOSTIC
 	if (ip->i_usecount < 0) {
-		panic("ntfs_ntput: ino: %d usecount: %d ",
-		      ip->i_number,ip->i_usecount);
+		panic("ntfs_ntput: ino: %llu usecount: %d ",
+		    (unsigned long long)ip->i_number, ip->i_usecount);
 	}
 #endif
 
@@ -512,8 +512,8 @@ ntfs_ntrele(ip)
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
-		panic("ntfs_ntrele: ino: %d usecount: %d ",
-		      ip->i_number,ip->i_usecount);
+		panic("ntfs_ntrele: ino: %llu usecount: %d ",
+		    (unsigned long long)ip->i_number, ip->i_usecount);
 	simple_unlock(&ip->i_interlock);
 }
 

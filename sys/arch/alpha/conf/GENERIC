@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.272 $"
+#ident 		"GENERIC-$Revision: 1.273 $"
 
 maxusers 32
 
@@ -137,6 +137,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options		COMPAT_16
 options		COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 

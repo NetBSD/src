@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.39 2005/07/31 04:04:30 yamt Exp $
+#	$NetBSD: RPC_WSCONS,v 1.40 2005/08/19 02:03:49 christos Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.39 $"
+#ident		"GENERIC-$Revision: 1.40 $"
 
 # estimated number of users
 maxusers	32
@@ -98,6 +98,7 @@ options 	INET6		# IPV6
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.

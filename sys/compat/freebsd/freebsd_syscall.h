@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.58 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.59 2005/08/19 02:03:57 christos Exp $ */
 
 /*
  * System call numbers.
@@ -690,13 +690,13 @@
 /* syscall: "__msync13" ret: "int" args: "void *" "size_t" "int" */
 #define	FREEBSD_SYS___msync13	277
 
-/* syscall: "__stat13" ret: "int" args: "const char *" "struct stat *" */
+/* syscall: "__stat13" ret: "int" args: "const char *" "struct stat30 *" */
 #define	FREEBSD_SYS___stat13	278
 
-/* syscall: "__fstat13" ret: "int" args: "int" "struct stat *" */
+/* syscall: "__fstat13" ret: "int" args: "int" "struct stat30 *" */
 #define	FREEBSD_SYS___fstat13	279
 
-/* syscall: "__lstat13" ret: "int" args: "const char *" "struct stat *" */
+/* syscall: "__lstat13" ret: "int" args: "const char *" "struct stat30 *" */
 #define	FREEBSD_SYS___lstat13	280
 
 /* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs12 *" */

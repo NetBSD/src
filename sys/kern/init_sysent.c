@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.165 2005/07/10 22:05:24 thorpej Exp $ */
+/* $NetBSD: init_sysent.c,v 1.166 2005/08/19 02:04:03 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.165 2005/07/10 22:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.166 2005/08/19 02:04:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -84,6 +84,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.165 2005/07/10 22:05:24 thorpej Ex
 #define	compat_20(func) __CONCAT(compat_20_,func)
 #else
 #define	compat_20(func) sys_nosys
+#endif
+
+#ifdef COMPAT_30
+#define	compat_30(func) __CONCAT(compat_30_,func)
+#else
+#define	compat_30(func) sys_nosys
 #endif
 
 #define	s(type)	sizeof(type)
@@ -768,8 +774,8 @@ struct sysent sysent[] = {
 	    sys___posix_rename },		/* 270 = __posix_rename */
 	{ 3, s(struct sys_swapctl_args), 0,
 	    sys_swapctl },			/* 271 = swapctl */
-	{ 3, s(struct sys_getdents_args), 0,
-	    sys_getdents },			/* 272 = getdents */
+	{ 3, s(struct compat_30_sys_getdents_args), 0,
+	    compat_30(sys_getdents) },		/* 272 = compat_30 getdents */
 	{ 3, s(struct sys_minherit_args), 0,
 	    sys_minherit },			/* 273 = minherit */
 	{ 2, s(struct sys_lchmod_args), 0,
@@ -780,12 +786,12 @@ struct sysent sysent[] = {
 	    sys_lutimes },			/* 276 = lutimes */
 	{ 3, s(struct sys___msync13_args), 0,
 	    sys___msync13 },			/* 277 = __msync13 */
-	{ 2, s(struct sys___stat13_args), 0,
-	    sys___stat13 },			/* 278 = __stat13 */
-	{ 2, s(struct sys___fstat13_args), 0,
-	    sys___fstat13 },			/* 279 = __fstat13 */
-	{ 2, s(struct sys___lstat13_args), 0,
-	    sys___lstat13 },			/* 280 = __lstat13 */
+	{ 2, s(struct compat_30_sys___stat13_args), 0,
+	    compat_30(sys___stat13) },		/* 278 = compat_30 __stat13 */
+	{ 2, s(struct compat_30_sys___fstat13_args), 0,
+	    compat_30(sys___fstat13) },		/* 279 = compat_30 __fstat13 */
+	{ 2, s(struct compat_30_sys___lstat13_args), 0,
+	    compat_30(sys___lstat13) },		/* 280 = compat_30 __lstat13 */
 	{ 2, s(struct sys___sigaltstack14_args), 0,
 	    sys___sigaltstack14 },		/* 281 = __sigaltstack14 */
 	{ 0, 0, 0,
@@ -1018,14 +1024,14 @@ struct sysent sysent[] = {
 	    sys_lremovexattr },			/* 385 = lremovexattr */
 	{ 2, s(struct sys_fremovexattr_args), 0,
 	    sys_fremovexattr },			/* 386 = fremovexattr */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 387 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 388 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 389 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 390 = filler */
+	{ 2, s(struct sys___stat30_args), 0,
+	    sys___stat30 },			/* 387 = __stat30 */
+	{ 2, s(struct sys___fstat30_args), 0,
+	    sys___fstat30 },			/* 388 = __fstat30 */
+	{ 2, s(struct sys___lstat30_args), 0,
+	    sys___lstat30 },			/* 389 = __lstat30 */
+	{ 3, s(struct sys___getdents30_args), 0,
+	    sys___getdents30 },			/* 390 = __getdents30 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 391 = filler */
 	{ 0, 0, 0,

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.41 2005/05/29 21:05:25 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.42 2005/08/19 02:03:57 christos Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.41 2005/05/29 21:05:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.42 2005/08/19 02:03:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,8 @@ coda_open(v)
     if (error)
 	return (error);
     if (!error) {
-	CODADEBUG( CODA_OPEN,myprintf(("open: dev %d inode %d result %d\n",
-				  dev, inode, error)); )
+	CODADEBUG( CODA_OPEN,myprintf(("open: dev %d inode %llu result %d\n",
+				  dev, (unsigned long long)inode, error)); )
     }
 
     /* Translate the <device, inode> pair for the cache file into
@@ -1878,8 +1878,8 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
     /* XXX - ensure that nonzero-return means failure */
     error = VFS_VGET(mp,ino,vpp);
     if (error) {
-	myprintf(("coda_grab_vnode: iget/vget(%d, %d) returns %p, err %d\n",
-		  dev, ino, *vpp, error));
+	myprintf(("coda_grab_vnode: iget/vget(%d, %llu) returns %p, err %d\n",
+		  dev, (unsigned long long)ino, *vpp, error));
 	return(ENOENT);
     }
     return(0);

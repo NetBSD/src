@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.23 2005/08/05 09:23:16 skrll Exp $
+#	$NetBSD: PB1000,v 1.24 2005/08/19 02:03:51 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PB1000-$Revision: 1.23 $"
+#ident 		"PB1000-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -51,6 +51,7 @@ options 	SYMTAB_SPACE=180000	# size for embedded symbol table
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

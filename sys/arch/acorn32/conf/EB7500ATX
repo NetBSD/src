@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.18 2005/07/31 04:04:30 yamt Exp $
+#	$NetBSD: EB7500ATX,v 1.19 2005/08/19 02:03:49 christos Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.18 $"
+#ident		"EB7500ATX-$Revision: 1.19 $"
 
 # estimated number of users
 maxusers	32
@@ -106,6 +106,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options		COMPAT_15	# NetBSD 1.5 compatibility.

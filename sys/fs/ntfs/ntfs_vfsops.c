@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.31 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.32 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.31 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.32 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,8 +893,8 @@ ntfs_vgetex(
 	if (!(flags & VG_DONTLOADIN) && !(ip->i_flag & IN_LOADED)) {
 		error = ntfs_loadntnode(ntmp, ip);
 		if(error) {
-			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO: %d\n",
-			       ip->i_number);
+			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO:"
+			    " %llu\n", (unsigned long long)ip->i_number);
 			ntfs_ntput(ip);
 			return (error);
 		}

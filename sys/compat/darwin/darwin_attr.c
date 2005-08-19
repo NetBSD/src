@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.6 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.7 2005/08/19 02:03:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.7 2005/08/19 02:03:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ darwin_sys_getattrlist(l, v, retval)
 	darwin_attrreference_t *vol_mountpoint_p = NULL;
 	darwin_attrreference_t *vol_name_p = NULL;
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
-	struct sys___stat13_args cup1;
+	struct sys___stat30_args cup1;
 	struct stat *ust;
 	struct stat st;
 	struct compat_20_sys_statfs_args cup2;
@@ -163,10 +163,10 @@ darwin_sys_getattrlist(l, v, retval)
 	SCARG(&cup1, path) = path;
 	SCARG(&cup1, ub) = ust;
 	if (follow) {
-		if ((error = sys___stat13(l, &cup1, retval)) != 0)
+		if ((error = sys___stat30(l, &cup1, retval)) != 0)
 			return error;
 	} else {
-		if ((error = sys___lstat13(l, &cup1, retval)) != 0)
+		if ((error = sys___lstat30(l, &cup1, retval)) != 0)
 			return error;
 	}
 

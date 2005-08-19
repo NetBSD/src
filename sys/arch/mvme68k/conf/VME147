@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.48 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: VME147,v 1.49 2005/08/19 02:03:52 christos Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -49,6 +49,7 @@ options 	COMPAT_14
 options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries

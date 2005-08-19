@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.19 2005/07/31 04:04:31 yamt Exp $
+#	$NetBSD: NAPPI,v 1.20 2005/08/19 02:03:51 christos Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -80,6 +80,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.

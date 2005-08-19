@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.90 2005/06/09 13:29:57 tron Exp $
+#	$NetBSD: INSTALL,v 1.91 2005/08/19 02:03:52 christos Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -29,6 +29,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

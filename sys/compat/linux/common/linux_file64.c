@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.28 2005/05/29 22:08:16 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.29 2005/08/19 02:03:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.28 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.29 2005/08/19 02:03:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ linux_sys_fstat64(l, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct linux_stat64 tmplst;
 	struct stat *st,tmpst;
 	caddr_t sg;
@@ -143,7 +143,7 @@ linux_sys_fstat64(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -165,7 +165,7 @@ linux_do_stat64(l, v, retval, dolstat)
 	int dolstat;
 {
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct linux_stat64 tmplst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -179,8 +179,8 @@ linux_do_stat64(l, v, retval, dolstat)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = (dolstat ? sys___lstat13(l, &sa, retval) :
-				sys___stat13(l, &sa, retval))))
+	if ((error = (dolstat ? sys___lstat30(l, &sa, retval) :
+				sys___stat30(l, &sa, retval))))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))

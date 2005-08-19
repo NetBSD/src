@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.16 2005/07/28 03:50:52 christos Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.17 2005/08/19 02:04:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.16 2005/07/28 03:50:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.17 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ svr4_32_sys_xstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
-	struct sys___stat13_args	cup;
+	struct sys___stat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -330,7 +330,7 @@ svr4_32_sys_xstat(l, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -360,7 +360,7 @@ svr4_32_sys_lxstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
-	struct sys___lstat13_args	cup;
+	struct sys___lstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -369,7 +369,7 @@ svr4_32_sys_lxstat(l, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -399,7 +399,7 @@ svr4_32_sys_fxstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
-	struct sys___fstat13_args	cup;
+	struct sys___fstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -407,7 +407,7 @@ svr4_32_sys_fxstat(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -433,7 +433,7 @@ svr4_32_sys_stat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
-	struct sys___stat13_args	cup;
+	struct sys___stat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -442,7 +442,7 @@ svr4_32_sys_stat64(l, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -472,7 +472,7 @@ svr4_32_sys_lstat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
-	struct sys___lstat13_args	cup;
+	struct sys___lstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -481,7 +481,7 @@ svr4_32_sys_lstat64(l, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -511,7 +511,7 @@ svr4_32_sys_fstat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
-	struct sys___fstat13_args	cup;
+	struct sys___fstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -519,7 +519,7 @@ svr4_32_sys_fstat64(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)

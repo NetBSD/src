@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.53 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.54 2005/08/19 02:03:58 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.53 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.54 2005/08/19 02:03:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -279,7 +279,7 @@ clean_pipe(l, path)
 	const char *path;
 {
 	struct proc *p = l->l_proc;
-	struct sys___lstat13_args la;
+	struct sys___lstat30_args la;
 	struct sys_unlink_args ua;
 	register_t retval;
 	struct stat st;
@@ -296,7 +296,7 @@ clean_pipe(l, path)
 
 	SCARG(&la, path) = tpath;
 
-	if ((error = sys___lstat13(l, &la, &retval)) != 0)
+	if ((error = sys___lstat30(l, &la, &retval)) != 0)
 		return 0;
 
 	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
@@ -1601,7 +1601,7 @@ svr4_sys_putmsg(l, v, retval)
 		else {
 			/* Maybe we've been given a device/inode pair */
 			dev_t *dev = SVR4_ADDROF(&sc);
-			ino_t *ino = (ino_t *) &dev[1];
+			svr4_ino_t *ino = (svr4_ino_t *) &dev[1];
 			skp = svr4_find_socket(p, fp, *dev, *ino);
 			if (skp == NULL) {
 				skp = &saun;

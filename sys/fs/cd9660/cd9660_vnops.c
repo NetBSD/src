@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.14 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.13 2005/06/23 17:00:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.14 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ iso_uiodir(idp, dp, off)
 	int error;
 
 	dp->d_name[dp->d_namlen] = 0;
-	dp->d_reclen = DIRENT_SIZE(dp);
+	dp->d_reclen = _DIRENT_SIZE(dp);
 
 	if (idp->uio->uio_resid < dp->d_reclen) {
 		idp->eofflag = 0;
@@ -396,7 +396,7 @@ iso_shipdir(idp)
 			}
 		}
 	}
-	idp->current.d_reclen = DIRENT_SIZE(&idp->current);
+	idp->current.d_reclen = _DIRENT_SIZE(&idp->current);
 	if (assoc) {
 		idp->assocoff = idp->curroff;
 		memcpy(&idp->assocent, &idp->current, idp->current.d_reclen);

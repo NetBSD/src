@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.13 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.14 2005/08/19 02:03:58 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.13 2005/02/26 23:58:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.14 2005/08/19 02:03:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -721,8 +721,8 @@ struct sysent pecoff_sysent[] = {
 	    pecoff_sys___posix_rename },	/* 270 = __posix_rename */
 	{ 3, s(struct sys_swapctl_args), 0,
 	    sys_swapctl },			/* 271 = swapctl */
-	{ 3, s(struct sys_getdents_args), 0,
-	    sys_getdents },			/* 272 = getdents */
+	{ 3, s(struct sys___getdents30_args), 0,
+	    sys___getdents30 },			/* 272 = __getdents30 */
 	{ 3, s(struct sys_minherit_args), 0,
 	    sys_minherit },			/* 273 = minherit */
 	{ 2, s(struct pecoff_sys_lchmod_args), 0,
@@ -733,12 +733,12 @@ struct sysent pecoff_sysent[] = {
 	    pecoff_sys_lutimes },		/* 276 = lutimes */
 	{ 3, s(struct sys___msync13_args), 0,
 	    sys___msync13 },			/* 277 = __msync13 */
-	{ 2, s(struct pecoff_sys___stat13_args), 0,
-	    pecoff_sys___stat13 },		/* 278 = __stat13 */
-	{ 2, s(struct sys___fstat13_args), 0,
-	    sys___fstat13 },			/* 279 = __fstat13 */
-	{ 2, s(struct pecoff_sys___lstat13_args), 0,
-	    pecoff_sys___lstat13 },		/* 280 = __lstat13 */
+	{ 2, s(struct pecoff_sys___stat30_args), 0,
+	    pecoff_sys___stat30 },		/* 278 = __stat30 */
+	{ 2, s(struct sys___fstat30_args), 0,
+	    sys___fstat30 },			/* 279 = __fstat30 */
+	{ 2, s(struct pecoff_sys___lstat30_args), 0,
+	    pecoff_sys___lstat30 },		/* 280 = __lstat30 */
 	{ 2, s(struct sys___sigaltstack14_args), 0,
 	    sys___sigaltstack14 },		/* 281 = __sigaltstack14 */
 	{ 0, 0, 0,

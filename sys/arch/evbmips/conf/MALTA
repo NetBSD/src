@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.33 2005/07/31 04:04:31 yamt Exp $
+#	$NetBSD: MALTA,v 1.34 2005/08/19 02:03:51 christos Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.33 $"
+#ident 		"MALTA-$Revision: 1.34 $"
 
 maxusers	32
 
@@ -50,6 +50,7 @@ options 	SYMTAB_SPACE=150000	# size for embedded symbol table
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

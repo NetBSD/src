@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.15 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: compat_file.c,v 1.16 2005/08/19 02:03:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.15 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.16 2005/08/19 02:03:57 christos Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -878,12 +878,12 @@ bsd_sys_lutimes(l, v, retval)
 }
 
 int
-bsd_sys___stat13(l, v, retval)
+bsd_sys___stat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys___stat13_args /* {
+	struct sys___stat30_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -891,16 +891,16 @@ bsd_sys___stat13(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys___stat13(l, uap, retval);
+	return sys___stat30(l, uap, retval);
 }
 
 int
-bsd_sys___lstat13(l, v, retval)
+bsd_sys___lstat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys___lstat13_args /* {
+	struct sys___lstat30_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -908,7 +908,7 @@ bsd_sys___lstat13(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys___lstat13(l, uap, retval);
+	return sys___lstat30(l, uap, retval);
 }
 
 int

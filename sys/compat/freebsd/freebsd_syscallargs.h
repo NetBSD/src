@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.60 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.61 2005/08/19 02:03:57 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -806,7 +806,7 @@ int	sys_issetugid(struct lwp *, void *, register_t *);
 
 int	freebsd_sys_lchown(struct lwp *, void *, register_t *);
 
-int	sys_getdents(struct lwp *, void *, register_t *);
+int	compat_30_sys_getdents(struct lwp *, void *, register_t *);
 
 int	sys_lchmod(struct lwp *, void *, register_t *);
 
@@ -816,11 +816,11 @@ int	sys_lutimes(struct lwp *, void *, register_t *);
 
 int	sys___msync13(struct lwp *, void *, register_t *);
 
-int	sys___stat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___stat13(struct lwp *, void *, register_t *);
 
-int	sys___fstat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___fstat13(struct lwp *, void *, register_t *);
 
-int	sys___lstat13(struct lwp *, void *, register_t *);
+int	compat_30_sys___lstat13(struct lwp *, void *, register_t *);
 
 int	compat_20_sys_fhstatfs(struct lwp *, void *, register_t *);
 

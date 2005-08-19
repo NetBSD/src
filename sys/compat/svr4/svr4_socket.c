@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.10 2003/01/18 08:44:27 thorpej Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.11 2005/08/19 02:03:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.10 2003/01/18 08:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.11 2005/08/19 02:03:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,7 @@ struct svr4_sockcache_entry {
 	void *cookie;		/* Internal cookie used for matching	*/
 	struct sockaddr_un sock;/* Pathname for the socket		*/
 	dev_t dev;		/* Device where the socket lives on	*/
-	ino_t ino;		/* Inode where the socket lives on	*/
+	svr4_ino_t ino;		/* Inode where the socket lives on	*/
 	TAILQ_ENTRY(svr4_sockcache_entry) entries;
 };
 
@@ -90,7 +90,7 @@ svr4_find_socket(p, fp, dev, ino)
 	struct proc *p;
 	struct file *fp;
 	dev_t dev;
-	ino_t ino;
+	svr4_ino_t ino;
 {
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;

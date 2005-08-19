@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.15 2005/07/17 00:08:27 hubertf Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.16 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -197,6 +197,15 @@ struct vnd_comp_header
 /*
  * A simple structure for describing which vnd units are in use.
  */
+#ifdef COMPAT_30
+struct vnd_ouser {
+	int		vnu_unit;	/* which vnd unit */
+	dev_t		vnu_dev;	/* file is on this device... */
+	uint32_t	vnu_ino;	/* ...at this inode */
+};
+#define VNDIOOCGET	_IOWR('F', 2, struct vnd_ouser)	/* get list */
+#endif
+
 struct vnd_user {
 	int		vnu_unit;	/* which vnd unit */
 	dev_t		vnu_dev;	/* file is on this device... */
@@ -211,4 +220,4 @@ struct vnd_user {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
-#define VNDIOCGET	_IOWR('F', 2, struct vnd_user)	/* get list */
+#define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */

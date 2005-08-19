@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.36 2005/07/31 04:04:44 yamt Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.37 2005/08/19 02:03:53 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.36 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -88,6 +88,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	COMPAT_15	# NetBSD 1.5
 options		COMPAT_16	# NetBSD 1.6
 options		COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_IRIX	# binary compatibility with IRIX

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.12 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.13 2005/08/19 02:03:58 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.12 2005/02/26 23:58:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.13 2005/08/19 02:03:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -402,15 +402,15 @@ const char *const pecoff_syscallnames[] = {
 	"#269 (unimplemented)",		/* 269 = unimplemented */
 	"__posix_rename",			/* 270 = __posix_rename */
 	"swapctl",			/* 271 = swapctl */
-	"getdents",			/* 272 = getdents */
+	"__getdents30",			/* 272 = __getdents30 */
 	"minherit",			/* 273 = minherit */
 	"lchmod",			/* 274 = lchmod */
 	"lchown",			/* 275 = lchown */
 	"lutimes",			/* 276 = lutimes */
 	"__msync13",			/* 277 = __msync13 */
-	"__stat13",			/* 278 = __stat13 */
-	"__fstat13",			/* 279 = __fstat13 */
-	"__lstat13",			/* 280 = __lstat13 */
+	"__stat30",			/* 278 = __stat30 */
+	"__fstat30",			/* 279 = __fstat30 */
+	"__lstat30",			/* 280 = __lstat30 */
 	"__sigaltstack14",			/* 281 = __sigaltstack14 */
 	"__vfork14",			/* 282 = __vfork14 */
 	"__posix_chown",			/* 283 = __posix_chown */

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.13 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.14 2005/08/19 02:03:57 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -208,12 +208,12 @@ struct pecoff_sys_lutimes_args {
 	syscallarg(const struct timeval *) tptr;
 };
 
-struct pecoff_sys___stat13_args {
+struct pecoff_sys___stat30_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat *) ub;
 };
 
-struct pecoff_sys___lstat13_args {
+struct pecoff_sys___lstat30_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat *) ub;
 };
@@ -642,7 +642,7 @@ int	pecoff_sys___posix_rename(struct lwp *, void *, register_t *);
 
 int	sys_swapctl(struct lwp *, void *, register_t *);
 
-int	sys_getdents(struct lwp *, void *, register_t *);
+int	sys___getdents30(struct lwp *, void *, register_t *);
 
 int	sys_minherit(struct lwp *, void *, register_t *);
 
@@ -654,11 +654,11 @@ int	pecoff_sys_lutimes(struct lwp *, void *, register_t *);
 
 int	sys___msync13(struct lwp *, void *, register_t *);
 
-int	pecoff_sys___stat13(struct lwp *, void *, register_t *);
+int	pecoff_sys___stat30(struct lwp *, void *, register_t *);
 
-int	sys___fstat13(struct lwp *, void *, register_t *);
+int	sys___fstat30(struct lwp *, void *, register_t *);
 
-int	pecoff_sys___lstat13(struct lwp *, void *, register_t *);
+int	pecoff_sys___lstat30(struct lwp *, void *, register_t *);
 
 int	sys___sigaltstack14(struct lwp *, void *, register_t *);
 
