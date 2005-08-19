@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.9 2003/04/02 10:39:22 fvdl Exp $  */
+/*      $NetBSD: coalesce.c,v 1.10 2005/08/19 02:06:29 christos Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -147,20 +147,22 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	/* Sanity checks */
 	if (dip->di_size < 0) {
 		if (debug)
-			syslog(LOG_DEBUG, "ino %d, negative size (%lld)",
-				ino, (long long)dip->di_size);
+			syslog(LOG_DEBUG, "ino %llu, negative size (%lld)",
+			    (unsigned long long)ino, (long long)dip->di_size);
 		return COALESCE_BADSIZE;
 	}
 	if (nb > dip->di_blocks) {
 		if (debug)
-			syslog(LOG_DEBUG, "ino %d, computed blocks %d > held blocks %d",
-				ino, nb, dip->di_blocks);
+			syslog(LOG_DEBUG, "ino %llu, computed blocks %d "
+			    "> held blocks %d",
+			    (unsigned long long)ino, nb, dip->di_blocks);
 		return COALESCE_BADBLOCKSIZE;
 	}
 
 	bip = (BLOCK_INFO *)malloc(sizeof(BLOCK_INFO) * nb);
 	if (bip == NULL) {
-		syslog(LOG_WARNING, "ino %d, %d blocks: %m", ino, nb);
+		syslog(LOG_WARNING, "ino %llu, %d blocks: %m",
+		    (unsigned long long)ino, nb);
 		return COALESCE_NOMEM;
 	}
 	for (i = 0; i < nb; i++) {
@@ -203,9 +205,9 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		retval = COALESCE_NOTWORTHIT;
 		goto out;
 	} else if (debug)
-		syslog(LOG_DEBUG, "ino %d total discontinuity "
-			"%d (%lld) for %d blocks", ino, noff,
-			(long long)toff, nb);
+		syslog(LOG_DEBUG, "ino %llu total discontinuity "
+		    "%d (%lld) for %d blocks", (unsigned long long)ino,
+		    noff, (long long)toff, nb);
 
 	/* Search for blocks in active segments; don't move them. */
 	for (i = 0; i < nb; i++) {
@@ -258,7 +260,8 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		}
 	}
 	if (debug)
-		syslog(LOG_DEBUG, "ino %d markv %d blocks", ino, nb);
+		syslog(LOG_DEBUG, "ino %llu markv %d blocks",
+		    (unsigned long long)ino, nb);
 
 	/*
 	 * Write in segment-sized chunks.  If at any point we'd write more
