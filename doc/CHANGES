@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.506 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.507 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -71,6 +71,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		http://www.gont.com.ar/drafts/icmp-attacks-against-tcp.html
 		[christos 20050719]
 	config(1): Implement "no <dev> at <attachment>". [cube 20050724]
+	ucycom(4): Add driver for Cypress microcontroller based serial
+		devices. [skrll 20050731]
 	hpcmips: Add teliosio(4) driver for the Sharp Telios LCD screen and
 		Battery unit. [nakayama 20050731]
 	scan_lfs(8): Program to find LFS partitions on disks [xtraeme 20050731]
