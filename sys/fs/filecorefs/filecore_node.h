@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.2 2003/08/07 16:31:38 agc Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.3 2005/08/19 04:47:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -138,6 +138,6 @@ void	filecore_ihashrem __P((struct filecore_node *));
 mode_t	filecore_mode	__P((struct filecore_node *));
 struct timespec	filecore_time	__P((struct filecore_node *));
 ino_t	filecore_getparent	__P((struct filecore_node *));
-int	filecore_fn2unix	__P((char *, char *, u_int8_t *));
+int	filecore_fn2unix	__P((char *, char *, u_int16_t *));
 int	filecore_fncmp		__P((const char *, const char *, u_short));
 int	filecore_dbread		__P((struct filecore_node *, struct buf **));

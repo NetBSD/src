@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.12 2005/08/19 04:45:47 christos Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.13 2005/08/19 04:47:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.12 2005/08/19 04:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.13 2005/08/19 04:47:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,6 +343,7 @@ filecore_readdir(v)
 			else
 				de.d_type = DT_REG;
 			if (filecore_fn2unix(dep->name, de.d_name,
+/*###346 [cc] warning: passing arg 3 of `filecore_fn2unix' from incompatible pointer type%%%*/
 			    &de.d_namlen)) {
 				*ap->a_eofflag = 1;
 				goto out;
