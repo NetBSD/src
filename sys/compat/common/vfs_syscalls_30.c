@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.2 2005/08/19 06:01:00 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.3 2005/08/19 13:16:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.2 2005/08/19 06:01:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.3 2005/08/19 13:16:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,8 @@ again:
 		idb.d_fileno = (u_int32_t)bdp->d_fileno;
 		idb.d_type = bdp->d_type;
 		(void)memcpy(idb.d_name, bdp->d_name, idb.d_namlen);
-		idb.d_name[idb.d_namlen] = '\0';
+		memset(idb.d_name + idb.d_namlen, 0,
+		    idb.d_reclen - _DIRENT_NAMEOFF(&idb) - idb.d_namlen);
 		if ((error = copyout(&idb, outp, idb.d_reclen)) != 0)
 			goto out;
 		/* advance past this real entry */
