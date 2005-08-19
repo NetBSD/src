@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.225 2005/08/19 02:04:04 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.226 2005/08/19 10:08:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.225 2005/08/19 02:04:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.226 2005/08/19 10:08:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2837,7 +2837,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				goto nfsmout;
 			}
 			/* for cookie stashing */
-			reclen = _DIRENT_RECLEN(dp, len) * 2 * sizeof(off_t);
+			reclen = _DIRENT_RECLEN(dp, len) + 2 * sizeof(off_t);
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if (reclen > left) {
 				/*
