@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.158 2005/07/10 22:05:24 thorpej Exp $ */
+/* $NetBSD: syscall.h,v 1.159 2005/08/19 02:04:04 christos Exp $ */
 
 /*
  * System call numbers.
@@ -771,8 +771,8 @@
 /* syscall: "swapctl" ret: "int" args: "int" "void *" "int" */
 #define	SYS_swapctl	271
 
-/* syscall: "getdents" ret: "int" args: "int" "char *" "size_t" */
-#define	SYS_getdents	272
+/* syscall: "compat_30_getdents" ret: "int" args: "int" "char *" "size_t" */
+#define	SYS_compat_30_getdents	272
 
 /* syscall: "minherit" ret: "int" args: "void *" "size_t" "int" */
 #define	SYS_minherit	273
@@ -789,14 +789,14 @@
 /* syscall: "__msync13" ret: "int" args: "void *" "size_t" "int" */
 #define	SYS___msync13	277
 
-/* syscall: "__stat13" ret: "int" args: "const char *" "struct stat *" */
-#define	SYS___stat13	278
+/* syscall: "compat_30___stat13" ret: "int" args: "const char *" "struct stat30 *" */
+#define	SYS_compat_30___stat13	278
 
-/* syscall: "__fstat13" ret: "int" args: "int" "struct stat *" */
-#define	SYS___fstat13	279
+/* syscall: "compat_30___fstat13" ret: "int" args: "int" "struct stat30 *" */
+#define	SYS_compat_30___fstat13	279
 
-/* syscall: "__lstat13" ret: "int" args: "const char *" "struct stat *" */
-#define	SYS___lstat13	280
+/* syscall: "compat_30___lstat13" ret: "int" args: "const char *" "struct stat30 *" */
+#define	SYS_compat_30___lstat13	280
 
 /* syscall: "__sigaltstack14" ret: "int" args: "const struct sigaltstack *" "struct sigaltstack *" */
 #define	SYS___sigaltstack14	281
@@ -1061,5 +1061,17 @@
 /* syscall: "fremovexattr" ret: "int" args: "int" "const char *" */
 #define	SYS_fremovexattr	386
 
-#define	SYS_MAXSYSCALL	387
+/* syscall: "__stat30" ret: "int" args: "const char *" "struct stat *" */
+#define	SYS___stat30	387
+
+/* syscall: "__fstat30" ret: "int" args: "int" "struct stat *" */
+#define	SYS___fstat30	388
+
+/* syscall: "__lstat30" ret: "int" args: "const char *" "struct stat *" */
+#define	SYS___lstat30	389
+
+/* syscall: "__getdents30" ret: "int" args: "int" "char *" "size_t" */
+#define	SYS___getdents30	390
+
+#define	SYS_MAXSYSCALL	391
 #define	SYS_NSYSENT	512

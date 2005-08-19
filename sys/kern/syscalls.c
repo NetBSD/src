@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.160 2005/07/10 22:05:24 thorpej Exp $ */
+/* $NetBSD: syscalls.c,v 1.161 2005/08/19 02:04:03 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.160 2005/07/10 22:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.161 2005/08/19 02:04:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -391,15 +391,15 @@ const char *const syscallnames[] = {
 	"#269 (unimplemented)",		/* 269 = unimplemented */
 	"__posix_rename",			/* 270 = __posix_rename */
 	"swapctl",			/* 271 = swapctl */
-	"getdents",			/* 272 = getdents */
+	"compat_30_getdents",	/* 272 = compat_30 getdents */
 	"minherit",			/* 273 = minherit */
 	"lchmod",			/* 274 = lchmod */
 	"lchown",			/* 275 = lchown */
 	"lutimes",			/* 276 = lutimes */
 	"__msync13",			/* 277 = __msync13 */
-	"__stat13",			/* 278 = __stat13 */
-	"__fstat13",			/* 279 = __fstat13 */
-	"__lstat13",			/* 280 = __lstat13 */
+	"compat_30___stat13",	/* 278 = compat_30 __stat13 */
+	"compat_30___fstat13",	/* 279 = compat_30 __fstat13 */
+	"compat_30___lstat13",	/* 280 = compat_30 __lstat13 */
 	"__sigaltstack14",			/* 281 = __sigaltstack14 */
 	"__vfork14",			/* 282 = __vfork14 */
 	"__posix_chown",			/* 283 = __posix_chown */
@@ -522,4 +522,8 @@ const char *const syscallnames[] = {
 	"removexattr",			/* 384 = removexattr */
 	"lremovexattr",			/* 385 = lremovexattr */
 	"fremovexattr",			/* 386 = fremovexattr */
+	"__stat30",			/* 387 = __stat30 */
+	"__fstat30",			/* 388 = __fstat30 */
+	"__lstat30",			/* 389 = __lstat30 */
+	"__getdents30",			/* 390 = __getdents30 */
 };

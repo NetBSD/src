@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/12 12:06:45 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2005/08/19 02:04:03 christos Exp $
 
 .if !defined(__SYS_LKM_MAKEFILE_INC)
 __SYS_LKM_MAKEFILE_INC=	1
 
 NOMAN=	# defined
+CPPFLAGS+=-DLOCKDEBUG -DDEBUG -DDIAGNOSTIC
 
 .include <bsd.own.mk>
 
 WARNS?=	1
+CPPFLAGS+=-DDEBUG -DDIAGNOSTIC # -DMALLOCLOG -DLOCKDEBUG
 
 .endif	# __SYS_LKM_MAKEFILE_INC

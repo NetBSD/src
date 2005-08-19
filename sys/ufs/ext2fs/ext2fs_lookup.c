@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.34 2005/06/28 16:53:14 kml Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.35 2005/08/19 02:04:08 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34 2005/06/28 16:53:14 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.35 2005/08/19 02:04:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	   nothing anyway, we compute our own reclen according to what
 	   we think is right
 	 */
-	ffsdir->d_reclen = DIRENT_SIZE(ffsdir);
+	ffsdir->d_reclen = _DIRENT_SIZE(ffsdir);
 }
 
 /*

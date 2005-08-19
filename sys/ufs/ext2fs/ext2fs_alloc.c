@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.24 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.25 2005/08/19 02:04:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.24 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.25 2005/08/19 02:04:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,8 +205,9 @@ ext2fs_valloc(v)
 	}
 	ip = VTOI(*ap->a_vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
-		printf("mode = 0%o, nlinks %d, inum = %d, fs = %s\n",
-			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
+		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
+		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
+		    (unsigned long long)ip->i_number, fs->e2fs_fsmnt);
 		panic("ext2fs_valloc: dup alloc");
 	}
 
@@ -537,8 +538,8 @@ ext2fs_blkfree(ip, bno)
 	fs = ip->i_e2fs;
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
-		printf("bad block %lld, ino %d\n", (long long)bno,
-		    ip->i_number);
+		printf("bad block %lld, ino %llu\n", (long long)bno,
+		    (unsigned long long)ip->i_number);
 		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
 		return;
 	}
@@ -588,8 +589,8 @@ ext2fs_vfree(v)
 	pip = VTOI(ap->a_pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
+			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
@@ -601,8 +602,8 @@ ext2fs_vfree(v)
 	ibp = (char *)bp->b_data;
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
-		printf("dev = 0x%x, ino = %d, fs = %s\n",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		printf("dev = 0x%x, ino = %llu, fs = %s\n",
+		    pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}

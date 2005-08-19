@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.18 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.19 2005/08/19 02:04:09 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.18 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.19 2005/08/19 02:04:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -495,7 +495,8 @@ loop:
 	VI_LOCK(devvp);
 	fs->fs_snapinum[snaploc] = ip->i_number;
 	if (ip->i_nextsnap.tqe_prev != 0)
-		panic("ffs_snapshot: %d already on list", ip->i_number);
+		panic("ffs_snapshot: %llu already on list",
+		    (unsigned long long)ip->i_number);
 	TAILQ_INSERT_TAIL(&ump->um_snapshots, ip, i_nextsnap);
 	VI_UNLOCK(devvp);
 	if (xp == NULL)
@@ -1325,8 +1326,8 @@ ffs_snapgone(struct inode *ip)
 		vrele(ITOV(ip));
 #ifdef DEBUG
 	else if (snapdebug)
-		printf("ffs_snapgone: lost snapshot vnode %d\n",
-		    ip->i_number);
+		printf("ffs_snapgone: lost snapshot vnode %llu\n",
+		    (unsigned long long)ip->i_number);
 #endif
 	/*
 	 * Delete snapshot inode from superblock. Keep list dense.
@@ -1562,9 +1563,11 @@ retry:
 		if (size == fs->fs_bsize) {
 #ifdef DEBUG
 			if (snapdebug)
-				printf("%s %d lbn %" PRId64 " from inum %d\n",
-				    "Grabonremove: snapino", ip->i_number,
-				    lbn, inum);
+				printf("%s %llu lbn %" PRId64
+				    "from inum %llu\n",
+				    "Grabonremove: snapino",
+				    (unsigned long long)ip->i_number,
+				    lbn, (unsigned long long)inum);
 #endif
 			if (lbn < NDADDR) {
 				db_assign(ip, lbn, bno);
@@ -1581,9 +1584,10 @@ retry:
 			brelse(ibp);
 #ifdef DEBUG
 		if (snapdebug)
-			printf("%s%d lbn %" PRId64 " %s %d size %ld\n",
-			    "Copyonremove: snapino ", ip->i_number,
-			    lbn, "for inum", inum, size);
+			printf("%s%llu lbn %" PRId64 " %s %llu size %ld\n",
+			    "Copyonremove: snapino ",
+			    (unsigned long long)ip->i_number,
+			    lbn, "for inum", (unsigned long long)inum, size);
 #endif
 		/*
 		 * If we have already read the old block contents, then
@@ -1747,8 +1751,8 @@ ffs_snapshot_mount(struct mount *mp)
 		 */
 		VI_LOCK(devvp);
 		if (ip->i_nextsnap.tqe_prev != 0)
-			panic("ffs_snapshot_mount: %d already on list",
-			    ip->i_number);
+			panic("ffs_snapshot_mount: %llu already on list",
+			    (unsigned long long)ip->i_number);
 		else
 			TAILQ_INSERT_TAIL(&ump->um_snapshots, ip, i_nextsnap);
 		vp->v_flag |= VSYSTEM;
@@ -1924,12 +1928,13 @@ retry:
 		snapshot_locked = 1;
 #ifdef DEBUG
 		if (snapdebug) {
-			printf("Copyonwrite: snapino %d lbn %" PRId64 " for ",
-			    ip->i_number, lbn);
+			printf("Copyonwrite: snapino %llu lbn %" PRId64 " for ",
+			    (unsigned long long)ip->i_number, lbn);
 			if (bp->b_vp == devvp)
 				printf("fs metadata");
 			else
-				printf("inum %d", VTOI(bp->b_vp)->i_number);
+				printf("inum %llu", (unsigned long long)
+				    VTOI(bp->b_vp)->i_number);
 			printf(" lblkno %" PRId64 "\n", bp->b_lblkno);
 		}
 #endif

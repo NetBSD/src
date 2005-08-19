@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.62 2005/06/06 19:56:46 jdc Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.63 2005/08/19 02:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.62 2005/06/06 19:56:46 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.63 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,9 +698,34 @@ sa_yield(struct lwp *l)
 int
 sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 {
+	struct sys_sa_preempt_args /* {
+		syscallarg(lwpid_t) sa_id;
+	} */ *uap = v;
+	int target_lid;
+	struct proc *p = l->l_proc;
+	struct lwp *t;
 
-	/* XXX Implement me. */
-	return (ENOSYS);
+	target_lid = SCARG(uap, sa_id);
+
+	LIST_FOREACH(t, &p->p_lwps, l_sibling)
+		if (t->l_lid == target_lid)
+			break;
+
+	if (t == NULL)
+		return ESRCH;
+
+	/* XXX: Not correct, but the best we can do for now */
+	if (t != l && t->l_stat == LSONPROC && l->l_cpu != t->l_cpu) {
+#ifdef DIAGNOSTIC
+		printf("reschedule %d\n", t->l_lid);
+#endif
+		need_resched(t->l_cpu);
+#ifndef DIAGNOSTIC
+	} else {
+		printf("can't reschedule %d\n", t->l_lid);
+#endif
+	}
+	return 0;
 }
 
 

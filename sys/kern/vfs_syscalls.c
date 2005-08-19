@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.227 2005/08/05 13:22:23 jmmv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.228 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.227 2005/08/05 13:22:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.228 2005/08/19 02:04:03 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2113,9 +2113,9 @@ out:
  */
 /* ARGSUSED */
 int
-sys___stat13(struct lwp *l, void *v, register_t *retval)
+sys___stat30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___stat13_args /* {
+	struct sys___stat30_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -2141,9 +2141,9 @@ sys___stat13(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___lstat13(struct lwp *l, void *v, register_t *retval)
+sys___lstat30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___lstat13_args /* {
+	struct sys___lstat30_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -3256,9 +3256,9 @@ out:
  * Read a block of directory entries in a file system independent format.
  */
 int
-sys_getdents(struct lwp *l, void *v, register_t *retval)
+sys___getdents30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_getdents_args /* {
+	struct sys___getdents30_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(size_t) count;

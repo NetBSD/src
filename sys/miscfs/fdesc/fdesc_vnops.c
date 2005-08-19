@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.84 2005/05/29 21:55:33 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.85 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84 2005/05/29 21:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.85 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +656,6 @@ fdesc_setattr(v)
 	return (0);
 }
 
-#define UIO_MX 32
 
 struct fdesc_target {
 	ino_t ft_fileno;
@@ -664,7 +663,6 @@ struct fdesc_target {
 	u_char ft_namlen;
 	const char *ft_name;
 } fdesc_targets[] = {
-/* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
 	{ FD_DEVFD,  DT_DIR,     N("fd")     },
 	{ FD_STDIN,  DT_LNK,     N("stdin")  },
@@ -672,6 +670,7 @@ struct fdesc_target {
 	{ FD_STDERR, DT_LNK,     N("stderr") },
 	{ FD_CTTY,   DT_UNKNOWN, N("tty")    },
 #undef N
+#define UIO_MX _DIRENT_RECLEN((struct dirent *)NULL, sizeof("stderr") - 1)
 };
 static int nfdesc_targets = sizeof(fdesc_targets) / sizeof(fdesc_targets[0]);
 
