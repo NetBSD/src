@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.19 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: NULL,v 1.20 2005/08/19 05:19:49 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -71,6 +71,7 @@ file-system 	FFS		# Berkeley fast file system
 #file-system 	PROCFS		# /proc filesystem
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 #Filesystem options
 #options 	QUOTA		# User and group quotas in FFS

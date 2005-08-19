@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.29 2005/08/05 09:23:16 skrll Exp $
+# $NetBSD: VR41XX,v 1.30 2005/08/19 05:19:50 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -83,6 +83,7 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.35 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: INSTALL,v 1.36 2005/08/19 05:19:54 christos Exp $
 #
 # INSTALL -- install kernel
 #
@@ -25,6 +25,7 @@ file-system 	MSDOSFS				# MS-DOS file system
 file-system 	CD9660				# ISO 9660 CD-ROM file system
 file-system 	KERNFS				# /kern
 file-system 	NFS				# Network File System client
+#file-system	PTYFS				# /dev/pts/N support
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space

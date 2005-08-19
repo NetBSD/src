@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.50 2005/08/19 02:03:49 christos Exp $
+#	$NetBSD: PICA,v 1.51 2005/08/19 05:19:49 christos Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -77,6 +77,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# FFS quotas

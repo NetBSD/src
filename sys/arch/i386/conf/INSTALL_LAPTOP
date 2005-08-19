@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.87 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.88 2005/08/19 05:19:50 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -119,6 +119,7 @@ file-system 	KERNFS		# /kern
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

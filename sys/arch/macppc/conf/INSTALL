@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.91 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: INSTALL,v 1.92 2005/08/19 05:19:53 christos Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -39,6 +39,7 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space

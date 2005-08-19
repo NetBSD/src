@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.40 2005/08/19 02:03:53 christos Exp $
+#	$NetBSD: NATSUMI,v 1.41 2005/08/19 05:19:54 christos Exp $
 #
 #	for development
 #
@@ -73,6 +73,7 @@ file-system	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	FFS_EI		# FFS Endian Independant support

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.9 2005/08/19 02:03:51 christos Exp $
+#	$NetBSD: TWINTAIL,v 1.10 2005/08/19 05:19:50 christos Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -47,6 +47,7 @@ file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas

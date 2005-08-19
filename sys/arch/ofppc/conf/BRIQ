@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.22 2005/08/19 02:03:52 christos Exp $
+#	$NetBSD: BRIQ,v 1.23 2005/08/19 05:19:54 christos Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -80,6 +80,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	NTFS		# Windows NT file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas
