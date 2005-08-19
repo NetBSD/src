@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.158 2005/07/16 17:12:12 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.159 2005/08/19 02:04:54 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -28,9 +28,10 @@ SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
-	msync.c ntp_adjtime.c pread.c preadv.c pwrite.c pwritev.c semctl.c \
-	settimeofday.c sigaltstack.c stat.c statfs.c swapon.c truncate.c
+SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c getdents.c \
+	lseek.c mmap.c msync.c ntp_adjtime.c pread.c preadv.c pwrite.c \
+	pwritev.c semctl.c settimeofday.c sigaltstack.c stat.c __stat13.c \
+	statfs.c swapon.c truncate.c
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -54,8 +55,8 @@ ASM=	access.S acct.S \
 		extattr_set_link.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
 		fhopen.S fhstat.S fhstatvfs1.S fktrace.S \
-		flock.S fpathconf.S __fstat13.S fstatvfs1.S futimes.S \
-	__getcwd.S getdents.S getfh.S getvfsstat.S getgroups.S getitimer.S \
+		flock.S fpathconf.S __fstat30.S fstatvfs1.S futimes.S \
+	__getcwd.S __getdents30.S getfh.S getvfsstat.S getgroups.S getitimer.S \
 		__getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
 		getsockopt.S gettimeofday.S \
@@ -65,7 +66,7 @@ ASM=	access.S acct.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
-		lfs_segwait.S link.S listen.S __lstat13.S lutimes.S \
+		lfs_segwait.S link.S listen.S __lstat30.S lutimes.S \
 		_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
 		_lwp_getprivate.S _lwp_setprivate.S \
@@ -85,7 +86,7 @@ ASM=	access.S acct.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
 		setuid.S __shmctl13.S shmdt.S shmget.S shutdown.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
-		__sigtimedwait.S socket.S socketpair.S __stat13.S statvfs1.S \
+		__sigtimedwait.S socket.S socketpair.S __stat30.S statvfs1.S \
 		swapctl.S symlink.S __sysctl.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 		timer_settime.S \
