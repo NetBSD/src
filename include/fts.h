@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: fts.h,v 1.13 2005/08/19 02:05:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,6 +33,16 @@
 
 #ifndef	_FTS_H_
 #define	_FTS_H_
+
+#ifndef	__fts_stat_t
+#define	__fts_stat_t	struct stat
+#endif
+#ifndef	__fts_nlink_t
+#define	__fts_nlink_t	nlink_t
+#endif
+#ifndef	__fts_ino_t
+#define	__fts_ino_t	ino_t
+#endif
 
 typedef struct {
 	struct _ftsent *fts_cur;	/* current node */
@@ -74,13 +84,9 @@ typedef struct _ftsent {
 	u_short fts_pathlen;		/* strlen(fts_path) */
 	u_short fts_namelen;		/* strlen(fts_name) */
 
-	ino_t fts_ino;			/* inode */
+	__fts_ino_t fts_ino;		/* inode */
 	dev_t fts_dev;			/* device */
-#ifdef __LIBC12_SOURCE__
-	u_int16_t fts_nlink;		/* link count */
-#else
-	nlink_t fts_nlink;		/* link count */
-#endif
+	__fts_nlink_t fts_nlink;	/* link count */
 
 #define	FTS_ROOTPARENTLEVEL	-1
 #define	FTS_ROOTLEVEL		 0
@@ -113,11 +119,7 @@ typedef struct _ftsent {
 #define	FTS_SKIP	 4		/* discard node */
 	u_short fts_instr;		/* fts_set() instructions */
 
-#ifdef __LIBC12_SOURCE__
-	struct stat12 *fts_statp;	/* stat(2) information */
-#else
-	struct stat *fts_statp;		/* stat(2) information */
-#endif
+	__fts_stat_t *fts_statp;	/* stat(2) information */
 	char fts_name[1];		/* file name */
 } FTSENT;
 
@@ -132,13 +134,13 @@ FTS	*fts_open(char * const *, int,
 FTSENT	*fts_read(FTS *);
 int	 fts_set(FTS *, FTSENT *, int);
 #else
-FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children13);
-int	 fts_close(FTS *)			__RENAME(__fts_close13);
+FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children30);
+int	 fts_close(FTS *)			__RENAME(__fts_close30);
 FTS	*fts_open(char * const *, int,
 	    int (*)(const FTSENT **, const FTSENT **))
-						__RENAME(__fts_open13);
-FTSENT	*fts_read(FTS *)			__RENAME(__fts_read13);
-int	 fts_set(FTS *, FTSENT *, int)	__RENAME(__fts_set13);
+						__RENAME(__fts_open30);
+FTSENT	*fts_read(FTS *)			__RENAME(__fts_read30);
+int	 fts_set(FTS *, FTSENT *, int)	__RENAME(__fts_set30);
 #endif
 __END_DECLS
 
