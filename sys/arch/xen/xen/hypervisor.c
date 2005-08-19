@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.14 2005/04/18 21:33:21 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.15 2005/08/19 16:06:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.14 2005/04/18 21:33:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.15 2005/08/19 16:06:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.14 2005/04/18 21:33:21 bouyer Exp $
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 #include <machine/kernfs_machdep.h>
-#include <dev/pci/pcivar.h>
 #include <dev/isa/isavar.h>
+#endif
+#if NPCI > 0
+#include <dev/pci/pcivar.h>
 #endif
 
 #if NXENNET > 0
@@ -182,9 +184,13 @@ hypervisor_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#ifdef DOM0OPS
+#if NPCI > 0
 	struct pcibus_attach_args pba;
+#if defined(DOM0OPS) && NISA > 0
 	struct isabus_attach_args iba;
+#endif
+	physdev_op_t physdev_op;
+	int i, j, busnum;
 #endif
 	union hypervisor_attach_cookie hac;
 
@@ -208,15 +214,12 @@ hypervisor_attach(parent, self, aux)
 	hac.hac_xennpx.xa_device = "npx";
 	config_found(self, &hac.hac_xennpx, hypervisor_print);
 #endif
-#ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		physdev_op_t physdev_op;
-		int i, j, busnum;
+#if NPCI > 0
 
-		physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
-		if (HYPERVISOR_physdev_op(&physdev_op) < 0) {
-			printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed\n");
-		}
+	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
+	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
+		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);
+	} else {
 #ifdef DEBUG
 		printf("PCI_PROBE_ROOT_BUSES: ");
 		for (i = 0; i < 256/32; i++)
@@ -246,16 +249,22 @@ hypervisor_attach(parent, self, aux)
 				config_found_ia(self, "pcibus", &pba,
 				    pcibusprint);
 			}
-		}
-		if (isa_has_been_seen == 0) {
-			iba._iba_busname = "isa";
-			iba.iba_iot = X86_BUS_SPACE_IO;
-			iba.iba_memt = X86_BUS_SPACE_MEM;
-			iba.iba_dmat = &isa_bus_dma_tag;
-			iba.iba_ic = NULL; /* No isa DMA yet */
-			config_found_ia(self, "isabus", &iba, isabusprint);
-		}
+		} 
+	}
+#if defined(DOM0OPS) && NISA > 0
+	if (isa_has_been_seen == 0) {
+		iba._iba_busname = "isa";
+		iba.iba_iot = X86_BUS_SPACE_IO;
+		iba.iba_memt = X86_BUS_SPACE_MEM;
+		iba.iba_dmat = &isa_bus_dma_tag;
+		iba.iba_ic = NULL; /* No isa DMA yet */
+		config_found_ia(self, "isabus", &iba, isabusprint);
+	}
+#endif
+#endif
 
+#ifdef DOM0OPS
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
