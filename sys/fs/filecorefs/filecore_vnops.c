@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.11 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.12 2005/08/19 04:45:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.12 2005/08/19 04:45:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ filecore_readdir(v)
 			}
 			break;
 		}
-		de.d_reclen = DIRENT_SIZE(&de);
+		de.d_reclen = _DIRENT_SIZE(&de);
 		if (uio->uio_resid < de.d_reclen)
 			goto out;
 		error = uiomove(&de, de.d_reclen, uio);
