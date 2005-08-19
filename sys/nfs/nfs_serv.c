@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.96 2005/08/19 12:47:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95 2005/05/18 12:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.96 2005/08/19 12:47:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2766,7 +2766,7 @@ again:
 			bp += NFSX_UNSIGNED;
 			if (v3) {
 				nfsm_clget;
-				*tl = 0;
+				*tl = txdr_unsigned(dp->d_fileno >> 32);
 				bp += NFSX_UNSIGNED;
 			}
 			nfsm_clget;
@@ -3068,7 +3068,7 @@ again:
 			*tl = nfs_true;
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
-			*tl = 0;
+			*tl = txdr_unsigned(dp->d_fileno >> 32);
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
 			*tl = txdr_unsigned(dp->d_fileno);
