@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.1 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.2 2005/08/19 06:01:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.1 2005/08/19 02:03:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.2 2005/08/19 06:01:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 0xf)
+		if (reclen & _DIRENT_ALIGN(bdp))
 			panic("netbsd30_getdents: bad reclen %d", reclen);
 		if (cookie)
 			off = *cookie++; /* each entry points to the next */
