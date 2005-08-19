@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.17 2003/08/07 16:34:42 agc Exp $	*/
+/*	$NetBSD: dir.h,v 1.18 2005/08/19 05:28:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,8 +78,9 @@
 #define	MAXNAMLEN	255
 #define APPLEUFS_DIRBLKSIZ 1024
 
+#define d_ino d_fileno
 struct	direct {
-	u_int32_t d_ino;		/* inode number of entry */
+	u_int32_t d_fileno;		/* inode number of entry */
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
 	u_int8_t  d_namlen;		/* length of string in d_name */
