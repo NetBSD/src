@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.22 2005/08/13 13:06:35 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.23 2005/08/19 16:58:29 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.22 2005/08/13 13:06:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.23 2005/08/19 16:58:29 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.22 2005/08/13 13:06:35 elad Exp $\n$NetBSD: verified_exec.c,v 1.22 2005/08/13 13:06:35 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.23 2005/08/19 16:58:29 christos Exp $\n$NetBSD: verified_exec.c,v 1.23 2005/08/19 16:58:29 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -249,11 +249,12 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			 * the signature file. Just give collision info
 			 * and return.
 			 */
-			printf("veriexec: Duplicate entry. [%s, %ld:%ld] "
+			printf("veriexec: Duplicate entry. [%s, %ld:%llu] "
 			       "old[type=0x%02x, algorithm=%s], "
 			       "new[type=0x%02x, algorithm=%s] "
 			       "(%s fingerprint)\n",
-			       params->file, va.va_fsid, va.va_fileid,
+			       params->file, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
 			       hh->type, hh->ops->type,
 			       params->type, params->fp_type,
 			       (((hh->ops->hash_len != params->size) ||
@@ -273,8 +274,9 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 			free(e, M_TEMP);
 			printf("Veriexec: veriexecioctl: Invalid or unknown "
 			       "fingerprint type \"%s\" for file \"%s\" "
-			       "(dev=%ld, inode=%ld)\n", params->fp_type,
-			       params->file, va.va_fsid, va.va_fileid);
+			       "(dev=%ld, inode=%llu)\n", params->fp_type,
+			       params->file, va.va_fsid, 
+			       (unsigned long long)va.va_fileid);
 			return(EINVAL);
 		}
 
@@ -289,9 +291,10 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		if (e->ops->hash_len != params->size) {
 			printf("Veriexec: veriexecioctl: Inconsistent "
 			       "fingerprint size for type \"%s\" for file "
-			       "\"%s\" (dev=%ld, inode=%ld), size was %u "
+			       "\"%s\" (dev=%ld, inode=%llu), size was %u "
 			       "was expecting %zu\n", params->fp_type,
-			       params->file, va.va_fsid, va.va_fileid,
+			       params->file, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
 			       params->size, e->ops->hash_len);
 			free(e, M_TEMP);
 			return(EINVAL);

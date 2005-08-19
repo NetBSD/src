@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.36 2005/08/19 12:30:02 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.37 2005/08/19 16:58:29 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.36 2005/08/19 12:30:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.37 2005/08/19 16:58:29 christos Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -520,8 +520,9 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 
 	if (veriexec_strict >= 3) {
 		printf("Veriexec: veriexec_renamechk: Preventing rename "
-		       "of \"%s\" [%ld:%ld] to \"%s\", uid=%u, pid=%u: "
-		       "Lockdown mode.\n", from, va.va_fsid, va.va_fileid,
+		       "of \"%s\" [%ld:%llu] to \"%s\", uid=%u, pid=%u: "
+		       "Lockdown mode.\n", from, va.va_fsid,
+		       (unsigned long long)va.va_fileid,
 		       to, p->p_ucred->cr_uid, p->p_pid);
 		return (EPERM);
 	}
@@ -531,17 +532,17 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 	if (vhe != NULL) {
 		if (veriexec_strict >= 2) {
 			printf("Veriexec: veriexec_renamechk: Preventing "
-			       "rename of \"%s\" [%ld:%ld] to \"%s\", "
+			       "rename of \"%s\" [%ld:%llu] to \"%s\", "
 			       "uid=%u, pid=%u: IPS mode, file "
 			       "monitored.\n", from, va.va_fsid,
-			       va.va_fileid, to, p->p_ucred->cr_uid,
-			       p->p_pid);
+			       (unsigned long long)va.va_fileid,
+			       to, p->p_ucred->cr_uid, p->p_pid);
 			return (EPERM);
 		}
 
 		printf("Veriexec: veriexec_rename: Monitored file \"%s\" "
-		       "[%ld:%ld] renamed to \"%s\", uid=%u, pid=%u.\n",
-		       from, va.va_fsid, va.va_fileid, to,
+		       "[%ld:%llu] renamed to \"%s\", uid=%u, pid=%u.\n",
+		       from, va.va_fsid, (unsigned long long)va.va_fileid, to,
 		       p->p_ucred->cr_uid, p->p_pid);
 	}
 
