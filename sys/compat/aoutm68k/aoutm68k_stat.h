@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.h,v 1.3 2003/06/25 20:30:15 martin Exp $	*/
+/*	$NetBSD: aoutm68k_stat.h,v 1.4 2005/08/19 02:03:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #ifdef COMPAT_43
 struct aoutm68k_stat43 {
 	u_int16_t st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
 	u_int16_t st_nlink;		/* number of hard links */
 	u_int16_t st_uid;		/* user ID of the file's owner */
@@ -68,7 +68,7 @@ struct aoutm68k_stat43 {
 #ifdef COMPAT_12
 struct aoutm68k_stat12 {
 	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
 	u_int16_t st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
@@ -89,7 +89,7 @@ struct aoutm68k_stat12 {
 
 struct aoutm68k_stat {
 	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
+	u_int32_t st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
 	nlink_t	  st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */

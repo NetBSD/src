@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.7 2005/07/23 21:51:29 cube Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.8 2005/08/19 02:03:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -347,6 +347,31 @@ netbsd32_to_timex(tx32p, txp)
 static __inline void
 netbsd32_from___stat13(sbp, sb32p)
 	const struct stat *sbp;
+	struct netbsd32_stat13 *sb32p;
+{
+	sb32p->st_dev = sbp->st_dev;
+	sb32p->st_ino = sbp->st_ino;
+	sb32p->st_mode = sbp->st_mode;
+	sb32p->st_nlink = sbp->st_nlink;
+	sb32p->st_uid = sbp->st_uid;
+	sb32p->st_gid = sbp->st_gid;
+	sb32p->st_rdev = sbp->st_rdev;
+	sb32p->st_size = sbp->st_size;
+	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
+	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
+	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
+	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
+	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
+	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
+	sb32p->st_blksize = sbp->st_blksize;
+	sb32p->st_blocks = sbp->st_blocks;
+	sb32p->st_flags = sbp->st_flags;
+	sb32p->st_gen = sbp->st_gen;
+}
+
+static __inline void
+netbsd32_from___stat30(sbp, sb32p)
+	const struct stat *sbp;
 	struct netbsd32_stat *sb32p;
 {
 	sb32p->st_dev = sbp->st_dev;
@@ -356,10 +381,7 @@ netbsd32_from___stat13(sbp, sb32p)
 	sb32p->st_uid = sbp->st_uid;
 	sb32p->st_gid = sbp->st_gid;
 	sb32p->st_rdev = sbp->st_rdev;
-	if (sbp->st_size < (quad_t)1 << 32)
-		sb32p->st_size = sbp->st_size;
-	else
-		sb32p->st_size = -2;
+	sb32p->st_size = sbp->st_size;
 	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
 	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
 	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
@@ -548,6 +570,36 @@ netbsd32_to_sigevent(const struct netbsd32_sigevent *ev32, struct sigevent *ev)
 	ev->sigev_value.sival_int = ev32->sigev_value.sival_int;
 	ev->sigev_notify_function = (void *)(intptr_t)ev32->sigev_notify_function;
 	ev->sigev_notify_attributes = (void *)(intptr_t)ev32->sigev_notify_attributes;
+}
+int
+netbsd32_to_dirent12(char *nbuf, char *obuf, int nbytes)
+{
+	struct dirent *ndp, *nndp, *endp;
+	struct dirent12 *odp;
+
+	odp = (struct dirent12 *)(void *)buf;
+	ndp = (struct dirent *)(void *)buf;
+	endp = (struct dirent *)(void *)&buf[nbytes];
+
+	/*
+	 * In-place conversion. This works because odp
+	 * is smaller than ndp, but it has to be done
+	 * in the right sequence.
+	 */
+	for (; ndp < endp; ndp = nndp) {
+		nndp = _DIRENT_NEXT(ndp);
+		odp->d_ino = (u_int32_t)ndp->d_ino;
+		if (ndp->d_namlen >= sizeof(odp->d_name))
+			odp->d_namlen = sizeof(odp->d_name) - 1;
+		else
+			odp->d_namlen = (u_int8_t)ndp->d_namlen;
+		odp->d_type = ndp->d_type;
+		(void)memcpy(odp->d_name, ndp->d_name, (size_t)odp->d_namlen);
+		odp->d_name[odp->d_namlen] = '\0';
+		odp->d_reclen = _DIRENT_SIZE(odp);
+		odp = _DIRENT_NEXT(odp);
+	}
+	return ((char *)(void *)odp) - buf;
 }
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_CONV_H_ */

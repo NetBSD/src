@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 2005/07/23 22:03:45 cube Exp $
+	$NetBSD: syscalls.master,v 1.38 2005/08/19 02:03:57 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -443,9 +443,9 @@
 275	STD		{ int netbsd32_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
 276	STD		{ int netbsd32_lutimes(const netbsd32_charp path, const netbsd32_timevalp_t tptr); }
 277	STD		{ int netbsd32___msync13(netbsd32_voidp addr, netbsd32_size_t len, int flags); }
-278	STD		{ int netbsd32___stat13(const netbsd32_charp path, netbsd32_statp_t ub); }
-279	STD		{ int netbsd32___fstat13(int fd, netbsd32_statp_t sb); }
-280	STD		{ int netbsd32___lstat13(const netbsd32_charp path, netbsd32_statp_t ub); }
+278	STD		{ int netbsd32___stat13(const netbsd32_charp path, netbsd32_stat30p_t ub); }
+279	STD		{ int netbsd32___fstat13(int fd, netbsd32_stat30p_t sb); }
+280	STD		{ int netbsd32___lstat13(const netbsd32_charp path, netbsd32_stat30p_t ub); }
 281	STD		{ int netbsd32___sigaltstack14(const netbsd32_sigaltstackp_t nss, netbsd32_sigaltstackp_t oss); }
 282	NOARGS		{ int sys___vfork14(void); }
 283	STD		{ int netbsd32___posix_chown(const netbsd32_charp path, uid_t uid, gid_t gid); }
@@ -639,3 +639,11 @@
 			    const netbsd32_charp name); }
 386	STD		{ int netbsd32_fremovexattr(int fd, \
 			    const netbsd32_charp name); }
+387     STD             { int netbsd32_sys___stat30(const netbsd32_charp path, \
+			    netbsd32_statp_t ub); }
+388     STD             { int netbsd32_sys___fstat30(int fd, \
+			    netbsd32_statp_t sb); }
+389     STD             { int netbsd32_sys___lstat30( \
+			    const netbsd32_charp path, netbsd32_statp_t ub); }
+390     STD             { int netbsd32_sys___getdents30(int fd, \
+			    netbsd32_charp buf, netbsd32_size_t count);

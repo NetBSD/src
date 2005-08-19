@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.134 2005/06/23 23:15:12 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.135 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134 2005/06/23 23:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.135 2005/08/19 02:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -716,9 +716,9 @@ sys_close(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___fstat13(struct lwp *l, void *v, register_t *retval)
+sys___fstat30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___fstat13_args /* {
+	struct sys___fstat30_args /* {
 		syscallarg(int)			fd;
 		syscallarg(struct stat *)	sb;
 	} */ *uap = v;

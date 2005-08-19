@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.8 2005/07/07 17:05:47 tron Exp $
+# $NetBSD: INSTALL,v 1.9 2005/08/19 02:03:51 christos Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 makeoptions     COPTS="-Os"
 
@@ -57,6 +57,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
