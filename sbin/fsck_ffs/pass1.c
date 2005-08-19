@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.38 2005/06/08 20:34:06 dbj Exp $	*/
+/*	$NetBSD: pass1.c,v 1.39 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.38 2005/06/08 20:34:06 dbj Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.39 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
 			NIADDR * sizeof(int32_t)))) ||
 		    mode || size) {
-			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
+			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
+			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
 				clearinode(dp);
@@ -290,8 +291,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 				errx(EEXIT, "cannot read symlink");
 			if (debug) {
 				symbuf[size] = 0;
-				printf("convert symlink %u(%s) of size %lld\n",
-				    inumber, symbuf,
+				printf("convert symlink %llu(%s) "
+				    "of size %lld\n",
+				    (unsigned long long)inumber, symbuf,
 				    (unsigned long long)size);
 			}
 			dp = ginode(inumber);
@@ -422,8 +424,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	else
 		blocks = iswap32(dp->dp1.di_blocks);
 	if (blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%lld should be %lld)",
-		    inumber, (long long)blocks, (long long)idesc->id_entryno);
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%lld should be %lld)",
+		    (unsigned long long)inumber, (long long)blocks,
+		    (long long)idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0) {
@@ -439,7 +442,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	return;
 unknown:
-	pfatal("UNKNOWN FILE TYPE I=%u", inumber);
+	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);
 	info->ino_state = FCLEAR;
 	if (reply("CLEAR") == 1) {
 		info->ino_state = USTATE;
@@ -466,8 +469,8 @@ pass1check(struct inodesc *idesc)
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%u",
-				idesc->id_number);
+			pwarn("EXCESSIVE BAD BLKS I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0) {
@@ -487,8 +490,8 @@ pass1check(struct inodesc *idesc)
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 			if (dupblk++ >= MAXDUP) {
-				pwarn("EXCESSIVE DUP BLKS I=%u",
-					idesc->id_number);
+				pwarn("EXCESSIVE DUP BLKS I=%llu",
+				    (unsigned long long)idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2005/05/11 17:41:52 jmc Exp $ */
+/*	$NetBSD: pmap.c,v 1.27 2005/08/19 02:09:22 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.26 2005/05/11 17:41:52 jmc Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.27 2005/08/19 02:09:22 christos Exp $");
 #endif
 
 #include <string.h>
@@ -438,8 +438,8 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		       vme->advice);
 		if (verbose) {
 			if (inode)
-				printf(" %d,%d %d",
-				       major(dev), minor(dev), inode);
+				printf(" %u,%u %llu", major(dev), minor(dev),
+				    (unsigned long long)inode);
 			if (name[0])
 				printf(" %s", name);
 		}
@@ -447,7 +447,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 	}
 
 	if (print_maps) {
-		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02x:%02x %d     %s\n",
+		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02x:%02x %llu     %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2, vme->start,
 		       (int)sizeof(void *) * 2, vme->end,
@@ -457,7 +457,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		       UVM_ET_ISCOPYONWRITE(vme) ? 'p' : 's',
 		       (int)sizeof(void *) * 2,
 		       vme->offset,
-		       major(dev), minor(dev), inode,
+		       major(dev), minor(dev), (unsigned long long)inode,
 		       (name[0] != ' ') || verbose ? name : "");
 	}
 
@@ -478,9 +478,9 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		if (verbose) {
 			printf("\t%*s", indent(2), "");
 			if (inode)
-				printf("(dev=%d,%d ino=%d [%s] [%p])\n",
-				       major(dev), minor(dev), inode,
-				       name, P(vp));
+				printf("(dev=%u,%u ino=%llu [%s] [%p])\n",
+				    major(dev), minor(dev),
+				    (unsigned long long)inode, name, P(vp));
 			else if (name[0] == ' ')
 				printf("(%s)\n", &name[2]);
 			else
@@ -514,8 +514,8 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf(A(vp) ?
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s [%p]\n" :
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s\n",
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s [%p]\n" :
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,
@@ -535,7 +535,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		       vme->inheritance,
 		       vme->wired_count,
 		       vme->advice,
-		       major(dev), minor(dev), inode,
+		       major(dev), minor(dev), (unsigned long long)inode,
 		       name, P(vp));
 	}
 

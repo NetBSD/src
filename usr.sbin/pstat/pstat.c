@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.89 2005/05/30 07:24:31 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.90 2005/08/19 02:09:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.89 2005/05/30 07:24:31 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.90 2005/08/19 02:09:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,7 +501,7 @@ ufs_print(vp, ovflw)
 	 */
 
 	(void)getflags(ufs_flags, flags, ip->i_flag);
-	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
+	PRWORD(ovflw, " %*llu", 7, 1, (unsigned long long)ip->i_number);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
 	type = ip->i_mode & S_IFMT;
 	if (S_ISCHR(ip->i_mode) || S_ISBLK(ip->i_mode)) {
@@ -535,7 +535,7 @@ ext2fs_print(vp, ovflw)
 	 */
 
 	(void)getflags(ufs_flags, flags, ip->i_flag);
-	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
+	PRWORD(ovflw, " %*llu", 7, 1, (unsigned long long)ip->i_number);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
 	type = ip->i_e2fs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode)) {

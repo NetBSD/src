@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.44 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: traverse.c,v 1.45 2005/08/19 02:07:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.44 2004/05/25 14:54:56 hannken Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.45 2005/08/19 02:07:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -418,7 +418,8 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 	for (loc = 0; loc < size; ) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
-			msg("corrupted directory, inumber %d\n", dino);
+			msg("corrupted directory, inumber %llu\n",
+			    (unsigned long long)dino);
 			break;
 		}
 		loc += iswap16(dp->d_reclen);

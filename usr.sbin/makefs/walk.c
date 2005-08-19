@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.17 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: walk.c,v 1.18 2005/08/19 02:09:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.17 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: walk.c,v 1.18 2005/08/19 02:09:50 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -515,15 +515,16 @@ link_check(fsinode *entry)
 		if (dups[i].dev == entry->st.st_dev &&
 		    dups[i].ino == entry->st.st_ino) {
 			if (debug & DEBUG_WALK_DIR_LINKCHECK)
-				printf("link_check: found [%d,%d]\n",
-				    entry->st.st_dev, entry->st.st_ino);
+				printf("link_check: found [%u, %llu]\n",
+				    entry->st.st_dev,
+				    (unsigned long long)entry->st.st_ino);
 			return (dups[i].dup);
 		}
 	}
 
 	if (debug & DEBUG_WALK_DIR_LINKCHECK)
-		printf("link_check: no match for [%d, %d]\n",
-		    entry->st.st_dev, entry->st.st_ino);
+		printf("link_check: no match for [%u, %llu]\n",
+		    entry->st.st_dev, (unsigned long long)entry->st.st_ino);
 	if (ndups == maxdups) {
 		if ((newdups = realloc(dups, sizeof(struct dupnode) * (maxdups + 128)))
 		    == NULL)

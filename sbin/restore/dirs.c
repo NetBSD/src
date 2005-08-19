@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.45 2005/06/27 02:03:28 christos Exp $	*/
+/*	$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.45 2005/06/27 02:03:28 christos Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -620,7 +620,8 @@ setdirmodes(int flags)
 				continue;
 		}
 		if (ep == NULL) {
-			panic("cannot find directory inode %d\n", node.ino);
+			panic("cannot find directory inode %llu\n",
+			    (unsigned long long)node.ino);
 		} else {
 			if (!Nflag) {
 				cp = myname(ep);
@@ -655,7 +656,8 @@ genliteraldir(const char *name, ino_t ino)
 
 	itp = inotablookup(ino);
 	if (itp == NULL)
-		panic("Cannot find directory inode %d named %s\n", ino, name);
+		panic("Cannot find directory inode %llu named %s\n",
+		    (unsigned long long)ino, name);
 	if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
 		fprintf(stderr, "%s: ", name);
 		(void) fflush(stderr);
@@ -668,15 +670,15 @@ genliteraldir(const char *name, ino_t ino)
 		size = i < BUFSIZ ? i : BUFSIZ;
 		if (read(dp, buf, (int) size) == -1) {
 			fprintf(stderr,
-				"write error extracting inode %d, name %s\n",
-				curfile.ino, curfile.name);
+			    "write error extracting inode %llu, name %s\n",
+			    (unsigned long long)curfile.ino, curfile.name);
 			fprintf(stderr, "read: %s\n", strerror(errno));
 			exit(1);
 		}
 		if (!Nflag && write(ofile, buf, (int) size) == -1) {
 			fprintf(stderr,
-				"write error extracting inode %d, name %s\n",
-				curfile.ino, curfile.name);
+			    "write error extracting inode %llu, name %s\n",
+			    (unsigned long long)curfile.ino, curfile.name);
 			fprintf(stderr, "write: %s\n", strerror(errno));
 			exit(1);
 		}

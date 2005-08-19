@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.55 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.56 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.55 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.56 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 			if (IBLK(bp, i) == 0)
 				continue;
 			(void)snprintf(buf, sizeof(buf),
-			    "PARTIALLY TRUNCATED INODE I=%u", idesc->id_number);
+			    "PARTIALLY TRUNCATED INODE I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (dofix(idesc, buf)) {
 				IBLK(bp, i) = 0;
 				dirty(bp);
@@ -322,7 +323,8 @@ ginode(ino_t inumber)
 	int blkoff;
 
 	if (inumber < ROOTINO || inumber > maxino)
-		errx(EEXIT, "bad inode number %d to ginode", inumber);
+		errx(EEXIT, "bad inode number %llu to ginode",
+		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + INOPB(sblock)) {
 		iblk = ino_to_fsba(sblock, inumber);
@@ -394,7 +396,8 @@ getnextinode(ino_t inumber)
 	union dinode *ret;
 
 	if (inumber != nextino++ || inumber > lastvalidinum)
-		errx(EEXIT, "bad inode number %d to nextinode", inumber);
+		errx(EEXIT, "bad inode number %llu to nextinode",
+		    (unsigned long long)inumber);
 
 	if (inumber >= lastinum) {
 		readcnt++;
@@ -427,7 +430,8 @@ setinodebuf(ino_t inum)
 {
 
 	if (inum % sblock->fs_ipg != 0)
-		errx(EEXIT, "bad inode number %d to setinodebuf", inum);
+		errx(EEXIT, "bad inode number %llu to setinodebuf",
+		    (unsigned long long)inum);
 
 	lastvalidinum = inum + sblock->fs_ipg - 1;
 	startinum = 0;
@@ -527,7 +531,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	errx(EEXIT, "cannot find inode %d", inumber);
+	errx(EEXIT, "cannot find inode %llu", (unsigned long long)inumber);
 	return ((struct inoinfo *)0);
 }
 
@@ -635,7 +639,7 @@ pinode(ino_t ino)
 	struct passwd *pw;
 	time_t t;
 
-	printf(" I=%u ", ino);
+	printf(" I=%llu ", (unsigned long long)ino);
 	if (ino < ROOTINO || ino > maxino)
 		return;
 	dp = ginode(ino);
@@ -660,7 +664,7 @@ blkerror(ino_t ino, const char *type, daddr_t blk)
 {
 	struct inostat *info;
 
-	pfatal("%lld %s I=%u", (long long)blk, type, ino);
+	pfatal("%lld %s I=%llu", (long long)blk, type, (unsigned long long)ino);
 	printf("\n");
 	info = inoinfo(ino);
 	switch (info->ino_state) {

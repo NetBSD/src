@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.15 2005/06/23 00:53:16 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.16 2005/08/19 02:09:50 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.15 2005/06/23 00:53:16 fvdl Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.16 2005/08/19 02:09:50 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -451,7 +451,8 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	}
 	cg = dtog(fs, bno);
 	if (bno >= fs->fs_size) {
-		warnx("bad block %lld, ino %d", (long long)bno, ip->i_number);
+		warnx("bad block %lld, ino %llu", (long long)bno,
+		    (unsigned long long)ip->i_number);
 		return;
 	}
 	error = bread(ip->i_fd, ip->i_fs, fsbtodb(fs, cgtod(fs, cg)),

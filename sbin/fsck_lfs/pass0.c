@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.21 2005/06/08 19:09:55 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.22 2005/08/19 02:07:19 christos Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -181,13 +181,14 @@ pass0(void)
 			++count;
 		}
 		if (ino >= maxino) {
-			printf("! Ino %d out of range (last was %d)\n", ino,
-			    plastino);
+			printf("! Ino %llu out of range (last was %llu)\n",
+			    (unsigned long long)ino,
+			    (unsigned long long)plastino);
 			break;
 		}
 		if (visited[ino]) {
-			pwarn("! Ino %d already found on the free list!\n",
-			    ino);
+			pwarn("! Ino %llu already found on the free list!\n",
+			    (unsigned long long)ino);
 			if (preen || reply("FIX") == 1) {
 				/* plastino can't be zero */
 				LFS_IENTRY(ifp, fs, plastino, bp);
@@ -202,8 +203,9 @@ pass0(void)
 		daddr = ifp->if_daddr;
 		brelse(bp);
 		if (daddr) {
-			pwarn("! Ino %d with daddr 0x%llx is on the free list!\n",
-			    ino, (long long) daddr);
+			pwarn("! Ino %llu with daddr 0x%llx is on the "
+			    "free list!\n",
+			    (unsigned long long)ino, (long long) daddr);
 			if (preen || reply("FIX") == 1) {
 				if (plastino == 0) {
 					fs->lfs_freehd = nextino;
@@ -234,7 +236,8 @@ pass0(void)
 			brelse(bp);
 			continue;
 		}
-		pwarn("! Ino %d free, but not on the free list\n", ino);
+		pwarn("! Ino %llu free, but not on the free list\n",
+		    (unsigned long long)ino);
 		if (preen || reply("FIX") == 1) {
 			ifp->if_nextfree = fs->lfs_freehd;
 			fs->lfs_freehd = ino;
@@ -254,8 +257,8 @@ pass0(void)
 		}
 	}
 	if (cip->free_tail != plastino) {
-		pwarn("! Free list tail should be %d (was %d)\n", plastino,
-			cip->free_tail);
+		pwarn("! Free list tail should be %llu (was %d)\n",
+		    (unsigned long long)plastino, cip->free_tail);
 		if (preen || reply("FIX")) {
 			cip->free_tail = plastino;
 			writeit = 1;

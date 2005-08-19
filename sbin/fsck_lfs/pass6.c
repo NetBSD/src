@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.8 2005/06/08 19:09:55 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.9 2005/08/19 02:07:19 christos Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -276,8 +276,8 @@ pass6check(struct inodesc * idesc)
 	if (anyout) {
 		blkerror(idesc->id_number, "BAD", idesc->id_blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%u",
-			      idesc->id_number);
+			pwarn("EXCESSIVE BAD BLKS I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				pwarn(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)

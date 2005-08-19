@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.15 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: ffs.c,v 1.16 2005/08/19 02:09:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.15 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.16 2005/08/19 02:09:50 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -233,8 +233,8 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 	}
 
 	if (nblk != 0) {
-		warnx("Inode %d in `%s' ran out of blocks?", ino,
-		    params->filesystem);
+		warnx("Inode %llu in `%s' ran out of blocks?",
+		    (unsigned long long)ino, params->filesystem);
 		return (0);
 	}
 
@@ -363,8 +363,8 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 	}
 
 	if (nblk != 0) {
-		warnx("Inode %d in `%s' ran out of blocks?", ino,
-		    params->filesystem);
+		warnx("Inode %llu in `%s' ran out of blocks?",
+		    (unsigned long long)ino, params->filesystem);
 		return (0);
 	}
 

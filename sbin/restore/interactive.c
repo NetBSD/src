@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.22 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: interactive.c,v 1.23 2005/08/19 02:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.22 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.23 2005/08/19 02:07:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -687,7 +687,8 @@ formatf(struct afile *list, int nentry)
 		for (j = 0; j < columns; j++) {
 			fp = &list[j * lines + i];
 			if (vflag) {
-				fprintf(stderr, "%*d ", precision, fp->fnum);
+				fprintf(stderr, "%*llu ", precision,
+				    (unsigned long long)fp->fnum);
 				fp->len += precision + 1;
 			}
 			if (haveprefix) {

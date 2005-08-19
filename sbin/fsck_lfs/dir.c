@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.17 2005/06/27 02:49:32 christos Exp $	 */
+/* $NetBSD: dir.c,v 1.18 2005/08/19 02:07:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -244,7 +244,8 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 		pwarn("ino too large, reclen=0, reclen>space, or reclen&3!=0\n");
 		pwarn("dp->d_ino = 0x%x\tdp->d_reclen = 0x%x\n",
 		    dp->d_ino, dp->d_reclen);
-		pwarn("maxino = 0x%x\tspaceleft = 0x%x\n", maxino, spaceleft);
+		pwarn("maxino = %llu\tspaceleft = 0x%x\n",
+		    (unsigned long long)maxino, spaceleft);
 		return (0);
 	}
 	if (dp->d_ino == 0)
@@ -470,9 +471,10 @@ linkup(ino_t orphan, ino_t parentdir)
 		VTOI(vp)->i_ffs1_nlink++;
 		inodirty(VTOI(vp));
 		lncntp[lfdir]++;
-		pwarn("DIR I=%u CONNECTED. ", orphan);
+		pwarn("DIR I=%llu CONNECTED. ", (unsigned long long)orphan);
 		if (parentdir != (ino_t) - 1)
-			printf("PARENT WAS I=%u\n", parentdir);
+			printf("PARENT WAS I=%llu\n",
+			    (unsigned long long)parentdir);
 		if (preen == 0)
 			printf("\n");
 	}

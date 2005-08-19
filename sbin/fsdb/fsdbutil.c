@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.15 2005/01/19 20:19:04 xtraeme Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.16 2005/08/19 02:07:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.15 2005/01/19 20:19:04 xtraeme Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.16 2005/08/19 02:07:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		puts("fifo");
 		break;
 	}
-	printf("I=%u MODE=%o SIZE=%llu", inum, mode,
+	printf("I=%llu MODE=%o SIZE=%llu", (unsigned long long)inum, mode,
 	    (unsigned long long)size);
 	t = is_ufs2 ? iswap64(dp->dp2.di_mtime) : iswap32(dp->dp1.di_mtime);
 	p = ctime(&t);
@@ -199,7 +199,8 @@ checkactivedir(void)
 		return 0;
 	}
 	if ((iswap16(DIP(curinode, mode)) & IFMT) != IFDIR) {
-		warnx("inode %d not a directory", curinum);
+		warnx("inode %llu not a directory",
+		    (unsigned long long)curinum);
 		return 0;
 	}
 	return 1;
@@ -224,11 +225,12 @@ printactive(void)
 		printstat("current inode", curinum, curinode);
 		break;
 	case 0:
-		printf("current inode %d: unallocated inode\n", curinum);
+		printf("current inode %llu: unallocated inode\n",
+		    (unsigned long long)curinum);
 		break;
 	default:
-		printf("current inode %d: screwy itype 0%o (mode 0%o)?\n",
-		    curinum, mode & IFMT, mode);
+		printf("current inode %llu: screwy itype 0%o (mode 0%o)?\n",
+		    (unsigned long long)curinum, mode & IFMT, mode);
 		break;
 	}
 	return 0;

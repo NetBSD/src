@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.25 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: main.c,v 1.26 2005/08/19 02:07:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -238,7 +238,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		if (zlnhead != NULL) {
 			printf("The following zero link count inodes remain:");
 			for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
-				printf(" %u,", zlnp->zlncnt);
+				printf(" %llu,",
+				    (unsigned long long)zlnp->zlncnt);
 			printf("\n");
 		}
 	}
@@ -256,8 +257,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	/*
 	 * print out summary statistics
 	 */
-	pwarn("%d files, %lld used, %lld free\n",
-	    n_files, (long long) n_blks,
+	pwarn("%llu files, %lld used, %lld free\n",
+	    (unsigned long long)n_files, (long long) n_blks,
 	    (long long) fs->lfs_bfree);
 
 	ckfini(1);

@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.21 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: pass1.c,v 1.22 2005/08/19 02:07:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -194,7 +194,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(ufs_daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
-			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
+			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
+			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
 				vp = vget(fs, inumber);
 				clearinode(inumber);
@@ -287,8 +288,9 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);
 	if (dp->di_blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, dp->di_blocks, idesc->id_entryno);
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
+		    (unsigned long long)inumber, dp->di_blocks,
+		    idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
@@ -298,7 +300,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	}
 	return;
 unknown:
-	pfatal("UNKNOWN FILE TYPE I=%u", inumber);
+	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);
 	statemap[inumber] = FCLEAR;
 	if (reply("CLEAR") == 1) {
 		statemap[inumber] = USTATE;
@@ -320,8 +322,8 @@ pass1check(struct inodesc *idesc)
 	if ((anyout = chkrange(blkno, fragstofsb(fs, idesc->id_numfrags))) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%u",
-			    idesc->id_number);
+			pwarn("EXCESSIVE BAD BLKS I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
@@ -348,8 +350,8 @@ pass1check(struct inodesc *idesc)
 			    testbmap(blkno));
 #endif
 			if (dupblk++ >= MAXDUP) {
-				pwarn("EXCESSIVE DUP BLKS I=%u",
-				    idesc->id_number);
+				pwarn("EXCESSIVE DUP BLKS I=%llu",
+				    (unsigned long long)idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)

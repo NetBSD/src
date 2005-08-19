@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.32 2005/06/02 00:47:42 lukem Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.33 2005/08/19 02:07:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.32 2005/06/02 00:47:42 lukem Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.33 2005/08/19 02:07:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -243,7 +243,8 @@ static char *
 prompt(EditLine *el)
 {
 	static char pstring[64];
-	snprintf(pstring, sizeof(pstring), "fsdb (inum: %d)> ", curinum);
+	snprintf(pstring, sizeof(pstring), "fsdb (inum: %llu)> ",
+	    (unsigned long long)curinum);
 	return pstring;
 }
 
@@ -323,10 +324,11 @@ cmdloop(void)
 
 static ino_t ocurrent;
 
-#define GETINUM(ac,inum)    inum = strtoul(argv[ac], &cp, 0); \
+#define GETINUM(ac,inum)    inum = strtoull(argv[ac], &cp, 0); \
     if (inum < ROOTINO || inum >= maxino || cp == argv[ac] || *cp != '\0' ) { \
-	printf("inode %d out of range; range is [%d,%d]\n", \
-	       inum, ROOTINO, maxino); \
+	printf("inode %llu out of range; range is [%llu,%llu]\n", \
+	   (unsigned long long)inum, (unsigned long long)ROOTINO, \
+	   (unsigned long long)maxino); \
 	return 1; \
     }
 
@@ -389,7 +391,8 @@ CMDFUNCSTART(uplink)
 	nlink = iswap16(DIP(curinode, nlink));
 	nlink++;
 	DIP(curinode, nlink) = iswap16(nlink);
-	printf("inode %d link count now %d\n", curinum, nlink);
+	printf("inode %llu link count now %d\n", (unsigned long long)curinum,
+	    nlink);
 	inodirty();
 	return 0;
 }
@@ -403,7 +406,8 @@ CMDFUNCSTART(downlink)
 	nlink = iswap16(DIP(curinode, nlink));
 	nlink--;
 	DIP(curinode, nlink) = iswap16(nlink);
-	printf("inode %d link count now %d\n", curinum, nlink);
+	printf("inode %llu link count now %d\n", (unsigned long long)curinum,
+	    nlink);
 	inodirty();
 	return 0;
 }
@@ -466,14 +470,15 @@ CMDFUNCSTART(blks)
 	}
 	type = iswap16(DIP(curinode, mode)) & IFMT;
 	if (type != IFDIR && type != IFREG) {
-		warnx("inode %d not a file or directory", curinum);
+		warnx("inode %llu not a file or directory",
+		    (unsigned long long)curinum);
 		return 0;
 	}
 	if (is_ufs2) {
-		printf("I=%d %lld blocks\n", curinum,
+		printf("I=%llu %lld blocks\n", (unsigned long long)curinum,
 		    (long long)(iswap64(curinode->dp2.di_blocks)));
 	} else {
-		printf("I=%d %d blocks\n", curinum,
+		printf("I=%llu %d blocks\n", (unsigned long long)curinum,
 		    iswap32(curinode->dp1.di_blocks));
 	}
 	printf("Direct blocks:\n");
@@ -545,10 +550,12 @@ CMDFUNCSTART(findblk)
 			        ino_to_fsba(sblock, inum)) :
 			    compare_blk32(wantedblk32,
 			        ino_to_fsba(sblock, inum))) {
-				printf("block %llu: inode block (%d-%d)\n",
+				printf("block %llu: inode block (%llu-%llu)\n",
 				    (unsigned long long)fsbtodb(sblock,
 					ino_to_fsba(sblock, inum)),
+				    (unsigned long long)
 				    (inum / INOPB(sblock)) * INOPB(sblock),
+				    (unsigned long long)
 				    (inum / INOPB(sblock) + 1) * INOPB(sblock));
 				findblk_numtofind--;
 				if (findblk_numtofind == 0)
@@ -639,8 +646,9 @@ compare_blk64(uint64_t *wantedblk, uint64_t curblk)
 static int
 founddatablk(uint64_t blk)
 {
-	printf("%llu: data block of inode %d\n",
-	    (unsigned long long)fsbtodb(sblock, blk), curinum);
+	printf("%llu: data block of inode %llu\n",
+	    (unsigned long long)fsbtodb(sblock, blk),
+	    (unsigned long long)curinum);
 	findblk_numtofind--;
 	if (findblk_numtofind == 0)
 		return 1;
@@ -913,7 +921,8 @@ CMDFUNCSTART(ln)
 		return 1;
 	rval = makeentry(curinum, inum, argv[2]);
 	if (rval)
-		printf("Ino %d entered as `%s'\n", inum, argv[2]);
+		printf("Ino %llu entered as `%s'\n", (unsigned long long)inum,
+		    argv[2]);
 	else
 		printf("could not enter name? weird.\n");
 	curinode = ginode(curinum);

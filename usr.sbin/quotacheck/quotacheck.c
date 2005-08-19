@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.36 2004/12/12 05:57:03 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.37 2005/08/19 02:09:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.36 2004/12/12 05:57:03 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.37 2005/08/19 02:09:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -796,7 +796,8 @@ getnextinode(inumber)
 	union comb_dinode *ret;
 
 	if (inumber != nextino++ || inumber > lastvalidinum) {
-		errx(1, "bad inode number %d to nextinode", inumber);
+		errx(1, "bad inode number %llu to nextinode",
+		    (unsigned long long)inumber);
 	}
 
 	if (inumber >= lastinum) {
@@ -832,7 +833,8 @@ setinodebuf(inum)
 {
 
 	if (inum % sblock.fs_ipg != 0)
-		errx(1, "bad inode number %d to setinodebuf", inum);
+		errx(1, "bad inode number %llu to setinodebuf",
+		    (unsigned long long)inum);
 
 	lastvalidinum = inum + sblock.fs_ipg - 1;
 	nextino = inum;
