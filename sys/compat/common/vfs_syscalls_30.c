@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.3 2005/08/19 13:16:56 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.4 2005/08/19 13:17:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.3 2005/08/19 13:16:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.4 2005/08/19 13:17:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ compat_30_sys_getdents(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	caddr_t inp, tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* NetBSD-1.2-format */
+	caddr_t outp;		/* NetBSD-3.0-format */
 	int resid;	
 	struct file *fp;
 	struct uio auio;
@@ -260,7 +260,7 @@ again:
 		else
 			off += reclen;
 		if ((off >> 32) != 0) {
-			compat_offseterr(vp, "netbsd12_getdents");
+			compat_offseterr(vp, "netbsd30_getdents");
 			error = EINVAL;
 			goto out;
 		}
@@ -275,7 +275,7 @@ again:
 			break;
 		}
 		/*
-		 * Massage in place to make a NetBSD-1.2-shaped dirent
+		 * Massage in place to make a NetBSD-3.0-shaped dirent
 		 * (otherwise we have to worry about touching user memory
 		 * outside of the copyout() call).
 		 */
@@ -288,7 +288,7 @@ again:
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		/* advance output past NetBSD-1.2-shaped entry */
+		/* advance output past NetBSD-3.0-shaped entry */
 		outp += idb.d_reclen;
 		resid -= idb.d_reclen;
 	}
