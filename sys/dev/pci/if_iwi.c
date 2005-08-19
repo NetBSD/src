@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.14 2005/08/19 08:50:06 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.15 2005/08/19 14:26:38 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.14 2005/08/19 08:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.15 2005/08/19 14:26:38 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -90,6 +90,11 @@ static const struct ieee80211_rateset iwi_rateset_11g =
 static int iwi_match(struct device *, struct cfdata *, void *);
 static void iwi_attach(struct device *, struct device *, void *);
 static int iwi_detach(struct device *, int);
+
+static void iwi_shutdown(void *);
+static int iwi_suspend(struct iwi_softc *);
+static int iwi_resume(struct iwi_softc *);
+static void iwi_powerhook(int, void *);
 
 static int iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
     int);
@@ -358,6 +363,19 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
+
+	/*
+	 * Make sure the interface is shutdown during reboot.
+	 */
+	sc->sc_sdhook = shutdownhook_establish(iwi_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+	sc->sc_powerhook = powerhook_establish(iwi_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+
 	ieee80211_announce(ic);
 	/*
 	 * Add a few sysctl knobs.
@@ -693,6 +711,68 @@ iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 		}
 		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
 	}
+}
+
+static void
+iwi_shutdown(void *arg)
+{
+	struct iwi_softc *sc = (struct iwi_softc *)arg;
+	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+
+	iwi_stop(ifp, 1);
+}
+
+static int
+iwi_suspend(struct iwi_softc *sc)
+{
+	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+
+	iwi_stop(ifp, 1);
+
+	return 0;
+}
+
+static int
+iwi_resume(struct iwi_softc *sc)
+{
+	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	pcireg_t data;
+
+	/* clear device specific PCI configuration register 0x41 */
+	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
+	data &= ~0x0000ff00;
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+
+	if (ifp->if_flags & IFF_UP) {
+		iwi_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			iwi_start(ifp);
+	}
+
+	return 0;
+}
+
+static void
+iwi_powerhook(int why, void *arg)
+{
+        struct iwi_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		iwi_suspend(sc);
+		break;
+	case PWR_RESUME:
+		iwi_resume(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }
 
 static int
