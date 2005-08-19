@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.2 2005/08/19 01:24:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.2 2005/08/19 01:24:21 dyoung Exp $");
 #endif  /* !__lint */
 
 static struct boot_catalog_entry *cd9660_init_boot_catalog_entry(void);
@@ -61,66 +61,62 @@ const char * boot_info;
 	
 	assert(boot_info != NULL);
 
-	/* First decode the boot information */
-	temp = malloc(strlen(boot_info) + 1);
-	if (temp == NULL) {
-		warnx("Error initializing memory in cd9660_add_boot_disk");
-		return 0;
-	}
-
-	strcpy(temp, boot_info);
-
-	sysname = temp;
-	if (*sysname == '\0') {
+	if (*boot_info == '\0') {
 		warnx("Error: Boot disk information must be in the "
 		      "format 'system;filename'");
 		return 0;	
 	}
 
+	/* First decode the boot information */
+	if ((temp = strdup(boot_info)) == NULL) {
+		warn("%s: strdup", __func__);
+		return 0;
+	}
+
+	sysname = temp;
 	filename = strchr(sysname, ';');
 	if (filename == NULL) {
-		warnx("Error: Boot disk information must be in the "
-		       "format 'system;filename'");
+		warnx("supply boot disk information in the format "
+		    "'system;filename'");
 		return 0;	
 	}
 
-	*filename = '\0';
-	filename++;
-	
+	*filename++ = '\0';
+
 	printf("Found bootdisk with system %s, and filename %s\n",
 	    sysname, filename);
 	new_image = malloc(sizeof(struct cd9660_boot_image));
 	if (new_image == NULL) {
-		warnx("Error initializing memory in cd9660_add_boot_disk");
+		warn("%s: malloc", __func__);
 		return 0;
 	}
 	new_image->loadSegment = 0;	/* default for now */
 
 	/* Decode System */
-	if (strcmp(sysname,"x86") == 0)
+	if (strcmp(sysname, "i386") == 0)
 		new_image->system = ET_SYS_X86;
-	else if (strcmp(sysname,"ppc") == 0)
+	else if (strcmp(sysname, "powerpc") == 0)
 		new_image->system = ET_SYS_PPC;
-	else if (strcmp(sysname,"mac") == 0)
+	else if (strcmp(sysname, "macppc") == 0 || strcmp(sysname, "mac68k"))
 		new_image->system = ET_SYS_MAC;
 	else {
-		warnx("Error: Boot disk system must be one of the "
-		      "following: x86, ppc, mac");
+		warnx("boot disk system must be "
+		      "i386, powerpc, macppc, or mac68k");
 		return 0;
 	}
 	
-	new_image->filename = malloc(strlen(filename) + 1);
-	if (new_image->filename == NULL) {
-		warnx("Error initializing memory in cd9660_add_boot_disk");
+	
+	if ((new_image->filename = strdup(filename)) == NULL) {
+		warn("%s: strdup", __func__);
 		return 0;
 	}
 
-	strcpy(new_image->filename, filename);
 	free(temp);
 	
 	/* Get information about the file */
 	if (lstat(new_image->filename, &stbuf) == -1)
-		errx(1, "Can't lstat `%s'", new_image->filename);
+		err(EXIT_FAILURE, "%s: lstat(\"%s\")", __func__,
+		    new_image->filename);
 
 	switch (stbuf.st_size) {
 	case 1440 * 1024:
@@ -180,8 +176,8 @@ cd9660_eltorito_add_boot_option(const char *option_string, const char* value)
 	/* Find the last image added */
 	image = diskStructure.boot_images.lh_first;
 	if (image == NULL)
-		errx(1, "Attempted to add boot option, but no boot images "
-			"have been specified");
+		errx(EXIT_FAILURE, "Attempted to add boot option, "
+		    "but no boot images have been specified");
 
 	while (image->image_list.le_next != NULL)
 		image = image->image_list.le_next;
