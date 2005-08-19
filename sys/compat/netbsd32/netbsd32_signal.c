@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.10 2005/07/23 22:03:45 cube Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.11 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.10 2005/07/23 22:03:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.11 2005/08/19 04:24:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.10 2005/07/23 22:03:45 cube Ex
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/wait.h>
+#include <sys/dirent.h>
 
 #include <uvm/uvm_extern.h>
 
