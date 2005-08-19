@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.101 2005/07/10 04:23:30 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.102 2005/08/19 02:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.101 2005/07/10 04:23:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.102 2005/08/19 02:04:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -495,7 +495,7 @@ ultrix_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 
 struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */
-	ino_t	f_tinode;	/* total inodes free */
+	uint32_t f_tinode;	/* total inodes free */
 	char	f_fname[6];	/* filsys name */
 	char	f_fpack[6];	/* filsys pack name */
 };

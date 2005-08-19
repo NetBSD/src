@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.20 2005/07/10 16:34:53 cube Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.21 2005/08/19 02:03:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.20 2005/07/10 16:34:53 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.21 2005/08/19 02:03:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -615,7 +615,7 @@ netbsd32_futimes(l, v, retval)
 }
 
 int
-netbsd32_getdents(l, v, retval)
+netbsd32___getdents30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;

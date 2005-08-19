@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscall.h,v 1.12 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: pecoff_syscall.h,v 1.13 2005/08/19 02:03:57 christos Exp $ */
 
 /*
  * System call numbers.
@@ -669,8 +669,8 @@
 /* syscall: "swapctl" ret: "int" args: "int" "const void *" "int" */
 #define	PECOFF_SYS_swapctl	271
 
-/* syscall: "getdents" ret: "int" args: "int" "char *" "size_t" */
-#define	PECOFF_SYS_getdents	272
+/* syscall: "__getdents30" ret: "int" args: "int" "char *" "size_t" */
+#define	PECOFF_SYS___getdents30	272
 
 /* syscall: "minherit" ret: "int" args: "void *" "size_t" "int" */
 #define	PECOFF_SYS_minherit	273
@@ -687,14 +687,14 @@
 /* syscall: "__msync13" ret: "int" args: "void *" "size_t" "int" */
 #define	PECOFF_SYS___msync13	277
 
-/* syscall: "__stat13" ret: "int" args: "const char *" "struct stat *" */
-#define	PECOFF_SYS___stat13	278
+/* syscall: "__stat30" ret: "int" args: "const char *" "struct stat *" */
+#define	PECOFF_SYS___stat30	278
 
-/* syscall: "__fstat13" ret: "int" args: "int" "struct stat *" */
-#define	PECOFF_SYS___fstat13	279
+/* syscall: "__fstat30" ret: "int" args: "int" "struct stat *" */
+#define	PECOFF_SYS___fstat30	279
 
-/* syscall: "__lstat13" ret: "int" args: "const char *" "struct stat *" */
-#define	PECOFF_SYS___lstat13	280
+/* syscall: "__lstat30" ret: "int" args: "const char *" "struct stat *" */
+#define	PECOFF_SYS___lstat30	280
 
 /* syscall: "__sigaltstack14" ret: "int" args: "const struct sigaltstack *" "struct sigaltstack *" */
 #define	PECOFF_SYS___sigaltstack14	281

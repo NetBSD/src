@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.23 2005/08/05 09:23:16 skrll Exp $
+#	$NetBSD: SMDK2410,v 1.24 2005/08/19 02:03:51 christos Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -99,6 +99,7 @@ options 	NFS_BOOT_BOOTPARAM
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_15	# NetBSD 1.5 compatibility.

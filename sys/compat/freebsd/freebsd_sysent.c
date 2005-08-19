@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.60 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.61 2005/08/19 02:03:57 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.60 2005/02/26 23:58:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.61 2005/08/19 02:03:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -670,8 +670,8 @@ struct sysent freebsd_sysent[] = {
 	    sys_nosys },			/* 270 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 271 = unimplemented */
-	{ 3, s(struct sys_getdents_args), 0,
-	    sys_getdents },			/* 272 = getdents */
+	{ 3, s(struct compat_30_sys_getdents_args), 0,
+	    compat_30_sys_getdents },		/* 272 = getdents */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 273 = unimplemented */
 	{ 2, s(struct sys_lchmod_args), 0,
@@ -682,12 +682,12 @@ struct sysent freebsd_sysent[] = {
 	    sys_lutimes },			/* 276 = lutimes */
 	{ 3, s(struct sys___msync13_args), 0,
 	    sys___msync13 },			/* 277 = __msync13 */
-	{ 2, s(struct sys___stat13_args), 0,
-	    sys___stat13 },			/* 278 = __stat13 */
-	{ 2, s(struct sys___fstat13_args), 0,
-	    sys___fstat13 },			/* 279 = __fstat13 */
-	{ 2, s(struct sys___lstat13_args), 0,
-	    sys___lstat13 },			/* 280 = __lstat13 */
+	{ 2, s(struct compat_30_sys___stat13_args), 0,
+	    compat_30_sys___stat13 },		/* 278 = __stat13 */
+	{ 2, s(struct compat_30_sys___fstat13_args), 0,
+	    compat_30_sys___fstat13 },		/* 279 = __fstat13 */
+	{ 2, s(struct compat_30_sys___lstat13_args), 0,
+	    compat_30_sys___lstat13 },		/* 280 = __lstat13 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 281 = unimplemented */
 	{ 0, 0, 0,
