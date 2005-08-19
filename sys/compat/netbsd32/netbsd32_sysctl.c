@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.19 2005/07/03 17:18:02 cube Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.20 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19 2005/07/03 17:18:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.20 2005/08/19 04:24:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19 2005/07/03 17:18:02 cube Ex
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/dirent.h>
 
 #include <uvm/uvm_extern.h>
 

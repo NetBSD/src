@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.8 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.9 2005/08/19 04:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -67,7 +67,8 @@ static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, const s
 static __inline void netbsd32_from_statvfs __P((const struct statvfs *, struct netbsd32_statvfs *));
 static __inline void netbsd32_from_timex __P((const struct timex *, struct netbsd32_timex *));
 static __inline void netbsd32_to_timex __P((const struct netbsd32_timex *, struct timex *));
-static __inline void netbsd32_from___stat13 __P((const struct stat *, struct netbsd32_stat *));
+static __inline void netbsd32_from___stat13 __P((const struct stat *, struct netbsd32_stat13 *));
+static __inline void netbsd32_from___stat30 __P((const struct stat *, struct netbsd32_stat *));
 static __inline void netbsd32_to_ipc_perm __P((const struct netbsd32_ipc_perm *, struct ipc_perm *));
 static __inline void netbsd32_from_ipc_perm __P((const struct ipc_perm *, struct netbsd32_ipc_perm *));
 static __inline void netbsd32_to_msg __P((const struct netbsd32_msg *, struct msg *));
@@ -80,6 +81,7 @@ static __inline void netbsd32_to_semid_ds __P((const struct  netbsd32_semid_ds *
 static __inline void netbsd32_from_semid_ds __P((const struct  semid_ds *, struct  netbsd32_semid_ds *));
 static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, const struct loadavg *));
 static __inline void netbsd32_to_sigevent(const struct netbsd32_sigevent *, struct sigevent *);
+static __inline int  netbsd32_to_dirent12(char *, int);
 
 /* converters for structures that we need */
 static __inline void
@@ -571,8 +573,9 @@ netbsd32_to_sigevent(const struct netbsd32_sigevent *ev32, struct sigevent *ev)
 	ev->sigev_notify_function = (void *)(intptr_t)ev32->sigev_notify_function;
 	ev->sigev_notify_attributes = (void *)(intptr_t)ev32->sigev_notify_attributes;
 }
-int
-netbsd32_to_dirent12(char *nbuf, char *obuf, int nbytes)
+
+static __inline int
+netbsd32_to_dirent12(char *buf, int nbytes)
 {
 	struct dirent *ndp, *nndp, *endp;
 	struct dirent12 *odp;
@@ -588,7 +591,7 @@ netbsd32_to_dirent12(char *nbuf, char *obuf, int nbytes)
 	 */
 	for (; ndp < endp; ndp = nndp) {
 		nndp = _DIRENT_NEXT(ndp);
-		odp->d_ino = (u_int32_t)ndp->d_ino;
+		odp->d_fileno = (u_int32_t)ndp->d_fileno;
 		if (ndp->d_namlen >= sizeof(odp->d_name))
 			odp->d_namlen = sizeof(odp->d_name) - 1;
 		else
