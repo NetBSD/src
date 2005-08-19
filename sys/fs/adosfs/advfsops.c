@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.23 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.24 2005/08/19 04:15:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.24 2005/08/19 04:15:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -499,7 +499,8 @@ adosfs_vget(mp, an, vpp)
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: name length too long blk %d\n", an);
+		printf("adosfs: aget: name length too long blk %llu\n",
+		    (unsigned long long)an);
 #endif
 		brelse(bp);
 		vput(vp);
