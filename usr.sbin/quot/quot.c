@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.24 2004/04/21 01:05:48 christos Exp $	*/
+/*	$NetBSD: quot.c,v 1.25 2005/08/19 02:09:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.24 2004/04/21 01:05:48 christos Exp $");
+__RCSID("$NetBSD: quot.c,v 1.25 2005/08/19 02:09:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -484,10 +484,10 @@ donames(fd, super, name)
 		while ((c = getchar()) != EOF && c != '\n');
 	ungetc(c, stdin);
 	inode1 = -1;
-	while (scanf("%d", &inode) == 1) {
+	while (scanf("%llu", &inode) == 1) {
 		if (inode < 0 || inode > maxino) {
 #ifndef	COMPAT
-			warnx("invalid inode %d", inode);
+			warnx("invalid inode %llu", (unsigned long long)inode);
 #endif
 			return;
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.29 2005/06/27 02:50:01 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.30 2005/08/19 02:07:19 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -263,8 +263,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		for (ap = ((ufs_daddr_t *) bp->b_data) + nif; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void) sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
-			    idesc->id_number);
+			(void) sprintf(buf, "PARTIALLY TRUNCATED INODE I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				++diddirty;
@@ -404,7 +404,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	err(8, "cannot find inode %d\n", inumber);
+	err(8, "cannot find inode %llu\n", (unsigned long long)inumber);
 	return ((struct inoinfo *) 0);
 }
 
@@ -525,7 +525,7 @@ pinode(ino_t ino)
 	struct passwd *pw;
 	time_t t;
 
-	printf(" I=%u ", ino);
+	printf(" I=%llu ", (unsigned long long)ino);
 	if (ino < ROOTINO || ino >= maxino)
 		return;
 	dp = ginode(ino);
@@ -551,7 +551,8 @@ void
 blkerror(ino_t ino, const char *type, daddr_t blk)
 {
 
-	pfatal("%lld %s I=%u", (long long) blk, type, ino);
+	pfatal("%lld %s I=%llu", (long long) blk, type,
+	    (unsigned long long)ino);
 	printf("\n");
 	if (exitonfail)
 		exit(1);

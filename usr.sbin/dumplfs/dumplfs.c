@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.28 2003/08/07 11:25:20 agc Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.29 2005/08/19 02:09:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.28 2003/08/07 11:25:20 agc Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.29 2005/08/19 02:09:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,9 @@ char *special;
 	(void)printf("inum\tstatus\tversion\tdaddr\t\tfreeptr\n")
 #define print_ientry(i, ip) \
 	if ((ip)->if_daddr == LFS_UNUSED_DADDR) \
-		(void)printf("%d\tFREE\t%d\t \t\t%d\n", \
-		    i, (ip)->if_version, (ip)->if_nextfree); \
+		(void)printf("%d\tFREE\t%d\t \t\t%llu\n", \
+		    i, (ip)->if_version, \
+		    (unsigned long long)(ip)->if_nextfree); \
 	else \
 		(void)printf("%d\tINUSE\t%d\t%8X    \n", \
 		    i, (ip)->if_version, (ip)->if_daddr)

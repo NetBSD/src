@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2005/06/26 23:01:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2005/08/19 02:07:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2005/06/26 23:01:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2005/08/19 02:07:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		if (zlnhead != NULL) {
 			printf("The following zero link count inodes remain:");
 			for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
-				printf(" %u,", zlnp->zlncnt);
+				printf(" %llu,",
+				    (unsigned long long)zlnp->zlncnt);
 			printf("\n");
 		}
 	}
