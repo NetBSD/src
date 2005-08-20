@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.h,v 1.1.1.4 2005/03/16 23:52:56 manu Exp $	*/
+/*	$NetBSD: localconf.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: localconf.h,v 1.9.2.2 2005/03/16 23:18:43 manubsd Exp */
 

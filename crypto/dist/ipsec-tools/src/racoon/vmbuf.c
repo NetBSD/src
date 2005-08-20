@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbuf.c,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: vmbuf.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /*	$KAME: vmbuf.c,v 1.11 2001/11/26 16:54:29 sakane Exp $	*/
 

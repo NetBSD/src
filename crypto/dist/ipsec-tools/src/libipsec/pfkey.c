@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.5 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.6 2005/08/20 00:57:06 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -692,7 +692,7 @@ pfkey_send_delete_all(so, satype, mode, src, dst)
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
-	ep = ((void *)newmsg) + len;
+	ep = ((caddr_t)(void *)newmsg) + len;
 
 	p = pfkey_setsadbmsg((void *)newmsg, ep, SADB_DELETE, (u_int)len, 
 	    satype, 0, getpid());
@@ -1335,7 +1335,7 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len,
 	                     satype, seq, getpid());
 	if (!p) {
 		free(newmsg);
@@ -1508,7 +1508,7 @@ pfkey_send_x2(so, type, satype, mode, src, dst, spi)
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len, satype, 0,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len, satype, 0,
 	    getpid());
 	if (!p) {
 		free(newmsg);
@@ -1590,7 +1590,7 @@ pfkey_send_x3(so, type, satype)
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((void *)newmsg, ep, type, len, satype, 0,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len, satype, 0,
 	    getpid());
 	if (!p || p != ep) {
 		free(newmsg);

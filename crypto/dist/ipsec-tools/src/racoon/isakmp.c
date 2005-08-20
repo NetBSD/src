@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.8 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.9 2005/08/20 00:57:06 manu Exp $	*/
 
-/* Id: isakmp.c,v 1.34.2.18 2005/07/26 14:58:16 vanhu Exp */
+/* Id: isakmp.c,v 1.34.2.19 2005/08/11 14:58:51 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3133,8 +3133,8 @@ purge_remote(iph1)
 		}
 
 		/* check in/outbound SAs */
-		if (CMPSADDR(iph1->remote, dst) &&
-		    CMPSADDR(iph1->remote, src)) {
+		if ((CMPSADDR(iph1->local, src) || CMPSADDR(iph1->remote, dst)) &&
+			(CMPSADDR(iph1->local, dst) || CMPSADDR(iph1->remote, src))) {
 			msg = next;
 			continue;
 		}

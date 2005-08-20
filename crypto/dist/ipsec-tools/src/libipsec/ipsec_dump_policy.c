@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.4 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.5 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: ipsec_dump_policy.c,v 1.7.4.2 2005/06/29 13:01:27 manubsd Exp */
 

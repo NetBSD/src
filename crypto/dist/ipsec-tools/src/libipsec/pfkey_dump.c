@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.8 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.9 2005/08/20 00:57:06 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -91,7 +91,7 @@ do { \
 		printf("%u ", (num)); \
 	else \
 		printf("%s ", (str)[(num)]); \
-} while (0/*CONSTCOND*/)
+} while (/*CONSTCOND*/0)
 
 #define GETMSGV2S(v2s, num) \
 do { \
@@ -104,7 +104,7 @@ do { \
 		printf("%s ", p->str); \
 	else \
 		printf("%u ", (num)); \
-} while (0/*CONSTCOND*/)
+} while (/*CONSTCOND*/0)
 
 static char *str_ipaddr __P((struct sockaddr *));
 static char *str_prefport __P((u_int, u_int, u_int, u_int));

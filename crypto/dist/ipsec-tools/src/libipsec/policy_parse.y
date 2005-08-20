@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.5 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.6 2005/08/20 00:57:06 manu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -641,7 +641,7 @@ ipsec_set_policy(msg, msglen)
 	__ipsec_const char *msg;
 	int msglen;
 {
-	void *policy;
+	caddr_t policy;
 
 	policy = policy_parse(msg, msglen);
 	if (policy == NULL) {

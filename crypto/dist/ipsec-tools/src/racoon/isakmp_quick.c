@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.6 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.7 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.13.2.7 2005/07/20 08:02:05 vanhu Exp */
 

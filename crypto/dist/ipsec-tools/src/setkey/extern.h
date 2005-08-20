@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.1.1 2005/08/07 08:49:26 manu Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2005/08/20 00:57:29 manu Exp $	*/
 
 
 

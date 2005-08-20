@@ -1,4 +1,4 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.1.1.3 2005/08/07 08:47:45 manu Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: plainrsa-gen.c,v 1.4.8.2 2005/04/21 09:07:20 monas Exp */
 /*

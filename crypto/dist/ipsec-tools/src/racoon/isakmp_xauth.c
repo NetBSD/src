@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.3 2005/08/07 09:38:46 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.17.2.5 2005/05/20 07:31:09 manubsd Exp */
 
