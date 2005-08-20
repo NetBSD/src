@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.10 2005/06/15 22:08:08 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.11 2005/08/20 19:20:54 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10 2005/06/15 22:08:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.11 2005/08/20 19:20:54 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -584,6 +584,15 @@ xpq_increment_idx(void)
 	xpq_idx++;
 	if (__predict_false(xpq_idx == XPQUEUE_SIZE))
 		xpq_flush_queue();
+}
+
+void
+xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
+{
+	XENPRINTK2(("xpq_queue_machphys_update ma=%p pa=%p\n", (void *)ma, (void *)pa));
+	xpq_queue[xpq_idx].pa.ptr = ma | MMU_MACHPHYS_UPDATE;
+	xpq_queue[xpq_idx].pa.val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+	xpq_increment_idx();
 }
 
 void
