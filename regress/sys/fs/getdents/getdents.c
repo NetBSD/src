@@ -1,4 +1,4 @@
-/*	$Id: getdents.c,v 1.6 2005/08/19 12:47:10 christos Exp $	*/
+/*	$Id: getdents.c,v 1.7 2005/08/20 05:25:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -49,7 +49,7 @@ print_dents(FILE *fp, const void *vp, int sz)
 		d = (const void *)cp;
 		fprintf(fp, "fileno=%" PRIu64
 		    ", type=%d, reclen=%d, len=%d, %s\n",
-		    d->d_fileno, (int)d->d_type, (int)d->d_reclen,
+		    (uint64_t)d->d_fileno, (int)d->d_type, (int)d->d_reclen,
 		    (int)d->d_namlen, d->d_name);
 		cp += d->d_reclen;
 	}
