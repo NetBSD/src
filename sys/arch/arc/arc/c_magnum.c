@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.9 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.10 2005/08/20 17:58:49 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.9 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.10 2005/08/20 17:58:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ timer_magnum_intr(uint32_t mask, struct clockframe *cf)
 
 	temp = inw(R4030_SYS_IT_STAT);
 	hardclock(cf);
+	timer_jazzio_ev.ev_count++;
 
 	/* Re-enable clock interrupts */
 	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_IE);
