@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.35 2005/08/13 01:49:35 fvdl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.36 2005/08/20 15:00:27 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.35 2005/08/13 01:49:35 fvdl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.36 2005/08/20 15:00:27 kent Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -536,7 +536,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		warnx(
 		"Image file `%s' has %lld free inodes; %lld are required.",
 		    image,
-		    (long long)fs->fs_cstotal.cs_nifree + ROOTINO,
+		    (long long)(fs->fs_cstotal.cs_nifree + ROOTINO),
 		    (long long)fsopts->inodes);
 		return (-1);
 	}
