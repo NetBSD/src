@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.1.1.4 2005/08/07 08:46:16 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.1.1.5 2005/08/20 00:41:48 manu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.14.4.9 2005/08/02 15:09:26 vanhu Exp */
 
@@ -955,13 +955,7 @@ purge_isakmp_spi(proto, spi, n)
 	}
 }
 
-<<<<<<< isakmp_inf.c
-
-
-void
-=======
 static void
->>>>>>> 1.14.4.9
 purge_ipsec_spi(dst0, proto, spi, n)
 	struct sockaddr *dst0;
 	int proto;
@@ -1556,11 +1550,6 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 }
 
 
-<<<<<<< isakmp_inf.c
-
-
-=======
->>>>>>> 1.14.4.9
 /*
  * send Delete payload (for ISAKMP SA) in Informational exchange.
  */
