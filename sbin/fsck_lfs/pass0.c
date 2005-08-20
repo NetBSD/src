@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.22 2005/08/19 02:07:19 christos Exp $	 */
+/* $NetBSD: pass0.c,v 1.23 2005/08/20 14:59:20 kent Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ pass0(void)
 	 * cleaner thrash as well.
 	 */
 	if (totaldist > 4 * maxino) {
-		pwarn("%sotal inode list traversal length %lldx list length%s\n",
+		pwarn("%sotal inode list traversal length %" PRIu64 "x list length%s\n",
 		      (preen ? "t" : "T"), totaldist/maxino,
 		      (preen ? ", optimizing" : ""));
 		if (preen || reply("OPTIMIZE") == 1) {
