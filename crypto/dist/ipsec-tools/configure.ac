@@ -1,8 +1,8 @@
 dnl -*- mode: m4 -*-
-dnl Id: configure.ac,v 1.47.2.23 2005/08/04 21:26:47 manubsd Exp
+dnl Id: configure.ac,v 1.47.2.24 2005/08/19 22:46:45 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, 0.6.1rc1)
+AC_INIT(ipsec-tools, 0.6.1)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
