@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.27 2005/08/19 16:06:12 bouyer Exp $
+#	$NetBSD: files.xen,v 1.28 2005/08/20 19:30:37 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -83,6 +83,7 @@ include	"dev/ata/files.ata"
 file	dev/md_root.c			memory_disk_hooks
 
 file	arch/x86/x86/bus_dma.c		pci
+file	arch/xen/x86/xen_bus_dma.c	pci
 file	arch/xen/x86/bus_space.c	pci
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
