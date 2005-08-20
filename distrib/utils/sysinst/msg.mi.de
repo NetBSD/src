@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.20 2005/05/08 20:32:36 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.21 2005/08/20 19:49:07 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -694,7 +694,7 @@ oder zu erneuern.)}
 
 message verboseextract
 {
-Im nächste Schritt werden nun die Distributionssets (Basissystem + Kernel)
+Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
 geladen und auf die Festplatte kopiert.
 
 Was wollen Sie während des Extrahierens sehen?
