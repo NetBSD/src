@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.7 2005/05/31 12:36:56 yamt Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.8 2005/08/20 19:20:54 bouyer Exp $	*/
 
 /*
  *
@@ -37,6 +37,7 @@
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
+void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
 void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
