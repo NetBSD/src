@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.354 2005/08/18 22:40:41 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.355 2005/08/20 01:06:25 manu Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -335,15 +335,15 @@ Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
 
 Package:	ipsec-tools
-Version:	0.6-base
-Current Vers:	0.5.2/0.6.beta3
+Version:	0.6.1
+Current Vers:	0.6.1
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
 Responsible:	manu
 Notes:
-Don't forget to remove .cvsignore files when importing newer versions
+See src/crypto/dist/ipsec-tools/netbsd-import.sh to import newer versions
 
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit
