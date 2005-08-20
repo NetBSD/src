@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.27 2005/08/15 10:52:42 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.28 2005/08/20 19:01:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -59,6 +59,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: alpha_reloc.c,v 1.28 2005/08/20 19:01:16 skrll Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

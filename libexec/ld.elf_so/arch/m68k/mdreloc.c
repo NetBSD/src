@@ -1,4 +1,9 @@
-/*	$NetBSD: mdreloc.c,v 1.18 2005/07/26 15:43:34 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.19 2005/08/20 19:01:17 skrll Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mdreloc.c,v 1.19 2005/08/20 19:01:17 skrll Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

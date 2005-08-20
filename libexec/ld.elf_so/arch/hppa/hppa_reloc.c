@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.22 2005/06/05 19:08:28 chs Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.23 2005/08/20 19:01:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: hppa_reloc.c,v 1.23 2005/08/20 19:01:17 skrll Exp $");
+#endif /* not lint */
 
 #include <stdlib.h>
 #include <sys/types.h>

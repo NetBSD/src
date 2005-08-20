@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.36 2005/08/15 10:52:42 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -36,6 +36,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $");
+#endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
