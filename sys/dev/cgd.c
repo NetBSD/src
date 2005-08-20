@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.28 2005/08/20 12:01:04 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.29 2005/08/20 12:03:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.28 2005/08/20 12:01:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.29 2005/08/20 12:03:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,11 @@ static struct dk_intf the_dkintf = {
 };
 static struct dk_intf *di = &the_dkintf;
 
+static struct dkdriver cgddkdriver = {
+	.d_strategy = cgdstrategy,
+	.d_minphys = minphys,
+};
+
 /* DIAGNOSTIC and DEBUG definitions */
 
 #if defined(CGDDEBUG) && !defined(DEBUG)
@@ -172,6 +177,7 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
 	simple_lock_init(&cs->sc_slock);
 	dk_sc_init(&cs->sc_dksc, cs, sbuf);
+	cs->sc_dksc.sc_dkdev.dk_driver = &cgddkdriver;
 	pseudo_disk_init(&cs->sc_dksc.sc_dkdev);
 }
 
@@ -443,6 +449,7 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
+	struct	disk *dk;
 	int	ret;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -451,15 +458,13 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    dev, cmd, data, flag, p));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
+	dk = &dksc->sc_dkdev;
 	switch (cmd) {
 	case CGDIOCSET:
 	case CGDIOCCLR:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 	}
-
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
 
 	switch (cmd) {
 	case CGDIOCSET:
@@ -484,7 +489,6 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
 	return ret;
 }
 
@@ -577,6 +581,9 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 	/* Try and read the disklabel. */
 	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
 
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&cs->sc_dksc.sc_dkdev);
+
 	return 0;
 
 bail:
@@ -589,6 +596,9 @@ static int
 cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 {
 	int	s;
+
+	/* Delete all of our wedges. */
+	dkwedge_delall(&cs->sc_dksc.sc_dkdev);
 
 	/* Kill off any queued buffers. */
 	s = splbio();
