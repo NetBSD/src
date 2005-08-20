@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -200,11 +200,21 @@ disk_find(char *name)
 	return (NULL);
 }
 
-/*
- * Attach a disk.
- */
-void
-disk_attach(struct disk *diskp)
+static void
+disk_init0(struct disk *diskp)
+{
+
+	/*
+	 * Initialize the wedge-related locks and other fields.
+	 */
+	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
+	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	LIST_INIT(&diskp->dk_wedges);
+	diskp->dk_nwedges = 0;
+}
+
+static void
+disk_attach0(struct disk *diskp)
 {
 	int s;
 
@@ -223,14 +233,6 @@ disk_attach(struct disk *diskp)
 	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
-	 * Initialize the wedge-related locks and other fields.
-	 */
-	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
-	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
-	LIST_INIT(&diskp->dk_wedges);
-	diskp->dk_nwedges = 0;
-
-	/*
 	 * Set the attached timestamp.
 	 */
 	s = splclock();
@@ -246,14 +248,9 @@ disk_attach(struct disk *diskp)
 	simple_unlock(&disklist_slock);
 }
 
-/*
- * Detach a disk.
- */
-void
-disk_detach(struct disk *diskp)
+static void
+disk_detach0(struct disk *diskp)
 {
-
-	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
 
 	/*
 	 * Remove from the disklist.
@@ -271,6 +268,59 @@ disk_detach(struct disk *diskp)
 	free(diskp->dk_label, M_DEVBUF);
 	free(diskp->dk_cpulabel, M_DEVBUF);
 }
+
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+	disk_attach0(diskp);
+}
+
+/*
+ * Detach a disk.
+ */
+void
+disk_detach(struct disk *diskp)
+{
+
+	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
+	disk_detach0(diskp);
+}
+
+/*
+ * Initialize a pseudo disk.
+ */
+void
+pseudo_disk_init(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+}
+
+/*
+ * Attach a pseudo disk.
+ */
+void
+pseudo_disk_attach(struct disk *diskp)
+{
+
+	disk_attach0(diskp);
+}
+
+/*
+ * Detach a pseudo disk.
+ */
+void
+pseudo_disk_detach(struct disk *diskp)
+{
+
+	disk_detach0(diskp);
+}
+
 
 /*
  * Increment a disk's busy counter.  If the counter is going from
