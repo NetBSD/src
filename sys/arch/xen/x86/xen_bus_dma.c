@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.1 2005/08/20 19:30:38 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.2 2005/08/20 20:06:24 bouyer Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.1 2005/08/20 19:30:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.2 2005/08/20 20:06:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,13 @@ _xen_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	/* Always round the size. */
 	size = round_page(size);
 
+	KASSERT((alignment & (alignment - 1)) == 0);
+	KASSERT((boundary & (boundary - 1)) == 0);
+	if (alignment < PAGE_SIZE)
+		alignment = PAGE_SIZE;
+	if (boundary != 0 && boundary < size)
+		return (EINVAL);
+
 	/*
 	 * Allocate pages from the VM system.
 	 */
@@ -177,6 +184,8 @@ again:
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = m->pageq.tqe_next;
+	if ((_BUS_PHYS_TO_BUS(segs[curseg].ds_addr) & (alignment - 1)) != 0)
+		goto dorealloc;
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
@@ -194,11 +203,17 @@ again:
 			    "enforce address range\n");
 			return EINVAL;
 		}
-		if (bus_curaddr == (bus_lastaddr + PAGE_SIZE))
+		if (bus_curaddr == (bus_lastaddr + PAGE_SIZE)) {
 			segs[curseg].ds_len += PAGE_SIZE;
+			if ((bus_lastaddr & boundary) !=
+			    (bus_curaddr & boundary))
+				goto dorealloc;
+		}
 		else {
 			curseg++;
-			if (curseg >= nsegs) {
+			if (curseg >= nsegs ||
+			    (bus_curaddr & (alignment - 1)) != 0) {
+dorealloc:
 				if (doingrealloc == 1)
 					panic("_xen_bus_dmamem_alloc_range: "
 					   "xen_alloc_contig returned "
