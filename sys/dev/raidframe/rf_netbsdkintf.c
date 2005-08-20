@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.187 2005/05/29 22:03:09 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.188 2005/08/20 12:01:04 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.187 2005/05/29 22:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.188 2005/08/20 12:01:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -396,6 +396,7 @@ raidattach(int num)
 
 	for (raidID = 0; raidID < num; raidID++) {
 		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
+		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -667,7 +668,7 @@ raidclose(dev_t dev, int flags, int fmt, struct proc *p)
 			rs->sc_flags &= ~RAIDF_INITED;
 
 			/* Detach the disk. */
-			disk_detach(&rs->sc_dkdev);
+			pseudo_disk_detach(&rs->sc_dkdev);
 		}
 	}
 
@@ -1617,7 +1618,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
-	disk_attach(&rs->sc_dkdev);
+	pseudo_disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */

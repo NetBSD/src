@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.27 2005/06/28 20:23:02 drochner Exp $ */
+/* $NetBSD: cgd.c,v 1.28 2005/08/20 12:01:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27 2005/06/28 20:23:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.28 2005/08/20 12:01:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,6 +172,7 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
 	simple_lock_init(&cs->sc_slock);
 	dk_sc_init(&cs->sc_dksc, cs, sbuf);
+	pseudo_disk_init(&cs->sc_dksc.sc_dkdev);
 }
 
 void
@@ -571,7 +572,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 	cs->sc_dksc.sc_flags |= DKF_INITED;
 
 	/* Attach the disk. */
-	disk_attach(&cs->sc_dksc.sc_dkdev);
+	pseudo_disk_attach(&cs->sc_dksc.sc_dkdev);
 
 	/* Try and read the disklabel. */
 	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
@@ -601,7 +602,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 	free(cs->sc_data, M_DEVBUF);
 	cs->sc_data_used = 0;
 	cs->sc_dksc.sc_flags &= ~DKF_INITED;
-	disk_detach(&cs->sc_dksc.sc_dkdev);
+	pseudo_disk_detach(&cs->sc_dksc.sc_dkdev);
 
 	return 0;
 }
