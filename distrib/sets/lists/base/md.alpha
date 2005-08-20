@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.34 2005/07/24 13:08:29 wiz Exp $
+# $NetBSD: md.alpha,v 1.35 2005/08/20 20:15:57 abs Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib
@@ -10,6 +10,7 @@
 ./usr/mdec/bootxx.old				base-obsolete		obsolete
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_ffsv2				base-sysutil-bin
 ./usr/mdec/bootxx_lfs				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/installboot.old			base-obsolete		obsolete
