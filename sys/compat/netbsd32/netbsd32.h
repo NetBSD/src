@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.39 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.40 2005/08/20 15:02:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -508,14 +508,14 @@ struct netbsd32_stat {
 	struct	  netbsd32_timespec st_atimespec;/* time of last access */
 	struct	  netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct	  netbsd32_timespec st_ctimespec;/* time of last file status change */
-	struct 	  netbsd32_timespec st_birthtimespec; /* time of creation */
+	struct	  netbsd32_timespec st_birthtimespec; /* time of creation */
 	off_t	  st_size;		/* file size, in bytes */
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 	u_int32_t st_spare[2];
-};
+}
 #ifdef __x86_64__
 __attribute__((packed))
 #endif
