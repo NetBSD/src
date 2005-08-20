@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $ */
+/* $NetBSD: dksubr.c,v 1.16 2005/08/20 12:03:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15 2005/06/28 20:23:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.16 2005/08/20 12:03:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 	dksc->sc_osc = osc;
 	strncpy(dksc->sc_xname, xname, DK_XNAME_SIZE);
 	dksc->sc_dkdev.dk_name = dksc->sc_xname;
-	lockinit(&dksc->sc_lock, PRIBIO, "dklk", 0, 0);
 }
 
 /* ARGSUSED */
@@ -96,22 +95,37 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 	int	ret = 0;
+	struct disk *dk = &dksc->sc_dkdev;
 
 	DPRINTF_FOLLOW(("dk_open(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return ret;
 
 	part = DISKPART(dev);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (dk->dk_nwedges != 0 && part != RAW_PART) {
+		ret = EBUSY;
+		goto done;
+	}
+
 	pmask = 1 << part;
 
 	/*
 	 * If we're init'ed and there are no other open partitions then
 	 * update the in-core disklabel.
 	 */
-	if ((dksc->sc_flags & DKF_INITED) && dksc->sc_dkdev.dk_openmask == 0)
-		dk_getdisklabel(di, dksc, dev);
+	if ((dksc->sc_flags & DKF_INITED)) {
+		if (dk->dk_openmask == 0) {
+			dk_getdisklabel(di, dksc, dev);
+		}
+		/* XXX re-discover wedges? */
+	}
 
 	/* Fail if we can't find the partition. */
 	if ((part != RAW_PART) &&
@@ -125,18 +139,17 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	/* Mark our unit as open. */
 	switch (fmt) {
 	case S_IFCHR:
-		dksc->sc_dkdev.dk_copenmask |= pmask;
+		dk->dk_copenmask |= pmask;
 		break;
 	case S_IFBLK:
-		dksc->sc_dkdev.dk_bopenmask |= pmask;
+		dk->dk_bopenmask |= pmask;
 		break;
 	}
 
-	dksc->sc_dkdev.dk_openmask =
-	    dksc->sc_dkdev.dk_copenmask | dksc->sc_dkdev.dk_bopenmask;
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
 done:
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 	return ret;
 }
 
@@ -148,25 +161,25 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 	int	ret;
+	struct disk *dk = &dksc->sc_dkdev;
 
 	DPRINTF_FOLLOW(("dk_close(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return ret;
 
 	switch (fmt) {
 	case S_IFCHR:
-		dksc->sc_dkdev.dk_copenmask &= ~pmask;
+		dk->dk_copenmask &= ~pmask;
 		break;
 	case S_IFBLK:
-		dksc->sc_dkdev.dk_bopenmask &= ~pmask;
+		dk->dk_bopenmask &= ~pmask;
 		break;
 	}
-	dksc->sc_dkdev.dk_openmask =
-	    dksc->sc_dkdev.dk_copenmask | dksc->sc_dkdev.dk_bopenmask;
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -276,6 +289,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	disklabel *lp;
+	struct	disk *dk;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct	disklabel newlabel;
 #endif
@@ -350,6 +364,12 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 #endif
 		lp = (struct disklabel *)data;
 
+		dk = &dksc->sc_dkdev;
+		error = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL);
+		if (error) {
+			break;
+		}
+
 		dksc->sc_flags |= DKF_LABELLING;
 
 		error = setdisklabel(dksc->sc_dkdev.dk_label,
@@ -366,6 +386,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		}
 
 		dksc->sc_flags &= ~DKF_LABELLING;
+		error = lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
 		break;
 
 	case DIOCWLABEL:
@@ -387,6 +408,37 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *)data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
+		return (dkwedge_add(dkw));
+	    }
+
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *)data;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
+		return (dkwedge_del(dkw));
+	    }
+
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *)data;
+
+		return (dkwedge_list(&dksc->sc_dkdev, dkwl, p));
+	    }
 
 	default:
 		error = ENOTTY;
