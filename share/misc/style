@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.33 2005/08/20 08:58:57 rillig Exp $ */
+/* $NetBSD: style,v 1.34 2005/08/20 09:03:29 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.33 2005/08/20 08:58:57 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.34 2005/08/20 09:03:29 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -366,9 +366,11 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 		err(1, "Unable to stat %s", p);
 
 	/*
-	 * To printf 64 bit quantities, use %ll and cast to (long long).
+	 * To printf 64 bit quantities, use %lld and cast to (long long)
+	 * or use %llu and cast to (unsigned long long).
 	 */
-	(void)printf("The size of %s is %lld\n", p, (long long)sb->st_size);
+	(void)printf("The size of %s is %llu\n",
+	    p, (unsigned long long)sb->st_size);
 }
 
 /*
