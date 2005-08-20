@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2004/07/02 00:05:23 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2005/08/20 16:14:34 elad Exp $
 #	$OpenBSD: Makefile.inc,v 1.5 1997/07/17 06:02:42 millert Exp $
 
 # hash functions
@@ -18,3 +18,5 @@ MLINKS+=rmd160.3 RMD160Init.3    rmd160.3 RMD160Update.3
 MLINKS+=rmd160.3 RMD160Final.3   rmd160.3 RMD160Transform.3
 MLINKS+=rmd160.3 RMD160End.3     rmd160.3 RMD160File.3
 MLINKS+=rmd160.3 RMD160Data.3
+
+.include "${.CURDIR}/hash/sha2/Makefile.inc"
