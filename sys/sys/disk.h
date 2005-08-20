@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.29 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: disk.h,v 1.30 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -318,6 +318,9 @@ struct proc;
 
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
+void	pseudo_disk_init(struct disk *);
+void	pseudo_disk_attach(struct disk *);
+void	pseudo_disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 void	disk_resetstat(struct disk *);
