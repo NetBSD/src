@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.36 2005/07/28 10:54:30 skrll Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -27,6 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ppc_reloc.c,v 1.37 2005/08/20 19:01:17 skrll Exp $");
+#endif /* not lint */
 
 #include <stdarg.h>
 #include <stdio.h>

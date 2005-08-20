@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.47 2005/06/07 09:20:19 he Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.48 2005/08/20 19:01:17 skrll Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -27,6 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mips_reloc.c,v 1.48 2005/08/20 19:01:17 skrll Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
