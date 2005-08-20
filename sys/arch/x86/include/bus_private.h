@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.1 2005/04/16 08:53:09 yamt Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.2 2005/08/20 19:18:11 bouyer Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -98,12 +98,12 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 
+#ifndef _PRIVATE_BUS_DMAMEM_ALLOC_RANGE
 int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    paddr_t low, paddr_t high);
-
-
+	    bus_addr_t low, bus_addr_t high);
+#endif
 
 /*
  * Cookie used for bounce buffers. A pointer to one of these it stashed in
@@ -172,5 +172,14 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 	return _BUS_PHYS_TO_BUS(pa);
 }
 #endif /* !defined(_BUS_VIRT_TO_BUS) */
+
+/*
+ * by default, the end address of RAM visible on bus is the same as the
+ * largest physical address.
+ */
+#ifndef _BUS_AVAIL_END
+#define _BUS_AVAIL_END (avail_end)
+#endif
+
 
 #endif /* !defined(_X86_BUS_PRIVATE_H_) */
