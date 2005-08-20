@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+/*	$NetBSD: misc.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: misc.h,v 1.6 2004/06/11 16:00:17 ludvigm Exp */
 

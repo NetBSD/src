@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.3 2005/08/07 09:38:46 manu Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.

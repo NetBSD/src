@@ -1,5 +1,28 @@
 ---------------------------------------------
 
+	0.6.1 released
+
+2005-08-14  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Francis Dupont <Francis.Dupont@enst-bretagne.fr>
+	* src/racoon/dnssec.c: fix bogus test on function result
+
+2005-08-11  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Improved in/out SA addresses check in
+	  purge_remote(). Reported by Patrick Ma.
+
+2005-08-08  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/libipsec/{key_debug.c|pfkey.c|pfkey_dump.c}: de-lint, warnings
+
+2005-08-08  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/privsep.c: Fixed a %d -> %zu in
+	port_check() (reported by Matthias Scheler).
+
+---------------------------------------------
+
 	0.6.1.rc1 released
 
 2005-08-04  Emmanuel Dreyfus  <manu@netbsd.org>
