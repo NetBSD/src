@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.32 2005/06/10 06:35:41 junyoung Exp $ */
+/* $NetBSD: style,v 1.33 2005/08/20 08:58:57 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.32 2005/06/10 06:35:41 junyoung Exp $");
+__RCSID("$NetBSD: style,v 1.33 2005/08/20 08:58:57 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -414,5 +414,5 @@ usage(void)
 	 * "usage: f [-a | -b] [-c [-de] [-n number]]\n"
 	 */
 	(void)fprintf(stderr, "usage: %s [-ab]\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
