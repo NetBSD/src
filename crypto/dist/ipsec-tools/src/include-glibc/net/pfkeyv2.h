@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 #ifndef __NET_PFKEYV2_H_
 #define __NET_PFKEYV2_H_ 1

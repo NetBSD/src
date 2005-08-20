@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.1.1.2 2005/02/23 14:54:38 manu Exp $	*/
+/*	$NetBSD: sha2.c,v 1.2 2005/08/20 00:57:29 manu Exp $	*/
 
 /* Id: sha2.c,v 1.6 2004/09/21 14:35:25 ludvigm Exp */
 

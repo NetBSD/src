@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.4 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.5 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.40.4.5 2005/07/12 11:50:15 manubsd Exp */
 

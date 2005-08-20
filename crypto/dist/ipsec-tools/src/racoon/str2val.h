@@ -1,4 +1,4 @@
-/*	$NetBSD: str2val.h,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: str2val.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: str2val.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 

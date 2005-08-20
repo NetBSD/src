@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.h,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $	*/
+/*	$NetBSD: ipsec_strerror.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: ipsec_strerror.h,v 1.4 2004/06/07 09:18:46 ludvigm Exp */
 

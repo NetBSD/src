@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.3 2005/08/07 09:38:45 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.9.2.1 2005/06/28 22:38:03 manubsd Exp */
 

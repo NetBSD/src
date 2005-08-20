@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.h,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: strnames.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: strnames.h,v 1.5 2004/07/12 20:37:13 ludvigm Exp */
 
