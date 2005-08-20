@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.82 2005/07/15 22:33:48 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.83 2005/08/20 21:07:42 dsl Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd July 15, 2005
+.Dd August 20, 2005
 .Os
 .Dt SH 1
 .Sh NAME
@@ -1222,14 +1222,16 @@ appears in the environment of the
 .Ic cd
 command or the shell variable
 .Ev CDPATH
-is set and the directory name does not begin with a slash, then the
-directories listed in
+is set and the directory name does not begin with a slash,
+or its first (or only) component isn't dot or dot dot,
+then the directories listed in
 .Ev CDPATH
 will be searched for the specified directory.
 The format of
 .Ev CDPATH
 is the same as that of
 .Ev PATH .
+.br
 In an interactive shell, the
 .Ic cd
 command will print out the name of the
