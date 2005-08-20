@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.20 2005/04/17 22:59:37 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.21 2005/08/20 12:03:52 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.20 2005/04/17 22:59:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.21 2005/08/20 12:03:52 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -182,6 +182,10 @@ static dev_t xbd_cd_major;
 static dev_t xbd_cd_cdev_major;
 #endif
 
+static struct dkdriver xbddkdriver = {
+	.d_strategy = xbdstrategy,
+	.d_minphys = minphys,
+};
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
@@ -1020,6 +1024,7 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
+	xs->sc_dksc.sc_dkdev.dk_driver = &xbddkdriver;
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
 
 #if NRND > 0
@@ -1053,6 +1058,9 @@ xbd_detach(struct device *dv, int flags)
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
+
+	/* Delete all of our wedges. */
+	dkwedge_delall(&xs->sc_dksc.sc_dkdev);
 
 #if 0
 	s = splbio();
@@ -1527,14 +1535,13 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
 	int	ret;
+	struct	disk *dk;
 
 	DPRINTF_FOLLOW(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, p));
 	GETXBD_SOFTC(xs, dev);
 	dksc = &xs->sc_dksc;
-
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
+	dk = &dksc->sc_dkdev;
 
 	switch (cmd) {
 	default:
@@ -1542,7 +1549,6 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
 	return ret;
 }
 
@@ -1622,6 +1628,9 @@ xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 	format_bytes(buf, sizeof(buf), (uint64_t)xs->sc_dksc.sc_size *
 	    pdg->pdg_secsize);
 	printf(" %s\n", buf);
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&xs->sc_dksc.sc_dkdev);
 
 /*   out: */
 	return ret;
