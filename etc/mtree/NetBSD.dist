@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.288 2005/07/31 00:12:17 nakayama Exp $
+#	$NetBSD: NetBSD.dist,v 1.289 2005/08/20 17:23:53 rpaulo Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -636,6 +636,7 @@
 ./usr/share/man
 ./usr/share/man/cat1
 ./usr/share/man/cat1/atari
+./usr/share/man/cat1/hp300
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
@@ -740,6 +741,7 @@
 ./usr/share/man/cat9/x68k
 ./usr/share/man/man1
 ./usr/share/man/man1/atari
+./usr/share/man/man1/hp300
 ./usr/share/man/man1/x68k
 ./usr/share/man/man2
 ./usr/share/man/man3
@@ -844,6 +846,7 @@
 ./usr/share/man/man9/x68k
 ./usr/share/man/html1
 ./usr/share/man/html1/atari
+./usr/share/man/html1/hp300
 ./usr/share/man/html1/x68k
 ./usr/share/man/html2
 ./usr/share/man/html3

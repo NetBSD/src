@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.816 2005/08/18 23:06:15 rpaulo Exp $
+# $NetBSD: mi,v 1.817 2005/08/20 17:23:53 rpaulo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -143,7 +143,7 @@
 ./usr/share/man/cat1/getopt.0			man-util-catman		.cat
 ./usr/share/man/cat1/gettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/grep.0			man-util-catman		.cat
-./usr/share/man/cat1/grfinfo.0			man-sysutil-catman	.cat
+./usr/share/man/cat1/grfinfo.0			man-obsolete		obsolete
 ./usr/share/man/cat1/groups.0			man-util-catman		.cat
 ./usr/share/man/cat1/gunzip.0			man-util-catman		.cat
 ./usr/share/man/cat1/gzcat.0			man-util-catman		.cat
@@ -155,6 +155,7 @@
 ./usr/share/man/cat1/history.0			man-util-catman		.cat
 ./usr/share/man/cat1/host.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/hostname.0			man-util-catman		.cat
+./usr/share/man/cat1/hp300/grfinfo.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/i386			man-obsolete		obsolete
 ./usr/share/man/cat1/i386/cursor.0		man-obsolete		obsolete
 ./usr/share/man/cat1/i386/fed.0			man-obsolete		obsolete
@@ -2400,7 +2401,7 @@
 ./usr/share/man/man1/getopt.1			man-util-man		.man
 ./usr/share/man/man1/gettext.1			man-locale-man		.man
 ./usr/share/man/man1/grep.1			man-util-man		.man
-./usr/share/man/man1/grfinfo.1			man-sysutil-man		.man
+./usr/share/man/man1/grfinfo.1			man-obsolete		obsolete
 ./usr/share/man/man1/groups.1			man-util-man		.man
 ./usr/share/man/man1/gunzip.1			man-util-man		.man
 ./usr/share/man/man1/gzcat.1			man-util-man		.man
@@ -2412,6 +2413,7 @@
 ./usr/share/man/man1/history.1			man-util-man		.man
 ./usr/share/man/man1/host.1			man-netutil-man		.man
 ./usr/share/man/man1/hostname.1			man-util-man		.man
+./usr/share/man/man1/hp300/grfinfo.1		man-sysutil-man		.man
 ./usr/share/man/man1/i386			man-obsolete		obsolete
 ./usr/share/man/man1/i386/cursor.1		man-obsolete		obsolete
 ./usr/share/man/man1/i386/fed.1			man-obsolete		obsolete

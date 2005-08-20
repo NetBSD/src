@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.566 2005/08/18 22:31:47 rpaulo Exp $
+# $NetBSD: mi,v 1.567 2005/08/20 17:23:53 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2101,6 +2101,7 @@
 ./usr/share/man/COPYRIGHT			base-man-share		share
 ./usr/share/man/cat1				base-man-share
 ./usr/share/man/cat1/atari			base-man-share
+./usr/share/man/cat1/hp300			base-man-share
 ./usr/share/man/cat1/x68k			base-man-share
 ./usr/share/man/cat2				base-man-share
 ./usr/share/man/cat3				base-man-share
@@ -2216,6 +2217,7 @@
 ./usr/share/man/cat9/x68k			base-man-share
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
+./usr/share/man/html1/hp300			base-man-share
 ./usr/share/man/html1/x68k			base-man-share
 ./usr/share/man/html2				base-man-share
 ./usr/share/man/html3				base-man-share
@@ -2330,6 +2332,7 @@
 ./usr/share/man/makewhatis.sed			base-man-share		share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
+./usr/share/man/man1/hp300			base-man-share
 ./usr/share/man/man1/x68k			base-man-share
 ./usr/share/man/man2				base-man-share
 ./usr/share/man/man3				base-man-share
