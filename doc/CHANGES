@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.508 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.509 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -82,3 +82,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		peers, viewable with netstat(1). [rpaulo 20050805]
 	postfix: Updated to 2.2.5. [rpaulo 20050818]
 	kernel: 64 bit inode changes [christos 20050819]
+	racoon(8): ipsec-tools updated to 0.6.1 [manu 20050820]

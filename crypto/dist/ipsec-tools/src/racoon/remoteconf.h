@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.3 2005/08/07 09:38:46 manu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
 
 /* Id: remoteconf.h,v 1.19.2.1 2005/05/20 00:37:42 manubsd Exp */
 
