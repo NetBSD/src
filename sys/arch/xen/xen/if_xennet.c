@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.30 2005/08/21 13:12:59 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.31 2005/08/21 22:20:28 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.30 2005/08/21 13:12:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.31 2005/08/21 22:20:28 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -361,7 +361,8 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 	if (sc == NULL) {
 		xneta.xa_device = "xennet";
 		xneta.xa_handle = status->handle;
-		config_found(netctrl.xc_parent, &xneta, netctrl.xc_cfprint);
+		config_found_ia(netctrl.xc_parent, "xendevbus", &xneta,
+		    netctrl.xc_cfprint);
 		sc = find_device(status->handle);
 		if (sc == NULL) {
 			if (in_autoconf) {
