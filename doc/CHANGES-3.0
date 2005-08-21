@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.208 2005/08/18 20:46:35 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.209 2005/08/21 22:18:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11748,4 +11748,45 @@ sys/arch/xen/xen/evtchn.c			1.15
 
 	evtchn_do_event: enable interrupts while calling interrupt handlers.
 	[yamt, ticket #676]
+
+sys/arch/xen/xen/if_xennet.c			1.29
+
+	Wrap some code with #if defined(NFS_BOOT_BOOTSTATIC).
+	[yamt, ticket #677]
+
+sys/kern/kern_exit.c				1.149
+
+	exit_lwps: fix a race which causes a panic
+	"setrunnable: lwp %p state was %d".
+	[yamt, ticket #678]
+
+sys/kern/kern_exit.c				1.150
+
+	exit_lwps: fix a race with eg. sa_setwoken. ie.
+	"exit_lwps: lwp_wait1 failed with error 11", PR kern/30689.
+	[yamt, ticket #679]
+
+sys/arch/i386/i386/pmap.c			1.184
+
+	pmap_enter: fix an uninitialized variable bug which can cause
+	"TLB IPI rendezvous failed".
+	[yamt, ticket #680]
+
+sys/arch/xen/xen/xbdback.c			1.13
+
+	xbdback_co_main_loop: don't forget to set xbdi->cont in the case of
+	error.
+	[yamt, ticket #681]
+
+sys/arch/xen/xen/xbdback.c			1.14
+
+	Fix a race by re-checking req_prod when exiting main loop.
+	[yamt, ticket #682]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.11
+
+	xen_shm_unmap:
+	- Don't try to remove a request twice.
+	- Fix spl/splx mismatch.
+	[yamt, ticket #683]
 
