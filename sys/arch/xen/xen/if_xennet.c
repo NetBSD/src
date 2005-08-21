@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.29 2005/08/07 04:54:58 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.30 2005/08/21 13:12:59 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.29 2005/08/07 04:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.30 2005/08/21 13:12:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -823,6 +823,13 @@ network_tx_buf_gc(struct xennet_softc *sc)
 			put_bufarray_entry(sc->sc_tx_bufa,
 			    sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id);
 			sc->sc_tx_entries--; /* atomic */
+
+			if (sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.status
+			    == NETIF_RSP_OKAY) {
+				ifp->if_opackets++;
+			} else {
+				ifp->if_oerrors++;
+			}
 		}
 
 		sc->sc_tx_resp_cons = prod;
@@ -1109,8 +1116,6 @@ xennet_start(struct ifnet *ifp)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		ifp->if_timer = 5;
 	}
-
-	ifp->if_opackets++;
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start() done\n",
 	    sc->sc_dev.dv_xname));
