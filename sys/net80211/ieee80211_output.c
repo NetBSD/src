@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.36 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.37 2005/08/21 00:07:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.36 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.37 2005/08/21 00:07:57 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -352,7 +352,7 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 {
 #define	TO_BE_RECLAIMED	(sizeof(struct ether_header) - sizeof(struct llc))
 	int needed_space = hdrsize;
-	int error;
+	int wlen = 0;
 
 	if (key != NULL) {
 		/* XXX belongs in crypto code? */
@@ -404,21 +404,25 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		 */
 		n->m_next = m;
 		m = n;
+	} else {
+                /* We will overwrite the ethernet header in the
+                 * 802.11 encapsulation stage.  Make sure that it
+                 * is writable.
+		 */
+		wlen = sizeof(struct ether_header);
 	}
 
 	/*
 	 * If we're going to s/w encrypt the mbuf chain make sure it is
 	 * writable.
 	 */
-	if (key != NULL && (key->wk_flags & IEEE80211_KEY_SWCRYPT) != 0) {
-        	error = m_makewritable(&m, 0, M_COPYALL, M_DONTWAIT);
+	if (key != NULL && (key->wk_flags & IEEE80211_KEY_SWCRYPT) != 0)
+		wlen = M_COPYALL;
 
-        	if (error) {
-                	m_freem(m);
-                	m = NULL;
-        	}
+	if (wlen != 0 && m_makewritable(&m, 0, wlen, M_DONTWAIT) != 0) {
+		m_freem(m);
+		return NULL;
 	}
-
 	return m;
 #undef TO_BE_RECLAIMED
 }
