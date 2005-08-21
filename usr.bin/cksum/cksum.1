@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.25 2004/07/09 11:47:59 wiz Exp $
+.\"	$NetBSD: cksum.1,v 1.26 2005/08/21 18:51:44 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd July 9, 2004
+.Dd August 21, 2005
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -48,12 +48,7 @@
 .Nm
 .Op Fl n
 .Oo
-.Fl m |
-.Fl 1 |
-.Fl 2 |
-.Fl 4 |
-.Fl 5 |
-.Fl 6 |
+.Fl a Ar algorithm |
 .Op Fl o Ar 1 | Ar 2
 .Oc
 .Op Ar
@@ -159,16 +154,18 @@ two programs is 160 bits in length, as opposed to 128.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl 1
-Use the SHA1 algorithm rather than the default one.
-.It Fl 2
-Use the MD2 algorithm rather than the default one.
-.It Fl 4
-Use the MD4 algorithm rather than the default one.
-.It Fl m | 5
-Use the MD5 algorithm rather than the default one.
-.It Fl 6
-Use the RMD160 algorithm rather than the default one.
+.It Fl a Ar algorithm
+When invoked as
+.Nm cksum ,
+use the specified
+.Pa algorithm .
+Valid algorithms are MD2, MD4, MD5, SHA1, RMD160, CRC, old1, and old2.
+Old1 and old2 are equal to
+.Fl o Ar 1
+and
+.Fl o Ar 2 ,
+respectively.
+The default is CRC.
 .It Fl o
 Use historic algorithms instead of the (superior) default one.
 .Pp
