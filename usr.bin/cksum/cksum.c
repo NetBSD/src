@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.25 2005/08/21 18:51:44 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.26 2005/08/21 19:33:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.25 2005/08/21 18:51:44 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.26 2005/08/21 19:33:10 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -181,6 +181,11 @@ main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * The -1, -2, -4, -5, -6, and -m flags should be deprecated, but
+	 * are still supported in code to not break anything that might
+	 * be using them.
+	 */
 	while ((ch = getopt(argc, argv, "a:mno:ps:tx12456")) != -1)
 		switch(ch) {
 		case 'a':
