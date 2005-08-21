@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/08/18 22:30:37 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.8 2005/08/21 23:00:12 he Exp $
 
 NOMAN=	# defined
 
@@ -19,8 +19,8 @@ DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS}
 
 .if ${MKCRYPTO} != "no"
-DPADD+=	${LIBPTLS} ${LIBSSL}
-LDADD+=	${LIBPTLS} -lssl
+DPADD+=	${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
+LDADD+=	${LIBPTLS} -lssl -lcrypto
 .endif
 
 DPADD+=	${LIBPUTIL}
