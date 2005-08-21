@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/08/18 22:30:37 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.2 2005/08/21 20:26:39 he Exp $
 
 NOMAN=	# defined
 
@@ -11,7 +11,7 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${PROG}
 
 BINDIR=	${PFIX_LIBEXECDIR}
 
-DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPTLS} ${LIBPUTIL}
-LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPTLS} ${LIBPUTIL} -lssl
+DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPTLS} ${LIBCRYPTO} ${LIBPUTIL}
+LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPTLS} ${LIBCRYPTO} ${LIBPUTIL} -lssl
 
 .include <bsd.prog.mk>
