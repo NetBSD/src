@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.57 2005/07/27 21:22:57 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.58 2005/08/21 00:25:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.57 2005/07/27 21:22:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.58 2005/08/21 00:25:51 dyoung Exp $");
 #endif
 
 /*
@@ -2678,23 +2678,6 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	return 0;
 }
 
-static uint64_t
-ath_tsf_extend(struct ath_hal *ah, uint32_t rstamp)
-{
-	uint64_t tsf;
-	
-	KASSERT((rstamp & 0xffff0000) == 0,
-	    ("rx timestamp > 16 bits wide, %" PRIu32, rstamp));
-
-	tsf = ath_hal_gettsf64(ah);
-
-	/* Compensate for rollover. */
-	if ((tsf & 0xffff) <= rstamp)
-		tsf -= 0x10000;
-
-	return (tsf & ~(uint64_t)0xffff) | rstamp;
-}
-
 /*
  * Extend 15-bit time stamp from rx descriptor to
  * a full 64-bit TSF using the current h/w TSF.
@@ -2734,7 +2717,7 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    ic->ic_state == IEEE80211_S_RUN) {
-			u_int64_t tsf = ath_tsf_extend(sc->sc_ah, rstamp);
+			u_int64_t tsf = ath_extend_tsf(sc->sc_ah, rstamp);
 
 			/*
 			 * Handle ibss merge as needed; check the tsf on the
