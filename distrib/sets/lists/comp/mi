@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.804 2005/08/14 12:04:23 yamt Exp $
+#	$NetBSD: mi,v 1.805 2005/08/21 15:37:57 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -131,6 +131,7 @@
 ./usr/include/cdk/viewer.h			comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
+./usr/include/crypto/sha2.h			comp-c-include
 ./usr/include/ctype.h				comp-c-include
 ./usr/include/curses.h				comp-c-include
 ./usr/include/db.h				comp-c-include
