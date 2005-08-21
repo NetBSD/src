@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.4.2.7 2005/08/15 14:57:19 tron Exp $      */
+/*      $NetBSD: xbdback.c,v 1.4.2.8 2005/08/21 22:08:52 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -662,6 +662,7 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			    "operation %d\n", xbdi->domid, req->operation);
 			xbdback_send_reply(xbdi, req->id, req->operation,
 			    BLKIF_RSP_ERROR);
+			xbdi->cont = xbdback_co_main_incr;
 			break;
 		}
 	} else {
