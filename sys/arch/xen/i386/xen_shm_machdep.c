@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.4 2005/08/15 14:57:06 tron Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5.2.5 2005/08/21 22:13:23 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -248,7 +248,7 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		splx(s);
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
-			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
+			s = splvm();
 			pool_put(&xen_shm_callback_pool, xshmc);
 		} else {
 			/* callback failed, probably out of ressources */
