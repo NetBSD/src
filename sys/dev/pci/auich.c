@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.98 2005/08/21 23:57:32 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.98 2005/08/21 23:57:32 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,7 +975,7 @@ auich_halt_pipe(struct auich_softc *sc, int pipe)
 	}
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + ICH_CTRL, ICH_RR);
 
-#if 1
+#if 0
 	if (i > 0)
 		printf("auich_halt_pipe: halt took %d cycles\n", i);
 #endif
