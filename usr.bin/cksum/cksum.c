@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $	*/
+/*	$NetBSD: cksum.c,v 1.25 2005/08/21 18:51:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.25 2005/08/21 18:51:44 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	int (*cfncn) (int, u_int32_t *, off_t *);
 	void (*pfncn) (char *, u_int32_t, off_t);
 	struct hash *hash;
-	int normal;
+	int normal, i;
 
 	cfncn = NULL;
 	pfncn = NULL;
@@ -181,8 +181,37 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "mno:ps:tx12456")) != -1)
+	while ((ch = getopt(argc, argv, "a:mno:ps:tx12456")) != -1)
 		switch(ch) {
+		case 'a':
+			if (hash != NULL || dosum) {
+				warnx("illegal use of -a option\n");
+				usage();
+			}
+			i = 0;
+			while (hashes[i].hashname != NULL) {
+				if (!strcasecmp(hashes[i].hashname, optarg)) {
+					hash = &hashes[i];
+					break;
+				}
+				i++;
+			}
+			if (hash == NULL) {
+				if (!strcasecmp(optarg, "old1")) {
+					cfncn = csum1;
+					pfncn = psum1;
+				} else if (!strcasecmp(optarg, "old2")) {
+					cfncn = csum2;
+					pfncn = psum2;
+				} else if (!strcasecmp(optarg, "crc")) {
+					cfncn = crc;
+					pfncn = pcrc;
+				} else {
+					warnx("illegal argument to -a option");
+					usage();
+				}
+			}
+			break;
 		case '2':
 			if (dosum) {
 				warnx("sum mutually exclusive with md2");
