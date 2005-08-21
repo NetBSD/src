@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2005/06/22 20:42:45 dyoung Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2005/08/21 23:02:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -56,12 +56,14 @@ int	main(void);
 void	command_help __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
+void	command_consdev(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "consdev",	command_consdev },
 	{ NULL,		NULL },
 };
 
@@ -147,6 +149,7 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
+	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -155,7 +158,12 @@ command_help(char *arg)
 void
 command_quit(char *arg)
 {
-	printf("Exiting... goodbye...\n");
+
+	printf("Exiting...\n");
+	delay(1000000);
+	reboot();
+	/* Note: we shouldn't get to this point! */
+	panic("Could not reboot!");
 	exit(0);
 }
 
@@ -167,4 +175,35 @@ command_boot(char *arg)
 
 	if (parseboot(arg, &filename, &howto))
 		bootit(filename, howto);
+}
+
+static const struct cons_devs {
+    const char	*name;
+    u_int	tag;
+} cons_devs[] = {
+	{ "pc",		CONSDEV_PC },
+	{ "com0",	CONSDEV_COM0 },
+	{ "com1",	CONSDEV_COM1 },
+	{ "com2",	CONSDEV_COM2 },
+	{ "com3",	CONSDEV_COM3 },
+	{ "com0kbd",	CONSDEV_COM0KBD },
+	{ "com1kbd",	CONSDEV_COM1KBD },
+	{ "com2kbd",	CONSDEV_COM2KBD },
+	{ "com3kbd",	CONSDEV_COM3KBD },
+	{ "auto",	CONSDEV_AUTO },
+	{ 0, 0 } };
+
+void
+command_consdev(char *arg)
+{
+	const struct cons_devs *cdp;
+
+	for (cdp = cons_devs; cdp->name; cdp++) {
+		if (!strcmp(arg, cdp->name)) {
+			initio(cdp->tag);
+			print_banner();
+			return;
+		}
+	}
+	printf("invalid console device.\n");
 }
