@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.163 2005/08/18 22:13:19 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.164 2005/08/21 17:44:02 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3412,4 +3412,9 @@ sys/dev/usb/uplcom.c				1.45
 	effectively swapped RTS and DTR, apparently on all versions of the chip.
 	This fixes PR kern/30685.
 	[martin, ticket #5576]
+
+distrib/utils/sysinst/msg.mi.de			1.21
+
+	Add missing 'n', fixes install/31023 - from Zafer Aydogan
+	[martin, ticket #5593]
 
