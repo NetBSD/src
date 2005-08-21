@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.163 2005/06/29 02:31:19 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.164 2005/08/21 16:16:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.163 2005/06/29 02:31:19 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.164 2005/08/21 16:16:33 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -196,7 +196,6 @@ auth_url(const char *challenge, char **response, const char *guser,
 			warnx("%s; can't authenticate", errormsg);
 			goto cleanup_auth_url;
 		}
-		user[strlen(user) - 1] = '\0';
 	}
 	if (gpass != NULL)
 		pass = (char *)gpass;
