@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.111 2005/08/21 13:13:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.110 2005/06/25 02:19:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.111 2005/08/21 13:13:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1097,12 +1097,10 @@ linux_machdepioctl(p, v, retval)
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
 		 */
-		FILE_USE(fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
-		FILE_UNUSE(fp, p);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;
