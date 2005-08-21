@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.145.2.1 2005/08/21 22:04:22 tron Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.145.2.2 2005/08/21 22:06:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.145.2.1 2005/08/21 22:04:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.145.2.2 2005/08/21 22:06:14 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -590,6 +590,7 @@ exit_lwps(struct lwp *l)
 		}
 	}
 
+retry:
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs, make detached LWPs undetached (so we can wait for
@@ -613,6 +614,14 @@ exit_lwps(struct lwp *l)
 		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n",
 		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
+		if (error == EDEADLK) {
+			/*
+			 * LWPs can get suspended/slept behind us.
+			 * (eg. sa_setwoken)
+			 * kick them again and retry.
+			 */
+			goto retry;
+		}
 		if (error)
 			panic("exit_lwps: lwp_wait1 failed with error %d\n",
 			    error);
