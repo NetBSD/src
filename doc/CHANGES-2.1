@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.165 2005/08/22 02:02:34 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.166 2005/08/22 22:12:53 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3423,4 +3423,44 @@ distrib/notes/i386/hardware			1.117
 	We support SMP these days.
 	Noted by David H. Gutteridge in PR port-i386/28663.
 	[rpaulo, ticket #5594]
+
+sys/dev/ic/aic7xxx.c				1.115
+
+	We can't free struct ahc_softc on NetBSD either, because it comes from
+	config(9). Fix a corruption on alldevs list when an ahc device fails to
+	initialise.
+	[bouyer, ticket #5590]
+
+sys/kern/uipc_socket.c				1.105 via patch
+
+	PR/26210: Matthew Mondor: Since revision 1.14 when net-2 was merged,
+	the code to do receive packet accounting has been disabled for no
+	apparent reason. Re-enable it.
+	[christos, ticket #5598]
+
+distrib/utils/sysinst/msg.mi.de			1.22
+
+	Fix PR/31023 completely - the messages should not have been
+	displayed at all...
+	[martin, ticket #5600]
+
+sys/dev/pci/piixide.c				1.24
+
+	Not all PIIX are wired to compat mode these days. Problem reported
+	and fix tested by Havard Eidnes.
+	[bouyer, ticket #5602]
+
+sys/dev/ic/wdc.c				1.226,1.229 via patch
+
+	The ATA/ATAPI IDENTIFY data were designed to be converted on the fly to
+	host byte order (eventually the byte swapping could be wired in
+	hardware, on the 16 bit data bus). This was kept when
+	wdc_exec_command() was created, and as a result wdc_exec_command()
+	is doing 16bit conversion to host byte order. This is fine for
+	IDENTIFY but doesn't work for other opaque data structure, such
+	as the ones for SMART.  So change wdc_exec_command() to
+	do the conversion to host byte order only for WDCC_IDENTIFY
+	and ATAPI_IDENTIFY_DEVICE. This fixes atactl smart status
+	on big-endian hosts.
+	[bouyer, ticket #5603]
 
