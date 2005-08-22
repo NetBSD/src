@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.84 2004/05/04 21:27:28 pk Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.85 2005/08/22 15:10:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.84 2004/05/04 21:27:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.85 2005/08/22 15:10:50 rillig Exp $");
 
 #include "opt_compat_43.h"
 
@@ -647,10 +647,15 @@ crfree(struct ucred *cr)
 int
 crcmp(const struct ucred *cr1, const struct uucred *cr2)
 {
+	/* FIXME: The group lists should be compared element by element,
+	 * as the order of groups may be different in the two lists.
+	 * Currently this function can return a non-zero value for
+	 * equivalent group lists. */
 	return cr1->cr_uid != cr2->cr_uid ||
 	    cr1->cr_gid != cr2->cr_gid ||
 	    cr1->cr_ngroups != (uint32_t)cr2->cr_ngroups ||
-	    memcmp(cr1->cr_groups, cr2->cr_groups, cr1->cr_ngroups);
+	    memcmp(cr1->cr_groups, cr2->cr_groups,
+	        sizeof(cr1->cr_groups[0]) * cr1->cr_ngroups);
 }
 
 /*
