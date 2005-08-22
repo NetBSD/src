@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.45 2004/12/11 09:34:08 jmc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.46 2005/08/22 15:27:11 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -487,6 +487,9 @@ void *setmode(const char *);
 #endif
 #ifndef _PATH_DEFTAPE
 #define _PATH_DEFTAPE "/dev/nrst0"
+#endif
+#ifndef _PATH_VI
+#define _PATH_VI "/usr/bin/vi"
 #endif
 
 /* <stdarg.h> */
