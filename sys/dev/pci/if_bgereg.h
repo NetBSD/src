@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.24 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.25 2005/08/22 18:18:25 gavan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -249,6 +249,7 @@
 #define BGE_CHIPID_BCM5705_A3		0x30030000
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
+#define BGE_CHIPID_BCM5751_A1		0x41010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)                  ((x) >> 28)
