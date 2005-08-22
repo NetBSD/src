@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.90 2005/08/22 08:53:03 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.91 2005/08/22 09:08:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -475,7 +475,7 @@ struct ifile {
 	u_int32_t if_version;		/* inode version number */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
 	int32_t	  if_daddr;		/* inode disk address */
-	u_int32_t	  if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_nextfree;		/* next-unallocated inode */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
 	u_int32_t if_atime_nsec;	/* and nanoseconds */
 };
@@ -484,7 +484,7 @@ typedef struct ifile_v1 IFILE_V1;
 struct ifile_v1 {
 	u_int32_t if_version;		/* inode version number */
 	int32_t	  if_daddr;		/* inode disk address */
-	u_int32_t	  if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_nextfree;		/* next-unallocated inode */
 #if LFS_ATIME_IFILE
 	struct timespec if_atime;	/* Last access time */
 #endif
@@ -909,10 +909,10 @@ struct lfs {
  * about inodes and data blocks.
  */
 typedef struct block_info {
-	u_int32_t	bi_inode;		/* inode # */
-	int32_t bi_lbn;			/* logical block w/in file */
-	int32_t bi_daddr;		/* disk address of block */
-	u_int64_t   bi_segcreate;	/* origin segment create time */
+	u_int32_t bi_inode;		/* inode # */
+	int32_t	bi_lbn;			/* logical block w/in file */
+	int32_t	bi_daddr;		/* disk address of block */
+	u_int64_t bi_segcreate;		/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
 	int	bi_size;		/* size of the block (if fragment) */
@@ -920,10 +920,10 @@ typedef struct block_info {
 
 /* Compatibility for 1.5 binaries */
 typedef struct block_info_15 {
-	u_int32_t	bi_inode;		/* inode # */
-	int32_t bi_lbn;			/* logical block w/in file */
-	int32_t bi_daddr;		/* disk address of block */
-	u_int32_t   bi_segcreate;	/* origin segment create time */
+	u_int32_t bi_inode;		/* inode # */
+	int32_t	bi_lbn;			/* logical block w/in file */
+	int32_t	bi_daddr;		/* disk address of block */
+	u_int32_t bi_segcreate;		/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
 	int	bi_size;		/* size of the block (if fragment) */
