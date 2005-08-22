@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.2 2005/08/20 19:18:11 bouyer Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.3 2005/08/22 11:09:39 bouyer Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -98,7 +98,7 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 
-#ifndef _PRIVATE_BUS_DMAMEM_ALLOC_RANGE
+#ifndef _BUS_DMAMEM_ALLOC_RANGE
 int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,

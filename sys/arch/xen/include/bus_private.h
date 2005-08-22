@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.2 2005/08/20 19:30:37 bouyer Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.3 2005/08/22 11:09:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 }
 
 /* we need our own bus_dmamem_alloc_range */
-#define _PRIVATE_BUS_DMAMEM_ALLOC_RANGE _xen_bus_dmamem_alloc_range
+#define _BUS_DMAMEM_ALLOC_RANGE _xen_bus_dmamem_alloc_range
 int _xen_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int,
 	    bus_addr_t, bus_addr_t);
