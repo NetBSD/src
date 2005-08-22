@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.17 2005/06/27 02:05:30 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.18 2005/08/22 09:19:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.17 2005/06/27 02:05:30 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.18 2005/08/22 09:19:19 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,7 +330,9 @@ main(int argc, char **argv)
 	/* If force, make the partition look like an LFS */
 	if (force) {
 		pp->p_fstype = FS_BSDLFS;
-		pp->p_size = fssize;
+		if (fssize) {
+			pp->p_size = fssize;
+		}
 		/* 0 means to use defaults */
 		pp->p_fsize  = 0;
 		pp->p_frag   = 0;
