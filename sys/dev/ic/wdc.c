@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.7 2005/08/13 23:35:26 riz Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.8 2005/08/22 22:10:48 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.7 2005/08/13 23:35:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.8 2005/08/22 22:10:48 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1743,6 +1743,25 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	int bcount = wdc_c->bcount;
 	char *data = wdc_c->data;
 	int wflags;
+	int drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
+	int wdc_cap;
+
+	if (wdc_c->r_command == WDCC_IDENTIFY ||
+	    wdc_c->r_command == ATAPI_IDENTIFY_DEVICE) {
+		/*
+		 * The IDENTIFY data has been designed as an array of
+		 * u_int16_t, so we can byteswap it on the fly.
+		 * Historically it's what we have always done so keeping it
+		 * here ensure binary backward compatibility.
+		 */
+		 wdc_cap = WDC_CAPABILITY_ATA_NOSTREAM | wdc->cap;
+	} else {
+		/*
+		 * Other data structure are opaque and should be transfered
+		 * as is.
+		 */
+		wdc_cap = WDC_CAPABILITY_ATA_NOSTREAM | wdc->cap;
+	}
 
 	if ((wdc_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
@@ -1784,23 +1803,38 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_c->flags |= AT_TIMEOU;
 		goto out;
 	}
-	if (wdc->cap & WDC_CAPABILITY_IRQACK)
+	if (wdc_cap & WDC_CAPABILITY_IRQACK)
 		wdc->irqack(chp);
 	if (wdc_c->flags & AT_READ) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			wdc_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
-			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
+		if (wdc_cap & WDC_CAPABILITY_ATA_NOSTREAM) {
+			if (drive_flags & DRIVE_CAP32) {
+				bus_space_read_multi_4(chp->data32iot,
+				    chp->data32ioh, 0, (u_int32_t*)data,
+				    bcount >> 2);
+				data += bcount & 0xfffffffc;
+				bcount = bcount & 0x03;
+			}
+			if (bcount > 0)
+				bus_space_read_multi_2(chp->cmd_iot,
+				    chp->cmd_iohs[wd_data], 0,
+				    (u_int16_t *)data, bcount >> 1);
+		} else {
+			if (drive_flags & DRIVE_CAP32) {
+				bus_space_read_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, 0, (u_int32_t*)data,
+				    bcount >> 2);
+				data += bcount & 0xfffffffc;
+				bcount = bcount & 0x03;
+			}
+			if (bcount > 0)
+				bus_space_read_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_iohs[wd_data], 0,
+				    (u_int16_t *)data, bcount >> 1);
 		}
-		if (bcount > 0)
-			bus_space_read_multi_2(chp->cmd_iot,
-			    chp->cmd_iohs[wd_data], 0,
-			    (u_int16_t *)data, bcount >> 1);
 		/* at this point the drive should be in its initial state */
 		wdc_c->flags |= AT_XFDONE;
 		/* XXX should read status register here ? */
@@ -1809,16 +1843,31 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			wdc_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_4(chp->data32iot, chp->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
+		if (wdc_cap & WDC_CAPABILITY_ATA_NOSTREAM) {
+			if (drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_4(chp->data32iot,
+				    chp->data32ioh, 0, (u_int32_t*)data,
+				    bcount >> 2);
+				data += bcount & 0xfffffffc;
+				bcount = bcount & 0x03;
+			}
+			if (bcount > 0)
+				bus_space_write_multi_2(chp->cmd_iot,
+				    chp->cmd_iohs[wd_data], 0,
+				    (u_int16_t *)data, bcount >> 1);
+		} else {
+			if (drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, 0, (u_int32_t*)data,
+				    bcount >> 2);
+				data += bcount & 0xfffffffc;
+				bcount = bcount & 0x03;
+			}
+			if (bcount > 0)
+				bus_space_write_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_iohs[wd_data], 0,
+				    (u_int16_t *)data, bcount >> 1);
 		}
-		if (bcount > 0)
-			bus_space_write_multi_2(chp->cmd_iot,
-			    chp->cmd_iohs[wd_data], 0,
-			    (u_int16_t *)data, bcount >> 1);
 		wdc_c->flags |= AT_XFDONE;
 		if ((wdc_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
