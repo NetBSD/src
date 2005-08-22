@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.27 2005/08/21 19:33:10 elad Exp $
+.\"	$NetBSD: cksum.1,v 1.28 2005/08/22 14:47:55 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd August 21, 2005
+.Dd August 22, 2005
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -154,11 +154,11 @@ two programs is 160 bits in length, as opposed to 128.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.\"
-.\" Note that the -a <algorithm> flag replaces the deprecated -1, -2, -4,
-.\" -5, -6, and -m flags. Their usage should be discouraged, so they are
-.\" intentionally left out of documentation.
-.\"
+.It Fl 1 , Fl 2 , Fl 4 , Fl 5 , Fl 6 , Fl m
+These flags are deprecated and should not be used as they may be removed
+in the future.
+These flags control what algorithm will be used when calculating the hash
+and for now are kept only for compatibility.
 .It Fl a Ar algorithm
 When invoked as
 .Nm cksum ,
