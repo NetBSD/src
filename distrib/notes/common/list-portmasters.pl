@@ -34,10 +34,11 @@
 # 1) lynx -dump http://www.netbsd.org/People/port-maintainers.html \
 #    | perl list-portmasters.pl
 #    >x
-# 2) Last entry will need fixing (BUG)
-# 3) Sort: sort +1 x >xx ; mv xx x
-# 4) merge "x" into src/distrib/notes/common/main's "portmasters" section
+# 2) Sort: sort +1 x >xx ; mv xx x
+# 3) merge "x" into src/distrib/notes/common/main's "portmasters" section
 #
+# Note:  If the *second* portmaster of a port has a link as part of the
+#        Name field, it will cause this script to error out.
 
 while(<>) {
     chomp;
@@ -54,15 +55,12 @@ while(<>) {
     $email=pop(@a);
     $name="@a";
 
-    if ($port !~ /\[\d+\]/) {
-	# fixup needed *sigh*
-	$last_name .= " $last_email";
-	$last_email = $email;
-
+    if ($port && $port !~ /\[\d+\]/) {
+	# Port name is wrong - probably because of dual portmasters.
+	# Fix it up.
 	$name = "$port $name";
+
 	$port = $last_port;
-	$email = <>;
-	chomp($email);
     }
 
     # valid data is now in $last_*,
@@ -71,8 +69,10 @@ while(<>) {
     $last_port=~s,\s*\[\d+\],,;
     $last_name=~s,\s*\[\d+\],,;
     $last_email=~s,\s*\[\d+\],,;
+    $last_email=~s,\<,,;
+    $last_email=~s,\>,,;
 
-    $last_name=~s,ø,\(/o,;		# Søren => S\(/oren
+    $last_name=~s,ø,\\(/o,g;		# Søren => S\(/oren
     
     # output
     print ".It ";
