@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.27 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.28 2005/08/22 10:57:04 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.28 2005/08/22 10:57:04 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ hpux_sys_fstat(l, v, retval)
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -463,7 +463,7 @@ hpux_sys_fstat(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -515,7 +515,7 @@ hpux_stat1(l, v, retval, dolstat)
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -529,9 +529,9 @@ hpux_stat1(l, v, retval, dolstat)
 	SCARG(&sa, path) = SCARG(uap, path);
 
 	if (dolstat)
-		error = sys___lstat13(l, &sa, retval);
+		error = sys___lstat30(l, &sa, retval);
 	else
-		error = sys___stat13(l, &sa, retval);
+		error = sys___stat30(l, &sa, retval);
 
 	if (error)
 		return (error);
@@ -558,7 +558,7 @@ hpux_sys_fstat_6x(l, v, retval)
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -571,7 +571,7 @@ hpux_sys_fstat_6x(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -596,7 +596,7 @@ hpux_sys_stat_6x(l, v, retval)
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -610,7 +610,7 @@ hpux_sys_stat_6x(l, v, retval)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &sa, retval)))
+	if ((error = sys___stat30(l, &sa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
