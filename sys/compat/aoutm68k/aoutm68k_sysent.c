@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.17 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.18 2005/08/22 10:57:04 he Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.17 2005/02/26 23:58:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.18 2005/08/22 10:57:04 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -889,8 +889,8 @@ struct sysent aoutm68k_sysent[] = {
 	    sys___posix_rename },		/* 270 = __posix_rename */
 	{ 3, s(struct sys_swapctl_args), 0,
 	    sys_swapctl },			/* 271 = swapctl */
-	{ 3, s(struct sys_getdents_args), 0,
-	    sys_getdents },			/* 272 = getdents */
+	{ 3, s(struct sys___getdents30_args), 0,
+	    sys___getdents30 },			/* 272 = getdents */
 	{ 3, s(struct sys_minherit_args), 0,
 	    sys_minherit },			/* 273 = minherit */
 	{ 2, s(struct sys_lchmod_args), 0,
