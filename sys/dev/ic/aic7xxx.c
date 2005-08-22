@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $
+ * $Id: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109.4.1 2005/08/22 21:29:14 riz Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -3967,7 +3967,7 @@ ahc_free(struct ahc_softc *ahc)
 #endif
 	if (ahc->seep_config != NULL)
 		free(ahc->seep_config, M_DEVBUF);
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__NetBSD__)
 	free(ahc, M_DEVBUF);
 #endif
 	return;
