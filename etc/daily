@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.64 2005/01/09 13:07:14 sketch Exp $
+#	$NetBSD: daily,v 1.65 2005/08/22 14:24:45 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -166,7 +166,7 @@ if checkyesno check_disks; then
 		echo ""
 		echo "disks:"
 		if [ -s $TMP ]; then
-			cat $TMP
+			cat $TMP | sed 's/Mounted on/Mount/'
 			echo ""
 		fi
 		if [ -s $TMP2 ]; then
