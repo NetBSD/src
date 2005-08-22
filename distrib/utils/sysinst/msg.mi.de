@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.6.2.5.2.2 2005/08/21 17:41:00 riz Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6.2.5.2.3 2005/08/22 21:46:33 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,18 +369,12 @@ message disksetupdone
 {Der erste Teil der Installation ist nun abgeschlossen. Sysinst hat auf das
 Ziellaufwerk ein Disklabel geschrieben und alle von Ihnen definierten
 Partitionen formatiert (newfs'ed) sowie auf Fehler überprüft (fsck'ed).
-
-Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
-geladen und auf die Festplatte kopiert.
 }
 
 message disksetupdoneupdate
 {Der erste Teil der Prozedur ist nun abgeschlossen. Sysinst hat auf das
 Ziellaufwerk ein Disklabel geschrieben und alle von Ihnen definierten
 Partition auf Fehler überprüft (fsck'ed).
-
-Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
-geladen und auf die Festplatte kopiert.
 }
 
 message openfail
