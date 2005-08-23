@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.173 2005/08/14 12:02:02 yamt Exp $
+#       $NetBSD: Makefile,v 1.174 2005/08/23 09:34:11 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -278,6 +278,7 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
 	mbuf.9 MGET.9 mbuf.9 MGETHDR.9 mbuf.9 MEXTMALLOC.9 \
 	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 mbuf.9 M_COPY_PKTHDR.9 \
+	mbuf.9 M_MOVE_PKTHDR.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
