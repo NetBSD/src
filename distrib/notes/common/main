@@ -1,6 +1,6 @@
-.\"	$NetBSD: main,v 1.253.2.10.2.3 2005/08/15 06:08:58 snj Exp $
+.\"	$NetBSD: main,v 1.253.2.10.2.4 2005/08/23 13:28:13 tron Exp $
 .\"
-.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ You are reading the
 .Em \*[format]
 version.
 .
-.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64] \{
+.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[amd64] \{
 .Ss "Quick install notes for the impatient"
 .Pp
 This section contains some brief notes describing what you need to
@@ -114,19 +114,26 @@ on a machine of the \*M architecture.
 .Bl -bullet
 .It
 Fetch the
-.if \n[i386] \{\
+.if \n[i386]:\n[amd64] \{\
 appropriate pair of boot floppy images from the
-.Pa i386/installation/floppy/
-directory.
+.Pa \*M/installation/floppy/
+directory, or a CD-ROM image.
 Most people will need the
 .Pa boot1.fs
 and
 .Pa boot2.fs
-images, or possibly (but not necessarily)
+images for VGA console installation, or the
+.Pa boot-com1.fs
+and
+.Pa boot-com2.fs
+images for installation via serial console.
+.if \n[i386] \{\
+You may also possibly (but not necessarily) want to use
 .Pa bootlap1.fs
 and
 .Pa bootlap2.fs
 if installing on a laptop.
+.\}
 .\}
 .if \n[macppc] \{\
 files necessary to boot your system.
@@ -184,7 +191,7 @@ There are several other methods to get the binary sets onto
 your machine.
 .Pp
 You will at a minimum need
-.ie \n[i386] \{\
+.ie \n[i386]:\n[amd64] \{\
 one of the kernel sets, typically
 .Pa kern-GENERIC.tgz ,
 as well as
