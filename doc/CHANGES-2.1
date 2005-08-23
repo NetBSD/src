@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.166 2005/08/22 22:12:53 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.167 2005/08/23 13:10:50 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3463,4 +3463,9 @@ sys/dev/ic/wdc.c				1.226,1.229 via patch
 	and ATAPI_IDENTIFY_DEVICE. This fixes atactl smart status
 	on big-endian hosts.
 	[bouyer, ticket #5603]
+
+sys/dev/ic/wdc.c				patch
+
+	Fix error in patch from ticket #5603.
+	[bouyer, ticket #5604]
 
