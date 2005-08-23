@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.131 2005/08/23 12:27:16 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.132 2005/08/23 12:27:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.131 2005/08/23 12:27:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.132 2005/08/23 12:27:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1652,7 +1652,8 @@ ufs_readdir(void *v)
 			break;
 		ndp->d_fileno = ufs_rw32(cdp->d_ino, nswap);
 		(void)memcpy(ndp->d_name, cdp->d_name, ndp->d_namlen);
-		ndp->d_name[ndp->d_namlen] = '\0';
+		memset(&ndp->d_name[ndp->d_namlen], 0,
+		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
 		off += cdp->d_reclen;
 		if (ap->a_cookies) {
 			KASSERT(ccp - *(ap->a_cookies) < ccount);
