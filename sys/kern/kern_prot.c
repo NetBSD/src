@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.85 2005/08/22 15:10:50 rillig Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.86 2005/08/23 07:58:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.85 2005/08/22 15:10:50 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.86 2005/08/23 07:58:58 christos Exp $");
 
 #include "opt_compat_43.h"
 
@@ -69,6 +69,8 @@ int	sys_getuid(struct lwp *, void *, register_t *);
 int	sys_getuid_with_euid(struct lwp *, void *, register_t *);
 int	sys_getgid(struct lwp *, void *, register_t *);
 int	sys_getgid_with_egid(struct lwp *, void *, register_t *);
+
+static int grsortu(gid_t *, int);
 
 /* ARGSUSED */
 int
@@ -536,6 +538,40 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+/*
+ * sort -u for groups.
+ */
+static int
+grsortu(gid_t *grp, int ngrp)
+{
+	int i, j, k;
+	static const size_t gs = sizeof(grp[0]);
+
+	/* bubble sort */
+	for (i = 0; i < ngrp; i++)
+		for (j = i + 1; j < ngrp; j++)
+			if (grp[i] > grp[j]) {
+				gid_t tmp = grp[i];
+				grp[i] = grp[j];
+				grp[j] = tmp;
+			}
+	/* uniq */
+	for (i = 0; i < ngrp; i++) {
+		for (j = i + 1; j < ngrp && grp[i] == grp[j]; j++)
+			continue;
+		k = j - (i + 1);
+		if (k == 0)
+			continue;
+		(void)memcpy(&grp[i + 1], &grp[j], gs * (ngrp - j));
+		ngrp -= k;
+#ifdef DIAGNOSTIC
+		/* zero out the rest of the array */
+		(void)memset(&grp[ngrp], 0, gs * k);
+#endif
+	}
+	return ngrp;
+}
+
 /* ARGSUSED */
 int
 sys_setgroups(struct lwp *l, void *v, register_t *retval)
@@ -562,6 +598,8 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	error = copyin(SCARG(uap, gidset), grp, grsize);
 	if (error)
 		return (error);
+
+	ngrp = grsortu(grp, ngrp);
 	/*
 	 * Check if this is a no-op.
 	 */
