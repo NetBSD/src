@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.130 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.131 2005/08/23 12:27:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.130 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.131 2005/08/23 12:27:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1620,7 +1620,7 @@ ufs_readdir(void *v)
 
 	off = uio->uio_offset;
 	if (ap->a_cookies) {
-		ccount = rcount / 4;
+		ccount = rcount / _DIRENT_RECLEN(cdp, 1);
 		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
 		    M_TEMP, M_WAITOK);
 	} else {
