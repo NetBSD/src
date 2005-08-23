@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.8 2005/08/22 22:10:48 riz Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.9 2005/08/23 13:07:31 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.8 2005/08/22 22:10:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.9 2005/08/23 13:07:31 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1760,7 +1760,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		 * Other data structure are opaque and should be transfered
 		 * as is.
 		 */
-		wdc_cap = WDC_CAPABILITY_ATA_NOSTREAM | wdc->cap;
+		wdc_cap = wdc->cap;
 	}
 
 	if ((wdc_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
