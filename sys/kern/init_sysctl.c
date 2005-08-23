@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.36.2.3 2005/07/02 15:48:42 tron Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.36.2.4 2005/08/23 13:43:39 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.3 2005/07/02 15:48:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.4 2005/08/23 13:43:39 tron Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_verified_exec.h"
 #include "pty.h"
 #include "rnd.h"
 
