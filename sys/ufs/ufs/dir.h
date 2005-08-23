@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.18 2005/08/19 05:28:48 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.19 2005/08/23 08:05:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,7 +58,7 @@
  * the length of the entry, and the length of the name contained in
  * the entry.  These are followed by the name padded to a 4 byte boundary.
  * All names are guaranteed null terminated.
- * The maximum length of a name in a directory is MAXNAMLEN.
+ * The maximum length of a name in a directory is FFS_MAXNAMLEN.
  *
  * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
  * a directory entry.  Free space in a directory is represented by
@@ -74,8 +74,7 @@
  */
 #undef	DIRBLKSIZ
 #define	DIRBLKSIZ	DEV_BSIZE
-#undef	MAXNAMLEN
-#define	MAXNAMLEN	255
+#define	FFS_MAXNAMLEN	255
 #define APPLEUFS_DIRBLKSIZ 1024
 
 #define d_ino d_fileno
@@ -84,7 +83,7 @@ struct	direct {
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
 	u_int8_t  d_namlen;		/* length of string in d_name */
-	char	  d_name[MAXNAMLEN + 1];/* name with length <= MAXNAMLEN */
+	char	  d_name[FFS_MAXNAMLEN + 1];/* name with length <= FFS_MAXNAMLEN */
 };
 
 /*
@@ -113,7 +112,7 @@ struct	direct {
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #define	DIRECTSIZ(namlen) \
-	((sizeof(struct direct) - (MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+	((sizeof(struct direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define DIRSIZ(oldfmt, dp, needswap)	\
@@ -130,7 +129,7 @@ struct	direct {
 
 /*
  * Template for manipulating directories.  Should use struct direct's,
- * but the name field is MAXNAMLEN - 1, and this just won't do.
+ * but the name field is FFS_MAXNAMLEN - 1, and this just won't do.
  */
 struct dirtemplate {
 	u_int32_t	dot_ino;

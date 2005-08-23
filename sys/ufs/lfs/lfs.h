@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.91 2005/08/22 09:08:17 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.92 2005/08/23 08:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@
 #define	LFS_DFL_SUMMARY_SIZE	512	/* Default summary size */
 
 #define LFS_MAX_DADDR	0x7fffffff	/* Highest addressable fsb */
+
+#define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
 /* Adjustable filesystem parameters */
 #define MIN_FREE_SEGS	2

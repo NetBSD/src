@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.87 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.88 2005/08/23 08:05:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.87 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.88 2005/08/23 08:05:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.87 2005/07/23 12:18:41 yamt Exp 
 #include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/ext2fs/ext2fs.h>
+#include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 extern struct lock ufs_hashlock;
@@ -690,7 +691,7 @@ ext2fs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_EXT2FS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = EXT2FS_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
