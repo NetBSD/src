@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.86.2.6 2005/08/23 13:43:43 tron Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.86.2.7 2005/08/23 14:45:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.6 2005/08/23 13:43:43 tron Exp $");
-
-#include "opt_verified_exec.h"
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.86.2.7 2005/08/23 14:45:21 tron Exp $");
 
 #include "fs_union.h"
 

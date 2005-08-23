@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.24 2005/08/23 13:43:57 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.25 2005/08/23 14:45:21 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.24 2005/08/23 13:43:57 tron Exp $");
-
-#include "opt_verified_exec.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.25 2005/08/23 14:45:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>

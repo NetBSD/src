@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.38.10.5 2005/08/23 13:47:41 tron Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.38.10.6 2005/08/23 14:45:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,13 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.5 2005/08/23 13:47:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.38.10.6 2005/08/23 14:45:20 tron Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
 #endif
-
-#include "opt_verified_exec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +253,7 @@ check_shell:
 #ifdef VERIFIED_EXEC
 	if ((error = check_exec(p, epp, VERIEXEC_INDIRECT)) == 0) {
 #else
-	if ((error = check_exec(p, epp, 0)) == 0) {
+	if ((error = check_exec(p, epp)) == 0) {
 #endif
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
