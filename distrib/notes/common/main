@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.10.2.5 2005/08/23 13:32:26 tron Exp $
+.\"	$NetBSD: main,v 1.253.2.10.2.6 2005/08/23 23:09:19 riz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " x68k xen .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd August 22, 2004
+.Dd August 23, 2005
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -431,6 +431,200 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 2.0 and 2.1 Releases
+.Pp
+The
+.Nx 2.1
+release
+is the first functional update release of the
+.Nx 2
+release branch.
+This provides numerous functional enhancements, including support
+for many new devices, hundreds of bug fixes, patches and updates to
+kernel subsystems, and many enhancements to the user environment.
+In addition, all of the security fixes and critical bug fixes from the
+.Nx 2.0.3
+update are included as well.
+The result of these improvements is a stable operating system fit
+for production use that rivals most commercially available systems.
+.Pp
+It is impossible to completely summarize all the changes that have gone
+in over the over nine months since the release of
+.Nx 2.0.
+Some highlights include:
+.Ss2 Kernel
+.(bullet
+Fix a bug that caused spontaneous reboot under heavy load on SH3/4
+platforms.
+.It
+Fixed some sparc64 and alpha pmap issues.
+.It
+A longstanding bug in the SYSV semaphore code has been fixed.
+.It
+Eliminated hangs when large processes fork.
+.It
+.Xr ata 4
+and
+.Xr wdc 4
+drives now only downgrade modes due to actual CRC errors, and UDMA modes
+are downgraded more slowly.
+.It
+The
+.Xr pdcsata 4
+driver was added, with support for the Promise SATA150 series of
+controllers, including RAID support.
+.It
+The RAIDframe disk driver had various bugfixes and improvements.
+.It
+Added support for various devices from the nVidia nForce3 chipset. (i386,
+amd64)
+.It
+Fixed interrupt problems on some Intel Xeon systems.
+.It
+Added support for the VT642 SATA RAID Controller.
+.It
+Various fixes to the
+.Xr esiop 4
+driver.
+.It
+Added support for the Dell CERC SATA RAID to the
+.Xr aac 4
+driver.
+.It
+Added support for additional Dell boards to the
+.Xr ahd 4
+driver.
+.It
+Fix a number of issues with the
+.Xr ehci 4
+driver.
+.It
+Added
+.Xr ukyopon 4
+: Kyocera AIR-EDGE phone driver.
+.It
+The
+.Xr wdc 4
+driver has been fixed for commands with opaque data structures.
+.Pa atactl smart status
+now works on big-endian hosts.
+.bullet)
+.
+.Ss2 Networking
+.(bullet
+.Xr wm 4
+fixed major performance issues with the i82547 Gig-E chip.
+.It
+.Xr sk 4
+improved chip identification and improved performance, and added support
+for the Belkin Gigabit Desktop Network PCI card.
+.It
+Fix a bug which would crash the system when destroying
+.Xr vlan 4
+interfaces.
+.It
+Added
+.Xr rtk 4
+and
+.Xr tl 4
+interfaces as
+.Xr rnd 4
+sources.
+.It
+Added support for the Compaq Netelligent 10 T/2 PCI UTP/Coax Controller to the
+.Xr tl 4
+driver.
+.It
+Added support for changing the MTU of an
+.Xr stf 4
+interface.
+.It
+Added support for IPv6 over
+.Xr gre 4
+interfaces.
+.It
+The
+.Xr hme 4
+driver now supports Sun QFE boards on non-sparc hardware.
+.It
+.Xr stge 4
+Fix some bigendian issues, and some other issues.  Now works on sparc64
+with hardware checksums.
+.bullet)
+.
+.Ss2 File system
+.(bullet
+Fix a number of NFS issues.
+.It
+Fixed file access problems via SMBFS when the file is already open
+on the server.
+.It
+Various improvements to LFS, the BSD log-structured file system.
+.bullet)
+.
+.Ss2 Security
+.(bullet
+.Xr krb5 3
+Support changing passwords in a Windows 2000 (or later) domain.
+.It
+Fixed a possible Denial of Service attack via IPSec AH packets.
+.It
+NetBSD-SA2005-07 AES-XCBC-MAC always caculated with same key
+.It
+NetBSD-SA2005-06 Multiple vulnerabilites in CVS
+.It
+NetBSD-SA2005-05
+.Xr cgd 4
+key destruction on unconfigure
+.It
+NetBSD-SA2005-04 Buffer overflows in MIT Kerberos 5 telnet client
+.It
+NetBSD-SA2005-03 F_CLOSEM local denial of service
+.It
+NetBSD-SA2005-02 Local DoS via audio device with specific drivers
+.bullet)
+.
+.Ss2 System administration and user tools
+.(bullet
+.Xr ntpd 8
+coredump if local system and NTP server did not have overlapping protocol
+family support (IPv4 vs. IPv6, for example) fixed.
+.It
+.Xr pax 1
+has a number of bugfixes and new features.
+.It
+.Xr ifwatchd 8
+has been fixed to call the CARRIER script if a link is already up
+during the initial interface scan.
+.It
+CVS has been upgraded to version 1.11.20.
+.It
+Avoid crashes in
+.Xr grep 1
+on empty or very large files.
+.It
+Fixed a number of issues in
+.Xr gzip 1
+.bullet)
+.
+.Ss2 Miscellaneous
+.(bullet
+Added VT switching for the cats port.
+.It
+Various fixes and improvements to the cross-build system.
+.It
+Fixed some issues in libpthread and libpthread_dbg.
+.It
+Implement a USB memory reserve to work around problems plugging in
+(for example)
+.Xr umass 4
+devices after boot.
+.It
+Package tools have been upgraded to version 20050530.
+.bullet)
+.
+.Ss2 \*M specific
+.so whatis -----------------------------------------------
 .Ss Changes Between The NetBSD 1.6 and 2.0 Releases
 .Pp
 The
@@ -639,8 +833,6 @@ Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports.
 You can look for this trend to continue.
 .
-.Ss2 \*M specific
-.so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
 .Ss Important notes about NetBSD \*V
 .Pp
