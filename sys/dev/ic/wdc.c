@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.7.2.9 2005/08/23 13:07:31 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7.2.10 2005/08/23 13:35:55 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.9 2005/08/23 13:07:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7.2.10 2005/08/23 13:35:55 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -486,7 +486,7 @@ wdcprobe(struct wdc_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	/* default reset method */
-	if (wdc->reset == NULL)
+	if (wdc != NULL && wdc->reset == NULL)
 		wdc->reset = wdc_do_reset;
 
 	return (wdcprobe1(chp, 1));
