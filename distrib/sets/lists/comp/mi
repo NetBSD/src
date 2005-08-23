@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.805 2005/08/21 15:37:57 tron Exp $
+#	$NetBSD: mi,v 1.806 2005/08/23 09:36:47 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -35,18 +35,18 @@
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
-./usr/bin/msgc					comp-c-bin
 ./usr/bin/msgattrib				comp-c-bin
-./usr/bin/msgcmp				comp-c-bin
+./usr/bin/msgc					comp-c-bin
 ./usr/bin/msgcat				comp-c-bin
-./usr/bin/msgconv				comp-c-bin
+./usr/bin/msgcmp				comp-c-bin
 ./usr/bin/msgcomm				comp-c-bin
-./usr/bin/msgexec				comp-c-bin
+./usr/bin/msgconv				comp-c-bin
 ./usr/bin/msgen					comp-c-bin
+./usr/bin/msgexec				comp-c-bin
 ./usr/bin/msgfmt				comp-c-bin
 ./usr/bin/msginit				comp-c-bin
-./usr/bin/msgunfmt				comp-c-bin
 ./usr/bin/msgmerge				comp-c-bin
+./usr/bin/msgunfmt				comp-c-bin
 ./usr/bin/msguniq				comp-c-bin
 ./usr/bin/nm					comp-util-bin		bfd
 ./usr/bin/objcopy				comp-util-bin		bfd
@@ -859,8 +859,8 @@
 ./usr/include/miscfs/umapfs/umap.h		comp-c-include
 ./usr/include/miscfs/union/union.h		comp-c-include
 ./usr/include/mntopts.h				comp-c-include
-./usr/include/mpool.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
+./usr/include/mpool.h				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
 ./usr/include/msdosfs/bpb.h			comp-c-include
 ./usr/include/msdosfs/denode.h			comp-c-include
@@ -1882,47 +1882,47 @@
 ./usr/share/locale/ca/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ca	nls
 ./usr/share/locale/cs/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-cs	nls
 ./usr/share/locale/da/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-da	nls
+./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/de/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-de	nls
+./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/el/LC_MESSAGES/gettext-tools.mo	comp-c_locale-el	nls
 ./usr/share/locale/en@boldquot/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-en@boldquot	nls
 ./usr/share/locale/en@quot/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-en@quot	nls
 ./usr/share/locale/es/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-es	nls
+./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/et/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-et	nls
 ./usr/share/locale/fi/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-fi	nls
 ./usr/share/locale/fr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-fr	nls
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/gl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-gl	nls
 ./usr/share/locale/id/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-id	nls
 ./usr/share/locale/it/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-it	nls
 ./usr/share/locale/ja/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ja	nls
 ./usr/share/locale/ko/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ko	nls
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/nl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-nl	nls
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/nn/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-nn	nls
 ./usr/share/locale/no/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-no	nls
+./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/pl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pl	nls
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/pt/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pr	nls
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/pt_BR/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-pt_BR	nls
 ./usr/share/locale/ro/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ro	nls
 ./usr/share/locale/ru/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-ru	nls
 ./usr/share/locale/sk/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sk	nls
 ./usr/share/locale/sl/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sl	nls
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/sr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sr	nls
 ./usr/share/locale/sv/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-sv	nls
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/locale/tr/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-tr	nls
 ./usr/share/locale/uk/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-uk	nls
 ./usr/share/locale/zh_CN/LC_MESSAGES/gettext-tools.mo 	comp-c_locale-zh_CN	nls
 ./usr/share/locale/zh_TW/LC_MESSAGES/gettext-tools.mo	comp-c_locale-zh_TW	nls
-./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
-./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-obsolete	obsolete
 ./usr/share/man/cat1/addr2line.0		comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat
@@ -1950,8 +1950,8 @@
 ./usr/share/man/cat1/gcore.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
-./usr/share/man/cat1/gprof.0			comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
+./usr/share/man/cat1/gprof.0			comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/ld.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/lex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
@@ -2025,18 +2025,18 @@
 ./usr/share/man/cat2/dup2.0			comp-c-catman		.cat
 ./usr/share/man/cat2/errno.0			comp-c-catman		.cat
 ./usr/share/man/cat2/execve.0			comp-c-catman		.cat
-./usr/share/man/cat2/extattr_get_fd.0		comp-c-catman		.cat
-./usr/share/man/cat2/extattr_set_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_fd.0	comp-c-catman		.cat
-./usr/share/man/cat2/extattr_list_fd.0		comp-c-catman		.cat
-./usr/share/man/cat2/extattr_get_file.0		comp-c-catman		.cat
-./usr/share/man/cat2/extattr_set_file.0		comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_file.0	comp-c-catman		.cat
-./usr/share/man/cat2/extattr_list_file.0	comp-c-catman		.cat
-./usr/share/man/cat2/extattr_get_link.0		comp-c-catman		.cat
-./usr/share/man/cat2/extattr_set_link.0		comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_link.0	comp-c-catman		.cat
+./usr/share/man/cat2/extattr_get_fd.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_get_file.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_get_link.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_list_fd.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_list_file.0	comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_list_link.0	comp-c-catman		.cat
+./usr/share/man/cat2/extattr_set_fd.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_set_file.0		comp-c-catman		.cat
+./usr/share/man/cat2/extattr_set_link.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fchdir.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchflags.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchmod.0			comp-c-catman		.cat
@@ -4021,19 +4021,19 @@
 ./usr/share/man/cat3/pthread_attr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setcreatesuspend_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman		.cat
-./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barierattr_init.0		comp-obsolete		obsolete
-./usr/share/man/cat3/pthread_barrierattr_destroy.0	comp-c-catman		.cat
-./usr/share/man/cat3/pthread_barrierattr_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_wait.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrierattr.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_barrierattr_destroy.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_barrierattr_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cleanup_pop.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cleanup_push.0	comp-c-catman		.cat
@@ -5833,8 +5833,8 @@
 ./usr/share/man/man1/gcore.1			comp-debug-man		.man
 ./usr/share/man/man1/gcov.1			comp-debug-man		.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
-./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man
 ./usr/share/man/man1/genassym.1			comp-util-man		.man
+./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man
 ./usr/share/man/man1/ld.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
@@ -5907,18 +5907,18 @@
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
 ./usr/share/man/man2/execve.2			comp-c-man		.man
-./usr/share/man/man2/extattr_get_fd.2		comp-c-man		.man
-./usr/share/man/man2/extattr_set_fd.2		comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_fd.2	comp-c-man		.man
-./usr/share/man/man2/extattr_list_fd.2		comp-c-man		.man
-./usr/share/man/man2/extattr_get_file.2		comp-c-man		.man
-./usr/share/man/man2/extattr_set_file.2		comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_file.2	comp-c-man		.man
-./usr/share/man/man2/extattr_list_file.2	comp-c-man		.man
-./usr/share/man/man2/extattr_get_link.2		comp-c-man		.man
-./usr/share/man/man2/extattr_set_link.2		comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_link.2	comp-c-man		.man
+./usr/share/man/man2/extattr_get_fd.2		comp-c-man		.man
+./usr/share/man/man2/extattr_get_file.2		comp-c-man		.man
+./usr/share/man/man2/extattr_get_link.2		comp-c-man		.man
+./usr/share/man/man2/extattr_list_fd.2		comp-c-man		.man
+./usr/share/man/man2/extattr_list_file.2	comp-c-man		.man
 ./usr/share/man/man2/extattr_list_link.2	comp-c-man		.man
+./usr/share/man/man2/extattr_set_fd.2		comp-c-man		.man
+./usr/share/man/man2/extattr_set_file.2		comp-c-man		.man
+./usr/share/man/man2/extattr_set_link.2		comp-c-man		.man
 ./usr/share/man/man2/fchdir.2			comp-c-man		.man
 ./usr/share/man/man2/fchflags.2			comp-c-man		.man
 ./usr/share/man/man2/fchmod.2			comp-c-man		.man
@@ -7619,10 +7619,10 @@
 ./usr/share/man/man3/log.3			comp-c-man		.man
 ./usr/share/man/man3/log10.3			comp-c-man		.man
 ./usr/share/man/man3/log10f.3			comp-c-man		.man
-./usr/share/man/man3/log2.3			comp-c-man		.man
-./usr/share/man/man3/log2f.3			comp-c-man		.man
 ./usr/share/man/man3/log1p.3			comp-c-man		.man
 ./usr/share/man/man3/log1pf.3			comp-c-man		.man
+./usr/share/man/man3/log2.3			comp-c-man		.man
+./usr/share/man/man3/log2f.3			comp-c-man		.man
 ./usr/share/man/man3/logb.3			comp-c-man		.man
 ./usr/share/man/man3/logbf.3			comp-c-man		.man
 ./usr/share/man/man3/logf.3			comp-c-man		.man
@@ -7901,19 +7901,19 @@
 ./usr/share/man/man3/pthread_attr.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setdetachstate.3	comp-c-man		.man
-./usr/share/man/man3/pthread_attr_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_barierattr_init.3		comp-obsolete		obsolete
-./usr/share/man/man3/pthread_barrierattr_destroy.3	comp-c-man		.man
-./usr/share/man/man3/pthread_barrierattr_init.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_wait.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrierattr.3	comp-c-man		.man
+./usr/share/man/man3/pthread_barrierattr_destroy.3	comp-c-man		.man
+./usr/share/man/man3/pthread_barrierattr_init.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_cleanup_pop.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_cleanup_push.3	comp-c-man		.man
