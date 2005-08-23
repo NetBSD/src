@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.88 2005/06/27 20:32:40 peter Exp $
+#	$NetBSD: special,v 1.89 2005/08/23 12:12:56 peter Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -201,6 +201,9 @@
 ./etc/rc.d/nfslocking		type=file mode=0555
 ./etc/rc.d/ntpd			type=file mode=0555
 ./etc/rc.d/ntpdate		type=file mode=0555
+./etc/rc.d/pf			type=file mode=0555
+./etc/rc.d/pf_boot		type=file mode=0555
+./etc/rc.d/pflogd		type=file mode=0555
 ./etc/rc.d/poffd		type=file mode=0555
 ./etc/rc.d/postfix		type=file mode=0555
 ./etc/rc.d/powerd		type=file mode=0555

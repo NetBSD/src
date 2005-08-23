@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/06/27 20:32:40 peter Exp $
+#	$NetBSD: Makefile,v 1.7 2005/08/23 12:12:56 peter Exp $
 
 .include <bsd.own.mk>
 
@@ -15,5 +15,6 @@ SUBDIR+=	examples
 
 configinstall:
 	${MAKEDIRTARGET} etc configinstall
+	${MAKEDIRTARGET} etc/defaults configinstall
 
 .include <bsd.subdir.mk>
