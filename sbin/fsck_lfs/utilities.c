@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.20 2005/08/23 11:26:59 tron Exp $	 */
+/* $NetBSD: utilities.c,v 1.21 2005/08/23 11:44:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -226,7 +226,7 @@ namelookup:
 		cp -= len;
 		memcpy(cp, namebuf, (size_t) len);
 		*--cp = '/';
-		if (cp < &namebuf[FFS_MAXNAMLEN])
+		if (cp < &namebuf[LFS_MAXNAMLEN])
 			break;
 		ino = idesc.id_number;
 	}
