@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.45 2005/08/20 14:58:34 kent Exp $	*/
+/*	$NetBSD: library.c,v 1.46 2005/08/23 05:55:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.45 2005/08/20 14:58:34 kent Exp $");
+__RCSID("$NetBSD: library.c,v 1.46 2005/08/23 05:55:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -798,8 +798,8 @@ bi_compare(const void *a, const void *b)
 	if ((diff = (int)(ba->bi_daddr - bb->bi_daddr)))
 		return (diff);
 	if(ba->bi_inode != LFS_IFILE_INUM && debug)
-		syslog(LOG_DEBUG,"bi_compare: using kludge on ino %" PRIu64 "!",
-		    ba->bi_inode);
+		syslog(LOG_DEBUG,"bi_compare: using kludge on ino %llu!",
+		    (unsigned long long)ba->bi_inode);
 	diff = ba->bi_size - bb->bi_size;
 	return diff;
 }
