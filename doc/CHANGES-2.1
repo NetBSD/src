@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.167 2005/08/23 13:10:50 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.168 2005/08/23 13:37:22 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3468,4 +3468,42 @@ sys/dev/ic/wdc.c				patch
 
 	Fix error in patch from ticket #5603.
 	[bouyer, ticket #5604]
+
+distrib/notes/Makefile				1.35
+distrib/notes/amd64/Makefile			1.1
+distrib/notes/amd64/hardware			1.1
+distrib/notes/amd64/install			1.1
+distrib/notes/amd64/legal			1.1
+distrib/notes/amd64/prep			1.1
+distrib/notes/amd64/upgrade			1.1
+distrib/notes/amd64/whatis			1.1
+distrib/notes/amd64/xfer			1.1
+
+	Create the release notes framework for the amd64 port.  These are,
+	for the most part, skeleton files that allow the amd64 INSTALL document
+	to have all the platform-independent bits, with very little MD stuff.
+	The MD pieces will have to wait for someone familiar with the platform
+	to add them.
+	[riz, ticket #5595]
+
+distrib/notes/common/contents			1.116
+distrib/notes/common/main			1.291
+
+	Add an amd64 'Quick install notes for the impatient' bit, and
+	touch up the amd64 directory structure.
+	[riz, ticket #5596]
+
+distrib/notes/common/main			1.292 via patch
+
+	Update for recent changes:
+	- pkgsrc has over 5400 packages these days
+	- change core's membership to reflect current reality
+	- update the list of portmasters
+	[riz, ticket #5597]
+
+sys/dev/ic/wdc.c				patch
+
+	On NetBSD 2.x chp->ch_wdc can be NULL in some case, check for this.
+	This avoids panics in wdcprobe().
+	[bouyer, ticket #5605]
 
