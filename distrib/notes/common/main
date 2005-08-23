@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.10.2.4 2005/08/23 13:28:13 tron Exp $
+.\"	$NetBSD: main,v 1.253.2.10.2.5 2005/08/23 13:32:26 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -383,7 +383,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its more than 5000 program packages.
+system with its more than 5400 program packages.
 .El
 .\}
 .Ss "What is NetBSD?"
@@ -630,7 +630,7 @@ AIX, BSD/OS and HP-UX) is currently being worked on thanks to our new,
 portable bootstrap kit which makes it much simpler to port pkgsrc support to 
 new operating systems.
 .
-At the time of writing, there are over 4500 third party packages
+At the time of writing, there are over 5400 third party packages
 available in pkgsrc.
 .bullet)
 .
@@ -1221,9 +1221,9 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Em "The NetBSD core group:"
 .It Ta Ta
 .It Ta Allen Briggs Ta Mt briggs@NetBSD.org
-.It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
-.It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
+.It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
+.It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
@@ -1232,7 +1232,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
-.It Ta Ta
+.It Ta                                Ta Mt                      Ta Sy 
 .It Ta Allen Briggs                   Ta Mt    briggs@NetBSD.org Ta Sy sandpoint
 .It Ta Anders Magnusson               Ta Mt     ragge@NetBSD.org Ta Sy vax
 .It Ta Andrey Petrov                  Ta Mt    petrov@NetBSD.org Ta Sy sparc64
@@ -1242,12 +1242,14 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Eduardo Horvath                Ta Mt       eeh@NetBSD.org Ta Sy evbppc
 .It Ta Frank van der Linden           Ta Mt      fvdl@NetBSD.org Ta Sy amd64
 .It Ta Frank van der Linden           Ta Mt      fvdl@NetBSD.org Ta Sy i386
+.It Ta Gavan Fantom                   Ta Mt     gavan@NetBSD.org Ta Sy iyonix
 .It Ta IWAMOTO Toshihiro              Ta Mt    toshii@NetBSD.org Ta Sy hpcarm
 .It Ta Ichiro Fukuhara                Ta Mt    ichiro@NetBSD.org Ta Sy hpcarm
 .It Ta Ignatios Souvatzis             Ta Mt        is@NetBSD.org Ta Sy amiga
 .It Ta Izumi Tsutsui                  Ta Mt   tsutsui@NetBSD.org Ta Sy hp300
 .It Ta Izumi Tsutsui                  Ta Mt   tsutsui@NetBSD.org Ta Sy news68k
 .It Ta Jason Thorpe                   Ta Mt   thorpej@NetBSD.org Ta Sy algor
+.It Ta Jason Thorpe                   Ta Mt   thorpej@NetBSD.org Ta Sy evbarm
 .It Ta Jason Thorpe                   Ta Mt   thorpej@NetBSD.org Ta Sy shark
 .It Ta Jeremy Cooper                  Ta Mt    jeremy@NetBSD.org Ta Sy sun3
 .It Ta Jonathan Stone                 Ta Mt  jonathan@NetBSD.org Ta Sy pmax
@@ -1272,8 +1274,8 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Phil Nelson                    Ta Mt      phil@NetBSD.org Ta Sy pc532
 .It Ta Reinoud Zandijk                Ta Mt   reinoud@NetBSD.org Ta Sy acorn32
 .It Ta Ross Harvey                    Ta Mt      ross@NetBSD.org Ta Sy alpha
-.It Ta S(/oren J(/orvang              Ta Mt     soren@NetBSD.org Ta Sy cobalt
-.It Ta S(/oren J(/orvang              Ta Mt     soren@NetBSD.org Ta Sy sgimips
+.It Ta S\(/oren J\(/orvang            Ta Mt     soren@NetBSD.org Ta Sy cobalt
+.It Ta S\(/oren J\(/orvang            Ta Mt     soren@NetBSD.org Ta Sy sgimips
 .It Ta Scott Reynolds                 Ta Mt    scottr@NetBSD.org Ta Sy mac68k
 .It Ta Shin Takemura                  Ta Mt  takemura@NetBSD.org Ta Sy hpcmips
 .It Ta Simon Burge                    Ta Mt    simonb@NetBSD.org Ta Sy evbmips
