@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 2005/08/20 16:14:34 elad Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2005/08/23 16:20:01 elad Exp $
 
 # hash functions
 .PATH: ${.CURDIR}/hash/sha2
 
-#INCSDIR=/usr/include/crypto
-
-#INCS=	sha2.h
-
-SRCS+=	sha2.c
+SRCS+=	sha2.c sha256hl.c sha384hl.c sha512hl.c
 
 MAN+=	sha2.3
 
