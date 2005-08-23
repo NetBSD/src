@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.51 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.52 2005/08/23 11:10:23 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.51 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.52 2005/08/23 11:10:23 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,7 +482,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 		cp -= len;
 		memmove(cp, namebuf, (size_t)len);
 		*--cp = '/';
-		if (cp < &namebuf[MAXNAMLEN])
+		if (cp < &namebuf[FFS_MAXNAMLEN])
 			break;
 		ino = idesc.id_number;
 	}

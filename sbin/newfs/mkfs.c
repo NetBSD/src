@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.90 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.91 2005/08/23 11:18:30 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.90 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.91 2005/08/23 11:18:30 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -947,7 +947,7 @@ struct odirect {
 	u_int32_t d_ino;
 	u_int16_t d_reclen;
 	u_int16_t d_namlen;
-	u_char	d_name[MAXNAMLEN + 1];
+	u_char	d_name[FFS_MAXNAMLEN + 1];
 } oroot_dir[] = {
 	{ ROOTINO, sizeof(struct direct), 1, "." },
 	{ ROOTINO, sizeof(struct direct), 2, ".." },
