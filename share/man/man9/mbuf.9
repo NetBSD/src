@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.39 2005/07/02 10:59:10 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.40 2005/08/23 09:34:11 yamt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 18, 2005
+.Dd August 23, 2005
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -66,6 +66,7 @@
 .Nm MEXTADD ,
 .Nm MCLGET ,
 .Nm M_COPY_PKTHDR ,
+.Nm M_MOVE_PKTHDR ,
 .Nm M_ALIGN ,
 .Nm MH_ALIGN ,
 .Nm M_LEADINGSPACE ,
@@ -131,6 +132,8 @@
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft void
 .Fn M_COPY_PKTHDR "struct mbuf *to" "struct mbuf *from"
+.Ft void
+.Fn M_MOVE_PKTHDR "struct mbuf *to" "struct mbuf *from"
 .Ft void
 .Fn M_ALIGN "struct mbuf *m" "int len"
 .Ft void
@@ -633,6 +636,22 @@ set, and
 .Fa to
 must be empty.
 Implemented as a macro.
+.It Fn M_MOVE_PKTHDR "struct mbuf *to" "struct mbuf *from"
+Moves the mbuf pkthdr from mbuf
+.Fa from
+to mbuf
+.Fa to .
+.Fa from
+must have the type flag
+.Dv M_PKTHDR
+set, and
+.Fa to
+must be empty.
+The flag
+.Dv M_PKTHDR
+in mbuf
+.Fa from
+will be cleared.
 .It Fn M_ALIGN "struct mbuf *m" "int len"
 Sets the data pointer of a newly allocated mbuf
 .Fa m
