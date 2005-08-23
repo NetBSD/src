@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.2 2005/07/12 09:10:18 wiz Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.3 2005/08/23 19:19:51 kiyohara Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -674,8 +674,8 @@ main(int argc, char **argv)
 				errx(1, "invalid target: %s", optarg);
 			eui.hi = ntohl(*(u_int32_t*)&(target.octet[0]));
 			eui.lo = ntohl(*(u_int32_t*)&(target.octet[4]));
-			sysctl_set_int("hw.firewire.fwmem.eui64_hi", eui.hi);
-			sysctl_set_int("hw.firewire.fwmem.eui64_lo", eui.lo);
+			sysctl_set_int("hw.fwmem.eui64_hi", eui.hi);
+			sysctl_set_int("hw.fwmem.eui64_lo", eui.lo);
 			break;
 		case 'o':
 			open_dev(&fd, devbase);
