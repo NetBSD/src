@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.210 2005/08/23 13:50:31 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.211 2005/08/23 14:45:20 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11789,17 +11789,4 @@ sys/arch/xen/i386/xen_shm_machdep.c		1.11
 	- Don't try to remove a request twice.
 	- Fix spl/splx mismatch.
 	[yamt, ticket #683]
-
-sys/conf/files					1.725
-sys/kern/exec_script.c				1.42
-sys/kern/init_main.c				1.250 via patch
-sys/kern/init_sysctl.c				1.47
-sys/kern/kern_exec.c				1.205
-sys/kern/exec_script.c				1.43
-sys/kern/kern_verifiedexec.c			1.32
-sys/kern/vfs_syscalls.c				1.226
-sys/kern/vfs_vnops.c				1.93
-
-	Defopt verified_exec and VERIFIED_EXEC*
-	[elad, ticket #685]
 
