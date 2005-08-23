@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.185 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.186 2005/08/23 08:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.185 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.186 2005/08/23 08:05:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1102,7 +1102,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_LFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = LFS_MAXNAMLEN;
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;

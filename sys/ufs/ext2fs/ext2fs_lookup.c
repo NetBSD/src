@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.35 2005/08/19 02:04:08 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.36 2005/08/23 08:05:13 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.35 2005/08/19 02:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.36 2005/08/23 08:05:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,10 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 
 	ffsdir->d_type = DT_UNKNOWN;		/* don't know more here */
 #ifdef DIAGNOSTIC
+#if MAXNAMLEN < E2FS_MAXNAMLEN
 	/*
-	 * XXX Right now this can't happen, but if one day
-	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
+	 * we should handle this more gracefully !
 	 */
-#if 0
 	if (e2dir->e2d_namlen > MAXNAMLEN)
 		panic("ext2fs: e2dir->e2d_namlen");
 #endif
@@ -726,7 +725,7 @@ found:
  *	record length must be multiple of 4
  *	entry must fit in rest of its dirblksize block
  *	record must be large enough to contain entry
- *	name is not longer than MAXNAMLEN
+ *	name is not longer than EXT2FS_MAXNAMLEN
  *	name must be as long as advertised, and null terminated
  */
 /*
@@ -746,16 +745,18 @@ ext2fs_dirbadentry(dp, de, entryoffsetinblock)
 		int namlen = de->e2d_namlen;
 
 		if (reclen < EXT2FS_DIRSIZ(1)) /* e2d_namlen = 1 */
-				error_msg = "rec_len is smaller than minimal";
+			error_msg = "rec_len is smaller than minimal";
 		else if (reclen % 4 != 0)
-				error_msg = "rec_len % 4 != 0";
+			error_msg = "rec_len % 4 != 0";
+		else if (namlen > EXT2FS_MAXNAMLEN)
+			error_msg = "namlen > EXT2FS_MAXNAMLEN";
 		else if (reclen < EXT2FS_DIRSIZ(namlen))
-				error_msg = "reclen is too small for name_len";
+			error_msg = "reclen is too small for name_len";
 		else if (entryoffsetinblock + reclen > dirblksiz)
-				error_msg = "directory entry across blocks";
+			error_msg = "directory entry across blocks";
 		else if (fs2h32(de->e2d_ino) >
 		    VTOI(dp)->i_e2fs->e2fs.e2fs_icount)
-				error_msg = "inode out of bounds";
+			error_msg = "inode out of bounds";
 
 		if (error_msg != NULL) {
 			printf( "bad directory entry: %s\n"
