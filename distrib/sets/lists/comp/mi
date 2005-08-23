@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.806 2005/08/23 09:36:47 yamt Exp $
+#	$NetBSD: mi,v 1.807 2005/08/23 09:38:17 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4839,6 +4839,7 @@
 ./usr/share/man/cat9/M_ALIGN.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/M_COPY_PKTHDR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/M_LEADINGSPACE.0		comp-sys-catman		.cat
+./usr/share/man/cat9/M_MOVE_PKTHDR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/M_PREPEND.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/M_TRAILINGSPACE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/NDINIT.0			comp-sys-catman		.cat
@@ -8714,6 +8715,7 @@
 ./usr/share/man/man9/M_ALIGN.9			comp-sys-man		.man
 ./usr/share/man/man9/M_COPY_PKTHDR.9		comp-sys-man		.man
 ./usr/share/man/man9/M_LEADINGSPACE.9		comp-sys-man		.man
+./usr/share/man/man9/M_MOVE_PKTHDR.9		comp-sys-man		.man
 ./usr/share/man/man9/M_PREPEND.9		comp-sys-man		.man
 ./usr/share/man/man9/M_TRAILINGSPACE.9		comp-sys-man		.man
 ./usr/share/man/man9/NDINIT.9			comp-sys-man		.man
