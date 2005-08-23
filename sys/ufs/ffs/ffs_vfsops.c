@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.168 2005/07/25 11:42:38 drochner Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.169 2005/08/23 08:05:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.168 2005/07/25 11:42:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.169 2005/08/23 08:05:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -935,7 +935,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = FFS_MAXNAMLEN;
 	if (UFS_MPISAPPLEUFS(ump)) {
 		/* NeXT used to keep short symlinks in the inode even
 		 * when using FS_42INODEFMT.  In that case fs->fs_maxsymlinklen
