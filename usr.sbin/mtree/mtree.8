@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.40 2005/08/24 20:49:51 elad Exp $
+.\"	$NetBSD: mtree.8,v 1.41 2005/08/24 20:55:41 elad Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -416,6 +416,27 @@ cryptographic message digest of the file.
 .It Sy sha1digest
 Synonym for
 .Sy sha1 .
+.It Sy sha256
+The 256-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha256digest
+Synonym for
+.Sy sha256 .
+.It Sy sha384
+The 384-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha384digest
+Synonym for
+.Sy sha384 .
+.It Sy sha512
+The 512-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha512digest
+Synonym for
+.Sy sha512 .
 .It Sy size
 The size, in bytes, of the file.
 .It Sy tags
@@ -657,3 +678,10 @@ and
 .Fl X
 flags, and support for full paths appeared in
 .Nx 1.6 .
+The
+.Sy sha256 ,
+.Sy sha384 ,
+and
+.Sy sha512
+keywords appeared in
+.Nx 4.0 .
