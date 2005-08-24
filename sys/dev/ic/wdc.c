@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.220.2.6 2005/08/24 21:53:23 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.220.2.7 2005/08/24 21:53:46 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.6 2005/08/24 21:53:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.7 2005/08/24 21:53:46 tron Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1393,7 +1393,8 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		 * Historically it's what we have always done so keeping it
 		 * here ensure binary backward compatibility.
 		 */
-		 drive_flags = DRIVE_NOSTREAM;
+		 drive_flags = DRIVE_NOSTREAM | 
+				chp->ch_drive[xfer->c_drive].drive_flags;
 	} else {
 		/*
 		 * Other data structure are opaque and should be transfered
