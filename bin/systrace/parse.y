@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.9 2003/05/20 22:45:13 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.10 2005/08/24 19:09:03 elad Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.9 2003/05/20 22:45:13 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.10 2005/08/24 19:09:03 elad Exp $");
 
 #include <sys/types.h>
 
@@ -72,7 +72,7 @@ extern int iamroot;
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY ASK
 %token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
-%token	COLON RE LESSER GREATER
+%token	COLON RE LESSER GREATER TOPDIR
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -392,6 +392,16 @@ symbol		: STRING typeoff MATCH CMDSTRING
 		break;
 
 	node->filter_match = filter_inpath;
+	$$ = node;
+}
+		| STRING typeoff TOPDIR CMDSTRING
+{
+	struct logic *node;
+
+	if ((node = parse_newsymbol($1, $2, $4)) == NULL)
+		break;
+
+	node->filter_match = filter_topdir;
 	$$ = node;
 }
 		| STRING typeoff RE CMDSTRING
