@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.53 2005/06/23 04:20:41 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.54 2005/08/24 15:51:41 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -298,6 +298,7 @@ struct ftpclass {
 	LLT		 mmapsize;	/* mmap window size */
 	LLT		 readsize;	/* data read size */
 	LLT		 writesize;	/* data write size */
+	LLT		 recvbufsize;	/* SO_RCVBUF size */
 	LLT		 sendbufsize;	/* SO_SNDBUF size */
 	LLT		 sendlowat;	/* SO_SNDLOWAT size */
 };
