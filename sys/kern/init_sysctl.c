@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.51 2005/08/13 10:48:27 blymn Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.52 2005/08/24 16:00:54 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.51 2005/08/13 10:48:27 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.52 2005/08/24 16:00:54 simonb Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1079,7 +1079,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.maxvnodes.  ensures that the new
+ * sysctl helper routine for kern.maxproc.  ensures that the new
  * values are not too low or too high.
  */
 static int
