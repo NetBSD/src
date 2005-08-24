@@ -1,4 +1,4 @@
-/* $NetBSD: sha384hl.c,v 1.1 2005/08/23 16:20:01 elad Exp $ */
+/* $NetBSD: sha384hl.c,v 1.2 2005/08/24 12:08:45 tron Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ SHA384_End(SHA384_CTX *ctx, char *buf)
 
 	SHA384_Final(digest, ctx);
 	for (i = 0; i < SHA384_DIGEST_LENGTH; i++) {
-		buf[i + i] = hex[digest[i] >> 4];
+		buf[i + i] = hex[(u_int32_t)digest[i] >> 4];
 		buf[i + i + 1] = hex[digest[i] & 0x0f];
 	}
 	buf[i + i] = '\0';
@@ -65,7 +65,8 @@ SHA384_FileChunk(const char *filename, char *buf, off_t off, off_t len)
 	if (off > 0 && lseek(fd, off, SEEK_SET) < 0)
 		return (NULL);
 
-	while ((nr = read(fd, buffer, MIN(sizeof(buffer), len))) > 0) {
+	while ((nr = read(fd, buffer, (size_t) MIN(sizeof(buffer), len)))
+	    > 0) {
 		SHA384_Update(&ctx, buffer, (size_t)nr);
 		if (len > 0 && (len -= nr) == 0)
 			break;
