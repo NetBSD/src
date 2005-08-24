@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.211 2005/08/23 14:45:20 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.212 2005/08/24 18:51:05 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11789,4 +11789,48 @@ sys/arch/xen/i386/xen_shm_machdep.c		1.11
 	- Don't try to remove a request twice.
 	- Fix spl/splx mismatch.
 	[yamt, ticket #683]
+
+sys/dev/ic/aic7xxx.c				1.115
+
+	We can't free struct ahc_softc on NetBSD either, because it comes from
+	config(9). Fix a corruption on alldevs list when an ahc device fails to
+	initialise.
+	[bouyer, ticket #686]
+
+sys/netinet6/esp_core.c				1.34
+
+	Remove write-only variable "derived" in esp_cbc_encrypt().
+	[tron, ticket #687]
+
+sys/fs/adosfs/advfsops.c			1.23
+sys/fs/cd9660/cd9660_vfsops.c			1.24
+sys/fs/filecorefs/filecore_vfsops.c		1.20
+sys/fs/msdosfs/denode.h				1.5
+sys/fs/msdosfs/msdosfs_denode.c			1.8-1.9
+sys/fs/ntfs/ntfs_vfsops.c			1.31
+sys/fs/smbfs/smbfs_node.c			1.24
+sys/kern/vfs_subr.c				1.252
+sys/miscfs/genfs/genfs_node.h			1.6-1.8
+sys/miscfs/genfs/genfs_vnops.c			1.98-1.104 via patch
+sys/nfs/nfs_node.c				1.80
+sys/sys/vnode.h					1.141
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.86-1.87
+sys/ufs/ffs/ffs_vfsops.c			1.165,1.167
+sys/ufs/ffs/ffs_vnops.c				1.71-1.72
+sys/ufs/lfs/lfs_extern.h			1.69
+sys/ufs/lfs/lfs_vfsops.c			1.183-1.184
+sys/ufs/ufs/ufs_extern.h			1.45 via patch
+sys/ufs/ufs/ufs_inode.c				1.50-1.51
+sys/ufs/ufs/ufs_inode.c				1.50-1.51
+sys/ufs/ufs/ufs_vnops.c				1.129
+sys/uvm/uvm_bio.c				1.40-1.41
+sys/uvm/uvm_fault.c				1.96-1.98
+sys/uvm/uvm_mmap.c				1.92
+sys/uvm/uvm_object.h				1.19
+sys/uvm/uvm_pager.h				1.29-1.30
+
+	Ensure that vnodes with dirty pages are always on syncer's
+	queue.  Update file timestamps for nfsd loaned-read an mmap.
+	'atime' of nfs-served files is now updated properly.
+	[yamt, ticket #688]
 
