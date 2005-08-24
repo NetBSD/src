@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.49 2005/08/19 02:04:04 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.50 2005/08/24 10:13:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -159,18 +159,17 @@ struct stat {
 	struct	  timespec st_ctimespec;/* time of last file status change */
 	struct 	  timespec st_birthtimespec; /* time of creation */
 #else
-	__STATPAD(__pad0)
 	time_t	  st_atime;		/* time of last access */
-	__STATPAD(__pad1)
+	__STATPAD(__pad0)
 	long	  st_atimensec;		/* nsec of last access */
 	time_t	  st_mtime;		/* time of last data modification */
-	__STATPAD(__pad2)
+	__STATPAD(__pad1)
 	long	  st_mtimensec;		/* nsec of last data modification */
 	time_t	  st_ctime;		/* time of last file status change */
-	__STATPAD(__pad3)
+	__STATPAD(__pad2)
 	long	  st_ctimensec;		/* nsec of last file status change */
 	time_t	  st_birthtime;		/* time of creation */
-	__STATPAD(__pad4)
+	__STATPAD(__pad3)
 	long	  st_birthtimensec;	/* nsec of time of creation */
 #endif
 	off_t	  st_size;		/* file size, in bytes */
