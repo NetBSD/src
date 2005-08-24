@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.33 2003/08/27 00:08:31 thorpej Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.33.14.1 2005/08/24 18:03:01 riz Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.33 2003/08/27 00:08:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.33.14.1 2005/08/24 18:03:01 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -634,7 +634,6 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 	int scutoff;
 	int i;
 	int blocklen;
-	int derived;
 
 	if (ivlen != sav->ivlen || ivlen > sizeof(iv)) {
 		ipseclog((LOG_ERR, "esp_cbc_decrypt %s: "
@@ -659,7 +658,6 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 		/* RFC 1827 */
 		ivoff = off + sizeof(struct esp);
 		bodyoff = off + sizeof(struct esp) + ivlen;
-		derived = 0;
 	} else {
 		/* RFC 2406 */
 		if (sav->flags & SADB_X_EXT_DERIV) {
@@ -670,11 +668,9 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 			ivoff = off + sizeof(struct esp);
 			bodyoff = off + sizeof(struct esp) + sizeof(u_int32_t);
 			ivlen = sizeof(u_int32_t);
-			derived = 1;
 		} else {
 			ivoff = off + sizeof(struct newesp);
 			bodyoff = off + sizeof(struct newesp) + ivlen;
-			derived = 0;
 		}
 	}
 
