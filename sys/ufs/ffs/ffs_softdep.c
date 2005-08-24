@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.67 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.68 2005/08/24 10:19:43 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.67 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.68 2005/08/24 10:19:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5805,8 +5805,8 @@ softdep_setup_pagecache(ip, lbn, size)
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
 	bp->b_bcount = bp->b_resid = size;
-	UVMHIST_LOG(ubchist, "vp = %p, lbn = %" PRId64
-	    ", bp = %p, bcount = resid = %ld", vp, lbn, bp, size);
+	UVMHIST_LOG(ubchist, "vp = %p, lbn = %ld, "
+	    "bp = %p, bcount = resid = %ld", vp, lbn, bp, size);
 	return bp;
 }
 
@@ -5962,7 +5962,7 @@ softdep_pageiodone1(bp)
 				continue;
 			}
 			UVMHIST_LOG(ubchist,
-			    "bcount %ld resid %ld vp %p lbn %" PRId64,
+			    "bcount %ld resid %ld vp %p lbn %ld",
 			    pcbp ? pcbp->b_bcount : -1,
 			    pcbp ? pcbp->b_resid : -1, vp, lbn);
 			UVMHIST_LOG(ubchist,
