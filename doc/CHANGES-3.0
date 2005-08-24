@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.213 2005/08/24 18:55:20 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.214 2005/08/24 21:56:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11834,4 +11834,39 @@ sys/uvm/uvm_pager.h				1.29-1.30
 	'atime' of nfs-served files is now updated properly.
 	PR#24596, PR#25279
 	[yamt, ticket #688]
+
+distrib/utils/sysinst/msg.mi.de			1.21
+
+	Add missing 'n'. This fixes PR install/31023.
+	[martin, ticket #689]
+
+sys/arch/i386/i386/vector.S			1.19
+
+	Remove some unsafe sti insns before INTRFASTEXIT, which
+	can allow infinite recursion of the handler.
+	[yamt, ticket #690]
+
+distrib/utils/sysinst/msg.mi.de			1.22
+
+	Fix PR/31023 completely - the messages should not have been displayed
+	at all.
+	[martin, ticket #691]
+
+sys/dev/pci/piixide.c				1.24
+
+	Not add PIIX are wired to compat mode these days.
+	[bouyer, ticket #692]
+
+sys/dev/ic/wdc.c				1.226,1.229
+
+	The ATA/ATAPI IDENTIFY data were designed to be converted on the fly to
+	host byte order (eventually the byte swapping could be wired in
+	hardware, on the 16 bit data bus). This was keept when
+	wdc_exec_command() was created, and as a result wdc_exec_command() is
+	doing 16bit conversion to host byte order. This is fine for IDENTIFY
+	but doesn't work for other opaque data structure, such as the ones
+	for SMART. So change wdc_exec_command() to do the conversion to host
+	byte order only for WDCC_IDENTIFY and ATAPI_IDENTIFY_DEVICE. This fixes
+	atactl smart status on big-endian hosts.
+	[bouyer, ticket #693]
 
