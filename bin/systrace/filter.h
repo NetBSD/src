@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.h,v 1.3 2002/11/02 20:04:20 provos Exp $	*/
+/*	$NetBSD: filter.h,v 1.4 2005/08/24 19:09:03 elad Exp $	*/
 /*	$OpenBSD: filter.h,v 1.1 2002/07/19 14:38:57 itojun Exp $	*/
 
 /*
@@ -39,3 +39,4 @@ int filter_negsubstrmatch(struct intercept_translate *, struct logic *);
 int filter_inpath(struct intercept_translate *, struct logic *);
 int filter_regex(struct intercept_translate *, struct logic *);
 int filter_true(struct intercept_translate *, struct logic *);
+int filter_topdir(struct intercept_translate *, struct logic *);
