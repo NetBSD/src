@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.26 2005/08/21 19:33:10 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.27 2005/08/24 19:59:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.26 2005/08/21 19:33:10 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.27 2005/08/24 19:59:08 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: cksum.c,v 1.26 2005/08/21 19:33:10 elad Exp $");
 #include <md4.h>
 #include <md2.h>
 #include <sha1.h>
+#include <crypto/sha2.h>
 #include <rmd160.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,6 +136,15 @@ struct hash {
 	{ "rmd160", "RMD160",
 	  RMD160String, RMD160TimeTrial, RMD160TestSuite,
 	  RMD160Filter, (_filefunc) RMD160File },
+	{ "sha256", "SHA256",
+	  SHA256_String, SHA256_TimeTrial, SHA256_TestSuite,
+	  SHA256_Filter, (_filefunc) SHA256_File },
+	{ "sha384", "SHA384",
+	  SHA384_String, SHA384_TimeTrial, SHA384_TestSuite,
+	  SHA384_Filter, (_filefunc) SHA384_File },
+	{ "sha512", "SHA512",
+	  SHA512_String, SHA512_TimeTrial, SHA512_TestSuite,
+	  SHA512_Filter, (_filefunc) SHA512_File },
 	{ NULL }
 };
 
