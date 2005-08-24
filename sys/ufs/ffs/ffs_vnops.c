@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.69.2.1 2005/08/24 18:43:37 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.2.1 2005/08/24 18:43:37 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ ffs_full_fsync(v)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));

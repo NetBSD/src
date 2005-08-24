@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.126.2.1 2005/03/30 10:12:06 tron Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.126.2.2 2005/08/24 18:43:38 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.126.2.1 2005/03/30 10:12:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.126.2.2 2005/08/24 18:43:38 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2194,4 +2194,26 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 
 out:
         return error;
+}
+
+void
+ufs_gop_markupdate(struct vnode *vp, int flags)
+{
+	u_int32_t mask = 0;
+
+	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
+		mask = IN_ACCESS;
+	}
+	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
+		if (vp->v_type == VREG) {
+			mask |= IN_CHANGE | IN_UPDATE;
+		} else {
+			mask |= IN_MODIFY;
+		}
+	}
+	if (mask) {
+		struct inode *ip = VTOI(vp);
+
+		ip->i_flag |= mask;
+	}
 }
