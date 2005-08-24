@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.168 2005/08/23 13:37:22 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.169 2005/08/24 04:13:59 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3506,4 +3506,29 @@ sys/dev/ic/wdc.c				patch
 	On NetBSD 2.x chp->ch_wdc can be NULL in some case, check for this.
 	This avoids panics in wdcprobe().
 	[bouyer, ticket #5605]
+
+sys/dev/ic/i82557.c				1.92 via patch
+
+	Make microcode loading work on big endian machines.
+	Reported and patch supplied by yongari@freebsd a long time ago.
+	[junyoung, ticket #5608]
+
+sys/kern/kern_exit.c				1.149
+
+	exit_lwps: fix a race which causes a panic "setrunnable: lwp
+	%p state was %d".
+	[yamt, ticket #5609]
+
+sys/kern/kern_exit.c				1.150
+
+	exit_lwps: fix a race with eg. sa_setwoken.
+	ie. "exit_lwps: lwp_wait1 failed with error 11"
+	PR/30689.
+	[yamt, ticket #5610]
+
+sys/arch/i386/i386/pmap.c			1.184
+
+	pmap_enter: fix an uninitialized variable bug which can cause
+	"TLB IPI rendezvous failed".
+	[yamt, ticket #5611]
 
