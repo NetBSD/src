@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.29 2005/03/03 22:19:47 ginsbach Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.30 2005/08/24 15:51:41 ginsbach Exp $
 .\"
 .\" Copyright (c) 1997-2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2005
+.Dd August 24, 2005
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -571,6 +571,19 @@ The default is the file system block size.
 An optional suffix may be provided as per
 .Sy rateget .
 This option affects only binary transfers.
+If
+.Ar class
+is
+.Dq none
+or
+.Ar size
+is not specified, use the default.
+.It Sy recvbufsize Ar class Op Ar size
+Set the size of the socket recveive buffer.
+An optional suffix may be provided as per
+.Sy rateget .
+The default is zero and the system default value will be used.
+This option affects only passive transfers.
 If
 .Ar class
 is
