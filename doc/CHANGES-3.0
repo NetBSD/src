@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.212 2005/08/24 18:51:05 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.213 2005/08/24 18:55:20 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11832,5 +11832,6 @@ sys/uvm/uvm_pager.h				1.29-1.30
 	Ensure that vnodes with dirty pages are always on syncer's
 	queue.  Update file timestamps for nfsd loaned-read an mmap.
 	'atime' of nfs-served files is now updated properly.
+	PR#24596, PR#25279
 	[yamt, ticket #688]
 
