@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.510 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.511 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,3 +84,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: 64 bit inode changes [christos 20050819]
 	racoon(8): ipsec-tools updated to 0.6.1 [manu 20050820]
 	getent(1): Add support for "ethers" database. [ginsbach 20050824]
+	ftpd(8): Add new ftpd.conf(5) option, recvbufsize, and make
+		readsize option also apply to network reads for transfers to
+		the server. [ginsbach 20050824]
