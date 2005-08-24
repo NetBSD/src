@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.167 2005/08/04 17:41:35 peter Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.168 2005/08/24 15:51:41 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.167 2005/08/04 17:41:35 peter Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.168 2005/08/24 15:51:41 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -2283,8 +2283,10 @@ receive_data(FILE *instr, FILE *outstr)
 {
 	int	c, bare_lfs, netfd, filefd, rval;
 	off_t	byteswritten;
-	char	buf[BUFSIZ];
+	char	*buf;
+	size_t	readsize;
 	struct sigaction sa, sa_saved;
+	struct stat st;
 #ifdef __GNUC__
 	(void) &bare_lfs;
 #endif
@@ -2300,6 +2302,7 @@ receive_data(FILE *instr, FILE *outstr)
 	transflag = 1;
 	rval = -1;
 	byteswritten = 0;
+	buf = NULL;
 
 #define FILESIZECHECK(x) \
 			do { \
@@ -2317,6 +2320,16 @@ receive_data(FILE *instr, FILE *outstr)
 		netfd = fileno(instr);
 		filefd = fileno(outstr);
 		(void) alarm(curclass.timeout);
+		if (curclass.readsize)
+			readsize = curclass.readsize;
+		else if (fstat(filefd, &st))
+			readsize = (size_t)st.st_blksize;
+		else
+			readsize = BUFSIZ;
+		if ((buf = malloc(readsize)) == NULL) {
+			perror_reply(451, "Local resource failure: malloc");
+			goto cleanup_recv_data;
+		}
 		if (curclass.rateput) {
 			while (1) {
 				int d;
@@ -2327,7 +2340,7 @@ receive_data(FILE *instr, FILE *outstr)
 				errno = c = d = 0;
 				for (bufrem = curclass.rateput; bufrem > 0; ) {
 					if ((c = read(netfd, buf,
-					    MIN(sizeof(buf), bufrem))) <= 0)
+					    MIN(readsize, bufrem))) <= 0)
 						goto recvdone;
 					if (urgflag && handleoobcmd())
 						goto cleanup_recv_data;
@@ -2348,7 +2361,7 @@ receive_data(FILE *instr, FILE *outstr)
 					usleep(1000000 - td.tv_usec);
 			}
 		} else {
-			while ((c = read(netfd, buf, sizeof(buf))) > 0) {
+			while ((c = read(netfd, buf, readsize)) > 0) {
 				if (urgflag && handleoobcmd())
 					goto cleanup_recv_data;
 				FILESIZECHECK(byte_count + c);
@@ -2444,6 +2457,8 @@ receive_data(FILE *instr, FILE *outstr)
  cleanup_recv_data:
 	(void) alarm(0);
 	(void) sigaction(SIGALRM, &sa_saved, NULL);
+	if (buf)
+		free(buf);
 	transflag = 0;
 	urgflag = 0;
 	total_files_in++;
@@ -2691,6 +2706,11 @@ statcmd(void)
 			reply(0, "Write size: " LLF, (LLT)curclass.writesize);
 		else
 			reply(0, "Write size: default");
+		if (curclass.recvbufsize)
+			reply(0, "Receive buffer size: " LLF,
+			    (LLT)curclass.recvbufsize);
+		else
+			reply(0, "Receive buffer size: default");
 		if (curclass.sendbufsize)
 			reply(0, "Send buffer size: " LLF,
 			    (LLT)curclass.sendbufsize);
@@ -2910,7 +2930,7 @@ bind_pasv_addr(void)
 void
 passive(void)
 {
-	int len;
+	int len, recvbufsize;
 	char *p, *a;
 
 	if (pdata >= 0)
@@ -2928,6 +2948,13 @@ passive(void)
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr.si_su, &len) < 0)
 		goto pasv_error;
 	pasv_addr.su_len = len;
+	if (curclass.recvbufsize) {
+		recvbufsize = curclass.recvbufsize;
+		if (setsockopt(pdata, SOL_SOCKET, SO_RCVBUF, &recvbufsize,
+			       sizeof(int)) == -1)
+			syslog(LOG_WARNING, "setsockopt(SO_RCVBUF, %d): %m",
+			       recvbufsize);
+	}
 	if (listen(pdata, 1) < 0)
 		goto pasv_error;
 	if (curclass.advertise.su_len != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 2005/03/03 22:19:47 ginsbach Exp $	*/
+/*	$NetBSD: conf.c,v 1.55 2005/08/24 15:51:41 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.54 2005/03/03 22:19:47 ginsbach Exp $");
+__RCSID("$NetBSD: conf.c,v 1.55 2005/08/24 15:51:41 ginsbach Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -388,6 +388,10 @@ parse_conf(const char *findclass)
 		} else if (strcasecmp(word, "writesize") == 0) {
 			curclass.writesize = 0;
 			CONF_LL(writesize, arg, 0, LLTMAX);
+
+		} else if (strcasecmp(word, "recvbufsize") == 0) {
+			curclass.recvbufsize = 0;
+			CONF_LL(recvbufsize, arg, 0, LLTMAX);
 
 		} else if (strcasecmp(word, "sendbufsize") == 0) {
 			curclass.sendbufsize = 0;
