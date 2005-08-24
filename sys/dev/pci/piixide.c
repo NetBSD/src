@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.19.2.3 2005/07/23 14:51:55 riz Exp $	*/
+/*	$NetBSD: piixide.c,v 1.19.2.4 2005/08/24 21:51:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -243,6 +243,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	u_int32_t idetim;
 	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -338,8 +339,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
-		/* PIIX is compat-only */
-		if (pciide_chansetup(sc, channel, 0) == 0)
+		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		idetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 		if ((PIIX_IDETIM_READ(idetim, channel) &
@@ -362,8 +362,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    channel, idetim, interface);
 #endif
 		}
-		/* PIIX are compat-only pciide devices */
-		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface,
+		    &cmdsize, &ctlsize, pciide_pci_intr);
 	}
 
 	ATADEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
