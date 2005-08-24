@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171.2.1.2.1 2005/06/08 11:29:43 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.171.2.1.2.2 2005/08/24 04:08:09 riz Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.2.1.2.1 2005/06/08 11:29:43 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.2.1.2.2 2005/08/24 04:08:09 riz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3458,10 +3458,12 @@ shootdown_test:
 	/* Update page attributes if needed */
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 #if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
+		int32_t cpumask;
 #endif
 shootdown_now:
 #if defined(MULTIPROCESSOR)
+		cpumask = 0;
+
 		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
 		pmap_tlb_shootnow(cpumask);
 #else
