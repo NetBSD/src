@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.243.2.3 2005/07/02 15:53:52 tron Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.243.2.4 2005/08/24 18:43:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.243.2.3 2005/07/02 15:53:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.243.2.4 2005/08/24 18:43:38 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -995,7 +995,7 @@ brelvp(bp)
 
 	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-		vp->v_flag &= ~VONWORKLST;
+		vp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
 		LIST_REMOVE(vp, v_synclist);
 	}
 
@@ -1033,7 +1033,7 @@ reassignbuf(bp, newvp)
 		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
 		    (newvp->v_flag & VONWORKLST) &&
 		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
-			newvp->v_flag &= ~VONWORKLST;
+			newvp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
 			LIST_REMOVE(newvp, v_synclist);
 		}
 	} else {
@@ -1334,7 +1334,7 @@ vput(vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, p);
 }
@@ -1378,7 +1378,7 @@ vrele(vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, p);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.29 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.29.2.1 2005/08/24 18:43:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.29 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.29.2.1 2005/08/24 18:43:38 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,8 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 int *, struct ucred **));
 #endif
 
-struct genfs_ops ntfs_genfsops = {
-	NULL,
-	NULL,
-	genfs_compat_gop_write,
+static const struct genfs_ops ntfs_genfsops = {
+	.gop_write = genfs_compat_gop_write,
 };
 
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.2 2005/05/18 04:00:42 snj Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.3 2005/08/24 18:43:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.2 2005/05/18 04:00:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.3 2005/08/24 18:43:37 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -161,10 +161,11 @@ struct vfsops lfs_vfsops = {
 	lfs_vnodeopv_descs,
 };
 
-struct genfs_ops lfs_genfsops = {
-	lfs_gop_size,
-	ufs_gop_alloc,
-	lfs_gop_write,
+const struct genfs_ops lfs_genfsops = {
+	.gop_size = lfs_gop_size,
+	.gop_alloc = ufs_gop_alloc,
+	.gop_write = lfs_gop_write,
+	.gop_markupdate = ufs_gop_markupdate,
 };
 
 /*
