@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.30 2005/08/10 21:53:01 elad Exp $	*/
+/*	$NetBSD: filter.c,v 1.31 2005/08/24 19:09:03 elad Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.30 2005/08/10 21:53:01 elad Exp $");
+__RCSID("$NetBSD: filter.c,v 1.31 2005/08/24 19:09:03 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -864,3 +864,35 @@ filter_true(struct intercept_translate *tl, struct logic *logic)
 {
 	return (1);
 }
+
+int
+filter_topdir(struct intercept_translate *tl, struct logic *logic)
+{
+	const char *line;
+	size_t len, baselen;
+
+	if ((line = intercept_translate_print(tl)) == NULL)
+		return (0);
+
+	len = strlen(line);
+	baselen = strlen(logic->filterdata);
+
+	/* remove trailing slash */
+	if (baselen && ((char *)logic->filterdata)[baselen - 1] == '/')
+		baselen--;
+
+	if (baselen <= 1)
+		return (1);
+
+	if (len < baselen)
+		return (0);
+
+	if (line[baselen] != '/')
+		return (0);
+
+	if (strncmp(logic->filterdata, line, baselen))
+		return (0);
+
+	return (1);
+}
+
