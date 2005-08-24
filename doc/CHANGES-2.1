@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.169 2005/08/24 04:13:59 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.170 2005/08/24 18:58:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3531,4 +3531,11 @@ sys/arch/i386/i386/pmap.c			1.184
 	pmap_enter: fix an uninitialized variable bug which can cause
 	"TLB IPI rendezvous failed".
 	[yamt, ticket #5611]
+
+usr.bin/less/less/line.c			1.10
+
+	Fix a one byte off error which causes "less" to crash if you view a
+	large file, jump to the end, scroll backwards with "b" and try to
+	search backwards afterwards.
+	[tron, ticket #5612]
 
