@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.37 2005/02/26 22:31:44 perry Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.37.2.1 2005/08/24 18:43:38 riz Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.37 2005/02/26 22:31:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.37.2.1 2005/08/24 18:43:38 riz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -285,7 +285,8 @@ again:
 	    uobj, umap->offset + slot_offset, npages, 0);
 
 	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
-	    &npages, 0, access_type, 0, flags);
+	    &npages, 0, access_type, 0, flags | PGO_NOBLOCKALLOC |
+	    PGO_NOTIMESTAMP);
 	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
 	    0);
 
@@ -304,6 +305,8 @@ again:
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
+		boolean_t rdonly;
+		vm_prot_t mask;
 
 		/*
 		 * for virtually-indexed, virtually-tagged caches we should
@@ -349,11 +352,21 @@ again:
 					continue; /* will re-fault */
 			}
 		}
-		KASSERT(access_type == VM_PROT_READ ||
-		    (pg->flags & PG_RDONLY) == 0);
+
+		/*
+		 * note that a page whose backing store is partially allocated
+		 * is marked as PG_RDONLY.
+		 */
+
+		rdonly = (access_type & VM_PROT_WRITE) == 0 &&
+		    (pg->flags & PG_RDONLY) != 0;
+		KASSERT((pg->flags & PG_RDONLY) == 0 ||
+		    (access_type & VM_PROT_WRITE) == 0 ||
+		    pg->offset < umap->writeoff ||
+		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
+		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    (pg->flags & PG_RDONLY) ? prot & ~VM_PROT_WRITE : prot,
-		    access_type);
+		    prot & mask, access_type & mask);
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
@@ -471,7 +484,9 @@ again:
 	if (flags & UBC_FAULTBUSY) {
 		int npages = (*lenp + PAGE_SIZE - 1) >> PAGE_SHIFT;
 		struct vm_page *pgs[npages];
-		int gpflags = PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF;
+		int gpflags =
+		    PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF|PGO_NOBLOCKALLOC|
+		    PGO_NOTIMESTAMP;
 		int i;
 		KDASSERT(flags & UBC_WRITE);
 

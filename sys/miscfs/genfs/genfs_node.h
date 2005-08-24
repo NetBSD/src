@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.5 2003/09/24 10:22:53 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.5.14.1 2005/08/24 18:43:37 riz Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -39,6 +39,7 @@ struct genfs_ops {
 	void	(*gop_size)(struct vnode *, off_t, off_t *, int);
 	int	(*gop_alloc)(struct vnode *, off_t, off_t, int, struct ucred *);
 	int	(*gop_write)(struct vnode *, struct vm_page **, int, int);
+	void	(*gop_markupdate)(struct vnode *, int);
 };
 
 #define GOP_SIZE(vp, size, eobp, flags) \
@@ -48,20 +49,37 @@ struct genfs_ops {
 #define GOP_WRITE(vp, pgs, npages, flags) \
 	(*VTOG(vp)->g_op->gop_write)((vp), (pgs), (npages), (flags))
 
+/*
+ * GOP_MARKUPDATE: mark vnode's timestamps for update.
+ *
+ * => called with v_interlock (and possibly other locks) held.
+ * => used for accesses via mmap.
+ */
+
+#define GOP_MARKUPDATE(vp, flags) \
+	(VTOG(vp)->g_op->gop_markupdate) ? \
+	(*VTOG(vp)->g_op->gop_markupdate)((vp), (flags)) : \
+	(void)0;
+
 /* Flags to GOP_SIZE */
 #define	GOP_SIZE_READ	0x1	/* Advise how many pages to read */
 #define	GOP_SIZE_WRITE	0x2	/* Tell how many pages to write */
 #define	GOP_SIZE_MEM	0x4	/* in-memory size */
 
+/* Flags to GOP_MARKUPDATE */
+#define	GOP_UPDATE_ACCESSED	1
+#define	GOP_UPDATE_MODIFIED	2
+
 struct genfs_node {
-	struct genfs_ops	*g_op;		/* ops vector */
+	const struct genfs_ops	*g_op;		/* ops vector */
 	struct lock		g_glock;	/* getpages lock */
+	int			g_dirtygen;
 };
 
 #define VTOG(vp) ((struct genfs_node *)(vp)->v_data)
 
 void	genfs_size(struct vnode *, off_t, off_t *, int);
-void	genfs_node_init(struct vnode *, struct genfs_ops *);
+void	genfs_node_init(struct vnode *, const struct genfs_ops *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);
 

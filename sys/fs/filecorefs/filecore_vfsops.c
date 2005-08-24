@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.18 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.18.2.1 2005/08/24 18:43:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18.2.1 2005/08/24 18:43:37 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -125,8 +125,8 @@ struct vfsops filecore_vfsops = {
 	filecore_vnodeopv_descs,
 };
 
-struct genfs_ops filecore_genfsops = {
-	genfs_size,
+static const struct genfs_ops filecore_genfsops = {
+	.gop_size = genfs_size,
 };
 
 /*

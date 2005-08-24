@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.91 2005/02/28 15:33:04 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.91.2.1 2005/08/24 18:43:38 riz Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.91 2005/02/28 15:33:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.91.2.1 2005/08/24 18:43:38 riz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.91 2005/02/28 15:33:04 chs Exp $");
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 
@@ -969,8 +970,11 @@ ReFault:
 				 */
 				KASSERT((curpg->flags & PG_PAGEOUT) == 0);
 				KASSERT((curpg->flags & PG_RELEASED) == 0);
+				KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
+				    (curpg->flags & PG_CLEAN) != 0);
 				readonly = (curpg->flags & PG_RDONLY)
-				    || (curpg->loan_count > 0);
+				    || (curpg->loan_count > 0)
+				    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(curpg),
@@ -1446,6 +1450,8 @@ Case2:
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
+	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
+	    (uobjpage->flags & PG_CLEAN) != 0);
 	if (promote == FALSE) {
 
 		/*
@@ -1461,7 +1467,8 @@ Case2:
 		anon = NULL;
 
 		uvmexp.flt_obj++;
-		if (UVM_ET_ISCOPYONWRITE(ufi.entry))
+		if (UVM_ET_ISCOPYONWRITE(ufi.entry) ||
+		    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 			enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47.6.1 2005/08/24 18:43:38 riz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.6.1 2005/08/24 18:43:38 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -240,7 +240,8 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	memset(pgs, 0, npages * sizeof(struct vm_page *));
 	simple_lock(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
-	    VM_PROT_READ, 0, PGO_SYNCIO|PGO_PASTEOF);
+	    VM_PROT_WRITE, 0,
+	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		return error;
 	}
@@ -278,9 +279,11 @@ ufs_balloc_range(vp, off, len, cred, flags)
 
 	simple_lock(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
-		pgs[i]->flags &= ~PG_RDONLY;
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
+		} else if (off <= pagestart + (i << PAGE_SHIFT) &&
+		    pagestart + ((i + 1) << PAGE_SHIFT) <= off + len) {
+			pgs[i]->flags &= ~PG_RDONLY;
 		}
 	}
 	if (error) {
