@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.15 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: icp.c,v 1.16 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.15 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.16 2005/08/25 22:33:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,6 @@ int	icp_async_event(struct icp_softc *, int);
 void	icp_ccb_submit(struct icp_softc *icp, struct icp_ccb *ic);
 void	icp_chain(struct icp_softc *);
 int	icp_print(void *, const char *);
-int	icp_submatch(struct device *, struct cfdata *,
-		     const locdesc_t *, void *);
 void	icp_watchdog(void *);
 void	icp_ucmd_intr(struct icp_ccb *);
 void	icp_recompute_openings(struct icp_softc *);
@@ -388,7 +386,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 			icp->icp_children[icpa.icpa_unit] =
 				config_found_sm_loc(&icp->icp_dv, "icp", locs,
-					&icpa, icp_print, icp_submatch);
+					&icpa, icp_print, config_stdsubmatch);
 		}
 	}
 
@@ -406,7 +404,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 			icp->icp_children[icpa.icpa_unit] =
 			    config_found_sm_loc(&icp->icp_dv, "icp", locs,
-				&icpa, icp_print, icp_submatch);
+				&icpa, icp_print, config_stdsubmatch);
 		}
 	}
 
@@ -530,7 +528,7 @@ icp_rescan(struct icp_softc *icp, int unit)
 		locs[ICPCF_UNIT] = unit;
 
 		icp->icp_children[unit] = config_found_sm_loc(&icp->icp_dv,
-			"icp", locs, &icpa, icp_print, icp_submatch);
+			"icp", locs, &icpa, icp_print, config_stdsubmatch);
 	}
 
 	icp_recompute_openings(icp);
@@ -640,18 +638,6 @@ icp_print(void *aux, const char *pnp)
 	aprint_normal(" unit %d", icpa->icpa_unit);
 
 	return (UNCONF);
-}
-
-int
-icp_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[ICPCF_UNIT] != ICPCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ICPCF_UNIT] != locs[ICPCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int

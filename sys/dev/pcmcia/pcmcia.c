@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.75 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.76 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.75 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.76 2005/08/25 22:33:19 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -79,8 +79,6 @@ int	pcmcia_verbose = 0;
 #endif
 
 int	pcmcia_match(struct device *, struct cfdata *, void *);
-int	pcmcia_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
@@ -242,7 +240,8 @@ pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
 		paa.pf = pf;
 
 		pf->child = config_found_sm_loc(self, "pcmcia", locs, &paa,
-						pcmcia_print, pcmcia_submatch);
+						pcmcia_print,
+						config_stdsubmatch);
 	}
 
 	return (0);
@@ -327,21 +326,6 @@ pcmcia_card_deactivate(dev)
 		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
 		config_deactivate(pf->child);
 	}
-}
-
-int
-pcmcia_submatch(parent, cf, locs, aux)
-	struct device *parent;
-	const locdesc_t *locs;
-	struct cfdata *cf;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCMCIACF_FUNCTION] != locs[PCMCIACF_FUNCTION])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
