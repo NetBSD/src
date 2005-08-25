@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.121 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: isa.c,v 1.122 2005/08/25 20:52:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.121 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.122 2005/08/25 20:52:02 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ isaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
-	static const int wildcard[7] = {
+	static const int wildcard[ISACF_NLOCS] = {
 		ISACF_PORT_DEFAULT, ISACF_SIZE_DEFAULT,
 		ISACF_IOMEM_DEFAULT, ISACF_IOSIZ_DEFAULT,
 		ISACF_IRQ_DEFAULT, ISACF_DRQ_DEFAULT, ISACF_DRQ2_DEFAULT
@@ -380,7 +380,7 @@ isaprint(void *aux, const char *isa)
 
 int
 isasearch(struct device *parent, struct cfdata *cf,
-	  const locdesc_t *ldesc, void *aux)
+	  const locdesc_t *slocs, void *aux)
 {
 	struct isa_io res_io[1];
 	struct isa_iomem res_mem[1];
@@ -388,7 +388,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 	struct isa_drq res_drq[2];
 	struct isa_softc *sc = (struct isa_softc *)parent;
 	struct isa_attach_args ia;
-	int locs[ISACF_NLOCS];
+	int flocs[ISACF_NLOCS];
 	int tryagain;
 
 	do {
@@ -424,7 +424,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 		ia.ia_drq = res_drq;
 		ia.ia_ndrq = 2;
 
-		if (!checkattachargs(&ia, locs))
+		if (!checkattachargs(&ia, slocs))
 			return (0);
 
 		tryagain = 0;
@@ -433,14 +433,14 @@ isasearch(struct device *parent, struct cfdata *cf,
 			 * This is not necessary for detach, but might
 			 * still be useful to collect device information.
 			 */
-			locs[ISACF_PORT] = ia.ia_io[0].ir_addr;
-			locs[ISACF_SIZE] = ia.ia_io[0].ir_size;
-			locs[ISACF_IOMEM] = ia.ia_iomem[0].ir_addr;
-			locs[ISACF_IOSIZ] = ia.ia_iomem[0].ir_size;
-			locs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
-			locs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
-			locs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
-			config_attach_loc(parent, cf, locs, &ia, isaprint);
+			flocs[ISACF_PORT] = ia.ia_io[0].ir_addr;
+			flocs[ISACF_SIZE] = ia.ia_io[0].ir_size;
+			flocs[ISACF_IOMEM] = ia.ia_iomem[0].ir_addr;
+			flocs[ISACF_IOSIZ] = ia.ia_iomem[0].ir_size;
+			flocs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
+			flocs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
+			flocs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
+			config_attach_loc(parent, cf, flocs, &ia, isaprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);
