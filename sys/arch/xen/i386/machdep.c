@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.2.2 2005/06/28 10:27:51 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.3 2005/08/25 20:16:21 tron Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.2 2005/06/28 10:27:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.3 2005/08/25 20:16:21 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.2 2005/06/28 10:27:51 tron Exp $"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1485,9 +1487,9 @@ init386(paddr_t first_avail)
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
-#if defined(XEN) && defined(DOM0OPS)
+#if defined(XEN) && (NISA > 0 || NPCI > 0)
 	x86_bus_space_init();
-#endif /* defined(XEN) && defined(DOM0OPS) */
+#endif
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 	/*
