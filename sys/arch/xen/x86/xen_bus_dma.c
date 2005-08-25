@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.3.2.3 2005/08/25 20:52:17 tron Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.3.2.4 2005/08/25 20:52:46 tron Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.3.2.3 2005/08/25 20:52:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.3.2.4 2005/08/25 20:52:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ again:
 			 */
 			printf("_xen_bus_dmamem_alloc_range: no way to "
 			    "enforce address range\n");
+			uvm_pglistfree(&mlist);
 			return EINVAL;
 		}
 		if (bus_curaddr == (bus_lastaddr + PAGE_SIZE)) {
