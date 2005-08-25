@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.62 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.63 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.62 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.63 2005/08/25 22:33:18 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -73,8 +73,6 @@ STATIC void cardbusattach(struct device *, struct device *, void *);
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
-static int cardbussubmatch(struct device *, struct cfdata *,
-    const locdesc_t *, void *);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -595,7 +593,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		locs[CARDBUSCF_FUNCTION] = function;
 
 		if ((csc = config_found_sm_loc((void *)sc, "cardbus", locs,
-		    &ca, cardbusprint, cardbussubmatch)) == NULL) {
+		    &ca, cardbusprint, config_stdsubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;
@@ -612,24 +610,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	disable_function(sc, 8);
 
 	return (0);
-}
-
-static int
-cardbussubmatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *locs, void *aux)
-{
-
-	/* ldesc->locs[CARDBUSCF_DEV] is always 0 */
-	if (cf->cf_loc[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_DEV] != locs[CARDBUSCF_DEV]) {
-		return (0);
-	}
-	if (cf->cf_loc[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_FUNCTION] != locs[CARDBUSCF_FUNCTION]) {
-		return (0);
-	}
-
-	return (config_match(parent, cf, aux));
 }
 
 static int

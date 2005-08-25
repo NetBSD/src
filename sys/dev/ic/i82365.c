@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.91 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: i82365.c,v 1.92 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.91 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.92 2005/08/25 22:33:19 drochner Exp $");
 
 #define	PCICDEBUG
 
@@ -89,8 +89,6 @@ int	pcic_debug = 0;
 void	pcic_attach_socket(struct pcic_handle *);
 void	pcic_attach_socket_finish(struct pcic_handle *);
 
-int	pcic_submatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
 int	pcic_print (void *arg, const char *pnp);
 int	pcic_intr_socket(struct pcic_handle *);
 void	pcic_poll_intr(void *);
@@ -417,7 +415,7 @@ pcic_attach_socket(h)
 	locs[PCMCIABUSCF_SOCKET] = h->socket;
 
 	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", locs, &paa,
-					pcic_print, pcic_submatch);
+					pcic_print, config_stdsubmatch);
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;
@@ -637,24 +635,6 @@ pcic_event_thread(arg)
 	wakeup(sc);
 
 	kthread_exit(0);
-}
-
-int
-pcic_submatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != locs[PCMCIABUSCF_CONTROLLER])
-			return 0;
-	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != locs[PCMCIABUSCF_SOCKET])
-			return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 int
