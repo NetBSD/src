@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.62 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.62 2005/08/25 18:35:39 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -477,8 +477,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 
 	for (function = 0; function < nfunction; function++) {
 		struct cardbus_attach_args ca;
-		int help[3];
-		locdesc_t *ldesc = (void *)&help; /* XXX */
+		int locs[CARDBUSCF_NLOCS];
 
 		if (locators[CARDBUSCF_FUNCTION] !=
 		    CARDBUSCF_FUNCTION_DEFAULT &&
@@ -592,11 +591,10 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 			}
 		}
 
-		ldesc->len = 2;
-		ldesc->locs[CARDBUSCF_DEV] = sc->sc_device; /* always 0 */
-		ldesc->locs[CARDBUSCF_FUNCTION] = function;
+		locs[CARDBUSCF_DEV] = sc->sc_device; /* always 0 */
+		locs[CARDBUSCF_FUNCTION] = function;
 
-		if ((csc = config_found_sm_loc((void *)sc, "cardbus", ldesc,
+		if ((csc = config_found_sm_loc((void *)sc, "cardbus", locs,
 		    &ca, cardbusprint, cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
@@ -618,16 +616,16 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 
 static int
 cardbussubmatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
+		const locdesc_t *locs, void *aux)
 {
 
 	/* ldesc->locs[CARDBUSCF_DEV] is always 0 */
 	if (cf->cf_loc[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_DEV] != ldesc->locs[CARDBUSCF_DEV]) {
+	    cf->cf_loc[CARDBUSCF_DEV] != locs[CARDBUSCF_DEV]) {
 		return (0);
 	}
 	if (cf->cf_loc[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_FUNCTION] != ldesc->locs[CARDBUSCF_FUNCTION]) {
+	    cf->cf_loc[CARDBUSCF_FUNCTION] != locs[CARDBUSCF_FUNCTION]) {
 		return (0);
 	}
 

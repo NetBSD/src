@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: sab.c,v 1.22 2005/08/25 18:35:39 drochner Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.21 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.22 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,8 +242,7 @@ sab_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 	u_int8_t r;
 	u_int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SABCF_NLOCS];
 
 	sc->sc_bt = ea->ea_bustag;
 	sc->sc_node = ea->ea_node;
@@ -303,12 +302,11 @@ sab_attach(parent, self, aux)
 
 		stax.sbt_portno = i;
 
-		ldesc->len = 1;
-		ldesc->locs[SABCF_CHANNEL] = i;
+		locs[SABCF_CHANNEL] = i;
 
 		sc->sc_child[i] =
 		    (struct sabtty_softc *)config_found_sm_loc(self,
-		     "sab", ldesc, &stax, sab_print, sab_submatch);
+		     "sab", locs, &stax, sab_print, sab_submatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
@@ -316,11 +314,11 @@ sab_attach(parent, self, aux)
 
 int
 sab_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
         if (cf->cf_loc[SABCF_CHANNEL] != SABCF_CHANNEL_DEFAULT &&
-            cf->cf_loc[SABCF_CHANNEL] != ldesc->locs[SABCF_CHANNEL])
+            cf->cf_loc[SABCF_CHANNEL] != locs[SABCF_CHANNEL])
                 return (0);
 
         return (config_match(parent, cf, aux));

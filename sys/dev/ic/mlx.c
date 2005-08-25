@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.34 2005/07/30 17:37:11 mhitch Exp $	*/
+/*	$NetBSD: mlx.c,v 1.35 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.34 2005/07/30 17:37:11 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.35 2005/08/25 18:35:39 drochner Exp $");
 
 #include "ld.h"
 
@@ -577,8 +577,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[MLXCF_NLOCS];
 
 	mlx->mlx_flags |= MLXF_RESCANNING;
 
@@ -643,11 +642,10 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		 */
 		mlxa.mlxa_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[MLXCF_UNIT] = i;
+		locs[MLXCF_UNIT] = i;
 
-		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", NULL, &mlxa, mlx_print,
-		    mlx_submatch);
+		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", locs,
+						&mlxa, mlx_print, mlx_submatch);
 		nunits += (ms->ms_dv != NULL);
 	}
 
@@ -681,11 +679,11 @@ mlx_print(void *aux, const char *pnp)
  */
 static int
 mlx_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[MLXCF_UNIT] != MLXCF_UNIT_DEFAULT &&
-	    cf->cf_loc[MLXCF_UNIT] != ldesc->locs[MLXCF_UNIT])
+	    cf->cf_loc[MLXCF_UNIT] != locs[MLXCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

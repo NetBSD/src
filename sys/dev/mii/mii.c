@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.37 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: mii.c,v 1.38 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.37 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.38 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,8 +74,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 	struct mii_softc *child;
 	int bmsr, offset = 0;
 	int phymin, phymax;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[MIICF_NLOCS];
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
@@ -144,11 +143,10 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 		ma.mii_capmask = capmask;
 		ma.mii_flags = flags | (mii->mii_flags & MIIF_INHERIT_MASK);
 
-		ldesc->len = 1;
-		ldesc->locs[MIICF_PHY] = ma.mii_phyno;
+		locs[MIICF_PHY] = ma.mii_phyno;
 
 		child = (struct mii_softc *)config_found_sm_loc(parent, "mii",
-			ldesc, &ma, mii_print, mii_submatch);
+			locs, &ma, mii_print, mii_submatch);
 		if (child) {
 			/*
 			 * Link it up in the parent's MII data.
@@ -239,11 +237,11 @@ mii_print(void *aux, const char *pnp)
 
 static int
 mii_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[MIICF_PHY] != MIICF_PHY_DEFAULT &&
-	    cf->cf_loc[MIICF_PHY] != ldesc->locs[MIICF_PHY])
+	    cf->cf_loc[MIICF_PHY] != locs[MIICF_PHY])
 		return (0);
 
 	return (config_match(parent, cf, aux));

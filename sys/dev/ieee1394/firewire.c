@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.2 2005/07/20 15:11:57 drochner Exp $	*/
+/*	$NetBSD: firewire.c,v 1.3 2005/08/25 18:35:39 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -558,14 +558,14 @@ firewire_resume(device_t dev)
 #elif defined(__NetBSD__)
 static int
 firewiresubmatch(
-    struct device *parent, struct cfdata *cf, const locdesc_t *ldesc, void *aux)
+    struct device *parent, struct cfdata *cf, const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[IEEE1394IFCF_EUIHI] != IEEE1394IFCF_EUIHI_DEFAULT &&
-	    cf->cf_loc[IEEE1394IFCF_EUIHI] != ldesc->locs[0])
+	    cf->cf_loc[IEEE1394IFCF_EUIHI] != locs[IEEE1394IFCF_EUIHI])
 		return (0);
 	if (cf->cf_loc[IEEE1394IFCF_EUILO] != IEEE1394IFCF_EUILO_DEFAULT &&
-	    cf->cf_loc[IEEE1394IFCF_EUILO] != ldesc->locs[1])
+	    cf->cf_loc[IEEE1394IFCF_EUILO] != locs[IEEE1394IFCF_EUILO])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
