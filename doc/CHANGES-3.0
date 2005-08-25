@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.215 2005/08/25 19:34:44 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.216 2005/08/25 20:59:09 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11883,4 +11883,43 @@ usr.bin/less/less/line.c			1.10
 	large file, jump to the end, scroll backwards with "b" and try to
 	search backwards afterwards.
 	[tron, ticket #705]
+
+sys/arch/xen/conf/files.xen			1.27
+sys/arch/xen/i386/machdep.c			1.18
+sys/arch/xen/include/pci_machdep.h		1.4
+sys/arch/xen/xen/evtchn.c			1.16
+sys/arch/xen/xen/hypervisor.c			1.15
+sys/arch/xen/xen/pci_machdep.c			1.5
+
+	Make PCI devices usable for non-domain0 kernels.
+	[bouyer, ticket #694]
+
+
+	More adjustements to deal with Xen's physical <=> machine addresses
+	mappings:
+	- Allow _bus_dmamem_alloc_range to be provided from external source:
+	  Use a _PRIVATE_BUS_DMAMEM_ALLOC_RANGE macro, defined to
+	  _bus_dmamem_alloc_range by default.
+	- avail_end is the end of the physical address range. Define a macro
+	 _BUS_AVAIL_END (defined by default to avail_end) and use it instead.
+	[bouyer, ticket #695]
+
+sys/arch/x86/include/bus_private.h		1.2
+sys/arch/x86/x86/bus_dma.c			1.22
+sys/arch/xen/conf/files.xen			1.28
+sys/arch/xen/include/bus_private.h		1.2
+sys/arch/xen/include/xenpmap.h			1.8
+sys/arch/xen/i386/xen_machdep.c			1.11
+sys/arch/xen/x86/xen_bus_dma.c			1.1-1.3
+
+	Improve bus_dmamem_map implementation for NetBSD-xen.
+	[bouyer, ticket #695, #696]
+
+sys/arch/x86/include/bus_private.h		1.3
+sys/arch/x86/x86/bus_dma.c			1.23
+sys/arch/xen/include/bus_private.h		1.3
+
+	Rename _PRIVATE_BUS_DMAMEM_ALLOC_RANGE to _BUS_DMAMEM_ALLOC_RANGE for
+	consistency with other macros defined in bus_private.h.
+	[bouyer, ticket #697]
 
