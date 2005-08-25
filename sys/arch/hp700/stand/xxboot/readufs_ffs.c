@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.1 2004/06/15 03:10:30 itohy Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.2 2005/08/25 14:31:07 he Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
@@ -122,7 +122,7 @@ try_ffs()
  */
 int
 get_ffs_inode(ino, dibuf)
-	ino_t ino;
+	ino32_t ino;
 	union ufs_dinode *dibuf;
 {
 	struct ufs_info *ufsinfo = &ufs_info;
