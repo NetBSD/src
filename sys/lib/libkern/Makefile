@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2005/08/25 08:34:50 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.74 2005/08/25 08:55:42 uebayasi Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -56,6 +56,8 @@ CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
 # mcount cannot be compiled with profiling
 .if ${MKPROFILE} != "no"
+POBJS+=	mcount.po
+
 mcount.po: mcount.o
 	cp mcount.o mcount.po
 .endif
@@ -81,8 +83,6 @@ SRCS+=	strchr.c
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
 .endif
-
-POBJS+=	mcount.po
 
 # only needed during build
 libinstall::
