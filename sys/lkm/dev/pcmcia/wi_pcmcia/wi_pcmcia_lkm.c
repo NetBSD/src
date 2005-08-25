@@ -1,4 +1,4 @@
-/* $NetBSD: wi_pcmcia_lkm.c,v 1.1 2004/08/18 13:12:07 drochner Exp $ */
+/* $NetBSD: wi_pcmcia_lkm.c,v 1.2 2005/08/25 15:08:06 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -12,13 +12,14 @@ CFDRIVER_DECL(wi, DV_DULL, NULL);
 
 extern struct cfdriver wi_cd;
 extern struct cfattach wi_pcmcia_ca;
+extern struct cfiattrdata pcmciacf_iattrdata;
 
 static int pcmcialoc[] = { -1, -1 }; /* function, irq */
 static struct cfparent pcmciaparent = {
 	"pcmcia", "pcmcia", DVUNIT_ANY
 };
 static struct cfdata wi_pcmcia_cfdata[] = {
-	{"wi", "wi_pcmcia", 0, FSTATE_STAR, pcmcialoc, 0, &pcmciaparent, 0},
+	{"wi", "wi_pcmcia", 0, FSTATE_STAR, pcmcialoc, 0, &pcmciaparent},
 	{ 0 }
 };
 
