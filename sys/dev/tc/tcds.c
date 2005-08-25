@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.14 2005/02/27 00:27:49 perry Exp $ */
+/* $NetBSD: tcds.c,v 1.15 2005/08/25 18:35:40 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.14 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.15 2005/08/25 18:35:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -171,8 +171,7 @@ tcdsattach(parent, self, aux)
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
 	const struct evcnt *pevcnt;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TCDSCF_NLOCS];
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -308,10 +307,9 @@ tcdsattach(parent, self, aux)
 
 		tcds_scsi_reset(tcdsdev.tcdsda_sc);
 
-		ldesc->len = 1;
-		ldesc->locs[TCDSCF_CHIP] = i;
+		locs[TCDSCF_CHIP] = i;
 
-		config_found_sm_loc(self, "tcds", ldesc, &tcdsdev,
+		config_found_sm_loc(self, "tcds", locs, &tcdsdev,
 				    tcdsprint, tcdssubmatch);
 #ifdef __alpha__
 		/*
@@ -326,15 +324,15 @@ tcdsattach(parent, self, aux)
 }
 
 int
-tcdssubmatch(parent, cf, ldesc, aux)
+tcdssubmatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
-	    cf->cf_loc[TCDSCF_CHIP] != ldesc->locs[TCDSCF_CHIP])
+	    cf->cf_loc[TCDSCF_CHIP] != locs[TCDSCF_CHIP])
 		return (0);
 
 	return (config_match(parent, cf, aux));

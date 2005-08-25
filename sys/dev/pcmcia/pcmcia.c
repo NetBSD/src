@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.74 2005/08/15 18:58:24 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.75 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.74 2005/08/15 18:58:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.75 2005/08/25 18:35:39 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -214,8 +214,7 @@ pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
 	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
 	struct pcmcia_function *pf;
 	struct pcmcia_attach_args paa;
-	int help[3];
-	locdesc_t *ldesc = (void *)&help; /* XXX */
+	int locs[PCMCIACF_NLOCS];
 
 	if (sc->card.error ||
 	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
@@ -234,16 +233,15 @@ pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
 		if (pf->child)
 			continue;
 
-		ldesc->len = 2;
-		ldesc->locs[PCMCIACF_FUNCTION] = pf->number;
-		ldesc->locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
+		locs[PCMCIACF_FUNCTION] = pf->number;
+		locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
 
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		pf->child = config_found_sm_loc(self, "pcmcia", ldesc, &paa,
+		pf->child = config_found_sm_loc(self, "pcmcia", locs, &paa,
 						pcmcia_print, pcmcia_submatch);
 	}
 
@@ -332,15 +330,15 @@ pcmcia_card_deactivate(dev)
 }
 
 int
-pcmcia_submatch(parent, cf, ldesc, aux)
+pcmcia_submatch(parent, cf, locs, aux)
 	struct device *parent;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	struct cfdata *cf;
 	void *aux;
 {
 
 	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCMCIACF_FUNCTION] != ldesc->locs[PCMCIACF_FUNCTION])
+	    cf->cf_loc[PCMCIACF_FUNCTION] != locs[PCMCIACF_FUNCTION])
 		return (0);
 
 	return (config_match(parent, cf, aux));

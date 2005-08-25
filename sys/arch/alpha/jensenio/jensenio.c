@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.10 2004/09/14 19:57:37 drochner Exp $ */
+/* $NetBSD: jensenio.c,v 1.11 2005/08/25 18:35:38 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.10 2004/09/14 19:57:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.11 2005/08/25 18:35:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,7 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct jensenio_attach_args ja;
 	struct jensenio_config *jcp = &jensenio_configuration;
 	int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[JENSENIOCF_NLOCS];
 
 	printf("\n");
 
@@ -193,9 +192,8 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 		ja.ja_iot = &jcp->jc_internal_iot;
 		ja.ja_ec = &jcp->jc_ec;
 
-		ldesc->len = 1;
-		ldesc->locs[JENSENIOCF_PORT] = jensenio_devs[i].jd_ioaddr;
-		(void) config_found_sm_loc(self, "jensenio", ldesc, &ja,
+		locs[JENSENIOCF_PORT] = jensenio_devs[i].jd_ioaddr;
+		(void) config_found_sm_loc(self, "jensenio", locs, &ja,
 		    jensenio_print, jensenio_submatch);
 	}
 
@@ -225,11 +223,11 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 
 int
 jensenio_submatch(struct device *parent, struct cfdata *cf,
-		  const locdesc_t *ldesc, void *aux)
+		  const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[JENSENIOCF_PORT] != JENSENIOCF_PORT_DEFAULT &&
-	    cf->cf_loc[JENSENIOCF_PORT] != ldesc->locs[JENSENIOCF_PORT])
+	    cf->cf_loc[JENSENIOCF_PORT] != locs[JENSENIOCF_PORT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

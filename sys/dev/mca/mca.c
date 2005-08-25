@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.17 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: mca.c,v 1.18 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.17 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.18 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,15 +118,15 @@ mca_print(aux, pnp)
 }
 
 int
-mca_submatch(parent, cf, ldesc, aux)
+mca_submatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if (cf->cf_loc[MCACF_SLOT] != MCACF_SLOT_DEFAULT &&
-	    cf->cf_loc[MCACF_SLOT] != ldesc->locs[MCACF_SLOT])
+	    cf->cf_loc[MCACF_SLOT] != locs[MCACF_SLOT])
 		return 0;
 	return (config_match(parent, cf, aux));
 }
@@ -162,8 +162,7 @@ mca_attach(parent, self, aux)
 	for (slot = 0; slot < MCA_MAX_SLOTS; slot++) {
 		struct mca_attach_args ma;
 		int reg;
-		int help[2];
-		locdesc_t *ldesc = (void *)help; /* XXX */
+		int locs[MCACF_NLOCS];
 
 		ma.ma_iot = iot;
 		ma.ma_memt = memt;
@@ -178,12 +177,11 @@ mca_attach(parent, self, aux)
 		if (ma.ma_id == 0xffff)	/* no adapter here */
 			continue;
 
-		ldesc->len = 1;
-		ldesc->locs[MCACF_SLOT] = slot;
+		locs[MCACF_SLOT] = slot;
 
 		if (ma.ma_pos[2] & MCA_POS2_ENABLE
 		    || mca_match_disabled(ma.ma_id))
-			config_found_sm_loc(self, "mca", ldesc, &ma,
+			config_found_sm_loc(self, "mca", locs, &ma,
 					    mca_print, mca_submatch);
 		else {
 			mca_print(&ma, self->dv_xname);

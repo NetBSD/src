@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.28 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.29 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.28 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.29 2005/08/25 18:35:39 drochner Exp $");
 
 #include "rnd.h"
 
@@ -153,11 +153,11 @@ edc_mca_probe(parent, match, aux)
 
 static int
 edcsubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[EDCCF_DRIVE] != EDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[EDCCF_DRIVE] != ldesc->locs[EDCCF_DRIVE])
+	    cf->cf_loc[EDCCF_DRIVE] != locs[EDCCF_DRIVE])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -175,8 +175,7 @@ edc_mca_attach(parent, self, aux)
 	int irq, drq, iobase;
 	const char *typestr;
 	int devno, error;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[EDCCF_NLOCS];
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
@@ -324,10 +323,9 @@ edc_mca_attach(parent, self, aux)
 	/* check for attached disks */
 	for (devno = 0; devno < sc->sc_maxdevs; devno++) {
 		eda.edc_drive = devno;
-		ldesc->len = 1;
-		ldesc->locs[EDCCF_DRIVE] = devno;
+		locs[EDCCF_DRIVE] = devno;
 		sc->sc_ed[devno] =
-			(void *) config_found_sm_loc(self, "edc", ldesc, &eda,
+			(void *) config_found_sm_loc(self, "edc", locs, &eda,
 						     NULL, edcsubmatch);
 
 		/* If initialization did not succeed, NULL the pointer. */

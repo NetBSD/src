@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.28 2005/06/02 13:17:45 drochner Exp $ */
+/* $NetBSD: tlsb.c,v 1.29 2005/08/25 18:35:38 drochner Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.28 2005/06/02 13:17:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.29 2005/08/25 18:35:38 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -104,18 +104,18 @@ tlsbprint(aux, pnp)
 }
 
 static int
-tlsbsubmatch(parent, cf, ldesc, aux)
+tlsbsubmatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if (cf->cf_loc[TLSBCF_NODE] != TLSBCF_NODE_DEFAULT &&
-	    cf->cf_loc[TLSBCF_NODE] != ldesc->locs[TLSBCF_NODE])
+	    cf->cf_loc[TLSBCF_NODE] != locs[TLSBCF_NODE])
 		return (0);
 	if (cf->cf_loc[TLSBCF_OFFSET] != TLSBCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[TLSBCF_OFFSET] != ldesc->locs[TLSBCF_OFFSET])
+	    cf->cf_loc[TLSBCF_OFFSET] != locs[TLSBCF_OFFSET])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -153,8 +153,7 @@ tlsbattach(parent, self, aux)
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
 	int node;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TLSBCF_NLOCS];
 
 	printf("\n");
 
@@ -206,11 +205,10 @@ tlsbattach(parent, self, aux)
 		/*
 		 * Attach any children nodes, including a CPU's GBus
 		 */
-		ldesc->len = 2;
-		ldesc->locs[TLSBCF_NODE] = node;
-		ldesc->locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
+		locs[TLSBCF_NODE] = node;
+		locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
-		config_found_sm_loc(self, "tlsb", ldesc, &ta,
+		config_found_sm_loc(self, "tlsb", locs, &ta,
 				    tlsbprint, tlsbsubmatch);
 	}
 	/*
@@ -253,11 +251,10 @@ tlsbattach(parent, self, aux)
 			ta.ta_swrev = TLDEV_SWREV(tldev);
 			ta.ta_hwrev = TLDEV_HWREV(tldev);
 
-			ldesc->len = 2;
-			ldesc->locs[TLSBCF_NODE] = node;
-			ldesc->locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
+			locs[TLSBCF_NODE] = node;
+			locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
-			config_found_sm_loc(self, "tlsb", ldesc, &ta,
+			config_found_sm_loc(self, "tlsb", locs, &ta,
 					    tlsbprint, tlsbsubmatch);
 		}
 	}

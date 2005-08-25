@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.93 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.94 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.94 2005/08/25 18:35:39 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -245,14 +245,14 @@ pciprint(void *aux, const char *pnp)
 
 int
 pcisubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[PCICF_DEV] != PCICF_DEV_DEFAULT &&
-	    cf->cf_loc[PCICF_DEV] != ldesc->locs[PCICF_DEV])
+	    cf->cf_loc[PCICF_DEV] != locs[PCICF_DEV])
 		return (0);
 	if (cf->cf_loc[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCICF_FUNCTION] != ldesc->locs[PCICF_FUNCTION])
+	    cf->cf_loc[PCICF_FUNCTION] != locs[PCICF_FUNCTION])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -265,8 +265,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	struct pci_attach_args pa;
 	pcireg_t id, csr, class, intr, bhlcr;
 	int ret, pin, bus, device, function;
-	int help[3];
-	locdesc_t *ldp = (void *)&help; /* XXX XXX */
+	int locs[PCICF_NLOCS];
 	struct device *subdev;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
@@ -350,11 +349,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
-		ldp->len = 2;
-		ldp->locs[PCICF_DEV] = device;
-		ldp->locs[PCICF_FUNCTION] = function;
+		locs[PCICF_DEV] = device;
+		locs[PCICF_FUNCTION] = function;
 
-		subdev = config_found_sm_loc(&sc->sc_dev, "pci", ldp, &pa,
+		subdev = config_found_sm_loc(&sc->sc_dev, "pci", locs, &pa,
 					     pciprint, pcisubmatch);
 		sc->PCI_SC_DEVICESC(device, function) = subdev;
 		ret = (subdev != NULL);

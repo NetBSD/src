@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.40 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: tc.c,v 1.41 2005/08/25 18:35:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.40 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.41 2005/08/25 18:35:40 drochner Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -82,8 +82,7 @@ tcattach(parent, self, aux)
 	struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
 	int i;
-	int help[3];
-	locdesc_t *ldesc = (void *)&help; /* XXX */
+	int locs[TCCF_NLOCS];
 
 	printf(": %s MHz clock\n",
 	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
@@ -136,13 +135,12 @@ tcattach(parent, self, aux)
 		 */
 		sc->sc_slots[builtin->tcb_slot].tcs_used = 1;
 
-		ldesc->len = 2;
-		ldesc->locs[TCCF_SLOT] = builtin->tcb_slot;
-		ldesc->locs[TCCF_OFFSET] = builtin->tcb_offset;
+		locs[TCCF_SLOT] = builtin->tcb_slot;
+		locs[TCCF_OFFSET] = builtin->tcb_offset;
 		/*
 		 * Attach the device.
 		 */
-		config_found_sm_loc(self, "tc", ldesc, &ta,
+		config_found_sm_loc(self, "tc", locs, &ta,
 				    tcprint, tcsubmatch);
 	}
 
@@ -180,13 +178,12 @@ tcattach(parent, self, aux)
 		 */
 		slot->tcs_used = 1;
 
-		ldesc->len = 2;
-		ldesc->locs[TCCF_SLOT] = i;
-		ldesc->locs[TCCF_OFFSET] = 0;
+		locs[TCCF_SLOT] = i;
+		locs[TCCF_OFFSET] = 0;
 		/*
 		 * Attach the device.
 		 */
-		config_found_sm_loc(self, "tc", ldesc, &ta,
+		config_found_sm_loc(self, "tc", locs, &ta,
 				    tcprint, tcsubmatch);
 	}
 }
@@ -208,18 +205,18 @@ tcprint(aux, pnp)
 }
 
 int
-tcsubmatch(parent, cf, ldesc, aux)
+tcsubmatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if ((cf->cf_loc[TCCF_SLOT] != TCCF_SLOT_DEFAULT) &&
-	    (cf->cf_loc[TCCF_SLOT] != ldesc->locs[TCCF_SLOT]))
+	    (cf->cf_loc[TCCF_SLOT] != locs[TCCF_SLOT]))
 		return 0;
 	if ((cf->cf_loc[TCCF_OFFSET] != TCCF_OFFSET_DEFAULT) &&
-	    (cf->cf_loc[TCCF_OFFSET] != ldesc->locs[TCCF_OFFSET]))
+	    (cf->cf_loc[TCCF_OFFSET] != locs[TCCF_OFFSET]))
 		return 0;
 
 	return (config_match(parent, cf, aux));
