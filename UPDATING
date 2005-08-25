@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.141 2005/07/01 09:55:37 augustss Exp $
+$NetBSD: UPDATING,v 1.142 2005/08/25 16:01:14 drochner Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20050825:
+	Some data structures in sys/device.h, related to interface
+	attributes and locator names, were changed. config(1) was
+	modified to emit the new data structures.
+	Thus usr.bin/config must be updated (and run on the kernel
+	configuration file) before a new kernel can be built.
 
 20050531:
 	genassym.sh(8) was moved to genassym(1). You need to either build
@@ -793,19 +800,15 @@ cd $NETBSDSRCDIR && make cleandir
 
 Critical utilities:
 ^^^^^^^^^^^^^^^^^^^
-	gnu/usr.bin/egcs
 	usr.bin/compile_et
 	usr.bin/make
 	usr.bin/yacc
 	usr.bin/lex
 	usr.bin/xlint
-	usr.sbin/config
+	usr.bin/config
 
 Other problems and possible solutions:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Symptom:Unreasonable compiler errors.
-Fix:	Rebuild gnu/usr.bin/egcs
-
 Symptom:Complaints involving a Makefile.
 Fix:	Rebuild usr.bin/make:
 	cd usr.bin/make && make && make install
@@ -816,7 +819,7 @@ Fix:	Make sure .mk files are up to date.
 	cd share/mk && make install
 
 Symptom:Kernel `config' fails to configure any kernel, including GENERIC.
-Fix:	Rebuild usr.sbin/config
+Fix:	Rebuild usr.bin/config
 
 Symptom:
 Fix:	Rebuild usr.bin/yacc
@@ -842,7 +845,7 @@ Fix:	Build and install usr.bin/mklocale
 Symptom:undefined reference to `__assert13' or `__unsetenv13'
 Fix:    Rebuild and install lib/libc
 
-Symptom:usr.sbin/config fails to build.
+Symptom:usr.bin/config fails to build.
 Fix:	Try building with -DMAKE_BOOTSTRAP added to CFLAGS in Makefile.
 
 Symptom:undefined reference to `getprogname' or `setprogname'
