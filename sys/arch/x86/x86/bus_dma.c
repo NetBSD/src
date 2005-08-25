@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19.2.2 2005/08/25 20:20:08 tron Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19.2.3 2005/08/25 20:57:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.2 2005/08/25 20:20:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.3 2005/08/25 20:57:24 tron Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -139,8 +139,8 @@ static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 static __inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
     bus_addr_t, int);
 
-#ifndef _PRIVATE_BUS_DMAMEM_ALLOC_RANGE
-#define _PRIVATE_BUS_DMAMEM_ALLOC_RANGE _bus_dmamem_alloc_range
+#ifndef _BUS_DMAMEM_ALLOC_RANGE
+#define _BUS_DMAMEM_ALLOC_RANGE _bus_dmamem_alloc_range
 
 /*
  * Allocate physical memory from the given physical address range.
@@ -200,7 +200,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	return (0);
 }
-#endif /* _PRIVATE_BUS_DMAMEM_ALLOC_RANGE */
+#endif /* _BUS_DMAMEM_ALLOC_RANGE */
 
 /*
  * Create a DMA map.
@@ -860,7 +860,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	else
 		high = trunc_page(_BUS_AVAIL_END);
 
-	return (_PRIVATE_BUS_DMAMEM_ALLOC_RANGE(t, size, alignment, boundary,
+	return (_BUS_DMAMEM_ALLOC_RANGE(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high));
 }
 
