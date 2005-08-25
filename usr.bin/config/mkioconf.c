@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.2 2005/06/28 20:21:05 drochner Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.3 2005/08/25 15:01:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 /*
  * Make ioconf.c.
  */
-static int cf_locnames_print(const char *, void *, void *);
+static int cf_locators_print(const char *, void *, void *);
 static int cforder(const void *, const void *);
 static int emitcfdata(FILE *);
 static int emitcfdrivers(FILE *);
@@ -165,6 +165,40 @@ emithdr(FILE *ofp)
 	return (rv);
 }
 
+/*
+ * Emit an initialized array of character strings describing this
+ * attribute's locators.
+ */
+static int
+cf_locators_print(const char *name, void *value, void *arg)
+{
+	struct attr *a;
+	struct nvlist *nv;
+	FILE *fp = arg;
+
+	a = value;
+	if (a->a_locs) {
+		if (fprintf(fp,
+		    "static const struct cfiattrdata %scf_iattrdata = {\n",
+			    name) < 0)
+			return (1);
+		if (fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen) < 0)
+			return (1);
+		for (nv = a->a_locs; nv; nv = nv->nv_next)
+			if (fprintf(fp, "\t\t{\"%s\", \"%s\", %s},\n",
+				nv->nv_name,
+				(nv->nv_str ? nv->nv_str : "NULL"),
+				(nv->nv_str ? nv->nv_str : "0")) < 0)
+				return (1);
+		if (fprintf(fp, "\t}\n};\n") < 0)
+			return (1);
+	} else if (fprintf(fp,
+		"static const struct cfiattrdata %scf_iattrdata = {\n"
+		"\t\"%s\", 0, {\n\t\t{ NULL },\n\t}\n};\n", name, name) < 0)
+		return (1);
+	return 0;
+}
+
 static int
 emitcfdrivers(FILE *fp)
 {
@@ -172,6 +206,10 @@ emitcfdrivers(FILE *fp)
 	struct nvlist *nv;
 	struct attr *a;
 	int has_iattrs;
+
+	NEWLINE;
+	if (ht_enumerate(attrtab, cf_locators_print, fp))
+		return (1);
 
 	NEWLINE;
 	TAILQ_FOREACH(d, &allbases, d_next) {
@@ -184,11 +222,11 @@ emitcfdrivers(FILE *fp)
 				continue;
 			if (has_iattrs == 0 &&
 			    fprintf(fp,
-			    	    "static const char * const %s_attrs[] = { ",
+			    	    "static const struct cfiattrdata * const %s_attrs[] = { ",
 			    	    d->d_name) < 0)
 				return (1);
 			has_iattrs = 1;
-			if (fprintf(fp, "\"%s\", ", a->a_name) < 0)
+			if (fprintf(fp, "&%scf_iattrdata, ", a->a_name) < 0)
 				return (1);
 		}
 		if (has_iattrs && fprintf(fp, "NULL };\n") < 0)
@@ -286,32 +324,6 @@ emitcfattachinit(FILE *fp)
 	return (0);
 }
 
-/*
- * Emit an initialized array of character strings describing this
- * attribute's locators.
- */
-static int
-cf_locnames_print(const char *name, void *value, void *arg)
-{
-	struct attr *a;
-	struct nvlist *nv;
-	FILE *fp = arg;
-
-	a = value;
-	if (a->a_locs) {
-		if (fprintf(fp,
-			    "static const char * const %scf_locnames[] = { ",
-			    name) < 0)
-			return (1);
-		for (nv = a->a_locs; nv; nv = nv->nv_next)
-			if (fprintf(fp, "\"%s\", ", nv->nv_name) < 0)
-				return (1);
-		if (fprintf(fp, "NULL};\n") < 0)
-			return (1);
-	}
-	return 0;
-}
-
 static int
 emitloc(FILE *fp)
 {
@@ -333,14 +345,6 @@ static int loc[%d] = {", locators.used) < 0)
 static int loc[1] = { -1 };\n") < 0)
 			return (1);
 	}
-
-	if (*packed != NULL)
-		if (fprintf(fp,
-	    "\nstatic const char * const nullcf_locnames[] = {NULL};\n") < 0)
-			return (1);
-
-	if (locators.used != 0)
-		return ht_enumerate(attrtab, cf_locnames_print, fp);
 
 	return (0);
 }
@@ -401,8 +405,7 @@ emitcfdata(FILE *fp)
 #define STAR FSTATE_STAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
-    /* driver           attachment    unit state loc   flags pspec\n\
-       locnames */\n") < 0)
+    /* driver           attachment    unit state loc   flags pspec */\n") < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
@@ -470,13 +473,9 @@ struct cfdata cfdata[] = {\n\
 			    unit, state, loc, i->i_cfflags) < 0)
 			return (1);
 		if (ps != NULL) {
-			if (fprintf(fp, "&pspec%d,\n", ps->p_inst) < 0)
+			if (fprintf(fp, "&pspec%d},\n", ps->p_inst) < 0)
 				return (1);
-		} else if (fputs("NULL,\n", fp) < 0)
-			return (1);
-		if (fprintf(fp, "     %scf_locnames},\n",
-			    (a != NULL && a->a_locs != NULL) ? a->a_name
-							     : "null") < 0)
+		} else if (fputs("NULL},\n", fp) < 0)
 			return (1);
 	}
 	return (fputs("    {0}\n};\n", fp) < 0);
