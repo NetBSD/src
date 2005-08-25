@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2.2.1 2005/04/28 10:18:56 tron Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.2.2.2 2005/08/25 20:17:32 tron Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -39,6 +39,7 @@ extern u_int32_t pci_bus_attached[];
 /* Some values appropriate for x86, from x86/include/pci_machdep.h */
 #define __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 #define PCI_PREFER_IOSPACE
+#define PCI_MACHDEP_ENUMERATE_BUS xen_pci_enumerate_bus
 
 /* types provided to MI PCI */
 struct xen_pci_tag {
@@ -75,6 +76,8 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+int		xen_pci_enumerate_bus(struct pci_softc *, const int *,
+		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,
