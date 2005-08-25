@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.214 2005/08/24 21:56:45 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.215 2005/08/25 19:34:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11869,4 +11869,18 @@ sys/dev/ic/wdc.c				1.226,1.229
 	byte order only for WDCC_IDENTIFY and ATAPI_IDENTIFY_DEVICE. This fixes
 	atactl smart status on big-endian hosts.
 	[bouyer, ticket #693]
+
+usr.sbin/cron/do_command.c			1.17
+
+	Set SIGCHLD to SIG_DFL in cron's child; instead of SIG_IGN, which
+	alters the behavior of wait() causing cron_pclose() to return bogus
+	status and the logging of bogus status in debug mode.
+	[heas, ticket #698]
+
+usr.bin/less/less/line.c			1.10
+
+	Fix a one byte off error which causes "less" to crash if you view a
+	large file, jump to the end, scroll backwards with "b" and try to
+	search backwards afterwards.
+	[tron, ticket #705]
 
