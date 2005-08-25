@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2004/06/15 03:10:30 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2005/08/25 14:31:07 he Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -44,7 +44,7 @@ void ipl_main __P((unsigned /*interactive*/,
     unsigned /*sptop*/, unsigned /*psw*/));
 void load_file __P((const char *, unsigned /*loadadr*/,
     unsigned /*interactive*/, int /*part*/));
-void load_file_ino __P((ino_t, const char *, unsigned /*loadadr*/,
+void load_file_ino __P((ino32_t, const char *, unsigned /*loadadr*/,
     unsigned /*interactive*/, int /*part*/));
 
 struct loadinfo {
@@ -315,7 +315,7 @@ load_file(path, loadadr, interactive, part)
 
 void
 load_file_ino(ino, fn, loadadr, interactive, part)
-	ino_t ino;
+	ino32_t ino;
 	const char *fn;		/* for message only */
 	unsigned loadadr, interactive;
 	int part;
