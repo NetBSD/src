@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.2 2005/06/28 20:21:05 drochner Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.3 2005/08/25 15:02:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,6 +256,10 @@ locators_print(const char *name, void *value, void *arg)
 				return 1;
 			free(namedup);
 		}
+		/* assert(i == a->a_loclen) */
+		if (fprintf(fp, "#define %sCF_NLOCS %d\n",
+					locdup, a->a_loclen) < 0)
+			return 1;
 		free(locdup);
 	}
 	return 0;
