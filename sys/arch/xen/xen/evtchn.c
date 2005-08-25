@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3.2.12 2005/08/18 20:45:11 tron Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3.2.13 2005/08/25 20:16:21 tron Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.12 2005/08/18 20:45:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.13 2005/08/25 20:16:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3.2.12 2005/08/18 20:45:11 tron Exp $")
 #include <machine/xenfunc.h>
 
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -71,7 +73,7 @@ static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
 static int virq_to_evtch[NR_VIRQS];
 
 
-#ifdef DOM0OPS
+#if NPCI > 0 || NISA > 0
 /* event-channel <-> PIRQ mapping */
 static int pirq_to_evtch[NR_PIRQS];
 /* PIRQ needing notify */
@@ -97,7 +99,7 @@ events_default_setup()
 	for (i = 0; i < NR_VIRQS; i++)
 		virq_to_evtch[i] = -1;
 
-#ifdef DOM0OPS
+#if NPCI > 0 || NISA > 0
 	/* No PIRQ -> event mappings. */
 	for (i = 0; i < NR_PIRQS; i++)
 		pirq_to_evtch[i] = -1;
@@ -289,7 +291,7 @@ unbind_virq_from_evtch(int virq)
 	splx(s);
 }
 
-#ifdef DOM0OPS
+#if NPCI > 0 || NISA > 0
 int
 bind_pirq_to_evtch(int pirq)
 {
@@ -402,7 +404,7 @@ pirq_interrupt(void *arg)
 	return ret;
 }
 
-#endif /* DOM0OPS */
+#endif /* NPCI > 0 || NISA > 0 */
 
 int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
@@ -548,7 +550,7 @@ hypervisor_enable_event(unsigned int evtch)
 #endif
 
 	hypervisor_unmask_event(evtch);
-#ifdef DOM0OPS
+#if NPCI > 0 || NISA > 0
 	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
 #ifdef  IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
@@ -556,7 +558,7 @@ hypervisor_enable_event(unsigned int evtch)
 #endif
 		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
 	}
-#endif /* DOM0OPS */
+#endif /* NPCI > 0 || NISA > 0 */
 }
 
 static int
