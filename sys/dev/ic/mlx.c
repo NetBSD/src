@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.35 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: mlx.c,v 1.36 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.35 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.36 2005/08/25 22:33:19 drochner Exp $");
 
 #include "ld.h"
 
@@ -133,8 +133,6 @@ static void	mlx_periodic_thread(void *);
 static int	mlx_print(void *, const char *);
 static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
-static int	mlx_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
 static __inline__ time_t	mlx_curtime(void);
@@ -645,7 +643,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		locs[MLXCF_UNIT] = i;
 
 		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", locs,
-						&mlxa, mlx_print, mlx_submatch);
+				&mlxa, mlx_print, config_stdsubmatch);
 		nunits += (ms->ms_dv != NULL);
 	}
 
@@ -672,21 +670,6 @@ mlx_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", mlxa->mlxa_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-mlx_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[MLXCF_UNIT] != MLXCF_UNIT_DEFAULT &&
-	    cf->cf_loc[MLXCF_UNIT] != locs[MLXCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

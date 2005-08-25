@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.18 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: mca.c,v 1.19 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.18 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.19 2005/08/25 22:33:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ void	mca_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(mca, sizeof(struct device),
     mca_match, mca_attach, NULL, NULL);
 
-int	mca_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 int	mca_print(void *, const char *);
 
 int
@@ -117,20 +115,6 @@ mca_print(aux, pnp)
 	}
 }
 
-int
-mca_submatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[MCACF_SLOT] != MCACF_SLOT_DEFAULT &&
-	    cf->cf_loc[MCACF_SLOT] != locs[MCACF_SLOT])
-		return 0;
-	return (config_match(parent, cf, aux));
-}
-
 void
 mca_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -182,7 +166,7 @@ mca_attach(parent, self, aux)
 		if (ma.ma_pos[2] & MCA_POS2_ENABLE
 		    || mca_match_disabled(ma.ma_id))
 			config_found_sm_loc(self, "mca", locs, &ma,
-					    mca_print, mca_submatch);
+					    mca_print, config_stdsubmatch);
 		else {
 			mca_print(&ma, self->dv_xname);
 			printf(" disabled\n");

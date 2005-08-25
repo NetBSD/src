@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.231 2005/08/25 18:35:40 drochner Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.232 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.231 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.232 2005/08/25 22:33:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,6 @@ static int	scsibusactivate(struct device *, enum devact);
 static int	scsibusdetach(struct device *, int flags);
 static int	scsibusrescan(struct device *, const char *, const int *);
 static void	scsidevdetached(struct device *, struct device *);
-
-static int	scsibussubmatch(struct device *, struct cfdata *,
-		    const locdesc_t *, void *);
 
 CFATTACH_DECL2(scsibus, sizeof(struct scsibus_softc),
     scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate,
@@ -240,20 +237,6 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 	scsipi_adapter_delref(chan->chan_adapter);
 
 	config_pending_decr();
-}
-
-static int
-scsibussubmatch(struct device *parent, struct cfdata *cf,
-	const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[SCSIBUSCF_TARGET] != SCSIBUSCF_TARGET_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_TARGET] != locs[SCSIBUSCF_TARGET])
-		return (0);
-	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_LUN] != locs[SCSIBUSCF_LUN])
-		return (0);
-	return (config_match(parent, cf, aux));
 }
 
 static int
@@ -956,7 +939,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	locs[SCSIBUSCF_TARGET] = target;
 	locs[SCSIBUSCF_LUN] = lun;
 
-	if ((cf = config_search_loc(scsibussubmatch, &sc->sc_dev,
+	if ((cf = config_search_loc(config_stdsubmatch, &sc->sc_dev,
 	     "scsibus", locs, &sa)) != NULL) {
 		scsipi_insert_periph(chan, periph);
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.37 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: eisa.c,v 1.38 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.37 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.38 2005/08/25 22:33:18 drochner Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -61,8 +61,6 @@ static void	eisaattach(struct device *, struct device *, void *);
 CFATTACH_DECL(eisa, sizeof(struct device),
     eisamatch, eisaattach, NULL, NULL);
 
-static int	eisasubmatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	eisaprint(void *, const char *);
 static void	eisa_devinfo(const char *, char *, size_t);
 
@@ -86,17 +84,6 @@ eisaprint(void *aux, const char *pnp)
 	}
 	aprint_normal(" slot %d", ea->ea_slot);
 	return (UNCONF);
-}
-
-static int
-eisasubmatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t * locs, void *aux)
-{
-
-	if (cf->cf_loc[EISACF_SLOT] != EISACF_SLOT_DEFAULT &&
-	    cf->cf_loc[EISACF_SLOT] != locs[EISACF_SLOT])
-		return (0);
-	return (config_match(parent, cf, aux));
 }
 
 static void
@@ -195,7 +182,7 @@ eisaattach(struct device *parent, struct device *self, void *aux)
 
 		/* Attach matching device. */
 		config_found_sm_loc(self, "eisa", locs, &ea,
-				    eisaprint, eisasubmatch);
+				    eisaprint, config_stdsubmatch);
 	}
 }
 

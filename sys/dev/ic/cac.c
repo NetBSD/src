@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.31 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: cac.c,v 1.32 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.31 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.32 2005/08/25 22:33:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,6 @@ static int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
 static int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 static int	cac_print(void *, const char *);
 static void	cac_shutdown(void *);
-static int	cac_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static struct	cac_ccb *cac_l0_completed(struct cac_softc *);
 static int	cac_l0_fifo_full(struct cac_softc *);
@@ -187,7 +185,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		locs[CACCF_UNIT] = i;
 
 		config_found_sm_loc(&sc->sc_dv, "cac", locs, &caca,
-				    cac_print, cac_submatch);
+				    cac_print, config_stdsubmatch);
 	}
 
 	/* Set our `shutdownhook' before we start any device activity. */
@@ -233,21 +231,6 @@ cac_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", caca->caca_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-cac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[CACCF_UNIT] != CACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[CACCF_UNIT] != locs[CACCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.49 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: iop.c,v 1.50 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.49 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.50 2005/08/25 22:33:18 drochner Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -228,8 +228,6 @@ static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
-static int	iop_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -591,7 +589,8 @@ iop_config_interrupts(struct device *self)
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
 	locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", locs, &ia, iop_print, iop_submatch);
+	config_found_sm_loc(self, "iop", locs, &ia, iop_print,
+		config_stdsubmatch);
 
 	/*
 	 * Start device configuration.
@@ -841,7 +840,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		locs[IOPCF_TID] = ia.ia_tid;
 
 		dv = config_found_sm_loc(&sc->sc_dv, "iop", locs, &ia,
-					 iop_print, iop_submatch);
+					 iop_print, config_stdsubmatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
 			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
@@ -896,18 +895,6 @@ iop_print(void *aux, const char *pnp)
 	}
 	aprint_normal(" tid %d", ia->ia_tid);
 	return (UNCONF);
-}
-
-static int
-iop_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[IOPCF_TID] != IOPCF_TID_DEFAULT &&
-	    cf->cf_loc[IOPCF_TID] != locs[IOPCF_TID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
