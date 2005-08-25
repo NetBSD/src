@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2005/02/26 22:58:56 perry Exp $
+#	$NetBSD: Makefile,v 1.73 2005/08/25 08:34:50 uebayasi Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -55,8 +55,10 @@ CLEANFILES+= lib${LIB}.o lib${LIB}.po
 #
 
 # mcount cannot be compiled with profiling
+.if ${MKPROFILE} != "no"
 mcount.po: mcount.o
 	cp mcount.o mcount.po
+.endif
 
 # XXX these stub builds should be cleaned up even further.
 
