@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.1.2.2 2005/04/21 18:43:01 tron Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.1.2.3 2005/08/25 20:49:54 tron Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -44,5 +44,17 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 
 	return ba;
 }
+
+/* we need our own bus_dmamem_alloc_range */
+#define _PRIVATE_BUS_DMAMEM_ALLOC_RANGE _xen_bus_dmamem_alloc_range
+int _xen_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int,
+	    bus_addr_t, bus_addr_t);
+
+/*
+ * The higher machine address of our allocated range isn't know and can change
+ * over time. Just assume it's the largest possible value.
+ */
+#define _BUS_AVAIL_END ((bus_addr_t)0xffffffff)
 
 #include <x86/bus_private.h>
