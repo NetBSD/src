@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.6 2003/10/30 22:27:05 he Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.7 2005/08/25 14:31:07 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -69,7 +69,7 @@ void print_hex (unsigned int, int);
 #endif
 
 static int load_file (const char*, unsigned int, struct exec *);
-static int load_file_ino (ino_t, const char*, unsigned int, struct exec *);
+static int load_file_ino (ino32_t, const char*, unsigned int, struct exec *);
 
 void bootufs (void) __attribute__ ((__noreturn__));
 
@@ -210,7 +210,7 @@ load_file(path, addr, header)
 
 static int
 load_file_ino(ino, fn, addr, header)
-	ino_t ino;
+	ino32_t ino;
 	const char *fn;		/* for message only */
 	unsigned int addr;
 	struct exec *header;
