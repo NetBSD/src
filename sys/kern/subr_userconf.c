@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.16 2005/08/25 15:06:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.15 2005/06/23 18:44:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.16 2005/08/25 15:06:28 drochner Exp $");
 
 #include "opt_userconf.h"
 
@@ -206,7 +206,9 @@ userconf_pdev(short devno)
 	struct cfdata *cd;
 	const struct cfparent *cfp;
 	int   *l;
-	const char * const *ln;
+	const struct cfiattrdata *ia;
+	const struct cflocdesc *ld;
+	int nld, i;
 
 	if (devno > userconf_maxdev) {
 		printf("Unknown devno (max is %d)\n", userconf_maxdev);
@@ -239,11 +241,16 @@ userconf_pdev(short devno)
 		printf(" ???");
 		break;
 	}
-	l = cd->cf_loc;
-	ln = cd->cf_locnames;
-	while (ln && *ln) {
-		printf(" %s ", *ln++);
-		userconf_pnum(*l++);
+	if (cfp) {
+		l = cd->cf_loc;
+		ia = cfiattr_lookup(cfp->cfp_iattr, 0);
+		KASSERT(ia);
+		ld = ia->ci_locdesc;
+		nld = ia->ci_loclen;
+		for (i = 0; i < nld; i++) {
+			printf(" %s ", ld[i].cld_name);
+			userconf_pnum(*l++);
+		}
 	}
 	printf("\n");
 }
@@ -363,7 +370,9 @@ userconf_change(int devno)
 	char c = '\0';
 	int   *l;
 	int   ln;
-	const char * const *locnames;
+	const struct cfiattrdata *ia;
+	const struct cflocdesc *ld;
+	int nld;
 
 	if (devno <=  userconf_maxdev) {
 
@@ -383,17 +392,18 @@ userconf_change(int devno)
 
 			cd = &cfdata[devno];
 			l = cd->cf_loc;
-			locnames = cd->cf_locnames;
-			ln = 0;
+			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, 0);
+			KASSERT(ia);
+			ld = ia->ci_locdesc;
+			nld = ia->ci_loclen;
 
-			while (locnames[ln])
+			for (ln = 0; ln < nld; ln++)
 			{
-				userconf_modify(locnames[ln], l);
+				userconf_modify(ld[ln].cld_name, l);
 
 				/* XXX add *l */
 				userconf_hist_int(*l);
 
-				ln++;
 				l++;
 			}
 

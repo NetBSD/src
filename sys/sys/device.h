@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.75 2005/06/28 18:37:34 drochner Exp $ */
+/* $NetBSD: device.h,v 1.76 2005/08/25 15:06:28 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -172,6 +172,25 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
 
 /*
+ * Description of a locator, as part of interface attribute definitions.
+ */
+struct cflocdesc {
+	const char *cld_name;
+	const char *cld_defaultstr; /* NULL if no default */
+	int cld_default;
+};
+
+/*
+ * Description of an interface attribute, provided by potential
+ * parent device drivers, referred to by child device configuration data.
+ */
+struct cfiattrdata {
+	const char *ci_name;
+	int ci_loclen;
+	const struct cflocdesc ci_locdesc[];
+};
+
+/*
  * Description of a configuration parent.  Each device attachment attaches
  * to an "interface attribute", which is given in this structure.  The parent
  * *must* carry this attribute.  Optionally, an individual device instance
@@ -195,7 +214,6 @@ struct cfdata {
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	const struct cfparent *cf_pspec;/* parent specification */
-	const char * const *cf_locnames;/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND		0	/* has not been found */
 #define	FSTATE_FOUND		1	/* has been found */
@@ -215,7 +233,7 @@ TAILQ_HEAD(cftablelist, cftable);
 
 /*
  * XXX the "locdesc_t" is unnecessary; the len is known to "config" and
- * should be made available through cfdata->cf_pspec->cfp_iattr.
+ * available through cfdata->cf_pspec->cfp_iattr.
  * So just an "int *" should do it.
  */
 typedef struct {
@@ -278,7 +296,7 @@ struct cfdriver {
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
-	const char * const *cd_attrs;	/* attributes for this device */
+	const struct cfiattrdata * const *cd_attrs; /* attributes provided */
 };
 LIST_HEAD(cfdriverlist, cfdriver);
 
@@ -354,6 +372,7 @@ int	config_cfdata_detach(struct cfdata *);
 
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
+const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 
 struct cfdata *config_search_loc(cfsubmatch_t, struct device *,
 				 const char *, const locdesc_t *, void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.96 2005/08/25 15:06:28 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95 2005/06/28 18:37:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.96 2005/08/25 15:06:28 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -459,21 +459,43 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 }
 
 /*
- * Helper function: check whether the driver supports the interface attribute.
+ * Helper function: check whether the driver supports the interface attribute
+ * and return its descriptor structure.
  */
-static int
-cfdriver_has_iattr(const struct cfdriver *cd, const char *ia)
+static const struct cfiattrdata *
+cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
 {
-	const char * const *cpp;
+	const struct cfiattrdata * const *cpp;
 
 	if (cd->cd_attrs == NULL)
 		return (0);
 
 	for (cpp = cd->cd_attrs; *cpp; cpp++) {
-		if (STREQ(*cpp, ia)) {
+		if (STREQ((*cpp)->ci_name, ia)) {
 			/* Match. */
-			return (1);
+			return (*cpp);
 		}
+	}
+	return (0);
+}
+
+/*
+ * Lookup an interface attribute description by name.
+ * If the driver is given, consider only its supported attributes.
+ */
+const struct cfiattrdata *
+cfiattr_lookup(const char *name, const struct cfdriver *cd)
+{
+	const struct cfdriver *d;
+	const struct cfiattrdata *ia;
+
+	if (cd)
+		return (cfdriver_get_iattr(cd, name));
+
+	LIST_FOREACH(d, &allcfdrivers, cd_list) {
+		ia = cfdriver_get_iattr(d, name);
+		if (ia)
+			return (ia);
 	}
 	return (0);
 }
@@ -498,7 +520,7 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 	 * First, ensure this parent has the correct interface
 	 * attribute.
 	 */
-	if (!cfdriver_has_iattr(pcd, cfp->cfp_iattr))
+	if (!cfdriver_get_iattr(pcd, cfp->cfp_iattr))
 		return (0);
 
 	/*
@@ -664,7 +686,7 @@ config_search_loc(cfsubmatch_t fn, struct device *parent,
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
-	KASSERT(!ifattr || cfdriver_has_iattr(parent->dv_cfdriver, ifattr));
+	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
 
 	m.fn_loc = fn;
 	m.parent = parent;
@@ -843,6 +865,7 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	const char *xunit;
 	int myunit;
 	char num[10];
+	const struct cfiattrdata *ia;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -901,9 +924,14 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
 	if (ldesc) {
-		dev->dv_locators = malloc(ldesc->len * sizeof(int),
+		KASSERT(parent); /* no locators at root */
+		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
+				    parent->dv_cfdriver);
+		KASSERT(ldesc->len == ia->ci_loclen); /* XXX will go away */
+		dev->dv_locators = malloc(ia->ci_loclen * sizeof(int),
 					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-		memcpy(dev->dv_locators, ldesc->locs, ldesc->len * sizeof(int));
+		memcpy(dev->dv_locators, ldesc->locs,
+		       ia->ci_loclen * sizeof(int));
 	}
 
 	if (config_do_twiddle)
