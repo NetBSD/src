@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.22 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.22 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,6 @@ static int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
 				 u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
 static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
-static int	aac_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 #ifdef AAC_DEBUG
 static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
@@ -256,7 +254,7 @@ aac_attach(struct aac_softc *sc)
 		locs[AACCF_UNIT] = i;
 
 		config_found_sm_loc(&sc->sc_dv, "aac", locs, &aaca,
-				    aac_print, aac_submatch);
+				    aac_print, config_stdsubmatch);
 	}
 
 	/*
@@ -302,21 +300,6 @@ aac_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", aaca->aaca_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-aac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[AACCF_UNIT] != AACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AACCF_UNIT] != locs[AACCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

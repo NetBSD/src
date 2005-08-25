@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.15 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.16 2005/08/25 22:33:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.15 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.16 2005/08/25 22:33:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -75,9 +75,6 @@ void		ataraidattach(int);
 static int	ataraid_match(struct device *, struct cfdata *, void *);
 static void	ataraid_attach(struct device *, struct device *, void *);
 static int	ataraid_print(void *, const char *);
-
-static int	ataraid_submatch(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
 
 static int	ata_raid_finalize(struct device *);
 
@@ -206,7 +203,7 @@ ataraid_attach(struct device *parent, struct device *self, void *aux)
 		locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
 
 		config_found_sm_loc(self, "ataraid", locs, aai,
-				    ataraid_print, ataraid_submatch);
+				    ataraid_print, config_stdsubmatch);
 	}
 }
 
@@ -224,27 +221,6 @@ ataraid_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" vendtype %d unit %d", aai->aai_type, aai->aai_arrayno);
 	return (UNCONF);
-}
-
-/*
- * ataraid_submatch:
- *
- *	Submatch routine for ATA RAID logical disks.
- */
-static int
-ataraid_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[ATARAIDCF_VENDTYPE] != ATARAIDCF_VENDTYPE_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_VENDTYPE] != locs[ATARAIDCF_VENDTYPE])
-		return (0);
-
-	if (cf->cf_loc[ATARAIDCF_UNIT] != ATARAIDCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_UNIT] != locs[ATARAIDCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

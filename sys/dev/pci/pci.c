@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.94 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.95 2005/08/25 22:33:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.94 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.95 2005/08/25 22:33:19 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -59,8 +59,6 @@ int pci_config_dump = 0;
 #endif
 
 int	pciprint(void *, const char *);
-int	pcisubmatch(struct device *, struct cfdata *,
-			 const locdesc_t *, void *);
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
@@ -244,20 +242,6 @@ pciprint(void *aux, const char *pnp)
 }
 
 int
-pcisubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[PCICF_DEV] != PCICF_DEV_DEFAULT &&
-	    cf->cf_loc[PCICF_DEV] != locs[PCICF_DEV])
-		return (0);
-	if (cf->cf_loc[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCICF_FUNCTION] != locs[PCICF_FUNCTION])
-		return (0);
-	return (config_match(parent, cf, aux));
-}
-
-int
 pci_probe_device(struct pci_softc *sc, pcitag_t tag,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
@@ -353,7 +337,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		locs[PCICF_FUNCTION] = function;
 
 		subdev = config_found_sm_loc(&sc->sc_dev, "pci", locs, &pa,
-					     pciprint, pcisubmatch);
+					     pciprint, config_stdsubmatch);
 		sc->PCI_SC_DEVICESC(device, function) = subdev;
 		ret = (subdev != NULL);
 	}

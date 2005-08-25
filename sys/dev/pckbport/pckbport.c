@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.5 2005/08/25 18:35:39 drochner Exp $ */
+/* $NetBSD: pckbport.c,v 1.6 2005/08/25 22:33:19 drochner Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.5 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.6 2005/08/25 22:33:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,6 @@ struct pckbport_slotdata {
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
 static void pckbport_init_slotdata(struct pckbport_slotdata *);
-static int pckbport_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int pckbportprint(void *, const char *);
 
 static struct pckbport_slotdata pckbport_cons_slotdata;
@@ -116,17 +114,6 @@ pckbport_send_devcmd(struct pckbport_tag *t, pckbport_slot_t slot, u_char val)
 {
 
 	return t->t_ops->t_send_devcmd(t->t_cookie, slot, val);
-}
-
-static int
-pckbport_submatch(struct device *parent, struct cfdata *cf,
-		  const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[PCKBPORTCF_SLOT] != PCKBPORTCF_SLOT_DEFAULT &&
-	    cf->cf_loc[PCKBPORTCF_SLOT] != locs[PCKBPORTCF_SLOT])
-		return 0;
-	return config_match(parent, cf, aux);
 }
 
 pckbport_tag_t
@@ -172,7 +159,7 @@ pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
 	locs[PCKBPORTCF_SLOT] = slot;
 
 	found = config_found_sm_loc(dev, "pckbport", locs, &pa,
-				    pckbportprint, pckbport_submatch);
+				    pckbportprint, config_stdsubmatch);
 
 	if (found == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.50 2005/08/25 18:35:38 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.51 2005/08/25 22:33:18 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.50 2005/08/25 18:35:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.51 2005/08/25 22:33:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,6 @@ static int	pnpbios_attachnode(struct pnpbios_softc *,
 
 static int	pnp_scan(const u_int8_t **, size_t,
 			struct pnpresources *, int);
-static int pnpbios_submatch(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
 extern int	pnpbioscall(int);
 
 static void	pnpbios_enumerate(struct pnpbios_softc *);
@@ -767,18 +765,6 @@ pnpbios_print_devres(struct device *dev, struct pnpbiosdev_attach_args *aa)
 }
 
 static int
-pnpbios_submatch(struct device *parent, struct cfdata *match,
-    const locdesc_t *locs, void *aux)
-{
-
-	if (match->cf_loc[PNPBIOSCF_INDEX] != PNPBIOSCF_INDEX_DEFAULT &&
-	    match->cf_loc[PNPBIOSCF_INDEX] != locs[PNPBIOSCF_INDEX])
-		return (0);
-
-	return (config_match(parent, match, aux));
-}
-
-static int
 pnpbios_attachchild(struct pnpbios_softc *sc,
 		    struct pnpbiosdev_attach_args *aa, int matchonly)
 {
@@ -787,11 +773,11 @@ pnpbios_attachchild(struct pnpbios_softc *sc,
 	locs[PNPBIOSCF_INDEX] = aa->idx;
 
 	if (matchonly)
-		return (config_search_loc(pnpbios_submatch, (struct device *)sc,
+		return (config_search_loc(config_stdsubmatch, (struct device *)sc,
 					 "pnpbios", locs, aa) != NULL);
 	else 
 		return (config_found_sm_loc((struct device *)sc, "pnpbios",
-			locs, aa, pnpbios_print, pnpbios_submatch)
+			locs, aa, pnpbios_print, config_stdsubmatch)
 				!= NULL);
 }
 
