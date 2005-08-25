@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.13 2005/06/28 19:46:47 drochner Exp $ */
+/* $NetBSD: aubus.c,v 1.14 2005/08/25 18:35:39 drochner Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.13 2005/06/28 19:46:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.14 2005/08/25 18:35:39 drochner Exp $");
 
 #include "locators.h"
 
@@ -181,11 +181,11 @@ aubus_match(struct device *parent, struct cfdata *match, void *aux)
 
 static int
 aubus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[AUBUSCF_ADDR] != AUBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[AUBUSCF_ADDR] != ldesc->locs[AUBUSCF_ADDR])
+	    cf->cf_loc[AUBUSCF_ADDR] != locs[AUBUSCF_ADDR])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -200,8 +200,7 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args aa;
 	struct device *sc = (struct device *)self;
 	const struct au1x00_dev *ad;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[AUBUSCF_NLOCS];
 
 	printf("\n");
 
@@ -231,10 +230,9 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq[0] = ad->irq[0];
 		aa.aa_irq[1] = ad->irq[1];
 
-		ldesc->len = 1;
-		ldesc->locs[AUBUSCF_ADDR] = ad->addr[0];
+		locs[AUBUSCF_ADDR] = ad->addr[0];
 
-		(void) config_found_sm_loc(self, "aubus", ldesc, &aa,
+		(void) config_found_sm_loc(self, "aubus", locs, &aa,
 					   aubus_print, aubus_submatch);
 	}
 }
