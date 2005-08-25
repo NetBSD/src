@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.9 2004/08/26 01:29:20 wiz Exp $	*/
+/*	$NetBSD: line.c,v 1.9.2.1 2005/08/25 19:33:35 snj Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -916,8 +916,8 @@ back_raw_line(curr_pos, linep)
 			/*
 			 * Shift the data to the end of the new linebuf.
 			 */
-			for (fm = linebuf + old_size_linebuf,
-			      to = linebuf + size_linebuf;
+			for (fm = linebuf + old_size_linebuf - 1,
+			      to = linebuf + size_linebuf - 1;
 			     fm >= linebuf;  fm--, to--)
 				*to = *fm;
 			n = size_linebuf - old_size_linebuf;
