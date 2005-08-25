@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.97 2005/08/25 18:35:40 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.98 2005/08/25 22:17:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.97 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.98 2005/08/25 22:17:19 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -456,6 +456,29 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 		m->match = cf;
 		m->pri = pri;
 	}
+}
+
+int
+config_stdsubmatch(struct device *parent, struct cfdata *cf,
+		   const int *locs, void *aux)
+{
+	const struct cfiattrdata *ci;
+	const struct cflocdesc *cl;
+	int nlocs, i;
+
+	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	KASSERT(ci);
+	nlocs = ci->ci_loclen;
+	for (i = 0; i < nlocs; i++) {
+		cl = &ci->ci_locdesc[i];
+		/* !cld_defaultstr means no default value */
+		if ((!(cl->cld_defaultstr)
+		     || (cf->cf_loc[i] != cl->cld_default))
+		    && cf->cf_loc[i] != locs[i])
+			return (0);
+	}
+
+	return (config_match(parent, cf, aux));
 }
 
 /*

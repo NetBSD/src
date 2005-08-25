@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.77 2005/08/25 18:35:40 drochner Exp $ */
+/* $NetBSD: device.h,v 1.78 2005/08/25 22:17:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -369,6 +369,7 @@ struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
 const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 
+int config_stdsubmatch(struct device *, struct cfdata *, const int *, void *);
 struct cfdata *config_search_loc(cfsubmatch_t, struct device *,
 				 const char *, const locdesc_t *, void *);
 #define config_search_ia(sm, d, ia, a) \
