@@ -1,4 +1,8 @@
-/* $NetBSD: sha512.c,v 1.1 2005/08/24 19:59:09 elad Exp $ */
+/* $NetBSD: sha512.c,v 1.2 2005/08/25 09:51:23 tron Exp $ */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <crypto/sha2.h>	/* this hash type */
 #include <md5.h>		/* the hash we're replacing */
