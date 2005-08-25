@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.49 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48 2005/05/30 04:37:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.49 2005/08/25 18:35:39 drochner Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -486,8 +486,7 @@ iop_config_interrupts(struct device *self)
 	struct iop_softc *sc, *iop;
 	struct i2o_systab_entry *ste;
 	int rv, i, niop;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
 	sc = (struct iop_softc *)self;
 	LIST_INIT(&sc->sc_iilist);
@@ -591,9 +590,8 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	ldesc->len = 1;
-	ldesc->locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", ldesc, &ia, iop_print, iop_submatch);
+	locs[IOPCF_TID] = I2O_TID_IOP;
+	config_found_sm_loc(self, "iop", locs, &ia, iop_print, iop_submatch);
 
 	/*
 	 * Start device configuration.
@@ -803,8 +801,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	struct device *dv;
 	int i, j, nent;
 	u_int usertid;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
@@ -841,10 +838,9 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		if (ii != NULL)
 			continue;
 
-		ldesc->len = 1;
-		ldesc->locs[IOPCF_TID] = ia.ia_tid;
+		locs[IOPCF_TID] = ia.ia_tid;
 
-		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
+		dv = config_found_sm_loc(&sc->sc_dv, "iop", locs, &ia,
 					 iop_print, iop_submatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
@@ -904,11 +900,11 @@ iop_print(void *aux, const char *pnp)
 
 static int
 iop_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[IOPCF_TID] != IOPCF_TID_DEFAULT &&
-	    cf->cf_loc[IOPCF_TID] != ldesc->locs[IOPCF_TID])
+	    cf->cf_loc[IOPCF_TID] != locs[IOPCF_TID])
 		return (0);
 
 	return (config_match(parent, cf, aux));

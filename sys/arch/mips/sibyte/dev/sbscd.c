@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.9 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: sbscd.c,v 1.10 2005/08/25 18:35:39 drochner Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.9 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.10 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,8 +87,7 @@ sbscd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbscd_attach_args sa;
 	int i;
-	int help[4];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SBSCDCF_NLOCS];
 
 	printf("\n");
 
@@ -97,14 +96,13 @@ sbscd_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_base = 0x10000000;			/* XXXCGD */
 		sa.sa_locs = sb1250_sbscd_devs[i];
 
-		ldesc->len = 3;
-		ldesc->locs[SBSCDCF_OFFSET] = sb1250_sbscd_devs[i].sa_offset;
-		ldesc->locs[SBSCDCF_INTR + 0] =
+		locs[SBSCDCF_OFFSET] = sb1250_sbscd_devs[i].sa_offset;
+		locs[SBSCDCF_INTR + 0] =
 			sb1250_sbscd_devs[i].sa_intr[0];
-		ldesc->locs[SBSCDCF_INTR + 1] =
+		locs[SBSCDCF_INTR + 1] =
 			sb1250_sbscd_devs[i].sa_intr[1];
 
-		config_found_sm_loc(self, "sbscd", ldesc, &sa,
+		config_found_sm_loc(self, "sbscd", locs, &sa,
 				    sbscd_print, sbscd_submatch);
 	}
 	return;
@@ -130,18 +128,18 @@ sbscd_print(void *aux, const char *pnp)
 
 static int
 sbscd_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const locdesc_t *locs, void *aux)
 {
 	int i;
 
 	if (cf->cf_loc[SBSCDCF_OFFSET] != SBSCDCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[SBSCDCF_OFFSET] != ldesc->locs[SBSCDCF_OFFSET])
+	    cf->cf_loc[SBSCDCF_OFFSET] != locs[SBSCDCF_OFFSET])
 		return (0);
 
 	for (i = 0; i < 2; i++) {
 		if (cf->cf_loc[SBSCDCF_INTR + i] != SBSCDCF_INTR_DEFAULT &&
 		    cf->cf_loc[SBSCDCF_INTR + i]
-		    		!= ldesc->locs[SBSCDCF_INTR + i])
+		    		!= locs[SBSCDCF_INTR + i])
 			return (0);
 	}
 

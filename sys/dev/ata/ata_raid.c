@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.14 2005/07/18 15:21:48 briggs Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.15 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.14 2005/07/18 15:21:48 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.15 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -191,8 +191,7 @@ static void
 ataraid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ataraid_array_info *aai;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ATARAIDCF_NLOCS];
 
 	/*
 	 * We're a pseudo-device, so we get to announce our own
@@ -203,11 +202,10 @@ ataraid_attach(struct device *parent, struct device *self, void *aux)
 	    ataraid_array_info_count == 1 ? "" : "s");
 
 	TAILQ_FOREACH(aai, &ataraid_array_info_list, aai_list) {
-		ldesc->len = 2;
-		ldesc->locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
-		ldesc->locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
+		locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
+		locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
 
-		config_found_sm_loc(self, "ataraid", NULL, aai,
+		config_found_sm_loc(self, "ataraid", locs, aai,
 				    ataraid_print, ataraid_submatch);
 	}
 }
@@ -235,15 +233,15 @@ ataraid_print(void *aux, const char *pnp)
  */
 static int
 ataraid_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[ATARAIDCF_VENDTYPE] != ATARAIDCF_VENDTYPE_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_VENDTYPE] != ldesc->locs[ATARAIDCF_VENDTYPE])
+	    cf->cf_loc[ATARAIDCF_VENDTYPE] != locs[ATARAIDCF_VENDTYPE])
 		return (0);
 
 	if (cf->cf_loc[ATARAIDCF_UNIT] != ATARAIDCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_UNIT] != ldesc->locs[ATARAIDCF_UNIT])
+	    cf->cf_loc[ATARAIDCF_UNIT] != locs[ATARAIDCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

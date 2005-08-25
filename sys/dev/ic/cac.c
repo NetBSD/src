@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.30 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: cac.c,v 1.31 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.31 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	int error, rseg, size, i;
 	bus_dma_segment_t seg;
 	struct cac_ccb *ccb;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[CACCF_NLOCS];
 
 	if (intrstr != NULL)
 		aprint_normal("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
@@ -185,10 +184,9 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	for (i = 0; i < cinfo.num_drvs; i++) {
 		caca.caca_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[CACCF_UNIT] = i;
+		locs[CACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "cac", ldesc, &caca,
+		config_found_sm_loc(&sc->sc_dv, "cac", locs, &caca,
 				    cac_print, cac_submatch);
 	}
 
@@ -242,11 +240,11 @@ cac_print(void *aux, const char *pnp)
  */
 static int
 cac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[CACCF_UNIT] != CACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[CACCF_UNIT] != ldesc->locs[CACCF_UNIT])
+	    cf->cf_loc[CACCF_UNIT] != locs[CACCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

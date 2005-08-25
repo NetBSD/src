@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.230 2005/05/30 04:25:32 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.231 2005/08/25 18:35:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.230 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.231 2005/08/25 18:35:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,14 +244,14 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 
 static int
 scsibussubmatch(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux)
+	const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[SCSIBUSCF_TARGET] != SCSIBUSCF_TARGET_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_TARGET] != ldesc->locs[0])
+	    cf->cf_loc[SCSIBUSCF_TARGET] != locs[SCSIBUSCF_TARGET])
 		return (0);
 	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_LUN] != ldesc->locs[1])
+	    cf->cf_loc[SCSIBUSCF_LUN] != locs[SCSIBUSCF_LUN])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -739,8 +739,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	int checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
-	int help[3];
-	locdesc_t *locd = (void *)&help;
+	int locs[SCSIBUSCF_NLOCS];
 	struct device *chld;
 
 	/*
@@ -954,19 +953,18 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	if ((periph->periph_quirks & PQUIRK_NOLUNS) == 0)
 		docontinue = 1;
 
-	locd->len = 2;
-	locd->locs[0] = target;
-	locd->locs[1] = lun;
+	locs[SCSIBUSCF_TARGET] = target;
+	locs[SCSIBUSCF_LUN] = lun;
 
 	if ((cf = config_search_loc(scsibussubmatch, &sc->sc_dev,
-	     "scsibus", locd, &sa)) != NULL) {
+	     "scsibus", locs, &sa)) != NULL) {
 		scsipi_insert_periph(chan, periph);
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
 		 * XXX need it before config_attach() returns.  Must
 		 * XXX assign it in periph driver.
 		 */
-		chld = config_attach_loc(&sc->sc_dev, cf, locd, &sa,
+		chld = config_attach_loc(&sc->sc_dev, cf, locs, &sa,
 					 scsibusprint);
 	} else {
 		scsibusprint(&sa, sc->sc_dev.dv_xname);

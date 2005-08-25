@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.28 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.28 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
         struct amr_ccb *ac;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[AMRCF_NLOCS];
 
 	aprint_naive(": RAID controller\n");
 
@@ -464,11 +463,10 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		amra.amra_unit = j;
 
-		ldesc->len = 1;
-		ldesc->locs[AMRCF_UNIT] = j;
+		locs[AMRCF_UNIT] = j;
 
 		amr->amr_drive[j].al_dv = config_found_sm_loc(&amr->amr_dv,
-			"amr", ldesc, &amra, amr_print, amr_submatch);
+			"amr", locs, &amra, amr_print, amr_submatch);
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
@@ -539,14 +537,14 @@ amr_print(void *aux, const char *pnp)
  */
 static int
 amr_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 	struct amr_attach_args *amra;
 
 	amra = (struct amr_attach_args *)aux;
 
 	if (cf->cf_loc[AMRCF_UNIT] != AMRCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AMRCF_UNIT] != ldesc->locs[AMRCF_UNIT])
+	    cf->cf_loc[AMRCF_UNIT] != locs[AMRCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.69 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.69 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,8 +551,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	int rv;
 	uint16_t dsize;
 	uint8_t newtype, newstripe;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TWECF_NLOCS];
 
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
@@ -640,10 +639,9 @@ twe_add_unit(struct twe_softc *sc, int unit)
 
 	twea.twea_unit = unit;
 
-	ldesc->len = 1;
-	ldesc->locs[TWECF_UNIT] = unit;
+	locs[TWECF_UNIT] = unit;
 
-	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", NULL, &twea,
+	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", locs, &twea,
 					 twe_print, twe_submatch);
 
 	rv = 0;
@@ -780,11 +778,11 @@ twe_print(void *aux, const char *pnp)
  */
 static int
 twe_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[TWECF_UNIT] != TWECF_UNIT_DEFAULT &&
-	    cf->cf_loc[TWECF_UNIT] != ldesc->locs[TWECF_UNIT])
+	    cf->cf_loc[TWECF_UNIT] != locs[TWECF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

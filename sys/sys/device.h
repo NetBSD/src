@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.76 2005/08/25 15:06:28 drochner Exp $ */
+/* $NetBSD: device.h,v 1.77 2005/08/25 18:35:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -232,14 +232,9 @@ struct cftable {
 TAILQ_HEAD(cftablelist, cftable);
 
 /*
- * XXX the "locdesc_t" is unnecessary; the len is known to "config" and
- * available through cfdata->cf_pspec->cfp_iattr.
- * So just an "int *" should do it.
+ * XXX the "locdesc_t" is unnecessary
  */
-typedef struct {
-	int len;
-	int locs[1];
-} locdesc_t;
+typedef int locdesc_t;
 typedef int (*cfsubmatch_t)(struct device *, struct cfdata *,
 			    const locdesc_t *, void *);
 

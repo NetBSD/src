@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.28 2005/08/25 18:35:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27 2005/06/19 10:29:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.28 2005/08/25 18:35:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,7 @@ USB_ATTACH(uhidev)
 	const void *descptr;
 	usbd_status err;
 	char *devinfop;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[UHIDBUSCF_NLOCS];
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
@@ -286,11 +285,10 @@ USB_ATTACH(uhidev)
 			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
 			uha.reportid = repid;
-			ldesc->len = 1;
-			ldesc->locs[UHIDBUSCF_REPORTID] = repid;
+			locs[UHIDBUSCF_REPORTID] = repid;
 
 			dev = (struct uhidev *)config_found_sm_loc(self,
-				"uhidbus", ldesc, &uha,
+				"uhidbus", locs, &uha,
 				uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
@@ -346,15 +344,15 @@ uhidevprint(void *aux, const char *pnp)
 
 int
 uhidevsubmatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const locdesc_t *locs, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
 	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
-	    cf->cf_loc[UHIDBUSCF_REPORTID] != ldesc->locs[UHIDBUSCF_REPORTID])
+	    cf->cf_loc[UHIDBUSCF_REPORTID] != locs[UHIDBUSCF_REPORTID])
 		return (0);
 
-	if (cf->cf_loc[UHIDBUSCF_REPORTID] == ldesc->locs[UHIDBUSCF_REPORTID])
+	if (cf->cf_loc[UHIDBUSCF_REPORTID] == locs[UHIDBUSCF_REPORTID])
 		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
 	else
 		uha->matchlvl = 0;

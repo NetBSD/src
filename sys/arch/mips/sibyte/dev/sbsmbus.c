@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.9 2004/09/13 14:57:31 drochner Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.10 2005/08/25 18:35:39 drochner Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.9 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.10 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,8 +87,7 @@ smbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smbus_attach_args sa;
 	int i;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SMBUSCF_NLOCS];
 
 	found++;
 	printf("\n");
@@ -101,11 +100,10 @@ smbus_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_interface = smbus_devs[i].sa_interface;
 		sa.sa_device = smbus_devs[i].sa_device;
 
-		ldesc->len = 2;
-		ldesc->locs[SMBUSCF_CHAN] = 0; /* XXX */
-		ldesc->locs[SMBUSCF_DEV] = smbus_devs[i].sa_device;
+		locs[SMBUSCF_CHAN] = 0; /* XXX */
+		locs[SMBUSCF_DEV] = smbus_devs[i].sa_device;
 
-		config_found_sm_loc(self, "smbus", ldesc, &sa,
+		config_found_sm_loc(self, "smbus", locs, &sa,
 				    smbus_print, smbus_submatch);
 	}
 }
@@ -125,14 +123,14 @@ smbus_print(void *aux, const char *pnp)
 
 static int
 smbus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const locdesc_t *locs, void *aux)
 {
 
 	if (cf->cf_loc[SMBUSCF_CHAN] != SMBUSCF_CHAN_DEFAULT &&
-	    cf->cf_loc[SMBUSCF_CHAN] != ldesc->locs[SMBUSCF_CHAN])
+	    cf->cf_loc[SMBUSCF_CHAN] != locs[SMBUSCF_CHAN])
 		return (0);
 	if (cf->cf_loc[SMBUSCF_DEV] != SMBUSCF_DEV_DEFAULT &&
-	    cf->cf_loc[SMBUSCF_DEV] != ldesc->locs[SMBUSCF_DEV])
+	    cf->cf_loc[SMBUSCF_DEV] != locs[SMBUSCF_DEV])
 		return (0);
 
 	return (config_match(parent, cf, aux));

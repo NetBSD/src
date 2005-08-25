@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.15 2005/06/02 13:17:45 drochner Exp $ */
+/* $NetBSD: mcbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.15 2005/06/02 13:17:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,15 +103,15 @@ mcbusprint(aux, cp)
 }
 
 static int
-mcbussbm(parent, cf, ldesc, aux)
+mcbussbm(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if (cf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
-	    cf->cf_loc[MCBUSCF_MID] != ldesc->locs[MCBUSCF_MID])
+	    cf->cf_loc[MCBUSCF_MID] != locs[MCBUSCF_MID])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -149,8 +149,7 @@ mcbusattach(parent, self, aux)
 	struct mcbus_dev_attach_args ta;
 	mcbus_softc_t *mbp = (mcbus_softc_t *)self;
 	int i, mid;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[MCBUSCF_NLOCS];
 
 	printf(": %s BCache\n", mcbus_primary.mcbus_valid ?
 	    bcs[mcbus_primary.mcbus_bcache] : "Unknown");
@@ -172,9 +171,8 @@ mcbusattach(parent, self, aux)
 	ta.ma_mid = 1;
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
-	ldesc->len = 1;
-	ldesc->locs[MCBUSCF_MID] = 1;
-	(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+	locs[MCBUSCF_MID] = 1;
+	(void) config_found_sm_loc(self, "mcbus", locs, &ta,
 				   mcbusprint, mcbussbm);
 
 	/*
@@ -190,10 +188,9 @@ mcbusattach(parent, self, aux)
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
-		ldesc->len = 1;
-		ldesc->locs[MCBUSCF_MID] = mid;
+		locs[MCBUSCF_MID] = mid;
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
-			(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+			(void) config_found_sm_loc(self, "mcbus", locs, &ta,
 						   mcbusprint, mcbussbm);
 	}
 
@@ -220,9 +217,8 @@ mcbusattach(parent, self, aux)
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
-		ldesc->len = 1;
-		ldesc->locs[MCBUSCF_MID] = mid;
-		(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+		locs[MCBUSCF_MID] = mid;
+		(void) config_found_sm_loc(self, "mcbus", locs, &ta,
 					   mcbusprint, mcbussbm);
 	}
 #endif

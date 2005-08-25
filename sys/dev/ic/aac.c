@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $	*/
+/*	$NetBSD: aac.c,v 1.22 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21 2005/06/20 20:40:21 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.22 2005/08/25 18:35:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,13 +154,7 @@ aac_attach(struct aac_softc *sc)
 	struct aac_ccb *ac;
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX - Not clean
-		The big plan is to let config(8) issue information
-		about the length of the locator array in a useful way.
-		Then the allocation can be centralized. See also
-		http://mail-index.netbsd.org/tech-kern/2005/02/09/0025.html
-	*/
+	int locs[AACCF_NLOCS];
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -259,10 +253,9 @@ aac_attach(struct aac_softc *sc)
 			continue;
 		aaca.aaca_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[AACCF_UNIT] = i;
+		locs[AACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "aac", ldesc, &aaca,
+		config_found_sm_loc(&sc->sc_dv, "aac", locs, &aaca,
 				    aac_print, aac_submatch);
 	}
 
@@ -316,14 +309,11 @@ aac_print(void *aux, const char *pnp)
  */
 static int
 aac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const locdesc_t *locs, void *aux)
 {
-	struct aac_attach_args *aaca;
-
-	aaca = aux;
 
 	if (cf->cf_loc[AACCF_UNIT] != AACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AACCF_UNIT] != ldesc->locs[AACCF_UNIT])
+	    cf->cf_loc[AACCF_UNIT] != locs[AACCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

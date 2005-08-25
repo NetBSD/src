@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.96 2005/08/25 15:06:28 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.97 2005/08/25 18:35:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.96 2005/08/25 15:06:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.97 2005/08/25 18:35:40 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -855,7 +855,7 @@ config_makeroom(int n, struct cfdriver *cd)
  */
 struct device *
 config_attach_loc(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux, cfprint_t print)
+	const locdesc_t *locs, void *aux, cfprint_t print)
 {
 	struct device *dev;
 	struct cftable *ct;
@@ -923,15 +923,13 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	if (ldesc) {
+	if (locs) {
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
 				    parent->dv_cfdriver);
-		KASSERT(ldesc->len == ia->ci_loclen); /* XXX will go away */
 		dev->dv_locators = malloc(ia->ci_loclen * sizeof(int),
 					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-		memcpy(dev->dv_locators, ldesc->locs,
-		       ia->ci_loclen * sizeof(int));
+		memcpy(dev->dv_locators, locs, ia->ci_loclen * sizeof(int));
 	}
 
 	if (config_do_twiddle)

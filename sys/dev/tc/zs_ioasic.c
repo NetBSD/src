@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.26 2005/06/02 13:11:39 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.27 2005/08/25 18:35:40 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.26 2005/06/02 13:11:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.27 2005/08/25 18:35:40 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -249,8 +249,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct zshan *zc;
 	int s, channel;
 	u_long zflg;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ZSCCF_NLOCS];
 
 	printf("\n");
 
@@ -319,14 +318,13 @@ zs_ioasic_attach(parent, self, aux)
 		else
 			cs->cs_ctl_chan = NULL;
 
-		ldesc->len = 1;
-		ldesc->locs[ZSCCF_CHANNEL] = channel;
+		locs[ZSCCF_CHANNEL] = channel;
 
 		/*
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (config_found_sm_loc(self, "zsc", ldesc, (void *)&zs_args,
+		if (config_found_sm_loc(self, "zsc", locs, (void *)&zs_args,
 				zs_ioasic_print, zs_ioasic_submatch) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
@@ -386,10 +384,10 @@ zs_ioasic_print(aux, name)
 }
 
 int
-zs_ioasic_submatch(parent, cf, ldesc, aux)
+zs_ioasic_submatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 	struct zsc_softc *zs = (void *)parent;
@@ -397,7 +395,7 @@ zs_ioasic_submatch(parent, cf, ldesc, aux)
 	const char *defname = "";
 
 	if (cf->cf_loc[ZSCCF_CHANNEL] != ZSCCF_CHANNEL_DEFAULT &&
-	    cf->cf_loc[ZSCCF_CHANNEL] != ldesc->locs[ZSCCF_CHANNEL])
+	    cf->cf_loc[ZSCCF_CHANNEL] != locs[ZSCCF_CHANNEL])
 		return (0);
 
 	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT) {

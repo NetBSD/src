@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.21 2005/08/25 18:35:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.21 2005/08/25 18:35:39 drochner Exp $");
 
 #undef	TCICDEBUG
 
@@ -412,8 +412,7 @@ tcic_attach_socket(h)
 	struct tcic_handle *h;
 {
 	struct pcmciabus_attach_args paa;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
 
@@ -430,11 +429,10 @@ tcic_attach_socket(h)
 	paa.iobase = h->sc->iobase;
 	paa.iosize = h->sc->iosize;
 
-	ldesc->len = 2;
-	ldesc->locs[PCMCIABUSCF_CONTROLLER] = 0;
-	ldesc->locs[PCMCIABUSCF_SOCKET] = h->sock;
+	locs[PCMCIABUSCF_CONTROLLER] = 0;
+	locs[PCMCIABUSCF_SOCKET] = h->sock;
 
-	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", ldesc, &paa,
+	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", locs, &paa,
 					tcic_print, tcic_submatch);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
@@ -538,18 +536,18 @@ tcic_init_socket(h)
 }
 
 int
-tcic_submatch(parent, cf, ldesc, aux)
+tcic_submatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const locdesc_t *locs;
 	void *aux;
 {
 
 	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
+	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != locs[PCMCIABUSCF_CONTROLLER])
 		return 0;
 	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
+	    cf->cf_loc[PCMCIABUSCF_SOCKET] != locs[PCMCIABUSCF_SOCKET])
 		return 0;
 
 	return (config_match(parent, cf, aux));

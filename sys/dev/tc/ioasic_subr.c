@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.8 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.9 2005/08/25 18:35:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.8 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.9 2005/08/25 18:35:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,11 @@ ioasicprint(aux, pnp)
 
 int
 ioasicsubmatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
+		const locdesc_t *locs, void *aux)
 {
 
 	if ((cf->cf_loc[IOASICCF_OFFSET] != IOASICCF_OFFSET_DEFAULT) &&
-	    (cf->cf_loc[IOASICCF_OFFSET] != ldesc->locs[IOASICCF_OFFSET]))
+	    (cf->cf_loc[IOASICCF_OFFSET] != locs[IOASICCF_OFFSET]))
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -76,8 +76,7 @@ ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
 {
 	struct ioasicdev_attach_args idev;
 	int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOASICCF_NLOCS];
 
         /*
 	 * Try to configure each device.
@@ -90,9 +89,8 @@ ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
 		idev.iada_cookie = ioasic_devs[i].iad_cookie;
 
                 /* Tell the autoconfig machinery we've found the hardware. */
-		ldesc->len = 1;
-		ldesc->locs[IOASICCF_OFFSET] = ioasic_devs[i].iad_offset;
-		config_found_sm_loc(&sc->sc_dv, "ioasic", ldesc, &idev,
+		locs[IOASICCF_OFFSET] = ioasic_devs[i].iad_offset;
+		config_found_sm_loc(&sc->sc_dv, "ioasic", locs, &idev,
 				    ioasicprint, ioasicsubmatch);
         }
 }
