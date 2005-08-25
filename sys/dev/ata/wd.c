@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305 2005/07/02 04:29:01 dsainty Exp $ */
+/*	$NetBSD: wd.c,v 1.306 2005/08/25 19:06:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305 2005/07/02 04:29:01 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.306 2005/08/25 19:06:35 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -231,9 +231,13 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 
 	/*
-	 * This seagate drive seems to have issue addressing sector 0xfffffff
+	 * These seagate drives seems to have issue addressing sector 0xfffffff
 	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
 	 * LBA48
+	 * Note that we can't just change the code to always use LBA48 for
+	 * sector 0xfffffff, because this would break valid and working
+	 * setups using LBA48 drives on non-LBA48-capable controllers
+	 * (and it's hard to get a list of such controllers)
 	 */
 	{ "ST3160023A*",
 	  WD_QUIRK_FORCE_LBA48 },
