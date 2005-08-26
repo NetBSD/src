@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2 2005/08/20 20:52:52 elad Exp $ */
+/* $NetBSD: sha2.c,v 1.3 2005/08/26 15:58:17 elad Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <crypto/sha2.h>

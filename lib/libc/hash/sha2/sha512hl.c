@@ -1,4 +1,4 @@
-/* $NetBSD: sha512hl.c,v 1.2 2005/08/24 12:08:45 tron Exp $ */
+/* $NetBSD: sha512hl.c,v 1.3 2005/08/26 15:58:17 elad Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -8,6 +8,8 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  */
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/stat.h>
