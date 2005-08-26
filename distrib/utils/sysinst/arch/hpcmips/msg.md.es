@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/08/26 15:44:43 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,7 @@ message dobad144
 }
 
 message getboottype
-{¿Le gustaria instalar el set normal de bootblocks o bootblocks por serie?
+{¿Le gustaría instalar el set normal de bootblocks o bootblocks por serie?
 
 Bootblocks normal usa el dispositivo de consola de BIOS como consola
 (normalmente el monitor y teclado). Bootblocks por serie usa el primer
@@ -93,10 +93,10 @@ message partabovechs
 maquina puede dirigirse. Puede que no sea posible iniciar desde el.
 ¿Esta seguro de que quiere hacer esto?
 
-(Si contesta 'no' sera devuelto al menu de edicion de particiones.)}
+(Si contesta 'no' sera devuelto al menú de edicion de particiones.)}
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
 message set_kernel_2
-{Nucleo (TX3912)}
+{Núcleo (TX3912)}
 
