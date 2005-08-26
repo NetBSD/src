@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.69 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: twe.c,v 1.70 2005/08/26 11:20:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.69 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.70 2005/08/26 11:20:33 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,6 @@ static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
 static int	twe_reset(struct twe_softc *);
-static int	twe_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
@@ -642,7 +640,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	locs[TWECF_UNIT] = unit;
 
 	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", locs, &twea,
-					 twe_print, twe_submatch);
+					 twe_print, config_stdsubmatch);
 
 	rv = 0;
  out:
@@ -771,21 +769,6 @@ twe_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", twea->twea_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-twe_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[TWECF_UNIT] != TWECF_UNIT_DEFAULT &&
-	    cf->cf_loc[TWECF_UNIT] != locs[TWECF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

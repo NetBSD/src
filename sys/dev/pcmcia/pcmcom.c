@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.23 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.24 2005/08/26 11:20:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.23 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.24 2005/08/26 11:20:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,6 @@ const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
 int	pcmcom_print(void *, const char *);
-int	pcmcom_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 int	pcmcom_enable(struct pcmcom_softc *);
 void	pcmcom_disable(struct pcmcom_softc *);
@@ -186,7 +184,7 @@ pcmcom_attach(parent, self, aux)
 
 		sc->sc_slaves[slave] = config_found_sm_loc(&sc->sc_dev,
 			"pcmcom", locs,
-			&pca, pcmcom_print, pcmcom_submatch);
+			&pca, pcmcom_print, config_stdsubmatch);
 	}
 
 	pcmcom_disable(sc);
@@ -270,21 +268,6 @@ pcmcom_print(aux, pnp)
 	aprint_normal(" slave %d", pca->pca_slave);
 
 	return (UNCONF);
-}
-
-int
-pcmcom_submatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT &&
-	    cf->cf_loc[PCMCOMCF_SLAVE] != locs[PCMCOMCF_SLAVE]);
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
