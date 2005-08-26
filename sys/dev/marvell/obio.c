@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2005/08/26 12:42:11 drochner Exp $");
 
 #include "opt_marvell.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2004/09/13 12:55:48 drochner Exp $");
 static int obio_cfprint(void *, const char *);
 static int obio_cfmatch(struct device *, struct cfdata *, void *);
 static int obio_cfsearch(struct device *, struct cfdata *,
-			 const locdesc_t *, void *);
+			 const int *, void *);
 static void obio_cfattach(struct device *, struct device *, void *);
 
 struct obio_softc {
@@ -120,7 +120,7 @@ obio_cfprint(void *aux, const char *pnp)
 
 int
 obio_cfsearch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *) parent;
 	struct obio_attach_args oa;
