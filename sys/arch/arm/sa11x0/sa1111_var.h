@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.6 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.7 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,6 @@ void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 void sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
 int	sacc_probe(struct device *, struct cfdata *, void *);
 int	sa1111_search(struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 
 #endif /* _SA1111_VAR_H */

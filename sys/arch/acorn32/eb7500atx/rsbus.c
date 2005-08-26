@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.2 2005/06/30 17:03:52 drochner Exp $ */
+/* $NetBSD: rsbus.c,v 1.3 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.2 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.3 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ static int	rsbus_match(struct device *, struct cfdata *, void *);
 static void	rsbus_attach(struct device *, struct device *, void *);
 static int	rsbus_print(void *, const char *);
 static int	rsbus_search(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
+			     const int *, void *);
 
 CFATTACH_DECL(rsbus, sizeof(struct rsbus_softc),
     rsbus_match, rsbus_attach, NULL, NULL);
@@ -87,7 +87,7 @@ static int
 rsbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct rsbus_softc *sc = (struct rsbus_softc *)parent;

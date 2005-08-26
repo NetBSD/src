@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.29 2005/07/04 15:18:17 drochner Exp $	*/
+/*	$NetBSD: hpib.c,v 1.30 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.29 2005/07/04 15:18:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.30 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ CFATTACH_DECL(hpibbus, sizeof(struct hpibbus_softc),
 
 static void	hpibbus_attach_children(struct hpibbus_softc *);
 static int	hpibbussearch(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	hpibbusprint(void *, const char *);
 
 static int	hpibbus_alloc(struct hpibbus_softc *, int, int);
@@ -211,7 +211,7 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 
 static int
 hpibbussearch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct hpibbus_softc *sc = (struct hpibbus_softc *)parent;
 	struct hpibbus_attach_args *ha = aux;

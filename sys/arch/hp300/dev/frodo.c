@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.20 2005/06/28 18:29:59 drochner Exp $	*/
+/*	$NetBSD: frodo.c,v 1.21 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.20 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.21 2005/08/26 13:19:35 drochner Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -110,7 +110,7 @@ static int	frodomatch(struct device *, struct cfdata *, void *);
 static void	frodoattach(struct device *, struct device *, void *);
 
 static int	frodoprint(void *, const char *);
-static int	frodosubmatch(struct device *, struct cfdata *, const locdesc_t *, void *);
+static int	frodosubmatch(struct device *, struct cfdata *, const int *, void *);
 
 static int	frodointr(void *);
 
@@ -214,7 +214,7 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 
 static int
 frodosubmatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.10 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: femi.c,v 1.11 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.10 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.11 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ static int femimatch(struct device *, struct cfdata *, void *);
 static void femiattach(struct device *, struct device *, void *);
 static int femiprint(void *, const char *);
 static int femisubmatch(struct device *, struct cfdata *,
-			const locdesc_t *, void *);
+			const int *, void *);
 
 struct femi_softc {
 	struct device sc_dev;
@@ -144,7 +144,7 @@ femiprint(void *arg, const char *cp)
 
 static int
 femisubmatch(struct device *dev, struct cfdata *cf,
-	const locdesc_t *ldesc, void *arg)
+	const int *ldesc, void *arg)
 {
 	struct femi_softc *sc = (struct femi_softc *) dev;
 	struct femi_attach_args fa;

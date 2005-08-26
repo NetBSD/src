@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.9 2005/06/30 17:03:52 drochner Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.10 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.9 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.10 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.9 2005/06/30 17:03:52 drochner Exp $")
 static int	s3c2800_match(struct device *, struct cfdata *, void *);
 static void	s3c2800_attach(struct device *, struct device *, void *);
 static int	s3c2800_search(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
+			       const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL(ssio, sizeof(struct s3c2800_softc), s3c2800_match, s3c2800_attach,
@@ -167,7 +167,7 @@ abort:
 
 int
 s3c2800_search(struct device * parent, struct cfdata * cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct s3c2800_softc *sc = (struct s3c2800_softc *) parent;
 	struct s3c2xx0_attach_args aa;

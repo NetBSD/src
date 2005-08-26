@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.15 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.16 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.15 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.16 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.15 2005/06/30 17:03:52 drochner Exp $")
 static int	sa11x0_match(struct device *, struct cfdata *, void *);
 static void	sa11x0_attach(struct device *, struct device *, void *);
 static int 	sa11x0_search(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 static int	sa11x0_print(void *, const char *);
 
 /* attach structures */
@@ -208,7 +208,7 @@ int
 sa11x0_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct sa11x0_softc *sc = (struct sa11x0_softc *)parent;

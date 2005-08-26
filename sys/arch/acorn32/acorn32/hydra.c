@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.18 2005/06/28 18:29:58 drochner Exp $	*/
+/*	$NetBSD: hydra.c,v 1.19 2005/08/26 13:19:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.18 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.19 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static void hydra_attach(struct device *, struct device *, void *);
 static int hydra_probe_slave(struct hydra_softc *, int);
 static int hydra_print(void *, char const *);
 static int hydra_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
+			  const int *, void *);
 static void hydra_shutdown(void *);
 
 static void hydra_reset(struct hydra_softc *);
@@ -250,7 +250,7 @@ hydra_print(void *aux, char const *pnp)
 
 static int
 hydra_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct hydra_attach_args *ha = aux;
 

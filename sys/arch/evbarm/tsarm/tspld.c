@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.9 2005/08/14 03:03:48 joff Exp $	*/
+/*	$NetBSD: tspld.c,v 1.10 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.9 2005/08/14 03:03:48 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.10 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -66,7 +66,7 @@ int	tspldmatch (struct device *, struct cfdata *, void *);
 void	tspldattach (struct device *, struct device *, void *);
 static int	tspld_wdog_setmode (struct sysmon_wdog *);
 static int	tspld_wdog_tickle (struct sysmon_wdog *);
-int tspld_search (struct device *, struct cfdata *, const locdesc_t *, void *);
+int tspld_search (struct device *, struct cfdata *, const int *, void *);
 int tspld_print (void *, const char *);
 void boardtemp_poll (void *);
 
@@ -459,7 +459,7 @@ int
 tspld_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct tspld_softc *sc = (struct tspld_softc *)parent;

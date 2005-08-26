@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.1 2005/01/23 19:22:22 shige Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.2 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -51,7 +51,7 @@ struct gpio_softc {
 
 static int	gpio_print(void *, const char *);
 static int	gpio_search(struct device *, struct cfdata *,
-			const locdesc_t *ldesc, void *aux);
+			const int *ldesc, void *aux);
 static int	gpio_match(struct device *, struct cfdata *, void *);
 static void	gpio_attach(struct device *, struct device *, void *);
 
@@ -83,7 +83,7 @@ gpio_print(void *aux, const char *pnp)
 
 static int
 gpio_search(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux)
+	const int *ldesc, void *aux)
 {
 	struct gpio_softc *sc = (void *)parent;
 	struct gpio_attach_args gaa;

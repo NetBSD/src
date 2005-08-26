@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 2005/07/04 15:18:17 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72 2005/07/04 15:18:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2005/08/26 13:19:35 drochner Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -289,7 +289,7 @@ static void	dev_data_insert(struct dev_data *, ddlist_t *);
 static int	mainbusmatch(struct device *, struct cfdata *, void *);
 static void	mainbusattach(struct device *, struct device *, void *);
 static int	mainbussearch(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
@@ -319,7 +319,7 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 
 static int
 mainbussearch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

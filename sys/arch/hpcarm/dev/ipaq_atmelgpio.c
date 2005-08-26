@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.8 2005/08/26 13:19:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.7 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.8 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static	int	atmelgpio_match(struct device *, struct cfdata *, void *);
 static	void	atmelgpio_attach(struct device *, struct device *, void *);
 static	int	atmelgpio_print(void *, const char *);
 static	int	atmelgpio_search(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
+				 const int *, void *);
 static	void	atmelgpio_init(struct atmelgpio_softc *);
 
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
@@ -139,7 +139,7 @@ static int
 atmelgpio_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)

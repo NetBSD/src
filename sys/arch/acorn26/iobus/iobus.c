@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.11 2005/06/30 17:03:51 drochner Exp $ */
+/* $NetBSD: iobus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.11 2005/06/30 17:03:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.11 2005/06/30 17:03:51 drochner Exp $");
 static int iobus_match(struct device *parent, struct cfdata *cf, void *aux);
 static void iobus_attach(struct device *parent, struct device *self, void *aux);
 static int iobus_search_ioc(struct device *parent, struct cfdata *cf,
-			    const locdesc_t *ldesc, void *aux);
+			    const int *ldesc, void *aux);
 static int iobus_search(struct device *parent, struct cfdata *cf,
-			const locdesc_t *ldesc, void *aux);
+			const int *ldesc, void *aux);
 static int iobus_print(void *aux, const char *pnp);
 
 struct iobus_softc {
@@ -89,7 +89,7 @@ extern struct bus_space iobus_bs_tag;
 
 static int
 iobus_search_ioc(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 
@@ -104,7 +104,7 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf,
 
 static int
 iobus_search(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 	

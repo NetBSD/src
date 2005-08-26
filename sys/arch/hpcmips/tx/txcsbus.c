@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.18 2005/07/30 22:40:34 nakayama Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.19 2005/08/26 13:19:36 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.18 2005/07/30 22:40:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.19 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ int	txcsbus_match(struct device *, struct cfdata *, void *);
 void	txcsbus_attach(struct device *, struct device *, void *);
 int	txcsbus_print(void *, const char *);
 int	txcsbus_search(struct device *, struct cfdata *,
-		       const locdesc_t *, void *);
+		       const int *, void *);
 
 struct txcsbus_softc {
 	struct	device sc_dev;
@@ -205,7 +205,7 @@ txcsbus_print(void *aux, const char *pnp)
 
 int
 txcsbus_search(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct txcsbus_softc *sc = (void*)parent;
 	struct cs_attach_args ca;

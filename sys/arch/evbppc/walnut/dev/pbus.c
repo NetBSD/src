@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.7 2005/06/28 18:29:59 drochner Exp $	*/
+/*	$NetBSD: pbus.c,v 1.8 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.7 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.8 2005/08/26 13:19:35 drochner Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -99,7 +99,7 @@ const struct pbus_dev {
 static int	pbus_match(struct device *, struct cfdata *, void *);
 static void	pbus_attach(struct device *, struct device *, void *);
 static int	pbus_submatch(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	pbus_print(void *, const char *);
 
 CFATTACH_DECL(pbus, sizeof(struct device),
@@ -129,7 +129,7 @@ pbus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 static int
 pbus_submatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct pbus_attach_args *pba = aux;
 

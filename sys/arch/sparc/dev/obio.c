@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.67 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.68 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.67 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.68 2005/08/26 13:19:37 drochner Exp $");
 
 #include "locators.h"
 
@@ -97,7 +97,7 @@ struct obio4_busattachargs {
 #if defined(SUN4)
 static	int obioprint  __P((void *, const char *));
 static	int obiosearch   __P((struct device *, struct cfdata *,
-			      const locdesc_t *, void *));
+			      const int *, void *));
 static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 			       int, int));
 static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
@@ -255,7 +255,7 @@ int
 obiosearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct obio4_busattachargs *oap = aux;

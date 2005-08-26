@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.18 2005/06/28 18:29:58 drochner Exp $ */
+/* $NetBSD: podulebus.c,v 1.19 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.18 2005/06/28 18:29:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.19 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ int podulebusmatch(struct device *, struct cfdata *, void *);
 void podulebusattach(struct device *, struct device *, void *);
 int podulebusprint(void *, const char *);
 int podulebussubmatch(struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 void podulechunkdirectory(podule_t *);
 void podulescan(struct device *);
 
@@ -131,7 +131,7 @@ int
 podulebussubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct podule_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.11 2005/08/26 13:19:34 drochner Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.11 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static int  piocprint	 __P((void *aux, const char *name));
 static int  piocsearch	 __P((struct device *, struct cfdata *, void *));
 #endif
 static int  piocsubmatch __P((struct device *, struct cfdata *,
-			      const locdesc_t *, void *));
+			      const int *, void *));
 static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
 			      int config_entry, int *id, int *revision));
 
@@ -225,7 +225,7 @@ static int
 piocsearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct pioc_softc *sc = (struct pioc_softc *)parent;
@@ -271,7 +271,7 @@ static int
 piocsubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct pioc_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 2005/08/26 13:19:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2005/06/30 17:03:53 drochner Exp $"
 STATIC int mainbus_match(struct device *, struct cfdata *, void *);
 STATIC void mainbus_attach(struct device *, struct device *, void *);
 STATIC int mainbus_search(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
+			  const int *, void *);
 STATIC int mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -103,7 +103,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 int
 mainbus_search(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = (void *)aux;
 	int locator = cf->cf_loc[MAINBUSCF_PLATFORM];

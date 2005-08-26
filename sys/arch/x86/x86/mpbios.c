@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.25 2005/06/01 13:11:47 blymn Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.26 2005/08/26 13:19:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.25 2005/06/01 13:11:47 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.26 2005/08/26 13:19:38 drochner Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -173,7 +173,7 @@ struct mp_map
 
 int mp_print __P((void *, const char *));
 int mp_submatch __P((struct device *, struct cfdata *,
-	const locdesc_t *, void *));
+	const int *, void *));
 static const void *mpbios_search __P((struct device *, paddr_t, int,
     struct mp_map *));
 static inline int mpbios_cksum __P((const void *,int));
@@ -227,7 +227,7 @@ int
 mp_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;

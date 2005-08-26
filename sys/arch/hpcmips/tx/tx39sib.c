@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.15 2005/06/30 17:03:53 drochner Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.16 2005/08/26 13:19:36 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.15 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.16 2005/08/26 13:19:36 drochner Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -70,7 +70,7 @@ int	tx39sib_match(struct device *, struct cfdata *, void *);
 void	tx39sib_attach(struct device *, struct device *, void *);
 int	tx39sib_print(void *, const char *);
 int	tx39sib_search(struct device *, struct cfdata *,
-		       const locdesc_t *, void *);
+		       const int *, void *);
 
 #define TX39_CLK2X	18432000
 const int sibsclk_divide_table[8] = {
@@ -280,7 +280,7 @@ tx39sib_clock(struct device *dev)
 
 int
 tx39sib_search(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct tx39sib_softc *sc = (void*)parent;
 	struct txsib_attach_args sa;

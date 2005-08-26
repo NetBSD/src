@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2005/07/03 18:10:53 bsh Exp $ */
+/*	$NetBSD: obio.c,v 1.5 2005/08/26 13:19:35 drochner Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2005/07/03 18:10:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2005/07/03 18:10:53 bsh Exp $");
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
 static int	obio_search(struct device *, struct cfdata *,
-		    const locdesc_t *, void *);
+		    const int *, void *);
 static int	obio_print(void *, const char *);
 
 /* attach structures */
@@ -287,7 +287,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-obio_search(struct device *parent, struct cfdata *cf, const locdesc_t *ldesc,
+obio_search(struct device *parent, struct cfdata *cf, const int *ldesc,
     void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.10 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: intio.c,v 1.11 2005/08/26 13:19:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.10 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.11 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ int	intiomatch(struct device *, struct cfdata *, void *);
 void	intioattach(struct device *, struct device *, void *);
 int	intioprint(void *, const char *);
 int	intiosearch(struct device *, struct cfdata *,
-		    const locdesc_t *, void *);
+		    const int *, void *);
 
 CFATTACH_DECL(intio, sizeof(struct device),
     intiomatch, intioattach, NULL, NULL);
@@ -104,7 +104,7 @@ intioprint(void *aux, const char *pnp)
 
 int
 intiosearch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct intio_attach_args ia;

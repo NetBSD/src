@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.13 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.14 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.13 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.14 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -71,7 +71,7 @@ CFATTACH_DECL(bootbus, sizeof(struct bootbus_softc),
     bootbus_match, bootbus_attach, NULL, NULL);
 
 static int bootbus_submatch(struct device *, struct cfdata *,
-			    const locdesc_t *, void *);
+			    const int *, void *);
 static int bootbus_print(void *, const char *);
 
 static int bootbus_setup_attach_args(struct bootbus_softc *, bus_space_tag_t,
@@ -140,7 +140,7 @@ bootbus_attach(struct device *parent, struct device *self, void *aux)
 
 static int
 bootbus_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct bootbus_attach_args *baa = aux;
 

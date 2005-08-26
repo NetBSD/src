@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2005/06/28 18:29:59 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2005/08/26 13:19:35 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2005/06/28 18:29:59 drochner Exp $")
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_submatch(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
+				 const int *, void *);
 static int	mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -169,7 +169,7 @@ mainbus_attach(parent, self, aux)
 
 static int
 mainbus_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
