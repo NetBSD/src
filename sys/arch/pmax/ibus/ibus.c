@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.11 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: ibus.c,v 1.12 2005/08/26 11:49:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.11 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.12 2005/08/26 11:49:13 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.11 2005/08/25 18:35:39 drochner Exp $");
 #include <pmax/ibus/ibusvar.h>
 
 #include "locators.h"
-
-static int	ibussubmatch __P((struct device *, struct cfdata *,
-				  const locdesc_t *, void *));
 
 void
 ibusattach(parent, self, aux)
@@ -71,23 +68,8 @@ ibusattach(parent, self, aux)
 		locs[IBUSCF_ADDR] = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
 
 		config_found_sm_loc(self, "ibus", locs, ia,
-				    ibusprint, ibussubmatch);
+				    ibusprint, config_stdsubmatch);
 	}
-}
-
-static int
-ibussubmatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[IBUSCF_ADDR] != IBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[IBUSCF_ADDR] != locs[IBUSCF_ADDR])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
