@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.27 2005/08/25 18:35:40 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.28 2005/08/26 12:42:11 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.27 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.28 2005/08/26 12:42:11 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,7 +195,7 @@ int	zs_ioasic_match(struct device *, struct cfdata *, void *);
 void	zs_ioasic_attach(struct device *, struct device *, void *);
 int	zs_ioasic_print(void *, const char *name);
 int	zs_ioasic_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
@@ -387,7 +387,7 @@ int
 zs_ioasic_submatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *locs;
+	const int *locs;
 	void *aux;
 {
 	struct zsc_softc *zs = (void *)parent;

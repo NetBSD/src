@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.1 2005/08/14 03:50:34 joff Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.2 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.1 2005/08/14 03:50:34 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.2 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.1 2005/08/14 03:50:34 joff Exp $");
 
 int	tsdio_probe(struct device *, struct cfdata *, void *);
 void	tsdio_attach(struct device *, struct device *, void *);
-int	tsdio_search(struct device *, struct cfdata *, const locdesc_t *, void *);
+int	tsdio_search(struct device *, struct cfdata *, const int *, void *);
 int	tsdio_print(void *, const char *);
 
 CFATTACH_DECL(tsdio, sizeof(struct tsdio_softc),
@@ -141,7 +141,7 @@ int
 tsdio_search(parent, cf, l, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *l;
+	const int *l;
 	void *aux;
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *)parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $	   */
+/*	$NetBSD: uba.c,v 1.72 2005/08/26 12:42:11 drochner Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.72 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.71 2005/02/26 12:45:06 simonb Exp $");
 #include "locators.h"
 
 static int ubasearch (struct device *, struct cfdata *,
-		      const locdesc_t *, void *);
+		      const int *, void *);
 static int ubaprint (void *, const char *);
 
 /*
@@ -288,7 +288,7 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 
 int
 ubasearch(struct device *parent, struct cfdata *cf,
-	  const locdesc_t *ldesc, void *aux)
+	  const int *ldesc, void *aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;

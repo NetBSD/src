@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.47 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.46 2005/05/17 04:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.47 2005/08/26 12:42:11 drochner Exp $");
 
 #include "isadma.h"
 
@@ -82,7 +82,7 @@ static void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
 static int isapnp_print(void *, const char *);
 #ifdef _KERNEL
 static int isapnp_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 #endif
 static int isapnp_find(struct isapnp_softc *, int);
 static int isapnp_match(struct device *, struct cfdata *, void *);
@@ -604,7 +604,7 @@ static int
 isapnp_submatch(parent, match, ldesc, aux)
 	struct device *parent;
 	struct cfdata *match;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $	*/
+/*	$NetBSD: ucom.c,v 1.57 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56 2005/06/21 14:01:12 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.57 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1141,7 +1141,7 @@ ucomprint(void *aux, const char *pnp)
 
 int
 ucomsubmatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 
