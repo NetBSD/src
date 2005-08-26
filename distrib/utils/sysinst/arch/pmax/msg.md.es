@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,9 +45,9 @@ message md_hello
 }
 
 message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Deberia escoger
+{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
 entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaria hacer?
+¿Que le gustaría hacer?
 
 }
 
@@ -56,4 +56,4 @@ message dobootblks
 }
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}

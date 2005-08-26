@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@ message md_hello
 }
 
 message askboot
-{¿Tamaño de la particion de imagenes de arranque en sectores? }
+{¿Tamaño de la partición de imagenes de arranque en sectores? }
 
 message dobootblks
 {Instalando bloques de arranque en %s....
