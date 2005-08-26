@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.15 2005/08/25 18:35:40 drochner Exp $ */
+/* $NetBSD: tcds.c,v 1.16 2005/08/26 10:14:05 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.15 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.16 2005/08/26 10:14:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,8 +109,6 @@ struct tcds_softc {
 int	tcdsmatch(struct device *, struct cfdata *, void *);
 void	tcdsattach(struct device *, struct device *, void *);
 int     tcdsprint(void *, const char *);
-int	tcdssubmatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 
 CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
     tcdsmatch, tcdsattach, NULL, NULL);
@@ -310,7 +308,7 @@ tcdsattach(parent, self, aux)
 		locs[TCDSCF_CHIP] = i;
 
 		config_found_sm_loc(self, "tcds", locs, &tcdsdev,
-				    tcdsprint, tcdssubmatch);
+				    tcdsprint, config_stdsubmatch);
 #ifdef __alpha__
 		/*
 		 * The second SCSI chip isn't present on the baseboard TCDS
@@ -321,21 +319,6 @@ tcdsattach(parent, self, aux)
 			break;
 #endif /* __alpha__ */
 	}
-}
-
-int
-tcdssubmatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
-	    cf->cf_loc[TCDSCF_CHIP] != locs[TCDSCF_CHIP])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int

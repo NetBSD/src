@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $ */
+/* $NetBSD: gbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,6 @@ CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
     gbusmatch, gbusattach, NULL, NULL);
 
 static int	gbusprint __P((void *, const char *));
-static int	gbussubmatch __P((struct device *, struct cfdata *,
-				  const locdesc_t *, void *));
 
 struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
@@ -133,21 +131,6 @@ gbusattach(parent, self, aux)
 	for (ga = gbus_children; ga->ga_name != NULL; ga++) {
 		locs[GBUSCF_OFFSET] = ga->ga_offset;
 		(void) config_found_sm_loc(self, "gbus", locs, ga,
-					   gbusprint, gbussubmatch);
+					   gbusprint, config_stdsubmatch);
 	}
-}
-
-static int
-gbussubmatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[GBUSCF_OFFSET] != GBUSCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[GBUSCF_OFFSET] != locs[GBUSCF_OFFSET])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
