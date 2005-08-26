@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.78 2005/08/25 22:17:19 drochner Exp $ */
+/* $NetBSD: device.h,v 1.79 2005/08/26 14:20:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -231,12 +231,8 @@ struct cftable {
 };
 TAILQ_HEAD(cftablelist, cftable);
 
-/*
- * XXX the "locdesc_t" is unnecessary
- */
-typedef int locdesc_t;
 typedef int (*cfsubmatch_t)(struct device *, struct cfdata *,
-			    const locdesc_t *, void *);
+			    const int *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -371,12 +367,12 @@ const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 
 int config_stdsubmatch(struct device *, struct cfdata *, const int *, void *);
 struct cfdata *config_search_loc(cfsubmatch_t, struct device *,
-				 const char *, const locdesc_t *, void *);
+				 const char *, const int *, void *);
 #define config_search_ia(sm, d, ia, a) \
 	config_search_loc((sm), (d), (ia), NULL, (a))
 struct cfdata *config_rootsearch(cfsubmatch_t, const char *, void *);
 struct device *config_found_sm_loc(struct device *,
-				   const char *, const locdesc_t *, void *,
+				   const char *, const int *, void *,
 				   cfprint_t, cfsubmatch_t);
 #define config_found_ia(d, ia, a, p) \
 	config_found_sm_loc((d), (ia), NULL, (a), (p), NULL)
@@ -384,7 +380,7 @@ struct device *config_found_sm_loc(struct device *,
 	config_found_sm_loc((d), NULL, NULL, (a), (p), NULL)
 struct device *config_rootfound(const char *, void *);
 struct device *config_attach_loc(struct device *, struct cfdata *,
-    const locdesc_t *, void *, cfprint_t);
+    const int *, void *, cfprint_t);
 #define config_attach(p, cf, aux, pr) \
 	config_attach_loc((p), (cf), 0, (aux), (pr))
 int config_match(struct device *, struct cfdata *, void *);
