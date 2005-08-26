@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.28 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: amr.c,v 1.29 2005/08/26 11:20:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.28 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.29 2005/08/26 11:20:33 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,6 @@ static int	amr_intr(void *);
 static int	amr_match(struct device *, struct cfdata *, void *);
 static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
-static int	amr_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static void	amr_teardown(struct amr_softc *);
 static void	amr_thread(void *);
 static void	amr_thread_create(void *);
@@ -466,7 +464,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		locs[AMRCF_UNIT] = j;
 
 		amr->amr_drive[j].al_dv = config_found_sm_loc(&amr->amr_dv,
-			"amr", locs, &amra, amr_print, amr_submatch);
+			"amr", locs, &amra, amr_print, config_stdsubmatch);
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
@@ -530,24 +528,6 @@ amr_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", amra->amra_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-amr_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-	struct amr_attach_args *amra;
-
-	amra = (struct amr_attach_args *)aux;
-
-	if (cf->cf_loc[AMRCF_UNIT] != AMRCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AMRCF_UNIT] != locs[AMRCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.29 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.30 2005/08/26 11:20:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.29 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.30 2005/08/26 11:20:33 drochner Exp $");
 
 #include "rnd.h"
 
@@ -149,18 +149,6 @@ edc_mca_probe(parent, match, aux)
 	default:
 		return (0);
 	}
-}
-
-static int
-edcsubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[EDCCF_DRIVE] != EDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[EDCCF_DRIVE] != locs[EDCCF_DRIVE])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 void
@@ -326,7 +314,7 @@ edc_mca_attach(parent, self, aux)
 		locs[EDCCF_DRIVE] = devno;
 		sc->sc_ed[devno] =
 			(void *) config_found_sm_loc(self, "edc", locs, &eda,
-						     NULL, edcsubmatch);
+						     NULL, config_stdsubmatch);
 
 		/* If initialization did not succeed, NULL the pointer. */
 		if (sc->sc_ed[devno]
