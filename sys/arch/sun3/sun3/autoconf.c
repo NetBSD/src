@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ cpu_configure(void)
  */
 int 
 bus_scan(struct device *parent, struct cfdata *cf,
-	 const locdesc_t *ldesc, void *aux)
+	 const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 

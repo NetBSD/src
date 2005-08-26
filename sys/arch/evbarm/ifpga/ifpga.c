@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.19 2004/08/30 15:05:17 drochner Exp $ */
+/*	$NetBSD: ifpga.c,v 1.20 2005/08/26 13:19:35 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.19 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.20 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ ifpga_print(void *aux, const char *pnp)
 
 static int
 ifpga_search(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct ifpga_softc *sc = (struct ifpga_softc *)parent;
 	struct ifpga_attach_args ifa;

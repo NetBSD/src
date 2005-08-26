@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.6 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.7 2005/08/26 13:19:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.6 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.7 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static	int	uda1341_match(struct device *, struct cfdata *, void *);
 static	void	uda1341_attach(struct device *, struct device *, void *);
 static	int	uda1341_print(void *, const char *);
 static	int	uda1341_search(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
+			       const int *, void *);
 
 static	void	uda1341_output_high(struct uda1341_softc *);
 static	void	uda1341_output_low(struct uda1341_softc *);
@@ -160,7 +160,7 @@ static int
 uda1341_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.8 2005/06/30 17:03:52 drochner Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.9 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.8 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.9 2005/08/26 13:19:34 drochner Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.8 2005/06/30 17:03:52 drochner Exp $");
 static int	ixpsip_match(struct device *, struct cfdata *, void *);
 static void	ixpsip_attach(struct device *, struct device *, void *);
 static int	ixpsip_search(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	ixpsip_print(void *, const char *);
 
 CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
@@ -85,7 +85,7 @@ int
 ixpsip_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct ixpsip_softc *sc = (struct ixpsip_softc *)parent;

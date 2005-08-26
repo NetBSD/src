@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.32 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: hpc.c,v 1.33 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.32 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.33 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ int	hpc_print(void *, const char *);
 int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
 int	hpc_submatch(struct device *, struct cfdata *,
-		     const locdesc_t *, void *);
+		     const int *, void *);
 
 int	hpc_power_intr(void *);
 
@@ -507,7 +507,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 
 int
 hpc_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 

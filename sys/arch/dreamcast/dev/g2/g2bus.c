@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.10 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.11 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.10 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.11 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ CFATTACH_DECL(g2bus, sizeof(struct g2bus_softc),
     g2busmatch, g2busattach, NULL, NULL);
 
 int	g2bussearch(struct device *, struct cfdata *,
-		    const locdesc_t *, void *);
+		    const int *, void *);
 
 int
 g2busmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -89,7 +89,7 @@ g2busprint(void *aux, const char *pnp)
 
 int
 g2bussearch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, aux) > 0)

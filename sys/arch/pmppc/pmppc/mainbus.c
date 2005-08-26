@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 
 static int
 mainbus_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 

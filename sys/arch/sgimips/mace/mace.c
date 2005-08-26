@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.6 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: mace.c,v 1.7 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.6 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.7 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static int	mace_match(struct device *, struct cfdata *, void *);
 static void	mace_attach(struct device *, struct device *, void *);
 static int	mace_print(void *, const char *);
 static int	mace_search(struct device *, struct cfdata *,
-			    const locdesc_t *, void *);
+			    const int *, void *);
 
 CFATTACH_DECL(mace, sizeof(struct mace_softc),
     mace_match, mace_attach, NULL, NULL);
@@ -238,7 +238,7 @@ mace_print(void *aux, const char *pnp)
 
 static int
 mace_search(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct mace_softc *sc = (struct mace_softc *)parent;
 	struct mace_attach_args maa;

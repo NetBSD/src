@@ -1,4 +1,4 @@
-/* $NetBSD: pb1000_obio.c,v 1.7 2005/06/28 18:29:59 drochner Exp $ */
+/* $NetBSD: pb1000_obio.c,v 1.8 2005/08/26 13:19:35 drochner Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.7 2005/06/28 18:29:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.8 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.7 2005/06/28 18:29:59 drochner Exp
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
 static int	obio_submatch(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	obio_print(void *, const char *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
@@ -107,7 +107,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 static int
 obio_submatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 
