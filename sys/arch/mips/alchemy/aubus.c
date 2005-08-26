@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.14 2005/08/25 18:35:39 drochner Exp $ */
+/* $NetBSD: aubus.c,v 1.15 2005/08/26 11:49:13 drochner Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.14 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.15 2005/08/26 11:49:13 drochner Exp $");
 
 #include "locators.h"
 
@@ -158,8 +158,6 @@ const struct au1x00_dev au1100_devs [] = {
 
 static int	aubus_match(struct device *, struct cfdata *, void *);
 static void	aubus_attach(struct device *, struct device *, void *);
-static int	aubus_submatch(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
 static int	aubus_print(void *, const char *);
 static void  aubus_alloc_dma_tag(struct device *, bus_dma_tag_t);
 
@@ -177,18 +175,6 @@ aubus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
-}
-
-static int
-aubus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[AUBUSCF_ADDR] != AUBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[AUBUSCF_ADDR] != locs[AUBUSCF_ADDR])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -233,7 +219,7 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 		locs[AUBUSCF_ADDR] = ad->addr[0];
 
 		(void) config_found_sm_loc(self, "aubus", locs, &aa,
-					   aubus_print, aubus_submatch);
+					   aubus_print, config_stdsubmatch);
 	}
 }
 
