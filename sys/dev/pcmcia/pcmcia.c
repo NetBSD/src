@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.76 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.77 2005/08/26 11:01:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.76 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.77 2005/08/26 11:01:43 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -151,7 +151,7 @@ pcmcia_card_attach(dev)
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
 	int error;
-	static const int wildcard[2] = {
+	static const int wildcard[PCMCIACF_NLOCS] = {
 		PCMCIACF_FUNCTION_DEFAULT, PCMCIACF_IRQ_DEFAULT
 	};
 

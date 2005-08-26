@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.95 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.96 2005/08/26 11:01:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.95 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.96 2005/08/26 11:01:43 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -132,8 +132,9 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	struct pci_softc *sc = (struct pci_softc *)self;
 	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
 	const char *sep = "";
-	static const int wildcard[2] = { PCICF_DEV_DEFAULT,
-					 PCICF_FUNCTION_DEFAULT };
+	static const int wildcard[PCICF_NLOCS] = {
+		PCICF_DEV_DEFAULT, PCICF_FUNCTION_DEFAULT
+	};
 
 	pci_attach_hook(parent, self, pba);
 

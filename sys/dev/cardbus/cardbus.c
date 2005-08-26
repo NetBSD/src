@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.63 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.64 2005/08/26 11:01:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.63 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.64 2005/08/26 11:01:42 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -385,7 +385,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
 	int cdstatus;
-	static int wildcard[] = {
+	static int wildcard[CARDBUSCF_NLOCS] = {
 		CARDBUSCF_DEV_DEFAULT, CARDBUSCF_FUNCTION_DEFAULT
 	};
 
