@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $ */
+/* $NetBSD: mcbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.16 2005/08/25 18:35:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.17 2005/08/26 10:13:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ struct mcbus_cpu_busdep mcbus_primary;
 static int	mcbusmatch __P((struct device *, struct cfdata *, void *));
 static void	mcbusattach __P((struct device *, struct device *, void *));
 static int	mcbusprint __P((void *, const char *));
-static int	mcbussbm __P((struct device *, struct cfdata *,
-			      const locdesc_t *, void *));
 static const char *mcbus_node_type_str __P((u_int8_t));
 
 typedef struct {
@@ -100,21 +98,6 @@ mcbusprint(aux, cp)
 	aprint_normal(" mid %d: %s", tap->ma_mid,
 	    mcbus_node_type_str(tap->ma_type));
 	return (UNCONF);
-}
-
-static int
-mcbussbm(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
-	    cf->cf_loc[MCBUSCF_MID] != locs[MCBUSCF_MID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 static int
@@ -173,7 +156,7 @@ mcbusattach(parent, self, aux)
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
 	locs[MCBUSCF_MID] = 1;
 	(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-				   mcbusprint, mcbussbm);
+				   mcbusprint, config_stdsubmatch);
 
 	/*
 	 * Now find PCI busses.
@@ -191,7 +174,8 @@ mcbusattach(parent, self, aux)
 		locs[MCBUSCF_MID] = mid;
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
 			(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-						   mcbusprint, mcbussbm);
+						   mcbusprint,
+						   config_stdsubmatch);
 	}
 
 #if 0
@@ -219,7 +203,7 @@ mcbusattach(parent, self, aux)
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
 		locs[MCBUSCF_MID] = mid;
 		(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-					   mcbusprint, mcbussbm);
+					   mcbusprint, config_stdsubmatch);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.29 2005/08/25 18:35:38 drochner Exp $ */
+/* $NetBSD: tlsb.c,v 1.30 2005/08/26 10:13:05 drochner Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.29 2005/08/25 18:35:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.30 2005/08/26 10:13:05 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -71,8 +71,6 @@ CFATTACH_DECL(tlsb, sizeof (struct device),
 extern struct cfdriver tlsb_cd;
 
 static int	tlsbprint __P((void *, const char *));
-static int	tlsbsubmatch __P((struct device *, struct cfdata *,
-				  const locdesc_t *, void *));
 static const char *tlsb_node_type_str __P((u_int32_t));
 
 /*
@@ -101,24 +99,6 @@ tlsbprint(aux, pnp)
 		    tlsb_node_type_str(tap->ta_dtype));
 
 	return (UNCONF);
-}
-
-static int
-tlsbsubmatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if (cf->cf_loc[TLSBCF_NODE] != TLSBCF_NODE_DEFAULT &&
-	    cf->cf_loc[TLSBCF_NODE] != locs[TLSBCF_NODE])
-		return (0);
-	if (cf->cf_loc[TLSBCF_OFFSET] != TLSBCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[TLSBCF_OFFSET] != locs[TLSBCF_OFFSET])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 static int
@@ -209,7 +189,7 @@ tlsbattach(parent, self, aux)
 		locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
 		config_found_sm_loc(self, "tlsb", locs, &ta,
-				    tlsbprint, tlsbsubmatch);
+				    tlsbprint, config_stdsubmatch);
 	}
 	/*
 	 * *Now* search for I/O nodes (in descending order)
@@ -255,7 +235,7 @@ tlsbattach(parent, self, aux)
 			locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
 			config_found_sm_loc(self, "tlsb", locs, &ta,
-					    tlsbprint, tlsbsubmatch);
+					    tlsbprint, config_stdsubmatch);
 		}
 	}
 }
