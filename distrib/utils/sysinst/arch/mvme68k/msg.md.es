@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 
 
 message md_hello
-{Si su maquina tiene 4MB o menos, sysinst no funciona correctamente.
+{Si su maquina tiene 4MB o menos, sysinst no funcionará correctamente.
 
 }
 
@@ -55,14 +55,14 @@ a escribir un disklabel.
 }
 
 message ordering
-{El orden de la particion %c esta mal. ¿Editar de nuevo?}
+{El orden de la partición %c esta mal. ¿Editar de nuevo?}
 
 message emptypart
-{Hay una particion valida %c despues de particion(es) valida(s).
+{Hay una partición valida %c despues de particion(es) valida(s).
 Por favor, reedite la tabla de particiones}
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
 
 .if notyet
 /* XXX: not yet implemented */
