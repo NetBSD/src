@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.9 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: becc.c,v 1.10 2005/08/26 13:19:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.9 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.10 2005/08/26 13:19:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ const char *becc_revisions[] = {
 struct becc_softc *becc_softc;
 
 static int becc_search(struct device *, struct cfdata *,
-		       const locdesc_t *, void *);
+		       const int *, void *);
 static int becc_print(void *, const char *);
 
 static void becc_pci_dma_init(struct becc_softc *);
@@ -220,7 +220,7 @@ becc_attach(struct becc_softc *sc)
  */
 static int
 becc_search(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct becc_softc *sc = (void *) parent;
 	struct becc_attach_args ba;

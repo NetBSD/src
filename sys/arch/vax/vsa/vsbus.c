@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.48 2005/06/30 17:03:54 drochner Exp $ */
+/*	$NetBSD: vsbus.c,v 1.49 2005/08/26 13:19:38 drochner Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.48 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.49 2005/08/26 13:19:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ int	vsbus_match(struct device *, struct cfdata *, void *);
 void	vsbus_attach(struct device *, struct device *, void *);
 int	vsbus_print(void *, const char *);
 int	vsbus_search(struct device *, struct cfdata *,
-		     const locdesc_t *, void *);
+		     const int *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
@@ -211,7 +211,7 @@ int
 vsbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct	vsbus_softc *sc = (void *)parent;

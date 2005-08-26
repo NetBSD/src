@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.2 2005/06/30 17:03:54 drochner Exp $	 */
+/* $NetBSD: ioc.c,v 1.3 2005/08/26 13:19:37 drochner Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.2 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.3 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void     ioc_attach(struct device *, struct device *, void *);
 #if defined(notyet)
 static int      ioc_print(void *, const char *);
 static int      ioc_search(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
+			   const int *, void *);
 #endif
 
 CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
@@ -175,7 +175,7 @@ ioc_print(void *aux, const char *pnp)
 
 static int
 ioc_search(struct device * parent, struct cfdata * cf,
-	   const locdesc_t *ldesc, void *aux)
+	   const int *ldesc, void *aux)
 {
 	struct ioc_softc *sc = (struct ioc_softc *) parent;
 	struct ioc_attach_args iaa;

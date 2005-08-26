@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.19 2005/07/03 22:25:02 he Exp $ */
+/* $NetBSD: opb.c,v 1.20 2005/08/26 13:19:37 drochner Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.19 2005/07/03 22:25:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.20 2005/08/26 13:19:37 drochner Exp $");
 
 #include "locators.h"
 
@@ -120,7 +120,7 @@ const struct opb_limit {
 static int	opb_match(struct device *, struct cfdata *, void *);
 static void	opb_attach(struct device *, struct device *, void *);
 static int	opb_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
+			     const int *, void *);
 static int	opb_print(void *, const char *);
 
 CFATTACH_DECL(opb, sizeof(struct device),
@@ -151,7 +151,7 @@ opb_match(struct device *parent, struct cfdata *cf, void *aux)
 
 static int
 opb_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
 

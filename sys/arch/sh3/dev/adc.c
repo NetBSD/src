@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.4 2005/06/30 17:03:54 drochner Exp $ */
+/*	$NetBSD: adc.c,v 1.5 2005/08/26 13:19:37 drochner Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.4 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.5 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,7 +56,7 @@ CFATTACH_DECL(adc, sizeof(struct adc_softc),
     adc_match, adc_attach, NULL, NULL);
 
 static int	adc_search(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
+			   const int *, void *);
 static int	adc_print(void *, const char *);
 
 
@@ -91,7 +91,7 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 
 static int
 adc_search(struct device *parent, struct cfdata *cf,
-	   const locdesc_t *ldesc, void *aux)
+	   const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

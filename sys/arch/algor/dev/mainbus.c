@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2005/06/30 17:03:52 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2005/08/26 13:19:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2005/08/26 13:19:34 drochner Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -78,7 +78,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 
 int	mainbus_print(void *, const char *);
 int	mainbus_submatch(struct device *, struct cfdata *,
-			 const locdesc_t *, void *);
+			 const int *, void *);
 
 /* There can be only one. */
 int	mainbus_found;
@@ -255,7 +255,7 @@ mainbus_print(void *aux, const char *pnp)
 
 int
 mainbus_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *ldesc, void *aux)
+		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

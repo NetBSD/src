@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $ */
+/* $NetBSD: mainbus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int  mainbusmatch  __P((struct device *, struct cfdata *, void *));
 static void mainbusattach __P((struct device *, struct device *, void *));
 static int  mainbusprint  __P((void *aux, const char *mainbus));
 static int  mainbussearch __P((struct device *, struct cfdata *,
-				const locdesc_t *, void *));
+				const int *, void *));
 
 /* attach and device structures for the device */
 
@@ -130,7 +130,7 @@ static int
 mainbussearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct mainbus_attach_args mb;

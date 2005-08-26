@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.2 2005/06/30 17:03:52 drochner Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.3 2005/08/26 13:19:34 drochner Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.2 2005/06/30 17:03:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.3 2005/08/26 13:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct ssspi_softc {
 static int	ssspi_match(struct device *, struct cfdata *, void *);
 static void	ssspi_attach(struct device *, struct device *, void *);
 static int 	ssspi_search(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
+			     const int *, void *);
 static int	ssspi_print(void *, const char *);
 
 /* attach structures */
@@ -138,7 +138,7 @@ int
 ssspi_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct ssspi_softc *sc = (struct ssspi_softc *)parent;
