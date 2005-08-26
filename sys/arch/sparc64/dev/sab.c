@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.22 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: sab.c,v 1.23 2005/08/26 11:49:13 drochner Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.22 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.23 2005/08/26 11:49:13 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,8 +125,6 @@ struct sabtty_softc *sabtty_cons_output;
 
 int sab_match(struct device *, struct cfdata *, void *);
 void sab_attach(struct device *, struct device *, void *);
-int sab_submatch(struct device *, struct cfdata *,
-		 const locdesc_t *, void *);
 int sab_print(void *, const char *);
 int sab_intr(void *);
 
@@ -306,22 +304,10 @@ sab_attach(parent, self, aux)
 
 		sc->sc_child[i] =
 		    (struct sabtty_softc *)config_found_sm_loc(self,
-		     "sab", locs, &stax, sab_print, sab_submatch);
+		     "sab", locs, &stax, sab_print, config_stdsubmatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
-}
-
-int
-sab_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *locs, void *aux)
-{
-
-        if (cf->cf_loc[SABCF_CHANNEL] != SABCF_CHANNEL_DEFAULT &&
-            cf->cf_loc[SABCF_CHANNEL] != locs[SABCF_CHANNEL])
-                return (0);
-
-        return (config_match(parent, cf, aux));
 }
 
 int
