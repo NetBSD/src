@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.98 2005/08/25 22:17:19 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.99 2005/08/26 14:20:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.98 2005/08/25 22:17:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.99 2005/08/26 14:20:40 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,9 +134,9 @@ propdb_t dev_propdb;
 #define	ROOT ((struct device *)NULL)
 
 struct matchinfo {
-	cfsubmatch_t fn_loc;
+	cfsubmatch_t fn;
 	struct	device *parent;
-	const locdesc_t *ldesc;
+	const int *locs;
 	void	*aux;
 	struct	cfdata *match;
 	int	pri;
@@ -439,8 +439,8 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 {
 	int pri;
 
-	if (m->fn_loc != NULL) {
-		pri = (*m->fn_loc)(m->parent, cf, m->ldesc, m->aux);
+	if (m->fn != NULL) {
+		pri = (*m->fn)(m->parent, cf, m->locs, m->aux);
 	} else {
 		struct cfattach *ca;
 
@@ -702,7 +702,7 @@ config_match(struct device *parent, struct cfdata *cf, void *aux)
  */
 struct cfdata *
 config_search_loc(cfsubmatch_t fn, struct device *parent,
-		  const char *ifattr, const locdesc_t *ldesc, void *aux)
+		  const char *ifattr, const int *locs, void *aux)
 {
 	struct cftable *ct;
 	struct cfdata *cf;
@@ -711,9 +711,9 @@ config_search_loc(cfsubmatch_t fn, struct device *parent,
 	KASSERT(config_initialized);
 	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
 
-	m.fn_loc = fn;
+	m.fn = fn;
 	m.parent = parent;
-	m.ldesc = ldesc;
+	m.locs = locs;
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
@@ -764,7 +764,7 @@ config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 	const short *p;
 	struct matchinfo m;
 
-	m.fn_loc = fn;
+	m.fn = fn;
 	m.parent = ROOT;
 	m.aux = aux;
 	m.match = NULL;
@@ -794,13 +794,13 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  */
 struct device *
 config_found_sm_loc(struct device *parent,
-		const char *ifattr, const locdesc_t *ldesc, void *aux,
+		const char *ifattr, const int *locs, void *aux,
 		cfprint_t print, cfsubmatch_t submatch)
 {
 	struct cfdata *cf;
 
-	if ((cf = config_search_loc(submatch, parent, ifattr, ldesc, aux)))
-		return(config_attach_loc(parent, cf, ldesc, aux, print));
+	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
+		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
 		if (config_do_twiddle)
 			twiddle();
@@ -878,7 +878,7 @@ config_makeroom(int n, struct cfdriver *cd)
  */
 struct device *
 config_attach_loc(struct device *parent, struct cfdata *cf,
-	const locdesc_t *locs, void *aux, cfprint_t print)
+	const int *locs, void *aux, cfprint_t print)
 {
 	struct device *dev;
 	struct cftable *ct;
