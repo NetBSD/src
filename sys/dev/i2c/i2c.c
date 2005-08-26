@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.3 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: i2c.c,v 1.4 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@ iic_print(void *aux, const char *pnp)
 
 static int
 iic_search(struct device *parent, struct cfdata *cf,
-	   const locdesc_t *ldesc, void *aux)
+	   const int *ldesc, void *aux)
 {
 	struct iic_softc *sc = (void *) parent;
 	struct i2c_attach_args ia;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.12 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.13 2005/08/26 12:42:11 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.13 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ int	hpcioman_match(struct device *, struct cfdata *, void *);
 void	hpcioman_attach(struct device *, struct device *, void *);
 int	hpcioman_print(void *, const char *);
 int	hpcioman_search(struct device *, struct cfdata *,
-			const locdesc_t *, void *);
+			const int *, void *);
 
 struct hpcioman_softc {
 	struct device sc_dev;
@@ -90,7 +90,7 @@ hpcioman_attach(struct device *parent, struct device *self, void *aux)
 
 int
 hpcioman_search(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
+		const int *ldesc, void *aux)
 {
 	//struct hpcioman_softc *sc = (struct hpcioman_softc *)parent;
 	struct hpcio_attach_args *haa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.129 2005/08/26 12:42:11 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.128 2005/06/19 04:01:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.129 2005/08/26 12:42:11 drochner Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -89,7 +89,7 @@ Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
 Static int usbd_print(void *, const char *);
 Static int usbd_submatch(device_ptr_t, struct cfdata *,
-			 const locdesc_t *, void *);
+			 const int *, void *);
 #elif defined(__OpenBSD__)
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
@@ -1191,7 +1191,7 @@ usbd_print(void *aux, const char *pnp)
 #if defined(__NetBSD__)
 int
 usbd_submatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 #elif defined(__OpenBSD__)
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.28 2005/08/25 18:35:40 drochner Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.29 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.28 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.29 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,10 @@ int	uhidevdebug = 0;
 
 Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int uhidev_maxrepid(void *buf, int len);
-Static int uhidevprint(void *aux, const char *pnp);
-Static int uhidevsubmatch(struct device *parent, struct cfdata *cf,
-			  const locdesc_t *, void *aux);
+Static int uhidev_maxrepid(void *, int);
+Static int uhidevprint(void *, const char *);
+Static int uhidevsubmatch(struct device *, struct cfdata *,
+			  const int *, void *);
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -344,7 +344,7 @@ uhidevprint(void *aux, const char *pnp)
 
 int
 uhidevsubmatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *locs, void *aux)
+	       const int *locs, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
