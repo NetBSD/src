@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.41 2005/08/25 18:35:40 drochner Exp $	*/
+/*	$NetBSD: tc.c,v 1.42 2005/08/26 10:14:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.41 2005/08/25 18:35:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.42 2005/08/26 10:14:05 drochner Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -51,8 +51,6 @@ CFATTACH_DECL(tc, sizeof(struct tc_softc),
 extern struct cfdriver tc_cd;
 
 int	tcprint(void *, const char *);
-int	tcsubmatch(struct device *, struct cfdata *,
-			const locdesc_t *, void *);
 void	tc_devinfo(const char *, char *, size_t);
 
 int
@@ -141,7 +139,7 @@ tcattach(parent, self, aux)
 		 * Attach the device.
 		 */
 		config_found_sm_loc(self, "tc", locs, &ta,
-				    tcprint, tcsubmatch);
+				    tcprint, config_stdsubmatch);
 	}
 
 	/*
@@ -184,7 +182,7 @@ tcattach(parent, self, aux)
 		 * Attach the device.
 		 */
 		config_found_sm_loc(self, "tc", locs, &ta,
-				    tcprint, tcsubmatch);
+				    tcprint, config_stdsubmatch);
 	}
 }
 
@@ -202,24 +200,6 @@ tcprint(aux, pnp)
 	}
 	aprint_normal(" slot %d offset 0x%x", ta->ta_slot, ta->ta_offset);
 	return (UNCONF);
-}
-
-int
-tcsubmatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *locs;
-	void *aux;
-{
-
-	if ((cf->cf_loc[TCCF_SLOT] != TCCF_SLOT_DEFAULT) &&
-	    (cf->cf_loc[TCCF_SLOT] != locs[TCCF_SLOT]))
-		return 0;
-	if ((cf->cf_loc[TCCF_OFFSET] != TCCF_OFFSET_DEFAULT) &&
-	    (cf->cf_loc[TCCF_OFFSET] != locs[TCCF_OFFSET]))
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 

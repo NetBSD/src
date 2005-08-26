@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.9 2005/08/25 18:35:38 drochner Exp $ */
+/* $NetBSD: sableio.c,v 1.10 2005/08/26 10:13:05 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.9 2005/08/25 18:35:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.10 2005/08/26 10:13:05 drochner Exp $");
 
 #include "isadma.h"
 
@@ -111,8 +111,6 @@ CFATTACH_DECL(sableio, sizeof(struct sableio_softc),
     sableio_match, sableio_attach, NULL, NULL);
 
 int	sableio_print(void *, const char *);
-int	sableio_submatch(struct device *, struct cfdata *,
-			 const locdesc_t *, void *);
 
 struct sableio_softc *sableio_attached;
 
@@ -178,20 +176,8 @@ sableio_attach(struct device *parent, struct device *self, void *aux)
 		locs[SABLEIOCF_PORT] = sableio_devs[i].sd_ioaddr;
 
 		(void) config_found_sm_loc(self, "sableio", locs, &sa,
-					   sableio_print, sableio_submatch);
+					   sableio_print, config_stdsubmatch);
 	}
-}
-
-int
-sableio_submatch(struct device *parent, struct cfdata *cf,
-		 const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[SABLEIOCF_PORT] != SABLEIOCF_PORT_DEFAULT &&
-	    cf->cf_loc[SABLEIOCF_PORT] != locs[SABLEIOCF_PORT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
