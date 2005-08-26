@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.3 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: firewire.c,v 1.4 2005/08/26 11:20:33 drochner Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -195,8 +195,6 @@ int firewirematch (struct device *, struct cfdata *, void *);
 void firewireattach (struct device *, struct device *, void *);
 int firewiredetach (struct device *, int);
 int firewire_print (void *, const char *);
-static int firewiresubmatch(
-    struct device *, struct cfdata *, const locdesc_t *, void *);
 #endif
 static void fw_try_bmr (void *);
 static void fw_try_bmr_callback (struct fw_xfer *);
@@ -554,20 +552,6 @@ firewire_resume(device_t dev)
 	bus_generic_resume(dev);
 
 	return(0);
-}
-#elif defined(__NetBSD__)
-static int
-firewiresubmatch(
-    struct device *parent, struct cfdata *cf, const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[IEEE1394IFCF_EUIHI] != IEEE1394IFCF_EUIHI_DEFAULT &&
-	    cf->cf_loc[IEEE1394IFCF_EUIHI] != locs[IEEE1394IFCF_EUIHI])
-		return (0);
-	if (cf->cf_loc[IEEE1394IFCF_EUILO] != IEEE1394IFCF_EUILO_DEFAULT &&
-	    cf->cf_loc[IEEE1394IFCF_EUILO] != locs[IEEE1394IFCF_EUILO])
-		return (0);
-	return (config_match(parent, cf, aux));
 }
 #endif
 

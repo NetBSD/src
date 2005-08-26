@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.25 2005/08/25 18:35:39 drochner Exp $	*/
+/*	$NetBSD: puc.c,v 1.26 2005/08/26 11:20:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.25 2005/08/25 18:35:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.26 2005/08/26 11:20:33 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,6 @@ struct puc_softc {
 };
 
 static int	puc_print(void *, const char *);
-static int	puc_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static const char *puc_port_type_name(int);
 
@@ -304,7 +302,7 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 
 		/* and configure it */
 		sc->sc_ports[i].dev = config_found_sm_loc(self, "puc", locs,
-			&paa, puc_print, puc_submatch);
+			&paa, puc_print, config_stdsubmatch);
 	}
 }
 
@@ -320,18 +318,6 @@ puc_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", puc_port_type_name(paa->type), pnp);
 	aprint_normal(" port %d", paa->port);
 	return (UNCONF);
-}
-
-static int
-puc_submatch(struct device *parent, struct cfdata *cf,
-    const locdesc_t *locs, void *aux)
-{
-
-	if (cf->cf_loc[PUCCF_PORT] != PUCCF_PORT_DEFAULT &&
-	    cf->cf_loc[PUCCF_PORT] != locs[PUCCF_PORT])
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 const struct puc_device_description *

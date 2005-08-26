@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.3 2005/07/23 16:55:13 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.4 2005/08/26 11:20:33 drochner Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -823,11 +823,7 @@ struct fwbus_attach_args {
 	do {								      \
 		struct firewire_softc *sc = (struct firewire_softc *)fc->bdev;\
 		struct firewire_dev_list *devlist, *elm;		      \
-		struct fw_loc {						      \
-			int len;					      \
-			struct fw_eui64 eui;				      \
-		} help;							      \
-		locdesc_t *ldp = (void *)&help; /* XXX XXX */		      \
+		int locs[IEEE1394IFCF_NLOCS];				      \
 									      \
 		devlist = malloc(					      \
 		    sizeof (struct firewire_dev_list), M_DEVBUF, M_NOWAIT);   \
@@ -836,13 +832,12 @@ struct fwbus_attach_args {
 			break;						      \
 		}							      \
 									      \
-		help.len = sizeof (struct fw_eui64);			      \
-		help.eui.hi = fwdev->eui.hi;				      \
-		help.eui.lo = fwdev->eui.lo;				      \
+		locs[IEEE1394IFCF_EUIHI] = fwdev->eui.hi;		      \
+		locs[IEEE1394IFCF_EUILO] = fwdev->eui.lo;		      \
 									      \
 		fwa.fwdev = fwdev;					      \
 		fwdev->sbp = config_found_sm_loc(sc->dev, "ieee1394if",	      \
-		    ldp, &fwa, firewire_print, firewiresubmatch);	      \
+		    locs, &fwa, firewire_print, config_stdsubmatch);	      \
 		if (fwdev->sbp == NULL) {				      \
 			free(devlist, M_DEVBUF);			      \
 			break;						      \
