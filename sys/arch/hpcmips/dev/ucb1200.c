@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.14 2005/06/30 17:03:53 drochner Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.15 2005/08/26 13:19:36 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.14 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.15 2005/08/26 13:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ int	ucb1200_match(struct device *, struct cfdata *, void *);
 void	ucb1200_attach(struct device *, struct device *, void *);
 int	ucb1200_print(void *, const char *);
 int	ucb1200_search(struct device *, struct cfdata *,
-		       const locdesc_t *, void *);
+		       const int *, void *);
 int	ucb1200_check_id(u_int16_t, int);
 
 #ifdef UCB1200_DEBUG
@@ -147,7 +147,7 @@ ucb1200_attach(struct device *parent, struct device *self, void *aux)
 
 int
 ucb1200_search(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct ucb1200_softc *sc = (void*)parent;
 	struct ucb1200_attach_args ucba;

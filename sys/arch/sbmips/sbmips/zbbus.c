@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $ */
+/* $NetBSD: zbbus.c,v 1.10 2005/08/26 13:19:37 drochner Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.9 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.10 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ CFATTACH_DECL(zbbus, sizeof(struct device),
 
 static int	zbbus_print(void *, const char *);
 static int	zbbus_submatch(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
+			       const int *, void *);
 static const char *zbbus_entity_type_name(enum zbbus_entity_type type);
 
 static int	zbbus_attached;
@@ -110,7 +110,7 @@ zbbus_print(void *aux, const char *pnp)
 
 static int
 zbbus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
+	       const int *ldesc, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 

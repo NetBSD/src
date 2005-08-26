@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.8 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: shb.c,v 1.9 2005/08/26 13:19:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.8 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.9 2005/08/26 13:19:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.8 2005/06/30 17:03:54 drochner Exp $");
 int shb_match(struct device *, struct cfdata *, void *);
 void shb_attach(struct device *, struct device *, void *);
 int shb_print(void *, const char *);
-int shb_search(struct device *, struct cfdata *, const locdesc_t *, void *);
+int shb_search(struct device *, struct cfdata *, const int *, void *);
 
 CFATTACH_DECL(shb, sizeof(struct device),
     shb_match, shb_attach, NULL, NULL);
@@ -73,7 +73,7 @@ shb_attach(struct device *parent, struct device *self, void *aux)
 
 int
 shb_search(struct device *parent, struct cfdata *cf,
-	   const locdesc_t *ldesc, void *aux)
+	   const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

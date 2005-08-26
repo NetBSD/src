@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2005/06/30 17:03:53 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2005/08/26 13:19:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2005/08/26 13:19:36 drochner Exp $");
 
 #include "locators.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2005/06/30 17:03:53 drochner Exp $");
 static int	obio_match __P((struct device *, struct cfdata *, void *));
 static void	obio_attach __P((struct device *, struct device *, void *));
 static int	obio_search __P((struct device *, struct cfdata *,
-				 const locdesc_t *, void *));
+				 const int *, void *));
 static int	obio_print __P((void *, const char *));
 static void	obio_intr_establish  __P((bus_space_tag_t, int, int, int,
 					  int (*)(void *), void *));
@@ -107,7 +107,7 @@ static int
 obio_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct confargs *ca = aux;

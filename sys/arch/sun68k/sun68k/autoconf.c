@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2005/06/30 17:03:54 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2005/08/26 13:19:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2005/06/30 17:03:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2005/08/26 13:19:38 drochner Exp $");
 
 #include "opt_kgdb.h"
 
@@ -187,7 +187,7 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
  */
 int 
 sun68k_bus_search(struct device *parent, struct cfdata *cf,
-		  const locdesc_t *ldesc, void *aux)
+		  const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;
