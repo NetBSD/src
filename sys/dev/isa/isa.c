@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.122 2005/08/25 20:52:02 drochner Exp $	*/
+/*	$NetBSD: isa.c,v 1.123 2005/08/26 12:42:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.122 2005/08/25 20:52:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.123 2005/08/26 12:42:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ CFATTACH_DECL2(isa, sizeof(struct isa_softc),
 void	isa_attach_knowndevs(struct isa_softc *);
 void	isa_free_knowndevs(struct isa_softc *);
 
-int	isasubmatch(struct device *, struct cfdata *, const locdesc_t *, void *);
-int	isasearch(struct device *, struct cfdata *, const locdesc_t *, void *);
+int	isasubmatch(struct device *, struct cfdata *, const int *, void *);
+int	isasearch(struct device *, struct cfdata *, const int *, void *);
 
 int
 isamatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -288,7 +288,7 @@ checkattachargs(struct isa_attach_args *ia, const int *loc)
 
 int
 isasubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -380,7 +380,7 @@ isaprint(void *aux, const char *isa)
 
 int
 isasearch(struct device *parent, struct cfdata *cf,
-	  const locdesc_t *slocs, void *aux)
+	  const int *slocs, void *aux)
 {
 	struct isa_io res_io[1];
 	struct isa_iomem res_mem[1];
