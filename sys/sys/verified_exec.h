@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.17 2005/08/19 12:30:02 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.18 2005/08/26 22:53:56 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <sys/hash.h>
 
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.17 2005/08/19 12:30:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.18 2005/08/26 22:53:56 elad Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
@@ -195,4 +195,4 @@ void veriexec_report(const u_char *, const u_char *, struct vattr *,
 
 #endif /* _KERNEL */
 
-#endif /* _SYS_VERIFIED_EXEC_H_ */
+#endif /* !_SYS_VERIFIED_EXEC_H_ */
