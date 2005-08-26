@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:33 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,14 +41,14 @@
 
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
 message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Deberia escoger
+{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
 entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaria hacer?
+¿Que le gustaría hacer?
 }
 
 message badreadbb
@@ -75,8 +75,8 @@ message dobootblks
 
 message arm32fspart
 {Ahora tenemos nuestras particiones NetBSD en % como sigue (Tamaño y
-Compensacion en %s):
+Compensación en %s):
 }
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
