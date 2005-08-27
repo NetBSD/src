@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.92 2005/06/27 01:00:05 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.93 2005/08/27 22:43:40 uwe Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.92 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.93 2005/08/27 22:43:40 uwe Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -71,7 +71,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.92 2005/06/27 01:00:05 christos Exp $");
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "../../include/disktab.h"
-#include "../../include/util.h"
 #else
 #include <disktab.h>
 #include <util.h>
