@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.172 2005/08/26 00:09:37 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.173 2005/08/27 05:25:34 snj Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3543,6 +3543,12 @@ gnu/dist/cvs/src/cvsbug.in			1.3
 
 	Fix vulnerability reported in SA16553 using the Red Hat patch.
 	[tron, ticket #5613]
+
+lib/libpthread_dbg/pthread_dbg.c		1.23-1.25
+lib/libpthread_dbg/pthread_dbg_int.h		1.5
+
+	Fix build problems introduced by ticket #1526.
+	[riz, ticket #5615]
 
 sys/sys/param.h					patch
 share/tmac/doc-common				patch
