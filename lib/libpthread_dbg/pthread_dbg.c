@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.16.4.1 2005/05/18 18:40:26 riz Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.16.4.2 2005/08/27 05:12:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.16.4.1 2005/05/18 18:40:26 riz Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.16.4.2 2005/08/27 05:12:43 snj Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -162,6 +162,9 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	proc->stacksize = 0;
 	proc->stackmask = 0;
 
+	proc->regbuf = NULL;
+	proc->fpregbuf = NULL;
+	
 	dbg = getpid();
 	/*
 	 * If this fails it probably means we're debugging a core file and
@@ -209,6 +212,12 @@ td_close(td_proc_t *proc)
 		PTQ_REMOVE(&proc->syncs, s, list);
 		free(s);
 	}
+
+	if (proc->regbuf != NULL) {
+		free(proc->regbuf);
+		free(proc->fpregbuf);
+	}
+
 	free(proc);
 	return 0;
 }
@@ -1075,9 +1084,8 @@ td_thr_suspend(td_thread_t *thread)
 {
 	int tmp, tmp1, val;
 	caddr_t addr, sp, nthreadaddr, qaddr;
+	size_t rsize;
 	td_thread_t *nthread;
-	struct reg r;
-	struct fpreg fr;
 	ucontext_t uc;
 	struct pthread_queue_t qhead;
 
@@ -1115,15 +1123,40 @@ td_thr_suspend(td_thread_t *thread)
 	switch (tmp) {
 	case PT_STATE_RUNNING:
 		/* grab the current thread's state and stash it */
-		val = GETREGS(thread->proc, 0, thread->lwp, &r);
+		if (thread->proc->regbuf == NULL) {
+			val = REGSIZE(thread->proc, 0, &rsize);
+			if (val != 0)
+				return val;
+			errno = 0;
+			thread->proc->regbuf = malloc(rsize);
+			if ((thread->proc->regbuf == NULL) &&
+			    (errno == ENOMEM))
+				return TD_ERR_NOMEM;
+			val = REGSIZE(thread->proc, 1, &rsize);
+			if (val != 0) {
+				free(thread->proc->regbuf);
+				thread->proc->regbuf = NULL;
+				return TD_ERR_NOMEM;
+			}
+			thread->proc->fpregbuf = malloc(rsize);
+			if ((thread->proc->fpregbuf == NULL) &&
+			    (errno == ENOMEM)) {
+				free(thread->proc->regbuf);
+				thread->proc->regbuf = NULL;
+				return TD_ERR_NOMEM;
+			}
+		}
+		val = GETREGS(thread->proc, 0, thread->lwp,
+		    thread->proc->regbuf);
 		if (val != 0)
 			return val;
-		val = GETREGS(thread->proc, 1, thread->lwp, &fr);
+		val = GETREGS(thread->proc, 1, thread->lwp,
+		    thread->proc->fpregbuf);
 		if (val != 0)
 			return val;
 		_INITCONTEXT_U(&uc);
-		PTHREAD_REG_TO_UCONTEXT(&uc, &r);
-		PTHREAD_FPREG_TO_UCONTEXT(&uc, &fr);
+		PTHREAD_REG_TO_UCONTEXT(&uc, thread->proc->regbuf);
+		PTHREAD_FPREG_TO_UCONTEXT(&uc, thread->proc->fpregbuf);
 		sp = (caddr_t)pthread__uc_sp(&uc);
 		sp -= sizeof(uc);
 #ifdef _UC_UCONTEXT_ALIGN
@@ -1169,12 +1202,14 @@ td_thr_suspend(td_thread_t *thread)
 		val = READ(thread->proc, addr, &uc, sizeof(uc));
 		if (val != 0)
 			return val;
-		PTHREAD_UCONTEXT_TO_REG(&r, &uc);
-		PTHREAD_UCONTEXT_TO_FPREG(&fr, &uc);
-		val = SETREGS(thread->proc, 0, thread->lwp, &r);
+		PTHREAD_UCONTEXT_TO_REG(thread->proc->regbuf, &uc);
+		PTHREAD_UCONTEXT_TO_FPREG(thread->proc->fpregbuf, &uc);
+		val = SETREGS(thread->proc, 0, thread->lwp,
+		    thread->proc->regbuf);
 		if (val != 0)
 			return val;
-		val = SETREGS(thread->proc, 1, thread->lwp, &fr);
+		val = SETREGS(thread->proc, 1, thread->lwp,
+		    thread->proc->fpregbuf);
 		if (val != 0)
 			return val;
 
