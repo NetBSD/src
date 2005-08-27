@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.12 2003/07/26 19:25:10 salo Exp $ */
+/*	$NetBSD: pidlock.c,v 1.13 2005/08/27 16:55:59 elad Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.12 2003/07/26 19:25:10 salo Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.13 2005/08/27 16:55:59 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 		return -1;
 	}
 	snprintf(s, sizeof(s), "%10d\n", getpid());	/* pid */
-	if (write(f, s, 11) != 11)  {
+	if (write(f, s, (size_t)11) != 11)  {
 		err = errno;
 		close(f);
 		unlink(tempfile);
@@ -93,7 +93,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	}
 	if ((flags & PIDLOCK_USEHOSTNAME))  {		/* hostname */
 		if ((write(f, hostname, strlen(hostname)) != strlen(hostname))
-		    || (write(f, "\n", 1) != 1))  {
+		    || (write(f, "\n", (size_t)1) != 1))  {
 			err = errno;
 			close(f);
 			unlink(tempfile);
@@ -104,7 +104,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	if (info)  {					/* info */
 		if (!(flags & PIDLOCK_USEHOSTNAME))  {
 			/* write blank line because there's no hostname */
-			if (write(f, "\n", 1) != 1)  {
+			if (write(f, "\n", (size_t)1) != 1)  {
 				err = errno;
 				close(f);
 				unlink(tempfile);
@@ -113,7 +113,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 			}
 		}
 		if (write(f, info, strlen(info)) != strlen(info) ||
-		    (write(f, "\n", 1) != 1))  {
+		    (write(f, "\n", (size_t)1) != 1))  {
 			err = errno;
 			close(f);
 			unlink(tempfile);
@@ -135,7 +135,7 @@ lockfailed:
 		}
 		/* Find out who has this lockfile. */
 		if ((f = open(lockfile, O_RDONLY, 0)) != 0)  {
-			read(f, s, 11);
+			read(f, s, (size_t)11);
 			pid2 = atoi(s);
 			read(f, s, sizeof(s)-2);
 			s[sizeof(s)-1] = '\0';

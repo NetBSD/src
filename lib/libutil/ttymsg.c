@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.21 2005/01/08 06:43:16 christos Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.22 2005/08/27 17:16:06 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.21 2005/01/08 06:43:16 christos Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.22 2005/08/27 17:16:06 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,10 +66,11 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 	static char errbuf[1024];
 	char device[MAXNAMLEN];
 	const char *ptr;
-	int cnt, fd, left, wret;
+	int fd, ret;
 	struct iovec localiov[32];
 	sigset_t nset;
 	int forked = 0;
+	size_t cnt, left, wret;
 
 	_DIAGASSERT(iov != NULL);
 	_DIAGASSERT(iovcnt >= 0);
@@ -82,19 +83,20 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 		return errbuf;
 	}
 
-	ptr = strncmp(line, "pts/", 4) == 0 ? line + 4 : line;
+	ptr = strncmp(line, "pts/", (size_t)4) == 0 ? line + 4 : line;
 	if (strcspn(ptr, "./") != strlen(ptr)) {
 		/* A slash or dot is an attempt to break security... */
 		(void)snprintf(errbuf, sizeof(errbuf),
 		    "%s: '/' or '.' in \"%s\"", __func__, line);
 		return errbuf;
 	}
-	cnt = snprintf(device, sizeof(device), "%s%s", _PATH_DEV, line);
-	if (cnt == -1 || cnt >= sizeof(device)) {
+	ret = snprintf(device, sizeof(device), "%s%s", _PATH_DEV, line);
+	if (ret == -1 || ret >= (int)sizeof(device)) {
 		(void) snprintf(errbuf, sizeof(errbuf),
 		    "%s: line `%s' too long", __func__, line);
 		return errbuf;
 	}
+	cnt = (size_t)ret;
 
 	/*
 	 * open will fail on slip lines or exclusive-use lines
@@ -142,7 +144,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			continue;
 		} else if (wret == 0) {
 			(void)snprintf(errbuf, sizeof(errbuf),
-			    "%s: failed writing %d bytes to `%s'", __func__,
+			    "%s: failed writing %zu bytes to `%s'", __func__,
 			    left, device);
 			(void) close(fd);
 			if (forked)
