@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.99 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.100 2005/08/27 08:04:26 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -292,6 +292,11 @@ static int VarWordCompare(const void *, const void *);
 static void VarPrintVar(ClientData);
 
 #define WR(a)	((char *)UNCONST(a))
+
+#define BROPEN	'{'
+#define BRCLOSE	'}'
+#define PROPEN	'('
+#define PRCLOSE	')'
 
 /*-
  *-----------------------------------------------------------------------
@@ -1738,14 +1743,14 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 		} else {
 		    const char *cp2 = &cp[1];
 
-		    if (*cp2 == '(' || *cp2 == '{') {
+		    if (*cp2 == PROPEN || *cp2 == BROPEN) {
 			/*
 			 * Find the end of this variable reference
 			 * and suck it in without further ado.
 			 * It will be interperated later.
 			 */
 			int have = *cp2;
-			int want = (*cp2 == '(') ? ')' : '}';
+			int want = (*cp2 == PROPEN) ? PRCLOSE : BRCLOSE;
 			int depth = 1;
 
 			for (++cp2; *cp2 != '\0' && depth > 0; ++cp2) {
@@ -1911,7 +1916,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
     parsestate.oneBigWord = FALSE;
     parsestate.varSpace = ' ';	/* word separator */
 
-    if (str[1] != '(' && str[1] != '{') {
+    if (str[1] != PROPEN && str[1] != BROPEN) {
 	/*
 	 * If it's not bounded by braces of some sort, life is much simpler.
 	 * We just need to check for the first character and return the
@@ -1956,11 +1961,14 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    tstr = &str[1];
 	    endc = str[1];
 	}
-    } else {
+    } else if (str[1] == '\0') {
+	*lengthPtr = 1;
+	return (err ? var_Error : varNoError);
+    } else { 
 	Buffer buf;	/* Holds the variable name */
 
 	startc = str[1];
-	endc = startc == '(' ? ')' : '}';
+	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
 	buf = Buf_Init(MAKE_BSIZE);
 
 	/*
@@ -2297,8 +2305,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			cp = ++tstr;
 			break;
 		    }
-			/* XXX: appease vi sm: '{' */
-		    delim = '}';
+		    delim = BRCLOSE;
 		    pattern.flags = 0;
 
 		    pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
@@ -2889,14 +2896,13 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 						     NULL)) == NULL)
 			goto cleanup;
 
-			/* '{' or '(' */
+			/* BROPEN or PROPEN */
 		    delim = endc;
 		    if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
 						     &cp, delim, NULL,
 						     &pattern.rightLen,
 						     NULL)) == NULL)
 			goto cleanup;
-			/* XXX: appease vi sm: ')' '}' */
 
 		    termc = *--cp;
 		    delim = '\0';
@@ -3297,7 +3303,12 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 	    if (var != NULL) {
 		int expand;
 		for (;;) {
-		    if (str[1] != '(' && str[1] != '{') {
+		    if (str[1] == '\0') {
+			/* A trailing $ is kind of a special case */
+			Buf_AddByte(buf, str[0]);
+			str++;
+			expand = FALSE;
+		    } else if (str[1] != PROPEN && str[1] != BROPEN) {
 			if (str[1] != *var || strlen(var) > 1) {
 			    Buf_AddBytes(buf, 2, (const Byte *)str);
 			    str += 2;
@@ -3314,7 +3325,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 			 * Scan up to the end of the variable name.
 			 */
 			for (p = &str[2]; *p &&
-			     *p != ':' && *p != ')' && *p != '}'; p++)
+			     *p != ':' && *p != PRCLOSE && *p != BRCLOSE; p++)
 			    if (*p == '$')
 				break;
 			/*
