@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.21 2005/04/13 20:32:42 drochner Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.22 2005/08/27 17:24:42 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.21 2005/04/13 20:32:42 drochner Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.22 2005/08/27 17:24:42 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -574,7 +574,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 				/* XXX - call syslog()? */;
 
 	if (flags & LOGIN_SETPRIORITY) {
-		p = login_getcapnum(lc, "priority", 0LL, 0LL);
+		p = login_getcapnum(lc, "priority", (quad_t)0, (quad_t)0);
 
 		if (setpriority(PRIO_PROCESS, 0, (int)p) < 0)
 			syslog(LOG_ERR, "%s: setpriority: %m", lc->lc_class);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.17 2004/12/11 06:41:16 christos Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.18 2005/08/27 17:06:29 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ttyaction.c,v 1.17 2004/12/11 06:41:16 christos Exp $");
+__RCSID("$NetBSD: ttyaction.c,v 1.18 2005/08/27 17:06:29 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ ttyaction(const char *tty, const char *act, const char *user)
 		return 0;
 
 	/* Skip the "/dev/" part of the first arg. */
-	if (!strncmp(tty, "/dev/", 5))
+	if (!strncmp(tty, "/dev/", (size_t)5))
 		tty += 5;
 
 	/* Args will be: "sh -c ..." */
@@ -116,7 +116,7 @@ ttyaction(const char *tty, const char *act, const char *user)
 
 	linenum = 0;
 	status = 0;
-	while (fgets(line, sizeof(line), fp)) {
+	while (fgets(line, (int)sizeof(line), fp)) {
 		linenum++;
 
 		/* Allow comment lines. */

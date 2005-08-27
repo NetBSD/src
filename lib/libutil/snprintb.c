@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.4 2004/12/11 06:41:16 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.5 2005/08/27 17:28:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.4 2004/12/11 06:41:16 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.5 2005/08/27 17:28:26 elad Exp $");
 #endif
 
 /*
@@ -127,7 +127,8 @@ snprintb(buf, buflen, bitfmt, val)
 			case 'f':
 			case 'F':
 				flen = *bitfmt++;	/* field length */
-				field = (val >> bit) & ((1ULL << flen) - 1);
+				field = (val >> bit) &
+					    (((uint64_t)1 << flen) - 1);
 				if (ch == 'F')	/* just extract */
 					break;
 				PUTC(sep);
