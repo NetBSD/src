@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.5 2005/04/09 02:05:47 atatat Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.6 2005/08/27 17:01:49 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.5 2005/04/09 02:05:47 atatat Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.6 2005/08/27 17:01:49 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -121,7 +121,8 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 		name = addr;
 
 	if (a && getnameinfo(sa, (socklen_t)sa->sa_len, addr = abuf,
-	    sizeof(abuf), NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+	    (unsigned int)sizeof(abuf), NULL, 0,
+	    NI_NUMERICHOST|NI_NUMERICSERV) != 0)
 		return -1;
 
 	for (ptr = fmt; *ptr; ptr++) {
@@ -159,7 +160,8 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 				ADDNA();
 			else {
 				getnameinfo(sa, (socklen_t)sa->sa_len,
-					name = Abuf, sizeof(nbuf), NULL, 0, 0);
+					name = Abuf,
+					(unsigned int)sizeof(nbuf), NULL, 0, 0);
 				ADDS(name);
 			}
 			break;
@@ -170,7 +172,8 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 				ADDNA();
 			else {
 				getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0,
-					port = pbuf, sizeof(pbuf), 0);
+					port = pbuf,
+					(unsigned int)sizeof(pbuf), 0);
 				ADDS(port);
 			}
 			break;
@@ -226,5 +229,5 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 	}
 done:
 	ADDN();
-	return buf - sbuf;
+	return (int)(buf - sbuf);
 }

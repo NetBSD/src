@@ -1,4 +1,4 @@
-/*	$NetBSD: getmaxpartitions.c,v 1.4 2000/07/05 11:46:40 ad Exp $	*/
+/*	$NetBSD: getmaxpartitions.c,v 1.5 2005/08/27 17:23:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getmaxpartitions.c,v 1.4 2000/07/05 11:46:40 ad Exp $");
+__RCSID("$NetBSD: getmaxpartitions.c,v 1.5 2005/08/27 17:23:17 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ getmaxpartitions(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXPARTITIONS;
 	varlen = sizeof(maxpart);
-	if (sysctl(mib, 2, &maxpart, &varlen, NULL, 0) < 0)
+	if (sysctl(mib, 2, &maxpart, &varlen, NULL, (size_t)0) < 0)
 		return (-1);
 
 	return (maxpart);

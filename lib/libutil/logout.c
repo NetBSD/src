@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.15 2003/08/07 16:44:59 agc Exp $	*/
+/*	$NetBSD: logout.c,v 1.16 2005/08/27 17:07:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.15 2003/08/07 16:44:59 agc Exp $");
+__RCSID("$NetBSD: logout.c,v 1.16 2005/08/27 17:07:17 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,10 +62,11 @@ logout(const char *line)
 		return(0);
 	rval = 0;
 	while (read(fd, &ut, sizeof(ut)) == sizeof(ut)) {
-		if (!ut.ut_name[0] || strncmp(ut.ut_line, line, UT_LINESIZE))
+		if (!ut.ut_name[0] || strncmp(ut.ut_line, line,
+					      (size_t)UT_LINESIZE))
 			continue;
-		memset(ut.ut_name, 0, UT_NAMESIZE);
-		memset(ut.ut_host, 0, UT_HOSTSIZE);
+		memset(ut.ut_name, 0, (size_t)UT_NAMESIZE);
+		memset(ut.ut_host, 0, (size_t)UT_HOSTSIZE);
 		(void)time(&ut.ut_time);
 		(void)lseek(fd, -(off_t)sizeof(ut), SEEK_CUR);
 		(void)write(fd, &ut, sizeof(ut));
