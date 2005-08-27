@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2005/06/17 21:20:18 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2005/08/27 22:21:14 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.4 2005/06/17 21:20:18 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2005/08/27 22:21:14 uwe Exp $");
 #endif
 #endif	/* not lint */
 
@@ -74,7 +74,6 @@ __RCSID("$NetBSD: main.c,v 1.4 2005/06/17 21:20:18 dsl Exp $");
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/sys/disklabel.h>
 #include <nbinclude/sys/bootblock.h>
-#include "../../include/util.h"
 #include "../../include/disktab.h"
 #else
 #include <sys/ioctl.h>
