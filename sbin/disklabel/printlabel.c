@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.12 2005/06/12 19:18:34 dyoung Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.13 2005/08/27 22:38:02 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.12 2005/06/12 19:18:34 dyoung Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.13 2005/08/27 22:38:02 uwe Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: printlabel.c,v 1.12 2005/06/12 19:18:34 dyoung Exp $");
 #define FSTYPENAMES
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/sys/disklabel.h>
+#ifndef PRIu32
+#define PRIu32 "d"
+#endif
 #else
 #include <sys/disklabel.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
