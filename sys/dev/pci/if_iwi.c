@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.15 2005/08/19 14:26:38 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.16 2005/08/27 07:26:47 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.15 2005/08/19 14:26:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.16 2005/08/27 07:26:47 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -304,7 +304,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(ic->ic_myaddr));
 
 
-	if (PCI_PRODUCT(pa->pa_id) >= PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1) {
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2) {
 		/* set supported .11a rates (2915ABG only) */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
 
