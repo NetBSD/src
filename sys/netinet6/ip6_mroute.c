@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.64 2005/05/29 21:43:09 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.65 2005/08/28 21:03:18 rpaulo Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.64 2005/05/29 21:43:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.65 2005/08/28 21:03:18 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.64 2005/05/29 21:43:09 christos Exp
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -1927,4 +1928,32 @@ pim6_input(mp, offp, proto)
   pim6_input_to_daemon:
 	rip6_input(&m, offp, proto);
 	return (IPPROTO_DONE);
+}
+
+SYSCTL_SETUP(sysctl_net_inet6_pim6_setup, "sysctl net.inet6.pim6 subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "pim6",
+		       SYSCTL_DESCR("PIMv6 settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_PIM, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("PIMv6 statistics"),
+		       NULL, 0, &pim6stat, sizeof(pim6stat),
+		       CTL_NET, PF_INET6, IPPROTO_PIM, PIM6CTL_STATS,
+		       CTL_EOL);
 }
