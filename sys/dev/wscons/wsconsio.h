@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
+/* $NetBSD: wsconsio.h,v 1.75 2005/08/28 13:08:16 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -97,8 +97,8 @@ struct wscons_event {
 #define	WSKBD_TYPE_ATARI	15	/* Atari keyboard */
 #define	WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
 #define	WSKBD_TYPE_SUN5		17	/* Sun Type5 */
-#define WSKBD_TYPE_SGI		18	/* SGI keyboard */
-#define WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
+#define	WSKBD_TYPE_SGI		18	/* SGI keyboard */
+#define	WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -196,7 +196,7 @@ struct wskbd_scroll_data {
 #define	WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */
 #define	WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 #define	WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
-#define WSMOUSE_TYPE_SGI	13	/* SGI mouse */
+#define	WSMOUSE_TYPE_SGI	13	/* SGI mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
@@ -409,12 +409,12 @@ struct wsdisplay_kbddata {
 
 /* Misc control.  Not applicable to all display types. */
 struct wsdisplay_param {
-        int param;
+	int param;
 #define	WSDISPLAYIO_PARAM_BACKLIGHT	1
 #define	WSDISPLAYIO_PARAM_BRIGHTNESS	2
 #define	WSDISPLAYIO_PARAM_CONTRAST	3
-        int min, max, curval;
-        int reserved[4];
+	int min, max, curval;
+	int reserved[4];
 };
 #define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
 #define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
