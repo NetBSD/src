@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.72 2005/07/26 12:14:46 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.73 2005/08/28 19:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.72 2005/07/26 12:14:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.73 2005/08/28 19:37:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,12 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
 	{ &vop_putpages_desc, ffs_putpages },		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -172,6 +178,12 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_specop_opv_desc =
@@ -226,6 +238,12 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
+	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =
@@ -610,4 +628,142 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	} else {
 		*eobp = blkroundup(fs, size);
 	}
+}
+
+int
+ffs_openextattr(void *v)
+{
+	struct vop_openextattr_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_closeextattr(void *v)
+{
+	struct vop_closeextattr_args /* {
+		struct vnode *a_vp;
+		int a_commit;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_getextattr(void *v)
+{
+	struct vop_getextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		size_t *a_size;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_getextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_setextattr(void *v)
+{
+	struct vop_setextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_setextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_listextattr(void *v)
+{
+	struct vop_listextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		struct uio *a_uio;
+		size_t *a_size;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	/* Not supported for UFS1 file systems. */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+int
+ffs_deleteextattr(void *v)
+{
+	struct vop_deleteextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		return (ufs_deleteextattr(ap));
+#else
+		return (EOPNOTSUPP);
+#endif
+	}
+
+	/* XXX Not implemented for UFS2 file systems. */
+	return (EOPNOTSUPP);
 }

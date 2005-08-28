@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.43 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.44 2005/08/28 19:37:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -136,6 +136,8 @@ int	ffs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	ffs_vget(struct mount *, ino_t, struct vnode **);
 int	ffs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	ffs_vptofh(struct vnode *, struct fid *);
+int	ffs_extattrctl(struct mount *, int, struct vnode *, int,
+		       const char *, struct proc *);
 int	ffs_sbupdate(struct ufsmount *, int);
 int	ffs_cgupdate(struct ufsmount *, int);
 
@@ -155,6 +157,12 @@ int	ffs_reclaim(void *);
 int	ffs_getpages(void *);
 int	ffs_putpages(void *);
 void	ffs_gop_size(struct vnode *, off_t, off_t *, int);
+int	ffs_openextattr(void *);
+int	ffs_closeextattr(void *);
+int	ffs_getextattr(void *);
+int	ffs_setextattr(void *);
+int	ffs_listextattr(void *);
+int	ffs_deleteextattr(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);

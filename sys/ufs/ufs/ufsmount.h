@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.18 2005/05/22 08:35:28 hannken Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.19 2005/08/28 19:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,6 +58,8 @@ struct mfs_args {
 #include "opt_ffs.h"
 #endif
 
+#include <ufs/ufs/extattr.h>
+
 struct buf;
 struct inode;
 struct nameidata;
@@ -83,6 +85,9 @@ struct ufsmount {
 #define	um_lfs	ufsmount_u.lfs
 #define um_e2fs	ufsmount_u.e2fs
 #define um_e2fsb ufsmount_u.e2fs->s_es
+
+	/* Extended attribute information. */
+	struct ufs_extattr_per_mount um_extattr;
 
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
 	struct	ucred *um_cred[MAXQUOTAS];	/* quota file access cred */

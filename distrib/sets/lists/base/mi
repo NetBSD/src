@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.567 2005/08/20 17:23:53 rpaulo Exp $
+# $NetBSD: mi,v 1.568 2005/08/28 19:37:58 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -964,6 +964,7 @@
 ./usr/sbin/envstat				base-sysutil-bin
 ./usr/sbin/eshconfig				base-sysutil-bin
 ./usr/sbin/etcupdate				base-sysutil-bin
+./usr/sbin/extattrctl				base-sysutil-bin
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flush				base-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.169 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.170 2005/08/28 19:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.169 2005/08/23 08:05:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.170 2005/08/28 19:37:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,7 +108,7 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_snapshot,
-	vfs_stdextattrctl,
+	ffs_extattrctl,
 	ffs_vnodeopv_descs,
 };
 VFS_ATTACH(ffs_vfsops);
@@ -979,6 +979,22 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	}
 	if (ronly == 0 && fs->fs_snapinum[0] != 0)
 		ffs_snapshot_mount(mp);
+#ifdef UFS_EXTATTR
+	/*
+	 * Initialize file-backed extended attributes on UFS1 file
+	 * systems.
+	 */
+	if (ump->um_fstype == UFS1) {
+		ufs_extattr_uepm_init(&ump->um_extattr);
+#ifdef UFS_EXTATTR_AUTOSTART
+		/*
+		 * XXX Just ignore errors.  Not clear that we should
+		 * XXX fail the mount in this case.
+		 */
+		(void) ufs_extattr_autostart(mp, p);
+#endif
+	}
+#endif /* UFS_EXTATTR */
 	return (0);
 out:
 	if (fs)
@@ -1116,14 +1132,24 @@ ffs_oldfscompat_write(struct fs *fs, struct ufsmount *ump)
 int
 ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
-	struct ufsmount *ump;
-	struct fs *fs;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct fs *fs = ump->um_fs;
 	int error, flags, penderr;
 
 	penderr = 0;
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
+#ifdef UFS_EXTATTR
+	if (ump->um_fstype == UFS1) {
+		error = ufs_extattr_stop(mp, p);
+		if (error)
+			printf("%s: ufs_extattr_stop returned %d\n",
+			    fs->fs_fsmnt, error);
+		else
+			ufs_extattr_uepm_destroy(&ump->um_extattr);
+	}
+#endif /* UFS_EXTATTR */
 	if (mp->mnt_flag & MNT_SOFTDEP) {
 		if ((error = softdep_flushfiles(mp, flags, p)) != 0)
 			return (error);
@@ -1131,8 +1157,6 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		if ((error = ffs_flushfiles(mp, flags, p)) != 0)
 			return (error);
 	}
-	ump = VFSTOUFS(mp);
-	fs = ump->um_fs;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		printf("%s: unmount pending error: blocks %" PRId64
 		       " files %d\n",
@@ -1684,4 +1708,20 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 	if (!allerror && error)
 		allerror = error;
 	return (allerror);
+}
+
+int
+ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+    int attrnamespace, const char *attrname, struct proc *p)
+{
+#ifdef UFS_EXTATTR
+	/*
+	 * File-backed extended attributes are only supported on UFS1.
+	 * UFS2 has native extended attributes.
+	 */
+	if (VFSTOUFS(mp)->um_fstype == UFS1)
+		return (ufs_extattrctl(mp, cmd, vp, attrnamespace, attrname,
+				       p));
+#endif
+	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname, p));
 }

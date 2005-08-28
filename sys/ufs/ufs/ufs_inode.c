@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.51 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.52 2005/08/28 19:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.51 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.52 2005/08/28 19:37:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -58,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.51 2005/07/23 12:18:41 yamt Exp $");
 #include <ufs/ufs/ufs_extern.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
+#endif
+#ifdef UFS_EXTATTR
+#include <ufs/ufs/extattr.h>
 #endif
 
 #include <uvm/uvm.h>
@@ -97,6 +100,9 @@ ufs_inactive(void *v)
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
+#endif
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, p);
 #endif
 		if (ip->i_size != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
