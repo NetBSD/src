@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.34 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: inet6.c,v 1.35 2005/08/28 16:12:35 rpaulo Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.34 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.35 2005/08/28 16:12:35 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: inet6.c,v 1.34 2005/08/04 19:41:28 rpaulo Exp $");
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -121,8 +122,10 @@ extern char *tcpstates[];
 #endif
 #include <netdb.h>
 
+#include <err.h>
 #include <kvm.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "netstat.h"
@@ -146,6 +149,71 @@ void	inet6print __P((struct in6_addr *, int, char *));
  * Listening processes (aflag) are suppressed unless the
  * -a (all) flag is specified.
  */
+static int width;
+static int compact;
+
+static void
+ip6protoprhdr(void)
+{
+	
+	printf("Active Internet6 connections");
+	
+	if (aflag)
+		printf(" (including servers)");
+	putchar('\n');
+	
+	if (Aflag) {
+		printf("%-8.8s ", "PCB");
+		width = 18;
+	}
+	printf( "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
+	    "Proto", "Recv-Q", "Send-Q",
+	    -width, width, "Local Address",
+	    -width, width, "Foreign Address",
+	    "(state)");
+}
+
+static void
+ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
+	struct in6_addr *laddr, u_int16_t lport,
+	struct in6_addr *faddr, u_int16_t fport,
+	short t_state, char *name)
+{
+	static char *shorttcpstates[] = {
+		"CLOSED",       "LISTEN",       "SYNSEN",       "SYSRCV",
+		"ESTABL",       "CLWAIT",       "FWAIT1",       "CLOSNG",
+		"LASTAK",       "FWAIT2",       "TMWAIT",
+	};
+	int istcp;
+
+	istcp = strcmp(name, "tcp6") == 0;
+	if (Aflag)
+		printf("%8" PRIxPTR " ", ppcb);
+
+	printf("%-5.5s %6ld %6ld%s", name, rcv_sb_cc, snd_sb_cc,
+	    compact ? "" : " ");
+
+	inet6print(laddr, (int)lport, name);
+	inet6print(faddr, (int)fport, name);
+	if (istcp) {
+#ifdef TCP6
+		if (t_state < 0 || t_state >= TCP6_NSTATES)
+			printf(" %d", t_state);
+		else
+			printf(" %s", tcp6states[t_state]);
+#else
+		if (t_state < 0 || t_state >= TCP_NSTATES)
+			printf(" %d", t_state);
+		else
+			printf(" %s", compact ? shorttcpstates[t_state] :
+			    tcpstates[t_state]);
+#endif
+	}
+	putchar('\n');
+	
+}
+
+
 void
 ip6protopr(off, name)
 	u_long off;
@@ -155,7 +223,6 @@ ip6protopr(off, name)
 	struct in6pcb *head, *prev, *next;
 	int istcp;
 	static int first = 1;
-	int width = 22;
 
 	if (off == 0)
 		return;
@@ -164,6 +231,69 @@ ip6protopr(off, name)
 	head = prev =
 	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
 	next = (struct in6pcb *)table.inpt_queue.cqh_first;
+
+	compact = 0;
+	if (Aflag) {
+		if (!numeric_addr)
+			width = 18;
+		else {
+			width = 21;
+			compact = 1;
+		}
+	} else
+		width = 22;
+
+	if (use_sysctl) {
+		struct kinfo_pcb *pcblist;
+		int mib[8];
+		size_t namelen = 0, size = 0, i;
+		char *mibname = NULL;
+
+		memset(mib, 0, sizeof(mib));
+
+		if (asprintf(&mibname, "net.inet6.%s.pcblist", name) == -1)
+			err(1, "asprintf");
+
+		/* get dynamic pcblist node */
+		if (sysctlnametomib(mibname, mib, &namelen) == -1)
+			err(1, "sysctlnametomib");
+
+		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
+		    NULL, 0) == -1)
+			err(1, "sysctl (query)");
+		
+		pcblist = malloc(size);
+		memset(pcblist, 0, size);
+
+		mib[6] = sizeof(*pcblist);
+		mib[7] = size / sizeof(*pcblist);
+
+		if (sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
+		    &size, NULL, 0) == -1)
+			err(1, "sysctl (copy)");
+
+		for (i = 0; i < size / sizeof(*pcblist); i++) {
+			struct sockaddr_in6 src, dst;
+
+			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
+			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
+
+			if (first) {
+				ip6protoprhdr();
+				first = 0;
+			}
+
+			ip6protopr0((intptr_t) pcblist[i].ki_ppcbaddr,
+			    pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
+			    &src.sin6_addr, src.sin6_port,
+			    &dst.sin6_addr, dst.sin6_port,
+			    pcblist[i].ki_tstate, name);
+		}
+
+		free(pcblist);
+		return;
+	}
+
 	while (next != head) {
 		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
 		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev) {
@@ -178,7 +308,8 @@ ip6protopr(off, name)
 
 		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
 			continue;
-		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, sizeof (sockb));
+		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
+		    sizeof (sockb));
 		if (istcp) {
 #ifdef TCP6
 			kread((u_long)in6pcb.in6p_ppcb,
@@ -189,46 +320,15 @@ ip6protopr(off, name)
 #endif
 		}
 		if (first) {
-			printf("Active Internet6 connections");
-			if (aflag)
-				printf(" (including servers)");
-			putchar('\n');
-			if (Aflag) {
-				printf("%-8.8s ", "PCB");
-				width = 18;
-			}
-			printf( "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				-width, width, "Local Address", 
-				-width, width, "Foreign Address", 
-				"(state)");
+			ip6protoprhdr();
 			first = 0;
 		}
-		if (Aflag) {
-			if (istcp)
-				printf("%8lx ", (u_long) in6pcb.in6p_ppcb);
-			else
-				printf("%8lx ", (u_long) prev);
-		}
-		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
-		/* xxx */
-		inet6print(&in6pcb.in6p_laddr, (int)in6pcb.in6p_lport, name);
-		inet6print(&in6pcb.in6p_faddr, (int)in6pcb.in6p_fport, name);
-		if (istcp) {
-#ifdef TCP6
-			if (tcp6cb.t_state < 0 || tcp6cb.t_state >= TCP6_NSTATES)
-				printf(" %d", tcp6cb.t_state);
-			else
-				printf(" %s", tcp6states[tcp6cb.t_state]);
-#else
-			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
-				printf(" %d", tcpcb.t_state);
-			else
-				printf(" %s", tcpstates[tcpcb.t_state]);
-#endif
-		}
-		putchar('\n');
+		ip6protopr0(istcp ? (intptr_t) in6pcb.in6p_ppcb : 
+		    (intptr_t) prev, sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
+		    &in6pcb.in6p_laddr, in6pcb.in6p_lport,
+		    &in6pcb.in6p_faddr, in6pcb.in6p_fport,
+		    tcpcb.t_state, name);
+		
 	}
 }
 
@@ -243,10 +343,19 @@ tcp6_stats(off, name)
 {
 	struct tcp6stat tcp6stat;
 
-	if (off == 0)
-		return;
+	if (use_sysctl) {
+		size_t size = sizeof(tcp6stat);
+
+		if (sysctlbyname("net.inet6.tcp6.stats", &tcp6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.tcp6.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&tcp6stat, sizeof (tcp6stat));
+	}
+
 	printf ("%s:\n", name);
-	kread(off, (char *)&tcp6stat, sizeof (tcp6stat));
 
 #define	p(f, m) if (tcp6stat.f || sflag <= 1) \
     printf(m, tcp6stat.f, plural(tcp6stat.f))
@@ -941,9 +1050,18 @@ icmp6_stats(off, name)
 	struct icmp6stat icmp6stat;
 	register int i, first;
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&icmp6stat, sizeof (icmp6stat));
+	if (use_sysctl) {
+		size_t size = sizeof(icmp6stat);
+
+		if (sysctlbyname("net.inet6.icmp6.stats", &icmp6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.icmp6.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&icmp6stat, sizeof (icmp6stat));
+	}
+	
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
