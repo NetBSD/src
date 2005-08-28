@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.512 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.513 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -88,3 +88,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		readsize option also apply to network reads for transfers to
 		the server. [ginsbach 20050824]
 	sysinst: Added Spanish language translation. [xtraeme 20050826]
+	UFS: Add experimental support for file-backed extended attributes
+		on UFS1 file systems, adapted from FreeBSD.  [thorpej 20050828]
