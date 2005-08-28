@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.78 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.79 2005/08/28 21:01:53 rpaulo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.79 2005/08/28 21:01:53 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1477,12 +1477,6 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       IPV6CTL_FORWSRCRT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "stats", NULL,
-		       NULL, 0, &?, sizeof(?),
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_STATS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "mrtstats", NULL,
 		       NULL, 0, &?, sizeof(?),
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
@@ -1647,4 +1641,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_maxfrags, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_MAXFRAGS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IPv6 statistics"),
+		       NULL, 0, &ip6stat, sizeof(ip6stat),
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_STATS, CTL_EOL);
 }
