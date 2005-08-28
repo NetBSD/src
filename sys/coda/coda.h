@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.9 2005/02/26 23:04:16 perry Exp $ */
+/* $NetBSD: coda.h,v 1.10 2005/08/28 08:57:45 christos Exp $ */
 
 /*
 
@@ -401,7 +401,7 @@ struct coda_open_in {
 struct coda_open_out {
     struct coda_out_hdr oh;
     cdev_t	dev;
-    ino_t	inode;
+    u_int32_t	inode;
 };
 
 
