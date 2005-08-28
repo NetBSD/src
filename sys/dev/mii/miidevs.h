@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.61 2005/06/23 19:19:55 briggs Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.62 2005/08/28 15:01:09 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -184,6 +184,8 @@
 /* AMD Am79C873 seems to be a relabeled DM9101 */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9102	0x0004
+#define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
