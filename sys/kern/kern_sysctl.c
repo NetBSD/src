@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.179.2.1 2005/08/28 09:55:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.179.2.1 2005/08/28 09:55:17 tron Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2516,16 +2516,26 @@ old_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	   void *newp, size_t newlen, struct lwp *l)
 {
 	int error;
-	size_t savelen = *oldlenp;
+	size_t oldlen = 0;
+	size_t savelen;
+
+	if (oldlenp) {
+		oldlen = *oldlenp;
+	}
+	savelen = oldlen;
 
 	error = sysctl_lock(l, oldp, savelen);
 	if (error)
 		return (error);
-	error = sysctl_dispatch(name, namelen, oldp, oldlenp,
+	error = sysctl_dispatch(name, namelen, oldp, &oldlen,
 				newp, newlen, name, l, NULL);
 	sysctl_unlock(l);
-	if (error == 0 && oldp != NULL && savelen < *oldlenp)
+	if (error == 0 && oldp != NULL && savelen < oldlen)
 		error = ENOMEM;
+
+	if (oldlenp) {
+		*oldlenp = oldlen;
+	}
 
 	return (error);
 }
