@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.121 2005/08/20 12:01:04 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.122 2005/08/28 08:56:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.121 2005/08/20 12:01:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.122 2005/08/28 08:56:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -817,7 +817,7 @@ vnd_cget(struct proc *p, int unit, int *un, struct vattr *va)
 	vnd = &vnd_softc[*un];
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
-		return 0;
+		return -1;
 
 	return VOP_GETATTR(vnd->sc_vp, va, p->p_ucred, p);
 }
