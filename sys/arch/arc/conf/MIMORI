@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.40 2005/08/19 05:19:49 christos Exp $
+#	$NetBSD: MIMORI,v 1.41 2005/08/28 13:23:22 tsutsui Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -28,7 +28,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
@@ -58,7 +58,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 # mipsel specific
 #options 	COMPAT_ULTRIX	# Ultrix binary compatibility
 #options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# fast filesystem
