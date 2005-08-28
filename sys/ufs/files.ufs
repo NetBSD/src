@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.10 2005/07/10 01:08:52 thorpej Exp $
+#	$NetBSD: files.ufs,v 1.11 2005/08/28 19:37:58 thorpej Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -7,6 +7,7 @@ deffs	fs_lfs.h			LFS		# XXX
 
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 					UFS_DIRHASH
+					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -50,6 +51,7 @@ file	ufs/mfs/mfs_vnops.c		mfs
 
 file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_dirhash.c		(ffs | lfs | mfs | ext2fs) & ufs_dirhash
+file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
 file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
 file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
