@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.73 2005/08/28 21:04:09 rpaulo Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.73 2005/08/28 21:04:09 rpaulo Exp $");
 
 #include "opt_ipsec.h"
 
@@ -891,4 +891,11 @@ SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
 		       sysctl_inpcblist, 0, &raw6cbtable, 0,
 		       CTL_NET, PF_INET6, IPPROTO_RAW,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Raw IPv6 statistics"),
+		       NULL, 0, &rip6stat, sizeof(rip6stat),
+		       CTL_NET, PF_INET6, IPPROTO_RAW, RAW6CTL_STATS,
+		       CTL_EOL);
 }
