@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.16.2.1.2.1 2005/07/24 02:25:24 snj Exp $	*/
+/*	$NetBSD: menus.mi,v 1.16.2.1.2.2 2005/08/28 21:38:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -120,6 +120,13 @@ menu selfsize, title MSG_Select_file_system_fragment_size, y=11, x=40;
 	option "32768", exit, action { set_fsize(arg, 32768); };
 
 menu mountoptions, title MSG_toggle, y=5, x=30, exitstring MSG_unchanged;
+	display action {
+		static int actual_numopt;
+		if (!actual_numopt)
+			actual_numopt = menu->numopts;
+		menu->numopts = actual_numopt - 
+			(((partinfo *)arg)->pi_fstype !=  FS_BSDFFS);
+	};
 	option "async", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_ASYNC; };
 	option "noatime", exit, action
