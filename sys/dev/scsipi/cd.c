@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.224 2005/07/06 14:28:39 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.225 2005/08/28 22:51:01 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.224 2005/07/06 14:28:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.225 2005/08/28 22:51:01 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1270,6 +1270,7 @@ bad:
 #endif
 
 	case CDIOCPLAYTRACKS: {
+		/* PLAY_MSF command */
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
@@ -1278,6 +1279,7 @@ bad:
 		    args->start_index, args->end_track, args->end_index));
 	}
 	case CDIOCPLAYMSF: {
+		/* PLAY_MSF command */
 		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
@@ -1286,6 +1288,7 @@ bad:
 		    args->start_f, args->end_m, args->end_s, args->end_f));
 	}
 	case CDIOCPLAYBLOCKS: {
+		/* PLAY command */
 		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
@@ -1293,6 +1296,7 @@ bad:
 		return (cd_play(cd, args->blk, args->len));
 	}
 	case CDIOCREADSUBCHANNEL: {
+		/* READ_SUBCHANNEL command */
 		struct ioc_read_subchannel *args =
 		    (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
@@ -1311,6 +1315,7 @@ bad:
 		return (copyout(&data, args->data, len));
 	}
 	case CDIOREADTOCHEADER: {
+		/* READ TOC format 0 command, static header */
 		struct ioc_toc_header th;
 
 		if ((error = cd_read_toc_f0(cd, 0, 0, &th, sizeof(th),
@@ -1324,6 +1329,7 @@ bad:
 		return (0);
 	}
 	case CDIOREADTOCENTRYS: {
+		/* READ TOC format 0 command, entries */
 		struct cd_toc toc;
 		struct ioc_read_toc_entry *te =
 		    (struct ioc_read_toc_entry *)addr;
@@ -1362,6 +1368,7 @@ bad:
 		return (copyout(toc.entries, te->data, len));
 	}
 	case CDIOREADMSADDR: {
+		/* READ TOC format 0 command, length of first track only */
 		int sessno = *(int*)addr;
 
 		if (sessno != 0)
@@ -1376,39 +1383,48 @@ bad:
 		    arg->patch[2], arg->patch[3], 0));
 	}
 	case CDIOCGETVOL: {
+		/* MODE SENSE command (AUDIO page) */
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
 		return (cd_getvol(cd, arg, 0));
 	}
 	case CDIOCSETVOL: {
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
 		return (cd_setvol(cd, arg, 0));
 	}
 
 	case CDIOCSETMONO:
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, BOTH_CHANNEL, BOTH_CHANNEL,
 		    MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETSTEREO:
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, LEFT_CHANNEL, RIGHT_CHANNEL,
 		    MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETMUTE:
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, MUTE_CHANNEL, MUTE_CHANNEL,
 		    MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETLEFT:
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, LEFT_CHANNEL, LEFT_CHANNEL,
 		    MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETRIGHT:
+		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, RIGHT_CHANNEL, RIGHT_CHANNEL,
 		    MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCRESUME:
+		/* PAUSE command */
 		return (cd_pause(cd, PA_RESUME));
 	case CDIOCPAUSE:
+		/* PAUSE command */
 		return (cd_pause(cd, PA_PAUSE));
 	case CDIOCSTART:
 		return (scsipi_start(periph, SSS_START, 0));
@@ -1455,10 +1471,13 @@ bad:
 	case SCIOCRESET:
 		return (cd_reset(cd));
 	case CDIOCLOADUNLOAD:
+		/* LOAD_UNLOAD command */
 		return (cd_load_unload(cd, (struct ioc_load_unload *)addr));
 	case DVD_AUTH:
+		/* GPCMD_REPORT_KEY or GPCMD_SEND_KEY command */
 		return (dvd_auth(cd, (dvd_authinfo *)addr));
 	case DVD_READ_STRUCT:
+		/* GPCMD_READ_DVD_STRUCTURE command */
 		return (dvd_read_struct(cd, (dvd_struct *)addr));
 
 	default:
