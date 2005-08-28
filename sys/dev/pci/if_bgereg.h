@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.25 2005/08/22 18:18:25 gavan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.26 2005/08/28 19:24:57 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1751,8 +1751,6 @@ typedef struct {
 	u_int32_t		bge_addr_lo;
 } bge_hostaddr;
 #endif
-
-#define BGE_HOSTADDR(x)	(x).bge_addr_lo
 
 static __inline void
 bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
