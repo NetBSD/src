@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.6 2005/01/21 02:43:33 ginsbach Exp $	*/
+/*	$NetBSD: getent.c,v 1.6.2.1 2005/08/28 09:57:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.6 2005/01/21 02:43:33 ginsbach Exp $");
+__RCSID("$NetBSD: getent.c,v 1.6.2.1 2005/08/28 09:57:50 tron Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -59,12 +59,16 @@ __RCSID("$NetBSD: getent.c,v 1.6 2005/01/21 02:43:33 ginsbach Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <netinet/in.h>		/* for INET6_ADDRSTRLEN */
 
 #include <rpc/rpcent.h>
 
 static int	usage(void);
 static int	parsenum(const char *, unsigned long *);
+static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
 static int	networks(int, char *[]);
@@ -85,6 +89,7 @@ static struct getentdb {
 	const char	*name;
 	int		(*callback)(int, char *[]);
 } databases[] = {
+	{	"ethers",	ethers,		},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
 	{	"networks",	networks,	},
@@ -181,6 +186,48 @@ printfmtstrings(char *strings[], const char *prefix, const char *sep,
 	printf("\n");
 }
 
+
+		/*
+		 * ethers
+		 */
+
+static int
+ethers(int argc, char *argv[])
+{
+	char		hostname[MAXHOSTNAMELEN + 1], *hp;
+	struct ether_addr ea, *eap;
+	int		i, rv;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+#define ETHERSPRINT	printf("%-17s  %s\n", ether_ntoa(eap), hp)
+
+	rv = RV_OK;
+	if (argc == 2) {
+		fprintf(stderr, "Enumeration not supported on ethers\n");
+		rv = RV_NOENUM;
+	} else {
+		for (i = 2; i < argc; i++) {
+			if ((eap = ether_aton(argv[i])) == NULL) {
+				eap = &ea;
+				hp = argv[i];
+				if (ether_hostton(hp, eap) != 0) {
+					rv = RV_NOTFOUND;
+					break;
+				}
+			} else {
+				hp = hostname;
+				if (ether_ntohost(hp, eap) != 0) {
+					rv = RV_NOTFOUND;
+					break;
+				}
+			}
+			ETHERSPRINT;
+		}
+	}
+	return rv;
+}
 
 		/*
 		 * group
