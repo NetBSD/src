@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.17.2.2 2005/08/24 21:48:51 tron Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.17.2.3 2005/08/28 10:04:54 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -366,15 +366,16 @@ Möchten Sie fortfahren?
 }
 
 message disksetupdone
-{Der erste Teil der Installation ist nun abgeschlossen. Sysinst hat auf das
-Ziellaufwerk ein Disklabel geschrieben und alle von Ihnen definierten
-Partitionen formatiert (newfs'ed) sowie auf Fehler überprüft (fsck'ed).
+{Der erste Teil der Installation ist nun abgeschlossen. 
+Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
+auf allen von Ihnen gewählten Partitionen ein Dateisystem initialisiert
+und geprüft.
 }
 
 message disksetupdoneupdate
-{Der erste Teil der Prozedur ist nun abgeschlossen. Sysinst hat auf das
-Ziellaufwerk ein Disklabel geschrieben und alle von Ihnen definierten
-Partition auf Fehler überprüft (fsck'ed).
+{Der erste Teil der Prozedur ist nun abgeschlossen. 
+Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
+und alle gewählten Dateisysteme auf Fehler überprüft.
 }
 
 message openfail
@@ -669,8 +670,6 @@ message verboseextract
 {
 Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
 geladen und auf die Festplatte kopiert.
-
-Was wollen Sie während des Extrahierens sehen?
 }
 
 message notarfile
@@ -1062,10 +1061,10 @@ message other {andere }
 message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
 message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root Shell}
-message Select_set_extraction_verbosity {Wählen Sie, welche Ausgaben Sie während des Extrahierens sehen möchten}
+message Select_set_extraction_verbosity {Bitte wählen Sie die Fortschrittsanzeige während des Extrahierens}
 message Progress_bar {Fortschrittsbalken (empfohlen)}
-message Silent {Nichts (schnell)}
-message Verbose {Alle installierten Dateien (langsam))}
+message Silent {Keine (schnell)}
+message Verbose {Alle installierten Dateien anzeigen (langsam))}
 
 .if AOUT2ELF
 message aoutfail
