@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.809 2005/08/28 19:37:58 thorpej Exp $
+#	$NetBSD: mi,v 1.810 2005/08/28 20:58:14 reinoud Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -9162,6 +9162,8 @@
 ./usr/share/man/man9/ioasic_intr_evcnt.9	comp-sys-man		.man
 ./usr/share/man/man9/ioasic_submatch.9		comp-sys-man		.man
 ./usr/share/man/man9/ioctl.9			comp-sys-man		.man
+./usr/share/man/man9/ioctl_copyin.9		comp-sys-man		.man
+./usr/share/man/man9/ioctl_copyout.9		comp-sys-man		.man
 ./usr/share/man/man9/ipkdb.9			comp-sys-man		.man
 ./usr/share/man/man9/ipkdb_connect.9		comp-sys-man		.man
 ./usr/share/man/man9/ipkdb_init.9		comp-sys-man		.man

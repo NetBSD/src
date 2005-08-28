@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.118 2005/07/06 22:30:42 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.119 2005/08/28 20:58:14 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.118 2005/07/06 22:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.119 2005/08/28 20:58:14 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.118 2005/07/06 22:30:42 christos Exp
 #include <sys/queue.h>
 #include <sys/systrace.h>
 #include <sys/ktrace.h>
+#include <sys/fcntl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -324,6 +325,30 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	uvmspace_free(p->p_vmspace);
 
 	return (error);
+}
+
+/*
+ * Like copyin(), except it operates on kernel addresses when the FKIOCTL
+ * flag is passed in `ioctlflags' from the ioctl call.
+ */
+int
+ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len)
+{
+	if (ioctlflags & FKIOCTL)
+		return kcopy(src, dst, len);
+	return copyin(src, dst, len);
+}
+
+/*
+ * Like copyout(), except it operates on kernel addresses when the FKIOCTL
+ * flag is passed in `ioctlflags' from the ioctl call.
+ */
+int
+ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len)
+{
+	if (ioctlflags & FKIOCTL)
+		return kcopy(src, dst, len);
+	return copyout(src, dst, len);
 }
 
 /*
