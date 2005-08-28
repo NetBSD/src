@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.14 2003/04/16 13:35:26 wiz Exp $
+.\"	$NetBSD: copy.9,v 1.15 2005/08/28 20:58:14 reinoud Exp $
 .\"
 .\" Copyright (c) 1996, 2002 Jason R. Thorpe.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 19, 2002
+.Dd August 28, 2005
 .Dt COPY 9
 .Os
 .Sh NAME
@@ -60,6 +60,10 @@
 .Fn copyin_proc "struct proc *p" "const void *uaddr" "void *kaddr" "size_t len"
 .Ft int
 .Fn copyout_proc "struct proc *p" "const void *kaddr" "void *uaddr" "size_t len"
+.Ft int
+.Fn ioctl_copyin "int ioctlflags" "const void *src" "void *dst" "size_t len"
+.Ft int
+.Fn ioctl_copyout "int ioctlflags" "const void *src" "void *dst" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm
@@ -138,6 +142,18 @@ Like
 .Fn copyout ,
 except it operates on the address space of the process
 .Fa p .
+.It Fn ioctl_copyin
+Like
+.Fn copyin ,
+except it operates on kernel adresses when the FKIOCTL flag is passed in 
+.Fa ioctlflags
+from the ioctl call.
+.It Fn ioctl_copyout
+Like
+.Fn copyout ,
+except it operates on kernel adresses when the FKIOCTL flag is passed in 
+.Fa ioctlflags
+from the ioctl call.
 .El
 .Sh RETURN VALUES
 The
