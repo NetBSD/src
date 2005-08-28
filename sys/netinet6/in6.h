@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.46 2005/08/10 12:58:37 yamt Exp $	*/
+/*	$NetBSD: in6.h,v 1.47 2005/08/28 21:01:53 rpaulo Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ struct in6_pktinfo {
 	{ "hlim", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
 	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
 	{ "mrtproto", CTLTYPE_INT }, \
 	{ "maxfragpackets", CTLTYPE_INT }, \
