@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.6.2.5 2005/08/25 20:48:28 tron Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.6.2.6 2005/08/28 09:56:21 tron Exp $	*/
 
 /*
  *
@@ -33,12 +33,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.5 2005/08/25 20:48:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.6.2.6 2005/08/28 09:56:21 tron Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/boot_flag.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 
@@ -220,19 +221,7 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 			if (*opt == '-') {
 				opt++;
 				while(*opt != '\0') {
-					switch(*opt) {
-					case 'a':
-						boothowto |= RB_ASKNAME;
-						break;
-#ifdef notyet /* XXX cause early panic, before console is setup */
-					case 'd':
-						boothowto |= RB_KDB;
-						break;
-#endif
-					case 's':
-						boothowto |= RB_SINGLE;
-						break;
-					}
+					BOOT_FLAG(*opt, boothowto);
 					opt++;
 				}
 			}
