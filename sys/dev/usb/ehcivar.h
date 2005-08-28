@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.20 2005/08/28 12:10:37 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ typedef struct ehci_softc {
 	device_ptr_t sc_child;		/* /dev/usb# device */
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
 	struct usb_dma_reserve sc_dma_reserve;
 #endif
 } ehci_softc_t;
