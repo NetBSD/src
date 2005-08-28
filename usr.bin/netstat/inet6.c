@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.35 2005/08/28 16:12:35 rpaulo Exp $	*/
+/*	$NetBSD: inet6.c,v 1.36 2005/08/28 21:06:57 rpaulo Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.35 2005/08/28 16:12:35 rpaulo Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.36 2005/08/28 21:06:57 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,9 +432,17 @@ udp6_stats(off, name)
 	struct udp6stat udp6stat;
 	u_quad_t delivered;
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&udp6stat, sizeof (udp6stat));
+	if (use_sysctl) {
+		size_t size = sizeof(udp6stat);
+
+		if (sysctlbyname("net.inet6.udp6.stats", &udp6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.udp6.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&udp6stat, sizeof (udp6stat));
+	}
 	printf("%s:\n", name);
 #define	p(f, m) if (udp6stat.f || sflag <= 1) \
     printf(m, (unsigned long long)udp6stat.f, plural(udp6stat.f))
@@ -571,10 +579,17 @@ ip6_stats(off, name)
 	struct protoent *ep;
 	const char *n;
 
-	if (off == 0)
-		return;
+	if (use_sysctl) {
+		size_t size = sizeof(ip6stat);
 
-	kread(off, (char *)&ip6stat, sizeof (ip6stat));
+		if (sysctlbyname("net.inet6.ip6.stats", &ip6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.ip6.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&ip6stat, sizeof (ip6stat));
+	}
 	printf("%s:\n", name);
 
 #define	p(f, m) if (ip6stat.f || sflag <= 1) \
@@ -1201,9 +1216,17 @@ pim6_stats(off, name)
 {
 	struct pim6stat pim6stat;
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&pim6stat, sizeof(pim6stat));
+	if (use_sysctl) {
+		size_t size = sizeof(pim6stat);
+
+		if (sysctlbyname("net.inet6.pim6.stats", &pim6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.pim6.stats");
+        } else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&pim6stat, sizeof(pim6stat));
+	}
 	printf("%s:\n", name);
 
 #define	p(f, m) if (pim6stat.f || sflag <= 1) \
@@ -1229,9 +1252,17 @@ rip6_stats(off, name)
 	struct rip6stat rip6stat;
 	u_quad_t delivered;
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&rip6stat, sizeof(rip6stat));
+	if (use_sysctl) {
+		size_t size = sizeof(rip6stat);
+
+		if (sysctlbyname("net.inet6.raw6.stats", &rip6stat, &size,
+		    NULL, 0) == -1)
+			err(1, "net.inet6.raw6.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&rip6stat, sizeof(rip6stat));
+	}
 	printf("%s:\n", name);
 
 #define	p(f, m) if (rip6stat.f || sflag <= 1) \
