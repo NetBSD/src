@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.205 2005/08/19 20:24:33 rpaulo Exp $	*/
+/*	$NetBSD: proc.h,v 1.206 2005/08/28 14:57:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -151,6 +151,7 @@ struct emul {
  *
  * Fields marked 'p:' are protected by the process's own p_lock.
  * Fields marked 'l:' are protected by the proclist_lock
+ * Fields marked 's:' are protected by the SCHED_LOCK.
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
@@ -191,7 +192,7 @@ struct proc {
 #define	p_startzero	p_nlwps
 
 	int 		p_nlwps;	/* p: Number of LWPs */
-	int 		p_nrlwps;	/* p: Number of running LWPs */
+	int 		p_nrlwps;	/* s: Number of running LWPs */
 	int 		p_nzlwps;	/* p: Number of zombie LWPs */
 	int 		p_nlwpid;	/* p: Next LWP ID */
 
