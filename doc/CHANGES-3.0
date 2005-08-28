@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.216 2005/08/25 20:59:09 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.217 2005/08/28 10:01:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11894,16 +11894,6 @@ sys/arch/xen/xen/pci_machdep.c			1.5
 	Make PCI devices usable for non-domain0 kernels.
 	[bouyer, ticket #694]
 
-
-	More adjustements to deal with Xen's physical <=> machine addresses
-	mappings:
-	- Allow _bus_dmamem_alloc_range to be provided from external source:
-	  Use a _PRIVATE_BUS_DMAMEM_ALLOC_RANGE macro, defined to
-	  _bus_dmamem_alloc_range by default.
-	- avail_end is the end of the physical address range. Define a macro
-	 _BUS_AVAIL_END (defined by default to avail_end) and use it instead.
-	[bouyer, ticket #695]
-
 sys/arch/x86/include/bus_private.h		1.2
 sys/arch/x86/x86/bus_dma.c			1.22
 sys/arch/xen/conf/files.xen			1.28
@@ -11922,4 +11912,50 @@ sys/arch/xen/include/bus_private.h		1.3
 	Rename _PRIVATE_BUS_DMAMEM_ALLOC_RANGE to _BUS_DMAMEM_ALLOC_RANGE for
 	consistency with other macros defined in bus_private.h.
 	[bouyer, ticket #697]
+
+sys/dev/pci/if_wmreg.h				1.15
+
+	Fix a typo in an unused macro.
+	[yamt, ticket #699]
+
+sys/dev/pci/if_wm.c				1.106
+
+	wm_rxintr: ignore h/w assisted checksum results if WRX_ST_IXSM is set.
+	[yamt, ticket #700]
+
+sys/compat/linux/arch/i386/linux_machdep.c	1.111
+
+	linux_machdepioctl: remove duplicated FILE_USE/UNUSE.
+	[yamt, ticket #701]
+
+sys/arch/xen/xen/if_xennet.c			1.30
+
+	- count if_opackets correctly.
+	- reflect tx errors to if_oerrors.
+	[yamt, ticket #702]
+
+sys/kern/kern_sysctl.c				1.186
+
+	old_sysctl: fix null dereference when oldlenp == NULL.
+	[yamt, ticket #703]
+
+sys/arch/xen/i386/xen_machdep.c			1.12
+
+	xen_parse_cmdline:
+	- use BOOT_FLAG macro.
+	- allow RB_KDB because it works fine, depending on type of console.
+	[yamt, ticket #704]
+
+usr.bin/getent/getent.1				1.11
+usr.bin/getent/getent.c				1.7
+
+	Implement "ethers".
+	[ginsbach, ticket #706]
+
+sys/fs/union/union_vfsops.c			1.28
+
+	statvfs(2) returns bogus result from union mounted file systems with
+	`-r' option, since it uses uninitialized buffer in the case of no
+	lower-layer file system.
+	[nakayama, ticket #708]
 
