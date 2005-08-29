@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.25 2005/08/05 11:00:31 jmmv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.26 2005/08/29 23:57:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.25 2005/08/05 11:00:31 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.26 2005/08/29 23:57:35 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -84,25 +84,25 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.25 2005/08/05 11:00:31 jmmv Exp
 #define MSDOSFS_NAMEMAX(pmp) \
 	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
 
-int msdosfs_mountroot __P((void));
-int msdosfs_mount __P((struct mount *, const char *, void *,
-    struct nameidata *, struct proc *));
-int msdosfs_start __P((struct mount *, int, struct proc *));
-int msdosfs_unmount __P((struct mount *, int, struct proc *));
-int msdosfs_root __P((struct mount *, struct vnode **));
-int msdosfs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
-int msdosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *,
-    struct ucred **));
-int msdosfs_vptofh __P((struct vnode *, struct fid *));
+int msdosfs_mountroot(void);
+int msdosfs_mount(struct mount *, const char *, void *,
+    struct nameidata *, struct proc *);
+int msdosfs_start(struct mount *, int, struct proc *);
+int msdosfs_unmount(struct mount *, int, struct proc *);
+int msdosfs_root(struct mount *, struct vnode **);
+int msdosfs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
+int msdosfs_statvfs(struct mount *, struct statvfs *, struct proc *);
+int msdosfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int msdosfs_vget(struct mount *, ino_t, struct vnode **);
+int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int msdosfs_checkexp(struct mount *, struct mbuf *, int *,
+    struct ucred **);
+int msdosfs_vptofh(struct vnode *, struct fid *);
 
-int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
-    struct msdosfs_args *));
+int msdosfs_mountfs(struct vnode *, struct mount *, struct proc *,
+    struct msdosfs_args *);
 
-static int update_mp __P((struct mount *, struct msdosfs_args *));
+static int update_mp(struct mount *, struct msdosfs_args *);
 
 MALLOC_DEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
 MALLOC_DEFINE(M_MSDOSFSFAT, "MSDOSFS fat", "MSDOS FS fat table");

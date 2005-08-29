@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.6 2005/08/29 23:22:05 xtraeme Exp $	*/
+/*	$NetBSD: denode.h,v 1.7 2005/08/29 23:57:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -257,16 +257,16 @@ struct defid {
 /*
  * Prototypes for MSDOSFS vnode operations
  */
-int	msdosfs_lookup		__P((void *));
-int	msdosfs_create		__P((void *));
-int	msdosfs_mknod		__P((void *));
-int	msdosfs_open		__P((void *));
-int	msdosfs_close		__P((void *));
-int	msdosfs_access		__P((void *));
-int	msdosfs_getattr		__P((void *));
-int	msdosfs_setattr		__P((void *));
-int	msdosfs_read		__P((void *));
-int	msdosfs_write		__P((void *));
+int	msdosfs_lookup		(void *);
+int	msdosfs_create		(void *);
+int	msdosfs_mknod		(void *);
+int	msdosfs_open		(void *);
+int	msdosfs_close		(void *);
+int	msdosfs_access		(void *);
+int	msdosfs_getattr		(void *);
+int	msdosfs_setattr		(void *);
+int	msdosfs_read		(void *);
+int	msdosfs_write		(void *);
 #define	msdosfs_lease_check	genfs_lease_check
 #define	msdosfs_ioctl		genfs_enoioctl
 #define	msdosfs_poll		genfs_poll
@@ -274,41 +274,43 @@ int	msdosfs_write		__P((void *));
 #define	msdosfs_mmap		genfs_mmap
 #define	msdosfs_fsync		genfs_fsync
 #define	msdosfs_seek		genfs_seek
-int	msdosfs_remove		__P((void *));
-int	msdosfs_link		__P((void *));
-int	msdosfs_rename		__P((void *));
-int	msdosfs_mkdir		__P((void *));
-int	msdosfs_rmdir		__P((void *));
-int	msdosfs_symlink		__P((void *));
-int	msdosfs_readdir		__P((void *));
-int	msdosfs_readlink	__P((void *));
+int	msdosfs_remove		(void *);
+int	msdosfs_link		(void *);
+int	msdosfs_rename		(void *);
+int	msdosfs_mkdir		(void *);
+int	msdosfs_rmdir		(void *);
+int	msdosfs_symlink		(void *);
+int	msdosfs_readdir		(void *);
+int	msdosfs_readlink	(void *);
 #define	msdosfs_abortop		genfs_abortop
-int	msdosfs_inactive	__P((void *));
-int	msdosfs_reclaim		__P((void *));
-int	msdosfs_bmap		__P((void *));
-int	msdosfs_strategy	__P((void *));
-int	msdosfs_print		__P((void *));
-int	msdosfs_advlock		__P((void *));
-int	msdosfs_reallocblks	__P((void *));
-int	msdosfs_pathconf	__P((void *));
-int	msdosfs_update		__P((void *));
+int	msdosfs_inactive	(void *);
+int	msdosfs_reclaim		(void *);
+int	msdosfs_bmap		(void *);
+int	msdosfs_strategy	(void *);
+int	msdosfs_print		(void *);
+int	msdosfs_advlock		(void *);
+int	msdosfs_reallocblks	(void *);
+int	msdosfs_pathconf	(void *);
+int	msdosfs_update		(void *);
 
 /*
  * Internal service routine prototypes.
  */
-int createde __P((struct denode *, struct denode *, struct denode **, struct componentname *));
-int deextend __P((struct denode *, u_long, struct ucred *));
-int deget __P((struct msdosfsmount *, u_long, u_long, struct denode **));
-int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
-int deupdat __P((struct denode *, int));
-int doscheckpath __P((struct denode *, struct denode *));
-int dosdirempty __P((struct denode *));
-int readde __P((struct denode *, struct buf **, struct direntry **));
-int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **));
-void reinsert __P((struct denode *));
-int removede __P((struct denode *, struct denode *));
-int uniqdosname __P((struct denode *, struct componentname *, u_char *));
-int findwin95 __P((struct denode *));
-int msdosfs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
-void msdosfs_gop_markupdate __P((struct vnode *, int));
+int createde(struct denode *, struct denode *,
+		struct denode **, struct componentname *);
+int deextend(struct denode *, u_long, struct ucred *);
+int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
+int detrunc(struct denode *, u_long, int, struct ucred *, struct proc *);
+int deupdat(struct denode *, int);
+int doscheckpath(struct denode *, struct denode *);
+int dosdirempty(struct denode *);
+int readde(struct denode *, struct buf **, struct direntry **);
+int readep(struct msdosfsmount *, u_long, u_long,
+		struct buf **, struct direntry **);
+void reinsert(struct denode *);
+int removede(struct denode *, struct denode *);
+int uniqdosname(struct denode *, struct componentname *, u_char *);
+int findwin95(struct denode *);
+int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+void msdosfs_gop_markupdate(struct vnode *, int);
 #endif	/* _KERNEL */
