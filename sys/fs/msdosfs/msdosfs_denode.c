@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.9 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.10 2005/08/29 23:57:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.9 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.10 2005/08/29 23:57:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,9 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_markupdate = msdosfs_gop_markupdate,
 };
 
-static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
-static void msdosfs_hashins __P((struct denode *));
-static void msdosfs_hashrem __P((struct denode *));
+static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
+static void msdosfs_hashins(struct denode *);
+static void msdosfs_hashrem(struct denode *);
 
 #ifdef _LKM
 MALLOC_DECLARE(M_MSDOSFSFAT);
@@ -225,7 +225,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
-	extern int (**msdosfs_vnodeop_p) __P((void *));
+	extern int (**msdosfs_vnodeop_p)(void *);
 	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
