@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep1.c,v 1.1 2005/04/19 16:36:34 nathanw Exp $	*/
+/*	$NetBSD: sleep1.c,v 1.2 2005/08/29 18:52:16 drochner Exp $	*/
 
 #include <signal.h>
 #include <stdio.h>
@@ -22,6 +22,7 @@ main(void)
 	pthread_t thread;
 	struct itimerval it;
 	struct sigaction act;
+	sigset_t mtsm;
 
 	printf("Testing sleeps unreasonably far into the future.\n");
 
@@ -31,6 +32,11 @@ main(void)
 	sigaction(SIGALRM, &act, NULL);
 	
 	pthread_create(&thread, NULL, threadfunc, NULL);
+
+	/* make sure the signal is delivered to the child thread */
+	sigemptyset(&mtsm);
+	sigaddset(&mtsm, SIGALRM);
+	pthread_sigmask(SIG_BLOCK, &mtsm, 0);
 
 	timerclear(&it.it_interval);
 	timerclear(&it.it_value);
