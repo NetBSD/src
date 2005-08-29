@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.2 2005/08/29 17:20:31 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -863,11 +863,6 @@ sbp_login(struct sbp_dev *sdev)
 	timevalsub(&t, &delta);
 	if (t.tv_sec >= 0 && t.tv_usec > 0)
 		ticks = (t.tv_sec * 1000 + t.tv_usec / 1000) * hz / 1000;
-#if defined(__NetBSD__) && defined(cobalt)
-	/* XXXX boot time for cobalt */
-	if (sdev->target->sbp->last_busreset.tv_sec == 0)
-		ticks = hz * 2;
-#endif
 SBP_DEBUG(0)
 	printf("%s: sec = %ld usec = %ld ticks = %d\n", __func__,
 	    t.tv_sec, t.tv_usec, ticks);
