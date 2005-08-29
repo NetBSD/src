@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.99 2005/08/26 14:20:40 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.100 2005/08/29 19:13:48 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.99 2005/08/26 14:20:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.100 2005/08/29 19:13:48 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -442,15 +442,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	if (m->fn != NULL) {
 		pri = (*m->fn)(m->parent, cf, m->locs, m->aux);
 	} else {
-		struct cfattach *ca;
-
-		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
-		if (ca == NULL) {
-			/* No attachment for this entry, oh well. */
-			return;
-		}
-	        KASSERT(ca->ca_match != NULL);
-		pri = (*ca->ca_match)(m->parent, cf, m->aux);
+		pri = config_match(m->parent, cf, m->aux);
 	}
 	if (pri > m->pri) {
 		m->match = cf;
