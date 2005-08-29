@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: reg.h,v 1.2.4.1 2005/08/29 00:55:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
 #ifndef _AMD64_REG_H_
 #define _AMD64_REG_H_
 
+#include <machine/fpu.h>
 #include <machine/mcontext.h>
 
 /*
