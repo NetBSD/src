@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.568 2005/08/28 19:37:58 thorpej Exp $
+# $NetBSD: mi,v 1.569 2005/08/29 18:59:12 kleink Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2973,6 +2973,7 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share		share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share		share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share		share
+./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
@@ -3202,6 +3203,7 @@
 ./usr/share/zoneinfo/Australia/Brisbane		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Broken_Hill	base-sys-share		share
 ./usr/share/zoneinfo/Australia/Canberra		base-sys-share		share
+./usr/share/zoneinfo/Australia/Currie		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Darwin		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Hobart		base-sys-share		share
 ./usr/share/zoneinfo/Australia/LHI		base-sys-share		share
