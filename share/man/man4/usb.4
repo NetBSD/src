@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.76 2005/07/30 06:14:49 skrll Exp $
+.\" $NetBSD: usb.4,v 1.77 2005/08/29 11:49:36 gson Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -314,9 +314,10 @@ struct usb_device_info {
 	u_int8_t	udi_bus;
 	u_int8_t	udi_addr;
 	usb_event_cookie_t udi_cookie;
-	char		udi_product[USB_MAX_STRING_LEN];
-	char		udi_vendor[USB_MAX_STRING_LEN];
+	char		udi_product[USB_MAX_ENCODED_STRING_LEN];
+	char		udi_vendor[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_release[8];
+	char		udi_serial[USB_MAX_ENCODED_STRING_LEN];
 	u_int16_t	udi_productNo;
 	u_int16_t	udi_vendorNo;
 	u_int16_t	udi_releaseNo;
@@ -342,8 +343,9 @@ struct usb_device_info {
 The
 .Va product ,
 .Va vendor ,
+.Va release ,
 and
-.Va release
+.Va serial
 fields contain self-explanatory descriptions of the device.
 .Pp
 The
