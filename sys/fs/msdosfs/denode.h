@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.5 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: denode.h,v 1.6 2005/08/29 23:22:05 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -176,6 +176,9 @@ struct denode {
  * Note: Must be < sizeof(dirent.d_name)
  */
 #define	WIN_MAXLEN	255
+
+/* Maximum size of a file on a FAT filesystem */
+#define MSDOSFS_FILESIZE_MAX	0xFFFFFFFFLL
 
 /*
  * Transfer directory entries between internal and external form.
