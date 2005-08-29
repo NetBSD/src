@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.307 2005/08/26 00:09:03 briggs Exp $ */
+/*	$NetBSD: wd.c,v 1.308 2005/08/29 19:05:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.307 2005/08/26 00:09:03 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.308 2005/08/29 19:05:54 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1494,7 +1494,6 @@ wdsize(dev_t dev)
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
 static int wddoingadump = 0;
 static int wddumprecalibrated = 0;
-static int wddumpmulti = 1;
 
 /*
  * Dump core after a system crash.
@@ -1534,77 +1533,68 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 
 	/* Recalibrate, if first dump transfer. */
 	if (wddumprecalibrated == 0) {
-		wddumpmulti = wd->sc_multi;
 		wddumprecalibrated = 1;
 		(*wd->atabus->ata_reset_drive)(wd->drvp,
 					       AT_POLL | AT_RST_EMERG);
 		wd->drvp->state = RESET;
 	}
 
-	while (nblks > 0) {
-		wd->sc_bp = NULL;
-		wd->sc_wdc_bio.blkno = blkno;
-		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wd->sc_flags & WDF_LBA48 &&
-		    (blkno > LBA48_THRESHOLD ||
-	    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
-			wd->sc_wdc_bio.flags |= ATA_LBA48;
-		if (wd->sc_flags & WDF_LBA)
-			wd->sc_wdc_bio.flags |= ATA_LBA;
-		wd->sc_wdc_bio.bcount =
-			min(nblks, wddumpmulti) * lp->d_secsize;
-		wd->sc_wdc_bio.databuf = va;
+	wd->sc_bp = NULL;
+	wd->sc_wdc_bio.blkno = blkno;
+	wd->sc_wdc_bio.flags = ATA_POLL;
+	if (wd->sc_flags & WDF_LBA48 &&
+	    (blkno > LBA48_THRESHOLD ||
+    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
+		wd->sc_wdc_bio.flags |= ATA_LBA48;
+	if (wd->sc_flags & WDF_LBA)
+		wd->sc_wdc_bio.flags |= ATA_LBA;
+	wd->sc_wdc_bio.bcount = nblks * lp->d_secsize;
+	wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
-		switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-		case ATACMD_TRY_AGAIN:
-			panic("wddump: try again");
-			break;
-		case ATACMD_QUEUED:
-			panic("wddump: polled command has been queued");
-			break;
-		case ATACMD_COMPLETE:
-			break;
-		}
-		switch(wd->sc_wdc_bio.error) {
-		case TIMEOUT:
-			printf("wddump: device timed out");
-			err = EIO;
-			break;
-		case ERR_DF:
-			printf("wddump: drive fault");
-			err = EIO;
-			break;
-		case ERR_DMA:
-			printf("wddump: DMA error");
-			err = EIO;
-			break;
-		case ERROR:
-			printf("wddump: ");
-			wdperror(wd);
-			err = EIO;
-			break;
-		case NOERROR:
-			err = 0;
-			break;
-		default:
-			panic("wddump: unknown error type");
-		}
-		if (err != 0) {
-			printf("\n");
-			return err;
-		}
-#else	/* WD_DUMP_NOT_TRUSTED */
-		/* Let's just talk about this first... */
-		printf("wd%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
-		    unit, va, cylin, head, sector);
-		delay(500 * 1000);	/* half a second */
-#endif
-
-		/* update block count */
-		nblks -= min(nblks, wddumpmulti);
-		blkno += min(nblks, wddumpmulti);
-		va += min(nblks, wddumpmulti) * lp->d_secsize;
+	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
+	case ATACMD_TRY_AGAIN:
+		panic("wddump: try again");
+		break;
+	case ATACMD_QUEUED:
+		panic("wddump: polled command has been queued");
+		break;
+	case ATACMD_COMPLETE:
+		break;
 	}
+	switch(wd->sc_wdc_bio.error) {
+	case TIMEOUT:
+		printf("wddump: device timed out");
+		err = EIO;
+		break;
+	case ERR_DF:
+		printf("wddump: drive fault");
+		err = EIO;
+		break;
+	case ERR_DMA:
+		printf("wddump: DMA error");
+		err = EIO;
+		break;
+	case ERROR:
+		printf("wddump: ");
+		wdperror(wd);
+		err = EIO;
+		break;
+	case NOERROR:
+		err = 0;
+		break;
+	default:
+		panic("wddump: unknown error type");
+	}
+	if (err != 0) {
+		printf("\n");
+		return err;
+	}
+#else	/* WD_DUMP_NOT_TRUSTED */
+	/* Let's just talk about this first... */
+	printf("wd%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
+	    unit, va, cylin, head, sector);
+	delay(500 * 1000);	/* half a second */
+#endif
 
 	wddoingadump = 0;
 	return 0;
