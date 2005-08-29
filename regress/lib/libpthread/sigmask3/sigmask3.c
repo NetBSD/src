@@ -37,6 +37,7 @@ threadroutine(void *arg)
 {
 
 	kill(getpid(), SIGUSR1);
+	sleep(1);
 
 	if (flag == 2)
 		printf("Success: Both handlers ran in order\n");
