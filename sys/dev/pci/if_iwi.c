@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.16 2005/08/27 07:26:47 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.17 2005/08/30 21:05:47 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.16 2005/08/27 07:26:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.17 2005/08/30 21:05:47 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -141,13 +141,15 @@ static int iwi_auth_and_assoc(struct iwi_softc *);
 static int iwi_init(struct ifnet *);
 static void iwi_stop(struct ifnet *, int);
 
-static __inline u_int8_t MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
+static __inline u_int8_t
+MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_1(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-static __inline u_int32_t MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
+static __inline u_int32_t
+MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
