@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.17 2004/06/30 17:42:55 hannken Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.18 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -70,50 +70,50 @@
  */
 
 /* misc routines in layer_subr.c */
-void	layerfs_init __P((void));
-void	layerfs_done __P((void));
-int	layer_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
-int	layer_node_create __P((struct mount *, struct vnode *, struct vnode **));
+void	layerfs_init(void);
+void	layerfs_done(void);
+int	layer_node_alloc(struct mount *, struct vnode *, struct vnode **);
+int	layer_node_create(struct mount *, struct vnode *, struct vnode **);
 struct vnode *
-	layer_node_find __P((struct mount *, struct vnode *));
+	layer_node_find(struct mount *, struct vnode *);
 #define LOG2_SIZEVNODE	7		/* log2(sizeof struct vnode) */
 #define LAYER_NHASH(lmp, vp) \
 	(&((lmp)->layerm_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & \
 		(lmp)->layerm_node_hash]))
 
 /* vfs routines */
-int	layerfs_start __P((struct mount *, int, struct proc *));
-int	layerfs_root __P((struct mount *, struct vnode **));
-int	layerfs_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct proc *));
-int	layerfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	layerfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	layerfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	layerfs_vptofh __P((struct vnode *, struct fid *));
-int	layerfs_snapshot __P((struct mount *, struct vnode *,
-			    struct timespec *));
+int	layerfs_start(struct mount *, int, struct proc *);
+int	layerfs_root(struct mount *, struct vnode **);
+int	layerfs_quotactl(struct mount *, int, uid_t, void *,
+			     struct proc *);
+int	layerfs_statvfs(struct mount *, struct statvfs *, struct proc *);
+int	layerfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	layerfs_vget(struct mount *, ino_t, struct vnode **);
+int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	layerfs_checkexp(struct mount *, struct mbuf *, int *,
+			   struct ucred **);
+int	layerfs_vptofh(struct vnode *, struct fid *);
+int	layerfs_snapshot(struct mount *, struct vnode *,
+			    struct timespec *);
 
 /* VOP routines */
-int	layer_bypass __P((void *));
-int	layer_getattr __P((void *));
-int	layer_inactive __P((void *));
-int	layer_reclaim __P((void *));
-int	layer_print __P((void *));
-int	layer_bwrite __P((void *));
-int	layer_bmap __P((void *));
-int	layer_lock __P((void *));
-int	layer_unlock __P((void *));
-int	layer_islocked __P((void *));
-int	layer_fsync __P((void *));
-int	layer_lookup __P((void *));
-int	layer_setattr __P((void *));
-int	layer_access __P((void *));
-int	layer_open __P((void *));
-int	layer_remove __P((void *));
-int	layer_rename __P((void *));
-int	layer_rmdir __P((void *));
-int	layer_getpages __P((void *));
-int	layer_putpages __P((void *));
+int	layer_bypass(void *);
+int	layer_getattr(void *);
+int	layer_inactive(void *);
+int	layer_reclaim(void *);
+int	layer_print(void *);
+int	layer_bwrite(void *);
+int	layer_bmap(void *);
+int	layer_lock(void *);
+int	layer_unlock(void *);
+int	layer_islocked(void *);
+int	layer_fsync(void *);
+int	layer_lookup(void *);
+int	layer_setattr(void *);
+int	layer_access(void *);
+int	layer_open(void *);
+int	layer_remove(void *);
+int	layer_rename(void *);
+int	layer_rmdir(void *);
+int	layer_getpages(void *);
+int	layer_putpages(void *);

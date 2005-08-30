@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.123 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.124 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.123 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.124 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.123 2005/05/29 21:55:34 christos 
  *
  */
 
-static int procfs_validfile_linux __P((struct proc *, struct mount *));
+static int procfs_validfile_linux(struct proc *, struct mount *);
 static int procfs_root_readdir_callback(struct proc *, void *);
 
 /*
@@ -119,7 +119,7 @@ static const struct proc_target {
 	u_char	pt_namlen;
 	const char	*pt_name;
 	pfstype	pt_pfstype;
-	int	(*pt_valid) __P((struct proc *, struct mount *));
+	int	(*pt_valid)(struct proc *, struct mount *);
 } proc_targets[] = {
 #define N(s) sizeof(s)-1, s
 	/*	  name		type		validp */
@@ -162,14 +162,14 @@ static const struct proc_target proc_root_targets[] = {
 static const int nproc_root_targets =
     sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
 
-int	procfs_lookup	__P((void *));
+int	procfs_lookup(void *);
 #define	procfs_create	genfs_eopnotsupp
 #define	procfs_mknod	genfs_eopnotsupp
-int	procfs_open	__P((void *));
-int	procfs_close	__P((void *));
-int	procfs_access	__P((void *));
-int	procfs_getattr	__P((void *));
-int	procfs_setattr	__P((void *));
+int	procfs_open(void *);
+int	procfs_close(void *);
+int	procfs_access(void *);
+int	procfs_getattr(void *);
+int	procfs_setattr(void *);
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
 #define	procfs_fcntl	genfs_fcntl
@@ -179,22 +179,22 @@ int	procfs_setattr	__P((void *));
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
 #define	procfs_remove	genfs_eopnotsupp
-int	procfs_link	__P((void *));
+int	procfs_link(void *);
 #define	procfs_rename	genfs_eopnotsupp
 #define	procfs_mkdir	genfs_eopnotsupp
 #define	procfs_rmdir	genfs_eopnotsupp
-int	procfs_symlink	__P((void *));
-int	procfs_readdir	__P((void *));
-int	procfs_readlink	__P((void *));
+int	procfs_symlink(void *);
+int	procfs_readdir(void *);
+int	procfs_readlink(void *);
 #define	procfs_abortop	genfs_abortop
-int	procfs_inactive	__P((void *));
-int	procfs_reclaim	__P((void *));
+int	procfs_inactive(void *);
+int	procfs_reclaim(void *);
 #define	procfs_lock	genfs_lock
 #define	procfs_unlock	genfs_unlock
 #define	procfs_bmap	genfs_badop
 #define	procfs_strategy	genfs_badop
-int	procfs_print	__P((void *));
-int	procfs_pathconf	__P((void *));
+int	procfs_print(void *);
+int	procfs_pathconf(void *);
 #define	procfs_islocked	genfs_islocked
 #define	procfs_advlock	genfs_einval
 #define	procfs_blkatoff	genfs_eopnotsupp
@@ -205,12 +205,12 @@ int	procfs_pathconf	__P((void *));
 #define	procfs_bwrite	genfs_eopnotsupp
 #define procfs_putpages	genfs_null_putpages
 
-static int atoi __P((const char *, size_t));
+static int atoi(const char *, size_t);
 
 /*
  * procfs vnode operations.
  */
-int (**procfs_vnodeop_p) __P((void *));
+int (**procfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, procfs_lookup },		/* lookup */

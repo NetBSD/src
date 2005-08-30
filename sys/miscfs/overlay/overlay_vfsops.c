@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.31 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.31 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej 
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	ov_unmount __P((struct mount *, int, struct proc *));
+int	ov_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	ov_unmount(struct mount *, int, struct proc *);
 
 #define	NOVERLAYNODECACHE	16
 

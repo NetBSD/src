@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.24 2005/05/20 13:16:54 chs Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.25 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,24 +121,24 @@ struct kernfs_mount {
 extern const struct kern_target kern_targets[];
 extern int nkern_targets;
 extern const int static_nkern_targets;
-extern int (**kernfs_vnodeop_p) __P((void *));
+extern int (**kernfs_vnodeop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 
 struct secasvar;
 struct secpolicy;
 
-int kernfs_root __P((struct mount *, struct vnode **));
+int kernfs_root(struct mount *, struct vnode **);
 
-void kernfs_hashinit __P((void));
-void kernfs_hashreinit __P((void));
-void kernfs_hashdone __P((void));
-int kernfs_freevp __P((struct vnode *));
-int kernfs_allocvp __P((struct mount *, struct vnode **, kfstype,
-	const struct kern_target *, u_int32_t));
+void kernfs_hashinit(void);
+void kernfs_hashreinit(void);
+void kernfs_hashdone(void);
+int kernfs_freevp(struct vnode *);
+int kernfs_allocvp(struct mount *, struct vnode **, kfstype,
+	const struct kern_target *, u_int32_t);
 
-void kernfs_revoke_sa __P((struct secasvar *));
-void kernfs_revoke_sp __P((struct secpolicy *));
+void kernfs_revoke_sa(struct secasvar *);
+void kernfs_revoke_sp(struct secpolicy *);
 
 /*
  * Data types for the kernfs file operations.
@@ -189,7 +189,7 @@ kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
 	(dkt)->dkt_kt.kt_mode = (mode);					\
 } while (/*CONSTCOND*/0)
 #define	KERNFS_ENTOPARENTDIR(dkt) &(dkt)->dkt_kt
-int kernfs_addentry __P((kernfs_parentdir_t *, kernfs_entry_t *));
+int kernfs_addentry(kernfs_parentdir_t *, kernfs_entry_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_kernfs_setup);

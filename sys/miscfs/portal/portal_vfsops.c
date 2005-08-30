@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,22 +66,22 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51 2005/05/29 21:55:34 christos 
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
-void	portal_init __P((void));
-void	portal_done __P((void));
-int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	portal_start __P((struct mount *, int, struct proc *));
-int	portal_unmount __P((struct mount *, int, struct proc *));
-int	portal_root __P((struct mount *, struct vnode **));
-int	portal_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct proc *));
-int	portal_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	portal_vget __P((struct mount *, ino_t, struct vnode **));
-int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	portal_vptofh __P((struct vnode *, struct fid *));
+void	portal_init(void);
+void	portal_done(void);
+int	portal_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	portal_start(struct mount *, int, struct proc *);
+int	portal_unmount(struct mount *, int, struct proc *);
+int	portal_root(struct mount *, struct vnode **);
+int	portal_quotactl(struct mount *, int, uid_t, void *,
+			     struct proc *);
+int	portal_statvfs(struct mount *, struct statvfs *, struct proc *);
+int	portal_sync(struct mount *, int, struct ucred *, struct proc *);
+int	portal_vget(struct mount *, ino_t, struct vnode **);
+int	portal_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	portal_checkexp(struct mount *, struct mbuf *, int *,
+			   struct ucred **);
+int	portal_vptofh(struct vnode *, struct fid *);
 
 void
 portal_init()

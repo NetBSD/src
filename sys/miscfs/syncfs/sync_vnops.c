@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.12 2005/08/30 20:08:02 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.12 2005/08/30 20:08:02 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.11 2003/10/15 11:29:01 hannken Exp 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-int (**sync_vnodeop_p) __P((void *));
+int (**sync_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_close_desc, sync_close },		/* close */

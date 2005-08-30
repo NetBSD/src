@@ -1,4 +1,4 @@
-/*	$NetBSD: portal.h,v 1.9 2004/05/20 06:34:30 atatat Exp $	*/
+/*	$NetBSD: portal.h,v 1.10 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@ struct portalnode {
 
 #define PORTAL_ROOTFILEID	2
 
-extern int (**portal_vnodeop_p) __P((void *));
+extern int (**portal_vnodeop_p)(void *);
 extern struct vfsops portal_vfsops;
 
 #ifdef SYSCTL_SETUP_PROTO

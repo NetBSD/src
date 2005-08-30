@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.81 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.82 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.82 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,7 +76,7 @@ struct vnode	*speclisth[SPECHSZ];
  * equivalent for other filesystems.
  */
 
-int (**spec_vnodeop_p) __P((void *));
+int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -680,7 +680,7 @@ spec_close(v)
 	const struct cdevsw *cdev;
 	struct session *sess;
 	dev_t dev = vp->v_rdev;
-	int (*devclose) __P((dev_t, int, int, struct proc *));
+	int (*devclose)(dev_t, int, int, struct proc *);
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);

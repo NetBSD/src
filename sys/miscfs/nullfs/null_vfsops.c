@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55 2005/03/29 02:41:05 thorpej Exp
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	nullfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct proc *));
-int	nullfs_unmount __P((struct mount *, int, struct proc *));
+int	nullfs_mount(struct mount *, const char *, void *,
+	    struct nameidata *, struct proc *);
+int	nullfs_unmount(struct mount *, int, struct proc *);
 
 /*
  * Mount null layer

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.7 2005/07/24 17:33:24 erh Exp $	*/
+/*	$NetBSD: layer.h,v 1.8 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -90,12 +90,12 @@ struct layer_mount {
 	u_int			layerm_size;	/* size of fs's struct node */
 	enum vtype		layerm_tag;	/* vtag of our vnodes */
 	int				/* bypass routine for this mount */
-				(*layerm_bypass) __P((void *));
+				(*layerm_bypass)(void *);
 	int			(*layerm_alloc)	/* alloc a new layer node */
-				__P((struct mount *, struct vnode *,
-						struct vnode **));
+				(struct mount *, struct vnode *,
+						struct vnode **);
 	int			(**layerm_vnodeop_p)	/* ops for our nodes */
-				__P((void *));
+				(void *);
 	struct layer_node_hashhead	/* head of hash list for layer_nodes */
 				*layerm_node_hashtbl;
 	u_long			layerm_node_hash; /* hash mask for hash chain */
@@ -148,7 +148,7 @@ struct layer_node {
 #define	LAYERFS_DO_BYPASS(vp, ap)	\
 	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))
 
-struct vnode *layer_checkvp __P((struct vnode *vp, const char *fil, int lno));
+struct vnode *layer_checkvp(struct vnode *vp, const char *fil, int lno);
 
 #define	MOUNTTOLAYERMOUNT(mp) ((struct layer_mount *)((mp)->mnt_data))
 #define	VTOLAYER(vp) ((struct layer_node *)(vp)->v_data)

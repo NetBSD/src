@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.51 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.51 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ struct fifoinfo {
 	long		fi_writers;
 };
 
-int (**fifo_vnodeop_p) __P((void *));
+int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -113,7 +113,7 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_update_desc, fifo_update },		/* update */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
