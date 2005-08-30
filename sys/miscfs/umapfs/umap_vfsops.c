@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.54 2005/08/30 20:08:02 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.54 2005/08/30 20:08:02 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53 2005/05/29 21:55:34 christos Ex
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	umapfs_unmount __P((struct mount *, int, struct proc *));
+int	umapfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	umapfs_unmount(struct mount *, int, struct proc *);
 
 /*
  * Mount umap layer

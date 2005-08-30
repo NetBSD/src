@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.16 2005/07/24 17:33:24 erh Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.17 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.16 2005/07/24 17:33:24 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.17 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	struct layer_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p) __P((void *));
+	extern int (**dead_vnodeop_p)(void *);
 
 	if ((error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
 			&vp)) != 0)

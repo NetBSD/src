@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.67 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.68 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.67 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.68 2005/08/30 20:08:01 xtraeme Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -64,23 +64,23 @@ MALLOC_DEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
-void	kernfs_init __P((void));
-void	kernfs_reinit __P((void));
-void	kernfs_done __P((void));
-void	kernfs_get_rrootdev __P((void));
-int	kernfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct proc *));
-int	kernfs_start __P((struct mount *, int, struct proc *));
-int	kernfs_unmount __P((struct mount *, int, struct proc *));
-int	kernfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	kernfs_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct proc *));
-int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	kernfs_vptofh __P((struct vnode *, struct fid *));
+void	kernfs_init(void);
+void	kernfs_reinit(void);
+void	kernfs_done(void);
+void	kernfs_get_rrootdev(void);
+int	kernfs_mount(struct mount *, const char *, void *,
+	    struct nameidata *, struct proc *);
+int	kernfs_start(struct mount *, int, struct proc *);
+int	kernfs_unmount(struct mount *, int, struct proc *);
+int	kernfs_statvfs(struct mount *, struct statvfs *, struct proc *);
+int	kernfs_quotactl(struct mount *, int, uid_t, void *,
+			     struct proc *);
+int	kernfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	kernfs_vget(struct mount *, ino_t, struct vnode **);
+int	kernfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	kernfs_checkexp(struct mount *, struct mbuf *, int *,
+			   struct ucred **);
+int	kernfs_vptofh(struct vnode *, struct fid *);
 
 void
 kernfs_init()
