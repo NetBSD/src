@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.238.2.2 2005/08/28 10:17:52 tron Exp $
+#	$NetBSD: Makefile,v 1.238.2.3 2005/08/30 05:56:05 tron Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -50,7 +50,7 @@
 #	defaults to the root directory).  Ensures that INSTALLWORLDDIR
 #	is the not root directory if cross compiling.
 #   release:
-#	Does a `make distribution', and then tars up the DESTDIR files
+#	Does a `make build', and then tars up the DESTDIR files
 #	into RELEASEDIR/${MACHINE}, in release(7) format.
 #	(See etc/Makefile for more information on this.)
 #   regression-tests:
@@ -292,14 +292,14 @@ ${tgt}: .PHONY
 .endfor
 
 #
-# Build a release or snapshot (implies "make distribution").  Note that
+# Build a release or snapshot (implies "make build").  Note that
 # in this case, the set lists will be checked before the tar files
 # are made.
 #
 
 release snapshot: .PHONY
-	${MAKEDIRTARGET} . distribution
-	${MAKEDIRTARGET} etc release DISTRIBUTION_DONE=1
+	${MAKEDIRTARGET} . build NOPOSTINSTALL=1
+	${MAKEDIRTARGET} etc release INSTALL_DONE=1
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
