@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.14 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.15 2005/08/30 18:47:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.14 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.15 2005/08/30 18:47:19 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ struct isoreaddir {
 	int ncookies;
 };
 
-int	iso_uiodir __P((struct isoreaddir *, struct dirent *, off_t));
-int	iso_shipdir __P((struct isoreaddir *));
+int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
+int	iso_shipdir(struct isoreaddir *);
 
 #if 0
 /*
@@ -905,7 +905,7 @@ cd9660_setattr(v)
 /*
  * Global vfs data structures for cd9660
  */
-int (**cd9660_vnodeop_p) __P((void *));
+int (**cd9660_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, cd9660_lookup },		/* lookup */
@@ -961,7 +961,7 @@ const struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 /*
  * Special device vnode ops
  */
-int (**cd9660_specop_p) __P((void *));
+int (**cd9660_specop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -1015,7 +1015,7 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 const struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
 
-int (**cd9660_fifoop_p) __P((void *));
+int (**cd9660_fifoop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
