@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.8 2004/12/27 18:14:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.9 2005/08/30 19:01:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -242,9 +242,9 @@ struct bootfile {
 
 #pragma pack()
 
-typedef wchar (ntfs_wget_func_t) __P((const char **, size_t *));
-typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
-typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
+typedef wchar (ntfs_wget_func_t)(const char **, size_t *);
+typedef int (ntfs_wput_func_t)(char *, size_t, wchar);
+typedef int (ntfs_wcmp_func_t)(wchar, wchar);
 
 #define	NTFS_SYSNODESNUM	0x0B
 struct ntfsmount {
@@ -303,7 +303,7 @@ MALLOC_DECLARE(M_NTFSRUN);
 #endif
 
 #ifdef __NetBSD__
-typedef int (vop_t) __P((void *));
+typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
 #if 0

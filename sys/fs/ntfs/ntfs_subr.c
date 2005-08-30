@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.18 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.19 2005/08/30 19:01:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.18 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.19 2005/08/30 19:01:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,15 @@ struct ntfs_lookup_ctx {
 	struct ntfs_lookup_ctx *prev;
 };
 
-static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
-static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
-static int ntfs_uastricmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
-static int ntfs_uastrcmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
+static int ntfs_ntlookupattr(struct ntfsmount *, const char *, int,
+	int *, char **);
+static int ntfs_findvattr(struct ntfsmount *, struct ntnode *,
+	struct ntvattr **, struct ntvattr **, u_int32_t, const char *,
+	size_t, cn_t);
+static int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t,
+	const char *, size_t);
+static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t,
+	const char *, size_t);
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
