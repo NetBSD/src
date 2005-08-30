@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.67 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.68 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.68 2005/08/30 22:01:12 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,7 +69,7 @@ u_long	mfs_rootsize;	/* size of mini-root in bytes */
 
 static	int mfs_minor;	/* used for building internal dev_t */
 
-extern int (**mfs_vnodeop_p) __P((void *));
+extern int (**mfs_vnodeop_p)(void *);
 
 MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
 
@@ -134,7 +134,7 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
  * Memory based filesystem initialization.
  */
 void
-mfs_init()
+mfs_init(void)
 {
 #ifdef _LKM
 	malloc_type_attach(M_MFSNODE);
@@ -147,13 +147,13 @@ mfs_init()
 }
 
 void
-mfs_reinit()
+mfs_reinit(void)
 {
 	ffs_reinit();
 }
 
 void
-mfs_done()
+mfs_done(void)
 {
 	/*
 	 * ffs_done() ensures to free necessary resources
@@ -170,7 +170,7 @@ mfs_done()
  */
 
 int
-mfs_mountroot()
+mfs_mountroot(void)
 {
 	struct fs *fs;
 	struct mount *mp;
@@ -219,8 +219,7 @@ mfs_mountroot()
  * of the mini-root.
  */
 int
-mfs_initminiroot(base)
-	caddr_t base;
+mfs_initminiroot(caddr_t base)
 {
 	struct fs *fs = (struct fs *)(base + SBLOCK_UFS1);
 
@@ -243,12 +242,8 @@ mfs_initminiroot(base)
  */
 /* ARGSUSED */
 int
-mfs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+mfs_mount(struct mount *mp, const char *path, void *data,
+	struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
 	struct mfs_args args;
@@ -359,10 +354,7 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+mfs_start(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
@@ -414,10 +406,7 @@ mfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-mfs_statvfs(mp, sbp, p)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct proc *p;
+mfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	int error;
 

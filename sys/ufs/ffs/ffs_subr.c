@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.34 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.35 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.34 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.35 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 
@@ -49,7 +49,7 @@ extern const u_char * const fragtbl[];
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
-void    panic __P((const char *, ...))
+void    panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
 #else	/* _KERNEL */

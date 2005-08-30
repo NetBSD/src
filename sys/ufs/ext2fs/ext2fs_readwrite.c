@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.37 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.37 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36 2005/02/09 23:02:10 ws Exp
  */
 /* ARGSUSED */
 int
-ext2fs_read(v)
-	void *v;
+ext2fs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -218,8 +217,7 @@ out:
  * Vnode op for writing.
  */
 int
-ext2fs_write(v)
-	void *v;
+ext2fs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;

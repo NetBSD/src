@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.20 2004/05/20 06:34:33 atatat Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.21 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,26 +49,26 @@ __BEGIN_DECLS
 #define	mfs_ioctl	genfs_enoioctl
 
 /* mfs_vfsops.c */
-int	mfs_mountroot	__P((void));
-int	mfs_initminiroot	__P((caddr_t));
-int	mfs_mount	__P((struct mount *, const char *, void *,
-			     struct nameidata *, struct proc *));
-int	mfs_start	__P((struct mount *, int, struct proc *));
-int	mfs_statvfs	__P((struct mount *, struct statvfs *, struct proc *));
+int	mfs_mountroot(void);
+int	mfs_initminiroot(caddr_t);
+int	mfs_mount(struct mount *, const char *, void *,
+			     struct nameidata *, struct proc *);
+int	mfs_start(struct mount *, int, struct proc *);
+int	mfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 
-void	mfs_init	__P((void));
-void	mfs_reinit	__P((void));
-void	mfs_done	__P((void));
+void	mfs_init(void);
+void	mfs_reinit(void);
+void	mfs_done(void);
 
 /* mfs_vnops.c */
-int	mfs_open	__P((void *));
-int	mfs_strategy	__P((void *));
-void	mfs_doio	__P((struct buf *, caddr_t));
-int	mfs_bmap	__P((void *));
-int	mfs_close	__P((void *));
-int	mfs_inactive	__P((void *));
-int	mfs_reclaim	__P((void *));
-int	mfs_print	__P((void *));
+int	mfs_open(void *);
+int	mfs_strategy(void *);
+void	mfs_doio(struct buf *, caddr_t);
+int	mfs_bmap(void *);
+int	mfs_close(void *);
+int	mfs_inactive(void *);
+int	mfs_reclaim(void *);
+int	mfs_print(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_mfs_setup);

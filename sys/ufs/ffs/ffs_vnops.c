@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.73 2005/08/28 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.74 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.73 2005/08/28 19:37:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.74 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.73 2005/08/28 19:37:59 thorpej Exp $
 
 #include <uvm/uvm.h>
 
-static int ffs_full_fsync __P((void *));
+static int ffs_full_fsync(void *);
 
 /* Global vfs data structures for ufs. */
-int (**ffs_vnodeop_p) __P((void *));
+int (**ffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
@@ -128,7 +128,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
-int (**ffs_specop_p) __P((void *));
+int (**ffs_specop_p)(void *);
 const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -189,7 +189,7 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 const struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
-int (**ffs_fifoop_p) __P((void *));
+int (**ffs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */

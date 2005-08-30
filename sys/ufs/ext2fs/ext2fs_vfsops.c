@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.88 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.89 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.88 2005/08/23 08:05:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.89 2005/08/30 22:01:12 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,8 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.88 2005/08/23 08:05:13 christos 
 
 extern struct lock ufs_hashlock;
 
-int ext2fs_sbupdate __P((struct ufsmount *, int));
-static int ext2fs_checksb __P((struct ext2fs *, int));
+int ext2fs_sbupdate(struct ufsmount *, int);
+static int ext2fs_checksb(struct ext2fs *, int);
 
 extern const struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -162,7 +162,7 @@ POOL_INIT(ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
 extern u_long ext2gennumber;
 
 void
-ext2fs_init()
+ext2fs_init(void)
 {
 #ifdef _LKM
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
@@ -174,13 +174,13 @@ ext2fs_init()
 }
 
 void
-ext2fs_reinit()
+ext2fs_reinit(void)
 {
 	ufs_reinit();
 }
 
 void
-ext2fs_done()
+ext2fs_done(void)
 {
 	ufs_done();
 #ifdef _LKM
@@ -197,7 +197,7 @@ ext2fs_done()
 #define ROOTNAME	"root_device"
 
 int
-ext2fs_mountroot()
+ext2fs_mountroot(void)
 {
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
@@ -245,12 +245,8 @@ ext2fs_mountroot()
  * mount system call
  */
 int
-ext2fs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void * data;
-	struct nameidata *ndp;
-	struct proc *p;
+ext2fs_mount(struct mount *mp, const char *path, void *data,
+	struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
 	struct ufs_args args;
@@ -464,10 +460,7 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ext2fs_reload(mountp, cred, p)
-	struct mount *mountp;
-	struct ucred *cred;
-	struct proc *p;
+ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
@@ -592,10 +585,7 @@ loop:
  * Common code for mount and mountroot
  */
 int
-ext2fs_mountfs(devvp, mp, p)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
+ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct buf *bp;
@@ -725,10 +715,7 @@ out:
  * unmount system call
  */
 int
-ext2fs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
@@ -765,10 +752,7 @@ ext2fs_unmount(mp, mntflags, p)
  * Flush out all the files in a filesystem.
  */
 int
-ext2fs_flushfiles(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+ext2fs_flushfiles(struct mount *mp, int flags, struct proc *p)
 {
 	extern int doforce;
 	int error;
@@ -783,10 +767,7 @@ ext2fs_flushfiles(mp, flags, p)
  * Get file system statistics.
  */
 int
-ext2fs_statvfs(mp, sbp, p)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct proc *p;
+ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
@@ -843,11 +824,7 @@ ext2fs_statvfs(mp, sbp, p)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ext2fs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+ext2fs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;
@@ -932,10 +909,7 @@ loop:
  * done by the calling routine.
  */
 int
-ext2fs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct m_ext2fs *fs;
 	struct inode *ip;
@@ -1063,10 +1037,7 @@ ext2fs_vget(mp, ino, vpp)
  * - check for an unallocated inode (i_mode == 0)
  */
 int
-ext2fs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *nvp;
@@ -1100,9 +1071,7 @@ ext2fs_fhtovp(mp, fhp, vpp)
  */
 /* ARGSUSED */
 int
-ext2fs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+ext2fs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct inode *ip;
 	struct ufid *ufhp;
@@ -1140,9 +1109,7 @@ SYSCTL_SETUP(sysctl_vfs_ext2fs_setup, "sysctl vfs.ext2fs subtree setup")
  * Write a superblock and associated information back to disk.
  */
 int
-ext2fs_sbupdate(mp, waitfor)
-	struct ufsmount *mp;
-	int waitfor;
+ext2fs_sbupdate(struct ufsmount *mp, int waitfor)
 {
 	struct m_ext2fs *fs = mp->um_e2fs;
 	struct buf *bp;
@@ -1158,9 +1125,7 @@ ext2fs_sbupdate(mp, waitfor)
 }
 
 int
-ext2fs_cgupdate(mp, waitfor)
-	struct ufsmount *mp;
-	int waitfor;
+ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 {
 	struct m_ext2fs *fs = mp->um_e2fs;
 	struct buf *bp;
@@ -1184,9 +1149,7 @@ ext2fs_cgupdate(mp, waitfor)
 }
 
 static int
-ext2fs_checksb(fs, ronly)
-	struct ext2fs *fs;
-	int ronly;
+ext2fs_checksb(struct ext2fs *fs, int ronly)
 {
 	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
 		return (EINVAL);		/* XXX needs translation */
