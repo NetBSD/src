@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.29 2005/08/30 22:24:11 xtraeme Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.30 2005/08/30 22:27:16 xtraeme Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.29 2005/08/30 22:24:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.30 2005/08/30 22:27:16 xtraeme Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -544,7 +544,7 @@ struct coda_clstat coda_clstat;
  */
 
 int
-coda_call(struct coda_mntinfo *mntinfo, int inSize, int outSize,
+coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 	caddr_t buffer)
 {
 	struct vcomm *vcp;
