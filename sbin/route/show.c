@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.26 2005/08/09 21:25:42 ginsbach Exp $	*/
+/*	$NetBSD: show.c,v 1.27 2005/08/30 19:01:25 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.26 2005/08/09 21:25:42 ginsbach Exp $");
+__RCSID("$NetBSD: show.c,v 1.27 2005/08/30 19:01:25 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,22 +159,25 @@ bad:			usage(*argv);
 	mib[5] = 0;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
-	if ((buf = malloc(needed)) == 0)
-		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		err(1, "sysctl of routing table");
-	lim  = buf + needed;
+	buf = lim = NULL;
+	if (needed) {
+		if ((buf = malloc(needed)) == 0)
+			err(1, "malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			err(1, "sysctl of routing table");
+		lim  = buf + needed;
+	}
 
 	printf("Routing table%s\n", (af == AF_UNSPEC)? "s" : "");
 
-	/* for (i = 0; i <= AF_MAX; i++) ??? */
-	{
+	if (needed) {
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
 			sa = (struct sockaddr *)(rtm + 1);
 			if (af == AF_UNSPEC || af == sa->sa_family)
 				p_rtentry(rtm);
 		}
+		free(buf);
 	}
 }
 
