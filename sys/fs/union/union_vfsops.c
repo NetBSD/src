@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.28 2005/08/24 15:21:28 nakayama Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.29 2005/08/30 19:11:43 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.28 2005/08/24 15:21:28 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.29 2005/08/30 19:11:43 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,19 +94,19 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.28 2005/08/24 15:21:28 nakayama E
 
 #include <fs/union/union.h>
 
-int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		     struct proc *));
-int union_start __P((struct mount *, int, struct proc *));
-int union_unmount __P((struct mount *, int, struct proc *));
-int union_root __P((struct mount *, struct vnode **));
-int union_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
-int union_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int union_vget __P((struct mount *, ino_t, struct vnode **));
-int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int union_checkexp __P((struct mount *, struct mbuf *, int *,
-		      struct ucred **));
-int union_vptofh __P((struct vnode *, struct fid *));
+int union_mount(struct mount *, const char *, void *, struct nameidata *,
+		     struct proc *);
+int union_start(struct mount *, int, struct proc *);
+int union_unmount(struct mount *, int, struct proc *);
+int union_root(struct mount *, struct vnode **);
+int union_quotactl(struct mount *, int, uid_t, void *, struct proc *);
+int union_statvfs(struct mount *, struct statvfs *, struct proc *);
+int union_sync(struct mount *, int, struct ucred *, struct proc *);
+int union_vget(struct mount *, ino_t, struct vnode **);
+int union_fhtovp(struct mount *, struct fid *, struct vnode **);
+int union_checkexp(struct mount *, struct mbuf *, int *,
+		      struct ucred **);
+int union_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount union filesystem
