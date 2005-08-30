@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.46 2005/06/28 16:53:14 kml Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.47 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.46 2005/06/28 16:53:14 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.47 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.46 2005/06/28 16:53:14 kml Exp $"
 
 extern int prtactive;
 
-static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
-				  daddr_t, int, long *));
+static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
+				  daddr_t, int, long *);
 
 /*
  * Get the size of an inode.
@@ -136,8 +136,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ext2fs_inactive(v)
-	void *v;
+ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -195,8 +194,7 @@ out:
  * write of the inode to complete.
  */
 int
-ext2fs_update(v)
-	void *v;
+ext2fs_update(void *v)
 {
 	struct vop_update_args /* {
 		struct vnode *a_vp;
@@ -256,8 +254,7 @@ ext2fs_update(v)
  * disk blocks.
  */
 int
-ext2fs_truncate(v)
-	void *v;
+ext2fs_truncate(void *v)
 {
 	struct vop_truncate_args /* {
 		struct vnode *a_vp;
@@ -465,12 +462,8 @@ done:
  * NB: triple indirect blocks are untested.
  */
 static int
-ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	struct inode *ip;
-	daddr_t lbn, lastbn;
-	daddr_t dbn;
-	int level;
-	long *countp;
+ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
+		int level, long *countp)
 {
 	int i;
 	struct buf *bp;
