@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.32 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33 2005/08/30 19:01:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.32 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33 2005/08/30 19:01:30 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,46 +67,46 @@ MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
 MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
 #if defined(__FreeBSD__)
-static int	ntfs_mount __P((struct mount *, char *, caddr_t,
-				struct nameidata *, struct proc *));
+static int	ntfs_mount(struct mount *, char *, caddr_t,
+				struct nameidata *, struct proc *);
 #else
-static int	ntfs_mount __P((struct mount *, const char *, void *,
-				struct nameidata *, struct proc *));
+static int	ntfs_mount(struct mount *, const char *, void *,
+				struct nameidata *, struct proc *);
 #endif
-static int	ntfs_quotactl __P((struct mount *, int, uid_t, void *,
-				   struct proc *));
-static int	ntfs_root __P((struct mount *, struct vnode **));
-static int	ntfs_start __P((struct mount *, int, struct proc *));
-static int	ntfs_statvfs __P((struct mount *, struct statvfs *,
-				 struct proc *));
-static int	ntfs_sync __P((struct mount *, int, struct ucred *,
-			       struct proc *));
-static int	ntfs_unmount __P((struct mount *, int, struct proc *));
-static int	ntfs_vget __P((struct mount *mp, ino_t ino,
-			       struct vnode **vpp));
-static int	ntfs_mountfs __P((struct vnode *, struct mount *,
-				  struct ntfs_args *, struct proc *));
-static int	ntfs_vptofh __P((struct vnode *, struct fid *));
+static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
+				   struct proc *);
+static int	ntfs_root(struct mount *, struct vnode **);
+static int	ntfs_start(struct mount *, int, struct proc *);
+static int	ntfs_statvfs(struct mount *, struct statvfs *,
+				 struct proc *);
+static int	ntfs_sync(struct mount *, int, struct ucred *,
+			       struct proc *);
+static int	ntfs_unmount(struct mount *, int, struct proc *);
+static int	ntfs_vget(struct mount *mp, ino_t ino,
+			       struct vnode **vpp);
+static int	ntfs_mountfs(struct vnode *, struct mount *,
+				  struct ntfs_args *, struct proc *);
+static int	ntfs_vptofh(struct vnode *, struct fid *);
 
 #if defined(__FreeBSD__)
-static int	ntfs_init __P((struct vfsconf *));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(struct vfsconf *);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct sockaddr *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #elif defined(__NetBSD__)
-static void	ntfs_init __P((void));
-static void	ntfs_reinit __P((void));
-static void	ntfs_done __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
-				 struct vnode **));
-static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
-				   int *, struct ucred **));
-static int	ntfs_mountroot __P((void));
+static void	ntfs_init(void);
+static void	ntfs_reinit(void);
+static void	ntfs_done(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
+				 struct vnode **);
+static int	ntfs_checkexp(struct mount *, struct mbuf *,
+				   int *, struct ucred **);
+static int	ntfs_mountroot(void);
 #else
-static int	ntfs_init __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
