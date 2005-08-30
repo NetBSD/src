@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.68 2005/08/24 10:19:43 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.69 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.68 2005/08/24 10:19:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.69 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -132,81 +132,81 @@ LIST_HEAD(, buf) pcbphashhead[PCBPHASHSIZE];
 /*
  * Internal function prototypes.
  */
-static	void softdep_error __P((const char *, int));
-static	void drain_output __P((struct vnode *, int));
-static	int getdirtybuf __P((struct buf **, int));
-static	void clear_remove __P((struct proc *));
-static	void clear_inodedeps __P((struct proc *));
-static	int flush_pagedep_deps __P((struct vnode *, struct mount *,
-	    struct diraddhd *));
-static	int flush_inodedep_deps __P((struct fs *, ino_t));
-static	int handle_written_filepage __P((struct pagedep *, struct buf *));
-static  void diradd_inode_written __P((struct diradd *, struct inodedep *));
-static	int handle_written_inodeblock __P((struct inodedep *, struct buf *));
-static	void handle_allocdirect_partdone __P((struct allocdirect *));
-static	void handle_allocindir_partdone __P((struct allocindir *));
-static	void initiate_write_filepage __P((struct pagedep *, struct buf *));
-static	void handle_written_mkdir __P((struct mkdir *, int));
-static	void initiate_write_inodeblock_ufs1 __P((struct inodedep *,
-	     struct buf *));
-static	void initiate_write_inodeblock_ufs2 __P((struct inodedep *,
-	     struct buf *));
-static	void handle_workitem_freefile __P((struct freefile *));
-static	void handle_workitem_remove __P((struct dirrem *));
-static	struct dirrem *newdirrem __P((struct buf *, struct inode *,
-	    struct inode *, int, struct dirrem **));
-static	void free_diradd __P((struct diradd *));
-static	void free_allocindir __P((struct allocindir *, struct inodedep *));
-static	void free_newdirblk __P((struct newdirblk *));
-static	int indir_trunc __P((struct inode *, daddr_t, int, daddr_t,
-	    int64_t *));
-static	void deallocate_dependencies __P((struct buf *, struct inodedep *));
-static	void free_allocdirect __P((struct allocdirectlst *,
-	    struct allocdirect *, int));
-static	int check_inode_unwritten __P((struct inodedep *));
-static	int free_inodedep __P((struct inodedep *));
-static	void handle_workitem_freeblocks __P((struct freeblks *));
-static	void merge_inode_lists __P((struct inodedep *));
-static	void setup_allocindir_phase2 __P((struct buf *, struct inode *,
-	    struct allocindir *));
-static	struct allocindir *newallocindir __P((struct inode *, int, daddr_t,
-	    daddr_t));
-static	void handle_workitem_freefrag __P((struct freefrag *));
-static	struct freefrag *newfreefrag __P((struct inode *, daddr_t, long));
-static	void allocdirect_merge __P((struct allocdirectlst *,
-	    struct allocdirect *, struct allocdirect *));
-static	struct bmsafemap *bmsafemap_lookup __P((struct buf *));
-static	int newblk_lookup __P((struct fs *, daddr_t, int,
-	    struct newblk **));
-static	int inodedep_lookup __P((struct fs *, ino_t, int, struct inodedep **));
-static	int pagedep_lookup __P((struct inode *, daddr_t, int,
-	    struct pagedep **));
-static	void pause_timer __P((void *));
-static	int request_cleanup __P((int, int));
-static	void add_to_worklist __P((struct worklist *));
-static	struct buf *softdep_setup_pagecache __P((struct inode *, daddr_t,
-						 long));
-static	void softdep_collect_pagecache __P((struct inode *));
-static	void softdep_free_pagecache __P((struct inode *));
+static	void softdep_error(const char *, int);
+static	void drain_output(struct vnode *, int);
+static	int getdirtybuf(struct buf **, int);
+static	void clear_remove(struct proc *);
+static	void clear_inodedeps(struct proc *);
+static	int flush_pagedep_deps(struct vnode *, struct mount *,
+	    struct diraddhd *);
+static	int flush_inodedep_deps(struct fs *, ino_t);
+static	int handle_written_filepage(struct pagedep *, struct buf *);
+static  void diradd_inode_written(struct diradd *, struct inodedep *);
+static	int handle_written_inodeblock(struct inodedep *, struct buf *);
+static	void handle_allocdirect_partdone(struct allocdirect *);
+static	void handle_allocindir_partdone(struct allocindir *);
+static	void initiate_write_filepage(struct pagedep *, struct buf *);
+static	void handle_written_mkdir(struct mkdir *, int);
+static	void initiate_write_inodeblock_ufs1(struct inodedep *,
+	     struct buf *);
+static	void initiate_write_inodeblock_ufs2(struct inodedep *,
+	     struct buf *);
+static	void handle_workitem_freefile(struct freefile *);
+static	void handle_workitem_remove(struct dirrem *);
+static	struct dirrem *newdirrem(struct buf *, struct inode *,
+	    struct inode *, int, struct dirrem **);
+static	void free_diradd(struct diradd *);
+static	void free_allocindir(struct allocindir *, struct inodedep *);
+static	void free_newdirblk(struct newdirblk *);
+static	int indir_trunc(struct inode *, daddr_t, int, daddr_t,
+	    int64_t *);
+static	void deallocate_dependencies(struct buf *, struct inodedep *);
+static	void free_allocdirect(struct allocdirectlst *,
+	    struct allocdirect *, int);
+static	int check_inode_unwritten(struct inodedep *);
+static	int free_inodedep(struct inodedep *);
+static	void handle_workitem_freeblocks(struct freeblks *);
+static	void merge_inode_lists(struct inodedep *);
+static	void setup_allocindir_phase2(struct buf *, struct inode *,
+	    struct allocindir *);
+static	struct allocindir *newallocindir(struct inode *, int, daddr_t,
+	    daddr_t);
+static	void handle_workitem_freefrag(struct freefrag *);
+static	struct freefrag *newfreefrag(struct inode *, daddr_t, long);
+static	void allocdirect_merge(struct allocdirectlst *,
+	    struct allocdirect *, struct allocdirect *);
+static	struct bmsafemap *bmsafemap_lookup(struct buf *);
+static	int newblk_lookup(struct fs *, daddr_t, int,
+	    struct newblk **);
+static	int inodedep_lookup(struct fs *, ino_t, int, struct inodedep **);
+static	int pagedep_lookup(struct inode *, daddr_t, int,
+	    struct pagedep **);
+static	void pause_timer(void *);
+static	int request_cleanup(int, int);
+static	void add_to_worklist(struct worklist *);
+static	struct buf *softdep_setup_pagecache(struct inode *, daddr_t,
+						 long);
+static	void softdep_collect_pagecache(struct inode *);
+static	void softdep_free_pagecache(struct inode *);
 static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
-static	struct buf *softdep_lookup_pcbp __P((struct vnode *, daddr_t));
+static	struct buf *softdep_lookup_pcbp(struct vnode *, daddr_t);
 #ifdef UVMHIST
-void softdep_pageiodone1 __P((struct buf *));
+void softdep_pageiodone1(struct buf *);
 #endif
-void softdep_pageiodone __P((struct buf *));
-void softdep_flush_vnode __P((struct vnode *, daddr_t));
+void softdep_pageiodone(struct buf *);
+void softdep_flush_vnode(struct vnode *, daddr_t);
 static void softdep_trackbufs(struct inode *, int, boolean_t);
 
 /*
  * Exported softdep operations.
  */
-static	void softdep_disk_io_initiation __P((struct buf *));
-static	void softdep_disk_write_complete __P((struct buf *));
-static	void softdep_deallocate_dependencies __P((struct buf *));
-static	int softdep_fsync __P((struct vnode *, int));
-static	int softdep_process_worklist __P((struct mount *));
-static	void softdep_move_dependencies __P((struct buf *, struct buf *));
-static	int softdep_count_dependencies __P((struct buf *bp, int));
+static	void softdep_disk_io_initiation(struct buf *);
+static	void softdep_disk_write_complete(struct buf *);
+static	void softdep_deallocate_dependencies(struct buf *);
+static	int softdep_fsync(struct vnode *, int);
+static	int softdep_process_worklist(struct mount *);
+static	void softdep_move_dependencies(struct buf *, struct buf *);
+static	int softdep_count_dependencies(struct buf *bp, int);
 
 struct bio_ops bioops = {
 	softdep_disk_io_initiation,		/* io_start */
@@ -250,10 +250,10 @@ static struct lockit {
 } lk = { 0, -1 };
 static int lockcnt;
 
-static	void acquire_lock __P((struct lockit *));
-static	void free_lock __P((struct lockit *));
-static	void acquire_lock_interlocked __P((struct lockit *, int));
-static	int  free_lock_interlocked __P((struct lockit *));
+static	void acquire_lock(struct lockit *);
+static	void free_lock(struct lockit *);
+static	void acquire_lock_interlocked(struct lockit *, int);
+static	int  free_lock_interlocked(struct lockit *);
 
 #define ACQUIRE_LOCK(lk)		acquire_lock(lk)
 #define FREE_LOCK(lk)			free_lock(lk)
@@ -324,9 +324,9 @@ struct sema {
 	int	prio;
 	int	timo;
 };
-static	void sema_init __P((struct sema *, const char *, int, int));
-static	int sema_get __P((struct sema *, struct lockit *));
-static	void sema_release __P((struct sema *));
+static	void sema_init(struct sema *, const char *, int, int);
+static	int sema_get(struct sema *, struct lockit *);
+static	void sema_release(struct sema *);
 
 static void
 sema_init(semap, name, prio, timo)
@@ -584,9 +584,9 @@ inodedep_freedino(struct inodedep *inodedep)
 	softdep_freequeue_add((struct worklist *)item)
 
 #else /* DEBUG */
-static	void worklist_insert __P((struct workhead *, struct worklist *));
-static	void worklist_remove __P((struct worklist *));
-static	void workitem_free __P((struct worklist *, int));
+static	void worklist_insert(struct workhead *, struct worklist *);
+static	void worklist_remove(struct worklist *);
+static	void workitem_free(struct worklist *, int);
 
 #define WORKLIST_INSERT(head, item) worklist_insert(head, item)
 #define WORKLIST_REMOVE(item) worklist_remove(item)
