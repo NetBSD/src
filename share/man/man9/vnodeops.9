@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.36 2005/08/19 10:56:29 jmmv Exp $
+.\"     $NetBSD: vnodeops.9,v 1.37 2005/08/30 21:03:13 jmmv Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 19, 2005
+.Dd August 30, 2005
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -613,7 +613,7 @@ will be locked on entry and should remain locked on return.
 Get specific vnode attributes on a file.
 The argument
 .Fa vp
-is the locked vnode of the file to get the attributes for.
+is the vnode of the file to get the attributes for.
 The arguments
 .Fa p
 and
@@ -890,7 +890,7 @@ If the operation is successful zero is returned, otherwise an error
 code is returned.
 The directory vnode
 .Fa dvp
-should be locked on entry and will remain locked on return.
+should be locked on entry and will be released and unlocked on return.
 The vnode
 .Fa vp
 should not be locked on entry and will remain unlocked on return.
@@ -967,7 +967,7 @@ Both
 .Fa dvp
 and
 .Fa vp
-should be locked on entry and remain locked on return.
+should be locked on entry and will be released and unlocked on return.
 .It Fn VOP_SYMLINK "dvp" "vpp" "cnp" "vap" "target"
 Create a symbolic link in a given directory.
 The argument
