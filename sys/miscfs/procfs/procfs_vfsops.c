@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.60 2005/03/29 02:41:05 thorpej Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.61 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60 2005/03/29 02:41:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.61 2005/08/30 20:08:01 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -100,22 +100,22 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60 2005/03/29 02:41:05 thorpej E
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
-void	procfs_init __P((void));
-void	procfs_reinit __P((void));
-void	procfs_done __P((void));
-int	procfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	procfs_start __P((struct mount *, int, struct proc *));
-int	procfs_unmount __P((struct mount *, int, struct proc *));
-int	procfs_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct proc *));
-int	procfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	procfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	procfs_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	procfs_vptofh __P((struct vnode *, struct fid *));
+void	procfs_init(void);
+void	procfs_reinit(void);
+void	procfs_done(void);
+int	procfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	procfs_start(struct mount *, int, struct proc *);
+int	procfs_unmount(struct mount *, int, struct proc *);
+int	procfs_quotactl(struct mount *, int, uid_t, void *,
+			     struct proc *);
+int	procfs_statvfs(struct mount *, struct statvfs *, struct proc *);
+int	procfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	procfs_vget(struct mount *, ino_t, struct vnode **);
+int	procfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	procfs_checkexp(struct mount *, struct mbuf *, int *,
+			   struct ucred **);
+int	procfs_vptofh(struct vnode *, struct fid *);
 
 /*
  * VFS Operations.

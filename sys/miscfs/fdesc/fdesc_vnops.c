@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.85 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.86 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.85 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.86 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,40 +84,40 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
-int	fdesc_lookup	__P((void *));
+int	fdesc_lookup(void *);
 #define	fdesc_create	genfs_eopnotsupp
 #define	fdesc_mknod	genfs_eopnotsupp
-int	fdesc_open	__P((void *));
+int	fdesc_open(void *);
 #define	fdesc_close	genfs_nullop
 #define	fdesc_access	genfs_nullop
-int	fdesc_getattr	__P((void *));
-int	fdesc_setattr	__P((void *));
-int	fdesc_read	__P((void *));
-int	fdesc_write	__P((void *));
-int	fdesc_ioctl	__P((void *));
-int	fdesc_poll	__P((void *));
-int	fdesc_kqfilter	__P((void *));
+int	fdesc_getattr(void *);
+int	fdesc_setattr(void *);
+int	fdesc_read(void *);
+int	fdesc_write(void *);
+int	fdesc_ioctl(void *);
+int	fdesc_poll(void *);
+int	fdesc_kqfilter(void *);
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_seek
 #define	fdesc_remove	genfs_eopnotsupp
-int	fdesc_link	__P((void *));
+int	fdesc_link(void *);
 #define	fdesc_rename	genfs_eopnotsupp
 #define	fdesc_mkdir	genfs_eopnotsupp
 #define	fdesc_rmdir	genfs_eopnotsupp
-int	fdesc_symlink	__P((void *));
-int	fdesc_readdir	__P((void *));
-int	fdesc_readlink	__P((void *));
+int	fdesc_symlink(void *);
+int	fdesc_readdir(void *);
+int	fdesc_readlink(void *);
 #define	fdesc_abortop	genfs_abortop
-int	fdesc_inactive	__P((void *));
-int	fdesc_reclaim	__P((void *));
+int	fdesc_inactive(void *);
+int	fdesc_reclaim(void *);
 #define	fdesc_lock	genfs_lock
 #define	fdesc_unlock	genfs_unlock
 #define	fdesc_bmap	genfs_badop
 #define	fdesc_strategy	genfs_badop
-int	fdesc_print	__P((void *));
-int	fdesc_pathconf	__P((void *));
+int	fdesc_print(void *);
+int	fdesc_pathconf(void *);
 #define	fdesc_islocked	genfs_islocked
 #define	fdesc_advlock	genfs_einval
 #define	fdesc_blkatoff	genfs_eopnotsupp
@@ -129,9 +129,9 @@ int	fdesc_pathconf	__P((void *));
 #define fdesc_revoke	genfs_revoke
 #define fdesc_putpages	genfs_null_putpages
 
-static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
+static int fdesc_attr(int, struct vattr *, struct ucred *, struct proc *);
 
-int (**fdesc_vnodeop_p) __P((void *));
+int (**fdesc_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fdesc_lookup },		/* lookup */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.109 2005/05/29 21:55:33 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.110 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.109 2005/05/29 21:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.110 2005/08/30 20:08:01 xtraeme Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -168,40 +168,40 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
   { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
 
-int	kernfs_lookup	__P((void *));
+int	kernfs_lookup(void *);
 #define	kernfs_create	genfs_eopnotsupp
 #define	kernfs_mknod	genfs_eopnotsupp
-int	kernfs_open	__P((void *));
-int	kernfs_close	__P((void *));
-int	kernfs_access	__P((void *));
-int	kernfs_getattr	__P((void *));
-int	kernfs_setattr	__P((void *));
-int	kernfs_read	__P((void *));
-int	kernfs_write	__P((void *));
+int	kernfs_open(void *);
+int	kernfs_close(void *);
+int	kernfs_access(void *);
+int	kernfs_getattr(void *);
+int	kernfs_setattr(void *);
+int	kernfs_read(void *);
+int	kernfs_write(void *);
 #define	kernfs_fcntl	genfs_fcntl
-int	kernfs_ioctl	__P((void *));
+int	kernfs_ioctl(void *);
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
 #define	kernfs_remove	genfs_eopnotsupp
-int	kernfs_link	__P((void *));
+int	kernfs_link(void *);
 #define	kernfs_rename	genfs_eopnotsupp
 #define	kernfs_mkdir	genfs_eopnotsupp
 #define	kernfs_rmdir	genfs_eopnotsupp
-int	kernfs_symlink	__P((void *));
-int	kernfs_readdir	__P((void *));
+int	kernfs_symlink(void *);
+int	kernfs_readdir(void *);
 #define	kernfs_readlink	genfs_eopnotsupp
 #define	kernfs_abortop	genfs_abortop
-int	kernfs_inactive	__P((void *));
-int	kernfs_reclaim	__P((void *));
+int	kernfs_inactive(void *);
+int	kernfs_reclaim(void *);
 #define	kernfs_lock	genfs_lock
 #define	kernfs_unlock	genfs_unlock
 #define	kernfs_bmap	genfs_badop
 #define	kernfs_strategy	genfs_badop
-int	kernfs_print	__P((void *));
+int	kernfs_print(void *);
 #define	kernfs_islocked	genfs_islocked
-int	kernfs_pathconf	__P((void *));
+int	kernfs_pathconf(void *);
 #define	kernfs_advlock	genfs_einval
 #define	kernfs_blkatoff	genfs_eopnotsupp
 #define	kernfs_valloc	genfs_eopnotsupp
@@ -211,10 +211,11 @@ int	kernfs_pathconf	__P((void *));
 #define	kernfs_bwrite	genfs_eopnotsupp
 #define	kernfs_putpages	genfs_putpages
 
-static int	kernfs_xread __P((struct kernfs_node *, int, char **, size_t, size_t *));
-static int	kernfs_xwrite __P((const struct kernfs_node *, char *, size_t));
+static int	kernfs_xread(struct kernfs_node *, int, char **,
+				size_t, size_t *);
+static int	kernfs_xwrite(const struct kernfs_node *, char *, size_t);
 
-int (**kernfs_vnodeop_p) __P((void *));
+int (**kernfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, kernfs_lookup },		/* lookup */

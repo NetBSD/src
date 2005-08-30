@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.5 2004/05/20 06:34:30 atatat Exp $	*/
+/*	$NetBSD: overlay.h,v 1.6 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -114,13 +114,13 @@ struct overlay_node {
 #define	VTOOVERLAY(vp) ((struct overlay_node *)(vp)->v_data)
 #define	OVERLAYTOV(xp) ((xp)->ov_vnode)
 #ifdef OVERLAYFS_DIAGNOSTIC
-extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
+extern struct vnode *layer_checkvp(struct vnode *vp, char *fil, int lno);
 #define	OVERLAYVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	OVERLAYVPTOLOWERVP(vp) (VTOOVERLAY(vp)->ov_lowervp)
 #endif
 
-extern int (**overlay_vnodeop_p) __P((void *));
+extern int (**overlay_vnodeop_p)(void *);
 extern struct vfsops overlay_vfsops;
 
 #ifdef SYSCTL_SETUP_PROTO

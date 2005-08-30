@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.36 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.36 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,20 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $");
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_lookup	__P((void *));
+int	dead_lookup(void *);
 #define dead_create	genfs_badop
 #define dead_mknod	genfs_badop
-int	dead_open	__P((void *));
+int	dead_open(void *);
 #define dead_close	genfs_nullop
 #define dead_access	genfs_ebadf
 #define dead_getattr	genfs_ebadf
 #define dead_setattr	genfs_ebadf
-int	dead_read	__P((void *));
-int	dead_write	__P((void *));
+int	dead_read(void *);
+int	dead_write(void *);
 #define dead_lease_check genfs_nullop
 #define dead_fcntl	genfs_nullop
-int	dead_ioctl	__P((void *));
-int	dead_poll	__P((void *));
+int	dead_ioctl(void *);
+int	dead_poll(void *);
 #define dead_mmap	genfs_badop
 #define dead_fsync	genfs_nullop
 #define dead_seek	genfs_nullop
@@ -76,11 +76,11 @@ int	dead_poll	__P((void *));
 #define dead_abortop	genfs_badop
 #define dead_inactive	genfs_nullop
 #define dead_reclaim	genfs_nullop
-int	dead_lock	__P((void *));
+int	dead_lock(void *);
 #define dead_unlock	genfs_nullop
-int	dead_bmap	__P((void *));
-int	dead_strategy	__P((void *));
-int	dead_print	__P((void *));
+int	dead_bmap(void *);
+int	dead_strategy(void *);
+int	dead_print(void *);
 #define dead_islocked	genfs_nullop
 #define dead_pathconf	genfs_ebadf
 #define dead_advlock	genfs_ebadf
@@ -93,9 +93,9 @@ int	dead_print	__P((void *));
 #define dead_revoke	genfs_nullop
 #define dead_putpages	genfs_null_putpages
 
-int	chkvnlock __P((struct vnode *));
+int	chkvnlock(struct vnode *);
 
-int (**dead_vnodeop_p) __P((void *));
+int (**dead_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
