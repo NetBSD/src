@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.11 2005/08/30 18:47:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.11 2005/08/30 18:47:19 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 POOL_INIT(cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0, "cd9660nopl",
     &pool_allocator_nointr);
 
-static u_int cd9660_chars2ui __P((u_char *, int));
+static u_int cd9660_chars2ui(u_char *, int);
 
 /*
  * Initialize hash links for inodes and dnodes.

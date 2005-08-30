@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_rrip.h,v 1.2 2003/08/07 16:31:36 agc Exp $	*/
+/*	$NetBSD: iso_rrip.h,v 1.3 2005/08/30 18:47:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -69,13 +69,13 @@ typedef struct {
 	int		cont;		/* continuation of above */
 } ISO_RRIP_ANALYZE;
 
-int cd9660_rrip_analyze __P((struct iso_directory_record *isodir,
-			    struct iso_node *inop, struct iso_mnt *imp));
-int cd9660_rrip_getname __P((struct iso_directory_record *isodir,
+int cd9660_rrip_analyze(struct iso_directory_record *isodir,
+			    struct iso_node *inop, struct iso_mnt *imp);
+int cd9660_rrip_getname(struct iso_directory_record *isodir,
 			    char *outbuf, u_short *outlen,
-			    ino_t *inump, struct iso_mnt *imp));
-int cd9660_rrip_getsymname __P((struct iso_directory_record *isodir,
+			    ino_t *inump, struct iso_mnt *imp);
+int cd9660_rrip_getsymname(struct iso_directory_record *isodir,
 			       char *outbuf, u_short *outlen,
-			       struct iso_mnt *imp));
-int cd9660_rrip_offset __P((struct iso_directory_record *isodir,
-			   struct iso_mnt *imp));
+			       struct iso_mnt *imp);
+int cd9660_rrip_offset(struct iso_directory_record *isodir,
+			   struct iso_mnt *imp);
