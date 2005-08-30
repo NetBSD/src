@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.18 2005/08/30 21:14:29 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.19 2005/08/30 21:18:47 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.18 2005/08/30 21:14:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.19 2005/08/30 21:18:47 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -889,7 +889,7 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	case IEEE80211_S_INIT:
 		sc->flags &= ~IWI_FLAG_SCANNING;
-		break;
+		return (*sc->sc_newstate)(ic, nstate, arg);
 	}
 
 	ic->ic_state = nstate;
