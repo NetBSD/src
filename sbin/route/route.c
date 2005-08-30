@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.91 2005/08/15 19:28:08 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.92 2005/08/30 19:01:25 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.91 2005/08/15 19:28:08 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.92 2005/08/30 19:01:25 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,18 +296,21 @@ bad:			usage(*argv);
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
-	if (needed == 0)
-		return 0;
-	if ((buf = malloc(needed)) == NULL)
-		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		err(1, "actual retrieval of routing table");
-	lim = buf + needed;
+	buf = lim = NULL;
+	if (needed) {
+		if ((buf = malloc(needed)) == NULL)
+			err(1, "malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			err(1, "actual retrieval of routing table");
+		lim = buf + needed;
+	}
 	if (verbose) {
 		(void)printf("Examining routing table from sysctl\n");
 		if (af)
 			printf("(address family %s)\n", (*argv + 1));
 	}
+	if (needed == 0)
+		return 0;
 	seqno = 0;		/* ??? */
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -350,6 +353,7 @@ bad:			usage(*argv);
 			(void)printf("done\n");
 		}
 	}
+	free(buf);
 	return 0;
 }
 
@@ -380,7 +384,6 @@ any_ntoa(const struct sockaddr *sa)
 	out[-1] = '\0';
 	return obuf;
 }
-
 
 int
 netmask_length(struct sockaddr *nm, int family)
@@ -481,7 +484,6 @@ netmask_string(struct sockaddr *mask, int len, int family)
 	return smask;
 }
 
-
 const char *
 routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 {
@@ -533,7 +535,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 				char *ccp;
 				if ((ccp = strchr(hp->h_name, '.')) &&
 				    !strcmp(ccp + 1, domain))
-					*ccp = 0;
+					*ccp = '\0';
 				cp = hp->h_name;
 			}
 		}
@@ -587,7 +589,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 			char *ccp;
 			if (!nflag && (ccp = strchr(nihost, '.')) &&
 			    strcmp(ccp + 1, domain) == 0)
-				*ccp = 0;
+				*ccp = '\0';
 			strlcpy(line, nihost, sizeof(line));
 		}
 		break;
@@ -740,7 +742,6 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 				/* noncontiguous never happens in ipv6 */
 				snprintf(line, sizeof(line), "::/%d", nml);
 		}
-
 		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 		    line, sizeof(line), NULL, 0, niflags) != 0)
 			strlcpy(line, "invalid", sizeof(line));
@@ -990,7 +991,7 @@ newroute(int argc, char **argv)
 						"assuming route to if");
 					}
 				    } else
-					usage((char *)NULL);
+					usage(NULL);
 				    iflag = 1;
 				    continue;
 				} else if (ret > 0 && ret < 10) {
@@ -1220,14 +1221,14 @@ getaddr(int which, char *s, struct hostent **hpp)
 				slash = 0;
 			}
 			if (getaddrinfo(s, "0", &hints, &res) != 0)
-				errx(1, "bad value: %s", s);
+				errx(1, "%s: bad value", s);
 		}
 		if (slash)
 			*slash = '/';
 		if (sizeof(su->sin6) != res->ai_addrlen)
 			errx(1, "%s: bad value", s);
 		if (res->ai_next)
-			errx(1, "address resolved to multiple values: %s", s);
+			errx(1, "%s: address resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 #ifdef __KAME__
@@ -1353,7 +1354,7 @@ netdone:
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	errx(1, "bad value: %s", s);
+	errx(1, "%s: bad value", s);
 	/*NOTREACHED*/
 }
 
@@ -1374,11 +1375,12 @@ prefixlen(const char *s)
 #endif
 	default:
 		errx(1, "prefixlen is not supported with af %d", af);
+		/*NOTREACHED*/
 	}
 
 	rtm_addrs |= RTA_NETMASK;	
 	if (len < -1 || len > max)
-		errx(1, "bad value: %s", s);
+		errx(1, "%s: bad value", s);
 	
 	q = len >> 3;
 	r = len & 7;
@@ -1483,14 +1485,17 @@ interfaces(void)
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
-	if ((buf = malloc(needed)) == NULL)
-		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		err(1, "actual retrieval of interface table");
-	lim = buf + needed;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		print_rtmsg(rtm, rtm->rtm_msglen);
+	if (needed) {
+		if ((buf = malloc(needed)) == NULL)
+			err(1, "malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			err(1, "actual retrieval of interface table");
+		lim = buf + needed;
+		for (next = buf; next < lim; next += rtm->rtm_msglen) {
+			rtm = (struct rt_msghdr *)next;
+			print_rtmsg(rtm, rtm->rtm_msglen);
+		}
+		free(buf);
 	}
 }
 
