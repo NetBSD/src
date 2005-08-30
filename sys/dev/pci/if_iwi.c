@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.17 2005/08/30 21:05:47 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.18 2005/08/30 21:14:29 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.17 2005/08/30 21:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.18 2005/08/30 21:14:29 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -418,6 +418,9 @@ iwi_detach(struct device* self, int flags)
 	}
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
+	powerhook_disestablish(sc->sc_powerhook);
+	shutdownhook_disestablish(sc->sc_sdhook);
 
 	return 0;
 }
