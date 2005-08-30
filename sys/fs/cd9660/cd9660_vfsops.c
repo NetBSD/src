@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.25 2005/08/05 13:24:18 jmmv Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.26 2005/08/30 18:47:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.25 2005/08/05 13:24:18 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.26 2005/08/30 18:47:19 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,9 +119,9 @@ static const struct genfs_ops cd9660_genfsops = {
  */
 #define ROOTNAME	"root_device"
 
-static int iso_makemp __P((struct iso_mnt *isomp, struct buf *bp, int *ea_len));
-static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct proc *p, struct iso_args *argp));
+static int iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len);
+static int iso_mountfs(struct vnode *devvp, struct mount *mp,
+		struct proc *p, struct iso_args *argp);
 
 int
 cd9660_mountroot()
