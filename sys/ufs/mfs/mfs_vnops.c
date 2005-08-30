@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.38 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.39 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.38 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.39 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.38 2005/02/26 22:32:20 perry Exp $")
 /*
  * mfs vnode operations.
  */
-int (**mfs_vnodeop_p) __P((void *));
+int (**mfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, mfs_lookup },		/* lookup */
@@ -114,8 +114,7 @@ const struct vnodeopv_desc mfs_vnodeop_opv_desc =
  */
 /* ARGSUSED */
 int
-mfs_open(v)
-	void *v;
+mfs_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -135,8 +134,7 @@ mfs_open(v)
  * Pass I/O requests to the memory filesystem process.
  */
 int
-mfs_strategy(v)
-	void *v;
+mfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -185,9 +183,7 @@ mfs_strategy(v)
  * Trivial on the HP since buffer has already been mapping into KVA space.
  */
 void
-mfs_doio(bp, base)
-	struct buf *bp;
-	caddr_t base;
+mfs_doio(struct buf *bp, caddr_t base)
 {
 	base += (bp->b_blkno << DEV_BSHIFT);
 	if (bp->b_flags & B_READ)
@@ -205,8 +201,7 @@ mfs_doio(bp, base)
  * This is a noop, simply returning what one has been given.
  */
 int
-mfs_bmap(v)
-	void *v;
+mfs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -230,8 +225,7 @@ mfs_bmap(v)
  */
 /* ARGSUSED */
 int
-mfs_close(v)
-	void *v;
+mfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -279,8 +273,7 @@ mfs_close(v)
  */
 /* ARGSUSED */
 int
-mfs_inactive(v)
-	void *v;
+mfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -300,8 +293,7 @@ mfs_inactive(v)
  * Reclaim a memory filesystem devvp so that it can be reused.
  */
 int
-mfs_reclaim(v)
-	void *v;
+mfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -317,8 +309,7 @@ mfs_reclaim(v)
  * Print out the contents of an mfsnode.
  */
 int
-mfs_print(v)
-	void *v;
+mfs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.13 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.14 2005/08/30 22:01:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.13 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.14 2005/08/30 22:01:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.13 2004/03/22 19:23:08 bouyer Exp 
  * remaining space in the directory.
  */
 int
-ext2fs_blkatoff(v)
-	void *v;
+ext2fs_blkatoff(void *v)
 {
 	struct vop_blkatoff_args /* {
 		struct vnode *a_vp;
@@ -114,9 +113,7 @@ ext2fs_blkatoff(v)
 
 #ifdef DIAGNOSTIC
 void
-ext2fs_checkoverlap(bp, ip)
-	struct buf *bp;
-	struct inode *ip;
+ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
 {
 #if 0
 	struct buf *ebp, *ep;
