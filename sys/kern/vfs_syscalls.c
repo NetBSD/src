@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.229 2005/08/19 12:30:02 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.230 2005/08/30 09:37:41 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.229 2005/08/19 12:30:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.230 2005/08/30 09:37:41 jmmv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1659,6 +1659,7 @@ restart:
 		goto restart;
 	}
 	VATTR_NULL(&vattr);
+	vattr.va_type = VLNK;
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
