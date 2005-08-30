@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.218 2005/08/28 10:19:10 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.219 2005/08/30 05:56:05 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11992,12 +11992,4 @@ usr.bin/ftp/version.h				1.57
 	Don't clear the trailing character on the auth_url() username;
 	We now use getline() and that newline strips for us.
 	[lukem, ticket #715]
-
-Makefile					1.240
-
-	Modify "release" to invoke "make distribution" instead of "make build",
-	so that the "obsolete file removal" functionality of "distribution"
-	is used. Fixes build problems numerous people have experienced with
-	MKUPDATE=yes and the "release" target.
-	[lukem, ticket #716]
 
