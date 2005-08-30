@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.7 2005/08/30 18:47:19 xtraeme Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.8 2005/08/30 19:15:11 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -128,7 +128,7 @@ int	cd9660_unlock(void *);
 int	cd9660_strategy(void *);
 int	cd9660_print(void *);
 int	cd9660_islocked(void *);
-int	cd9660_pathconf(void *));
+int	cd9660_pathconf(void *);
 int	cd9660_setattr(void *);
 int	cd9660_blkatoff(void *);
 
