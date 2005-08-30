@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.16 2004/05/20 06:34:30 atatat Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.17 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,11 +71,11 @@ struct fdescnode {
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
 
 extern dev_t devctty;
-extern void fdesc_init __P((void));
-extern void fdesc_done __P((void));
-extern int fdesc_root __P((struct mount *, struct vnode **));
-extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
-extern int (**fdesc_vnodeop_p) __P((void *));
+extern void fdesc_init(void);
+extern void fdesc_done(void);
+extern int fdesc_root(struct mount *, struct vnode **);
+extern int fdesc_allocvp(fdntype, int, struct mount *, struct vnode **);
+extern int (**fdesc_vnodeop_p)(void *);
 extern struct vfsops fdesc_vfsops;
 
 #ifdef SYSCTL_SETUP_PROTO

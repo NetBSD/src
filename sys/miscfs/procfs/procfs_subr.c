@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.64 2005/05/29 21:55:34 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.65 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64 2005/05/29 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.65 2005/08/30 20:08:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64 2005/05/29 21:55:34 christos Ex
 
 #include <miscfs/procfs/procfs.h>
 
-void procfs_hashins __P((struct pfsnode *));
-void procfs_hashrem __P((struct pfsnode *));
-struct vnode *procfs_hashget __P((pid_t, pfstype, int, struct mount *));
+void procfs_hashins(struct pfsnode *);
+void procfs_hashrem(struct pfsnode *);
+struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *);
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */

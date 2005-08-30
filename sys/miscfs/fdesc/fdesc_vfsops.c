@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.55 2005/05/29 21:55:33 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.55 2005/05/29 21:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,19 +61,19 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.55 2005/05/29 21:55:33 christos E
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount __P((struct mount *, const char *, void *,
-			 struct nameidata *, struct proc *));
-int	fdesc_start __P((struct mount *, int, struct proc *));
-int	fdesc_unmount __P((struct mount *, int, struct proc *));
-int	fdesc_quotactl __P((struct mount *, int, uid_t, void *,
-			    struct proc *));
-int	fdesc_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	fdesc_checkexp __P((struct mount *, struct mbuf *, int *,
-			    struct ucred **));
-int	fdesc_vptofh __P((struct vnode *, struct fid *));
+int	fdesc_mount(struct mount *, const char *, void *,
+			 struct nameidata *, struct proc *);
+int	fdesc_start(struct mount *, int, struct proc *);
+int	fdesc_unmount(struct mount *, int, struct proc *);
+int	fdesc_quotactl(struct mount *, int, uid_t, void *,
+			    struct proc *);
+int	fdesc_statvfs(struct mount *, struct statvfs *, struct proc *);
+int	fdesc_sync(struct mount *, int, struct ucred *, struct proc *);
+int	fdesc_vget(struct mount *, ino_t, struct vnode **);
+int	fdesc_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	fdesc_checkexp(struct mount *, struct mbuf *, int *,
+			    struct ucred **);
+int	fdesc_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
