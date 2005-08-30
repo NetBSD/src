@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.28 2005/05/29 21:05:25 christos Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.29 2005/08/30 22:24:11 xtraeme Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.28 2005/05/29 21:05:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.29 2005/08/30 22:24:11 xtraeme Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -128,8 +128,7 @@ struct vmsg {
 
 /* vcodaattach: do nothing */
 void
-vcodaattach(n)
-    int n;
+vcodaattach(int n)
 {
 }
 
@@ -137,11 +136,7 @@ vcodaattach(n)
  * These functions are written for NetBSD.
  */
 int
-vc_nb_open(dev, flag, mode, p)
-    dev_t        dev;
-    int          flag;
-    int          mode;
-    struct proc *p;             /* NetBSD only */
+vc_nb_open(dev_t dev, int flag, int mode, struct proc *p /* NetBSD only */)
 {
     struct vcomm *vcp;
 
@@ -169,11 +164,7 @@ vc_nb_open(dev, flag, mode, p)
 }
 
 int
-vc_nb_close (dev, flag, mode, p)
-    dev_t        dev;
-    int          flag;
-    int          mode;
-    struct proc *p;
+vc_nb_close(dev_t dev, int flag, int mode, struct proc *p)
 {
     struct vcomm *vcp;
     struct vmsg *vmp, *nvmp = NULL;
@@ -261,10 +252,7 @@ vc_nb_close (dev, flag, mode, p)
 }
 
 int
-vc_nb_read(dev, uiop, flag)
-    dev_t        dev;
-    struct uio  *uiop;
-    int          flag;
+vc_nb_read(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
@@ -315,10 +303,7 @@ vc_nb_read(dev, uiop, flag)
 }
 
 int
-vc_nb_write(dev, uiop, flag)
-    dev_t        dev;
-    struct uio  *uiop;
-    int          flag;
+vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
@@ -415,12 +400,7 @@ vc_nb_write(dev, uiop, flag)
 }
 
 int
-vc_nb_ioctl(dev, cmd, addr, flag, p)
-    dev_t         dev;
-    u_long        cmd;
-    caddr_t       addr;
-    int           flag;
-    struct proc  *p;
+vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
     ENTRY;
 
@@ -469,10 +449,7 @@ vc_nb_ioctl(dev, cmd, addr, flag, p)
 }
 
 int
-vc_nb_poll(dev, events, p)
-    dev_t         dev;
-    int           events;
-    struct proc  *p;
+vc_nb_poll(dev_t dev, int events, struct proc *p)
 {
     struct vcomm *vcp;
     int event_msk = 0;
@@ -567,8 +544,8 @@ struct coda_clstat coda_clstat;
  */
 
 int
-coda_call(mntinfo, inSize, outSize, buffer)
-     struct coda_mntinfo *mntinfo; int inSize; int *outSize; caddr_t buffer;
+coda_call(struct coda_mntinfo *mntinfo, int inSize, int outSize,
+	caddr_t buffer)
 {
 	struct vcomm *vcp;
 	struct vmsg *vmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.10 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.11 2005/08/30 22:24:11 xtraeme Exp $	*/
 
 /*
  *
@@ -46,38 +46,38 @@
  */
 
 /* NetBSD interfaces to the vnodeops */
-int coda_open      __P((void *));
-int coda_close     __P((void *));
-int coda_read      __P((void *));
-int coda_write     __P((void *));
-int coda_ioctl     __P((void *));
-/* 1.3 int coda_select    __P((void *));*/
-int coda_getattr   __P((void *));
-int coda_setattr   __P((void *));
-int coda_access    __P((void *));
-int coda_abortop   __P((void *));
-int coda_readlink  __P((void *));
-int coda_fsync     __P((void *));
-int coda_inactive  __P((void *));
-int coda_lookup    __P((void *));
-int coda_create    __P((void *));
-int coda_remove    __P((void *));
-int coda_link      __P((void *));
-int coda_rename    __P((void *));
-int coda_mkdir     __P((void *));
-int coda_rmdir     __P((void *));
-int coda_symlink   __P((void *));
-int coda_readdir   __P((void *));
-int coda_bmap      __P((void *));
-int coda_strategy  __P((void *));
-int coda_reclaim   __P((void *));
-int coda_lock      __P((void *));
-int coda_unlock    __P((void *));
-int coda_islocked  __P((void *));
-int coda_vop_error   __P((void *));
-int coda_vop_nop     __P((void *));
-int coda_getpages  __P((void *));
-int coda_putpages  __P((void *));
+int coda_open(void *);
+int coda_close(void *);
+int coda_read(void *);
+int coda_write(void *);
+int coda_ioctl(void *);
+/* 1.3 int coda_select(void *);*/
+int coda_getattr(void *);
+int coda_setattr(void *);
+int coda_access(void *);
+int coda_abortop(void *);
+int coda_readlink(void *);
+int coda_fsync(void *);
+int coda_inactive(void *);
+int coda_lookup(void *);
+int coda_create(void *);
+int coda_remove(void *);
+int coda_link(void *);
+int coda_rename(void *);
+int coda_mkdir(void *);
+int coda_rmdir(void *);
+int coda_symlink(void *);
+int coda_readdir(void *);
+int coda_bmap(void *);
+int coda_strategy(void *);
+int coda_reclaim(void *);
+int coda_lock(void *);
+int coda_unlock(void *);
+int coda_islocked(void *);
+int coda_vop_error(void *);
+int coda_vop_nop(void *);
+int coda_getpages(void *);
+int coda_putpages(void *);
 
 int (**coda_vnodeop_p)(void *);
 int coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw,
