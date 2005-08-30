@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.10 2004/05/20 06:34:27 atatat Exp $	*/
+/*	$NetBSD: union.h,v 1.11 2005/08/30 19:11:43 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -131,30 +131,30 @@ struct union_node {
 #define UN_DRAINING	0x20		/* upper node lock is draining */
 #define UN_DRAINED	0x40		/* upper node lock is drained */
 
-extern int union_allocvp __P((struct vnode **, struct mount *,
+extern int union_allocvp(struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,
 				struct componentname *, struct vnode *,
-				struct vnode *, int));
-extern int union_copyfile __P((struct vnode *, struct vnode *,
-					struct ucred *, struct proc *));
-extern int union_copyup __P((struct union_node *, int, struct ucred *,
-				struct proc *));
-extern void union_diruncache __P((struct union_node *));
-extern int union_dowhiteout __P((struct union_node *, struct ucred *,
-					struct proc *));
-extern int union_mkshadow __P((struct union_mount *, struct vnode *,
-				struct componentname *, struct vnode **));
-extern int union_mkwhiteout __P((struct union_mount *, struct vnode *,
-				struct componentname *, char *));
-extern int union_vn_create __P((struct vnode **, struct union_node *,
-				struct proc *));
-extern int union_cn_close __P((struct vnode *, int, struct ucred *,
-				struct proc *));
-extern void union_removed_upper __P((struct union_node *un));
-extern struct vnode *union_lowervp __P((struct vnode *));
-extern void union_newlower __P((struct union_node *, struct vnode *));
-extern void union_newupper __P((struct union_node *, struct vnode *));
-extern void union_newsize __P((struct vnode *, off_t, off_t));
+				struct vnode *, int);
+extern int union_copyfile(struct vnode *, struct vnode *,
+					struct ucred *, struct proc *);
+extern int union_copyup(struct union_node *, int, struct ucred *,
+				struct proc *);
+extern void union_diruncache(struct union_node *);
+extern int union_dowhiteout(struct union_node *, struct ucred *,
+					struct proc *);
+extern int union_mkshadow(struct union_mount *, struct vnode *,
+				struct componentname *, struct vnode **);
+extern int union_mkwhiteout(struct union_mount *, struct vnode *,
+				struct componentname *, char *);
+extern int union_vn_create(struct vnode **, struct union_node *,
+				struct proc *);
+extern int union_cn_close(struct vnode *, int, struct ucred *,
+				struct proc *);
+extern void union_removed_upper(struct union_node *un);
+extern struct vnode *union_lowervp(struct vnode *);
+extern void union_newlower(struct union_node *, struct vnode *);
+extern void union_newupper(struct union_node *, struct vnode *);
+extern void union_newsize(struct vnode *, off_t, off_t);
 int union_readdirhook(struct vnode **, struct file *, struct proc *);
 
 #define	MOUNTTOUNIONMOUNT(mp) ((struct union_mount *)((mp)->mnt_data))
@@ -164,11 +164,11 @@ int union_readdirhook(struct vnode **, struct file *, struct proc *);
 #define	UPPERVP(vp) (VTOUNION(vp)->un_uppervp)
 #define OTHERVP(vp) (UPPERVP(vp) ? UPPERVP(vp) : LOWERVP(vp))
 
-extern int (**union_vnodeop_p) __P((void *));
+extern int (**union_vnodeop_p)(void *);
 
-void union_init __P((void));
-void union_done __P((void));
-int union_freevp __P((struct vnode *));
+void union_init(void);
+void union_done(void);
+int union_freevp(struct vnode *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_union_setup);

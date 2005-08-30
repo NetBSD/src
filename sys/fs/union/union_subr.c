@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.13 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.14 2005/08/30 19:11:43 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.13 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.14 2005/08/30 19:11:43 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,15 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.13 2005/05/29 21:00:29 christos Exp
 static LIST_HEAD(unhead, union_node) unhead[NHASH];
 static int unvplock[NHASH];
 
-static int union_list_lock __P((int));
-static void union_list_unlock __P((int));
-void union_updatevp __P((struct union_node *, struct vnode *, struct vnode *));
-static int union_relookup __P((struct union_mount *, struct vnode *,
+static int union_list_lock(int);
+static void union_list_unlock(int);
+void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
+static int union_relookup(struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
-			       struct componentname *, const char *, int));
-int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
-static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *, struct proc *));
+			       struct componentname *, const char *, int);
+int union_vn_close(struct vnode *, int, struct ucred *, struct proc *);
+static void union_dircache_r(struct vnode *, struct vnode ***, int *);
+struct vnode *union_dircache(struct vnode *, struct proc *);
 
 void
 union_init()
