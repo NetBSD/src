@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.219 2005/08/30 05:56:05 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.220 2005/08/31 10:43:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11992,4 +11992,21 @@ usr.bin/ftp/version.h				1.57
 	Don't clear the trailing character on the auth_url() username;
 	We now use getline() and that newline strips for us.
 	[lukem, ticket #715]
+
+usr.bin/gzip/gzip.c				1.73
+
+	Avoid an infinite loop while decompressing invalid gzip files.
+	[mrg, ticket #721]
+
+share/mk/bsd.links.mk				1.30
+
+	Fix parallel build race in CONFIGSYMLINKS & CONFIGLINKS by
+	makeing configlinksinstall depend upon configfilesinstall.
+	[lukem, ticket #726]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.111
+
+	Don't allow negative offsets when reading the message buffer, because
+	it can allow reading arbitrary kernel memory.
+	[christos, ticket #727]
 
