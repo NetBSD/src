@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.35 2005/08/25 15:16:46 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.36 2005/08/31 13:29:40 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -403,4 +403,10 @@ gnu/dist/cvs/src/cvsbug.in			1.3
 
 	Fix vulnerability reported in SA16553 using the Red Hat patch.
 	[tron, ticket #5613]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.111
+
+	Don't allow negative offsets when reading the message buffer, because
+	it can allow reading arbitrary kernel memory.
+	[christos, ticket #5633]
 
