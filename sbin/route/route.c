@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.92 2005/08/30 19:01:25 ginsbach Exp $	*/
+/*	$NetBSD: route.c,v 1.93 2005/08/31 02:58:30 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.92 2005/08/30 19:01:25 ginsbach Exp $");
+__RCSID("$NetBSD: route.c,v 1.93 2005/08/31 02:58:30 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,8 @@ static int inet6_makenetandmask(struct sockaddr_in6 *);
 #endif
 static int getaddr(int, char *, struct hostent **);
 static int flushroutes(int, char *[], int);
-#ifndef SMALL
 static int prefixlen(const char *);
+#ifndef SMALL
 static int x25_makemask(void);
 static void interfaces(void);
 static void monitor(void);
@@ -548,7 +548,6 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 	case AF_LINK:
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -596,6 +595,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 	    }
 #endif
 
+#ifndef SMALL
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
 
@@ -709,7 +709,6 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 	case AF_LINK:
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -749,6 +748,7 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 	    }
 #endif
 
+#ifndef SMALL
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
 
@@ -1201,7 +1201,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 		return (0);
 	}
 	switch (afamily) {
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -1251,6 +1250,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 	    }
 #endif
 
+#ifndef SMALL
 	case AF_NS:
 		if (which == RTA_DST) {
 			struct sockaddr_ns *sms = &(so_mask.sns);
@@ -2073,7 +2073,6 @@ sodump(sup su, const char *which)
 		(void)printf("%s: link %s; ",
 		    which, link_ntoa(&su->sdl));
 		break;
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 		(void)printf("%s: inet6 %s; ",
@@ -2081,6 +2080,7 @@ sodump(sup su, const char *which)
 				     ntop_buf, sizeof(ntop_buf)));
 		break;
 #endif
+#ifndef SMALL
 	case AF_ISO:
 		(void)printf("%s: iso %s; ",
 		    which, iso_ntoa(&su->siso.siso_addr));

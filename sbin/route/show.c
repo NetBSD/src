@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.27 2005/08/30 19:01:25 ginsbach Exp $	*/
+/*	$NetBSD: show.c,v 1.28 2005/08/31 02:58:30 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.27 2005/08/30 19:01:25 ginsbach Exp $");
+__RCSID("$NetBSD: show.c,v 1.28 2005/08/31 02:58:30 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,12 +282,12 @@ pr_family(int af)
 	case AF_INET:
 		afname = "Internet";
 		break;
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 		afname = "Internet6";
 		break;
 #endif /* INET6 */
+#ifndef SMALL
 	case AF_NS:
 		afname = "XNS";
 		break;
@@ -331,7 +331,6 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 		cp = routename(sa, nm, flags);
 		break;
 
-#ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
 		cp = routename(sa, nm, flags);
@@ -341,6 +340,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 		break;
 #endif /* INET6 */
 
+#ifndef SMALL
 	case AF_NS:
 		cp = ns_print((struct sockaddr_ns *)sa);
 		break;
