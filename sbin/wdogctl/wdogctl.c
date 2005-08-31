@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.14 2005/08/31 18:21:39 dyoung Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.15 2005/08/31 18:28:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.14 2005/08/31 18:21:39 dyoung Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.15 2005/08/31 18:28:58 dyoung Exp $");
 #endif
 
 
@@ -244,8 +244,8 @@ enable_user(const char *name, u_int period)
 		err(EXIT_FAILURE, "unable to fork tickler process");
 	else if (tickler != 0) {
 		if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1) {
-			err(EXIT_FAILURE, "WDOGIOC_SMODE");
 			(void)kill(tickler, SIGTERM);
+			err(EXIT_FAILURE, "WDOGIOC_SMODE");
 		}
 		(void)close(fd);
 		return;
