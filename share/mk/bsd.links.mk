@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.29 2004/06/25 02:05:39 christos Exp $
+#	$NetBSD: bsd.links.mk,v 1.29.2.1 2005/08/31 10:36:22 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -44,7 +44,8 @@ linksinstall::	realinstall
 
 
 configinstall:		configlinksinstall
-configlinksinstall::	.PHONY
+.PHONY:			configlinksinstall
+configlinksinstall::	configfilesinstall
 .if defined(CONFIGSYMLINKS)
 	@(set ${CONFIGSYMLINKS}; \
 	 while test $$# -ge 2; do \
