@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.13 2005/01/12 16:18:39 drochner Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.14 2005/08/31 18:21:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.13 2005/01/12 16:18:39 drochner Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.14 2005/08/31 18:21:39 dyoung Exp $");
 #endif
 
 
@@ -142,40 +142,37 @@ main(int argc, char *argv[])
 			usage();
 		if (argc != 0)
 			usage();
-	}
-	else {
-		if (argc != 1)
-			usage();
-	}
+	} else if (argc != 1)
+		usage();
 
 	switch (command) {
-		case CMD_NONE:
-			list_timers();
-			break;
-		case CMD_DISABLE:
-			disable();
-			break;
-		case CMD_DOTICKLE:
-			tickle_ext();
-			break;
-		case CMD_EXT_TICKLE:
-			enable_ext(argv[0], period);
-			break;
-		case CMD_KERN_TICKLE:
-			enable_kernel(argv[0], period);
-			break;
-		case CMD_USER_TICKLE:
-			enable_user(argv[0], period);
-			break;
+	case CMD_NONE:
+		list_timers();
+		break;
+	case CMD_DISABLE:
+		disable();
+		break;
+	case CMD_DOTICKLE:
+		tickle_ext();
+		break;
+	case CMD_EXT_TICKLE:
+		enable_ext(argv[0], period);
+		break;
+	case CMD_KERN_TICKLE:
+		enable_kernel(argv[0], period);
+		break;
+	case CMD_USER_TICKLE:
+		enable_user(argv[0], period);
+		break;
 	}
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void
 prep_wmode(struct wdog_mode *wp, int mode,  const char *name, u_int period)
 {
 	if (strlen(name) >= WDOG_NAMESIZE)
-		errx(1, "invalid watchdog timer name: %s", name);
+		errx(EXIT_FAILURE, "invalid watchdog timer name: %s", name);
 
 	strlcpy(wp->wm_name, name, sizeof(wp->wm_name));
 	wp->wm_mode = mode;
@@ -194,10 +191,10 @@ enable_kernel(const char *name, u_int period)
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 
 	if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1)
-		err(1, "WDOGIOC_SMODE");
+		err(EXIT_FAILURE, "WDOGIOC_SMODE");
 }
 
 void
@@ -210,9 +207,9 @@ enable_ext(const char *name, u_int period)
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 	if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1) {
-		err(1, "WDOGIOC_SMODE");
+		err(EXIT_FAILURE, "WDOGIOC_SMODE");
 	}
 	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
 		syslog(LOG_EMERG, "unable to tickle watchdog timer %s: %m",
@@ -232,7 +229,7 @@ enable_user(const char *name, u_int period)
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 
 	/* ...so we can log failures to tickle the timer. */
 	openlog("wdogctl", LOG_PERROR|LOG_PID, LOG_DAEMON);
@@ -244,13 +241,13 @@ enable_user(const char *name, u_int period)
 	 */
 	tickler = fork();
 	if (tickler == -1)
-		err(1, "unable to fork tickler process");
+		err(EXIT_FAILURE, "unable to fork tickler process");
 	else if (tickler != 0) {
 		if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1) {
-			err(1, "WDOGIOC_SMODE");
-			(void) kill(tickler, SIGTERM);
+			err(EXIT_FAILURE, "WDOGIOC_SMODE");
+			(void)kill(tickler, SIGTERM);
 		}
-		(void) close(fd);
+		(void)close(fd);
 		return;
 	}
 
@@ -282,7 +279,7 @@ enable_user(const char *name, u_int period)
 		 * we exit, the kernel will disable the watchdog so
 		 * that the system won't die.
 		 */
-		err(1, "unable to detach from terminal");
+		err(EXIT_FAILURE, "unable to detach from terminal");
 	}
 
 	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
@@ -292,7 +289,7 @@ enable_user(const char *name, u_int period)
 	for (;;) {
 		ts.tv_sec = wm.wm_period / 2;
 		ts.tv_nsec = 0;
-		(void) nanosleep(&ts, NULL);
+		(void)nanosleep(&ts, NULL);
 
 		if (ioctl(fd, WDOGIOC_TICKLE) == -1)
 			syslog(LOG_EMERG,
@@ -309,7 +306,7 @@ tickle_ext()
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
 		fprintf(stderr, "Cannot tickle timer\n");
 }
@@ -323,7 +320,7 @@ disable(void)
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 
 	if (ioctl(fd, WDOGIOC_WHICH, &wm) == -1) {
 		printf("No watchdog timer running.\n");
@@ -338,14 +335,16 @@ disable(void)
 	 */
 	if (mode == WDOG_MODE_UTICKLE) {
 		if (ioctl(fd, WDOGIOC_GTICKLER, &tickler) == -1)
-			err(1, "WDOGIOC_GTICKLER");
-		(void) close(fd);
-		(void) kill(tickler, SIGTERM);
+			err(EXIT_FAILURE, "WDOGIOC_GTICKLER");
+		(void)close(fd);
+		(void)kill(tickler, SIGTERM);
 	} else {
 		wm.wm_mode = WDOG_MODE_DISARMED;
-		if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1)
-			err(1, "unable to disarm watchdog %s", wm.wm_name);
-		(void) close(fd);
+		if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1) {
+			err(EXIT_FAILURE, "unable to disarm watchdog %s",
+			    wm.wm_name);
+		}
+		(void)close(fd);
 	}
 }
 
@@ -360,13 +359,13 @@ list_timers(void)
 
 	fd = open(_PATH_WATCHDOG, O_RDONLY, 0644);
 	if (fd == -1)
-		err(1, "open %s", _PATH_WATCHDOG);
+		err(EXIT_FAILURE, "open %s", _PATH_WATCHDOG);
 
 	wc.wc_names = NULL;
 	wc.wc_count = 0;
 
 	if (ioctl(fd, WDOGIOC_GWDOGS, &wc) == -1)
-		err(1, "ioctl WDOGIOC_GWDOGS for count");
+		err(EXIT_FAILURE, "ioctl WDOGIOC_GWDOGS for count");
 
 	count = wc.wc_count;
 	if (count == 0) {
@@ -376,12 +375,12 @@ list_timers(void)
 
 	buf = malloc(count * WDOG_NAMESIZE);
 	if (buf == NULL)
-		err(1, "malloc %d byte for watchdog names",
+		err(EXIT_FAILURE, "malloc %d byte for watchdog names",
 		    count * WDOG_NAMESIZE);
 	
 	wc.wc_names = buf;
 	if (ioctl(fd, WDOGIOC_GWDOGS, &wc) == -1)
-		err(1, "ioctl WDOGIOC_GWDOGS for names");
+		err(EXIT_FAILURE, "ioctl WDOGIOC_GWDOGS for names");
 
 	count = wc.wc_count;
 	if (count == 0) {
@@ -406,24 +405,24 @@ list_timers(void)
 		printf("\t%s, %u second period", cp, wm.wm_period);
 		if (mode != WDOG_MODE_DISARMED) {
 			switch(mode) {
-				case WDOG_MODE_KTICKLE:
-					printf(" [armed, kernel tickle");
-					break;
-				case WDOG_MODE_UTICKLE:
-					printf(" [armed, user tickle");
-					if (tickler != (pid_t) -1)
-						printf(", pid %d", tickler);
-					break;
-				case WDOG_MODE_ETICKLE:
-					printf(" [armed, external tickle");
-					break;
+			case WDOG_MODE_KTICKLE:
+				printf(" [armed, kernel tickle");
+				break;
+			case WDOG_MODE_UTICKLE:
+				printf(" [armed, user tickle");
+				if (tickler != (pid_t) -1)
+					printf(", pid %d", tickler);
+				break;
+			case WDOG_MODE_ETICKLE:
+				printf(" [armed, external tickle");
+				break;
 			}
 			printf("]");
 		}
 		printf("\n");
 	}
  out:
-	(void) close(fd);
+	(void)close(fd);
 }
 
 void
