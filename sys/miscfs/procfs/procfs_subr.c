@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.58 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.58.2.1 2005/08/31 13:41:38 tron Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.58 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.58.2.1 2005/08/31 13:41:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,9 +299,17 @@ procfs_rw(v)
 	struct lwp *l;
 	struct proc *p;
 
+	if (uio->uio_offset < 0)
+		return EINVAL;
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
-		return (EINVAL);
+		return ESRCH;
+	/*
+	 * Do not allow init to be modified while in secure mode; it
+	 * could be duped into changing the security level.
+	 */
+	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
+		return EPERM;
 
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
@@ -310,26 +318,6 @@ procfs_rw(v)
 	 */
 	l = proc_representative_lwp(p);
 	
-	switch (pfs->pfs_type) {
-	case PFSregs:
-	case PFSfpregs:
-	case PFSmem:
-#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
-	PROCFS_MACHDEP_PROTECT_CASES
-#endif
-		/*
-		 * Do not allow init to be modified while in secure mode; it
-		 * could be duped into changing the security level.
-		 */
-		if (uio->uio_rw == UIO_WRITE &&
-		    p == initproc && securelevel > -1)
-			return (EPERM);
-		break;
-
-	default:
-		break;
-	}
-
 	switch (pfs->pfs_type) {
 	case PFSnote:
 	case PFSnotepg:
