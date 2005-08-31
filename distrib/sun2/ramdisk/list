@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.6 2003/01/19 12:26:57 tsutsui Exp $
+#	$NetBSD: list,v 1.6.4.1 2005/08/31 02:28:58 riz Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -46,7 +46,7 @@ SRCDIRS	bin sbin usr.bin distrib/utils
 
 # From /usr/src/distrib/utils:
 PROG		bin/dd
-PROG		bin/ls
+PROG		bin/tls		bin/ls
 PROG		bin/rsh
 PROG		bin/ssh		bin/sh bin/-sh
 # PROG		bin/tftp
@@ -83,7 +83,7 @@ LIBS libhack.o -lrmt -lutil -lz
 
 # These are built with special flags to save a little space.
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
-SPECIAL	ls		srcdir	distrib/utils/tls
+SPECIAL	tls		srcdir	distrib/utils/tls
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	ssh		srcdir	distrib/utils/ssh
 SPECIAL	umount		srcdir	distrib/utils/x_umount
