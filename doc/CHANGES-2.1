@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.179 2005/08/31 13:28:29 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.180 2005/08/31 13:41:14 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3608,4 +3608,12 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.111
 	Don't allow negative offsets when reading the message buffer, because
 	it can allow reading arbitrary kernel memory.
 	[christos, ticket #5633]
+
+sys/miscfs/procfs/procfs_subr.c			1.59
+
+	Simplify the code by:
+	1. Checking for a negative uio_offset at the beginning. This really
+	   does not affect us in most cases because we check that later too.
+	2. Checking for attempts to write to init sooner and in all cases.
+	[christos, ticket #5634]
 
