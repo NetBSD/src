@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.178 2005/08/31 06:04:27 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.179 2005/08/31 13:28:29 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3602,4 +3602,10 @@ share/tmac/doc-common				patch
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 
 	Welcome to 2.1_RC3
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.111
+
+	Don't allow negative offsets when reading the message buffer, because
+	it can allow reading arbitrary kernel memory.
+	[christos, ticket #5633]
 
