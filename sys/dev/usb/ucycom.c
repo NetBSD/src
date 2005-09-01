@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.4 2005/09/01 18:10:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.4 2005/09/01 18:10:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,6 @@ ucycom_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	DPRINTF(("ucycom match\n"));
 	return (ucycom_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -202,8 +201,6 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	int size, repid;
 	void *desc;
 
-	DPRINTF(("ucycom attach: sc = %p\n", sc));
-
 	sc->sc_hdev.sc_intr = ucycom_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -214,8 +211,6 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
-	DPRINTF(("ucycom attach: report_id = %d\n", uha->reportid));
-
 	sc->sc_msr = sc->sc_mcr = 0;
 
 	/* set up tty */
@@ -224,10 +219,11 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tty->t_oproc = ucycomstart;
 	sc->sc_tty->t_param = ucycomparam;
 
-	DPRINTF(("ucycom_attach: tty_attach %p\n", sc->sc_tty));
 	tty_attach(sc->sc_tty);
 
-	DPRINTF(("ucycom_attach: complete\n"));
+	/* Nothing interesting to report */
+	printf("\n");
+
 }
 
 
