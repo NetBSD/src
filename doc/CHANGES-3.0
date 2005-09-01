@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.220 2005/08/31 10:43:53 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.221 2005/09/01 13:04:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12009,4 +12009,10 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.111
 	Don't allow negative offsets when reading the message buffer, because
 	it can allow reading arbitrary kernel memory.
 	[christos, ticket #727]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.112
+
+	Also protect the ipsec ioctls from negative offsets to prevent panics
+	in m_copydata().
+	[christos, ticket #728]
 
