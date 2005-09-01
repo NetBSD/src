@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.37 2005/08/31 13:43:38 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.38 2005/09/01 17:53:48 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -417,4 +417,11 @@ sys/miscfs/procfs/procfs_subr.c			1.59
 	   does not affect us in most cases because we check that later too.
 	2. Checking for attempts to write to init sooner and in all cases.
 	[christos, ticket #5634]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.112
+
+	Also protect the ipsec ioctls from negative offsets to prevent panics
+	in m_copydata(). Pointed out by Karl Janmar. Move the negative offset
+	check from kernfs_xread() to kernfs_read().
+	[christos, ticket #5637]
 
