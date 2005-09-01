@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.111 2005/08/31 09:54:54 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.112 2005/09/01 06:25:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.111 2005/08/31 09:54:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.112 2005/09/01 06:25:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -427,10 +427,6 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		 * message buffer header are corrupted, but that'll cause
 		 * the system to die anyway.
 		 */
-		if (off < 0) {
-			*wrlen = 0;
-			return EINVAL;
-		}
 		if (off >= msgbufp->msg_bufs) {
 			*wrlen = 0;
 			return (0);
@@ -942,6 +938,10 @@ kernfs_read(v)
 
 	if (ap->a_vp->v_type == VDIR)
 		return (EOPNOTSUPP);
+
+	/* Don't allow negative offsets */
+	if (uio->uio_offset < 0)
+		return EINVAL;
 
 	off = uio->uio_offset;
 	bf = strbuf;
