@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.221 2005/09/01 13:04:10 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.222 2005/09/01 18:05:07 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -11869,6 +11869,11 @@ sys/dev/ic/wdc.c				1.226,1.229
 	byte order only for WDCC_IDENTIFY and ATAPI_IDENTIFY_DEVICE. This fixes
 	atactl smart status on big-endian hosts.
 	[bouyer, ticket #693]
+
+gnu/dist/cvs/src/cvsbug.in			1.3
+
+	Fix vulnerability reported in SA16553 using the Red Hat patch.
+	[tron, ticket #707]
 
 usr.sbin/cron/do_command.c			1.17
 
