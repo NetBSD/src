@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.105 2005/09/01 02:16:46 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.106 2005/09/01 02:21:12 yamt Exp $	*/
 
 /*
  *
@@ -245,7 +245,6 @@ struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
-struct vmspace;
 struct vmtotal;
 
 /*
