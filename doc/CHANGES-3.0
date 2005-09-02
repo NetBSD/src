@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.224 2005/09/02 14:56:57 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.225 2005/09/02 15:26:05 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12069,4 +12069,18 @@ x11/lib/Makefile				1.7-1.9
 	Fix make target ordering, add back <bsd.lib.mk>, and
 	insert a .WAIT .
 	[tron, ticket #739]
+
+sys/arch/hpcmips/dev/optpoint.c			1.2
+
+	Fix buttons arg of wsmouse_input().
+	Add hard power hook. disable at suspend, enable at resume.
+	[hamajima, ticket #720]
+
+sys/fs/msdosfs/denode.h				1.6
+sys/fs/msdosfs/msdosfs_vnops.c			1.17
+
+	The maximum file size on MS-DOS filesystems is 4 GB - 1 byte, so
+	don't bother trying to write files bigger than this.  Just return
+	EFBIG to caller, rather than panic()ing later. PR#30864
+	[xtraeme, ticket #722]
 
