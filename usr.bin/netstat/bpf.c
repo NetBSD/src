@@ -1,4 +1,4 @@
-/* $NetBSD: bpf.c,v 1.2 2005/08/05 12:16:51 elad Exp $ */
+/*	$NetBSD: bpf.c,v 1.3 2005/09/02 22:23:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -68,14 +68,14 @@ bpf_stats(void)
 }
 
 void
-bpf_dump(kvm_t *kd, char *interface)
+bpf_dump(char *interface)
 {
-	int    name[CTL_MAXNAME], rc, i, cnt;
-	size_t sz;
+	int    name[CTL_MAXNAME], rc, i;
+	size_t sz, szproc;
 	u_int  namelen;
 	void  *v;
 	struct bpf_d_ext *dpe;
-	struct kinfo_proc *kp;
+	struct kinfo_proc2 p;
 
 	/* adapted from sockstat.c by Andrew Brown */
 
@@ -147,12 +147,19 @@ bpf_dump(kvm_t *kd, char *interface)
 		printf("%c", BPFEXT(bde_hdrcmplt) ? 'H' : '-');
 		printf("  %-8d ", BPFEXT(bde_bufsize));
 
-		kp = kvm_getprocs(kd, KERN_PROC_PID, BPFEXT(bde_pid), &cnt);
+		szproc = sizeof(p);
+		namelen = 0;
+		name[namelen++] = CTL_KERN;
+		name[namelen++] = KERN_PROC2;
+		name[namelen++] = KERN_PROC_PID;
+		name[namelen++] = BPFEXT(bde_pid);
+		name[namelen++] = szproc;
+		name[namelen++] = 1;
 
-		if (cnt && kd)
-			printf("%s\n", kp->kp_proc.p_comm);
-		else
+		if (sysctl(&name[0], namelen, &p, &szproc, NULL, 0) == -1)
 			printf("-\n");
+		else
+			printf("%s\n", p.p_comm);
 #undef BPFEXT
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2005/08/04 19:39:40 rpaulo Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2005/09/02 22:23:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.49 2005/08/04 19:39:40 rpaulo Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2005/09/02 22:23:13 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,7 +537,7 @@ main(argc, argv)
 		if (sflag)
 			bpf_stats();
 		else
-			bpf_dump(kvmd, interface);
+			bpf_dump(interface);
 		exit(0);
 	}
 
