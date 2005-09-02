@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.1 2005/08/14 21:14:25 riz Exp $
+# $NetBSD: GENERIC,v 1.47.2.2 2005/09/02 12:38:09 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -170,9 +170,18 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_VT100
 # allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=4
-# different kernel output - see dev/wscons/wsdisplayvar.h
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
