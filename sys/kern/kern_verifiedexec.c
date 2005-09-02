@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.25 2005/08/23 14:45:21 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.26 2005/09/02 12:16:17 tron Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.25 2005/08/23 14:45:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.26 2005/09/02 12:16:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -499,6 +499,52 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	tbl->hash_count--;
 
 	return (error);
+}
+
+/*
+ * Veriexe rename policy.
+ */
+int
+veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
+{
+	struct proc *p = curlwp->l_proc;
+	struct veriexec_hash_entry *vhe;
+	struct vattr va;
+	int error;
+
+	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
+	if (error)
+		return (error);
+
+	if (veriexec_strict >= 3) {
+		printf("Veriexec: veriexec_renamechk: Preventing rename "
+		       "of \"%s\" [%ld:%llu] to \"%s\", uid=%u, pid=%u: "
+		       "Lockdown mode.\n", from, va.va_fsid,
+		       (unsigned long long)va.va_fileid,
+		       to, p->p_ucred->cr_uid, p->p_pid);
+		return (EPERM);
+	}
+
+	/* XXX: dev_t and ino_t are 32bit, long can be 64bit. */
+	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
+	if (vhe != NULL) {
+		if (veriexec_strict >= 2) {
+			printf("Veriexec: veriexec_renamechk: Preventing "
+			       "rename of \"%s\" [%ld:%llu] to \"%s\", "
+			       "uid=%u, pid=%u: IPS mode, file "
+			       "monitored.\n", from, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
+			       to, p->p_ucred->cr_uid, p->p_pid);
+			return (EPERM);
+		}
+
+		printf("Veriexec: veriexec_rename: Monitored file \"%s\" "
+		       "[%ld:%llu] renamed to \"%s\", uid=%u, pid=%u.\n",
+		       from, va.va_fsid, (unsigned long long)va.va_fileid, to,
+		       p->p_ucred->cr_uid, p->p_pid);
+	}
+
+	return (0);
 }
 
 /*
