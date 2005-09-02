@@ -1,0 +1,6 @@
+.\"$NetBSD: hardware,v 1.1.4.2 2005/09/02 20:27:41 tron Exp $
+.
+.Nx*M
+supports CPUs that implement the 64bit AMD64 architecture.
+These currently include AMD Opteron, AMD Athlon64, and Intel CPUs that 
+implement the EM64T extension.
