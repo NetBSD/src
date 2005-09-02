@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.86 2005/08/23 07:58:58 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.87 2005/09/02 20:51:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.86 2005/08/23 07:58:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.87 2005/09/02 20:51:53 rillig Exp $");
 
 #include "opt_compat_43.h"
 
@@ -544,8 +544,10 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 static int
 grsortu(gid_t *grp, int ngrp)
 {
-	int i, j, k;
-	static const size_t gs = sizeof(grp[0]);
+	const gid_t *src, *end;
+	gid_t *dst;
+	gid_t group;
+	int i, j;
 
 	/* bubble sort */
 	for (i = 0; i < ngrp; i++)
@@ -555,21 +557,24 @@ grsortu(gid_t *grp, int ngrp)
 				grp[i] = grp[j];
 				grp[j] = tmp;
 			}
+
 	/* uniq */
-	for (i = 0; i < ngrp; i++) {
-		for (j = i + 1; j < ngrp && grp[i] == grp[j]; j++)
-			continue;
-		k = j - (i + 1);
-		if (k == 0)
-			continue;
-		(void)memcpy(&grp[i + 1], &grp[j], gs * (ngrp - j));
-		ngrp -= k;
-#ifdef DIAGNOSTIC
-		/* zero out the rest of the array */
-		(void)memset(&grp[ngrp], 0, gs * k);
-#endif
+	end = grp + ngrp;
+	src = grp;
+	dst = grp;
+	while (src < end) {
+		group = *src++;
+		while (src < end && *src == group)
+			src++;
+		*dst++ = group;
 	}
-	return ngrp;
+
+#ifdef DIAGNOSTIC
+	/* zero out the rest of the array */
+	(void)memset(dst, 0, sizeof(*grp) * (end - dst));
+#endif
+
+	return dst - grp;
 }
 
 /* ARGSUSED */
