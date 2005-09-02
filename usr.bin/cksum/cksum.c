@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.28 2005/09/02 16:52:03 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.29 2005/09/02 16:52:34 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.28 2005/09/02 16:52:03 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.29 2005/09/02 16:52:34 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -350,7 +350,7 @@ main(int argc, char **argv)
 int
 hash_digest_file(char *fn, struct hash *hash, int normal)
 {
-	char buf[MAXHASHLEN], *cp;
+	char buf[MAXHASHLEN + 1], *cp;
 
 	cp = hash->filefunc(fn, buf);
 	if (cp == NULL)
