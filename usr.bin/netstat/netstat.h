@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.31 2005/08/04 19:39:40 rpaulo Exp $	*/
+/*	$NetBSD: netstat.h,v 1.32 2005/09/02 22:23:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,4 +155,4 @@ void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));
 
 void	bpf_stats(void);
-void	bpf_dump(kvm_t *, char *);
+void	bpf_dump(char *);
