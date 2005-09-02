@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.46 2005/08/24 20:55:41 elad Exp $	*/
+/*	$NetBSD: compare.c,v 1.47 2005/09/02 17:12:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.46 2005/08/24 20:55:41 elad Exp $");
+__RCSID("$NetBSD: compare.c,v 1.47 2005/09/02 17:12:38 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ compare(NODE *s, FTSENT *p)
 	int fd, label;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
-	char digestbuf[129];	/* large enough for {MD5,RMD160,SHA1,SHA2512_}File() */
+	char digestbuf[MAXHASHLEN + 1];
 #endif
 
 	tab = NULL;
