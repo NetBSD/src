@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.8 2005/08/09 12:59:29 he Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.9 2005/09/02 17:48:40 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.8 2005/08/09 12:59:29 he Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.9 2005/09/02 17:48:40 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -407,8 +407,6 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 				break;
 			case FSTYPE_NONE:
 				/* maybe LFS? */
-				if (sbinfo.lfs->lfs_magic != LFS_MAGIC)
-					break;
 				if (sbinfo.lfs->lfs_magic == LFS_MAGIC)
 					lfs_scan(n);
 				break;
