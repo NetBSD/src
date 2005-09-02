@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.223 2005/09/02 12:46:47 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.224 2005/09/02 14:56:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12063,4 +12063,10 @@ usr.bin/ssh/sshd/Makefile			1.27
 	fails. The problem was that different ssh programs were compiled with
 	different cpp flags. In particular, ssh-keysign was affected.
 	[christos, ticket #719]
+
+x11/lib/Makefile				1.7-1.9
+
+	Fix make target ordering, add back <bsd.lib.mk>, and
+	insert a .WAIT .
+	[tron, ticket #739]
 
