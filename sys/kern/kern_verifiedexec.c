@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.37 2005/08/19 16:58:29 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.38 2005/09/02 14:16:50 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.37 2005/08/19 16:58:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.38 2005/09/02 14:16:50 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -361,10 +361,7 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		return (0);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
-	/*
-	 * XXX: Both va_fsid and va_fileid are long (32/64 bits), while
-	 * XXX: veriexec_lookup() is passed dev_t and ino_t - uint32_t.
-	 */
+	/* XXX: va_fsid is long, dev_t is uint32_t. */
 	vhe = veriexec_lookup((dev_t)va->va_fsid, (ino_t)va->va_fileid);
 	if (ret != NULL)
 		*ret = vhe;
@@ -527,7 +524,7 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 		return (EPERM);
 	}
 
-	/* XXX: dev_t and ino_t are 32bit, long can be 64bit. */
+	/* XXX: dev_t is 32bit, long can be 64bit. */
 	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
 	if (vhe != NULL) {
 		if (veriexec_strict >= 2) {
