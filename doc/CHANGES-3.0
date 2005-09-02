@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.222 2005/09/01 18:05:07 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.223 2005/09/02 12:46:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12020,4 +12020,47 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.112
 	Also protect the ipsec ioctls from negative offsets to prevent panics
 	in m_copydata().
 	[christos, ticket #728]
+
+sys/kern/kern_verifiedexec.c			patch
+sys/kern/vfs_syscalls.c				patch
+sys/sys/verified_exec.h				patch
+
+	Implements the rename policy. Implications per strict level:
+	0, 1: Log renames of monitored files.
+	2:    Prevent renames of monitored files.
+	3:    Prevent renames.
+	[elad, ticket #709]
+
+distrib/sets/lists/etc/mi			1.158
+distrib/sets/lists/man/mi			1.818
+etc/mtree/special				1.89
+etc/rc.d/Makefile				1.52
+etc/rc.d/pf					1.5-1.6
+etc/rc.d/pf_boot				1.1
+usr.sbin/pf/Makefile				1.7
+usr.sbin/pf/etc/defaults/Makefile		1.1
+usr.sbin/pf/etc/defaults/pf.boot.conf		1.1
+usr.sbin/pf/man/man5/Makefile			1.5
+usr.sbin/pf/man/man5/pf.boot.conf.5		1.1
+usr.sbin/postinstall/postinstall		1.4
+
+	Add /etc/defaults/pf.boot.conf and load it with the /etc/rc.d/pf_boot
+	script before starting the network. People who don'tp like the default
+	rules can override it with their own /etc/pf.boot.conf.
+	If the pf_rules cannot be found at boot time, abort the boot.
+	[peter, ticket #717]
+
+sys/arch/hpcsh/conf/GENERIC			1.56
+
+	Add WSDISPLAY_CUSTOM_OUTPUT and related options.
+	[uwe, ticket #718]
+
+usr.bin/ssh/Makefile.inc			1.12
+usr.bin/ssh/ssh/Makefile			1.22
+usr.bin/ssh/sshd/Makefile			1.27
+
+	PR bin/30750: ssh gives bogus complaint when gssapi authentication
+	fails. The problem was that different ssh programs were compiled with
+	different cpp flags. In particular, ssh-keysign was affected.
+	[christos, ticket #719]
 
