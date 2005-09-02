@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.226 2005/09/02 20:39:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.227 2005/09/02 20:42:38 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12133,4 +12133,12 @@ distrib/notes/common/main			patch
 	- Update list of release engineers.
 	- Updated URL for list of NetBSD mirrors.
 	[riz, ticket #734]
+
+Makefile					1.240
+
+	Modify "release" to invoke "make distribution" instead of "make build",
+	so that the "obsolete file removal" functionality of "distribution"
+	is used. Fixes build problems numerous people have experienced with
+	MKUPDATE=yes and the "release" target.
+	[lukem, ticket #716]
 
