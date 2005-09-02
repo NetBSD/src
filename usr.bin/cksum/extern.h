@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2005/08/24 19:59:08 elad Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2005/09/02 16:52:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,6 +36,9 @@
 #endif
 
 #include <sys/cdefs.h>
+
+/* Max. length of hash -- update when adding new algorithms. */
+#define	MAXHASHLEN	128 /* SHA512 */
 
 __BEGIN_DECLS
 int	crc(int, u_int32_t *, off_t *);
