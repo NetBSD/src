@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2005/09/02 12:42:10 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,6 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	kexdhs.c kexgexs.c
 
 .if (${USE_PAM} != "no")
-CPPFLAGS+=-DUSE_PAM
 SRCS+= auth-pam.c
 LDADD+=	-lpam ${PAM_STATIC_LDADD}
 DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
@@ -25,7 +24,6 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 
 .if (${USE_KERBEROS} != "no")
 
-CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
 SRCS +=	gss-genr.c auth2-gss.c gss-serv.c gss-serv-krb5.c
 LDADD+=	-lgssapi
 DPADD+=	${LIBGSSAPI}
@@ -33,13 +31,11 @@ DPADD+=	${LIBGSSAPI}
 LDADD+=	-lkafs
 DPADD+= ${LIBKAFS}
 
-CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5
 SRCS+=	auth-krb5.c auth2-krb5.c
 LDADD+=	-lkrb5 -lasn1
 DPADD+=	${LIBKRB5} ${LIBASN1}
 
 .if ${MKKERBEROS4} != "no"
-CPPFLAGS+=-DKRB4 -DAFS -I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	auth-krb4.c radix.c
 LDADD+=	-lkrb -ldes
 DPADD+=	${LIBKRB} ${LIBDES}
@@ -51,17 +47,13 @@ DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
 
 .include <bsd.prog.mk>
 
-CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
-
 LDADD+=	-lcrypt -lutil
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
-CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
 .if (${USE_SKEY} != "no")
-CPPFLAGS+=-DSKEY
 LDADD+=	-lskey
 DPADD+=	${LIBSKEY}
 .endif
