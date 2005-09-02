@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.225 2005/09/02 15:26:05 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.226 2005/09/02 20:39:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12083,4 +12083,54 @@ sys/fs/msdosfs/msdosfs_vnops.c			1.17
 	don't bother trying to write files bigger than this.  Just return
 	EFBIG to caller, rather than panic()ing later. PR#30864
 	[xtraeme, ticket #722]
+
+distrib/notes/common/contents			1.115
+
+	Reference siop(4) not ncr(4).
+	[riz, ticket #729]
+
+share/man/man4/options.4			1.283
+
+	Remove reference to ncr(4).
+	[riz, ticket #730]
+
+distrib/notes/common/postinstall		1.59
+
+	Packages.txt has been obsoleted, point to doc/pkgsrc.txt.
+	Whitespace and casing nit fixes.
+	[riz, ticket #731]
+
+distrib/notes/Makefile				1.35
+distrib/notes/amd64/Makefile			1.1
+distrib/notes/amd64/hardware			1.1
+distrib/notes/amd64/install			1.1
+distrib/notes/amd64/legal			1.1
+distrib/notes/amd64/prep			1.1
+distrib/notes/amd64/upgrade			1.1
+distrib/notes/amd64/whatis			1.1
+distrib/notes/amd64/xfer			1.1
+
+	Create the release notes framework for the amd64 port.  These are,
+	for the most part, skeleton files that allow the amd64 INSTALL document
+	to have all the platform-independent bits, with very little MD stuff.
+	The MD pieces will have to wait for someone familiar with the platform
+	to add them.
+	[riz, ticket #732]
+
+distrib/notes/common/contents			1.116
+distrib/notes/common/main			1.291
+
+	Add an amd64 'Quick install notes for the impatient' bit, and
+	touch up the amd64 directory structure.
+	[riz, ticket #733]
+
+distrib/notes/common/main			patch
+
+	- Add various new developers.
+	- Correct number of packages in package sources.
+	- Update list of core members.
+	- Update list of portmasters.
+	- Update list of release engineers.
+	- Updated URL for list of NetBSD mirrors.
+	[riz, ticket #734]
 
