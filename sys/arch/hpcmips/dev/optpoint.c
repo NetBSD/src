@@ -1,4 +1,4 @@
-/*	$NetBSD: optpoint.c,v 1.1.2.2 2005/05/07 11:34:57 tron Exp $ */
+/*	$NetBSD: optpoint.c,v 1.1.2.3 2005/09/02 15:19:20 riz Exp $ */
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.1.2.2 2005/05/07 11:34:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.1.2.3 2005/09/02 15:19:20 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/bus.h>
+#include <machine/config_hook.h>
 #include <dev/hpc/hpciovar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -58,6 +59,7 @@ struct optpoint_softc {
 	struct tx39spi_softc *sc_spi;
 	struct hpcio_chip *sc_hc;
 	struct device *sc_wsmousedev;
+	void *sc_powerhook;	/* power management hook */
 	char packet[4];
 	int index;	/* number of bytes received for this packet */
 	u_int buttons;	/* mouse button status */
@@ -73,6 +75,7 @@ static int optpoint_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static int optpoint_initialize(void *);
 static void optpoint_send(struct optpoint_softc *, int);
 static int optpoint_recv(struct optpoint_softc *);
+static int optpoint_power(void *, int, long, void *);
 
 #define LBUTMASK 0x01
 #define RBUTMASK 0x02
@@ -127,6 +130,17 @@ optpoint_attach(struct device *parent, struct device *self, void *aux)
 	wsmaa.accesscookie = sc;
 	/* attach the wsmouse */
 	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint);
+
+	/* Add a hard power hook to power saving */
+	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
+				       CONFIG_HOOK_PMEVENT_HARDPOWER,
+				       CONFIG_HOOK_SHARE,
+				       optpoint_power, sc);
+#ifdef DIAGNOSTIC
+	if (sc->sc_powerhook == 0)
+		printf("%s: unable to establish hard power hook",
+		       sc->sc_dev.dv_xname);
+#endif
 }
 
 int
@@ -153,17 +167,16 @@ optpoint_intr(void *self)
 
 	sc->packet[sc->index++] = data;
 	if (sc->index >= 3){
-		u_int newbuttons = ((sc->packet[1] & LBUTMASK) ? 0x1 : 0) |
-		    ((sc->packet[1] & RBUTMASK) ? 0x2 : 0);
+		u_int newbuttons = ((sc->packet[1] & LBUTMASK) ? 0x1 : 0)
+				 | ((sc->packet[1] & RBUTMASK) ? 0x2 : 0);
 		int dx = sc->packet[2];
 		int dy = sc->packet[0];
 		u_int changed = (sc->buttons ^ newbuttons);
 
 		if (dx || dy || changed){
-			DPRINTF(("buttons=0x%x, dx=%d, dy=%d\n",
-				 newbuttons, dx, dy));
-			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, dx, dy, 0,
+			DPRINTF(("%s: buttons=0x%x, dx=%d, dy=%d\n",
+				 sc->sc_dev.dv_xname, newbuttons, dx, dy));
+			wsmouse_input(sc->sc_wsmousedev, newbuttons, dx, dy, 0,
 				      WSMOUSE_INPUT_DELTA);
 		}
 		sc->buttons = newbuttons;
@@ -184,6 +197,8 @@ optpoint_enable(void *self)
 		tx_chipset_tag_t tc = sc->sc_tc;
 		struct hpcio_chip *hc = sc->sc_hc;
 		int s = spltty();
+
+		DPRINTF(("%s: enable\n", sc->sc_dev.dv_xname));
 
 		sc->enabled = 1;
 		sc->index = 0;
@@ -213,6 +228,8 @@ optpoint_disable(void *self)
 		tx_chipset_tag_t tc = sc->sc_tc;
 		struct hpcio_chip *hc = sc->sc_hc;
 		int s = spltty();
+
+		DPRINTF(("%s: disable\n", sc->sc_dev.dv_xname));
 
 		sc->enabled = 0;
 		(*hc->hc_portwrite)(hc, TELIOS_MFIO_OPTP_C_REQ, 0);
@@ -284,4 +301,26 @@ optpoint_recv(struct optpoint_softc *sc)
 	while ((*hc->hc_portread)(hc, TELIOS_MFIO_OPTP_S_ENB_N))
 		;
 	return tx39spi_get_word(sc->sc_spi) & 0xff;
+}
+
+int
+optpoint_power(void *self, int type, long id, void *msg)
+{
+	struct optpoint_softc *sc = (void *)self;
+	int why = (int)msg;
+
+	switch (why) {
+	case PWR_RESUME:
+		/* power on */
+		optpoint_enable(sc);
+		break;
+	case PWR_SUSPEND:
+		/* FALLTHROUGH */
+	case PWR_STANDBY:
+		/* power off */
+		optpoint_disable(sc);
+		break;
+	}
+
+	return 0;
 }
