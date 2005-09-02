@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: pf,v 1.3.2.2 2005/09/02 12:19:27 tron Exp $
+# $NetBSD: pf,v 1.3.2.3 2005/09/02 12:29:37 tron Exp $
 #
 
 # PROVIDE: pf
-# REQUIRE: root beforenetlkm mountcritlocal tty
-# BEFORE: network
+# REQUIRE: root beforenetlkm mountcritlocal tty network dhclient
+# BEFORE: NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
 
@@ -38,7 +38,12 @@ pf_prestart()
 pf_start()
 {
 	echo "Enabling pf firewall."
-	/sbin/pfctl -q -e 
+
+	# The pf_boot script has enabled pf already.
+	if [ "$autoboot" != yes ]; then
+		/sbin/pfctl -q -e 
+	fi
+
 	if [ -f ${pf_rules} ]; then
 		/sbin/pfctl -q -f ${pf_rules}
 	else
