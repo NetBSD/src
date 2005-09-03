@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.92 2005/05/30 11:21:11 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.93 2005/09/03 19:44:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92 2005/05/30 11:21:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.93 2005/09/03 19:44:20 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -650,8 +650,8 @@ done:
  *  SCM_RIGHTS message; len is the length it is being truncated to.  p
  *  is the affected process.
  */
-static
-void adjust_rights(struct mbuf *m, int len, struct proc *p)
+static void
+adjust_rights(struct mbuf *m, int len, struct proc *p)
 {
 	int nfd;
 	int i;
