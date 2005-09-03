@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.116 2005/08/19 05:19:51 christos Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.117 2005/09/03 20:38:07 dsl Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -315,7 +315,7 @@ scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
@@ -359,7 +359,7 @@ atapibus* at atapi?
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 sd*	at atapibus? drive ?		# ATAPI disk drives
-st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 
 
 # Miscellaneous mass storage devices
