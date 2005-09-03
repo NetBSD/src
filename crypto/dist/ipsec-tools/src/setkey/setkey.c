@@ -1,6 +1,6 @@
-/* $NetBSD: setkey.c,v 1.3.2.1 2005/05/01 11:01:11 tron Exp $ /
+/*	$NetBSD: setkey.c,v 1.3.2.2 2005/09/03 07:03:56 snj Exp $	*/
 
-/*	KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp	*/
+/*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -70,6 +70,8 @@
 #include "config.h"
 #include "libpfkey.h"
 #include "package_version.h"
+#define extern /* so that variables in extern.h are not extern... */
+#include "extern.h"
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
 
@@ -78,7 +80,6 @@ int main __P((int, char **));
 int get_supported __P((void));
 void sendkeyshort __P((u_int));
 void promisc __P((void));
-int sendkeymsg __P((char *, size_t));
 int postproc __P((struct sadb_msg *, int));
 int verifypriority __P((struct sadb_msg *m));
 int fileproc __P((const char *));
@@ -88,8 +89,6 @@ void shortdump __P((struct sadb_msg *));
 static void printdate __P((void));
 static int32_t gmt2local __P((time_t));
 void stdin_loop __P((void));
-
-extern void parse_init __P((void));
 
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
@@ -115,8 +114,9 @@ int f_rfcmode = 1;
 #else
 int f_rkwarn = 0;
 #define RK_OPTS ""
+static void rkwarn(void);
 static void
-rkwarn()
+rkwarn(void)
 {
 	if (!f_rkwarn) {
 		f_rkwarn = 1;
@@ -126,22 +126,6 @@ rkwarn()
 
 #endif
 static time_t thiszone;
-
-extern int lineno;
-
-#ifdef HAVE_PFKEY_POLICY_PRIORITY
-extern int last_msg_type;
-int last_msg_type = -1;
-
-extern u_int32_t last_priority;
-u_int32_t last_priority = 0;
-#endif
-
-extern int exit_now;
-int exit_now = 0;
-
-extern int parse __P((FILE **));
-extern int parse_string __P((char *));
 
 void
 usage(int only_version)
@@ -166,8 +150,6 @@ main(argc, argv)
 {
 	FILE *fp = stdin;
 	int c;
-	struct stat sb;
-	int error;
 
 	if (argc == 1) {
 		usage(0);
@@ -180,6 +162,10 @@ main(argc, argv)
 		switch (c) {
 		case 'c':
 			f_mode = MODE_STDIN;
+#ifdef HAVE_READLINE
+			/* disable filename completion */
+			rl_bind_key('\t', rl_insert);
+#endif
 			break;
 		case 'f':
 			f_mode = MODE_SCRIPT;
@@ -325,28 +311,28 @@ stdin_loop()
 	parse_init();
 	while (1) {
 #ifdef HAVE_READLINE
-		char *read;
-		read = readline ("");
-		if (! read)
+		char *rbuf;
+		rbuf = readline ("");
+		if (! rbuf)
 			break;
 #else
-		char read[1024];
-		read[0] = '\0';
-		fgets (read, sizeof(read), stdin);
-		if (! read[0])
+		char rbuf[1024];
+		rbuf[0] = '\0';
+		fgets (rbuf, sizeof(rbuf), stdin);
+		if (!rbuf[0])
 			break;
-		if (read[strlen(read)-1] == '\n')
-			read[strlen(read)-1] = '\0';
+		if (rbuf[strlen(rbuf)-1] == '\n')
+			rbuf[strlen(rbuf)-1] = '\0';
 #endif
-		comment = strchr(read, '#');
+		comment = strchr(rbuf, '#');
 		if (comment)
 			*comment = '\0';
 
-		if (! read[0])
+		if (!rbuf[0])
 			continue;
 
 		linelen += snprintf (&line[linelen], sizeof(line) - linelen,
-				     "%s%s", linelen > 0 ? " " : "", read);
+				     "%s%s", linelen > 0 ? " " : "", rbuf);
 
 		semicolon = strchr(line, ';');
 		while (semicolon) {

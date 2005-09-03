@@ -1,7 +1,7 @@
-# Id: racoon.conf.sample-inherit,v 1.1 2004/05/27 14:01:42 ludvigm Exp
+# Id: racoon.conf.sample-inherit,v 1.1.12.1 2005/04/18 11:10:55 manubsd Exp
 # Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
 
-# This file show the basic inheritance usage in 'remote' statements.
+# This file shows the basic inheritance usage in 'remote' statements.
 
 path pre_shared_key "/etc/racoon/psk.txt";
 path certificate "/etc/racoon";

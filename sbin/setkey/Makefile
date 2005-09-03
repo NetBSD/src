@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2005/02/24 13:45:08 manu Exp $
-
-WARNS=	0	# Will be fixed later
+# $NetBSD: Makefile,v 1.6.2.1 2005/09/03 07:03:57 snj Exp $
 
 .include <bsd.own.mk>
 

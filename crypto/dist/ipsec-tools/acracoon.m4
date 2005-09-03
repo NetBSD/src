@@ -48,7 +48,8 @@ AC_DEFUN([RACOON_CHECK_VA_COPY], [
 		}],
 		[ac_cv_va_copy=yes],
 		[ac_cv_va_copy=no],
-		[])
+		AC_MSG_WARN(Cross compiling... Unable to test va_copy)
+		[ac_cv_va_copy=no])
 	])
 	if test x$ac_cv_va_copy != xyes; then
 		AC_CACHE_CHECK([for an implementation of __va_copy()],
@@ -69,7 +70,8 @@ AC_DEFUN([RACOON_CHECK_VA_COPY], [
 			}],
 			[ac_cv___va_copy=yes],
 			[ac_cv___va_copy=no],
-			[])
+			AC_MSG_WARN(Cross compiling... Unable to test __va_copy)
+			[ac_cv___va_copy=no])
 		])
 	fi
 
@@ -186,8 +188,8 @@ AC_DEFUN([RACOON_CHECK_BUGGY_GETADDRINFO], [
 	buggygetaddrinfo=no,
 	AC_MSG_RESULT(buggy)
 	buggygetaddrinfo=yes,
-	AC_MSG_RESULT(buggy)
-	buggygetaddrinfo=yes)
+	AC_MSG_RESULT(Cross compiling ... Assuming getaddrinfo is not buggy.)
+	buggygetaddrinfo=no)
 	CFLAGS=$saved_CFLAGS
 	unset saved_CFLAGS
 ])

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
 
 /* Id: gssapi.h,v 1.5 2005/02/11 06:59:01 manubsd Exp */
 

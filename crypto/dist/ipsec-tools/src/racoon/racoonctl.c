@@ -1,6 +1,6 @@
-/*	$NetBSD: racoonctl.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
 
-/*	Id: racoonctl.c,v 1.2 2004/12/30 11:08:32 manubsd Exp */
+/*	Id: racoonctl.c,v 1.2.2.1 2005/04/21 09:07:20 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -82,7 +82,7 @@
 #include "ipsec_doi.h"
 #include "evt.h"
 
-static char *adminsock_path = ADMINSOCK_PATH;
+char *adminsock_path = ADMINSOCK_PATH;
 
 static void usage __P((void));
 static vchar_t *get_combuf __P((int, char **));

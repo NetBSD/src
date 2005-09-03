@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_tok.l,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+/*	$NetBSD: prsa_tok.l,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
 
 /* Id: prsa_tok.l,v 1.2 2004/07/12 20:43:51 ludvigm Exp */
 

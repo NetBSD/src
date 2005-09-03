@@ -1,6 +1,6 @@
-/*	$NetBSD: privsep.c,v 1.1.1.4.2.1 2005/06/10 09:25:32 tron Exp $	*/
+/*	$NetBSD: privsep.c,v 1.1.1.4.2.2 2005/09/03 07:03:50 snj Exp $	*/
 
-/* Id: privsep.c,v 1.6.2.4 2005/03/16 23:18:43 manubsd Exp */
+/* Id: privsep.c,v 1.6.2.7 2005/08/08 11:25:01 vanhu Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -69,7 +69,9 @@ static int privsep_sock[2] = { -1, -1 };
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
 static int safety_check(struct privsep_com_msg *, int i);
+#ifdef HAVE_LIBPAM
 static int port_check(int);
+#endif
 static int unsafe_env(char *const *);
 static int unknown_name(int);
 static int unknown_script(int);
@@ -905,19 +907,21 @@ privsep_xauth_login_system(usr, pwd)
 }
 #endif /* ENABLE_HYBRID */
 
+#ifdef HAVE_LIBPAM
 static int
 port_check(port)
 	int port;
 {
 	if ((port < 0) || (port >= isakmp_cfg_config.pool_size)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
-		    "privsep: port %d outsied of allowed range [0,%d]\n",
+		    "privsep: port %d outside of allowed range [0,%zu]\n",
 		    port, isakmp_cfg_config.pool_size - 1);
 		return -1;
 	}
 
 	return 0;
 }
+#endif
 
 static int 
 safety_check(msg, index)
