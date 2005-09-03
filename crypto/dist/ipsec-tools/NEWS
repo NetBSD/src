@@ -1,13 +1,25 @@
 Version history:
 ----------------
-0.6???	- ??
+0.6.1	- 10 august 2005
+	o NAT-T fixes for situations where NAT-T is not used
+	o OpenSSL 0.9.8 support
+	o keys are not restricted to OpenSSL default size anymore
+	o PKCS7 support
+	o SHA2 support
+
+0.6	- 27 June 2005
+	o Generated policies are now correctly flushed
+	o NAT-T works with multiple peers behind the NAT (need kernel support)
+	o Xauth can use shadow passwords
+	o TCP-MD5 support
 	o PAM support for Xauth
 	o Privilege separation
 	o ESP fragmentation in tunnel mode can be tunned (NetBSD only)
 	o racoon admin interface is exported (header and library) to 
 	  help building control programs for racoon (think GUI)
+ 	o Fixed single DES support; single DES users MUST UPGRADE
 
-0.5???	- ?? 
+0.5	- 10 April 2005
 	o Rewritten buildsystem. Now completely autoconfed, automaked,
 	  libtoolized.
 	o IPsec-tools now compiles on NetBSD and FreeBSD again.

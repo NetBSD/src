@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.4.2.2 2005/09/03 07:03:49 snj Exp $	*/
 
-/* $Id: cftoken.l,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $ */
+/* Id: cftoken.l,v 1.31.2.5 2005/06/28 22:38:02 manubsd Exp */
 
 %{
 /*
@@ -400,16 +400,22 @@ non_auth	{ YYD; yylval.num = algtype_non_auth;	return(ALGORITHMTYPE); }
 hmac_md5	{ YYD; yylval.num = algtype_hmac_md5;	return(ALGORITHMTYPE); }
 hmac_sha1	{ YYD; yylval.num = algtype_hmac_sha1;	return(ALGORITHMTYPE); }
 hmac_sha2_256	{ YYD; yylval.num = algtype_hmac_sha2_256;	return(ALGORITHMTYPE); }
+hmac_sha256	{ YYD; yylval.num = algtype_hmac_sha2_256;	return(ALGORITHMTYPE); }
 hmac_sha2_384	{ YYD; yylval.num = algtype_hmac_sha2_384;	return(ALGORITHMTYPE); }
+hmac_sha384	{ YYD; yylval.num = algtype_hmac_sha2_384;	return(ALGORITHMTYPE); }
 hmac_sha2_512	{ YYD; yylval.num = algtype_hmac_sha2_512;	return(ALGORITHMTYPE); }
+hmac_sha512	{ YYD; yylval.num = algtype_hmac_sha2_512;	return(ALGORITHMTYPE); }
 des_mac		{ YYD; yylval.num = algtype_des_mac;	return(ALGORITHMTYPE); }
 kpdk		{ YYD; yylval.num = algtype_kpdk;	return(ALGORITHMTYPE); }
 md5		{ YYD; yylval.num = algtype_md5;	return(ALGORITHMTYPE); }
 sha1		{ YYD; yylval.num = algtype_sha1;	return(ALGORITHMTYPE); }
 tiger		{ YYD; yylval.num = algtype_tiger;	return(ALGORITHMTYPE); }
 sha2_256	{ YYD; yylval.num = algtype_sha2_256;	return(ALGORITHMTYPE); }
+sha256		{ YYD; yylval.num = algtype_sha2_256;	return(ALGORITHMTYPE); }
 sha2_384	{ YYD; yylval.num = algtype_sha2_384;	return(ALGORITHMTYPE); }
+sha384		{ YYD; yylval.num = algtype_sha2_384;	return(ALGORITHMTYPE); }
 sha2_512	{ YYD; yylval.num = algtype_sha2_512;	return(ALGORITHMTYPE); }
+sha512		{ YYD; yylval.num = algtype_sha2_512;	return(ALGORITHMTYPE); }
 oui		{ YYD; yylval.num = algtype_oui;	return(ALGORITHMTYPE); }
 deflate		{ YYD; yylval.num = algtype_deflate;	return(ALGORITHMTYPE); }
 lzs		{ YYD; yylval.num = algtype_lzs;	return(ALGORITHMTYPE); }
@@ -512,7 +518,7 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 		}
 
 {quotedstring}	{
-			u_char *p = yytext;
+			char *p = yytext;
 
 			YYD;
 			while (*++p != '"') ;

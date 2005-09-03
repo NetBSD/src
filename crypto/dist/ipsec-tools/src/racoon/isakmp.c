@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.3.2.6 2005/07/02 23:22:34 tron Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.3.2.7 2005/09/03 07:03:49 snj Exp $	*/
 
-/* $Id: isakmp.c,v 1.1.1.3.2.6 2005/07/02 23:22:34 tron Exp $ */
+/* Id: isakmp.c,v 1.34.2.19 2005/08/11 14:58:51 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@
 #include <unistd.h>
 #endif
 #include <ctype.h>
+#include <fcntl.h>
 
 #include "var.h"
 #include "misc.h"
@@ -85,6 +86,7 @@
 #include "oakley.h"
 #include "evt.h"
 #include "handler.h"
+#include "proposal.h"
 #include "ipsec_doi.h"
 #include "pfkey.h"
 #include "crypto_openssl.h"
@@ -108,6 +110,8 @@
 # include "nattraversal.h"
 # ifdef __linux__
 #  include <linux/udp.h>
+#include <fcntl.h>
+
 #  ifndef SOL_UDP
 #   define SOL_UDP 17
 #  endif
@@ -194,8 +198,8 @@ isakmp_handler(so_isakmp)
 	} x;
 	struct sockaddr_storage remote;
 	struct sockaddr_storage local;
-	int remote_len = sizeof(remote);
-	int local_len = sizeof(local);
+	unsigned int remote_len = sizeof(remote);
+	unsigned int local_len = sizeof(local);
 	int len = 0, extralen = 0;
 	u_short port;
 	vchar_t *buf = NULL, *tmpbuf = NULL;
@@ -1086,6 +1090,15 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 	iph1->approval = NULL;
 
+#ifdef ENABLE_NATT
+	/* RFC3947 says that we MUST accept new phases1 on NAT-T floated port.
+	 * We have to setup this flag now to correctly generate the first reply.
+	 * Don't know if a better check could be done for that ?
+	 */
+	if(extract_port(local) == lcconf->port_isakmp_natt)
+		iph1->natt_flags |= (NAT_PORTS_CHANGED);
+#endif
+
 	/* copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0)
 		return -1;
@@ -1573,6 +1586,10 @@ isakmp_open()
 				plog(LLV_ERROR, LOCATION, NULL,
 					"setsockopt(%d): %s\n",
 					pktinfo, strerror(errno));
+		if (fcntl(p->sock, F_SETFL, O_NONBLOCK) == -1)
+			plog(LLV_WARNING, LOCATION, NULL,
+				"failed to put socket in non-blocking mode\n");
+
 				goto err_and_next;
 			}
 			break;
@@ -1715,39 +1732,46 @@ isakmp_send(iph1, sbuf)
 		vbuf = vmalloc (sbuf->l + extralen);
 		*(u_int32_t *)vbuf->v = 0;
 		memcpy (vbuf->v + extralen, sbuf->v, sbuf->l);
+		sbuf = vbuf;
 	}
-	else
-		vbuf = sbuf;
-#else
-	vbuf = sbuf;
 #endif
 
 	/* select the socket to be sent */
 	s = getsockmyaddr(iph1->local);
-	if (s == -1)
+	if (s == -1){
+		if ( vbuf != NULL )
+			vfree(vbuf);
 		return -1;
+	}
 
-	plog (LLV_DEBUG, LOCATION, NULL, "%zu bytes %s\n", vbuf->l, 
+	plog (LLV_DEBUG, LOCATION, NULL, "%zu bytes %s\n", sbuf->l, 
 	      saddr2str_fromto("from %s to %s", iph1->local, iph1->remote));
 
 #ifdef ENABLE_FRAG
-	if (iph1->frag && vbuf->l > ISAKMP_FRAG_MAXLEN) {
-		if (isakmp_sendfrags(iph1, vbuf) == -1) {
+	if (iph1->frag && sbuf->l > ISAKMP_FRAG_MAXLEN) {
+		if (isakmp_sendfrags(iph1, sbuf) == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "isakmp_sendfrags failed\n");
+			if ( vbuf != NULL )
+				vfree(vbuf);
 			return -1;
 		}
 	} else 
 #endif
 	{
-		len = sendfromto(s, vbuf->v, vbuf->l,
+		len = sendfromto(s, sbuf->v, sbuf->l,
 		    iph1->local, iph1->remote, lcconf->count_persend);
 		if (len == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, "sendfromto failed\n");
+			if ( vbuf != NULL )
+				vfree(vbuf);
 			return -1;
 		}
 	}
-
+	
+	if ( vbuf != NULL )
+		vfree(vbuf);
+	
 	return 0;
 }
 
@@ -2763,6 +2787,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	    iph1->natt_flags |= NAT_ADD_NON_ESP_MARKER;
 	}
 #endif
+
 	return 0;
 }
 
@@ -3046,9 +3071,24 @@ purge_remote(iph1)
 	struct sadb_sa *sa;
 	struct sockaddr *src, *dst;
 	caddr_t mhp[SADB_EXT_MAX + 1];
+	u_int proto_id;
 	struct ph2handle *iph2;
+	struct ph1handle *new_iph1;
 
-	/* Delete all phase2 SAs */
+	plog(LLV_INFO, LOCATION, NULL,
+		 "purging ISAKMP-SA spi=%s.\n",
+		 isakmp_pindex(&(iph1->index), iph1->msgid));
+
+	/* Mark as expired. */
+	iph1->status = PHASE1ST_EXPIRED;
+
+	/* Check if we have another, still valid, phase1 SA. */
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote);
+
+	/*
+	 * Delete all orphaned or binded to the deleting ph1handle phase2 SAs.
+	 * Keep all others phase2 SAs.
+	 */
 	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);
 	if (buf == NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -3085,36 +3125,70 @@ purge_remote(iph1)
 		src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 		dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
-		if (sa->sadb_sa_state != SADB_SASTATE_MATURE &&
+		if (sa->sadb_sa_state != SADB_SASTATE_LARVAL &&
+		    sa->sadb_sa_state != SADB_SASTATE_MATURE &&
 		    sa->sadb_sa_state != SADB_SASTATE_DYING) {
 			msg = next;
 			continue;
 		}
 
-		/* delete in/outbound SAs */
-		if (CMPSADDR(iph1->remote, dst) &&
-		    CMPSADDR(iph1->remote, src)) {
+		/* check in/outbound SAs */
+		if ((CMPSADDR(iph1->local, src) || CMPSADDR(iph1->remote, dst)) &&
+			(CMPSADDR(iph1->local, dst) || CMPSADDR(iph1->remote, src))) {
 			msg = next;
 			continue;
 		}
 
+		proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
+		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);
+
+		/* Check if there is another valid ISAKMP-SA */
+		if (new_iph1 != NULL) {
+
+			if (iph2 == NULL) {
+				/* No handler... still send a pfkey_delete message, but log this !*/
+				plog(LLV_INFO, LOCATION, NULL,
+					"Unknown IPsec-SA spi=%u, hmmmm?\n",
+					ntohl(sa->sadb_sa_spi));
+			}else{
+
+				/* 
+				 * If we have a new ph1, do not purge IPsec-SAs binded
+				 *  to a different ISAKMP-SA
+				 */
+				if (iph2->ph1 != NULL && iph2->ph1 != iph1){
+					msg = next;
+					continue;
+				}
+
+				/* If the ph2handle is established, do not purge IPsec-SA */
+				if (iph2->status == PHASE2ST_ESTABLISHED ||
+					iph2->status == PHASE2ST_EXPIRED) {
+					
+					plog(LLV_INFO, LOCATION, NULL,
+						 "keeping IPsec-SA spi=%u - found valid ISAKMP-SA spi=%s.\n",
+						 ntohl(sa->sadb_sa_spi),
+						 isakmp_pindex(&(new_iph1->index), new_iph1->msgid));
+					msg = next;
+					continue;
+				}
+			}
+		}
+
+		
 		pfkey_send_delete(lcconf->sock_pfkey,
 				  msg->sadb_msg_satype,
 				  IPSEC_MODE_ANY,
 				  src, dst, sa->sadb_sa_spi);
 
-		/*
-		 * delete a relative phase 2 handler.
-		 * continue to process if no relative phase 2 handler
-		 * exists.
-		 */
-		while ((iph2 = getph2bysaddr(src, dst)) != NULL) {
+		/* delete a relative phase 2 handle. */
+		if (iph2 != NULL) {
 			delete_spd(iph2);
 			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 		}
-		
+
 		plog(LLV_INFO, LOCATION, NULL,
 			 "purged IPsec-SA spi=%u.\n",
 			 ntohl(sa->sadb_sa_spi));
@@ -3133,7 +3207,6 @@ purge_remote(iph1)
 	if (iph1->sce)
 		SCHED_KILL(iph1->sce);
 
-	iph1->status = PHASE1ST_EXPIRED;
 	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 }
 

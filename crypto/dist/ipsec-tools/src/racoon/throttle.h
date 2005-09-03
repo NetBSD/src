@@ -1,4 +1,4 @@
-/*	$NetBSD: throttle.h,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: throttle.h,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
 
 /* Id: throttle.h,v 1.1 2004/11/30 00:46:09 manubsd Exp */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 

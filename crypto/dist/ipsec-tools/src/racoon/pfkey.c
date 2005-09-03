@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2.2.5 2005/07/12 17:39:36 tron Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.6 2005/09/03 07:03:50 snj Exp $	*/
 
-/* Id: pfkey.c,v 1.31.2.1 2005/02/18 10:01:40 vanhu Exp */
+/* Id: pfkey.c,v 1.31.2.9 2005/07/28 05:05:52 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -447,6 +447,24 @@ ipsecdoi2pfkey_aalg(hashtype)
 		return SADB_AALG_MD5HMAC;
 	case IPSECDOI_ATTR_AUTH_HMAC_SHA1:
 		return SADB_AALG_SHA1HMAC;
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_256:
+#if (defined SADB_X_AALG_SHA2_256) && !defined(SADB_X_AALG_SHA2_256HMAC)
+		return SADB_X_AALG_SHA2_256;
+#else
+		return SADB_X_AALG_SHA2_256HMAC;
+#endif
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_384:
+#if (defined SADB_X_AALG_SHA2_384) && !defined(SADB_X_AALG_SHA2_384HMAC)
+		return SADB_X_AALG_SHA2_384;
+#else
+		return SADB_X_AALG_SHA2_384HMAC;
+#endif
+	case IPSECDOI_ATTR_AUTH_HMAC_SHA2_512:
+#if (defined SADB_X_AALG_SHA2_512) && !defined(SADB_X_AALG_SHA2_512HMAC)
+		return SADB_X_AALG_SHA2_512;
+#else
+		return SADB_X_AALG_SHA2_512HMAC;
+#endif
 	case IPSECDOI_ATTR_AUTH_KPDK:		/* need special care */
 		return SADB_AALG_NONE;
 
@@ -840,8 +858,8 @@ pk_sendgetspi(iph2)
 		/* this works around a bug in Linux kernel where it allocates 4 byte
 		   spi's for IPCOMP */
 		else if (satype == SADB_X_SATYPE_IPCOMP) {
-			minspi = ntohl (0x100);
-			maxspi = ntohl (0xffff);
+			minspi = 0x100;
+			maxspi = 0xffff;
 		}
 		else {
 			minspi = 0;
@@ -983,7 +1001,7 @@ pk_sendupdate(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4;  /* XXX static size of window */ 
@@ -1275,7 +1293,7 @@ pk_sendadd(iph2)
 {
 	struct saproto *pr;
 	struct sockaddr *src = NULL, *dst = NULL;
-	int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
 	u_int wsize = 4; /* XXX static size of window */ 
@@ -2131,7 +2149,7 @@ pk_recvspdupdate(mhp)
 	sp = getsp(&spidx);
 	if (sp == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"such policy does not already exist: %s\n",
+			"such policy does not already exist: \"%s\"\n",
 			spidx2str(&spidx));
 	} else {
 		remsp(sp);

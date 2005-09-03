@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_inf.c,v 1.1.1.3.2.5 2005/07/12 19:08:47 tron Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.1.1.3.2.6 2005/09/03 07:03:49 snj Exp $	*/
 
-/* Id: isakmp_inf.c,v 1.14.4.2 2005/03/02 20:00:03 vanhu Exp */
+/* Id: isakmp_inf.c,v 1.14.4.9 2005/08/02 15:09:26 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,6 +92,9 @@
 #include "proposal.h"
 #include "admin.h"
 #include "strnames.h"
+#ifdef ENABLE_NATT
+#include "nattraversal.h"
+#endif
 
 /* information exchange */
 static int isakmp_info_recv_n __P((struct ph1handle *, vchar_t *));
@@ -124,6 +127,9 @@ isakmp_info_recv(iph1, msg0)
 	int error = -1;
 	struct isakmp *isakmp;
 	struct isakmp_gen *gen;
+	void *p;
+	vchar_t *hash, *payload;
+	struct isakmp_gen *nd;
 	u_int8_t np;
 	int encrypted;
 
@@ -149,27 +155,40 @@ isakmp_info_recv(iph1, msg0)
 	} else
 		msg = vdup(msg0);
 
+	/* Safety check */
+	if (msg->l < sizeof(*isakmp) + sizeof(*gen)) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+			"ignore information because the "
+			"message is way too short\n");
+		goto end;
+	}
+
 	isakmp = (struct isakmp *)msg->v;
 	gen = (struct isakmp_gen *)((caddr_t)isakmp + sizeof(struct isakmp));
-
-	if (isakmp->np != ISAKMP_NPTYPE_HASH) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		    "ignore information because the message has no hash payload.\n");
-		goto end;
-	}
-
-	if (iph1->status != PHASE1ST_ESTABLISHED) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		    "ignore information because ISAKMP-SA has not been established yet.\n");
-		goto end;
-	}
-
 	np = gen->np;
 
-	{
-		void *p;
-		vchar_t *hash, *payload;
-		struct isakmp_gen *nd;
+	if (encrypted) {
+		if (isakmp->np != ISAKMP_NPTYPE_HASH) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "ignore information because the "
+			    "message has no hash payload.\n");
+			goto end;
+		}
+
+		if (iph1->status != PHASE1ST_ESTABLISHED) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "ignore information because ISAKMP-SA "
+			    "has not been established yet.\n");
+			goto end;
+		}
+
+		/* Safety check */
+		if (msg->l < sizeof(*isakmp) + ntohs(gen->len) + sizeof(*nd)) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+				"ignore information because the "
+				"message is too short\n");
+			goto end;
+		}
 
 		p = (caddr_t) gen + sizeof(struct isakmp_gen);
 		nd = (struct isakmp_gen *) ((caddr_t) gen + ntohs(gen->len));
@@ -179,6 +198,12 @@ isakmp_info_recv(iph1, msg0)
 		    ntohs(gen->len))) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				 "too long payload length (broken message?)\n");
+			goto end;
+		}
+
+		if (ntohs(nd->len) < sizeof(*nd)) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"too short payload length (broken message?)\n");
 			goto end;
 		}
 
@@ -223,10 +248,8 @@ isakmp_info_recv(iph1, msg0)
 
 		vfree(hash);
 		vfree(payload);
-	}
-		
-	/* make sure the packet were encrypted. */
-	if (!encrypted) {
+	} else {
+		/* make sure the packet were encrypted after the beginning of phase 1. */
 		switch (iph1->etype) {
 		case ISAKMP_ETYPE_AGG:
 		case ISAKMP_ETYPE_BASE:
@@ -893,7 +916,7 @@ isakmp_info_recv_n(iph1, msg)
 			"invalid spi_size in notification payload.\n");
 		return -1;
 	}
-	spi = val2str((u_char *)(n + 1), n->spi_size);
+	spi = val2str((char *)(n + 1), n->spi_size);
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote,
 		"notification message %d:%s, "
@@ -1163,11 +1186,34 @@ info_recv_initialcontact(iph1)
 		 * racoon only deletes SA which is matched both the
 		 * source address and the destination accress.
 		 */
-		if (CMPSADDR(iph1->local, src) == 0 &&
-		    CMPSADDR(iph1->remote, dst) == 0)
+#ifdef ENABLE_NATT
+		/* 
+		 * XXX RFC 3947 says that whe MUST NOT use IP+port to find old SAs
+		 * from this peer !
+		 */
+		if(iph1->natt_flags & NAT_DETECTED){
+			if (CMPSADDR(iph1->local, src) == 0 &&
+				CMPSADDR(iph1->remote, dst) == 0)
+				;
+			else if (CMPSADDR(iph1->remote, src) == 0 &&
+					 CMPSADDR(iph1->local, dst) == 0)
+				;
+			else {
+				msg = next;
+				continue;
+			}
+		} else
+#endif
+		/* If there is no NAT-T, we don't have to check addr + port...
+		 * XXX what about a configuration with a remote peers which is not
+		 * NATed, but which NATs some other peers ?
+		 * Here, the INITIAl-CONTACT would also flush all those NATed peers !!
+		 */
+		if (cmpsaddrwop(iph1->local, src) == 0 &&
+		    cmpsaddrwop(iph1->remote, dst) == 0)
 			;
-		else if (CMPSADDR(iph1->remote, src) == 0 &&
-		    CMPSADDR(iph1->local, dst) == 0)
+		else if (cmpsaddrwop(iph1->remote, src) == 0 &&
+		    cmpsaddrwop(iph1->local, dst) == 0)
 			;
 		else {
 			msg = next;

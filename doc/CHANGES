@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.10 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.11 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -268,3 +268,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Compressed disk images can be used with the vnd(4) driver when
 		compiled with VND_COMPRESSION and "vnconfig -z". 
 		Useful for creation of Live CDs/DVDs. [hubertf 20050725]
+	racoon(8): ipsec-tools updated to 0.6.1 [manu 20050820]
