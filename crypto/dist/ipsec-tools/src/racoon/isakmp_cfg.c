@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3.2.4 2005/05/11 17:42:18 tron Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3.2.5 2005/09/03 07:03:49 snj Exp $	*/
 
-/* $Id: isakmp_cfg.c,v 1.1.1.3.2.4 2005/05/11 17:42:18 tron Exp $ */
+/* Id: isakmp_cfg.c,v 1.26.2.5 2005/05/10 09:45:46 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus

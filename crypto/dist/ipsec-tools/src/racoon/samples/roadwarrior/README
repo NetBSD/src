@@ -1,7 +1,7 @@
 This directory contains sample configurations files used for roadwarrior
 remote access using hybrid authentication. In this setup, the VPN 
-gateway authenticate to the client using a certificate, and the client
-authenticate to the VPN gateway using a login and a password.
+gateway authenticates to the client using a certificate, and the client
+authenticates to the VPN gateway using a login and a password.
 
 Moreover, this setup makes use of ISAKMP mode config to autoconfigure 
 the client. After a successful login, the client will receive an 
@@ -24,9 +24,9 @@ to be used for the RADIUS server are configured in /etc/radius.conf,
 see radius.conf(5).
 
 Both configurations can be used with the Cisco VPN client if it
-is setup to use hybrid authentication (aka mutual group authentication,
+is set up to use hybrid authentication (aka mutual group authentication,
 available in Cisco VPN client version 4.0.5 and above). The group 
-password configured in the Cisco VPN client is unused by racoon.
+password configured in the Cisco VPN client is not used by racoon.
 
 After you have installed /etc/racoon/racoon.conf, you will also have 
 to install a server certificate and key in /etc/openssl/certs/server.crt
@@ -55,10 +55,10 @@ you for the password.
 The password can be stored in the psk.txt file. In that situation, 
 add this directive to the remote section of racoon.conf:
 	 xauth_login "username";
-Where username is your login.
+where username is your login.
 
 Note that for now there is no feedback in racoonctl if the authentication
-fails. Peek at racoon logs to discover what goes wrong.
+fails. Peek at the racoon logs to discover what goes wrong.
 
 In order to disconnect from the VPN, do this:
 racoonctl vd vpn-gateway.example.net

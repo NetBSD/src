@@ -13,15 +13,15 @@ IPsec-tools were ported to Linux from the KAME project
 
 Currently the package is actively maintained and developed 
 by Michal Ludvig <mludvig@suse.cz>, Aidas Kasparas <a.kasparas@gmc.lt>
-and Emmanuel Dreyfus <manu@netbsd.org>.
+Emmanuel Dreyfus <manu@netbsd.org>, VANHULLEBUS Yvan <vanhu@zeninc.net>,
+and Fred Senault <fred.letter@lacave.net>.
 
 Sources can be found at the IPsec-Tools home page at:
 	http://ipsec-tools.sourceforge.net/
 
 Please report any problems to the mailing list:
 	ipsec-tools-devel@lists.sourceforge.net
-	(it is called 'devel' but feel free to send general
-	questions there as well :-)
+	ipsec-tools-users@lists.sourceforge.net
 
 You can also browse the list archive:
 	http://sourceforge.net/mailarchive/forum.php?forum_id=32000

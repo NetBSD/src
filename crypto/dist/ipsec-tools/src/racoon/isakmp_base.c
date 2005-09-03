@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.1.1.2 2005/02/23 14:54:18 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: cfparse.y,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.1.1.4.2.2 2005/09/03 07:03:49 snj Exp $	*/
 
-/* $Id: cfparse.y,v 1.1.1.4.2.1 2005/05/11 17:42:02 tron Exp $ */
+/* Id: cfparse.y,v 1.37.2.4 2005/05/10 09:45:45 manubsd Exp */
 
 %{
 /*
@@ -1702,7 +1702,7 @@ set_isakmp_proposal(rmconf, prspec)
 	struct secprotospec *s;
 	int prop_no = 1; 
 	int trns_no = 1;
-	u_int32_t types[MAXALGCLASS];
+	int32_t types[MAXALGCLASS];
 
 	p = prspec;
 	if (p->next != 0) {

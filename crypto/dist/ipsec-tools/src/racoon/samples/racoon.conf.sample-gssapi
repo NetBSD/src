@@ -1,6 +1,6 @@
 # $KAME: racoon.conf.sample-gssapi,v 1.5 2001/08/16 06:33:40 itojun Exp $
 
-# sample configuration for GSSAPI authentication (basically, kerberos).
+# sample configuration for GSSAPI authentication (basically, Kerberos).
 # doc/README.gssapi gives some idea on how to configure it.
 # TODO: more documentation.
 

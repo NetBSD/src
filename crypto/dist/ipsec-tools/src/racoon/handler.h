@@ -1,6 +1,6 @@
-/*	$NetBSD: handler.h,v 1.1.1.2.2.4 2005/05/11 12:20:16 tron Exp $	*/
+/*	$NetBSD: handler.h,v 1.1.1.2.2.5 2005/09/03 07:03:49 snj Exp $	*/
 
-/* Id: handler.h,v 1.11 2004/11/16 15:44:46 ludvigm Exp */
+/* Id: handler.h,v 1.11.4.3 2005/05/07 17:26:05 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

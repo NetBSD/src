@@ -1,6 +1,6 @@
-/*	$NetBSD: policy_token.l,v 1.1.1.2.2.1 2005/05/12 12:04:12 tron Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.1.1.2.2.2 2005/09/03 07:03:49 snj Exp $	*/
 
-/* Id: policy_token.l,v 1.10 2004/11/14 20:15:43 monas Exp */
+/* Id: policy_token.l,v 1.10.4.1 2005/05/07 14:30:38 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.

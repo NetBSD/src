@@ -1,22 +1,173 @@
+---------------------------------------------
+
+	0.6.1 released
+
+2005-08-14  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Francis Dupont <Francis.Dupont@enst-bretagne.fr>
+	* src/racoon/dnssec.c: fix bogus test on function result
+
+2005-08-11  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Improved in/out SA addresses check in
+	  purge_remote(). Reported by Patrick Ma.
+
+2005-08-08  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/libipsec/{key_debug.c|pfkey.c|pfkey_dump.c}: de-lint, warnings
+
+2005-08-08  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/privsep.c: Fixed a %d -> %zu in
+	port_check() (reported by Matthias Scheler).
+
+---------------------------------------------
+
+	0.6.1.rc1 released
+
+2005-08-04  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* configure.ac: correctly quote RACOON_PATH_LIBS arguments
+
+2005-08-02  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp_inf.c: First fix to
+	info_recv_initialcontact(): do a basic IP check when no NAT-T.
+
+2005-07-28  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/{pfkey.c|proposal.c}: IPcomp CPI size fixes
+
+2005-07-26  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Fixed purge_remote()
+
+2005-07-25  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Do not purge IPSec SAs in purge_remote() if
+	a new ph1handle exists (patch by Krzysztof Oledzki)
+
+---------------------------------------------
+
+	0.6.1.beta3 released
+
+2005-07-20  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	* configure.ac: disabled --enable-samode-unspec for linux
+
+2005-07-20  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp_quick.c: Ignore NATOA payloads in
+	quick_r1recv() as it is done in quick_i2recv().
+
+2005-07-19  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Checks in isakmp_ph1begin_r() if we got the
+	packet from NAT-T port, and set up the NAT_PORTS_CHANGED in that
+	case (RFC 3947, sect 4, we MUST allow new phase1 negociations on
+	NAT-T floated port), to correctly generate the reply.
+
+2005-07-16  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	* src/racoon/grabmyaddr.c: fixed file descriptor leak. Thanks to
+	  Patrice Fournier
+	* src/setkey/setkey.c: disabled readline's filename completion.
+	  Fixed bug 1179281.
+	* src/racoon/proposal.c: fixed mode selection for SAs with
+	  complex_bundle on behind NAT.
+
+2005-07-14  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/handler.c: Clears the DPD schedule in delph1()
+
+---------------------------------------------
+
+	0.6.1.beta2 released
+
+2005-07-13  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/setkey/Makefile.am: missing file in distribution
+	* src/racoon/isakmp_inf.c: build fix
+
+---------------------------------------------
+
+	0.6.1.beta1 released
+
+2005-07-12  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Fixed a mem leak in isakmp_send().
+
+2005-07-12  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/pfkey.c: Set IKE ports to 0 in the SA when NAT-T is not
+	  used. 
+	* src/racoon/{crypto_openssl.c|ipsec_doi.c|oakley.c} configure.ac
+	  src/racoon/missing/crypto/sha2/sha2.h: Support OpenSSL-0.9.8
+	* src/racoon/{admin.c|session.c}: Don't use the adminport if it is
+	  disabled
+	* src/racoon/samples/roadwarrior/client/{pahse1-up.sh|phase1-down.sh}:
+	  Add comments for using the scripts without NAT-T
+
+2005-07-04  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/isakmp_inf.c: safety checks on informational messages
+
+2005-07-11  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* configure.ac: build fixes on Linux. Accomodate various libiconv 
+	  versions
+
 2005-07-09  Yvan Vanhullebus  <vanhu@free.fr>
 
 	* src/racoon/crypto_openssl.c: Fixed evp_crypt when using crypto
 	  algorithms with variable key size but not OpenSSL default key
 	  size.
 
-2005-07-12  Emmanuel Dreyfus  <manu@netbsd.org>
+2005-07-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
-	* src/racoon/samples/roadwarrior/client/{pahse1-up.sh|phase1-down.sh}:
-	  Add comments for using the scripts without NAT-T
-	* src/racoon/pfkey.c: Set IKE ports to 0 in the SA when NAT-T is not
-	  used. 
-	* src/racoon/{admin.c|session.c}: Don't use adminport if it is 
-	  disabled.
+	From Mathias Scheler <tron@netbsd.org>
+	* src/racoon/raccon.conf.5: Document that aes can be used in 
+	  racoon.conf
+
+2005-07-06  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/setkey/extern.h: new file (was missing in previous commit)
+
+2005-07-06  Frederic Senault  <fred@lacave.net>
+
+	* src/setkey/setkey.c: fix compilation with readline.
+	* src/racoon/oakley.c: move declarations to the top of the function
+	  to fix compilation issues with gcc 2.95.4/FreeBSD4, re-indentation
+	  and style cleanup of the pkcs7 patch.
 
 2005-07-01  Emmanuel Dreyfus  <manu@netbsd.org>
 
-	From Uri <urimobile@optonline.net>
+	From Uri <urimobile@optonline.net>:
+	* src/racoon/{ipsec_doi.c|Makefile.am}: Linux build fixes
 	* src/racoon/oakley.c: pkcs7 support
+
+2005-06-29  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Christos Zoulas <christos@zoulas.com>
+	* configure.ac src/setkey/{parse.y|setkey.c|token.l}
+	  src/libipsec/{ipsec_dump_policy.c|ipsec_get_policylen.c|key_debug.c}
+	  src/libipsec/{libpfkey.h|pfkey_dump.c|policy_parse.y}: de-lint, 
+	  using void * instead of caddr_t and adding const where appropriate.
+	* src/setkey/extern.h: new file
+	* src/libipsec/{pfkey.c|pfkey_dump.c|policy_parse.y}
+	  src/racoon/{sockmisc.c|sockmisc.h}: de-lint signed/unsigned, 
+	  size_t/int and lint constants
+
+2005-06-29  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Uri <urimobile@optonline.net> and Larry Baird <lab@gta.com>:
+	* src/libipsec/pfkey_dump.c src/setkey/test-pfkey.c
+	  src/racoon/{algorithm.c|cftoken.l|eaytest.c|ipsec_doi.c}
+	  src/racoon/{ipsec_doi.h|pfkey.c|strnames.c}: Add SHA2 support
+
+---------------------------------------------
+
+	0.6 released 
 
 2005-06-22  Emmanuel Dreyfus  <manu@netbsd.org>
 
@@ -27,7 +178,11 @@
 	  on phase 2 initiation retries when the phase 2 had been queued
 	  for a phase 1.
 
-2005-06-07  Emmanuel Dreyfus  <manu@netbsd.org>
+---------------------------------------------
+
+	0.6rc1 released 
+
+2005-06-15  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Larry Baird <lab@gta.com>
 	* src/racoon/isakmp.c: consume NAT keepalive data  already seen
@@ -40,10 +195,24 @@
 	From Frederic Senault  <fred@lacave.net>
 	* src/racoon/privsep.c: fix Xauth login with PAM authentication
 
+2005-06-05  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Thomas Klausner <wiz@netbsd.org>
+	* src/setkey/setkey.8 src/racoon/racoon.conf.5: remove trailing
+	  spaces, grammar fix
+
 2005-05-31  Aidas Kasparas  <a.kasparas@gmc.lt>
 
 	* src/racoon/ipsec_doi.c: Inserted missing 0th element of
 	  rm_idtype2doi array. Bug #1199700 fix.
+
+2005-05-23  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/admin.c: build fix
+
+---------------------------------------------
+
+	0.6b3 released 
 
 2005-05-20  Emmanuel Dreyfus  <manu@netbsd.org>
 
@@ -60,23 +229,38 @@
 	  altering lifetime, duplicate the proposal instead of modifying 
 	  the configured one.
 
+	From Frederic Senault  <fred@lacave.net>
+	* src/racoon/{isakmp.c|pfkey.c}: Put sockets in non-blocking mode to
+	  fix a hangup with FreeBSD 4.
+
 2005-05-14  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/libipsec/policy_parse.y: fix parse bug in IPsec policies
+
+2005-05-14  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	* src/racoon/sockmisc.c: Debug message said it will send to
+	  source address insted of destination.
 
 2005-05-13  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/isakmp.c: For acquire messages, when NAT-T is in use,
 	  consider null port as a wildcard and use IKE port
 
+	* src/racoon/isakmp.c: Build fix
+
 2005-05-13  Yvan Vanhullebus  <vanhu@free.fr>
 
 	* src/racoon/isakmp.c: Fixed a double ph2handler free in
 	  isakmp_ph2begin_i().
 
+2005-05-12  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/{proposal.c|proposal.h|isakmp_quick.c}: fix build problem
+
 ---------------------------------------------
 
-	0.6b2 released
+	0.6b2 released 
 
 2005-05-10  Emmanuel Dreyfus  <manu@netbsd.org>
 
@@ -87,12 +271,18 @@
 	  higher security settings. Remove now useless phase 1 down 
 	  script on server side.
 
+2005-05-10  Emmanuel Dreyfus  <manu@netbsd.org>
+
 	* src/racoon/ipsec_doi.c: check for lifebyte in proposals
 	* src/racoon/ipsec_doi.c: fix a bug in proposal_check claim for phase 1
 
 	* src/racoon/{cfparse.y|cftoken.l|racoon.conf.5|isakmp_cfg.c}
 	  src/racoon/{isakmp_cfg.h|isakmp_unity.c}: add Cisco extensions for
-	  pushing PFS group and save password setting through ISAKMP mode cfg
+	  sending PFS group and save password through ISAKMP mode config.
+
+2005-05-08  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* configure.ac src/racoon/isakmp_xauth.c: Support shadow passwords
 
 2005-05-07  Emmanuel Dreyfus  <manu@netbsd.org>
 
@@ -123,11 +313,19 @@
 	From Manisha Malla <mmanisha@novell.com>
 	* src/racoon/isakmp_cfg.c: fix unsigned int checked for being negative
 
+	From Ludo Stellingwerff <ludo@protactive.nl>
+	* src/setkey/{parse.y|token.l}: build on system that do not have
+	  TCP-MD5 support
+
+2005-05-04  Michal Ludvig  <michal@logix.cz>
+
+	* configure.ac: Revert GLIBC_BUGS change from 2005-04-15
+
 2005-05-03  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Patrick McHardy <kaber@trash.net>
-	* src/racoon/{pfkey.c|handler.h|hendler.c}: on phase 2 acquire,
-	  lookup phase 2 by (src, dst, policy id) so that multiple SA can
+	* src/racoon/{pfkey.c|handler.h|hendler.c}: on phase 2 acquire, 
+	  lookup phase 2 by (src, dst, policy id) so that multiple SA can 
 	  be used in transport mode
 
 2005-04-26  Emmanuel Dreyfus  <manu@netbsd.org>
@@ -140,16 +338,33 @@
 	* src/libipsec/{ipsec_dump_policy.c|pfkey_dump.c|libpfkey.h}:
 	  src/setkey/{setkey.8|setkey.c}: add a -p option to setkey to
 	  enable the display of ESP over UDP ports in policies.
-
+	
 	* src/racoon/{isakmp.c|isakmp_cfg.c|isakmp_inf.c|pfkey.c}: don't
 	  forget port numbers so that mutiple clients behind the same NAT
 	  can work.
 
 	* src/racoon/ipsec_doi.c: fix LP64 bug
-
+	
 	From Larry Baird <lab@gta.com>
 	* src/racoon/{isakmp.c|nattraversal.c|isakmp_quick.c|nattraversal.h}:
 	  NAT-T fixes for interoperability with greenbow VPN client.
+
+2005-04-21  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	* src/libipsec/policy.parse.y, src/racoon/cfparse.y,
+	  src/libipsec/policy_parse.y, src/racoon/cfparse.y,
+	  src/racoon/cftoken.l, src/racoon/crypto_openssl.c,
+	  src/racoon/getcertsbyname.c, src/racoon/grabmyaddr.c, 
+	  src/racoon/ipsec_doi.c, src/racoon/isakmp.c,
+	  src/racoon/isakmp_inf.c, src/racoon/pfkey.c,
+	  src/racoon/plainrsa-gen.c, src/racoon/sockmisc.c,
+	  src/racoon/sockmisc.h, src/racoon/racoonctl.c: made
+	  compile with gcc-4.0 (20050410 prerelease)
+
+2005-04-20  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	From: Ganesan Rajagopal <rganesan@users.sourceforge.net>
+	* configure.ac: fix --enable-ipv6 logic
 
 2005-04-19  Yvan Vanhullebus  <vanhu@free.fr>
 
@@ -164,6 +379,7 @@
 2005-04-18  Aidas Kasparas  <a.kasparas@gmc.lt>
 
 	* src/racoon/crypto_openssl.c: fixed single DES support;
+	* NEWS: noted fix
 
 2005-04-18  Emmanuel Dreyfus  <manu@netbsd.org>
 
@@ -182,20 +398,51 @@
 	From KAME
 	* src/racoon/ipsec_doi.c: wrong check on SA lifebyte
 
+2005-04-15  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	From Zilvinas Valinskas <zilvinas@gemtek.lt>:
+	* configure.ac: 
+	  - cross-compile type fix (patch 1);
+	  - --enable-{frag|hybrid}=no fixes (patches 6,7);
+	  - support for --with-flex, --with-flexlib (patch 11);
+	  - GLIBC_BUGS assignment correction (patch 14 with mods).
+
 2005-04-10  Emmanuel Dreyfus <manu@netbsd.org>
 
 	* src/racoon/isakmp_agg.c: fix a memory leak when using hybrid auth
-	* src/libipsec/{pfkey.c|pfkey_dump.c}
-	  src/setkey/{token.l|parse.y|setkey.8}: missing bits for TCP_MD5
+        * src/libipsec/{pfkey.c|pfkey_dump.c}
+          src/setkey/{token.l|parse.y|setkey.8}: missing bits for TCP_MD5 
 	  support, from KAME
 
 2005-04-04  Emmanuel Dreyfus <manu@netbsd.org>
 
 	* src/racoon/isakmp_cfg.c: fix a buffer overrun in mode config SET
 
+2005-03-30  Michal Ludvig  <michal@logix.cz>
+
+	* configure.ac: Don't compile with NAT-T by default (according to 
+	  documentation, finally :-)
+	* configure.ac, rpm/suse/ipsec-tools.spec.in,
+	  rpm/suse/Makefile.am: Distribute .spec file with 
+	  resolved version string.
+	* src/racoon/Makefile.am: Allow parallel cluster build.
+
+2005-03-27  Michal Ludvig  <michal@logix.cz>
+
+	From Zilvinas Valinskas <zilvinas@gemtek.lt>:
+	* configure.ac: 
+	  - Use AC_CHECK_HEADER for kernel headers instead of AC_CHECK_FILE.
+	  - Fix OpenSSL check for cross-compilation.
+	* acracoon.m4(RACOON_CHECK_VA_COPY): Allow cross-compilation.
+	  (RACOON_CHECK_BUGGY_GETADDRINFO): Ditto.
+
 ---------------------------------------------
 
-	0.6b1 released
+	0.6b1 released 
+
+2005-03-22  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/privsep.c: fix the build without --with-libpam
 
 2005-03-16  Emmanuel Dreyfus <manu@netbsd.org>
 
@@ -243,7 +490,7 @@
 	
 2005-02-23  Emmanuel Dreyfus <manu@netbsd.org>
 
-        * configure.ac, src/racoon/{Makefile.am|crypto_openssl.c}: optionnal
+	* configure.ac, src/racoon/{Makefile.am|crypto_openssl.c}: optionnal
 	  support for patented algorithms: IDEA and RC5.
 	* src/racoon/{isakmp_xauth.c|main.c}: don't initialize RADIUS if it
 	  is not required in the configuration
@@ -253,7 +500,7 @@
 
 2005-02-18  Emmanuel Dreyfus <manu@netbsd.org>
 
-        * src/racoon/{main.c|eaytest.c|plairsa-gen.c}
+	* src/racoon/{main.c|eaytest.c|plairsa-gen.c}
 	  src/setkey/setkey.c: don't use fuzzy paths for package_version.h
 
 2005-02-18  Yvan Vanhullebus  <vanhu@free.fr>

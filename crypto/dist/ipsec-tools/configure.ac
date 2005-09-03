@@ -1,8 +1,8 @@
 dnl -*- mode: m4 -*-
-dnl Id: configure.ac,v 1.47.2.3 2005/03/14 07:55:03 manubsd Exp
+dnl Id: configure.ac,v 1.47.2.24 2005/08/19 22:46:45 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, 0.5pre)
+AC_INIT(ipsec-tools, 0.6.1)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
@@ -57,8 +57,8 @@ case "$host_os" in
 	      AC_SUBST(CONFIGURE_AMFLAGS) ],
 	    [ KERNEL_INCLUDE="/lib/modules/`uname -r`/build/include" ])
 
-    AC_CHECK_FILE($KERNEL_INCLUDE/linux/pfkeyv2.h, ,
-	[ AC_CHECK_FILE(/usr/src/linux/include/linux/pfkeyv2.h,
+    AC_CHECK_HEADER($KERNEL_INCLUDE/linux/pfkeyv2.h, ,
+	[ AC_CHECK_HEADER(/usr/src/linux/include/linux/pfkeyv2.h,
 	  KERNEL_INCLUDE=/usr/src/linux/include ,
 	  [ AC_MSG_ERROR([Unable to find linux-2.6 kernel headers. Aborting.]) ] ) ] )
     AC_SUBST(KERNEL_INCLUDE)
@@ -73,9 +73,10 @@ case "$host_os" in
     	[#include "$KERNEL_INCLUDE/linux/pfkeyv2.h"])
 
     GLIBC_BUGS='-include ${top_srcdir}/src/include-glibc/glibc-bugs.h -I${top_srcdir}/src/include-glibc -I${top_builddir}/src/include-glibc'
-    AC_SUBST(GLIBC_BUGS)
     GLIBC_BUGS_LOCAL="-include ${srcdir-.}/src/include-glibc/glibc-bugs.h -I${srcdir-.}/src/include-glibc -I./src/include-glibc"
     CPPFLAGS="$GLIBC_BUGS_LOCAL $CPPFLAGS"
+    CPPFLAGS="-D_GNU_SOURCE $CPPFLAGS"
+    AC_SUBST(GLIBC_BUGS)
     ;;
  *)
     if test "$have_net_pfkey$have_netinet_ipsec" != yesyes; then
@@ -94,6 +95,7 @@ esac
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(limits.h sys/time.h unistd.h stdarg.h varargs.h)
+AC_CHECK_HEADERS(shadow.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -149,6 +151,27 @@ if test $with_readline != "no"; then
 		], [])], [])
 fi
 
+
+AC_MSG_CHECKING(if --with-flex option is specified)
+AC_ARG_WITH(flexdir,
+	[AC_HELP_STRING([--with-flex], [use directiory (default: no)])],
+	[flexdir="$withval"])
+AC_MSG_RESULT(${flexdir-dirdefault})
+
+if test "x$flexdir" != "x"; then
+	LIBS="$LIBS $flexdir/libfl.a"
+fi
+
+AC_MSG_CHECKING(if --with-flexlib option is specified)
+AC_ARG_WITH(flexlib,
+	[  --with-flexlib=<LIB>    specify flex library.],
+	[flexlib="$withval"])
+AC_MSG_RESULT(${flexlib-default})
+
+if test "x$flexlib" != "x"; then
+	LIBS="$LIBS $flexlib"
+fi
+
 # Check if a different OpenSSL directory was specified
 AC_MSG_CHECKING(if --with-openssl option is specified)
 AC_ARG_WITH(openssl, [  --with-openssl=DIR      specify OpenSSL directory],
@@ -157,15 +180,21 @@ AC_MSG_RESULT(${crypto_dir-default})
 
 if test "x$crypto_dir" != "x"; then
 	LIBS="$LIBS -L${crypto_dir}/lib"
-	CPPFLAGS_ADD="-I${crypto_dir}/include $CPPFLAGS_ADD"
+	CPPFLAGS="-I${crypto_dir}/include $CPPLAGS"
 fi
 AC_MSG_CHECKING(openssl version)
-AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
-#if OPENSSL_VERSION_NUMBER >= 0x0090602fL
-yes
-#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
-	AC_MSG_ERROR([OpenSSL version must be 0.9.6 or higher. Aborting.])
-	])
+
+AC_TRY_COMPILE(
+[#include <openssl/opensslv.h>
+],
+[#if OPENSSL_VERSION_NUMBER < 0x0090602fL
+#error OpenSSL version is too old ...
+#endif],
+[AC_MSG_RESULT([ok])],
+[AC_MSG_RESULT(too old)
+AC_MSG_ERROR([OpenSSL version must be 0.9.6 or higher. Aborting.])
+])
+
 AC_CHECK_HEADERS(openssl/engine.h)
 
 # checking rijndael
@@ -175,10 +204,23 @@ AC_CHECK_HEADERS([openssl/aes.h], [],
 # checking sha2
 AC_MSG_CHECKING(sha2 support)
 AC_DEFINE([WITH_SHA2], [], [SHA2 support])
+AC_MSG_RESULT(yes)
 AC_CHECK_HEADER(openssl/sha2.h, [], [
+	AC_MSG_CHECKING(if sha2 is defined in openssl/sha.h)
+	AC_TRY_COMPILE([
+		#include <openssl/sha.h>
+	], [
+		typedef int SHA256_CTX;
+	], [AC_MSG_RESULT(no)
+	    AC_LIBOBJ([sha2])
+	    CRYPTOBJS="$CRYPTOBJS sha2.o"
+	], [
+	    AC_MSG_RESULT(yes)
+	    AC_DEFINE([HAVE_SHA2_IN_SHA_H], [], [sha2 is defined in sha.h])
+	])
+
 	CPPFLAGS_ADD="$CPPFLAGS_ADD -I./\${top_srcdir}/src/racoon/missing"
-	AC_LIBOBJ([sha2])
-	CRYPTOBJS="$CRYPTOBJS sha2.o"])
+])
 AC_SUBST(CRYPTOBJS)
 
 # Option --enable-adminport 
@@ -219,7 +261,7 @@ fi
 AC_SUBST(EXTRA_CRYPTO)
 
 # For dynamic libradius
-RACOON_PATH_LIBS(MD5_Init, crypto)
+RACOON_PATH_LIBS([MD5_Init], [crypto])
 
 # Check for Kerberos5 support
 AC_MSG_CHECKING(if --enable-gssapi option is specified)
@@ -248,33 +290,52 @@ if test "x$enable_gssapi" = "xyes"; then
 	LIBS="$LIBS $krb5_libs"
 	CPPFLAGS_ADD="$krb5_incdir $CPPFLAGS_ADD"
 	AC_DEFINE([HAVE_GSSAPI], [], [Enable GSS API])
+
+	# Check if iconv 2nd argument needs const 
+	AC_CHECK_HEADER([iconv.h], [], [AC_MSG_ERROR([iconv.h not found, but needed for GSSAPI support. Aborting.])])
+	AC_MSG_CHECKING([if iconv second argument needs const])
+	AC_TRY_COMPILE([
+		#include <iconv.h>
+		#include <stdio.h>
+	], [
+		iconv_t cd = NULL;
+		const char **src = NULL;
+		size_t *srcleft = NULL;
+		char **dst = NULL;
+		size_t *dstleft = NULL;
+
+		(void)iconv(cd, src, srcleft, dst, dstleft);
+	], [AC_MSG_RESULT(yes)
+	    AC_DEFINE([HAVE_ICONV_2ND_CONST], [], [Have iconv using const])
+	], [AC_MSG_RESULT(no)])
+
 fi
 
 AC_MSG_CHECKING([if --enable-hybrid option is specified])
 AC_ARG_ENABLE(hybrid, 
     [  --enable-hybrid	  enable hybrid, both mode-cfg and xauth support],
-    [
+    [], [enable_hybrid=no])
+AC_MSG_RESULT($enable_hybrid)
+
+if test "x$enable_hybrid" = "xyes"; then
 	LIBS="$LIBS -lcrypt"; 
-	enable_hybrid=yes;
 	HYBRID_OBJS="isakmp_xauth.o isakmp_cfg.o isakmp_unity.o throttle.o"
 	AC_SUBST(HYBRID_OBJS)
 	AC_DEFINE([ENABLE_HYBRID], [], [Hybrid authentication support])
-    ],
-    [enable_hybrid=no])
-AC_MSG_RESULT($enable_hybrid)
+fi
 
 AC_MSG_CHECKING([if --enable-frag option is specified])
 AC_ARG_ENABLE(frag, 
     [  --enable-frag           enable IKE fragmentation payload support],
-    [
+    [], [enable_frag=no])
+AC_MSG_RESULT($enable_frag)
+
+if test "x$enable_frag" = "xyes"; then
 	LIBS="$LIBS -lcrypt"; 
-	enable_frag=yes;
 	FRAG_OBJS="isakmp_frag.o"
 	AC_SUBST(FRAG_OBJS)
 	AC_DEFINE([ENABLE_FRAG], [], [IKE fragmentation support])
-    ],
-    [enable_frag=no])
-AC_MSG_RESULT($enable_frag)
+fi
 
 AC_MSG_CHECKING(if --with-libradius option is specified)
 AC_ARG_WITH(libradius, 
@@ -287,11 +348,11 @@ if test "$libradius_dir" != "no"; then
 		  libradius_dir="";
 	fi;
 	if test "x$libradius_dir" = "x"; then
-		RACOON_PATH_LIBS(rad_create_request, radius)
+		RACOON_PATH_LIBS([rad_create_request], [radius])
 	else
 		if test -d "$libradius_dir/lib" -a \
 		    -d "$libradius_dir/include" ; then
-			RACOON_PATH_LIBS(rad_create_request, radius, "$libradius_dir/lib")
+			RACOON_PATH_LIBS([rad_create_request], [radius], ["$libradius_dir/lib"])
 			CPPFLAGS_ADD="$CPPFLAGS_ADD -I$libradius_dir/include"
 		else
 			AC_MSG_ERROR([RADIUS libs or includes not found. Aborting.])
@@ -313,11 +374,11 @@ if test "$libpam_dir" != "no"; then
 		  libpam_dir="";
 	fi;
 	if test "x$libpam_dir" = "x"; then
-		RACOON_PATH_LIBS(pam_start, pam)
+		RACOON_PATH_LIBS([pam_start], [pam])
 	else
 		if test -d "$libpam_dir/lib" -a \
 		    -d "$libpam_dir/include" ; then
-			RACOON_PATH_LIBS(pam_start, pam, "$libpam_dir/lib")
+			RACOON_PATH_LIBS([pam_start], [pam], ["$libpam_dir/lib"])
 			CPPFLAGS_ADD="$CPPFLAGS_ADD -I$libpam_dir/include"
 		else
 			AC_MSG_ERROR([PAM libs or includes not found. Aborting.])
@@ -352,6 +413,19 @@ AC_ARG_ENABLE(samode-unspec,
         [  --enable-samode-unspec  enable to use unspecified a mode of SA],
         [], [enable_samode_unspec=no])
 if test "x$enable_samode_unspec" = "xyes"; then
+	case $host_os in
+	*linux*)
+		cat << EOC
+		
+ERROR: --enable-samode-unspec is not supported under linux 
+because linux kernel do not support it. This option is disabled 
+to prevent mysterious problems.
+
+If you REALLY know what your are doing, remove this check.
+EOC
+		exit 1;
+		;;
+	esac
 	AC_DEFINE([ENABLE_SAMODE_UNSPECIFIED], [], [Enable samode-unspec])
 fi
 AC_MSG_RESULT($enable_samode_unspec)
@@ -392,6 +466,7 @@ main()
 ))
 
 if test "$ipv6" = "yes"; then
+	AC_DEFINE([INET6], [], [Support IPv6])
 	AC_MSG_CHECKING(for advanced API support)
 	AC_TRY_COMPILE([#ifndef INET6
 #define INET6
@@ -439,8 +514,8 @@ AC_MSG_RESULT($kernel_natt)
 AC_MSG_CHECKING(whether to support NAT-T)
 AC_ARG_ENABLE(natt,
 	[  --enable-natt           enable NAT-Traversal (yes/no/kernel)],
-        [if test "$enable_natt" = "kernel"; then enable_natt=$kernel_natt; fi],
-	[enable_natt=$kernel_natt])
+        [ if test "$enable_natt" = "kernel"; then enable_natt=$kernel_natt; fi ],
+	[ enable_natt=no ])
 AC_MSG_RESULT($enable_natt)
 
 if test "$enable_natt" = "yes"; then
@@ -500,6 +575,14 @@ case $host in
 		;;
 esac
 
+AC_CHECK_TYPE([ipsec_policy_t], 
+	      [AC_DEFINE([HAVE_IPSEC_POLICY_T], [], [Have ipsec_policy_t])],
+	      [],
+	      [
+		#include <sys/types.h>
+	      	#include <netinet6/ipsec.h>
+	      ])
+
 CFLAGS="$CFLAGS $CFLAGS_ADD"
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_ADD"
 
@@ -527,5 +610,6 @@ AC_CONFIG_FILES([
   src/racoon/samples/racoon.conf
   rpm/Makefile
   rpm/suse/Makefile
+  rpm/suse/ipsec-tools.spec
   ])
 AC_OUTPUT

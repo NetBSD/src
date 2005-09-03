@@ -1,6 +1,6 @@
-/*	$NetBSD: handler.c,v 1.1.1.2.2.3 2005/05/28 13:04:30 tron Exp $	*/
+/*	$NetBSD: handler.c,v 1.1.1.2.2.4 2005/09/03 07:03:49 snj Exp $	*/
 
-/* Id: handler.c,v 1.13 2004/11/21 19:36:26 manubsd Exp */
+/* Id: handler.c,v 1.13.4.4 2005/07/14 12:00:36 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -277,6 +277,11 @@ delph1(iph1)
 	}
 #endif
 
+#ifdef ENABLE_DPD
+	if (iph1->dpd_r_u != NULL)
+		SCHED_KILL(iph1->dpd_r_u);
+#endif
+
 	if (iph1->remote) {
 		racoon_free(iph1->remote);
 		iph1->remote = NULL;
@@ -420,21 +425,6 @@ getph2byspid(spid)
 	return NULL;
 }
 
-struct ph2handle *
-getph2bysaddr(src, dst)
-	struct sockaddr *src, *dst;
-{
-	struct ph2handle *p;
-
-	LIST_FOREACH(p, &ph2tree, chain) {
-		if (cmpsaddrstrict(src, p->src) == 0 &&
-		    cmpsaddrstrict(dst, p->dst) == 0)
-			return p;
-	}
-
-	return NULL;
-}
-
 /*
  * search ph2handle with sequence number.
  */
@@ -479,8 +469,23 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    cmpsaddrwop(src, p->src) == 0 &&
-		    cmpsaddrwop(dst, p->dst) == 0)
+		    CMPSADDR(src, p->src) == 0 &&
+		    CMPSADDR(dst, p->dst) == 0)
+			return p;
+	}
+
+	return NULL;
+}
+
+struct ph2handle *
+getph2bysaddr(src, dst)
+	struct sockaddr *src, *dst;
+{
+	struct ph2handle *p;
+
+	LIST_FOREACH(p, &ph2tree, chain) {
+		if (cmpsaddrstrict(src, p->src) == 0 &&
+		    cmpsaddrstrict(dst, p->dst) == 0)
 			return p;
 	}
 

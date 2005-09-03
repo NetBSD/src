@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_quick.c,v 1.1.1.3.2.4 2005/06/10 09:23:22 tron Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.1.1.3.2.5 2005/09/03 07:03:49 snj Exp $	*/
 
-/* Id: isakmp_quick.c,v 1.13.2.1 2005/03/02 20:00:03 vanhu Exp */
+/* Id: isakmp_quick.c,v 1.13.2.7 2005/07/20 08:02:05 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -986,6 +986,13 @@ quick_r1recv(iph2, msg0)
 			isakmp_check_notify(pa->ptr, iph2->ph1);
 			break;
 
+#ifdef ENABLE_NATT
+		case ISAKMP_NPTYPE_NATOA_DRAFT:
+		case ISAKMP_NPTYPE_NATOA_RFC:
+			/* Ignore original source/destination messages */
+			break;
+#endif
+
 		default:
 			plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
 				"ignore the packet, "
@@ -1583,18 +1590,6 @@ end:
 		vfree(notify);
 
 	return error;
-}
-
-int
-tunnel_mode_prop(p)
-	struct saprop *p;
-{
-	struct saproto *pr;
-
-	for (pr = p->head; pr; pr = pr->next)
-		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL)
-			return 1;
-	return 0;
 }
 
 /*

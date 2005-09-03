@@ -1,6 +1,6 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
 
-/* Id: plainrsa-gen.c,v 1.4.8.1 2005/02/18 10:23:10 manubsd Exp */
+/* Id: plainrsa-gen.c,v 1.4.8.2 2005/04/21 09:07:20 monas Exp */
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
  * Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
@@ -91,8 +91,8 @@ mix_b64_pubkey(RSA *key)
 	binlen = 1 + BN_num_bytes(key->e) + BN_num_bytes(key->n);
 	binbuf = malloc(binlen);
 	memset(binbuf, 0, binlen);
-	binbuf[0] = BN_bn2bin(key->e, &binbuf[1]);
-	ret = BN_bn2bin(key->n, &binbuf[binbuf[0] + 1]);
+	binbuf[0] = BN_bn2bin(key->e, (unsigned char *) &binbuf[1]);
+	ret = BN_bn2bin(key->n, (unsigned char *) (&binbuf[binbuf[0] + 1]));
 	if (1 + binbuf[0] + ret != binlen) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "Pubkey generation failed. This is really strange...\n");

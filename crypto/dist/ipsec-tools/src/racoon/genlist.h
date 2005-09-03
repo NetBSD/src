@@ -1,4 +1,4 @@
-/*	$NetBSD: genlist.h,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+/*	$NetBSD: genlist.h,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
 
 /* Id: genlist.h,v 1.2 2004/07/12 20:43:50 ludvigm Exp */
 

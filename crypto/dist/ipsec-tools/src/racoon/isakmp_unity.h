@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.h,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.h,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
 
 /*	$KAME$ */
 
