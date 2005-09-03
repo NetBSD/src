@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.18 2005/02/04 02:10:47 perry Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.19 2005/09/03 22:55:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.18 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.19 2005/09/03 22:55:55 uwe Exp $");
 
 #include "opt_rasops.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
