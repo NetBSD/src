@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.32 2005/08/24 19:09:03 elad Exp $
+.\"	$NetBSD: systrace.1,v 1.33 2005/09/03 11:44:45 elad Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd July 4, 2005
+.Dd September 3, 2005
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -142,13 +142,10 @@ The policy is specified via the following grammar:
 filter = expression "then" action errorcode logcode
 expression = symbol | "not" expression | "(" expression ")" |
     expression "and" expression | expression "or" expression
-symbol = string typeoff "match" cmdstring |
-    string typeoff "eq" cmdstring | string typeoff "neq" cmdstring |
-    string typeoff "sub" cmdstring | string typeoff "nsub" cmdstring |
-    string typeoff "inpath" cmdstring | string typeoff "re" cmdstring |
-    string typeoff "topdir" cmdstring
-    "true"
+symbol = string typeoff op cmdstring | "true"
 typeoff = /* empty */ | "[" number "]"
+op = "match" | "eq" | "neq" | "sub" | "nsub" | "inpath" | "re"
+   | "topdir"
 action = "permit" | "deny" | "ask"
 errorcode = /* empty */ | "[" string "]"
 logcode = /* empty */ | "log"
