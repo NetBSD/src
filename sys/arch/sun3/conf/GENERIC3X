@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.80 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: GENERIC3X,v 1.81 2005/09/04 10:41:36 isaki Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -93,7 +93,7 @@ options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)

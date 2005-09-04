@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.29 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: INSTALL3X,v 1.30 2005/09/04 10:41:36 isaki Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -85,7 +85,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP

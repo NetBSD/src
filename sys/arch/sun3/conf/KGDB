@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.45 2005/08/19 05:20:03 christos Exp $
+#	$NetBSD: KGDB,v 1.46 2005/09/04 10:41:36 isaki Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -80,7 +80,7 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
