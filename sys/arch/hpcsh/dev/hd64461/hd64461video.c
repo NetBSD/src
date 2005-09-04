@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.30 2005/03/26 22:41:12 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.31 2005/09/04 01:01:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.30 2005/03/26 22:41:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.31 2005/09/04 01:01:29 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -348,6 +348,11 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;
+		/*
+		 * XXX: uwe: if I RTFS correctly, this really means
+		 * that uint16_t pixel is fetched as little endian.
+		 */
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 
 		fb->hf_class_data_length = sizeof(struct hf_rgb_tag);
 		/* reserved for future use */
