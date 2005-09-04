@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2004/05/16 09:53:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2005/09/04 19:57:50 tron Exp $
 
-CONFIGFILES=	127 root.cache named.conf localhost loopback.v6
+CONFIGFILES=	127 root.cache localhost loopback.v6
 FILESDIR=	/etc/namedb
 FILESMODE=	644
 
