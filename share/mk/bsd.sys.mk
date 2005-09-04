@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.115.2.1 2005/05/28 05:38:36 snj Exp $
+#	$NetBSD: bsd.sys.mk,v 1.115.2.2 2005/09/04 20:04:04 tron Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -64,7 +64,12 @@ AFLAGS+=	${CPUFLAGS}
 HOST_CC?=	cc
 HOST_CFLAGS?=	-O
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
+HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
+.if defined(HOSTPROG_CXX) 
+HOST_LINK.c?=	${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+.else
 HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+.endif
 
 HOST_CXX?=	c++
 HOST_CXXFLAGS?=	-O
@@ -144,7 +149,7 @@ TOOL_UUDECODE?=		uudecode
 TOOL_VGRIND?=		vgrind -f
 TOOL_ZIC?=		zic
 
-.SUFFIXES:	.o .ln .lo .c ${YHEADER:D.h}
+.SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C ${YHEADER:D.h}
 
 # C
 .c.o:
@@ -176,6 +181,12 @@ TOOL_ZIC?=		zic
 .c.lo:
 	${_MKTARGET_COMPILE}
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	mv ${.TARGET}.o ${.TARGET}
+
+# C++
+.cc.lo .cpp.lo .cxx.lo .C.lo:
+	${_MKTARGET_COMPILE}
+	${HOST_COMPILE.cc} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 	mv ${.TARGET}.o ${.TARGET}
 
 # Assembly
