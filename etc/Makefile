@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306.2.6 2005/04/20 11:14:59 tron Exp $
+#	$NetBSD: Makefile,v 1.306.2.7 2005/09/04 19:57:50 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -91,7 +91,7 @@ UTMPGRP= utmp
 BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf locate.conf \
-	mailer.conf man.conf monthly monthly.conf mrouted.conf \
+	mailer.conf man.conf monthly monthly.conf mrouted.conf named.conf \
 	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	passwd.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc \
