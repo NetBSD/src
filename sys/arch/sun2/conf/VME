@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.20 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: VME,v 1.21 2005/09/04 10:40:51 isaki Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.20 $"
+#ident 		"VME-$Revision: 1.21 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -80,7 +80,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
