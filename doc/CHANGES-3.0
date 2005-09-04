@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.229 2005/09/04 13:45:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.230 2005/09/04 20:10:39 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12325,4 +12325,39 @@ usr.sbin/postinstall/postinstall		1.5
 	Fix the installation of /etc/defaults/pf.boot.conf so that it works
 	with -s etc.tgz.
 	[lukem, ticket #745]
+
+distrib/sets/lists/etc/mi			1.159
+etc/Makefile					1.314
+etc/named.conf					1.1
+etc/namedb/Makefile				1.2
+etc/namedb/named.conf				delete
+
+	Move "named.conf" example configuration to "/etc" because that is where
+	named(8) looks for it. You can now really get a caching name server
+	by simply setting "named=yes" in "/etc/rc.conf" as documented in
+	The NetBSD Guide. This fixes PR bin/30662 by Christian Hattemer.
+	[jwise, ticket #725]
+
+tools/host-mkdep/host-mkdep.in			1.15
+
+	Recognize -isystem-cxx as well as -isystem, making this more usable
+	for c++	host progs.
+	[jwise, ticket #735]
+
+tools/host-mkdep/host-mkdep.in			1.16
+
+	On second thought, we can't just pass through -isystem-cxx, we have to
+	change it to -isystem.  With this change, I can now make depend a
+	simple c++ stl-using host program.
+	[jwise, ticket #736]
+
+share/mk/bsd.hostprog.mk			1.45
+share/mk/bsd.sys.mk				1.124 via patch
+
+	Add proper support for using bsd.hostprog.mk to build c++-based host
+	programs -- doesn't affect current host tools build (groff is built the
+	Makefile.gnuhost way).
+	Provides {.cc,.cpp,.cxx,.C}.lo rule, associated variables, and
+	HOSTPROG_CXX support (mirroring PROG_CXX in bsd.prog.mk).
+	[jwise, ticket #737]
 
