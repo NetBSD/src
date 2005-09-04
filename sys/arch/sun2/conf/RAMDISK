@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.26 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: RAMDISK,v 1.27 2005/09/04 10:40:51 isaki Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -77,7 +77,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)

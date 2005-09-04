@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.64 2005/08/19 05:19:53 christos Exp $
+# $NetBSD: GENERIC,v 1.65 2005/09/04 10:40:51 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 maxusers	8
 
@@ -104,7 +104,7 @@ options 	SOFTDEP		# ffs soft updates support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
