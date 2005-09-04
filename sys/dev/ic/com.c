@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.234 2005/06/21 14:01:11 ws Exp $	*/
+/*	$NetBSD: com.c,v 1.235 2005/09/04 09:48:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234 2005/06/21 14:01:11 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.235 2005/09/04 09:48:53 kleink Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -297,9 +297,9 @@ comspeed(long speed, long frequency, int type)
 #ifdef COM_DEBUG
 int	com_debug = 0;
 
-void comstatus(struct com_softc *, char *);
+void comstatus(struct com_softc *, const char *);
 void
-comstatus(struct com_softc *sc, char *str)
+comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
