@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.19 2005/08/30 21:18:47 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.20 2005/09/04 06:58:20 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.19 2005/08/30 21:18:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.20 2005/09/04 06:58:20 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -78,14 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.19 2005/08/30 21:18:47 skrll Exp $");
 #include <dev/pci/if_iwireg.h>
 #include <dev/pci/if_iwivar.h>
 
-static const struct ieee80211_rateset iwi_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-static const struct ieee80211_rateset iwi_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-static const struct ieee80211_rateset iwi_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
+#ifdef IWI_DEBUG
+#define DPRINTF(x)	if (iwi_debug > 0) printf x
+#define DPRINTFN(n, x)	if (iwi_debug >= (n)) printf x
+int iwi_debug = 4;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n, x)
+#endif
 
 static int iwi_match(struct device *, struct cfdata *, void *);
 static void iwi_attach(struct device *, struct device *, void *);
@@ -141,6 +141,18 @@ static int iwi_auth_and_assoc(struct iwi_softc *);
 static int iwi_init(struct ifnet *);
 static void iwi_stop(struct ifnet *, int);
 
+/*
+ * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
+ */
+static const struct ieee80211_rateset iwi_rateset_11a =
+	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+static const struct ieee80211_rateset iwi_rateset_11b =
+	{ 4, { 2, 4, 11, 22 } };
+
+static const struct ieee80211_rateset iwi_rateset_11g =
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
+
 static __inline u_int8_t
 MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
 {
@@ -154,15 +166,6 @@ MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
 }
-
-#ifdef IWI_DEBUG
-#define DPRINTF(x)	if (iwi_debug > 0) printf x
-#define DPRINTFN(n, x)	if (iwi_debug >= (n)) printf x
-int iwi_debug = 0;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n, x)
-#endif
 
 CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
@@ -796,6 +799,10 @@ iwi_media_change(struct ifnet *ifp)
 	return 0;
 }
 
+/*
+ * The firmware automaticly adapt the transmit speed. We report the current
+ * transmit speed here.
+ */
 static void
 iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
@@ -898,7 +905,6 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 /*
  * Read 16 bits at address 'addr' from the serial EEPROM.
- * DON'T PLAY WITH THIS CODE UNLESS YOU KNOW *EXACTLY* WHAT YOU'RE DOING!
  */
 static u_int16_t
 iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
