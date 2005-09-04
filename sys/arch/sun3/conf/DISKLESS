@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.49 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: DISKLESS,v 1.50 2005/09/04 10:41:36 isaki Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -74,7 +74,7 @@ file-system	NFS		# Sun NFS client support
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
