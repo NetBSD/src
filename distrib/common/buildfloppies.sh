@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.10 2005/09/03 20:34:28 dsl Exp $
+# $NetBSD: buildfloppies.sh,v 1.11 2005/09/04 19:29:31 dsl Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,6 +100,22 @@ files=$*
 floppy=floppy.$$.tar
 trap "rm -f ${floppy}" 0 1 2 3			# EXIT HUP INT QUIT
 rm -f ${floppybase}?${suffix}
+
+#	Try to accurately summarise free space
+#
+[ "$files" = "boot netbsd" ] && {
+	set -- $(ls -ln boot)
+	boot_size=$5
+	boot_pad=$(($(roundup $boot_size 512) * 512 - $boot_size))
+	set -- $(ls -ln netbsd)
+	netbsd_size=$5
+	netbsd_pad=$(($(roundup $netbsd_size 512) * 512 - $netbsd_size))
+	echo Free space: boot $boot_pad, netbsd $netbsd_pad, \
+		at end $(($maxdisks * ($floppysize - 16) * 512 \
+		- 512 - $boot_size - $boot_pad \
+		- 512 - $netbsd_size - $netbsd_pad \
+		- 512 * 2))
+}
 
 #	create tar file
 #
