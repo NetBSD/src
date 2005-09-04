@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.44 2004/06/20 22:20:15 jmc Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.44.2.1 2005/09/04 20:04:04 tron Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -61,6 +61,10 @@ OBJHOSTMACHINE=	# set
 .endif
 
 ##### Build rules
+.if defined(HOSTPROG_CXX)
+HOSTPROG=	${HOSTPROG_CXX}
+.endif
+
 .if defined(HOSTPROG)
 SRCS?=		${HOSTPROG}.c
 
