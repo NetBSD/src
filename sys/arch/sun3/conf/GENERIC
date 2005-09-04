@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: GENERIC,v 1.123 2005/09/04 10:41:36 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -112,7 +112,7 @@ options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)

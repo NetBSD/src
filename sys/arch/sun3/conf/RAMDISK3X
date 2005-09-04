@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.30 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: RAMDISK3X,v 1.31 2005/09/04 10:41:36 isaki Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -32,7 +32,7 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 #file-system	PTYFS		# /dev/pts/N support
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
