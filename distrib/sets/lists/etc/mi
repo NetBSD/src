@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153.2.3 2005/09/02 12:32:09 tron Exp $
+# $NetBSD: mi,v 1.153.2.4 2005/09/04 19:57:50 tron Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -67,10 +67,11 @@
 ./etc/mtree/NetBSD.dist				etc-sys-etc
 ./etc/mtree/set.etc				etc-sys-etc
 ./etc/mtree/special				etc-sys-etc
+./etc/named.conf				etc-bind-etc
 ./etc/namedb/127				etc-bind-etc
 ./etc/namedb/localhost				etc-bind-etc
 ./etc/namedb/loopback.v6			etc-bind-etc
-./etc/namedb/named.conf				etc-bind-etc
+./etc/namedb/named.conf				etc-obsolete		obsolete
 ./etc/namedb/root.cache				etc-bind-etc
 ./etc/netconfig					etc-net-etc
 ./etc/networks					etc-net-etc
