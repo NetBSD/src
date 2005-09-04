@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.68 2005/03/13 04:08:16 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.69 2005/09/04 19:02:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.68 2005/03/13 04:08:16 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.69 2005/09/04 19:02:08 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN + 1];
 int maxname = 8, maxline = 3, maxhost = 16;
+int		use_sysctl;
 
 /*
  * One of these per active utmp entry.
@@ -190,9 +191,13 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL,
-	    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
-		errx(1, "%s", errbuf);
+	use_sysctl = (memf == NULL && nlistf == NULL);
+
+	if (!use_sysctl) {
+		if ((kd = kvm_openfiles(nlistf, memf, NULL,
+		    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
+			errx(1, "%s", errbuf);
+	}
 
 	(void)time(&now);
 
@@ -286,9 +291,28 @@ main(int argc, char **argv)
 			exit (0);
 	}
 
-	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
-	    sizeof(struct kinfo_proc2), &nentries)) == NULL)
-		errx(1, "%s", kvm_geterr(kd));
+	if (use_sysctl) {
+		int mib[6] = { CTL_KERN, KERN_PROC2, KERN_PROC_ALL, 0, sizeof(*kp), 0 };
+		size_t size;
+
+		if (sysctl(mib, 6, NULL, &size, NULL, 0) == -1)
+			err(1, "sysctl (query)");
+
+		if ((kp = malloc(size)) == NULL)
+			err(1, "malloc");
+		memset(kp, 0, size);
+
+		mib[5] = size / sizeof(*kp);
+
+		if (sysctl(mib, 6, kp, &size, NULL, 0) == -1)
+			err(1, "sysctl (copy)");
+
+		nentries = size / sizeof(*kp);
+	} else {
+		if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
+		    sizeof(struct kinfo_proc2), &nentries)) == NULL)
+			errx(1, "%s", kvm_geterr(kd));
+	}
 
 	/* Include trailing space because TTY header starts one column early. */
 	for (i = 0; i < nentries; i++, kp++) {
@@ -439,7 +463,48 @@ pr_args(struct kinfo_proc2 *kp)
 	if (kp == 0)
 		goto nothing;
 	left = argwidth;
-	argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
+
+	if (use_sysctl) {
+		char *a = NULL;
+		size_t size;
+		int mib[4] = { CTL_KERN, KERN_PROC_ARGS, kp->p_pid, KERN_PROC_NARGV };
+		int nargv;
+
+		size = sizeof(nargv);
+		if (sysctl(mib, 4, &nargv, &size, NULL, 0) == -1)
+			err(1, "sysctl (nargv)");
+
+		size = ARG_MAX;
+
+		argv = malloc(size);
+		memset(argv, 0, size);
+
+		mib[3] = KERN_PROC_ARGV;
+
+		if (sysctl(mib, 4, argv, &size, NULL, 0) == -1)
+			err(1, "sysctl (argv copy)");
+
+		if (size == 0) {
+			free(argv);
+			argv = NULL;
+		}
+
+		if (nargv != 1 && argv != NULL) {
+			a = (char *)argv;
+			while (nargv > 1) {
+				if (*a == '\0') {
+					*a = ' ';
+					nargv--;
+				}
+				a++;
+			}
+		}
+		if (a != NULL && argwidth)
+			argv[argwidth] = '\0';
+	} else {
+		argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
+	}
+
 	if (argv == 0) {
 		if (kp->p_comm == 0) {
 			goto nothing;
@@ -450,11 +515,17 @@ pr_args(struct kinfo_proc2 *kp)
 			return;
 		}
 	}
-	while (*argv) {
-		fmt_puts(*argv, &left);
-		argv++;
-		fmt_putc(' ', &left);
+
+	if (use_sysctl) {
+		printf("%s", (char *)argv);
+	} else {
+		while (*argv) {
+			fmt_puts(*argv, &left);
+			argv++;
+			fmt_putc(' ', &left);
+		}
 	}
+
 	return;
 nothing:
 	putchar('-');
