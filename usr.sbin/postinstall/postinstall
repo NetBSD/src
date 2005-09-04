@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2.2.5 2005/09/02 12:29:37 tron Exp $
+# $NetBSD: postinstall,v 1.2.2.6 2005/09/04 13:43:59 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -500,8 +500,11 @@ do_defaults()
 	compare_dir $1 ${SRC_DIR}/etc/defaults ${DEST_DIR}/etc/defaults 444 \
 		daily.conf monthly.conf rc.conf security.conf weekly.conf
 
-	compare_dir $1 ${SRC_DIR}/usr.sbin/pf/etc/defaults \
-		${DEST_DIR}/etc/defaults 444 pf.boot.conf
+	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
+	    ${SRC_DIR}/usr.sbin/pf/etc/defaults ${SRC_DIR}/etc/defaults \
+	    || return 1
+
+	compare_dir $1 ${dir} ${DEST_DIR}/etc/defaults 444 pf.boot.conf
 }
 
 #
