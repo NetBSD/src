@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.9 2003/08/07 11:25:49 agc Exp $	*/
+/*	$NetBSD: trsp.c,v 1.10 2005/09/05 23:17:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.9 2003/08/07 11:25:49 agc Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.10 2005/09/05 23:17:08 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,17 +139,15 @@ int	spp_debx;
 
 kvm_t	*kd;
 
-int	main __P((int, char *[]));
-void	dotrace __P((caddr_t));
-int	numeric __P((const void *, const void *));
-void	spp_trace __P((short, short, struct sppcb *, struct sppcb *,
-	    struct spidp *, int));
-void	usage __P((void));
+int	main(int, char *[]);
+void	dotrace(caddr_t);
+int	numeric(const void *, const void *);
+void	spp_trace(short, short, struct sppcb *, struct sppcb *,
+	    struct spidp *, int);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, i, npcbs = 0;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
@@ -292,8 +290,7 @@ main(argc, argv)
 }
 
 void
-dotrace(sppcb)
-	caddr_t sppcb;
+dotrace(caddr_t sppcb)
 {
 	struct spp_debug *sd;
 	int i;
@@ -317,8 +314,7 @@ dotrace(sppcb)
 }
 
 int
-numeric(v1, v2)
-	const void *v1, *v2;
+numeric(const void *v1, const void *v2)
 {
 	const caddr_t *c1 = v1;
 	const caddr_t *c2 = v2;
@@ -335,11 +331,8 @@ numeric(v1, v2)
 }
 
 void
-spp_trace(act, ostate, asp, sp, si, req)
-	short act, ostate;
-	struct sppcb *asp, *sp;
-	struct spidp *si;
-	int req;
+spp_trace(short act, short ostate, struct sppcb *asp, struct sppcb *sp,
+	struct spidp *si, int req)
 {
 	u_int16_t seq, ack, len, alo;
 	int flags;
@@ -474,7 +467,7 @@ spp_trace(act, ostate, asp, sp, si, req)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-azstj] [-p hex-address]"
