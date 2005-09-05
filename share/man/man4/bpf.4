@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.31 2005/08/07 11:15:38 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.32 2005/09/05 18:03:18 rpaulo Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,6 +289,19 @@ or haphazard packet matching).
 .It Dv BIOCSRSIG BIOCGRSIG (u_int signal)
 Set or get the receive signal.  This signal will be sent to the process or process group
 specified by FIOSETOWN.  It defaults to SIGIO.
+.It Dv BIOGHDRCMPLT BIOSHDRCMPLT (u_int)
+Enable/disable or get the
+.Dq header complete
+flag status.
+If enabled, packets written to the bpf file descriptor will not have headers
+rewritten in the interface output routine.
+By default, the flag is disabled (value is 0).
+.It Dv BIOCGSEESENT BIOCSSEESENT (u_int)
+Enable/disable or get the
+.Dq see sent
+flag status.
+If enabled, packets sent will be passed to the filter.
+By default, the flag is enabled (value is 1).
 .El
 .Sh STANDARD IOCTLS
 .Nm
