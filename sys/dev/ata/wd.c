@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.309 2005/09/05 20:42:37 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.310 2005/09/05 21:09:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.309 2005/09/05 20:42:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.310 2005/09/05 21:09:08 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -243,15 +243,9 @@ static const struct wd_quirk {
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160827A*",
 	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3200822A*",
+	/* Attemp to catch all seagate drives larger than 200GB */
+	{ "ST3[2-9][0-9][0-9][0-9][0-9][0-9]A*",
 	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3250823A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3200826A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3300831A*",
-	  WD_QUIRK_FORCE_LBA48 },
-
 	{ NULL,
 	  0 }
 };
