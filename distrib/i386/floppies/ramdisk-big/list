@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.22 2005/01/18 12:38:45 lukem Exp $
+#	$NetBSD: list,v 1.23 2005/09/05 20:58:35 dsl Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -25,6 +25,7 @@ PROG	bin/sync
 
 PROG	sbin/dhclient
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fdisk
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
