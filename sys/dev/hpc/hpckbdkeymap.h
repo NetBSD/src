@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.36 2005/07/30 22:45:13 nakayama Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.37 2005/09/05 18:54:10 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -840,7 +840,7 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 /* 5 */ 30 , 16 , 21 , 24 , 28 , 54 , UNK, UNK,
 /* 6 */ 17 ,  4 , UNK, 10 , 12 , 205, UNK, UNK,
 /* 7 */ 31 , 18 ,  7 , 25 , 13 , 83 , UNK, UNK,
-/* 8 */ 60 , 62 , 64 , 66 , 68 , IGN, UNK, UNK, /* REC button */
+/* 8 */ 60 , 62 , 64 , 66 , 68 , UNK, UNK, UNK,
 /* 9 */ UNK, 123, 49 , 53 , 203, UNK, UNK, UNK,
 /*10 */ 56 , 46 , 50 , 57 , 208, UNK, UNK, UNK,
 /*11 */ 15 , 33 , 36 , 39 , 43 , UNK, UNK, UNK,
@@ -853,6 +853,19 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 const int persona_hpw50pad_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	=  5,
 	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+static const keysym_t persona_hpw50pad_jp_keydesc[] = {
+/*	pos	command			normal		shifted		*/
+	KC(63),	KS_Cmd_ContrastDown,	KS_f5,
+	KC(64),	KS_Cmd_ContrastUp,	KS_f6,
+	KC(65),	KS_Cmd_BrightnessDown,	KS_f7,
+	KC(66),	KS_Cmd_BrightnessUp,	KS_f8,
+
+	KC(200),KS_Cmd_ScrollFastUp,	KS_Up,
+	KC(208),KS_Cmd_ScrollFastDown,	KS_Down,
+	KC(203),KS_KP_Home,		KS_Left,
+	KC(205),KS_KP_End,		KS_Right,
 };
 
 /*
@@ -1104,7 +1117,7 @@ const struct hpckbd_keymap_table {
 	{ 	&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD,
 		persona_hpw50pad_jp_keytrans,
 		persona_hpw50pad_special_keymap,
-		NULLCMDMAP,
+ 		CMDMAP(persona_hpw50pad_jp_keydesc),
 		KB_JP },
 
 	/*
