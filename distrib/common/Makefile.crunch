@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.20 2005/09/04 19:00:40 dsl Exp $
+#	$NetBSD: Makefile.crunch,v 1.21 2005/09/05 20:14:08 dsl Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -50,7 +50,7 @@ ${CRUNCHBIN}.cache: ${CRUNCHBIN}.mk
 
 ${CRUNCHBIN}.mk: ${CRUNCHBIN}.conf  ${TOOL_CRUNCHGEN:[-1]}
 	${CRUNCHENV} ${TOOL_CRUNCHGEN} -f -D ${NETBSDSRCDIR} \
-	    -L ${DESTDIR}/usr/lib -q ${CRUNCHGEN_FLAGS} ${.ALLSRC}
+	    -L ${DESTDIR}/usr/lib -q ${CRUNCHGEN_FLAGS} ${CRUNCHBIN}.conf
 
 ${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
