@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2005/09/05 18:54:10 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.59 2005/09/05 19:05:20 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -214,6 +214,7 @@ wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?
+adc*		at shb?			# analog->digital converter
 pfckbd*		at mainbus?
 
 #
@@ -233,8 +234,6 @@ wskbd0		at hpckbd? mux 1
 scif0		at shb?
 options 	SCIFCN_SPEED=19200
 
-adc*		at shb?			# analog->digital converter
-
 j6x0pwr*	at adc?			# '680 battery, on/off, etc
 
 j6x0lcd*	at shb?			# '680 LCD power, brightness, contrast
@@ -250,11 +249,6 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 #options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
 #options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
 
-hd64461if* at shb?
-hd64461pcmcia*	at hd64461if?
-#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
-hd64461video*	at hd64461if?
-
 #
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
@@ -264,6 +258,11 @@ psh3lcd*	at shb?			# PERSONA SH3 power, brightness, contrast
 
 psh3tp*		at adc?			# PERSONA SH3 touch panel
 wsmouse*	at psh3tp? mux 0
+
+hd64461if* at shb?
+hd64461pcmcia*	at hd64461if?
+#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
+hd64461video*	at hd64461if?
 
 #
 # machine independent part
