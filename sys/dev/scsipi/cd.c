@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.225 2005/08/28 22:51:01 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.226 2005/09/05 21:16:24 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.225 2005/08/28 22:51:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.226 2005/09/05 21:16:24 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1119,6 +1119,28 @@ cdreadmsaddr(struct cd_softc *cd, int *addr)
 	return 0;
 }
 
+/* synchronise caches code from sd.c, move to scsipi_ioctl.c ? */
+static int
+cdcachesync(struct scsipi_periph *periph, int flags) {
+	struct scsi_synchronize_cache_10 cmd;
+
+	/*
+	 * Issue a SYNCHRONIZE CACHE. MMC devices have to issue with address 0
+	 * and length 0 as it can't synchronise parts of the disc per spec.
+	 * We ignore ILLEGAL REQUEST in the event that the command is not
+	 * supported by the device, and poll for completion so that we know
+	 * that the cache has actually been flushed.
+	 *
+	 * XXX should we handle the PQUIRK_NOSYNCCACHE ?
+	 */
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = SCSI_SYNCHRONIZE_CACHE_10;
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
+}
+
 /*
  * Perform special action on behalf of the user.
  * Knows about the internals of this device
@@ -1146,6 +1168,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		case DIOCLOCK:
 		case ODIOCEJECT:
 		case DIOCEJECT:
+		case DIOCCACHESYNC:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1454,6 +1477,9 @@ bad:
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case ODIOCEJECT:
 		return (scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0));
+	case DIOCCACHESYNC:
+		/* SYNCHRONISE CACHES command */
+		return (cdcachesync(periph, 0));
 	case CDIOCALLOW:
 		return (scsipi_prevent(periph, SPAMR_ALLOW, 0));
 	case CDIOCPREVENT:
