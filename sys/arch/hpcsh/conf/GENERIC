@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.57 2005/09/04 16:07:46 uwe Exp $
+# $NetBSD: GENERIC,v 1.58 2005/09/05 18:54:10 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -259,6 +259,8 @@ hd64461video*	at hd64461if?
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
 com0		at hd64461if?
+
+psh3lcd*	at shb?			# PERSONA SH3 power, brightness, contrast
 
 psh3tp*		at adc?			# PERSONA SH3 touch panel
 wsmouse*	at psh3tp? mux 0
