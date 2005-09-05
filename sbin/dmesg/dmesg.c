@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.23 2005/01/20 15:55:01 xtraeme Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.24 2005/09/05 20:56:41 dsl Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.23 2005/01/20 15:55:01 xtraeme Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.24 2005/09/05 20:56:41 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,12 +62,12 @@ struct nlist nl[] = {
 	{ "_msgbufp" },
 	{ NULL },
 };
-#endif
 
 void	usage(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
+#endif
 
 int
 main(int argc, char *argv[])
@@ -105,17 +105,14 @@ main(int argc, char *argv[])
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_MSGBUF;
 
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
-			errx(1, "can't get size of msgbuf");
-
-		if ((bufdata = malloc(size)) == NULL)
-			err(1, "couldn't allocate space for buffer data");
-
-		if (sysctl(mib, 2, bufdata, &size, NULL, 0) == -1)
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1 ||
+		    (bufdata = malloc(size)) == NULL ||
+		    sysctl(mib, 2, bufdata, &size, NULL, 0) == -1)
 			err(1, "can't get msgbuf");
 
 		/* make a dummy struct msgbuf for the display logic */
-		cur.msg_bufx =  cur.msg_bufs = size;
+		cur.msg_bufx = 0;
+		cur.msg_bufs = size;
 #ifndef SMALL
 	} else {
 		kvm_t *kd;
@@ -164,8 +161,10 @@ main(int argc, char *argv[])
 	 */
 	for (newl = skip = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
+#ifndef SMALL
 		if (p == bufdata + cur.msg_bufs)
 			p = bufdata;
+#endif
 		ch = *p;
 		/* Skip "\n<.*>" syslog sequences. */
 		if (skip) {
@@ -181,9 +180,11 @@ main(int argc, char *argv[])
 			continue;
 		newl = ch == '\n';
 		(void)vis(buf, ch, VIS_NOSLASH, 0);
+#ifndef SMALL
 		if (buf[1] == 0)
 			(void)putchar(buf[0]);
 		else
+#endif
 			(void)printf("%s", buf);
 	}
 	if (!newl)
@@ -191,14 +192,12 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+#ifndef SMALL
 void
 usage(void)
 {
 
-#ifdef SMALL
-	(void)fprintf(stderr, "usage: dmesg\n");
-#else
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
-#endif
 	exit(1);
 }
+#endif
