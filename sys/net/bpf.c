@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.110 2005/08/04 19:30:47 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.111 2005/09/05 18:32:24 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.110 2005/08/04 19:30:47 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.111 2005/09/05 18:32:24 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,12 +169,8 @@ const struct cdevsw bpf_cdevsw = {
 };
 
 static int
-bpf_movein(uio, linktype, mtu, mp, sockp)
-	struct uio *uio;
-	int linktype;
-	int mtu;
-	struct mbuf **mp;
-	struct sockaddr *sockp;
+bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
+	   struct sockaddr *sockp)
 {
 	struct mbuf *m;
 	int error;
@@ -297,9 +293,7 @@ bad:
  * Must be called at splnet.
  */
 static void
-bpf_attachd(d, bp)
-	struct bpf_d *d;
-	struct bpf_if *bp;
+bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 {
 	/*
 	 * Point d at bp, and add d to the interface's list of listeners.
@@ -317,8 +311,7 @@ bpf_attachd(d, bp)
  * Detach a file from its interface.
  */
 static void
-bpf_detachd(d)
-	struct bpf_d *d;
+bpf_detachd(struct bpf_d *d)
 {
 	struct bpf_d **p;
 	struct bpf_if *bp;
@@ -371,8 +364,7 @@ bpf_detachd(d)
  */
 /* ARGSUSED */
 void
-bpfilterattach(n)
-	int n;
+bpfilterattach(int n)
 {
 	simple_lock_init(&bpf_slock);
 	
@@ -390,11 +382,7 @@ bpfilterattach(n)
  */
 /* ARGSUSED */
 int
-bpfopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct bpf_d *d;
 	struct file *fp;
@@ -467,7 +455,7 @@ bpf_close(struct file *fp, struct proc *p)
  */
 static int
 bpf_read(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+	 struct ucred *cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -566,8 +554,7 @@ done:
  * If there are processes sleeping on this descriptor, wake them up.
  */
 static __inline void
-bpf_wakeup(d)
-	struct bpf_d *d;
+bpf_wakeup(struct bpf_d *d)
 {
 	wakeup(d);
 	if (d->bd_async)
@@ -580,8 +567,7 @@ bpf_wakeup(d)
 
 
 static void
-bpf_timed_out(arg)
-	void *arg;
+bpf_timed_out(void *arg)
 {
 	struct bpf_d *d = arg;
 	int s;
@@ -598,7 +584,7 @@ bpf_timed_out(arg)
 
 static int
 bpf_write(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+	  struct ucred *cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
@@ -641,8 +627,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
  * receive and drop counts.  Should be called at splnet.
  */
 static void
-reset_d(d)
-	struct bpf_d *d;
+reset_d(struct bpf_d *d)
 {
 	if (d->bd_hbuf) {
 		/* Free the hold buffer. */
@@ -1261,7 +1246,7 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
  */
 static __inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
-    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
+	    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
 {
 	u_int slen;
 	struct bpf_d *d;
@@ -1434,7 +1419,7 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
  */
 static void
 catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
-    void *(*cpfn)(void *, const void *, size_t))
+	    void *(*cpfn)(void *, const void *, size_t))
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
