@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.96 2005/08/19 12:47:23 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.97 2005/09/06 09:36:28 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.96 2005/08/19 12:47:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.97 2005/09/06 09:36:28 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2213,6 +2213,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	if (error)
 		goto out;
 	VATTR_NULL(&va);
+	va.va_type = VLNK;
 	if (v3) {
 		va.va_mode = 0;
 		nfsm_srvsattr(&va);
