@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.29.2.3 2005/07/24 21:21:17 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.29.2.4 2005/09/06 16:00:22 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.3 2005/07/24 21:21:17 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.29.2.4 2005/09/06 16:00:22 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -637,6 +637,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		 (int)(in_tot >> 24) & 0xff);
 	if (i != 8)
 		maybe_err("snprintf");
+	if (in_tot > 0xffffffff)
+		maybe_warn("input file size >= 4GB cannot be saved");
 	if (write(out, outbufp, i) != i) {
 		maybe_warn("write");
 		in_tot = -1;
@@ -730,8 +732,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 					print_test(filename, 0);
 #endif
 				maybe_warn("failed to read stdin");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			} else if (in_size == 0) {
 				done_reading = 1;
 			}
@@ -751,8 +752,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_MAGIC0:
 			if (*z.next_in != GZIP_MAGIC0) {
 				maybe_warnx("input not gziped (MAGIC0)");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			}
 			ADVANCE();
 			state++;
@@ -764,8 +764,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			if (*z.next_in != GZIP_MAGIC1 &&
 			    *z.next_in != GZIP_OMAGIC1) {
 				maybe_warnx("input not gziped (MAGIC1)");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			}
 			ADVANCE();
 			state++;
@@ -774,8 +773,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_METHOD:
 			if (*z.next_in != Z_DEFLATED) {
 				maybe_warnx("unknown compression method");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			}
 			ADVANCE();
 			state++;
@@ -859,18 +857,37 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_INIT:
 			if (inflateInit2(&z, -MAX_WBITS) != Z_OK) {
 				maybe_warnx("failed to inflateInit");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			}
 			state++;
 			break;
 
 		case GZSTATE_READ:
 			error = inflate(&z, Z_FINISH);
+			switch (error) {
 			/* Z_BUF_ERROR goes with Z_FINISH... */
-			if (error != Z_STREAM_END && error != Z_BUF_ERROR)
-				/* Just need more input */
+			case Z_BUF_ERROR:
+			case Z_STREAM_END:
+			case Z_OK:
 				break;
+
+			case Z_NEED_DICT:
+				maybe_warnx("Z_NEED_DICT error");
+				goto stop_and_fail;
+			case Z_DATA_ERROR:
+				maybe_warnx("data stream error");
+				goto stop_and_fail;
+			case Z_STREAM_ERROR:
+				maybe_warnx("internal stream error");
+				goto stop_and_fail;
+			case Z_MEM_ERROR:
+				maybe_warnx("memory allocation error");
+				goto stop_and_fail;
+
+			default:
+				maybe_warn("unknown error from inflate(): %d",
+				    error);
+			}
 			wr = BUFLEN - z.avail_out;
 
 			if (wr != 0) {
@@ -882,8 +899,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 #endif
 				    write(out, outbufp, wr) != wr) {
 					maybe_warn("error writing to output");
-					out_tot = -1;
-					goto stop;
+					goto stop_and_fail;
 				}
 
 				out_tot += wr;
@@ -909,8 +925,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 						continue;
 					}
 					maybe_warnx("truncated input");
-					out_tot = -1;
-					goto stop;
+					goto stop_and_fail;
 				}
 				origcrc = ((unsigned)z.next_in[0] & 0xff) |
 					((unsigned)z.next_in[1] & 0xff) << 8 |
@@ -919,8 +934,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				if (origcrc != crc) {
 					maybe_warnx("invalid compressed"
 					     " data--crc error");
-					out_tot = -1;
-					goto stop;
+					goto stop_and_fail;
 				}
 			}
 
@@ -942,8 +956,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 						continue;
 					}
 					maybe_warnx("truncated input");
-					out_tot = -1;
-					goto stop;
+					goto stop_and_fail;
 				}
 				origlen = ((unsigned)z.next_in[0] & 0xff) |
 					((unsigned)z.next_in[1] & 0xff) << 8 |
@@ -953,8 +966,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				if (origlen != out_sub_tot) {
 					maybe_warnx("invalid compressed"
 					     " data--length error");
-					out_tot = -1;
-					goto stop;
+					goto stop_and_fail;
 				}
 			}
 				
@@ -963,13 +975,14 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 			if (error < 0) {
 				maybe_warnx("decompression error");
-				out_tot = -1;
-				goto stop;
+				goto stop_and_fail;
 			}
 			state = GZSTATE_MAGIC0;
 			break;
 		}
 		continue;
+stop_and_fail:
+		out_tot = 1;
 stop:
 		break;
 	}
@@ -1206,7 +1219,7 @@ file_compress(char *file, char *outfile, size_t outsize)
 		maybe_warn("couldn't close ouput");
 
 #ifndef SMALL
-	if (stat(outfile, &osb) < 0) {
+	if (stat(outfile, &osb) != 0) {
 		maybe_warn("couldn't stat: %s", outfile);
 		goto bad_outfile;
 	}
@@ -1445,13 +1458,13 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	/*
 	 * if we can't stat the file don't remove the file.
 	 */
-	if (stat(outfile, &osb) < 0) {
+	if (stat(outfile, &osb) != 0) {
 		maybe_warn("couldn't stat (leaving original): %s",
 			   outfile);
 		return -1;
 	}
 	if (osb.st_size != size) {
-		maybe_warn("stat gave different size: %" PRIdOFF
+		maybe_warnx("stat gave different size: %" PRIdOFF
 				" != %" PRIdOFF " (leaving original)",
 				size, osb.st_size);
 		unlink(outfile);
@@ -1650,7 +1663,7 @@ handle_pathname(char *path)
 	}
 
 retry:
-	if (stat(path, &sb) < 0) {
+	if (stat(path, &sb) != 0) {
 		/* lets try <path>.gz if we're decompressing */
 		if (dflag && s == NULL && errno == ENOENT) {
 			len = strlen(path);
