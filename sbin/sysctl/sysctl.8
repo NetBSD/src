@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.123 2005/08/04 20:10:24 rpaulo Exp $
+.\"	$NetBSD: sysctl.8,v 1.124 2005/09/06 03:22:58 rpaulo Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 4, 2005
+.Dd September 6, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -429,9 +429,13 @@ privilege can change the value.
 .It net.inet.tcp.timestamps	integer	yes
 .It net.inet.tcp.win_scale	integer	yes
 .It net.inet.tcp.ident	struct	no
+.It net.inet.tcp.debug	struct	no
+.It net.inet.tcp.debx	integer	no
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.recvspace	integer	yes
 .It net.inet.udp.sendspace	integer	yes
+.It net.ns.spp.debug	struct	yes
+.It net.ns.spp.debx	integer	yes
 .It net.inet6.icmp6.errppslimit	integer	yes
 .It net.inet6.icmp6.mtudisc_hiwat	integer	yes
 .It net.inet6.icmp6.mtudisc_lowat	integer	yes
