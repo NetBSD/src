@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.9.4.1 2005/09/06 16:12:00 riz Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9.4.1 2005/09/06 16:12:00 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,6 +595,10 @@ msdosfs_write(v)
 
 	if (uio->uio_resid == 0)
 		return (0);
+
+	/* Don't bother to try to write files larger than the fs limit */
+	if (uio->uio_offset + uio->uio_resid > MSDOSFS_FILESIZE_MAX)
+		return (EFBIG);
 
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
