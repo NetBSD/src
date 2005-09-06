@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.22 2005/06/02 04:40:46 riz Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.23 2005/09/06 01:05:38 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.22 2005/06/02 04:40:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.23 2005/09/06 01:05:38 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -142,7 +142,8 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 			if (m->m_len < sizeof(td->td_ti))
 				break;
 			bcopy(mtod(m, caddr_t), &td->td_ti, sizeof(td->td_ti));
-			th = (struct tcphdr *)((caddr_t)&td->td_ti + sizeof(struct ip));
+			th = (struct tcphdr *)((caddr_t)&td->td_ti + 
+			    sizeof(struct ip));
 			break;
 #ifdef INET6
 		case 6:
@@ -150,7 +151,8 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 				break;
 			bcopy(mtod(m, caddr_t), &td->td_ti6,
 				sizeof(td->td_ti6));
-			th = (struct tcphdr *)((caddr_t)&td->td_ti6 + sizeof(struct ip6_hdr));
+			th = (struct tcphdr *)((caddr_t)&td->td_ti6 + 
+			    sizeof(struct ip6_hdr));
 			break;
 #endif
 		}
@@ -189,7 +191,8 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 		if (flags) {
 #ifndef lint
 			const char *cp = "<";
-#define pf(f) { if (th->th_flags&__CONCAT(TH_,f)) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (th->th_flags&__CONCAT(TH_,f)) { \
+	printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");
