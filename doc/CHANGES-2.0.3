@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.39 2005/09/06 01:34:51 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.40 2005/09/06 16:11:29 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -449,4 +449,12 @@ share/zoneinfo/zone.tab				1.1.1.21-1.1.1.23
 	leap second at the end of 2005 and the U.S. DST changes
 	taking effect in 2007.
 	[kleink, ticket #5816]
+
+sys/fs/msdosfs/denode.h				1.6
+sys/fs/msdosfs/msdosfs_vnops.c			1.17
+
+	The maximum file size on MS-DOS filesystems is 4 GB - 1 byte, so
+	don't bother trying to write files bigger than this.  Just return
+	EFBIG to caller, rather than panic()ing later.  PR#30864
+	[xtraeme, ticket #5627]
 
