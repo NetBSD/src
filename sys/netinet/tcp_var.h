@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.129 2005/08/10 13:06:49 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.130 2005/09/06 02:41:14 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -673,7 +673,9 @@ struct	tcpstat {
 #define	TCPCTL_ACKDROPRATELIMIT	28	/* SYN/RST -> ACK rate limit */
 #define	TCPCTL_LOOPBACKCKSUM	29	/* do TCP checksum on loopback */
 #define	TCPCTL_STATS		30	/* TCP statistics */
-#define	TCPCTL_MAXID		31
+#define	TCPCTL_DEBUG		31	/* TCP debug sockets */
+#define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
+#define	TCPCTL_MAXID		33
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -707,6 +709,8 @@ struct	tcpstat {
 	{ "ackdropppslimit", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "debug", CTLTYPE_STRUCT }, \
+	{ "debx", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
