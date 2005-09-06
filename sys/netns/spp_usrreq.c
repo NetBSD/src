@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.40 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.41 2005/09/06 02:44:55 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.40 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.41 2005/09/06 02:44:55 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ spp_reass(cb, si, m0)
 	struct socket *so = cb->s_nspcb->nsp_socket;
 	char packetp = cb->s_flags & SF_HI;
 	int incr;
-	char wakeup = 0;
+	char reaswakeup = 0;
 
 	if (si == SI(0))
 		goto present;
@@ -552,7 +552,7 @@ present:
 			p = q->si_q.le_next;
 			LIST_REMOVE(q, si_q);
 			FREE(q, M_SPIDPQ);
-			wakeup = 1;
+			reaswakeup = 1;
 			sppstat.spps_rcvpack++;
 #ifdef SF_NEWCALL
 			if (cb->s_flags2 & SF_NEWCALL) {
@@ -600,7 +600,7 @@ present:
 		  } else
 			break;
 	}
-	if (wakeup) sorwakeup(so);
+	if (reaswakeup) sorwakeup(so);
 	return (0);
 }
 
