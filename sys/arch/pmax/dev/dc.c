@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: dc.c,v 1.80 2005/09/06 20:46:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.79 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.80 2005/09/06 20:46:38 kleink Exp $");
 
 /*
  * devDC7085.c --
@@ -509,7 +509,8 @@ dcopen(dev, flag, mode, p)
 #endif
 		(void) dcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
