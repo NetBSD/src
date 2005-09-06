@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.183 2005/09/06 00:19:27 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.184 2005/09/06 16:30:21 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3643,4 +3643,28 @@ share/zoneinfo/zone.tab				1.1.1.23
 
 	Update to tzdata2005m.
 	[kleink, ticket #5814]
+
+usr.bin/gzip/gzip.c				1.73
+
+	Avoid an infinite loop while decompressing invalid gzip files.
+	Some minor CSE.  Compare stat return value consistently.
+	[mrg, ticket #5626]
+
+sys/fs/msdosfs/denode.h				1.6
+sys/fs/msdosfs/msdosfs_vnops.c			1.17
+
+	The maximum file size on MS-DOS filesystems is 4 GB - 1 byte, so
+	don't bother trying to write files bigger than this.  Just return
+	EFBIG to caller, rather than panic()ing later.  PR#30864
+	[xtraeme, ticket #5627]
+
+sys/dev/ata/wd.c				1.307
+
+	ST3300831A also needs WD_QUIRK_FORCE_LBA48.
+	[bouyer, ticket #5821]
+
+sys/dev/ata/wd.c				1.309
+
+	Add quirk for ST3200826A.
+	[bouyer, ticket #5822]
 
