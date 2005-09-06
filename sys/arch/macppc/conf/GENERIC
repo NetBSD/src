@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.210 2005/08/19 05:19:53 christos Exp $
+# $NetBSD: GENERIC,v 1.211 2005/09/06 02:03:52 dogcow Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.210 $"
+#ident 		"GENERIC-$Revision: 1.211 $"
 
 maxusers	32
 
@@ -358,6 +358,7 @@ atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
