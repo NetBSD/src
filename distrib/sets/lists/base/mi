@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470.2.2 2004/05/10 19:30:47 tron Exp $
+# $NetBSD: mi,v 1.470.2.3 2005/09/06 01:33:43 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2850,6 +2850,18 @@
 ./usr/share/zoneinfo/America/Anguilla		base-sys-share		share
 ./usr/share/zoneinfo/America/Antigua		base-sys-share		share
 ./usr/share/zoneinfo/America/Araguaina		base-sys-share		share
+./usr/share/zoneinfo/America/Argentina		base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Buenos_Aires	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Catamarca	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/ComodRivadavia	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Cordoba	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Jujuy	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/La_Rioja	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share		share
 ./usr/share/zoneinfo/America/Atka		base-sys-share		share
@@ -2870,6 +2882,7 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share		share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share		share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share		share
+./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
@@ -3099,6 +3112,7 @@
 ./usr/share/zoneinfo/Australia/Brisbane		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Broken_Hill	base-sys-share		share
 ./usr/share/zoneinfo/Australia/Canberra		base-sys-share		share
+./usr/share/zoneinfo/Australia/Currie		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Darwin		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Hobart		base-sys-share		share
 ./usr/share/zoneinfo/Australia/LHI		base-sys-share		share
@@ -3203,6 +3217,7 @@
 ./usr/share/zoneinfo/Europe/Luxembourg		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Madrid		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Malta		base-sys-share		share
+./usr/share/zoneinfo/Europe/Mariehamn		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Minsk		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Monaco		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Moscow		base-sys-share		share
