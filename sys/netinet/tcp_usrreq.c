@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.109 2005/09/06 02:41:14 rpaulo Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.110 2005/09/06 02:57:04 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.109 2005/09/06 02:41:14 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.110 2005/09/06 02:57:04 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1629,8 +1629,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "debx",
-		       SYSCTL_DESCR("Number of TCP debug sockets marked "
-				    "for debugging"),
+		       SYSCTL_DESCR("Number of TCP debug sockets messages"),
 		       NULL, 0, &tcp_debx, sizeof(tcp_debx),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
 		       CTL_EOL);
