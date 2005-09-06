@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.92 2005/08/22 18:18:25 gavan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.93 2005/09/06 15:42:21 tsarna Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.92 2005/08/22 18:18:25 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.93 2005/09/06 15:42:21 tsarna Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3575,7 +3575,7 @@ bge_init(ifp)
 
 	/* Specify MTU. */
 	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN); 
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&(LLADDR(ifp->if_sadl)[0]);
