@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.13 2005/06/02 04:25:16 lukem Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.14 2005/09/06 21:30:36 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.13 2005/06/02 04:25:16 lukem Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.14 2005/09/06 21:30:36 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,14 +537,25 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 		 * excessive.
 		 */
 		/*
-		 * Morph into escape key, this is consistent with what other
-		 * vi's do. -aymeric
+		 * If we are recording, morph into <escape> key so that
+		 * we can repeat the command safely: there is no way to
+		 * invalidate the repetition of an instance of a command,
+		 * which would be the alternative possibility.
+		 * If we are not recording (most likely on the command line),
+		 * simply discard the input and return to command mode
+		 * so that an INTERRUPT doesn't become for example a file
+		 * completion request. -aymeric
 		 */
-		evp->e_event = E_CHARACTER;
-		evp->e_c = 033;
-		evp->e_flags = 0;
-		evp->e_value = K_ESCAPE;
-		break;
+		if (LF_ISSET(TXT_RECORD)) {
+		    evp->e_event = E_CHARACTER;
+		    evp->e_c = 033;
+		    evp->e_flags = 0;
+		    evp->e_value = K_ESCAPE;
+		    break;
+		} else {
+		    tp->term = TERM_ESC;
+		    goto k_escape;
+		}
 	}
 
 	/*
