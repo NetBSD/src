@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.20 2005/06/02 09:44:41 lukem Exp $	*/
+/*	$NetBSD: trpt.c,v 1.21 2005/09/06 03:04:15 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.20 2005/06/02 09:44:41 lukem Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.21 2005/09/06 03:04:15 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: trpt.c,v 1.20 2005/06/02 09:44:41 lukem Exp $");
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #define PRUREQUESTS
 #include <sys/protosw.h>
 #include <sys/file.h>
@@ -154,19 +155,18 @@ int	numeric(const void *, const void *);
 void	usage(void);
 
 kvm_t	*kd;
+int     use_sysctl;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, i, jflag, npcbs;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
-	gid_t egid = getegid();
 	unsigned long l;
 
-	(void)setegid(getgid());
+	jflag = npcbs = 0;
 	system = core = NULL;
 
-	jflag = npcbs = 0;
 	while ((ch = getopt(argc, argv, "afjp:stN:M:")) != -1) {
 		switch (ch) {
 		case 'a':
@@ -214,35 +214,34 @@ main(int argc, char *argv[])
 	if (argc)
 		usage();
 
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (core != NULL || system != NULL)
-		setgid(getgid());
-	else
-		setegid(egid);
+	use_sysctl = (system == NULL && core == NULL);
 
-	kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
-	if (kd == NULL)
-		errx(1, "can't open kmem: %s", errbuf);
+	if (use_sysctl) {
+		size_t lenx = sizeof(tcp_debx);
+		size_t lend = sizeof(tcp_debug);
 
-	/* get rid of it now anyway */
-	if (core == NULL && system == NULL)
-		setgid(getgid());
+		if (sysctlbyname("net.inet.tcp.debx", &tcp_debx, &lenx, 
+		    NULL, 0) == -1)
+			err(1, "net.inet.tcp.debx");
+		if (sysctlbyname("net.inet.tcp.debug", &tcp_debug, &lend,
+		    NULL, 0) == -1)
+			err(1, "net.inet.tcp.debug");
+	} else {
+		kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
+		if (kd == NULL)
+			errx(1, "can't open kmem: %s", errbuf);
 
-	if (kvm_nlist(kd, nl))
-		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
+		if (kvm_nlist(kd, nl))
+			errx(2, "%s: no namelist", system);
 
-	if (kvm_read(kd, nl[N_TCP_DEBX].n_value, (char *)&tcp_debx,
-	    sizeof(tcp_debx)) != sizeof(tcp_debx))
-		errx(3, "tcp_debx: %s", kvm_geterr(kd));
+		if (kvm_read(kd, nl[N_TCP_DEBX].n_value, (char *)&tcp_debx,
+		    sizeof(tcp_debx)) != sizeof(tcp_debx))
+			errx(3, "tcp_debx: %s", kvm_geterr(kd));
 
-	if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, (char *)tcp_debug,
-	    sizeof(tcp_debug)) != sizeof(tcp_debug))
-		errx(3, "tcp_debug: %s", kvm_geterr(kd));
+		if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, (char *)tcp_debug,
+		    sizeof(tcp_debug)) != sizeof(tcp_debug))
+			errx(3, "tcp_debug: %s", kvm_geterr(kd));
+	}
 
 	/*
 	 * If no control blocks have been specified, figure
@@ -353,15 +352,31 @@ dotrace(caddr_t tcpcb)
 			prev_debx = 0;
 		do {
 			sleep(1);
-			if (kvm_read(kd, nl[N_TCP_DEBX].n_value,
-			    (char *)&tcp_debx, sizeof(tcp_debx)) !=
-			    sizeof(tcp_debx))
-				errx(3, "tcp_debx: %s", kvm_geterr(kd));
+			if (use_sysctl) {
+				size_t len = sizeof(tcp_debx);
+
+				if (sysctlbyname("net.inet.tcp.debx", 
+				    &tcp_debx, &len, NULL, 0) == -1)
+					err(1, "net.inet.tcp.debx");
+			} else
+				if (kvm_read(kd, nl[N_TCP_DEBX].n_value,
+				    (char *)&tcp_debx, sizeof(tcp_debx)) !=
+				    sizeof(tcp_debx))
+					errx(3, "tcp_debx: %s", 
+					    kvm_geterr(kd));
 		} while (tcp_debx == prev_debx);
 
-		if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, (char *)tcp_debug,
-		    sizeof(tcp_debug)) != sizeof(tcp_debug))
-			errx(3, "tcp_debug: %s", kvm_geterr(kd));
+		if (use_sysctl) {
+			size_t len = sizeof(tcp_debug);
+
+			if (sysctlbyname("net.inet.tcp.debug", &tcp_debug, 
+			    &len, NULL, 0) == -1)
+				err(1, "net.inet.tcp.debug");
+		} else
+			if (kvm_read(kd, nl[N_TCP_DEBUG].n_value, 
+			    (char *)tcp_debug, 
+			    sizeof(tcp_debug)) != sizeof(tcp_debug))
+				errx(3, "tcp_debug: %s", kvm_geterr(kd));
 
 		goto again;
 	}
@@ -509,21 +524,32 @@ skipact:
 		int i;
 		int hardticks;
 
-		if (kvm_read(kd, nl[N_HARDCLOCK_TICKS].n_value,
-		    (char *)&hardticks, sizeof(hardticks)) != sizeof(hardticks))
-			errx(3, "hardclock_ticks: %s", kvm_geterr(kd));
+		if (use_sysctl) {
+			size_t len = sizeof(hardticks);
 
-		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if ((tp->t_timer[i].c_flags & CALLOUT_PENDING) == 0)
-				continue;
-			printf("%s%s=%d", cp, tcptimers[i],
-			    tp->t_timer[i].c_time - hardticks);
-			if (i == TCPT_REXMT)
-				printf(" (t_rxtshft=%d)", tp->t_rxtshift);
-			cp = ", ";
+			if (sysctlbyname("kern.hardclock_ticks", &hardticks,
+			    &len, NULL, 0) == -1)
+				err(1, "kern.hardclock_ticks");
+		} else {
+			if (kvm_read(kd, nl[N_HARDCLOCK_TICKS].n_value,
+			    (char *)&hardticks, 
+			    sizeof(hardticks)) != sizeof(hardticks))
+				errx(3, "hardclock_ticks: %s", kvm_geterr(kd));
+
+			for (i = 0; i < TCPT_NTIMERS; i++) {
+				if ((tp->t_timer[i].c_flags 
+				    & CALLOUT_PENDING) == 0)
+					continue;
+				printf("%s%s=%d", cp, tcptimers[i],
+				    tp->t_timer[i].c_time - hardticks);
+				if (i == TCPT_REXMT)
+					printf(" (t_rxtshft=%d)", 
+					    tp->t_rxtshift);
+				cp = ", ";
+			}
+			if (*cp != '\t')
+				putchar('\n');
 		}
-		if (*cp != '\t')
-			putchar('\n');
 	}
 }
 
