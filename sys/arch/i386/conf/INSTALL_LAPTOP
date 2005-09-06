@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.88 2005/08/19 05:19:50 christos Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.89 2005/09/06 02:03:52 dogcow Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -468,6 +468,7 @@ atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex* 	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp* 	at cardbus? dev ? function ? 	# Intel i8255x
 rtk* 	at cardbus? dev ? function ? 	# Realtek 8129/8139
+rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
 tlp* 	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
