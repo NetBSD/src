@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.696 2005/08/19 05:19:50 christos Exp $
+# $NetBSD: GENERIC,v 1.697 2005/09/06 02:03:52 dogcow Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.696 $"
+#ident 		"GENERIC-$Revision: 1.697 $"
 
 maxusers	32		# estimated number of users
 
@@ -880,6 +880,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MCA network cards
