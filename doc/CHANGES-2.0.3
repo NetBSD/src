@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.38 2005/09/01 17:53:48 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.39 2005/09/06 01:34:51 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -424,4 +424,29 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.112
 	in m_copydata(). Pointed out by Karl Janmar. Move the negative offset
 	check from kernfs_xread() to kernfs_read().
 	[christos, ticket #5637]
+
+distrib/sets/lists/base/mi			1.525,1.543,1.569
+doc/3RDPARTY					1.357 via patch
+etc/mtree/NetBSD.dist				1.283
+share/zoneinfo/africa				1.1.1.16-1.1.1.18
+share/zoneinfo/antarctica			1.1.1.12-1.1.1.13
+share/zoneinfo/asia				1.1.1.28-1.1.1.33
+share/zoneinfo/australasia			1.5-1.8
+share/zoneinfo/backward				1.1.1.14-1.1.1.15
+share/zoneinfo/etcetera				1.1.1.5
+share/zoneinfo/europe				1.1.1.28-1.1.1.31
+share/zoneinfo/iso3166.tab			1.1.1.11-1.1.1.13
+share/zoneinfo/leapseconds			1.1.1.10-1.1.1.11
+share/zoneinfo/northamerica			1.1.1.27-1.1.1.30
+share/zoneinfo/solar87				1.1.1.2
+share/zoneinfo/solar88				1.1.1.2
+share/zoneinfo/solar89				1.1.1.2
+share/zoneinfo/southamerica			1.1.1.26-1.1.1.29
+share/zoneinfo/yearistype.sh			1.5
+share/zoneinfo/zone.tab				1.1.1.21-1.1.1.23
+
+	Update to tzdata2005m. Lots of fixes, including most recently the
+	leap second at the end of 2005 and the U.S. DST changes
+	taking effect in 2007.
+	[kleink, ticket #5816]
 
