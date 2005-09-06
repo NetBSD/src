@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.12 2005/07/24 21:07:55 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.13 2005/09/06 21:32:31 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -952,8 +952,10 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 
 /* ATI products */
 product ATI RADEON_A3		0x4136	Radeon Mobility A3
+product	ATI RADEON_9600_LE	0x4151	Radeon 9600 LE
 product	ATI RADEON_9600_XT	0x4152	Radeon 9600 XT
 product ATI MACH32		0x4158	Mach32
+product	ATI RADEON_9600_LE_S	0x4171	Radeon 9600 LE Secondary
 product	ATI RADEON_9600_XT_S	0x4172	Radeon 9600 XT Secondary
 product ATI RADEON_U1		0x4336	Radeon Mobility U1
 product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
