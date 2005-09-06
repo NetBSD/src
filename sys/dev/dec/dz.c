@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.16 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: dz.c,v 1.17 2005/09/06 21:40:39 kleink Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.16 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.17 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,8 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 		}
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)

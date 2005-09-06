@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.2 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: spif.c,v 1.3 2005/09/06 21:40:39 kleink Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.2 2005/02/27 00:27:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.3 2005/09/06 21:40:39 kleink Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -384,7 +384,8 @@ stty_open(dev, flags, mode, p)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 	}
-	else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+	else if (ISSET(tp->t_state, TS_XCLUDE) &&
+		 suser(p->p_ucred, &p->p_acflag) != 0) {
 		return (EBUSY);
 	} else {
 		s = spltty();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.34 2005/06/10 16:41:48 jmc Exp $	*/
+/*	$NetBSD: pccons.c,v 1.35 2005/09/06 21:40:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.34 2005/06/10 16:41:48 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.35 2005/09/06 21:40:37 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -869,7 +869,8 @@ pcopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
