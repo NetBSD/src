@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.12 2005/07/24 21:08:30 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.13 2005/09/06 21:32:57 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.12 2005/07/24 21:07:55 riz Exp
+ *	NetBSD: pcidevs,v 1.701.2.13 2005/09/06 21:32:31 riz Exp
  */
 
 /*
@@ -3404,12 +3404,20 @@ const struct pci_product pci_products[] = {
 	    "Radeon Mobility A3",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_LE,
+	    "Radeon 9600 LE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT,
 	    "Radeon 9600 XT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    "Mach32",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_LE_S,
+	    "Radeon 9600 LE Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT_S,
@@ -10264,4 +10272,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1987;
+const int pci_nproducts = 1989;
