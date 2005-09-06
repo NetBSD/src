@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $	*/
+/*	$NetBSD: com.c,v 1.36 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35 2005/06/13 00:34:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.36 2005/09/06 21:40:39 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -419,7 +419,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40 2005/06/12 23:46:41 he Exp $	*/
+/*	$NetBSD: ite.c,v 1.41 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40 2005/06/12 23:46:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.41 2005/09/06 21:40:39 kleink Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -393,7 +393,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ite_tty[unit];
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(dev, 0);

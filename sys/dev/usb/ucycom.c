@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.4 2005/09/01 18:10:20 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.5 2005/09/06 21:40:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.4 2005/09/01 18:10:20 skrll Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.5 2005/09/06 21:40:45 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

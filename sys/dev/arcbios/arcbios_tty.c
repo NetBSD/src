@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.9 2005/04/18 15:38:01 tsutsui Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.10 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.9 2005/04/18 15:38:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.10 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -101,7 +101,8 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE &&
+	           suser(p->p_ucred, &p->p_acflag) != 0) {
 		splx(s);
 		return (EBUSY);
 	}

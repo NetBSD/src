@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.69 2003/08/07 16:26:44 agc Exp $ */
+/*	$NetBSD: ser.c,v 1.70 2005/09/06 21:40:37 kleink Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.69 2003/08/07 16:26:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.70 2005/09/06 21:40:37 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ seropen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.29 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: dl.c,v 1.30 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.30 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,8 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 		dlparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
-	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return EBUSY;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));

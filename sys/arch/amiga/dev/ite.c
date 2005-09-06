@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.70 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: ite.c,v 1.71 2005/09/06 21:40:37 kleink Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2005/09/06 21:40:37 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -464,7 +464,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);

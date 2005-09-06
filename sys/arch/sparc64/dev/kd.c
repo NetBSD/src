@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.33 2005/02/25 19:16:45 martin Exp $	*/
+/*	$NetBSD: kd.c,v 1.34 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.33 2005/02/25 19:16:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -183,7 +183,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (p->p_ucred->cr_uid != 0) )
+	    && (suser(p->p_ucred, &p->p_acflag) != 0) )
 	{
 		return (EBUSY);
 	}

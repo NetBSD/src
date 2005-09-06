@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.29 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: msc.c,v 1.30 2005/09/06 21:40:37 kleink Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.29 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.30 2005/09/06 21:40:37 kleink Exp $");
 
 #include "msc.h"
 
@@ -407,7 +407,8 @@ mscopen(dev_t dev, int flag, int mode, struct proc *p)
 			tp->t_state &= ~TS_CARR_ON;
 
 	} else {
-		if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+		if (tp->t_state & TS_XCLUDE &&
+		    suser(p->p_ucred, &p->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		}

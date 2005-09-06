@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.68 2005/09/06 21:40:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2005/06/02 17:14:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.68 2005/09/06 21:40:38 kleink Exp $");
 
 #include "hil.h"
 
@@ -399,7 +399,7 @@ iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);

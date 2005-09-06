@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.33 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.33 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -966,7 +966,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

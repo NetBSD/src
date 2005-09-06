@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.21 2005/06/03 13:14:09 scw Exp $       */
+/*      $NetBSD: pccons.c,v 1.22 2005/09/06 21:40:38 kleink Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21 2005/06/03 13:14:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.22 2005/09/06 21:40:38 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1207,7 +1207,7 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0 )
+    else if ( tp->t_state & TS_XCLUDE && suser(p->p_ucred, &p->p_acflag) != 0 )
     {
         /*
         ** Don't allow the open if the tty has been set up 

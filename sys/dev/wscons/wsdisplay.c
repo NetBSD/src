@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.84 2005/06/21 14:01:13 ws Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.85 2005/09/06 21:40:45 kleink Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.84 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.85 2005/09/06 21:40:45 kleink Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -755,7 +755,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   p->p_ucred->cr_uid != 0)
+			   suser(p->p_ucred, &p->p_acflag) != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 

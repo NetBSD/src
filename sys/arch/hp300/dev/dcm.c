@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.67 2005/09/06 21:40:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66 2005/03/14 12:50:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.67 2005/09/06 21:40:38 kleink Exp $");
 
 #include "opt_kgdb.h"
 
@@ -551,7 +551,7 @@ dcmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

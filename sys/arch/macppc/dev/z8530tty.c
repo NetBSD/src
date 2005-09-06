@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.22 2005/06/03 21:38:05 matt Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.23 2005/09/06 21:40:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.22 2005/06/03 21:38:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.23 2005/09/06 21:40:38 kleink Exp $");
 
 #include "opt_kgdb.h"
 
@@ -504,7 +504,7 @@ zsopen(dev, flags, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

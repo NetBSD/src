@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.57 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: ucom.c,v 1.58 2005/09/06 21:40:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.57 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.58 2005/09/06 21:40:45 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
