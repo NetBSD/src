@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.52 2005/08/24 16:00:54 simonb Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.53 2005/09/06 02:36:17 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.52 2005/08/24 16:00:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.53 2005/09/06 02:36:17 rpaulo Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -338,6 +338,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_kern_clockrate, 0, NULL,
 		       sizeof(struct clockinfo),
 		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "hardclock_ticks",
+		       SYSCTL_DESCR("Number of hardclock ticks"),
+		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
+		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode",
