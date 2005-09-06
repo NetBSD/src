@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.10 2005/09/05 23:17:08 rpaulo Exp $	*/
+/*	$NetBSD: trsp.c,v 1.11 2005/09/06 02:58:48 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.10 2005/09/05 23:17:08 rpaulo Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.11 2005/09/06 02:58:48 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: trsp.c,v 1.10 2005/09/05 23:17:08 rpaulo Exp $");
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #define PRUREQUESTS
 #include <sys/protosw.h>
 
@@ -149,12 +150,10 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, i, npcbs = 0;
+	int ch, i, npcbs = 0, use_sysctl;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
-	gid_t egid = getegid();
 	unsigned long l;
 
-	(void)setegid(getgid());
 	system = core = NULL;
 
 	while ((ch = getopt(argc, argv, "azstjp:N:M:")) != -1) {
@@ -202,35 +201,38 @@ main(int argc, char *argv[])
 	if (argc)
 		usage();
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (core != NULL || system != NULL)
-		setgid(getgid());
-	else
-		setegid(egid);
+	use_sysctl = (system == NULL && core == NULL);
 
-	kd = kvm_openfiles(system, core, NULL, zflag ? O_RDWR : O_RDONLY,
-	    errbuf);
-	if (kd == NULL)
-		errx(1, "can't open kmem: %s", errbuf);
+	if (use_sysctl) {
+		size_t lenx = sizeof(spp_debx);
+		size_t lend = sizeof(spp_debug);
 
-	/* get rid of it now anyway */
-	if (core == NULL && system == NULL)
-		setgid(getgid());
+		if (sysctlbyname("net.ns.spp.debx", &spp_debx, &lenx, NULL, 
+		    0) == -1)
+			err(1, "net.ns.spp.debx");
+		if (sysctlbyname("net.ns.spp.debug", &spp_debug, &lend, NULL,
+		    0) == -1)
+			err(1, "net.ns.spp.debug");
+		
+	} else {
+		kd = kvm_openfiles(system, core, NULL, 
+		    zflag ? O_RDWR : O_RDONLY, errbuf);
+		if (kd == NULL)
+			errx(1, "can't open kmem: %s", errbuf);
 
-	if (kvm_nlist(kd, nl))
-		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
+		if (kvm_nlist(kd, nl))
+			errx(2, "%s: no namelist", system);
 
-	if (kvm_read(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
-	    sizeof(spp_debx)) != sizeof(spp_debx))
-		errx(3, "spp_debx: %s", kvm_geterr(kd));
+		if (kvm_read(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
+		    sizeof(spp_debx)) != sizeof(spp_debx))
+			errx(3, "spp_debx: %s", kvm_geterr(kd));
+
+		if (kvm_read(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
+		    sizeof(spp_debug)) != sizeof(spp_debug))
+			errx(3, "spp_debug: %s", kvm_geterr(kd));
+	}
+
 	printf("spp_debx=%d\n", spp_debx);
-
-	if (kvm_read(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
-	    sizeof(spp_debug)) != sizeof(spp_debug))
-		errx(3, "spp_debug: %s", kvm_geterr(kd));
 
 	/*
 	 * Here, we just want to clear out the old trace data and start over.
@@ -239,14 +241,22 @@ main(int argc, char *argv[])
 		spp_debx = 0;
 		(void) memset(spp_debug, 0, sizeof(spp_debug));
 
-		if (kvm_write(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
-		    sizeof(spp_debx)) != sizeof(spp_debx))
-			errx(4, "write spp_debx: %s", kvm_geterr(kd));
+		if (use_sysctl) {
+			if (sysctlbyname("net.ns.spp.debx", NULL, 0, 
+			    &spp_debx, sizeof(spp_debx)) == -1)
+				err(1, "write spp_debx");
+			if (sysctlbyname("net.ns.spp.debug", NULL, 0,
+			    &spp_debug, sizeof(spp_debug)) == -1)
+				err(1, "write spp_debug");
+		} else {
+			if (kvm_write(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
+			    sizeof(spp_debx)) != sizeof(spp_debx))
+				errx(4, "write spp_debx: %s", kvm_geterr(kd));
 		
-		if (kvm_write(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
-		    sizeof(spp_debug)) != sizeof(spp_debug))
-			errx(4, "write spp_debug: %s", kvm_geterr(kd));
-
+			if (kvm_write(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
+			    sizeof(spp_debug)) != sizeof(spp_debug))
+				errx(4, "write spp_debug: %s", kvm_geterr(kd));
+		}
 		exit(0);
 	}
 
