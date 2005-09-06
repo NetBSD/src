@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.64 2005/02/22 14:46:47 chs Exp $ */
+/*	$NetBSD: scn.c,v 1.65 2005/09/06 21:40:38 kleink Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.64 2005/02/22 14:46:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.65 2005/09/06 21:40:38 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1143,7 +1143,8 @@ scnopen(dev, flag, mode, p)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
-		if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+		if (tp->t_state & TS_XCLUDE &&
+		    suser(p->p_ucred, &p->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {

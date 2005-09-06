@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.10 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.11 2005/09/06 21:40:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.11 2005/09/06 21:40:39 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -431,8 +431,8 @@ cdttyopen(dev, flag, mode, p)
 	/* enforce exclude */
 	if (tp == NULL ||
 	    (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    (p->p_ucred->cr_uid != 0)))
+	     ISSET(tp->t_state, TS_XCLUDE) &&
+	     suser(p->p_ucred, &p->p_acflag) != 0))
 		return (EBUSY);
 
 	s = spltty();

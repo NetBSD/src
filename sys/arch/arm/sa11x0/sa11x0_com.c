@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.20 2005/06/02 21:33:08 uwe Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.21 2005/09/06 21:40:37 kleink Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.20 2005/06/02 21:33:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.21 2005/09/06 21:40:37 kleink Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -547,7 +547,7 @@ sacomopen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
