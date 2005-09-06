@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.41 2005/09/06 02:44:55 rpaulo Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.42 2005/09/06 02:52:38 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.41 2005/09/06 02:44:55 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.42 2005/09/06 02:52:38 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.41 2005/09/06 02:44:55 rpaulo Exp $
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #include <sys/errno.h>
 
 #include <net/if.h>
@@ -1816,6 +1817,45 @@ spp_timers(struct sppcb *cb, long timer)
 	}
 	return (cb);
 }
+
+SYSCTL_SETUP(sysctl_net_ns_spp_setup, "sysctl net.ns.spp subtree setup")
+{
+	extern struct spp_debug spp_debug[SPP_NDEBUG];
+	extern int spp_debx;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ns", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_NS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "spp",
+		       SYSCTL_DESCR("Xerox Sequenced Packet Protocol"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_NS, NSPROTO_SPP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "debug",
+		       SYSCTL_DESCR("Xerox SPP sockets debug informaton"),
+		       NULL, 0, &spp_debug, sizeof(spp_debug),
+		       CTL_NET, PF_NS, NSPROTO_SPP,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debx",
+		       SYSCTL_DESCR("Number of Xerox SPP sockets debug "
+				    "messages"),
+		       NULL, 0, &spp_debx, sizeof(spp_debx),
+		       CTL_NET, PF_NS, NSPROTO_SPP,
+		       CTL_CREATE, CTL_EOL);
+}
+
 #ifndef lint
 int SppcbSize = sizeof (struct sppcb);
 int NspcbSize = sizeof (struct nspcb);
