@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.108 2005/08/10 13:06:49 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.109 2005/09/06 02:41:14 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.108 2005/08/10 13:06:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.109 2005/09/06 02:41:14 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1370,6 +1370,10 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
 	const struct sysctlnode *sack_node;
+#ifdef TCP_DEBUG
+	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
+	extern int tcp_debx;
+#endif
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1614,6 +1618,24 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcpstat, sizeof(tcpstat),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
 		       CTL_EOL);
+#ifdef TCP_DEBUG
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "debug",
+		       SYSCTL_DESCR("TCP sockets debug information"),
+		       NULL, 0, &tcp_debug, sizeof(tcp_debug),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBUG,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "debx",
+		       SYSCTL_DESCR("Number of TCP debug sockets marked "
+				    "for debugging"),
+		       NULL, 0, &tcp_debx, sizeof(tcp_debx),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
+		       CTL_EOL);
+#endif
+
 }
 
 /*
