@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.24 2005/02/27 00:27:01 perry Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.25 2005/09/06 21:36:54 kleink Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.24 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.25 2005/09/06 21:36:54 kleink Exp $");
 
 #include "opt_ddb.h"
 
@@ -527,7 +527,8 @@ clmpccopen(dev, flag, mode, p)
 	tp = ch->ch_tty;
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0 )
+	     ISSET(tp->t_state, TS_XCLUDE) &&
+	     suser(p->p_ucred, &p->p_acflag) != 0 )
 		return EBUSY;
 
 	/*
@@ -587,9 +588,7 @@ clmpccopen(dev, flag, mode, p)
 		clmpcc_modem_control(ch, TIOCM_RTS | TIOCM_DTR, DMBIS);
 
 		clmpcc_select_channel(sc, oldch);
-	} else
-	if ( ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0 )
-		return EBUSY;
+	}
 
 	error = ttyopen(tp, CLMPCCDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 	if (error)
