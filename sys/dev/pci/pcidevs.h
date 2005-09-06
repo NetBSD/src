@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.12 2005/07/24 21:08:30 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.13 2005/09/06 21:32:57 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.12 2005/07/24 21:07:55 riz Exp
+ *	NetBSD: pcidevs,v 1.701.2.13 2005/09/06 21:32:31 riz Exp
  */
 
 /*
@@ -959,8 +959,10 @@
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_RADEON_A3	0x4136		/* Radeon Mobility A3 */
+#define	PCI_PRODUCT_ATI_RADEON_9600_LE	0x4151		/* Radeon 9600 LE */
 #define	PCI_PRODUCT_ATI_RADEON_9600_XT	0x4152		/* Radeon 9600 XT */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
+#define	PCI_PRODUCT_ATI_RADEON_9600_LE_S	0x4171		/* Radeon 9600 LE Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_9600_XT_S	0x4172		/* Radeon 9600 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_U1	0x4336		/* Radeon Mobility U1 */
 #define	PCI_PRODUCT_ATI_RADEON_M6_U2	0x4337		/* Radeon Mobility M6 */
