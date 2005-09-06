@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.12 2005/06/09 09:24:45 he Exp $	*/
+/*	$NetBSD: console.c,v 1.13 2005/09/06 21:40:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2005/06/09 09:24:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13 2005/09/06 21:40:37 kleink Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -404,7 +404,8 @@ physconopen(dev, flag, mode, p)
 		TP->t_ispeed = TP->t_ospeed = TTYDEF_SPEED;
 		physconparam(TP, &TP->t_termios);
 		ttsetwater(TP);
-	} else if (TP->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (TP->t_state&TS_XCLUDE &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return EBUSY;
 	TP->t_state |= TS_CARR_ON;
 

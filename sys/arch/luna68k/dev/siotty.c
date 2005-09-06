@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.14 2004/04/25 06:23:41 matt Exp $ */
+/* $NetBSD: siotty.c,v 1.15 2005/09/06 21:40:38 kleink Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.14 2004/04/25 06:23:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.15 2005/09/06 21:40:38 kleink Exp $");
 
 #include "opt_ddb.h"
 
@@ -379,7 +379,7 @@ sioopen(dev, flag, mode, p)
 		tty_attach(tp);
 	}		
 	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && suser(p->p_ucred, &p->p_acflag) != 0)
 		return EBUSY;
 
 	tp->t_oproc = siostart;
