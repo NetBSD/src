@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.6 2003/08/07 16:28:14 agc Exp $	*/
+/*	$NetBSD: int_types.h,v 1.7 2005/09/06 19:18:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,13 +34,15 @@
 #ifndef	_M68K_INT_TYPES_H_
 #define	_M68K_INT_TYPES_H_
 
+#include <sys/cdefs.h>
+
 /*
  * 7.18.1 Integer types
  */
 
 /* 7.18.1.1 Exact-width integer types */
 
-typedef	signed char		 __int8_t;
+typedef	__signed char		 __int8_t;
 typedef	unsigned char		__uint8_t;
 typedef	short int		__int16_t;
 typedef	unsigned short int     __uint16_t;
