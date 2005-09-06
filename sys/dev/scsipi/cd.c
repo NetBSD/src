@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.226 2005/09/05 21:16:24 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.227 2005/09/06 22:19:14 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.226 2005/09/05 21:16:24 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.227 2005/09/06 22:19:14 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1417,7 +1417,6 @@ bad:
 
 		return (cd_setvol(cd, arg, 0));
 	}
-
 	case CDIOCSETMONO:
 		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
 		return (cd_setchan(cd, BOTH_CHANNEL, BOTH_CHANNEL,
@@ -1505,7 +1504,6 @@ bad:
 	case DVD_READ_STRUCT:
 		/* GPCMD_READ_DVD_STRUCTURE command */
 		return (dvd_read_struct(cd, (dvd_struct *)addr));
-
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
@@ -1612,62 +1610,74 @@ error:
 	cdgetdefaultlabel(cd, lp);
 }
 
+static int
+read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
+{
+	struct scsipi_read_cd_capacity cmd;
+	struct scsipi_read_cd_cap_data data;
+	int error, flags;
+
+	/* if the device doesn't grog capacity, return the dummies */
+	if (periph->periph_quirks & PQUIRK_NOCAPACITY)
+		return 0;
+
+	/* issue the request */
+	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_CD_CAPACITY;
+
+	error = scsipi_command(periph,
+	    (void *) &cmd,  sizeof(cmd),
+	    (void *) &data, sizeof(data),
+	    CDRETRIES, 30000, NULL, flags);
+	if (error)
+		return error;
+
+	/* retrieve values and sanity check them */
+	*blksize = _4btol(data.length);
+
+	/* blksize is 2048 for CD, but some drives give gibberish */
+	if ((*blksize < 512) || ((*blksize & 511) != 0))
+		*blksize = 2048;	/* some drives lie ! */
+
+	*size = _4btol(data.addr);
+	if (*size < 100)
+		*size = 400000;
+
+	return 0;
+}
+
 /*
  * Find out from the device what it's capacity is
  */
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	struct scsipi_read_cd_capacity cmd;
-	struct scsipi_read_cd_cap_data data;
 	int blksize;
 	u_long size;
+	int error;
 
-	if (cd->sc_periph->periph_quirks & PQUIRK_NOCAPACITY) {
-		/*
-		 * the drive doesn't support the READ_CD_CAPACITY command
-		 * use a fake size
-		 */
-		cd->params.blksize = 2048;
-		cd->params.disksize = 400000;
-		cd->params.disksize512 = 1600000;
-		return (400000);
-	}
+	/* set up fake values */
+	blksize = 2048;
+	size    = 400000;
 
-	/*
-	 * make up a scsi command and ask the scsi driver to do
-	 * it for you.
-	 */
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = READ_CD_CAPACITY;
+	/* if this function bounces with an error return fake value */
+	error = read_cd_capacity(cd->sc_periph, &blksize, &size);
+	if (error)
+		return size;
 
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks and a blocksize
-	 */
-	if (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd),
-	    (void *)&data, sizeof(data), CDRETRIES, 30000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0)
-		return (0);
-
-	blksize = _4btol(data.length);
-	if ((blksize < 512) || ((blksize & 511) != 0))
-		blksize = 2048;	/* some drives lie ! */
 	if (blksize != 2048) {
 		if (cd_setblksize(cd) == 0)
 			blksize = 2048;
 	}
-	cd->params.blksize = blksize;
-
-	size = _4btol(data.addr) + 1;
-	if (size < 100)
-		size = 400000;	/* ditto */
-	cd->params.disksize = size;
+	cd->params.blksize     = blksize;
+	cd->params.disksize    = size-1;   /* disklabel is exclusive */
 	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
 	    ("cd_size: %d %ld\n", blksize, size));
-	return (size);
+
+	return size;
 }
 
 /*
@@ -2473,3 +2483,4 @@ printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,
 	    big));
 }
+
