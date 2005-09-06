@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2004/08/16 10:10:46 aymeric Exp $
+#	$NetBSD: Makefile,v 1.18 2005/09/06 21:57:47 aymeric Exp $
 
 # Makefile for amiga tags file and boot blocks
 
@@ -16,7 +16,7 @@ DAMIGA=	amiga dev include
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TAMIGA} ${SAMIGA} ${SM68K} ${COMM}
+	-echo ${COMM} | xargs ctags -wdtf ${TAMIGA} ${SAMIGA} ${SM68K}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMIGA} ${AM68K} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TAMIGA}
