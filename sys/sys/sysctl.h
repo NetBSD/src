@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.139 2005/08/07 12:30:01 blymn Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.140 2005/09/06 02:36:17 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -270,7 +270,8 @@ struct ctlname {
 #define	KERN_FILE2		77	/* struct: file entries */
 #define	KERN_VERIEXEC		78	/* node: verified exec */
 #define	KERN_CP_ID		79	/* struct: cpu id numbers */
-#define	KERN_MAXID		80	/* number of valid kern ids */
+#define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
+#define	KERN_MAXID		81	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -354,6 +355,7 @@ struct ctlname {
 	{ "file2", CTLTYPE_STRUCT }, \
 	{ "veriexec", CTLTYPE_NODE }, \
 	{ "cp_id", CTLTYPE_STRUCT }, \
+	{ "hardclock_ticks", CTLTYPE_INT }, \
 }
 
 /*
