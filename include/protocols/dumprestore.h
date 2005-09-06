@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.12 2003/08/07 09:44:13 agc Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.13 2005/09/06 17:03:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -73,7 +73,7 @@ union u_spcl {
 		int32_t	c_old_ddate;	    /* date of previous dump */
 		int32_t	c_volume;	    /* dump volume number */
 		int32_t	c_old_tapea;	    /* logical block of this record */
-		ino_t	c_inumber;	    /* number of inode */
+		u_int32_t c_inumber;	    /* number of inode */
 		int32_t	c_magic;	    /* magic number (see above) */
 		int32_t	c_checksum;	    /* record checksum */
 		union {
