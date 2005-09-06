@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.53 2005/07/11 06:01:42 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.54 2005/09/06 01:59:26 dogcow Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.53 2005/07/11 06:01:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.54 2005/09/06 01:59:26 dogcow Exp $");
 
 #include "bpfilter.h"
 
@@ -105,7 +105,7 @@ static int rtw_key_set(struct ieee80211com *, const struct ieee80211_key *,
     const u_int8_t[IEEE80211_ADDR_LEN]);
 static void rtw_key_update_end(struct ieee80211com *);
 static void rtw_key_update_begin(struct ieee80211com *);
-static int rtw_wep_decap(struct ieee80211_key *, struct mbuf *);
+static int rtw_wep_decap(struct ieee80211_key *, struct mbuf *, int);
 static void rtw_wep_setkeys(struct rtw_softc *, struct ieee80211_key *, int);
 
 static void rtw_led_attach(struct rtw_led_state *, void *);
@@ -531,7 +531,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 }
 
 static int
-rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m)
+rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	struct ieee80211_key keycopy;
 
@@ -540,7 +540,7 @@ rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m)
 	keycopy = *k;
 	keycopy.wk_flags &= ~IEEE80211_KEY_SWCRYPT;
 
-	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m);
+	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m, force);
 }
 
 static int
