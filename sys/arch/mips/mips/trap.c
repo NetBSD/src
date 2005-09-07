@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.197 2005/09/07 20:28:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2005/06/01 16:53:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2005/09/07 20:28:08 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -516,9 +516,9 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 			sa = trunc_page(va);
 			ea = round_page(va + sizeof(int) - 1);
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_DEFAULT, FALSE);
+				sa, ea, VM_PROT_ALL, FALSE);
 			if (rv == 0) {
-				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+				rv = suiword((void *)va, l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
@@ -686,7 +686,7 @@ mips_singlestep(struct lwp *l)
 		sa = trunc_page(va);
 		ea = round_page(va + sizeof(int) - 1);
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
-		    sa, ea, VM_PROT_DEFAULT, FALSE);
+		    sa, ea, VM_PROT_ALL, FALSE);
 		if (rv == 0) {
 			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
