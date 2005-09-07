@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.13 2005/06/25 12:53:32 elad Exp $	*/
+/*	$NetBSD: register.c,v 1.14 2005/09/07 19:04:57 elad Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -207,17 +207,17 @@ systrace_initcb(void)
 	    &ic_translate_unlinkname);
 	intercept_register_transfn("netbsd", "__posix_rename", 1);
 
-	/* 278: __stat13 [fsread] */
-	X(intercept_register_sccb("netbsd", "__stat13", trans_cb, NULL));
-	tl = intercept_register_transfn("netbsd", "__stat13", 0);
-	alias = systrace_new_alias("netbsd", "__stat13", "netbsd", "fsread");
+	/* 278: compat_30___stat13 [fsread] */
+	X(intercept_register_sccb("netbsd", "compat_30___stat13", trans_cb, NULL));
+	tl = intercept_register_transfn("netbsd", "compat_30___stat13", 0);
+	alias = systrace_new_alias("netbsd", "compat_30___stat13", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
 	/* 280: __lstat13 [fsread] */
-	X(intercept_register_sccb("netbsd", "__lstat13", trans_cb, NULL));
-	tl = intercept_register_translation("netbsd", "__lstat13", 0,
+	X(intercept_register_sccb("netbsd", "compat_30___lstat13", trans_cb, NULL));
+	tl = intercept_register_translation("netbsd", "compat_30___lstat13", 0,
 	    &ic_translate_unlinkname);
-	alias = systrace_new_alias("netbsd", "__lstat13", "netbsd", "fsread");
+	alias = systrace_new_alias("netbsd", "compat_30___lstat13", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
 	/* 283: __posix_chown */
