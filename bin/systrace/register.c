@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.14 2005/09/07 19:04:57 elad Exp $	*/
+/*	$NetBSD: register.c,v 1.15 2005/09/07 19:15:49 elad Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -213,7 +213,7 @@ systrace_initcb(void)
 	alias = systrace_new_alias("netbsd", "compat_30___stat13", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
-	/* 280: __lstat13 [fsread] */
+	/* 280: compat_30___lstat13 [fsread] */
 	X(intercept_register_sccb("netbsd", "compat_30___lstat13", trans_cb, NULL));
 	tl = intercept_register_translation("netbsd", "compat_30___lstat13", 0,
 	    &ic_translate_unlinkname);
