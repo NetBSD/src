@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.54 2005/09/06 01:59:26 dogcow Exp $ */
+/* $NetBSD: rtw.c,v 1.55 2005/09/07 05:25:41 dogcow Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.54 2005/09/06 01:59:26 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.55 2005/09/07 05:25:41 dogcow Exp $");
 
 #include "bpfilter.h"
 
@@ -601,7 +601,7 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 static void
 rtw_key_update_begin(struct ieee80211com *ic)
 {
-#ifdef ATW_DEBUG
+#ifdef RTW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;
 	struct rtw_softc *sc = ifp->if_softc;
 #endif
@@ -707,8 +707,8 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 
 	RTW_WBR(regs, RTW_9346CR, RTW_9346CR);
 
-	/* wait 2.5ms for completion */
-	for (i = 0; i < 25; i++) {
+	/* wait 25ms for completion */
+	for (i = 0; i < 250; i++) {
 		ecr = RTW_READ8(regs, RTW_9346CR);
 		if ((ecr & RTW_9346CR_EEM_MASK) == RTW_9346CR_EEM_NORMAL) {
 			RTW_DPRINTF(RTW_DEBUG_RESET,
@@ -898,6 +898,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 
 	switch (RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
+	case _RTW_CONFIG0_GL_USA:
 		*locale = RTW_LOCALE_USA;
 		break;
 	case RTW_CONFIG0_GL_EUROPE:
@@ -1088,6 +1089,7 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
 
 	switch (cfg0 & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
+	case _RTW_CONFIG0_GL_USA:
 		*locale = RTW_LOCALE_USA;
 		break;
 	case RTW_CONFIG0_GL_JAPAN:
