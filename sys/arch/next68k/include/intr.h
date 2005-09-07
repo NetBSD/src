@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2005/09/07 19:35:37 drochner Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -31,8 +31,6 @@
 #ifndef _NEXT68K_INTR_H_
 #define _NEXT68K_INTR_H_
 
-#include <sys/device.h>
-#include <sys/queue.h>
 #include <machine/psl.h>
 
 /* Probably want to dealwith IPL's here @@@ */
