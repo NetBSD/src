@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.22 2005/09/07 15:11:54 elad Exp $	*/
+/*	$NetBSD: ucred.h,v 1.23 2005/09/07 17:27:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,7 +96,9 @@ int		crcmp(const struct ucred *, const struct uucred *);
  * Check if we need to curtain information when a user requests information
  * about an object.
  */
-#define	CURTAIN(user_id, object_id)	((user_id) != 0 && (user_id) != (object_id))
+#define	CURTAIN(user_id, object_id)	(security_curtain && 		\
+					 (user_id) != 0 &&		\
+					 (user_id) != (object_id))
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
