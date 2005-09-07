@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.53 2005/09/06 02:36:17 rpaulo Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.54 2005/09/07 16:26:15 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.53 2005/09/06 02:36:17 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.54 2005/09/07 16:26:15 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.53 2005/09/06 02:36:17 rpaulo Exp 
 #endif
 
 #include <machine/cpu.h>
+
+/* XXX this should not be here */
+int security_curtain = 1;
 
 /*
  * try over estimating by 5 procs/lwps
@@ -247,6 +250,12 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 		       SYSCTL_DESCR("Emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security",
+		       SYSCTL_DESCR("Security"),
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
 }
 
 /*
@@ -1009,6 +1018,17 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 	}
 }
 #endif /* DEBUG */
+
+SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects"
+				    " to users not owning them."),
+		       NULL, 0, &security_curtain, 0,
+		       CTL_SECURITY, SECURITY_CURTAIN, CTL_EOL);
+}
 
 /*
  * ********************************************************************

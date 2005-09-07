@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.140 2005/09/06 02:36:17 rpaulo Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.141 2005/09/07 16:26:16 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -161,7 +161,8 @@ struct ctlname {
 #define	CTL_PROC	10		/* per-proc attr */
 #define	CTL_VENDOR	11		/* vendor-specific data */
 #define	CTL_EMUL	12		/* emulation-specific data */
-#define	CTL_MAXID	13		/* number of valid top-level ids */
+#define	CTL_SECURITY	13		/* security */
+#define	CTL_MAXID	14		/* number of valid top-level ids */
 
 #define	CTL_NAMES { \
 	{ 0, 0 }, \
@@ -177,6 +178,7 @@ struct ctlname {
 	{ "proc", CTLTYPE_NODE }, \
 	{ "vendor", CTLTYPE_NODE }, \
 	{ "emul", CTLTYPE_NODE }, \
+	{ "security", CTLTYPE_NODE }, \
 }
 
 /*
@@ -895,6 +897,20 @@ struct kinfo_file {
 	{ "darwin", CTLTYPE_NODE }, \
 	{ "mach", CTLTYPE_NODE }, \
 }
+
+/*
+ * CTL_SECURITY definitions.
+ */
+#define	SECURITY_CURTAIN	1
+#define	SECURITY_MAXID		2
+
+#define	CTL_SECURITY_NAMES { \
+	{ 0, 0 }, \
+	{ "curtain", CTLTYPE_INT }, \
+}
+
+/* XXX this should not be here */
+extern int security_curtain;
 
 #ifdef _KERNEL
 
