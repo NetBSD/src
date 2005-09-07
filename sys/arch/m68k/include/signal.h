@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.20 2004/07/29 12:54:46 is Exp $	*/
+/*	$NetBSD: signal.h,v 1.21 2005/09/07 19:42:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -72,6 +72,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#if defined(_LIBC) || defined(_KERNEL)
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
@@ -82,6 +83,7 @@ struct sigcontext {
 	int	sc_ps;			/* psl to restore */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #include <m68k/cpuframe.h>
 
