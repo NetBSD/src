@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.54 2005/09/07 16:26:15 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.55 2005/09/07 17:30:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.54 2005/09/07 16:26:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.55 2005/09/07 17:30:07 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.54 2005/09/07 16:26:15 elad Exp $"
 #include <machine/cpu.h>
 
 /* XXX this should not be here */
-int security_curtain = 1;
+int security_curtain = 0;
 
 /*
  * try over estimating by 5 procs/lwps
@@ -1264,6 +1264,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
+		if (CURTAIN(l->l_proc->p_ucred->cr_uid, fp->f_cred->cr_uid))
+			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
 			return (ENOMEM);
@@ -1975,6 +1977,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
+			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
+				    fp->f_cred->cr_uid))
+				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
 				error = copyout(&kf, dp, out_size);
@@ -1998,6 +2003,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
+				continue;
+			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
+				    p->p_ucred->cr_uid))
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2128,6 +2136,10 @@ again:
 		 */
 		if (p->p_stat == SIDL)
 			continue;
+
+		if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+			continue;
+
 		/*
 		 * TODO - make more efficient (see notes below).
 		 * do by session.
@@ -2287,6 +2299,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	/* check pid */
 	if ((p = pfind(pid)) == NULL)
 		return (EINVAL);
+
+	if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+		return (EPERM);
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
