@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.52 2005/06/09 02:19:59 atatat Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.53 2005/09/07 17:38:44 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.52 2005/06/09 02:19:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.53 2005/09/07 17:38:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -279,6 +279,9 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * to walk the file list looking for them.  :-/
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
+		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
+			    fp->f_cred->cr_uid))
+			continue;
 		if (fp->f_type != DTYPE_SOCKET)
 			continue;
 		so = (struct socket *)fp->f_data;
