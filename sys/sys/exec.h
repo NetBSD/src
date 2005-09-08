@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.106 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: exec.h,v 1.106.4.1 2005/09/08 21:04:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -243,13 +243,9 @@ int	vmcmd_map_zero		(struct proc *, struct exec_vmcmd *);
 int	copyargs		(struct proc *, struct exec_package *,
 				    struct ps_strings *, char **, void *);
 void	setregs			(struct lwp *, struct exec_package *, u_long);
-#ifdef VERIFIED_EXEC
 int	check_veriexec		(struct proc *, struct vnode *,
 				     struct exec_package *, int);
 int	check_exec		(struct proc *, struct exec_package *, int);
-#else
-int	check_exec		(struct proc *, struct exec_package *);
-#endif
 int	exec_init		(int);
 int	exec_read_from		(struct proc *, struct vnode *, u_long off,
 				    void *, size_t);
