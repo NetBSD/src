@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.16 2005/08/25 15:06:28 drochner Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.17 2005/09/08 14:58:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.16 2005/08/25 15:06:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.17 2005/09/08 14:58:14 drochner Exp $");
 
 #include "opt_userconf.h"
 
@@ -249,7 +249,11 @@ userconf_pdev(short devno)
 		nld = ia->ci_loclen;
 		for (i = 0; i < nld; i++) {
 			printf(" %s ", ld[i].cld_name);
-			userconf_pnum(*l++);
+			if (!ld[i].cld_defaultstr
+			    || (l[i] != ld[i].cld_default))
+				userconf_pnum(l[i]);
+			else
+				printf("?");
 		}
 	}
 	printf("\n");
@@ -334,15 +338,18 @@ userconf_device(char *cmd, int *len, short *unit, short *state)
 }
 
 static void
-userconf_modify(const char *item, int *val)
+userconf_modify(const struct cflocdesc *item, int *val)
 {
 	int ok = 0;
 	int a;
 	char *c;
 
 	while (!ok) {
-		printf("%s [", item);
-		userconf_pnum(*val);
+		printf("%s [", item->cld_name);
+		if (item->cld_defaultstr && (*val == item->cld_default))
+			printf("?");
+		else
+			userconf_pnum(*val);
 		printf("] ? ");
 
 		getsn(userconf_argbuf, sizeof(userconf_argbuf));
@@ -351,7 +358,13 @@ userconf_modify(const char *item, int *val)
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
 
 		if (*c != '\0') {
-			if (userconf_number(c, &a) == 0) {
+			if (*c == '?') {
+				if (item->cld_defaultstr) {
+					*val = item->cld_default;
+					ok = 1;
+				} else
+					printf("No default\n");
+			} else if (userconf_number(c, &a) == 0) {
 				*val = a;
 				ok = 1;
 			} else {
@@ -399,7 +412,7 @@ userconf_change(int devno)
 
 			for (ln = 0; ln < nld; ln++)
 			{
-				userconf_modify(ld[ln].cld_name, l);
+				userconf_modify(&ld[ln], l);
 
 				/* XXX add *l */
 				userconf_hist_int(*l);
