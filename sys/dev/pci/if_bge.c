@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.87.2.1 2005/09/08 21:23:38 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.87.2.2 2005/09/08 21:24:31 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.87.2.1 2005/09/08 21:23:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.87.2.2 2005/09/08 21:24:31 tron Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1941,6 +1941,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5750_A1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 A1" },
+
+	{ BGE_CHIPID_BCM5751_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5751 A1" },
 
 	{ 0, 0, NULL }
 };
