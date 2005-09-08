@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2004/11/28 06:57:14 jmc Exp $
+#	$NetBSD: Makefile,v 1.32.2.1 2005/09/08 19:15:44 tron Exp $
 
 HOSTLIB=	nbcompat
 
@@ -8,7 +8,8 @@ SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
 		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c mkdtemp.c \
 		mkstemp.c pread.c putc_unlocked.c pwcache.c pwrite.c \
 		pw_scan.c rmd160.c rmd160hl.c setenv.c setgroupent.c \
-		setpassent.c setprogname.c sha1.c sha1hl.c snprintf.c \
+		setpassent.c setprogname.c sha1.c sha1hl.c sha2.c \
+		sha256hl.c sha384hl.c sha512hl.c snprintf.c \
 		strlcat.c strlcpy.c strmode.c strsep.c strsuftoll.c \
 		strtoll.c unvis.c vis.c _err.c _errx.c _verr.c _verrx.c \
 		_vwarn.c _vwarnx.c _warn.c _warnx.c __fts13.c __glob13.c
@@ -28,6 +29,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
+		${.CURDIR}/../../lib/libc/hash/sha2 \
 		${.CURDIR}/../../lib/libc/md \
 		${.CURDIR}/../../lib/libc/stdio \
 		${.CURDIR}/../../lib/libc/stdlib \
