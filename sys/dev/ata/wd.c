@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.298.2.5 2005/07/02 18:12:36 tron Exp $ */
+/*	$NetBSD: wd.c,v 1.298.2.6 2005/09/08 21:17:03 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.5 2005/07/02 18:12:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.6 2005/09/08 21:17:03 tron Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -240,6 +240,8 @@ static const struct wd_quirk {
 	{ "ST3200822A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3250823A*",
+	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3300831A*",
 	  WD_QUIRK_FORCE_LBA48 },
 
 	{ NULL,
