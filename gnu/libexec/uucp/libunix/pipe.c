@@ -27,7 +27,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char pipe_rcsid[] = "$Id: pipe.c,v 1.2 1995/08/24 05:20:05 jtc Exp $";
+const char pipe_rcsid[] = "$Id: pipe.c,v 1.2.22.1 2005/09/08 21:20:38 tron Exp $";
 #endif
 
 #include "uudefs.h"
@@ -199,6 +199,7 @@ fspipe_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialer)
   struct ssysdep_conn *q;
   int aidescs[3];
   const char **pzprog;
+  const char **p;
 
   q = (struct ssysdep_conn *) qconn->psysdep;
 
@@ -211,6 +212,12 @@ fspipe_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialer)
       ulog (LOG_ERROR, "No command for pipe connection");
       return FALSE;
     }
+
+  /* Look for a string \H and substitute the address given for this system */
+  for (p=pzprog; *p; p++)
+    if (!strcmp(*p, "\\H"))
+      *p = zphone;
+ 
 
   aidescs[0] = SPAWN_WRITE_PIPE;
   aidescs[1] = SPAWN_READ_PIPE;

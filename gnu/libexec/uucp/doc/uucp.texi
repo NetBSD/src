@@ -4241,7 +4241,8 @@ using the @code{speed} command to select ports from the port file.
 @findex address
 
 Give a phone number to call (when using a modem port) or a remote host
-to contact (when using a TCP or TLI port).  The commands @code{phone}
+to contact (when using a TCP or TLI port) or insert as parameter to a 
+command string (when using a PIPE port). The commands @code{phone}
 and @code{address} are equivalent; the duplication is intended to
 provide a mnemonic choice depending on the type of port in use.
 
@@ -5246,7 +5247,8 @@ When a port of this type is used, the command is executed and
 only be reached through some unusual means.  A sample use might be
 @samp{command /bin/rlogin -E -8 -l @var{login} @var{system}}.  The
 command is run with the full privileges of UUCP; it is responsible for
-maintaining security.
+maintaining security. The string @kbd{\H} is replaced with the remote
+host name given by the @code{address} command.
 
 @end table
 
@@ -5649,8 +5651,8 @@ Keywords: UUCP, protocol, FAQ
 Approved: news-answers-request@@MIT.Edu
 
 Archive-name: uucp-internals
-Version: $Revision: 1.5 $
-Last-modified: $Date: 2003/01/06 20:30:43 $
+Version: $Revision: 1.5.6.1 $
+Last-modified: $Date: 2005/09/08 21:20:38 $
 @end format
 @end ifset
 
