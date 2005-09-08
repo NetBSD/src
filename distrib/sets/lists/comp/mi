@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770.2.7 2005/07/21 21:23:48 tron Exp $
+#	$NetBSD: mi,v 1.770.2.8 2005/09/08 19:15:43 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -122,6 +122,7 @@
 ./usr/include/cdk/viewer.h			comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
+./usr/include/crypto/sha2.h			comp-c-include
 ./usr/include/ctype.h				comp-c-include
 ./usr/include/curses.h				comp-c-include
 ./usr/include/db.h				comp-c-include
@@ -2382,6 +2383,30 @@
 ./usr/share/man/cat3/SHA1Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Transform.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Update.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_Data.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_End.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_File.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_FileChunk.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_Final.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_Init.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_Transform.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA256_Update.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_Data.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_End.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_File.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_FileChunk.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_Final.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_Init.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_Transform.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA384_Update.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_Data.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_End.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_File.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_FileChunk.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_Final.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_Init.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_Transform.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA512_Update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_FIRST.0		comp-c-catman		.cat
@@ -4242,6 +4267,7 @@
 ./usr/share/man/cat3/setvbuf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sha.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/sha1.0			comp-c-catman		.cat
+./usr/share/man/cat3/sha2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shquote.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shquotev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigaddset.0		comp-c-catman		.cat
@@ -6228,6 +6254,30 @@
 ./usr/share/man/man3/SHA1Init.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1Transform.3		comp-c-man		.man
 ./usr/share/man/man3/SHA1Update.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_Data.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_End.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_File.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_FileChunk.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_Final.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_Init.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_Transform.3		comp-c-man		.man
+./usr/share/man/man3/SHA256_Update.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_Data.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_End.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_File.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_FileChunk.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_Final.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_Init.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_Transform.3		comp-c-man		.man
+./usr/share/man/man3/SHA384_Update.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_Data.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_End.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_File.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_FileChunk.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_Final.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_Init.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_Transform.3		comp-c-man		.man
+./usr/share/man/man3/SHA512_Update.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_FIRST.3		comp-c-man		.man
@@ -8084,6 +8134,7 @@
 ./usr/share/man/man3/setvbuf.3			comp-c-man		.man
 ./usr/share/man/man3/sha.3			comp-obsolete		obsolete
 ./usr/share/man/man3/sha1.3			comp-c-man		.man
+./usr/share/man/man3/sha2.3			comp-c-man		.man
 ./usr/share/man/man3/shquote.3			comp-c-man		.man
 ./usr/share/man/man3/shquotev.3			comp-c-man		.man
 ./usr/share/man/man3/sigaddset.3		comp-c-man		.man
