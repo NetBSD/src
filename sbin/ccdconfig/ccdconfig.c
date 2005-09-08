@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.40 2005/01/20 15:49:24 xtraeme Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.41 2005/09/08 14:50:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,13 +41,12 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.40 2005/01/20 15:49:24 xtraeme Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.41 2005/09/08 14:50:02 drochner Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
