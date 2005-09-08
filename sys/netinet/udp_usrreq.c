@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.134.2.4 2005/05/06 08:40:21 tron Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.134.2.5 2005/09/08 21:10:24 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.4 2005/05/06 08:40:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.134.2.5 2005/09/08 21:10:24 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1400,10 +1400,10 @@ udp4_espinudp(m, off, src, so)
 	}
 
 	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
-		u_int64_t *st = (u_int64_t *)data;
+		u_int32_t *st = (u_int32_t *)data;
 
 		if ((len <= sizeof(u_int64_t) + sizeof(struct esp))
-		    || (*st != 0))
+		    || ((st[0] | st[1]) != 0))
 			return 0; /* Normal UDP processing */
 
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
