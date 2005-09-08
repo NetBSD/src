@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.194.4.8 2005/08/23 14:45:20 tron Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.194.4.9 2005/09/08 21:06:31 tron Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.194.4.8 2005/08/23 14:45:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.194.4.9 2005/09/08 21:06:31 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
+#include "opt_verified_exec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,11 +220,8 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  *			exec header unmodified.
  */
 int
-#ifdef VERIFIED_EXEC
+/*ARGSUSED*/
 check_exec(struct proc *p, struct exec_package *epp, int flag)
-#else
-check_exec(struct proc *p, struct exec_package *epp)
-#endif
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -437,7 +435,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #ifdef VERIFIED_EXEC
         if ((error = check_exec(p, &pack, VERIEXEC_DIRECT)) != 0)
 #else
-        if ((error = check_exec(p, &pack)) != 0)
+        if ((error = check_exec(p, &pack, 0)) != 0)
 #endif
 		goto freehdr;
 
