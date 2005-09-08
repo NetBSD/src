@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.232 2005/09/08 20:12:14 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.233 2005/09/08 21:26:59 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12402,4 +12402,51 @@ tools/compat/crypto/sha2.h			1.1
 	Introduce SHA2 hashing routines in userland, including the common
 	helper routines.
 	[elad, ticket #743]
+
+sys/conf/files					patch
+sys/kern/exec_script.c				patch
+sys/kern/init_main.c				patch
+sys/kern/init_sysctl.c				patch
+sys/kern/kern_exec.c				patch
+sys/kern/kern_verifiedexec.c			patch
+sys/kern/vfs_syscalls.c				patch
+sys/kern/vfs_vnops.c				patch
+sys/sys/exec.h					1.111
+
+	Defopt VERIFIED_EXEC.
+	[elad, ticket #740]
+
+sys/netinet/udp_usrreq.c			1.142
+
+	udp4_espinudp(): don't assume that the Non-ESP marker (or UDP payload)
+	is aligned on a 64-bit boundary.
+	[kleink, ticket #744]
+
+sys/arch/hpcsh/conf/GENERIC			1.57
+
+	Since we have ipf/pf in the config (commented out), add pertinent
+	options as well (commented out too).
+	[uwe, ticket #747]
+
+sys/dev/ata/wd.c				1.307,1,309
+
+	Add quirks for ST3300831A and ST3200826A.
+	[bouyer, ticket #749, #750]
+
+gnu/libexec/uucp/doc/uucp.texi			1.6
+gnu/libexec/uucp/libunix/pipe.c			1.3
+
+	Allow for \H -> "address ..." substitution in PIPE ports. Useful
+	e.g. for generic UUCP over SSH or SSL.
+	[is, ticket #751]
+
+sys/dev/pci/if_bge.c				1.91-1.92
+sys/dev/pci/if_bgereg.h				1.25
+sys/dev/pci/pcidevs				1.730
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Recognise Broadcom 5751M Gigabit Ethernet, as found on ThinkPad T43p.
+	Also add quirk for BGE_CHIPID_BCM5751_A1. This fixes kern/31028.
+	[gavan, ticket #752]
 
