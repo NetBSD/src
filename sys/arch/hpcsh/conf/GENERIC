@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.2 2005/09/02 12:38:09 tron Exp $
+# $NetBSD: GENERIC,v 1.47.2.3 2005/09/08 21:13:54 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -142,6 +142,10 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
