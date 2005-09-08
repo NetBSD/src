@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.13 2005/09/06 21:32:57 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.14 2005/09/08 21:23:03 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.13 2005/09/06 21:32:31 riz Exp
+ *	NetBSD: pcidevs,v 1.701.2.14 2005/09/08 21:22:15 tron Exp
  */
 
 /*
@@ -4134,6 +4134,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M,
 	    "BCM5750M 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751M,
+	    "BCM5751M 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
@@ -10272,4 +10276,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1989;
+const int pci_nproducts = 1990;
