@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.24 2003/01/18 11:29:06 thorpej Exp $	*/
+/*	$NetBSD: svc.c,v 1.25 2005/09/09 15:41:27 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.24 2003/01/18 11:29:06 thorpej Exp $");
+__RCSID("$NetBSD: svc.c,v 1.25 2005/09/09 15:41:27 christos Exp $");
 #endif
 #endif
 
@@ -753,7 +753,7 @@ svc_getreq_poll(pfdp, pollretval)
 			/*
 			 *	We assume that this function is only called
 			 *	via someone select()ing from svc_fdset or
-			 *	poll()ing from svc_pollset[].  Thus it's safe
+			 *	pollts()ing from svc_pollset[].  Thus it's safe
 			 *	to handle the POLLNVAL event by simply turning
 			 *	the corresponding bit off in svc_fdset.  The
 			 *	svc_pollset[] array is derived from svc_fdset

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.12 2003/01/18 11:29:07 thorpej Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.13 2005/09/09 15:41:27 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.12 2003/01/18 11:29:07 thorpej Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.13 2005/09/09 15:41:27 christos Exp $");
 #endif
 #endif
 
@@ -484,7 +484,6 @@ read_vc(xprtp, buf, len)
 {
 	SVCXPRT *xprt;
 	int sock;
-	int milliseconds = 35 * 1000;
 	struct pollfd pollfd;
 	struct sockaddr *sa;
 	struct msghdr msg;
@@ -493,6 +492,7 @@ read_vc(xprtp, buf, len)
 	struct sockcred *sc;
 	socklen_t crmsgsize;
 	struct cf_conn *cfp;
+	static const struct timespec ts = { 35, 0 };
 
 	xprt = (SVCXPRT *)(void *)xprtp;
 	_DIAGASSERT(xprt != NULL);
@@ -552,7 +552,7 @@ read_vc(xprtp, buf, len)
 	do {
 		pollfd.fd = sock;
 		pollfd.events = POLLIN;
-		switch (poll(&pollfd, 1, milliseconds)) {
+		switch (pollts(&pollfd, 1, &ts, NULL)) {
 		case -1:
 			if (errno == EINTR) {
 				continue;

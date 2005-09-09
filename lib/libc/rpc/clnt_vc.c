@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.11 2004/12/30 05:11:50 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.12 2005/09/09 15:41:27 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.11 2004/12/30 05:11:50 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.12 2005/09/09 15:41:27 christos Exp $");
 #endif
 #endif
  
@@ -679,15 +679,16 @@ read_vc(ctp, buf, len)
 {
 	struct ct_data *ct = (struct ct_data *)(void *)ctp;
 	struct pollfd fd;
-	int milliseconds = (int)((ct->ct_wait.tv_sec * 1000) +
-	    (ct->ct_wait.tv_usec / 1000));
+	struct timespec ts;
 
 	if (len == 0)
 		return (0);
+
+	TIMEVAL_TO_TIMESPEC(&ct->ct_wait, &ts);
 	fd.fd = ct->ct_fd;
 	fd.events = POLLIN;
 	for (;;) {
-		switch (poll(&fd, 1, milliseconds)) {
+		switch (pollts(&fd, 1, &ts, NULL)) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
 			return (-1);
