@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.34 2005/09/09 20:46:49 wiz Exp $ */
+.\" $NetBSD: useradd.8,v 1.35 2005/09/09 21:29:08 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -97,7 +97,7 @@ sets and displays the defaults for the
 utility.
 .Bl -tag -width Ds
 .It Fl b Ar base-dir
-sets the default base directory.
+Set the default base directory.
 This is the directory to which the
 user directory is added, which will be created if the
 .Fl m
@@ -119,7 +119,7 @@ See
 .Xr usermgmt.conf 5
 for more information.
 .It Fl e Ar expiry-time
-sets the time at which the new user accounts will expire.
+Set the time at which the new user accounts will expire.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
@@ -129,26 +129,27 @@ A value of 0 can be used to disable this feature.
 .It Fl F
 Force the user to change their password upon next login.
 .It Fl f Ar inactive-time
-sets the time at which passwords for the new user accounts will expire.
+Set the time at which passwords for the new user accounts will
+expire.
 Also see the
 .Fl e
 option above.
 .It Fl g Ar gid | groupname | Li =uid
-sets the default group for new users.
+Set the default group for new users.
 .It Fl k Ar skel-dir
-sets the skeleton directory in which to find files with
+Set the skeleton directory in which to find files with
 which to populate new users' home directories.
 .It Fl L Ar login-class
-sets the default login class for new users.
+Set the default login class for new users.
 See
 .Xr login.conf 5
 for more information on user login classes.
 .It Fl r Ar lowuid Ns Li .. Ns Ar highuid
-sets the low and high bounds of uid ranges for new users.
+Set the low and high bounds of uid ranges for new users.
 A new user can only be created if there are uids which can be
 assigned from one of the free ranges.
 .It Fl s Ar shell
-sets the default login shell for new users.
+Set the default login shell for new users.
 .El
 .Pp
 In the second form of the command,
@@ -157,21 +158,21 @@ after setting any defaults, and then reading values from
 the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl b Ar base-directory
-is the base directory name, in which the user's new home
+Set the base directory name, in which the user's new home
 directory will be created, should the
 .Fl m
 option be specified.
 .It Fl c Ar comment
-is the comment field (also, for historical reasons known as the
+Set the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the user's full name, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-is the home directory which will be created and populated for the user,
+Set the home directory which will be created and populated for the user,
 should the
 .Fl m
 option be specified.
 .It Fl e Ar expiry-time
-sets the time at which the current password will expire for new
+Set the time at which the current password will expire for new
 users.
 It should be entered in the form
 .Dq month day year ,
@@ -183,16 +184,18 @@ See
 .Xr passwd 5
 for more details.
 .It Fl f Ar inactive-time
-sets the time at which new user accounts will expire.
+Set the time at which new user accounts will expire.
 Also see the
 .Fl e
 option above.
 .It Fl G Ar secondary-group
-is the secondary group to which the user will be added in the
+Add the user to the secondary group
+.Ar secondary-group
+in the
 .Pa /etc/group
 file.
 .It Fl g Ar gid | name | Li =uid
-gives the group name or identifier to be used for the new user's primary group.
+Give the group name or identifier to be used for the new user's primary group.
 If this is
 .Ql =uid ,
 then a uid and gid will be picked which are both unique
@@ -200,19 +203,19 @@ and the same, and a line added to
 .Pa /etc/group
 to describe the new group.
 .It Fl k Ar skeleton directory
-gives the skeleton directory in which to find files
+Give the skeleton directory in which to find files
 with which to populate the new user's home directory.
 .It Fl L Ar login-class
-This option sets the login class for the user being created.
+Set the login class for the user being created.
 See
 .Xr login.conf 5
 for more information on user login classes.
 .It Fl m
-create a new home directory for the new user.
+Create a new home directory for the new user.
 .It Fl o
-allow the new user to have a uid which is already in use for another user.
+Allow the new user to have a uid which is already in use for another user.
 .It Fl p Ar password
-specifies an already-encrypted password for the new user.
+Specify an already-encrypted password for the new user.
 Encrypted passwords can be generated with
 .Xr pwhash 1 .
 The password can be changed later by using
@@ -220,12 +223,12 @@ The password can be changed later by using
 or
 .Xr passwd 1 .
 .It Fl S
-allows samba user names with a trailing dollar sign to be
+Allow samba user names with a trailing dollar sign to be
 added to the system.
 .It Fl s Ar shell
-specifies the login shell for the new user.
+Specify the login shell for the new user.
 .It Fl u Ar uid
-specifies a uid for the new user.
+Specify a uid for the new user.
 Boundaries for this value can be preset for all users
 by using the
 .Ar range
@@ -233,7 +236,7 @@ field in the
 .Pa /etc/usermgmt.conf
 file.
 .It Fl v
-enables verbose mode - explain the commands as they are executed.
+Enable verbose mode - explain the commands as they are executed.
 .El
 .Pp
 Once the information has been verified,
