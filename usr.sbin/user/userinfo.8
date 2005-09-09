@@ -1,5 +1,4 @@
-.\" $NetBSD: userinfo.8,v 1.9 2005/02/05 15:28:46 wiz Exp $ */
-.\"
+.\" $NetBSD: userinfo.8,v 1.10 2005/09/09 21:31:00 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -31,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd September 9, 2005
 .Dt USERINFO 8
 .Os
 .Sh NAME
@@ -49,23 +48,21 @@ utility retrieves the user information from the system.
 The following command line options are recognised:
 .Bl -tag -width Ds
 .It Fl e
-return 0 if the user exists, and non-zero if the
+Return 0 if the user exists, and non-zero if the
 user does not exist, on the system.
 No information is displayed.
 This form of the command is useful for
 scripts which need to check whether a particular user
 name or uid is already in use on the system.
 .It Fl v
-perform any actions in a verbose manner.
+Perform any actions in a verbose manner.
 .El
 .Pp
 The
 .Ar user
 argument may either be a user's name, or a uid.
-.Pp
-The
-.Nm
-utility exits 0 if the user name or uid exists, and non-zero if it does not.
+.Sh EXIT STATUS
+.Ex -std userinfo
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
