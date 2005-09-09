@@ -1,4 +1,4 @@
-/*	$NetBSD: includes.h,v 1.9 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: includes.h,v 1.10 2005/09/09 12:20:12 christos Exp $	*/
 /*	$OpenBSD: includes.h,v 1.18 2004/06/13 15:03:02 djm Exp $	*/
 
 /*
@@ -68,6 +68,12 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
  * Define this to use pipes instead of socketpairs for communicating with the
  * client program.  Socketpairs do not seem to work on all systems.
  */
+#ifndef __NetBSD__
+/*
+ * silly programs such as bash, check fd=0 to be a socket in order to execute
+ * .bashrc. Make it so.
+ */
 #define USE_PIPES 1
+#endif
 
 #endif				/* INCLUDES_H */
