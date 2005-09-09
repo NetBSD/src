@@ -1,5 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.26 2005/02/05 15:28:46 wiz Exp $ */
-.\"
+.\" $NetBSD: userdel.8,v 1.27 2005/09/09 21:30:31 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -31,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 14, 2004
+.Dd September 9, 2005
 .Dt USERDEL 8
 .Os
 .Sh NAME
@@ -42,7 +41,7 @@
 .Fl D
 .Op Fl p Ar preserve-value
 .Nm
-.Op Fl Sprv
+.Op Fl prSv
 .Ar user
 .Sh DESCRIPTION
 The
@@ -52,8 +51,8 @@ removing that user's home directory and any subdirectories.
 .Pp
 Default values are taken from the information provided in the
 .Pa /etc/usermgmt.conf
-file, which, if running as root, is created using the built-in defaults if
-it does not exist.
+file, which, if running as root, is created using the built-in
+defaults if it does not exist.
 .Pp
 The first form of the command shown above (using the
 .Fl D
@@ -62,7 +61,7 @@ option) sets and displays the defaults for the
 utility.
 .Bl -tag -width Ds
 .It Fl D
-without any further options,
+Without any further options,
 .Fl D
 will show the current defaults which will be used by the
 .Nm
@@ -72,11 +71,12 @@ of the command,
 .Fl D
 will set the default to be the new value.
 .It Fl p Ar preserve-value
-sets the preservation value.
+Set the preservation value.
 If this value is one of
 .Ql true ,
 .Ql yes ,
-or a non-zero number, then the user login information will be preserved.
+or a non-zero number, then the user login information will be
+preserved.
 .El
 .Pp
 In the second form of the command,
@@ -84,16 +84,12 @@ after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl S
-allows a samba user name (with a trailing dollar sign)
-to be deleted.
 .It Fl p
-preserve the user information in the password file,
+Preserve the user information in the password file,
 but do not allow the user to login, by switching the
 password to an
 .Dq impossible
-one, and by setting the
-user's shell to the
+one, and by setting the user's shell to the
 .Xr nologin 8
 program.
 This option can be helpful in preserving a user's
@@ -107,12 +103,16 @@ field.
 If the field has any of the values
 .Ql true ,
 .Ql yes ,
-or a non-zero number, then user information preservation will take place.
+or a non-zero number, then user information preservation will take
+place.
 .It Fl r
-remove the user's home directory, any subdirectories,
+Remove the user's home directory, any subdirectories,
 and any files and other entries in them.
+.It Fl S
+Allow a samba user name (with a trailing dollar sign)
+to be deleted.
 .It Fl v
-perform any actions in a verbose manner.
+Perform any actions in a verbose manner.
 .El
 .Pp
 Once the information has been verified,
@@ -125,10 +125,8 @@ at very large sites could take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std userdel
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
