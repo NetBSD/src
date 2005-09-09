@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2005/09/06 02:03:52 dogcow Exp $
+# $NetBSD: GENERIC,v 1.212 2005/09/09 16:32:18 drochner Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 maxusers	32
 
@@ -354,11 +354,11 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
-rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex*	at cardbus? function ?	# 3Com 3C575TX
+tlp*	at cardbus? function ?	# DECchip 21143
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
@@ -395,8 +395,8 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
 ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
 
-ohci*	at cardbus? dev ? function ?	# USB Open Host Controller
-ehci*	at cardbus? dev ? function ?	# USB Enhanced Host Controller
+ohci*	at cardbus? function ?	# USB Open Host Controller
+ehci*	at cardbus? function ?	# USB Enhanced Host Controller
 
 usb*	at ohci?					# USB bus support
 usb*	at ehci?					# USB bus support
@@ -449,7 +449,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers 
-#fwohci*	at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394

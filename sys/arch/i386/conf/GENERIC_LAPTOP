@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.154 2005/09/09 13:43:40 rpaulo Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.155 2005/09/09 16:26:20 drochner Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.154 $"
+#ident 		"GENERIC-$Revision: 1.155 $"
 
 maxusers	32		# estimated number of users
 
@@ -426,7 +426,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-com*	at cardbus? dev ? function ?	# Modems and serial cards
+com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -475,9 +475,9 @@ aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
-ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
-adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # SCSI bus support
 scsibus* at scsi?
@@ -599,14 +599,14 @@ com*	at mhzc?
 sm*	at mhzc?
 
 # CardBus network cards
-ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-fxp*	at cardbus? dev ? function ?	# Intel i8255x
-re*	at cardbus? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex*	at cardbus? function ?	# 3Com 3C575TX
+fxp*	at cardbus? function ?	# Intel i8255x
+re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp*	at cardbus? function ?	# DECchip 21143
 
 # MII/PHY support
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
@@ -636,7 +636,7 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at ehci?

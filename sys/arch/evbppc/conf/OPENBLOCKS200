@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.6 2005/08/19 05:19:50 christos Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.7 2005/09/09 16:35:29 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -187,9 +187,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 #mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#tlp*	at cardbus? function ?	# DECchip 21143
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
 
 wd*	at atabus? drive ?
 

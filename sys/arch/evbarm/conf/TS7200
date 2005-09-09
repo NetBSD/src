@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.21 2005/08/19 05:19:50 christos Exp $
+#	$NetBSD: TS7200,v 1.22 2005/09/09 16:36:14 drochner Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -392,7 +392,7 @@ ugen*	at uhub? port ?
 # irframe* at oboe?
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 #fw*	at fwbus?			# IP over 1394
 

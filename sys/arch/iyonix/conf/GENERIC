@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 2005/08/19 05:19:53 christos Exp $
+#	$NetBSD: GENERIC,v 1.19 2005/09/09 16:34:34 drochner Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -306,8 +306,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -435,7 +435,7 @@ usb*	at uhci?
 #fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 #fw*	at fwbus?			# IP over 1394
 

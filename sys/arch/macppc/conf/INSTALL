@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.92 2005/08/19 05:19:53 christos Exp $
+#	$NetBSD: INSTALL,v 1.93 2005/09/09 16:32:18 drochner Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -138,8 +138,8 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
+ex*	at cardbus? function ?	# 3Com 3C575TX
+tlp*	at cardbus? function ?	# DECchip 21143
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
