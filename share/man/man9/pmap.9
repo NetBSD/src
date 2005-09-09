@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.29 2005/08/11 11:20:48 yamt Exp $
+.\"	$NetBSD: pmap.9,v 1.30 2005/09/09 20:33:54 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,14 +183,14 @@ interface functions are provided by the header file
 .Aq Pa uvm/uvm_pmap.h .
 It is possible to override this behavior by defining the
 C pre-processor macro
-.Dq PMAP_EXCLUDE_DECLS .
+.Dv PMAP_EXCLUDE_DECLS .
 This may be used to add a layer of indirection to
 .Nm
 API calls, for handling different MMU types in a single
 .Nm
 module, for example.
 If the
-.Dq PMAP_EXCLUDE_DECLS
+.Dv PMAP_EXCLUDE_DECLS
 macro is defined,
 .Aq Pa machine/pmap.h
 .Em must
@@ -443,7 +443,7 @@ statistic for
 Note that this function may be provided as a C pre-processor macro.
 .It long Fn "pmap_wired_count" "pmap_t pmap"
 Query the
-.Dq wired pages"
+.Dq wired pages
 statistic for
 .Fa pmap .
 .Pp
@@ -509,7 +509,9 @@ information for the page
 .Em must
 be seeded with the access type provided in
 .Fa flags
-if the PMAP_WIRED flag is set.
+if the
+.Dv PMAP_WIRED
+flag is set.
 This is to prevent a fault for the purpose of tracking
 modified/referenced information from occurring while the system is in
 a critical section where a fault would be unacceptable.
@@ -924,7 +926,7 @@ upon return.
 The
 .Fn pmap_steal_memory
 function is enabled by defining the C pre-processor macro
-.Dq PMAP_STEAL_MEMORY
+.Dv PMAP_STEAL_MEMORY
 in
 .Aq Pa machine/pmap.h .
 .It vaddr_t Fn "pmap_growkernel" "vaddr_t maxkvaddr"
@@ -960,7 +962,7 @@ must panic.
 The
 .Fn pmap_growkernel
 function is enabled by defining the C pre-processor macro
-.Dq PMAP_GROWKERNEL
+.Dv PMAP_GROWKERNEL
 in
 .Aq Pa machine/pmap.h .
 .It void Fn "pmap_fork" "pmap_t src_map" "pmap_t dst_map"
@@ -989,7 +991,7 @@ is called from
 The
 .Fn pmap_fork
 function is enabled by defining the C pre-processor macro
-.Dq PMAP_FORK
+.Dv PMAP_FORK
 in
 .Aq Pa machine/pmap.h .
 .It vaddr_t Fn "PMAP_MAP_POOLPAGE" "paddr_t pa"
@@ -1069,7 +1071,7 @@ is enabled by defining it as a C pre-processor macro in
 .Aq Pa machine/pmap.h .
 .Pp
 .It void Fn "pmap_procwr" "struct proc *p" "vaddr_t va" "vsize_t size"
-Synchronize cpu instruction caches of the specified range.
+Synchronize CPU instruction caches of the specified range.
 The address space is designated by
 .Fa p .
 This function is typically used to flush instruction caches
@@ -1077,7 +1079,9 @@ after code modification.
 .Pp
 The use of
 .Fn pmap_procwr
-is enabled by defining a C pre-processor macro PMAP_NEED_PROCWR in
+is enabled by defining a C pre-processor macro
+.Dv PMAP_NEED_PROCWR
+in
 .Aq Pa machine/pmap.h .
 .El
 .Sh SEE ALSO
