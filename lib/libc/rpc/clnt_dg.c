@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.15 2005/06/09 22:13:17 yamt Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.16 2005/09/09 15:40:49 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.15 2005/06/09 22:13:17 yamt Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.16 2005/09/09 15:40:49 christos Exp $");
 #endif
 #endif
 
@@ -80,7 +80,6 @@ static bool_t clnt_dg_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clnt_dg_abort __P((CLIENT *));
 static bool_t clnt_dg_control __P((CLIENT *, u_int, char *));
 static void clnt_dg_destroy __P((CLIENT *));
-static int __rpc_timeval_to_msec __P((struct timeval *));
 
 
 
@@ -323,10 +322,13 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct timeval startime, curtime;
 	int firsttimeout = 1;
 #ifdef _REENTRANT
-	sigset_t mask;
+	sigset_t mask, maskp = &mask;
+#else
+	sigset_t maskp = NULL;
 #endif
 	sigset_t newmask;
 	ssize_t recvlen = 0;
+	struct timespec ts;
 
 	_DIAGASSERT(cl != NULL);
 
@@ -392,8 +394,8 @@ send_again:
 
 
 	for (;;) {
-		switch (poll(&cu->pfdp, 1,
-		    __rpc_timeval_to_msec(&retransmit_time))) {
+		TIMEVAL_TO_TIMESPEC(&retransmit_time, &ts);
+		switch (pollts(&cu->pfdp, 1, &ts, maskp)) {
 		case 0:
 			time_waited.tv_sec += retransmit_time.tv_sec;
 			time_waited.tv_usec += retransmit_time.tv_usec;
@@ -468,6 +470,18 @@ send_again:
 				release_fd_lock(cu->cu_fd, mask);
 				return (cu->cu_error.re_status = RPC_TIMEDOUT);
 			}
+#ifdef _REENTRANT
+			if (errno == EINTR) {
+				sigset_t rmask;
+				if (sigpending(&rmask) == -1) {
+					cu->cu_error.re_errno = errno;
+					release_fd_lock(cu->cu_fd, mask);
+					return cu->cu_error.re_status =
+					    RPC_SYSTEMERROR;
+				}
+				(void)sigsuspend(&rmask);
+			}
+#endif
 			errno = 0; /* reset it */
 			continue;
 		};
@@ -476,7 +490,7 @@ send_again:
 			cu->cu_error.re_status = RPC_CANTRECV;
 			/*
 			 *	Note:  we're faking errno here because we
-			 *	previously would have expected poll() to
+			 *	previously would have expected pollts() to
 			 *	return -1 with errno EBADF.  Poll(BA_OS)
 			 *	returns 0 and sets the POLLNVAL revents flag
 			 *	instead.
@@ -831,30 +845,4 @@ time_not_ok(t)
 
 	return (t->tv_sec < -1 || t->tv_sec > 100000000 ||
 		t->tv_usec < -1 || t->tv_usec > 1000000);
-}
-
-
-/*
- *	Convert from timevals (used by select) to milliseconds (used by poll).
- */
-static int
-__rpc_timeval_to_msec(t)
-	struct timeval	*t;
-{
-	int	t1, tmp;
-
-	_DIAGASSERT(t != NULL);
-
-	/*
-	 *	We're really returning t->tv_sec * 1000 + (t->tv_usec / 1000)
-	 *	but try to do so efficiently.  Note:  1000 = 1024 - 16 - 8.
-	 */
-	tmp = (int)t->tv_sec << 3;
-	t1 = -tmp;
-	t1 += t1 << 1;
-	t1 += tmp << 7;
-	if (t->tv_usec)
-		t1 += (int)(t->tv_usec / 1000);
-
-	return (t1);
 }
