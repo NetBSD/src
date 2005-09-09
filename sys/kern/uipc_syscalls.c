@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.90.2.3 2005/09/09 14:17:02 tron Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.90.2.4 2005/09/09 14:17:44 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.3 2005/09/09 14:17:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.4 2005/09/09 14:17:44 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -658,7 +658,8 @@ adjust_rights(struct mbuf *m, int len, struct proc *p)
 	int nok;
 	int *fdv;
 
-	nfd = (m->m_len - CMSG_LEN(0)) / sizeof(int);
+	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
+	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
 	nok = (len < CMSG_LEN(0)) ? 0 : ((len - CMSG_LEN(0)) / sizeof(int));
 	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
 	for (i = nok; i < nfd; i++)
