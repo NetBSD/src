@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.33 2005/09/05 03:37:14 hubertf Exp $ */
+.\" $NetBSD: useradd.8,v 1.34 2005/09/09 20:46:49 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 4, 2005
+.Dd September 9, 2005
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -39,34 +39,29 @@
 .Nd add a user to the system
 .Sh SYNOPSIS
 .Nm
-.Fl DF
+.Fl D
+.Op Fl F
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Oo
-.Fl g Ar gid | name | Li =uid Oc
-.Op Fl L Ar login-class
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-dir
-.Oo
-.Fl r Ar lowuid Ns Li .. Ns Ar highuid
-.Oc
+.Op Fl L Ar login-class
+.Op Fl r Ar lowuid Ns Li .. Ns Ar highuid
 .Op Fl s Ar shell
 .Nm
-.Op Fl Smov
-.Op Fl G Ar secondary-group
+.Op Fl moSv
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Oo
-.Fl g Ar gid | name | Li =uid Oc
+.Op Fl G Ar secondary-group
+.Op Fl g Ar gid | name | Li =uid
 .Op Fl k Ar skel-dir
 .Op Fl L Ar login-class
 .Op Fl p Ar password
-.Oo
-.Fl r Ar lowuid Ns Li .. Ns Ar highuid
-.Oc
+.Op Fl r Ar lowuid Ns Li .. Ns Ar highuid
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
@@ -101,6 +96,14 @@ sets and displays the defaults for the
 .Nm
 utility.
 .Bl -tag -width Ds
+.It Fl b Ar base-dir
+sets the default base directory.
+This is the directory to which the
+user directory is added, which will be created if the
+.Fl m
+option is specified and no
+.Fl d
+option is specified.
 .It Fl D
 without any further options,
 .Fl D
@@ -115,16 +118,6 @@ will set the default to be the new value.
 See
 .Xr usermgmt.conf 5
 for more information.
-.It Fl F
-Force the user to change their password upon next login.
-.It Fl b Ar base-dir
-sets the default base directory.
-This is the directory to which the
-user directory is added, which will be created if the
-.Fl m
-option is specified and no
-.Fl d
-option is specified.
 .It Fl e Ar expiry-time
 sets the time at which the new user accounts will expire.
 It should be entered in the form
@@ -133,6 +126,8 @@ where month is the month name (the first three characters are
 sufficient), day is the day of the month, and year is the year.
 Time in seconds since the epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
+.It Fl F
+Force the user to change their password upon next login.
 .It Fl f Ar inactive-time
 sets the time at which passwords for the new user accounts will expire.
 Also see the
@@ -148,9 +143,7 @@ sets the default login class for new users.
 See
 .Xr login.conf 5
 for more information on user login classes.
-.It Xo
-.Fl r Ar lowuid Ns Li .. Ns Ar highuid
-.Xc
+.It Fl r Ar lowuid Ns Li .. Ns Ar highuid
 sets the low and high bounds of uid ranges for new users.
 A new user can only be created if there are uids which can be
 assigned from one of the free ranges.
@@ -163,13 +156,6 @@ after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl G Ar secondary-group
-is the secondary group to which the user will be added in the
-.Pa /etc/group
-file.
-.It Fl S
-allows samba user names with a trailing dollar sign to be
-added to the system.
 .It Fl b Ar base-directory
 is the base directory name, in which the user's new home
 directory will be created, should the
@@ -201,6 +187,10 @@ sets the time at which new user accounts will expire.
 Also see the
 .Fl e
 option above.
+.It Fl G Ar secondary-group
+is the secondary group to which the user will be added in the
+.Pa /etc/group
+file.
 .It Fl g Ar gid | name | Li =uid
 gives the group name or identifier to be used for the new user's primary group.
 If this is
@@ -229,6 +219,9 @@ The password can be changed later by using
 .Xr chpass 1
 or
 .Xr passwd 1 .
+.It Fl S
+allows samba user names with a trailing dollar sign to be
+added to the system.
 .It Fl s Ar shell
 specifies the login shell for the new user.
 .It Fl u Ar uid
@@ -253,10 +246,8 @@ at very large sites could take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std useradd
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
