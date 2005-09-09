@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.90.2.1 2005/09/09 14:15:24 tron Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.90.2.2 2005/09/09 14:16:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.1 2005/09/09 14:15:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.2 2005/09/09 14:16:17 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.1 2005/09/09 14:15:24 tron 
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+static void adjust_rights(struct mbuf *m, int len, struct proc *p);
 
 /*
  * System call interface to the socket abstraction.
@@ -641,6 +643,28 @@ done:
 	return (error);
 }
 
+/*
+ * Adjust for a truncated SCM_RIGHTS control message.  This means
+ *  closing any file descriptors that aren't entirely present in the
+ *  returned buffer.  m is the mbuf holding the (already externalized)
+ *  SCM_RIGHTS message; len is the length it is being truncated to.  p
+ *  is the affected process.
+ */
+static
+void adjust_rights(struct mbuf *m, int len, struct proc *p)
+{
+	int nfd;
+	int i;
+	int nok;
+	int *fdv;
+
+	nfd = (m->m_len - CMSG_LEN(0)) / sizeof(int);
+	nok = (len < CMSG_LEN(0)) ? 0 : ((len - CMSG_LEN(0)) / sizeof(int));
+	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
+	for (i = nok; i < nfd; i++)
+		fdrelease(p,fdv[i]);
+}
+
 int
 recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	register_t *retsize)
@@ -750,16 +774,26 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 				if (len < i) {
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
+					if (mtod(m, struct cmsghdr *)->
+					    cmsg_type == SCM_RIGHTS)
+						adjust_rights(m, len, p);
 				}
 				error = copyout(mtod(m, caddr_t), q,
 				    (unsigned)i);
-				if (m->m_next)
+				m = m->m_next;
+				if (m)
 					i = ALIGN(i);
 				q += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
-			} while ((m = m->m_next) != NULL);
+			} while (m != NULL);
+			while (m) {
+				if (mtod(m, struct cmsghdr *)->
+				    cmsg_type == SCM_RIGHTS)
+					adjust_rights(m, 0, p);
+				m = m->m_next;
+			}
 			len = q - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
