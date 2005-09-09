@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.46 2005/06/13 15:27:41 tron Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.47 2005/09/09 14:50:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.46 2005/06/13 15:27:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.47 2005/09/09 14:50:58 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -261,7 +261,7 @@ tlp_cardbus_attach(parent, self, aux)
 	bus_addr_t adr;
 	pcireg_t reg;
 
-	sc->sc_devno = ca->ca_device;
+	sc->sc_devno = 0;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;

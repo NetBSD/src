@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.33 2005/05/30 04:36:16 christos Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.34 2005/09/09 14:50:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -76,7 +76,7 @@ typedef int cardbus_intr_handle_t;
  *	int (*cardbus_power)(cardbus_chipset_tag_t ct, int voltage);
  *
  *	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t ct,
- *	    int busno, int devno, int functionno);
+ *	    int busno, int functionno);
  *	void (*cardbus_free_tag)(cardbus_chipset_tag_t ct, cardbustag_t tag);
  *	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t ct,
  *	    cardbustag_t tag, int offs);
@@ -95,8 +95,7 @@ typedef struct cardbus_functions {
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
 
-	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int,
-	    int);
+	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
 	void (*cardbus_free_tag)(cardbus_chipset_tag_t, cardbustag_t);
 	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
 	    cardbustag_t, int);
@@ -119,8 +118,7 @@ typedef struct cardbus_functions {
 	    int (*)(void *), void *);
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 
-	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int,
-	    int);
+	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
 	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
 	    cardbustag_t, int);
 	void (*cardbus_conf_write)(cardbus_chipset_tag_t, cardbustag_t,
@@ -162,7 +160,6 @@ struct cardbus_softc {
 	struct device sc_dev;		/* fundamental device structure */
 
 	int sc_bus;			/* cardbus bus number */
-	int sc_device;			/* cardbus device number */
 	int sc_intrline;		/* CardBus intrline */
 
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
@@ -200,7 +197,6 @@ typedef struct cardbus_devfunc {
 	cardbus_function_tag_t ct_cf;
 	struct cardbus_softc *ct_sc;	/* pointer to the parent */
 	int ct_bus;			/* bus number */
-	int ct_dev;			/* device number */
 	int ct_func;			/* function number */
 
 #if rbus
@@ -250,7 +246,6 @@ struct cardbus_attach_args {
 	bus_dma_tag_t ca_dmat;		/* DMA tag */
 
 	u_int ca_bus;
-	u_int ca_device;
 	u_int ca_function;
 	cardbustag_t ca_tag;
 	cardbusreg_t ca_id;
@@ -332,8 +327,8 @@ int cardbus_setpowerstate(const char *, cardbus_devfunc_t, pcitag_t, int);
 #define Cardbus_mapreg_unmap(ct, reg, tag, handle, size) \
 	cardbus_mapreg_unmap((ct)->ct_sc, (ct->ct_func), (reg), (tag), (handle), (size))
 
-#define Cardbus_make_tag(ct) (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc, (ct)->ct_bus, (ct)->ct_dev, (ct)->ct_func)
-#define cardbus_make_tag(cc, cf, bus, device, function) ((cf)->cardbus_make_tag)((cc), (bus), (device), (function))
+#define Cardbus_make_tag(ct) (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc, (ct)->ct_bus, (ct)->ct_func)
+#define cardbus_make_tag(cc, cf, bus, function) ((cf)->cardbus_make_tag)((cc), (bus), (function))
 
 #define Cardbus_free_tag(ct, tag) (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
 #define cardbus_free_tag(cc, cf, tag) (*(cf)->cardbus_free_tag)(cc, (tag))
