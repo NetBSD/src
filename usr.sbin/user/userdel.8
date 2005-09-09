@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.27 2005/09/09 21:30:31 wiz Exp $ */
+.\" $NetBSD: userdel.8,v 1.28 2005/09/09 21:43:42 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -41,7 +41,8 @@
 .Fl D
 .Op Fl p Ar preserve-value
 .Nm
-.Op Fl prSv
+.Op Fl rSv
+.Op Fl p Ar preserve-value
 .Ar user
 .Sh DESCRIPTION
 The
@@ -84,7 +85,7 @@ after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl p
+.It Fl p Ar preserve-value
 Preserve the user information in the password file,
 but do not allow the user to login, by switching the
 password to an
