@@ -1,4 +1,4 @@
-.\"	$NetBSD: scan_ffs.8,v 1.4 2005/06/19 16:01:38 wiz Exp $
+.\"	$NetBSD: scan_ffs.8,v 1.5 2005/09/09 20:21:39 wiz Exp $
 .\"     OpenBSD: scan_ffs.8,v 1.13 2004/12/14 00:04:21 jmc Exp
 .\"
 .\" Copyright (c) 2005 Juan Romero Pardines
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm scan_ffs
-.Nd finding FFSv1/FFSv2 partitions on a disk
+.Nd find FFSv1/FFSv2 partitions on a disk
 .Sh SYNOPSIS
 .Nm
 .Op Fl lv
@@ -38,10 +38,11 @@
 .Op Fl s Ar start
 .Ar device
 .Sh DESCRIPTION
-This program will take a raw disk device that covers the whole disk,
-and will find all possible FFSv1/FFSv2 partitions with different block
-sizes on the disk.
-It will show the file system type (FFSv1 or FFSv2), size and offset.
+.Nm
+will take a raw disk device that covers the whole disk
+and will find all possible FFSv1/FFSv2 partitions, independent of block
+sizes, on the disk.
+It will show the file system type (FFSv1 or FFSv2), size, and offset.
 Also it has an option to show the values with a disklabel-alike
 output.
 .Pp
@@ -61,7 +62,7 @@ With a little massaging, this output can usually be used by
 .It Fl s Ar start
 Where to start searching for file systems.
 This makes it easier to skip swap
-partitions, or other large non-UFS/FFS partitions.
+partitions or other large non-UFS/FFS partitions.
 The
 .Ar start
 argument specifies the first sector that will be searched.
