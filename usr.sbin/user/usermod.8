@@ -1,5 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.23 2005/08/12 16:22:05 christos Exp $ */
-.\"
+.\" $NetBSD: usermod.8,v 1.24 2005/09/09 20:48:16 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -31,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 27, 2005
+.Dd September 9, 2005
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -105,13 +104,13 @@ file.
 See
 .Xr usermgmt.conf 5
 for more details.
+.It Fl F
+Force the user to change their password upon next login.
 .It Fl f Ar inactive-time
 Set the time at which the password expires.
 See the
 .Fl e
 option.
-.It Fl F
-Force the user to change their password upon next login.
 .It Fl G Ar secondary-group
 Specify a secondary group to which the user will be added in the
 .Pa /etc/group
