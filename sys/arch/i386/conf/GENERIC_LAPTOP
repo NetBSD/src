@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.153 2005/09/06 02:03:52 dogcow Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.154 2005/09/09 13:43:40 rpaulo Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 maxusers	32		# estimated number of users
 
@@ -222,6 +222,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
 options 	PCDISPLAY_SOFTCURSOR
+# console scrolling support.
+options 	WSDISPLAY_SCROLLSUPPORT
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 

@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.11 2005/08/19 05:19:51 christos Exp $
+# $NetBSD: XEN0,v 1.12 2005/09/09 13:43:40 rpaulo Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -177,6 +177,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_SCROLLSUPPORT
 options 	PCDISPLAY_SOFTCURSOR
 
 config		netbsd	root on ? type ?
