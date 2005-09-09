@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_argv.c,v 1.12 2005/02/12 12:53:22 aymeric Exp $	*/
+/*	$NetBSD: ex_argv.c,v 1.12.2.1 2005/09/09 15:00:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_argv.c	10.26 (Berkeley) 9/20/96";
 #else
-__RCSID("$NetBSD: ex_argv.c,v 1.12 2005/02/12 12:53:22 aymeric Exp $");
+__RCSID("$NetBSD: ex_argv.c,v 1.12.2.1 2005/09/09 15:00:58 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,7 @@ argv_exp2(sp, excp, cmd, cmdlen)
 	size_t blen, len, n;
 	int rval;
 	char *bp, *mp, *p;
+	int shellmeta_ok;
 
 	GET_SPACE_RET(sp, bp, blen, 512);
 
@@ -190,12 +191,16 @@ argv_exp2(sp, excp, cmd, cmdlen)
 	if (opts_empty(sp, O_SHELL, 1) || opts_empty(sp, O_SHELLMETA, 1))
 		n = 0;
 	else {
+		shellmeta_ok = 1;
 		for (p = mp = O_STR(sp, O_SHELLMETA); *p != '\0'; ++p)
-			if (isblank(*p) || isalnum((unsigned char)*p))
+			if (isblank(*p) || isalnum((unsigned char)*p)) {
+				shellmeta_ok = 0;
 				break;
+			}
+
 		p = bp + SHELLOFFSET;
 		n = len - SHELLOFFSET;
-		if (*p != '\0') {
+		if (shellmeta_ok) {
 			for (; n > 0; --n, ++p)
 				if (strchr(mp, *p) != NULL)
 					break;
