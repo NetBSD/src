@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/04/23 10:47:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2005/09/09 17:27:18 tsutsui Exp $
 
 PROG=	aoutboot
 
@@ -30,7 +30,7 @@ ip3xboot: ${OBJS} ${LIBS}
 	@${SIZE} ip3xboot
 
 ip2xboot: ${OBJS} ${LIBS}
-	${LD} -Map boot.map -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
+	${LD} -Map boot.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
 	    -e start -o ip2xboot ${OBJS} ${LIBS}
 	@${STRIP} -s ip2xboot
 	@${SIZE} ip2xboot
