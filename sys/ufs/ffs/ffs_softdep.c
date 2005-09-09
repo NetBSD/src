@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.69 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.70 2005/09/09 15:04:07 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.69 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.70 2005/09/09 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -196,6 +196,9 @@ void softdep_pageiodone1(struct buf *);
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
 static void softdep_trackbufs(struct inode *, int, boolean_t);
+
+#define	PCBP_BITMAP(off, size) \
+	(((1 << howmany((size), PAGE_SIZE)) - 1) << ((off) >> PAGE_SHIFT))
 
 /*
  * Exported softdep operations.
@@ -5793,6 +5796,11 @@ softdep_setup_pagecache(ip, lbn, size)
 	 * Enter pagecache dependency buf in hash.
 	 * Always reset b_resid to be the full amount of data in the block
 	 * since the caller has the corresponding pages locked and dirty.
+	 *
+	 * Note that we are using b_resid as a bitmap, so that
+	 * we can track which pages are written.  As pages can be re-dirtied
+	 * and re-written in the mean time, byte-count is not suffice for
+	 * our purpose.
 	 */
 
 	bp = softdep_lookup_pcbp(vp, lbn);
@@ -5804,9 +5812,13 @@ softdep_setup_pagecache(ip, lbn, size)
 		LIST_INSERT_HEAD(&pcbphashhead[PCBPHASH(vp, lbn)], bp, b_hash);
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
-	bp->b_bcount = bp->b_resid = size;
+	bp->b_bcount = size;
+	KASSERT(size <= PAGE_SIZE * sizeof(bp->b_resid) * CHAR_BIT);
+	bp->b_resid = PCBP_BITMAP(0, size);
 	UVMHIST_LOG(ubchist, "vp = %p, lbn = %ld, "
-	    "bp = %p, bcount = resid = %ld", vp, lbn, bp, size);
+	    "bp = %p, bcount = %ld", vp, lbn, bp, size);
+	UVMHIST_LOG(ubchist, "b_resid = %ld",
+	    bp->b_resid, 0, 0, 0);
 	return bp;
 }
 
@@ -5933,7 +5945,7 @@ softdep_pageiodone1(bp)
 	struct worklist *wk;
 	daddr_t lbn;
 	voff_t off;
-	long iosize = bp->b_bcount;
+	int iosize = bp->b_bcount;
 	int size, asize, bshift, bsize;
 	int i;
 	UVMHIST_FUNC("softdep_pageiodone"); UVMHIST_CALLED(ubchist);
@@ -5946,12 +5958,14 @@ softdep_pageiodone1(bp)
 	for (i = 0; i < npages; i++) {
 		pg = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
 		if (pg == NULL) {
-			continue;
+			panic("%s: no page", __func__);
 		}
 
 		for (off = pg->offset;
 		     off < pg->offset + PAGE_SIZE;
 		     off += bsize) {
+			int pgmask;
+
 			size = MIN(asize, iosize);
 			iosize -= size;
 			lbn = off >> bshift;
@@ -5968,14 +5982,14 @@ softdep_pageiodone1(bp)
 			UVMHIST_LOG(ubchist,
 			    "pcbp %p iosize %ld, size %d, asize %d",
 			    pcbp, iosize, size, asize);
-			pcbp->b_resid -= size;
-			if (pcbp->b_resid < 0) {
-				panic("softdep_pageiodone: "
-				    "resid < 0, vp %p lbn 0x%" PRIx64 " pcbp %p"
-				    " iosize %ld, size %d, asize %d, bsize %d",
-				    vp, lbn, pcbp, iosize, size, asize, bsize);
+			pgmask = PCBP_BITMAP(off & (bsize - 1), size);
+			if ((~pcbp->b_resid & pgmask) != 0) {
+				UVMHIST_LOG(ubchist,
+				    "multiple write resid %lx, pgmask %lx",
+				    pcbp->b_resid, pgmask, 0, 0);
 			}
-			if (pcbp->b_resid > 0) {
+			pcbp->b_resid &= ~pgmask;
+			if (pcbp->b_resid != 0) {
 				continue;
 			}
 
