@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.233 2005/09/08 21:26:59 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.234 2005/09/09 15:27:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12449,4 +12449,30 @@ sys/dev/pci/pcidevs_data.h			regen
 	Recognise Broadcom 5751M Gigabit Ethernet, as found on ThinkPad T43p.
 	Also add quirk for BGE_CHIPID_BCM5751_A1. This fixes kern/31028.
 	[gavan, ticket #752]
+
+sys/kern/uipc_syscalls.c			1.91-1.94
+
+	Close additional file descriptors if we set MSG_CTRUNC in a SCM_RIGHTS
+	message. This fixes PR kern/30370.
+	In adjust_rights() Use CMSG_SPACE() to calculate the number of
+	filedescriptors passed in this message - the counterpart in
+	unp_externalize does this as well.
+	Note that CMSG_SPACE(0) does not make sense, since it does not invoke
+	the alignment magic - so use CMSG_SPACE(sizeof(int)) and adjust the
+	calculated total later.
+	This fixes the postfix conection cache for 64bit platforms. Previously
+	the number of passed filed descriptors (nfds) would have been
+	calculeted too high, causing the fdrelease() of uninitialized junk.
+	[martin, ticket #746]
+
+usr.bin/vi/vi/v_ex.c				1.12
+usr.bin/vi/vi/v_txt.c				1.14
+usr.bin/vi/ex/ex_argv.c				1.13-1.14
+usr.bin/vi/ex/version.h				1.18
+
+	Various "nvi" bug fixes:
+	- Handle ^C correctly in all cases.
+	- Blanks and alnum chars are ignored in the shellmeta option.
+	- \ Can be used to escape any (special) character in file names.
+	[aymeric, ticket #753]
 
