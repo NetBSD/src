@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.88 2005/08/12 21:40:35 he Exp $ */
+/* $NetBSD: user.c,v 1.89 2005/09/09 21:48:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.88 2005/08/12 21:40:35 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.89 2005/09/09 21:48:10 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1681,26 +1681,33 @@ void
 usermgmt_usage(const char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void)fprintf(stderr, "usage: %s -DF [-b basedir] [-e expiry] "
-		    "[-f inactive] [-g group]\n\t[-r lowuid..highuid] "
-		    "[-s shell] [-L class]\n", prog);
-		(void)fprintf(stderr, "usage: %s [-G group] [-b basedir] "
-		    "[-c comment] [-d homedir] [-e expiry]\n\t[-f inactive] "
-		    "[-g group] [-k skeletondir] [-m] [-o] [-p password]\n"
-		    "\t[-r lowuid..highuid] [-s shell] [-u uid] [-v] user\n",
+		(void)fprintf(stderr, "usage: %s -D [-F] [-b base-dir] "
+		    "[-e expiry-time] [-f inactive-time]\n"
+		    "\t[-g gid | name | =uid] [-k skel-dir] [-L login-class]\n"
+		    "\t[-r lowuid..highuid] [-s shell]\n", prog);
+		(void)fprintf(stderr, "usage: %s [-moSv] [-b base-dir] "
+		    "[-c comment] [-d home-dir] [-e expiry-time]\n"
+		    "\t[-f inactive-time] [-G secondary-group] "
+		    "[-g gid | name | =uid]\n"
+		    "\t[-k skeletondir] [-L login-class] [-p password]"
+		    "[-r lowuid..highuid]\n"
+		    "\t[-s shell] [-u uid] user\n",
 		    prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void)fprintf(stderr, "usage: %s -F [-G group] [-c comment] "
-		    "[-C yes/no] [-d homedir] [-e expire] \n\t[-f inactive] "
-		    "[-g group] [-l newname] [-m] [-o] [-p password]\n"
-		    "\t[-s shell] [-u uid] [-L class] [-v] user\n", prog);
+		(void)fprintf(stderr, "usage: %s [-FmoSv] [-C yes/no] "
+		    "[-c comment] [-d home-dir] [-e expiry-time]\n"
+		    "\t[-f inactive] [-G secondary-group] "
+		    "[-g gid | name | =uid]\n"
+		    "\t[-L login-class] [-l new-login] [-p password] "
+		    "[-s shell] [-u uid]\n"
+		    "\tuser\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
-		(void)fprintf(stderr, "usage: %s -D [-p preserve]\n", prog);
+		(void)fprintf(stderr, "usage: %s -D [-p preserve-value]\n", prog);
 		(void)fprintf(stderr,
-		    "usage: %s [-p preserve] [-r] [-v] user\n", prog);
+		    "usage: %s [-rSv] [-p preserve-value] user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
-		(void)fprintf(stderr, "usage: %s [-e] [-v] user\n", prog);
+		(void)fprintf(stderr, "usage: %s [-ev] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
 		(void)fprintf(stderr, "usage: %s [-g gid] [-o]"
@@ -1753,7 +1760,7 @@ useradd(int argc, char **argv)
 			/*
 			 * Setting -1 will force the new user to
 			 * change their password as soon as they
-			 * next login - passwd(5).
+			 * next log in - passwd(5).
 			 */
 			defaultfield = 1;
 			memsave(&u.u_inactive, "-1", strlen("-1"));
