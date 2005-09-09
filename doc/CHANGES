@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.516 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.517 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -93,3 +93,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		   [kiyohara 20050906]
 	xge(4): Add driver for the Neterion Xframe-I 10 gigabit ethernet
 		controller [ragge 20050909]
+	i386: WSDISPLAY_SCROLLSUPPORT enabled in GENERIC.MPACPI,
+		GENERIC_LAPTOP and XEN0 kernels. [rpaulo 20050909]
+	amd64: WSDISPLAY_SCROLLSUPPORT enabled in GENERIC kernel.
+		[rpaulo 20050909]
