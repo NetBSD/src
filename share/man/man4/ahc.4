@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.28 2005/06/05 15:21:23 soren Exp $
+.\"	$NetBSD: ahc.4,v 1.29 2005/09/09 14:11:39 drochner Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -55,7 +55,7 @@ For one or more PCI cards:
 .Cd "ahc* at pci? dev ? function ?"
 .Pp
 For CardBus cards:
-.Cd "ahc* at cardbus? dev ? function ?"\}
+.Cd "ahc* at cardbus? function ?"\}
 .Pp
 To allow PCI adapters to use memory mapped I/O if enabled:
 .Cd options AHC_ALLOW_MEMIO

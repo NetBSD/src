@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.77 2005/08/29 11:49:36 gson Exp $
+.\" $NetBSD: usb.4,v 1.78 2005/09/09 14:11:39 drochner Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Nm usb
 .Nd Universal Serial Bus driver
 .Sh SYNOPSIS
-.Cd "ehci*   at cardbus? dev ? function ?"
+.Cd "ehci*   at cardbus? function ?"
 .Cd "ehci*   at pci? dev ? function ?"
-.Cd "ohci*   at cardbus? dev ? function ?"
+.Cd "ohci*   at cardbus? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
 .Cd "slhci*  at isa? port ? irq ?"
-.Cd "uhci*   at cardbus? dev ? function ?"
+.Cd "uhci*   at cardbus? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
 .Cd "usb*    at ohci? flags X"
