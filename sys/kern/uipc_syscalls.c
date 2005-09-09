@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.90 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.90.2.1 2005/09/09 14:15:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.1 2005/09/09 14:15:24 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -409,13 +409,13 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	struct iovec	aiov;
 
 	p = l->l_proc;
-	msg.msg_name = (caddr_t)SCARG(uap, to);		/* XXX kills const */
+	msg.msg_name = __UNCONST(SCARG(uap, to)); /* XXXUNCONST kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
 	msg.msg_flags = 0;
-	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
+	aiov.iov_base = __UNCONST(SCARG(uap, buf)); /* XXXUNCONST kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
@@ -743,7 +743,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			len = 0;
 		else {
 			struct mbuf *m = control;
-			caddr_t p = (caddr_t)mp->msg_control;
+			caddr_t q = (caddr_t)mp->msg_control;
 
 			do {
 				i = m->m_len;
@@ -751,16 +751,16 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
 				}
-				error = copyout(mtod(m, caddr_t), p,
+				error = copyout(mtod(m, caddr_t), q,
 				    (unsigned)i);
 				if (m->m_next)
 					i = ALIGN(i);
-				p += i;
+				q += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
 			} while ((m = m->m_next) != NULL);
-			len = p - (caddr_t)mp->msg_control;
+			len = q - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
 	}
@@ -1053,7 +1053,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
  * XXX arguments in mbufs, and this could go away.
  */
 int
-sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
+sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 {
 	struct sockaddr	*sa;
 	struct mbuf	*m;
@@ -1078,7 +1078,7 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 		MEXTMALLOC(m, buflen, M_WAITOK);
 	}
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), buflen);
+	error = copyin(bf, mtod(m, caddr_t), buflen);
 	if (error) {
 		(void) m_free(m);
 		return (error);
