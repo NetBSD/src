@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.11 2002/04/09 01:47:35 thorpej Exp $	*/
+/*	$NetBSD: v_ex.c,v 1.11.8.1 2005/09/09 14:25:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_ex.c	10.42 (Berkeley) 6/28/96";
 #else
-__RCSID("$NetBSD: v_ex.c,v 1.11 2002/04/09 01:47:35 thorpej Exp $");
+__RCSID("$NetBSD: v_ex.c,v 1.11.8.1 2005/09/09 14:25:13 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,6 +433,10 @@ v_ex(sp, vp)
 
 			/* If the user didn't enter anything, return. */
 			if (tp->term == TERM_BS)
+				break;
+
+			/* If the user changed their mind, return. */
+			if (tp->term != TERM_OK)
 				break;
 
 			/* Log the command. */
