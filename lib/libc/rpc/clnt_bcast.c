@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.13 2005/06/01 04:38:40 lukem Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.14 2005/09/09 15:41:27 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.13 2005/06/01 04:38:40 lukem Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.14 2005/09/09 15:41:27 christos Exp $");
 #endif
 #endif
 
@@ -288,6 +288,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	int msec;
 	int pollretval;
 	int fds_found;
+	struct timespec ts;
 
 #ifdef PORTMAP
 	size_t outlen_pmap = 0;
@@ -516,8 +517,10 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 		 * Get all the replies from these broadcast requests
 		 */
 	recv_again:
+		ts.tv_sec = msec / 1000;
+		ts.tv_nsec = (msec % 1000) * 1000000;
 
-		switch (pollretval = poll(pfd, fdlistno, msec)) {
+		switch (pollretval = pollts(pfd, fdlistno, &ts, NULL)) {
 		case 0:		/* timed out */
 			stat = RPC_TIMEDOUT;
 			continue;
@@ -534,7 +537,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 			else if (pfd[i].revents & POLLNVAL) {
 				/*
 				 * Something bad has happened to this descri-
-				 * ptor. We can cause poll() to ignore
+				 * ptor. We can cause pollts() to ignore
 				 * it simply by using a negative fd.  We do that
 				 * rather than compacting the pfd[] and fdlist[]
 				 * arrays.
