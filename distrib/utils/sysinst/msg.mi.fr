@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.85 2005/05/08 22:35:20 christos Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.86 2005/09/09 23:20:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -978,7 +978,7 @@ pour le système maintenant ?}
 
 message rootsh	
 {Vous pouvez maintenant choisir quel shell utiliser pour l'utilisateur root.
-Par default il s'agit de /bin/csh}
+Par default il s'agit de /bin/sh}
 
 message postuseexisting
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.2 2005/08/27 21:24:13 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.3 2005/09/09 23:20:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -983,7 +983,7 @@ y por eso está vacio. ¿Quiere fijar un password de root para el sistema ahora?}
 
 message rootsh
 {Ahora puede seleccionar que shell quiere usar para el usuario root. Por
-defecto es /bin/csh, pero podria preferir otra.}
+defecto es /bin/sh, pero podria preferir otra.}
 
 message postuseexisting
 {
