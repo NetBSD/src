@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.82 2005/06/21 14:01:12 ws Exp $	*/
+/*	$NetBSD: usb.c,v 1.83 2005/09/09 12:04:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82 2005/06/21 14:01:12 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.83 2005/09/09 12:04:30 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -703,7 +703,8 @@ usb_get_next_event(struct usb_event *ue)
 		return (0);
 	}
 #endif
-	*ue = ueq->ue;
+	if (ue)
+		*ue = ueq->ue;
 	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
 	free(ueq, M_USBDEV);
 	usb_nevents--;
@@ -734,7 +735,6 @@ Static void
 usb_add_event(int type, struct usb_event *uep)
 {
 	struct usb_event_q *ueq;
-	struct usb_event ue;
 	struct timeval thetime;
 	int s;
 
@@ -749,7 +749,7 @@ usb_add_event(int type, struct usb_event *uep)
 	if (++usb_nevents >= USB_MAX_EVENTS) {
 		/* Too many queued events, drop an old one. */
 		DPRINTFN(-1,("usb: event dropped\n"));
-		(void)usb_get_next_event(&ue);
+		(void)usb_get_next_event(0);
 	}
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	wakeup(&usb_events);
