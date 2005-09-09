@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.19 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.20 2005/09/09 14:50:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.19 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.20 2005/09/09 14:50:58 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -202,7 +202,7 @@ fxp_cardbus_setup(struct fxp_softc * sc)
 	pcireg_t command;
 
 	cardbustag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
-	    csc->ct->ct_dev, csc->ct->ct_func);
+	    csc->ct->ct_func);
 
 	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
