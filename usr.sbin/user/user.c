@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.89 2005/09/09 21:48:10 wiz Exp $ */
+/* $NetBSD: user.c,v 1.90 2005/09/09 22:04:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.89 2005/09/09 21:48:10 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.90 2005/09/09 22:04:09 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1710,19 +1710,19 @@ usermgmt_usage(const char *prog)
 		(void)fprintf(stderr, "usage: %s [-ev] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
-		(void)fprintf(stderr, "usage: %s [-g gid] [-o]"
-		    " [-r lowgid..highgid] [-v] group\n", prog);
+		(void)fprintf(stderr, "usage: %s [-ov] [-g gid]"
+		    " [-r lowgid..highgid] group\n", prog);
 	} else if (strcmp(prog, "groupdel") == 0) {
 		(void)fprintf(stderr, "usage: %s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
 		(void)fprintf(stderr,
-		    "usage: %s [-g gid] [-o] [-n newname] [-v] group\n", prog);
+		    "usage: %s [-ov] [-g gid] [-n newname] group\n", prog);
 	} else if (strcmp(prog, "user") == 0 || strcmp(prog, "group") == 0) {
 		(void)fprintf(stderr,
 		    "usage: %s ( add | del | mod | info ) ...\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
-		(void)fprintf(stderr, "usage: %s [-e] [-v] group\n", prog);
+		(void)fprintf(stderr, "usage: %s [-ev] group\n", prog);
 #endif
 	}
 	exit(EXIT_FAILURE);
