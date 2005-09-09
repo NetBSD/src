@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.33 2005/04/23 16:53:29 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.34 2005/09/09 12:24:37 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh.c,v 1.233 2005/03/01 17:22:06 jmc Exp $");
-__RCSID("$NetBSD: ssh.c,v 1.33 2005/04/23 16:53:29 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.34 2005/09/09 12:24:37 christos Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -790,7 +790,7 @@ x11_get_proto(char **_proto, char **_data)
 			}
 		}
 		snprintf(cmd, sizeof(cmd),
-		    "%s %s%s list %s . 2>" _PATH_DEVNULL,
+		    "%s %s%s list %s 2>" _PATH_DEVNULL,
 		    options.xauth_location,
 		    generated ? "-f " : "" ,
 		    generated ? xauthfile : "",
