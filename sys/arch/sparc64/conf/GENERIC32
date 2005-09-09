@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.117 2005/08/19 05:20:03 christos Exp $
+# 	$NetBSD: GENERIC32,v 1.118 2005/09/09 16:30:02 drochner Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	64
 
@@ -689,24 +689,24 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## CardBus cards; UT marks untested.
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards UT
+#com*	at cardbus? function ?	# Modems and serial cards UT
 
 # CardBus SCSI controllers
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480 UT
-#njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480 UT
+#njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus network interfaces
-#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
-#atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11) UT
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX UT
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x UT
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139 UT
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143 UT
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11 UT
+#atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
+#ex*	at cardbus? function ?	# 3Com 3C575TX UT
+#fxp*	at cardbus? function ?	# Intel i8255x UT
+#rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
+#tlp*	at cardbus? function ?	# DECchip 21143 UT
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 ## PCMCIA cards; UT marks untested.
 

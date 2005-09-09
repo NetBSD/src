@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.72 2005/08/19 05:19:51 christos Exp $
+#	$NetBSD: SWINGER,v 1.73 2005/09/09 16:26:20 drochner Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.72 $"
+#ident 		"SWINGER-$Revision: 1.73 $"
 
 maxusers	64		# estimated number of users
 
@@ -395,8 +395,8 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at scsi?
@@ -566,10 +566,10 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? function ?	# Intel i8255x
+#tlp*	at cardbus? function ?	# DECchip 21143
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -593,7 +593,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 
 # CardBus USB controllers
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at uhci?

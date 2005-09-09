@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.89 2005/09/06 02:03:52 dogcow Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.90 2005/09/09 16:26:20 drochner Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -308,7 +308,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-com* 	at cardbus? dev ? function ?	# Modems and serial cards
+com* 	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -341,8 +341,8 @@ com2	at isa? port 0x3e8 irq 5
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # CardBus SCSI cards
-ahc* 	at cardbus? dev ? function ?	# Adaptec ADP-1480
-adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc* 	at cardbus? function ?	# Adaptec ADP-1480
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at scsi?
@@ -463,13 +463,13 @@ com*	at mhzc?
 sm*	at mhzc?
 
 # CardBus network cards
-ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-ex* 	at cardbus? dev ? function ?	# 3Com 3C575TX
-fxp* 	at cardbus? dev ? function ? 	# Intel i8255x
-rtk* 	at cardbus? dev ? function ? 	# Realtek 8129/8139
-rtw*	at cardbus? dev ? function ?	# Realtek 8180L (802.11)
-tlp* 	at cardbus? dev ? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex* 	at cardbus? function ?	# 3Com 3C575TX
+fxp* 	at cardbus? function ? 	# Intel i8255x
+rtk* 	at cardbus? function ? 	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp* 	at cardbus? function ?	# DECchip 21143
 
 # MII/PHY support
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs

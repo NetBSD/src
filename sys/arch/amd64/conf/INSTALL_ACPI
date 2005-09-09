@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.27 2005/08/19 05:19:49 christos Exp $
+# $NetBSD: INSTALL_ACPI,v 1.28 2005/09/09 16:28:10 drochner Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27 $"
+#ident 		"INSTALL-$Revision: 1.28 $"
 
 maxusers	32		# estimated number of users
 
@@ -248,7 +248,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 #com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards
+#com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -299,8 +299,8 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 #esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480
 
 # SCSI bus support
 scsibus* at scsi?
@@ -447,11 +447,11 @@ wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 #sm*	at mhzc?
 
 # CardBus network cards
-#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? function ?	# Intel i8255x
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
+#tlp*	at cardbus? function ?	# DECchip 21143
 
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
@@ -487,8 +487,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
