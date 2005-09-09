@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.237 2005/08/29 19:11:33 drochner Exp $
+#	$NetBSD: files.pci,v 1.238 2005/09/09 10:30:27 ragge Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -761,6 +761,11 @@ file	dev/pci/if_ipw.c		ipw
 # device declaration in sys/conf/files
 attach	njs at pci with njs_pci
 file	dev/pci/njs_pci.c		njs_pci
+
+# S2io Xframe 10 Gigabit ethernet (Xframe driver)
+device  xge: ether, ifnet, arp
+attach  xge  at pci 
+file    dev/pci/if_xge.c		xge
 
 # Intel PRO/Wireless 2200BG/2915ABG
 device	iwi: ifnet, wlan
