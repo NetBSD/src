@@ -1,5 +1,4 @@
-.\" $NetBSD: user.8,v 1.18 2005/02/05 15:26:50 wiz Exp $ */
-.\"
+.\" $NetBSD: user.8,v 1.19 2005/09/09 21:26:09 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -31,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 14, 2004
+.Dd September 9, 2005
 .Dt USER 8
 .Os
 .Sh NAME
@@ -41,55 +40,26 @@
 .Nm
 .Cm add
 .Fl D
-.Op Fl b Ar base-dir
-.Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-time
-.Op Fl g Ar gid/name/=uid
-.Op Fl L Ar login-class
-.Op Fl r Ar lowuid..highuid
+.Op options
 .Nm
 .Cm add
-.Op Fl Smov
-.Op Fl G Ar secondary-group
-.Op Fl b Ar base-dir
-.Op Fl c Ar comment
-.Op Fl d Ar home-dir
-.Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-time
-.Op Fl g Ar gid/name/=uid
-.Op Fl k Ar skel-dir
-.Op Fl L Ar login-class
-.Op Fl p Ar password
-.Op Fl r Ar lowuid..highuid
-.Op Fl s Ar shell
-.Op Fl u Ar uid
+.Op options
 .Ar user
 .Nm
 .Cm del
 .Fl D
-.Op Fl p Ar preserve-value
+.Op options
 .Nm
 .Cm del
-.Op Fl Sprv
+.Op options
 .Ar user
 .Nm
 .Cm info
-.Op Fl ev
+.Op options
 .Ar user
 .Nm
 .Cm mod
-.Op Fl Smov
-.Op Fl G Ar secondary-group
-.Op Fl c Ar comment
-.Op Fl d Ar home-dir
-.Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-time
-.Op Fl g Ar gid/name/=uid
-.Op Fl L Ar login-class
-.Op Fl l Ar new-login
-.Op Fl p Ar password
-.Op Fl s Ar shell
-.Op Fl u Ar uid
+.Op options
 .Ar user
 .Sh DESCRIPTION
 The
@@ -103,10 +73,8 @@ and
 commands.
 .Pp
 For a full explanation of the options, please see the relevant manual page.
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std user
 .Sh FILES
 .Bl -tag -width /usr/share/examples/usermgmt -compact
 .It Pa /etc/skel/.[A-z]*
@@ -115,12 +83,12 @@ Skeleton files for new user
 Configuration file for
 .Nm ,
 .Xr group 8
-and those backend commands
+and the backend commands mentioned above.
 .It Pa /usr/share/examples/usermgmt
 A directory containing examples for
 .Nm
 and
-.Xr group 8
+.Xr group 8 .
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
