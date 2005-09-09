@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.103 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.104 2005/09/09 15:38:05 christos Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.103 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.104 2005/09/09 15:38:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,7 +98,7 @@ int ipsec_debug = 0;
 struct ipsecstat ipsecstat;
 int ip4_ah_cleartos = 1;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
-int ip4_ipsec_dfbit = 0;	/* DF bit on encap. 0: clear 1: set 2: copy */
+int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
 int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
