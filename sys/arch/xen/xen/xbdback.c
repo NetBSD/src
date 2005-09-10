@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.14 2005/07/19 12:20:29 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.15 2005/09/10 18:00:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -368,7 +368,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 
 		xbdi->ma_ring = req->shmem_frame << PAGE_SHIFT;
 		error = pmap_remap_pages(pmap_kernel(), ring_addr,
-		    xbdi->ma_ring, 1, PMAP_WIRED | PMAP_CANFAIL, req->domid);
+		    xbdi->ma_ring, 1, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
 			uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
 			    UVM_KMF_VAONLY);
