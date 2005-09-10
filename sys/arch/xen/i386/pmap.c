@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2005/05/29 15:57:02 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2005/09/10 15:46:04 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2005/05/29 15:57:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2005/09/10 15:46:04 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -4064,7 +4064,9 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh;
 	struct pv_entry *pve = NULL; /* XXX gcc */
-	int error;
+	int error, dptpwire;
+
+	dptpwire = 0;
 
 	XENPRINTK(("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n",
 	    pmap, (void *)va, (void *)pa, npages, flags, dom));
@@ -4230,14 +4232,37 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	} else {
 		pmap->pm_stats.resident_count++;
 		pmap->pm_stats.wired_count++;
-		if (ptp)
+		if (ptp) {
+			dptpwire = 1;
 			ptp->wire_count++;
+		}
 	}
 
 	//printf("pmap initial setup");
 	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+ change_pte:
 	error = xpq_update_foreign(maptp, npte, dom);
-
+	if (error) {
+		if (npte & PG_RW) {
+			/* 
+			 * XXXjld@panix.com: Some things cannot be
+			 * mapped read/write, even by a privileged
+			 * domain.  This wouldn't be necessary if
+			 * pmap_remap_pages had a "prot" parameter
+			 * like pmap_enter does.
+			 */
+			npte &= ~(PG_RW | PG_M);
+			//printf("pmap_remap_pages: losing write bit npte=%lx\n", (unsigned long)npte);
+			goto change_pte;
+		}
+		printf("pmap_remap_pages: xpq_update_foreign failed va=%lx"
+		    " npte=%lx error=%d dptpwire=%d\n",
+		    va, (unsigned long)npte, error, dptpwire);
+		ptp->wire_count -= dptpwire;
+		/* XXX fix other stats? */
+		goto out;
+	}
+	
 shootdown_test:
 	/* Update page attributes if needed */
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
