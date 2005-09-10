@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.129 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.130 2005/09/10 19:20:51 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -107,6 +107,7 @@ struct statfs12 {
 #define	MOUNT_NTFS	"ntfs"		/* Windows/NT Filesystem */
 #define	MOUNT_SMBFS	"smbfs"		/* CIFS (SMB) */
 #define	MOUNT_PTYFS	"ptyfs"		/* Pseudo tty filesystem */
+#define	MOUNT_TMPFS	"tmpfs"		/* Efficient memory file-system */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

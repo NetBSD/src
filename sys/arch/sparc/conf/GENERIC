@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2005/08/19 05:20:03 christos Exp $
+# $NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.180 $"
 
 maxusers	32
 
@@ -189,6 +189,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server

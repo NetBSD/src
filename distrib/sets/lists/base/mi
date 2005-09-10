@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.569 2005/08/29 18:59:12 kleink Exp $
+# $NetBSD: mi,v 1.570 2005/09/10 19:20:48 jmmv Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -159,6 +159,7 @@
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_smbfs				base-smbfs-root
+./sbin/mount_tmpfs				base-miscfs-root
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root

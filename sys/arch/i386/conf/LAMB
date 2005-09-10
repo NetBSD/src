@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.56 2005/08/19 05:19:51 christos Exp $
+#	$NetBSD: LAMB,v 1.57 2005/09/10 19:20:49 jmmv Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -125,6 +125,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

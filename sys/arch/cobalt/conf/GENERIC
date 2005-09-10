@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2005/08/19 05:19:50 christos Exp $
+# $NetBSD: GENERIC,v 1.82 2005/09/10 19:20:49 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 maxusers	32
 
@@ -91,6 +91,7 @@ file-system	FDESC		# user file descriptor filesystem
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 #file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server

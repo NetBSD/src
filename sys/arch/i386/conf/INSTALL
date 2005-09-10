@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.271 2005/09/03 20:38:07 dsl Exp $
+#	$NetBSD: INSTALL,v 1.272 2005/09/10 19:20:49 jmmv Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -121,6 +121,7 @@ file-system 	KERNFS		# /kern
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas

@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.29 2005/09/09 16:26:20 drochner Exp $
+# $NetBSD: VIRTUALPC,v 1.30 2005/09/10 19:20:49 jmmv Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.29 $"
+#ident 		"VIRTUALPC-$Revision: 1.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -148,6 +148,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

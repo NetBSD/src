@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.7 2005/08/19 05:19:51 christos Exp $
+# $NetBSD: XENU,v 1.8 2005/09/10 19:20:49 jmmv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -106,6 +106,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

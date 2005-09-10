@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2005/08/20 03:42:01 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.72 2005/09/10 19:20:50 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	8
 
@@ -100,6 +100,7 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# ffs quotas
