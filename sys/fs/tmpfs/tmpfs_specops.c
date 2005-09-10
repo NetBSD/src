@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $
 
 /*
  * vnode operations vector used for special devices stored in a tmpfs
- * file-system.
+ * file system.
  */
 int (**tmpfs_specop_p)(void *);
 const struct vnodeopv_entry_desc tmpfs_specop_entries[] = {

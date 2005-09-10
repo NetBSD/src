@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $
 /* --------------------------------------------------------------------- */
 
 /*
- * vnode operations vector used for fifos stored in a tmpfs file-system.
+ * vnode operations vector used for fifos stored in a tmpfs file system.
  */
 int (**tmpfs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {

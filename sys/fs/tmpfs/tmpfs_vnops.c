@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $")
 /* --------------------------------------------------------------------- */
 
 /*
- * vnode operations vector used for files stored in a tmpfs file-system.
+ * vnode operations vector used for files stored in a tmpfs file system.
  */
 int (**tmpfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
@@ -144,7 +144,7 @@ tmpfs_lookup(void *v)
 	if (error != 0)
 		goto out;
 
-	/* If requesting the last path component on a read-only file-system
+	/* If requesting the last path component on a read-only file system
 	 * with a write operation, deny it. */
 	if ((cnp->cn_flags & ISLASTCN) &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&

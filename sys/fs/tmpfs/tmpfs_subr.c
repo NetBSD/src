@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 /*
- * Efficient memory file-system supporting functions.
+ * Efficient memory file system supporting functions.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -73,7 +73,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	struct timeval tv;
 	struct tmpfs_node *nnode;
 
-	/* If the root directory of the 'tmp' file-system is not yet
+	/* If the root directory of the 'tmp' file system is not yet
 	 * allocated, this must be the request to do it. */
 	KASSERT(IMPLIES(tmp->tm_root == NULL, parent == NULL && type == VDIR));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 /*
- * Efficient memory file-system.
+ * Efficient memory file system.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -128,7 +128,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 			return vfs_export(mp, &tmp->tm_export, &args.ta_export);
 		}
 
-		/* XXX: There is no support yet to update file-system
+		/* XXX: There is no support yet to update file system
 		 * settings.  Should be added. */
 
 		return EOPNOTSUPP;
@@ -142,7 +142,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	if (tmpfs_mem_info(TRUE) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
-	/* Get the maximum number of memory pages this file-system is
+	/* Get the maximum number of memory pages this file system is
 	 * allowed to use, based on the maximum size the user passed in
 	 * the mount structure.  A value of zero is treated as if the
 	 * maximum available space was requested. */
