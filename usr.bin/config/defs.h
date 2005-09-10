@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.2 2005/09/10 15:38:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -389,6 +389,7 @@ int	npspecs;			/* number of parent specs */
 int	maxbdevm;			/* max number of block major */
 int	maxcdevm;			/* max number of character major */
 int	do_devsw;			/* 0 if pre-devsw config */
+int	oktopackage;			/* 0 before setmachine() */
 
 TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
 TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and

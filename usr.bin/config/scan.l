@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.2 2005/09/10 15:38:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,12 +48,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stddef.h>
+#include <ctype.h>
 #include "defs.h"
 #include "gram.h"
 
 int	yyline;
 const char *yyfile;
 const char *lastfile;
+char curinclpath[PATH_MAX];
 
 /*
  * Data for returning to previous files from include files.
@@ -68,13 +71,16 @@ struct incl {
 };
 static struct incl *incl;
 static int endinclude(void);
+static int getincludepath(void);
 
 #define	yywrap() 1
 
 %}
 
 PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
+QCHARS	([^"\n]|\\\")+
 WORD	[A-Za-z_][-A-Za-z_0-9]*
+FILENAME	({PATH}|\"{QCHARS}\")
 
 %%
 		/* Local variables for yylex() */
@@ -86,7 +92,6 @@ attach		return ATTACH;
 block		return BLOCK;
 build		return BUILD;
 char		return CHAR;
-cinclude	return CINCLUDE;
 compile-with	return COMPILE_WITH;
 config		return CONFIG;
 deffs		return DEFFS;
@@ -103,7 +108,6 @@ file		return XFILE;
 file-system	return FILE_SYSTEM;
 flags		return FLAGS;
 ident		return IDENT;
-include		return INCLUDE;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
@@ -116,7 +120,6 @@ no		return NO;
 object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
-package		return PACKAGE;
 prefix		return PREFIX;
 pseudo-device	return PSEUDO_DEVICE;
 root		return ROOT;
@@ -125,6 +128,32 @@ type		return TYPE;
 with		return WITH;
 
 \+=		return PLUSEQ;
+
+include[ \t]+{FILENAME}	{
+		if (getincludepath()) {
+			include(curinclpath, 0, 0, 1);
+		} else {
+			yyerror("bad include path-name");
+		}
+	}
+
+cinclude[ \t]+{FILENAME}	{
+		if (getincludepath()) {
+			include(curinclpath, 0, 1, 1);
+		} else {
+			yyerror("bad cinclude path-name");
+		}
+	}
+
+package[ \t]+{FILENAME}	{
+		if (!oktopackage) {
+			yyerror("package not allowed here");
+		} else if (getincludepath()) {
+			package(curinclpath);
+		} else {
+			yyerror("bad package path-name");
+		}
+	}
 
 {PATH}	{
 		yylval.str = intern(yytext);
@@ -140,7 +169,8 @@ with		return WITH;
 		yylval.str = intern("");
 		return EMPTY;
 	}
-\"([^"\n]|\\\")+ {
+
+\"{QCHARS}	{
 		tok = input();  /* eat closing quote */
 		if (tok != '"') {
 			error("closing quote missing\n");
@@ -350,6 +380,38 @@ include(const char *fname, int ateof, int conditional, int direct)
 	yyline = 1;
 	free(s);
 	return (0);
+}
+
+/*
+ * Extract the pathname from a include/cinclude/package into curinclpath
+ */
+static int
+getincludepath()
+{
+	const char *p = yytext;
+
+	while (*p && isascii((signed char)*p) && !isspace((signed char)*p))
+		p++;
+	while (*p && isascii((signed char)*p) && isspace((signed char)*p))
+		p++;
+	if (!*p)
+		return 0;
+	if (*p == '"') {
+		ptrdiff_t len;
+		const char *e = strchr(p+1, '"');
+
+		if (!e) return 0;
+		len = e-p-1;
+		if (len > sizeof(curinclpath)-1)
+			len = sizeof(curinclpath)-1;
+		strncpy(curinclpath, p+1, sizeof(curinclpath));
+		curinclpath[len] = '\0';
+	} else {
+		strncpy(curinclpath, p, sizeof(curinclpath));
+		curinclpath[sizeof(curinclpath)-1] = '\0';
+	}
+
+	return 1;
 }
 
 /*
