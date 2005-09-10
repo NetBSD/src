@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.115 2005/08/19 17:08:59 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.116 2005/09/10 19:15:44 tsutsui Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.115 2005/08/19 17:08:59 bouyer Exp $
+ * $Id: aic7xxx.c,v 1.116 2005/09/10 19:15:44 tsutsui Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.115 2005/08/19 17:08:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.116 2005/09/10 19:15:44 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -498,6 +498,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			struct ahc_initiator_tinfo *targ_info;
 			struct ahc_tmode_tstate *tstate;
 			struct ahc_transinfo *tinfo;
+			uint32_t len;
 #ifdef AHC_DEBUG
 			if (ahc_debug & AHC_SHOW_SENSE) {
 				ahc_print_path(ahc, scb);
@@ -527,20 +528,16 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				printf("Sending Sense\n");
 			}
 #endif
-			sg->addr = ahc_get_sense_bufaddr(ahc, scb);
-			sg->len = ahc_get_sense_bufsize(ahc, scb);
-			sg->len |= AHC_DMA_LAST_SEG;
-
-			/* Fixup byte order */
-			sg->addr = ahc_htole32(sg->addr);
-			sg->len = ahc_htole32(sg->len);
+			sg->addr = ahc_htole32(ahc_get_sense_bufaddr(ahc, scb));
+			len = ahc_get_sense_bufsize(ahc, scb);
+			sg->len = ahc_htole32(len | AHC_DMA_LAST_SEG);
 
 			memset(sc, 0, sizeof(*sc));
 			sc->opcode = SCSI_REQUEST_SENSE;
 			if (tinfo->protocol_version <= SCSI_REV_2
 			    && SCB_GET_LUN(scb) < 8)
 				sc->byte2 = SCB_GET_LUN(scb) << 5;
-			sc->length = sg->len;
+			sc->length = len;
 
 			/*
 			 * We can't allow the target to disconnect.
@@ -573,8 +570,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			hscb->cdb_len = sizeof(*sc);
 			hscb->dataptr = sg->addr;
 			hscb->datacnt = sg->len;
-			hscb->sgptr = scb->sg_list_phys | SG_FULL_RESID;
-			hscb->sgptr = ahc_htole32(hscb->sgptr);
+			hscb->sgptr =
+			    ahc_htole32(scb->sg_list_phys | SG_FULL_RESID);
 			scb->sg_count = 1;
 			scb->flags |= SCB_SENSE;
 			ahc_qinfifo_requeue_tail(ahc, scb);
