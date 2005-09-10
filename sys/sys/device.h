@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.79 2005/08/26 14:20:40 drochner Exp $ */
+/* $NetBSD: device.h,v 1.80 2005/09/10 10:39:39 itohy Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -187,7 +187,11 @@ struct cflocdesc {
 struct cfiattrdata {
 	const char *ci_name;
 	int ci_loclen;
-	const struct cflocdesc ci_locdesc[];
+	const struct cflocdesc ci_locdesc[
+#if defined(__GNUC__) && __GNUC__ <= 2
+		0
+#endif
+	];
 };
 
 /*
