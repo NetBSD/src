@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.26 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.27 2005/09/10 17:33:45 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.26 2005/08/29 23:57:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.27 2005/09/10 17:33:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -441,7 +441,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	u_int8_t SecPerClust;
 	int	ronly, error;
 	int	bsize = 0, dtype = 0, tmp;
-	u_long	dirsperblk;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
@@ -530,16 +529,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	} else {
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
-	}
-	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
-	if (pmp->pm_HugeSectors > 0xffffffff / dirsperblk + 1) {
-		/*
-		 * We cannot deal currently with this size of disk
-		 * due to fileid limitations (see msdosfs_getattr and
-		 * msdosfs_readdir)
-		 */
-		error = EINVAL;
-		goto error_exit;
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
