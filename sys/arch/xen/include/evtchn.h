@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.9 2005/04/28 18:26:26 yamt Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.10 2005/09/10 18:24:35 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #ifndef _XEN_EVENTS_H_
 #define _XEN_EVENTS_H_
 
-#define NR_PIRQS	32
+#define NR_PIRQS	256
 
 extern struct evtsource *evtsource[];
 
