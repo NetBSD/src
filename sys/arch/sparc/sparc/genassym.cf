@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45 2005/07/10 17:02:19 christos Exp $
+#	$NetBSD: genassym.cf,v 1.46 2005/09/10 01:27:54 uwe Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -197,6 +197,10 @@ define PCIC_PROC_IPR_REG	offsetof(struct msiiep_pcic_reg, pcic_proc_ipr)
 define PCIC_SOFT_INTR_CLEAR_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_clear)
 define PCIC_SOFT_INTR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_set)
 define PCIC_SCCR_REG		offsetof(struct msiiep_pcic_reg, pcic_sccr)
+
+define PCIC_SYS_ITMR_CLR_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_clr)
+define PCIC_SYS_ITMR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_set)
+define MSIIEP_SYS_ITMR_ALL	MSIIEP_SYS_ITMR_ALL
 
 # errno
 define	EFAULT		EFAULT

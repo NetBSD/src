@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.216 2005/07/10 17:02:19 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.217 2005/09/10 01:27:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3103,6 +3103,8 @@ nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 
+#if !defined(MSIIEP) /* normal sun4m */
+
 	/* Read the Pending Interrupts register */
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
@@ -3194,7 +3196,68 @@ nmi_sun4m:
 4:
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
+
+#else /* MSIIEP*/
+	sethi	%hi(MSIIEP_PCIC_VA), %l6
+
+	/* Read the Processor Interrupt Pending register */
+	ld	[%l6 + PCIC_PROC_IPR_REG], %l5
+
+	/*
+	 * Level 15 interrupts are nonmaskable, so with traps off,
+	 * disable all interrupts to prevent recursion.
+	 */
+	set	MSIIEP_SYS_ITMR_ALL, %l4
+	st	%l4, [%l6 + PCIC_SYS_ITMR_SET_REG]
+
+	set	(1 << 15), %l4
+	btst	%l4, %l5	! has pending level 15 hw intr?
+	bz	1f
+	 nop
+
+	/* hard level 15 interrupt */
+	sethi	%hi(_C_LABEL(nmi_hard_msiiep)), %o3
+	b	2f
+	 or	%o3, %lo(_C_LABEL(nmi_hard_msiiep)), %o3
+
+1:	/* soft level 15 interrupt */
+	sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+	set	_C_LABEL(nmi_soft_msiiep), %o3
+2:
+
+	/* XXX:	call sequence is identical to sun4m case above. merge? */
+	or	%l0, PSR_PIL, %o4	! splhigh()
+	wr	%o4, 0, %psr		!
+	wr	%o4, PSR_ET, %psr	! turn traps on again
+
+	std	%g2, [%sp + CCFSZ + 80]	! save g2, g3
+	rd	%y, %l4			! save y
+	std	%g4, [%sp + CCFSZ + 88]	! save g4, g5
+
+	/* Finish stackframe, call C trap handler */
+	mov	%g1, %l5		! save g1, g6, g7
+	mov	%g6, %l6
+
+	call	%o3			! nmi_hard(0) or nmi_soft(&tf)
+	 mov	%g7, %l7
+
+	mov	%l5, %g1		! restore g1 through g7
+	ldd	[%sp + CCFSZ + 80], %g2
+	ldd	[%sp + CCFSZ + 88], %g4
+	wr	%l0, 0, %psr		! re-disable traps
+	mov	%l6, %g6
+	mov	%l7, %g7
+
+	! enable interrupts again (safe, we disabled traps again above)
+	sethi	%hi(MSIIEP_PCIC_VA), %o0
+	set	MSIIEP_SYS_ITMR_ALL, %o1
+	st	%o1, [%o0 + PCIC_SYS_ITMR_CLR_REG]
+
+	b	return_from_trap
+	 wr	%l4, 0, %y		! restore y
+#endif /* MSIIEP */
 #endif /* SUN4M */
+
 
 #ifdef GPROF
 	.globl	window_of, winof_user
