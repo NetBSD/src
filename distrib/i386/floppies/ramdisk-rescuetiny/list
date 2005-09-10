@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2004/04/18 19:50:34 dsl Exp $
+#	$NetBSD: list,v 1.16 2005/09/10 14:50:08 dsl Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -20,6 +20,7 @@ PROG	bin/stty
 PROG	bin/sync
 
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fdisk
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
