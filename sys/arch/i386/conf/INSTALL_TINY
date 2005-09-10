@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.94 2005/08/19 05:19:51 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.95 2005/09/10 14:53:34 dsl Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -111,7 +111,7 @@ file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
+#file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc

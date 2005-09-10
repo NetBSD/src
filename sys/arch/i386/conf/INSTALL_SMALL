@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.117 2005/09/03 20:38:07 dsl Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.118 2005/09/10 14:53:34 dsl Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -112,7 +112,7 @@ file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
+#file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
