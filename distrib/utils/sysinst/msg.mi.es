@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.3 2005/09/09 23:20:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.4 2005/09/10 21:51:12 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -488,7 +488,7 @@ seleccionar desde los sets de distribución opcionales.
 }
 
 message ftpsource
-{Lo siguiente es el sitio ftp, directorio, usuario y password actual
+{Lo siguiente es el sitio %s, directorio, usuario y password actual
 listo para usar. Si el "usuario" es "ftp", entonces el password no será
 necesario.
 
