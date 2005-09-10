@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_sizes,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+# $NetBSD: t_sizes,v 1.2 2005/09/10 22:28:57 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@
 #
 
 #
-# Verifies that the file-system controls memory usage correctly.
+# Verifies that the file system controls memory usage correctly.
 #
 
 test_run() {
