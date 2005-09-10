@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.3 2005/05/24 12:07:12 yamt Exp $	*/
+/*	$NetBSD: xenio.h,v 1.4 2005/09/10 15:41:54 bouyer Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -83,7 +83,7 @@ typedef struct privcmd_blkmsg
 #define IOCTL_PRIVCMD_MMAPBATCH        \
     _IOW('P', 3, privcmd_mmapbatch_t)
 #define IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN \
-    _IOW('P', 4, unsigned long)
+    _IOR('P', 4, unsigned long)
 
 /*
  * @cmd: IOCTL_PRIVCMD_INITDOMAIN_EVTCHN
