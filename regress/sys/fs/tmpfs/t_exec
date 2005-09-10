@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_exec,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+# $NetBSD: t_exec,v 1.2 2005/09/10 22:28:57 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@
 #
 
 #
-# Verifies that binary files can be executed from within the file-system
+# Verifies that binary files can be executed from within the file system
 # (i.e., whether getpages works).
 #
 

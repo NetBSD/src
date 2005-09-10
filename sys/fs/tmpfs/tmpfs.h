@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
  * XXX: Should this be tunable through sysctl, for instance? */
 #define TMPFS_PAGES_RESERVED (4 * 1024 * 1024 / PAGE_SIZE)
 
-/* Returns the available memory for the given file-system, which can be
+/* Returns the available memory for the given file system, which can be
  * its limit (set during mount time) or the amount of free memory, whichever
  * is lower. */
 static inline size_t
