@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26 2005/06/09 13:29:57 tron Exp $
+#	$NetBSD: list,v 1.27 2005/09/10 13:09:01 dsl Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -61,7 +61,6 @@ PROG	usr/sbin/installboot
 # init invokes the shell as -sh
 ARGVLN	sh	-sh
 
-SPECIAL	dmesg		srcdir	distrib/utils/x_dmesg
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
