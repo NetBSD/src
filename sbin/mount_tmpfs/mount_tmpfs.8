@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_tmpfs.8,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+.\"	$NetBSD: mount_tmpfs.8,v 1.2 2005/09/10 22:28:57 jmmv Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ Specifies the group name or GID of the root inode of the file system.
 .It Fl m Ar mode
 Specifies the mode (in octal notation) of the root inode of the file system.
 .It Fl n Ar nodes
-Specifies the maximum number of nodes available to the file-system.
+Specifies the maximum number of nodes available to the file system.
 .It Fl o Ar options
 Options are specified with a
 .Fl o
@@ -79,7 +79,7 @@ Specifies the total file system size in bytes.
 If zero is given (the default), the available amount of memory (including
 main memory and swap space) will be used.
 Note that four megabytes are always reserved for the system and cannot
-be assigned to the file-system.
+be assigned to the file system.
 .It Fl u Ar user
 Specifies the user name or UID of the root inode of the file system.
 .El
