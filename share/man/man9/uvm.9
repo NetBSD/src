@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.66 2005/08/13 09:49:58 jmmv Exp $
+.\"	$NetBSD: uvm.9,v 1.67 2005/09/10 12:51:13 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -516,11 +516,11 @@ on the memory described in
 .Sh ALLOCATION OF KERNEL MEMORY
 .Ft vaddr_t
 .br
-.Fn uvm_km_alloc "struct vm_map *map" "vsize_t size" "vsize_t align" "uvm_flag_t flags";
+.Fn uvm_km_alloc "struct vm_map *map" "vsize_t size" "vsize_t align" "uvm_flag_t flags" ;
 .Pp
 .Ft void
 .br
-.Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size" "uvm_flag_t flags";
+.Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size" "uvm_flag_t flags" ;
 .Pp
 .Ft struct vm_map *
 .br
