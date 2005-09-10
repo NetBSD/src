@@ -1,4 +1,4 @@
-.\"	$NetBSD: tmpfs.9,v 1.1 2005/09/10 19:20:48 jmmv Exp $
+.\"	$NetBSD: tmpfs.9,v 1.2 2005/09/10 21:42:32 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,16 +39,17 @@
 .Os
 .Sh NAME
 .Nm tmpfs
-.Nd efficient memory file-system
+.Nd efficient memory file system
 .\" =======================================================================
 .Sh DESCRIPTION
 .Nm
-is a file-system that uses
-.Nx Ns 's
-virtual memory sub-system (the well-known UVM) to store file data and
-metadata in an efficient way.
-This means that it does not follow the structure of an on-disk file-system
-because it simply does not need to.
+is a file system that uses
+.Nx Ap s
+virtual memory sub-system (the well-known UVM, see
+.Xr uvm 9 )
+to store file data and metadata in an efficient way.
+This means that it does not follow the structure of an on-disk
+file system because it simply does not need to.
 Instead, it uses memory-specific data structures and algorithms to
 automatically allocate and release resources.
 .Pp
@@ -58,7 +59,7 @@ It provides an in-depth description of its data structures and supporting
 functions, as well as the rationale behind several design decisions that
 arose during its development.
 It is recommended that you have
-.Nm Ns 's
+.Nm Ap s
 source code available while you read this document.
 .\" -----------------------------------------------------------------------
 .Ss Mount point structure
@@ -69,31 +70,32 @@ to describe a mount point.
 It has the following attributes:
 .Bl -tag
 .It Ft size_t Va tm_pages_max
-Maximum number of memory pages available for use by the file-system, set
+Maximum number of memory pages available for use by the file system, set
 during mount time.
-This variable must never be used directly as it may be bigger that the
+This variable must never be used directly as it may be bigger than the
 current amount of free memory; in the extreme case, it will hold the
-.Va SIZE_MAX
+.Dv SIZE_MAX
 value.
 Instead, use the
 .Fn TMPFS_PAGES_MAX
 macro, which is described below.
 .It Ft size_t Va tm_pages_used
-Number of pages in use by the file-system.
+Number of pages in use by the file system.
 Cannot be bigger than the value returned by
 .Fn TMPFS_PAGES_MAX
 in any case.
 .It Ft "struct tmpfs_node *" Va tm_root
-Pointer to the node representing the root directory of the file-system.
+Pointer to the node representing the root directory of the file system.
 .It Ft "struct netexport" Va tm_export
 Standard structure that describes NFS export information.
 .It Ft ino_t Va tm_nodes_max
-Maximum number of possible nodes for this file-system; set during mount time.
-We need a hard limit on the maximum number of nodes to avoid allocating
-too much of them because their objects cannot be released until the
-file-system is unmounted.
-Otherwise, we could run out of memory easily by creating lots of empty files
-and then simply removing them.
+Maximum number of possible nodes for this file system; set during
+mount time.
+We need a hard limit on the maximum number of nodes to avoid
+allocating too much of them because their objects cannot be released
+until the file system is unmounted.
+Otherwise, we could run out of memory easily by creating lots of
+empty files and then simply removing them.
 .It Ft ino_t Va tm_nodes_last
 Number of nodes currently allocated.
 This number only grows.
@@ -103,10 +105,10 @@ no more new nodes can be allocated.
 Of course, the old, unused ones can be reused.
 .It Ft "struct tmpfs_node_list *" Va tm_nodes_used
 Pointer to a list of nodes that contains all the used nodes in this
-specific file-system.
+specific file system.
 .It Ft "struct tmpfs_node_list *" Va tm_nodes_avail
-Pointer to a list of nodes that contains all the available nodes in this
-specific file-system.
+Pointer to a list of nodes that contains all the available nodes
+in this specific file system.
 .It Ft "struct tmpfs_pool" Va tm_dirent_pool
 Pool of directory entries.
 See
@@ -130,99 +132,105 @@ structure in its
 field.
 In order to access this attribute, the
 .Fn VFS_TO_TMPFS
-macro is provided, which, aside returning the value of the field, does several
-consistency checks (only if kernel assertions are enabled).
+macro is provided, which, aside returning the value of the field,
+does several consistency checks (only if kernel assertions are
+enabled).
 .Pp
-Whenever the file-system needs to obtain the maximum size allowed for a mount
-point, the macro
+Whenever the file system needs to obtain the maximum size allowed
+for a mount point, the macro
 .Fn TMPFS_PAGES_MAX
 is used instead of directly retrieving the value from
 .Va tm_pages_max .
 The reason is that the size of a
 .Nm
-file-system is dynamic: it lets the user store files as long as there is
-enough free memory (including physical memory and swap space).
-Therefore, the amount of memory to be used is either the limit imposed by the
-user during mount time or the amount of available memory, whichever is lower.
-To avoid consuming all the memory for a given mount point, the system will
-always reserve a minimum of
+file system is dynamic: it lets the user store files as long as
+there is enough free memory (including physical memory and swap
+space).
+Therefore, the amount of memory to be used is either the limit
+imposed by the user during mount time or the amount of available
+memory, whichever is lower.
+To avoid consuming all the memory for a given mount point, the
+system will always reserve a minimum of
 .Va TMPFS_PAGES_RESERVED
 pages, which is also taken into account by this macro.
 .Pp
 For convenience, the
 .Fn TMPFS_PAGES_AVAIL
-macro returns the available space for the given file-system.
+macro returns the available space for the given file system.
 That is, the value returned by
 .Fn TMPFS_PAGES_MAX
 minus
 .Va tm_pages_used .
 .\" -----------------------------------------------------------------------
 .Ss Internal nodes
-As any other file-system,
+As any other file system,
 .Nm
 needs a structure,
 .Ft struct tmpfs_node ,
-to represent files of any type, no matter if they are in use by the system
-(there is an vnode representing them) or not.
-They are released whenever the corresponding file is created and removed
-when the file is explicitly removed.
+to represent files of any type, no matter if they are in use by
+the system (there is an vnode representing them) or not.
+They are released whenever the corresponding file is created and
+removed when the file is explicitly removed.
 Also, given the volatile nature of
 .Nm ,
 the nodes are also released as part of the unmount process.
-to describe existing files (of any type) within the file-system.
+.\" XXX: missing half sentence?
+to describe existing files (of any type) within the file system.
 .Pp
-This structure is splitted in two parts: one holds attributes common to all
-file types and the other holds data that is only applicable to a particular
-type.
-The code must be careful to only access those attributes that are actually
-allowed by the node's type.
+This structure is split in two parts: one holds attributes common
+to all file types and the other holds data that is only applicable
+to a particular type.
+The code must be careful to only access those attributes that are
+actually allowed by the node's type.
 .Pp
 The common attributes are described below:
 .Bl -tag
 .It Ft LIST_ENTRY(tmpfs_node) Va tn_entries
 Doubly-linked list entry which links all existing nodes for a single
-file-system.
+file system.
 This is provided to ease the removal of all nodes during the unmount
 operation.
 .It Ft "enum vtype" Va tn_type
 The node's type.
 Any of
-.Sq VBLK ,
-.Sq VCHR ,
-.Sq VDIR ,
-.Sq VFIFO ,
-.Sq VLNK ,
-.Sq VREG
+.Dv VBLK ,
+.Dv VCHR ,
+.Dv VDIR ,
+.Dv VFIFO ,
+.Dv VLNK ,
+.Dv VREG ,
 and
-.Sq VSOCK
+.Dv VSOCK
 is allowed.
-The usage of vnode types instead of a custom enumeration is to make things
-simpler and faster, as we do not need to convert between two types.
+The usage of vnode types instead of a custom enumeration is to make
+things simpler and faster, as we do not need to convert between
+two types.
 .It Ft ino_t Va tn_id
 Node identifier.
 .It Ft int Va tn_status
 The node's internal status.
-This is used by several file-system operations to do modifications to the
-node in a delayed fashion.
+This is used by several file system operations to do modifications
+to the node in a delayed fashion.
 .Pp
 Its value is a bitwise OR of the following values:
 .Bl -tag -width TMPFS_NODE_ACCESSED
-.It TMPFS_NODE_ACCESSED
+.It Dv TMPFS_NODE_ACCESSED
 The file contents have been accessed.
 .Fn tmpfs_update
 will update its atime when run.
-.It TMPFS_NODE_CHANGED
+.It Dv TMPFS_NODE_CHANGED
 The node has been changed.
 .Fn tmpfs_update
 will update its ctime when run.
-.It TMPFS_NODE_MODIFIED
+.It Dv TMPFS_NODE_MODIFIED
 The file contents have been modified.
 .Fn tmpfs_update
 will update its mtime when run.
 .El
 .It Ft off_t Va tn_size
 The node size.
-It does not necessarily match the real amount of memory consumed by it.
+It does not necessarily match the real amount of memory consumed
+by it.
 .It Ft uid_t Va tn_uid
 User identifier of the file's owner.
 .It Ft gid_t Va tn_gid
@@ -247,7 +255,9 @@ File generation number.
 Increased each time a node is reused.
 .It Ft struct vnode * Va tn_vnode
 Pointer to the vnode that represents this file.
-May be NULL when the node is unused (that is, no vnode has been allocated for
+May be
+.Dv NULL
+when the node is unused (that is, no vnode has been allocated for
 it or it has been reclaimed).
 .It Ft struct tmpfs_node * Va tn_lookup_dirent
 Pointer to the node returned by
@@ -258,7 +268,9 @@ In case we were looking up
 .Pa \&.
 or
 .Pa .. ,
-it holds a null pointer.
+it holds a
+.Dv NULL
+pointer.
 Used to simplify the
 .Fn tmpfs_remove
 and
@@ -273,20 +285,21 @@ subsections.
 Nodes are organized in two different lists.
 The
 .Em used list
-contains all nodes that are currently used by the file-system; i.e., they
-refer to existing files.
+contains all nodes that are currently used by the file system;
+i.e., they refer to existing files.
 The
 .Em available list
-contains all nodes that are currently available for use by new files.
-Nodes must be kept in this list (instead of deleting them) because we need
-to keep track of their generation number
+contains all nodes that are currently available for use by new
+files.
+Nodes must be kept in this list (instead of deleting them) because
+we need to keep track of their generation number
 .Va ( tn_gen
 field).
-Note that nodes are lazily allocated: if the available list is empty and
-we have enough space to create more nodes, they will be created and inserted
-in the used list.
-Once these are released, they will go into the available list, remaining
-alive until the file-system is unmounted.
+Note that nodes are lazily allocated: if the available list is
+empty and we have enough space to create more nodes, they will be
+created and inserted in the used list.
+Once these are released, they will go into the available list,
+remaining alive until the file system is unmounted.
 .Pp
 In order to manipulate nodes, regardless of their type, the following
 functions and macros are provided:
@@ -306,39 +319,41 @@ using the credentials of the process
 .Va p .
 .Pp
 If the node type is set to
-.Sq VDIR ,
+.Dv VDIR ,
 then the
 .Va parent
 parameter must point to the parent directory of the node being created.
-It may only be NULL while allocating the root node.
+It may only be
+.Dv NULL
+while allocating the root node.
 .Pp
 If the node type is set to
-.Sq VBLK
+.Dv VBLK
 or
-.Sq VCHR ,
+.Dv VCHR ,
 then the
 .Va rdev
 parameter specified the device the node represents.
 .Pp
 If the node type is set to
-.Sq VLNK ,
+.Dv VLNK ,
 then the parameter
 .Va target
-specified the file name of the target file for the symbolic link that is
-being created.
+specified the file name of the target file for the symbolic link
+that is being created.
 .Pp
-Note that new nodes are retrieved from the available list if it has items or,
-if it is empty, from the node pool as long as there is enough space to create
-them.
+Note that new nodes are retrieved from the available list if it
+has items or, if it is empty, from the node pool as long as there
+is enough space to create them.
 .Pp
 Returns zero on success or an appropriate error code on failure.
 .It Ft void Fn tmpfs_free_node "struct tmpfs_mount *tmp" "struct tmpfs_node *node"
 Destroys the node pointed to by
 .Va node
-from the file-system
+from the file system
 .Va tmp.
-If the node does not belong to the given mount point, the results are
-unpredicted.
+If the node does not belong to the given mount point, the results
+are unpredictable.
 .Pp
 If the node references a directory, it must be empty (the
 .Pa \&.
@@ -347,26 +362,27 @@ and
 directories do not count);
 no entries are allowed because their removal could need a recursive
 algorithm, something forbidden in kernel space.
-Furthermore, there is not need to provide such functionality (recursive
-removal) because the only primitives offered to the user are the removal
-of empty directories and the deletion of files.
+Furthermore, there is not need to provide such functionality
+(recursive removal) because the only primitives offered to the user
+are the removal of empty directories and the deletion of files.
 .Pp
-Note that nodes are not really deleted; in fact, when a node has been
-allocated, it cannot be deleted during the whole life of the file-system.
-Instead, they are moved to the available list and remain there until
-reused.
+Note that nodes are not really deleted; in fact, when a node has
+been allocated, it cannot be deleted during the whole life of the
+file system.
+Instead, they are moved to the available list and remain there
+until reused.
 .It Ft vaddr_t Fn TMPFS_NODE_ID "struct tmpfs_node *"
 Returns a unique file identifier for the given node.
-The implementation behind this is a big hack, because it is not portable
-(you can notice this by the return value of this macro).
+The implementation behind this is a big hack, because it is not
+portable (you can notice this by the return value of this macro).
 More details will be added here when this issue is fixed.
 .El
 .\" -----------------------------------------------------------------------
 .Ss Device nodes
 The following attributes are available when the node type is either
-.Sq VBLK
+.Dv VBLK
 or
-.Sq VCHR :
+.Dv VCHR :
 .Bl -tag
 .It Ft dev_t Va tn_rdev
 The device identifier this node represents.
@@ -375,10 +391,10 @@ The device identifier this node represents.
 .Ss Directory nodes
 A directory in
 .Nm
-holds a sorted list of directory entries (described below), which in turn
-point to other files (which can be directories themselves).
-This creates a directed tree of nodes, which is the main spirit of a
-file-system.
+holds a sorted list of directory entries (described below), which
+in turn point to other files (which can be directories themselves).
+This creates a directed tree of nodes, which is the main spirit of
+a file system.
 In
 .Nm ,
 this list is managed by a tail queue, whose head is defined by the
@@ -389,20 +405,20 @@ It is imporant to notice that directories do not have entries for
 .Pa \&.
 and
 .Pa ..
-as other file-systems do.
-These can be generated when requested based on information available by
-other means, such as the pointer to the node itself in the former case
-or the pointer to the parent directory in the latter case.
+as other file systems do.
+These can be generated when requested based on information available
+by other means, such as the pointer to the node itself in the former
+case or the pointer to the parent directory in the latter case.
 This is done to simplify
-.Nm Ns 's
+.Nm Ap s
 code and, more importantly, to remove redundancy.
-A direct benefit of less redundancy is that we reduce memory consumption
-at the expense of a bit more run time.
+A direct benefit of less redundancy is that we reduce memory
+consumption at the expense of a bit more run time.
 .Pp
-A directory entry maps a name to a node, thus clearly separating these
-two concepts.
-This is important because it is the basic idea behind hard links, which
-are trivial to implement in this scheme.
+A directory entry maps a name to a node, thus clearly separating
+these two concepts.
+This is important because it is the basic idea behind hard links,
+which are trivial to implement in this scheme.
 A directory entry is represented by the
 .Ft struct tmpfs_dirent
 type, which has the following fields:
@@ -440,16 +456,18 @@ is increased by one to reflect the new object referencing it.
 Returns zero on success or an appropriate error code on failure.
 .It Ft void Fn tmpfs_free_dirent "struct tmpfs_mount *tmp" "struct tmpfs_dirent *de" "boolean_t node_exists"
 Frees a directory entry.
-It is the responsibility of the caller to destroy the node referenced by
-if needed.
+It is the responsibility of the caller to destroy the node referenced
+.\" XXX: missing word after "by"
+by if needed.
 .Pp
 The link count of
 .Va node
-is decreased by one to reflect the removal of an object that referenced it.
+is decreased by one to reflect the removal of an object that
+referenced it.
 This only happens if
 .Va node_exists
-is true; otherwise the function will not access the node referred to by the
-directory entry, as it may already have been released.
+is true; otherwise the function will not access the node referred
+to by the directory entry, as it may already have been released.
 .It Ft boolean_t Fn TMPFS_DIRENT_MATCHES "struct tmpfs_dirent *de" "const char *name" "uint16_t namelen"
 Returns true if the name stored in the directory entry
 .Va de
@@ -459,29 +477,31 @@ with a length of
 .Va namelen .
 .El
 .Pp
-As directories are treated like regular files from the point of view of
-the system, the
+As directories are treated like regular files from the point of
+view of the system, the
 .Ft struct tmpfs_node
 type is used to describe them.
-Therefore, the following attributes are available when the node type is
-.Sq VDIR :
+Therefore, the following attributes are available when the node
+type is
+.Dv VDIR :
 .Bl -tag
 .It Ft "struct tmpfs_node *" Va tn_parent
 Pointer to the parent directory.
-The root directory has a pointer to itself in this field; this property
-identifies the root node.
+The root directory has a pointer to itself in this field; this
+property identifies the root node.
 .It Ft "struct tmpfs_dir" Va tn_dir
-Head of a tail-queue that links the contents of the directory together.
+Head of a tail-queue that links the contents of the directory
+together.
 .It Ft long Va tn_readdir_lastn
-Number of the first entry the readdir operation should return if it were
-called again to continue reading data from the same directory.
-This is used to speed up reads of long directories, assuming that no more
-than one read is in progress at a given time.
-Otherwise, this value is discarded and a linear scan is done from the
-beginning up to the point where readdir starts returning values.
+Number of the first entry the readdir operation should return if
+it were called again to continue reading data from the same directory.
+This is used to speed up reads of long directories, assuming that
+no more than one read is in progress at a given time.
+Otherwise, this value is discarded and a linear scan is done from
+the beginning up to the point where readdir starts returning values.
 .It Ft "struct tmpfs_dirent *" Va tn_readdir_lastp
-Pointer to the first entry the readdir operation should return if it were
-called again to continue reading data from the same directory.
+Pointer to the first entry the readdir operation should return if
+it were called again to continue reading data from the same directory.
 Used in conjunction with
 .Va tn_readdir_lastn .
 .El
@@ -493,16 +513,16 @@ Attaches the directory entry
 .Va de
 to the directory represented by
 .Va vp .
-Note that this does not change the link count of the node pointed by the
-directory entry, as this is done by
+Note that this does not change the link count of the node pointed
+to by the directory entry, as this is done by
 .Fn tmpfs_alloc_dirent .
 .It Ft void Fn tmpfs_dir_detach "struct vnode *vp" "struct tmpfs_dirent *de"
 Detaches the directory entry
 .Va de
 from the directory represented by
 .Va vp .
-Note that this does not change the link count of the node pointed by the
-directory entry, as this is done by
+Note that this does not change the link count of the node pointed
+to by the directory entry, as this is done by
 .Fn tmpfs_free_dirent .
 .It Ft "struct tmpfs_dirent *" Fn tmpfs_dir_lookup "struct tmpfs_node *node" "struct componentname *cnp"
 Looks for a directory entry in the directory represented by
@@ -516,12 +536,13 @@ and
 components are not allowed as they do not physically exist within
 directories.
 .Pp
-Returns a pointer to the entry when found, otherwise NULL.
+Returns a pointer to the entry when found, otherwise
+.Dv NULL .
 .El
 .\" -----------------------------------------------------------------------
 .Ss Symbolic links
 The following attributes are available when the node type is
-.Sq VLNK :
+.Dv VLNK :
 .Bl -tag
 .It Ft "char *" Va tn_link
 The link's target, allocated from a string pool (see
@@ -532,21 +553,24 @@ for more information).
 .Ss Regular files
 The contents of regular file stored in a
 .Nm
-file-system are represented by a single anonymous memory object (aobj,
-for short).
-The aobj provides direct access to any position within the file, because
-its contents are always mapped in a contiguous region of virtual memory.
+file system are represented by a single anonymous memory object
+(aobj, for short).
+The aobj provides direct access to any position within the file,
+because its contents are always mapped in a contiguous region of
+virtual memory.
 It is a task of the memory management subsystem (see
 .Xr uvm 9 )
-to issue the required page ins or page outs whenever a position within the
-file is accessed.
+to issue the required pageins or pageouts whenever a position
+within the file is accessed.
 .Pp
 The following attributes are available when the node type is
-.Sq VREG :
+.Dv VREG :
 .Bl -tag
 .It Ft "struct uvm_object *" Va tn_aobj
 Pointer to the aobj associated to the file.
-It is NULL when the file holds no data.
+It is
+.Dv NULL
+when the file holds no data.
 .It Ft size_t Va tn_aobj_pages
 Number of memory pages that the file's aobj takes.
 It is zero when the file holds no data.
@@ -561,24 +585,25 @@ The following functions are provided to manage regular files:
 Resizes the aobj associated to the regular file pointed to by
 .Va vp
 to the size
-.Va newsize.
+.Va newsize .
 .Va vp
 must point to a vnode that represents a regular file.
 .Va newsize
 must be different than the current file size.
 .Pp
-Note that in some situations, this function will not change the amount
-of memory pages held by the aobj; in these cases, only the node's size
-will be changed, but not its underlying aobj.
+Note that in some situations, this function will not change the
+amount of memory pages held by the aobj; in these cases, only the
+node's size will be changed, but not its underlying aobj.
 .Pp
 Returns zero on success or an appropriate error code on failure.
 .El
 .\" -----------------------------------------------------------------------
 .Ss Vnode management
 As there is a single vnode for each active file within the system,
-care has to be taken to avoid allocating more than one vnode per file.
-In order to do this, a bidirectional association is kept between vnodes
-and nodes.
+care has to be taken to avoid allocating more than one vnode per
+file.
+In order to do this, a bidirectional association is kept between
+vnodes and nodes.
 .Pp
 Whenever a vnode is allocated, its
 .Va v_data
@@ -586,21 +611,22 @@ field is updated to point to the node it references.
 At the same time, the node's
 .Va tn_vnode
 field is modified to point to the new vnode representing it.
-Further attempts to allocate a vnode for this same node will result in
-returning a new reference to the value stored in
+Further attempts to allocate a vnode for this same node will result
+in returning a new reference to the value stored in
 .Va tn_vnode .
 .Pp
-When a vnode is reclaimed, the association is destroyed by setting both
-pointers to NULL.
-Things get a bit more interesting when the item destroyed is the underlying
-node, not the vnode.
-In this case, the association can only be undone when the vnode is reclaimed;
-otherwise, its
+When a vnode is reclaimed, the association is destroyed by setting
+both pointers to
+.Dv NULL .
+Things get a bit more interesting when the item destroyed is the
+underlying node, not the vnode.
+In this case, the association can only be undone when the vnode is
+reclaimed; otherwise, its
 .Va v_data
-field could end up pointing to a freed memory region, causing further memory
-corruption or unallowed page faults.
-To achieve this, the node is only destroyed if and only if its link count
-is zero; this is done as soon as possible after the deletion.
+field could end up pointing to a freed memory region, causing
+further memory corruption or unallowed page faults.
+To achieve this, the node is destroyed if and only if its link
+count is zero; this is done as soon as possible after the deletion.
 .Pp
 To convert between vnodes and nodes, the following macros are provided:
 .Bl -tag
@@ -611,9 +637,9 @@ into a
 .Va struct tmpfs_node
 object.
 .Pp
-When kernel diagnostic functionality is enabled, this macro ensures that
-the vnode points to a correct node, and that the node passes several sanity
-checks that can be applied to all file types.
+When kernel diagnostic functionality is enabled, this macro ensures
+that the vnode points to a correct node, and that the node passes
+several sanity checks that can be applied to all file types.
 .It Ft "struct tmpfs_node *" Fn VP_TO_TMPFS_DIR "struct vnode *vp"
 Converts the vnode pointed to by
 .Va vp
@@ -621,8 +647,8 @@ into a
 .Va struct tmpfs_node
 object, assuming that the vnode represents a directory.
 .Pp
-When kernel diagnostic functionality is enabled, this macro ensures that
-the vnode points to a correct directory.
+When kernel diagnostic functionality is enabled, this macro ensures
+that the vnode points to a correct directory.
 Otherwise, it behaves exactly as
 .Fn VP_TO_TMPFS_NODE .
 .El
@@ -632,8 +658,8 @@ The following functions are provided to manage vnodes:
 .It Ft int Fn tmpfs_alloc_vp "struct mount *mp" "struct tmpfs_node *node" "struct vnode **vpp"
 Allocates a new vnode for the node
 .Va node
-or returns a new reference to an existing one if the node had already a
-vnode referencing it.
+or returns a new reference to an existing one if the node already
+had a vnode referencing it.
 The resulting locked vnode is returned in
 .Va *vpp .
 .Pp
@@ -658,31 +684,33 @@ structure:
 .Va tm_dirent_pool
 and
 .Va tm_node_pool .
-The reason behind this decision, as opposed to sharing the pools across all
-mounted instances of the file-system, is that all pages of a single pool hold
-objects specific to a single file-system.
+The reason behind this decision, as opposed to sharing the pools
+across all mounted instances of the file system, is that all pages
+of a single pool hold objects specific to a single file system.
 This provides the following benefits:
 .Bl -bullet
 .It
-It is very easy to control how many memory is associated with a given
-file-system.
+It is very easy to control how many memory is associated with a
+given file system.
 .Nm
-provides a custom pool allocator that controls memory usage according to
-previously specified usage limits, by simply increasing or decreasing a
-counter when pages are allocated or released, respectively.
+provides a custom pool allocator that controls memory usage according
+to previously specified usage limits, by simply increasing or
+decreasing a counter when pages are allocated or released,
+respectively.
 .Pp
-If the pools were shared, we could easily end up with unaccounted memory,
-thus taking incorrect decisions on the amount of memory use.
-As an example to prove this point, consider two mounted instances of
+If the pools were shared, we could easily end up with unaccounted
+memory, thus taking incorrect decisions on the amount of memory
+use.
+As an example to prove this point, consider two mounted instances
+of
 .Nm ,
 one mounted on
 .Pa A
-and
-another one on
+and another one on
 .Pa B .
-Assume that each memory page can hold up to four directory entries and
-that, for each entry you create on
-.Pa A ,
+Assume that each memory page can hold up to four directory entries
+and that for each entry you create on
+.Pa A
 you create three on
 .Pa B
 afterwards.
@@ -690,39 +718,41 @@ After doing this, each memory page will be holding an entry from
 .Pa A
 and three for
 .Pa B .
-If you sum up all the space taken by the total amount of allocated entries,
-rounded up to a page boundary, that number will match the number of allocated
-pages, so everything is fine.
+If you sum up all the space taken by the total amount of allocated
+entries, rounded up to a page boundary, that number will match the
+number of allocated pages, so everything is fine.
 .Pp
 Now suppose we unmount
 .Pa B .
-Given that the file-system has to disappear, we have to delete all the
-directory entries attached to it.
+Given that the file system has to disappear, we have to delete all
+the directory entries attached to it.
 But the problem is that freeing those entries will
 .Em not
 release any memory page.
-Instead, each page will be filled up to a 25%, and the rest, a 75%, will be
-lost.
-Not lost in a strict term, because the memory can be reused by new entries,
-but lost in the sense that it is not accounted by any file-system.
-Despite
+Instead, each page will be filled up to a 25%, and the rest, a 75%,
+will be lost.
+Not lost in a strict term, because the memory can be reused by new
+entries, but lost in the sense that it is not accounted for by any
+file system.
+Even though
 .Pa A
 will think it is using an amount
 .Sq X
-of memory, it will be really using fourth times that number, thus causing
-mistakes when it comes to decide if there is more free space for that
-specific instance of
+of memory, it will be really using four times that number, thus
+causing mistakes when it comes to decide if there is more free
+space for that specific instance of
 .Nm .
 .It
-The number of page faults and cache misses is reduced given that all entries
-of a given file-system are stored in less pages.
-Note that this is true because it is common to allocate and/or access many
-entries at once on a specific file-system.
+The number of page faults and cache misses is reduced given that
+all entries of a given file system are stored in less pages.
+Note that this is true because it is common to allocate and/or
+access many entries at once on a specific file system.
 .Pp
-Following the example given above, listing a directory on file-system
+Following the example given above, listing a directory on file
+system
 .Pa A
-could result, in the worst case scenario, in fourth times more page faults
-if we shared the pools.
+could result, in the worst case scenario, in four times more page
+faults if we shared the pools.
 .El
 .Pp
 .Nm
@@ -730,8 +760,8 @@ extends the standard
 .Ft struct pool
 structure into
 .Ft struct tmpfs_pool
-because it needs to associate some auxiliary information of its own to
-the pool:
+because it needs to associate some auxiliary information of its
+own to the pool:
 .Bd -literal -offset indent
 struct tmpfs_pool {
 	struct pool		tp_pool;
@@ -744,7 +774,8 @@ The
 field holds a reference to the mount point that holds the pool.
 This is used by the
 .Va tmpfs_pool_allocator
-to access and modify the memory accounting variables for the mount point.
+to access and modify the memory accounting variables for the mount
+point.
 .Pp
 In all other aspects, a
 .Ft struct tmpfs_pool
@@ -782,24 +813,26 @@ to the pool
 .\" -----------------------------------------------------------------------
 .Ss String pools
 .Nm
-uses variable-length strings to store file names and to store link targets.
-Reserving a fixed-size buffer for each of them is inefficient because it
-will consume a lot more memory than is really necessary.
-However, managing variable-sized buffers is difficult as regards memory
-allocation and very inefficient in computation time.
+uses variable-length strings to store file names and to store link
+targets.
+Reserving a fixed-size buffer for each of them is inefficient
+because it will consume a lot more memory than is really necessary.
+However, managing variable-sized buffers is difficult as regards
+memory allocation and very inefficient in computation time.
 This is why
 .Nm
 provides an hybrid scheme to store strings: string pools.
 .Pp
-A string pool is a collection of memory pools, each one with elements of a
-fixed size.
+A string pool is a collection of memory pools, each one with elements
+of a fixed size.
 In
 .Nm Ns 's
-case, a string pool contains independent memory pools for 16-byte, 32-byte,
-64-byte, 128-byte, 256-byte, 512-byte and 1024-byte long objects.
-Whenever an object is requested from the pool, the new object's size is
-rounded to the closest upper match and an item from the corresponding pool
-is returned.
+case, a string pool contains independent memory pools for 16-byte,
+32-byte, 64-byte, 128-byte, 256-byte, 512-byte and 1024-byte long
+objects.
+Whenever an object is requested from the pool, the new object's
+size is rounded to the closest upper match and an item from the
+corresponding pool is returned.
 .Pp
 To manage string pools, the code provides several functions:
 .Bl -tag
@@ -817,8 +850,8 @@ Allocate a new string with a minimum length of
 from the
 .Va tsp
 string pool.
-The pool can return a bigger string, but the caller must not make any
-assumptions about the real object size.
+The pool can return a bigger string, but the caller must not make
+any assumptions about the real object size.
 .It Ft void Fn tmpfs_str_pool_put struct tmpfs_str_pool *tsp" "char *str" "size_t len");
 Destroy the
 .Va str
@@ -832,7 +865,7 @@ The length must match the one given during allocation.
 .Sh CODE REFERENCES
 The
 .Nm
-file-system is implemented within the directory
+file system is implemented within the directory
 .Pa sys/fs/tmpfs .
 .\" =======================================================================
 .Sh SEE ALSO
@@ -866,19 +899,20 @@ with help from
 and others as part of Google's Summer of Code 2005 program.
 .\" =======================================================================
 .Sh BUGS
-This file-system is experimental.
+This file system is experimental.
 .Pp
 The following issues need to be fixed before it can be considered
 complete and stable.
-Of course, fixing these does not mean it will be stable, but it will
-be at a point of being ready to do serious stress-testing on it to
-find other bugs.
+Of course, fixing these does not mean it will be stable, but it
+will be at a point of being ready to do serious stress-testing on
+it to find other bugs.
 .Bl -bullet
 .It
 File meta-data is stored using memory pools.
 These use, at the moment, wired kernel memory, which is not acceptable
 because it is easy to turn the system unstable by exhausting it.
-Therefore, a pool allocator that uses anonymous memory has to be written.
+Therefore, a pool allocator that uses anonymous memory has to be
+written.
 .It
 Optimize for speed and memory usage.
 Nodes are still quite big; their size should be reduced if possible.
@@ -889,17 +923,17 @@ Verify that file holes work (they should, but must be checked).
 Add a regression test for this feature.
 .It
 NFS support is broken.
-The readdir operation does not work until wcc is disabled (which happens
-as soon as doing a
-.Sq touch foo
-over the NFS mount point.
+The readdir operation does not work until wcc is disabled (which
+happens as soon as doing a
+.Ic touch foo
+over the NFS mount point).
 Furthermore, the system crashes if a file is created on the original
-file-system and is read through NFS; the system spits a panic about
+file system and is read through NFS; the system spits a panic about
 busy pages.
 .It
 Fix and complete code marked with
-.Sq XXX
+.Dq XXX
 and
-.Sq TODO
+.Dq TODO
 tags.
 .El
