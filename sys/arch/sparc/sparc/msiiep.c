@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.24 2005/04/01 11:59:34 yamt Exp $ */
+/*	$NetBSD: msiiep.c,v 1.25 2005/09/10 02:22:33 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.24 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.25 2005/09/10 02:22:33 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -102,9 +102,9 @@ static struct sparc_pci_chipset mspcic_pc_tag = { NULL };
  */
 
 struct mspcic_pci_map {
-	u_int32_t sysbase;
-	u_int32_t pcibase;
-	u_int32_t size;
+	uint32_t sysbase;
+	uint32_t pcibase;
+	uint32_t size;
 };
 
 /* fixed i/o and one set of i/o cycle translation registers */
@@ -128,7 +128,7 @@ static struct mspcic_cookie mspcic_mem_cookie = { mspcic_pci_memmap, 0 };
 
 static void		mspcic_init_maps(void);
 static void		mspcic_pci_map_from_reg(struct mspcic_pci_map *,
-						u_int8_t, u_int8_t, u_int8_t);
+						uint8_t, uint8_t, uint8_t);
 static bus_addr_t	mspcic_pci_map_find(struct mspcic_pci_map *, int,
 					    bus_addr_t, bus_size_t);
 #ifdef DEBUG
@@ -178,10 +178,7 @@ static struct sparc_bus_dma_tag mspcic_dma_tag = {
 
 
 static int
-msiiep_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+msiiep_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	pcireg_t id;
@@ -206,10 +203,7 @@ msiiep_match(parent, cf, aux)
 
 
 static void
-msiiep_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+msiiep_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct msiiep_attach_args msa;
@@ -236,10 +230,9 @@ msiiep_attach(parent, self, aux)
  * didn't turn endian swapping off.
  */
 void
-msiiep_swap_endian(on)
-	int on;
+msiiep_swap_endian(int on)
 {
-	u_int8_t pioctl;
+	uint8_t pioctl;
 
 	pioctl = mspcic->pcic_pio_ctrl;
 	if (on)
@@ -260,10 +253,7 @@ msiiep_swap_endian(on)
  */
 
 static int
-mspcic_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+mspcic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct msiiep_attach_args *msa = aux;
 
@@ -272,10 +262,7 @@ mspcic_match(parent, cf, aux)
 
 
 static void
-mspcic_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mspcic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mspcic_softc *sc = (struct mspcic_softc *)self;
 	struct msiiep_attach_args *msa = aux;
@@ -349,9 +336,7 @@ mspcic_attach(parent, self, aux)
 
 
 static int
-mspcic_print(args, busname)
-	void *args;
-	const char *busname;
+mspcic_print(void *args, const char *busname)
 {
 
 	if (busname == NULL)
@@ -364,8 +349,7 @@ mspcic_print(args, busname)
  * Get the PIL currently assigned for this interrupt input line.
  */
 int
-mspcic_assigned_interrupt(line)
-	int line;
+mspcic_assigned_interrupt(int line)
 {
 	unsigned int intrmap;
 
@@ -387,9 +371,8 @@ mspcic_assigned_interrupt(line)
  */
 
 static __inline__ void
-mspcic_pci_map_from_reg(m, sbar, pbar, sizemask)
-	struct mspcic_pci_map *m;
-	u_int8_t sbar, pbar, sizemask;
+mspcic_pci_map_from_reg(struct mspcic_pci_map *m,
+			uint8_t sbar, uint8_t pbar, uint8_t sizemask)
 {
 	m->sysbase = 0x30000000 | ((sbar & 0x0f) << 24);
 	m->pcibase = pbar << 24;
@@ -413,7 +396,7 @@ mspcic_pci_map_from_reg(m, sbar, pbar, sizemask)
  * Init auxiliary paddr->pci maps.
  */
 static void
-mspcic_init_maps()
+mspcic_init_maps(void)
 {
 	struct mspcic_pci_map *m0, *m1, *io;
 	int nmem, nio;
@@ -467,9 +450,7 @@ mspcic_init_maps()
 
 #ifdef DEBUG
 static void
-mspcic_pci_map_print(m, msg)
-	struct mspcic_pci_map *m;
-	const char *msg;
+mspcic_pci_map_print(struct mspcic_pci_map *m, const char *msg)
 {
 	printf("mspcic0: paddr [%08x..%08x] -> pci [%08x..%08x] %s\n",
 	       m->sysbase, m->sysbase + m->size - 1,
@@ -480,11 +461,8 @@ mspcic_pci_map_print(m, msg)
 
 
 static bus_addr_t
-mspcic_pci_map_find(m, nmaps, pciaddr, size)
-	struct mspcic_pci_map *m;
-	int nmaps;
-	bus_addr_t pciaddr;
-	bus_size_t size;
+mspcic_pci_map_find(struct mspcic_pci_map *m, int nmaps,
+		    bus_addr_t pciaddr, bus_size_t size)
 {
 	bus_size_t offset;
 	int i;
@@ -499,13 +477,8 @@ mspcic_pci_map_find(m, nmaps, pciaddr, size)
 
 
 static int
-mspcic_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
+mspcic_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size,
+	       int flags, vaddr_t va, bus_space_handle_t *hp)
 {
 	struct mspcic_cookie *c = t->cookie;
 	bus_addr_t paddr;
@@ -518,12 +491,8 @@ mspcic_bus_map(t, ba, size, flags, va, hp)
 
 
 static paddr_t
-mspcic_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	off_t off;
-	int prot;
-	int flags;
+mspcic_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off,
+		int prot, int flags)
 {
 	struct mspcic_cookie *c = t->cookie;
 	bus_addr_t paddr;
@@ -545,13 +514,9 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
  * assignment select registers (but we use existing assignments).
  */
 static void *
-mspcic_intr_establish(t, line, ipl, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int line;
-	int ipl;
-	int (*handler)(void *);
-	void *arg;
-	void (*fastvec)(void);
+mspcic_intr_establish(bus_space_tag_t t, int line, int ipl,
+		      int (*handler)(void *), void *arg,
+		      void (*fastvec)(void))
 {
 	struct intrhand *ih;
 	int pil;
@@ -580,13 +545,9 @@ mspcic_intr_establish(t, line, ipl, handler, arg, fastvec)
  */
 
 static int
-mspcic_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+mspcic_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+		   void *buf, bus_size_t buflen,
+		   struct proc *p, int flags)
 {
 	pmap_t pmap;
 	paddr_t pa;
@@ -609,9 +570,7 @@ mspcic_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 static void
-mspcic_dmamap_unload(t, dmam)
-	bus_dma_tag_t t;
-	bus_dmamap_t dmam;
+mspcic_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t dmam)
 {
 
 	panic("mspcic_dmamap_unload: not implemented");
@@ -619,13 +578,8 @@ mspcic_dmamap_unload(t, dmam)
 
 
 static int
-mspcic_dmamem_map(tag, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t tag;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+mspcic_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+		  size_t size, caddr_t *kvap, int flags)
 {
 	struct pglist *mlist;
 	struct vm_page *m;
