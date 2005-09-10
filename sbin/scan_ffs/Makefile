@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.5 2005/07/31 19:26:06 xtraeme Exp $
+# $NetBSD: Makefile,v 1.6 2005/09/10 23:08:37 wiz Exp $
 
 PROG=	scan_ffs
-MAN=	scan_ffs.8 scan_lfs.8
 
 LINKS=	${BINDIR}/scan_ffs ${BINDIR}/scan_lfs
+MLINKS=	scan_ffs.8 scan_lfs.8
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
