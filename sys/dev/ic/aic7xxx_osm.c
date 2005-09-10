@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.17 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.18 2005/09/10 17:19:55 tsutsui Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.17 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.18 2005/09/10 17:19:55 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -485,7 +485,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 			sg->addr = ahc_htole32(dm_segs->ds_addr);
 			len = dm_segs->ds_len
-			    | ((dm_segs->ds_addr >> 8) & 0x7F000000);
+			    | ((dm_segs->ds_addr >> 8) & AHC_SG_HIGH_ADDR_MASK);
 			sg->len = ahc_htole32(len);
 			sg++;
 			dm_segs++;
