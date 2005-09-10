@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.811 2005/08/29 05:40:17 taca Exp $
+#	$NetBSD: mi,v 1.812 2005/09/10 19:20:48 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5637,6 +5637,7 @@
 ./usr/share/man/cat9/tc_wmb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/time.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/timeout.0			comp-sys-catman		.cat
+./usr/share/man/cat9/tmpfs.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/todr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/todr_getcal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/todr_gettime.0		comp-sys-catman		.cat
@@ -9540,6 +9541,7 @@
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
 ./usr/share/man/man9/time.9			comp-sys-man		.man
 ./usr/share/man/man9/timeout.9			comp-sys-man		.man
+./usr/share/man/man9/tmpfs.9			comp-sys-man		.man
 ./usr/share/man/man9/todr.9			comp-sys-man		.man
 ./usr/share/man/man9/todr_getcal.9		comp-sys-man		.man
 ./usr/share/man/man9/todr_gettime.9		comp-sys-man		.man
