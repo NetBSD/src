@@ -1,4 +1,4 @@
-/*	$NetBSD: tpstats.c,v 1.2 2005/08/08 11:31:48 blymn Exp $	*/
+/*	$NetBSD: tpstats.c,v 1.3 2005/09/10 11:10:21 blymn Exp $	*/
 
 /*
  * Copyright 2005 Brett Lymn
@@ -210,9 +210,7 @@ tpinit(int selected)
 
 		tp_ndrive = size / sizeof(struct tape_sysctl);
 
-		if (size == 0) {
-			warnx("No tape drives attached.");
-		} else {
+		if (size != 0) {
 			tapes = (struct tape_sysctl *)malloc(size);
 			if (tapes == NULL)
 				errx(1, "Memory allocation failure.");
@@ -232,9 +230,7 @@ tpinit(int selected)
 
 		if (tp_ndrive < 0)
 			errx(1, "invalid _tape_count %d.", tp_ndrive);
-		else if (tp_ndrive == 0) {
-			warnx("No drives attached.");
-		} else {
+		else if (tp_ndrive != 0) {
 			/* Get a pointer to the first disk. */
 			  deref_nl(X_TAPELIST, &tapelist_head,
 				   sizeof(tapelist_head));
