@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.16 2005/09/09 15:40:49 christos Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.17 2005/09/10 09:04:11 jmmv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.16 2005/09/09 15:40:49 christos Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.17 2005/09/10 09:04:11 jmmv Exp $");
 #endif
 #endif
 
@@ -322,9 +322,9 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct timeval startime, curtime;
 	int firsttimeout = 1;
 #ifdef _REENTRANT
-	sigset_t mask, maskp = &mask;
+	sigset_t mask, *maskp = &mask;
 #else
-	sigset_t maskp = NULL;
+	sigset_t *maskp = NULL;
 #endif
 	sigset_t newmask;
 	ssize_t recvlen = 0;
