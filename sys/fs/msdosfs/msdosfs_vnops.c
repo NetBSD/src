@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.18 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.19 2005/09/10 18:35:56 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.18 2005/08/29 23:57:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2005/09/10 18:35:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ msdosfs_getattr(v)
 	mode_t mode;
 	struct timespec ts;
 	u_long dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
-	u_long fileid;
+	ino_t fileid;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(dep, &ts, &ts, &ts, pmp->pm_gmtoff);
@@ -295,11 +295,11 @@ msdosfs_getattr(v)
 	 * doesn't work.
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY) {
-		fileid = cntobn(pmp, dep->de_StartCluster) * dirsperblk;
+		fileid = cntobn(pmp, (ino_t)dep->de_StartCluster) * dirsperblk;
 		if (dep->de_StartCluster == MSDOSFSROOT)
 			fileid = 1;
 	} else {
-		fileid = cntobn(pmp, dep->de_dirclust) * dirsperblk;
+		fileid = cntobn(pmp, (ino_t)dep->de_dirclust) * dirsperblk;
 		if (dep->de_dirclust == MSDOSFSROOT)
 			fileid = roottobn(pmp, 0) * dirsperblk;
 		fileid += dep->de_diroffset / sizeof(struct direntry);
@@ -1424,7 +1424,7 @@ msdosfs_readdir(v)
 	long lost;
 	long count;
 	u_long cn;
-	u_long fileno;
+	ino_t fileno;
 	u_long dirsperblk;
 	long bias = 0;
 	daddr_t bn, lbn;
@@ -1499,8 +1499,8 @@ msdosfs_readdir(v)
 			     n < 2; n++) {
 				if (FAT32(pmp))
 					dirbuf.d_fileno = cntobn(pmp,
-								 pmp->pm_rootdirblk)
-							  * dirsperblk;
+					     (ino_t)pmp->pm_rootdirblk)
+					     * dirsperblk;
 				else
 					dirbuf.d_fileno = 1;
 				dirbuf.d_type = DT_DIR;
@@ -1604,13 +1604,13 @@ msdosfs_readdir(v)
 			if (dentp->deAttributes & ATTR_DIRECTORY) {
 				fileno = getushort(dentp->deStartCluster);
 				if (FAT32(pmp))
-					fileno |= getushort(dentp->deHighClust) << 16;
+					fileno |= ((ino_t)getushort(dentp->deHighClust)) << 16;
 				/* if this is the root directory */
 				if (fileno == MSDOSFSROOT)
 					if (FAT32(pmp))
 						fileno = cntobn(pmp,
-								pmp->pm_rootdirblk)
-							 * dirsperblk;
+						    (ino_t)pmp->pm_rootdirblk)
+						    * dirsperblk;
 					else
 						fileno = 1;
 				else
