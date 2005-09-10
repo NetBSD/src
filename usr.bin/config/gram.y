@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.2 2005/09/10 15:38:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,12 +101,12 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 
 %token	AND AT ATTACH
 %token	BLOCK BUILD
-%token	CHAR CINCLUDE COMPILE_WITH CONFIG
+%token	CHAR COMPILE_WITH CONFIG
 %token	DEFFS DEFINE DEFOPT DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS
 %token	DEVICE_MAJOR
 %token	ENDFILE
 %token	XFILE FILE_SYSTEM FLAGS
-%token	IDENT INCLUDE
+%token	IDENT
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT ON OPTIONS
@@ -181,7 +181,6 @@ topthings:
 topthing:
 	SOURCE filename '\n'		{ if (!srcdir) srcdir = $2; } |
 	BUILD  filename '\n'		{ if (!builddir) builddir = $2; } |
-	include '\n' |
 	'\n';
 
 machine_spec:
@@ -252,13 +251,6 @@ rule:
 	COMPILE_WITH stringvalue	{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
-include:
-	INCLUDE filename		{ (void) include($2, 0, 0, 1); } |
-	CINCLUDE filename		{ (void) include($2, 0, 1, 1); };
-
-package:
-	PACKAGE filename		{ package($2); };
-
 prefix:
 	PREFIX filename			{ prefix_push($2); } |
 	PREFIX				{ prefix_pop(); };
@@ -280,8 +272,6 @@ one_def:
 	file |
 	object |
 	device_major			{ do_devsw = 1; } |
-	include |
-	package |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); } |
 	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
@@ -649,6 +639,8 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 	 */
 	if (include("conf/files", ENDFILE, 0, 0) != 0)
 		exit(1);
+
+	oktopackage = 1;
 }
 
 static void
