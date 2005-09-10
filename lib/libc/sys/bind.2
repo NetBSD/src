@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.25 2005/08/30 15:05:04 jmmv Exp $
+.\"	$NetBSD: bind.2,v 1.26 2005/09/10 22:27:39 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -111,9 +111,9 @@ domain.
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
+.Dv NAME_MAX
 characters, or an entire path name exceeded
-.Dv {PATH_MAX}
+.Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 A prefix component of the path name does not exist.
@@ -172,9 +172,11 @@ same port with
 was changed in
 .Nx 4.0
 to honor the user's umask when binding sockets in the local domain.
-This was done to match the behavior of other operating systems, including
+This was done to match the behavior of other operating systems,
+including
 .Fx ,
-.Ox and
+.Ox ,
+and
 Linux, and to improve compatibility with some third-party software.
 Please note that this behavior
 .Em is not portable .
