@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.6 2005/09/10 21:38:40 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.7 2005/09/10 21:51:12 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ do
 	[ -z "$count_fmtargs" -a -z "$fmt_count" ] && continue
 
 	IFS='%'
-	set -- - $sv_msg
+	set -- - x$sv_msg
 	[ -n "$count_fmtargs" ] && {
 		echo $number $#
 		continue
