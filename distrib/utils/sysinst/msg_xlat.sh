@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.5 2003/11/11 17:25:45 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.6 2005/09/10 21:38:40 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -16,11 +16,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
+# 3. Neither the name of The NetBSD Foundation nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
 #
@@ -37,6 +33,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+usage()
+{
+	echo "usage: msg_xlat.sh [-ci] [-d msg_defs.h] [-f fmt_count]" >&2
+	exit 1
+}
+
+count_fmtargs=
+msg_defs=msg_defs.h
+while getopts cd:f:i f
+do
+	case $f in
+	c) count_fmtargs=1;;
+	d) msg_defs=$OPTARG;;
+	f) fmt_count=$OPTARG;;
+	i) IGNORE_MISSING_TRANSLATIONS=y;;
+	*) usage;;
+	esac
+done
+shift $(($OPTIND - 1))
+[ "$#" = 0 ] || usage
+
 nl="
 "
 msg_long="((msg)(long)"
@@ -47,9 +64,21 @@ slash="/"
 
 rval=0
 
+# save stdin while we read the other files
+exec 3<&0
+
+# Read existing list of format arg counts
+[ -n "$fmt_count" ] && {
+	exec <$fmt_count || exit 2
+	while read name count
+	do
+		eval count_$name=\$count
+	done
+}
+
 # Read header file and set up map of message names to numbers
 
-exec 3<&0 <msg_defs.h
+exec <$msg_defs || exit 2
 
 while read define MSG_name number rest
 do
@@ -116,10 +145,26 @@ do
 	}
 	eval MSGTEXT_$number=\"\${msg}\"
 	# echo $number $msg
+	sv_name="$name"
+	sv_msg="$msg"
 	name=
 	msg=
+	[ -z "$count_fmtargs" -a -z "$fmt_count" ] && continue
+
+	IFS='%'
+	set -- - $sv_msg
+	[ -n "$count_fmtargs" ] && {
+		echo $number $#
+		continue
+	}
+	eval count=\${count_$number:-unknown}
+	[ "$count" = $# ] || {
+		echo "ERROR: Wrong number of format specifiers in \"$sv_name\", got $#, expected $count" >&2
+		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
+	}
 done
 
+[ -n "$count_fmtargs" ] && exit $rval
 
 # Output the total number of messages and the offset of each in the file.
 # Use ascii numbers because generating target-ordered binary numbers
