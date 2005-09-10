@@ -1,4 +1,4 @@
-.\"	$NetBSD: xge.4,v 1.1 2005/09/09 11:20:38 ragge Exp $
+.\"	$NetBSD: xge.4,v 1.2 2005/09/10 22:48:09 wiz Exp $
 .\"
 .\" Copyright (c) 2005, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -43,18 +43,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the Neterion Xframe-I LR Ethernet
-adapter,
+device driver supports the Neterion Xframe-I LR Ethernet adapter,
 which uses a single mode fiber (1310nm) interface.
 .Pp
 The Xframe supports IPv4/TCP/UDP checksumming in hardware, as well
 as TCP Segmentation Offloading (TSO) and hardvare VLAN handling.
-The driver does currently not support the hardware VLAN
-feature.
+The driver currently does not support the hardware VLAN feature.
 See
 .Xr ifconfig 8
 for information on how to enable TSO and hardware checksum calculation.
-.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It xge%s: failed configuring endian, %llx != %llx!
@@ -67,8 +64,8 @@ The computer has run out of kernel memory.
 .Pp
 .It xge%d: adapter not quiescent, aborting
 .It xge%d: ADAPTER_STATUS missing bits %s
-The Xframe could not be turned into a useable state. 
-Most likely a Xframe hardware error.
+The Xframe could not be turned into a usable state.
+Most likely an Xframe hardware error.
 .Pp
 .It xge%d: cannot create TX DMA maps
 .It xge%d: cannot create RX DMA maps
@@ -76,8 +73,8 @@ This error is either a kernel error or that the kernel has run out
 of available memory.
 .Pp
 .It xge%d: bad compiler struct alignment, %d != %d
-The compiler did not align the structure correctly.  This is a
-compiler problem.
+The compiler did not align the structure correctly.
+This is a compiler problem.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
