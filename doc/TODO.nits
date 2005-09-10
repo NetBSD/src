@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.nits,v 1.1 2005/09/10 18:30:30 perry Exp $
+#	$NetBSD: TODO.nits,v 1.2 2005/09/10 21:14:18 wiz Exp $
 #
 # This file documents small nits in our code (often marked in comments
 # with /* XXX */) and similar "small fixes needed" so that they will not
@@ -22,4 +22,4 @@
 # them.
 
 2005-09-10 (christos) Convert src/lib/libc/rpc to use kqueues, the way
-    FreeBSDs does.
+    FreeBSD does.
