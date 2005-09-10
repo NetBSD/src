@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2005/09/10 20:00:02 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,3 +54,6 @@ Compensación en %s):
 
 message set_kernel_1
 {Núcleo (GENERIC)}
+
+message set_kernel_2
+{Núcleo (GENERIC.ABLE)}
