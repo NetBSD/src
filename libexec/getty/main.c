@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2005/06/01 15:50:00 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2005/09/10 21:29:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 2005/06/01 15:50:00 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2005/09/10 21:29:36 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,8 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
 			exit(1);
 		}
-		(void) chown(lockfile, ttyowner, 0);
+		if (uugetty)
+			(void) chown(lockfile, ttyowner, 0);
 		login_tty(i);
 	    }
 	}
@@ -434,7 +435,8 @@ main(int argc, char *argv[])
 		signal(SIGINT, SIG_IGN);
 		if (NX && *NX)
 			tname = NX;
-		unlink(lockfile);
+		if (uugetty)
+			unlink(lockfile);
 	}
 }
 
