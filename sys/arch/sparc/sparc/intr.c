@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.87 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: intr.c,v 1.88 2005/09/10 01:27:54 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.87 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.88 2005/09/10 01:27:54 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -202,7 +202,7 @@ softnet(fp)
 #undef DONETISR
 }
 
-#if defined(SUN4M) || defined(SUN4D)
+#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
 void	nmi_hard __P((void));
 void	nmi_soft __P((struct trapframe *));
 
@@ -383,6 +383,105 @@ static void xcallintr(void *v)
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
+
+
+#ifdef MSIIEP
+/*
+ * It's easier to make this separate so that not to further obscure
+ * SUN4M case with more ifdefs.  There's no common functionality
+ * anyway.
+ */
+
+#include <sparc/sparc/msiiepreg.h>
+
+/* ms-IIep PCIC registers are mapped at fixed VA */
+#define mspcic ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
+
+void	nmi_hard_msiiep(void);
+void	nmi_soft_msiiep(void);
+
+
+void
+nmi_hard_msiiep(void)
+{
+	uint32_t si;
+	int byteswap;
+	char bits[128];
+	int fatal = 0;
+
+	si = mspcic->pcic_sys_ipr;
+	printf("NMI: system interrupts: %s\n",
+	       bitmask_snprintf(si, MSIIEP_SYS_IPR_BITS, bits, sizeof(bits)));
+
+	if (si & MSIIEP_SYS_IPR_MEM_FAULT) {
+		uint32_t afsr, afar, mfsr, mfar;
+
+		afar = *(volatile uint32_t *)MSIIEP_AFAR;
+		afsr = *(volatile uint32_t *)MSIIEP_AFSR;
+
+		mfar = *(volatile uint32_t *)MSIIEP_MFAR;
+		mfsr = *(volatile uint32_t *)MSIIEP_MFSR;
+
+		if (afsr & MSIIEP_AFSR_ERR)
+			printf("async fault: afsr=%s; afar=%08x\n",
+			       bitmask_snprintf(afsr, MSIIEP_AFSR_BITS,
+						bits, sizeof(bits)),
+			       afar);
+
+		if (mfsr & MSIIEP_MFSR_ERR)
+			printf("mem fault: mfsr=%s; mfar=%08x\n",
+			       bitmask_snprintf(mfsr, MSIIEP_MFSR_BITS,
+						bits, sizeof(bits)),
+			       mfar);
+
+		fatal = 0;
+	}
+
+	byteswap = mspcic->pcic_pio_ctrl & MSIIEP_PIO_CTRL_BIG_ENDIAN;
+
+	if (si & MSIIEP_SYS_IPR_SERR) {	/* XXX */
+		printf("serr#\n");
+		fatal = 0;
+	}
+
+	if (si & MSIIEP_SYS_IPR_DMA_ERR) {
+		uint32_t iotlb_err_addr = mspcic->pcic_iotlb_err_addr;
+
+		if (byteswap)
+			iotlb_err_addr = bswap32(iotlb_err_addr);
+
+		printf("dma: %08x\n", iotlb_err_addr);
+		fatal = 0;
+	}
+
+	if (si & MSIIEP_SYS_IPR_PIO_ERR) {
+		uint32_t pio_err_addr = mspcic->pcic_pio_err_addr;
+
+		if (byteswap)
+			pio_err_addr = bswap32(pio_err_addr);
+
+		printf("pio: addr=%08x, cmd=%x\n",
+		       pio_err_addr, mspcic->pcic_pio_err_cmd);
+		fatal = 0;
+	}
+
+	if (fatal)
+		panic("nmi");
+
+	/* Clear the NMI if it was PCIC related */
+	mspcic->pcic_sys_ipr_clr = MSIIEP_SYS_IPR_CLR_ALL;
+}
+
+
+void
+nmi_soft_msiiep(void)
+{
+	panic("soft nmi");
+}
+
+
+#endif /* MSIIEP */
+
 
 /*
  * Level 15 interrupts are special, and not vectored here.
