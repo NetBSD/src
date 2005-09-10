@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_getconf.3,v 1.8 2005/08/18 21:07:23 elad Exp $
+.\"	$NetBSD: pw_getconf.3,v 1.9 2005/09/10 21:55:35 wiz Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -82,12 +82,12 @@ An empty string is returned for all errors.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
-If there is no key in
+There is no key in
 .Pa /etc/passwd.conf
 named
 .Pa key .
 .It Bq Er ENOENT
-If there is no option named
+There is no option named
 .Pa option
 in the specified key.
 .El
