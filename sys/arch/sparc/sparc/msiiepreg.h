@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.1 2001/12/11 00:18:23 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.2 2005/09/10 00:44:08 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -52,64 +52,64 @@
 
 struct msiiep_pcic_reg {
 	/* PCI_ID_REG */
-	u_int32_t	pcic_id;		/* @00/4  9.5.2.1 */
+	uint32_t	pcic_id;		/* @00/4  9.5.2.1 */
 
 	/* PCI_COMMAND_STATUS_REG */
-	u_int16_t	pcic_cmd;		/* @04/2  9.5.2.2 */
-	u_int16_t	pcic_stat;		/* @06/2  9.5.2.3 */
+	uint16_t	pcic_cmd;		/* @04/2  9.5.2.2 */
+	uint16_t	pcic_stat;		/* @06/2  9.5.2.3 */
 
 	/* PCI_CLASS_REG */
-	u_int32_t	pcic_class;		/* @08/4  9.5.2.1 */
+	uint32_t	pcic_class;		/* @08/4  9.5.2.1 */
 
 	/* PCI_BHLC_REG: but with lattimer and cacheline swapped !!! */
-	u_int32_t	pcic_bhlc;		/* @0c/4  9.5.2.1, 9.5.3*/
+	uint32_t	pcic_bhlc;		/* @0c/4  9.5.2.1, 9.5.3*/
 
 	/* 9.5.5.1  PCI Base Address Registers */
-	u_int32_t	pcic_ba[6];		/* @10/4 .. @24/4 */
+	uint32_t	pcic_ba[6];		/* @10/4 .. @24/4 */
 
-	u_int32_t	pcic_unused_28;
-	u_int32_t	pcic_unused_2c;
-	u_int32_t	pcic_unused_30;
-	u_int32_t	pcic_unused_34;
-	u_int32_t	pcic_unused_38;
-	u_int32_t	pcic_unused_3c;
+	uint32_t	pcic_unused_28;
+	uint32_t	pcic_unused_2c;
+	uint32_t	pcic_unused_30;
+	uint32_t	pcic_unused_34;
+	uint32_t	pcic_unused_38;
+	uint32_t	pcic_unused_3c;
 
 	/* 9.5.3  #RETRY and #TRDY counters */
-	u_int32_t	pcic_cntrs;		/* @40/4 */
+	uint32_t	pcic_cntrs;		/* @40/4 */
 
 	/* 9.5.5.2  PCI Base Size Registers */
-	u_int32_t	pcic_sz[6];		/* @44/4 .. @58/4 */
+	uint32_t	pcic_sz[6];		/* @44/4 .. @58/4 */
 
-	u_int32_t	pcic_unused_5c;
+	uint32_t	pcic_unused_5c;
 
 
 	/* 9.6.3  PIO control */
-	u_int8_t	pcic_pio_ctrl;		/* @60/1 (no word?) */
+	uint8_t	pcic_pio_ctrl;		/* @60/1 (no word?) */
 #define MSIIEP_PIO_CTRL_PREFETCH_ENABLE		0x80
 #define MSIIEP_PIO_CTRL_BURST_ENABLE		0x40
 #define MSIIEP_PIO_CTRL_BIG_ENDIAN		0x04
 
-	u_int8_t	pcic_unused_61;
+	uint8_t		pcic_unused_61;
 
 	/* 9.6.4  DVMA control */
-	u_int8_t	pcic_dvmac;		/* @62/1  (no word?) */
+	uint8_t		pcic_dvmac;		/* @62/1  (no word?) */
 
 	/* 9.6.5  Arbitration/Interrupt Control */
-	u_int8_t	pcic_arb_intr_ctrl;	/* @63/1 */
+	uint8_t		pcic_arb_intr_ctrl;	/* @63/1 */
 
 	/*  9.7.5  Processor Interrupt Pending */
-	u_int32_t	pcic_proc_ipr;		/* @64/4 */
+	uint32_t	pcic_proc_ipr;		/* @64/4 */
 
 	/* 9.5.3  Discard Timer */
-	u_int16_t	pcic_discard_tmr;	/* @68/2 */
+	uint16_t	pcic_discard_tmr;	/* @68/2 */
 
 	/* 9.7.6  Software Interrupt Clear/Set */
-	u_int16_t	pcic_soft_intr_clear;	/* @6a/2 */
-	u_int16_t	pcic_unused_6c;
-	u_int16_t	pcic_soft_intr_set;	/* @6e/2 */
+	uint16_t	pcic_soft_intr_clear;	/* @6a/2 */
+	uint16_t	pcic_unused_6c;
+	uint16_t	pcic_soft_intr_set;	/* @6e/2 */
 
 	/*  9.7.2  System Interrupt Pending */
-	u_int32_t	pcic_sys_ipr;		/* @70/4 */
+	uint32_t	pcic_sys_ipr;		/* @70/4 */
 #define MSIIEP_SYS_IPR_PIO_ERR			0x40000000
 #define MSIIEP_SYS_IPR_DMA_ERR			0x20000000
 #define MSIIEP_SYS_IPR_SERR			0x10000000
@@ -117,9 +117,9 @@ struct msiiep_pcic_reg {
 
 
 	/* 9.7.4  System Interrupt Target Mask (read/clear/set) */
-	u_int32_t	pcic_sys_itmr;		/* @74/4 */
-	u_int32_t	pcic_sys_itmr_clr;	/* @78/4 */
-	u_int32_t	pcic_sys_itmr_set;	/* @7c/4 */
+	uint32_t	pcic_sys_itmr;		/* @74/4 */
+	uint32_t	pcic_sys_itmr_clr;	/* @78/4 */
+	uint32_t	pcic_sys_itmr_set;	/* @7c/4 */
 #define MSIIEP_SYS_ITMR_ALL			0x80000000
 #define MSIIEP_SYS_ITMR_PIO_ERR			0x40000000
 #define MSIIEP_SYS_ITMR_DMA_ERR			0x20000000
@@ -127,12 +127,12 @@ struct msiiep_pcic_reg {
 #define MSIIEP_SYS_ITMR_MEM_FAULT		0x08000000
 #define MSIIEP_SYS_ITMR_RESET			0x04000000
 
-	u_int8_t	pcic_unused_80;
-	u_int8_t	pcic_unused_81;
-	u_int8_t	pcic_unused_82;
+	uint8_t		pcic_unused_80;
+	uint8_t		pcic_unused_81;
+	uint8_t		pcic_unused_82;
 
 	/* 9.7.3  Clear System Interrupt Pending */
-	u_int8_t	pcic_sys_ipr_clr;	/* @83/1 */
+	uint8_t		pcic_sys_ipr_clr;	/* @83/1 */
 #define MSIIEP_SYS_IPR_CLR_ALL			0x80
 #define MSIIEP_SYS_IPR_CLR_PIO_ERR		0x40
 #define MSIIEP_SYS_IPR_CLR_DMA_ERR		0x20
@@ -141,43 +141,43 @@ struct msiiep_pcic_reg {
 
 
 	/* 9.5.7.1  IOTLB control (the rest of IOTLB regs is below at 90) */
-	u_int32_t	pcic_iotlb_ctrl;	/* @84/4 (no word?) */
+	uint32_t	pcic_iotlb_ctrl;	/* @84/4 (no word?) */
 
 	/* 9.7.1  Interrupt select PCI_INT_L[0..3] (aka pins A to D) */
-	u_int16_t	pcic_intr_asgn_sel; 	/* @88/2 */
+	uint16_t	pcic_intr_asgn_sel; 	/* @88/2 */
 
 	/* 9.6.1  Arbitration Assignment Select */
-	u_int16_t	pcic_arbt_asgn_sel;	/* @8a/2 */
+	uint16_t	pcic_arbt_asgn_sel;	/* @8a/2 */
 
 	/* 9.7.1  Interrupt Select PCI_INT_L[4..7] */
-	u_int16_t	pcic_intr_asgn_sel_hi; 	/* @8c/2 */
+	uint16_t	pcic_intr_asgn_sel_hi; 	/* @8c/2 */
 
 	/* 9.7.7  Hardware Interrupt Output */
-	u_int16_t	pcic_intr_out;		/* @8e/2 (no word) */
+	uint16_t	pcic_intr_out;		/* @8e/2 (no word) */
 
 	/* IOTLB RAM/CAM input/output */
-	u_int32_t	pcic_iotlb_ram_in;	/* @90/4  9.5.7.2 */
-	u_int32_t	pcic_iotlb_cam_in;	/* @94/4  9.5.7.3 */
-	u_int32_t	pcic_iotlb_ram_out;	/* @98/4  9.5.8.1 */
-	u_int32_t	pcic_iotlb_cam_out;	/* @9c/4  9.5.8.2 */
+	uint32_t	pcic_iotlb_ram_in;	/* @90/4  9.5.7.2 */
+	uint32_t	pcic_iotlb_cam_in;	/* @94/4  9.5.7.3 */
+	uint32_t	pcic_iotlb_ram_out;	/* @98/4  9.5.8.1 */
+	uint32_t	pcic_iotlb_cam_out;	/* @9c/4  9.5.8.2 */
 
 	/* 9.5.4.1  Memory Cycle Translation Register Set 0 */
-	u_int8_t	pcic_smbar0;		/* @a0/1 */
-	u_int8_t	pcic_msize0;		/* @a1/1 */
-	u_int8_t	pcic_pmbar0;		/* @a2/1 */
-	u_int8_t	pcic_unused_a3;
+	uint8_t		pcic_smbar0;		/* @a0/1 */
+	uint8_t		pcic_msize0;		/* @a1/1 */
+	uint8_t		pcic_pmbar0;		/* @a2/1 */
+	uint8_t		pcic_unused_a3;
 
 	/* 9.5.4.2  Memory Cycle Translation Register Set 1 */
-	u_int8_t	pcic_smbar1;		/* @a4/1 */
-	u_int8_t	pcic_msize1;		/* @a5/1 */
-	u_int8_t	pcic_pmbar1;		/* @a6/1 */
-	u_int8_t	pcic_unused_a7;
+	uint8_t		pcic_smbar1;		/* @a4/1 */
+	uint8_t		pcic_msize1;		/* @a5/1 */
+	uint8_t		pcic_pmbar1;		/* @a6/1 */
+	uint8_t		pcic_unused_a7;
 
 	/* 9.5.4.3  I/O Cycle Translation Register Set */
-	u_int8_t	pcic_sibar;		/* @a8/1 */
-	u_int8_t	pcic_iosize;		/* @a9/1 */
-	u_int8_t	pcic_pibar;		/* @aa/1 */
-	u_int8_t	pcic_unused_ab;
+	uint8_t		pcic_sibar;		/* @a8/1 */
+	uint8_t		pcic_iosize;		/* @a9/1 */
+	uint8_t		pcic_pibar;		/* @aa/1 */
+	uint8_t		pcic_unused_ab;
 
 	/*
 	 * 9.8  Processor and system counters:
@@ -185,41 +185,41 @@ struct msiiep_pcic_reg {
 	 */
 
 	/* processor counter (xor user timer that we don't use) */
-	u_int32_t	pcic_pclr;		/* @ac/4  9.8.1 */
-	u_int32_t	pcic_pccr;		/* @b0/4  9.8.2 */
-	u_int32_t	pcic_pclr_nr;		/* @b4/4  9.8.3 */
+	uint32_t	pcic_pclr;		/* @ac/4  9.8.1 */
+	uint32_t	pcic_pccr;		/* @b0/4  9.8.2 */
+	uint32_t	pcic_pclr_nr;		/* @b4/4  9.8.3 */
 
 	/* system counter */
-	u_int32_t	pcic_sclr;		/* @b8/4  9.8.4 */
-	u_int32_t	pcic_sccr;		/* @bc/4  9.8.5 */
-	u_int32_t	pcic_sclr_nr;		/* @c0/4  9.8.6 */
+	uint32_t	pcic_sclr;		/* @b8/4  9.8.4 */
+	uint32_t	pcic_sccr;		/* @bc/4  9.8.5 */
+	uint32_t	pcic_sclr_nr;		/* @c0/4  9.8.6 */
 
 	/* 9.8.7  User Timer Start/Stop */
-	u_int8_t	pcic_pc_ctl;		/* @c4/1 */
+	uint8_t		pcic_pc_ctl;		/* @c4/1 */
 
 	/* 9.8.8  Processor Counter or User Timer Configuration */
-	u_int8_t	pcic_pc_cfg;		/* @c5/1 (no word?) */
+	uint8_t		pcic_pc_cfg;		/* @c5/1 (no word?) */
 
 	/* 9.8.9  Counter Interrupt Priority Assignment */
-	u_int8_t	pcic_cipar;		/* @c6/1 */
+	uint8_t		pcic_cipar;		/* @c6/1 */
 
 
 	/* 9.5.9  PIO Error Command and Address Registers */
-	u_int8_t	pcic_pio_err_cmd;	/* @c7/1 */
-	u_int32_t	pcic_pio_err_addr;	/* @c8/4 */
+	uint8_t	pcic_pio_err_cmd;	/* @c7/1 */
+	uint32_t	pcic_pio_err_addr;	/* @c8/4 */
 
 	/* 9.5.8.3  IOTLB Error Address */
-	u_int32_t	pcic_iotlb_err_addr;	/* @cc/4 */
+	uint32_t	pcic_iotlb_err_addr;	/* @cc/4 */
 
 	/* 9.9  System Status and System Control (Reset) */
-	u_int8_t	pcic_sys_scr;		/* @d0/1 */
+	uint8_t		pcic_sys_scr;		/* @d0/1 */
 
 
 	/* pad to 256 bytes */
-	u_int8_t	pcic_unused_d1;
-	u_int8_t	pcic_unused_d2;
-	u_int8_t	pcic_unused_d3;
-	u_int32_t	pcic_unused_pad[11];
+	uint8_t		pcic_unused_d1;
+	uint8_t		pcic_unused_d2;
+	uint8_t		pcic_unused_d3;
+	uint32_t	pcic_unused_pad[11];
 };
 
 #endif /* _SPARC_MSIIEP_REG_H_ */
