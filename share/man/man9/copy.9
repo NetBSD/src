@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.15 2005/08/28 20:58:14 reinoud Exp $
+.\"	$NetBSD: copy.9,v 1.16 2005/09/10 22:24:42 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 Jason R. Thorpe.
 .\" All rights reserved.
@@ -145,26 +145,34 @@ except it operates on the address space of the process
 .It Fn ioctl_copyin
 Like
 .Fn copyin ,
-except it operates on kernel adresses when the FKIOCTL flag is passed in 
+except it operates on kernel adresses when the
+.Dv FKIOCTL
+flag is passed in
 .Fa ioctlflags
 from the ioctl call.
 .It Fn ioctl_copyout
 Like
 .Fn copyout ,
-except it operates on kernel adresses when the FKIOCTL flag is passed in 
+except it operates on kernel adresses when the
+.Dv FKIOCTL
+flag is passed in
 .Fa ioctlflags
 from the ioctl call.
 .El
 .Sh RETURN VALUES
 The
 .Nm
-functions return 0 on success or EFAULT if a bad address is encountered.
+functions return 0 on success or
+.Er EFAULT
+if a bad address is encountered.
 In addition, the
 .Fn copystr ,
 .Fn copyinstr ,
 and
 .Fn copyoutstr
-functions return ENAMETOOLONG if the string is longer than
+functions return
+.Er ENAMETOOLONG
+if the string is longer than
 .Fa len
 bytes.
 .Sh SEE ALSO
