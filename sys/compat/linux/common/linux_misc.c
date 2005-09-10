@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.139 2005/06/02 13:03:27 drochner Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.140 2005/09/10 19:20:50 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.139 2005/06/02 13:03:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.140 2005/09/10 19:20:50 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_FILECORE,	LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		},
-	{ MOUNT_PTYFS,		LINUX_DEVPTS_SUPER_MAGIC	}
+	{ MOUNT_PTYFS,		LINUX_DEVPTS_SUPER_MAGIC	},
+	{ MOUNT_TMPFS,		LINUX_DEFAULT_SUPER_MAGIC	}
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 

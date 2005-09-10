@@ -1,0 +1,10 @@
+#	$NetBSD: files.tmpfs,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+
+deffs	fs_tmpfs.h			TMPFS
+
+file	fs/tmpfs/tmpfs_fifoops.c	tmpfs
+file	fs/tmpfs/tmpfs_pool.c		tmpfs
+file	fs/tmpfs/tmpfs_specops.c	tmpfs
+file	fs/tmpfs/tmpfs_subr.c		tmpfs
+file	fs/tmpfs/tmpfs_vfsops.c		tmpfs
+file	fs/tmpfs/tmpfs_vnops.c		tmpfs
