@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2005/09/10 15:46:04 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2005/09/10 18:00:49 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2005/09/10 15:46:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2005/09/10 18:00:49 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -4050,11 +4050,12 @@ out:
  */
 
 int
-pmap_remap_pages(pmap, va, pa, npages, flags, dom)
+pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	int npages;
+	vm_prot_t prot;
 	int flags;
 	int dom;
 {
@@ -4138,11 +4139,11 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	    pmap->pm_stats.wired_count));
 	//printf("npte %p opte %p ptes %p idx %03x\n", (void *)npte, (void *)opte, ptes, x86_btop(va));
 	//printf("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x count %ld\n", pa, va, opte, npte, pmap->pm_stats.wired_count);
-#if 0
-	npte |= (opte & (PG_M | PG_RW));
-#else
-	npte |= (PG_M | PG_RW);
-#endif
+
+	if (prot & VM_PROT_WRITE)
+		npte |= (PG_M | PG_RW);
+	else 
+		npte |= PG_RO;
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
@@ -4240,21 +4241,8 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 
 	//printf("pmap initial setup");
 	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
- change_pte:
 	error = xpq_update_foreign(maptp, npte, dom);
 	if (error) {
-		if (npte & PG_RW) {
-			/* 
-			 * XXXjld@panix.com: Some things cannot be
-			 * mapped read/write, even by a privileged
-			 * domain.  This wouldn't be necessary if
-			 * pmap_remap_pages had a "prot" parameter
-			 * like pmap_enter does.
-			 */
-			npte &= ~(PG_RW | PG_M);
-			//printf("pmap_remap_pages: losing write bit npte=%lx\n", (unsigned long)npte);
-			goto change_pte;
-		}
 		printf("pmap_remap_pages: xpq_update_foreign failed va=%lx"
 		    " npte=%lx error=%d dptpwire=%d\n",
 		    va, (unsigned long)npte, error, dptpwire);
