@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.820 2005/09/05 18:54:10 kiyohara Exp $
+# $NetBSD: mi,v 1.821 2005/09/10 10:35:25 jmmv Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1429,6 +1429,7 @@
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
+./usr/share/man/cat4/xge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/yds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ym.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zero.0			man-sys-catman		.cat
@@ -3691,6 +3692,7 @@
 ./usr/share/man/man4/x68k/pow.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
+./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
 ./usr/share/man/man4/yds.4			man-sys-man		.man
 ./usr/share/man/man4/ym.4			man-sys-man		.man
