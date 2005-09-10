@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.2 2005/09/10 00:44:08 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.3 2005/09/10 01:01:40 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -115,6 +115,9 @@ struct msiiep_pcic_reg {
 #define MSIIEP_SYS_IPR_SERR			0x10000000
 #define MSIIEP_SYS_IPR_MEM_FAULT		0x08000000
 
+#define MSIIEP_SYS_IPR_BITS "\177\20"					\
+		"b\36PIO\0" "b\35DMA\0" "b\34SERR#\0" "b\33MEM\0"	\
+		"f\0\20INTR\0"
 
 	/* 9.7.4  System Interrupt Target Mask (read/clear/set) */
 	uint32_t	pcic_sys_itmr;		/* @74/4 */
