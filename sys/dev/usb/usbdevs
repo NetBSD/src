@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.412 2005/09/07 01:34:19 dogcow Exp $
+$NetBSD: usbdevs,v 1.413 2005/09/10 19:08:33 cube Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1361,6 +1361,7 @@ product MUSTEK DV2000		0xc441	DV2000 digital camera
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
 product MSYSTEMS DISKONKEY2	0x0011	DiskOnKey
+product MSYSTEMS DISKONKEY3	0x0012	DiskOnKey
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
