@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.3 2005/09/11 22:01:44 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.4 2005/09/11 22:03:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.3 2005/09/11 22:01:44 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.4 2005/09/11 22:03:48 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -222,12 +222,12 @@ cd9660_set_defaults(void)
 	
 	/* Spec breaking functionality */
 	diskStructure.allow_deep_trees = 
-		diskStructure.allow_start_dot =
-		diskStructure.allow_max_name =
-		diskStructure.allow_illegal_chars =
-		diskStructure.allow_lowercase =
-		diskStructure.allow_multidot =
-		diskStructure.omit_trailing_period = 0;
+	    diskStructure.allow_start_dot =
+	    diskStructure.allow_max_name =
+	    diskStructure.allow_illegal_chars =
+	    diskStructure.allow_lowercase =
+	    diskStructure.allow_multidot =
+	    diskStructure.omit_trailing_period = 0;
 	
 	/* Make sure the PVD is clear */
 	memset(&diskStructure.primaryDescriptor, 0, 2048);
@@ -1691,6 +1691,8 @@ typedef int(*cd9660_filename_conversion_functor)(const char *, char *, int);
 /*
  * TODO: These two functions are almost identical.
  * Some code cleanup is possible here
+ *
+ * XXX bounds checking!
  */
 static int
 cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
@@ -1709,11 +1711,11 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 		/* Handle period first, as it is special */
 		if (*oldname == '.') {
 			if (found_ext) {
-				*(newname++) = '_';
+				*newname++ = '_';
 				extlen ++;
 			}
 			else {
-				*(newname++) = '.';
+				*newname++ = '.';
 				found_ext = 1;
 			}
 		} else {
@@ -1724,12 +1726,12 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 			}
 
 			if (islower((unsigned char)*oldname))
-				*(newname++) = toupper((unsigned char)*oldname);
+				*newname++ = toupper((unsigned char)*oldname);
 			else if (isupper((unsigned char)*oldname)
 				    || isdigit((unsigned char)*oldname))
-				*(newname++) = *oldname;
+				*newname++ = *oldname;
 			else
-				*(newname++) = '_';
+				*newname++ = '_';
 
 			if (found_ext)
 				extlen++;
@@ -1741,11 +1743,12 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 	if (!found_ext && !diskStructure.omit_trailing_period)
 		*newname++ = '.';
 	/* Add version */
-	*(newname++) = ';';
-	sprintf((newname++), "%i", 1);
+	*newname++ = ';';
+	sprintf(newname, "%i", 1);
 	return namelen + extlen + found_ext;
 }
 
+/* XXX bounds checking! */
 static int
 cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 {
@@ -1766,11 +1769,11 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 		/* Handle period first, as it is special */
 		if (*oldname == '.') {
 			if (found_ext) {
-				*(newname++) = '_';
+				*newname++ = '_';
 				extlen ++;
 			}
 			else {
-				*(newname++) = '.';
+				*newname++ = '.';
 				found_ext = 1;
 			}
 		} else {
@@ -1778,12 +1781,12 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 				break;
 
 			 if (islower((unsigned char)*oldname))
-				*(newname++) = toupper((unsigned char)*oldname);
+				*newname++ = toupper((unsigned char)*oldname);
 			else if (isupper((unsigned char)*oldname) ||
 			    isdigit((unsigned char)*oldname))
-				*(newname++) = *oldname;
+				*newname++ = *oldname;
 			else 
-				*(newname++) = '_';
+				*newname++ = '_';
 
 			if (found_ext)
 				extlen++;
@@ -1795,8 +1798,8 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 	if (!found_ext && !diskStructure.omit_trailing_period)
 		*newname++ = '.';
 	/* Add version */
-	*(newname++) = ';';
-	sprintf((newname++), "%i", 1);
+	*newname++ = ';';
+	sprintf(newname, "%i", 1);
 	return namelen + extlen + found_ext;
 }
 
