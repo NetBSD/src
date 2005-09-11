@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.91 2005/09/02 21:26:47 rpaulo Exp $	*/
+/*	$NetBSD: pstat.c,v 1.92 2005/09/11 16:09:51 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.91 2005/09/02 21:26:47 rpaulo Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.92 2005/09/11 16:09:51 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ void	vnodemode(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, i, quit, ret;
+	int ch, i, quit, ret, use_sysctl;
 	int fileflag, swapflag, ttyflag, vnodeflag;
 	gid_t egid = getegid();
 	char buf[_POSIX2_LINE_MAX];
@@ -247,6 +247,8 @@ main(int argc, char *argv[])
 	else
 		(void)setegid(egid);
 
+	use_sysctl = (nlistf == NULL && memf == NULL);
+
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
 		errx(1, "kvm_openfiles: %s", buf);
 
@@ -273,7 +275,8 @@ main(int argc, char *argv[])
 	if (ttyflag)
 		ttymode();
 	if (swapflag || totalflag)
-		list_swap(0, kflag, 0, totalflag, 1, hflag);
+		if (use_sysctl)
+			list_swap(0, kflag, 0, totalflag, 1, hflag);
 	exit(0);
 }
 
