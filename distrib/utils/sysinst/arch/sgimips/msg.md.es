@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:33 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2005/09/11 08:03:05 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,3 +59,6 @@ message set_kernel_1
 
 message set_kernel_2
 {Núcleo (GENERIC32_IP3x)}
+
+message set_kernel_3
+{Núcleo (GENERIC32_IP12)}
