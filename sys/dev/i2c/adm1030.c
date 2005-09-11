@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.1 2005/08/10 14:18:28 macallan Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.2 2005/09/11 20:26:15 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.1 2005/08/10 14:18:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.2 2005/09/11 20:26:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,10 +211,10 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	cur_r = &adm1030c_ranges[0];
 	cur_i = &adm1030c_info[0];
 	cur_t = &datap->adm1030c_info[0];
-	strcpy(cur_i->desc, "CPU temperature");
+	strcpy(cur_i->desc, "case temperature");
 	cur_i->units = ENVSYS_STEMP;
 	cur_i->sensor = 0;
-	sc->regs[0] = 0x0b;	/* remote temperature register */
+	sc->regs[0] = 0x0a;	/* remote temperature register */
 	cur_r->low = adm1030c_temp2muk(-127);
 	cur_r->high = adm1030c_temp2muk(127);
 	cur_r->units = ENVSYS_STEMP;
@@ -235,11 +235,11 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	cur_r = &adm1030c_ranges[1];
 	cur_i = &adm1030c_info[1];
 	cur_t = &datap->adm1030c_info[1];
-	strcpy(cur_i->desc, "case temperature");
+	strcpy(cur_i->desc, "CPU temperature");
 	
 	cur_i->units = ENVSYS_STEMP;
 	cur_i->sensor = 1;
-	sc->regs[1] = 0x0a;	/* built-in temperature register */
+	sc->regs[1] = 0x0b;	/* built-in temperature register */
 	cur_r->low = adm1030c_temp2muk(-127);
 	cur_r->high = adm1030c_temp2muk(127);
 	cur_r->units = ENVSYS_STEMP;

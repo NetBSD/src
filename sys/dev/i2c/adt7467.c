@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.1 2005/08/10 14:18:28 macallan Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.2 2005/09/11 20:26:15 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.1 2005/08/10 14:18:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.2 2005/09/11 20:26:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,8 +199,10 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	struct envsys_tre_data *cur_t;
 	int i, ret;
 	int error;
-	uint8_t stuff;
+	const char *sensor_desc[] = { "case temperature", "CPU temperature",
+	    "GPU temperature" };
 	char name[16];
+	uint8_t stuff, sensortab[] = {0x26, 0x27, 0x25};
 	
 	sc->num_sensors = 5;
 	datap = malloc(sizeof(struct sysmon_envsys) + 5 * 
@@ -226,10 +228,10 @@ adt7467c_setup(struct adt7467c_softc *sc)
 		cur_i = &adt7467c_info[i];
 		cur_t = &datap->adt7467c_info[i];
 		snprintf(name, 16, "temp%d", i);
-		strcpy(cur_i->desc, name);
+		strcpy(cur_i->desc, sensor_desc[i]);
 		cur_r->units = ENVSYS_STEMP;
 		cur_i->sensor = i;
-		sc->regs[i] = i + 0x25;
+		sc->regs[i] = sensortab[i];
 		cur_r->low = temp2muk(-127);
 		cur_r->high = temp2muk(127);
 		ret = sysctl_createv(NULL, 0, NULL, 
