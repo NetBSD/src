@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.156 2005/09/11 21:57:24 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.157 2005/09/11 22:15:19 seb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.156 2005/09/11 21:57:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.157 2005/09/11 22:15:19 seb Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1728,7 +1728,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		/*
 		 * Set the IP time-to-live for outgoing multicast packets.
 		 */
-		error = ip_getoptval(m, &imo->imo_multicast_ttl, 255);
+		error = ip_getoptval(m, &imo->imo_multicast_ttl, MAXTTL);
 		break;
 
 	case IP_MULTICAST_LOOP:
