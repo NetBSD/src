@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.80 2005/08/03 06:25:11 onoe Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.81 2005/09/11 20:19:31 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.80 2005/08/03 06:25:11 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.81 2005/09/11 20:19:31 rpaulo Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1097,8 +1097,9 @@ nfssvc_iod(l)
 			(void)nfs_doio(bp);
 			simple_lock(&nmp->nm_slock);
 			/*
-			 * If there are more than one iod on this mount, then defect
-			 * so that the iods can be shared out fairly between the mounts
+			 * If there are more than one iod on this mount, 
+			 * then defect so that the iods can be shared out
+			 * fairly between the mounts
 			 */
 			if (nfs_defect && nmp->nm_bufqiods > 1) {
 				myiod->nid_mount = NULL;
