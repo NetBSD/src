@@ -1,4 +1,4 @@
-.\"	$NetBSD: units.1,v 1.12 2002/09/30 11:09:15 grant Exp $
+.\"	$NetBSD: units.1,v 1.13 2005/09/11 23:28:55 wiz Exp $
 .Dd December 18, 2001
 .Dt UNITS 1
 .Os
@@ -14,9 +14,11 @@
 .Ar from-unit to-unit
 .Oc
 .Sh DESCRIPTION
-The units program converts quantities expression in various scales to
+.Nm
+converts quantities expression in various scales to
 their equivalents in other scales.
-The units program can only handle multiplicative scale changes.
+.Nm
+can only handle multiplicative scale changes.
 It cannot convert Centigrade to Fahrenheit, for example.
 .Pp
 The following options are supported:
@@ -32,8 +34,8 @@ Prints the version number.
 Allows a single unit conversion to be done directly from the command
 line.
 No prompting will occur.
-The units program will print out
-only the result of this single conversion.
+.Nm
+will print out only the result of this single conversion.
 The
 .Ar count
 argument can be prepended to the
@@ -72,9 +74,10 @@ is the same as
 .Dq m/s^2
 or
 .Dq "m/s s" .
-If the user enters incompatible unit types, the units program will
-print a message indicating that the units are not conformable and
-it will display the reduced form for each unit:
+If the user enters incompatible unit types, the
+.Nm
+program will print a message indicating that the units are not
+conformable and it will display the reduced form for each unit:
 .Bd -literal
     You have: ergs/hour
     You want: fathoms kg^2 / day
@@ -124,7 +127,9 @@ its country name:
 .Dq britainpound .
 When searching for
 a unit, if the specified string does not appear exactly as a unit
-name, then the units program will try to remove a trailing
+name, then the
+.Nm
+program will try to remove a trailing
 .Dq s
 or a trailing
 .Dq es
@@ -139,7 +144,8 @@ new units in terms of old ones so that a reduction leads to the
 primitive units which are marked with
 .Sq \&!
 characters.
-The units program will not detect infinite loops that could be caused
+.Nm
+will not detect infinite loops that could be caused
 by careless unit definitions.
 .Pp
 Prefixes are defined in the same was as standard units, but with
