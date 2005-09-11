@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2005/09/10 18:00:49 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2005/09/11 14:30:31 chs Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2005/09/10 18:00:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2005/09/11 14:30:31 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3654,22 +3654,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
 
 		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			XENPRINTK(("pmap update opte == pa, prot change"));
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
-			    opte & (PG_M | PG_U));
-			goto out_ok;
-		}
-
-		/*
 		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
@@ -3802,7 +3786,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:
@@ -3922,22 +3905,6 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
 
 		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			XENPRINTK(("pmap update opte == pa, prot change"));
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
-			    opte & (PG_M | PG_U));
-			goto out_ok;
-		}
-
-		/*
 		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
@@ -4031,7 +3998,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:
