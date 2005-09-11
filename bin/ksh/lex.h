@@ -1,10 +1,10 @@
-/*	$NetBSD: lex.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: lex.h,v 1.7 2005/09/11 22:16:00 christos Exp $	*/
 
 /*
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $ */
+/* $Id: lex.h,v 1.7 2005/09/11 22:16:00 christos Exp $ */
 
 #define	IDENT	64
 
@@ -115,6 +115,7 @@ typedef union {
 #define ESACONLY BIT(7)		/* only accept esac keyword */
 #define CMDWORD BIT(8)		/* parsing simple command (alias related) */
 #define HEREDELIM BIT(9)	/* parsing <<,<<- delimiter */
+#define HEREDOC BIT(10)		/* parsing heredoc */
 
 #define	HERES	10		/* max << in line */
 
