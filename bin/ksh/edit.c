@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.16 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.17 2005/09/11 22:23:42 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.16 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.17 2005/09/11 22:23:42 christos Exp $");
 #endif
 
 
@@ -135,11 +135,6 @@ x_read(buf, len)
 {
 	int	i;
 
-#if defined(TIOCGWINSZ)
-	if (got_sigwinch)
-		check_sigwinch();
-#endif /* TIOCGWINSZ */
-
 	x_mode(TRUE);
 #ifdef EMACS
 	if (Flag(FEMACS) || Flag(FGMACS))
@@ -153,6 +148,11 @@ x_read(buf, len)
 #endif
 		i = -1;		/* internal error */
 	x_mode(FALSE);
+#if defined(TIOCGWINSZ)
+	if (got_sigwinch)
+		check_sigwinch();
+#endif /* TIOCGWINSZ */
+
 	return i;
 }
 
