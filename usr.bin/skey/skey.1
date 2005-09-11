@@ -1,4 +1,4 @@
-.\"	$NetBSD: skey.1,v 1.21 2003/09/07 16:22:24 wiz Exp $
+.\"	$NetBSD: skey.1,v 1.22 2005/09/11 23:25:32 wiz Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
@@ -79,13 +79,13 @@ one-time password(s), after requiring your secret password.
 If however, you misspell your secret password that you have given to
 .Xr skeyinit 1
 while running
-.Xr skey 1
+.Nm
 you will get a list of passwords
 that will not work, and no indication about the problem.
 .Pp
 Password sequence numbers count backward from 99.
 You can enter the passwords using small letters, even though
-.Xr skey 1
+.Nm
 prints them capitalized.
 .Pp
 The
@@ -159,7 +159,7 @@ flag is given to
 is a trademark of
 .Tn Bellcore .
 .Sh AUTHORS
-Phil Karn,
-Neil M. Haller,
-John S. Walden,
-Scott Chasin
+.An Phil Karn
+.An Neil M. Haller
+.An John S. Walden
+.An Scott Chasin
