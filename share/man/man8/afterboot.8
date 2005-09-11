@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.21 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: afterboot.8,v 1.22 2005/09/11 23:36:19 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -388,7 +388,7 @@ To get the RPC portmapper to start automatically on boot,
 you will need to have this line in
 .Pa /etc/rc.conf :
 .Pp
-.Dl portmap=YES
+.Dl rpcbind=YES
 .Ss YP (NIS) Setup
 Check the YP domain name with the
 .Xr domainname 1
