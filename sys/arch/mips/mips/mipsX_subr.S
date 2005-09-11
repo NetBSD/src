@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.15.2.1 2005/05/10 12:39:45 tron Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.15.2.2 2005/09/11 22:11:07 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -134,7 +134,6 @@
 
 /*
  * XXX MIPS3_5900 is still "special" for much of this code.
- * XXX MIPS3_4100 is still "special" in tlb update code
  */
 
 #if MIPS1
