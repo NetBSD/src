@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.124 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.125 2005/09/11 20:15:53 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.124 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.125 2005/09/11 20:15:53 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.124 2005/08/30 20:08:01 xtraeme E
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
 #include <sys/ptrace.h>
+#include <sys/sysctl.h> /* XXX for curtain */
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -523,6 +524,12 @@ procfs_getattr(v)
 		if (procp == NULL)
 			return (ENOENT);
 		break;
+	}
+
+	if (procp != NULL) {
+		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
+			    procp->p_ucred->cr_uid))
+			return (ENOENT);
 	}
 
 	error = 0;
@@ -1028,6 +1035,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 		return 0;
 	}
 
+	if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+		return (0);
+
 	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	d.d_fileno = PROCFS_FILENO(p->p_pid, PFSproc, -1);
@@ -1152,6 +1162,10 @@ procfs_readdir(v)
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
 			return ESRCH;
+
+		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
+			    p->p_ucred->cr_uid))
+			return (ESRCH);
 
 		fdp = p->p_fd;
 
