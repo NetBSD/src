@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.413 2005/09/10 19:08:33 cube Exp $
+$NetBSD: usbdevs,v 1.414 2005/09/11 22:53:07 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -583,6 +583,7 @@ product AOX USB101		0x0008	USB ethernet controller engine
 
 /* Apple Computer products */
 product APPLE OPTMOUSE		0x0302	Optical mouse
+product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* Asahi Optical products */
