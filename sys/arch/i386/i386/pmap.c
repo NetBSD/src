@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184 2005/08/12 10:04:24 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.185 2005/09/11 14:30:31 chs Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2005/08/12 10:04:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2005/09/11 14:30:31 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3297,21 +3297,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		opte = x86_atomic_testset_ul(ptep, npte);
 
 		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			x86_atomic_setbits_l(ptep, opte & (PG_M | PG_U));
-			goto out_ok;
-		}
-
-		/*
-		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
 		if (opte & PG_PVLIST) {
@@ -3436,7 +3421,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:
