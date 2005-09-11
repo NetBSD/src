@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.11 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.12 2005/09/11 22:16:00 christos Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.11 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.12 2005/09/11 22:16:00 christos Exp $");
 #endif
 
 
@@ -1484,7 +1484,7 @@ herein(content, sub)
 		s = pushs(SSTRING, ATEMP);
 		s->start = s->str = content;
 		source = s;
-		if (yylex(ONEWORD) != LWORD)
+		if (yylex(ONEWORD|HEREDOC) != LWORD)
 			internal_errorf(1, "herein: yylex");
 		source = osource;
 		shf_puts(evalstr(yylval.cp, 0), shf);
