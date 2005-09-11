@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.44 2004/04/02 10:13:57 mrg Exp $
+.\"	$NetBSD: inetd.8,v 1.45 2005/09/11 23:38:35 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,14 +95,10 @@ allows running one daemon to invoke several others,
 reducing load on the system.
 .Pp
 The options available for
-.\" Why doesn't just `.Nm :' work?
 .Nm :
 .Bl -tag -width Ds
 .It Fl d
 Turns on debugging.
-.El
-.Pp
-.Bl -tag -width Ds
 .It Fl l
 Turns on libwrap connection logging.
 .El
