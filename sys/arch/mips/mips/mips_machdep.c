@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.177.8.1 2005/09/11 22:10:13 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.177.8.1 2005/09/11 22:10:13 tron Exp $");
 
 #include "opt_cputype.h"
 
@@ -215,10 +215,6 @@ struct	pcb  *curpcb;
 struct	segtab *segbase;
 
 caddr_t	msgbufaddr;
-
-#if defined(MIPS3_4100)			/* VR4100 core */
-int	default_pg_mask = 0x00001800;
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -886,12 +882,18 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 #if defined(MIPS3_5900)	/* XXX */
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
 		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
 #else /* MIPS3_5900 */
+#if defined(MIPS3_4100)
+		mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+#else
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+#endif
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -902,6 +904,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -911,6 +914,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS64)
 	case CPU_ARCH_MIPS64:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
