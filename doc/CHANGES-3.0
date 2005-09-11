@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.234 2005/09/09 15:27:52 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.235 2005/09/11 22:14:04 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12475,4 +12475,19 @@ usr.bin/vi/ex/version.h				1.18
 	- Blanks and alnum chars are ignored in the shellmeta option.
 	- \ Can be used to escape any (special) character in file names.
 	[aymeric, ticket #753]
+
+sys/dev/pci/if_vge.c				1.6
+
+	PR kern/31130: Fix vge(4) SIOC{ADD,DEL}MULTI handling.
+	[christos, ticket #756]
+
+sys/arch/mips/include/mips3_pte.h		1.17
+sys/arch/mips/include/locore.h			1.69
+sys/arch/mips/mips/locore_mips3.S		1.87
+sys/arch/mips/mips/mipsX_subr.S			1.17
+sys/arch/mips/mips/mips_machdep.c		1.179
+
+	Initilize CP0 pagemask register properly.
+	Fixes PR port-mips/30590 and some other mips port.
+	[tsutsui, ticket #758]
 
