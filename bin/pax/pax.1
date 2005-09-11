@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.49 2004/06/19 02:27:00 christos Exp $
+.\"    $NetBSD: pax.1,v 1.50 2005/09/11 23:21:17 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -1174,6 +1174,51 @@ options are specified along with the
 .Fl n
 option, a file is not considered selected unless it is newer
 than the file to which it is compared.
+.Sh EXIT STATUS
+.Nm
+will exit with one of the following values:
+.Bl -tag -width 2n
+.It 0
+All files were processed successfully.
+.It 1
+An error occurred.
+.El
+.Pp
+Whenever
+.Nm
+cannot create a file or a link when reading an archive or cannot
+find a file when writing an archive, or cannot preserve the user ID,
+group ID, or file mode when the
+.Fl p
+option is specified, a diagnostic message is written to
+.Dv standard error
+and a non-zero exit status will be returned, but processing will continue.
+In the case where pax cannot create a link to a file,
+.Nm
+will not create a second copy of the file.
+.Pp
+If the extraction of a file from an archive is prematurely terminated by
+a signal or error,
+.Nm
+may have only partially extracted a file the user wanted.
+Additionally, the file modes of extracted files and directories
+may have incorrect file bits, and the modification and access times may be
+wrong.
+.Pp
+If the creation of an archive is prematurely terminated by a signal or error,
+.Nm
+may have only partially created the archive which may violate the specific
+archive format specification.
+.Pp
+If while doing a
+.Em copy ,
+.Nm
+detects a file is about to overwrite itself, the file is not copied,
+a diagnostic message is written to
+.Dv standard error
+and when
+.Nm
+completes it will exit with a non-zero exit status.
 .Sh EXAMPLES
 The command:
 .Dl pax -w -f /dev/rst0 \&.
@@ -1236,51 +1281,6 @@ will update (and list) only those files in the destination directory
 which are older (less recent inode change or file modification times) than
 files with the same name found in the source file tree
 .Pa home .
-.Sh ERRORS
-.Nm
-will exit with one of the following values:
-.Bl -tag -width 2n
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
-.Pp
-Whenever
-.Nm
-cannot create a file or a link when reading an archive or cannot
-find a file when writing an archive, or cannot preserve the user ID,
-group ID, or file mode when the
-.Fl p
-option is specified, a diagnostic message is written to
-.Dv standard error
-and a non-zero exit status will be returned, but processing will continue.
-In the case where pax cannot create a link to a file,
-.Nm
-will not create a second copy of the file.
-.Pp
-If the extraction of a file from an archive is prematurely terminated by
-a signal or error,
-.Nm
-may have only partially extracted a file the user wanted.
-Additionally, the file modes of extracted files and directories
-may have incorrect file bits, and the modification and access times may be
-wrong.
-.Pp
-If the creation of an archive is prematurely terminated by a signal or error,
-.Nm
-may have only partially created the archive which may violate the specific
-archive format specification.
-.Pp
-If while doing a
-.Em copy ,
-.Nm
-detects a file is about to overwrite itself, the file is not copied,
-a diagnostic message is written to
-.Dv standard error
-and when
-.Nm
-completes it will exit with a non-zero exit status.
 .Sh SEE ALSO
 .Xr cpio 1 ,
 .Xr tar 1 ,
