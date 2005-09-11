@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.155 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.156 2005/09/11 21:57:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.155 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.156 2005/09/11 21:57:24 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.155 2005/08/18 00:30:59 yamt Exp $")
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+static int ip_getoptval(struct mbuf *, u_int8_t *, u_int);
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
@@ -1626,6 +1627,32 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 	return ifp;
 }
 
+static int
+ip_getoptval(struct mbuf *m, u_int8_t *val, u_int maxval)
+{
+	u_int tval;
+
+	if (m == NULL)
+		return EINVAL;
+
+	switch (m->m_len) {
+	case sizeof(u_char):
+		tval = *(mtod(m, u_char *));
+		break;
+	case sizeof(u_int):
+		tval = *(mtod(m, u_int *));
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (tval > maxval)
+		return EINVAL;
+
+	*val = tval;
+	return 0;
+}
+
 /*
  * Set the IP multicast options in response to user setsockopt().
  */
@@ -1633,7 +1660,6 @@ int
 ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 {
 	int error = 0;
-	u_char loop;
 	int i;
 	struct in_addr addr;
 	struct ip_mreq *mreq;
@@ -1702,11 +1728,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		/*
 		 * Set the IP time-to-live for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_ttl = *(mtod(m, u_char *));
+		error = ip_getoptval(m, &imo->imo_multicast_ttl, 255);
 		break;
 
 	case IP_MULTICAST_LOOP:
@@ -1714,12 +1736,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Set the loopback flag for outgoing multicast packets.
 		 * Must be zero or one.
 		 */
-		if (m == NULL || m->m_len != 1 ||
-		   (loop = *(mtod(m, u_char *))) > 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_loop = loop;
+		error = ip_getoptval(m, &imo->imo_multicast_loop, 1);
 		break;
 
 	case IP_ADD_MEMBERSHIP:
