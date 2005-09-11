@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.2 2005/08/15 06:41:06 he Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.3 2005/09/11 22:01:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.2 2005/08/15 06:41:06 he Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.3 2005/09/11 22:01:44 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -405,7 +405,7 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	else if (CD9660_IS_COMMAND_ARG(var,"allow-multidot"))
 		diskStructure.allow_multidot = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "omit-trailing-period"))
-		diskStructure.omit_trailing_period = 0;
+		diskStructure.omit_trailing_period = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
 		    CD9660_IS_COMMAND_ARG(var, "no-boot") ||
 		    CD9660_IS_COMMAND_ARG(var, "hard-disk-boot") ||
@@ -1738,6 +1738,8 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 		}
 		oldname ++;
 	}
+	if (!found_ext && !diskStructure.omit_trailing_period)
+		*newname++ = '.';
 	/* Add version */
 	*(newname++) = ';';
 	sprintf((newname++), "%i", 1);
@@ -1790,7 +1792,8 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 		}
 		oldname ++;
 	}
-
+	if (!found_ext && !diskStructure.omit_trailing_period)
+		*newname++ = '.';
 	/* Add version */
 	*(newname++) = ';';
 	sprintf((newname++), "%i", 1);
