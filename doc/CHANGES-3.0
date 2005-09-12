@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.237 2005/09/12 13:45:41 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.238 2005/09/12 18:40:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12536,4 +12536,17 @@ sys/dev/pcmcia/pcmcia.c				1.74
 
 	Fix PR kern/30995: pcmcia interface can't use ne2000 compatible card.
 	[christos, ticket #761]
+
+xsrc/xfree/xc/config/cf/NetBSD.cf			1.80
+
+	Remove unsafe /tmp file creation for the file.0 target. Just make
+	the file in the current build directory instead of temp directory.
+	[reed, ticket #769]
+
+usr.bin/id/id.c					1.25
+
+	id(1) didn't check the return value of getgrouplist(3) and used memory
+	outside the group array in the case that a user is member of more than
+	_SC_NGROUPS_MAX groups.
+	[drochner, ticket #772]
 
