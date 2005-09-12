@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.39 2004/07/22 16:51:45 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.39.2.1 2005/09/12 12:26:27 tron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd July 22, 2004
+.Dd August 23, 2005
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -416,6 +416,27 @@ cryptographic message digest of the file.
 .It Sy sha1digest
 Synonym for
 .Sy sha1 .
+.It Sy sha256
+The 256-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha256digest
+Synonym for
+.Sy sha256 .
+.It Sy sha384
+The 384-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha384digest
+Synonym for
+.Sy sha384 .
+.It Sy sha512
+The 512-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha512digest
+Synonym for
+.Sy sha512 .
 .It Sy size
 The size, in bytes, of the file.
 .It Sy tags
@@ -606,7 +627,6 @@ for distributions and other such things.
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
 .Xr cksum 1 ,
-.Xr md5 1 ,
 .Xr stat 2 ,
 .Xr fnmatch 3 ,
 .Xr fts 3 ,
@@ -658,3 +678,10 @@ and
 .Fl X
 flags, and support for full paths appeared in
 .Nx 1.6 .
+The
+.Sy sha256 ,
+.Sy sha384 ,
+and
+.Sy sha512
+keywords appeared in
+.Nx 4.0 .
