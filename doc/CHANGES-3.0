@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.235 2005/09/11 22:14:04 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.236 2005/09/12 12:40:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12490,4 +12490,49 @@ sys/arch/mips/mips/mips_machdep.c		1.179
 	Initilize CP0 pagemask register properly.
 	Fixes PR port-mips/30590 and some other mips port.
 	[tsutsui, ticket #758]
+
+usr.bin/cksum/Makefile				patch
+usr.bin/cksum/cksum.1				patch
+usr.bin/cksum/cksum.c				patch
+usr.bin/cksum/extern.h				patch
+usr.bin/cksum/md5.c				patch
+usr.bin/cksum/sha256.c				new file
+usr.bin/cksum/sha384.c				new file
+usr.bin/cksum/sha512.c				new file
+
+	- Deprecate -1, -2, -4, -5, -6, -m flags.
+	- Add -a <algorithm> flag.
+	- Support SHA2 hashing.
+	cksum(1) now supports ``sha256'', ``sha384'', and ``sha512''.
+	[elad, ticket #754]
+
+tools/mtree/Makefile				patch
+usr.sbin/mtree/compare.c			patch
+usr.sbin/mtree/create.c				patch
+usr.sbin/mtree/misc.c				patch
+usr.sbin/mtree/mtree.8				patch
+usr.sbin/mtree/mtree.h				patch
+usr.sbin/mtree/spec.c				patch
+
+	Add support for SHA2 in mtree(8).
+	[elad, ticket #755]
+
+share/man/man9/kthread.9			1.13
+
+	Mention that a kthread *must* call kthread_exit() to terminate itself
+	properly. If you don't, the kernel will likely crash.
+	[briggs, ticket #759]
+
+sys/dev/mii/dmphy.c				1.21
+sys/dev/mii/miidevs				1.60
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add DAVICOM DM9102.
+	[kiyohara, ticket #760]
+
+sys/dev/pcmcia/pcmcia.c				1.74
+
+	Fix PR kern/30995: pcmcia interface can't use ne2000 compatible card.
+	[christos, ticket #761]
 
