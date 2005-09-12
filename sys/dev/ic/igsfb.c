@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.21 2005/09/12 11:02:21 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.22 2005/09/12 12:07:47 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.21 2005/09/12 11:02:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.22 2005/09/12 12:07:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,6 +457,8 @@ igsfb_init_wsdisplay(dc)
 
 	/* XXX: TODO: compute term size based on font dimensions? */
 	rasops_init(ri, 34, 80);
+	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
+	    ri->ri_width / ri->ri_font->fontwidth);
 
 
 	/* use the sprite for the text mode cursor */
@@ -629,6 +631,7 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
 		return (0);
+		
 	case WSDISPLAYIO_LINEBYTES:
 		ri = &dc->dc_ri;
 		*(int *)data = ri->ri_stride;
