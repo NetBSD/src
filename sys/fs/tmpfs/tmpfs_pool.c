@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.2 2005/09/12 19:56:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.2 2005/09/12 19:56:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -74,13 +74,13 @@ void
 tmpfs_pool_init(struct tmpfs_pool *tpp, size_t size, const char *what,
     struct tmpfs_mount *tmp)
 {
-	char wchan[64];
 	int cnt;
 
-	cnt = snprintf(wchan, sizeof(wchan), "%s_pool_%p", what, tmp);
-	KASSERT(cnt < sizeof(wchan));
+	cnt = snprintf(tpp->tp_name, sizeof(tpp->tp_name),
+	    "%s_pool_%p", what, tmp);
+	KASSERT(cnt < sizeof(tpp->tp_name));
 
-	pool_init((struct pool *)tpp, size, 0, 0, 0, wchan,
+	pool_init(&tpp->tp_pool, size, 0, 0, 0, tpp->tp_name,
 	    &tmpfs_pool_allocator);
 	tpp->tp_mount = tmp;
 }
