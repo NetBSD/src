@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.15 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.16 2005/09/12 20:21:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.15 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.16 2005/09/12 20:21:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,8 @@ ext2fs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
 	struct timespec *ts = NULL, tsb;
+
+	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
 
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
