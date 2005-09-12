@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.31 2005/09/12 16:13:13 tsarna Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.32 2005/09/12 18:34:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.31 2005/09/12 16:13:13 tsarna Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.32 2005/09/12 18:34:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,6 +642,6 @@ drop_privs(char *newuser)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-i <time>]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-i interval] [-u user]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
