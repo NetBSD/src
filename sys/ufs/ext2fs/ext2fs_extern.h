@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.27 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.28 2005/09/12 20:23:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -85,6 +85,10 @@ struct componentname;
 
 extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */
+
+#define	EXT2FS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		ext2fs_itimes(ip, acc, mod, cre)
 
 __BEGIN_DECLS
 
