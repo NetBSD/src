@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.7 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.8 2005/09/12 16:37:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.7 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.8 2005/09/12 16:37:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,8 +157,8 @@ int	ptyfs_update	(void *);
 static int ptyfs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
     struct proc *);
 static int ptyfs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
-static void ptyfs_time(struct ptyfsnode *, struct timespec *,
-    struct timespec *);
+static void ptyfs_itimes(struct ptyfsnode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 static int atoi(const char *, size_t);
 
 extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
@@ -311,10 +311,8 @@ ptyfs_getattr(void *v)
 	} */ *ap = v;
 	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
-        struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	ptyfs_time(ptyfs, &ts, &ts);
+	ptyfs_itimes(ptyfs, NULL, NULL, NULL);
 
 	/* start by zeroing out the attributes */
 	VATTR_NULL(vap);
@@ -778,13 +776,10 @@ ptyfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
-        struct timespec ts;
 
         simple_lock(&vp->v_interlock);
-        if (vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ptyfs_time(ptyfs, &ts, &ts);
-        }
+        if (vp->v_usecount > 1)
+		ptyfs_itimes(ptyfs, NULL, NULL, NULL);
         simple_unlock(&vp->v_interlock);
 
 	switch (ptyfs->ptyfs_type) {
@@ -940,32 +935,36 @@ ptyfs_update(v)
 		int a_flags;
 	} */ *ap = v;
 	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
-	struct timespec ts;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return 0;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if (ap->a_access == NULL)
-		ap->a_access = &ts;
-	if (ap->a_modify == NULL)
-		ap->a_modify = &ts;
-	ptyfs_time(ptyfs, ap->a_access, ap->a_modify);
+	ptyfs_itimes(ptyfs, ap->a_access, ap->a_modify, NULL);
 	return 0;
 }
 
-static void
-ptyfs_time(struct ptyfsnode *ptyfs, struct timespec *atime,
-    struct timespec *mtime)
+void
+ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *cre)
 {
+	struct timespec *ts = NULL, tsb;
+
+	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
+		if (acc == NULL)
+			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ptyfs->ptyfs_atime = *acc;
+	}
 	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
-		ptyfs->ptyfs_mtime = *mtime;
-		ptyfs->ptyfs_atime = *atime;
-	} else if (ptyfs->ptyfs_flag & PTYFS_ACCESS)
-		ptyfs->ptyfs_atime = *atime;
-	if (ptyfs->ptyfs_flag & PTYFS_CHANGE)
-		ptyfs->ptyfs_ctime = *atime;
-	ptyfs->ptyfs_flag = 0;
+		if (mod == NULL)
+			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ptyfs->ptyfs_mtime = *mod;
+	}
+	if (ptyfs->ptyfs_flag & PTYFS_CHANGE) {
+		if (cre == NULL)
+			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ptyfs->ptyfs_atime = *cre;
+	}
+	ptyfs->ptyfs_flag &= ~(PTYFS_ACCESS | PTYFS_CHANGE | PTYFS_MODIFY);
 }
 
 /*
