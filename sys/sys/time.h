@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.49 2005/07/23 19:43:01 cube Exp $	*/
+/*	$NetBSD: time.h,v 1.50 2005/09/12 16:21:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -212,7 +212,8 @@ struct	ptimers {
 int	itimerfix(struct timeval *tv);
 int	itimerdecr(struct ptimer *, int);
 void	itimerfire(struct ptimer *);
-void	microtime(struct timeval *tv);
+void	microtime(struct timeval *);
+struct timespec	*nanotime(struct timespec *);
 int	settime(struct timeval *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
