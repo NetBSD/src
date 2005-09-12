@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.27 2005/09/12 16:44:29 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.28 2005/09/12 16:54:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.27 2005/09/12 16:44:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.28 2005/09/12 16:54:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	smb_rq_getrequest(rqp, &mbp);
 
 	/* get current time */
-	(void)nanotime(&ts);
+	(void)nanotime(&ctime);
 	smb_time_local2server(&ctime, SSTOVC(ssp)->vc_sopt.sv_tz, &tm);
 
 	smb_rq_wstart(rqp);
