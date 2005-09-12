@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.22 2004/07/22 16:51:45 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.22.2.1 2005/09/12 12:26:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,6 +56,9 @@ typedef struct _node {
 	char	*md5digest;			/* MD5 digest */
 	char	*rmd160digest;			/* RMD-160 digest */
 	char	*sha1digest;			/* SHA1 digest */
+	char	*sha256digest;			/* SHA256 digest */
+	char	*sha384digest;			/* SHA384 digest */
+	char	*sha512digest;			/* SHA512 digest */
 	char	*tags;				/* tags, comma delimited */
 	size_t	lineno;				/* line # entry came from */
 
@@ -81,6 +84,9 @@ typedef struct _node {
 #define	F_UID		0x00080000		/* uid */
 #define	F_UNAME		0x00100000		/* user name */
 #define	F_VISIT		0x00200000		/* file visited */
+#define	F_SHA256	0x00800000		/* SHA256 digest */
+#define	F_SHA384	0x01000000		/* SHA384 digest */
+#define	F_SHA512	0x02000000		/* SHA512 digest */
 
 	int	flags;				/* items set */
 

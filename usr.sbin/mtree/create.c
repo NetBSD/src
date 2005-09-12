@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.46 2004/12/01 10:07:56 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.46.2.1 2005/09/12 12:26:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.46 2004/12/01 10:07:56 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.46.2.1 2005/09/12 12:26:27 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,9 @@ __RCSID("$NetBSD: create.c,v 1.46 2004/12/01 10:07:56 lukem Exp $");
 #endif
 #ifndef NO_SHA1
 #include <sha1.h>
+#endif
+#ifndef NO_SHA2
+#include <crypto/sha2.h>
 #endif
 
 #include "extern.h"
@@ -146,8 +149,8 @@ statf(FTSENT *p)
 	u_int32_t len, val;
 	int fd, indent;
 	const char *name;
-#if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1)
-	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
+#if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
+	char digestbuf[MAXHASHLEN + 1];
 #endif
 
 	indent = printf("%s%s",
@@ -220,6 +223,23 @@ statf(FTSENT *p)
 		output(&indent, "sha1=%s", digestbuf);
 	}
 #endif	/* ! NO_SHA1 */
+#ifndef NO_SHA2
+	if (keys & F_SHA256 && S_ISREG(p->fts_statp->st_mode)) {
+		if (SHA256_File(p->fts_accpath, digestbuf) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "SHA256_File");
+		output(&indent, "sha256=%s", digestbuf);
+	}
+	if (keys & F_SHA384 && S_ISREG(p->fts_statp->st_mode)) {
+		if (SHA384_File(p->fts_accpath, digestbuf) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "SHA384_File");
+		output(&indent, "sha384=%s", digestbuf);
+	}
+	if (keys & F_SHA512 && S_ISREG(p->fts_statp->st_mode)) {
+		if (SHA512_File(p->fts_accpath, digestbuf) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "SHA512_File");
+		output(&indent, "sha512=%s", digestbuf);
+	}
+#endif	/* ! NO_SHA2 */
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(&indent, "link=%s", vispath(rlink(p->fts_accpath)));

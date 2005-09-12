@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.59 2004/12/01 23:27:36 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.59.2.1 2005/09/12 12:26:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.59 2004/12/01 23:27:36 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.59.2.1 2005/09/12 12:26:27 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,6 +293,9 @@ free_nodes(NODE *root)
 		REPLACEPTR(cur->md5digest, NULL);
 		REPLACEPTR(cur->rmd160digest, NULL);
 		REPLACEPTR(cur->sha1digest, NULL);
+		REPLACEPTR(cur->sha256digest, NULL);
+		REPLACEPTR(cur->sha384digest, NULL);
+		REPLACEPTR(cur->sha512digest, NULL);
 		REPLACEPTR(cur->tags, NULL);
 		REPLACEPTR(cur, NULL);
 	}
@@ -362,6 +365,12 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			printf("rmd160=%s ", cur->rmd160digest);
 		if (MATCHFLAG(F_SHA1))
 			printf("sha1=%s ", cur->sha1digest);
+		if (MATCHFLAG(F_SHA256))
+			printf("sha256=%s ", cur->sha256digest);
+		if (MATCHFLAG(F_SHA384))
+			printf("sha384=%s ", cur->sha384digest);
+		if (MATCHFLAG(F_SHA512))
+			printf("sha512=%s ", cur->sha512digest);
 		if (MATCHFLAG(F_FLAGS))
 			printf("flags=%s ",
 			    flags_to_string(cur->st_flags, "none"));
@@ -479,6 +488,9 @@ replacenode(NODE *cur, NODE *new)
 	REPLACESTR(md5digest);
 	REPLACESTR(rmd160digest);
 	REPLACESTR(sha1digest);
+	REPLACESTR(sha256digest);
+	REPLACESTR(sha384digest);
+	REPLACESTR(sha512digest);
 	REPLACESTR(tags);
 	REPLACE(lineno);
 	REPLACE(flags);
@@ -618,6 +630,30 @@ set(char *t, NODE *ip)
 			if (uid_from_user(val, &uid) == -1)
 				mtree_err("unknown user `%s'", val);
 			ip->st_uid = uid;
+			break;
+		case F_SHA256:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->sha256digest = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
+			break;
+		case F_SHA384:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->sha384digest = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
+			break;
+		case F_SHA512:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->sha512digest = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
 			break;
 		default:
 			mtree_err(
