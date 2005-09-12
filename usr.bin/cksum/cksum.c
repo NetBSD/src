@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $	*/
+/*	$NetBSD: cksum.c,v 1.24.2.1 2005/09/12 12:17:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.24.2.1 2005/09/12 12:17:35 tron Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $");
 #include <md4.h>
 #include <md2.h>
 #include <sha1.h>
+#include <crypto/sha2.h>
 #include <rmd160.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,6 +136,15 @@ struct hash {
 	{ "rmd160", "RMD160",
 	  RMD160String, RMD160TimeTrial, RMD160TestSuite,
 	  RMD160Filter, (_filefunc) RMD160File },
+	{ "sha256", "SHA256",
+	  SHA256_String, SHA256_TimeTrial, SHA256_TestSuite,
+	  SHA256_Filter, (_filefunc) SHA256_File },
+	{ "sha384", "SHA384",
+	  SHA384_String, SHA384_TimeTrial, SHA384_TestSuite,
+	  SHA384_Filter, (_filefunc) SHA384_File },
+	{ "sha512", "SHA512",
+	  SHA512_String, SHA512_TimeTrial, SHA512_TestSuite,
+	  SHA512_Filter, (_filefunc) SHA512_File },
 	{ NULL }
 };
 
@@ -153,7 +163,7 @@ main(int argc, char **argv)
 	int (*cfncn) (int, u_int32_t *, off_t *);
 	void (*pfncn) (char *, u_int32_t, off_t);
 	struct hash *hash;
-	int normal;
+	int normal, i;
 
 	cfncn = NULL;
 	pfncn = NULL;
@@ -181,8 +191,42 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "mno:ps:tx12456")) != -1)
+	/*
+	 * The -1, -2, -4, -5, -6, and -m flags should be deprecated, but
+	 * are still supported in code to not break anything that might
+	 * be using them.
+	 */
+	while ((ch = getopt(argc, argv, "a:mno:ps:tx12456")) != -1)
 		switch(ch) {
+		case 'a':
+			if (hash != NULL || dosum) {
+				warnx("illegal use of -a option\n");
+				usage();
+			}
+			i = 0;
+			while (hashes[i].hashname != NULL) {
+				if (!strcasecmp(hashes[i].hashname, optarg)) {
+					hash = &hashes[i];
+					break;
+				}
+				i++;
+			}
+			if (hash == NULL) {
+				if (!strcasecmp(optarg, "old1")) {
+					cfncn = csum1;
+					pfncn = psum1;
+				} else if (!strcasecmp(optarg, "old2")) {
+					cfncn = csum2;
+					pfncn = psum2;
+				} else if (!strcasecmp(optarg, "crc")) {
+					cfncn = crc;
+					pfncn = pcrc;
+				} else {
+					warnx("illegal argument to -a option");
+					usage();
+				}
+			}
+			break;
 		case '2':
 			if (dosum) {
 				warnx("sum mutually exclusive with md2");
@@ -306,9 +350,9 @@ main(int argc, char **argv)
 int
 hash_digest_file(char *fn, struct hash *hash, int normal)
 {
-	char buf[41], *cp;
+	char *cp;
 
-	cp = hash->filefunc(fn, buf);
+	cp = hash->filefunc(fn, NULL);
 	if (cp == NULL)
 		return 1;
 
@@ -316,6 +360,9 @@ hash_digest_file(char *fn, struct hash *hash, int normal)
 		printf("%s %s\n", cp, fn);
 	else
 		printf("%s (%s) = %s\n", hash->hashname, fn, cp);
+
+	free(cp);
+
 	return 0;
 }
 

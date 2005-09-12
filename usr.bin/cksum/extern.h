@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2005/01/20 15:44:59 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.15.2.1 2005/09/12 12:17:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,4 +70,19 @@ void	RMD160String(const char *);
 void	RMD160TimeTrial(void);
 void	RMD160TestSuite(void);
 void	RMD160Filter(int);
+
+void	SHA256_String(const char *);
+void	SHA256_TimeTrial(void);
+void	SHA256_TestSuite(void);
+void	SHA256_Filter(int);
+
+void	SHA384_String(const char *);
+void	SHA384_TimeTrial(void);
+void	SHA384_TestSuite(void);
+void	SHA384_Filter(int);
+
+void	SHA512_String(const char *);
+void	SHA512_TimeTrial(void);
+void	SHA512_TestSuite(void);
+void	SHA512_Filter(int);
 __END_DECLS
