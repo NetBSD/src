@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.73 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.74 2005/09/12 20:09:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.73 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.74 2005/09/12 20:09:59 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -647,4 +647,37 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 
 	*countp = blocksreleased;
 	return (allerror);
+}
+
+void
+ffs_itimes(struct inode *ip, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *cre)
+{
+	struct timespec *ts = NULL, tsb;
+	if (ip->i_flag & IN_ACCESS) {
+		if (acc == NULL)
+			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		DIP_ASSIGN(ip, atime, acc->tv_sec);
+		DIP_ASSIGN(ip, atimensec, acc->tv_nsec);
+	}
+	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
+		if ((ip->i_flags & SF_SNAPSHOT) == 0) {
+			if (mod == NULL)
+				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			DIP_ASSIGN(ip, mtime, mod->tv_sec);
+			DIP_ASSIGN(ip, mtimensec, mod->tv_nsec);
+		}
+		ip->i_modrev++;
+	}
+	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
+		if (cre == NULL)
+			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		DIP_ASSIGN(ip, ctime, cre->tv_sec);
+		DIP_ASSIGN(ip, ctimensec, cre->tv_nsec);
+	}
+	if (ip->i_flag & (IN_ACCESS | IN_MODIFY))
+		ip->i_flag |= IN_ACCESSED;
+	if (ip->i_flag & (IN_UPDATE | IN_CHANGE))
+		ip->i_flag |= IN_MODIFIED;
+	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }
