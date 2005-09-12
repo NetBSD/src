@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.2 2005/09/12 16:09:06 rpaulo Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.3 2005/09/12 16:10:11 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.3 2005/09/12 16:10:11 rpaulo Exp $");
 
 #include "opt_ffs.h"
 
