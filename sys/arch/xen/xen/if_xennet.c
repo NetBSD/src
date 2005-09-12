@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.34 2005/09/12 12:40:43 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.35 2005/09/12 12:41:06 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.34 2005/09/12 12:40:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.35 2005/09/12 12:41:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -143,9 +143,7 @@ static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
 CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
 
-#define TX_MAX_ENTRIES (NETIF_TX_RING_SIZE - 2)
 #define RX_MAX_ENTRIES (NETIF_RX_RING_SIZE - 2)
-#define TX_ENTRIES 128
 #define RX_ENTRIES 128
 
 static unsigned long rx_pfn_array[NETIF_RX_RING_SIZE];
