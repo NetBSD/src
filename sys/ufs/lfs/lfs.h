@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.92 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.93 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -325,44 +325,9 @@ struct lfid {
 	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
-#define LFS_ITIMES(ip, acc, mod, cre)  do {				\
-	struct lfs *_fs = (ip)->i_lfs;					\
-									\
-	if ((ip)->i_flag & IN_ACCESS) {					\
-		(ip)->i_ffs1_atime = (acc)->tv_sec;			\
-		(ip)->i_ffs1_atimensec = (acc)->tv_nsec;		\
-		if ((ip)->i_lfs->lfs_version > 1) {			\
-			struct buf *_ibp;				\
-			IFILE *_ifp;					\
-									\
-			LFS_IENTRY(_ifp, ip->i_lfs, ip->i_number, _ibp); \
-			_ifp->if_atime_sec = (acc)->tv_sec;		\
-			_ifp->if_atime_nsec = (acc)->tv_nsec;		\
-			LFS_BWRITE_LOG(_ibp);				\
-			simple_lock(&_fs->lfs_interlock);		\
-			_fs->lfs_flags |= LFS_IFDIRTY;			\
-			simple_unlock(&_fs->lfs_interlock);		\
-		} else {						\
-			LFS_SET_UINO(ip, IN_ACCESSED);			\
-		}							\
-	}								\
-	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {	\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			(ip)->i_ffs1_mtime = (mod)->tv_sec;		\
-			(ip)->i_ffs1_mtimensec = (mod)->tv_nsec;	\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			(ip)->i_ffs1_ctime = (cre)->tv_sec;		\
-			(ip)->i_ffs1_ctimensec = (cre)->tv_nsec;	\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE))		\
-			LFS_SET_UINO(ip, IN_MODIFIED);			\
-		if ((ip)->i_flag & IN_MODIFY)				\
-			LFS_SET_UINO(ip, IN_ACCESSED);			\
-	}								\
-	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);\
-} while (0)
+#define LFS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		lfs_itimes(ip, acc, mod, cre)
 
 /*
  * "struct vnode" associated definitions

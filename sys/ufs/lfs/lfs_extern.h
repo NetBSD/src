@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.69 2005/06/28 09:30:38 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.70 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ int lfs_resize_fs(struct lfs *, int);
 /* lfs_vnops.c */
 void lfs_mark_vnode(struct vnode *);
 void lfs_unmark_vnode(struct vnode *);
-void lfs_itimes(struct inode *, struct timespec *, struct timespec *,
-		struct timespec *);
+void lfs_itimes(struct inode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 int lfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);

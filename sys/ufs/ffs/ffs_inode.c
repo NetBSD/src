@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.72 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.73 2005/09/12 16:24:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.72 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.73 2005/09/12 16:24:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -87,17 +87,13 @@ ffs_update(void *v)
 	struct buf *bp;
 	struct inode *ip;
 	int error;
-	struct timespec ts;
 	caddr_t cp;
 	int waitfor, flags;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	FFS_ITIMES(ip,
-	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
+	FFS_ITIMES(ip, ap->a_access, ap->a_modify, NULL);
 	if (ap->a_flags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 	else

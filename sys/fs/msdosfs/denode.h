@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.7 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: denode.h,v 1.8 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -225,20 +225,8 @@ struct denode {
 #define	DETOV(de)	((de)->de_vnode)
 
 #define	DETIMES(dep, acc, mod, cre, gmtoff) \
-	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
-		(dep)->de_flag |= DE_MODIFIED; \
-		if ((dep)->de_flag & DE_UPDATE) { \
-			unix2dostime((mod), gmtoff, &(dep)->de_MDate, &(dep)->de_MTime, NULL); \
-			(dep)->de_Attributes |= ATTR_ARCHIVE; \
-		} \
-		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
-			if ((dep)->de_flag & DE_ACCESS) \
-				unix2dostime((acc), gmtoff, &(dep)->de_ADate, NULL, NULL); \
-			if ((dep)->de_flag & DE_CREATE) \
-				unix2dostime((cre), gmtoff, &(dep)->de_CDate, &(dep)->de_CTime, &(dep)->de_CHun); \
-		} \
-		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
-	}
+	while ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) \
+		msdosfs_detimes(dep, acc, mod, cre, gmtoff)
 
 /*
  * This overlays the fid structure (see mount.h)
@@ -313,4 +301,6 @@ int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);
 int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 void msdosfs_gop_markupdate(struct vnode *, int);
+void msdosfs_detimes(struct denode *, const struct timespec *,
+    const struct timespec *, const struct timespec *, int);
 #endif	/* _KERNEL */

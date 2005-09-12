@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.61 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.62 2005/09/12 16:24:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.61 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.62 2005/09/12 16:24:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,10 +276,8 @@ ext2fs_getattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
-	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip, &ts, &ts, &ts);
+	EXT2FS_ITIMES(ip, NULL, NULL, NULL);
 	/*
 	 * Copy from inode table
 	 */

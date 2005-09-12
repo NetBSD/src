@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.3 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: direntry.h,v 1.4 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -119,7 +119,7 @@ struct winentry {
 #define DD_YEAR_SHIFT		9
 
 #ifdef _KERNEL
-void	unix2dostime(struct timespec *tsp, int gmtoff, u_int16_t *ddp,
+void	unix2dostime(const struct timespec *tsp, int gmtoff, u_int16_t *ddp,
 	    u_int16_t *dtp, u_int8_t *dhp);
 void	dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff,
 	    struct timespec *tsp);

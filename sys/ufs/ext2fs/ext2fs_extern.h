@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.26 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.27 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -129,6 +129,8 @@ int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 /* ext2fs_subr.c */
 int ext2fs_blkatoff(void *);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
+void ext2fs_itimes(struct inode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 #ifdef DIAGNOSTIC
 void	ext2fs_checkoverlap(struct buf *, struct inode *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.19 2005/09/10 18:35:56 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.20 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2005/09/10 18:35:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.20 2005/09/12 16:24:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ msdosfs_create(v)
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
 	int error;
-	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_create(cnp %p, vap %p\n", cnp, ap->a_vap);
@@ -155,8 +154,7 @@ msdosfs_create(v)
 	ndirent.de_devvp = pdep->de_devvp;
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts, pdep->de_pmp->pm_gmtoff);
+	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
@@ -216,13 +214,10 @@ msdosfs_close(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
-	struct timespec ts;
 
 	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		DETIMES(dep, &ts, &ts, &ts, dep->de_pmp->pm_gmtoff);
-	}
+	if (vp->v_usecount > 1)
+		DETIMES(dep, NULL, NULL, NULL, dep->de_pmp->pm_gmtoff);
 	simple_unlock(&vp->v_interlock);
 	return (0);
 }
@@ -282,12 +277,10 @@ msdosfs_getattr(v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
 	mode_t mode;
-	struct timespec ts;
 	u_long dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
 	ino_t fileid;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep, &ts, &ts, &ts, pmp->pm_gmtoff);
+	DETIMES(dep, NULL, NULL, NULL, pmp->pm_gmtoff);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -708,15 +701,11 @@ msdosfs_update(v)
 	struct direntry *dirp;
 	struct denode *dep;
 	int error;
-	struct timespec ts;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	dep = VTODE(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep,
-	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts, dep->de_pmp->pm_gmtoff);
+	DETIMES(dep, ap->a_access, ap->a_modify, NULL, dep->de_pmp->pm_gmtoff);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
 	dep->de_flag &= ~DE_MODIFIED;
@@ -1216,7 +1205,6 @@ msdosfs_mkdir(v)
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
-	struct timespec ts;
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 
 	/*
@@ -1240,8 +1228,7 @@ msdosfs_mkdir(v)
 	memset(&ndirent, 0, sizeof(ndirent));
 	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts, pmp->pm_gmtoff);
+	DETIMES(&ndirent, NULL, NULL, NULL, pmp->pm_gmtoff);
 
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
@@ -1850,6 +1837,37 @@ msdosfs_pathconf(v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
+}
+
+void
+msdosfs_detimes(struct denode *dep, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *cre, int gmtoff)
+{
+	struct timespec *ts = NULL, tsb;
+
+	KASSERT(dep->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS));
+	dep->de_flag |= DE_MODIFIED;
+	if (dep->de_flag & DE_UPDATE) {
+		if (mod == NULL)
+			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
+		dep->de_Attributes |= ATTR_ARCHIVE;
+	}
+	if ((dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0) {
+		if (dep->de_flag & DE_ACCESS)  {
+			if (acc == NULL)
+				acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			unix2dostime(acc, gmtoff, &dep->de_ADate, NULL, NULL);
+		}
+		if (dep->de_flag & DE_CREATE) {
+			if (cre == NULL)
+				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			unix2dostime(cre, gmtoff, &dep->de_CDate,
+			    &dep->de_CTime, &dep->de_CHun);
+		}
+	}
+
+	dep->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS);
 }
 
 /* Global vfs data structures for msdosfs */

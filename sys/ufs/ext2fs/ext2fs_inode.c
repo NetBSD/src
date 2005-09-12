@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.47 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.48 2005/09/12 16:24:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.47 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.48 2005/09/12 16:24:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,17 +206,13 @@ ext2fs_update(void *v)
 	struct buf *bp;
 	struct inode *ip;
 	int error;
-	struct timespec ts;
 	caddr_t cp;
 	int flags;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip,
-	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
+	EXT2FS_ITIMES(ip, ap->a_access, ap->a_modify, NULL);
 	if (ap->a_flags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 	else
