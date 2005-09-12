@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.43 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.44 2005/09/12 20:23:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -266,19 +266,16 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-#define	FFS_ITIMES(ip, acc, mod, cre) \
-	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
-		ffs_itimes(ip, acc, mod, cre)
+typedef void (*ufs_itimes_t)(struct inode *ip, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 
-#define	EXT2FS_ITIMES(ip, acc, mod, cre) \
-	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
-		ext2fs_itimes(ip, acc, mod, cre)
+extern ufs_itimes_t ffs_itimesfn, ext2fs_itimesfn;
 
 #define	ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		IS_EXT2_VNODE((ip)->i_vnode) ? \
-			ext2fs_itimes(ip, acc, mod, cre) : \
-			ffs_itimes(ip, acc, mod, cre)
+		    (*ext2fs_itimesfn)(ip, acc, mod, cre) : \
+		    (*ffs_itimesfn)(ip, acc, mod, cre)
 
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)

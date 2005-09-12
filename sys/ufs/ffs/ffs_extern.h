@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.46 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.47 2005/09/12 20:23:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -52,6 +52,10 @@
 	{ "doasyncfree", CTLTYPE_INT }, \
 	{ "log_changeopt", CTLTYPE_INT }, \
 }
+
+#define	FFS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		ffs_itimes(ip, acc, mod, cre)
 
 struct buf;
 struct fid;

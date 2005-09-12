@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.133 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.134 2005/09/12 20:23:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.133 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.134 2005/09/12 20:23:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -89,6 +89,8 @@ static const struct dirtemplate mastertemplate = {
 	0,	12,		DT_DIR,	1,	".",
 	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
+
+ufs_itimes_t ffs_itimesfn = NULL, ext2fs_itimesfn = NULL;
 
 /*
  * Create a regular file
