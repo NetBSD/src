@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.19.2.1 2005/06/10 15:10:38 tron Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.19.2.2 2005/09/12 13:45:06 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.19.2.1 2005/06/10 15:10:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.19.2.2 2005/09/12 13:45:06 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -152,7 +152,7 @@ netbsd32_execve2(l, uap, retval)
 #ifdef VERIFIED_EXEC
 	if ((error = check_exec(p, &pack, VERIEXEC_DIRECT)) != 0)
 #else
-	if ((error = check_exec(p, &pack)) != 0)
+	if ((error = check_exec(p, &pack, 0)) != 0)
 #endif
 		goto freehdr;
 
