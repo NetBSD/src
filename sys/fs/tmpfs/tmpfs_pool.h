@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.h,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_pool.h,v 1.2 2005/09/12 19:56:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 struct tmpfs_pool {
 	struct pool		tp_pool;
 	struct tmpfs_mount *	tp_mount;
+	char			tp_name[64];
 };
 
 /* --------------------------------------------------------------------- */
