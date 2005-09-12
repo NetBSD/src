@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.33 2005/09/11 13:20:00 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.34 2005/09/12 12:40:43 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.33 2005/09/11 13:20:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.34 2005/09/12 12:40:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -995,11 +995,13 @@ xennet_start(struct ifnet *ifp)
 				printf("xennet: no mbuf\n");
 				break;
 			}
-			MCLGET(new_m, M_DONTWAIT);
-			if ((new_m->m_flags & M_EXT) == 0) {
-				printf("xennet: no mbuf cluster\n");
-				m_freem(new_m);
-				break;
+			if (m->m_pkthdr.len > MHLEN) {
+				MCLGET(new_m, M_DONTWAIT);
+				if ((new_m->m_flags & M_EXT) == 0) {
+					printf("xennet: no mbuf cluster\n");
+					m_freem(new_m);
+					break;
+				}
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
@@ -1008,11 +1010,20 @@ xennet_start(struct ifnet *ifp)
 
 			m_freem(m);
 			m = new_m;
-			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-			KASSERT(m->m_data == m->m_ext.ext_buf);
-			pa = m->m_ext.ext_paddr;
+			if ((m->m_flags & M_EXT) != 0) {
+				pa = m->m_ext.ext_paddr;
+				KASSERT(m->m_data == m->m_ext.ext_buf);
+				KASSERT(pa != M_PADDR_INVALID);
+			} else {
+				pa = m->m_paddr;
+				KASSERT(pa != M_PADDR_INVALID);
+				KASSERT(m->m_data == M_BUFADDR(m));
+				pa += M_BUFOFFSET(m);
+			}
 		} else
 			IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		KASSERT(((pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) == 0);
 
 		bufid = get_bufarray_entry(sc->sc_tx_bufa);
 		KASSERT(bufid < NETIF_TX_RING_SIZE);
