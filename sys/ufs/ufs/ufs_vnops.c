@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.132 2005/08/23 12:27:47 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.133 2005/09/12 16:24:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.132 2005/08/23 12:27:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.133 2005/09/12 16:24:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.132 2005/08/23 12:27:47 yamt Exp $")
 #include <ufs/ufs/dirhash.h>
 #endif
 #include <ufs/ext2fs/ext2fs_extern.h>
+#include <ufs/ffs/ffs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
@@ -214,15 +215,12 @@ ufs_close(void *v)
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
-	struct timespec	ts;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ITIMES(ip, &ts, &ts, &ts);
-	}
+	if (vp->v_usecount > 1)
+		ITIMES(ip, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (0);
 }
@@ -295,13 +293,11 @@ ufs_getattr(void *v)
 	struct vnode	*vp;
 	struct inode	*ip;
 	struct vattr	*vap;
-	struct timespec	ts;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	vap = ap->a_vap;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	ITIMES(ip, &ts, &ts, &ts);
+	ITIMES(ip, NULL, NULL, NULL);
 
 	/*
 	 * Copy from inode table
@@ -1836,15 +1832,12 @@ ufsspec_close(void *v)
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
-	struct timespec	ts;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ITIMES(ip, &ts, &ts, &ts);
-	}
+	if (vp->v_usecount > 1)
+		ITIMES(ip, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
@@ -1905,15 +1898,12 @@ ufsfifo_close(void *v)
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
-	struct timespec	ts;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
-	if (ap->a_vp->v_usecount > 1) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ITIMES(ip, &ts, &ts, &ts);
-	}
+	if (ap->a_vp->v_usecount > 1)
+		ITIMES(ip, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
