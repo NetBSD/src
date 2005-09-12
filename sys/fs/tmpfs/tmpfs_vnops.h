@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.2 2005/09/12 19:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ int	tmpfs_update		(void *);
 #define	tmpfs_lease		genfs_lease_check
 #define	tmpfs_bwrite		genfs_nullop
 int	tmpfs_getpages		(void *);
-#define	tmpfs_putpages		genfs_nullop
+#define	tmpfs_putpages		genfs_null_putpages
 
 /* --------------------------------------------------------------------- */
 
