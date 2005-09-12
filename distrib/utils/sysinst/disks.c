@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.89 2005/08/28 13:10:20 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.90 2005/09/12 15:47:09 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -406,6 +406,8 @@ make_fstab(void)
 #endif
 	}
 
+	scripting_fprintf(f, "# NetBSD /etc/fstab\n# See /usr/share/examples/"
+		"fstab/ for more examples.\n", target_prefix());
 	for (i = 0; i < getmaxpartitions(); i++) {
 		const char *s = "";
 		const char *mp = bsdlabel[i].pi_mount;
@@ -440,7 +442,7 @@ make_fstab(void)
 		case FS_SWAP:
 			if (swap_dev == -1)
 				swap_dev = i;
-			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n",
+			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw\t\t 0 0\n",
 				diskdev, 'a' + i);
 			continue;
 		default:
@@ -452,7 +454,7 @@ make_fstab(void)
 		if (strcmp(mp, "/") == 0 && !(bsdlabel[i].pi_flags & PIF_MOUNT))
 			s = "# ";
 
-		scripting_fprintf(f, "%s/dev/%s%c %s %s rw%s%s%s%s%s%s%s%s %d %d\n",
+ 		scripting_fprintf(f, "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s\t\t %d %d\n",
 		   s, diskdev, 'a' + i, mp, fstype,
 		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
 		   bsdlabel[i].pi_flags & PIF_ASYNC ? ",async" : "",
@@ -467,16 +469,16 @@ make_fstab(void)
 
 	if (tmp_mfs_size != 0) {
 		if (swap_dev != -1)
-			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw,-s=%d\n",
+			scripting_fprintf(f, "/dev/%s%c\t\t/tmp\tmfs\trw,-s=%d\n",
 				diskdev, 'a' + swap_dev, tmp_mfs_size);
 		else
-			scripting_fprintf(f, "swap /tmp mfs rw,-s=%d\n",
+			scripting_fprintf(f, "swap\t\t/tmp\tmfs\trw,-s=%d\n",
 				tmp_mfs_size);
 	}
 
 	/* Add /kern and /proc to fstab and make mountpoint. */
-	scripting_fprintf(f, "kernfs /kern kernfs rw\n");
-	scripting_fprintf(f, "procfs /proc procfs rw,noauto\n");
+	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
+	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw,noauto\n");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 
