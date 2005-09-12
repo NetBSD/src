@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.18 2005/09/11 23:45:04 wiz Exp $
+.\"	$NetBSD: rwhod.8,v 1.19 2005/09/12 16:13:13 tsarna Exp $
 .\"
 .Dd August 9, 2005
 .Dt RWHOD 8
@@ -47,7 +47,7 @@ programs.  Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
-The following option is available:
+The following options are available:
 .Bl -tag -width XXXXXXXXXXX
 .It Fl i Ar interval
 Allows for the broadcast interval to be changed from the default 3 minutes.
@@ -61,6 +61,8 @@ The maximum allowed value for the broadcast interval is 11 minutes
 because higher values will cause
 .Xr ruptime 1
 to mark the host as being down.
+.It Fl u Ar user
+drop privledges and become the named user.
 .El
 .Pp
 .Nm

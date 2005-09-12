@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.30 2005/07/05 02:46:36 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.31 2005/09/12 16:13:13 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.30 2005/07/05 02:46:36 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.31 2005/09/12 16:13:13 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ static void	 sighup(int);
 static void	 handleread(int);
 static void	 quit(const char *);
 static void	 rt_xaddrs(void *, void *, struct rt_addrinfo *);
+static int	 drop_privs(char *);
 static void	 usage(void) __attribute__((__noreturn__));
 static int	 verify(const char *);
 #ifdef DEBUG
@@ -128,13 +129,14 @@ main(int argc, char *argv[])
 	struct sockaddr_in sasin;
 	struct pollfd pfd[1];
 	struct timeval delta, next, now;
+	char *newuser = NULL;
 
 	setprogname(argv[0]);
 
 	if (getuid())
 		errx(EXIT_FAILURE, "not super user");
 
-	while ((ch = getopt(argc, argv, "i:")) != -1) {
+	while ((ch = getopt(argc, argv, "i:u:")) != -1) {
 		switch (ch) {
 		case 'i':
 			time_interval = (int)strtol(optarg, &ep, 10);
@@ -160,6 +162,11 @@ main(int argc, char *argv[])
 				errx(1, "Interval cannot be greater than"
 				    " %d minutes", MAX_INTERVAL / 60);
 			break;
+
+		case 'u':
+			newuser = optarg;
+			break;
+			
 		default:
 			usage();	
 		}
@@ -205,6 +212,10 @@ main(int argc, char *argv[])
 	}
 	if (!configure(s))
 		exit(EXIT_FAILURE);
+
+	if (newuser)
+		if (!drop_privs(newuser))
+			exit(EXIT_FAILURE);
 
 	send_host_information(s);
 	delta.tv_sec = time_interval;
@@ -594,6 +605,39 @@ interval(int time, const char *updown)
 	return resbuf;
 }
 #endif
+
+static int
+drop_privs(char *newuser)
+{
+	struct passwd *pw;
+	gid_t gidset[1];
+	
+	pw = getpwnam(newuser);
+	if (pw == NULL) {
+		syslog(LOG_ERR, "no user %.100s", newuser);
+		return 0;
+	}
+
+	endpwent();	
+
+	gidset[0] = pw->pw_gid;
+	if (setgroups(1, gidset) == -1) {
+		syslog(LOG_ERR, "setgroups: %m");
+		return 0;
+	}
+
+	if (setgid(pw->pw_gid) == -1) {
+		syslog(LOG_ERR, "setgid: %m");
+		return 0;
+	}
+
+	if (setuid(pw->pw_uid) == -1) {
+		syslog(LOG_ERR, "setuid: %m");
+		return 0;
+	}
+
+	return 1;
+}
 
 static void
 usage(void)
