@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.12 2004/04/23 02:58:27 simonb Exp $
+.\"     $NetBSD: kthread.9,v 1.12.2.1 2005/09/12 12:30:25 tron Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,9 @@ within the kernel.
 Any process can request the creation of a new kernel thread.
 Kernel threads are not swapped out during memory congestion.
 The VM space and limits are shared with proc0 (usually swapper).
+A kernel thread must call
+.Fn kthread_exit
+to end execution.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn kthread_create1 "void (*func)(void *)" "void *arg" "struct proc **newpp" "const char *fmt" "..."
@@ -71,6 +74,12 @@ to commence execution.
 .Fa fmt
 is a string containing format information used to display the kernel
 thread name.
+The function
+.Fa func
+must not return.
+If the kernel thread runs to completion, it must call
+.Fn kthread_exit
+to properly terminate itself.
 .It Fn kthread_create "void (*func)(void *)" "void *arg"
 Register function
 .Fa func
