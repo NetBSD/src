@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.236 2005/09/12 12:40:35 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.237 2005/09/12 13:45:41 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12403,6 +12403,7 @@ tools/compat/crypto/sha2.h			1.1
 	helper routines.
 	[elad, ticket #743]
 
+sys/compat/netbsd32/netbsd32_execve.c		patch
 sys/conf/files					patch
 sys/kern/exec_script.c				patch
 sys/kern/init_main.c				patch
