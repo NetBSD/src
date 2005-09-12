@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.90 2005/09/09 22:04:09 wiz Exp $ */
+/* $NetBSD: user.c,v 1.91 2005/09/12 15:45:03 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.90 2005/09/09 22:04:09 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.91 2005/09/12 15:45:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -198,11 +198,11 @@ enum {
 #define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
 
-static int asystem(const char *fmt, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
-static int is_number(const char *);
-	
-static int	verbose;
+static int		asystem(const char *fmt, ...)
+			    __attribute__((__format__(__printf__, 1, 2)));
+static int		is_number(const char *);
+static struct group	*find_group_info(const char *);
+static int		verbose;
 
 static char *
 skipspace(char *s)
@@ -543,6 +543,29 @@ modify_gid(char *group, char *newent)
 		if (entc == groupc &&
 		    strncmp(group, buf, (unsigned) entc) == 0) {
 			if (newent == NULL) {
+				struct group	*grp_rm;
+				struct passwd	*user_pwd;
+
+				/*
+				 * Check that the group being removed
+				 * isn't any user's Primary group. Just
+				 * warn if it is. This could cause problems
+				 * if the group GID was reused for a
+				 * different purpose.
+				 */
+
+				grp_rm = find_group_info(group);
+				while ((user_pwd = getpwent()) != NULL) {
+					if (user_pwd->pw_gid == grp_rm->gr_gid) {
+						warnx("Warning: group `%s'(%d)"
+						   " is the primary group of"
+						   " `%s'. Use caution if you"
+						   " later add this GID.",
+						   grp_rm->gr_name,
+						   grp_rm->gr_gid, user_pwd->pw_name);
+					}
+				}
+				endpwent();
 				continue;
 			} else {
 				cc = strlen(newent);
