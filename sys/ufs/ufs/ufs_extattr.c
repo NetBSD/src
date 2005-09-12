@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.1 2005/08/28 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.2 2005/09/12 16:09:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -228,6 +228,8 @@ ufs_extattr_start(struct mount *mp, struct proc *p)
 	crhold(ump->um_extattr.uepm_ucred);
 
  unlock:
+	ufs_extattr_uepm_unlock(ump);
+
 	return (error);
 }
 
