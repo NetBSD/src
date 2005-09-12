@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.11 2003/08/07 11:15:45 agc Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.12 2005/09/12 16:16:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.11 2003/08/07 11:15:45 agc Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.12 2005/09/12 16:16:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,10 +59,10 @@ struct hs {
 	struct	whod *hs_wd;
 	int	hs_nusers;
 } *hs;
-struct	whod awhod;
 
-#define	ISDOWN(h)		(now - (h)->hs_wd->wd_recvtime > 11 * 60)
-#define	WHDRSIZE	(sizeof (awhod) - sizeof (awhod.wd_we))
+#define	ISDOWN(h)	(now - (h)->hs_wd->wd_recvtime > 11 * 60)
+#define	WHDRSIZE	(sizeof(struct whod) - \
+    sizeof (((struct whod *)0)->wd_we))
 
 size_t nhosts;
 time_t now;
