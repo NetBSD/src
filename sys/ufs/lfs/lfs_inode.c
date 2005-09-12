@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.96 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.97 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.96 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.97 2005/09/12 16:24:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -138,7 +138,6 @@ lfs_update(void *v)
 				  } */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
-	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	int s;
 	int flags;
@@ -165,10 +164,7 @@ lfs_update(void *v)
 	}
 	simple_unlock(&vp->v_interlock);
 	splx(s);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	LFS_ITIMES(ip,
-		   ap->a_access ? ap->a_access : &ts,
-		   ap->a_modify ? ap->a_modify : &ts, &ts);
+	LFS_ITIMES(ip, ap->a_access, ap->a_modify, NULL);
 	if (ap->a_flags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
 	else

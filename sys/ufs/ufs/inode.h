@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.42 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.43 2005/09/12 16:24:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -266,57 +266,19 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-#define	FFS_ITIMES(ip, acc, mod, cre) {					\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
-		if ((ip)->i_flag & IN_ACCESS) {				\
-			DIP_ASSIGN(ip, atime, (acc)->tv_sec);		\
-			DIP_ASSIGN(ip, atimensec, (acc)->tv_nsec);	\
-		}							\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			if (((ip)->i_flags & SF_SNAPSHOT) == 0) {	\
-				DIP_ASSIGN(ip, mtime, (mod)->tv_sec);	\
-				DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec); \
-			}						\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			DIP_ASSIGN(ip, ctime, (cre)->tv_sec);		\
-			DIP_ASSIGN(ip, ctimensec, (cre)->tv_nsec);	\
-		}							\
-		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
-			ip->i_flag |= IN_ACCESSED;			\
-		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
-			ip->i_flag |= IN_MODIFIED;			\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
-	}								\
-}
+#define	FFS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		ffs_itimes(ip, acc, mod, cre)
 
-#define	EXT2FS_ITIMES(ip, acc, mod, cre) {				\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
-		if ((ip)->i_flag & IN_ACCESS) {				\
-			(ip)->i_e2fs_atime = (acc)->tv_sec;		\
-		}							\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			(ip)->i_e2fs_mtime = (mod)->tv_sec;		\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			(ip)->i_e2fs_ctime = (cre)->tv_sec;		\
-		}							\
-		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
-			(ip)->i_flag |= IN_ACCESSED;			\
-		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
-			(ip)->i_flag |= IN_MODIFIED;			\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
-	}								\
-}
+#define	EXT2FS_ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		ext2fs_itimes(ip, acc, mod, cre)
 
-#define	ITIMES(ip, acc, mod, cre) {			\
-	if (IS_EXT2_VNODE((ip)->i_vnode))		\
-		EXT2FS_ITIMES(ip, acc, mod, cre)	\
-	else						\
-		FFS_ITIMES(ip, acc, mod, cre)		\
-}
+#define	ITIMES(ip, acc, mod, cre) \
+	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+		IS_EXT2_VNODE((ip)->i_vnode) ? \
+			ext2fs_itimes(ip, acc, mod, cre) : \
+			ffs_itimes(ip, acc, mod, cre)
 
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)

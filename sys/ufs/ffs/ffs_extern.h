@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.45 2005/09/09 15:00:39 yamt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.46 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -99,7 +99,9 @@ int	ffs_balloc(void *);
 void	ffs_sb_swap(struct fs*, struct fs *);
 void	ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void	ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
+struct csum;
 void	ffs_csum_swap(struct csum *, struct csum *, int);
+struct csum_total;
 void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
@@ -119,6 +121,8 @@ int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void	ffs_clrblock(struct fs *, u_char *, int32_t);
 void	ffs_setblock(struct fs *, u_char *, int32_t);
+void	ffs_itimes(struct inode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 
 /* ffs_vfsops.c */
 void	ffs_init(void);
@@ -142,6 +146,7 @@ int	ffs_sbupdate(struct ufsmount *, int);
 int	ffs_cgupdate(struct ufsmount *, int);
 
 /* ffs_appleufs.c */
+struct appleufslabel;
 u_int16_t ffs_appleufs_cksum(const struct appleufslabel *);
 int	ffs_appleufs_validate(const char*, const struct appleufslabel *,
 			      struct appleufslabel *);

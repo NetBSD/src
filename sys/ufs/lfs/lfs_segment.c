@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.165 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.166 2005/09/12 16:24:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.165 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.166 2005/09/12 16:24:41 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -833,7 +833,6 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	ino_t ino;
 	int error, i, ndx, fsb = 0;
 	int redo_ifile = 0;
-	struct timespec ts;
 	int gotblk = 0;
 
 	ASSERT_SEGLOCK(fs);
@@ -872,10 +871,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 
 	/* Update the inode times and copy the inode onto the inode page. */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	/* XXX kludge --- don't redirty the ifile just to put times on it */
 	if (ip->i_number != LFS_IFILE_INUM)
-		LFS_ITIMES(ip, &ts, &ts, &ts);
+		LFS_ITIMES(ip, NULL, NULL, NULL);
 
 	/*
 	 * If this is the Ifile, and we've already written the Ifile in this
