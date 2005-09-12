@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.45 2004/07/22 16:51:45 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.45.2.1 2005/09/12 12:26:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.45 2004/07/22 16:51:45 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.45.2.1 2005/09/12 12:26:27 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,9 @@ __RCSID("$NetBSD: compare.c,v 1.45 2004/07/22 16:51:45 lukem Exp $");
 #endif
 #ifndef NO_SHA1
 #include <sha1.h>
+#endif
+#ifndef NO_SHA2
+#include <crypto/sha2.h>
 #endif
 
 #include "extern.h"
@@ -123,8 +126,9 @@ compare(NODE *s, FTSENT *p)
 	u_int32_t len, val, flags;
 	int fd, label;
 	const char *cp, *tab;
-#if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1)
-	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
+#if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
+	/* char digestbuf[MAXHASHLEN + 1]; */
+	char *digestbuf = NULL;
 #endif
 
 	tab = NULL;
@@ -430,6 +434,53 @@ typeerr:		LABEL;
 		}
 	}
 #endif	/* ! NO_SHA1 */
+#ifndef NO_SHA2
+	if (s->flags & F_SHA256) {
+		if (SHA256_File(p->fts_accpath, digestbuf) == NULL) {
+			LABEL;
+			printf("%ssha256: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->sha256digest, digestbuf)) {
+				LABEL;
+				printf("%ssha256 (0x%s, 0x%s)\n",
+				    tab, s->sha256digest, digestbuf);
+			}
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_SHA384) {
+		if (SHA384_File(p->fts_accpath, digestbuf) == NULL) {
+			LABEL;
+			printf("%ssha384: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->sha384digest, digestbuf)) {
+				LABEL;
+				printf("%ssha384 (0x%s, 0x%s)\n",
+				    tab, s->sha384digest, digestbuf);
+			}
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_SHA512) {
+		if (SHA512_File(p->fts_accpath, digestbuf) == NULL) {
+			LABEL;
+			printf("%ssha512: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->sha512digest, digestbuf)) {
+				LABEL;
+				printf("%ssha512 (0x%s, 0x%s)\n",
+				    tab, s->sha512digest, digestbuf);
+			}
+			tab = "\t";
+		}
+	}
+#endif	/* ! NO_SHA2 */
 	if (s->flags & F_SLINK &&
 	    strcmp(cp = rlink(p->fts_accpath), s->slink)) {
 		LABEL;
