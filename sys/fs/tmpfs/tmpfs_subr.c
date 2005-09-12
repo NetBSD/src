@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.3 2005/09/12 16:55:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.3 2005/09/12 16:55:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -70,7 +70,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
     char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
 {
-	struct timeval tv;
 	struct tmpfs_node *nnode;
 
 	/* If the root directory of the 'tmp' file system is not yet
@@ -108,8 +107,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_links = 0;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &nnode->tn_atime);
+	(void)nanotime(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_ctime = nnode->tn_mtime =
 	    nnode->tn_atime;
 	nnode->tn_uid = uid;
