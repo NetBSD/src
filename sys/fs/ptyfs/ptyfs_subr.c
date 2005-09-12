@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.3 2005/09/12 16:42:09 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.4 2005/09/12 16:43:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.3 2005/09/12 16:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.4 2005/09/12 16:43:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,6 @@ out:
 	ptyfs->ptyfs_uid = ptyfs->ptyfs_gid = 0;
 	ptyfs->ptyfs_flags |= PTYFS_CHANGE;
 	PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
-	TIMEVAL_TO_TIMESPEC(&time, &ptyfs->ptyfs_ctime);
 	ptyfs->ptyfs_birthtime = ptyfs->ptyfs_mtime =
 	    ptyfs->ptyfs_atime = ptyfs->ptyfs_ctime;
 	ptyfs->ptyfs_flags = 0;
