@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: rwhod.8,v 1.19 2005/09/12 16:13:13 tsarna Exp $
+.\"	$NetBSD: rwhod.8,v 1.20 2005/09/12 18:33:56 wiz Exp $
 .\"
-.Dd August 9, 2005
+.Dd September 12, 2005
 .Dt RWHOD 8
 .Os
 .Sh NAME
@@ -37,13 +37,15 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl i Ar interval
+.Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
 is the server which maintains the database used by the
 .Xr rwho 1
 and
 .Xr ruptime 1
-programs.  Its operation is predicated on the ability to
+programs.
+Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
@@ -62,7 +64,8 @@ because higher values will cause
 .Xr ruptime 1
 to mark the host as being down.
 .It Fl u Ar user
-drop privledges and become the named user.
+Drop privileges and become the user
+.Ar user .
 .El
 .Pp
 .Nm
@@ -77,7 +80,9 @@ them in a collection of files located in the directory
 .Pa /var/rwho .
 .Pp
 The server transmits and receives messages at the port indicated
-in the ``who'' service specification; see
+in the
+.Dq who
+service specification; see
 .Xr services 5 .
 The messages sent and received, are of the form:
 .Bd -literal -offset indent
@@ -104,17 +109,18 @@ struct	whod {
 .Ed
 .Pp
 All fields are converted to network byte order prior to
-transmission.  The load averages are as calculated by the
+transmission.
+The load averages are as calculated by the
 .Xr w 1
 program, and represent load averages over the 5, 10, and 15 minute
 intervals prior to a server's transmission; they are multiplied by 100
-for representation in an integer.  The host name
-included is that returned by the
+for representation in an integer.
+The host name included is that returned by the
 .Xr gethostname 3
 function call, with any trailing domain name omitted.
 The array at the end of the message contains information about
-the users logged in to the sending machine.  This information
-includes the contents of the
+the users logged in to the sending machine.
+This information includes the contents of the
 .Xr utmp 5
 entry for each non-idle terminal line and a value indicating the
 time in seconds since a character was last received on the terminal line.
@@ -122,12 +128,13 @@ time in seconds since a character was last received on the terminal line.
 Messages received by the
 .Xr rwho 1
 server are discarded unless they originated at an
-rwho
-server's port.  In addition, if the host's name, as specified
+.Xr rwho 1
+server's port.
+In addition, if the host's name, as specified
 in the message, contains any unprintable
 .Tn ASCII
-characters, the
-message is discarded.  Valid messages received by
+characters, the message is discarded.
+Valid messages received by
 .Nm
 are placed in files named
 .Pa whod.hostname
@@ -149,6 +156,5 @@ command appeared in
 .Sh BUGS
 There should be a way to relay status information between networks.
 Status information should be sent only upon request rather than continuously.
-People often interpret the server dying
-or network communication failures
-as a machine going down.
+People often interpret the server dying or network communication
+failures as a machine going down.
