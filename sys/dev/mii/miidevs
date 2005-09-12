@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.58.2.1 2005/07/03 21:13:52 tron Exp $
+$NetBSD: miidevs,v 1.58.2.2 2005/09/12 12:34:07 tron Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
 model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
+model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
