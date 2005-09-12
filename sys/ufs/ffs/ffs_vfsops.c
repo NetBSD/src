@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.170 2005/08/28 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.171 2005/09/12 20:23:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.170 2005/08/28 19:37:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.171 2005/09/12 20:23:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1558,6 +1558,7 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
+	ffs_itimesfn = ffs_itimes;
 #ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "ffsinopl", &pool_allocator_nointr);
@@ -1590,6 +1591,7 @@ ffs_done(void)
 	pool_destroy(&ffs_dinode1_pool);
 	pool_destroy(&ffs_inode_pool);
 #endif
+	ffs_itimesfn = NULL;
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")

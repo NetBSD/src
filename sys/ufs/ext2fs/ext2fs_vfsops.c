@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.89 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.90 2005/09/12 20:23:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.89 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.90 2005/09/12 20:23:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -171,6 +171,7 @@ ext2fs_init(void)
 	    "ext2dinopl", &pool_allocator_nointr);
 #endif
 	ufs_init();
+	ext2fs_itimesfn = ext2fs_itimes;
 }
 
 void
@@ -187,6 +188,7 @@ ext2fs_done(void)
 	pool_destroy(&ext2fs_inode_pool);
 	pool_destroy(&ext2fs_dinode_pool);
 #endif
+	ext2fs_itimesfn = NULL;
 }
 
 /*
