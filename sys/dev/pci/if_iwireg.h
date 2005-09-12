@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.5 2005/08/19 08:50:06 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.6 2005/09/12 21:15:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -272,7 +272,7 @@ struct iwi_rateset {
 	u_int8_t	mode;
 	u_int8_t	nrates;
 	u_int8_t	type;
-#define IWI_RATESET_TYPE_NEGOCIATED	0
+#define IWI_RATESET_TYPE_NEGOTIATED	0
 #define IWI_RATESET_TYPE_SUPPORTED	1
 	u_int8_t	reserved;
 	u_int8_t	rates[12];
