@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.3 2005/09/12 16:55:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.3 2005/09/12 16:55:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1354,12 +1354,11 @@ int
 tmpfs_update(void *v)
 {
 	struct vnode *vp = ((struct vop_update_args *)v)->a_vp;
-	struct timespec *access = ((struct vop_update_args *)v)->a_access;
-	struct timespec *modify = ((struct vop_update_args *)v)->a_modify;
+	struct timespec *acc = ((struct vop_update_args *)v)->a_access;
+	struct timespec *mod = ((struct vop_update_args *)v)->a_modify;
 	int flags = ((struct vop_update_args *)v)->a_flags;
 
-	struct timespec ts;
-	struct timeval tv;
+	struct timespec *ts = NULL, tsb;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1370,18 +1369,21 @@ tmpfs_update(void *v)
 		; /* XXX Need to do anything special? */
 
 	if (node->tn_status != 0) {
-		microtime(&tv);
-		TIMEVAL_TO_TIMESPEC(&tv, &ts);
-
-		if (node->tn_status & TMPFS_NODE_ACCESSED)
-			node->tn_atime =
-			    (access != NULL ? *access : ts);
-		if (node->tn_status & TMPFS_NODE_MODIFIED)
-			node->tn_mtime =
-			    (modify != NULL ? *modify : ts);
-		if (node->tn_status & TMPFS_NODE_CHANGED)
-			node->tn_ctime = ts;
-
+		if (node->tn_status & TMPFS_NODE_ACCESSED) {
+			if (acc == NULL)
+				acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			node->tn_atime = *acc;
+		}
+		if (node->tn_status & TMPFS_NODE_MODIFIED) {
+			if (mod == NULL)
+				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			node->tn_mtime = *mod;
+		}
+		if (node->tn_status & TMPFS_NODE_CHANGED) {
+			if (ts == NULL)
+				ts = nanotime(&tsb);
+			node->tn_ctime = *ts;
+		}
 		node->tn_status &=
 		    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
 		    TMPFS_NODE_CHANGED);
