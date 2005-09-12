@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.21 2005/09/12 21:11:11 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.22 2005/09/12 21:15:04 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.21 2005/09/12 21:11:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.22 2005/09/12 21:15:04 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2184,13 +2184,13 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
-	/* the rate set has already been "negociated" */
+	/* the rate set has already been "negotiated" */
 	rs.mode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? IWI_MODE_11A :
 	    IWI_MODE_11G;
-	rs.type = IWI_RATESET_TYPE_NEGOCIATED;
+	rs.type = IWI_RATESET_TYPE_NEGOTIATED;
 	rs.nrates = ni->ni_rates.rs_nrates;
 	memcpy(rs.rates, ni->ni_rates.rs_rates, rs.nrates);
-	DPRINTF(("Setting negociated rates (%u)\n", rs.nrates));
+	DPRINTF(("Setting negotiated rates (%u)\n", rs.nrates));
 	error = iwi_cmd(sc, IWI_CMD_SET_RATES, &rs, sizeof rs, 1);
 	if (error != 0)
 		return error;
