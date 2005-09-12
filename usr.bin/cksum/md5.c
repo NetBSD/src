@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.8 2005/01/20 15:44:59 xtraeme Exp $	*/
+/*	$NetBSD: md5.c,v 1.8.2.1 2005/09/12 12:17:35 tron Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.8 2005/01/20 15:44:59 xtraeme Exp $");
+__RCSID("$NetBSD: md5.c,v 1.8.2.1 2005/09/12 12:17:35 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ MD5String(const char *string)
 	char buf[HASHLEN + 1];
 
 	printf("%s (\"%s\") = %s\n", HASHTYPE, string,
-	       MD5Data(string, len, buf));
+	       MD5Data((const unsigned char *)string, len, buf));
 }
 
 /*
@@ -139,15 +139,15 @@ void
 MD5Filter(int pipe)
 {
 	MD5_CTX context;
-	int len;
+	size_t len;
 	unsigned char buffer[BUFSIZ];
 	char buf[HASHLEN + 1];
 
 	MD5Init(&context);
-	while ((len = fread(buffer, 1, BUFSIZ, stdin)) > 0) {
-		if (pipe && (len != fwrite(buffer, 1, len, stdout)))
+	while ((len = fread(buffer, (size_t)1, (size_t)BUFSIZ, stdin)) > 0) {
+		if (pipe && (len != fwrite(buffer, (size_t)1, len, stdout)))
 			err(1, "stdout");
-		MD5Update(&context, buffer, len);
+		MD5Update(&context, buffer, (unsigned int)len);
 	}
 	printf("%s\n", MD5End(&context,buf));
 }
