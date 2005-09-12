@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.24 2004/11/22 17:31:38 peter Exp $");
+__RCSID("$NetBSD: id.c,v 1.24.2.1 2005/09/12 18:39:22 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,6 +248,7 @@ user(struct passwd *pw)
 	struct group *gr;
 	const char *fmt;
 	int cnt, id, lastid, ngroups;
+	gid_t *glist = groups;
 
 	id = pw->pw_uid;
 	(void)printf("uid=%u(%s)", id, pw->pw_name);
@@ -255,10 +256,13 @@ user(struct passwd *pw)
 	if ((gr = getgrgid(pw->pw_gid)) != NULL)
 		(void)printf("(%s)", gr->gr_name);
 	ngroups = maxgroups + 1;
-	(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+	if (getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups) == -1) {
+		glist = malloc(ngroups * sizeof(gid_t));
+		(void) getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups);
+	}
 	for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
 	    fmt=",%u", lastid = id, cnt++) {
-		id = groups[cnt];
+		id = glist[cnt];
 		if (lastid == id)
 			continue;
 		(void)printf(fmt, id);
@@ -266,6 +270,8 @@ user(struct passwd *pw)
 			(void)printf("(%s)", gr->gr_name);
 	}
 	(void)printf("\n");
+	if (glist != groups)
+		free(glist);
 }
 
 static void
@@ -274,17 +280,23 @@ group(struct passwd *pw, int nflag)
 	struct group *gr;
 	int cnt, id, lastid, ngroups;
 	const char *fmt;
+	gid_t *glist = groups;
 
 	if (pw) {
 		ngroups = maxgroups;
-		(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+		if (getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups)
+		    == -1) {
+			glist = malloc(ngroups * sizeof(gid_t));
+			(void) getgrouplist(pw->pw_name, pw->pw_gid, glist,
+					    &ngroups);
+		}
 	} else {
-		groups[0] = getgid();
-		ngroups = getgroups(maxgroups, groups + 1) + 1;
+		glist[0] = getgid();
+		ngroups = getgroups(maxgroups, glist + 1) + 1;
 	}
 	fmt = nflag ? "%s" : "%u";
 	for (lastid = -1, cnt = 0; cnt < ngroups; ++cnt) {
-		if (lastid == (id = groups[cnt]))
+		if (lastid == (id = glist[cnt]))
 			continue;
 		if (nflag) {
 			if ((gr = getgrgid(id)) != NULL)
@@ -300,6 +312,8 @@ group(struct passwd *pw, int nflag)
 		lastid = id;
 	}
 	(void)printf("\n");
+	if (glist != groups)
+		free(glist);
 }
 
 static struct passwd *
