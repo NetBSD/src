@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.20 2005/02/27 00:27:01 perry Exp $ */
+/*	$NetBSD: igsfb.c,v 1.21 2005/09/12 11:02:21 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.21 2005/09/12 11:02:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,10 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->depth = ri->ri_depth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
+		return (0);
+	case WSDISPLAYIO_LINEBYTES:
+		ri = &dc->dc_ri;
+		*(int *)data = ri->ri_stride;
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
