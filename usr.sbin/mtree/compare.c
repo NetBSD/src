@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.45.2.1 2005/09/12 12:26:27 tron Exp $	*/
+/*	$NetBSD: compare.c,v 1.45.2.2 2005/09/12 18:32:08 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.45.2.1 2005/09/12 12:26:27 tron Exp $");
+__RCSID("$NetBSD: compare.c,v 1.45.2.2 2005/09/12 18:32:08 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,8 +127,7 @@ compare(NODE *s, FTSENT *p)
 	int fd, label;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
-	/* char digestbuf[MAXHASHLEN + 1]; */
-	char *digestbuf = NULL;
+	char digestbuf[MAXHASHLEN + 1];
 #endif
 
 	tab = NULL;
