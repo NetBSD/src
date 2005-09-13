@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.125.2.4.2.1 2005/07/24 02:25:24 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.125.2.4.2.2 2005/09/13 22:36:36 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -951,7 +951,7 @@ and is thus empty.  Do you want to set a root password for the system now?}
 
 message rootsh
 {You can now select which shell to use for the root user. The default is
-/bin/csh, but you may prefer another one.}
+/bin/sh, but you may prefer another one.}
 
 message postuseexisting
 {
