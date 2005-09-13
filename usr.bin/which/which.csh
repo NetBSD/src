@@ -1,5 +1,5 @@
 #!/bin/csh
-#	$NetBSD: which.csh,v 1.3 1999/03/11 11:15:44 fair Exp $
+#	$NetBSD: which.csh,v 1.3.16.1 2005/09/13 21:42:23 riz Exp $
 #
 # DO NOT USE "csh -f"
 #
@@ -77,5 +77,6 @@ foreach arg ( $argv )
     endif
     if ( ! $?found ) then
 	echo no $arg in $path
+	exit 1
     endif
 end
