@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2005/06/17 18:37:24 peter Exp $
+#	$NetBSD: Makefile,v 1.34 2005/09/13 02:45:38 christos Exp $
 #
 
 WARNS=	2
@@ -17,6 +17,8 @@ ARCHSUBDIR=	${MACHINE_CPU}
 	@echo "WARNING: no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
 .endif
 
+# XXX: This crappy poke at libc's internals needs to be fixed.
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 INCS=	pthread.h pthread_types.h pthread_queue.h
 INCSDIR=/usr/include
 
