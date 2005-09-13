@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.4 2005/09/13 12:11:27 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.5 2005/09/13 14:27:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.4 2005/09/13 12:11:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.5 2005/09/13 14:27:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -524,7 +524,12 @@ tmpfs_read(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 
-	if (uio->uio_offset < 0 || vp->v_type != VREG) {
+	if (vp->v_type != VREG) {
+		error = EISDIR;
+		goto out;
+	}
+
+	if (uio->uio_offset < 0) {
 		error = EINVAL;
 		goto out;
 	}
