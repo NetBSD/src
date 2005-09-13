@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.240 2005/09/13 11:44:53 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.241 2005/09/13 16:48:11 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12550,7 +12550,7 @@ usr.bin/id/id.c					1.25
 	_SC_NGROUPS_MAX groups.
 	[drochner, ticket #772]
 
-sys/compat/freebsd/freebsd_misc.c		1.22
+sys/compat/freebsd/freebsd_misc.c		1.22-1.23
 
 	Range checks are not optional. The omission of this one, allows the
 	user to corrupt the heap and/or crash the kernel.
