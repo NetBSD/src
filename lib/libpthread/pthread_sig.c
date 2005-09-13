@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.41 2005/07/26 20:16:07 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.42 2005/09/13 02:45:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.41 2005/07/26 20:16:07 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.42 2005/09/13 02:45:38 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: pthread_sig.c,v 1.41 2005/07/26 20:16:07 christos Exp $");
 #include <string.h>		/* for memcpy() */
 #include <ucontext.h>
 #include <unistd.h>
+#include <compat/include/signal.h>
 #include <sys/syscall.h>
 
 #include <sched.h>
