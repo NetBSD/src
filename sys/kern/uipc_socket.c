@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.97.2.1.2.1 2005/08/22 21:42:19 riz Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.97.2.1.2.2 2005/09/13 23:23:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97.2.1.2.1 2005/08/22 21:42:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97.2.1.2.2 2005/09/13 23:23:56 riz Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1040,8 +1040,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 * While we process the initial mbufs containing address and control
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
+#ifdef notyet /* XXXX */
 	if (uio->uio_procp)
 		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
+#endif
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
