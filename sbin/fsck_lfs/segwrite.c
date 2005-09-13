@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.9 2005/04/01 23:45:59 he Exp $ */
+/* $NetBSD: segwrite.c,v 1.10 2005/09/13 04:14:17 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,7 +93,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 #include "segwrite.h"
 
 /* Compatibility definitions */
