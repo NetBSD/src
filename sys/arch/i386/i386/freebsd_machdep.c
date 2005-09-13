@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.42 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.43 2005/09/13 01:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.42 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.43 2005/09/13 01:43:29 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -51,12 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.42 2003/10/27 14:11:46 junyoun
 #include <sys/user.h>
 #include <sys/mount.h>
 
+#include <compat/sys/signal.h>
+
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
 #include <machine/reg.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
 #include <machine/freebsd_machdep.h>
+
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>

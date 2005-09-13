@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.7 2005/09/13 01:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2005/09/13 01:43:29 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2003/10/27 14:11:46 junyou
 #include <machine/vmparam.h>
 
 #if defined(COMPAT_16) || defined(COMPAT_IBCS2)
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and

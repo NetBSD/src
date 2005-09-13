@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.17 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.18 2005/09/13 01:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.17 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.18 2005/09/13 01:43:29 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.17 2005/07/01 18:01:44 christo
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/userret.h>
+
+#include <compat/sys/signal.h>
 
 #include <machine/freebsd_machdep.h>
 #include <compat/freebsd/freebsd_syscall.h>
