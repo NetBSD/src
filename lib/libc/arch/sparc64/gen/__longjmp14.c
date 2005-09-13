@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.4 2004/03/22 18:35:51 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.5 2005/09/13 09:52:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #define __LIBC12_SOURCE__
 #include <setjmp.h>
+#include <compat/include/setjmp.h>
 
 typedef struct {
 	__greg_t	__glob[5];
