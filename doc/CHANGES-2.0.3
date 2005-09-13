@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.42 2005/09/13 16:01:50 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.43 2005/09/13 16:39:06 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -468,4 +468,10 @@ sys/conf/copyright				1.2
 
 	Welcome to 2005.
 	[rpaulo, ticket #5848]
+
+sys/compat/freebsd/freebsd_misc.c		1.22 via patch
+
+	Range checks are not optional. The omission of this one, allows the
+	user to corrupt the heap and/or crash the kernel.
+	[christos, ticket #5846]
 
