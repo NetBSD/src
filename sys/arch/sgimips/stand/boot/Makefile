@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/03/01 00:20:09 sekiya Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2005/09/13 11:40:50 tron Exp $
 
 PROG=	aoutboot
 
@@ -24,7 +24,7 @@ CLEANFILES+=	boot.map
 .include "../Makefile.booters"
 
 ip3xboot: ${OBJS} ${LIBS}
-	${LD} -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
+	${LD} -Map boot.map -N -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
 	    -e start -o ip3xboot ${OBJS} ${LIBS}
 	@${STRIP} -s ip3xboot
 	@${SIZE} ip3xboot
