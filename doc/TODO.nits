@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.nits,v 1.2 2005/09/10 21:14:18 wiz Exp $
+#	$NetBSD: TODO.nits,v 1.3 2005/09/13 17:09:59 christos Exp $
 #
 # This file documents small nits in our code (often marked in comments
 # with /* XXX */) and similar "small fixes needed" so that they will not
@@ -23,3 +23,5 @@
 
 2005-09-10 (christos) Convert src/lib/libc/rpc to use kqueues, the way
     FreeBSD does.
+2005-09-13 (christos) src/lib/libpthread depends on __LIBC12_SOURCE__
+    and compat headers. This is unnecessary.
