@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.40 2005/09/06 16:11:29 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.41 2005/09/13 11:39:23 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -457,4 +457,10 @@ sys/fs/msdosfs/msdosfs_vnops.c			1.17
 	don't bother trying to write files bigger than this.  Just return
 	EFBIG to caller, rather than panic()ing later.  PR#30864
 	[xtraeme, ticket #5627]
+
+xsrc/xfree/xc/config/cf/NetBSD.cf		1.80
+
+	Remove unsafe /tmp file creation for the file.0 target. Just make
+	the file in the current build directory instead of temp directory.
+	[reed, ticket #5844]
 
