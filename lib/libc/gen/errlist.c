@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.14 2003/08/07 16:42:47 agc Exp $	*/
+/*	$NetBSD: errlist.c,v 1.15 2005/09/13 01:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -34,18 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.14 2003/08/07 16:42:47 agc Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.15 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __weak_alias
-__weak_alias(sys_errlist, _sys_errlist)
-__weak_alias(__sys_errlist, _sys_errlist)
-__weak_alias(sys_nerr, _sys_nerr)
-__weak_alias(__sys_nerr, _sys_nerr)
-#endif
+#include <errno.h>
 
-const char *const _sys_errlist[] = {
+static const char *const errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
 	"Operation not permitted",		/*  1 - EPERM */
 	"No such file or directory",		/*  2 - ENOENT */
@@ -145,5 +140,35 @@ const char *const _sys_errlist[] = {
 	"Function not implemented",		/* 78 - ENOSYS */
 
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
+	"Authentication error",			/* 80 - EAUTH */
+	"Need authenticator",			/* 81 - ENEEDAUTH */
+
+/* SystemV IPC */
+	"Identifier removed",			/* 82 - EIDRM */
+	"No message of desired type",		/* 83 - ENOMSG */
+						/* 84 - EOVERFLOW */
+	"Value too large to be stored in data type",
+
+/* Wide/multibyte-character handling, ISO/IEC 9899/AMD1:1995 */
+	"Illegal byte sequence",		/* 85 - EILSEQ */
+
+/* Base, Realtime, Threads or Thread Priority Scheduling option errors */
+	"Not supported",			/* 86 - ENOTSUP */
+
+/* Realtime option errors */
+	"Operation Canceled",			/* 87 - ECANCELED */
+
+/* Realtime, XSI STREAMS option errors */
+	"Bad or Corrupt message",		/* 88 - EBADMSG */
+
+/* XSI STREAMS option errors  */
+	"No message available",			/* 89 - ENODATA */
+	"No STREAM resources",			/* 90 - ENOSR */
+	"Not a STREAM",				/* 91 - ENOSTR */
+	"STREAM ioctl timeout",			/* 92 - ETIME */
+	"Attribute not found"			/* 93 - ENOATTR */
 };
-const int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
+
+const int sys_nerr = sizeof(errlist) / sizeof(errlist[0]);
+
+const char * const *sys_errlist = errlist;

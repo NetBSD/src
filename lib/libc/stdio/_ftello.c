@@ -1,4 +1,4 @@
-/*	$NetBSD: _ftello.c,v 1.3 2005/07/30 15:21:20 christos Exp $	*/
+/*	$NetBSD: _ftello.c,v 1.4 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,19 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _ftello.c,v 1.3 2005/07/30 15:21:20 christos Exp $");
+__RCSID("$NetBSD: _ftello.c,v 1.4 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_ftello, ftello)
 #else
 
 #include <stdio.h>
-off_t	_ftello __P((FILE *));	/* XXX */
+off_t	_ftello(FILE *);
 
 off_t
-ftello(stream)
-	FILE *stream;
+ftello(FILE *stream)
 {
 
 	return _ftello(stream);

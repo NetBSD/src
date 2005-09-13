@@ -1,4 +1,4 @@
-/*	$NetBSD: _sbrk.c,v 1.4 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: _sbrk.c,v 1.5 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,19 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _sbrk.c,v 1.4 2005/07/30 15:21:21 christos Exp $");
+__RCSID("$NetBSD: _sbrk.c,v 1.5 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_sbrk, sbrk)
 #else
 
 #include <unistd.h>
-void *	_sbrk __P((intptr_t));	/* XXX */
+void *	_sbrk(intptr_t);
 
 void *
-sbrk(incr)
-	intptr_t incr;
+sbrk(intptr_t incr)
 {
 
 	return _sbrk(incr);
