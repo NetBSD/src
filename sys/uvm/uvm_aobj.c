@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.70 2005/07/31 04:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.71 2005/09/13 19:54:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.70 2005/07/31 04:04:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.71 2005/09/13 19:54:09 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -752,7 +752,11 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		by_list = TRUE;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
-		stop = round_page(stop);
+		if (stop == 0) {
+			stop = aobj->u_pages << PAGE_SHIFT;
+		} else {
+			stop = round_page(stop);
+		}
 		if (stop > (aobj->u_pages << PAGE_SHIFT)) {
 			printf("uao_flush: strange, got an out of range "
 			    "flush (fixed)\n");
