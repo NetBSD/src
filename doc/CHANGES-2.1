@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.184 2005/09/06 16:30:21 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.185 2005/09/13 11:39:26 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3667,4 +3667,10 @@ sys/dev/ata/wd.c				1.309
 
 	Add quirk for ST3200826A.
 	[bouyer, ticket #5822]
+
+xsrc/xfree/xc/config/cf/NetBSD.cf		1.80
+
+	Remove unsafe /tmp file creation for the file.0 target. Just make
+	the file in the current build directory instead of temp directory.
+	[reed, ticket #5844]
 
