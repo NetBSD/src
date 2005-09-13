@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.57 2005/07/23 22:02:13 cube Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.58 2005/09/13 01:42:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -186,19 +186,6 @@ int	__sigtimedwait1(struct lwp *, void *, register_t *, copyinout_t,
  */
 void	sendsig(const struct ksiginfo *, const sigset_t *);
 
-/*
- * Compatibility functions.  See compat/common/kern_sig_13.c.
- */
-void	native_sigset13_to_sigset(const sigset13_t *, sigset_t *);
-void	native_sigset_to_sigset13(const sigset_t *, sigset13_t *);
-void	native_sigaction13_to_sigaction(const struct sigaction13 *,
-	    struct sigaction *);
-void	native_sigaction_to_sigaction13(const struct sigaction *,
-	    struct sigaction13 *);
-void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
-	    struct sigaltstack *);
-void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
-	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
 
 #ifdef	_KERNEL

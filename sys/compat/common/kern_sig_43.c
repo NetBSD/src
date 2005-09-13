@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.19 2003/09/06 22:09:20 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.20 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.19 2003/09/06 22:09:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.20 2005/09/13 01:42:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.19 2003/09/06 22:09:20 christos Ex
 #include <machine/cpu.h>
 
 #include <sys/user.h>		/* for coredump */
+
+#include <compat/sys/signal.h>
 
 void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
 void compat_43_sigset_to_sigmask __P((const sigset_t *, int *));
