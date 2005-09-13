@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.33 2005/09/13 01:42:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.33 2005/09/13 01:42:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32 2005/02/26 23:10:18 pe
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
 
