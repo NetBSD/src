@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/11/28 21:55:48 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.15.12.1 2005/09/13 22:17:48 riz Exp $
 
 COMPAT_UTIL_OVERRIDE=	freebsd
 .include "../Makefile.inc"
@@ -15,8 +15,8 @@ KMOD=	compat_freebsd
 # common source files
 SRCS+=	lkminit_emul.c
 SRCS+=	freebsd_exec.c freebsd_file.c freebsd_fork.c \
-	freebsd_ioctl.c freebsd_ipc.c \
-	freebsd_misc.c freebsd_ptrace.c freebsd_syscalls.c freebsd_sysent.c 
+	freebsd_ioctl.c freebsd_ipc.c freebsd_misc.c \
+	freebsd_ptrace.c freebsd_sched.c freebsd_syscalls.c freebsd_sysent.c 
 
 # XXXX - temporary, not applicable for kernel with COMPAT_43, OSSAUDIO
 #.PATH: $S/compat/common $S/compat/ossaudio
