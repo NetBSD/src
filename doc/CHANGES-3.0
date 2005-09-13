@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.239 2005/09/13 11:31:07 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.240 2005/09/13 11:44:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12537,7 +12537,7 @@ sys/dev/pcmcia/pcmcia.c				1.74
 	Fix PR kern/30995: pcmcia interface can't use ne2000 compatible card.
 	[christos, ticket #761]
 
-xsrc/xfree/xc/config/cf/NetBSD.cf			1.80
+xsrc/xfree/xc/config/cf/NetBSD.cf		1.80
 
 	Remove unsafe /tmp file creation for the file.0 target. Just make
 	the file in the current build directory instead of temp directory.
@@ -12555,4 +12555,9 @@ sys/compat/freebsd/freebsd_misc.c		1.22
 	Range checks are not optional. The omission of this one, allows the
 	user to corrupt the heap and/or crash the kernel.
 	[christos, ticket #778]
+
+sys/arch/sgimips/stand/boot/Makefile		1.10-1.11
+
+	Link bootloaders so that they are recognized by ARCS again.
+	[tsutsui, ticket #762]
 
