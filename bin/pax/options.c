@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.89 2005/06/29 02:21:27 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.90 2005/09/13 15:50:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.89 2005/06/29 02:21:27 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.90 2005/09/13 15:50:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -690,7 +690,7 @@ pax_options(int argc, char **argv)
 		--argc;
 		dirptr = argv[argc];
 		if (mkpath(dirptr) < 0)
-			pax_usage();
+			exit(1);
 		/* FALLTHROUGH */
 	case ARCHIVE:
 	case APPND:
@@ -1324,7 +1324,7 @@ mkpath(path)
 {
 	struct stat sb;
 	char *slash;
-	int done = 0;
+	int done = 0, sverrno;
 
 	slash = path;
 
@@ -1335,21 +1335,23 @@ mkpath(path)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (stat(path, &sb)) {
-			if (errno != ENOENT || mkdir(path, 0777)) {
-				tty_warn(1, "%s", path);
-				return (-1);
+		if (mkdir(path, 0777) == -1) {
+			/* Check if it was created it for us in the meantime */
+			sverrno = errno;
+
+			if (lstat(path, &sb) == -1 || !S_ISDIR(sb.st_mode)) {
+				/* Can't create or or not a directory */
+				syswarn(1, sverrno,
+				    "Cannot create directory `%s'", path);
+				return -1;
 			}
-		} else if (!S_ISDIR(sb.st_mode)) {
-			syswarn(1, ENOTDIR, "%s", path);
-			return (-1);
 		}
 
 		if (!done)
 			*slash = '/';
 	}
 
-	return (0);
+	return 0;
 }
 
 

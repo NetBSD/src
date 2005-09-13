@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.53 2005/04/24 01:24:57 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.54 2005/09/13 15:50:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.53 2005/04/24 01:24:57 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.54 2005/09/13 15:50:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,17 @@ node_creat(ARCHD *arcn)
 				}
 			}
 			res = mkdir(nm, file_mode);
-
+			if (res == -1 && errno == EEXIST) {
+				/*
+				 * Something's in the way.
+				 * If it's a directory, say we're done.
+				 */
+				if (lstat(nm, &sb) == 0 &&
+				    S_ISDIR(sb.st_mode)) {
+					res = 0;
+					break;
+				}
+			}
 badlink:
 			if (ign)
 				res = 0;
