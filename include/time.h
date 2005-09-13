@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.34 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: time.h,v 1.35 2005/09/13 01:44:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -100,11 +100,7 @@ time_t time(time_t *);
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-
-#ifdef __LIBC12_SOURCE__
-#define CLK_TCK 100
-#else
-
+#ifndef __LIBC12_SOURCE__
 /*
  * CLK_TCK uses libc's internal __sysconf() to retrieve the machine's
  * HZ. The value of _SC_CLK_TCK is 39 -- we hard code it so we do not
@@ -112,7 +108,7 @@ time_t time(time_t *);
  */
 long __sysconf(int);
 #define CLK_TCK		(__sysconf(39))
-
+#endif
 #endif
 
 extern __aconst char *tzname[2];
@@ -162,14 +158,10 @@ time_t posix2time(time_t);
 time_t timegm(struct tm *);
 time_t timeoff(struct tm *, long);
 time_t timelocal(struct tm *);
-#ifdef __LIBC12_SOURCE__
-char *timezone(int, int);
-#endif
 void tzsetwall(void);
 struct tm *offtime(const time_t *, long);
 #endif /* _NETBSD_SOURCE */
 
-#endif /* !_ANSI_SOURCE */
 __END_DECLS
 
 #endif /* !_TIME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.12 2005/02/03 04:39:32 perry Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.13 2005/09/13 01:44:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,13 +122,9 @@ struct utmpx *pututxline(const struct utmpx *);
 
 #if defined(_NETBSD_SOURCE)
 int updwtmpx(const char *, const struct utmpx *);
-int lastlogxname(const char *);
-#ifdef __LIBC12_SOURCE__
-struct lastlogx *getlastlogx(uid_t, struct lastlogx *);
-struct lastlogx *__getlastlogx13(const char *, uid_t, struct lastlogx *);
-#else
+#ifndef __LIBC12_SOURCE__
 struct lastlogx *getlastlogx(const char *, uid_t, struct lastlogx *)
-	__RENAME(__getlastlogx13);
+    __RENAME(__getlastlogx13);
 #endif
 int updlastlogx(const char *, uid_t, struct lastlogx *);
 struct utmp;
