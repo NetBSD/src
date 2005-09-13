@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.36 2005/06/20 02:49:18 atatat Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.37 2005/09/13 01:42:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.37 2005/09/13 01:42:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36 2005/06/20 02:49:18 atatat Ex
 #include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: times.h,v 1.12 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
@@ -33,33 +33,51 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)times.h	8.4 (Berkeley) 1/21/94
+ *	@(#)signal.h	8.4 (Berkeley) 5/4/95
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
+#ifndef	_COMPAT_SYS_SIGTYPES_H_
+#define	_COMPAT_SYS_SIGTYPES_H_
 
-#include <machine/ansi.h>
-
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd32.h"
 #endif
 
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+
+typedef unsigned int sigset13_t;
+
+/*
+ * Macro for manipulating signal masks.
+ */
+#define __sigmask13(n)		(1 << ((n) - 1))
+#define	__sigaddset13(s, n)	(*(s) |= __sigmask13(n))
+#define	__sigdelset13(s, n)	(*(s) &= ~__sigmask13(n))
+#define	__sigismember13(s, n)	(*(s) & __sigmask13(n))
+#define	__sigemptyset13(s)	(*(s) = 0)
+#define	__sigfillset13(s)	(*(s) = ~(sigset13_t)0)
+
+/* Not strictly a defined type, but is logically associated with stack_t. */
+struct sigaltstack13 {
+	char	*ss_sp;			/* signal stack base */
+	int	ss_size;		/* signal stack length */
+	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
 
-#ifndef _KERNEL
-#include <sys/cdefs.h>
+#endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
 
-__BEGIN_DECLS
-#ifndef __LIBC12_SOURCE__
-clock_t times(struct tms *) __RENAME(__times13);
-#endif
-__END_DECLS
-#endif
-#endif /* !_SYS_TIMES_H_ */
+#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+
+struct __sigaltstack32 {
+	uint32_t	ss_sp;
+	uint32_t	ss_size;
+	int32_t		ss_flags;
+};
+
+typedef struct __sigaltstack32 stack32_t;
+
+#endif /* COMPAT_NETBSD32 && _KERNEL */
+
+
+#endif	/* !_COMPAT_SYS_SIGTYPES_H_ */

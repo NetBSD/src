@@ -1,13 +1,8 @@
-/*	$NetBSD: times.h,v 1.12 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,33 +28,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)times.h	8.4 (Berkeley) 1/21/94
+ *	@(#)dirent.h	8.3 (Berkeley) 8/10/94
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
+#ifndef _COMPAT_SYS_DIRENT_H_
+#define _COMPAT_SYS_DIRENT_H_
 
-#include <machine/ansi.h>
-
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
-#endif
-
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
+struct dirent12 {
+	u_int32_t d_fileno;		/* file number of entry */
+	u_int16_t d_reclen;		/* length of this record */
+	u_int8_t  d_type; 		/* file type, see below */
+	u_int8_t  d_namlen;		/* length of string in d_name */
+	char	d_name[255 + 1];	/* name must be no longer than this */
 };
 
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-#ifndef __LIBC12_SOURCE__
-clock_t times(struct tms *) __RENAME(__times13);
-#endif
-__END_DECLS
-#endif
-#endif /* !_SYS_TIMES_H_ */
+#endif	/* !_COMPAT_SYS_DIRENT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.4 2005/08/19 13:17:37 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.5 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.4 2005/08/19 13:17:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.5 2005/09/13 01:42:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.4 2005/08/19 13:17:37 yamt Exp
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/sys/stat.h>
+#include <compat/sys/dirent.h>
 
 static void cvtstat(struct stat13 *, const struct stat *);
 

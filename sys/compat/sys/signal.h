@@ -1,7 +1,7 @@
-/*	$NetBSD: times.h,v 1.12 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
@@ -33,33 +33,56 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)times.h	8.4 (Berkeley) 1/21/94
+ *	@(#)signal.h	8.4 (Berkeley) 5/4/95
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
+#ifndef	_COMPAT_SYS_SIGNAL_H_
+#define	_COMPAT_SYS_SIGNAL_H_
 
-#include <machine/ansi.h>
+#include <compat/sys/sigtypes.h>
 
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
+#if defined(_NETBSD_SOURCE)
+
+/* Number of signals supported by old style signal mask. */
+#define	NSIG13		32
+
+#endif /* _NETBSD_SOURCE */
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+/*
+ * Signal vector "template" used in sigaction call.
+ */
+struct	sigaction13 {
+	void	(*osa_handler)		/* signal handler */
+			   (int);
+	sigset13_t osa_mask;		/* signal mask to apply */
+	int	osa_flags;		/* see signal options below */
+};
 #endif
 
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
+#if defined(_NETBSD_SOURCE)
+/*
+ * 4.3 compatibility:
+ * Signal vector "template" used in sigvec call.
+ */
+struct	sigvec {
+	void	(*sv_handler)		/* signal handler */
+			   (int);
+	int	sv_mask;		/* signal mask to apply */
+	int	sv_flags;		/* see signal options below */
 };
+#define SV_ONSTACK	SA_ONSTACK
+#define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
+#define SV_RESETHAND	SA_RESETHAND
+#define sv_onstack sv_flags	/* isn't compatibility wonderful! */
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-#ifndef __LIBC12_SOURCE__
-clock_t times(struct tms *) __RENAME(__times13);
-#endif
+int sigvec(int, struct sigvec *, struct sigvec *);
 __END_DECLS
 #endif
-#endif /* !_SYS_TIMES_H_ */
+
+#endif /* _NETBSD_SOURCE */
+
+#endif	/* !_COMPAT_SYS_SIGNAL_H_ */

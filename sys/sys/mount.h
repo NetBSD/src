@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.130 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: mount.h,v 1.131 2005/09/13 01:42:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -34,10 +34,6 @@
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_compat_43.h"
-#endif
-
 #ifndef _KERNEL
 #include <sys/featuretest.h>
 #include <sys/ucred.h>
@@ -56,29 +52,6 @@
 
 #define	MFSNAMELEN	16	/* length of fs type name, including nul */
 #define	MNAMELEN	90	/* length of buffer for returned name */
-
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct statfs12 {
-	short	f_type;			/* type of file system */
-	u_short	f_oflags;		/* deprecated copy of mount flags */
-	long	f_bsize;		/* fundamental file system block size */
-	long	f_iosize;		/* optimal transfer block size */
-	long	f_blocks;		/* total data blocks in file system */
-	long	f_bfree;		/* free blocks in fs */
-	long	f_bavail;		/* free blocks avail to non-superuser */
-	long	f_files;		/* total file nodes in file system */
-	long	f_ffree;		/* free file nodes in fs */
-	fsid_t	f_fsid;			/* file system id */
-	uid_t	f_owner;		/* user that mounted the file system */
-	long	f_flags;		/* copy of mount flags */
-	long	f_syncwrites;		/* count of sync writes since mount */
-	long	f_asyncwrites;		/* count of async writes since mount */
-	long	f_spare[1];		/* spare for later */
-	char	f_fstypename[MFSNAMELEN]; /* fs type name */
-	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
-	char	f_mntfromname[MNAMELEN];  /* mounted file system */
-};
-#endif
 
 /*
  * File system types.
@@ -197,24 +170,6 @@ struct mount {
  * Operations supported on mounted file system.
  */
 #ifdef _KERNEL
-
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-
-/*
- * Filesystem configuration information. Not used by NetBSD, but
- * defined here to provide a compatible sysctl interface to Lite2.
- */
-struct vfsconf {
-	struct	vfsops *vfc_vfsops;	/* filesystem operations vector */
-	char	vfc_name[MFSNAMELEN]; 	/* filesystem type name */
-	int	vfc_typenum;		/* historic filesystem type number */
-	int  	vfc_refcount;		/* number mounted of this type */
-	int	vfc_flags;		/* permanent flags */
-	int	(*vfc_mountroot)(void);	/* if != NULL, routine to mount root */
-	struct	vfsconf *vfc_next; 	/* next in list */
-};
-
-#endif
 
 #if __STDC__
 struct nameidata;
@@ -377,21 +332,12 @@ extern struct vfs_list_head vfs_list;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#ifdef __LIBC12_SOURCE__
-int	fstatfs(int, struct statfs12 *);
-int	getfsstat(struct statfs12 *, long, int);
-int	statfs(const char *, struct statfs12 *);
-int	getmntinfo(struct statfs12 **, int);
-#endif
 int	getfh(const char *, fhandle_t *);
 int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
 int	fhopen(const fhandle_t *, int);
 int	fhstat(const fhandle_t *, struct stat *);
-#ifdef __LIBC12_SOURCE__
-int	fhstatfs(const fhandle_t *, struct statfs12 *);
-#endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 

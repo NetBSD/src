@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.50 2005/08/24 10:13:09 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.51 2005/09/13 01:42:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,26 +46,6 @@
 #include <sys/time.h>
 #endif
 
-#ifdef _KERNEL
-struct stat43 {				/* BSD-4.3 stat struct */
-	u_int16_t st_dev;		/* inode's device */
-	u_int32_t st_ino;		/* inode's number */
-	u_int16_t st_mode;		/* inode protection mode */
-	u_int16_t st_nlink;		/* number of hard links */
-	u_int16_t st_uid;		/* user ID of the file's owner */
-	u_int16_t st_gid;		/* group ID of the file's group */
-	u_int16_t st_rdev;		/* device type */
-	int32_t	  st_size;		/* file size, in bytes */
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-	int32_t	  st_blksize;		/* optimal blocksize for I/O */
-	int32_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-};
-#endif /* defined(_KERNEL) */
-
 /*
  * On systems with 8 byte longs and 4 byte time_ts, padding the time_ts
  * is required in order to have a consistent ABI.  This is because the
@@ -79,71 +59,6 @@ struct stat43 {				/* BSD-4.3 stat struct */
 #else
 #define	__STATPAD(x)	/* nothing */
 #endif
-
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct stat12 {				/* NetBSD-1.2 stat struct */
-	dev_t	  st_dev;		/* inode's device */
-	u_int32_t st_ino;		/* inode's number */
-	u_int16_t st_mode;		/* inode protection mode */
-	u_int16_t st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-	off_t	  st_size;		/* file size, in bytes */
-	int64_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_blksize;		/* optimal blocksize for I/O */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-	int32_t	  st_lspare;
-	int64_t	  st_qspare[2];
-};
-struct stat13 {
-	dev_t	  st_dev;		/* inode's device */
-	uint32_t  st_ino;		/* inode's number */
-	mode_t	  st_mode;		/* inode protection mode */
-	nlink_t	  st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
-#if defined(_NETBSD_SOURCE)
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-#else
-	__STATPAD(__pad0)
-	time_t	  st_atime;		/* time of last access */
-	__STATPAD(__pad1)
-	long	  st_atimensec;		/* nsec of last access */
-	time_t	  st_mtime;		/* time of last data modification */
-	__STATPAD(__pad2)
-	long	  st_mtimensec;		/* nsec of last data modification */
-	time_t	  st_ctime;		/* time of last file status change */
-	__STATPAD(__pad3)
-	long	  st_ctimensec;		/* nsec of last file status change */
-#endif
-	off_t	  st_size;		/* file size, in bytes */
-	blkcnt_t  st_blocks;		/* blocks allocated for file */
-	blksize_t st_blksize;		/* optimal blocksize for I/O */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-	u_int32_t st_spare0;
-#if defined(_NETBSD_SOURCE)
-	struct timespec st_birthtimespec;
-#else
-	time_t	  st_birthtime;
-	__STATPAD(__pad4)
-	long	  st_birthtimensec;
-#endif
-#if !defined(_LP64)
-	int	__pad5;
-#endif
-};
-
-#endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
-
 
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
@@ -315,25 +230,14 @@ __BEGIN_DECLS
 int	chmod(const char *, mode_t);
 int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
-#ifdef __LIBC12_SOURCE__
-int	stat(const char *, struct stat12 *);
-int	fstat(int, struct stat12 *);
-int	__stat13(const char *, struct stat13 *);
-int	__fstat13(int, struct stat13 *);
-int	__stat30(const char *, struct stat *);
-int	__fstat30(int, struct stat *);
-#else
+#ifndef __LIBC12_SOURCE__
 int	stat(const char *, struct stat *) __RENAME(__stat30);
 int	fstat(int, struct stat *) __RENAME(__fstat30);
 #endif
 mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	fchmod(int, mode_t);
-#ifdef __LIBC12_SOURCE__
-int	lstat(const char *, struct stat12 *);
-int	__lstat13(const char *, struct stat13 *);
-int	__lstat30(const char *, struct stat *);
-#else
+#ifndef __LIBC12_SOURCE__
 int	lstat(const char *, struct stat *) __RENAME(__lstat30);
 #endif
 int	mknod(const char *, mode_t, dev_t);

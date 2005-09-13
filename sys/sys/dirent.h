@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.20 2005/08/19 05:06:14 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.21 2005/09/13 01:42:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -113,16 +113,6 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
-#endif
-
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct dirent12 {
-	u_int32_t d_fileno;		/* file number of entry */
-	u_int16_t d_reclen;		/* length of this record */
-	u_int8_t  d_type; 		/* file type, see below */
-	u_int8_t  d_namlen;		/* length of string in d_name */
-	char	d_name[255 + 1];	/* name must be no longer than this */
-};
 #endif
 
 #endif	/* !_SYS_DIRENT_H_ */

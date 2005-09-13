@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.41 2005/05/29 22:08:16 christos Ex
 #include <dev/wscons/wsconsio.h>
 
 #include <machine/darwin_machdep.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
 

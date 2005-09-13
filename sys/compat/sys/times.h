@@ -1,4 +1,4 @@
-/*	$NetBSD: times.h,v 1.12 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: times.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,30 +36,13 @@
  *	@(#)times.h	8.4 (Berkeley) 1/21/94
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
-
-#include <machine/ansi.h>
-
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
-#endif
-
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
-};
+#ifndef	_COMPAT_SYS_TIMES_H_
+#define	_COMPAT_SYS_TIMES_H_
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-#ifndef __LIBC12_SOURCE__
-clock_t times(struct tms *) __RENAME(__times13);
-#endif
+clock_t	times(struct tms *);
 __END_DECLS
 #endif
+
 #endif /* !_SYS_TIMES_H_ */

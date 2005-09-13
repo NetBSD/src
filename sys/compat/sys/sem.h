@@ -1,11 +1,12 @@
-/*	$NetBSD: darwin_ktrace.c,v 1.3 2005/09/13 01:42:32 christos Exp $ */
+/*	$NetBSD: sem.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,38 +37,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ktrace.c,v 1.3 2005/09/13 01:42:32 christos Exp $");
+/*
+ * SVID compatible sem.h file
+ *
+ * Author: Daniel Boulet
+ */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/ktrace.h>
-#include <sys/sa.h>
-#include <sys/syscallargs.h>
+#ifndef _COMPAT_SYS_SEM_H_
+#define _COMPAT_SYS_SEM_H_
 
-#include <compat/sys/signal.h>
+#ifdef _KERNEL
 
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_vm.h>
+struct semid_ds14 {
+	struct ipc_perm14 sem_perm;	/* operation permission struct */
+	struct __sem	*sem_base;	/* pointer to first semaphore in set */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	long		sem_pad1;	/* SVABI/386 says I need this here */
+	time_t		sem_ctime;	/* last change time */
+    					/* Times measured in secs since */
+    					/* 00:00:00 GMT, Jan. 1, 1970 */
+	long		sem_pad2;	/* SVABI/386 says I need this here */
+	long		sem_pad3[4];	/* SVABI/386 says I need this here */
+};
 
-#include <compat/darwin/darwin_audit.h>
-#include <compat/darwin/darwin_syscallargs.h>
+#else /* !_KERNEL */
 
-int
-darwin_sys_utrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct darwin_sys_utrace_args /* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-	} */ *uap = v;
+__BEGIN_DECLS
+int	semctl(int, int, int, union __semun);
+int	__semctl(int, int, int, union __semun *);
+int	__semctl13(int, int, int, ...);
+#if defined(_NETBSD_SOURCE)
+int	semconfig(int);
+#endif
+__END_DECLS
 
-	ktruser(l->l_proc, "darwin", SCARG(uap, addr), SCARG(uap, len), 0);
+#endif /* !_KERNEL */
 
-	return 0;
-}
+#endif /* !_COMPAT_SYS_SEM_H_ */

@@ -1,13 +1,8 @@
-/*	$NetBSD: times.h,v 1.12 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,33 +28,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)times.h	8.4 (Berkeley) 1/21/94
+ *	@(#)signalvar.h	8.6 (Berkeley) 2/19/95
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
+#ifndef	_COMPAT_SYS_SIGNALVAR_H_
+#define	_COMPAT_SYS_SIGNALVAR_H_
 
-#include <machine/ansi.h>
+#ifdef _KERNEL
+/*
+ * Compatibility functions.  See compat/common/kern_sig_13.c.
+ */
+void	native_sigset13_to_sigset(const sigset13_t *, sigset_t *);
+void	native_sigset_to_sigset13(const sigset_t *, sigset13_t *);
+void	native_sigaction13_to_sigaction(const struct sigaction13 *,
+	    struct sigaction *);
+void	native_sigaction_to_sigaction13(const struct sigaction *,
+	    struct sigaction13 *);
+void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
+	    struct sigaltstack *);
+void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
+	    struct sigaltstack13 *);
+#endif	/* _KERNEL */
 
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
-#endif
-
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
-};
-
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-#ifndef __LIBC12_SOURCE__
-clock_t times(struct tms *) __RENAME(__times13);
-#endif
-__END_DECLS
-#endif
-#endif /* !_SYS_TIMES_H_ */
+#endif	/* !_COMPAT_SYS_SIGNALVAR_H_ */
