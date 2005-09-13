@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.188 2005/09/13 23:09:45 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.189 2005/09/13 23:25:31 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3430,13 +3430,6 @@ sys/dev/ic/aic7xxx.c				1.115
 	config(9). Fix a corruption on alldevs list when an ahc device fails to
 	initialise.
 	[bouyer, ticket #5590]
-
-sys/kern/uipc_socket.c				1.105 via patch
-
-	PR/26210: Matthew Mondor: Since revision 1.14 when net-2 was merged,
-	the code to do receive packet accounting has been disabled for no
-	apparent reason. Re-enable it.
-	[christos, ticket #5598]
 
 distrib/utils/sysinst/msg.mi.de			1.22
 
