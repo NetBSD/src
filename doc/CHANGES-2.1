@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.187 2005/09/13 16:39:02 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.188 2005/09/13 23:09:45 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3684,4 +3684,96 @@ sys/compat/freebsd/freebsd_misc.c		1.22 via patch
 	Range checks are not optional. The omission of this one, allows the
 	user to corrupt the heap and/or crash the kernel.
 	[christos, ticket #5846]
+
+distrib/amd64/floppies/common/list.ramdisk	1.4
+
+	Add bootxx_ffsv2
+	[kleink, ticket #5828]
+
+sys/arch/mips/include/locore.h			1.69
+sys/arch/mips/include/mips3_pte.h		1.17
+sys/arch/mips/mips/locore_mips3.S		1.87
+sys/arch/mips/mips/mips_machdep.c		1.179
+sys/arch/mips/mips/mipsX_subr.S			1.17
+
+	Initilize CP0 pagemask register properly.  PR#30590
+	[tsutsui, ticket #5829]
+
+usr.bin/which/which.csh				patch
+
+	Make /usr/bin/which return a proper error indication.  PR#31252.
+	[rpaulo, ticket #5831]
+
+sys/lkm/compat/freebsd/Makefile			1.17 via patch
+
+	Add freebsd_sched.c
+	[rpaulo, ticket #5832]
+
+distrib/utils/sysinst/bsddisklabel.c		1.35
+
+	Don't display 'Yes' under 'Newfs' for swap
+	[dsl, ticket #5834]
+
+distrib/utils/sysinst/menus.mbr			1.4
+
+	Float the menu box of menu_fullpart (all mbr disk) below the text
+	message.  Stops the German text flowing into the box, should fix
+	PR/31292
+	[dsl, ticket #5835]
+
+distrib/utils/sysinst/msg.mbr.de		1.7
+
+	Reword "fullpart" message to make it shorter. Should fix
+	PR install/31292.
+	[dsl, ticket #5836]
+
+distrib/utils/sysinst/msg.mi.de			1.23
+
+	Improve language slightly.
+	[dsl, ticket #5837]
+
+distrib/utils/sysinst/disks.c			1.89
+
+	Comment out the vstab entries generated for alternate root filesystems.
+	Marking the 'noauto' isn't enough to stop the code that remounts root rw
+	trying to use them.
+	[dsl, ticket #5838]
+
+distrib/utils/sysinst/msg.mi.de			1.24
+distrib/utils/sysinst/msg.mi.en			1.138
+distrib/utils/sysinst/msg.mi.fr			1.86
+distrib/utils/sysinst/msg.mi.pl			1.47
+
+	Change the message above the selection menu for root's shell to show
+	the correct default (ie what happens if you type enter) of /bin/sh.
+	Fixes PR install/32159
+	[dsl, ticket #5839]
+
+distrib/utils/sysinst/msg.mi.fr			1.87
+distrib/utils/sysinst/msg.mi.pl			1.48
+
+	Correct some messages which had the wrong number of format specifiers.
+	[dsl, ticket #5840]
+
+sys/dev/pci/if_sk.c				1.16
+
+	Fixes from OpenBSD and FreeBSD: Don't initialize the card
+	(and start an autonegotiation!) every time the IP address
+	changes. Makes 'dhclient sk0' invocations way faster and
+	more consistant. i.e. one DHCPREQUEST elicts the DHCPACK.
+	Solve "No PHY found" problem for more Yukon Lite variants.
+	[xtraeme, ticket #5841]
+
+usr.sbin/traceroute6/traceroute6.8		1.10
+
+	Fix -m description position. From YOMURA Masanori in private mail.
+	[wiz, ticket #5842]
+
+sys/kern/sys_pipe.c				1.66
+
+	PR/27185: Christian Biere: kqueue: EOF on pipe gains no EVFILT_READ
+	event Set the PIPE_EOF flag before we wakeup() our peer. While here
+	GC unused argument from pipeselwakeup() and call it even when
+	fp == NULL.
+	[christos, ticket #5845]
 
