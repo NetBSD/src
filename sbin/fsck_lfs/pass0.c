@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.23 2005/08/20 14:59:20 kent Exp $	 */
+/* $NetBSD: pass0.c,v 1.24 2005/09/13 04:14:17 christos Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 
 #include "fsck.h"
 #include "extern.h"

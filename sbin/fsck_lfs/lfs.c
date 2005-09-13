@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.16 2005/06/08 19:09:55 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.17 2005/09/13 04:14:17 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,7 +94,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 #include "segwrite.h"
 
 #define panic call_panic

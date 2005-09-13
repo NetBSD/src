@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.21 2005/08/23 11:44:25 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.22 2005/09/13 04:14:17 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -50,7 +50,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 #include "segwrite.h"
 
 #include "fsutil.h"

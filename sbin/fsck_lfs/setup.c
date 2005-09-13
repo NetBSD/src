@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.25 2005/08/19 02:07:19 christos Exp $ */
+/* $NetBSD: setup.c,v 1.26 2005/09/13 04:14:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 
 #include "fsck.h"
 #include "extern.h"
