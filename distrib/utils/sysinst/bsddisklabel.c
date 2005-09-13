@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.27.2.1.2.1 2005/07/24 02:25:24 snj Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.27.2.1.2.2 2005/09/13 22:21:03 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,7 +142,7 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	p = bsdlabel + ptn;
 	p->pi_offset = start;
 	p->pi_size = size;
-	set_ptype(p, fstype, PIF_NEWFS);
+	set_ptype(p, fstype, mountpt ? PIF_NEWFS : 0);
 
 	if (mountpt != NULL) {
 		for (pp = 0; pp < maxptn; pp++) {
