@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.10 2005/07/31 04:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.11 2005/09/13 22:00:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -36,9 +36,17 @@
 #define	SWSLOT_BAD	(-1)
 
 #ifdef _KERNEL
+#if defined(_KERNEL_OPT)
+#if 0 /* notyet */
+#include "opt_vmswap.h"
+#else
+#define	VMSWAP
+#endif
+#endif
 
 struct swapent;
 
+#if defined(VMSWAP)
 int	uvm_swap_get(struct vm_page *, int, int);
 int	uvm_swap_put(int, struct vm_page **, int, int);
 int	uvm_swap_alloc(int *, boolean_t);
@@ -46,6 +54,9 @@ void	uvm_swap_free(int, int);
 void	uvm_swap_markbad(int, int);
 void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 boolean_t	uvm_swapisfull(void);
+#else /* defined(VMSWAP) */
+#define	uvm_swapisfull()	TRUE
+#endif /* defined(VMSWAP) */
 
 #endif /* _KERNEL */
 
