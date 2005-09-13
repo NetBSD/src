@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.9 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.10 2005/09/13 03:23:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -50,6 +50,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+
+#include <compat/sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 
