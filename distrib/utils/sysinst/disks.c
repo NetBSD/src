@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.76.2.4.2.1 2005/07/24 02:25:24 snj Exp $ */
+/*	$NetBSD: disks.c,v 1.76.2.4.2.2 2005/09/13 22:32:44 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -448,6 +448,10 @@ make_fstab(void)
 			s = "# ";
 			break;
 		}
+		/* The code that remounts root rw doesn't check the partition */
+		if (strcmp(mp, "/") == 0 && !(bsdlabel[i].pi_flags & PIF_MOUNT))
+			s = "# ";
+
 		scripting_fprintf(f, "%s/dev/%s%c %s %s rw%s%s%s%s%s%s%s%s %d %d\n",
 		   s, diskdev, 'a' + i, mp, fstype,
 		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
