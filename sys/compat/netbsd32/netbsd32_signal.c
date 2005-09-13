@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.11 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.12 2005/09/13 03:23:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.11 2005/08/19 04:24:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.12 2005/09/13 03:23:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.11 2005/08/19 04:24:38 christo
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#include <compat/sys/ucontext.h>
 
 int
 netbsd32_sigaction(l, v, retval)
