@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.4 2005/06/02 00:54:42 lukem Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.5 2005/09/13 04:40:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.4 2005/06/02 00:54:42 lukem Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.5 2005/09/13 04:40:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ __RCSID("$NetBSD: make_lfs.c,v 1.4 2005/06/02 00:54:42 lukem Exp $");
 
 #include "bufcache.h"
 #include "vnode.h"
-#include "lfs.h"
+#include "lfs_user.h"
 #include "segwrite.h"
 
 extern int Nflag; /* Don't write anything */
