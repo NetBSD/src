@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoumax.c,v 1.3 2005/07/30 15:21:20 christos Exp $	*/
+/*	$NetBSD: _strtoumax.c,v 1.4 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,21 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _strtoumax.c,v 1.3 2005/07/30 15:21:20 christos Exp $");
+__RCSID("$NetBSD: _strtoumax.c,v 1.4 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_strtoumax, strtoumax)
 #else
 
 #include <inttypes.h>
-uintmax_t	_strtoumax __P((const char *, char **, int));	/* XXX */
+uintmax_t	_strtoumax(const char *, char **, int);
 
 uintmax_t
-strtoumax(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	int base;
+strtoumax(const char *nptr, char **endptr, int base)
 {
 
 	return _strtoumax(nptr, endptr, base);

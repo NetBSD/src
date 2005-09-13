@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.15 2003/08/07 16:42:07 agc Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.16 2005/09/13 01:44:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,51 +36,62 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.15 2003/08/07 16:42:07 agc Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.16 2005/09/13 01:44:08 christos Exp $")
 #endif
 
-ENTRY(sigsetjmp)
+ENTRY(__sigsetjmp14)
 	movl	4(%esp),%ecx
-	movl	8(%esp),%eax
-	movl	%eax,28(%ecx)
-	testl	%eax,%eax
-	jz	2f
-
-	PIC_PROLOGUE
-	pushl	$0
-#ifdef PIC
-	call	PIC_PLT(_C_LABEL(sigblock))
-#else
-	call	_C_LABEL(sigblock)
-#endif
-	addl	$4,%esp
-	PIC_EPILOGUE
-
-	movl	4(%esp),%ecx
-	movl	%eax,24(%ecx)
-2:	movl	0(%esp),%edx
+	movl	0(%esp),%edx
 	movl	%edx, 0(%ecx)
 	movl	%ebx, 4(%ecx)
 	movl	%esp, 8(%ecx)
 	movl	%ebp,12(%ecx)
 	movl	%esi,16(%ecx)
 	movl	%edi,20(%ecx)
-	xorl	%eax,%eax
-	ret
 
-ENTRY(siglongjmp)
-	movl	4(%esp),%edx
-	cmpl	$0,28(%edx)
-	jz	2f
+	/* Check if we should save the signal mask, and remember it. */
+	movl	8(%esp),%eax
+	movl	%eax,40(%ecx)
+	testl	%eax,%eax
+	jz	2f			/* no, skip */
+
+	/* Get the signal mask. */
+	leal	24(%ecx),%edx
 
 	PIC_PROLOGUE
-	pushl	24(%edx)
+	pushl	%edx
+	pushl	$0
+	pushl	$0
 #ifdef PIC
-	call	PIC_PLT(_C_LABEL(sigsetmask))
+	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
-	call	_C_LABEL(sigsetmask)
+	call	_C_LABEL(__sigprocmask14)
 #endif
-	addl	$4,%esp
+	addl	$12,%esp
+	PIC_EPILOGUE
+
+2:	xorl	%eax,%eax
+	ret
+
+ENTRY(__siglongjmp14)
+	/* Check to see if we need to restore the signal mask. */
+	movl	4(%esp),%ecx
+	cmpl	$0,40(%ecx)
+	jz	2f			/* no, skip */
+
+	/* Restore the signal mask. */
+	leal	24(%ecx),%edx
+
+	PIC_PROLOGUE
+	pushl	$0
+	pushl	%edx
+	pushl	$3			/* SIG_SETMASK */
+#ifdef PIC
+	call	PIC_PLT(_C_LABEL(__sigprocmask14))
+#else
+	call	_C_LABEL(__sigprocmask14)
+#endif
+	addl	$12,%esp
 	PIC_EPILOGUE
 
 2:	movl	4(%esp),%edx

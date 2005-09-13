@@ -1,17 +1,21 @@
-#	$NetBSD: Makefile.inc,v 1.159 2005/08/19 02:04:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.160 2005/09/13 01:44:10 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
+SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
 	getcontext.S \
-	ptrace.S sbrk.S __semctl.S shmat.S shmctl.S sigaction.S \
-	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
+	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
+.if !defined(COMPATARCHDIR)
+SRCS+=	Ovfork.S msgctl.S __semctl.S shmctl.S sigaction.S sigpending.S \
+	sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S
+_LRCS+= Lint_Ovfork.S
+.endif
 
-_LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
+_LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c \
 	Lint_exect.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
 	Lint_syscall.c Lint___syscall.c \
@@ -28,10 +32,10 @@ SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c getdents.c \
-	lseek.c mmap.c msync.c ntp_adjtime.c pread.c preadv.c pwrite.c \
-	pwritev.c semctl.c settimeofday.c sigaltstack.c stat.c __stat13.c \
-	statfs.c swapon.c truncate.c
+SRCS+=	adjtime.c clock_settime.c ftruncate.c \
+	lseek.c mmap.c ntp_adjtime.c pread.c preadv.c pwrite.c \
+	pwritev.c settimeofday.c \
+	swapon.c truncate.c
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -149,7 +153,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fhopen.2 \
-	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 getdirentries.3 \
+	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \

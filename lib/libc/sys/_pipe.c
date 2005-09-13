@@ -1,4 +1,4 @@
-/*	$NetBSD: _pipe.c,v 1.5 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: _pipe.c,v 1.6 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,19 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _pipe.c,v 1.5 2005/07/30 15:21:21 christos Exp $");
+__RCSID("$NetBSD: _pipe.c,v 1.6 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_pipe, pipe)
 #else
 
 #include <unistd.h>
-int	_pipe __P((int *));	/* XXX */
+int	_pipe(int *);
 
 int
-pipe(fildes)
-	int *fildes;
+pipe(int *fildes)
 {
 
 	return _pipe(fildes);

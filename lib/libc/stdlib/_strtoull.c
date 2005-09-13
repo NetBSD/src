@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoull.c,v 1.4 2005/07/30 15:21:20 christos Exp $	*/
+/*	$NetBSD: _strtoull.c,v 1.5 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,23 +31,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _strtoull.c,v 1.4 2005/07/30 15:21:20 christos Exp $");
+__RCSID("$NetBSD: _strtoull.c,v 1.5 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_strtoull, strtoull)
 #else
 
 #include <stdlib.h>
 /* LONGLONG */
-unsigned long long int	_strtoull __P((const char *, char **, int)); /* XXX */
+unsigned long long int	_strtoull(const char *, char **, int);
 
 /* LONGLONG */
 unsigned long long int
-strtoull(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	int base;
+strtoull(const char *nptr, char **endptr, int base)
 {
 
 	return _strtoull(nptr, endptr, base);

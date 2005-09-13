@@ -1,4 +1,4 @@
-/*	$NetBSD: verr.c,v 1.12 2003/10/27 02:17:18 lukem Exp $	*/
+/*	$NetBSD: verr.c,v 1.13 2005/09/13 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verr.c,v 1.12 2003/10/27 02:17:18 lukem Exp $");
+__RCSID("$NetBSD: verr.c,v 1.13 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef __NO_NAMESPACE_H	/* XXX */
 #include "namespace.h"
-#endif
 #include <err.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -57,10 +55,7 @@ __weak_alias(verr, _verr)
 #endif
 
 __dead void
-_verr(eval, fmt, ap)
-	int eval;
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+verr(int eval, const char *fmt, _BSD_VA_LIST_ ap)
 {
 	int sverrno;
 

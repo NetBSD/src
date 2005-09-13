@@ -1,4 +1,4 @@
-/*	$NetBSD: _strlcat.c,v 1.3 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: _strlcat.c,v 1.4 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,21 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _strlcat.c,v 1.3 2005/07/30 15:21:21 christos Exp $");
+__RCSID("$NetBSD: _strlcat.c,v 1.4 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_strlcat, strlcat)
 #else
 
 #include <string.h>
-size_t	_strlcat __P((char *, const char *, size_t));	/* XXX */
+size_t	_strlcat(char *, const char *, size_t);
 
 size_t
-strlcat(dst, src, siz)
-	char *dst;
-	const char *src;
-	size_t siz;
+strlcat(char *dst, const char *src, size_t siz)
 {
 
 	return _strlcat(dst, src, siz);

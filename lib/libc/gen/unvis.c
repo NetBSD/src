@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.27 2005/05/16 11:42:04 lukem Exp $	*/
+/*	$NetBSD: unvis.c,v 1.28 2005/09/13 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,11 +34,9 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.27 2005/05/16 11:42:04 lukem Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.28 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -50,12 +48,6 @@ __RCSID("$NetBSD: unvis.c,v 1.27 2005/05/16 11:42:04 lukem Exp $");
 
 #ifdef __weak_alias
 __weak_alias(strunvis,_strunvis)
-__weak_alias(unvis,_unvis)
-#endif
-
-#ifdef __warn_references
-__warn_references(unvis,
-    "warning: reference to compatibility unvis(); include <vis.h> for correct reference")
 #endif
 
 #if !HAVE_VIS
@@ -75,20 +67,11 @@ __warn_references(unvis,
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 #define xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
 
-int
-unvis(cp, c, astate, flag)
-	char *cp;
-	int c;
-	int *astate, flag;
-{
-	return __unvis13(cp, c, astate, flag);
-}
-
 /*
  * unvis - decode characters previously encoded by vis
  */
 int
-__unvis13(cp, c, astate, flag)
+unvis(cp, c, astate, flag)
 	char *cp;
 	int c;
 	int *astate, flag;
@@ -293,7 +276,7 @@ strunvisx(dst, src, flag)
 
 	while ((c = *src++) != '\0') {
  again:
-		switch (__unvis13(dst, c, &state, flag)) {
+		switch (unvis(dst, c, &state, flag)) {
 		case UNVIS_VALID:
 			dst++;
 			break;
@@ -307,7 +290,7 @@ strunvisx(dst, src, flag)
 			return (-1);
 		}
 	}
-	if (__unvis13(dst, c, &state, UNVIS_END) == UNVIS_VALID)
+	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
 		dst++;
 	*dst = '\0';
 	return (dst - start);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vwarnx.c,v 1.12 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: vwarnx.c,v 1.13 2005/09/13 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vwarnx.c,v 1.12 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: vwarnx.c,v 1.13 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef __NO_NAMESPACE_H	/* XXX */
 #include "namespace.h"
-#endif
 #include <err.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -55,9 +53,7 @@ __weak_alias(vwarnx, _vwarnx)
 #endif
 
 void
-_vwarnx(fmt, ap)
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+vwarnx(const char *fmt, _BSD_VA_LIST_ ap)
 {
 	(void)fprintf(stderr, "%s: ", getprogname());
 	if (fmt != NULL)

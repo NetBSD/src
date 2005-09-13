@@ -1,4 +1,4 @@
-/*	$NetBSD: _strerror_r.c,v 1.1 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: _strerror_r.c,v 1.2 2005/09/13 01:44:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,19 +37,20 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _strerror_r.c,v 1.1 2005/07/30 15:21:21 christos Exp $");
+__RCSID("$NetBSD: _strerror_r.c,v 1.2 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_strerror_r, strerror_r)
 #else
 
 #include <string.h>
-int	_strerror_r(int, char *, size_t);	/* XXX */
+int	_strerror_r(int, char *, size_t);
 
 int
 strerror_r(int num, char *buf, size_t siz)
 {
+
 	return _strerror_r(num, buf, siz);
 }
 #endif

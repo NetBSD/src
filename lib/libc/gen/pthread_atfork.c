@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.4 2005/06/01 05:30:54 lukem Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.5 2005/09/13 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,10 +38,8 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.4 2005/06/01 05:30:54 lukem Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.5 2005/09/13 01:44:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
-
-#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 

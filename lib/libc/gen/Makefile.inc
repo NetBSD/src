@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.144 2005/08/19 02:04:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.145 2005/09/13 01:44:09 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -6,34 +6,34 @@
 
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
-	devname.c dirname.c disklabel.c err.c errx.c __errlist14.c errlist.c \
+	devname.c dirname.c disklabel.c err.c errx.c errlist.c \
 	errno.c execl.c execle.c execlp.c execv.c execvp.c extattr.c \
-	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c __fts13.c __fts30.c \
+	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c __getmntinfo13.c \
+	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
-	getusershell.c __glob13.c glob.c humanize_number.c initgroups.c \
+	getusershell.c glob.c humanize_number.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	__opendir30.c pause.c popen.c psignal.c pthread_atfork.c pwcache.c \
-	pw_scan.c raise.c randomid.c readdir.c __readdir30.c rewinddir.c \
-	scandir.c __scandir30.c seekdir.c setdomainname.c \
+	pause.c popen.c psignal.c pthread_atfork.c pwcache.c \
+	pw_scan.c raise.c randomid.c readdir.c rewinddir.c \
+	scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
-	__siglist14.c siglist.c signal.c __signame14.c signame.c sigrelse.c \
-	sigset.c __sigsetops14.c sigsetops.c sleep.c \
+	siglist.c signal.c signame.c sigrelse.c \
+	sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
-	sysctlnametomib.c syslog.c telldir.c time.c __times13.c \
-	times.c timezone.c toascii.c tolower_.c ttyname.c ttyslot.c \
+	sysctlnametomib.c syslog.c telldir.c time.c \
+	times.c toascii.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
 	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
 
 # indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
+SRCS+=	_err.c _errx.c \
 	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 # machine-dependent gen sources
