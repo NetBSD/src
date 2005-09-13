@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.241 2005/09/13 16:48:11 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.242 2005/09/13 21:09:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12560,4 +12560,36 @@ sys/arch/sgimips/stand/boot/Makefile		1.10-1.11
 
 	Link bootloaders so that they are recognized by ARCS again.
 	[tsutsui, ticket #762]
+
+sys/lkm/compat/freebsd/Makefile			1.17-1.18
+sys/compat/freebsd/freebsd_sysctl.c		1.3
+
+	Add missing sources files and fix other build issues.
+	Add freebsd_sched.c 
+	[rpaulo, ticket #764]
+
+sys/dev/pci/if_sk.c				1.16
+
+	Make sk(4) work with dhclient(8).
+	[xtraeme, ticket #765]
+
+usr.sbin/traceroute6/traceroute6.8		1.10
+
+	Fix -m description position.
+	[wiz, ticket #766]
+
+sys/dev/pcmcia/if_ray.c				1.58
+
+	Fix compilation with debugging on.
+	[kiyohara, ticket #767]
+
+share/man/man4/Makefile				1.368
+share/man/man4/xge.4				1.1
+sys/dev/pci/files.pci				1.238
+sys/dev/pci/if_xge.c				1.1 via patch
+sys/dev/pci/if_xgereg.h				1.1
+
+	Device driver for the Neterion (S2io) Xframe-I 10Gbit ethernet card.
+	Still missing: VLAN + IPv6 checksum support.
+	[ragge, ticket #768]
 
