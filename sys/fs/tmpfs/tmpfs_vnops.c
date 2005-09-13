@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.3 2005/09/12 16:55:01 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.4 2005/09/13 12:11:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.3 2005/09/12 16:55:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.4 2005/09/13 12:11:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -756,15 +756,13 @@ out:
 	if (VOP_ISLOCKED(vp))
 		VOP_UNLOCK(vp, 0);
 
-	if (error == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
+	PNBUF_PUT(cnp->cn_pnbuf);
 
 	vput(dvp);
 
 	/* XXX Locking status of dvp does not match manual page. */
 	KASSERT(!VOP_ISLOCKED(dvp));
 	KASSERT(!VOP_ISLOCKED(vp));
-	KASSERT(IFF(error == 0, cnp->cn_flags & HASBUF));
 
 	return error;
 }
