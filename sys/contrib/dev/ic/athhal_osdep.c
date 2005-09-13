@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.3 2005/07/04 05:35:09 dyoung Exp $
+ * $Id: athhal_osdep.c,v 1.4 2005/09/13 05:50:29 martin Exp $
  */
 #include "opt_ah.h"
 
@@ -288,6 +288,8 @@ ath_hal_alq_get(struct ath_hal *ah)
 void
 ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
+	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
+
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
 		if (ale) {
@@ -300,22 +302,25 @@ ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 	}
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+		bus_space_write_4(ah->ah_st, h, reg, val);
 	else
 #endif
-		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, val);
+		bus_space_write_stream_4(ah->ah_st, h, reg, val);
 }
 
 u_int32_t
 ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
 	u_int32_t val;
+	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
 
-	val = bus_space_read_stream_4(ah->ah_st, ah->ah_sh, reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		val = le32toh(val);
+		val = bus_space_read_4(ah->ah_st, h, reg);
+	else
 #endif
+		val = bus_space_read_stream_4(ah->ah_st, h, reg);
+
 	if (ath_hal_alq) {
 		struct ale *ale = ath_hal_alq_get(ah);
 		if (ale) {
@@ -358,25 +363,25 @@ OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
 void
 ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
+	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
+		bus_space_write_4(ah->ah_st, h, reg, val);
 	else
 #endif
-		bus_space_write_stream_4(ah->ah_st, ah->ah_sh, reg, val);
+		bus_space_write_stream_4(ah->ah_st, h, reg, val);
 }
 
 u_int32_t
 ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 {
-	u_int32_t val;
+	bus_space_handle_t h = ATH_HAL2BUSHDNLE(ah->ah_sh);
 
-	val = bus_space_read_stream_4(ah->ah_st, ah->ah_sh, reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
-		val = le32toh(val);
+		return bus_space_read_4(ah->ah_st, h, reg);
 #endif
-	return val;
+	return bus_space_read_stream_4(ah->ah_st, h, reg);
 }
 #endif /* AH_DEBUG || AH_REGOPS_FUNC */
 

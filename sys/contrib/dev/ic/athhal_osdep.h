@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.h,v 1.3 2005/07/04 05:35:09 dyoung Exp $
+ * $Id: athhal_osdep.h,v 1.4 2005/09/13 05:50:29 martin Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -46,9 +46,19 @@
 
 #include <machine/bus.h>
 
+#ifdef __sparc64__
+/* the HAL wants a pointer type, but bus_space_handle_t is a struct */
+typedef bus_space_handle_t *HAL_BUS_HANDLE;
+#define ATH_BUSHANDLE2HAL(HNDL)	(&(HNDL))
+#define ATH_HAL2BUSHDNLE(HH)	(*(HH))
+#else
+typedef bus_space_handle_t HAL_BUS_HANDLE;
+#define ATH_BUSHANDLE2HAL(HNDL)	(HNDL)
+#define ATH_HAL2BUSHDNLE(HH)	(HH)
+#endif
+
 typedef void* HAL_SOFTC;
 typedef bus_space_tag_t HAL_BUS_TAG;
-typedef bus_space_handle_t HAL_BUS_HANDLE;
 typedef bus_addr_t HAL_BUS_ADDR;
 
 /*
@@ -99,22 +109,22 @@ extern	u_int32_t ath_hal_reg_read(struct ath_hal *ah, u_int reg);
 #if _BYTE_ORDER == _BIG_ENDIAN
 #define OS_REG_WRITE(_ah, _reg, _val) do {				\
 	if ( (_reg) >= 0x4000 && (_reg) < 0x5000)			\
-		bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh,		\
-			(_reg), htole32(_val));			\
+		bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh,		\
+			(_reg), (_val));				\
 	else								\
-		bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh,		\
+		bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh,	\
 			(_reg), (_val));				\
 } while (0)
 #define OS_REG_READ(_ah, _reg)						\
 	(((_reg) >= 0x4000 && (_reg) < 0x5000) ?			\
-		le32toh(bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh,	\
+		bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh,		\
 			(_reg))) :					\
 		bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
 #else /* _BYTE_ORDER == _LITTLE_ENDIAN */
 #define	OS_REG_WRITE(_ah, _reg, _val)					\
-	bus_space_write_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg), (_val))
+	bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh, (_reg), (_val))
 #define	OS_REG_READ(_ah, _reg)						\
-	((u_int32_t) bus_space_read_stream_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
+	((u_int32_t) bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
 #endif /* _BYTE_ORDER */
 #endif /* AH_DEBUG || AH_REGFUNC || AH_DEBUG_ALQ */
 

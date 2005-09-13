@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.58 2005/08/21 00:25:51 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.59 2005/09/13 05:50:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.58 2005/08/21 00:25:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.59 2005/09/13 05:50:29 martin Exp $");
 #endif
 
 /*
@@ -308,7 +308,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
+	ah = ath_hal_attach(devid, sc, sc->sc_st, ATH_BUSHANDLE2HAL(sc->sc_sh),
+	    &status);
 	if (ah == NULL) {
 		if_printf(ifp, "unable to attach hardware; HAL status %u\n",
 			status);
