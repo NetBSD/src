@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.93 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.94 2005/09/13 04:13:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1080,5 +1080,10 @@ struct lfs_fcntl_markv {
 } while(0)
 # define ASSERT_MAYBE_SEGLOCK(x)
 #endif /* !notyet */
+
+__BEGIN_DECLS
+void lfs_itimes(struct inode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
+__END_DECLS
 
 #endif /* !_UFS_LFS_LFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.154 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.155 2005/09/13 04:13:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.154 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.155 2005/09/13 04:13:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,57 +267,6 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
 
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int);
-
-void
-lfs_itimes(struct inode *ip, const struct timespec *acc,
-    const struct timespec *mod, const struct timespec *cre)
-{
-	struct timespec *ts = NULL, tsb;
-
-	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
-
-	if (ip->i_flag & IN_ACCESS) {
-		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
-		ip->i_ffs1_atime = acc->tv_sec;
-		ip->i_ffs1_atimensec = acc->tv_nsec;
-		if (ip->i_lfs->lfs_version > 1) {
-			struct lfs *fs = ip->i_lfs;
-			struct buf *ibp;
-			IFILE *ifp;
-
-			LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);
-			ifp->if_atime_sec = acc->tv_sec;
-			ifp->if_atime_nsec = acc->tv_nsec;
-			LFS_BWRITE_LOG(ibp);
-			simple_lock(&fs->lfs_interlock);
-			fs->lfs_flags |= LFS_IFDIRTY;
-			simple_unlock(&fs->lfs_interlock);
-		} else {
-			LFS_SET_UINO(ip, IN_ACCESSED);
-		}
-	}
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
-		if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
-			if (mod == NULL)
-				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
-			ip->i_ffs1_mtime = mod->tv_sec;
-			ip->i_ffs1_mtimensec = mod->tv_nsec;
-			ip->i_modrev++;
-		}
-		if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
-			if (cre == NULL)
-				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
-			ip->i_ffs1_ctime = cre->tv_sec;
-			ip->i_ffs1_ctimensec = cre->tv_nsec;
-		}
-		if (ip->i_flag & (IN_CHANGE | IN_UPDATE))
-			LFS_SET_UINO(ip, IN_MODIFIED);
-		if (ip->i_flag & IN_MODIFY)
-			LFS_SET_UINO(ip, IN_ACCESSED);
-	}
-	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
-}
 
 #define	LFS_READWRITE
 #include <ufs/ufs/ufs_readwrite.c>
