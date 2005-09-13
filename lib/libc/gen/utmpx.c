@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.22 2004/11/11 22:14:20 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.23 2005/09/13 01:44:09 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.22 2004/11/11 22:14:20 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.23 2005/09/13 01:44:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,21 +58,13 @@ __RCSID("$NetBSD: utmpx.c,v 1.22 2004/11/11 22:14:20 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
-/* don't define earlier, has side effects in fcntl.h */
-#define __LIBC12_SOURCE__
 #include <utmpx.h>
 #include <vis.h>
-
-__warn_references(getlastlogx,
-    "warning: reference to compatibility getlastlogx(); include <utmpx.h> for correct reference")
-__warn_references(lastlogxname,
-    "warning: reference to deprecated lastlogxname()")
 
 static FILE *fp;
 static int readonly = 0;
 static struct utmpx ut;
 static char utfile[MAXPATHLEN] = _PATH_UTMPX;
-static char llfile[MAXPATHLEN] = _PATH_LASTLOGX;
 
 static struct utmpx *utmp_update(const struct utmpx *);
 
@@ -400,35 +392,8 @@ getutmpx(const struct utmp *u, struct utmpx *ux)
 	ux->ut_exit.e_exit = 0;
 }
 
-int
-lastlogxname(const char *fname)
-{
-	size_t len;
-
-	_DIAGASSERT(fname != NULL);
-
-	len = strlen(fname);
-
-	if (len >= sizeof(llfile))
-		return 0;
-
-	/* must end in x! */
-	if (fname[len - 1] != 'x')
-		return 0;
-
-	(void)strlcpy(llfile, fname, sizeof(llfile));
-	return 1;
-}
-
 struct lastlogx *
-getlastlogx(uid_t uid, struct lastlogx *ll)
-{
-
-	return __getlastlogx13(_PATH_LASTLOGX, uid, ll);
-}
-
-struct lastlogx *
-__getlastlogx13(const char *fname, uid_t uid, struct lastlogx *ll)
+getlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 {
 	DBT key, data;
 	DB *db;

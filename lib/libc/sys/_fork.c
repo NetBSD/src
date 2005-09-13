@@ -1,4 +1,4 @@
-/*	$NetBSD: _fork.c,v 1.3 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: _fork.c,v 1.4 2005/09/13 01:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,18 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _fork.c,v 1.3 2005/07/30 15:21:21 christos Exp $");
+__RCSID("$NetBSD: _fork.c,v 1.4 2005/09/13 01:44:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__indr_reference) && !defined(__lint__)
+#if defined(__indr_reference)
 __indr_reference(_fork, fork)
 #else
 
 #include <unistd.h>
-pid_t	_fork __P((void));	/* XXX */
+pid_t	_fork(void);
 
 pid_t
-fork()
+fork(void)
 {
 
 	return _fork();

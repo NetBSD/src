@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.15 2005/04/12 21:36:46 drochner Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.16 2005/09/13 01:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,11 +34,9 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.15 2005/04/12 21:36:46 drochner Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.16 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -49,37 +47,33 @@ __RCSID("$NetBSD: getmntinfo.c,v 1.15 2005/04/12 21:36:46 drochner Exp $");
 #include <errno.h>
 #include <stdlib.h>
 
-#ifdef __weak_alias
-__weak_alias(getmntinfo,_getmntinfo)
-#endif
-
 /*
  * Return information about mounted filesystems.
  */
 int
 getmntinfo(mntbufp, flags)
-	struct statfs12 **mntbufp;
+	struct statvfs **mntbufp;
 	int flags;
 {
-	static struct statfs12 *mntbuf;
+	static struct statvfs *mntbuf;
 	static int mntsize;
 	static size_t bufsize;
 
 	_DIAGASSERT(mntbufp != NULL);
 
 	if (mntsize <= 0 &&
-	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) == -1)
+	    (mntsize = getvfsstat(NULL, (size_t)0, MNT_NOWAIT)) == -1)
 		return (0);
 	if (bufsize > 0 &&
-	    (mntsize = getfsstat(mntbuf, (long)bufsize, flags)) == -1)
+	    (mntsize = getvfsstat(mntbuf, bufsize, flags)) == -1)
 		return (0);
-	while (bufsize <= mntsize * sizeof(struct statfs12)) {
+	while (bufsize <= mntsize * sizeof(struct statvfs)) {
 		if (mntbuf)
 			free(mntbuf);
-		bufsize = (mntsize + 1) * sizeof(struct statfs12);
+		bufsize = (mntsize + 1) * sizeof(struct statvfs);
 		if ((mntbuf = malloc(bufsize)) == NULL)
 			return (0);
-		if ((mntsize = getfsstat(mntbuf, (long)bufsize, flags)) == -1)
+		if ((mntsize = getvfsstat(mntbuf, bufsize, flags)) == -1)
 			return (0);
 	}
 	*mntbufp = mntbuf;
