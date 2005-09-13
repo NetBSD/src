@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.9 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.10 2005/09/13 01:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -38,11 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef __lint
-__COPYRIGHT("@(#) Copyright (c) 2002\n\
-	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.9 2005/02/09 21:35:46 kleink Exp $");
-#endif /* !__lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: humanize_number.c,v 1.10 2005/09/13 01:44:09 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>

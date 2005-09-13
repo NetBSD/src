@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.23 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: err.c,v 1.24 2005/09/13 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.23 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: err.c,v 1.24 2005/09/13 01:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef __NO_NAMESPACE_H	/* XXX */
 #include "namespace.h"
-#endif
 #include <err.h>
 #include <stdarg.h>
 
@@ -53,7 +51,7 @@ __weak_alias(err, _err)
 #endif
 
 __dead void
-_err(int eval, const char *fmt, ...)
+err(int eval, const char *fmt, ...)
 {
 	va_list ap;
 
