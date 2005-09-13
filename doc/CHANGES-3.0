@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.242 2005/09/13 21:09:18 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.243 2005/09/13 21:14:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12583,6 +12583,7 @@ sys/dev/pcmcia/if_ray.c				1.58
 	Fix compilation with debugging on.
 	[kiyohara, ticket #767]
 
+distrib/sets/lists/man/mi			1.821
 share/man/man4/Makefile				1.368
 share/man/man4/xge.4				1.1
 sys/dev/pci/files.pci				1.238
