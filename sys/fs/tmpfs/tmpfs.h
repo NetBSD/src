@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.3 2005/09/13 14:29:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ struct tmpfs_node {
 		struct {
 			struct uvm_object *	tn_aobj;
 			size_t			tn_aobj_pages;
-			vaddr_t			tn_va;
 		};
 	};
 };
@@ -296,7 +295,6 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 
 	KASSERT((vp) != NULL && (vp)->v_data != NULL);
 	node = (struct tmpfs_node *)vp->v_data;
-	KASSERT(node->tn_size == vp->v_size);
 	return node;
 }
 
