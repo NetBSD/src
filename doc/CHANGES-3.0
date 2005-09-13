@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.243 2005/09/13 21:14:32 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.244 2005/09/13 21:39:36 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12593,4 +12593,13 @@ sys/dev/pci/if_xgereg.h				1.1
 	Device driver for the Neterion (S2io) Xframe-I 10Gbit ethernet card.
 	Still missing: VLAN + IPv6 checksum support.
 	[ragge, ticket #768]
+
+sys/dev/ic/wdc.c				1.230
+
+	In __wdccommand_start(), don't call wdcwait() with ata_c->flags, as
+	this gives information about the context in which wdc_exec_command()
+	was called, but we may be in interrupt context here. Call wdcwait()
+	with flags derived from xfer->c_flags instead, as do other wdcwait()
+	callers. This should fix PR kern/31083.
+	[bouyer, ticket #780]
 
