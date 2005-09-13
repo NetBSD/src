@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.3 2005/09/12 16:55:01 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.4 2005/09/13 14:29:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.3 2005/09/12 16:55:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.4 2005/09/13 14:29:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -150,9 +150,8 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		break;
 
 	case VREG:
-		nnode->tn_aobj = NULL;
+		nnode->tn_aobj = uao_create(INT32_MAX - PAGE_SIZE, 0);
 		nnode->tn_aobj_pages = 0;
-		nnode->tn_va = 0;
 		break;
 
 	default:
@@ -735,7 +734,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 
 	KASSERT(vp->v_type == VREG);
 	KASSERT(newsize >= 0);
-	KASSERT(newsize != vp->v_size);
 
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
@@ -754,45 +752,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		goto out;
 	}
 
-	if (newpages == 0) {
-		uao_detach(node->tn_aobj);
-		node->tn_aobj = NULL;
-		node->tn_aobj_pages = 0;
-		node->tn_va = 0;
-	} else if (newpages > oldpages) {
-		vaddr_t va;
-		struct uvm_object *aobj;
-
-		aobj = uao_create(newpages * PAGE_SIZE, 0);
-		va = vm_map_min(kernel_map);
-		error = uvm_map(kernel_map, &va, newpages * PAGE_SIZE,
-		    aobj, 0, 0,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-		    UVM_ADV_RANDOM, 0));
-		if (error != 0) {
-			uao_detach(aobj);
-			error = ENOSPC;
-			goto out;
-		}
-
-		/* XXX This is really expensive.  Is it possible to do a
-		 * map entry passing? */
-		if (node->tn_size > 0) {
-			KASSERT(node->tn_aobj != NULL);
-			(void)memcpy((void *)va, (void *)node->tn_va,
-			    node->tn_size);
-			uao_detach(node->tn_aobj);
-		}
-
-		node->tn_aobj = aobj;
-		node->tn_aobj_pages = newpages;
-		node->tn_va = va;
-	} else if (newpages < oldpages) {
-		/* XXX Do we need to shrink the aobj or is the unmap enough? */
-		uvm_unmap(kernel_map, node->tn_va + (vaddr_t)newpages,
-		    (vaddr_t)node->tn_aobj_pages * PAGE_SIZE);
-		node->tn_aobj_pages = newpages;
-	}
+	node->tn_aobj_pages = newpages;
 
 	tmp->tm_pages_used += (newpages - oldpages);
 	node->tn_size = newsize;
