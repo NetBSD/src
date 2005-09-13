@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.220.2.7 2005/08/24 21:53:46 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.220.2.8 2005/09/13 21:37:46 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.7 2005/08/24 21:53:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220.2.8 2005/09/13 21:37:46 tron Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1330,6 +1330,7 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	int drive = xfer->c_drive;
+	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	struct ata_command *ata_c = xfer->c_cmd;
 
 	ATADEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
@@ -1341,7 +1342,7 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (drive << 4));
 	switch(wdcwait(chp, ata_c->r_st_bmask | WDCS_DRQ,
-	    ata_c->r_st_bmask, ata_c->timeout, ata_c->flags)) {
+	    ata_c->r_st_bmask, ata_c->timeout, wait_flags)) {
 	case WDCWAIT_OK:
 		break;
 	case WDCWAIT_TOUT:
