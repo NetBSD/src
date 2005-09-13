@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.22 2005/04/15 16:58:13 christos Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.23 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,21 +58,15 @@ typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#ifdef __LIBC12_SOURCE__
-int	__setjmp14(jmp_buf);
-void	__longjmp14(jmp_buf, int) __attribute__((__noreturn__));
-
-int	__sigsetjmp14(sigjmp_buf, int);
-void	__siglongjmp14(sigjmp_buf, int) __attribute__((__noreturn__));
-#else /* !__LIBC12_SOURCE__ */
-int	setjmp(jmp_buf) __RENAME(__setjmp14);
-void	longjmp(jmp_buf, int) __RENAME(__longjmp14)
+#ifndef __LIBC12_SOURCE__
+int	setjmp(jmp_buf)			 __RENAME(__setjmp14);
+void	longjmp(jmp_buf, int)		 __RENAME(__longjmp14)
     __attribute__((__noreturn__));
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-int	sigsetjmp(sigjmp_buf, int) __RENAME(__sigsetjmp14);
-void	siglongjmp(sigjmp_buf, int) __RENAME(__siglongjmp14)
+int	sigsetjmp(sigjmp_buf, int)	__RENAME(__sigsetjmp14);
+void	siglongjmp(sigjmp_buf, int)	 __RENAME(__siglongjmp14)
     __attribute__((__noreturn__));
 #endif /* not ANSI */
 #endif /* __LIBC12_SOURCE__ */

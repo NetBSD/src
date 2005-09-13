@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.70 2005/06/11 22:58:42 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.71 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -222,10 +222,7 @@ unsigned long long int
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
 int	 setenv(const char *, const char *, int);
-#ifdef __LIBC12_SOURCE__
-void	 unsetenv(const char *);
-int	 __unsetenv13(const char *);
-#else
+#ifndef __LIBC12_SOURCE__
 int	 unsetenv(const char *) __RENAME(__unsetenv13);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.13 2004/04/28 00:10:52 kleink Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.14 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,11 +60,7 @@
 
 typedef struct {
 	void	*dptr;
-#if defined(__LIBC12_SOURCE__)
-	int	 dsize;		/* XXX */
-#else
 	size_t	 dsize;		/* XPG4.2 */
-#endif
 } datum;
 
 typedef DB DBM;
@@ -80,13 +76,7 @@ int	 dbm_clearerr(DBM *);
 #if defined(_NETBSD_SOURCE)
 int	 dbm_dirfno(DBM *);
 #endif
-#if defined(__LIBC12_SOURCE__)
-int	 dbm_delete(DBM *, datum);
-datum	 dbm_fetch(DBM *, datum);
-datum	 dbm_firstkey(DBM *);
-datum	 dbm_nextkey(DBM *);
-int	 dbm_store(DBM *, datum, datum, int);
-#else
+#ifndef __LIBC12_SOURCE__
 int	 dbm_delete(DBM *, datum)		__RENAME(__dbm_delete13);
 datum	 dbm_fetch(DBM *, datum)		__RENAME(__dbm_fetch13);
 datum	 dbm_firstkey(DBM *)			__RENAME(__dbm_firstkey13);

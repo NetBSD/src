@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.23 2005/08/19 02:05:59 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.24 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -86,15 +86,7 @@ struct _dirdesc {
 __BEGIN_DECLS
 int closedir(DIR *);
 void rewinddir(DIR *);
-#ifdef __LIBC12_SOURCE__
-DIR *opendir(const char *);
-struct dirent12 *readdir(DIR *);
-int readdir_r(DIR *, struct dirent12 * __restrict,
-    struct dirent12 ** __restrict);
-struct dirent *__readdir30(DIR *);
-int __readdir_r30(DIR *, struct dirent * __restrict,
-    struct dirent ** __restrict);
-#else
+#ifndef __LIBC12_SOURCE__
 DIR *opendir(const char *) __RENAME(__opendir30);
 DIR *__opendir30(const char *) __RENAME(__opendir30);
 struct dirent *readdir(DIR *) __RENAME(__readdir30);
@@ -107,17 +99,7 @@ long telldir(const DIR *);
 #endif /* defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE) */
 #if defined(_NETBSD_SOURCE)
 void __seekdir(DIR *, long);
-#ifdef __LIBC12_SOURCE__
-DIR *__opendir2(const char *, int);
-DIR *__opendir230(const char *, int);
-int scandir(const char *, struct dirent12 ***,
-    int (*)(const struct dirent12 *), int (*)(const void *, const void *));
-int __scandir30(const char *, struct dirent ***,
-    int (*)(const struct dirent *), int (*)(const void *, const void *));
-int getdents(int, char *, size_t);
-int getdirentries(int, char *, int, long *);
-int __getdents30(int, char *, size_t);
-#else
+#ifndef __LIBC12_SOURCE__
 DIR *__opendir2(const char *, int) __RENAME(__opendir230);
 int scandir(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const void *, const void *))

@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: regex.h,v 1.13 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,11 +78,7 @@
 #include <sys/types.h>
 
 /* types */
-#if 1  /* __LIBC12_SOURCE__ - should go away */
 typedef off_t regoff_t;
-#else
-typedef size_t regoff_t;
-#endif
 
 typedef struct {
 	int re_magic;
