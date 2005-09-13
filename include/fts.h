@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.13 2005/08/19 02:05:59 christos Exp $	*/
+/*	$NetBSD: fts.h,v 1.14 2005/09/13 01:44:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -126,21 +126,13 @@ typedef struct _ftsent {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#ifdef __LIBC12_SOURCE__
-FTSENT	*fts_children(FTS *, int);
-int	 fts_close(FTS *);
-FTS	*fts_open(char * const *, int,
-	    int (*)(const FTSENT **, const FTSENT **));
-FTSENT	*fts_read(FTS *);
-int	 fts_set(FTS *, FTSENT *, int);
-#else
+#ifndef __LIBC12_SOURCE__
 FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children30);
 int	 fts_close(FTS *)			__RENAME(__fts_close30);
 FTS	*fts_open(char * const *, int,
-	    int (*)(const FTSENT **, const FTSENT **))
-						__RENAME(__fts_open30);
+    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open30);
 FTSENT	*fts_read(FTS *)			__RENAME(__fts_read30);
-int	 fts_set(FTS *, FTSENT *, int)	__RENAME(__fts_set30);
+int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set30);
 #endif
 __END_DECLS
 

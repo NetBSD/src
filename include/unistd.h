@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.104 2005/06/11 22:54:43 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.105 2005/09/13 01:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -269,10 +269,7 @@ int	 symlink(const char *, const char *);
 void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
-#ifdef __LIBC12_SOURCE__
-pid_t	 vfork(void);
-pid_t	 __vfork14(void);
-#else
+#ifndef __LIBC12_SOURCE__
 pid_t	 vfork(void) __RENAME(__vfork14);
 #endif
 
