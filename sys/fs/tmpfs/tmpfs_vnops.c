@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.5 2005/09/13 14:27:29 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.6 2005/09/13 14:29:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.5 2005/09/13 14:27:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.6 2005/09/13 14:29:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -516,9 +516,10 @@ tmpfs_read(void *v)
 	struct vnode *vp = ((struct vop_read_args *)v)->a_vp;
 	struct uio *uio = ((struct vop_read_args *)v)->a_uio;
 
-	int error;
-	off_t len;
 	struct tmpfs_node *node;
+	struct uvm_object *uobj;
+	int flags;
+	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -536,17 +537,24 @@ tmpfs_read(void *v)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	if (uio->uio_resid == 0 ||
-	    uio->uio_offset >= node->tn_size) {
-		error = 0;
-		goto out;
-	}
+	uobj = node->tn_aobj;
+	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+	error = 0;
+	while (uio->uio_resid > 0) {
+		vsize_t len;
+		void *win;
 
-	/* XXX Is it correct to do the uiomove directly over our aobj or
-	 * should we do it through the vnode? */
-	len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
-	error = uiomove((void *)(node->tn_va + (vaddr_t)uio->uio_offset), len,
-	    uio);
+		len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
+		if (len == 0) {
+			break;
+		}
+		win = ubc_alloc(uobj, uio->uio_offset, &len, UBC_READ);
+		error = uiomove(win, len, uio);
+		ubc_release(win, flags);
+		if (error) {
+			break;
+		}
+	}
 
 out:
 	KASSERT(VOP_ISLOCKED(vp));
@@ -567,6 +575,8 @@ tmpfs_write(void *v)
 	int error;
 	off_t oldsize;
 	struct tmpfs_node *node;
+	struct uvm_object *uobj;
+	int flags;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -593,18 +603,31 @@ tmpfs_write(void *v)
 			goto out;
 	}
 
-	/* XXX Is it correct to do the uiomove directly over our aobj or
-	 * should we do it through the vnode? */
-	error = uiomove((void *)(node->tn_va + (vaddr_t)uio->uio_offset),
-	    uio->uio_resid, uio);
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	} else if (extended) {
-		error = tmpfs_reg_resize(vp, oldsize);
-		KASSERT(error == 0);
+	uobj = node->tn_aobj;
+	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+	error = 0;
+	while (uio->uio_resid > 0) {
+		vsize_t len;
+		void *win;
+
+		len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
+		if (len == 0) {
+			break;
+		}
+		win = ubc_alloc(uobj, uio->uio_offset, &len, UBC_WRITE);
+		error = uiomove(win, len, uio);
+		ubc_release(win, flags);
+		if (error) {
+			break;
+		}
 	}
+
 	node->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
 	    (extended ? TMPFS_NODE_CHANGED : 0);
+
+	if (error) {
+		(void)tmpfs_reg_resize(vp, oldsize);
+	}
 
 out:
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1402,39 +1425,68 @@ tmpfs_update(void *v)
 int
 tmpfs_getpages(void *v)
 {
-	struct vnode *vp = ((struct vop_getpages_args *)v)->a_vp;
-	voff_t offset = ((struct vop_getpages_args *)v)->a_offset;
-	struct vm_page **m = ((struct vop_getpages_args *)v)->a_m;
-	int *count = ((struct vop_getpages_args *)v)->a_count;
-	int centeridx = ((struct vop_getpages_args *)v)->a_centeridx;
-	vm_prot_t access_type = ((struct vop_getpages_args *)v)->a_access_type;
-	int flags = ((struct vop_getpages_args *)v)->a_flags;
-
+	const struct vop_getpages_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	voff_t offset = ap->a_offset;
+	vm_prot_t access_type = ap->a_access_type;
+	int flags = ap->a_flags;
+	struct tmpfs_node *node = VP_TO_TMPFS_NODE(vp);
+	struct uvm_object *uobj;
 	int error;
-	struct tmpfs_node *node;
 
-	KASSERT(offset == trunc_page(offset));
+	KASSERT(vp->v_type == VREG);
 
-	node = VP_TO_TMPFS_NODE(vp);
+	uobj = node->tn_aobj;
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
-	if (offset < 0 || offset > vp->v_size) {
-		error = EINVAL;
-		goto out;
+	if ((flags & PGO_LOCKED) != 0) {
+		return EBUSY;
 	}
 
-	if (flags & PGO_LOCKED) {
-		uvn_findpages(&vp->v_uobj, offset, count, m,
-		    UFP_NOWAIT | UFP_NOALLOC |
-		    (access_type & VM_PROT_WRITE ?  UFP_NORDONLY : 0));
-
-		error = (m[centeridx] == NULL ? EBUSY : 0);
-		goto out;
+	if ((flags & PGO_NOTIMESTAMP) == 0) {
+		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0) {
+			node->tn_status |= TMPFS_NODE_ACCESSED;
+		}
+		if ((access_type & VM_PROT_WRITE) != 0) {
+			node->tn_status |= TMPFS_NODE_MODIFIED;
+		}
 	}
 
-	error = uvm_loan(kernel_map, node->tn_va + offset, (*count) *
-	    PAGE_SIZE, m, UVM_LOAN_TOPAGE);
-	node->tn_status |= TMPFS_NODE_ACCESSED;
+	simple_unlock(&vp->v_interlock);
 
-out:
+	simple_lock(&uobj->vmobjlock);
+	error = (*uobj->pgops->pgo_get)(uobj, offset, ap->a_m, ap->a_count,
+	    ap->a_centeridx, access_type, ap->a_advice, flags);
+
+	return error;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+tmpfs_putpages(void *v)
+{
+	const struct vop_putpages_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
+	struct tmpfs_node *node = VP_TO_TMPFS_NODE(vp);
+	struct uvm_object *uobj;
+	int error;
+
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+
+	if (vp->v_type != VREG) {
+		simple_unlock(&vp->v_interlock);
+		return 0;
+	}
+
+	uobj = node->tn_aobj;
+	simple_unlock(&vp->v_interlock);
+
+	simple_lock(&uobj->vmobjlock);
+	error = (*uobj->pgops->pgo_put)(uobj, ap->a_offlo, ap->a_offhi, flags);
+
+	/* XXX mtime */
+
 	return error;
 }
