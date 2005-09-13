@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.3 2005/09/13 21:30:52 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.3 2005/09/13 21:30:52 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -163,7 +163,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	KASSERT(tmp != NULL);
 
 	tmp->tm_nodes_max = nodes;
-	tmp->tm_nodes_last = 0;
+	tmp->tm_nodes_last = 1;
 	LIST_INIT(&tmp->tm_nodes_used);
 	LIST_INIT(&tmp->tm_nodes_avail);
 
