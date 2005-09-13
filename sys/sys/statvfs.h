@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.6 2005/06/23 01:59:31 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.7 2005/09/13 01:42:51 christos Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -157,8 +157,7 @@ int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
 int	getvfsstat(struct statvfs *, size_t, int);
 #ifndef __LIBC12_SOURCE__
-int	getmntinfo(struct statvfs **, int)
-    __RENAME(__getmntinfo13);
+int	getmntinfo(struct statvfs **, int) __RENAME(__getmntinfo13);
 #endif /* __LIBC12_SOURCE__ */
 #if defined(_NETBSD_SOURCE)
 int	fhstatvfs(const fhandle_t *, struct statvfs *);

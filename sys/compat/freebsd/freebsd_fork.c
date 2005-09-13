@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.c,v 1.3 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: freebsd_fork.c,v 1.4 2005/09/13 01:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.3 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.4 2005/09/13 01:42:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.3 2005/02/26 23:10:18 perry Exp $
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/freebsd_machdep.h>
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_fork.h>
+
+#include <machine/freebsd_machdep.h>
 
 /*
  * rfork()
