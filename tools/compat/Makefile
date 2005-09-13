@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2005/09/13 13:52:23 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2005/09/13 15:32:48 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -46,7 +46,7 @@ _CURDIR:=	${.CURDIR}
 .include "${.CURDIR}/db/Makefile.inc"
 .CURDIR:=	${_CURDIR}
 
-SRCS:=		${SRCS:Nndbm.c:N__ndbm13.c}
+SRCS:=		${SRCS:Nndbm*.c}
 
 config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 	rm -f ${.TARGET}
