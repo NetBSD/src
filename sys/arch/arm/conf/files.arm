@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.79 2005/07/04 00:42:37 bsh Exp $
+#	$NetBSD: files.arm,v 1.80 2005/09/13 22:07:47 christos Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -81,6 +81,7 @@ file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
+file	arch/arm/arm/compat_16_machdep.c	compat_16
 file	arch/arm/arm/copystr.S
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
