@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.72 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.73 2005/09/14 20:25:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.72 2005/09/13 22:00:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.73 2005/09/14 20:25:21 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -870,10 +870,6 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 			if (uobj->uo_refs > 1)
 				goto deactivate_it;
-
-			/* XXX skip the page if it's loaned or wired */
-			if (pg->loan_count != 0 || pg->wire_count != 0)
-				continue;
 
 			/*
 			 * wait and try again if the page is busy.
