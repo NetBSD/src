@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.154 2005/08/25 22:43:50 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.155 2005/09/14 22:36:11 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1901,4 +1901,16 @@ gnu/dist/cvs/src/cvsbug.in			1.3
 
 	Fix vulnerability reported in SA16553 using the Red Hat patch.
 	[tron, ticket #5850]
+
+sys/compat/freebsd/freebsd_misc.c		patch
+
+	Fix a user-controlled length argument from potentially overflowing an
+	integer.  Reported by Christer Oeberg.
+	[elad, ticket #5867]
+
+xfree/xc/config/cf/NetBSD.cf			1.80
+
+	Remove unsafe /tmp file creation for the file.0 target. Just make
+	the file in the current build directory instead of temp directory.
+	[reed, ticket #5866]
 
