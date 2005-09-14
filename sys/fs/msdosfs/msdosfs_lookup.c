@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.5 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.6 2005/09/14 15:07:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.5 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.6 2005/09/14 15:07:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,11 +397,18 @@ notfound:
 		return (EJUSTRETURN);
 	}
 
+#if 0
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
+	 *
+	 * XXX Negative caching is broken for msdosfs because the name
+	 * cache doesn't understand peculiarities such as case insensitivity
+	 * and 8.3 filenames.  Hence, it may not invalidate all negative
+	 * entries if a file with this name is later created.
 	 */
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
+#endif
 
 	return (ENOENT);
 
