@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.2 2005/09/14 20:20:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,24 +37,35 @@
 #include <compat/sys/dirent.h>
 
 __BEGIN_DECLS
+
 DIR *opendir(const char *);
-struct dirent12 *readdir(DIR *);
+DIR *__opendir30(const char *);
+
 int readdir_r(DIR *, struct dirent12 * __restrict,
     struct dirent12 ** __restrict);
-struct dirent *__readdir30(DIR *);
 int __readdir_r30(DIR *, struct dirent * __restrict,
     struct dirent ** __restrict);
+
+struct dirent12 *readdir(DIR *);
+struct dirent *__readdir30(DIR *);
+
 #if defined(_NETBSD_SOURCE)
+
 DIR *__opendir2(const char *, int);
 DIR *__opendir230(const char *, int);
+
 int scandir(const char *, struct dirent12 ***,
     int (*)(const struct dirent12 *), int (*)(const void *, const void *));
 int __scandir30(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const void *, const void *));
+
 int getdents(int, char *, size_t);
-int getdirentries(int, char *, int, long *);
 int __getdents30(int, char *, size_t);
+
+int getdirentries(int, char *, int, long *);
+
 #endif /* defined(_NETBSD_SOURCE) */
+
 __END_DECLS
 
 #endif /* !_COMPAT_DIRENT_H_ */
