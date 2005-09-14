@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.86 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.87 2005/09/14 14:53:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.86 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.87 2005/09/14 14:53:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,34 +690,37 @@ fdesc_readdir(v)
 	struct dirent d;
 	struct filedesc *fdp;
 	off_t i;
+	int j;
 	int error;
 	off_t *cookies = NULL;
-	int ncookies = 0;
+	int ncookies;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		return (0);
+		return 0;
 
 	case Fdesc:
-		return (ENOTDIR);
+		return ENOTDIR;
 
 	default:
 		break;
 	}
 
-	fdp = uio->uio_procp->p_fd;
+	fdp = uio->uio_procp ? uio->uio_procp->p_fd : NULL;
 
 	if (uio->uio_resid < UIO_MX)
-		return (EINVAL);
+		return EINVAL;
 	if (uio->uio_offset < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	error = 0;
 	i = uio->uio_offset;
-	memset(&d, 0, UIO_MX);
+	(void)memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	if (ap->a_ncookies)
-		ncookies = (uio->uio_resid / UIO_MX);
+		ncookies = uio->uio_resid / UIO_MX;
+	else
+		ncookies = 0;
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
 		struct fdesc_target *ft;
@@ -733,28 +736,35 @@ fdesc_readdir(v)
 			*ap->a_ncookies = ncookies;
 		}
 
-		for (ft = &fdesc_targets[i];
-		     uio->uio_resid >= UIO_MX && i < nfdesc_targets; ft++, i++) {
+		for (ft = &fdesc_targets[i]; uio->uio_resid >= UIO_MX &&
+		    i < nfdesc_targets; ft++, i++) {
 			switch (ft->ft_fileno) {
 			case FD_CTTY:
-				if (cttyvp(uio->uio_procp) == NULL)
+				if (uio->uio_procp == NULL ||
+				    cttyvp(uio->uio_procp) == NULL)
 					continue;
 				break;
 
 			case FD_STDIN:
 			case FD_STDOUT:
 			case FD_STDERR:
-				if ((ft->ft_fileno - FD_STDIN) >= fdp->fd_nfiles)
+				if (fdp == NULL)
 					continue;
-				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL
-				    || FILE_IS_USABLE(fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]) == 0)
+				if ((ft->ft_fileno - FD_STDIN) >=
+				    fdp->fd_nfiles)
+					continue;
+				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]
+				    == NULL
+				    || FILE_IS_USABLE(
+				    fdp->fd_ofiles[ft->ft_fileno - FD_STDIN])
+				    == 0)
 					continue;
 				break;
 			}
 
 			d.d_fileno = ft->ft_fileno;
 			d.d_namlen = ft->ft_namlen;
-			memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
+			(void)memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
 			d.d_type = ft->ft_type;
 
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -763,31 +773,33 @@ fdesc_readdir(v)
 				*cookies++ = i + 1;
 		}
 	} else {
+		int nfdp = fdp ? fdp->fd_nfiles : 0;
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (fdp->fd_nfiles + 2));
+			ncookies = min(ncookies, nfdp + 2);
 			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
 		}
-		for (; i - 2 < fdp->fd_nfiles && uio->uio_resid >= UIO_MX;
-		     i++) {
+		for (; i - 2 < nfdp && uio->uio_resid >= UIO_MX; i++) {
 			switch (i) {
 			case 0:
 			case 1:
 				d.d_fileno = FD_ROOT;		/* XXX */
 				d.d_namlen = i + 1;
-				memcpy(d.d_name, "..", d.d_namlen);
+				(void)memcpy(d.d_name, "..", d.d_namlen);
 				d.d_name[i + 1] = '\0';
 				d.d_type = DT_DIR;
 				break;
 
 			default:
-				if (fdp->fd_ofiles[i - 2] == NULL ||
-				    FILE_IS_USABLE(fdp->fd_ofiles[i - 2]) == 0)
+				KASSERT(fdp != NULL);
+				j = (int)i - 2;
+				if (fdp->fd_ofiles[j] == NULL ||
+				    FILE_IS_USABLE(fdp->fd_ofiles[j]) == 0)
 					continue;
-				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", (int) i - 2);
+				d.d_fileno = j + FD_STDIN;
+				d.d_namlen = sprintf(d.d_name, "%d", j);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
@@ -806,7 +818,7 @@ fdesc_readdir(v)
 	}
 
 	uio->uio_offset = i;
-	return (error);
+	return error;
 }
 
 int
