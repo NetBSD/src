@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.28 2005/01/19 01:54:09 mycroft Exp $	*/
+/*	$NetBSD: pty.c,v 1.29 2005/09/14 02:12:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.28 2005/01/19 01:54:09 mycroft Exp $");
+__RCSID("$NetBSD: pty.c,v 1.29 2005/09/14 02:12:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,8 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	int master, slave;
 	gid_t ttygid;
 	mode_t mode;
-	struct group *gr;
+	struct group grs, *grp;
+	char grbuf[1024];
 
 	_DIAGASSERT(amaster != NULL);
 	_DIAGASSERT(aslave != NULL);
@@ -88,8 +89,9 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		(void)close(master);
 	}
 
-	if ((gr = getgrnam("tty")) != NULL) {
-		ttygid = gr->gr_gid;
+	(void)getgrnam_r("tty", &grs, grbuf, sizeof(grbuf), &grp);
+	if (grp != NULL) {
+		ttygid = grp->gr_gid;
 		mode = S_IRUSR|S_IWUSR|S_IWGRP;
 	} else {
 		ttygid = getgid();
