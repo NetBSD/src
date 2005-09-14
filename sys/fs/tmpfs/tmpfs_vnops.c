@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.7 2005/09/13 20:02:05 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.8 2005/09/14 10:40:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.7 2005/09/13 20:02:05 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.8 2005/09/14 10:40:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -543,6 +543,9 @@ tmpfs_read(void *v)
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
 		void *win;
+
+		if (node->tn_size <= uio->uio_offset)
+			break;
 
 		len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
 		if (len == 0)
