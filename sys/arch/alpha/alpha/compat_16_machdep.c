@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.7 2005/09/14 17:52:24 martin Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.8 2005/09/14 21:48:14 he Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -85,13 +85,15 @@
 #include <sys/syscallargs.h>
 #include <sys/user.h>
 
+#if defined(COMPAT_13) || defined(COMPAT_OSF1)
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2005/09/14 17:52:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2005/09/14 21:48:14 he Exp $");
 
 
 #ifdef DEBUG
