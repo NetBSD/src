@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.244 2005/09/13 21:39:36 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.245 2005/09/14 20:37:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12602,4 +12602,20 @@ sys/dev/ic/wdc.c				1.230
 	with flags derived from xfer->c_flags instead, as do other wdcwait()
 	callers. This should fix PR kern/31083.
 	[bouyer, ticket #780]
+
+etc/etc.evbppc/Makefile.inc			patch
+sys/arch/evbppc/conf/OPENBLOCKS266		patch
+
+	Build kernel for OpenBlockS266(IBM405GP CPU) products.
+	[shige, ticket #770]
+
+sys/dev/sun/wskbdmap_sun.c			1.10-1.11
+
+	Add UK keyboard map.
+	[jdc, ticket #771]
+
+sys/kern/sys_pipe.c				1.66
+
+	PR kern/27185: EOF on pipe gains no EVFILT_READ event,
+	[christos, ticket #773]
 
