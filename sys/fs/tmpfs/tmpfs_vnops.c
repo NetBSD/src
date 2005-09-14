@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.8 2005/09/14 10:40:49 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.9 2005/09/14 20:27:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.8 2005/09/14 10:40:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.9 2005/09/14 20:27:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1433,12 +1433,25 @@ tmpfs_getpages(void *v)
 	int error;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
+	int npages = *count;
 
 	KASSERT(vp->v_type == VREG);
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_aobj;
+
+	/* We currently don't rely on PGO_PASTEOF. */
+
+	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
+		if ((flags & PGO_LOCKED) == 0)
+			simple_unlock(&vp->v_interlock);
+		return EINVAL;
+	}
+
+	if (vp->v_size < offset + (npages << PAGE_SHIFT)) {
+		npages = (round_page(vp->v_size) - offset) >> PAGE_SHIFT;
+	}
 
 	if ((flags & PGO_LOCKED) != 0)
 		return EBUSY;
@@ -1454,7 +1467,7 @@ tmpfs_getpages(void *v)
 	simple_unlock(&vp->v_interlock);
 
 	simple_lock(&uobj->vmobjlock);
-	error = (*uobj->pgops->pgo_get)(uobj, offset, m, count, centeridx,
+	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
 	    access_type, advice, flags);
 
 	return error;
