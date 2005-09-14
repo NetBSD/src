@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.812 2005/09/10 19:20:48 jmmv Exp $
+#	$NetBSD: mi,v 1.813 2005/09/14 11:36:53 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4139,6 +4139,7 @@
 ./usr/share/man/cat3/pw_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_lock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_mkdb.0			comp-c-catman		.cat
+./usr/share/man/cat3/pw_policy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_prompt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_scan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_setprefix.0		comp-c-catman		.cat
@@ -8048,6 +8049,7 @@
 ./usr/share/man/man3/pw_init.3			comp-c-man		.man
 ./usr/share/man/man3/pw_lock.3			comp-c-man		.man
 ./usr/share/man/man3/pw_mkdb.3			comp-c-man		.man
+./usr/share/man/cat3/pw_policy.3		comp-c-man		.man
 ./usr/share/man/man3/pw_prompt.3		comp-c-man		.man
 ./usr/share/man/man3/pw_scan.3			comp-c-man		.man
 ./usr/share/man/man3/pw_setprefix.3		comp-c-man		.man
