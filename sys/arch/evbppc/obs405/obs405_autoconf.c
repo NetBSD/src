@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.4.6.1 2005/09/14 20:53:59 tron Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -32,43 +32,37 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
-
-#ifndef	_EVBPPC_OBS405_H_
-#define	_EVBPPC_OBS405_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $");
 
 #include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
-#include <powerpc/ibm4xx/ibm405gp.h>
+#include <machine/obs405.h>
 
-#include "com.h"
-#if (NCOM > 0)
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 
-#include <sys/termios.h>
 
-#  ifndef CONADDR
-#  define CONADDR	IBM405GP_UART0_BASE
-#  endif
-#  ifndef CONSPEED
-#  define CONSPEED	B9600
-#  endif
-#  ifndef CONMODE
-   /* 8N1 */
-#  define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
-#  endif
+void
+cpu_rootconf(void)
+{
 
-#define OBS405_CONADDR		(CONADDR)
-#define OBS405_CONSPEED		(CONSPEED)
-#define OBS405_CONMODE		(CONMODE)
+	setroot(booted_device, booted_partition);
+}
 
-#endif /* NCOM */
+void obs405_device_register(struct device *dev, void *aux, int com_freq)
+{
+	struct device *parent = dev->dv_parent;
 
-#include <dev/ic/comreg.h>
+	/* register "com" device */
+	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
+	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+		/* Set the frequency of the on-chip UART. */
+		com_opb_device_register(dev, com_freq);
+		return;
+	}
 
-/*
- * extern variables and functions
- */
-extern void obs405_consinit(int com_freq);
-extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
-
-#endif	/* _EVBPPC_OBS405_H_ */
+	ibm4xx_device_register(dev, aux);
+}

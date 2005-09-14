@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.4.6.1 2005/09/14 20:53:59 tron Exp $	*/
+/*	$NetBSD: obs266.h,v 1.1.10.2 2005/09/14 20:53:59 tron Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,42 +33,32 @@
  * DAMAGE.
  */
 
-#ifndef	_EVBPPC_OBS405_H_
-#define	_EVBPPC_OBS405_H_
+#ifndef	_EVBPPC_OBS266_H_
+#define	_EVBPPC_OBS266_H_
 
-#include <sys/param.h>
-#include <sys/device.h>
+#include <machine/obs405.h>
 
-#include <powerpc/ibm4xx/ibm405gp.h>
+/*
+ * Device Properties for OpenBlockS266 (IBM405GPr 266MHz)
+ */
 
-#include "com.h"
-#if (NCOM > 0)
+/* UART Clock */
+#define OBS266_COM_FREQ		(COM_FREQ * 4)	/* UART CLK 7.3728 MHz */
 
-#include <sys/termios.h>
+/* OpenBlockS266 GPIO LED */
+#define OBS266_LED1		(1)
+#define OBS266_LED2		(2)
+#define OBS266_LED4		(4)
+#define OBS266_LED_ON		(OBS266_LED1 | OBS266_LED2 | OBS266_LED4)
+#define OBS266_LED_OFF		(~OBS266_LED1 & ~OBS266_LED2 & ~OBS266_LED4)
 
-#  ifndef CONADDR
-#  define CONADDR	IBM405GP_UART0_BASE
-#  endif
-#  ifndef CONSPEED
-#  define CONSPEED	B9600
-#  endif
-#  ifndef CONMODE
-   /* 8N1 */
-#  define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
-#  endif
-
-#define OBS405_CONADDR		(CONADDR)
-#define OBS405_CONSPEED		(CONSPEED)
-#define OBS405_CONMODE		(CONMODE)
-
-#endif /* NCOM */
-
-#include <dev/ic/comreg.h>
+#define OBS266_GPIO_LED1	(12)
+#define OBS266_GPIO_LED2	(13)
+#define OBS266_GPIO_LED4	(14)
 
 /*
  * extern variables and functions
  */
-extern void obs405_consinit(int com_freq);
-extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
+extern void obs266_led_set(int led);
 
-#endif	/* _EVBPPC_OBS405_H_ */
+#endif	/* _EVBPPC_OBS266_H_ */

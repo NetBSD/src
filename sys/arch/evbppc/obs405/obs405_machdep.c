@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2005/01/21 19:24:11 shige Exp $	*/
+/*	$NetBSD: obs405_machdep.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2005/01/21 19:24:11 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,47 +56,8 @@ char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /*
- * Machine-dependent functions
- *   cpu_startup:	sys/kern/init_main.c
+ * TODO: XXX these functions are machine-dependent ??
  */
-
-/*
- * machine-dependent function pointers
- */
-void (*md_consinit) __P((void)) = NULL;
-void (*md_cpu_startup) __P((void)) = NULL;
-
-/*
- * consinit:
- * console initialize.
- */
-void
-consinit(void)
-{
-
-	/* 4xx common procedure is here. */
-	;
-
-	/* machine-dependent procedure is here. */
-	if (md_consinit != NULL)
-		md_consinit();
-}
-
-/*
- * cpu_startup:
- * machine startup code.
- */
-void
-cpu_startup(void)
-{
-
-	/* 4xx common procedure is here. */
-	;
-
-	/* machine-dependent procedure is here. */
-	if (md_cpu_startup != NULL)
-		md_cpu_startup();
-}
 
 /*
  * softnet:

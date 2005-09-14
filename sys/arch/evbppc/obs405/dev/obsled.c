@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.1 2005/01/24 18:47:37 shige Exp $	*/
+/*	$NetBSD: obsled.c,v 1.1.8.1 2005/09/14 20:54:00 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,14 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.1 2005/01/24 18:47:37 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.1.8.1 2005/09/14 20:54:00 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
-#include <machine/obs405.h>
+#include <machine/obs266.h>
 
 #include <powerpc/ibm4xx/dev/gpiovar.h>
 
@@ -46,10 +47,14 @@ struct obsled_softc {
         struct device sc_dev;
 	gpio_tag_t sc_tag;
         int sc_addr;
+	int sc_led_state;	/* LED status (ON=1/OFF=0) */
+	int sc_led_state_mib;
 };
 
 static void	obsled_attach(struct device *, struct device *, void *);
 static int	obsled_match(struct device *, struct cfdata *, void *);
+static int	obsled_sysctl_verify(SYSCTLFN_PROTO);
+static void	obsled_set_state(struct obsled_softc *);
 
 CFATTACH_DECL(obsled, sizeof(struct obsled_softc),
 	obsled_match, obsled_attach, NULL, NULL);
@@ -60,11 +65,11 @@ obsled_match(struct device *parent, struct cfdata *cf, void *aux)
         struct gpio_attach_args *ga = aux;
 
 	/* XXX: support only OpenBlockS266 LED */
-        if (ga->ga_addr == OBS405_GPIO_LED1)
+        if (ga->ga_addr == OBS266_GPIO_LED1)
                 return (1);
-        else if (ga->ga_addr == OBS405_GPIO_LED2)
+        else if (ga->ga_addr == OBS266_GPIO_LED2)
                 return (1);
-        else if (ga->ga_addr == OBS405_GPIO_LED4)
+        else if (ga->ga_addr == OBS266_GPIO_LED4)
                 return (1);
 
         return (0);
@@ -75,15 +80,53 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
 {
         struct obsled_softc *sc = (struct obsled_softc *)self;
         struct gpio_attach_args *ga = aux;
-	int led = (1 << sc->sc_dev.dv_unit);
+	struct sysctlnode *node;
+	int err, node_mib;
+	char led_name[5];
+	/* int led = (1 << sc->sc_dev.dv_unit); */
 
-        aprint_naive(": OpenBlockS LED%d\n", led);
-        aprint_normal(": OpenBlockS LED%d\n", led);
+	snprintf(led_name, sizeof(led_name),
+		"led%d", (1 << sc->sc_dev.dv_unit) & 0x7);
+        aprint_naive(": OpenBlockS %s\n", led_name);
+        aprint_normal(": OpenBlockS %s\n", led_name);
 
         sc->sc_tag = ga->ga_tag;
         sc->sc_addr = ga->ga_addr;
+	sc->sc_led_state = 0;
 
-	obs405_led_set(OBS405_LED_OFF);
+	obs266_led_set(OBS266_LED_OFF);
+
+	/* add sysctl interface */
+	err = sysctl_createv(NULL, 0,
+			NULL, NULL,
+			0, CTLTYPE_NODE,
+			"hw",
+			NULL,
+			NULL, 0, NULL, 0,
+			CTL_HW, CTL_EOL);
+	if (err != 0)
+		return;
+	err = sysctl_createv(NULL, 0,
+			NULL, &node,
+			0, CTLTYPE_NODE,
+			"obsled",
+			NULL,
+			NULL, 0, NULL, 0,
+			CTL_HW, CTL_CREATE, CTL_EOL);
+	if (err  != 0)
+		return;
+	node_mib = node->sysctl_num;
+	err = sysctl_createv(NULL, 0,
+			NULL, &node,
+			CTLFLAG_READWRITE, CTLTYPE_INT,
+			led_name,
+			SYSCTL_DESCR("OpenBlockS LED state (0=off, 1=on)"),
+			obsled_sysctl_verify, 0, sc, 0,
+			CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
+	if (err  != 0)
+		return;
+
+	sc->sc_led_state_mib = node->sysctl_num;
 #if 0
 	{
 		gpio_tag_t tag = sc->sc_tag;
@@ -92,20 +135,63 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+static int
+obsled_sysctl_verify(SYSCTLFN_ARGS)
+{
+	struct obsled_softc *sc = rnode->sysctl_data;
+	struct sysctlnode node;
+	int err, state;
+
+	node = *rnode;
+	state = sc->sc_led_state;
+	node.sysctl_data = &state;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err != 0 || newp == NULL)
+		return err;
+
+	if (node.sysctl_num == sc->sc_led_state_mib) {
+		if (state < 0 || state > 1)
+			return EINVAL;
+		sc->sc_led_state = state;
+		obsled_set_state(sc);
+	}
+
+	return 0;
+}
+
+static void
+obsled_set_state(struct obsled_softc *sc)
+{
+	gpio_tag_t tag = sc->sc_tag;
+
+	(*(tag)->io_or_write)((tag)->cookie,
+				sc->sc_addr, 
+				(~(sc->sc_led_state) & 1));
+	/* GPIO LED input ON=0/OFF=1 */
+}
+
+/*
+ * Setting LED interface for inside kernel.
+ * Argumnt `led' is 3-bit LED state (led=0-7/ON=1/OFF=0).
+ */
 void
-obs405_led_set(int led)
+obs266_led_set(int led)
 {
 	struct device *dp = NULL;
 	struct devicelist *dlp = &alldevs;
 
+	/*
+	 * Sarching "obsled" devices from device tree.
+	 * Do you have something better idea?
+	 */
         for (dp = TAILQ_FIRST(dlp); dp != NULL; dp = TAILQ_NEXT(dp, dv_list)) {
 		if (dp->dv_cfdata != NULL
 			&& strcmp(dp->dv_cfdata->cf_name, "obsled") == 0) {
 			struct obsled_softc *sc = (struct obsled_softc *)dp;
-			gpio_tag_t tag = sc->sc_tag;
-			int bit = (led & (1 << dp->dv_unit)) >> dp->dv_unit;
-	 		(*(tag)->io_or_write)((tag)->cookie,
-					sc->sc_addr, (~bit & 1));
+			sc->sc_led_state =
+				(led & (1 << dp->dv_unit)) >> dp->dv_unit;
+			obsled_set_state(sc);
 		}
 	}
 }

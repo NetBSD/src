@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $	*/
+/*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,41 +68,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.1.10.2 2005/09/14 20:54:00 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>
-#include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/sa.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
-#include <sys/boot_flag.h>
-#include <sys/properties.h>
 #include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
 #include <machine/bus.h>
-#include <machine/trap.h>
-#include <machine/powerpc.h>
+#include <machine/cpu.h>
+#include <machine/obs266.h>
 #include <powerpc/spr.h>
-#include <machine/obs405.h>
 
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/openbios.h>
@@ -114,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp $");
 char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
-extern struct board_cfg_data board_data;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 void *startsym, *endsym;
@@ -139,9 +124,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init((void (*)(void))ext_intr);
-
-	/* machine-dependent functions */
-	md_device_register = obs405_device_register;
 
 	/*
 	 * Initialize console.
@@ -179,6 +161,13 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #endif
 }
 
+void
+consinit(void)
+{
+
+	obs405_consinit(OBS266_COM_FREQ);
+}
+
 int
 lcsplx(int ipl)
 {
@@ -197,14 +186,11 @@ cpu_startup(void)
 	/*
 	 * cpu common startup
 	 */
-	ibm4xx_startup("OpenBlockS266 IBM PowerPC 405GPr Board");
+	ibm4xx_cpu_startup("OpenBlockS266 IBM PowerPC 405GPr Board");
 
-#if 0
 	/*
 	 * Set up the board properties database.
 	 */
-	ibm4xx_setup_propdb();
-#endif
 	openbios_board_info_set();
 
 	/*
@@ -228,6 +214,8 @@ cpu_reboot(int howto, char *what)
 	static char str[256];
 	char *ap = str, *ap1 = ap;
 
+	obs266_led_set(OBS266_LED_ON);
+
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
@@ -249,7 +237,9 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 
+#if 0
 		goto reboot;	/* XXX for now... */
+#endif
 
 #ifdef DDB
 		printf("dropping to debugger\n");
@@ -280,7 +270,9 @@ cpu_reboot(int howto, char *what)
 	/* flush cache for msgbuf */
 	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
 
+#if 0
  reboot:
+#endif
 	ppc4xx_reset();
 
 	printf("ppc4xx_reset() failed!\n");
