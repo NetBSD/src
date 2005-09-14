@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2005/09/02 22:23:13 rpaulo Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2005/09/14 15:35:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 2005/09/02 22:23:13 rpaulo Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2005/09/14 15:35:26 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -533,6 +533,7 @@ main(argc, argv)
 	if (nlistf == NULL && memf == NULL)
 		(void)setgid(getgid());
 
+#ifndef SMALL
 	if (Bflag) {
 		if (sflag)
 			bpf_stats();
@@ -540,6 +541,7 @@ main(argc, argv)
 			bpf_dump(interface);
 		exit(0);
 	}
+#endif
 
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
