@@ -1,4 +1,13 @@
-# $NetBSD: mi,v 1.160 2005/09/14 00:32:26 lukem Exp $
+# $NetBSD: mi,v 1.161 2005/09/14 00:38:39 lukem Exp $
+#
+# Note: end-user configuration files that are moved to another location
+#	should not be marked "obsolete"; they should just be removed from
+#	the set list, a custom fix should be added to postinstall(8), and
+#	an item should be added to src/UPDATING for MKUPDATE=yes users.
+#	This is an exception to the general rule that moved/removed files
+#	are marked as "obsolete", because we don't want to arbitrarily
+#	remove end-user configuration files.
+#
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
