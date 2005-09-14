@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.11 2005/09/14 15:31:18 he Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.12 2005/09/14 15:54:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
 #define getgrnam_r		_getgrnam_r
 #define setgrent		_setgrent
 #define setgroupent		_setgroupent
-#define getgroupmembership	_getgroupmembership
+#define getgrouplist		_getgrouplist
 
 __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
@@ -79,7 +79,7 @@ __weak_alias(getgrnam,_getgrnam)
 __weak_alias(getgrnam_r,_getgrnam_r)
 __weak_alias(setgrent,_setgrent)
 __weak_alias(setgroupent,_setgroupent)
-__weak_alias(getgroupmembership,_getgroupmembership)
+__weak_alias(getgrouplist,_getgrouplist)
 #endif
 
 #include <sys/param.h>
@@ -208,12 +208,13 @@ endgrent(void)
 }
 
 int
-getgroupmembership(const char *uname, gid_t agroup,
-    gid_t *groups, int maxgroups, int *grpcnt)
+getgrouplist(const char *uname, gid_t agroup,
+    gid_t *groups, int *grpcnt)
 {
 	struct group *grp;
-	int i, ngroups, ret;
+	int maxgroups, i, ngroups, ret;
 
+	maxgroups = *grpcnt;
 	ret = 0;
 	ngroups = 0;
 
