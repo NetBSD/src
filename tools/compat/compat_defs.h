@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.47 2005/08/27 22:08:58 uwe Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.48 2005/09/14 14:06:11 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -115,7 +115,14 @@ struct passwd;
 /* Dirent support. */
 
 #if HAVE_DIRENT_H
-# include <dirent.h>
+# if defined(__linux__) && defined(__USE_BSD)
+#  undef __USE_BSD
+#  include <dirent.h>
+#  define __USE_BSD 1
+#  undef d_fileno
+# else
+#  include <dirent.h>
+# endif
 # define NAMLEN(dirent) (strlen((dirent)->d_name))
 #else
 # define dirent direct
