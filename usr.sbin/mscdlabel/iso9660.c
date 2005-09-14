@@ -1,4 +1,4 @@
-/* $NetBSD: iso9660.c,v 1.1 2004/07/04 14:11:44 drochner Exp $ */
+/* $NetBSD: iso9660.c,v 1.2 2005/09/14 09:41:24 drochner Exp $ */
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -18,6 +18,12 @@ printinfo(struct iso_primary_descriptor *vd)
 	char label[32 + 1], date[] = "yyyy/mm/dd hh:mm", *d;
 
 	strlcpy(label, vd->volume_id, sizeof(label));
+	/* strip trailing blanks */
+	d = label + strlen(label);
+	while (d > label && *(d - 1) == ' ')
+		d--;
+	*d = '\0';
+
 	d = vd->creation_date;
 	memcpy(date, d, 4); /* year */
 	memcpy(date + 5, d + 4, 2); /* month */
