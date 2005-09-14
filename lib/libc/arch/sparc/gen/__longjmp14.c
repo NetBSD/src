@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 18:47:55 pk Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.3 2005/09/14 09:02:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #define __LIBC12_SOURCE__
 #include <setjmp.h>
+#include <compat/include/setjmp.h>
 
 /*
  * Use setcontext to reload the stack pointer, program counter <pc,npc>, and
