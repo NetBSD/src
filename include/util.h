@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.37 2005/08/27 22:55:54 uwe Exp $	*/
+/*	$NetBSD: util.h,v 1.38 2005/09/14 15:59:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -52,6 +52,10 @@
 #define	HN_GETSCALE		0x10
 #define	HN_AUTOSCALE		0x20
 
+#define	PW_POLICY_BYSTRING	0
+#define	PW_POLICY_BYPASSWD	1
+#define	PW_POLICY_BYGROUP	2
+
 __BEGIN_DECLS
 struct disklabel;
 struct iovec;
@@ -94,6 +98,7 @@ const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
 int		pw_mkdb(const char *, int);
+int		pw_policy_test(char *, void *, int);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		secure_path(const char *);
