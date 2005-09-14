@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.10 2005/04/01 13:11:12 he Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.11 2005/09/14 15:31:18 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -67,6 +67,7 @@
 #define getgrent		_getgrent
 #define getgrgid		_getgrgid
 #define getgrnam		_getgrnam
+#define getgrnam_r		_getgrnam_r
 #define setgrent		_setgrent
 #define setgroupent		_setgroupent
 #define getgroupmembership	_getgroupmembership
@@ -75,6 +76,7 @@ __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
 __weak_alias(getgrgid,_getgrgid)
 __weak_alias(getgrnam,_getgrnam)
+__weak_alias(getgrnam_r,_getgrnam_r)
 __weak_alias(setgrent,_setgrent)
 __weak_alias(setgroupent,_setgroupent)
 __weak_alias(getgroupmembership,_getgroupmembership)
@@ -88,6 +90,7 @@ __weak_alias(getgroupmembership,_getgroupmembership)
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 static FILE		*_gr_fp;
 static struct group	_gr_group;
@@ -111,6 +114,31 @@ getgrent(void)
 	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, NULL))
  		return (NULL);
 	return &_gr_group;
+}
+
+int
+getgrnam_r(const char *name, struct group *grp, char *buffer,
+	size_t buflen, struct group **result)
+{
+	struct group *gp, *bgp;
+
+	/* 
+	 * We blatantly cheat (don't provide reentrancy) 
+	 * and hope to get away with it
+	 */
+
+	*result = NULL;
+	bgp = (struct group*)buffer;
+	if (buflen < sizeof(struct group))
+		return ENOMEM;
+
+	gp = getgrnam(name);
+	if (gp) {
+		*bgp = *gp;
+		*result = bgp;
+	}
+
+	return (gp) ? ENOENT : 0;
 }
 
 struct group *
