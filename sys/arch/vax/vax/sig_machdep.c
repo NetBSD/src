@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.5 2005/09/14 17:38:40 he Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5 2005/09/14 17:38:40 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,11 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $")
 
 #include <dev/cons.h>
 
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#endif
+
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
@@ -138,11 +143,11 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $")
 typedef vaddr_t (*sig_setupstack_t)(const ksiginfo_t *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 
-#if defined(COMPAT_13) || defined(COMAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 static vaddr_t setupstack_oldsigcontext(const ksiginfo_t *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 #endif
-#if defined(COMPAT_16) || defined(COMAT_ULTRIX)
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
 static vaddr_t setupstack_sigcontext2(const ksiginfo_t *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 #endif
@@ -150,7 +155,7 @@ static vaddr_t setupstack_siginfo3(const ksiginfo_t *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 
 const static sig_setupstack_t sig_setupstacks[] = {
-#if defined(COMPAT_13) || defined(COMAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 	setupstack_oldsigcontext,	/* 0 */
 	setupstack_oldsigcontext,	/* 1 */
 #else
@@ -165,7 +170,7 @@ const static sig_setupstack_t sig_setupstacks[] = {
 	setupstack_siginfo3,		/* 3 */
 };
 
-#if defined(COMPAT_13) || defined(COMAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 int
 compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
