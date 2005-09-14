@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.246 2005/09/14 20:54:49 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.247 2005/09/14 22:30:14 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12645,4 +12645,36 @@ sys/arch/powerpc/include/ibm4xx/pci_machdep.h	patch
 	Synchronize OpenBlockS266 port with NetBSD-current for enhanced
 	stability.
 	[shige, ticket #763]
+
+sys/arch/xen/include/xenio.h			1.4
+
+	IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN is a read, not a write.
+	[boyuer, ticket #774]
+
+sys/arch/xen/i386/pmap.c			1.13
+
+	In pmap_remap_pages() new mappings are created (PG_RW|PG_M). When
+	saving a domain, the hypervisor will refuse to map the foreing pages
+	RW. As a temporary measure, retry the mapping read-only if PG_RW
+	fails, so that domain save will work. Also fix the PTP's wire_count
+	if the MMU update fails (prevent a kernel panic).
+	[bouyer, ticket #775]
+
+sys/arch/xen/xen/privcmd.c			1.5
+
+	Implement IOCTL_PRIVCMD_MMAPBATCH as a loop calling
+	pmap_remap_pages().
+	[bouyer, ticket #776]
+
+sys/arch/xen/include/evtchn.h			1.10
+
+	The line number in the PCI interrupt register can be larger than 31
+	on some hardware, depending on how Xen set things up. So bump NR_PIRQ
+	from 32 to 256.
+	[bouyer, ticket #777]
+
+usr.bin/whatis/whatis.c				1.20
+
+	PR bin/31068: whatis doesn't find "/bin/[".
+	[rpaulo, ticket #779]
 
