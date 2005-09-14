@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.132 2005/04/19 19:00:25 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.133 2005/09/14 13:49:50 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132 2005/04/19 19:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.133 2005/09/14 13:49:50 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132 2005/04/19 19:00:25 christos Ex
 #include <sys/socketvar.h>
 #include <sys/exec.h>
 #include <sys/swap.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
