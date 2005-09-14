@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 2005/06/02 20:27:30 uwe Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 2005/09/14 18:26:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2005/06/02 20:27:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2005/09/14 18:26:31 martin Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -149,13 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2005/06/02 20:27:30 uwe Exp
 #ifdef ARMFPE
 #include <arm/fpe-arm/armfpe.h>
 #endif
-
-static __inline struct trapframe *
-process_frame(struct lwp *l)
-{
-
-	return l->l_addr->u_pcb.pcb_tf;
-}
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
