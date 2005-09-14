@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.5.2.3 2005/06/09 07:16:33 snj Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.5.2.4 2005/09/14 20:33:28 tron Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.5.2.3 2005/06/09 07:16:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.5.2.4 2005/09/14 20:33:28 tron Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -242,6 +242,17 @@ const keysym_t wssun_keydesctab_de_nodead[] = {
     KC(0x41),		KS_plus,	KS_asterisk,	KS_asciitilde,
 };
 
+const keysym_t wssun_keydesctab_uk[] = {
+    KC(0x1f),		KS_2,		KS_quotedbl,
+    KC(0x20),		KS_3,		KS_sterling,
+    KC(0x20),		KS_4,		KS_dollar,	KS_currency,
+    KC(0x2a),		KS_grave,	KS_notsign,
+    KC(0x57),		KS_apostrophe,	KS_at,
+    KC(0x58),		KS_numbersign,	KS_asciitilde,
+    KC(0x7c),		KS_backslash,	KS_bar,
+    KC(0x7c),		KS_backslash,	KS_bar,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 /* KBD_NULLMAP generates a entry for machine native variant.
@@ -254,5 +265,6 @@ const struct wscons_keydesc wssun_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	wssun_keydesctab_sv_nodead),
 	KBD_MAP(KB_DE,			KB_US,	wssun_keydesctab_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	wssun_keydesctab_de_nodead),
+	KBD_MAP(KB_UK,			KB_US,	wssun_keydesctab_uk),
 	{ 0, 0, 0, 0 }
 };
