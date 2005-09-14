@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.6 2005/09/14 15:07:22 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.7 2005/09/14 15:13:19 soda Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.6 2005/09/14 15:07:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.7 2005/09/14 15:13:19 soda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,6 +405,8 @@ notfound:
 	 * cache doesn't understand peculiarities such as case insensitivity
 	 * and 8.3 filenames.  Hence, it may not invalidate all negative
 	 * entries if a file with this name is later created.
+	 * e.g. creating a file 'foo' won't invalidate a negative entry 
+	 * for 'FOO'.
 	 */
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
