@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.6 2003/11/26 03:56:38 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.6.14.1 2005/09/14 20:54:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ set_sint(pending)
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splvm()		splraise(imask[IPL_VM])
+#define	splaudio()	splraise(imask[IPL_AUDIO])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])

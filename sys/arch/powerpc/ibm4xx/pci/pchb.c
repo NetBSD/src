@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3.10.1 2005/09/14 20:54:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3.10.1 2005/09/14 20:54:00 tron Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3 2004/08/30 15:05:18 drochner Exp $");
 static int	pchbmatch(struct device *, struct cfdata *, void *);
 static void	pchbattach(struct device *, struct device *, void *);
 static int	pchbprint(void *, const char *);
+static pci_chipset_tag_t	alloc_chipset_tag(int);
 
 CFATTACH_DECL(pchb, sizeof(struct device),
     pchbmatch, pchbattach, NULL, NULL);
@@ -89,7 +90,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	/* XXX chipset tag unused by walnut, so just pass 0 */
-	pci_chipset_tag_t pc = 0;
+	pci_chipset_tag_t pc = alloc_chipset_tag(0);
 	pcitag_t tag; 
 	int class, id;
 
@@ -126,15 +127,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct plb_attach_args *paa = aux;
 	struct pcibus_attach_args pba;
 	char devinfo[256];
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
 #ifdef PCI_CONFIGURE_VERBOSE
 	extern int pci_conf_debug;
 
 	pci_conf_debug = 1;
 #endif
-#endif
-	pci_chipset_tag_t pc = 0;
+	pci_chipset_tag_t pc = alloc_chipset_tag(0);
 	pcitag_t tag; 
 	int class, id;
 
@@ -168,14 +166,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		panic("pchbattach: can't init MEM tag");
 
 #ifdef PCI_NETBSD_CONFIGURE
-	memext = extent_create("pcimem", IBM405GP_PCI_MEM_START,
+	pc->memext = extent_create("pcimem", IBM405GP_PCI_MEM_START,
 	    IBM405GP_PCI_MEM_START + 0x1fffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT);
-	ioext = extent_create("pciio", IBM405GP_PCI_PCI_IO_START,
+	pc->ioext = extent_create("pciio", IBM405GP_PCI_PCI_IO_START,
 	    IBM405GP_PCI_PCI_IO_START + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
-	extent_destroy(memext);
-	extent_destroy(ioext);
+	pci_configure_bus(pc, pc->ioext, pc->memext, NULL, 0, 32);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 #ifdef PCI_CONFIGURE_VERBOSE
@@ -187,6 +183,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &pchb_mem_tag;
 	pba.pba_dmat = paa->plb_dmat;
 	pba.pba_dmat64 = NULL;
+	pba.pba_pc = pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
@@ -227,3 +224,16 @@ scan_pci_bus(void)
 	}
 }
 #endif
+
+static pci_chipset_tag_t
+alloc_chipset_tag(int node)
+{
+	pci_chipset_tag_t npc;
+
+	npc = malloc(sizeof *npc, M_DEVBUF, M_NOWAIT);
+	if (npc == NULL)
+		panic("could not allocate pci_chipset_tag_t");
+	npc->rootnode = node;
+
+	return (npc);
+}
