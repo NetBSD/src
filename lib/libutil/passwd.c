@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.41 2005/08/19 10:10:08 elad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.42 2005/09/14 02:12:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.41 2005/08/19 10:10:08 elad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.42 2005/09/14 02:12:34 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -599,14 +599,17 @@ pw_getpwconf(char *data, size_t max, const struct passwd *pwd,
     const char *option)
 {
 	char grpkey[LINE_MAX];
-	struct group *grp;
+	struct group grs, *grp;
+	char grbuf[1024];
 
 	pw_getconf(data, max, pwd->pw_name, option);
 
 	/* Try to find an entry for the group */
 	if (*data == '\0') {
-		if ((grp = getgrgid(pwd->pw_gid)) != NULL) {
-			snprintf(grpkey, sizeof(grpkey), ":%s", grp->gr_name);
+		(void)getgrgid_r(pwd->pw_gid, &grs, grbuf, sizeof(grbuf), &grp);
+		if (grp != NULL) {
+			(void)snprintf(grpkey, sizeof(grpkey), ":%s",
+			    grp->gr_name);
 			pw_getconf(data, max, grpkey, option);
 		}
 		if (*data == '\0')
