@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: machdep.c,v 1.258 2005/09/14 15:03:50 he Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2005/09/14 15:03:50 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -111,6 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2005/06/16 04:17:49 briggs Exp $")
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
 #include <sys/sysctl.h>
+
+#ifdef COMPAT_13
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#endif
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>

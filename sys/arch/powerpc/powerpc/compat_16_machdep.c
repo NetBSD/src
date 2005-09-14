@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2004/04/15 21:07:07 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.5 2005/09/14 15:03:50 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2004/04/15 21:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2005/09/14 15:03:50 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2004/04/15 21:07:07 matt E
 #include <sys/systm.h>
 #include <sys/ucontext.h>
 #include <sys/user.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <machine/fpu.h>
 
