@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.19 2004/11/05 19:54:47 dsl Exp $	*/
+/*	$NetBSD: whatis.c,v 1.19.2.1 2005/09/14 22:28:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.19 2004/11/05 19:54:47 dsl Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.19.2.1 2005/09/14 22:28:51 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,10 @@ match(bp, str)
 	if (!*str || !*bp)
 		return(0);
 	for (len = strlen(str);;) {
-		for (; *bp && !isalnum((unsigned char)*bp); ++bp);
+		/* 
+		 * /bin/[ is a special case.
+		 */
+		for (; *bp && *bp != '[' && !isalnum((unsigned char)*bp); ++bp);
 		if (!*bp)
 			break;
 		for (start = bp++;
