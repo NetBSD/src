@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.3 2004/03/23 01:42:53 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.4 2005/09/14 08:59:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 #define __LIBC12_SOURCE__
 #include <setjmp.h>
+#include <compat/include/setjmp.h>
 
 void
 __longjmp14(jmp_buf env, int val)
