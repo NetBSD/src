@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.142 2005/08/25 16:01:14 drochner Exp $
+$NetBSD: UPDATING,v 1.143 2005/09/14 00:32:26 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20050830:
+	named.conf was moved from /etc/namedb to /etc.
+	postinstall(8) migrates this during interactive use.
+	Users of MKUPDATE=yes will need to manually rectify
+	this in their DESTDIR.
 
 20050825:
 	Some data structures in sys/device.h, related to interface
