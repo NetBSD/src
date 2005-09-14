@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/07/18 22:38:33 chs Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2005/09/14 13:46:32 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #define __LIBC12_SOURCE__
 #include <setjmp.h>
+#include <compat/include/setjmp.h>
 
 #include <stdio.h>
 #include <unistd.h>
