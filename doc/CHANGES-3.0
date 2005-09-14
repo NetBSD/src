@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.245 2005/09/14 20:37:06 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.246 2005/09/14 20:54:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12618,4 +12618,31 @@ sys/kern/sys_pipe.c				1.66
 
 	PR kern/27185: EOF on pipe gains no EVFILT_READ event,
 	[christos, ticket #773]
+
+sys/arch/evbppc/conf/files.obs405		patch
+sys/arch/evbppc/include/obs266.h		new file
+sys/arch/evbppc/include/obs405.h		patch
+sys/arch/evbppc/include/rbus_machdep.h		new file
+sys/arch/evbppc/obs405/consinit.c		patch
+sys/arch/evbppc/obs405/dev/obsled.c		patch
+sys/arch/evbppc/obs405/machdep.c		delete
+sys/arch/evbppc/obs405/md_autoconf.c		delete
+sys/arch/evbppc/obs405/md_machdep.c		delete
+sys/arch/evbppc/obs405/obs266_autoconf.c	new file
+sys/arch/evbppc/obs405/obs266_machdep.c		new file
+sys/arch/evbppc/obs405/obs405_autoconf.c	new file
+sys/arch/evbppc/obs405/obs405_machdep.c		new file
+sys/arch/evbppc/obs405/rbus_machdep.c		new file
+sys/arch/hpc/stand/compile/.keep_me		delete
+sys/arch/hpc/stand/libz/errno.h			delete
+sys/arch/hpcmips/stand/libz/errno.h		delete
+sys/arch/powerpc/ibm4xx/autoconf.c		delete
+sys/arch/powerpc/ibm4xx/machdep.c		delete
+sys/arch/powerpc/ibm4xx/pci/pchb.c		patch
+sys/arch/powerpc/include/ibm4xx/ibm4xx_intr.h	patch
+sys/arch/powerpc/include/ibm4xx/pci_machdep.h	patch
+
+	Synchronize OpenBlockS266 port with NetBSD-current for enhanced
+	stability.
+	[shige, ticket #763]
 
