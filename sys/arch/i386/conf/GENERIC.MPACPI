@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.45 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.46 2005/09/14 08:22:24 tron Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	32		# estimated number of users
 
@@ -735,6 +735,7 @@ ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -768,6 +769,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
