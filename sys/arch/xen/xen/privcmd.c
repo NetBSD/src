@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.2.2.2 2005/06/18 10:43:37 tron Exp $ */
+/* $NetBSD: privcmd.c,v 1.2.2.3 2005/09/14 22:24:38 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.2 2005/06/18 10:43:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.2.2.3 2005/09/14 22:24:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,46 @@ privcmd_ioctl(void *v)
 		break;
 	}
 	case IOCTL_PRIVCMD_MMAPBATCH:
-		/* XXX */
-		printf("IOCTL_PRIVCMD_MMAPBATCH\n");
-		error = EOPNOTSUPP;
+	{
+		int i;
+		privcmd_mmapbatch_t* pmb = ap->a_data;
+		vaddr_t va0, va;
+		u_long mfn, ma;
+		struct vm_map *vmm;
+		pmap_t pmap;
+
+		vmm = &ap->a_p->p_vmspace->vm_map;
+		pmap = vm_map_pmap(vmm);
+		va0 = pmb->addr & ~PAGE_MASK;
+
+		if (va0 > VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
+			return EINVAL;
+		
+		//printf("mmapbatch: va0=%lx num=%d dom=%d\n", va0, pmb->num, pmb->dom);
+		for(i = 0; i < pmb->num; ++i) {
+			va = va0 + (i * PAGE_SIZE);
+			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
+			if (error != 0)
+				return error;
+			ma = mfn << PGSHIFT;
+			
+			/*
+			 * XXXjld@panix.com: figure out how to stuff
+			 * these into fewer hypercalls.
+			 */
+			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
+			error = pmap_remap_pages(pmap, va, ma, 1,
+			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
+			if (error != 0) {
+				printf("mmapbatch: remap error %d!\n", error);
+				mfn |= 0xF0000000;
+				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
+			}
+		}
 		break;
+	}
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
 		{
 		unsigned long *mfn_start = ap->a_data;
