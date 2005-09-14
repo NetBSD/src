@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.289 2005/08/20 17:23:53 rpaulo Exp $
+#	$NetBSD: NetBSD.dist,v 1.290 2005/09/14 14:01:57 tsarna Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1128,7 +1128,7 @@
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
-./var/rwho
+./var/rwho			uname=_rwhod gname=_rwhod
 ./var/spool
 ./var/spool/clientmqueue	uname=smmsp gname=smmsp mode=0770
 ./var/spool/ftp
