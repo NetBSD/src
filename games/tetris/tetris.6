@@ -1,4 +1,4 @@
-.\"	$NetBSD: tetris.6,v 1.10 2003/08/07 09:37:48 agc Exp $
+.\"	$NetBSD: tetris.6,v 1.11 2005/09/15 02:09:42 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,6 @@ Display the top scores.
 .It Fl p
 Switch on previewing of the shape that will appear next.
 .El
-.Pp
 .Sh PLAY
 At the start of the game, a shape will appear at the top of the screen,
 falling one square at a time.
@@ -145,8 +144,6 @@ are marked with asterisks
 .It /var/games/tetris.scores
 high score file
 .El
-.Sh BUGS
-The higher levels are unplayable without a fast terminal connection.
 .Sh AUTHORS
 Adapted from a 1989 International Obfuscated C Code Contest winner by
 Chris Torek and Darren F. Provine.
@@ -155,3 +152,5 @@ Manual adapted from the original entry written by Nancy L. Tinkham and
 Darren F. Provine.
 .Pp
 Code for previewing next shape added by Hubert Feyrer in 1999.
+.Sh BUGS
+The higher levels are unplayable without a fast terminal connection.
