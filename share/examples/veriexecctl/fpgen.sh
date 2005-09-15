@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: fpgen.sh,v 1.3.2.2 2005/09/15 20:39:12 tron Exp $	
+#	$NetBSD: fpgen.sh,v 1.3.2.3 2005/09/15 20:39:34 tron Exp $	
 #
 # Copyright 2005 Brett Lymn <blymn@netbsd.org>
 # Copyright 2005 Elad Efrat <elad@netbsd.org>
@@ -43,7 +43,6 @@
 #   ./fpgen.sh -ar sha1 vexec.conf (all files, recursively from curent dir)
 #   ./fpgen.sh -d /bin rmd160 vexec.conf (only executables in /bin)
 
-DIGEST="/usr/pkg/bin/digest"
 CKSUM="/usr/bin/cksum"
 
 # Get inode of given file.
@@ -91,11 +90,9 @@ if [ $# -lt 2 -o $# -gt 6 ]; then
 	echo "Usage: $0 [-a|-r|-d <dir>] [-q] <hash_type> <fingerprint_file>"
 	echo "(a)ll files; (r)ecursive scan; (d)irectory root."
 	echo ""
-	echo "$0 will use the command \"digest\" from pkgsrc, if available"
-	echo "or use the cksum command if \"digest\" is not available"
-	echo "see the man pages for cksum and digest for the supported"
-	echo "hash types.  Hash type names are of the form md5, sha1,"
-	echo "rmd160 and so forth"
+	echo "See the man page for cksum for the supported"
+	echo "hash types.  Hash type names are of the form sha1, sha384,"
+	echo "rmd160, and so forth"
 	exit 2
 fi
 
@@ -126,46 +123,18 @@ if [ -z "${dbfile}" ]; then
 	exit
 fi
 
-# If we have digest, we can use it for all algorithms. If we don't, we
-# fallback to cksum supporting only MD5, SHA1, and RMD160.
-if [ -e ${DIGEST} ]; then
-	hashcmd="${DIGEST} ${hashtype}"
+if [ -e ${CKSUM} ]; then
+	hashcmd="${CKSUM} -a ${hashtype}"
+
+	# Make sure hash type is supported.
 	echo "foo foo foo" | ${hashcmd} > /dev/null 2>&1
 	if [ "$?" != 0 ]; then
-		echo "ERROR: ${DIGEST} does not support the hash ${hashtype}"
+		echo "ERROR: ${CKSUM} does not support the hash ${hashtype}"
 		exit 1
 	fi
 else
-	if [ ${quiet} = "0" ]; then
-		echo "WARNING: No digest; Falling back to cksum."
-	fi
-
-	if [ ! -e ${hashcmd_cksum} ]; then
-		echo "ERROR: No cksum! Aborting."
-	fi
-
-	cksum_flag="no"
-	case "$hashtype" in
-	md5)
-		cksum_flag="-5"
-		;;
-
-	sha1)
-		cksum_flag="-1"
-		;;
-
-	rmd160)
-		cksum_flag="-6"
-		;;
-	esac
-
-	if [ "${cksum_flag}" = "no" ]; then
-		echo "ERROR: Unsupported hashing algorithm. Use 'md5'," \
-		"'sha1', or 'rmd160' only when using cksum."
-		exit 1
-	fi
-
-	hashcmd="${CKSUM} ${cksum_flag}"
+	echo "ERROR: No ${CKSUM}! Aborting."
+	exit 1
 fi
 
 if [ "${quiet}" = "0" ]; then
