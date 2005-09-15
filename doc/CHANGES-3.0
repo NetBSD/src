@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.249 2005/09/15 20:54:19 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.250 2005/09/15 21:11:14 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12714,4 +12714,25 @@ sys/arch/evbppc/conf/INSTALL_OPENBLOCKS266	new file
 
 	Build installation kernel for OpenBlockS266(IBM405GP CPU) products.
 	[shige, ticket #790]
+
+usr.sbin/postinstall/postinstall.8		1.3
+usr.sbin/postinstall/postinstall		1.6
+
+	- Note that not all items can be fixed automatically
+	- Reorganize items so that they're in alphabetical order except that
+	  "obsolete" is moved to the end.
+	[lukem, ticket #787]
+
+UPDATING					1.143 via patch
+distrib/sets/lists/etc/mi			1.160-1.161
+usr.sbin/postinstall/postinstall		1.7
+
+	Don't mark /etc/namedb/named.conf as "obsolete" since that will cause
+	a file that has end-user configuration to be unconditionally removed.
+	Instead, remove the entry from the set list, and add a note to UPDATING
+	reminding users of MKUPDATE=yes to manually rectify the problem in
+	their DESTDIR.
+	The "named" fix in postinstall(8) will migrate /etc/namedb/named.conf
+	to /etc/named.conf if the latter doesn't exist.
+	[lukem, ticket #788]
 
