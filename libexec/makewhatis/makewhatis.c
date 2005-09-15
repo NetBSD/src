@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.31.2.1 2005/09/15 23:42:22 snj Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.31.2.2 2005/09/15 23:44:19 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.31.2.1 2005/09/15 23:42:22 snj Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.31.2.2 2005/09/15 23:44:19 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -492,8 +492,6 @@ parsecatpage(gzFile *in)
 	}
 	while (buffer[0] == '\n');
 
-printf("buffer %s\n", buffer);
-
 	section = NULL;
 	if ((ptr = strchr(buffer, '(')) != NULL) {
 		if ((last = strchr(ptr + 1, ')')) !=NULL) {
@@ -507,8 +505,6 @@ printf("buffer %s\n", buffer);
 		}
 	}
 
-printf("section %s\n", section);
-
 	for (;;) {
 		if (GetS(in, buffer, sizeof(buffer)) == NULL) {
 			free(section);
@@ -519,7 +515,6 @@ printf("section %s\n", section);
 			break;
 	}
 
-printf("buffer2 %s\n", buffer);
 	ptr = last = buffer;
 	size = sizeof(buffer) - 1;
 	while ((size > 0) && (GetS(in, ptr, size) != NULL)) {
@@ -531,9 +526,7 @@ printf("buffer2 %s\n", buffer);
 		if (length == 0) {
 			*last = '\0';
 
-printf("buffer [%s] section [%s]\n", buffer, section);
 			ptr = replacestring(buffer, " -- ", section);
-printf("ptr %s\n", ptr);
 			free(section);
 			return ptr;
 		}
