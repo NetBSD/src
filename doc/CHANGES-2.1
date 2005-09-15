@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.189 2005/09/13 23:25:31 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.190 2005/09/15 14:34:36 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3769,4 +3769,35 @@ sys/kern/sys_pipe.c				1.66
 	GC unused argument from pipeselwakeup() and call it even when
 	fp == NULL.
 	[christos, ticket #5845]
+
+distrib/evbppc/md-kernel/Makefile		1.3 via patch
+etc/etc.evbppc/Makefile.inc			1.3 via patch
+sys/arch/evbppc/conf/files.obs405		1.5-1.8 via patch
+sys/arch/evbppc/conf/OPENBLOCKS266		1.22,1.25 via patch
+sys/arch/evbppc/include/obs266.h		1.1 (new)
+sys/arch/evbppc/include/obs405.h		1.1-1.5 (new)
+sys/arch/evbppc/include/rbus_machdep.h		1.1 (new)
+sys/arch/evbppc/obs405/consinit.c		1.2-1.4
+sys/arch/evbppc/obs405/dev/x1226.c		deleted
+sys/arch/evbppc/obs405/dev/x1226reg.h		deleted
+sys/arch/evbppc/obs405/machdep.c		deleted
+sys/arch/evbppc/obs405/obs266_autoconf.c	1.1 (new)
+sys/arch/evbppc/obs405/obs266_machdep.c		1.1 (new, plus patch)
+sys/arch/evbppc/obs405/obs405_autoconf.c	1.1 (new, plus patch)
+sys/arch/evbppc/obs405/obs405_machdep.c		1.1 (new)
+sys/arch/evbppc/obs405/rbus_machdep.c		1.1 (new)
+sys/arch/powerpc/conf/files.ibm4xx		1.6-1.7
+sys/arch/powerpc/ibm4xx/board_prop.c		1.1 (new)
+sys/arch/powerpc/ibm4xx/dev/com_opb.c		1.12
+sys/arch/powerpc/ibm4xx/dev/comopbvar.h		1.1 (new)
+sys/arch/powerpc/ibm4xx/ibm40x_machdep.c	1.3-1.4
+sys/arch/powerpc/ibm4xx/ibm4xx_autoconf.c	1.1-1.2 (new)
+sys/arch/powerpc/ibm4xx/ibm4xx_machdep.c	1.1-1.3 (new)
+sys/arch/powerpc/ibm4xx/ibm4xxgpx_autoconf.c	1.2-1.3
+sys/arch/powerpc/ibm4xx/openbios/openbios.c	1.1 (new)
+sys/arch/powerpc/include/ibm4xx/cpu.h		1.7-1.10
+sys/arch/powerpc/include/ibm4xx/openbios.h	1.1 (new)
+
+	Update OpenBlockS266 support to more modern, stable sources.
+	[shige, ticket #5820]
 
