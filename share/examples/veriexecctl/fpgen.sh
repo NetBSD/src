@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: fpgen.sh,v 1.3.2.3 2005/09/15 20:39:34 tron Exp $	
+#	$NetBSD: fpgen.sh,v 1.3.2.4 2005/09/15 20:40:06 tron Exp $	
 #
 # Copyright 2005 Brett Lymn <blymn@netbsd.org>
 # Copyright 2005 Elad Efrat <elad@netbsd.org>
@@ -39,9 +39,9 @@
 #
 # Usage pattern: fpgen.sh [flags] <hash> <database file>
 # Examples:
-#   ./fpgen.sh -r md5 vexec.conf (scan recursively from current dir)
-#   ./fpgen.sh -ar sha1 vexec.conf (all files, recursively from curent dir)
-#   ./fpgen.sh -d /bin rmd160 vexec.conf (only executables in /bin)
+#   ./fpgen.sh -r md5 /etc/signatures (scan recursively from current dir)
+#   ./fpgen.sh -ar sha1 /etc/signatures (all files recursively from current dir)
+#   ./fpgen.sh -d /bin rmd160 /etc/signatures (only executables in /bin)
 
 CKSUM="/usr/bin/cksum"
 
@@ -210,10 +210,10 @@ echo >> ${dbfile}
 
 if [ $quiet = "0" ]; then
 	echo
-	echo "##################################################################"
-	echo "    PLEASE VERIFY CONTENTS OF $dbfile AND SET THE \"INDIRECT\"    "
-	echo "    FLAG WHERE APPROPRIATE (HINT: INTERPRETERS SUCH AS PERL).   "
-	echo "##################################################################"
+	echo "###############################################################"
+	echo "  PLEASE VERIFY CONTENTS OF $dbfile AND FINE-TUNE THE"
+	echo "  FLAGS WHERE APPROPRIATE AFTER READING veriexecctl(8)"
+	echo "###############################################################"
 fi
 
 rm -f ${tmpfile}
