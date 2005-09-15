@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2005/09/15 22:44:58 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2005/09/15 22:49:33 uwe Exp $
 
 SRCS+=	setjmp.S sigsetjmp.S
 
@@ -30,7 +30,7 @@ SRCS+=	ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 KMSRCS+= ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S
 
-SRCS.sh3.gen=	Lint_swapcontext.c
+SRCS.sh3.gen=	Lint___setjmp14.c Lint___sigsetjmp14.c Lint_swapcontext.c
 LSRCS+=		${SRCS.sh3.gen}
 DPSRCS+=	${SRCS.sh3.gen}
 CLEANFILES+=	${SRCS.sh3.gen}
