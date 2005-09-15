@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
+.\"     $NetBSD: buffercache.9,v 1.13.2.1 2005/09/15 20:47:12 tron Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd June 17, 2004
+.Dd September 8, 2005
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -181,6 +181,14 @@ and
 .Fa blkno .
 The buffer is returned via
 .Fa bpp .
+.Fa blkno
+is in units of 
+.Dv DEV_BSIZE .
+Both
+.Fa blkno
+and
+.Fa size
+must be multiples of the underlying device's block size.
 .Pp
 If the buffer is not found (i.e. the block is not cached in memory),
 .Fn bread
