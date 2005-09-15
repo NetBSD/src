@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.75 2005/09/15 09:30:21 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.76 2005/09/15 18:51:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.75 2005/09/15 09:30:21 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.76 2005/09/15 18:51:33 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -1156,10 +1156,12 @@ file_compress(char *file, char *outfile, size_t outsize)
 		return -1;
 	}
 
+#ifndef SMALL
 	if (stat(file, &isb) != 0) {
 		maybe_warn("cannot stat %s -- skipping", file);
 		return -1;
 	}
+#endif
 	if (cflag == 0) {
 #ifndef SMALL
 		if (isb.st_nlink > 1 && fflag == 0) {
