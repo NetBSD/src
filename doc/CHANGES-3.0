@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.248 2005/09/15 07:04:56 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.249 2005/09/15 20:54:19 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12674,4 +12674,44 @@ usr.bin/whatis/whatis.c				1.20
 
 	PR bin/31068: whatis doesn't find "/bin/[".
 	[rpaulo, ticket #779]
+
+sys/dev/hpc/hpcfb.c				1.33
+sys/arch/hpcsh/dev/hd64461/hd64461video.c	1.31
+
+	Fix very dim colors when using wscons(4).
+	[uwe, ticket #781]
+
+share/examples/veriexecctl/fpgen.sh		1.1-1.3
+
+	Script for creating signature files for Veriexec.
+	[elad, ticket #782]
+
+sys/arch/i386/stand/pxeboot/main.c		1.9
+sys/arch/i386/stand/pxeboot/Makefile		1.8
+
+	- Add "consdev" from ../boot.
+	- Make "quit" work like it does in ../boot.
+	  (ie. let us try again with a bootloader from a different device).
+	- Copy some settings from ../boot/Makefile.boot that let us try to load
+	  64-bit kernels on amd64.
+	[chs, ticket #783]
+
+share/man/man9/buffercache.9			1.14
+
+	Note the fact that buffer cache takes block numbers in units of
+	DEV_BSIZE, even if the device's device size is larger.
+	[wrstuden, ticket #784]
+
+sys/dev/sun/kbd.c				1.51
+
+	Ignore KBD_IDLE one layer earlier - wskbd does not like it [and
+	complains in DEBUG kernels], and we already ignored it for raw mode.
+	[martin, ticket #785]
+
+distrib/evbppc/md-kernel/Makefile		patch
+distrib/evbppc/ramdisk/Makefile			patch
+sys/arch/evbppc/conf/INSTALL_OPENBLOCKS266	new file
+
+	Build installation kernel for OpenBlockS266(IBM405GP CPU) products.
+	[shige, ticket #790]
 
