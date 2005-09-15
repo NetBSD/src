@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.2 2005/06/22 06:14:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.3 2005/09/15 23:35:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.2 2005/06/22 06:14:51 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.3 2005/09/15 23:35:15 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -211,7 +211,8 @@ ieee80211_statistics(void)
 	struct ieee80211_stats stats;
 
 	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_data = (caddr_t)&stats;
+	ifr.ifr_buflen = sizeof(stats);
+	ifr.ifr_buf = (caddr_t)&stats;
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
 	    (caddr_t)&ifr) == -1)
