@@ -1,12 +1,23 @@
-#	$NetBSD: files.obs405,v 1.4 2003/11/19 14:27:24 scw Exp $
+#	$NetBSD: files.obs405,v 1.4.4.1 2005/09/15 14:28:44 riz Exp $
 #
 # obs405-specific configuration info
 
+file	arch/powerpc/ibm4xx/board_prop.c
+file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm4xxgpx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
+file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 file	arch/powerpc/ibm4xx/intr.c
+file	arch/powerpc/ibm4xx/openbios/openbios.c
 file	arch/evbppc/obs405/consinit.c
-file	arch/evbppc/obs405/machdep.c
+file	arch/evbppc/obs405/obs266_autoconf.c
+file	arch/evbppc/obs405/obs266_machdep.c
+file	arch/evbppc/obs405/obs405_autoconf.c
+file	arch/evbppc/obs405/obs405_machdep.c
+
+#device obsled
+#attach  obsled at gpio
+#file	arch/evbppc/obs405/dev/obsled.c		obsled
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
@@ -34,4 +45,4 @@ device fdc {drive = -1}
 include "dev/cardbus/files.cardbus"
 include "dev/pcmcia/files.pcmcia"
 
-file arch/macppc/macppc/rbus_machdep.c		cardbus
+file arch/evbppc/obs405/rbus_machdep.c		cardbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $	*/
+/*	$NetBSD: board_prop.c,v 1.1.14.2 2005/09/15 14:28:44 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,21 +31,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.1.14.2 2005/09/15 14:28:44 riz Exp $");
 
-#include <machine/obs405.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <sys/param.h>
+#include <sys/properties.h>
+#include <sys/systm.h>
 
-/*
- * obs405_consinit:
- *   Initialize the system console.
- */
+#include <machine/cpu.h>
+
+struct propdb *board_info = NULL;
+
 void
-obs405_consinit(int com_freq)
+board_info_init(void)
 {
 
-#if (NCOM > 0)
-	com_opb_cnattach(com_freq,
-		OBS405_CONADDR, OBS405_CONSPEED, OBS405_CONMODE);
-#endif /* NCOM */
+	/*
+	 * Set up the board properties database.
+	 */
+	if (board_info != NULL)
+		return;
+	if (!(board_info = propdb_create("board properties")))
+		panic("Cannot create board properties database");
 }
