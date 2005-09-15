@@ -1,4 +1,4 @@
-/*	$NetBSD: times.h,v 1.1 2005/09/13 01:42:32 christos Exp $	*/
+/*	$NetBSD: times.h,v 1.2 2005/09/15 03:00:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,4 +45,4 @@ clock_t	times(struct tms *);
 __END_DECLS
 #endif
 
-#endif /* !_SYS_TIMES_H_ */
+#endif /* !_COMPAT_SYS_TIMES_H_ */
