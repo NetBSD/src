@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.31.2.5 2005/09/15 23:49:08 snj Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.31.2.6 2005/09/15 23:51:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.31.2.5 2005/09/15 23:49:08 snj Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.31.2.6 2005/09/15 23:51:29 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,55 +91,64 @@ struct whatisstruct {
 	char	wi_prefix[1];
 };
 
-int	 main(int, char * const *);
-char	*findwhitespace(char *);
-char	*strmove(char *,char *);
-char	*GetS(gzFile, char *, size_t);
-int	 pathnamesection(const char *, const char *);
-int	 manpagesection(char *);
-char	*createsectionstring(char *);
-void	 addmanpage(manpage **, ino_t, char *, size_t, size_t);
-void	 addwhatis(whatis **, char *, char *);
-char	*makesection(int);
-char	*makewhatisline(const char *, const char *, const char *);
-void	 catpreprocess(char *);
-char	*parsecatpage(const char *, gzFile *);
-int	 manpreprocess(char *);
-char	*nroff(const char *, gzFile *);
-char	*parsemanpage(const char *, gzFile *, int);
-char	*getwhatisdata(char *);
-void	 processmanpages(manpage **,whatis **);
-void	 dumpwhatis(FILE *, whatis *);
-void	*emalloc(size_t);
-char	*estrdup(const char *);
-static int makewhatis(char * const *manpath);
+int		main(int, char * const *);
+static char	*findwhitespace(char *);
+static char	*strmove(char *,char *);
+static char	*GetS(gzFile, char *, size_t);
+static int	pathnamesection(const char *, const char *);
+static int	manpagesection(char *);
+static char	*createsectionstring(char *);
+static void	addmanpage(manpage **, ino_t, char *, size_t, size_t);
+static void	addwhatis(whatis **, char *, char *);
+static char	*makesection(int);
+static char	*makewhatisline(const char *, const char *, const char *);
+static void	catpreprocess(char *);
+static char	*parsecatpage(const char *, gzFile *);
+static int	manpreprocess(char *);
+static char	*nroff(const char *, gzFile *);
+static char	*parsemanpage(const char *, gzFile *, int);
+static char	*getwhatisdata(char *);
+static void	processmanpages(manpage **,whatis **);
+static void	dumpwhatis(FILE *, whatis *);
+static void	*emalloc(size_t);
+static char	*estrdup(const char *);
+static int	makewhatis(char * const *manpath);
 
-char * const default_manpath[] = {
+static char * const default_manpath[] = {
 	"/usr/share/man",
 	NULL
 };
 
-const char *sectionext	= "0123456789ln";
-const char *whatisdb	= _PATH_WHATIS;
-static int dowarn = 0;
+static const char	*sectionext = "0123456789ln";
+static const char	*whatisdb   = _PATH_WHATIS;
+static int		dowarn      = 0;
+
+#define	ISALPHA(c)	isalpha((unsigned char)(c))
+#define	ISDIGIT(c)	isdigit((unsigned char)(c))
+#define	ISSPACE(c)	isspace((unsigned char)(c))
 
 int
 main(int argc, char *const *argv)
 {
-	char	* const *manpath;
-	int c, dofork=1;
-	const char *conffile = NULL;
-	ENTRY *ep;
-	TAG *tp;
-	int rv, jobs = 0, status;
-	glob_t pg;
-	char *paths[2], **p, *sl;
-	int retval = EXIT_SUCCESS;
+	char * const	*manpath;
+	int		c, dofork;
+	const char	*conffile;
+	ENTRY		*ep;
+	TAG		*tp;
+	int		rv, jobs, status;
+	glob_t		pg;
+	char		*paths[2], **p, *sl;
+	int		retval;
+
+	dofork = 1;
+	conffile = NULL;
+	jobs = 0;
+	retval = EXIT_SUCCESS;
 
 	(void)setlocale(LC_ALL, "");
 
-	while((c = getopt(argc, argv, "C:fw")) != -1) {
-		switch(c) {
+	while ((c = getopt(argc, argv, "C:fw")) != -1) {
+		switch (c) {
 		case 'C':
 			conffile = optarg;
 			break;
@@ -163,7 +172,7 @@ main(int argc, char *const *argv)
 		manpath = &argv[0];
 	
 	    mkwhatis:
-		return (makewhatis(manpath));
+		return makewhatis(manpath);
 	}
 
 	/*
@@ -187,8 +196,10 @@ main(int argc, char *const *argv)
 		/* We always have something to work with here */
 		for (p = pg.gl_pathv; *p; p++) {
 			sl = strrchr(*p, '/');
-			if (!sl)
-				err(EXIT_FAILURE, "glob: _whatdb entry '%s' doesn't contain slash", ep->s);
+			if (sl == NULL) {
+				err(EXIT_FAILURE, "glob: _whatdb entry '%s' "
+				    "doesn't contain slash", ep->s);
+			}
 
 			/*
 			 * Cut the last component of path, leaving just
@@ -225,14 +236,14 @@ main(int argc, char *const *argv)
 	}
 
 	/* Wait for the childern to finish */
-	while(jobs > 0) {
-		wait(&status);
+	while (jobs > 0) {
+		(void)wait(&status);
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != EXIT_SUCCESS)
 			retval = EXIT_FAILURE;
 		jobs--;
 	}
 				
-	return (retval);
+	return retval;
 }
 
 static int
@@ -258,14 +269,17 @@ makewhatis(char * const * manpath)
 				 * commonly, this is arch-specific subdirectory.
 				 */
 				if (fe->fts_level >= 3) {
-					int sl = fe->fts_level - 1;
-					const char *s, *lsl=NULL;
+					int		sl;
+					const char	*s, *lsl;
 
-					s = &fe->fts_path[fe->fts_pathlen-1];
-					for(; sl > 0; sl--) {
+					lsl = NULL;
+					s = &fe->fts_path[fe->fts_pathlen - 1];
+					for(sl = fe->fts_level - 1; sl > 0;
+					    sl--) {
 						s--;
-						while(s[0] != '/') s--;
-						if (!lsl)
+						while (s[0] != '/')
+							s--;
+						if (lsl == NULL)
 							lsl = s;
 					}
 					
@@ -315,10 +329,10 @@ makewhatis(char * const * manpath)
 	return EXIT_SUCCESS;
 }
 
-char *
+static char *
 findwhitespace(char *str)
 {
-	while (!isspace((unsigned char)*str))
+	while (!ISSPACE(*str))
 		if (*str++ == '\0') {
 			str = NULL;
 			break;
@@ -327,13 +341,13 @@ findwhitespace(char *str)
 	return str;
 }
 
-char
+static char
 *strmove(char *dest,char *src)
 {
 	return memmove(dest, src, strlen(src) + 1);
 }
 
-char *
+static char *
 GetS(gzFile in, char *buffer, size_t length)
 {
 	char	*ptr;
@@ -344,7 +358,7 @@ GetS(gzFile in, char *buffer, size_t length)
 	return ptr;
 }
 
-char *
+static char *
 makesection(int s)
 {
 	char sectionbuffer[24];
@@ -355,7 +369,7 @@ makesection(int s)
 	return estrdup(sectionbuffer);
 }
 
-int
+static int
 pathnamesection(const char *pat, const char *name)
 {
 	char *ptr, *ext;
@@ -372,7 +386,7 @@ pathnamesection(const char *pat, const char *name)
 }
 
 
-int
+static int
 manpagesection(char *name)
 {
 	char	*ptr;
@@ -396,7 +410,7 @@ manpagesection(char *name)
 	return -1;
 }
 
-char *
+static char *
 createsectionstring(char *section_id)
 {
 	char *section;
@@ -406,7 +420,7 @@ createsectionstring(char *section_id)
 	return section;
 }
 
-void
+static void
 addmanpage(manpage **tree,ino_t inode,char *name, size_t sdoff, size_t sdlen)
 {
 	manpage *mp;
@@ -427,20 +441,20 @@ addmanpage(manpage **tree,ino_t inode,char *name, size_t sdoff, size_t sdlen)
 	*tree = mp;
 }
 
-void
+static void
 addwhatis(whatis **tree, char *data, char *prefix)
 {
 	whatis *wi;
 	int result;
 
-	while (isspace((unsigned char)*data))
+	while (ISSPACE(*data))
 		data++;
 
 	if (*data == '/') {
 		char *ptr;
 
 		ptr = ++data;
-		while ((*ptr != '\0') && !isspace((unsigned char)*ptr))
+		while ((*ptr != '\0') && !ISSPACE(*ptr))
 			if (*ptr++ == '/')
 				data = ptr;
 	}
@@ -463,17 +477,17 @@ addwhatis(whatis **tree, char *data, char *prefix)
 	*tree = wi;
 }
 
-void
+static void
 catpreprocess(char *from)
 {
 	char	*to;
 
 	to = from;
-	while (isspace((unsigned char)*from)) from++;
+	while (ISSPACE(*from)) from++;
 
 	while (*from != '\0')
-		if (isspace((unsigned char)*from)) {
-			while (isspace((unsigned char)*++from));
+		if (ISSPACE(*from)) {
+			while (ISSPACE(*++from));
 			if (*from != '\0')
 				*to++ = ' ';
 		}
@@ -485,7 +499,7 @@ catpreprocess(char *from)
 	*to = '\0';
 }
 
-char *
+static char *
 makewhatisline(const char *file, const char *line, const char *section)
 {
 	static const char *del[] = {
@@ -529,7 +543,7 @@ makewhatisline(const char *file, const char *line, const char *section)
 	return result;
 }
 
-char *
+static char *
 parsecatpage(const char *name, gzFile *in)
 {
 	char	 buffer[8192];
@@ -583,7 +597,7 @@ parsecatpage(const char *name, gzFile *in)
 			return ptr;
 		}
 		if ((length > 1) && (ptr[length - 1] == '-') &&
-		    isalpha((unsigned char)ptr[length - 2]))
+		    ISALPHA(ptr[length - 2]))
 			last = &ptr[--length];
 		else {
 			last = &ptr[length++];
@@ -599,23 +613,23 @@ parsecatpage(const char *name, gzFile *in)
 	return NULL;
 }
 
-int
+static int
 manpreprocess(char *line)
 {
 	char	*from, *to;
 
 	to = from = line;
-	while (isspace((unsigned char)*from)) from++;
+	while (ISSPACE(*from))
+		from++;
 	if (strncmp(from, ".\\\"", 3) == 0)
 		return 1;
 
 	while (*from != '\0')
-		if (isspace((unsigned char)*from)) {
-			while (isspace((unsigned char)*++from));
+		if (ISSPACE(*from)) {
+			while (ISSPACE(*++from));
 			if ((*from != '\0') && (*from != ','))
 				*to++ = ' ';
-		}
-		else if (*from == '\\')
+		} else if (*from == '\\') {
 			switch (*++from) {
 			case '\0':
 			case '-':
@@ -625,17 +639,18 @@ manpreprocess(char *line)
 				from++;
 				if ((*from=='+') || (*from=='-'))
 					from++;
-				while (isdigit((unsigned char)*from))
+				while (ISDIGIT(*from))
 					from++;
 				break;
 			default:
 				from++;
 			}
-		else
+		} else {
 			if (*from == '"')
 				from++;
 			else
 				*to++ = *from++;
+		}
 
 	*to = '\0';
 
@@ -643,7 +658,7 @@ manpreprocess(char *line)
 		char	*sect;
 
 		from = line + 3;
-		if (isspace((unsigned char)*from))
+		if (ISSPACE(*from))
 			from++;
 
 		if ((sect = findwhitespace(from)) != NULL) {
@@ -673,7 +688,7 @@ manpreprocess(char *line)
 	return 0;
 }
 
-char *
+static char *
 nroff(const char *inname, gzFile *in)
 {
 	char tempname[MAXPATHLEN], buffer[65536], *data;
@@ -772,7 +787,7 @@ nroff(const char *inname, gzFile *in)
 	return data;
 }
 
-char *
+static char *
 parsemanpage(const char *name, gzFile *in, int defaultsection)
 {
 	char	*section, buffer[8192], *ptr;
@@ -789,7 +804,7 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 			char	*end;
 
 			ptr = &buffer[3];
-			if (isspace((unsigned char)*ptr))
+			if (ISSPACE(*ptr))
 				ptr++;
 			if ((ptr = findwhitespace(ptr)) == NULL)
 				continue;
@@ -802,12 +817,12 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 		}
 		else if (strncasecmp(buffer, ".TH", 3) == 0) {
 			ptr = &buffer[3];
-			while (isspace((unsigned char)*ptr))
+			while (ISSPACE(*ptr))
 				ptr++;
 			if ((ptr = findwhitespace(ptr)) != NULL) {
 				char *next;
 
-				while (isspace((unsigned char)*ptr))
+				while (ISSPACE(*ptr))
 					ptr++;
 				if ((next = findwhitespace(ptr)) != NULL)
 					*next = '\0';
@@ -832,12 +847,12 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 		size_t	length, offset;
 
 		ptr = &buffer[3];
-		while (isspace((unsigned char)*ptr))
+		while (ISSPACE(*ptr))
 			ptr++;
 
 		length = strlen(ptr);
 		if ((length > 1) && (ptr[length - 1] == ',') &&
-		    isspace((unsigned char)ptr[length - 2])) {
+		    ISSPACE(ptr[length - 2])) {
 			ptr[--length] = '\0';
 			ptr[length - 1] = ',';
 		}
@@ -860,13 +875,13 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 			if (strncasecmp(ptr, ".Nm", 3) != 0) break;
 
 			ptr += 3;
-			if (isspace((unsigned char)*ptr))
+			if (ISSPACE(*ptr))
 				ptr++;
 
 			buffer[length++] = ' ';
 			more = strlen(ptr);
 			if ((more > 1) && (ptr[more - 1] == ',') &&
-			    isspace((unsigned char)ptr[more - 2])) {
+			    ISSPACE(ptr[more - 2])) {
 				ptr[--more] = '\0';
 				ptr[more - 1] = ',';
 			}
@@ -888,14 +903,15 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 				if (*ptr == '.') {
 					char	*space;
 
-					if (strncasecmp(ptr, ".Nd", 3) != 0) {
+					if (strncasecmp(ptr, ".Nd", 3) != 0 ||
+					    strchr(ptr, '[') != NULL) {
 						free(section);
 						return NULL;
 					}
 					space = findwhitespace(ptr);
-					if (space == NULL)
+					if (space == NULL) {
 						ptr = "";
-					else {
+					} else {
 						space++;
 						(void) strmove(ptr, space);
 					}
@@ -964,7 +980,7 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 			buffer[offset - 1] = ' ';
 			more = strlen(ptr);
 			if ((more > 1) && (ptr[more - 1] == ',') &&
-			    isspace((unsigned char)ptr[more - 2])) {
+			    ISSPACE(ptr[more - 2])) {
 				ptr[more - 1] = '\0';
 				ptr[more - 2] = ',';
 			}
@@ -981,7 +997,7 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 	return ptr;
 }
 
-char *
+static char *
 getwhatisdata(char *name)
 {
 	gzFile	*in;
@@ -1008,7 +1024,7 @@ getwhatisdata(char *name)
 	return data;
 }
 
-void
+static void
 processmanpages(manpage **source, whatis **dest)
 {
 	manpage *mp;
@@ -1041,7 +1057,7 @@ processmanpages(manpage **source, whatis **dest)
 	}
 }
 
-void
+static void
 dumpwhatis(FILE *out, whatis *tree)
 {
 	while (tree != NULL) {
@@ -1057,7 +1073,7 @@ dumpwhatis(FILE *out, whatis *tree)
 	}
 }
 
-void *
+static void *
 emalloc(size_t len)
 {
 	void *ptr;
@@ -1066,7 +1082,7 @@ emalloc(size_t len)
 	return ptr;
 }
 
-char *
+static char *
 estrdup(const char *str)
 {
 	char *ptr;
