@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.3 2004/03/26 22:15:03 drochner Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigreturn.S,v 1.3 2004/03/26 22:15:03 drochner Exp $")
+	RCSID("$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/15 21:39:16 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -45,7 +45,4 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 
-WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn()")
-
-PSEUDO(sigreturn,compat_13_sigreturn13)
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

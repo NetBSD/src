@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,55 +31,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
+ *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $")
+	RCSID("$NetBSD: compat_sigreturn.S,v 1.1 2005/09/15 21:39:16 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigprocmask, \
-    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
 
-ENTRY(sigprocmask)
-	mov	r5, r2			/* fetch new sigset pointer */
-	tst	r2, r2			/* check new sigset pointer */
-	bf	1f			/* if not null, indirect */
-	mov	#1, r4			/* SIG_BLOCK */
-	bra	2f
-	nop
-1:	mov.l	@r2, r2			/* fetch indirect ... */
-	mov	r2, r5			/* to new mask arg */
-2:	mov.l	LSYS_sigprocmask13, r0
-	trapa	#0x80
-	bf	err
-	mov	r6, r2			/* fetch old mask requested */
-	tst	r2, r2			/* test if old mask requested */
-	bt	out
-	mov.l	r0, @r2			/* store old mask */
-out:
-	xor	r0, r0
-	rts
-	nop
-err:
-	mov.l	Lcerror, r1
-#ifdef PIC
-	braf	r1
-#else
-	jmp	@r1
-#endif
-	nop
-3:	
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn()")
 
-	.align	2
-LSYS_sigprocmask13:
-	.long	SYS_compat_13_sigprocmask13
-Lcerror:
-#ifdef PIC
-	.long	cerror-3b
-#else
-	.long	cerror
-#endif
+PSEUDO(sigreturn,compat_13_sigreturn13)
