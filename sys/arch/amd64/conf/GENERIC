@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.6 2005/09/15 23:31:57 snj Exp $
+# $NetBSD: GENERIC,v 1.42.2.7 2005/09/15 23:33:43 snj Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.6 $"
+#ident 		"GENERIC-$Revision: 1.42.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -496,6 +496,7 @@ fd*	at fdc? drive ?			# the drives themselves
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -526,6 +527,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # PCMCIA network interfaces
 #an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
