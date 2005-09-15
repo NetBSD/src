@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.73 2005/08/28 10:17:50 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.74 2005/09/15 09:11:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.73 2005/08/28 10:17:50 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.74 2005/09/15 09:11:30 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -200,7 +200,7 @@ static	ssize_t	read_retry(int, void *, size_t);
 #else
 static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	prepend_gzip(char *, int *, char ***);
-static	void	handle_dir(char *, struct stat *);
+static	void	handle_dir(char *);
 static	void	print_verbage(const char *, const char *, off_t, off_t);
 static	void	print_test(const char *, int);
 static	void	copymodes(const char *, struct stat *);
@@ -549,7 +549,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	z.avail_out = BUFLEN - i;
 
 	error = deflateInit2(&z, numflag, Z_DEFLATED,
-			     -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+			     (-MAX_WBITS), 8, Z_DEFAULT_STRATEGY);
 	if (error != Z_OK) {
 		maybe_warnx("deflateInit2 failed");
 		in_tot = -1;
@@ -1489,7 +1489,6 @@ static off_t
 cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 {
 	char buf[BUFLEN];
-	size_t rv;
 	off_t in_tot;
 
 	in_tot = count;
@@ -1498,6 +1497,8 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 		return -1;
 	}
 	for (;;) {
+		ssize_t rv;
+
 		rv = read(fd, buf, sizeof buf);
 		if (rv == 0)
 			break;
@@ -1683,7 +1684,7 @@ retry:
 	if (S_ISDIR(sb.st_mode)) {
 #ifndef SMALL
 		if (rflag)
-			handle_dir(path, &sb);
+			handle_dir(path);
 		else
 #endif
 			maybe_warnx("%s is a directory", path);
@@ -1730,7 +1731,7 @@ handle_file(char *file, struct stat *sbp)
 #ifndef SMALL
 /* this is used with -r to recursively descend directories */
 static void
-handle_dir(char *dir, struct stat *sbp)
+handle_dir(char *dir)
 {
 	char *path_argv[2];
 	FTS *fts;
