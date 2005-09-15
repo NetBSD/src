@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.72 2004/05/27 18:40:07 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.73 2005/09/15 23:33:41 tsarna Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.72 2004/05/27 18:40:07 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.73 2005/09/15 23:33:41 tsarna Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -234,6 +234,7 @@ static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 
 static struct addrinfo *getanswer(const querybuf *, int, const char *, int,
 	const struct addrinfo *);
+static void aisort(struct addrinfo *s, res_state res);
 static int _dns_getaddrinfo(void *, void *, va_list);
 static void _sethtent(FILE **);
 static void _endhtent(FILE **);
@@ -246,7 +247,7 @@ static int _yp_getaddrinfo(void *, void *, va_list);
 #endif
 
 static int res_queryN(const char *, struct res_target *, res_state);
-static int res_searchN(const char *, struct res_target *);
+static int res_searchN(const char *, struct res_target *, res_state);
 static int res_querydomainN(const char *, const char *,
 	struct res_target *, res_state);
 
@@ -1241,6 +1242,37 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	return NULL;
 }
 
+#define SORTEDADDR(p)	(((struct sockaddr_in *)(void *)(p->ai_next->ai_addr))->sin_addr.s_addr)
+#define SORTMATCH(p, s) ((SORTEDADDR(p) & (s).mask) == (s).addr.s_addr)
+
+static void
+aisort(struct addrinfo *s, res_state res)
+{
+	struct addrinfo head, *t, *p;
+	int i;
+
+	head.ai_next = NULL;
+	t = &head;
+
+	for (i = 0; i < res->nsort; i++) {
+		p = s;
+		while (p->ai_next) {
+			if ((p->ai_next->ai_family != AF_INET)
+			|| SORTMATCH(p, res->sort_list[i])) {
+				t->ai_next = p->ai_next;
+				t = t->ai_next;
+				p->ai_next = p->ai_next->ai_next;
+			} else {
+				p = p->ai_next;
+			}
+		}
+	}
+
+	/* add rest of list and reset s to the new list*/
+	t->ai_next = s->ai_next;
+	s->ai_next = head.ai_next;
+}
+
 /*ARGSUSED*/
 static int
 _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
@@ -1251,6 +1283,7 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 	const struct addrinfo *pai;
 	struct addrinfo sentinel, *cur;
 	struct res_target q, q2;
+	res_state res;
 
 	name = va_arg(ap, char *);
 	pai = va_arg(ap, const struct addrinfo *);
@@ -1306,7 +1339,16 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 		free(buf2);
 		return NS_UNAVAIL;
 	}
-	if (res_searchN(name, &q) < 0) {
+
+	res = __res_get_state();
+	if (res == NULL) {
+		free(buf);
+		free(buf2);
+		return NS_NOTFOUND;
+	}
+
+	if (res_searchN(name, &q, res) < 0) {
+		__res_put_state(res);
 		free(buf);
 		free(buf2);
 		return NS_NOTFOUND;
@@ -1324,7 +1366,8 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 	}
 	free(buf);
 	free(buf2);
-	if (sentinel.ai_next == NULL)
+	if (sentinel.ai_next == NULL) {
+		__res_put_state(res);
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
 			return NS_NOTFOUND;
@@ -1333,6 +1376,13 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 		default:
 			return NS_UNAVAIL;
 		}
+	}
+
+	if (res->nsort)
+		aisort(&sentinel, res);
+
+	__res_put_state(res);
+
 	*((struct addrinfo **)rv) = sentinel.ai_next;
 	return NS_SUCCESS;
 }
@@ -1712,17 +1762,13 @@ res_queryN(const char *name, /* domain name */ struct res_target *target,
  * is detected.  Error code, if any, is left in h_errno.
  */
 static int
-res_searchN(const char *name,	/* domain name */ struct res_target *target)
+res_searchN(const char *name, struct res_target *target, res_state res)
 {
 	const char *cp, * const *domain;
 	HEADER *hp;
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
-	res_state res = __res_get_state();
-
-	if (res == NULL)
-		return -1;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(target != NULL);
@@ -1743,7 +1789,6 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 	 */
 	if (!dots && (cp = __hostalias(name)) != NULL) {
 		ret = res_queryN(cp, target, res);
-		__res_put_state(res);
 		return ret;
 	}
 
@@ -1754,10 +1799,8 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 	saved_herrno = -1;
 	if (dots >= res->ndots) {
 		ret = res_querydomainN(name, NULL, target, res);
-		if (ret > 0) {
-			__res_put_state(res);
+		if (ret > 0)
 			return (ret);
-		}
 		saved_herrno = h_errno;
 		tried_as_is++;
 	}
@@ -1777,10 +1820,8 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 		   domain++) {
 
 			ret = res_querydomainN(name, *domain, target, res);
-			if (ret > 0) {
-				__res_put_state(res);
+			if (ret > 0)
 				return ret;
-			}
 
 			/*
 			 * If no server present, give up.
@@ -1797,7 +1838,6 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 			 */
 			if (errno == ECONNREFUSED) {
 				h_errno = TRY_AGAIN;
-				__res_put_state(res);
 				return -1;
 			}
 
@@ -1835,13 +1875,10 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 	 */
 	if (!tried_as_is) {
 		ret = res_querydomainN(name, NULL, target, res);
-		if (ret > 0) {
-			__res_put_state(res);
+		if (ret > 0)
 			return ret;
-		}
 	}
 
-	__res_put_state(res);
 	/*
 	 * if we got here, we didn't satisfy the search.
 	 * if we did an initial full query, return that query's h_errno
@@ -1864,7 +1901,7 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
  * removing a trailing dot from name if domain is NULL.
  */
 static int
-res_querydomainN(const char *name, const char *domain, 
+res_querydomainN(const char *name, const char *domain,
     struct res_target *target, res_state res)
 {
 	char nbuf[MAXDNAME];
