@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2.2.6 2005/09/04 13:43:59 tron Exp $
+# $NetBSD: postinstall,v 1.2.2.7 2005/09/15 20:59:17 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # postinstall
-#	check for or fix configuration changes that occur
+#	Check for or fix configuration changes that occur
 #	over time as NetBSD evolves.
 #
 
@@ -75,8 +75,25 @@ msg()
 	echo "	$@"
 }
 
+mkdtemp()
+{
+	# Make sure we don't loop forever if mkdir will always fail.
+	[ -d /tmp ] || err 1 /tmp is not a directory
+	[ -w /tmp ] || err 1 /tmp is not writable
+
+	_base=/tmp/_postinstall.$$
+	_serial=0
+
+	while true; do
+		_dir=${_base}.${_serial}
+		mkdir -m 0700 ${_dir} && break
+		_serial=$((${_serial} + 1))
+	done
+	echo ${_dir}
+}
+
 # additem item description
-#	add item to list of supported items to check/fix
+#	Add item to list of supported items to check/fix.
 #
 additem()
 {
@@ -86,8 +103,8 @@ additem()
 }
 
 # checkdir op dir mode
-#	ensure dir exists, and if not, create it with the appropriate mode.
-#	returns 0 if ok, 1 otherwise.
+#	Ensure dir exists, and if not, create it with the appropriate mode.
+#	Returns 0 if ok, 1 otherwise.
 #
 check_dir()
 {
@@ -109,8 +126,8 @@ check_dir()
 }
 
 # check_ids op type file id [...]
-#	check if file of type "users" or "groups" contains the relevant ids
-#	returns 0 if ok, 1 otherwise.
+#	Check if file of type "users" or "groups" contains the relevant IDs
+#	Returns 0 if ok, 1 otherwise.
 #	
 check_ids()
 {
@@ -158,7 +175,7 @@ check_ids()
 
 # populate_dir op onlynew src dest mode file [file ...]
 #	Perform op ("check" or "fix") on files in src/ against dest/
-#	If op = "check" display missing or changed files, optionally with diffs
+#	If op = "check" display missing or changed files, optionally with diffs.
 #	If op != "check" copies any missing or changed files.
 #	If onlynew evaluates to true, changed files are ignored.
 #	Returns 0 if ok, 1 otherwise.
@@ -217,7 +234,7 @@ populate_dir()
 
 # compare_dir op src dest mode file [file ...]
 #	Perform op ("check" or "fix") on files in src/ against dest/
-#	If op = "check" display missing or changed files, optionally with diffs
+#	If op = "check" display missing or changed files, optionally with diffs.
 #	If op != "check" copies any missing or changed files.
 #	Returns 0 if ok, 1 otherwise.
 #
@@ -235,8 +252,8 @@ compare_dir()
 }
 
 # move_file op src dest --
-#	check (op == "check") or move (op != "check") from src to dest.
-#	returns 0 if ok, 1 otherwise.
+#	Check (op == "check") or move (op != "check") from src to dest.
+#	Returns 0 if ok, 1 otherwise.
 #
 move_file()
 {
@@ -260,10 +277,10 @@ move_file()
 }
 
 # rcconf_is_set op name var [verbose] --
-#	load the rcconf for name, and check if obsolete rc.conf(5) variable
+#	Load the rcconf for name, and check if obsolete rc.conf(5) variable
 #	var is defined or not.
-#	returns 0 if defined (even to ""), otherwise 1.
-#	if verbose != "", print an obsolete warning if the var is defined.
+#	Returns 0 if defined (even to ""), otherwise 1.
+#	If verbose != "", print an obsolete warning if the var is defined.
 #
 rcconf_is_set()
 {
@@ -297,10 +314,10 @@ rcconf_is_set()
 }
 
 # find_file_in_dirlist() file message dir1 [...] --
-#	find which directory file is in, and sets ${dir} to match
-#	returns 0 if matched, otherwise 1 (and sets ${dir} to "").
+#	Find which directory file is in, and sets ${dir} to match.
+#	Returns 0 if matched, otherwise 1 (and sets ${dir} to "").
 #
-#	generally, check the directory for the "checking from source" case,
+#	Generally, check the directory for the "checking from source" case,
 #	and then the directory for the "checking from extracted etc.tgz" case.
 #
 find_file_in_dirlist()
@@ -325,9 +342,9 @@ find_file_in_dirlist()
 }
 
 # stat op format target value
-#	call stat on the given target according to the given format, if
-#	stat(1) is available (it is presumed to live in /usr/bin).  if
-#	it is not available, this routine will always succeed, otherwise
+#	Call stat(1) on the given target according to the given format,
+#	if stat(1) is available (it is presumed to live in /usr/bin).
+#	If it is not available, this routine will always succeed, otherwise
 #	it returns 0 or 1, depending on whether or not the output from
 #	stat(1) matches the expected value.
 #
@@ -349,8 +366,8 @@ stat()
 }
 
 # obsolete_paths op
-#	obsolete the list of paths provided on stdin.
-#	each path is relative to ${DEST_DIR}, and should
+#	Obsolete the list of paths provided on stdin.
+#	Each path is relative to ${DEST_DIR}, and should
 #	be an absolute path or start with `./'.
 #
 obsolete_paths()
@@ -385,10 +402,10 @@ obsolete_paths()
 }
 
 # obsolete_libs dir
-#	display the minor/teeny shared libraries in dir that are considered
+#	Display the minor/teeny shared libraries in dir that are considered
 #	to be obsolete.
 #
-#	the implementation supports removing obsolete major libraries
+#	The implementation supports removing obsolete major libraries
 #	if the awk variable AllLibs is set, although there is no way to
 #	enable that in the enclosing shell function as this time.
 #
@@ -450,7 +467,7 @@ function checklib(results, line, regex) {
 }
 
 # modify_file op srcfile scratchfile awkprog
-#	apply awkprog to srcfile sending output to scratchfile, and
+#	Apply awkprog to srcfile sending output to scratchfile, and
 #	if appropriate replace srcfile with scratchfile.
 #
 modify_file()
@@ -508,6 +525,60 @@ do_defaults()
 }
 
 #
+#	gid
+#
+additem gid "required groups in /etc/group"
+do_gid()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
+
+	check_ids $1 groups "${DEST_DIR}/etc/group" \
+	    named ntpd sshd smmsp authpf _pflogd
+}
+
+#
+#	hosts
+#
+additem hosts "/etc/hosts being up to date"
+do_hosts()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_hosts  fix|check"
+
+	modify_file "$1" ${DEST_DIR}/etc/hosts ${SCRATCHDIR}/hosts '
+		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
+			print $0, "localhost."
+			next
+		}
+		{ print }
+	'
+	return $?
+}
+
+#
+#	makedev
+#
+additem makedev "/dev/MAKEDEV being up to date"
+do_makedev()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
+
+	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
+			# generate MAKEDEV from source if source is available
+		env MACHINE=${MACHINE} \
+		    MACHINE_ARCH=${MACHINE_ARCH} \
+		    NETBSDSRCDIR="${SRC_DIR}" \
+		    awk -f ${SRC_DIR}/etc/MAKEDEV.awk \
+		    ${SRC_DIR}/etc/MAKEDEV.tmpl > ${SCRATCHDIR}/MAKEDEV
+	fi
+
+	find_file_in_dirlist MAKEDEV "MAKEDEV" \
+	    ${SCRATCHDIR} ${SRC_DIR}/dev \
+	    || return 1
+
+	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
+}
+
+#
 #	mtree
 #
 additem mtree "/etc/mtree/ being up to date"
@@ -520,29 +591,24 @@ do_mtree()
 }
 
 #
-#	gid
+#	pam
 #
-additem gid "required GIDs"
-do_gid()
+# disabled for now
+additem pam "/etc/pam.d is populated"
+do_pam()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
+	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
+	op=$1
+	failed=0
 
-	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd sshd smmsp authpf _pflogd
+	populate_dir ${op} true ${SRC_DIR}/etc/pam.d ${DEST_DIR}/etc/pam.d 644 \
+		README display_manager ftpd gdm imap kde login other passwd \
+		pop3 ppp rexecd rsh sshd su system telnetd xdm xserver
+
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
-
-#
-#	uid
-#
-additem uid "required UIDs"
-do_uid()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
-
-	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd sshd smmsp _pflogd
-}
-
 
 #
 #	periodic
@@ -554,6 +620,30 @@ do_periodic()
 
 	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 644 \
 		daily weekly monthly security
+}
+
+#
+#	postfix
+#
+additem postfix "/etc/postfix/ being up to date"
+do_postfix()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
+	op=$1
+	failed=0
+
+	find_file_in_dirlist postfix-script "postfix scripts" \
+	    ${SRC_DIR}/gnu/dist/postfix/conf \
+	    ${DEST_DIR}/usr/share/examples/postfix \
+	    || return 1
+
+	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 555 postfix-script
+	failed=$(( ${failed} + $? ))
+	compare_dir ${op} ${dir} \
+	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
@@ -609,272 +699,6 @@ do_rc()
 		fi
 		shift 2
 	done
-
-	return ${failed}
-}
-
-#
-#	pam
-#
-# disabled for now
-additem pam "/etc/pam.d is populated"
-do_pam()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
-	op=$1
-	failed=0
-
-	populate_dir ${op} true ${SRC_DIR}/etc/pam.d ${DEST_DIR}/etc/pam.d 644 \
-		README display_manager ftpd gdm imap kde login other passwd \
-		pop3 ppp rexecd rsh sshd su system telnetd xdm xserver
-
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
-#
-#	ssh
-#
-additem ssh "ssh configuration update"
-do_ssh()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
-	op=$1
-
-	failed=0
-	_etcssh=${DEST_DIR}/etc/ssh
-	if ! check_dir ${op} ${_etcssh} 755; then
-		failed=1
-	fi
-
-	if [ ${failed} -eq 0 ]; then
-		for f in \
-			    ssh_known_hosts ssh_known_hosts2 \
-			    ssh_host_dsa_key ssh_host_dsa_key.pub \
-			    ssh_host_rsa_key ssh_host_rsa_key.pub \
-			    ssh_host_key ssh_host_key.pub \
-		    ; do
-			if ! move_file ${op} \
-			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f} ;
-			then
-				failed=1
-			fi
-		done
-		for f in sshd.conf ssh.conf ; do
-				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
-				#
-			if ! move_file ${op} \
-			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
-			then
-				failed=1
-			fi
-				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
-				#
-			if ! move_file ${op} \
-			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f%.conf}_config ;
-			then
-				failed=1
-			fi
-		done
-	fi
-
-	sshdconf=""
-	for f in \
-	    ${_etcssh}/sshd_config \
-	    ${_etcssh}/sshd.conf \
-	    ${DEST_DIR}/etc/sshd.conf ; do
-		if [ -f "${f}" ]; then
-			sshdconf=${f}
-			break
-		fi
-	done
-	if [ -n "${sshdconf}" ]; then
-		modify_file ${op} "${sshdconf}" "${SCRATCHDIR}/sshdconf" '
-			/^[^#$]/ {
-				kw = tolower($1)
-				if (kw == "hostkey" &&
-				    $2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ ) {
-					sub(/\/etc\/+/, "/etc/ssh/")
-				}
-				if (kw == "rhostsauthentication" ||
-				    kw == "verifyreversemapping" ||
-				    kw == "reversemappingcheck") {
-					sub(/^/, "# DEPRECATED:\t")
-				}
-			}
-			{ print }
-		'
-		failed=$(( ${failed} + $? ))
-	fi
-
-	if ! find_file_in_dirlist moduli "moduli" \
-	    ${SRC_DIR}/crypto/dist/ssh ${SRC_DIR}/etc ; then
-		failed=1
-	elif ! compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 moduli; then
-		failed=1
-	fi
-
-	if ! check_dir "${op}" "${DEST_DIR}/var/chroot/sshd" 755 ; then
-		failed=1
-	fi
-
-	if rcconf_is_set ${op} sshd sshd_conf_dir 1; then
-		failed=1
-	fi
-
-	return ${failed}
-}
-
-#
-#	X11
-#
-additem x11 "x11 configuration update"
-do_x11()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_x11  fix|check"
-	op=$1
-
-	failed=0
-	_etcx11=${DEST_DIR}/etc/X11
-	if [ ! -d "${_etcx11}" ]; then
-		msg "${_etcx11} is not a directory; skipping check"
-		return 1
-	fi
-	_libx11=${DEST_DIR}/usr/X11R6/lib/X11
-	if [ ! -d "${_libx11}" ]; then
-		msg "${_libx11} is not a directory; skipping check"
-		return 1
-	fi
-
-	_notfixed=""
-	if [ "${op}" = "fix" ]; then
-		_notfixed=${NOT_FIXED}
-	fi
-
-	for d in \
-		    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
-	    ; do
-		sd=${_libx11}/${d}
-		ld=/etc/X11/${d}
-		td=${DEST_DIR}${ld}
-		if [ -h ${sd} ]; then
-			continue
-		elif [ -d ${sd} ]; then
-			tdfiles=$(find ${td} \! -type d)
-			if [ -n "${tdfiles}" ]; then
-				msg "${sd} exists yet ${td} already" \
-				    "contains files${_notfixed}"
-			else
-				msg "Migrate ${sd} to ${td}${_notfixed}"
-			fi
-			failed=1
-		elif [ -e ${sd} ]; then
-			msg "Unexpected file ${sd}${_notfixed}"
-			continue
-		else
-			continue
-		fi
-	done
-
-	return ${failed}
-}
-
-#
-#	wscons
-#
-additem wscons "wscons configuration file update"
-do_wscons()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_wscons  fix|check"
-	op=$1
-
-	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
-
-	failed=0
-	notfixed=""
-	if [ "${op}" = "fix" ]; then
-		notfixed=${NOT_FIXED}
-	fi
-	while read _type _arg1 _rest; do
-		if [ "${_type}" = "mux" -a "${_arg1}" = "1" ]; then
-			msg \
-    "Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found.${notfixed}"
-			failed=1
-		fi
-	done < ${DEST_DIR}/etc/wscons.conf
-
-	return ${failed}
-}
-
-#
-#	makedev
-#
-additem makedev "/dev/MAKEDEV being up to date"
-do_makedev()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
-
-	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
-			# generate MAKEDEV from source if source is available
-		env MACHINE=${MACHINE} \
-		    MACHINE_ARCH=${MACHINE_ARCH} \
-		    NETBSDSRCDIR="${SRC_DIR}" \
-		    awk -f ${SRC_DIR}/etc/MAKEDEV.awk \
-		    ${SRC_DIR}/etc/MAKEDEV.tmpl > ${SCRATCHDIR}/MAKEDEV
-	fi
-
-	find_file_in_dirlist MAKEDEV "MAKEDEV" \
-	    ${SCRATCHDIR} ${SRC_DIR}/dev \
-	    || return 1
-
-	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
-}
-
-#
-#	postfix
-#
-additem postfix "/etc/postfix/ being up to date"
-do_postfix()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
-	op=$1
-	failed=0
-
-	find_file_in_dirlist postfix-script "postfix scripts" \
-	    ${SRC_DIR}/gnu/dist/postfix/conf \
-	    ${DEST_DIR}/usr/share/examples/postfix \
-	    || return 1
-
-	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 555 postfix-script
-	failed=$(( ${failed} + $? ))
-	compare_dir ${op} ${dir} \
-	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
-#
-#	obsolete
-#
-additem obsolete "obsolete file sets and minor libraries"
-do_obsolete()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
-	op=$1
-	failed=0
-
-	sort -ru ${DEST_DIR}/var/db/obsolete/* | obsolete_paths ${op}
-	failed=$(( ${failed} + $? ))
-
-	(
-		obsolete_libs /lib
-		obsolete_libs /usr/lib
-		obsolete_libs /usr/lib/i18n
-		obsolete_libs /usr/X11R6/lib
-	) | obsolete_paths ${op}
-	failed=$(( ${failed} + $? ))
 
 	return ${failed}
 }
@@ -1057,21 +881,215 @@ do_sendmail()
 }
 
 #
-#	hosts
+#	ssh
 #
-additem hosts "/etc/hosts being up to date"
-do_hosts()
+additem ssh "ssh configuration update"
+do_ssh()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_hosts  fix|check"
+	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
+	op=$1
 
-	modify_file "$1" ${DEST_DIR}/etc/hosts ${SCRATCHDIR}/hosts '
-		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
-			print $0, "localhost."
-			next
-		}
-		{ print }
-	'
-	return $?
+	failed=0
+	_etcssh=${DEST_DIR}/etc/ssh
+	if ! check_dir ${op} ${_etcssh} 755; then
+		failed=1
+	fi
+
+	if [ ${failed} -eq 0 ]; then
+		for f in \
+			    ssh_known_hosts ssh_known_hosts2 \
+			    ssh_host_dsa_key ssh_host_dsa_key.pub \
+			    ssh_host_rsa_key ssh_host_rsa_key.pub \
+			    ssh_host_key ssh_host_key.pub \
+		    ; do
+			if ! move_file ${op} \
+			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f} ;
+			then
+				failed=1
+			fi
+		done
+		for f in sshd.conf ssh.conf ; do
+				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
+				#
+			if ! move_file ${op} \
+			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
+			then
+				failed=1
+			fi
+				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
+				#
+			if ! move_file ${op} \
+			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f%.conf}_config ;
+			then
+				failed=1
+			fi
+		done
+	fi
+
+	sshdconf=""
+	for f in \
+	    ${_etcssh}/sshd_config \
+	    ${_etcssh}/sshd.conf \
+	    ${DEST_DIR}/etc/sshd.conf ; do
+		if [ -f "${f}" ]; then
+			sshdconf=${f}
+			break
+		fi
+	done
+	if [ -n "${sshdconf}" ]; then
+		modify_file ${op} "${sshdconf}" "${SCRATCHDIR}/sshdconf" '
+			/^[^#$]/ {
+				kw = tolower($1)
+				if (kw == "hostkey" &&
+				    $2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ ) {
+					sub(/\/etc\/+/, "/etc/ssh/")
+				}
+				if (kw == "rhostsauthentication" ||
+				    kw == "verifyreversemapping" ||
+				    kw == "reversemappingcheck") {
+					sub(/^/, "# DEPRECATED:\t")
+				}
+			}
+			{ print }
+		'
+		failed=$(( ${failed} + $? ))
+	fi
+
+	if ! find_file_in_dirlist moduli "moduli" \
+	    ${SRC_DIR}/crypto/dist/ssh ${SRC_DIR}/etc ; then
+		failed=1
+	elif ! compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 moduli; then
+		failed=1
+	fi
+
+	if ! check_dir "${op}" "${DEST_DIR}/var/chroot/sshd" 755 ; then
+		failed=1
+	fi
+
+	if rcconf_is_set ${op} sshd sshd_conf_dir 1; then
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+#
+#	wscons
+#
+additem wscons "wscons configuration file update"
+do_wscons()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_wscons  fix|check"
+	op=$1
+
+	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
+
+	failed=0
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed=${NOT_FIXED}
+	fi
+	while read _type _arg1 _rest; do
+		if [ "${_type}" = "mux" -a "${_arg1}" = "1" ]; then
+			msg \
+    "Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found.${notfixed}"
+			failed=1
+		fi
+	done < ${DEST_DIR}/etc/wscons.conf
+
+	return ${failed}
+}
+
+#
+#	X11
+#
+additem x11 "x11 configuration update"
+do_x11()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_x11  fix|check"
+	op=$1
+
+	failed=0
+	_etcx11=${DEST_DIR}/etc/X11
+	if [ ! -d "${_etcx11}" ]; then
+		msg "${_etcx11} is not a directory; skipping check"
+		return 1
+	fi
+	_libx11=${DEST_DIR}/usr/X11R6/lib/X11
+	if [ ! -d "${_libx11}" ]; then
+		msg "${_libx11} is not a directory; skipping check"
+		return 1
+	fi
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed=${NOT_FIXED}
+	fi
+
+	for d in \
+		    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
+	    ; do
+		sd=${_libx11}/${d}
+		ld=/etc/X11/${d}
+		td=${DEST_DIR}${ld}
+		if [ -h ${sd} ]; then
+			continue
+		elif [ -d ${sd} ]; then
+			tdfiles=$(find ${td} \! -type d)
+			if [ -n "${tdfiles}" ]; then
+				msg "${sd} exists yet ${td} already" \
+				    "contains files${_notfixed}"
+			else
+				msg "Migrate ${sd} to ${td}${_notfixed}"
+			fi
+			failed=1
+		elif [ -e ${sd} ]; then
+			msg "Unexpected file ${sd}${_notfixed}"
+			continue
+		else
+			continue
+		fi
+	done
+
+	return ${failed}
+}
+
+#
+#	uid
+#
+additem uid "required users in /etc/master.passwd"
+do_uid()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
+
+	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
+	    named ntpd sshd smmsp _pflogd
+}
+
+
+#
+#	obsolete
+#	(this item is last to allow other items to move obsolete files)
+#
+additem obsolete "remove obsolete file sets and minor libraries"
+do_obsolete()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
+	op=$1
+	failed=0
+
+	sort -ru ${DEST_DIR}/var/db/obsolete/* | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
+
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
+	) | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 
@@ -1278,23 +1296,6 @@ _Fix_me_
 		;;
 
 	esac
-}
-
-mkdtemp ()
-{
-	# Make sure we don't loop forever if mkdir will always fail.
-	[ -d /tmp ] || err 1 /tmp is not a directory
-	[ -w /tmp ] || err 1 /tmp is not writable
-
-	_base=/tmp/_postinstall.$$
-	_serial=0
-
-	while true; do
-		_dir=${_base}.${_serial}
-		mkdir -m 0700 ${_dir} && break
-		_serial=$((${_serial} + 1))
-	done
-	echo ${_dir}
 }
 
 # defaults
