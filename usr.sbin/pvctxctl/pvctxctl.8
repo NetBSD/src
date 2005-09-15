@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: pvctxctl.8,v 1.6 2005/09/11 23:43:27 wiz Exp $
+.\" $NetBSD: pvctxctl.8,v 1.7 2005/09/15 01:49:07 wiz Exp $
 .\"
 .Dd December 29, 1997
 .Dt PVCTXCTL 8
@@ -31,19 +31,16 @@
 .Nm pvctxctl
 .Nd display or control ATM PVC transmitter parameters
 .Sh SYNOPSIS
-.Nm pvctxctl
+.Nm
 .Ar interface
 .Op Oo vpi : Oc Ns Ar vci
-.Nm pvctxctl
+.Nm
 .Ar interface
 .Oo vpi : Oc Ns Ar vci
-.Op Fl p Ar pcr
-.Op Fl b Ar max-bandwidth
-.Oo
-.Fl j
-.Oo vpi : Oc Ns Ar vci
-.Oc
 .Op Fl n
+.Op Fl b Ar max-bandwidth
+.Op Fl j Oo vpi : Oc Ns Ar vci
+.Op Fl p Ar pcr
 .Sh DESCRIPTION
 .Nm
 displays or controls the shaper parameters of an ATM VC.
@@ -72,7 +69,7 @@ reserves one for non-shaping VCs.
 .Pp
 The options are as follows:
 .Bl -tag -width Fl
-.It Ar Interface
+.It Ar interface
 The
 .Ar interface
 parameter is a string of the form
@@ -86,16 +83,6 @@ assumed.
 For example, to assign a shaper to VPI=0 and
 VCI=201, the following forms can be used:
 "201", "0xc9", "0:201", "0:0xc9".
-.It Fl p Ar pcr
-The PCR (Peak Cell Rate) parameter specifies the peak cell rate in
-"cells per second".
-If PCR value "0" is specified,
-no shaper is assigned, which means cells are sent at
-full-speed of the link.
-If PCR value
-.Dq -1
-is specified, the corresponding VC
-is invalidated.
 .It Fl b Ar max-bandwidth
 The PCR parameter can be specified also in
 .Dq bits per second .
@@ -117,7 +104,7 @@ means
 .Dq 45Mbps
 or PCR value
 .Dq 117187 .
-.It [-j [vpi:]vci]
+.It Fl j Oo vpi : Oc Ns Ar vci
 The join parameter is intended for VP shaping.
 The VC shaper channel is shared with the existing VC,
 which means the sum of the cell rates never exceeds
@@ -133,6 +120,16 @@ For example, if two VCs (say 201 and 202) share a
 .It Fl n
 This parameter is only for a sub interface.
 Use NULL encapsulation instead of LLC/SNAP.
+.It Fl p Ar pcr
+The PCR (Peak Cell Rate) parameter specifies the peak cell rate in
+"cells per second".
+If PCR value "0" is specified,
+no shaper is assigned, which means cells are sent at
+full-speed of the link.
+If PCR value
+.Dq -1
+is specified, the corresponding VC
+is invalidated.
 .El
 .Sh SEE ALSO
 .Xr en 4 ,
