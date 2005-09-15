@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.22 2005/09/12 21:15:04 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.23 2005/09/15 19:56:50 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.22 2005/09/12 21:15:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.23 2005/09/15 19:56:50 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1106,7 +1106,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *buf,
 	case IWI_NOTIF_TYPE_SCAN_CHANNEL:
 		chan = (struct iwi_notif_scan_channel *)(notif + 1);
 
-		DPRINTFN(2, ("Scanning channel (%u)\n", chan->nchan));
+		DPRINTFN(2, ("Finished scanning channel (%u)\n", chan->nchan));
 		break;
 
 	case IWI_NOTIF_TYPE_SCAN_COMPLETE:
