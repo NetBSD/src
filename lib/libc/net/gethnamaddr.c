@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.66 2005/09/15 15:25:40 tsarna Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.67 2005/09/15 23:33:41 tsarna Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.66 2005/09/15 15:25:40 tsarna Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.67 2005/09/15 23:33:41 tsarna Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,7 +84,6 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.66 2005/09/15 15:25:40 tsarna Exp $");
 #endif
 
 #define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
-#define RESOLVSORT
 
 #include <nsswitch.h>
 #include <stdlib.h>
@@ -141,9 +140,7 @@ static struct hostent *getanswer(const querybuf *, int, const char *, int,
     res_state);
 static void map_v4v6_address(const char *, char *);
 static void map_v4v6_hostent(struct hostent *, char **, char *);
-#ifdef RESOLVSORT
 static void addrsort(char **, int, res_state);
-#endif
 
 void _sethtent(int);
 void _endhtent(void);
@@ -481,7 +478,6 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	if (haveanswer) {
 		*ap = NULL;
 		*hap = NULL;
-# if defined(RESOLVSORT)
 		/*
 		 * Note: we sort even if host can take only one address
 		 * in its return structures - should give it the "best"
@@ -489,7 +485,6 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		 */
 		if (res->nsort && haveanswer > 1 && qtype == T_A)
 			addrsort(h_addr_ptrs, haveanswer, res);
-# endif /*RESOLVSORT*/
 		if (!host.h_name) {
 			n = strlen(qname) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN)
@@ -1020,7 +1015,6 @@ map_v4v6_hostent(struct hostent *hp, char **bpp, char *ep)
 	}
 }
 
-#ifdef RESOLVSORT
 static void
 addrsort(char **ap, int num, res_state res)
 {
@@ -1063,7 +1057,6 @@ addrsort(char **ap, int num, res_state res)
 	    needsort++;
 	}
 }
-#endif
 
 struct hostent *
 gethostent(void)
