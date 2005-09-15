@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall.8,v 1.2.2.3 2005/04/20 11:25:32 tron Exp $
+.\"	$NetBSD: postinstall.8,v 1.2.2.4 2005/09/15 20:58:53 tron Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 18, 2005
+.Dd September 12, 2005
 .Dt POSTINSTALL 8
 .Os
 .Sh NAME
@@ -104,6 +104,9 @@ but also show the differences between the files.
 Apply fixes that
 .Cm check
 determines need to be applied.
+Not all items can be automatically fixed by
+.Nm ;
+in some cases manual intervention is required.
 .It Cm help
 Display a short help.
 .It Cm list
