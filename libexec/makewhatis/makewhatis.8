@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.9.6.1 2005/09/15 23:45:53 snj Exp $
+.\"	$NetBSD: makewhatis.8,v 1.9.6.2 2005/09/15 23:47:05 snj Exp $
 .\"
 .\" Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,19 +42,16 @@
 .Nd create a whatis.db database
 .Sh SYNOPSIS
 .Nm /usr/libexec/makewhatis
+.Op Fl fw
 .Op Fl C Ar file
-.Op Fl f
-.Op Fl w
 .Op Ar manpath ...
 .Sh DESCRIPTION
 .Nm
 strips the NAME lines from compiled or raw
 .Xr man 1
-pages and creates
-a whatis.db database
-for use in
+pages and creates a whatis.db database for use in
 .Xr apropos 1 ,
-.Xr whatis 1
+.Xr whatis 1 ,
 or with
 .Xr man 1 Ns 's
 .Fl k
@@ -82,7 +79,7 @@ Each database file is assumed to reside in the root of the appropriate
 man page hierarchy.
 .Pp
 The options are as follows:
-.Bl -tag -width flag
+.Bl -tag -width XCXfileXX
 .It Fl C Ar file
 Use
 .Ar file
@@ -112,18 +109,21 @@ is called without arguments
 .Xr whatis 1 ,
 .Xr man.conf 5
 .Sh HISTORY
+.An -nosplit
 .Nm
 first appeared in
 .Nx 1.0 ,
 as a shell script written by
 .An J.T. Conklin Aq jtc@NetBSD.org
 and
-.An  Thorsten Frueauf Aq frueauf@ira.uka.de .
+.An Thorsten Frueauf Aq frueauf@ira.uka.de .
 Further work was done by
-Matthew Green, Luke Mewburn and
-Chris Demetriou.
+.An Matthew Green ,
+.An Luke Mewburn ,
+and
+.An Chris Demetriou .
 .Pp
-Matthias Scheler
+.An Matthias Scheler
 has reimplemented
 .Nm
 in C in
