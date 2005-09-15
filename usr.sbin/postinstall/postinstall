@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2.2.7 2005/09/15 20:59:17 tron Exp $
+# $NetBSD: postinstall,v 1.2.2.8 2005/09/15 21:01:31 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -588,6 +588,20 @@ do_mtree()
 
 	compare_dir $1 ${SRC_DIR}/etc/mtree ${DEST_DIR}/etc/mtree 444 \
 		NetBSD.dist special
+}
+
+#
+#	named
+#
+additem named "named configuration update"
+do_named()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_named  fix|check"
+	op=$1
+
+	move_file ${op} \
+		${DEST_DIR}/etc/namedb/named.conf \
+		${DEST_DIR}/etc/named.conf
 }
 
 #
