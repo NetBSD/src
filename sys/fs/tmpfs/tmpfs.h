@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.3 2005/09/13 14:29:18 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.4 2005/09/15 12:34:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -68,6 +68,11 @@ struct tmpfs_dirent {
 };
 TAILQ_HEAD(tmpfs_dir, tmpfs_dirent);
 
+#define	TMPFS_DIRCOOKIE(dirent)	((off_t)(uintptr_t)(dirent))
+#define	TMPFS_DIRCOOKIE_DOT	0
+#define	TMPFS_DIRCOOKIE_DOTDOT	1
+#define	TMPFS_DIRCOOKIE_EOF	2
+
 /* --------------------------------------------------------------------- */
 
 /*
@@ -116,7 +121,7 @@ struct tmpfs_node {
 			struct tmpfs_dir	tn_dir;
 
 			/* Used by tmpfs_readdir to speed up lookups. */
-			long			tn_readdir_lastn;
+			off_t			tn_readdir_lastn;
 			struct tmpfs_dirent *	tn_readdir_lastp;
 		};
 
@@ -193,7 +198,8 @@ struct tmpfs_dirent *	tmpfs_dir_lookup(struct tmpfs_node *node,
 			    struct componentname *cnp);
 int	tmpfs_dir_getdotdent(struct tmpfs_node *, struct uio *);
 int	tmpfs_dir_getdotdotdent(struct tmpfs_node *, struct uio *);
-int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *);
+struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
+int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
 int	tmpfs_reg_resize(struct vnode *, off_t);
 size_t	tmpfs_mem_info(boolean_t);
 int	tmpfs_chflags(struct vnode *, int, struct ucred *, struct proc *);
@@ -230,7 +236,9 @@ int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
  */
 #define TMPFS_VALIDATE_DIR(node) \
     KASSERT((node)->tn_type == VDIR); \
-    KASSERT((node)->tn_size % sizeof(struct tmpfs_dirent) == 0);
+    KASSERT((node)->tn_size % sizeof(struct tmpfs_dirent) == 0); \
+    KASSERT((node)->tn_readdir_lastp == NULL || \
+	TMPFS_DIRCOOKIE((node)->tn_readdir_lastp) == (node)->tn_readdir_lastn);
 
 /* --------------------------------------------------------------------- */
 
