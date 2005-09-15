@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.70 2005/09/04 21:18:33 elad Exp $	*/
+/*	$NetBSD: w.c,v 1.71 2005/09/15 00:58:49 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.70 2005/09/04 21:18:33 elad Exp $");
+__RCSID("$NetBSD: w.c,v 1.71 2005/09/15 00:58:49 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,9 +135,10 @@ main(int argc, char **argv)
 	struct kinfo_proc2 *kp;
 	struct hostent *hp;
 	struct in_addr l;
-	int ch, i, nentries, nusers, wcmd;
-	char *memf, *nlistf, *p, *x;
+	int ch, i, nentries, nusers, wcmd, curtain, use_sysctl;
+	char *memf, *nlistf, *p, *x, *usrnp;
 	time_t then;
+	size_t len;
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
@@ -190,11 +191,20 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	use_sysctl = (memf == NULL && nlistf == NULL);
+
 	if ((kd = kvm_openfiles(nlistf, memf, NULL,
 	    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
 
 	(void)time(&now);
+
+	if (use_sysctl) {
+		len = sizeof(curtain);
+		if (sysctlbyname("security.curtain", &curtain, &len, 
+		    NULL, 0) == -1)
+			curtain = 0;
+	}
 
 #ifdef SUPPORT_UTMPX
 	setutxent();
@@ -409,17 +419,23 @@ main(int argc, char **argv)
 			(void)snprintf(buf, sizeof(buf), "%s:%s", p, x);
 			p = buf;
 		}
+
 		if (ep->tp != NULL)
 			kp = ep->tp;
 		else if (ep->pp != NULL)
 			kp = ep->pp;
 		else {
-			warnx("Stale utmp%s entry: %s %s %s",
-			    ep->type, ep->name, ep->line, ep->host);
-			continue;
+			if (curtain)
+				kp = NULL;
+			else {
+				warnx("Stale utmp%s entry: %s %s %s",
+				    ep->type, ep->name, ep->line, ep->host);
+				continue;
+			}
 		}
+		usrnp = (kp == NULL) ? ep->name : kp->p_login;
 		(void)printf("%-*s %-7.7s %-*.*s ",
-		    maxname, kp->p_login, ep->line,
+		    maxname, usrnp, ep->line,
 		    maxhost, maxhost, *p ? p : "-");
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
