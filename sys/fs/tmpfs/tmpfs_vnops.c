@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.9 2005/09/14 20:27:26 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.10 2005/09/15 12:34:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.9 2005/09/14 20:27:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.10 2005/09/15 12:34:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1040,11 +1040,6 @@ tmpfs_rmdir(void *v)
 	 * interested parties and clean it from the cache). */
 	vput(vp);
 
-	/* As the directory has been modified, invalidate readdir cached
-	 * values. */
-	dnode->tn_readdir_lastn = 0;
-	dnode->tn_readdir_lastp = NULL;
-
 	error = 0;
 
 out:
@@ -1084,7 +1079,8 @@ tmpfs_readdir(void *v)
 	int *ncookies = ((struct vop_readdir_args *)v)->a_ncookies;
 
 	int error;
-	off_t realsize, startoff;
+	off_t startoff;
+	off_t cnt;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1096,75 +1092,78 @@ tmpfs_readdir(void *v)
 	}
 
 	node = VP_TO_TMPFS_DIR(vp);
-	realsize = node->tn_size + sizeof(struct tmpfs_dirent) * 2;
-
-	/* The offset cannot extend past the end of the directory. */
-	if (uio->uio_offset >= realsize) {
-		error = EINVAL;
-		goto out;
-	}
-
-	/* The offset must be correctly aligned at the begining of
-	 * tmpfs_dirent structures. */
-	if (uio->uio_offset % sizeof(struct tmpfs_dirent) > 0) {
-		error = EINVAL;
-		goto out;
-	}
 
 	startoff = uio->uio_offset;
 
-	if (uio->uio_offset == 0) {
+	cnt = 0;
+	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOT) {
 		error = tmpfs_dir_getdotdent(node, uio);
 		if (error == -1) {
 			error = 0;
 			goto outok;
 		} else if (error != 0)
 			goto outok;
+		cnt++;
 	}
 
-	if (uio->uio_offset == sizeof(struct tmpfs_dirent)) {
+	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT) {
 		error = tmpfs_dir_getdotdotdent(node, uio);
 		if (error == -1) {
 			error = 0;
 			goto outok;
 		} else if (error != 0)
 			goto outok;
+		cnt++;
 	}
 
-	if (uio->uio_offset == realsize) {
-		error = 0;
-		goto outok;
-	}
-	KASSERT(uio->uio_offset < realsize);
-
-	error = tmpfs_dir_getdents(node, uio);
+	error = tmpfs_dir_getdents(node, uio, &cnt);
 	if (error == -1)
 		error = 0;
 	KASSERT(error >= 0);
 
 outok:
-	/* This label assumes that startoff, node and realsize have been
+	/* This label assumes that startoff has been
 	 * initialized.  If the compiler didn't spit out warnings, we'd
 	 * simply make this one be 'out' and drop 'outok'. */
 
 	if (eofflag != NULL)
 		*eofflag =
-		    (error == 0 && uio->uio_offset == realsize);
+		    (error == 0 && uio->uio_offset == TMPFS_DIRCOOKIE_EOF);
 
 	/* Update NFS-related variables. */
 	if (error == 0 && cookies != NULL && ncookies != NULL) {
-		long cnt, startcnt;
 		off_t i;
+		off_t off = startoff;
+		struct tmpfs_dirent *de = NULL;
 
-		startcnt = startoff / sizeof(struct tmpfs_dirent);
-		cnt = uio->uio_offset / sizeof(struct tmpfs_dirent);
-		*ncookies = cnt - startcnt;
-		*cookies = (off_t *)malloc((*ncookies) * sizeof(off_t),
-		    M_TEMP, M_WAITOK);
+		*ncookies = cnt;
+		*cookies = malloc(cnt * sizeof(off_t), M_TEMP, M_WAITOK);
 
-		for (i = 0; i < *ncookies; i++)
-			(*cookies)[i] = (startcnt + i + 1) *
-			    sizeof(struct tmpfs_dirent);
+		for (i = 0; i < cnt; i++) {
+			KASSERT(off != TMPFS_DIRCOOKIE_EOF);
+			if (off == TMPFS_DIRCOOKIE_DOT) {
+				off = TMPFS_DIRCOOKIE_DOTDOT;
+			} else {
+				if (off == TMPFS_DIRCOOKIE_DOTDOT) {
+					de = TAILQ_FIRST(&node->tn_dir);
+				} else if (de != NULL) {
+					de = TAILQ_NEXT(de, td_entries);
+				} else {
+					de = tmpfs_dir_lookupbycookie(node,
+					    off);
+					KASSERT(de != NULL);
+					de = TAILQ_NEXT(de, td_entries);
+				}
+				if (de == NULL) {
+					off = TMPFS_DIRCOOKIE_EOF;
+				} else {
+					off = TMPFS_DIRCOOKIE(de);
+				}
+			}
+
+			(*cookies)[i] = off;
+		}
+		KASSERT(uio->uio_offset == off);
 	}
 
 out:
