@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,21 +31,55 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
+ *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:21 agc Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.1 2005/09/15 21:39:16 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigpending, \
-    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
-_SYSCALL(sigpending,compat_13_sigpending13)
-	mov	r4, r2			/* fetch pointer to... */
-	mov.l	r0, @r2 		/* store old mask */
-	rts
+ENTRY(sigprocmask)
+	mov	r5, r2			/* fetch new sigset pointer */
+	tst	r2, r2			/* check new sigset pointer */
+	bf	1f			/* if not null, indirect */
+	mov	#1, r4			/* SIG_BLOCK */
+	bra	2f
+	nop
+1:	mov.l	@r2, r2			/* fetch indirect ... */
+	mov	r2, r5			/* to new mask arg */
+2:	mov.l	LSYS_sigprocmask13, r0
+	trapa	#0x80
+	bf	err
+	mov	r6, r2			/* fetch old mask requested */
+	tst	r2, r2			/* test if old mask requested */
+	bt	out
+	mov.l	r0, @r2			/* store old mask */
+out:
 	xor	r0, r0
+	rts
+	nop
+err:
+	mov.l	Lcerror, r1
+#ifdef PIC
+	braf	r1
+#else
+	jmp	@r1
+#endif
+	nop
+3:	
+
+	.align	2
+LSYS_sigprocmask13:
+	.long	SYS_compat_13_sigprocmask13
+Lcerror:
+#ifdef PIC
+	.long	cerror-3b
+#else
+	.long	cerror
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: __semctl.S,v 1.1 2000/04/20 13:48:14 tsubai Exp $	*/
+/*	$NetBSD: compat_msgctl.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,4 +39,7 @@
 
 #include "SYS.h"
 
-PSEUDO(__semctl,compat_14___semctl)
+WARN_REFERENCES(msgctl, \
+    "warning: reference to compatibility msgctl(); include <sys/msg.h> for correct reference")
+
+PSEUDO(msgctl,compat_14_msgctl)

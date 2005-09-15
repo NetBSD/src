@@ -1,7 +1,7 @@
-/*	$NetBSD: sigaction.S,v 1.1 2000/01/05 14:07:41 msaitoh Exp $	*/
+/*	$NetBSD: compat___semctl.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,4 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigaction, \
-    "warning: reference to compatibility sigaction(); include <signal.h> for correct reference")
-
-PSEUDO(sigaction,compat_13_sigaction13)
+PSEUDO(__semctl,compat_14___semctl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $")
+	RCSID("$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/15 21:39:16 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
