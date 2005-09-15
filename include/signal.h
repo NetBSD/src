@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.44 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.45 2005/09/15 13:44:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -91,7 +91,7 @@ int *__errno(void);
 #define errno (*__errno())
 #endif
 #ifndef _SIGINLINE
-#define _SIGINLINE extern inline
+#define _SIGINLINE extern __inline
 #endif
 _SIGINLINE int
 sigaddset(sigset_t *set, int signo)
