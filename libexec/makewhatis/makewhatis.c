@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.31.2.2 2005/09/15 23:44:19 snj Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.31.2.3 2005/09/15 23:45:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.31.2.2 2005/09/15 23:44:19 snj Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.31.2.3 2005/09/15 23:45:53 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,16 +95,18 @@ int	 main(int, char * const *);
 char	*findwhitespace(char *);
 char	*strmove(char *,char *);
 char	*GetS(gzFile, char *, size_t);
+int	 pathnamesection(const char *, const char *);
 int	 manpagesection(char *);
 char	*createsectionstring(char *);
 void	 addmanpage(manpage **, ino_t, char *, size_t, size_t);
 void	 addwhatis(whatis **, char *, char *);
-char	*replacestring(char *, char *, char *);
+char	*makesection(int);
+char	*makewhatisline(const char *, const char *, const char *);
 void	 catpreprocess(char *);
-char	*parsecatpage(gzFile *);
+char	*parsecatpage(const char *, gzFile *);
 int	 manpreprocess(char *);
-char	*nroff(gzFile *, const char *);
-char	*parsemanpage(gzFile *, int);
+char	*nroff(const char *, gzFile *);
+char	*parsemanpage(const char *, gzFile *, int);
 char	*getwhatisdata(char *);
 void	 processmanpages(manpage **,whatis **);
 void	 dumpwhatis(FILE *, whatis *);
@@ -119,6 +121,7 @@ char * const default_manpath[] = {
 
 const char *sectionext	= "0123456789ln";
 const char *whatisdb	= _PATH_WHATIS;
+static int dowarn = 0;
 
 int
 main(int argc, char *const *argv)
@@ -135,7 +138,7 @@ main(int argc, char *const *argv)
 
 	(void)setlocale(LC_ALL, "");
 
-	while((c = getopt(argc, argv, "C:f")) != -1) {
+	while((c = getopt(argc, argv, "C:fw")) != -1) {
 		switch(c) {
 		case 'C':
 			conffile = optarg;
@@ -144,8 +147,11 @@ main(int argc, char *const *argv)
 			/* run all processing on foreground */
 			dofork = 0;
 			break;
+		case 'w':
+			dowarn++;
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-C file] [-f] [path ...]\n",
+			fprintf(stderr, "Usage: %s [-C file] [-wf] [path ...]\n",
 				getprogname());
 			exit(EXIT_FAILURE);
 		}
@@ -338,6 +344,34 @@ GetS(gzFile in, char *buffer, size_t length)
 	return ptr;
 }
 
+char *
+makesection(int s)
+{
+	char sectionbuffer[24];
+	if (s == -1)
+		return NULL;
+	(void)snprintf(sectionbuffer, sizeof(sectionbuffer),
+		" (%c) - ", sectionext[s]);
+	return estrdup(sectionbuffer);
+}
+
+int
+pathnamesection(const char *pat, const char *name)
+{
+	char *ptr, *ext;
+	size_t len = strlen(pat);
+
+
+	while ((ptr = strstr(name, pat)) != NULL) {
+		if ((ext = strchr(sectionext, ptr[len])) != NULL) {
+			return ext - sectionext;
+		}
+		name = ptr + 1;
+	}
+	return -1;
+}
+
+
 int
 manpagesection(char *name)
 {
@@ -352,14 +386,13 @@ manpagesection(char *name)
 		int section;
 
 		ptr++;
-		section=0;
+		section = 0;
 		while (sectionext[section] != '\0')
 			if (sectionext[section] == *ptr)
 				return section;
 			else
 				section++;
 	}
-
 	return -1;
 }
 
@@ -453,34 +486,50 @@ catpreprocess(char *from)
 }
 
 char *
-replacestring(char *string, char *old, char *new)
-
+makewhatisline(const char *file, const char *line, const char *section)
 {
-	char	*ptr, *result;
-	size_t	 slength, olength, nlength, pos;
+	static const char *del[] = {
+		" - ",
+		" -- ",
+		"- ",
+		" -",
+		NULL
+	};
+	size_t i, pos;
+	size_t llen, slen, dlen;
+	char *result, *ptr;
 
-	if (new == NULL)
-		return estrdup(string);
+	if (section == NULL) {
+		if (dowarn)
+			warnx("%s: No section provided for `%s'", file, line);
+		return estrdup(line);
+	}
 
-	ptr = strstr(string, old);
-	if (ptr == NULL)
-		return estrdup(string);
+	for (i = 0; del[i]; i++)
+		if ((ptr = strstr(line, del[i])) != NULL)
+			break;
 
-	slength = strlen(string);
-	olength = strlen(old);
-	nlength = strlen(new);
-	result = emalloc(slength - olength + nlength + 1);
+	if (del[i] == NULL) {
+		if (dowarn)
+			warnx("%s: Bad format line `%s'", file, line);
+		return estrdup(line);
+	}
 
-	pos = ptr - string;
-	(void)memcpy(result, string, pos);
-	(void)memcpy(&result[pos], new, nlength);
-	(void)strcpy(&result[pos + nlength], &string[pos + olength]);
+	slen = strlen(section);
+	llen = strlen(line);
+	dlen = strlen(del[i]);
 
+	result = emalloc(llen - dlen + slen + 1);
+	pos = ptr - line;
+
+	(void)memcpy(result, line, pos);
+	(void)memcpy(&result[pos], section, slen);
+	(void)strcpy(&result[pos + slen], &line[pos + dlen]);
 	return result;
 }
 
 char *
-parsecatpage(gzFile *in)
+parsecatpage(const char *name, gzFile *in)
 {
 	char	 buffer[8192];
 	char	*section, *ptr, *last;
@@ -514,6 +563,8 @@ parsecatpage(gzFile *in)
 		if (strncmp(buffer, "NAME", 4) == 0)
 			break;
 	}
+	if (section == NULL)
+		section = makesection(pathnamesection("/cat", name));
 
 	ptr = last = buffer;
 	size = sizeof(buffer) - 1;
@@ -526,7 +577,7 @@ parsecatpage(gzFile *in)
 		if (length == 0) {
 			*last = '\0';
 
-			ptr = replacestring(buffer, " -- ", section);
+			ptr = makewhatisline(name, buffer, section);
 			free(section);
 			return ptr;
 		}
@@ -622,7 +673,7 @@ manpreprocess(char *line)
 }
 
 char *
-nroff(gzFile *in, const char *inname)
+nroff(const char *inname, gzFile *in)
 {
 	char tempname[MAXPATHLEN], buffer[65536], *data;
 	int tempfd, bytes, pipefd[2], status;
@@ -704,7 +755,7 @@ nroff(gzFile *in, const char *inname)
 		err(EXIT_FAILURE, "Cannot read from pipe");
 	}
 
-	data = parsecatpage(in);
+	data = parsecatpage(inname, in);
 	while (gzread(in, buffer, sizeof(buffer)) > 0);
 	(void)gzclose(in);
 
@@ -721,7 +772,7 @@ nroff(gzFile *in, const char *inname)
 }
 
 char *
-parsemanpage(gzFile *in, int defaultsection)
+parsemanpage(const char *name, gzFile *in, int defaultsection)
 {
 	char	*section, buffer[8192], *ptr;
 
@@ -921,17 +972,11 @@ parsemanpage(gzFile *in, int defaultsection)
 		}
 	}
 
-	if (section == NULL) {
-		char sectionbuffer[24];
+	if (section == NULL)
+		section = makesection(defaultsection);
 
-		(void) snprintf(sectionbuffer, sizeof(sectionbuffer),
-		    " (%c) - ", sectionext[defaultsection]);
-		ptr = replacestring(buffer, " - ", sectionbuffer);
-	}
-	else {
-		ptr = replacestring(buffer, " - ", section);
-		free(section);
-	}
+	ptr = makewhatisline(name, buffer, section);
+	free(section);
 	return ptr;
 }
 
@@ -950,12 +995,12 @@ getwhatisdata(char *name)
 	}
 
 	section = manpagesection(name);
-	if (section == 0)
-		data = parsecatpage(in);
-	else {
-		data = parsemanpage(in, section);
+	if (section == 0) {
+		data = parsecatpage(name, in);
+	} else {
+		data = parsemanpage(name, in, section);
 		if (data == NULL)
-			data = nroff(in, name);
+			data = nroff(name, in);
 	}
 
 	(void) gzclose(in);
