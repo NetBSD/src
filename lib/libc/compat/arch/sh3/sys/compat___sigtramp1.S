@@ -1,12 +1,11 @@
-/*	$NetBSD: shmctl.S,v 1.1 2000/04/20 13:48:15 tsubai Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +38,16 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(shmctl, \
-    "warning: reference to compatibility shmctl(); include <sys/shm.h> for correct reference")
-
-PSEUDO(shmctl,compat_14_shmctl)
+/*
+ * The SH signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, stack looks like:
+ *
+ *	sp->	sigcontext structure
+ */
+NENTRY(__sigtramp_sigcontext_1)
+	mov	r15, r4			/* get pointer to sigcontext */
+	SYSTRAP(compat_16___sigreturn14) /* and call sigreturn() */
+	mov	r0, r4			/* exit with errno */
+	SYSTRAP(exit)			/* if sigreturn fails */
