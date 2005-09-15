@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.8.2.1.2.1 2005/04/02 21:30:36 he Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.8.2.1.2.2 2005/09/15 14:28:44 riz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266"
+#ident 		"OPENBLOCKS266-$"
 
 maxusers	32
 
@@ -151,27 +151,12 @@ pchb0	at plb?				# PCI-Host bridges
 
 pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide* at pci? dev ? function ?	# Acard IDE controllers
-aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
-artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
-cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
-cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
-pdcide* at pci? dev ? function ?	# Promise IDE controllers
-pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
-satalink* at pci? dev ? function ?	# SiI SATALink controllers
-siside* at pci? dev ? function ?	# SiS IDE controllers
-slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
-viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus* at ata?
 
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101/9102 PHYs
 
 #cardslot* at cbb?
 #cardbus* at cardslot?
@@ -186,29 +171,20 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
+atabus* at ata?
 wd*	at atabus? drive ?
 
 atapibus* at atapi?
-
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
-
-#pckbc0	at pbus?
-#pckbd*	at pckbc?
-#wskbd*	at pckbd? console ?
-#pms*	at pckbc?
-#wsmouse* at pms? mux 0
-
-#vga*	at pci? dev ? function ?
-#wsdisplay* at vga? console ?
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-pseudo-device	md		1	# memory disk device
+#pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
@@ -220,6 +196,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick

@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.11 2003/07/15 02:54:44 lukem Exp $ */
+/* $NetBSD: com_opb.c,v 1.11.6.1 2005/09/15 14:28:44 riz Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,8 +35,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 1998
+ *	Matthias Drochner.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.11 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.11.6.1 2005/09/15 14:28:44 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,9 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.11 2003/07/15 02:54:44 lukem Exp $");
 #include <machine/cpu.h>
 
 #include <powerpc/ibm4xx/dev/opbvar.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 
+#include "com.h"
+#if (NCOM > 0)
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#endif
 
 struct com_opb_softc {
 	struct com_softc sc_com;
@@ -99,4 +128,50 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+}
+
+/*
+ * com_opb_cnattach:
+ * Initialize the system console.
+ */
+void
+com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
+{
+	static int attached = 0;
+#if (NCOM > 0)
+	bus_space_tag_t tag;
+#endif
+
+	if (attached)
+		return;
+	attached = 1;
+
+#if (NCOM > 0)
+	/* We *know* the com-console attaches to opb */
+	tag = opb_get_bus_space_tag();
+
+	if (comcnattach(tag,
+		conaddr, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
+		panic("can't init serial console @%x", conaddr);
+	else
+		return;
+#endif
+	panic("console device missing -- serial console not in kernel");
+	/* Of course, this is moot if there is no console... */
+}
+
+/*
+ * com_opb_device_register:
+ */
+void
+com_opb_device_register(struct device *dev, int frequency)
+{
+	int com_freq = frequency;
+
+	/* Set the frequency of the on-chip UART. */
+	if (prop_set(dev_propdb, dev, "frequency",
+		&com_freq, sizeof(com_freq), PROP_INT, 0) != 0)
+		printf("WARNING: unable to set frequency "
+			"property for %s\n", dev->dv_xname);
+	return;
 }

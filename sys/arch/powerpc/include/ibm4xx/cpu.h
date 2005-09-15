@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2003/09/23 15:14:03 shige Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.6.1 2005/09/15 14:28:44 riz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,18 +60,49 @@
 #if defined(_KERNEL)
 extern char bootpath[];
 
-void ibm4xx_init_board_data(void *, u_int);
-void ibm4xx_init(void (*)(void));
-void ibm4xx_startup(const char *);
-void ibm4xx_setup_propdb(void);
-void ibm4xx_dumpsys(void);
-void ibm4xx_install_extint(void (*)(void));
-void calc_delayconst(void);
-void ppc4xx_reset(void) __attribute__((__noreturn__));
+#include <sys/param.h>
+#include <sys/device.h>
+
+/* export from ibm4xx/autoconf.c */
+extern void (*md_device_register) __P((struct device *dev, void *aux));
+
+/* export from ibm4xx/machdep.c */
+extern void (*md_consinit) __P((void));
+extern void (*md_cpu_startup) __P((void));
+
+/* export from ibm4xx/ibm40x_machdep.c */
+extern void ibm40x_memsize_init(u_int, u_int);
+
+/* export from ibm4xx/ibm4xx_machdep.c */
+extern void ibm4xx_init(void (*)(void));
+extern void ibm4xx_cpu_startup(const char *);
+extern void ibm4xx_dumpsys(void);
+extern void ibm4xx_install_extint(void (*)(void));
+
+/* export from ibm4xx/ibm4xx_autoconf.c */
+extern void ibm4xx_device_register(struct device *dev, void *aux);
+
+/* export from ibm4xx/clock.c */
+extern void calc_delayconst(void);
+
+/* export from ibm4xx/4xx_locore.S */
+extern void ppc4xx_reset(void) __attribute__((__noreturn__));
+
 #endif /* _KERNEL */
 
 #include <powerpc/cpu.h>
 
+/* Board info database stuff */
+extern struct propdb *board_info;
+
+extern void board_info_init(void);
+#define	board_info_set(n, v, l, f, w)	\
+	prop_set(board_info, 0, (n), (v), (l), (f), (w))
+#define	board_info_get(n, v, l)		\
+	prop_get(board_info, 0, (n), (v), (l), NULL)
+
+/*****************************************************************************/
+/* THIS CODE IS OBSOLETE. WILL BE REMOVED */
 /*
  * Board configuration structure from the OpenBIOS.
  */
@@ -87,13 +118,6 @@ struct board_cfg_data {
 };
 
 extern struct board_cfg_data board_data;
-
-/* Board info database stuff */
-extern struct propdb *board_info;
-
-#define	board_info_set(n, v, l, f, w)	\
-	prop_set(board_info, 0, (n), (v), (l), (f), (w))
-#define	board_info_get(n, v, l)		\
-	prop_get(board_info, 0, (n), (v), (l), NULL)
+/*****************************************************************************/
 
 #endif	/* _IBM4XX_CPU_H_ */
