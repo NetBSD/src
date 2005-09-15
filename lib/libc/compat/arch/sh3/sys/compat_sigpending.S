@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 20:35:37 drochner Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,18 +31,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
+ *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 20:35:37 drochner Exp $")
+	RCSID("$NetBSD: compat_sigpending.S,v 1.1 2005/09/15 21:39:16 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-/*
- * We must preserve the state of the registers as the user has set them up.
- */
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
-PSEUDO(__sigreturn14,compat_16___sigreturn14)
+_SYSCALL(sigpending,compat_13_sigpending13)
+	mov	r4, r2			/* fetch pointer to... */
+	mov.l	r0, @r2 		/* store old mask */
+	rts
+	xor	r0, r0

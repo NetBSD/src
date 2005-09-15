@@ -1,7 +1,7 @@
-/*	$NetBSD: msgctl.S,v 1.1 2000/04/20 13:48:14 tsubai Exp $	*/
+/*	$NetBSD: compat_sigaction.S,v 1.1 2005/09/15 21:39:16 uwe Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(msgctl, \
-    "warning: reference to compatibility msgctl(); include <sys/msg.h> for correct reference")
+WARN_REFERENCES(sigaction, \
+    "warning: reference to compatibility sigaction(); include <signal.h> for correct reference")
 
-PSEUDO(msgctl,compat_14_msgctl)
+PSEUDO(sigaction,compat_13_sigaction13)
