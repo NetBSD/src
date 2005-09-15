@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.31.2.1 2005/09/15 20:34:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.31.2.1 2005/09/15 20:34:53 tron Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.31 2005/02/27 00:26:59 perry Exp $";
+    "$NetBSD: hpcfb.c,v 1.31.2.1 2005/09/15 20:34:53 tron Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,6 +467,15 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #endif
 		}
 		break;
+	}
+
+	if (fbconf->hf_class == HPCFB_CLASS_RGBCOLOR) {
+		ri->ri_rnum = fbconf->hf_u.hf_rgb.hf_red_width;
+		ri->ri_rpos = fbconf->hf_u.hf_rgb.hf_red_shift;
+		ri->ri_gnum = fbconf->hf_u.hf_rgb.hf_green_width;
+		ri->ri_gpos = fbconf->hf_u.hf_rgb.hf_green_shift;
+		ri->ri_bnum = fbconf->hf_u.hf_rgb.hf_blue_width;
+		ri->ri_bpos = fbconf->hf_u.hf_rgb.hf_blue_shift;
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
