@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.247 2005/09/14 22:30:14 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.248 2005/09/15 07:04:56 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12633,9 +12633,6 @@ sys/arch/evbppc/obs405/obs266_machdep.c		new file
 sys/arch/evbppc/obs405/obs405_autoconf.c	new file
 sys/arch/evbppc/obs405/obs405_machdep.c		new file
 sys/arch/evbppc/obs405/rbus_machdep.c		new file
-sys/arch/hpc/stand/compile/.keep_me		delete
-sys/arch/hpc/stand/libz/errno.h			delete
-sys/arch/hpcmips/stand/libz/errno.h		delete
 sys/arch/powerpc/ibm4xx/autoconf.c		delete
 sys/arch/powerpc/ibm4xx/machdep.c		delete
 sys/arch/powerpc/ibm4xx/pci/pchb.c		patch
