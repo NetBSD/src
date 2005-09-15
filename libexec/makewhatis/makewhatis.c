@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.31.2.4 2005/09/15 23:48:08 snj Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.31.2.5 2005/09/15 23:49:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.31.2.4 2005/09/15 23:48:08 snj Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.31.2.5 2005/09/15 23:49:08 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -499,6 +499,7 @@ makewhatisline(const char *file, const char *line, const char *section)
 	size_t llen, slen, dlen;
 	char *result, *ptr;
 
+	ptr = NULL;
 	if (section == NULL) {
 		if (dowarn)
 			warnx("%s: No section provided for `%s'", file, line);
