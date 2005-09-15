@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.250 2005/09/15 21:11:14 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.251 2005/09/15 23:54:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12735,4 +12735,22 @@ usr.sbin/postinstall/postinstall		1.7
 	The "named" fix in postinstall(8) will migrate /etc/namedb/named.conf
 	to /etc/named.conf if the latter doesn't exist.
 	[lukem, ticket #788]
+
+sys/dev/pci/if_bge.c				1.93
+
+	Allow reception of VLAN sized frames.  Fixes PR kern/29660.
+	[tron, ticket #757]
+
+sys/arch/amd64/conf/GENERIC			1.43, 1.71
+sys/arch/i386/conf/GENERIC			1.700
+sys/arch/i386/conf/GENERIC.MPACPI		1.46
+
+	Add 10 Gigabit Ethernet drivers dge(4) and xge(4).
+	[tron, ticket #786]
+
+libexec/makewhatis/makewhatis.8			1.10-1.11
+libexec/makewhatis/makewhatis.c			1.32-1.37
+
+	Bug-fixes (mostly for the parser) and documentation updates.
+	[tron, ticket #789]
 
