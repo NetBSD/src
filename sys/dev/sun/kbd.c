@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.7 2005/06/09 08:08:53 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.8 2005/09/15 20:48:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.7 2005/06/09 08:08:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.8 2005/09/15 20:48:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,6 +506,8 @@ kbd_input(k, code)
 		/*
 		 * We are using wskbd input mode, pass the event up.
 		 */
+		if (code == KBD_IDLE)
+			return;	/* this key is not in the mapped */
 		kbd_input_wskbd(k, code);
 		return;
 	}
@@ -954,11 +956,8 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 	if (k->k_wsraw) {
 		u_char buf;
 
-		/* do not bother userland with keyboard idle events */
-		if (code != KBD_IDLE) {
-			buf = code;
-			wskbd_rawinput(k->k_wskbd, &buf, 1);
-		}
+		buf = code;
+		wskbd_rawinput(k->k_wskbd, &buf, 1);
 		return;
 	}
 #endif
