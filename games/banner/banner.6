@@ -1,4 +1,4 @@
-.\"	$NetBSD: banner.6,v 1.13 2003/08/07 09:36:59 agc Exp $
+.\"	$NetBSD: banner.6,v 1.14 2005/09/15 02:09:41 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1993, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,8 @@ suitable for a narrow terminal.
 .Pp
 The output should be printed on paper of the appropriate width,
 with no breaks between the pages.
+.Sh AUTHORS
+.An Mark Horton
 .Sh BUGS
 Several ASCII characters are not defined, notably \*[Lt], \*[Gt], [, ], \\,
 ^, _, {, }, |, and ~.  Also, the characters ", ', and \*[Am] are funny
@@ -62,5 +64,3 @@ The
 option is implemented by skipping some rows and columns.
 The smaller it gets, the grainier the output.
 Sometimes it runs letters together.
-.Sh AUTHOR
-.An Mark Horton
