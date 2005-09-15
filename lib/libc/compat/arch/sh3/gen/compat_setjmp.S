@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.2 2003/08/07 16:42:19 agc Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,28 +31,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)_setjmp.s	5.1 (Berkeley) 4/23/90
+ *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
  */
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: _setjmp.S,v 1.2 2003/08/07 16:42:19 agc Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $")
 #endif
 
 /*
  * C library -- _setjmp, _longjmp
  *
- *	_longjmp(a,v)
+ *	longjmp(a,v)
  * will generate a "return(v)" from the last call to
- *	_setjmp(a)
+ *	setjmp(a)
  * by restoring registers from the stack.
- * The previous signal state is NOT restored.
+ * The previous signal state is restored.
  */
 
-ENTRY(_setjmp)
-	add	#4*10, r4
-	mov	#0, r0
-	mov.l	r0, @-r4
+ENTRY(setjmp)
+	sts.l	pr, @-r15
+	mov.l	r4, @-r15
+	mov	#0, r4
+	mov.l	Lsigblock, r0
+#ifdef PIC
+	bsrf	r0
+	nop
+1:	
+#else
+	jsr	@r0
+	nop
+#endif
+	mov.l	@r15+, r4
+	lds.l	@r15+, pr
+
+	add	#4*11, r4
+	mov.l	r0, @-r4	/* sigmask */
+	mov	#1, r0
+	mov.l	r0, @-r4	/* savemask */
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
@@ -65,7 +81,32 @@ ENTRY(_setjmp)
 	rts
 	xor	r0, r0
 
-ENTRY(_longjmp)
+	.align	2
+Lsigblock:
+#ifdef PIC
+	.long	_C_LABEL(sigblock)-1b
+#else
+	.long	_C_LABEL(sigblock)
+#endif
+
+ENTRY(longjmp)
+	mov.l	r4, @-r15
+	mov.l	r5, @-r15
+	mov	r4, r0
+	add	#4*10, r0
+	mov.l	@r0, r4
+	mov.l	Lsigsetmask, r0
+#ifdef PIC
+	bsrf	r0
+	nop
+1:	
+#else
+	jsr	@r0
+	nop
+#endif
+	mov.l	@r15+, r5
+	mov.l	@r15+, r4
+
 	lds.l	@r4+, pr
 	mov.l	@r4+, r8
 	mov.l	@r4+, r9
@@ -75,7 +116,6 @@ ENTRY(_longjmp)
 	mov.l	@r4+, r13
 	mov.l	@r4+, r14
 	mov.l	@r4+, r15
-
 	mov	r5, r0
 	tst	r0, r0
 	bf	.L0
@@ -83,3 +123,11 @@ ENTRY(_longjmp)
 .L0:
 	rts
 	nop
+
+	.align	2
+Lsigsetmask:
+#ifdef PIC
+	.long	_C_LABEL(sigsetmask)-1b
+#else
+	.long	_C_LABEL(sigsetmask)
+#endif
