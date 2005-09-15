@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $	*/
+/*	$NetBSD: comopbvar.h,v 1.1.14.2 2005/09/15 14:28:44 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -30,22 +30,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $");
+#ifndef __IBM4XX_COMOPBVAR_H__
+#define __IBM4XX_COMOPBVAR_H__
 
-#include <machine/obs405.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <sys/param.h>
+#include <sys/device.h>
 
-/*
- * obs405_consinit:
- *   Initialize the system console.
- */
-void
-obs405_consinit(int com_freq)
-{
+extern void com_opb_cnattach(int, int, int, int);
+extern void com_opb_device_register(struct device *, int);
 
-#if (NCOM > 0)
-	com_opb_cnattach(com_freq,
-		OBS405_CONADDR, OBS405_CONSPEED, OBS405_CONMODE);
-#endif /* NCOM */
-}
+#endif	/* __IBM4XX_COMOPBVAR_H__ */

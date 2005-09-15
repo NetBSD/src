@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $	*/
+/*	$NetBSD: openbios.h,v 1.1.14.2 2005/09/15 14:28:44 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -30,22 +30,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $");
+#ifndef _IBM4XX_OPENBIOS_H_
+#define	_IBM4XX_OPENBIOS_H_
 
-#include <machine/obs405.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <sys/param.h>
 
-/*
- * obs405_consinit:
- *   Initialize the system console.
- */
-void
-obs405_consinit(int com_freq)
-{
+extern void		openbios_board_init(void *, u_int);
+extern unsigned int	openbios_board_memsize_get(void);
+extern void		openbios_board_info_set(void);
+extern void		openbios_board_print(void);
 
-#if (NCOM > 0)
-	com_opb_cnattach(com_freq,
-		OBS405_CONADDR, OBS405_CONSPEED, OBS405_CONMODE);
-#endif /* NCOM */
-}
+#endif	/* _IBM4XX_OPENBIOS_H_ */

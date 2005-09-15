@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $	*/
+/*	$NetBSD: obs405_machdep.c,v 1.1.12.2 2005/09/15 14:28:44 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,21 +31,66 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.8.1 2005/09/15 14:28:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.1.12.2 2005/09/15 14:28:44 riz Exp $");
 
-#include <machine/obs405.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <sys/param.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <net/netisr.h>
+
+#include <machine/cpu.h>
 
 /*
- * obs405_consinit:
- *   Initialize the system console.
+ * Machine-dependent global variables
+ *   exec_map:		sys/uvm/uvm_extern.h
+ *   mb_map:		sys/uvm/uvm_extern.h
+ *   phys_map:		sys/uvm/uvm_extern.h
+ *   machine:		sys/sys/systm.h
+ *   machine_arch:	sys/sys/systm.h
+ */
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
+char machine[] = MACHINE;		/* from <machine/param.h> */
+char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/*
+ * TODO: XXX these functions are machine-dependent ??
+ */
+
+/*
+ * softnet:
+ * Soft networking interrupts.
  */
 void
-obs405_consinit(int com_freq)
+softnet(void)
 {
+	int isr;
 
-#if (NCOM > 0)
-	com_opb_cnattach(com_freq,
-		OBS405_CONADDR, OBS405_CONSPEED, OBS405_CONMODE);
-#endif /* NCOM */
+	isr = netisr;
+	netisr = 0;
+
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+#undef DONETISR
+}
+
+/*
+ * softserial:
+ * Soft tty interrupts.
+ */
+#include "com.h"
+void
+softserial(void)
+{
+#if NCOM > 0
+	void comsoft(void);	/* XXX from dev/ic/com.c */
+
+	comsoft();
+#endif
 }

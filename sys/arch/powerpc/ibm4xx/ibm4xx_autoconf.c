@@ -1,4 +1,5 @@
-/*	$NetBSD: ibm4xxgpx_autoconf.c,v 1.1.6.1 2005/09/15 14:28:44 riz Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.2.12.2 2005/09/15 14:28:44 riz Exp $	*/
+/*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,49 +33,47 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xxgpx_autoconf.c,v 1.1.6.1 2005/09/15 14:28:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2.12.2 2005/09/15 14:28:44 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <dev/ic/comreg.h>	/* For COM_FREQ */
+#include <net/if.h>
+#include <net/if_ether.h>
 
-#include <powerpc/ibm4xx/dcr405gp.h>
-#include <powerpc/ibm4xx/dev/plbvar.h>
+#include <machine/cpu.h>
 
-/*
- * List of port-specific devices to attach to the processor local bus.
- */
-static const struct plb_dev local_plb_devs [] = {
-	{ "pbus", },
-	{ NULL }
-};
-
-/*
- * Determine device configuration for a machine.
- */
 void
-cpu_configure(void)
+ibm4xx_device_register(struct device *dev, void *aux)
 {
+	struct device *parent = dev->dv_parent;
 
-	intr_init();
-	calc_delayconst();
+	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
+	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+		/* Set the mac-addr of the on-chip Ethernet. */
 
-	/* Make sure that timers run at CPU frequency */
-	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
+		if (dev->dv_unit < 10) {
+			uint8_t enaddr[ETHER_ADDR_LEN];
+			unsigned char prop_name[15];
 
-	if (config_rootfound("plb", &local_plb_devs) == NULL)
-		panic("configure: plb not configured");
+			snprintf(prop_name, sizeof(prop_name),
+				"emac%d-mac-addr", dev->dv_unit);
 
-	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
-	    (u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
-	
-	(void)spl0();
+			if (board_info_get(prop_name,
+				enaddr, sizeof(enaddr)) == -1) {
+				printf("WARNING: unable to get mac-addr "
+				    "property from board properties\n");
+				return;
+			}
 
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	asm volatile ("wrteei 1");
+			if (prop_set(dev_propdb, dev, "mac-addr",
+				     enaddr, sizeof(enaddr),
+				     PROP_ARRAY, 0) != 0)
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+		}
+		return;
+	}
 }

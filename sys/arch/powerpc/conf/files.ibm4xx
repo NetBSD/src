@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.5 2003/10/06 16:15:46 scw Exp $
+#	$NetBSD: files.ibm4xx,v 1.5.6.1 2005/09/15 14:28:44 riz Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -25,6 +25,11 @@ file	arch/powerpc/ibm4xx/dev/ecc_plb.c	ecc_plb
 # On-chip com device(s)
 attach	com at opb with com_opb
 file	arch/powerpc/ibm4xx/dev/com_opb.c	com_opb
+
+# On-chip GPIO controller
+device	gpio { addr, [size = -1] }
+attach	gpio at opb
+file	arch/powerpc/ibm4xx/dev/gpio_opb.c	gpio
 
 # On-chip ethernet device(s)
 device	emac: ether, ifnet, arp, mii
