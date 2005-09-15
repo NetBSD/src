@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.17 2005/04/15 22:39:11 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2005/09/15 22:44:58 uwe Exp $
 
-SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
+SRCS+=	setjmp.S sigsetjmp.S
 
 SRCS+=	makecontext.c resumecontext.c swapcontext.S
 

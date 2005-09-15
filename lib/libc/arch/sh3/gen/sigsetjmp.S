@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.6 2003/08/07 16:42:19 agc Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.7 2005/09/15 22:44:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,42 +31,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"
+ *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
  */
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.6 2003/08/07 16:42:19 agc Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.7 2005/09/15 22:44:58 uwe Exp $")
 #endif
 
-ENTRY(sigsetjmp)
-	mov	r4, r0
-	add	#4*9, r0	! &savemask
-	mov.l	r5, @r0
+ENTRY(__sigsetjmp14)
 	tst	r5, r5
 	bt	1f
 
 	sts.l	pr, @-r15
 	mov.l	r4, @-r15
-	mov	#0, r4
-	mov.l	Lsigblock, r0
+	mov.l	r5, @-r15
+	mov	r4, r6
+	mov	#1, r4		/* SIG_BLOCK */
+	mov	#0, r5
+	add	#4*10, r6	/* &sigmask */
+
 #ifdef PIC
+	mov.l	L__sigprocmask14r1, r0
 	bsrf	r0
 	nop
-2:	
+L__sigprocmask14o1:	
 #else
+	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
 #endif
+
+	mov.l	@r15+, r5
 	mov.l	@r15+, r4
 	lds.l	@r15+, pr
 
-	mov	r4, r1
-	add	#4*10, r1
-	mov.l	r0, @r1
-
 1:
-	add	#4*9, r4
+	add	#4*10, r4
+	mov.l	r5, @-r4
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
@@ -79,15 +81,7 @@ ENTRY(sigsetjmp)
 	rts
 	xor	r0, r0
 
-	.align	2
-Lsigblock:
-#ifdef PIC
-	.long	_C_LABEL(sigblock)-2b
-#else
-	.long	_C_LABEL(sigblock)
-#endif
-
-ENTRY(siglongjmp)
+ENTRY(__siglongjmp14)
 	mov	r4, r0
 	add	#4*9, r0
 	mov.l	@r0, r0
@@ -96,15 +90,17 @@ ENTRY(siglongjmp)
 
 	mov.l	r4, @-r15
 	mov.l	r5, @-r15
-	mov	r4, r0
-	add	#4*10, r0
-	mov.l	@r0, r4
-	mov.l	Lsigsetmask, r0
+	mov	r4, r5
+	mov	#3, r4		/* SIG_SETMASK */
+	add	#4*10, r5	/* &sigmask */
+	mov	#0, r6
 #ifdef PIC
+	mov.l	L__sigprocmask14r2, r0
 	bsrf	r0
 	nop
-2:	
+L__sigprocmask14o2:
 #else
+	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
 #endif
@@ -112,7 +108,6 @@ ENTRY(siglongjmp)
 	mov.l	@r15+, r4
 
 1:
-	mov	r5, r0
 	lds.l	@r4+, pr
 	mov.l	@r4+, r8
 	mov.l	@r4+, r9
@@ -122,6 +117,8 @@ ENTRY(siglongjmp)
 	mov.l	@r4+, r13
 	mov.l	@r4+, r14
 	mov.l	@r4+, r15
+
+	mov	r5, r0
 	tst	r0, r0
 	bf	.L0
 	add	#1, r0
@@ -130,9 +127,12 @@ ENTRY(siglongjmp)
 	nop
 
 	.align	2
-Lsigsetmask :
 #ifdef PIC
-	.long	_C_LABEL(sigsetmask)-2b
+L__sigprocmask14r1:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o1
+L__sigprocmask14r2:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o2
 #else
-	.long	_C_LABEL(sigsetmask)
+L__sigprocmask14:
+	.long	_C_LABEL(__sigprocmask14)
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.6 2003/08/07 16:42:19 agc Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.7 2005/09/15 22:44:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.6 2003/08/07 16:42:19 agc Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.7 2005/09/15 22:44:58 uwe Exp $")
 #endif
 
 /*
@@ -49,24 +49,28 @@
  * The previous signal state is restored.
  */
 
-ENTRY(setjmp)
+ENTRY(__setjmp14)
 	sts.l	pr, @-r15
 	mov.l	r4, @-r15
-	mov	#0, r4
-	mov.l	Lsigblock, r0
+	mov	r4, r6
+	mov	#1, r4		/* SIG_BLOCK */
+	mov	#0, r5
+	add	#4*10, r6	/* &sigmask */
+
 #ifdef PIC
+	mov.l	L__sigprocmask14r1, r0
 	bsrf	r0
 	nop
-1:	
+L__sigprocmask14o1:	
 #else
+	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
 #endif
+
 	mov.l	@r15+, r4
 	lds.l	@r15+, pr
-
-	add	#4*11, r4
-	mov.l	r0, @-r4	/* sigmask */
+	add	#4*10, r4
 	mov	#1, r0
 	mov.l	r0, @-r4	/* savemask */
 	mov.l	r15, @-r4
@@ -81,26 +85,21 @@ ENTRY(setjmp)
 	rts
 	xor	r0, r0
 
-	.align	2
-Lsigblock:
-#ifdef PIC
-	.long	_C_LABEL(sigblock)-1b
-#else
-	.long	_C_LABEL(sigblock)
-#endif
-
-ENTRY(longjmp)
+ENTRY(__longjmp14)
 	mov.l	r4, @-r15
 	mov.l	r5, @-r15
-	mov	r4, r0
-	add	#4*10, r0
-	mov.l	@r0, r4
-	mov.l	Lsigsetmask, r0
+
+	mov	r4, r5
+	mov	#3, r4		/* SIG_SETMASK */
+	add	#4*10, r5	/* &sigmask */
+	mov	#0, r6
 #ifdef PIC
+	mov.l	L__sigprocmask14r2, r0
 	bsrf	r0
 	nop
-1:	
+L__sigprocmask14o2:
 #else
+	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
 #endif
@@ -125,9 +124,12 @@ ENTRY(longjmp)
 	nop
 
 	.align	2
-Lsigsetmask:
 #ifdef PIC
-	.long	_C_LABEL(sigsetmask)-1b
+L__sigprocmask14r1:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o1
+L__sigprocmask14r2:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o2
 #else
-	.long	_C_LABEL(sigsetmask)
+L__sigprocmask14:
+	.long	_C_LABEL(__sigprocmask14)
 #endif
