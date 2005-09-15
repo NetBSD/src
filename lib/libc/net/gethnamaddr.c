@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.65 2005/06/01 04:39:36 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.66 2005/09/15 15:25:40 tsarna Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.65 2005/06/01 04:39:36 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.66 2005/09/15 15:25:40 tsarna Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.65 2005/06/01 04:39:36 lukem Exp $");
 #endif
 
 #define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
+#define RESOLVSORT
 
 #include <nsswitch.h>
 #include <stdlib.h>
@@ -141,7 +142,7 @@ static struct hostent *getanswer(const querybuf *, int, const char *, int,
 static void map_v4v6_address(const char *, char *);
 static void map_v4v6_hostent(struct hostent *, char **, char *);
 #ifdef RESOLVSORT
-static void addrsort(char **, int, res_state *);
+static void addrsort(char **, int, res_state);
 #endif
 
 void _sethtent(int);
