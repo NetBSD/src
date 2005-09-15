@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.7 2005/06/02 01:51:58 lukem Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.8 2005/09/15 09:11:30 mrg Exp $	*/
 
 /* This file is #included by gzip.c */
 
@@ -6,7 +6,6 @@ static off_t
 unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
 	int		ret, end_of_file;
-	size_t		n = 0;
 	off_t		bytes_out = 0;
 	bz_stream	bzs;
 	static char	*inbuf, *outbuf;
@@ -36,6 +35,8 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 
 	while (ret != BZ_STREAM_END) {
 	        if (bzs.avail_in == 0 && !end_of_file) {
+			ssize_t	n;
+
 	                n = read(in, inbuf, BUFLEN);
 	                if (n < 0)
 	                        maybe_err("read");
@@ -57,11 +58,13 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	                if (ret == BZ_OK && end_of_file)
 	                        maybe_err("read");
 	                if (!tflag) {
+				ssize_t	n;
+
 	                        n = write(out, outbuf, BUFLEN - bzs.avail_out);
 	                        if (n < 0)
 	                                maybe_err("write");
+	                	bytes_out += n;
 	                }
-	                bytes_out += n;
 	                break;
 
 	        case BZ_DATA_ERROR:
