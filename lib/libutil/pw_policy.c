@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.1 2005/09/14 11:36:53 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.2 2005/09/16 22:38:48 elad Exp $ */
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -66,13 +66,13 @@ static int pw_policy_handle_charclass(HANDLER_PROTO);
 static int pw_policy_handle_nclasses(HANDLER_PROTO);
 static int pw_policy_handle_ntoggles(HANDLER_PROTO);
 
-struct pw_policy {
+struct pw_policy_handler {
 	const char *name;
 	int (*handler)(char *, size_t, void *, void *);
 	void *arg2;
 };
 
-static struct pw_policy policies[] = {
+static struct pw_policy_handler handlers[] = {
 	{ "length", pw_policy_handle_len, NULL },
 	{ "lowercase", pw_policy_handle_charclass, islower },
 	{ "uppercase", pw_policy_handle_charclass, isupper },
@@ -286,7 +286,7 @@ pw_policy_handle_ntoggles(HANDLER_ARGS)
 int
 pw_policy_test(char *pw, void *key, int how)
 {
-	struct pw_policy *pwp;
+	struct pw_policy_handler *hp;
 	char buf[BUFSIZ];
 	size_t pwlen;
 
@@ -370,13 +370,13 @@ pw_policy_test(char *pw, void *key, int how)
  test_policies:
 	pwlen = strlen(pw);
 
-	pwp = &policies[0];
-	while (pwp->name != NULL) {
-		PW_GETCONF(buf, sizeof(buf), key, pwp->name);
-		if (*buf && pwp->handler(pw, pwlen, buf, pwp->arg2) != 0)
+	hp = &handlers[0];
+	while (hp->name != NULL) {
+		PW_GETCONF(buf, sizeof(buf), key, hp->name);
+		if (*buf && hp->handler(pw, pwlen, buf, hp->arg2) != 0)
 			return (EPERM);
 
-		pwp++;
+		hp++;
 	}
 
 	return (0);
