@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2005/04/20 18:26:11 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2005/09/16 18:24:49 drochner Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \
@@ -7,7 +7,7 @@ KMSRCS=	divrem.m4 \
 #KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
 
 SRCS+=	__longjmp14.c
-SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
