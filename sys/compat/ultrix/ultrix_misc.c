@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.102 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.103 2005/09/16 17:09:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.102 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.103 2005/09/16 17:09:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -141,6 +141,9 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.102 2005/08/19 02:04:03 christos E
 #include <sys/socketvar.h>				/* sosetopt() */
 
 #include <compat/ultrix/ultrix_flock.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #ifdef __mips
 #include <mips/cachectl.h>
