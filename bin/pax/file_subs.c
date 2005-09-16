@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.55 2005/09/13 20:09:55 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.56 2005/09/16 16:48:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.55 2005/09/13 20:09:55 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.56 2005/09/16 16:48:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -464,18 +464,7 @@ node_creat(ARCHD *arcn)
 					nm = target;
 				}
 			}
-			res = mkdir(nm, file_mode);
-			if (res == -1 && errno == EEXIST) {
-				/*
-				 * Something's in the way.
-				 * If it's a directory, say we're done.
-				 */
-				if (stat(nm, &sb) == 0 &&
-				    S_ISDIR(sb.st_mode)) {
-					res = 0;
-					break;
-				}
-			}
+			res = domkdir(nm, file_mode);
 badlink:
 			if (ign)
 				res = 0;
@@ -730,7 +719,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		 * the path fails at this point, see if we can create the
 		 * needed directory and continue on
 		 */
-		if (mkdir(name, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
+		if (domkdir(name, S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
 			*spt = '/';
 			retval = -1;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.91 2005/09/13 20:09:55 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.92 2005/09/16 16:48:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.91 2005/09/13 20:09:55 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.92 2005/09/16 16:48:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1322,9 +1322,8 @@ int
 mkpath(path)
 	char *path;
 {
-	struct stat sb;
 	char *slash;
-	int done = 0, sverrno;
+	int done = 0;
 
 	slash = path;
 
@@ -1335,20 +1334,8 @@ mkpath(path)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (stat(path, &sb) == -1) {
-			if ((sverrno = errno) != ENOENT)
-				goto out;
-			if (mkdir(path, 0777) == -1) {
-				sverrno = errno;
-				/* Check again, to avoid races */
-				if (stat(path, &sb) == -1
-				    || !S_ISDIR(sb.st_mode))
-					goto out;
-			}
-		} else if (!S_ISDIR(sb.st_mode)) {
-			sverrno = ENOTDIR;
+		if (domkdir(path, 0777) == -1)
 			goto out;
-		}
 
 		if (!done)
 			*slash = '/';
@@ -1357,7 +1344,7 @@ mkpath(path)
 	return 0;
 out:
 	/* Can't create or or not a directory */
-	syswarn(1, sverrno, "Cannot create directory `%s'", path);
+	syswarn(1, errno, "Cannot create directory `%s'", path);
 	return -1;
 }
 
