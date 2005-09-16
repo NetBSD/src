@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.5 2005/09/15 12:34:35 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.6 2005/09/16 00:18:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.5 2005/09/15 12:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.6 2005/09/16 00:18:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -579,7 +579,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dent.d_fileno = node->tn_id;
+	dent.d_fileno = node->tn_parent->tn_id;
 	dent.d_type = DT_DIR;
 	dent.d_namlen = 2;
 	dent.d_name[0] = '.';
