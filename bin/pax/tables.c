@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.23 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: tables.c,v 1.24 2005/09/16 17:05:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.23 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: tables.c,v 1.24 2005/09/16 17:05:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,13 @@ __RCSID("$NetBSD: tables.c,v 1.23 2003/10/27 00:12:41 lukem Exp $");
  * keeps. Tables are dynamically created only when they are needed. The
  * goal was speed and the ability to work with HUGE archives. The databases
  * were kept simple, but do have complex rules for when the contents change.
- * As of this writing, the posix library functions were more complex than
+ * As of this writing, the POSIX library functions were more complex than
  * needed for this application (pax databases have very short lifetimes and
  * do not survive after pax is finished). Pax is required to handle very
  * large archives. These database routines carefully combine memory usage and
  * temporary file storage in ways which will not significantly impact runtime
  * performance while allowing the largest possible archives to be handled.
- * Trying to force the fit to the posix database routines was not considered
+ * Trying to force the fit to the POSIX database routines was not considered
  * time well spent.
  */
 
