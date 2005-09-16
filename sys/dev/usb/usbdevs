@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.414 2005/09/11 22:53:07 augustss Exp $
+$NetBSD: usbdevs,v 1.415 2005/09/16 23:54:25 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -413,6 +413,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
+vendor RALINK_2		0x148f  Ralink Technology
 vendor CONCEPTRONIC	0x14b2	Conceptronic
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
@@ -1572,6 +1573,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 product RALINK RT2570		0x1706	RT2570
 product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
+product RALINK_2 RT2570		0x2570  RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
