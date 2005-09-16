@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.7 2005/08/16 19:35:17 drochner Exp $ */
+/*	$NetBSD: if_ural.c,v 1.8 2005/09/16 23:55:14 jmcneill Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.7 2005/08/16 19:35:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.8 2005/09/16 23:55:14 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -104,6 +104,7 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_2 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_3 },
+	{ USB_VENDOR_RALINK_2,		USB_PRODUCT_RALINK_2_RT2570 },
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
 	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_EP9001G },
 	{ USB_VENDOR_VTECH,		USB_PRODUCT_VTECH_RT2570 },
