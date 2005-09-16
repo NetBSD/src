@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.48 2005/04/24 01:45:04 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.49 2005/09/16 16:48:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -85,6 +85,7 @@ extern ARCHD archd;
 int updatepath(void);
 int dochdir(const char *);
 int fdochdir(int);
+int domkdir(const char *, mode_t);
 void list(void);
 void extract(void);
 void append(void);
