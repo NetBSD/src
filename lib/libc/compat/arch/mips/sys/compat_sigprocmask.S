@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,12 +35,34 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $")
+	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
+	ASMSTR("$NetBSD: compat_sigprocmask.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-/*
- * We must preserve the state of the registers as the user has set them up.
- */
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
-PSEUDO(__sigreturn14,compat_16___sigreturn14)
+LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+#ifdef __ABICALLS__
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+#endif
+	bne	a1, zero, gotptr	# if new sigset pointer not null
+	li	a0, 1			# how = SIG_BLOCK
+	b	doit			# mask = zero
+gotptr:
+	lw	a1, 0(a1)		# indirect to new mask arg
+doit:
+	li	v0, SYS_compat_13_sigprocmask13
+	syscall
+	bne	a3, zero, err
+	beq	a2, zero, out		# test if old mask requested
+	sw	v0, 0(a2)		# store old mask
+out:
+	move	v0, zero
+	j	ra
+err:
+	la	t9, _C_LABEL(__cerror)
+	jr	t9
+END(sigprocmask)

@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.4 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993, 1995,
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Havard Eidnes.
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,57 +32,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/syscall.h>
-#include <mips/regnum.h>
-#include <mips/asm.h>
-#include <machine/setjmp.h>
+#include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __sigsetjmp14.S,v 1.4 2003/08/07 16:42:15 agc Exp $")
+	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
+	ASMSTR("$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __ABICALLS__
-	.abicalls
-#endif
-
 /*
- * C library -- sigsetjmp, siglongjmp
- *
- *	siglongjmp(a,v)
- * will generate a "return(v)" from
- * the last call to
- *	sigsetjmp(a, savemask)
- * by restoring registers from the stack,
- * and dependent on savemask restores the
- * signal mask.
+ * We must preserve the state of the registers as the user has set them up.
  */
 
-LEAF(__sigsetjmp14)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
-	sw	a1, (_JBLEN*4)(a0)		# save "savemask"
-	bne	a1, 0x0, 1f			# do saving of signal mask?
-	la	t9, _setjmp
-	jr t9
-
-1:	la	t9, __setjmp14
-	jr t9
-END(__sigsetjmp14)
-
-LEAF(__siglongjmp14)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
-	lw	t0, (_JBLEN * 4)(a0)		# get "savemask"
-	bne	t0, 0x0, 1f			# restore signal mask?
-	la	t9, _longjmp
-	jr	t9
-1:	la	t9, __longjmp14
-	jr	t9
-END(__siglongjmp14)
+PSEUDO(__sigreturn14,compat_16___sigreturn14)
