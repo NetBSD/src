@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.11 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.12 2005/09/17 14:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -37,11 +37,7 @@
 
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
-#if 0 /* notyet */
 #include "opt_vmswap.h"
-#else
-#define	VMSWAP
-#endif
 #endif
 
 struct swapent;

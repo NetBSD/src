@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.15 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.16 2005/09/17 14:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -58,11 +58,7 @@
 
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
-#if 0 /* notyet */
 #include "opt_vmswap.h"
-#else
-#define	VMSWAP
-#endif
 #endif
 
 /*
