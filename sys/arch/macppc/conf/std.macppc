@@ -1,8 +1,9 @@
-#	$NetBSD: std.macppc,v 1.16 2003/08/12 05:15:42 matt Exp $
+#	$NetBSD: std.macppc,v 1.17 2005/09/17 09:44:07 yamt Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
 machine	macppc powerpc
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_OEA		# OEA class PowerPC chips

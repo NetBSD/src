@@ -1,8 +1,9 @@
-#	$NetBSD: std.ibmnws,v 1.1 2003/10/19 03:33:49 matt Exp $
+#	$NetBSD: std.ibmnws,v 1.2 2005/09/17 09:44:07 yamt Exp $
 #
 # standard, required NetBSD/ibmnws 'options'
 
 machine		ibmnws powerpc
+include		"conf/std"	# MI standard options
 
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	EXEC_ELF32	# exec ELF binaries

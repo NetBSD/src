@@ -1,8 +1,9 @@
-#	$NetBSD: std.mac68k,v 1.27 2002/03/25 14:03:05 shiba Exp $
+#	$NetBSD: std.mac68k,v 1.28 2005/09/17 09:44:07 yamt Exp $
 #
 # "options" common to all mac68k kernel configs
 
 machine	mac68k m68k
+include		"conf/std"	# MI standard options
 
 options 	HZ=60			# mac clock runs at 60hz
 

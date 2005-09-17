@@ -1,8 +1,9 @@
-#	$NetBSD: std.prep,v 1.7 2003/08/12 05:15:44 matt Exp $
+#	$NetBSD: std.prep,v 1.8 2005/09/17 09:44:08 yamt Exp $
 #
 # standard, required NetBSD/prep 'options'
 
 machine		prep powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

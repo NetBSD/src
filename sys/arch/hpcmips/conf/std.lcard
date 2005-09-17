@@ -1,7 +1,8 @@
-#	$NetBSD: std.lcard,v 1.4 2004/04/15 14:58:30 tv Exp $
+#	$NetBSD: std.lcard,v 1.5 2005/09/17 09:44:06 yamt Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	NOFPU			# No FPU

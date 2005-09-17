@@ -1,8 +1,9 @@
-# $NetBSD: std.amd64,v 1.1 2003/04/26 18:39:36 fvdl Exp $
+# $NetBSD: std.amd64,v 1.2 2005/09/17 09:44:05 yamt Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
 machine amd64 x86
+include		"conf/std"	# MI standard options
 
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts

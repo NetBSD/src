@@ -1,8 +1,9 @@
-#	$NetBSD: std.mvmeppc,v 1.7 2003/08/12 05:15:43 matt Exp $
+#	$NetBSD: std.mvmeppc,v 1.8 2005/09/17 09:44:07 yamt Exp $
 #
 # standard, required NetBSD/mvmeppc 'options'
 
 machine		mvmeppc powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# Support Motorola PPC60x CPUs
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
