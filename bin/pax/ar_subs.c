@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.43 2005/09/16 16:48:18 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.44 2005/09/17 06:05:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.43 2005/09/16 16:48:18 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.44 2005/09/17 06:05:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,17 +134,21 @@ domkdir(const char *fname, mode_t mode)
 	int error;
 	struct stat sb;
 
-	if ((error = mkdir(fname, mode)) != -1 || errno != EEXIST)
+	if ((error = mkdir(fname, mode)) != -1)
 		return error;
 
-	error = errno;
-
-	if (stat(fname, &sb) == 0 && S_ISDIR(sb.st_mode))
+	switch (errno) {
+	case EISDIR:
 		return 0;
-
-	errno = error;
-
-	return -1;
+	case EEXIST:
+		error = errno;
+		if (stat(fname, &sb) != -1 && S_ISDIR(sb.st_mode))
+			return 0;
+		errno = error;
+		/*FALLTHROUGH*/
+	default:
+		return -1;
+	}
 }
 
 static int
