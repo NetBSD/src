@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.11 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,34 +35,26 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigprocmask.S,v 1.11 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
+	ASMSTR("$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-WARN_REFERENCES(sigprocmask, \
-    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
-LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+LEAF(sigsuspend)
 #ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder
 #endif
-	bne	a1, zero, gotptr	# if new sigset pointer not null
-	li	a0, 1			# how = SIG_BLOCK
-	b	doit			# mask = zero
-gotptr:
-	lw	a1, 0(a1)		# indirect to new mask arg
-doit:
-	li	v0, SYS_compat_13_sigprocmask13
+	lw	a0, 0(a0)		# indirect to mask arg
+	li	v0, SYS_compat_13_sigsuspend13
 	syscall
-	bne	a3, zero, err
-	beq	a2, zero, out		# test if old mask requested
-	sw	v0, 0(a2)		# store old mask
-out:
-	move	v0, zero
+	bne	a3, zero, 1f
+	move	v0, zero		# should not happen
 	j	ra
-err:
+1:
 	la	t9, _C_LABEL(__cerror)
 	jr	t9
-END(sigprocmask)
+END(sigsuspend)

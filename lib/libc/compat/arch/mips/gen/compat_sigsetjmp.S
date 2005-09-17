@@ -1,11 +1,11 @@
-/*	$NetBSD: sigsuspend.S,v 1.11 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1995,
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * Havard Eidnes.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +32,57 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <sys/syscall.h>
+#include <mips/regnum.h>
+#include <mips/asm.h>
+#include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigsuspend.S,v 1.11 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
+	ASMSTR("$NetBSD: compat_sigsetjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-WARN_REFERENCES(sigsuspend, \
-    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
-
-LEAF(sigsuspend)
 #ifdef __ABICALLS__
-	.set    noreorder
-	.cpload t9
-	.set    reorder
+	.abicalls
 #endif
-	lw	a0, 0(a0)		# indirect to mask arg
-	li	v0, SYS_compat_13_sigsuspend13
-	syscall
-	bne	a3, zero, 1f
-	move	v0, zero		# should not happen
-	j	ra
-1:
-	la	t9, _C_LABEL(__cerror)
+
+/*
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *	siglongjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *	sigsetjmp(a, savemask)
+ * by restoring registers from the stack,
+ * and dependent on savemask restores the
+ * signal mask.
+ */
+
+LEAF(sigsetjmp)
+#ifdef __ABICALLS__
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
+	sw	a1, (_JBLEN*4)(a0)		# save "savemask"
+	bne	a1, 0x0, 1f			# do saving of signal mask?
+	la	t9, _setjmp
+	jr t9
+
+1:	la	t9, setjmp
+	jr t9
+END(sigsetjmp)
+
+LEAF(siglongjmp)
+#ifdef __ABICALLS__
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
+	lw	t0, (_JBLEN * 4)(a0)		# get "savemask"
+	bne	t0, 0x0, 1f			# restore signal mask?
+	la	t9, _longjmp
 	jr	t9
-END(sigsuspend)
+1:	la	t9, longjmp
+	jr	t9
+END(siglongjmp)
