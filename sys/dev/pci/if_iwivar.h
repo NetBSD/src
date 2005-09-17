@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.6 2005/08/19 14:26:38 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.7 2005/09/17 12:40:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -38,12 +38,12 @@ struct iwi_firmware {
 
 struct iwi_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	u_int8_t	wr_flags;
-	u_int8_t	wr_rate;
-	u_int16_t	wr_chan_freq;
-	u_int16_t	wr_chan_flags;
-	u_int8_t	wr_antsignal;
-	u_int8_t	wr_antenna;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_antsignal;
+	uint8_t		wr_antenna;
 };
 
 #define IWI_RX_RADIOTAP_PRESENT						\
@@ -55,9 +55,9 @@ struct iwi_rx_radiotap_header {
 
 struct iwi_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;
-	u_int16_t	wt_chan_freq;
-	u_int16_t	wt_chan_flags;
+	uint8_t		wt_flags;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 };
 
 #define IWI_TX_RADIOTAP_PRESENT						\
@@ -110,7 +110,7 @@ struct iwi_softc {
 				    enum ieee80211_state, int);
 
 	struct iwi_firmware	fw;
-	u_int32_t		flags;
+	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
 #define IWI_FLAG_FW_WARNED	(1 << 2)
@@ -145,14 +145,14 @@ struct iwi_softc {
 
 	union {
 		struct iwi_rx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_rxtapu;
 #define sc_rxtap	sc_rxtapu.th
 	int			sc_rxtap_len;
 
 	union {
 		struct iwi_tx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
