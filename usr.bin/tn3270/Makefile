@@ -1,9 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 1998/09/05 14:58:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2005/09/17 16:52:02 chs Exp $
 
-.if make(clean) || make(cleandir) || make(distclean) || make(depend) || \
-	make(obj) || make(lint)
-SUBDIR += tools
-.endif
-SUBDIR += tn3270 mset
+SUBDIR = tools .WAIT tn3270 mset
 
 .include <bsd.subdir.mk>
