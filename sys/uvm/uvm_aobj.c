@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.73 2005/09/14 20:25:21 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.74 2005/09/17 14:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.73 2005/09/14 20:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.74 2005/09/17 14:38:40 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -943,7 +943,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d",
-		    aobj, offset, flags,0);
+		    (struct uvm_aobj *)uobj, offset, flags,0);
 
 	/*
  	 * get number of pages
