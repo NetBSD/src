@@ -1,7 +1,7 @@
-/*	$NetBSD: sigaction.S,v 1.2 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: compat_shmctl.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigaction, \
-    "warning: reference to compatibility sigaction(); include <signal.h> for correct reference")
+WARN_REFERENCES(shmctl, \
+    "warning: reference to compatibility shmctl(); include <sys/shm.h> for correct reference")
 
-PSEUDO(sigaction,compat_13_sigaction13)
+PSEUDO(shmctl,compat_14_shmctl)
