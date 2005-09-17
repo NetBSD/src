@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.7 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.8 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -39,7 +39,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigsetjmp.S,v 1.7 2003/08/07 16:42:15 agc Exp $")
+	ASMSTR("$NetBSD: sigsetjmp.S,v 1.8 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -58,7 +58,7 @@
  * signal mask.
  */
 
-LEAF(sigsetjmp)
+LEAF(__sigsetjmp14)
 #ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
@@ -69,11 +69,11 @@ LEAF(sigsetjmp)
 	la	t9, _setjmp
 	jr t9
 
-1:	la	t9, setjmp
+1:	la	t9, __setjmp14
 	jr t9
-END(sigsetjmp)
+END(__sigsetjmp14)
 
-LEAF(siglongjmp)
+LEAF(__siglongjmp14)
 #ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
@@ -83,6 +83,6 @@ LEAF(siglongjmp)
 	bne	t0, 0x0, 1f			# restore signal mask?
 	la	t9, _longjmp
 	jr	t9
-1:	la	t9, longjmp
+1:	la	t9, __longjmp14
 	jr	t9
-END(siglongjmp)
+END(__siglongjmp14)

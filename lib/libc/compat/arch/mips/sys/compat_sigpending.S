@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.11 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigpending.S,v 1.11 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("$NetBSD: compat_sigpending.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 WARN_REFERENCES(sigpending, \
