@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.23 2005/09/15 19:56:50 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.24 2005/09/17 12:40:27 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.23 2005/09/15 19:56:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.24 2005/09/17 12:40:27 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -111,7 +111,7 @@ static void iwi_free_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
 
 static int iwi_media_change(struct ifnet *);
 static void iwi_media_status(struct ifnet *, struct ifmediareq *);
-static u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
+static uint16_t iwi_read_prom_word(struct iwi_softc *, uint8_t);
 static int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void iwi_fix_channel(struct ieee80211com *, struct mbuf *);
 static void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_data *, int,
@@ -121,11 +121,11 @@ static void iwi_notification_intr(struct iwi_softc *, struct iwi_rx_data *,
 static void iwi_rx_intr(struct iwi_softc *);
 static void iwi_tx_intr(struct iwi_softc *);
 static int iwi_intr(void *);
-static int iwi_cmd(struct iwi_softc *, u_int8_t, void *, u_int8_t, int);
+static int iwi_cmd(struct iwi_softc *, uint8_t, void *, uint8_t, int);
 static int iwi_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
 static void iwi_start(struct ifnet *);
 static void iwi_watchdog(struct ifnet *);
-static int iwi_get_table0(struct iwi_softc *, u_int32_t *);
+static int iwi_get_table0(struct iwi_softc *, uint32_t *);
 static int iwi_get_radio(struct iwi_softc *, int *);
 static int iwi_ioctl(struct ifnet *, u_long, caddr_t);
 static void iwi_stop_master(struct iwi_softc *);
@@ -153,15 +153,15 @@ static const struct ieee80211_rateset iwi_rateset_11b =
 static const struct ieee80211_rateset iwi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static __inline u_int8_t
-MEM_READ_1(struct iwi_softc *sc, u_int32_t addr)
+static __inline uint8_t
+MEM_READ_1(struct iwi_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_1(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-static __inline u_int32_t
-MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
+static __inline uint32_t
+MEM_READ_4(struct iwi_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
@@ -204,7 +204,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t data;
-	u_int16_t val;
+	uint16_t val;
 	int error, revision, i;
 
 	sc->sc_pct = pa->pa_pc;
@@ -810,7 +810,7 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	struct ieee80211com *ic = &sc->sc_ic;
 #define N(a)	(sizeof (a) / sizeof (a[0]))
 	static const struct {
-		u_int32_t	val;
+		uint32_t	val;
 		int		rate;
 	} rates[] = {
 		{ IWI_RATE_DS1,      2 },
@@ -826,7 +826,7 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		{ IWI_RATE_OFDM48,  96 },
 		{ IWI_RATE_OFDM54, 108 },
 	};
-	u_int32_t val;
+	uint32_t val;
 	int rate, i;
 
 	imr->ifm_status = IFM_AVALID;
@@ -906,11 +906,11 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 /*
  * Read 16 bits at address 'addr' from the serial EEPROM.
  */
-static u_int16_t
-iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
+static uint16_t
+iwi_read_prom_word(struct iwi_softc *sc, uint8_t addr)
 {
-	u_int32_t tmp;
-	u_int16_t val;
+	uint32_t tmp;
+	uint16_t val;
 	int n;
 
 	/* Clock C once before the first command */
@@ -966,8 +966,8 @@ static void
 iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 {
 	struct ieee80211_frame *wh;
-	u_int8_t subtype;
-	u_int8_t *frm, *efrm;
+	uint8_t subtype;
+	uint8_t *frm, *efrm;
 
 	wh = mtod(m, struct ieee80211_frame *);
 
@@ -980,8 +980,8 @@ iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 		return;
 
-	frm = (u_int8_t *)(wh + 1);
-	efrm = mtod(m, u_int8_t *) + m->m_len;
+	frm = (uint8_t *)(wh + 1);
+	efrm = mtod(m, uint8_t *) + m->m_len;
 
 	frm += 12;	/* skip tstamp, bintval and capinfo fields */
 	while (frm < efrm) {
@@ -1229,7 +1229,7 @@ iwi_tx_intr(struct iwi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct iwi_tx_data *data;
-	u_int32_t hw;
+	uint32_t hw;
 
 	hw = CSR_READ_4(sc, IWI_CSR_TX1_RIDX);
 
@@ -1263,7 +1263,7 @@ static int
 iwi_intr(void *arg)
 {
 	struct iwi_softc *sc = arg;
-	u_int32_t r;
+	uint32_t r;
 
 	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
@@ -1307,7 +1307,7 @@ iwi_intr(void *arg)
 }
 
 static int
-iwi_cmd(struct iwi_softc *sc, u_int8_t type, void *data, u_int8_t len,
+iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len,
     int async)
 {
 	struct iwi_cmd_desc *desc;
@@ -1542,9 +1542,9 @@ iwi_watchdog(struct ifnet *ifp)
 }
 
 static int
-iwi_get_table0(struct iwi_softc *sc, u_int32_t *tbl)
+iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 {
-	u_int32_t size, buf[128];
+	uint32_t size, buf[128];
 
 	if (!(sc->flags & IWI_FLAG_FW_INITED)) {
 		memset(buf, 0, sizeof buf);
@@ -1588,7 +1588,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGTABLE0:
 		ifr = (struct ifreq *)data;
-		error = iwi_get_table0(sc, (u_int32_t *)ifr->ifr_data);
+		error = iwi_get_table0(sc, (uint32_t *)ifr->ifr_data);
 		break;
 
 	case SIOCGRADIO:
@@ -1696,7 +1696,7 @@ iwi_reset(struct iwi_softc *sc)
 static int
 iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 {
-	u_int16_t *w;
+	uint16_t *w;
 	int ntries, i;
 
 	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
@@ -1764,7 +1764,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	bus_dma_segment_t seg;
 	caddr_t virtaddr;
 	u_char *p, *end;
-	u_int32_t sentinel, ctl, src, dst, sum, len, mlen;
+	uint32_t sentinel, ctl, src, dst, sum, len, mlen;
 	int ntries, nsegs, error;
 
 	/* Allocate DMA memory for storing firmware image */
@@ -1980,7 +1980,7 @@ iwi_config(struct iwi_softc *sc)
 	struct iwi_txpower power;
 	struct ieee80211_key *wk;
 	struct iwi_wep_key wepkey;
-	u_int32_t data;
+	uint32_t data;
 	int error, i;
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
@@ -2111,7 +2111,7 @@ iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwi_scan scan;
-	u_int8_t *p;
+	uint8_t *p;
 	int i, count;
 
 	(void)memset(&scan, 0, sizeof scan);
@@ -2152,8 +2152,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	struct iwi_configuration config;
 	struct iwi_associate assoc;
 	struct iwi_rateset rs;
-	u_int16_t capinfo;
-	u_int32_t data;
+	uint16_t capinfo;
+	uint32_t data;
 	int error;
 
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
