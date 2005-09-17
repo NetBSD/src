@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.6 2005/09/16 00:18:48 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.7 2005/09/17 10:28:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.6 2005/09/16 00:18:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.7 2005/09/17 10:28:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -138,15 +138,15 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 
 	case VLNK:
 		KASSERT(strlen(target) < MAXPATHLEN);
+		nnode->tn_size = strlen(target);
 		nnode->tn_link = tmpfs_str_pool_get(&tmp->tm_str_pool,
-		    strlen(target), 0);
+		    nnode->tn_size, 0);
 		if (nnode->tn_link == NULL) {
 			nnode->tn_type = VNON;
 			tmpfs_free_node(tmp, nnode);
 			return ENOSPC;
 		}
-		strcpy(nnode->tn_link, target);
-		nnode->tn_size = strlen(target);
+		memcpy(nnode->tn_link, target, nnode->tn_size);
 		break;
 
 	case VREG:
@@ -191,7 +191,7 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 
 	case VLNK:
 		tmpfs_str_pool_put(&tmp->tm_str_pool, node->tn_link,
-		    strlen(node->tn_link));
+		    node->tn_size);
 		pages = 0;
 		break;
 
