@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.23 2005/06/22 06:06:34 junyoung Exp $
+# $NetBSD: Makefile.boot,v 1.24 2005/09/17 16:49:25 chs Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -82,30 +82,16 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine x86
-.endif
-
-depend dependall realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
-machine::
-	-rm -f $@
-	ln -s $S/arch/i386/include $@
-
-x86::
-	-rm -f $@
-	ln -s $S/arch/x86/include $@
-
-${OBJS}: machine x86 lib
-
-lib:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && ln -s $S/arch/i386/include machine
+	-rm -f x86 && ln -s $S/arch/x86/include x86
 .ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
 .endif
 
 ### find out what to use for libi386
