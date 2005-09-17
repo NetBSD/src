@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 2005/08/18 22:31:47 rpaulo Exp $
+# $NetBSD: mi,v 1.124 2005/09/17 19:33:00 rpaulo Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -594,7 +594,7 @@
 ./usr/share/examples/postfix/SMTPD_POLICY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SMTPD_PROXY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/STANDARD_CONFIGURATION_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/TLS_LICENSE	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/TLS_LICENSE	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/TLS_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TUNING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/UUCP_README	misc-postfix-examples	postfix,doc
