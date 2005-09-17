@@ -1,8 +1,9 @@
-# $NetBSD: std.hpcsh,v 1.5 2005/03/07 18:25:22 uwe Exp $
+# $NetBSD: std.hpcsh,v 1.6 2005/09/17 09:44:07 yamt Exp $
 #
 # standard, required NetBSD/hpcsh 'options'
 
 machine hpcsh sh3
+include		"conf/std"	# MI standard options
 
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	IOM_RAM_BEGIN=0x0c000000

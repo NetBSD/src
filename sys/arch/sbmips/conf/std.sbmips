@@ -1,6 +1,7 @@
-# $NetBSD: std.sbmips,v 1.3 2002/12/09 22:54:16 simonb Exp $
+# $NetBSD: std.sbmips,v 1.4 2005/09/17 09:44:08 yamt Exp $
 
 machine sbmips mips
+include		"conf/std"	# MI standard options
 
 options	MIPS64
 options	MIPS64_SB1	# we use an SB1 core
