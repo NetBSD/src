@@ -1,0 +1,6 @@
+# $NetBSD: std,v 1.1 2005/09/17 09:43:40 yamt Exp $
+#
+# standard MI 'options'
+#
+# this file is for options which can't be off-by-default for some reasons.
+# "it's commonly used" is NOT a good reason to enable options here.
