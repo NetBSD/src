@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.21 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.22 2005/09/17 14:38:40 yamt Exp $	*/
 
 /*
  *
@@ -40,11 +40,7 @@
  */
 
 #if defined(_KERNEL_OPT)
-#if 0 /* notyet */
 #include "opt_vmswap.h"
-#else
-#define	VMSWAP
-#endif
 #endif
 
 /*
