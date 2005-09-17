@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.13 2005/02/26 23:10:18 perry Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.14 2005/09/17 14:52:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.13 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.14 2005/09/17 14:52:55 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.13 2005/02/26 23:10:18 perry Exp $")
 #include <compat/irix/irix_swap.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
-
-extern struct lock swap_syscall_lock;
 
 int
 irix_sys_swapctl(l, v, retval)
@@ -147,9 +145,7 @@ irix_sys_swapctl(l, v, retval)
 		if ((error = copyin(uise, ise, ilen)) != 0)
 			return error;
 
-		lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 		uvm_swap_stats(SWAP_STATS, bse, ist.swt_n, retval);
-		lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 		for (i = 0; i < ist.swt_n; i++) {
 
@@ -199,10 +195,8 @@ bad:
 
 		sep = (struct swapent *)malloc(
 		    sizeof(struct swapent) * entries, M_TEMP, M_WAITOK);
-		lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 		uvm_swap_stats(SWAP_STATS, sep, entries,
 		    (register_t *)(void *)&dontcare);
-		lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 		if (SCARG(uap, cmd) == IRIX_SC_GETFREESWAP)
 			for (i = 0; i < entries; i++)
