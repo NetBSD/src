@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.12 2005/09/17 14:38:40 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.13 2005/09/17 14:51:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -48,11 +48,11 @@ int	uvm_swap_put(int, struct vm_page **, int, int);
 int	uvm_swap_alloc(int *, boolean_t);
 void	uvm_swap_free(int, int);
 void	uvm_swap_markbad(int, int);
-void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 boolean_t	uvm_swapisfull(void);
 #else /* defined(VMSWAP) */
 #define	uvm_swapisfull()	TRUE
 #endif /* defined(VMSWAP) */
+void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 
 #endif /* _KERNEL */
 
