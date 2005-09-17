@@ -1,4 +1,4 @@
-/*	$NetBSD: getlabelsector.c,v 1.2 2003/01/24 21:55:03 fvdl Exp $	*/
+/*	$NetBSD: getlabelsector.c,v 1.3 2005/09/17 01:51:21 elad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getlabelsector.c,v 1.2 2003/01/24 21:55:03 fvdl Exp $");
+__RCSID("$NetBSD: getlabelsector.c,v 1.3 2005/09/17 01:51:21 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ getlabelsector(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_LABELSECTOR;
 	varlen = sizeof(sector);
-	if (sysctl(mib, 2, &sector, &varlen, NULL, 0) < 0)
+	if (sysctl(mib, 2, &sector, &varlen, NULL, (size_t)0) < 0)
 		return (-1);
 
 	return sector;
@@ -68,7 +68,7 @@ getlabeloffset(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_LABELOFFSET;
 	varlen = sizeof(offset);
-	if (sysctl(mib, 2, &offset, &varlen, NULL, 0) < 0)
+	if (sysctl(mib, 2, &offset, &varlen, NULL, (size_t)0) < 0)
 		return (-1);
 
 	return ((off_t)offset);
