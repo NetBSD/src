@@ -1,7 +1,8 @@
-#	$NetBSD: std.arc,v 1.17 2003/12/13 01:31:24 sekiya Exp $
+#	$NetBSD: std.arc,v 1.18 2005/09/17 09:44:06 yamt Exp $
 # standard arc info
 
 machine arc mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 mainbus0 at root

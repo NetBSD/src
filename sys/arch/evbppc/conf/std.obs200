@@ -1,8 +1,9 @@
-#	$NetBSD: std.obs200,v 1.1 2005/03/18 15:31:58 shige Exp $
+#	$NetBSD: std.obs200,v 1.2 2005/09/17 09:44:06 yamt Exp $
 #
 # Standard/required options for NetBSD/obs200
 
 machine	evbppc powerpc
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_IBM4XX	# IBM 40x family
