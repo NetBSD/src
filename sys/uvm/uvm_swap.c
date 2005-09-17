@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.94 2005/06/27 02:29:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.95 2005/09/17 14:51:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.94 2005/06/27 02:29:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.95 2005/09/17 14:51:50 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -216,7 +216,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
-struct lock swap_syscall_lock;
+static struct lock swap_syscall_lock;
 
 /*
  * prototypes
@@ -230,6 +230,8 @@ static void		 swaplist_trim(void);
 
 static int swap_on(struct proc *, struct swapdev *);
 static int swap_off(struct proc *, struct swapdev *);
+
+static void uvm_swap_stats_locked(int, struct swapent *, int, register_t *);
 
 static void sw_reg_strategy(struct swapdev *, struct buf *, int);
 static void sw_reg_iodone(struct buf *);
@@ -487,7 +489,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			len = sizeof(struct swapent) * misc;
 		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
 
-		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
+		uvm_swap_stats_locked(SCARG(uap, cmd), sep, misc, retval);
 		error = copyout(sep, SCARG(uap, arg), len);
 
 		free(sep, M_TEMP);
@@ -681,6 +683,15 @@ out:
  */
 void
 uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
+{
+
+	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	uvm_swap_stats_locked(cmd, sep, sec, retval);
+	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+}
+
+static void
+uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 	struct swappri *spp;
 	struct swapdev *sdp;
