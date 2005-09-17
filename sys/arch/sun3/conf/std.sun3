@@ -1,7 +1,8 @@
-# $NetBSD: std.sun3,v 1.30 2002/10/20 02:37:34 chs Exp $
+# $NetBSD: std.sun3,v 1.31 2005/09/17 09:44:08 yamt Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k
+include		"conf/std"	# MI standard options
 
 # Machine type to be supported by this kernel.  Note:
 # The SUN3 and SUN3X options are mutually exclusive!

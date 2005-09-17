@@ -1,8 +1,9 @@
-# $NetBSD: std.mmeye,v 1.8 2002/05/09 12:35:44 uch Exp $
+# $NetBSD: std.mmeye,v 1.9 2005/09/17 09:44:07 yamt Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
 machine mmeye sh3
+include		"conf/std"	# MI standard options
 
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_RAM_SIZE=0x01000000		# 16MB

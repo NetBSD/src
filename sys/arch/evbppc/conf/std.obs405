@@ -1,8 +1,9 @@
-#	$NetBSD: std.obs405,v 1.1 2003/09/23 14:45:13 shige Exp $
+#	$NetBSD: std.obs405,v 1.2 2005/09/17 09:44:06 yamt Exp $
 #
 # Standard/required options for NetBSD/obs405.
 
 machine	evbppc powerpc
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_IBM4XX	# IBM 40x family

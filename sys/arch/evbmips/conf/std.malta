@@ -1,6 +1,7 @@
-# $NetBSD: std.malta,v 1.3 2002/12/09 22:54:10 simonb Exp $
+# $NetBSD: std.malta,v 1.4 2005/09/17 09:44:06 yamt Exp $
 
 machine evbmips mips
+include		"conf/std"	# MI standard options
 
 options MIPS3_ENABLE_CLOCK_INTR
 

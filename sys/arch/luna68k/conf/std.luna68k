@@ -1,6 +1,7 @@
-#	$NetBSD: std.luna68k,v 1.5 2001/12/24 17:56:59 chs Exp $
+#	$NetBSD: std.luna68k,v 1.6 2005/09/17 09:44:07 yamt Exp $
 
 machine luna68k m68k
+include		"conf/std"	# MI standard options
 
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts

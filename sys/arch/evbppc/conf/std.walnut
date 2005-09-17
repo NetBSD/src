@@ -1,8 +1,9 @@
-#	$NetBSD: std.walnut,v 1.4 2003/08/12 05:15:42 matt Exp $
+#	$NetBSD: std.walnut,v 1.5 2005/09/17 09:44:06 yamt Exp $
 #
 # Standard/required options for NetBSD/walnut.
 
 machine	evbppc powerpc
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_IBM4XX	# IBM 40x family

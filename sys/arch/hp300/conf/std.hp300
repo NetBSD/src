@@ -1,9 +1,10 @@
-#	$NetBSD: std.hp300,v 1.8 2001/01/02 04:28:38 simonb Exp $
+#	$NetBSD: std.hp300,v 1.9 2005/09/17 09:44:06 yamt Exp $
 #
 # Options/devices that all hp300s should have
 #
 
 machine hp300 m68k
+include		"conf/std"	# MI standard options
 
 options 	EXEC_AOUT	# support for exec'ing a.out
 options 	EXEC_ELF32	# support for exec'ing ELF

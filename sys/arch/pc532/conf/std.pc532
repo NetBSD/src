@@ -1,8 +1,9 @@
-#	$NetBSD: std.pc532,v 1.16 2005/02/22 14:46:47 chs Exp $
+#	$NetBSD: std.pc532,v 1.17 2005/09/17 09:44:07 yamt Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
 machine pc532
+include		"conf/std"	# MI standard options
 
 mainbus0 	at root
 clock0 		at mainbus0		# system timer

@@ -1,8 +1,9 @@
-#	$NetBSD: std.integrator,v 1.12 2003/09/06 11:38:39 rearnsha Exp $
+#	$NetBSD: std.integrator,v 1.13 2005/09/17 09:44:06 yamt Exp $
 #
 # standard NetBSD/integrator options
 
 machine	evbarm arm
+include		"conf/std"	# MI standard options
 
 # Pull in Integrator config definitions.
 include "arch/evbarm/conf/files.integrator"

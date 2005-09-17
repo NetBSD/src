@@ -1,8 +1,9 @@
-#	$NetBSD: std.amiga,v 1.19 2002/02/13 12:08:57 is Exp $
+#	$NetBSD: std.amiga,v 1.20 2005/09/17 09:44:06 yamt Exp $
 
 # standard amiga information
 
 machine amiga m68k
+include		"conf/std"	# MI standard options
 
 mainbus0	at root
 
