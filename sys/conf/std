@@ -1,6 +1,10 @@
-# $NetBSD: std,v 1.1 2005/09/17 09:43:40 yamt Exp $
+# $NetBSD: std,v 1.2 2005/09/17 14:39:11 yamt Exp $
 #
 # standard MI 'options'
 #
 # this file is for options which can't be off-by-default for some reasons.
 # "it's commonly used" is NOT a good reason to enable options here.
+
+# the following options are on-by-default to keep
+# kernel config file compatibility.
+options	VMSWAP		# Swap device/file support
