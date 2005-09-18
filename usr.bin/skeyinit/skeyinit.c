@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.24 2004/11/03 20:10:08 dsl Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.25 2005/09/18 21:50:20 elad Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinit.c,v 1.24 2004/11/03 20:10:08 dsl Exp $");
+__RCSID("$NetBSD: skeyinit.c,v 1.25 2005/09/18 21:50:20 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -42,12 +42,11 @@ __RCSID("$NetBSD: skeyinit.c,v 1.24 2004/11/03 20:10:08 dsl Exp $");
 #define SKEY_NAMELEN    4
 #endif
 
-int main __P((int, char **));
-
 int main(int argc, char **argv)
 {
 	int     rval, nn, i, l;
 	int n = 0, defaultsetup = 1, zerokey = 0, hexmode = 0;
+	int	argpass = 0, argkey = 0;
 	time_t  now;
 	char	hostname[MAXHOSTNAMELEN + 1];
 	char    seed[SKEY_MAX_PW_LEN+2], key[SKEY_BINKEY_SIZE], defaultseed[SKEY_MAX_SEED_LEN+1];
@@ -101,12 +100,26 @@ int main(int argc, char **argv)
 		err(1, "Who are you?");
 	salt = pp->pw_passwd;
 
-	while((c = getopt(argc, argv, "n:t:sxz")) != -1) {
+	while((c = getopt(argc, argv, "k:n:p:t:sxz")) != -1) {
 		switch(c) {
+			case 'k':
+				argkey = 1;
+				if (strlen(optarg) > SKEY_MAX_PW_LEN)
+					errx(1, "key too long");
+				strlcpy(passwd, optarg, sizeof(passwd));
+				strlcpy(passwd2, optarg, sizeof(passwd));
+				break;
 			case 'n':
 				n = atoi(optarg);
 				if(n < 1 || n > SKEY_MAX_SEQ)
 					errx(1, "count must be between 1 and %d", SKEY_MAX_SEQ);
+				break;
+			case 'p':
+				if (strlen(optarg) >= _PASSWORD_LEN)
+					errx(1, "password too long");
+				if ((pw = malloc(_PASSWORD_LEN + 1)) == NULL)
+					err(1, "no memory for password");
+				strlcpy(pw, optarg, _PASSWORD_LEN + 1);
 				break;
 			case 't':
 				if(skey_set_algorithm(optarg) == NULL)
@@ -141,7 +154,8 @@ int main(int argc, char **argv)
 	}
 
 	if (getuid() != 0) {
-		pw = getpass("Password:");
+		if (!argpass)
+			pw = getpass("Password:");
 		p = crypt(pw, salt);
 
 		if (strcmp(p, pp->pw_passwd)) {
@@ -269,10 +283,12 @@ int main(int argc, char **argv)
 			if (i >= 2)
 				exit(1);
 
-			printf("Enter secret password: ");
-			readpass(passwd, sizeof(passwd));
-			if (passwd[0] == '\0')
-				exit(1);
+			if (!argkey) {
+				printf("Enter secret password: ");
+				readpass(passwd, sizeof(passwd));
+				if (passwd[0] == '\0')
+					exit(1);
+			}
 
 			if (strlen(passwd) < SKEY_MIN_PW_LEN) {
 				(void)fprintf(stderr,
@@ -289,10 +305,13 @@ int main(int argc, char **argv)
 				continue;
 			}
 #endif
-			printf("Again secret password: ");
-			readpass(passwd2, sizeof(passwd));
-			if (passwd2[0] == '\0')
-				exit(1);
+
+			if (!argkey) {
+				printf("Again secret password: ");
+				readpass(passwd2, sizeof(passwd));
+				if (passwd2[0] == '\0')
+					exit(1);
+			}
 
 			if (strcmp(passwd, passwd2) == 0)
 				break;
