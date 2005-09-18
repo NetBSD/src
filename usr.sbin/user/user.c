@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.91 2005/09/12 15:45:03 christos Exp $ */
+/* $NetBSD: user.c,v 1.92 2005/09/18 14:15:53 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.91 2005/09/12 15:45:03 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.92 2005/09/18 14:15:53 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -174,8 +174,7 @@ enum {
 enum {
 	MaxShellNameLen = 256,
 	MaxFileNameLen = MAXPATHLEN,
-	MaxUserNameLen = 32,
-	MaxFieldNameLen = 32,
+	MaxUserNameLen = LOGIN_NAME_MAX - 1,
 	MaxCommandLen = 2048,
 	MaxEntryLen = 2048,
 	PasswordLength = 2048,
@@ -700,6 +699,10 @@ static int
 valid_login(char *login_name, int allow_samba)
 {
 	unsigned char	*cp;
+
+	/* First character of a login name cannot be '-'. */
+	if (*login_name == '-')
+		return 0;
 
 	if (strlen(login_name) >= LOGIN_NAME_MAX) {
 		return 0;
@@ -1682,7 +1685,6 @@ find_user_info(const char *name)
 }
 #endif
 
-#ifdef EXTENSIONS
 /* see if we can find out the group struct */
 static struct group *
 find_group_info(const char *name)
@@ -1697,7 +1699,6 @@ find_group_info(const char *name)
 	}
 	return NULL;
 }
-#endif
 
 /* print out usage message, and then exit */
 void
@@ -2375,11 +2376,10 @@ userinfo(int argc, char **argv)
 	} else {
 		(void)printf("groups\t%s %s\n", grp->gr_name, buf);
 	}
-	(void)printf("change\t%s", pwp->pw_change ?
-	    ctime(&pwp->pw_change) : "NEVER\n");
-#ifdef EXTENSIONS
+	(void)printf("change\t%s", pwp->pw_change > 0 ?
+	    ctime(&pwp->pw_change) : pwp->pw_change == -1 ?
+	    "NEXT LOGIN\n" : "NEVER\n");
 	(void)printf("class\t%s\n", pwp->pw_class);
-#endif
 	(void)printf("gecos\t%s\n", pwp->pw_gecos);
 	(void)printf("dir\t%s\n", pwp->pw_dir);
 	(void)printf("shell\t%s\n", pwp->pw_shell);
