@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.55 2005/02/26 23:10:19 perry Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.55.2.1 2005/09/18 20:09:49 tron Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.55 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.55.2.1 2005/09/18 20:09:49 tron Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -119,6 +119,8 @@ const struct emul emul_mach = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 /*
