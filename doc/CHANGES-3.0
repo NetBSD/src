@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.251 2005/09/15 23:54:58 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.252 2005/09/18 18:37:31 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12753,4 +12753,31 @@ libexec/makewhatis/makewhatis.c			1.32-1.37
 
 	Bug-fixes (mostly for the parser) and documentation updates.
 	[tron, ticket #789]
+
+xfree/xc/programs/Xserver/afb/afbpixmap.c	1.2
+xfree/xc/programs/Xserver/cfb/cfbpixmap.c	1.2
+xfree/xc/programs/Xserver/dix/pixmap.c		1.2
+xfree/xc/programs/Xserver/fb/fbpixmap.c		1.2
+xfree/xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c	1.2
+xfree/xc/programs/Xserver/hw/xfree86/xf4bpp/ppcPixmap.c	1.2
+xfree/xc/programs/Xserver/ilbm/ilbmpixmap.c	1.2
+xfree/xc/programs/Xserver/iplan2p4/iplpixmap.c	1.2
+xfree/xc/programs/Xserver/mfb/mfbpixmap.c	1.2
+xfree/xc/programs/Xserver/os/utils.c		1.7
+
+	Fix security hole reported in CAN-2005-2495. The patch was provided by
+	Marc Aurele La France from the XFree86 project.
+	[tron, ticket #799]
+
+distrib/utils/sysinst/bsddisklabel.c		1.35
+
+	Don't display 'Yes' under 'Newfs' for swap
+	[dsl, ticket #791]
+
+distrib/utils/sysinst/menus.mbr			1.4
+
+	Float the menu box of menu_fullpart (all mbr disk) below the text
+	message.  Stops the German text flowing into the box, should fix
+	PR/31292
+	[dsl, ticket #792]
 
