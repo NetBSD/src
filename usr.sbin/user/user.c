@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.92 2005/09/18 14:15:53 christos Exp $ */
+/* $NetBSD: user.c,v 1.93 2005/09/18 21:41:26 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.92 2005/09/18 14:15:53 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.93 2005/09/18 21:41:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -206,17 +206,18 @@ static int		verbose;
 static char *
 skipspace(char *s)
 {
-	for (; *s && isspace((unsigned char)*s) ; s++) 
-		continue;
+	for (; *s && isspace((unsigned char)*s) ; s++) {
+	}
 	return s;
 }
 
 static int
 check_numeric(const char *val, const char *name)
 {
-	if (!is_number(val))
+	if (!is_number(val)) {
 		errx(EXIT_FAILURE, "When using [-%c %s], "
 		    "the %s must be numeric", *name, name, name);
+	}
 	return atoi(val);
 }
 
@@ -665,9 +666,10 @@ append_group(char *user, int ngroups, const char **groups)
 			    strncmp(groups[i], buf, (unsigned) entc) == 0) {
 				if ((nc = snprintf(&buf[cc - 1],
 				    sizeof(buf) - cc + 1, "%s%s\n",
-				    (buf[cc - 2] == ':') ? "" : ",", user)) < 0)
+				    (buf[cc - 2] == ':') ? "" : ",", user)) < 0) {
 					warnx("Warning: group `%s' "
 					    "entry too long", groups[i]);
+				}
 				cc += nc - 1;
 			}
 		}
@@ -701,9 +703,9 @@ valid_login(char *login_name, int allow_samba)
 	unsigned char	*cp;
 
 	/* First character of a login name cannot be '-'. */
-	if (*login_name == '-')
+	if (*login_name == '-') {
 		return 0;
-
+	}
 	if (strlen(login_name) >= LOGIN_NAME_MAX) {
 		return 0;
 	}
@@ -1001,8 +1003,9 @@ valid_class(char *class)
 {
 	login_cap_t *lc;
 	
-	if (class == NULL || *class == '\0')
+	if (class == NULL || *class == '\0') {
 		return 1;
+	}
 	/*
 	 * Check if /etc/login.conf exists. login_getclass() will
 	 * return 1 due to it not existing, so not informing the
@@ -1036,14 +1039,10 @@ scantime(time_t *tp, char *s)
 		(void)memset(&tm, 0, sizeof(tm));
 		if (strptime(s, "%c", &tm) != NULL) {
 			*tp = mktime(&tm);
-			if (*tp == -1)
-				return 0;
-			return 1;
+			return (*tp == -1) ? 0 : 1;
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
-			if (*tp == -1)
-				return 0;
-			return 1;
+			return (*tp == -1) ? 0 : 1;
 		} else {
 			errno = 0;
 			*tp = val = strtol(s, &ep, 10);
@@ -1051,8 +1050,9 @@ scantime(time_t *tp, char *s)
 				*tp = 0;
 				return 0;
 			}
-			if (*tp != val)
+			if (*tp != val) {
 				return 0;
+			}
 		}
 	}
 	return 1;
@@ -1472,12 +1472,14 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					 * and just change the password.
 					 */
 					if (asprintf(&locked_pwd, "%s%s",
-					    LOCKED, up->u_password) == -1)
+					    LOCKED, up->u_password) == -1) {
 						err(EXIT_FAILURE,
 						    "asprintf failed");
+					}
 					pwp->pw_passwd = locked_pwd;
-				} else
+				} else {
 					pwp->pw_passwd = up->u_password;
+				}
 			}
 		}
 		
@@ -1485,20 +1487,22 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		if (up->u_locked == LOCK) {
 			/* check to see account if already locked. */
 			if ((locked_pwd = strstr(pwp->pw_passwd, LOCKED))
-			    != NULL)
+			    != NULL) {
 				warnx("Account is already locked");
-			else {
+			} else {
 				if (asprintf(&locked_pwd, "%s%s", LOCKED,
-				    pwp->pw_passwd) == -1)
+				    pwp->pw_passwd) == -1) {
 					err(EXIT_FAILURE, "asprintf failed");
+				}
 				pwp->pw_passwd = locked_pwd;
 			}
 		} else if (up->u_locked == UNLOCK) {
 			if ((locked_pwd = strstr(pwp->pw_passwd, LOCKED))
-			    == NULL)
+			    == NULL) {
 				warnx("Account '%s' is not locked", login_name);
-			else
+			} else {
 				pwp->pw_passwd = locked_pwd + strlen(LOCKED);
+			}
 		}
 
 		if (up->u_flags & F_UID) {
@@ -1552,12 +1556,15 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 				pwp->pw_expire = 0;
 			}
 		}
-		if (up->u_flags & F_COMMENT)
+		if (up->u_flags & F_COMMENT) {
 			pwp->pw_gecos = up->u_comment;
-		if (up->u_flags & F_HOMEDIR)
+		}
+		if (up->u_flags & F_HOMEDIR) {
 			pwp->pw_dir = up->u_home;
-		if (up->u_flags & F_SHELL)
+		}
+		if (up->u_flags & F_SHELL) {
 			pwp->pw_shell = up->u_shell;
+		}
 #ifdef EXTENSIONS
 		if (up->u_flags & F_CLASS) {
 			if (!valid_class(up->u_class)) {
@@ -1952,14 +1959,15 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_COMMENT;
 			break;
 		case 'C':
-			if (strcasecmp(optarg, "yes") == 0)
+			if (strcasecmp(optarg, "yes") == 0) {
 				u.u_locked = LOCK;
-			else if (strcasecmp(optarg, "no") == 0)
+			} else if (strcasecmp(optarg, "no") == 0) {
 				u.u_locked = UNLOCK;
-			else
+			} else {
 				/* No idea. */
-				errx(1, "Please type 'yes' or 'no'");
-				
+				errx(EXIT_FAILURE,
+					"Please type 'yes' or 'no'");
+			}
 			break;	
 		case 'F':
 			memsave(&u.u_inactive, "-1", strlen("-1"));
@@ -2112,8 +2120,9 @@ userdel(int argc, char **argv)
 		warnx("No such user `%s'", *argv);
 		return EXIT_FAILURE;
 	}
-	if (rmhome)
+	if (rmhome) {
 		(void)removehomedir(pwp->pw_name, pwp->pw_uid, pwp->pw_dir);
+	}
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
@@ -2431,8 +2440,9 @@ groupinfo(int argc, char **argv)
 	(void)printf("members\t");
 	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
 		(void)printf("%s", *cpp);
-		if (*(cpp + 1))
+		if (*(cpp + 1)) {
 			(void) printf(", ");
+		}
 	}
 	(void)fputc('\n', stdout);
 	return EXIT_SUCCESS;
