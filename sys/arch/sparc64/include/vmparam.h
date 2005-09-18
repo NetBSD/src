@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2003/10/21 12:08:11 kleink Exp $ */
+/*	$NetBSD: vmparam.h,v 1.26.14.1 2005/09/18 20:09:50 tron Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,26 @@
 #define	MAXSSIZ		(8*1024*1024)			/* max stack size */
 #endif
 #endif
+
+/*
+ * 32-bit emulation limits.
+ */
+#ifndef MAXTSIZ32
+#define	MAXTSIZ32	(1*1024*1024*1024)	/* max text size */
+#endif
+#ifndef DFLDSIZ32
+#define	DFLDSIZ32	(128*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ32
+#define	MAXDSIZ32	(1*1024*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ32
+#define	DFLSSIZ32	(2*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ32
+#define	MAXSSIZ32	(8*1024*1024)			/* max stack size */
+#endif
+
 /*
  * Size of shared memory map
  */

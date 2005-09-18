@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.19 2005/03/12 16:29:59 dsl Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.19.2.1 2005/09/18 20:09:49 tron Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.19 2005/03/12 16:29:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.19.2.1 2005/09/18 20:09:49 tron Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.19 2005/03/12 16:29:59 dsl Exp
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
+
+#include <uvm/uvm_param.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_lwp.h>
@@ -686,4 +688,10 @@ svr4_32_sys_sysarch(l, v, retval)
 		printf("(sparc) svr4_32_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
+}
+
+vaddr_t
+svr4_32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

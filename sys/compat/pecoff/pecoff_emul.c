@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.10 2003/12/20 19:01:30 fvdl Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.10.14.1 2005/09/18 20:09:49 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.10 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.10.14.1 2005/09/18 20:09:49 tron Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.10 2003/12/20 19:01:30 fvdl Exp $"
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/exec_coff.h>
 #include <machine/coff_machdep.h>
@@ -111,4 +113,6 @@ const struct emul emul_pecoff = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };

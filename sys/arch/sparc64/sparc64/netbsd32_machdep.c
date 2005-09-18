@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.44.10.2 2005/07/13 09:28:15 tron Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.44.10.3 2005/09/18 20:09:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.44.10.2 2005/07/13 09:28:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.44.10.3 2005/09/18 20:09:49 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -107,6 +107,8 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
+
+	netbsd32_adjust_limits(p);
 
 	/* Setup the ev_out32 hook */
 #if NFIRM_EVENTS > 0
@@ -1370,4 +1372,10 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	} else {
 		mcp->__fpregs.__fpu_en = 0;
 	}
+}
+
+vaddr_t
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

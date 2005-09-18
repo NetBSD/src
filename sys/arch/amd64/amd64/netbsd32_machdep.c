@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.11 2004/09/17 14:11:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.11.10.1 2005/09/18 20:09:49 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.11 2004/09/17 14:11:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.11.10.1 2005/09/18 20:09:49 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -123,6 +123,8 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
 #endif
+
+	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
@@ -869,4 +871,10 @@ check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 	return 0;
+}
+
+vaddr_t
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

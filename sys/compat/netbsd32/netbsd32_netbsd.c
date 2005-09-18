@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.87 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.87.2.1 2005/09/18 20:09:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.87 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.87.2.1 2005/09/18 20:09:50 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -154,6 +154,8 @@ const struct emul emul_netbsd32 = {
 #endif
 	&netbsd32_sysctl_root,
 	NULL,
+
+	netbsd32_vm_default_addr,
 };
 
 /*
@@ -1692,6 +1694,24 @@ netbsd32_setrlimit(l, v, retval)
 	    sizeof(struct rlimit));
 	if (error)
 		return (error);
+
+	switch (which) {
+	case RLIMIT_DATA:
+		if (alim.rlim_cur > MAXDSIZ32)
+			alim.rlim_cur = MAXDSIZ32;
+		if (alim.rlim_max > MAXDSIZ32)
+			alim.rlim_max = MAXDSIZ32;
+		break;
+
+	case RLIMIT_STACK:
+		if (alim.rlim_cur > MAXSSIZ32)
+			alim.rlim_cur = MAXSSIZ32;
+		if (alim.rlim_max > MAXSSIZ32)
+			alim.rlim_max = MAXSSIZ32;
+	default:
+		break;
+	}
+
 	return (dosetrlimit(p, p->p_cred, which, &alim));
 }
 
@@ -2233,3 +2253,22 @@ netbsd32_ovadvise(l, v, retval)
 	return (sys_ovadvise(l, &ua, retval));
 }
 
+void
+netbsd32_adjust_limits(struct proc *p)
+{
+	rlim_t *valp;
+
+	valp = &p->p_rlimit[RLIMIT_DATA].rlim_cur;
+	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
+		*valp = MAXDSIZ32;
+	valp = &p->p_rlimit[RLIMIT_DATA].rlim_max;
+	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
+		*valp = MAXDSIZ32;
+
+	valp = &p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
+		*valp = MAXSSIZ32;
+	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
+	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
+		*valp = MAXSSIZ32;
+}

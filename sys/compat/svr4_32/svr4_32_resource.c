@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.4 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.4.2.1 2005/09/18 20:09:50 tron Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.4 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.4.2.1 2005/09/18 20:09:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.4 2005/02/26 23:10:21 perry E
 #include <sys/file.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+
+#include <machine/vmparam.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_resource.h>
@@ -137,6 +139,23 @@ svr4_32_sys_getrlimit(l, v, retval)
 		slim.rlim_cur = SVR4_RLIM_SAVED_MAX;
 	else
 		slim.rlim_cur = SVR4_RLIM_SAVED_CUR;
+
+	switch (rl) {
+	case RLIMIT_DATA:
+		if (blim.rlim_cur > MAXDSIZ32)
+			blim.rlim_cur = MAXDSIZ32;
+		if (blim.rlim_max > MAXDSIZ32)
+			blim.rlim_max = MAXDSIZ32;
+		break;
+
+	case RLIMIT_STACK:
+		if (blim.rlim_cur > MAXSSIZ32)
+			blim.rlim_cur = MAXSSIZ32;
+		if (blim.rlim_max > MAXSSIZ32)
+			blim.rlim_max = MAXSSIZ32;
+	default:
+		break;
+	}
 
 	return copyout(&slim, (caddr_t)(u_long)SCARG(uap, rlp), sizeof(slim));
 }

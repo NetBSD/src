@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.62 2005/03/03 04:39:37 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.62.2.1 2005/09/18 20:09:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.62 2005/03/03 04:39:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.62.2.1 2005/09/18 20:09:51 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.62 2005/03/03 04:39:37 christos Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/ibcs2_machdep.h>
 
@@ -108,6 +110,8 @@ const struct emul emul_ibcs2 = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 /*
