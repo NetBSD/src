@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.56 2005/09/16 16:48:18 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.57 2005/09/18 12:15:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.56 2005/09/16 16:48:18 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.57 2005/09/18 12:15:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -749,7 +749,14 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		*(spt++) = '/';
 		continue;
 	}
-	return(retval);
+	/*
+	 * We perform one final check here, because if someone else
+	 * created the directory in parallel with us, we might return
+	 * the wrong error code, even if the directory exists now.
+	 */
+	if (retval == -1 && stat(name, &sb) == 0 && S_ISDIR(sb.st_mode))
+		retval = 0;
+	return retval;
 }
 
 /*
