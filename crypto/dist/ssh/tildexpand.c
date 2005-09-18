@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.c,v 1.8 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: tildexpand.c,v 1.9 2005/09/18 18:39:05 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: tildexpand.c,v 1.15 2004/05/21 08:43:03 markus Exp $");
-__RCSID("$NetBSD: tildexpand.c,v 1.8 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: tildexpand.c,v 1.9 2005/09/18 18:39:05 christos Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -31,6 +31,7 @@ tilde_expand_filename(const char *filename, uid_t my_uid)
 	char *expanded;
 	struct passwd *pw;
 	char user[100];
+	const char *homedir = NULL;
 	int len;
 
 	/* Return immediately if no tilde. */
@@ -46,30 +47,37 @@ tilde_expand_filename(const char *filename, uid_t my_uid)
 		userlen = cp - filename;	/* Something after username. */
 	else
 		userlen = strlen(filename);	/* Nothing after username. */
-	if (userlen == 0)
-		pw = getpwuid(my_uid);		/* Own home directory. */
-	else {
+	if (userlen == 0) {
+		if ((homedir = getenv("HOME")) == NULL) {
+			pw = getpwuid(my_uid);	/* Own home directory. */
+			if (!pw)
+				fatal("No password entry for uid %d.",
+				    (int)my_uid);
+			homedir = pw->pw_dir;
+		}
+	} else {
 		/* Tilde refers to someone elses home directory. */
 		if (userlen > sizeof(user) - 1)
 			fatal("User name after tilde too long.");
 		memcpy(user, filename, userlen);
 		user[userlen] = 0;
 		pw = getpwnam(user);
+		if (!pw)
+			fatal("Unknown user %100s.", user);
+		homedir = pw->pw_dir;
 	}
-	if (!pw)
-		fatal("Unknown user %100s.", user);
 
 	/* If referring to someones home directory, return it now. */
 	if (!cp) {
 		/* Only home directory specified */
-		return xstrdup(pw->pw_dir);
+		return xstrdup(homedir);
 	}
 	/* Build a path combining the specified directory and path. */
-	len = strlen(pw->pw_dir) + strlen(cp + 1) + 2;
+	len = strlen(homedir) + strlen(cp + 1) + 2;
 	if (len > MAXPATHLEN)
 		fatal("Home directory too long (%d > %d", len-1, MAXPATHLEN-1);
 	expanded = xmalloc(len);
-	snprintf(expanded, len, "%s%s%s", pw->pw_dir,
-	    strcmp(pw->pw_dir, "/") ? "/" : "", cp + 1);
+	snprintf(expanded, len, "%s%s%s", homedir,
+	    strcmp(homedir, "/") ? "/" : "", cp + 1);
 	return expanded;
 }
