@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.191 2005/09/15 14:50:33 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.192 2005/09/18 17:28:40 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3806,4 +3806,19 @@ share/tmac/doc-common				patch
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 
 	Welcome to 2.1_RC4
+
+xfree/xc/programs/Xserver/afb/afbpixmap.c	1.2
+xfree/xc/programs/Xserver/cfb/cfbpixmap.c	1.2
+xfree/xc/programs/Xserver/dix/pixmap.c		1.2
+xfree/xc/programs/Xserver/fb/fbpixmap.c		1.2
+xfree/xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c	 1.2
+xfree/xc/programs/Xserver/hw/xfree86/xf4bpp/ppcPixmap.c	 1.2
+xfree/xc/programs/Xserver/ilbm/ilbmpixmap.c	1.2
+xfree/xc/programs/Xserver/iplan2p4/iplpixmap.c	1.2
+xfree/xc/programs/Xserver/mfb/mfbpixmap.c	1.2
+xfree/xc/programs/Xserver/os/utils.c		1.7 via patch
+
+	Fix security hole reported in CAN-2005-2495. The patch was provided by
+	Marc Aurele La France from the XFree86 project.
+	[tron, ticket #5858]
 
