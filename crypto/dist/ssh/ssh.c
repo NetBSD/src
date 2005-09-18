@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.34 2005/09/09 12:24:37 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.35 2005/09/18 18:27:33 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh.c,v 1.233 2005/03/01 17:22:06 jmc Exp $");
-__RCSID("$NetBSD: ssh.c,v 1.34 2005/09/09 12:24:37 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.35 2005/09/18 18:27:33 christos Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -433,7 +433,7 @@ again:
 				fwd.listen_host = cleanhostname(fwd.listen_host);
 			} else {
 				fwd.listen_port = a2port(fwd.listen_host);
-				fwd.listen_host = "";
+				fwd.listen_host = NULL;
 			}
 
 			if (fwd.listen_port == 0) {
