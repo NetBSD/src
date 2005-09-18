@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.252 2005/09/18 18:37:31 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.253 2005/09/18 20:44:51 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12780,4 +12780,44 @@ distrib/utils/sysinst/menus.mbr			1.4
 	message.  Stops the German text flowing into the box, should fix
 	PR/31292
 	[dsl, ticket #792]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.12
+sys/arch/amd64/include/vmparam.h		1.8
+sys/arch/sparc64/include/vmparam.h		1.27
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.45
+sys/arch/sparc64/sparc64/svr4_32_machdep.c	1.20
+sys/compat/aoutm68k/aoutm68k_exec.c		1.19
+sys/compat/darwin/darwin_exec.c			1.40
+sys/compat/freebsd/freebsd_exec.c		1.27
+sys/compat/hpux/hpux_exec.c			1.46-1.47
+sys/compat/ibcs2/ibcs2_exec.c			1.63
+sys/compat/irix/irix_exec.c			1.41
+sys/compat/linux/common/linux_exec.c		1.73-1.74
+sys/compat/mach/mach_exec.c			1.56
+sys/compat/netbsd32/netbsd32.h			1.31
+sys/compat/netbsd32/netbsd32_netbsd.c		1.88
+sys/compat/osf1/osf1_exec.c			1.39
+sys/compat/pecoff/pecoff_emul.c			1.11
+sys/compat/sunos/sunos_exec.c			1.47
+sys/compat/sunos32/sunos32_exec.c		1.20
+sys/compat/svr4/svr4_exec.c			1.56
+sys/compat/svr4_32/svr4_32_exec.c		1.16
+sys/compat/svr4_32/svr4_32_exec.h		1.9
+sys/compat/svr4_32/svr4_32_resource.c		1.5
+sys/compat/ultrix/ultrix_misc.c			1.99
+sys/kern/exec_elf32.c				1.103
+sys/kern/kern_exec.c				1.195
+sys/kern/kern_resource.c			1.91
+sys/kern/sysv_shm.c				1.83
+sys/sys/proc.h					1.198
+sys/uvm/uvm_extern.h				1.99
+sys/uvm/uvm_mmap.c				1.89
+
+	Make NetBSD 32-bit application compatibility (COMPAT_NETBSD32) work.
+	[fvdl, ticket #798]
+
+distrib/utils/sysinst/msg.mbr.de		1.6
+
+	Some improvements and fixes.
+	[dsl, ticket #801]
 
