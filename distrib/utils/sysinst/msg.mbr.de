@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.5 2004/10/21 12:14:21 martin Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.5.2.1 2005/09/18 20:16:09 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,15 +43,17 @@
 message fullpart
 {NetBSD wird auf die Festplatte %s installiert.
 
-NetBSD benötigt eine eigene Partition in der MBR Partitionstabelle der
-Festplatte. Diese Partition wird später vom NetBSD Disklabel weiter aufgeteilt.
-Des Weiteren kann NetBSD auch auf Dateisysteme in anderen MBR Partitionen
-zugreifen.
+NetBSD benötigt eine eigene Partition in der Partitionstabelle des
+Master Boot Record der Festplatte. Diese Partition wird später durch
+das NetBSD Disklabel weiter aufgeteilt. Des Weiteren kann NetBSD
+auch auf Dateisysteme zugreifen, die in anderen MBR-Partitionen
+definiert werden.
 
 Wenn Sie 'Die ganze Festplatte nutzen' auswählen, wird der ursprüngliche Inhalt
-durch eine MBR Partition ersetzt, die die gesamte Festplatte umfasst.
-Wollen Sie mehr als ein Betriebssystem installieren, so editieren Sie die
-MBR Partitionstabelle. Erstellen Sie dort eine Partition für NetBSD.
+der Festplatte durch eine MBR-Partition ersetzt, die die gesamte
+Festplatte umfasst. Wollen Sie mehr als ein Betriebssystem installieren, so
+bearbeiten Sie die MBR-Partitionstabelle. Erstellen Sie dort eine Partition
+für NetBSD.
 
 Einige hundert MB reichen für eine Basisinstallation, allerdings sollten
 Sie auch Platz für zusätzliche Software und Anwenderdaten einkalkulieren.
@@ -60,20 +62,20 @@ Sie auch Platz für zusätzliche Software und Anwenderdaten einkalkulieren.
 message Select_your_choice
 {Wie möchten Sie verfahren?}
 message Use_only_part_of_the_disk
-{Editieren der MBR Partitionstabelle}
+{Bearbeiten der MBR-Partitionstabelle}
 message Use_the_entire_disk
 {Die ganze Festplatte nutzen}
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Gesamtgröße der Platte %d %s.
+{   Festplattenkapazität insgesamt %d %s.
 
 .if BOOTSEL
-   Start(%3s) Größe(%3s) Flg Typ                    Bootmenü
-   ---------- ----------- --- ---------------------- --------
+   Start(%3s) Größe(%3s) Flag Typ                    Bootmenü
+   ---------- ---------- ---- ---------------------- --------
 .else
-   Start(%3s) Größe(%3s) Flg Typ 
-   ---------- ----------- --- ----------------
+   Start(%3s) Größe(%3s) Flag Typ 
+   ---------- ---------- ---- ----------------
 .endif
 }
 
@@ -83,34 +85,34 @@ message part_row_used
 message noactivepart
 {Sie haben keine Partition als aktive Startpartition markiert.
 Das System wird nicht von dieser Festplatte starten können.
-Soll die NetBSD Partition der Festplatte als aktiv markiert werden?}
+Soll die NetBSD-Partition der Festplatte als aktiv markiert werden?}
 
 message setbiosgeom
 {
 Geben Sie die Geometrie der Festplatte ein.
 Bitte geben Sie die Anzahl Sektoren je Spur (maximal 63)
-und die Anzahl der Köpfe (maximal 256) an, die das BIOS dazu verwendet auf die
-Festplatte zuzugreifen.
-Die Zahl der Zylinder wird auf Grund der Festplattengröße kalkuliert.
+und die Anzahl der Köpfe (maximal 256) an, die das BIOS dazu verwendet, auf die
+Festplatte zuzugreifen. Die Zahl der Zylinder ergibt sich aus der
+Festplattengröße kalkuliert.
 
 }
 
 message nobiosgeom
-{Sysinst konnte die BIOS Geometrie der Festplatte nicht ermitteln.
-Die physische Geometrie beträgt %d Zylinder %d Sektoren %d Köpfe\n}
+{Sysinst konnte die BIOS-Geometrie der Festplatte nicht ermitteln.
+Die physische Geometrie beträgt %d Zylinder, %d Sektoren und %d Köpfe\n}
 
 message biosguess
-{Den auf der Festplatte befindlichen Informationen zufolge beträgt die BIOS
-Geometrie schätzungsweise %d Zylinder %d Sektoren %d Köpfe\n}
+{Den auf der Festplatte befindlichen Informationen zufolge beträgt die BIOS-
+Geometrie schätzungsweise %d Zylinder, %d Sektoren und %d Köpfe\n}
 
 message realgeom
-{Reale Geometrie: %d Zyl, %d Köpfe, %d Sek (rein informativ; zum Vergleich)\n}
+{Reale Geometrie: %d Zyl, %d Köpfe, %d Sektoren (rein informativ; zum Vergleich)\n}
 
 message biosgeom
-{BIOS Geometrie: %d Zyl, %d Köpfe, %d Sek\n}
+{BIOS-Geometrie: %d Zyl, %d Köpfe, %d Sektoren\n}
 
 message ovrwrite
-{Ihre Festplatte verfügt gegenwärtig über eine nicht-NetBSD Partition.
+{Ihre Festplatte verfügt gegenwärtig über eine Nicht-NetBSD Partition.
 Wollen Sie diese Partition wirklich mit NetBSD überschreiben?
 }
 
@@ -147,7 +149,7 @@ message No_free_space {Kein freier Speicherplatz}
 message Only_one_extended_ptn {Hier ist nur eine erweiterte Partition möglich}
 
 message editparttable
-{Die aktuelle MBR Partition wird unten angezeigt. 
+{Die aktuelle MBR-Partition wird unten angezeigt. 
 Flgs: a => Aktive Startpartition,
 .if BOOTSEL
 d => 'Bootselect' (Bootauswahl) Vorgabe, 
@@ -170,19 +172,19 @@ message Other_kind
 message reeditpart
 {
 
-Wollen Sie die MBR Tabelle erneut editieren (oder die Installation abbrechen)?
+Wollen Sie die MBR-Tabelle erneut editieren (oder die Installation abbrechen)?
 }
 
 message nobsdpart
-{Es befindet sich keine NetBSD Partition in der Partitionstabelle des MBR.}
+{Es befindet sich keine NetBSD-Partition in der Partitionstabelle des MBR.}
 
 message multbsdpart
-{Es befinden sich mehrere NetBSD Partitionen in der Partitionstabelle des MBR.
-Sie sollten das 'Installation' Flag auf die Partition setzen, die Sie nutzen
+{Es befinden sich mehrere NetBSD-Partitionen in der Partitionstabelle des MBR.
+Sie sollten das Flag 'hier installieren' auf die Partition setzen, die Sie nutzen
 wollen.}
 
 message dofdisk
-{Erstellen der DOS Partitionstabelle ...
+{Erstellen der DOS-Partitionstabelle ...
 }
 
 message wmbrfail
@@ -191,10 +193,10 @@ message wmbrfail
 .if 0
 .if BOOTSEL
 message Set_timeout_value
-{Setzen des Timeout Wertes}
+{Setzen des Timeout-Wertes}
 
 message bootseltimeout
-{Timeout (Count Down) für das Bootmenü: %d\n}
+{Timeout (Countdown) für das Bootmenü: %d\n}
 
 .endif
 .endif
