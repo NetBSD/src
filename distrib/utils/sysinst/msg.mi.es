@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.4.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.4.2.3 2005/09/19 21:12:58 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,11 +71,11 @@ message hello
 {Bienvenido a sysinst, la herramienta de instalación de NetBSD-@@VERSION@@.
 Esta herramienta guiada por menús, está diseñada para ayudarle a instalar
 NetBSD en un disco duro, o actualizar un sistema NetBSD existente, con
-un trabajo minimo.
+un trabajo minimo. 
 En los siguientes menús teclee la letra de referencia (a b, c, ...) para
 seleccionar el item, o teclee CTRL+N/CTRL+P para seleccionar la opción
-siguiente/anterior.
-Las teclas de flechas y AvPag/RePag también funcionan.
+siguiente/anterior. 
+Las teclas de flechas y AvPag/RePag también funcionan. 
 Active la seleccion actual desde el menú pulsando la tecla enter.
 
 }
@@ -89,7 +89,7 @@ message installusure
 {Ha escogido instalar NetBSD en su disco duro. Esto cambiará información
 de su disco duro. ¡Debería haber hecho una copia de seguridad completa
 antes de este procedimiento! Este procedimiento realizará las siguientes
-operaciones :
+operaciones: 
 	a) Particionar su disco
 	b) Crear nuevos sistemas de archivos BSD
 	c) Cargar e instalar los sets de distribución
@@ -130,7 +130,7 @@ al menu original.
 }
 
 message onedisk
-{Solamente he encontrado un disco, %s.
+{Solamente he encontrado un disco, %s. 
 Por eso asumiré que quiere instalar NetBSD en %s.
 }
 
@@ -185,7 +185,8 @@ Seleccionando sectores le permitirá especificar los tamaños de manera
 mas precisa. En discos ZBR modernos, el tamaño actual del cilindro varía
 durante el disco y hay una pequeña ganancia desde el alineamiento del
 cilindro. En discos mas viejos, es mas eficiente seleccionar los tamaños
-de las particiones que son multiples exactos de su tamaño actual del cilindro.
+de las particiones que son multiples exactos de su tamaño actual del
+cilindro.
 
 Escoja su especificador de tamaño}
 
@@ -459,7 +460,7 @@ estuviera usando archivos de password locales.
 
 
 message unpackcomplete
-{Desempaquetamiento de sets adicionales de NetBSD-@@VERSION@@ completado.
+{Desempaquetamiento de sets adicionales de NetBSD-@@VERSION@@ completado. 
 Ahora necesitara seguir las instrucciones en el documento INSTALL para
 tener su sistema reconfigurado para su situación.
 La pagina de man afterboot(8) también puede serle de ayuda.
@@ -511,9 +512,9 @@ la distribución.
 Recuerde, el directorio debe contener los archivos .tgz y debe ser
 montable por nfs.
 
-host:		%s
-dir base:	%s
-dir de sets:	%s
+host:		%s 
+dir base:	%s 
+dir de sets:	%s 
 }
 
 message nfsbadmount
@@ -524,7 +525,7 @@ message cdromsource
 donde está localizada la distribución.
 Recuerde, el directorio debe contener los archivos .tgz.
 
-dispositivo:	%s
+dispositivo:	%s 
 dir de sets:	%s
 }
 
@@ -533,9 +534,9 @@ message localfssource
 donde está localizada la distribución.
 Recuerde, el directorio debe contener los archivos .tgz.
 
-dispositivo:	%s
-sist de archiv:	%s
-dir base:	%s
+dispositivo:	%s 
+sist de archiv:	%s 
+dir base:	%s 
 dir de sets:	%s
 }
 
@@ -618,22 +619,33 @@ message net_media
 message netok
 {Ha entrado los siguientes valores.
 
-Dominio DNS :		%s 
-Nombre del Host:	%s
-Interfaz primaria:	%s
-Host IP:		%s
-Mascara:		%s
-Serv de nombres IPv4:	%s
-Pasarela IPv4:		%s
-Tipo de medio:		%s
+Dominio DNS: 		%s 
+Nombre del Host:	%s 
+Interfaz primaria:	%s 
+Host IP:		%s 
+Mascara:		%s 
+Serv de nombres IPv4:	%s 
+Pasarela IPv4:		%s 
+Tipo de medio:		%s 
 }
 
 message netok_slip
-{Los siguientes valores son los que has metido. Son correctos?}
+{Los siguientes valores son los que has metido. Son correctos?
+
+Dominio DNS: 		%s 
+Nombre del Host:	%s 
+Interfaz primaria:	%s 
+Host IP:		%s 
+Server IP:		%s 
+Mascara:		%s 
+Serv de nombres IPv4:	%s 
+Pasarela IPv4:		%s 
+Tipo de medio:		%s 
+}
 
 message netokv6
-{IPv6 autoconf:		%s
-Serv de nombres IPv6:	%s
+{IPv6 autoconf:		%s 
+Serv de nombres IPv6:	%s 
 }
 
 message netok_ok
@@ -667,7 +679,7 @@ message distdir
 {¿Que directorio debería usar para %s? }
 
 message delete_dist_files
-{¿Quiere borrar los sets de NetBSD de %s?
+{¿Quiere borrar los sets de NetBSD de %s? 
 (Puede dejarlos para instalar/actualizar un segundo sistema.)}
 
 message verboseextract
@@ -924,8 +936,8 @@ solo-NetBSD?}
 
 message choose_timezone
 {Por favor escoja la zona horaria que se ajuste mejor de la siguiente
-lista.
-Presione RETURN para seleccionar una entrada.
+lista. 
+Presione RETURN para seleccionar una entrada. 
 Presione 'x' seguido de RETURN para salir de la selección de la
 zona horaria.
 
@@ -998,7 +1010,7 @@ message Logging {Logging}
 message Status  { Estado: }
 message Command {Comando: }
 message Running {Ejecutando}
-message Finished {Acabado}
+message Finished {Acabado   }
 message Command_failed {Comando fallido}
 message Command_ended_on_signal {Comando terminado en señal}
 

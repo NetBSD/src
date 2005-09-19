@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.2.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.2.2.3 2005/09/19 21:12:58 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,15 +121,15 @@ message Partition_OK
 message ptn_type
 {      tipo: %s}
 message ptn_start
-{     inicio: %d %s}
+{    inicio: %d %s}
 message ptn_size
-{      tamaño: %d %s}
+{    tamaño: %d %s}
 message ptn_end
 {       fin: %d %s}
 message ptn_active
 {    activa: %s}
 message ptn_install
-{   instalar: %s}
+{  instalar: %s}
 .if BOOTSEL
 message bootmenu
 {  bootmenu: %s}
