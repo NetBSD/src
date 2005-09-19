@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.45.2.1 2005/09/19 20:53:56 tron Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.45.2.2 2005/09/19 20:57:54 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -515,6 +515,7 @@ message localdir
 {Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
+katalog:	%s
 katalog:	%s
 }
 

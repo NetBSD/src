@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.83.2.1 2005/09/19 20:53:56 tron Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.83.2.2 2005/09/19 20:57:54 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -507,7 +507,7 @@ répertoire des composants: %s
 }
 
 message nfsbadmount
-{Le répertoire %s n'est pas montable par nfs.}
+{Le répertoire %s:%s n'est pas montable par nfs.}
 
 message cdromsource
 {Donnez le nom de périphérique du CD-Rom à utiliser ainsi que
@@ -525,10 +525,10 @@ ainsi que le répertoire contenant les composants.
 Le répertoire des composants est relatif au répertoire de base et doit
 contenir les fichiers .tgz.
 
-device:			   %s 
-système de fichiers:	   %s 
-répertoire de base:	   %s 
-répertoire des composants: %s
+device:			%s 
+système de fichiers:		%s 
+répertoire de base:		%s 
+répertoire des composants:	%s
 }
 
 message localdir
@@ -536,7 +536,8 @@ message localdir
 distribution. 
 Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
 
-Répertoire:	%s
+Répertoire de base:	        %s
+Répertoire des composants:	%s
 }
 
 message filesys
@@ -641,7 +642,7 @@ L'installation a échoué.
 }
 
 message realdir
-{Impossible de se déplacer sur le répertoire %s.
+{Impossible de se déplacer sur le répertoire %s/%s.
 L'installation a échoué.
 }
 
