@@ -139,7 +139,6 @@
 #include <sys/timepps.h>
 #include <sys/times.h>
 #include <sys/timex.h>
-#include <sys/tprintf.h>
 #include <sys/trace.h>
 #include <sys/tree.h>
 #include <sys/tty.h>
