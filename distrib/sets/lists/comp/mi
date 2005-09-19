@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.815 2005/09/16 15:26:47 wiz Exp $
+#	$NetBSD: mi,v 1.816 2005/09/19 03:16:40 simonb Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1433,7 +1433,7 @@
 ./usr/include/sys/timepps.h			comp-c-include
 ./usr/include/sys/times.h			comp-c-include
 ./usr/include/sys/timex.h			comp-c-include
-./usr/include/sys/tprintf.h			comp-c-include
+./usr/include/sys/tprintf.h			comp-obsolete		obsolete
 ./usr/include/sys/trace.h			comp-c-include
 ./usr/include/sys/tree.h			comp-c-include
 ./usr/include/sys/tty.h				comp-c-include
