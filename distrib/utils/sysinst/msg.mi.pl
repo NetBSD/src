@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.45.2.2 2005/09/19 20:57:54 tron Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.45.2.3 2005/09/19 21:03:13 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -567,6 +567,9 @@ message net_host
 message net_ip
 {Twoj adres IPv4}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {Maska podsieci IPv4}
 
@@ -595,6 +598,19 @@ Bramka IPv4:		%s
 Medium sieciowe:	%s
 }
 
+message netok_slip
+{The following are the values you entered.  Are they OK?
+
+DNS Domain:		%s
+Host Name:		%s
+Primary Interface:	%s
+Host IP:		%s
+Server IP:		%s
+Netmask:		%s
+IPv4 Nameserver:	%s
+IPv4 Gateway:		%s
+Media type:		%s
+}
 message netokv6
 {Autkonfiguracja IPv6:	%s 
 Serwer nazw IPv6:	%s 
@@ -602,6 +618,10 @@ Serwer nazw IPv6:	%s
 
 message netok_ok
 {Czy sa poprawne?}
+
+message slattach {
+Enter slattach flags
+}
 
 message netagain
 {Wprowadz jeszcze raz informacje o twojej sieci. Twoje ostatnie odpowiedzi

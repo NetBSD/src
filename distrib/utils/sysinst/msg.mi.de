@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.17.2.4 2005/09/19 20:53:56 tron Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.17.2.5 2005/09/19 21:03:13 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -598,6 +598,9 @@ message net_host
 message net_ip
 {IPv4 Adresse}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {IPv4 Netzmaske}
 
@@ -626,6 +629,20 @@ IPv4 Gateway:		%s
 Verbindungstyp:		%s 
 }
 
+message netok_slip
+{The following are the values you entered.  Are they OK?
+
+DNS Domain:		%s
+Host Name:		%s
+Primary Interface:	%s
+Host IP:		%s
+Server IP:		%s
+Netmask:		%s
+IPv4 Nameserver:	%s
+IPv4 Gateway:		%s
+Media type:		%s
+}
+
 message netokv6
 {
 IPv6 Autokonfiguration:	%s 
@@ -634,6 +651,10 @@ IPv6 Nameserver:	%s
 
 message netok_ok
 {Sind diese OK?}
+
+message slattach {
+Enter slattach flags
+}
 
 message netagain
 {Bitte geben Sie die Informationen über Ihr Netzwerk erneut an. Diese werden

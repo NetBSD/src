@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.136.2.1 2005/09/19 20:53:56 tron Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.136.2.2 2005/09/19 21:03:13 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -577,6 +577,9 @@ message net_host
 message net_ip
 {Your IPv4 number}
 
+message net_ip_2nd
+{Server IPv4 number}
+
 message net_mask
 {IPv4 Netmask}
 
@@ -599,6 +602,20 @@ DNS Domain:		%s
 Host Name:		%s 
 Primary Interface:	%s 
 Host IP:		%s 
+Netmask:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Media type:		%s 
+}
+
+message netok_slip
+{The following are the values you entered.  Are they OK?
+
+DNS Domain:		%s 
+Host Name:		%s 
+Primary Interface:	%s 
+Host IP:		%s 
+Server IP:		%s 
 Netmask:		%s 
 IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
@@ -948,6 +965,10 @@ There is no defined root file system.  You need to define at least
 one mount point with "/".
 
 Press <return> to continue.
+}
+
+message slattach {
+Enter slattach flags
 }
 
 message Pick_an_option {Pick an option to turn on or off.}
