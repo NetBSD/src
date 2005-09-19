@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.5.2.1 2005/09/18 20:16:09 tron Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.5.2.2 2005/09/19 20:48:23 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,17 +43,15 @@
 message fullpart
 {NetBSD wird auf die Festplatte %s installiert.
 
-NetBSD benötigt eine eigene Partition in der Partitionstabelle des
-Master Boot Record der Festplatte. Diese Partition wird später durch
-das NetBSD Disklabel weiter aufgeteilt. Des Weiteren kann NetBSD
-auch auf Dateisysteme zugreifen, die in anderen MBR-Partitionen
-definiert werden.
+NetBSD benötigt eine eigene Partition in der Partitionstabelle des Master
+Boot Record (MBR). Diese Partition wird später durch das NetBSD Disklabel
+weiter aufgeteilt. NetBSD kann auch auf Dateisysteme zugreifen, die in
+anderen MBR-Partitionen definiert werden.
 
-Wenn Sie 'Die ganze Festplatte nutzen' auswählen, wird der ursprüngliche Inhalt
-der Festplatte durch eine MBR-Partition ersetzt, die die gesamte
-Festplatte umfasst. Wollen Sie mehr als ein Betriebssystem installieren, so
-bearbeiten Sie die MBR-Partitionstabelle. Erstellen Sie dort eine Partition
-für NetBSD.
+Wenn Sie 'Die ganze Festplatte nutzen' auswählen, werden alle MBR Partitionen
+gelöscht und eine NetBSD Partition für die gesamte Festplatte erstellt.
+Wenn Sie mehr als ein Betriebssystem installieren möchten, bearbeiten Sie
+die MBR-Partitionstabelle und erstellen eine kleinere NetBSD Partition.
 
 Einige hundert MB reichen für eine Basisinstallation, allerdings sollten
 Sie auch Platz für zusätzliche Software und Anwenderdaten einkalkulieren.
