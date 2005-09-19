@@ -1,7 +1,7 @@
-.\"	$NetBSD: skeyinit.1,v 1.13 2005/09/11 23:26:14 wiz Exp $
+.\"	$NetBSD: skeyinit.1,v 1.14 2005/09/19 15:12:09 elad Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
-.Dd December 1, 2004
+.Dd September 19, 2005
 .Dt SKEYINIT 1
 .Os
 .Sh NAME
@@ -10,7 +10,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl sxz
+.Op Fl k Ar passphrase
 .Op Fl n Ar count
+.Op Fl p Ar password
 .Op Fl t Ar hash
 .Op Ar user
 .Sh DESCRIPTION
@@ -27,12 +29,20 @@ requires you to type a secret password, so it should be used
 only on a secure terminal.
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl k Ar passphrase
+Use pass phrase
+.Ar passphrase
+instead of asking for one to be entered.
 .It Fl n Ar count
 Start the
 .Xr skey 1
 sequence at
 .Ar count
 (default is 100).
+.It Fl p Ar password
+Use password
+.Ar password
+instead of asking for one to be entered.
 .It Fl s
 allows the user to set the seed and count for complete control
 of the parameters.
