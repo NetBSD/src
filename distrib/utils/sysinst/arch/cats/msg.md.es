@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.2.3 2005/09/19 21:19:12 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,8 +49,8 @@ message dobootblks
 
 message catsfspart
 {Ahora tenemos nuestras particiones NetBSD en %s como sigue (Tamaño y
-Compensacion en %s):
+Compensación en %s):
 }
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}

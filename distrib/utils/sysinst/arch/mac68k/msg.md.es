@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:51 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,62 +43,62 @@ message md_hello
 }
 
 message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Deberia escoger
+{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
 entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaria hacer?
+¿Que le gustaría hacer?
 }
 
 message nodiskmap
 {Parece que su disco, %s, no ha sido formateado e inicializado para
-usar en MacOS.  Este programa obtiene la disposicion de su disco
+usar en MacOS.  Este programa obtiene la disposición de su disco
 leyendo el Mapa de Particiones del Disco que es escrito por el
 formateador de disco cuando prepara el disco para usar con el
 sistema Macintosh. Sus opciones son:
 
-* Abortar la instalacion. Puede formatear y definir una estructura
+* Abortar la instalación. Puede formatear y definir una estructura
 preliminar de particiones con cualquier formateador de disco.
 Las particiones no tienen que estar definidas como del tipo A/UX;
-el proceso de instalacion de NetBSD le permitira redefinirlas
+el proceso de instalación de NetBSD le permitira redefinirlas
 si fuera necesario.
 
 * Permitir a sysinst inicializar el Mapa de Particiones del Disco
-por usted. El disco no sera iniciable por MacOS y puede que no sea
-usable por MacOS a no ser que los drivers de MacOS esten instalados
+por usted. El disco no será iniciable por MacOS y puede que no sea
+usable por MacOS a no ser que los drivers de MacOS estén instalados
 con un formateador compatible con MacOS.
 
 }
 
 message okwritediskmap
-{Sysinst intentara inicializar su disco con un nuevo Mapa de Particiones
+{Sysinst intentará inicializar su disco con un nuevo Mapa de Particiones
 de Disco usando los valores obtenidos del driver del disco.  Este mapa
-por defecto incluira una definicion minima de Block0, un Mapa de
+por defecto incluira una definición minima de Block0, un Mapa de
 Particiones permitiendo hasta 15 particiones de disco, y particiones
-pre-definidas para el Mapa, drivers de disco, y una particion minima
-de MacOS HFS. El resto del disco sera marcado como disponible para uso.
-Las particiones de drivers de disco no seran inicializadas asi que el
-volumen no sera iniciable por MacOS.  Si escoge proceder con la
-instalacion desde este punto debera editar este nuevo Mapa de Particiones
-para ajustar NetBSD a sus necesidades.  El Mapa no sera escrito a disco
+pre-definidas para el Mapa, drivers de disco, y una partición minima
+de MacOS HFS. El resto del disco será marcado como disponible para uso.
+Las particiones de drivers de disco no serán inicializadas asi que el
+volumen no será iniciable por MacOS.  Si escoge proceder con la
+instalación desde este punto deberá editar este nuevo Mapa de Particiones
+para ajustar NetBSD a sus necesidades.  El Mapa no será escrito a disco
 hasta que no haya completado el ajuste de sus particiones.
 
-¿Deberiamos continuar?}
+¿Deberíamos continuar?}
 
 message part_header
 {Part     Inicio     Tamaño TipoFS Uso       Punt Montaj (Nomb)
----- ---------- ---------- ------ --------- ------------------\n}
+----  ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
-{%3s%c %10d %10d %6s %-9s %s\n}
+{%4s%c %10d %10d %6s %-9s %s\n}
 
 message ovrwrite
-{Actualmente su disco tiene al menos una particion MacOS HFS.
-Sobreescribiendo el disco entero eliminara la particion y puede hacer
-el disco inusable bajo MacOS.  Deberia considerar el crear una particion
+{Actualmente su disco tiene al menos una partición MacOS HFS.
+Sobreescribiendo el disco entero eliminará la partición y puede hacer
+el disco inusable bajo MacOS.  Debería considerar el crear una partición
 sola MacOS HFS para asegurarse de que el disco pueda ser montado bajo
-MacOS.  Este sera un buen sitio para mantener una copia de la aplicacion
+MacOS.  Este será un buen sitio para mantener una copia de la aplicación
 de arranque de NetBSD/mac68k usada para iniciar NetBSD desde MacOS.
 
-¿Esta realmente seguro de que quiere sobreescribir la(s) particion(es)
+¿Está realmente seguro de que quiere sobreescribir la(s) particion(es)
 MacOS HFS?
 }
 
@@ -106,13 +106,13 @@ message editparttable
 {Editar Tabla de Particiones de Disco: El Mapa en el disco ha sido
 escaneada para todas las particiones a nivel de usuario, pero solo
 se muestran las usables por NetBSD.
-La talba de particiones actualmente se muestra como:
+La tabla de particiones actualmente se muestra como:
 
 }
 
 message split_part
-{La particion del disco que ha escogido sera partida en dos particiones.
-Una particion sera del tipo Apple_Scratch y la otra sera del tipo
+{La partición del disco que ha escogido sera partida en dos particiones.
+Una partición será del tipo Apple_Scratch y la otra sera del tipo
 Apple_Libre.  Entonces debera cambiar una de las dos particiones en una
 de otro tipo.  Si la parte Apple_Libre es fisicamente adyacente a otra
 particion que tambien sea del tipo Apple_Libre, las dos seran combinadas

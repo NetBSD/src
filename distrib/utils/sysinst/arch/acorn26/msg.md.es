@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,14 +41,14 @@
 
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
 message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Deberia escoger
+{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
 entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaria hacer?
+¿Que le gustaría hacer?
 }
 
 message badreadbb
@@ -60,12 +60,12 @@ message badreadriscix
 }
 
 message notnetbsdriscix
-{No se ha encontrado ninguna particion NetBSD en la tabla de
+{No se ha encontrado ninguna partición NetBSD en la tabla de
 particiones RISCiX - No se puede etiquetar
 }
 
 message notnetbsd
-{No se ha encontrado ninguna particion NetBSD (¿disco solo de filecore?)
+{No se ha encontrado ninguna partición NetBSD (¿disco solo de filecore?)
  - No se puede etiquetar
 }
 
@@ -81,5 +81,5 @@ message set_kernel_2
 
 message arm32fspart
 {Ahora tenemos nuestras particiones NetBSD en % como sigue (Tamaño y
-Compensacion en %s):
+Compensación en %s):
 }

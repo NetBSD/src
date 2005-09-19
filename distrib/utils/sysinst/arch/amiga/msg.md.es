@@ -1,11 +1,10 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.1.2.2 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Based on code written by Philip A. Nelson for Piermont Information
- * Systems Inc.
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,46 +36,16 @@
  *
  */
 
-/* mvme68k machine dependent messages, spanish */
-
+/* MD Message catalog -- english, amiga version */
 
 message md_hello
-{Si su maquina tiene 4MB o menos, sysinst no funcionará correctamente.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
 message dobootblks
-{Instalando bloques de arranque en %s....
+{Instalando boot blocks en %s....
 }
-
-message newdisk
-{Parece que su disco, %s, no tiene un disklavel mvme68k. sysinst va
-a escribir un disklabel.
-}
-
-message ordering
-{El orden de la partición %c esta mal. ¿Editar de nuevo?}
-
-message emptypart
-{Hay una partición valida %c despues de particion(es) valida(s).
-Por favor, reedite la tabla de particiones}
 
 message set_kernel_1
 {Núcleo (GENERIC)}
-
-.if notyet
-/* XXX: not yet implemented */
-message existing
-{¿Quiere preservar particion(es) BSD existente(s)?}
-
-message nofreepart
-{%s no tiene suficiente espacio libre para particiones para NetBSD.
-Debe tener como minimo 2 particiones libres (para el sistema de archivos
-raiz y para swap).
-}
-
-message notfirst
-{NetBSD/mvme68k debe estar instalado en la primera parte del disco de arranque.
-La primera parte de %s no esta libre.
-}
-.endif
