@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.2.3 2005/09/19 21:19:12 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,14 +41,14 @@
 
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
 message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Deberia escoger
+{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
 entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaria hacer?
+¿Que le gustaría hacer?
 }
 
 message badreadbb
@@ -60,7 +60,7 @@ message badreadriscix
 }
 
 message notnetbsdriscix
-{No se ha encontrado ninguna particion NetBSD en la tabla de
+{No se ha encontrado ninguna partición NetBSD en la tabla de
 particiones RISCiX - No se puede etiquetar
 }
 
@@ -75,16 +75,16 @@ message dobootblks
 
 message arm32fspart
 {Ahora tenemos nuestras particiones NetBSD en %s como sigue (Tamaño y
-Compensacion en %s):
+Compensación en %s):
 }
 
 message set_kernel_1
-{Nucleo (ADI_BRH)}
+{Núcleo (ADI_BRH)}
 message set_kernel_2
-{Nucleo (INTERGRATOR)}
+{Núcleo (INTERGRATOR)}
 message set_kernel_3 
-{Nucleo (IQ80310)}
+{Núcleo (IQ80310)}
 message set_kernel_4
-{Nucleo (IQ80321)}
+{Núcleo (IQ80321)}
 message set_kernel_5
-{Nucleo (TEAMASA_NPWR)}
+{Núcleo (TEAMASA_NPWR)}

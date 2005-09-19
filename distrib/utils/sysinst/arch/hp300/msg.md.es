@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 
 
 message md_hello
-{Si su maquina tiene 4MB o menos, sysinst no funcionara correctamente.
+{Si su maquina tiene 4MB o menos, sysinst no funcionará correctamente.
 
 }
 
@@ -51,20 +51,20 @@ message dobootblks
 
 message newdisk
 {Parece que su disco, %s, no tiene una marca de disco X68K. sysinst
-escribira una marca de disco.
-Note que si pretende usar una parte de %s desde Human68k, deberia abortar
+escribirá una marca de disco.
+Note que si pretende usar una parte de %s desde Human68k, debería abortar
 aqui y formatear el disco con la utilidad format.x de Human68k.
 }
 
 message ordering
-{El orden de la particion %c esta mal.  ¿Editar de nuevo?}
+{El orden de la partición %c esta mal.  ¿Editar de nuevo?}
 
 message emptypart
-{Hay una particion valida %c despues de particion(es) valida(s).
+{Hay una partición valida %c después de particion(es) valida(s).
 Por favor, reedite la tabla de particiones}
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
 
 .if notyet
 /* XXX: not yet implemented */

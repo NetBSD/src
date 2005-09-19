@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:51 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* MD Message catalog -- Spanish, arc version */
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
@@ -48,4 +48,4 @@ message dobad144
 }
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}

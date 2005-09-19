@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:52 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:12 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@ message md_hello
 }
 
 message askboot
-{¿Tamaño de la particion de imagenes de arranque en sectores? }
+{¿Tamaño de la partición de imagenes de arranque en sectores? }
 
 message dobootblks
 {Instalando bloques de arranque en %s....

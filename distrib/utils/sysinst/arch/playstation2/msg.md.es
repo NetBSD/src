@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:50 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:12 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,13 +80,13 @@ message pickdisk
 {Escoja disco: }
 
 message partabovechs
-{La parte NetBSD del disco esta fuera del rango que la BIOS de su maquina
+{La parte NetBSD del disco está fuera del rango que la BIOS de su maquina
 puede acceder.
 Puede que no sea posible iniciar desde ahi.
-¿Esta seguro de que quiere hacer eso?
+¿Está seguro de que quiere hacer eso?
 
-(Seleccionando 'no' le devolvera al menu de edicion de particiones.)}
+(Seleccionando 'no' le devolverá al menú de edición de particiones.)}
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
 

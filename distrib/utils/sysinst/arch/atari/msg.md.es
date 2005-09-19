@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:51 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* MD Message catalog -- spanish, atari version */
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
 
@@ -48,24 +48,24 @@ message dobootblks
 }
 
 message infoahdilabel
-{Ahora tiene que preparar su disco raiz para la instalacion de NetBSD. Esto
+{Ahora tiene que preparar su disco raiz para la instalación de NetBSD. Esto
 se refiere mas a fondo como 'etiquetar' un disco.
 
 Primero tiene la posibilidad de editar o crear un particionaje compatible
-con AHDI en el disco de instalacion. Note que NetBSD puede hacerlo sin
-particiones AHDI, compruebe la documentacion.
+con AHDI en el disco de instalación. Note que NetBSD puede hacerlo sin
+particiones AHDI, compruebe la documentación.
 Si quiere usar un particionaje compatible con AHDI, tiene que asignar algunas
-particiones a NetBSD antes de que Netbsd pueda usar el disco. Cambie la 'id'
+particiones a NetBSD antes de que NetBSD pueda usar el disco. Cambie la 'id'
 de todas las particiones en las que quiera usar sistemas de archivos NetBSD
-a 'NBD'. Cambie la 'id' de la particion en la que quiera usar swap a 'SWP'.
+a 'NBD'. Cambie la 'id' de la partición en la que quiera usar swap a 'SWP'.
 
 Quiere un particionaje compatible con AHDI? }
 
 message set_kernel_1
-{Nucleo (TT030/Falcon)}
+{Núcleo (TT030/Falcon)}
 message set_kernel_2
-{Nucleo (Hades)}
+{Núcleo (Hades)}
 message set_kernel_3 
-{Nucleo (Milan ISA)}
+{Núcleo (Milan ISA)}
 message set_kernel_4
-{Nucleo (Milan PCI)}
+{Núcleo (Milan PCI)}

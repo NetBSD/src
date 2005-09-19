@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:51 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ message Use_serial_com3		{Usar puerto serie com3}
 message serial_baud_rate	{Baudios puerto serie}
 message Use_existing_bootblocks	{Usar bootblocks existente}
 
-message No_Bootcode		{No hay codigo de arranque para la particion root}
+message No_Bootcode		{No hay código de arranque para la partición root}
 
 message dobootblks
 {Instalando bloques de arranque en %s....
@@ -93,9 +93,9 @@ message onebiosmatch_row
 {%#6x %9d %5d %7d %13u %3u\n}
 
 message This_is_the_correct_geometry
-{Esta es la geometria correcta}
+{Esta es la geometría correcta}
 message Set_the_geometry_by_hand
-{Ajustar geometria a mano}
+{Ajustar geometría a mano}
 message Use_one_of_these_disks
 {Usar uno de estos discos}
 
@@ -116,9 +116,9 @@ message biosgeom_advise
 {
 Nota: como sysinst es capaz de concordar unicamente el disco que escoja
 con un disco conocido por BIOS, los valores anteriores son probablemente
-correctos, y no deberian ser cambiados (los valores para cilindros,
+correctos, y no deberían ser cambiados (los valores para cilindros,
 cabezales y sectores son probablemente 1023, 255 y 63 - esto es correcto).
-Solo deberia cambiar la geometria si sabe que su BIOS reporta valores
+Solo debería cambiar la geometría si sabe que su BIOS reporta valores
 incorrectos.
 }
 
@@ -126,48 +126,48 @@ message pickdisk
 {Escoja disco: }
 
 message partabovechs
-{La parte NetBSD del disco esta fuera del rango que la BIOS de su maquina
+{La parte NetBSD del disco está fuera del rango que la BIOS de su maquina
 puede acceder.
 Puede que no sea posible iniciar desde ahi.
-¿Esta seguro de que quiere hacer eso?
+¿Está seguro de que quiere hacer eso?
 
-(Seleccionando 'no' le devolvera al menu de edicion de particiones.)}
+(Seleccionando 'no' le devolverá al menú de edicion de particiones.)}
 
 message missing_bootmenu_text
 {Tiene mas de un sistema operativo en el disco, pero no ha especificado
-un 'menu de arranque' para la particion activa o la particion de NetBSD
+un 'menu de arranque' para la partición activa o la partición de NetBSD
 en la que lo va a instalar.
 
-¿Quiere re-editar la particion para añadir una entrada en el menu de
+¿Quiere re-editar la partición para añadir una entrada en el menu de
 arranque?}
 
 message no_extended_bootmenu
-{Ha pedido que una particion extendida sea incluida en el menu de arranque.
-Sin embardo la BIOS de su sistema no parece soportar el comando de lectura
-usado por esa version del codigo del menu de arranque
-¿Esta seguro de que quiere hacer eso?
+{Ha pedido que una partición extendida sea incluida en el menú de arranque.
+Sin embargo la BIOS de su sistema no parece soportar el comando de lectura
+usado por esa versión del código del menu de arranque
+¿Está seguro de que quiere hacer eso?
 
 (Seleccionando 'no' le devolvera al menu de edicion de particiones.)}
 
 message installbootsel
-{Su configuracion requiere el codigo de bootselect de NetBSD
+{Su configuración requiere el código de bootselect de NetBSD
 para seleccionar que sistema usar.
 
-Actualmente no esta instalado, ¿lo quiere instalar ahora?}
+Actualmente no está instalado, ¿lo quiere instalar ahora?}
 
 message installmbr
-{El codigo de arranque del Master Boot Record no parece ser valido.
+{El código de arranque del Master Boot Record no parece ser válido.
 
-¿Quiere instalar el codigo de arranque de NetBSD?}
+¿Quiere instalar el código de arranque de NetBSD?}
 
 message updatembr
-{¿Quiere actualizar el codigo de arranque en el Master Boot
-Record a la ultima version del codigo de arranque de NetBSD?}
+{¿Quiere actualizar el código de arranque en el Master Boot
+Record a la ultima versión del código de arranque de NetBSD?}
 
-message set_kernel_1  {Nucleo (GENERIC)}
-message set_kernel_2  {Nucleo (GENERIC.MP)}
-message set_kernel_3  {Nucleo (GENERIC.MPACPI)}
-message set_kernel_4  {Nucleo (GENERIC_TINY)}
-message set_kernel_5  {Nucleo (GENERIC_LAPTOP)}
-message set_kernel_6  {Nucleo (GENERIC_DIAGNOSTIC)}
-message set_kernel_7  {Nucleo (GENERIC_PS2TINY)}
+message set_kernel_1  {Núcleo (GENERIC)}
+message set_kernel_2  {Núcleo (GENERIC.MP)}
+message set_kernel_3  {Núcleo (GENERIC.MPACPI)}
+message set_kernel_4  {Núcleo (GENERIC_TINY)}
+message set_kernel_5  {Núcleo (GENERIC_LAPTOP)}
+message set_kernel_6  {Núcleo (GENERIC_DIAGNOSTIC)}
+message set_kernel_7  {Núcleo (GENERIC_PS2TINY)}
