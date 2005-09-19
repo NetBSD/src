@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.28 2005/01/17 15:20:09 wiz Exp $
+.\"	$NetBSD: mountd.8,v 1.29 2005/09/19 00:59:56 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd January 14, 2005
+.Dd September 18, 2005
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@ mount requests
 .Sh SYNOPSIS
 .Nm
 .Op Fl dNn
+.Op Fl p Ar port
 .Op Fl P Ar policy
 .Op Ar exportsfile
 .Sh DESCRIPTION
@@ -78,11 +79,15 @@ from reserved ports, but it is now no longer functional. It
 is only provided for backwards compatibility. Requests
 are checked for reserved ports on a per-export basis, see
 .Xr exports 5 .
-.It Ar exportsfile
-The
-.Ar exportsfile
-argument specifies an alternative location
-for the exports file.
+.It Fl p Ar port
+Force
+.Nm
+to bind to the given port. If this
+option is not given, 
+.Nm
+may bind to every anonymous port
+(in the range 600-1023) which causes trouble when trying to use
+NFS through a firewall.
 .It Fl P Ar policy
 IPsec
 .Ar policy
@@ -94,6 +99,11 @@ a separator. If conflicting policy strings are found in a single line,
 the last string will take effect. If an invalid IPsec policy string is used
 .Nm
 logs an error message and terminates itself.
+.It Ar exportsfile
+The
+.Ar exportsfile
+argument specifies an alternative location
+for the exports file.
 .El
 .Pp
 When
