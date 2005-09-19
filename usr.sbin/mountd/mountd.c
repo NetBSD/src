@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.96 2005/09/19 00:59:56 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.97 2005/09/19 22:43:21 wiz Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.96 2005/09/19 00:59:56 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.97 2005/09/19 22:43:21 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -329,9 +329,9 @@ main(argc, argv)
 		default:
 			fprintf(stderr, "usage: %s [-dNn]"
 #ifdef IPSEC
-			    " [-P ipsec policy]"
+			    " [-P policy]"
 #endif
-			    " [export_file]\n", getprogname());
+			    " [-p port] [exportsfile]\n", getprogname());
 			exit(1);
 		};
 	argc -= optind;
