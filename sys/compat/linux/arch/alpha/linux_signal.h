@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.5 2005/05/19 21:16:29 manu Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.6 2005/09/19 02:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
 #define LINUX__NSIG_BPW		64
 #define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
 #define LINUX_NSIG		32
+
+#define	LINUX_MINSIGSTKSZ	4096
 
 /* sa_flags */
 #define LINUX_SA_ONSTACK	0x00000001

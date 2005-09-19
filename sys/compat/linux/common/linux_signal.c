@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.48 2005/09/19 02:46:49 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47 2005/05/20 01:06:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.48 2005/09/19 02:46:49 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -625,25 +625,33 @@ linux_sys_sigaltstack(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct linux_sigaltstack ss;
-	struct sigaltstack nss, oss;
+	struct sigaltstack nss;
 	int error;
+
+	if (SCARG(uap, oss)) {
+		native_to_linux_sigaltstack(&ss, &p->p_sigctx.ps_sigstk);
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
+			return error;
+	}
 
 	if (SCARG(uap, ss) != NULL) {
 		if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
 			return error;
 		linux_to_native_sigaltstack(&nss, &ss);
+
+		if (nss.ss_flags & ~SS_ALLBITS)
+			return EINVAL;
+
+		if (nss.ss_flags & SS_DISABLE) {
+			if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+				return EINVAL;
+		} else {
+			if (nss.ss_size < LINUX_MINSIGSTKSZ)
+				return ENOMEM;
+		}
+		p->p_sigctx.ps_sigstk = nss;
 	}
 
-	error = sigaltstack1(p,
-	    SCARG(uap, ss) ? &nss : NULL, SCARG(uap, oss) ? &oss : NULL);
-	if (error)
-		return error;
-
-	if (SCARG(uap, oss) != NULL) {
-		native_to_linux_sigaltstack(&ss, &oss);
-		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
-			return error;
-	}
 	return 0;
 }
 #endif /* LINUX_SS_ONSTACK */
