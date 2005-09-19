@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2004/02/23 03:44:30 jschauma Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.4.6.1 2005/09/19 21:21:49 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,8 +50,6 @@ message dobootblks
 message newdisk		/* XXX translate */
 {It appears that your disk, %s, has no X68K disk mark. sysinst is
 writing a disk mark.
-Note that if you plan to use a part of %s from Human68k, you should abort  
-here and format the disk with Human68k format.x utility.
 }
 
 message ordering	/* XXX translate */
