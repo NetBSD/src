@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2.2.2 2005/09/19 21:10:51 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2.2.3 2005/09/19 21:19:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@ message md_hello
 
 message diagcyl
 {Algunas BIOS viejas o programas de diagnostico antiguos pueden usar el
-ultimo cilindro del disco para propositos de testeo. Este ya no deberia
+ultimo cilindro del disco para propositos de testeo. Este ya no debería
 ser el caso de los sistemas modernos. Si tiene un sistema viejo y no
 esta seguro de si podria hacerlo, puede excluir el ultimo cilindro de
 su disco duro de ser usado.
@@ -67,4 +67,4 @@ message dobootblks
 }
 
 message set_kernel_1
-{Nucleo (GENERIC)}
+{Núcleo (GENERIC)}
