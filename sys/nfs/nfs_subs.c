@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.151 2005/08/19 12:47:23 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.152 2005/09/19 00:53:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.151 2005/08/19 12:47:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.152 2005/09/19 00:53:55 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1863,10 +1863,11 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vaper;
 {
 	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
