@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.45 2005/02/26 17:40:49 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.45.2.1 2005/09/19 20:53:56 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -916,7 +916,7 @@ i dlatego jest puste. Czy chcesz ustawic haslo dla root'a teraz?}
 
 message rootsh
 {Mozesz  teraz wybrac, ktorej powloki ma uzywac uzytkownik root. Domyslnie
-jest to /bin/csh, ale moze preferujesz inna.}
+jest to /bin/sh, ale moze preferujesz inna.}
 
 message postuseexisting
 {
