@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.h,v 1.2 2005/05/19 21:16:29 manu Exp $ */
+/*	$NetBSD: linux_signal.h,v 1.3 2005/09/19 02:46:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -90,6 +90,8 @@
 #define LINUX__NSIG		64
 #define LINUX__NSIG_BPW		64
 #define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
+
+#define	LINUX_MINSIGSTKSZ	2048
 
 typedef unsigned int linux_old_sigset_t;
 
