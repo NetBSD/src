@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.93 2005/09/18 21:41:26 agc Exp $ */
+/* $NetBSD: user.c,v 1.94 2005/09/19 00:43:17 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.93 2005/09/18 21:41:26 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.94 2005/09/19 00:43:17 rpaulo Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,7 +119,6 @@ enum {
 #define LOCK		1
 #define LOCKED		"*LOCKED*"
 
-#define CONFFILE	"/etc/usermgmt.conf"
 #define	PATH_LOGINCONF	"/etc/login.conf"
 
 #ifndef DEF_GROUP
@@ -797,13 +796,14 @@ setdefaults(user_t *up)
 	int	i;
 #endif
 
-	(void)snprintf(template, sizeof(template), "%s.XXXXXX", CONFFILE);
+	(void)snprintf(template, sizeof(template), "%s.XXXXXX", 
+	    _PATH_USERMGMT_CONF);
 	if ((fd = mkstemp(template)) < 0) {
-		warnx("Can't mkstemp `%s' for writing", CONFFILE);
+		warnx("Can't mkstemp `%s' for writing", _PATH_USERMGMT_CONF);
 		return 0;
 	}
 	if ((fp = fdopen(fd, "w")) == NULL) {
-		warn("Can't fdopen `%s' for writing", CONFFILE);
+		warn("Can't fdopen `%s' for writing", _PATH_USERMGMT_CONF);
 		return 0;
 	}
 	ret = 1;
@@ -820,7 +820,7 @@ setdefaults(user_t *up)
 		UNSET_EXPIRY : up->u_expire) <= 0 ||
 	    fprintf(fp, "preserve\t%s\n", (up->u_preserve == 0) ?
 		"false" : "true") <= 0) {
-		warn("Can't write to `%s'", CONFFILE);
+		warn("Can't write to `%s'", _PATH_USERMGMT_CONF);
 		ret = 0;
 	}
 #ifdef EXTENSIONS
@@ -828,15 +828,15 @@ setdefaults(user_t *up)
 	    i < up->u_rc ; i++) {
 		if (fprintf(fp, "range\t\t%d..%d\n", up->u_rv[i].r_from,
 		    up->u_rv[i].r_to) <= 0) {
-			warn("Can't write to `%s'", CONFFILE);
+			warn("Can't write to `%s'", _PATH_USERMGMT_CONF);
 			ret = 0;
 		}
 	}
 #endif
 	(void)fclose(fp);
 	if (ret) {
-		ret = ((rename(template, CONFFILE) == 0) &&
-		    (chmod(CONFFILE, 0644) == 0));
+		ret = ((rename(template, _PATH_USERMGMT_CONF) == 0) &&
+		    (chmod(_PATH_USERMGMT_CONF, 0644) == 0));
 	}
 	return ret;
 }
@@ -865,11 +865,12 @@ read_defaults(user_t *up)
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
-	if ((fp = fopen(CONFFILE, "r")) == NULL) {
-		if (stat(CONFFILE, &st) < 0 && !setdefaults(up)) {
-			warn("Can't create `%s' defaults file", CONFFILE);
+	if ((fp = fopen(_PATH_USERMGMT_CONF, "r")) == NULL) {
+		if (stat(_PATH_USERMGMT_CONF, &st) < 0 && !setdefaults(up)) {
+			warn("Can't create `%s' defaults file",
+			    _PATH_USERMGMT_CONF);
 		}
-		fp = fopen(CONFFILE, "r");
+		fp = fopen(_PATH_USERMGMT_CONF, "r");
 	}
 	if (fp != NULL) {
 		while ((s = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
