@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.157 2005/09/11 22:15:19 seb Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.158 2005/09/19 05:28:46 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.157 2005/09/11 22:15:19 seb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.158 2005/09/19 05:28:46 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -470,14 +470,12 @@ ip_output(struct mbuf *m0, ...)
 
 		goto sendit;
 	}
-#ifndef notdef
 	/*
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
 	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
-#endif
 
 	/*
 	 * packets with Class-D address as source are not valid per
