@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.68 2005/02/26 17:40:49 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.68.2.1 2005/09/19 21:14:40 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -956,7 +956,7 @@ edit_mbr_entry(menudesc *m, void *arg)
 
 	if (ptn_menu == -1)
 		ptn_menu = new_menu(NULL, ptn_opts, nelem(ptn_opts),
-			15, 6, 0, 50,
+			15, 6, 0, 54,
 			MC_SUBMENU | MC_SCROLL | MC_NOCLEAR,
 			set_ptn_header, set_ptn_label, NULL,
 			NULL, MSG_Partition_OK);
