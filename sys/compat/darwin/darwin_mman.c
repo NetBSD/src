@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.18 2005/09/13 01:42:32 christos Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.19 2005/09/19 02:47:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.18 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.19 2005/09/19 02:47:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,7 +145,8 @@ darwin_sys_load_shared_file(l, v, retval)
 		error = EINVAL;
 		goto bad3;
 	}
-	mapp = malloc(sizeof(*mapp) * SCARG(uap, count), M_TEMP, M_WAITOK);
+	maplen = SCARG(uap, count) * sizeof(*mapp);
+	mapp = malloc(maplen, M_TEMP, M_WAITOK);
 
 	if ((error = copyin(SCARG(uap, mappings), mapp, maplen)) != 0)
 		goto bad2;
