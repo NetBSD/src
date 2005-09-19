@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.95 2005/06/02 06:01:09 lukem Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.96 2005/09/19 00:59:56 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.95 2005/06/02 06:01:09 lukem Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.96 2005/09/19 00:59:56 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -236,6 +236,7 @@ static int countones __P((struct sockaddr *));
 #ifdef ISO
 static int get_isoaddr __P((const char *, size_t, char *, struct grouplist *));
 #endif
+static void bind_resv_port __P((int, sa_family_t, in_port_t));
 static struct exportlist *exphead;
 static struct mountlist *mlhead;
 static struct grouplist *grphead;
@@ -295,6 +296,7 @@ main(argc, argv)
 	int xcreated = 0, s;
 	int c, one = 1;
 	int maxrec = RPC_MAXDATASIZE;
+	in_port_t forcedport = 0;
 #ifdef IPSEC
 	char *policy = NULL;
 #define ADDOPTS "P:"
@@ -302,7 +304,7 @@ main(argc, argv)
 #define ADDOPTS
 #endif
 
-	while ((c = getopt(argc, argv, "dNnr" ADDOPTS)) != -1)
+	while ((c = getopt(argc, argv, "dNnrp:" ADDOPTS)) != -1)
 		switch (c) {
 #ifdef IPSEC
 		case 'P':
@@ -310,6 +312,10 @@ main(argc, argv)
 				errx(1, "Invalid ipsec policy `%s'", policy);
 			break;
 #endif
+		case 'p':
+			/* A forced port "0" will dynamically allocate a port */
+			forcedport = atoi(optarg);
+			break;
 		case 'd':
 			debug = 1;
 			break;
@@ -394,7 +400,7 @@ main(argc, argv)
 	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 
 	if (udpsock != -1 && udpconf != NULL) {
-		bindresvport(udpsock, NULL);
+		bind_resv_port(udpsock, AF_INET, forcedport);
 #ifdef IPSEC
 		if (policy)
 			ipsecsetup(AF_INET, udpsock, policy);
@@ -414,7 +420,7 @@ main(argc, argv)
 	}
 
 	if (tcpsock != -1 && tcpconf != NULL) {
-		bindresvport(tcpsock, NULL);
+		bind_resv_port(tcpsock, AF_INET, forcedport);
 #ifdef IPSEC
 		if (policy)
 			ipsecsetup(AF_INET, tcpsock, policy);
@@ -436,7 +442,7 @@ main(argc, argv)
 	}
 
 	if (udp6sock != -1 && udp6conf != NULL) {
-		bindresvport(udp6sock, NULL);
+		bind_resv_port(udp6sock, AF_INET6, forcedport);
 #ifdef IPSEC
 		if (policy)
 			ipsecsetup(AF_INET6, tcpsock, policy);
@@ -456,7 +462,7 @@ main(argc, argv)
 	}
 
 	if (tcp6sock != -1 && tcp6conf != NULL) {
-		bindresvport(tcp6sock, NULL);
+		bind_resv_port(tcp6sock, AF_INET6, forcedport);
 #ifdef IPSEC
 		if (policy)
 			ipsecsetup(AF_INET6, tcpsock, policy);
@@ -2679,4 +2685,34 @@ bad1:
 	if (cp)
 		*cp = '/';
 	return 0;
+}
+
+static void
+bind_resv_port(int sock, sa_family_t family, in_port_t port)
+{
+	struct sockaddr *sa;
+	struct sockaddr_in sasin;
+	struct sockaddr_in6 sasin6;
+
+	switch (family) {
+	case AF_INET:
+		(void)memset(&sasin, 0, sizeof(sasin));
+		sasin.sin_len = sizeof(sasin);
+		sasin.sin_family = family;
+		sasin.sin_port = htons(port);
+		sa = (struct sockaddr *)(void *)&sasin;
+		break;
+	case AF_INET6:
+		(void)memset(&sasin6, 0, sizeof(sasin6));
+		sasin6.sin6_len = sizeof(sasin6);
+		sasin6.sin6_family = family;
+		sasin6.sin6_port = htons(port);
+		sa = (struct sockaddr *)(void *)&sasin6;
+		break;
+	default:
+		syslog(LOG_ERR, "Unsupported address family %d", family);
+		return;
+	}
+	if (bindresvport_sa(sock, sa) == -1)
+		syslog(LOG_ERR, "Cannot bind to reserved port %d (%m)", port);
 }
