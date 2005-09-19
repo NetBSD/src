@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.254 2005/09/19 21:09:18 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.255 2005/09/19 21:23:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12872,4 +12872,127 @@ distrib/utils/sysinst/msg.mi.de			1.19
 
 	Translate the new slip related messages to german.
 	[dsl, ticket #804]
+
+distrib/utils/sysinst/Makefile.inc		1.40
+distrib/utils/sysinst/arch/acorn26/menus.md.es	1.1
+distrib/utils/sysinst/arch/acorn26/msg.md.es	1.1
+distrib/utils/sysinst/arch/acorn32/menus.md.es	1.1
+distrib/utils/sysinst/arch/acorn32/msg.md.es	1.1
+distrib/utils/sysinst/arch/alpha/menus.md.es	1.1
+distrib/utils/sysinst/arch/alpha/msg.md.es	1.1
+distrib/utils/sysinst/arch/arc/menus.md.es	1.1
+distrib/utils/sysinst/arch/arc/msg.md.es	1.1
+distrib/utils/sysinst/arch/atari/menus.md.es	1.1
+distrib/utils/sysinst/arch/atari/msg.md.es	1.1
+distrib/utils/sysinst/arch/bebox/menus.md.es	1.1
+distrib/utils/sysinst/arch/bebox/msg.md.es	1.1
+distrib/utils/sysinst/arch/cats/menus.md.es	1.1
+distrib/utils/sysinst/arch/cats/msg.md.es	1.1
+distrib/utils/sysinst/arch/evbarm/menus.md.es	1.1
+distrib/utils/sysinst/arch/evbarm/msg.md.es	1.1
+distrib/utils/sysinst/arch/evbppc/menus.md.es	1.1
+distrib/utils/sysinst/arch/evbppc/msg.md.es	1.1
+distrib/utils/sysinst/arch/hp300/menus.md.es	1.1
+distrib/utils/sysinst/arch/hp300/msg.md.es	1.1
+distrib/utils/sysinst/arch/hpcmips/menus.md.es	1.1
+distrib/utils/sysinst/arch/hpcmips/msg.md.es	1.1
+distrib/utils/sysinst/arch/i386/msg.md.es	1.1
+distrib/utils/sysinst/arch/mac68k/menus.md.es	1.1
+distrib/utils/sysinst/arch/mac68k/msg.md.es	1.1
+distrib/utils/sysinst/arch/macppc/menus.md.es	1.1
+distrib/utils/sysinst/arch/macppc/msg.md.es	1.1
+distrib/utils/sysinst/arch/mipsco/menus.md.es	1.1
+distrib/utils/sysinst/arch/mipsco/msg.md.es	1.1
+distrib/utils/sysinst/arch/mvme68k/menus.md.es	1.1
+distrib/utils/sysinst/arch/mvme68k/msg.md.es	1.1
+distrib/utils/sysinst/arch/news68k/menus.md.es	1.1
+distrib/utils/sysinst/arch/news68k/msg.md.es	1.1
+distrib/utils/sysinst/arch/newsmips/menus.md.es	1.1
+distrib/utils/sysinst/arch/newsmips/msg.md.es	1.1
+distrib/utils/sysinst/arch/pc532/menus.md.es	1.1
+distrib/utils/sysinst/arch/pc532/msg.md.es	1.1
+distrib/utils/sysinst/arch/playstation2/menus.md.es 1.1
+distrib/utils/sysinst/arch/playstation2/msg.md.es 1.1
+distrib/utils/sysinst/arch/pmax/menus.md.es	1.1
+distrib/utils/sysinst/arch/pmax/msg.md.es	1.1
+distrib/utils/sysinst/arch/pmppc/menus.md.es	1.1
+distrib/utils/sysinst/arch/pmppc/msg.md.es	1.1
+distrib/utils/sysinst/arch/prep/menus.md.es	1.1
+distrib/utils/sysinst/arch/prep/msg.md.es	1.1
+distrib/utils/sysinst/arch/sandpoint/menus.md.es 1.1
+distrib/utils/sysinst/arch/sandpoint/msg.md.es	1.1
+distrib/utils/sysinst/arch/sgimips/menus.md.es	1.1
+distrib/utils/sysinst/arch/sgimips/msg.md.es	1.1
+distrib/utils/sysinst/arch/shark/menus.md.es	1.1
+distrib/utils/sysinst/arch/shark/msg.md.es	1.1
+distrib/utils/sysinst/arch/sparc/menus.md.es	1.1
+distrib/utils/sysinst/arch/sparc/msg.md.es	1.1
+distrib/utils/sysinst/arch/sparc64/menus.md.es	1.1
+distrib/utils/sysinst/arch/sparc64/msg.md.es	1.1
+distrib/utils/sysinst/arch/vax/menus.md.es	1.1
+distrib/utils/sysinst/arch/vax/msg.md.es	1.1
+distrib/utils/sysinst/arch/x68k/menus.md.es	1.1
+distrib/utils/sysinst/arch/x68k/msg.md.es	1.1
+distrib/utils/sysinst/msg.mbr.es		1.1
+distrib/utils/sysinst/msg.mi.es			1.1
+
+	Spanish menus translation. contributed by Ivan-Benjamin Garcia Tora
+	[dsl, ticket #805]
+
+distrib/utils/sysinst/msg.mbr.es		1.2
+distrib/utils/sysinst/msg.mi.es			1.2
+
+	Fix some obvious problems found by actually running an install in
+	Spanish.
+	[dsl, ticket #806]
+
+distrib/utils/sysinst/mbr.c			1.69
+
+	Increase width of menu to allow for longer spanish message for
+	selecting units.
+	[dsl, ticket #807]
+
+distrib/utils/sysinst/arch/acorn26/msg.md.es	1.2
+distrib/utils/sysinst/arch/acorn32/msg.md.es	1.2
+distrib/utils/sysinst/arch/alpha/msg.md.es	1.2
+distrib/utils/sysinst/arch/amiga/menus.md.es	1.1
+distrib/utils/sysinst/arch/amiga/msg.md.es	1.1
+distrib/utils/sysinst/arch/arc/msg.md.es	1.2
+distrib/utils/sysinst/arch/atari/msg.md.es	1.2
+distrib/utils/sysinst/arch/bebox/msg.md.es	1.2
+distrib/utils/sysinst/arch/cats/msg.md.es	1.2
+distrib/utils/sysinst/arch/evbarm/msg.md.es	1.2
+distrib/utils/sysinst/arch/evbppc/msg.md.es	1.2
+distrib/utils/sysinst/arch/hp300/msg.md.es	1.2
+distrib/utils/sysinst/arch/hp700/menus.md.es	1.1
+distrib/utils/sysinst/arch/hp700/msg.md.es	1.1
+distrib/utils/sysinst/arch/hpcmips/msg.md.es	1.2
+distrib/utils/sysinst/arch/i386/msg.md.es	1.2
+distrib/utils/sysinst/arch/mac68k/msg.md.es	1.2
+distrib/utils/sysinst/arch/macppc/msg.md.es	1.2
+distrib/utils/sysinst/arch/mipsco/msg.md.es	1.2
+distrib/utils/sysinst/arch/mvme68k/msg.md.es	1.2
+distrib/utils/sysinst/arch/news68k/msg.md.es	1.2
+distrib/utils/sysinst/arch/newsmips/msg.md.es	1.2
+distrib/utils/sysinst/arch/pc532/msg.md.es	1.2
+distrib/utils/sysinst/arch/playstation2/msg.md.es 1.2
+distrib/utils/sysinst/arch/pmax/msg.md.es	1.2
+distrib/utils/sysinst/arch/pmppc/msg.md.es	1.2
+distrib/utils/sysinst/arch/prep/msg.md.es	1.2
+distrib/utils/sysinst/arch/sandpoint/msg.md.es	1.2
+distrib/utils/sysinst/arch/sgimips/msg.md.es	1.2
+distrib/utils/sysinst/arch/shark/msg.md.es	1.2
+distrib/utils/sysinst/arch/sparc/msg.md.es	1.2
+distrib/utils/sysinst/arch/sparc64/msg.md.es	1.2
+distrib/utils/sysinst/arch/vax/msg.md.es	1.2
+distrib/utils/sysinst/arch/x68k/msg.md.es	1.2
+
+	2nd stage of Spanish language translation (grammar fixes and typos),
+	[dsl, ticket #808]
+
+distrib/utils/sysinst/arch/mvme68k/msg.md.fr	1.5
+distrib/utils/sysinst/arch/sgimips/msg.md.de	1.5
+
+	Fix a couple of md translations that seem to have got awry.
+	[dsl, ticket #809]
 
