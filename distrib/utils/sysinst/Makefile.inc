@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2005/02/19 17:00:38 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.39.2.1 2005/09/19 21:10:50 tron Exp $
 #
 # Makefile for sysinst
 
@@ -17,7 +17,7 @@ SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
 SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
 
 SYSINSTLANG?=	en
-LANGUAGES?=	de en fr pl
+LANGUAGES?=	de en es fr pl
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
