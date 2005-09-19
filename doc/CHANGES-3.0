@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.253 2005/09/18 20:44:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.254 2005/09/19 21:09:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12820,4 +12820,56 @@ distrib/utils/sysinst/msg.mbr.de		1.6
 
 	Some improvements and fixes.
 	[dsl, ticket #801]
+
+distrib/utils/sysinst/msg.mbr.de		1.7
+
+	Reword "fullpart" message to make it shorter. Should fix
+	PR install/31292.
+	[dsl, ticket #793]
+
+distrib/utils/sysinst/disks.c			1.89
+
+	Comment out the vstab entries generated for alternate root filesystems.
+	Marking the 'noauto' isn't enough to stop the code that remounts
+	root rw trying to use them.
+	[dsl, ticket #795]
+
+distrib/utils/sysinst/msg.mi.de			1.24
+distrib/utils/sysinst/msg.mi.en			1.138
+distrib/utils/sysinst/msg.mi.es			1.3
+distrib/utils/sysinst/msg.mi.fr			1.86
+distrib/utils/sysinst/msg.mi.pl			1.47
+
+	Change the message above the selection menu for root's shell to show
+	the correct default (ie what happens if you type enter) of /bin/sh.
+	Fixes PR install/32159.
+	[dsl, ticket #796]
+
+distrib/utils/sysinst/msg.mi.fr			1.87
+distrib/utils/sysinst/msg.mi.pl			1.48
+
+	Correct some messages which had the wrong number of format specifiers.
+	[dsl, ticket #797]
+
+distrib/common/buildfloppies.sh			1.10
+
+	Tell pax to use 8k (not 10k) buffers when generating the tar archive
+	of 'boot' and 'netbsd'. This makes it possible for the tar archive to
+	end at the end of the 2.88M floppy, instead of either 4k before, or 6k
+	after. Gives us a whole extra 4k.
+	[dsl, ticket #802]
+
+distrib/utils/sysinst/msg.mi.de			1.18
+distrib/utils/sysinst/msg.mi.en			1.137
+distrib/utils/sysinst/msg.mi.fr			1.84
+distrib/utils/sysinst/msg.mi.pl			1.46
+distrib/utils/sysinst/net.c			1.106
+
+	Enable slip based installation.
+	[dsl, ticket #803]
+
+distrib/utils/sysinst/msg.mi.de			1.19
+
+	Translate the new slip related messages to german.
+	[dsl, ticket #804]
 
