@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.26 2005/09/19 22:45:27 wiz Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.27 2005/09/20 15:48:17 he Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinit.c,v 1.26 2005/09/19 22:45:27 wiz Exp $");
+__RCSID("$NetBSD: skeyinit.c,v 1.27 2005/09/20 15:48:17 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,6 +57,8 @@ int main(int argc, char **argv)
 	struct	passwd *pp;
 	struct	tm *tm;
 	int c;
+
+	pw = NULL;	/* XXX gcc -Wuninitialized [sh3] */
 
 	/*
 	 * Make sure using stdin/stdout/stderr is safe
