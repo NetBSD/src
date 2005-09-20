@@ -9,7 +9,7 @@ ac_cv_style_checkmount,
 case "${host_os_name}" in
 	svr4* | sysv4* | solaris2* | sunos5* )
 			ac_cv_style_checkmount=svr4 ;;
-	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
+	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | macosx* | rhapsody* )
 			ac_cv_style_checkmount=bsd44 ;;
 	aix* )
 			ac_cv_style_checkmount=aix ;;

@@ -26,6 +26,8 @@ SUBDIRS =		\
 # additional files to add to the distribution tar file
 #	m4/aclocal
 EXTRA_DIST_M4 =				\
+	vers.m4				\
+	\
 	m4/GNUmakefile			\
 	m4/amdgrep			\
 	m4/amindent			\
@@ -91,6 +93,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/func_bad_yp_all.m4			\
 	m4/macros/header_templates.m4			\
 	m4/macros/host_macros.m4			\
+	m4/macros/libtool.m4				\
 	m4/macros/linux_headers.m4			\
 	m4/macros/localconfig.m4			\
 	m4/macros/mount_headers.m4			\
@@ -125,6 +128,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/type_pcfs_args.m4			\
 	m4/macros/type_recvfrom_fromlen.m4		\
 	m4/macros/type_rfs_args.m4			\
+	m4/macros/type_rpcvers_t.m4			\
 	m4/macros/type_svc_in_arg.m4			\
 	m4/macros/type_time_t.m4			\
 	m4/macros/type_tmpfs_args.m4			\
@@ -172,6 +176,7 @@ EXTRA_DIST_CONF =			\
 	conf/hn_dref/hn_dref_linux.h	\
 	\
 	conf/mount/mount_aix.c		\
+	conf/mount/mount_aix3.c		\
 	conf/mount/mount_bsdi3.c	\
 	conf/mount/mount_default.c	\
 	conf/mount/mount_hpux.c		\
@@ -187,6 +192,7 @@ EXTRA_DIST_CONF =			\
 	conf/mtab/mtab_bsd.c		\
 	conf/mtab/mtab_file.c		\
 	conf/mtab/mtab_isc3.c		\
+	conf/mtab/mtab_linux.c		\
 	conf/mtab/mtab_mach3.c		\
 	conf/mtab/mtab_osf.c		\
 	conf/mtab/mtab_svr4.c		\
@@ -257,6 +263,7 @@ EXTRA_DIST_CONF =			\
 	conf/trap/trap_svr4.h		\
 	conf/trap/trap_ultrix.h		\
 	\
+	conf/umount/umount_aix.c	\
 	conf/umount/umount_bsd44.c	\
 	conf/umount/umount_default.c	\
 	conf/umount/umount_linux.c	\
@@ -281,6 +288,7 @@ EXTRA_DIST =			\
 	LSM.am-utils		\
 	MIRRORS.txt		\
 	MIRRORS.html		\
+	README.attrcache	\
 	README.autofs		\
 	README.ldap		\
 	README.osx		\
@@ -295,7 +303,8 @@ EXTRA_DIST =			\
 	stamp-h.in		\
 	tasks
 
-DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
+DISTCLEANFILES = amu_nfs_prot.h amu_autofs_prot.h config.cache.old dbgcf.h
+CLEANFILES = dbgcf.h
 
 ##############################################################################
 # Personal maintainer rules by Erez Zadok

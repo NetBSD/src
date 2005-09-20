@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_sunos5_8.h,v 1.1.1.8 2005/04/23 18:12:41 christos Exp $	*/
+/*	$NetBSD: nfs_prot_sunos5_8.h,v 1.1.1.9 2005/09/20 17:15:23 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_sunos5_8.h,v 1.10 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_sunos5_8.h
  *
  */
 
@@ -105,7 +105,6 @@
 #define	NFSPROC_STATFS ((unsigned long)(17))
 
 #define AUTOFS_CONFTYPE "ticotsord"
-
 
 /*
  * TYPEDEFS:
