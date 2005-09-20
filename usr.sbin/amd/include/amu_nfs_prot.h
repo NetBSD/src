@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_netbsd1_4.h,v 1.12 2005/01/03 20:56:45 ezk Exp 
+ * File: am-utils/conf/nfs_prot/nfs_prot_netbsd1_4.h
  *
  */
 
