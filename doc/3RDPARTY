@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.361 2005/09/08 11:46:21 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.362 2005/09/20 09:14:40 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -38,7 +38,7 @@ Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
 Version:	6.1-rc2 [20050417]
-Current Vers:	6.1.1
+Current Vers:	6.1.2.1
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
