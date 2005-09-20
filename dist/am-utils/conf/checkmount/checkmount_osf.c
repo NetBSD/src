@@ -1,4 +1,4 @@
-/*	$NetBSD: checkmount_osf.c,v 1.1.1.8 2005/04/23 18:12:20 christos Exp $	*/
+/*	$NetBSD: checkmount_osf.c,v 1.1.1.9 2005/09/20 17:15:06 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: checkmount_osf.c,v 1.9 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/checkmount/checkmount_osf.c
  *
  */
 
@@ -71,14 +71,14 @@ fixmount_check_mount(char *host, struct in_addr hostaddr, char *path)
      * Apparently two forms of nfs mount syntax are
      * accepted: host:/path or /path@host
      */
-    if (delim = strchr(fslist[i].f_mntfromname, ':')) {
+    if ((delim = strchr(fslist[i].f_mntfromname, ':'))) {
       *delim = '\0';
       if ((STREQ(delim + 1, path) ||
 	   STREQ(fslist[i].f_mntonname, path)) &&
 	  is_same_host(fslist[i].f_mntfromname,
 		       host, hostaddr))
 	  found = 1;
-    } else if (delim = strchr(fslist[i].f_mntfromname, '@')) {
+    } else if ((delim = strchr(fslist[i].f_mntfromname, '@'))) {
       *delim = '\0';
       if ((STREQ(fslist[i].f_mntfromname, path) ||
 	   STREQ(fslist[i].f_mntonname, path)) &&

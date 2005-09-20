@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.4 2005/04/23 18:12:19 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.5 2005/09/20 17:15:06 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v1.c,v 1.23 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/autofs/autofs_solaris_v1.c
  *
  */
 

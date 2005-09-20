@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.8 2005/04/23 18:12:31 christos Exp $	*/
+/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.9 2005/09/20 17:15:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_hpux11.h,v 1.16 2005/01/13 21:24:11 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_hpux11.h
  *
  */
 

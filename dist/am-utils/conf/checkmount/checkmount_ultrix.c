@@ -1,4 +1,4 @@
-/*	$NetBSD: checkmount_ultrix.c,v 1.1.1.8 2005/04/23 18:12:20 christos Exp $	*/
+/*	$NetBSD: checkmount_ultrix.c,v 1.1.1.9 2005/09/20 17:15:07 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: checkmount_ultrix.c,v 1.9 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/checkmount/checkmount_ultrix.c
  *
  */
 

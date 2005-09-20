@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_nfsx.c,v 1.1.1.8 2005/04/23 18:09:19 christos Exp $	*/
+/*	$NetBSD: amfs_nfsx.c,v 1.1.1.9 2005/09/20 17:14:44 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_nfsx.c,v 1.23 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/amfs_nfsx.c
  *
  */
 
