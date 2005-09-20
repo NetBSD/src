@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_mach3.c,v 1.1.1.8 2005/04/23 18:12:23 christos Exp $	*/
+/*	$NetBSD: mtab_mach3.c,v 1.1.1.9 2005/09/20 17:15:11 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_mach3.c,v 1.13 2005/03/04 18:42:43 ezk Exp
+ * File: am-utils/conf/mtab/mtab_mach3.c
  *
  */
 
@@ -129,7 +129,6 @@ again:
     endmntent(mfp);
     mfp = 0;
   }
-  clock_valid = 0;
   if (stat(mnttabname, &st_before) < 0) {
     plog(XLOG_ERROR, "%s: stat: %m", mnttabname);
     if (errno == ESTALE) {
@@ -227,6 +226,7 @@ unlock_mntlist(void)
    * Release file lock, by closing the file
    */
   if (mnt_file) {
+    dlog("unlock_mntlist: releasing");
     endmntent(mnt_file);
     mnt_file = 0;
   }

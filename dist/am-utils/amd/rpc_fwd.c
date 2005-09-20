@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.8 2005/04/23 18:09:30 christos Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.9 2005/09/20 17:14:53 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: rpc_fwd.c,v 1.19 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/rpc_fwd.c
  *
  */
 
@@ -95,7 +95,7 @@ static u_int xid;
 static rpc_forward *
 fwd_alloc(void)
 {
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
   rpc_forward *p = 0, *p2;
 
   /*

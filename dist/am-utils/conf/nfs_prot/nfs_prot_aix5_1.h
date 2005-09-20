@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.4 2005/04/23 18:12:28 christos Exp $	*/
+/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.5 2005/09/20 17:15:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix5_1.h,v 1.9 2005/01/16 23:59:25 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_aix5_1.h
  *
  */
 

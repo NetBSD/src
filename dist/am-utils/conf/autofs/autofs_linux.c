@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_linux.c,v 1.1.1.4 2005/04/23 18:12:20 christos Exp $	*/
+/*	$NetBSD: autofs_linux.c,v 1.1.1.5 2005/09/20 17:15:04 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -40,12 +40,12 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_linux.c,v 1.42 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/autofs/autofs_linux.c
  *
  */
 
 /*
- * Automounter filesystem
+ * Automounter filesystem for Linux
  */
 
 #ifdef HAVE_CONFIG_H
@@ -182,7 +182,7 @@ autofs_mounted(am_node *mp)
     plog(XLOG_ERROR, "AUTOFS_IOC_SETTIMEOUT: %s", strerror(errno));
 
   /* tell the daemon to call us for expirations */
-  mp->am_autofs_ttl = clocktime() + gopt.am_timeo_w;
+  mp->am_autofs_ttl = clocktime(NULL) + gopt.am_timeo_w;
 }
 
 
@@ -810,7 +810,7 @@ static int autofs_timeout_mp_task(void *arg)
 void autofs_timeout_mp(am_node *mp)
 {
   autofs_fh_t *fh = mp->am_autofs_fh;
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
 
   /* update the ttl */
   mp->am_autofs_ttl = now + gopt.am_timeo_w;
