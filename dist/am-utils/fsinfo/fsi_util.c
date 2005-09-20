@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.1.1.8 2005/04/23 18:13:21 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.1.1.9 2005/09/20 17:15:58 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_util.c,v 1.13 2005/02/27 04:23:09 ezk Exp
+ * File: am-utils/fsinfo/fsi_util.c
  *
  */
 

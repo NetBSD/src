@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.8 2005/04/23 18:09:16 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.1.1.9 2005/09/20 17:14:40 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_ops.c,v 1.23 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/amd/am_ops.c
  *
  */
 

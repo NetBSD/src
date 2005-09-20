@@ -1,4 +1,4 @@
-/*	$NetBSD: info_file.c,v 1.1.1.8 2005/04/23 18:09:23 christos Exp $	*/
+/*	$NetBSD: info_file.c,v 1.1.1.9 2005/09/20 17:14:55 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_file.c,v 1.13 2005/03/08 02:51:30 ezk Exp
+ * File: am-utils/amd/info_file.c
  *
  */
 
@@ -199,7 +199,7 @@ file_open(char *map, time_t *tp)
   if (mapf && tp) {
     struct stat stb;
     if (fstat(fileno(mapf), &stb) < 0)
-      *tp = clocktime();
+      *tp = clocktime(NULL);
     else
       *tp = stb.st_mtime;
   }
