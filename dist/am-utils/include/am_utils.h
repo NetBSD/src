@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.10 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.11 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_utils.h,v 1.65 2005/04/07 23:31:07 ezk Exp
+ * File: am-utils/include/am_utils.h
  *
  */
 
@@ -114,8 +114,6 @@
 #define XLOG_DEFSTR	"all,nomap,nostats"	/* Default log options */
 #define XLOG_ALL	(XLOG_FATAL|XLOG_ERROR|XLOG_USER|XLOG_WARNING|XLOG_INFO|XLOG_MAP|XLOG_STATS)
 
-#define clocktime() (clock_valid ? clock_valid : time(&clock_valid))
-
 #define NO_SUBNET	"notknown"   /* default subnet name for no subnet */
 #define	NEXP_AP		(1022)			/* gdmr: was 254 */
 #define NEXP_AP_MARGIN	(128)			/* ???? not used */
@@ -141,10 +139,17 @@
  * Systems which have the mount table in a file need to read it before
  * they can perform an unmount() system call.
  */
-#define UMOUNT_FS(dir, mtb_name, on_autofs)	umount_fs(dir, mtb_name, on_autofs)
+#define UMOUNT_FS(dir, mtb_name, unmount_flags)	umount_fs(dir, mtb_name, unmount_flags)
+/* next two are imported via $srcdir/conf/umount/umount_*.c */
+extern int umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags);
+#ifdef MNT2_GEN_OPT_FORCE
+extern int umount2_fs(const char *mntdir, u_int unmount_flags);
+#endif /* MNT2_GEN_OPT_FORCE */
 
-/* imported via $srcdir/conf/umount/umount_*.c */
-extern int umount_fs(char *mntdir, const char *mnttabname, int on_autofs);
+/* unmount-related flags (special handling of autofs, forced/lazy, etc.) */
+#define AMU_UMOUNT_FORCE        0x1
+#define AMU_UMOUNT_DETACH       0x2
+#define AMU_UMOUNT_AUTOFS       0x4
 
 /*
  * The following values can be tuned...
@@ -262,7 +267,6 @@ extern int xlog_level_init;
 extern serv_state amd_state;	/* Should we go now */
 extern struct in_addr myipaddr;	/* (An) IP address of this host */
 extern struct opt_tab xlog_opt[];
-extern time_t clock_valid;	/* Clock needs recalculating */
 extern u_short nfs_port;	/* Our NFS service port */
 
 /*
@@ -299,7 +303,7 @@ extern int mount_fs(mntent_t *, int, caddr_t, int, MTYPE_TYPE, u_long, const cha
 extern void nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp);
 extern int pickup_rpc_reply(voidp, int, voidp, XDRPROC_T_TYPE);
 extern int switch_option(char *);
-extern int switch_to_logfile(char *logfile, int orig_umask);
+extern int switch_to_logfile(char *logfile, int orig_umask, int truncate_log);
 extern mntlist *read_mtab(char *, const char *);
 #ifndef HAVE_TRANSPORT_TYPE_TLI
 extern struct sockaddr_in *amu_svc_getcaller(SVCXPRT *xprt);
@@ -327,9 +331,9 @@ extern voidp xzalloc(int);
 extern int check_pmap_up(char *host, struct sockaddr_in* sin);
 extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto);
 extern long get_server_pid(void);
-extern void dplog(const char *fmt, ...);
-
-
+extern int xsnprintf(char *str, size_t size, const char *format, ...);
+extern void setup_sighandler(int signum, void (*handler)(int));
+extern time_t clocktime(nfstime *nt);
 
 #ifdef MOUNT_TABLE_ON_FILE
 extern void rewrite_mtab(mntlist *, const char *);

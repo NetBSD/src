@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_cachefs.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: ops_cachefs.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_cachefs.c,v 1.18 2005/03/06 03:19:01 ezk Exp
+ * File: am-utils/amd/ops_cachefs.c
  *
  */
 
@@ -231,10 +231,10 @@ cachefs_mount(am_node *am, mntfs *mf)
 static int
 cachefs_umount(am_node *am, mntfs *mf)
 {
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   int error;
 
-  error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
+  error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, unmount_flags);
 
   /*
    * In the case of cachefs, we must fsck the cache directory.  Otherwise,

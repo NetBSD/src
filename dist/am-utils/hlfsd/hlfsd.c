@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.9 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.10 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.c,v 1.32 2005/02/27 23:53:22 ezk Exp
+ * File: am-utils/hlfsd/hlfsd.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
     *dot = '\0';
   orig_umask = umask(0);
   if (logfile)
-    switch_to_logfile(logfile, orig_umask);
+    switch_to_logfile(logfile, orig_umask, 0);
 
 #ifndef MOUNT_TABLE_ON_FILE
   if (amuDebug(D_MTAB))
@@ -337,8 +337,6 @@ main(int argc, char *argv[])
 	   am_get_progname(), dir_name);
     exit(3);
   }
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (!forcefast) {
     /* make sure mount point exists and is at least mode 555 */
@@ -573,8 +571,6 @@ main(int argc, char *argv[])
    *************************************************************************/
   compute_automounter_nfs_args(&nfs_args, &mnt);
 
-  clock_valid = 0;		/* invalidate logging clock */
-
 /*
  * For some reason, this mount may have to be done in the background, if I am
  * using -D daemon.  I suspect that the actual act of mounting requires
@@ -640,8 +636,6 @@ hlfsd_init(void)
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   /*
    * Initialize file handles.
@@ -787,8 +781,6 @@ reload(int signum)
   int child;
   int status;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   if (getpid() != masterpid)
     return;
 
@@ -797,7 +789,7 @@ reload(int signum)
    * can be rotated)
    */
   if (signum == SIGHUP && logfile)
-    switch_to_logfile(logfile, orig_umask);
+    switch_to_logfile(logfile, orig_umask, 0);
 
   /*
    * parent performs the reload, while the child continues to serve
@@ -839,8 +831,6 @@ cleanup(int signum)
 {
   struct stat stbuf;
   int umount_result;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (!amuDebug(D_DAEMON)) {
     if (getpid() != masterpid)
