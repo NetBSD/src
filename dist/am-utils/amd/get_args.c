@@ -1,4 +1,4 @@
-/*	$NetBSD: get_args.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: get_args.c,v 1.7 2005/09/20 18:29:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -112,7 +112,7 @@ get_version_string(void)
   strlcat(vers, tmpbuf, len);
 
   strlcat(vers, "Map support for: ", len);
-  mapc_showtypes(tmpbuf);
+  mapc_showtypes(tmpbuf, sizeof(tmpbuf));
   strlcat(vers, tmpbuf, len);
   strlcat(vers, ".\nAMFS: ", len);
   ops_showamfstypes(tmpbuf);
@@ -328,7 +328,7 @@ get_args(int argc, char *argv[])
     fp = fopen(amu_conf_file, "r");
     if (!fp) {
       char buf[128];
-      sprintf(buf, sizeof(buf), "Amd configuration file (%s)", amu_conf_file);
+      snprintf(buf, sizeof(buf), "Amd configuration file (%s)", amu_conf_file);
       perror(buf);
       exit(1);
     }
