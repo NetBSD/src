@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_bsd.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: mtab_bsd.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_bsd.c,v 1.10 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/mtab/mtab_bsd.c
  *
  */
 

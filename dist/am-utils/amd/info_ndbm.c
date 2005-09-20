@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ndbm.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: info_ndbm.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ndbm.c,v 1.9 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_ndbm.c
  *
  */
 
@@ -125,7 +125,7 @@ ndbm_init(mnt_map *m, char *map, time_t *tp)
     error = fstat(dbm_pagfno(db), &stb);
 #endif /* not DBM_SUFFIX */
     if (error < 0)
-      *tp = clocktime();
+      *tp = clocktime(NULL);
     else
       *tp = stb.st_mtime;
     dbm_close(db);

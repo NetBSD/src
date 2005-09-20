@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.10 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.11 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_subr.c,v 1.19 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/amq_subr.c
  *
  */
 /*
@@ -140,7 +140,7 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
   case AMOPT_LOGFILE:
     if (gopt.logfile && opt->as_str
 	&& STREQ(gopt.logfile, opt->as_str)) {
-      if (switch_to_logfile(opt->as_str, orig_umask))
+      if (switch_to_logfile(opt->as_str, orig_umask, 0))
 	rc = EINVAL;
     } else {
       rc = EACCES;
@@ -156,8 +156,8 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
     if (amd_state == Run) {
       plog(XLOG_INFO, "amq says flush cache");
       do_mapc_reload = 0;
-      flush_nfs_fhandle_cache((fserver *) 0);
-      flush_srvr_nfs_cache();
+      flush_nfs_fhandle_cache((fserver *) NULL);
+      flush_srvr_nfs_cache((fserver *) NULL);
     }
     break;
   }

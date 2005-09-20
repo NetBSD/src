@@ -1,4 +1,4 @@
-/*	$NetBSD: pawd.c,v 1.5 2005/04/23 22:18:17 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: pawd.c,v 1.16 2005/04/07 03:08:46 ezk Exp
+ * File: am-utils/amq/pawd.c
  *
  */
 
@@ -70,7 +70,7 @@ find_mt(amq_mount_tree *mt, char *dir)
   while (mt) {
     if (!STREQ(mt->mt_type, "toplvl")) {
       int len = strlen(mt->mt_mountpoint);
-      if (len && NSTREQ(mt->mt_mountpoint, dir, len) &&
+      if (len != 0 && NSTREQ(mt->mt_mountpoint, dir, len) &&
 	  ((dir[len] == '\0') || (dir[len] == '/'))) {
 	char tmp_buf[MAXPATHLEN];
 	strlcpy(tmp_buf, mt->mt_directory, sizeof(tmp_buf));
@@ -253,7 +253,7 @@ static char *
 getawd(char *path, size_t l)
 {
 #ifdef HAVE_GETCWD
-  char *wd = getcwd(path, MAXPATHLEN+1);
+  char *wd = getcwd(path, MAXPATHLEN);
 #else /* not HAVE_GETCWD */
   char *wd = getwd(path);
 #endif /* not HAVE_GETCWD */

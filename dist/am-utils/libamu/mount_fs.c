@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.12 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.13 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_fs.c,v 1.50 2005/04/09 18:15:35 ottavio Exp
+ * File: am-utils/libamu/mount_fs.c
  *
  */
 
@@ -182,8 +182,6 @@ mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type,
        mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
 
 again:
-  clock_valid = 0;
-
   error = MOUNT_TRAP(type, mnt, flags, mnt_data);
 
   if (error < 0) {
@@ -354,58 +352,73 @@ compute_nfs_attrcache_flags(nfs_args_t *nap, mntent_t *mntp)
   acval = hasmntval(mntp, MNTTAB_OPT_ACTIMEO); /* attr cache timeout (sec) */
 #endif /* MNTTAB_OPT_ACTIMEO */
 
+  /*** acregmin ***/
+#ifdef HAVE_NFS_ARGS_T_ACREGMIN
   if (acval) {
-#ifdef HAVE_NFS_ARGS_T_ACREGMIN
     nap->acregmin = acval;	/* min ac timeout for reg files (sec) */
-    nap->acregmax = acval;	/* max ac timeout for reg files (sec) */
-#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
-#ifdef HAVE_NFS_ARGS_T_ACDIRMIN
-    nap->acdirmin = acval;	/* min ac timeout for dirs (sec) */
-    nap->acdirmax = acval;	/* max ac timeout for dirs (sec) */
-#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
   } else {
-#ifdef HAVE_NFS_ARGS_T_ACREGMIN
 # ifdef MNTTAB_OPT_ACREGMIN
     nap->acregmin = hasmntval(mntp, MNTTAB_OPT_ACREGMIN);
 # else /* not MNTTAB_OPT_ACREGMIN */
     nap->acregmin = 0;
 # endif /* not MNTTAB_OPT_ACREGMIN */
+  }
+  /* set this flag, because if we got here, then we changed acregmin */
+# ifdef MNT2_NFS_OPT_ACREGMIN
+  nap->flags |= MNT2_NFS_OPT_ACREGMIN;
+# endif /* MNT2_NFS_OPT_ACREGMIN */
+#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
+
+  /*** acregmax ***/
+#ifdef HAVE_NFS_ARGS_T_ACREGMAX
+  if (acval) {
+    nap->acregmax = acval;	/* min ac timeout for reg files (sec) */
+  } else {
 # ifdef MNTTAB_OPT_ACREGMAX
     nap->acregmax = hasmntval(mntp, MNTTAB_OPT_ACREGMAX);
 # else /* not MNTTAB_OPT_ACREGMAX */
     nap->acregmax = 0;
 # endif /* not MNTTAB_OPT_ACREGMAX */
-#endif /* HAVE_NFS_ARGS_T_ACREGMIN */
+  }
+  /* set this flag, because if we got here, then we changed acregmax */
+# ifdef MNT2_NFS_OPT_ACREGMAX
+  nap->flags |= MNT2_NFS_OPT_ACREGMAX;
+# endif /* MNT2_NFS_OPT_ACREGMAX */
+#endif /* HAVE_NFS_ARGS_T_ACREGMAX */
+
+  /*** acdirmin ***/
 #ifdef HAVE_NFS_ARGS_T_ACDIRMIN
+  if (acval) {
+    nap->acdirmin = acval;	/* min ac timeout for reg files (sec) */
+  } else {
 # ifdef MNTTAB_OPT_ACDIRMIN
     nap->acdirmin = hasmntval(mntp, MNTTAB_OPT_ACDIRMIN);
 # else /* not MNTTAB_OPT_ACDIRMIN */
     nap->acdirmin = 0;
 # endif /* not MNTTAB_OPT_ACDIRMIN */
+  }
+  /* set this flag, because if we got here, then we changed acdirmin */
+# ifdef MNT2_NFS_OPT_ACDIRMIN
+  nap->flags |= MNT2_NFS_OPT_ACDIRMIN;
+# endif /* MNT2_NFS_OPT_ACDIRMIN */
+#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
+
+  /*** acdirmax ***/
+#ifdef HAVE_NFS_ARGS_T_ACDIRMAX
+  if (acval) {
+    nap->acdirmax = acval;	/* min ac timeout for reg files (sec) */
+  } else {
 # ifdef MNTTAB_OPT_ACDIRMAX
     nap->acdirmax = hasmntval(mntp, MNTTAB_OPT_ACDIRMAX);
 # else /* not MNTTAB_OPT_ACDIRMAX */
     nap->acdirmax = 0;
 # endif /* not MNTTAB_OPT_ACDIRMAX */
-#endif /* HAVE_NFS_ARGS_T_ACDIRMIN */
-  } /* end of "if (acval)" statement */
-
-#ifdef MNT2_NFS_OPT_ACREGMIN
-  if (nap->acregmin)
-    nap->flags |= MNT2_NFS_OPT_ACREGMIN;
-#endif /* MNT2_NFS_OPT_ACREGMIN */
-#ifdef MNT2_NFS_OPT_ACREGMAX
-  if (nap->acregmax)
-    nap->flags |= MNT2_NFS_OPT_ACREGMAX;
-#endif /* MNT2_NFS_OPT_ACREGMAX */
-#ifdef MNT2_NFS_OPT_ACDIRMIN
-  if (nap->acdirmin)
-    nap->flags |= MNT2_NFS_OPT_ACDIRMIN;
-#endif /* MNT2_NFS_OPT_ACDIRMIN */
-#ifdef MNT2_NFS_OPT_ACDIRMAX
-  if (nap->acdirmax)
-    nap->flags |= MNT2_NFS_OPT_ACDIRMAX;
-#endif /* MNT2_NFS_OPT_ACDIRMAX */
+  }
+  /* set this flag, because if we got here, then we changed acdirmax */
+# ifdef MNT2_NFS_OPT_ACDIRMAX
+  nap->flags |= MNT2_NFS_OPT_ACDIRMAX;
+# endif /* MNT2_NFS_OPT_ACDIRMAX */
+#endif /* HAVE_NFS_ARGS_T_ACDIRMAX */
 
 #ifdef MNTTAB_OPT_NOAC		/* don't cache attributes */
   if (amu_hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)

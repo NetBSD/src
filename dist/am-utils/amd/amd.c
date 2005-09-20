@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.8 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.9 2005/09/20 17:57:44 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.c,v 1.35 2005/03/08 06:05:33 ezk Exp
+ * File: am-utils/amd/amd.c
  *
  */
 
@@ -384,14 +384,11 @@ do_memory_locking(void)
 int
 main(int argc, char *argv[])
 {
-  char *domdot, *verstr;
+  char *domdot, *verstr, *vertmp;
   int ppid = 0;
   int error;
   char *progname = NULL;		/* "amd" */
   char hostname[MAXHOSTNAMELEN + 1] = "localhost"; /* Hostname */
-#ifdef HAVE_SIGACTION
-  struct sigaction sa;
-#endif /* HAVE_SIGACTION */
 
   /*
    * Make sure some built-in assumptions are true before we start
@@ -464,70 +461,27 @@ main(int argc, char *argv[])
   am_set_hostname(hostname);
 
   /*
-   * Trap interrupts for shutdowns.
+   * Setup signal handlers
    */
-#ifdef HAVE_SIGACTION
-  memset(&sa, 0, sizeof(sa));
-  sa.sa_handler = sigterm;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGINT);
-  sigaddset(&(sa.sa_mask), SIGTERM);
-  sigaction(SIGINT, &sa, NULL);
-  sigaction(SIGTERM, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGINT, sigterm);
-#endif /* not HAVE_SIGACTION */
-
+  /* SIGINT: trap interrupts for shutdowns */
+  setup_sighandler(SIGINT, sigterm);
+  /* SIGTERM: trap terminate so we can shutdown cleanly (some chance) */
+  setup_sighandler(SIGTERM, sigterm);
+  /* SIGHUP: hangups tell us to reload the cache */
+  setup_sighandler(SIGHUP, sighup);
   /*
-   * Trap Terminate so that we can shutdown gracefully (some chance)
+   * SIGCHLD: trap Death-of-a-child.  These allow us to pick up the exit
+   * status of backgrounded mounts.  See "sched.c".
    */
+  setup_sighandler(SIGCHLD, sigchld);
 #ifdef HAVE_SIGACTION
-  sa.sa_handler = sigterm;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGTERM);
-  sigaction(SIGTERM, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGTERM, sigterm);
-#endif /* not HAVE_SIGACTION */
-
-  /*
-   * Hangups tell us to reload the cache
-   */
-#ifdef HAVE_SIGACTION
-  sa.sa_handler = sighup;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGHUP);
-  sigaction(SIGHUP, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGHUP, sighup);
-#endif /* not HAVE_SIGACTION */
-
-  /*
-   * Trap Death-of-a-child.  These allow us to
-   * pick up the exit status of backgrounded mounts.
-   * See "sched.c".
-   */
-#ifdef HAVE_SIGACTION
-  sa.sa_handler = sigchld;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGCHLD);
-  sigaction(SIGCHLD, &sa, NULL);
-
-  /*
-   * construct global "masked_sigs" used in nfs_start.c
-   */
+  /* construct global "masked_sigs" used in nfs_start.c */
   sigemptyset(&masked_sigs);
+  sigaddset(&masked_sigs, SIGINT);
+  sigaddset(&masked_sigs, SIGTERM);
   sigaddset(&masked_sigs, SIGHUP);
   sigaddset(&masked_sigs, SIGCHLD);
-  sigaddset(&masked_sigs, SIGTERM);
-  sigaddset(&masked_sigs, SIGINT);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGCHLD, sigchld);
-#endif /* not HAVE_SIGACTION */
+#endif /* HAVE_SIGACTION */
 
   /*
    * Fix-up any umask problems.  Most systems default
@@ -548,12 +502,14 @@ main(int argc, char *argv[])
   /*
    * Log version information.
    */
-  verstr = strtok(get_version_string(), "\n");
+  vertmp = get_version_string();
+  verstr = strtok(vertmp, "\n");
   plog(XLOG_INFO, "AM-UTILS VERSION INFORMATION:");
   while (verstr) {
     plog(XLOG_INFO, "%s", verstr);
     verstr = strtok(NULL, "\n");
   }
+  XFREE(vertmp);
 
   /*
    * Get our own IP address so that we can mount the automounter.  We pass
@@ -597,7 +553,7 @@ main(int argc, char *argv[])
     do_memory_locking();
   }
 
-  do_mapc_reload = clocktime() + gopt.map_reload_interval;
+  do_mapc_reload = clocktime(NULL) + gopt.map_reload_interval;
 
   /*
    * Register automounter with system.

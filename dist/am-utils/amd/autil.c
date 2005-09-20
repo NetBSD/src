@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.5 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autil.c,v 1.51 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/autil.c
  *
  */
 
@@ -203,7 +203,6 @@ host_normalize(char **chp)
    */
   if (gopt.flags & CFM_NORMALIZE_HOSTNAMES) {
     struct hostent *hp;
-    clock_valid = 0;
     hp = gethostbyname(*chp);
     if (hp && hp->h_addrtype == AF_INET) {
       dlog("Hostname %s normalized to %s", *chp, hp->h_name);
@@ -246,7 +245,13 @@ forcibly_timeout_mp(am_node *mp)
   } else {
     plog(XLOG_INFO, "\"%s\" forcibly timed out", mp->am_path);
     mp->am_flags &= ~AMF_NOTIMEOUT;
-    mp->am_ttl = clocktime();
+    mp->am_ttl = clocktime(NULL);
+    /*
+     * Force mtime update of parent dir, to prevent DNLC/dcache from caching
+     * the old entry, which could result in ESTALE errors, bad symlinks, and
+     * more.
+     */
+    clocktime(&mp->am_parent->am_fattr.na_mtime);
     reschedule_timeout_mp();
   }
 }
@@ -295,8 +300,8 @@ mf_mounted(mntfs *mf, bool_t call_free_opts)
   }
 
   if (mf->mf_flags & MFF_RESTART) {
-    dlog("Restarted filesystem %s", mf->mf_mount);
     mf->mf_flags &= ~MFF_RESTART;
+    dlog("Restarted filesystem %s, flags 0x%x", mf->mf_mount, mf->mf_flags);
   }
 
   /*
@@ -380,16 +385,16 @@ am_mounted(am_node *mp)
     mp->am_fattr.na_size = strlen(mp->am_link ? mp->am_link : mf->mf_mount);
 
   /*
-   * Record mount time
+   * Record mount time, and update am_stats at the same time.
    */
-  mp->am_fattr.na_mtime.nt_seconds = mp->am_stats.s_mtime = clocktime();
+  mp->am_stats.s_mtime = clocktime(&mp->am_fattr.na_mtime);
   new_ttl(mp);
 
   /*
-   * Update mtime of parent node
+   * Update mtime of parent node (copying "struct nfstime" in '=' below)
    */
   if (mp->am_parent && mp->am_parent->am_mnt)
-    mp->am_parent->am_fattr.na_mtime.nt_seconds = mp->am_stats.s_mtime;
+    mp->am_parent->am_fattr.na_mtime = mp->am_fattr.na_mtime;
 
   /*
    * This is ugly, but essentially unavoidable
@@ -518,6 +523,7 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
   char *dir = mf->mf_mount;
   mntent_t mnt;
   MTYPE_TYPE type;
+  int forced_unmount = 0;	/* are we using forced unmounts? */
 
   memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
@@ -585,6 +591,7 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
 #endif /* HAVE_FS_AUTOFS */
   genflags |= compute_automounter_mount_flags(&mnt);
 
+again:
   if (!(mf->mf_flags & MFF_IS_AUTOFS)) {
     nfs_args_t nfs_args;
     am_nfs_fh *fhp;
@@ -686,6 +693,29 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
 		     retry, type, 0, NULL, mnttab_file_name, on_autofs);
 #endif /* HAVE_FS_AUTOFS */
   }
+  if (error == 0 || forced_unmount)
+     return error;
+
+  /*
+   * If user wants forced/lazy unmount semantics, then try it iff the
+   * current mount failed with EIO or ESTALE.
+   */
+  if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+    switch (errno) {
+    case ESTALE:
+    case EIO:
+      forced_unmount = errno;
+      plog(XLOG_WARNING, "Mount %s failed (%m); force unmount.", mp->am_path);
+      if ((error = UMOUNT_FS(mp->am_path, mnttab_file_name,
+			     AMU_UMOUNT_FORCE | AMU_UMOUNT_DETACH)) < 0) {
+	plog(XLOG_WARNING, "Forced umount %s failed: %m.", mp->am_path);
+	errno = forced_unmount;
+      } else
+	goto again;
+    default:
+      break;
+    }
+  }
 
   return error;
 }
@@ -746,7 +776,7 @@ am_unmounted(am_node *mp)
    * Update mtime of parent node
    */
   if (mp->am_parent && mp->am_parent->am_mnt)
-    mp->am_parent->am_fattr.na_mtime.nt_seconds = clocktime();
+    clocktime(&mp->am_parent->am_fattr.na_mtime);
 
   if (mp->am_flags & AMF_REMOUNT) {
     char *fname = strdup(mp->am_name);

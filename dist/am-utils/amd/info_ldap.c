@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ldap.c,v 1.24 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_ldap.c
  *
  */
 
@@ -234,7 +234,7 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
    * map types?
    */
   if (!gopt.map_type || !STREQ(gopt.map_type, AMD_LDAP_TYPE)) {
-    plog(XLOG_WARNING, "amu_ldap_init called with map_type <%s>\n",
+    dlog("amu_ldap_init called with map_type <%s>\n",
 	 (gopt.map_type ? gopt.map_type : "null"));
   } else {
     dlog("Map %s is ldap\n", map);
@@ -247,6 +247,8 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
   if (aldh->hostent == NULL) {
     plog(XLOG_USER, "Unable to parse hostport %s for ldap map %s",
 	 gopt.ldap_hostports ? gopt.ldap_hostports : "(null)", map);
+    XFREE(creds);
+    XFREE(aldh);
     return (ENOENT);
   }
   creds->who = "";
@@ -264,7 +266,7 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
   dlog("Bound to %s:%d\n", aldh->hostent->host, aldh->hostent->port);
   if (get_ldap_timestamp(aldh, map, ts))
     return (ENOENT);
-  dlog("Got timestamp for map %s: %ld\n", map, *ts);
+  dlog("Got timestamp for map %s: %ld\n", map, (u_long) *ts);
 
   return (0);
 }
@@ -276,7 +278,7 @@ amu_ldap_rebind(ALD *a)
   LDAP *ld;
   HE_ENT *h;
   CR *c = a->credentials;
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
   int try;
 
   dlog("-> amu_ldap_rebind\n");
@@ -418,7 +420,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
     }
     if (!*ts > 0) {
       plog(XLOG_USER, "Nonpositive timestamp %ld for map %s\n",
-	   *ts, map);
+	   (u_long) *ts, map);
       err = ENOENT;
     }
   } else {
@@ -429,7 +431,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 
   ldap_value_free(vals);
   ldap_msgfree(res);
-  dlog("The timestamp for %s is %ld (err=%d)\n", map, *ts, err);
+  dlog("The timestamp for %s is %ld (err=%d)\n", map, (u_long) *ts, err);
   return (err);
 }
 
