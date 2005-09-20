@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.76 2005/09/15 18:51:33 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.77 2005/09/20 05:12:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.76 2005/09/15 18:51:33 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.77 2005/09/20 05:12:15 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -203,8 +203,8 @@ static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *);
 static	void	print_verbage(const char *, const char *, off_t, off_t);
 static	void	print_test(const char *, int);
-static	void	copymodes(const char *, struct stat *);
-static	int	check_outfile(const char *outfile, struct stat *sb);
+static	void	copymodes(int fd, const struct stat *, const char *file);
+static	int	check_outfile(const char *outfile);
 #endif
 
 #ifndef NO_BZIP2_SUPPORT
@@ -597,6 +597,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	/* clean up */
 	for (;;) {
 		size_t len;
+		ssize_t w;
 
 		error = deflate(&z, Z_FINISH);
 		if (error != Z_OK && error != Z_STREAM_END) {
@@ -607,7 +608,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 
 		len = (char *)z.next_out - outbufp;
 
-		if (write(out, outbufp, len) != len) {
+		w = write(out, outbufp, len);
+		if (w == -1 || (size_t)w != len) {
 			maybe_warn("write");
 			out_tot = -1;
 			goto out;
@@ -717,7 +719,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 	for (;;) {
 		if ((z.avail_in == 0 || needmore) && done_reading == 0) {
-			size_t in_size;
+			ssize_t in_size;
 
 			if (z.avail_in > 0) {
 				memmove(inbufp, z.next_in, z.avail_in);
@@ -1005,12 +1007,14 @@ out2:
 
 #ifndef SMALL
 /*
- * set the owner, mode, flags & utimes for a file
+ * set the owner, mode, flags & utimes using the given file descriptor.
+ * file is only used in possible warning messages.
  */
 static void
-copymodes(const char *file, struct stat *sbp)
+copymodes(int fd, const struct stat *sbp, const char *file)
 {
 	struct timeval times[2];
+	struct stat sb;
 
 	/*
 	 * If we have no info on the input, give this file some
@@ -1019,30 +1023,31 @@ copymodes(const char *file, struct stat *sbp)
 	if (sbp == NULL) {
 		mode_t mask = umask(022);
 
-		(void)chmod(file, DEFFILEMODE & ~mask);
+		(void)fchmod(fd, DEFFILEMODE & ~mask);
 		(void)umask(mask);
 		return; 
 	}
+	sb = *sbp;
 
 	/* if the chown fails, remove set-id bits as-per compress(1) */
-	if (chown(file, sbp->st_uid, sbp->st_gid) < 0) {
+	if (fchown(fd, sb.st_uid, sb.st_gid) < 0) {
 		if (errno != EPERM)
-			maybe_warn("couldn't chown: %s", file);
-		sbp->st_mode &= ~(S_ISUID|S_ISGID);
+			maybe_warn("couldn't fchown: %s", file);
+		sb.st_mode &= ~(S_ISUID|S_ISGID);
 	}
 
 	/* we only allow set-id and the 9 normal permission bits */
-	sbp->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
-	if (chmod(file, sbp->st_mode) < 0)
-		maybe_warn("couldn't chmod: %s", file);
+	sb.st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
+	if (fchmod(fd, sb.st_mode) < 0)
+		maybe_warn("couldn't fchmod: %s", file);
 
 	/* only try flags if they exist already */
-        if (sbp->st_flags != 0 && chflags(file, sbp->st_flags) < 0)
-		maybe_warn("couldn't chflags: %s", file);
+        if (sb.st_flags != 0 && fchflags(fd, sb.st_flags) < 0)
+		maybe_warn("couldn't fchflags: %s", file);
 
-	TIMESPEC_TO_TIMEVAL(&times[0], &sbp->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&times[1], &sbp->st_mtimespec);
-	if (utimes(file, times) < 0)
+	TIMESPEC_TO_TIMEVAL(&times[0], &sb.st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtimespec);
+	if (futimes(fd, times) < 0)
 		maybe_warn("couldn't utimes: %s", file);
 }
 #endif
@@ -1073,11 +1078,12 @@ file_gettype(u_char *buf)
 #ifndef SMALL
 /* check the outfile is OK. */
 static int
-check_outfile(const char *outfile, struct stat *sb)
+check_outfile(const char *outfile)
 {
+	struct stat sb;
 	int ok = 1;
 
-	if (lflag == 0 && stat(outfile, sb) == 0) {
+	if (lflag == 0 && stat(outfile, &sb) == 0) {
 		if (fflag)
 			unlink(outfile);
 		else if (isatty(STDIN_FILENO)) {
@@ -1100,7 +1106,7 @@ check_outfile(const char *outfile, struct stat *sb)
 }
 
 static void
-unlink_input(const char *file, struct stat *sb)
+unlink_input(const char *file, const struct stat *sb)
 {
 	struct stat nsb;
 
@@ -1156,19 +1162,16 @@ file_compress(char *file, char *outfile, size_t outsize)
 		return -1;
 	}
 
-#ifndef SMALL
-	if (stat(file, &isb) != 0) {
-		maybe_warn("cannot stat %s -- skipping", file);
-		return -1;
-	}
-#endif
 	if (cflag == 0) {
 #ifndef SMALL
-		if (isb.st_nlink > 1 && fflag == 0) {
-			maybe_warnx("%s has %d other link%s -- skipping", file,
-			    isb.st_nlink - 1, isb.st_nlink == 1 ? "" : "s");
-			close(in);
-			return -1;
+		if (fstat(in, &isb) == 0) {
+			if (isb.st_nlink > 1 && fflag == 0) {
+				maybe_warnx("%s has %d other link%s -- "
+					    "skipping", file, isb.st_nlink - 1,
+					    isb.st_nlink == 1 ? "" : "s");
+				close(in);
+				return -1;
+			}
 		}
 
 		if (fflag == 0 && (suff = check_suffix(file, 0))
@@ -1181,13 +1184,13 @@ file_compress(char *file, char *outfile, size_t outsize)
 #endif
 
 		/* Add (usually) .gz to filename */
-		if (snprintf(outfile, outsize, "%s%s",
+		if ((size_t)snprintf(outfile, outsize, "%s%s",
 					file, suffixes[0].zipped) >= outsize)
 			memcpy(outfile - suffixes[0].ziplen - 1,
 				suffixes[0].zipped, suffixes[0].ziplen + 1);
 
 #ifndef SMALL
-		if (check_outfile(outfile, &osb) == 0) {
+		if (check_outfile(outfile) == 0) {
 			close(in);
 			return -1;
 		}
@@ -1218,11 +1221,8 @@ file_compress(char *file, char *outfile, size_t outsize)
 	if (cflag != 0)
 		return insize == -1 ? -1 : size;
 
-	if (close(out) == -1)
-		maybe_warn("couldn't close ouput");
-
 #ifndef SMALL
-	if (stat(outfile, &osb) != 0) {
+	if (fstat(out, &osb) != 0) {
 		maybe_warn("couldn't stat: %s", outfile);
 		goto bad_outfile;
 	}
@@ -1234,8 +1234,10 @@ file_compress(char *file, char *outfile, size_t outsize)
 		goto bad_outfile;
 	}
 
-	copymodes(outfile, &isb);
+	copymodes(out, &isb, outfile);
 #endif
+	if (close(out) == -1)
+		maybe_warn("couldn't close output");
 
 	/* output is good, ok to delete input */
 	unlink_input(file, &isb);
@@ -1243,6 +1245,9 @@ file_compress(char *file, char *outfile, size_t outsize)
 
 #ifndef SMALL
     bad_outfile:
+	if (close(out) == -1)
+		maybe_warn("couldn't close output");
+
 	maybe_warnx("leaving original %s", file);
 	unlink(outfile);
 	return size;
@@ -1258,7 +1263,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	ssize_t rbytes;
 	unsigned char header1[4];
 	enum filetype method;
-	int fd, zfd = -1;
+	int fd, ofd, zfd = -1;
 #ifndef SMALL
 	time_t timestamp = 0;
 	unsigned char name[PATH_MAX + 1];
@@ -1346,7 +1351,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		}
 		if (nflag == 0 && timestamp)
 			isb.st_mtime = timestamp;
-		if (check_outfile(outfile, &osb) == 0)
+		if (check_outfile(outfile) == 0)
 			goto lose;
 #endif
 	}
@@ -1461,22 +1466,32 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	/*
 	 * if we can't stat the file don't remove the file.
 	 */
-	if (stat(outfile, &osb) != 0) {
+
+	ofd = open(outfile, O_RDWR, 0);
+	if (ofd == -1) {
+		maybe_warn("couldn't open (leaving original): %s",
+			   outfile);
+		return -1;
+	}
+	if (fstat(ofd, &osb) != 0) {
 		maybe_warn("couldn't stat (leaving original): %s",
 			   outfile);
+		close(ofd);
 		return -1;
 	}
 	if (osb.st_size != size) {
 		maybe_warnx("stat gave different size: %" PRIdOFF
 				" != %" PRIdOFF " (leaving original)",
 				size, osb.st_size);
+		close(ofd);
 		unlink(outfile);
 		return -1;
 	}
 	unlink_input(file, &isb);
 #ifndef SMALL
-	copymodes(outfile, &isb);
+	copymodes(ofd, &isb, outfile);
 #endif
+	close(ofd);
 	return size;
 
     lose:
@@ -1493,9 +1508,11 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 {
 	char buf[BUFLEN];
 	off_t in_tot;
+	ssize_t w;
 
 	in_tot = count;
-	if (write(STDOUT_FILENO, prepend, count) != count) {
+	w = write(STDOUT_FILENO, prepend, count);
+	if (w == -1 || (size_t)w != count) {
 		maybe_warn("write to stdout");
 		return -1;
 	}
@@ -1846,8 +1863,7 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 	static off_t in_tot, out_tot;
 	uint32_t crc = 0;
 #endif
-	off_t in = 0;
-	int rv;
+	off_t in = 0, rv;
 
 	if (first) {
 #ifndef SMALL
@@ -1957,12 +1973,12 @@ static ssize_t
 read_retry(int fd, void *buf, size_t sz)
 {
 	char *cp = buf;
-	ssize_t left = sz;
+	size_t left = MIN(sz, (size_t) SSIZE_MAX);
 
 	while (left > 0) {
 		ssize_t ret;
 
-		ret = read(fd, cp, sz);
+		ret = read(fd, cp, left);
 		if (ret == -1) {
 			return ret;
 		} else if (ret == 0) {
