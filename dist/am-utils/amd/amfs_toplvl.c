@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.4 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: amfs_toplvl.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_toplvl.c,v 1.38 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/amfs_toplvl.c
  *
  */
 
@@ -56,7 +56,7 @@
 /****************************************************************************
  *** FORWARD DEFINITIONS                                                  ***
  ****************************************************************************/
-
+static int amfs_toplvl_init(mntfs *mf);
 
 /****************************************************************************
  *** OPS STRUCTURES                                                       ***
@@ -65,7 +65,7 @@ am_ops amfs_toplvl_ops =
 {
   "toplvl",
   amfs_generic_match,
-  0,				/* amfs_toplvl_init */
+  amfs_toplvl_init,		/* amfs_toplvl_init */
   amfs_toplvl_mount,
   amfs_toplvl_umount,
   amfs_generic_lookup_child,
@@ -132,6 +132,36 @@ set_auto_attrcache_timeout(char *preopts, char *opts)
   strcat(opts, preopts);
 # endif /* MNTTAB_OPT_ACREGMAX */
 #endif /* MNTTAB_OPT_ACTIMEO */
+}
+
+
+/*
+ * Initialize a top-level mount.  In our case, if the user asked for
+ * forced_unmounts, and the OS supports it, then we try forced/lazy unmounts
+ * on any previous toplvl mounts.  This is useful if a previous Amd died and
+ * left behind toplvl mount points (this Amd will clean them up).
+ *
+ * WARNING: Don't use forced/lazy unmounts if you have another valid Amd
+ * running, because this code WILL force those valid toplvl mount points to
+ * be detached as well!
+ */
+static int
+amfs_toplvl_init(mntfs *mf)
+{
+  int error = 0;
+
+#if defined(MNT2_GEN_OPT_FORCE) || defined(MNT2_GEN_OPT_DETACH)
+  if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+    plog(XLOG_INFO, "amfs_toplvl_init: trying forced/lazy unmount of %s",
+	 mf->mf_mount);
+    error = umount2_fs(mf->mf_mount, AMU_UMOUNT_FORCE | AMU_UMOUNT_DETACH);
+    if (error)
+      plog(XLOG_INFO, "amfs_toplvl_init: forced/lazy unmount failed: %m");
+    else
+      dlog("amfs_toplvl_init: forced/lazy unmount succeeded");
+  }
+#endif /* MNT2_GEN_OPT_FORCE || MNT2_GEN_OPT_DETACH */
+  return error;
 }
 
 
@@ -221,8 +251,9 @@ int
 amfs_toplvl_umount(am_node *mp, mntfs *mf)
 {
   struct stat stb;
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   int error;
+  int count = 0;		/* how many times did we try to unmount? */
 
 again:
   /*
@@ -247,7 +278,7 @@ again:
     goto out;
   }
 
-  error = UMOUNT_FS(mp->am_path, mnttab_file_name, on_autofs);
+  error = UMOUNT_FS(mp->am_path, mnttab_file_name, unmount_flags);
   if (error == EBUSY) {
 #ifdef HAVE_FS_AUTOFS
     /*
@@ -259,7 +290,24 @@ again:
       return error;
 #endif /* HAVE_FS_AUTOFS */
     plog(XLOG_WARNING, "amfs_toplvl_unmount retrying %s in 1s", mp->am_path);
-    sleep(1);			/* XXX */
+    count++;
+    sleep(1);
+    /*
+     * If user wants forced/lazy unmount semantics, then set those flags,
+     * but only after we've tried normal lstat/umount a few times --
+     * otherwise forced unmounts may hang this very same Amd (by preventing
+     * it from achieving a clean unmount).
+     */
+    if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+      if (count == 5) {		/* after 5 seconds, try MNT_FORCE */
+	dlog("enabling forced unmounts for toplvl node %s", mp->am_path);
+	unmount_flags |= AMU_UMOUNT_FORCE;
+      }
+      if (count == 10) {	/* after 10 seconds, try MNT_DETACH */
+	dlog("enabling detached unmounts for toplvl node %s", mp->am_path);
+	unmount_flags |= AMU_UMOUNT_DETACH;
+      }
+    }
     goto again;
   }
 out:

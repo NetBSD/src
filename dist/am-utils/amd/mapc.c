@@ -1,4 +1,4 @@
-/*	$NetBSD: mapc.c,v 1.5 2005/04/23 18:51:18 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mapc.c,v 1.27 2005/03/19 03:05:25 ezk Exp
+ * File: am-utils/amd/mapc.c
  *
  */
 
@@ -303,17 +303,6 @@ static map_type maptypes[] =
     MAPC_INC
   },
 #endif /* HAVE_MAP_NDBM */
-#ifdef HAVE_MAP_EXEC
-  {
-    "exec",
-    exec_init,
-    error_reload,
-    NULL,			/* isup function */
-    exec_search,
-    error_mtime,
-    MAPC_INC
-  },
-#endif /* HAVE_MAP_EXEC */
 #ifdef HAVE_MAP_FILE
   {
     "file",
@@ -325,6 +314,17 @@ static map_type maptypes[] =
     MAPC_ALL
   },
 #endif /* HAVE_MAP_FILE */
+#ifdef HAVE_MAP_EXEC
+  {
+    "exec",
+    exec_init,
+    error_reload,
+    NULL,			/* isup function */
+    exec_search,
+    error_mtime,
+    MAPC_INC
+  },
+#endif /* HAVE_MAP_EXEC */
   {
     "error",
     error_init,
@@ -516,11 +516,12 @@ mapc_find_wildcard(mnt_map *m)
  * Do a map reload.
  * Attempt to reload without losing current data by switching the hashes
  * round.
+ * If reloading was needed and succeeded, return 1; else return 0.
  */
-static void
+static int
 mapc_reload_map(mnt_map *m)
 {
-  int error;
+  int error, ret = 0;
   kv *maphash[NKVHASH], *tmphash[NKVHASH];
   time_t t;
 
@@ -538,7 +539,7 @@ mapc_reload_map(mnt_map *m)
       plog(XLOG_INFO, "reload of map %s is not needed (in sync)", m->map_name);
       dlog("map %s last load time is %d, last modify time is %d",
 	   m->map_name, (int) m->modify, (int) t);
-      return;
+      return ret;
     }
   }
 
@@ -567,6 +568,7 @@ mapc_reload_map(mnt_map *m)
     mapc_clear(m);
     memcpy((voidp) m->kvhash, (voidp) tmphash, sizeof(m->kvhash));
     m->modify = t;
+    ret = 1;
   }
   m->wildcard = 0;
 
@@ -574,6 +576,7 @@ mapc_reload_map(mnt_map *m)
   error = mapc_search(m, wildcard, &m->wildcard);
   if (error)
     m->wildcard = 0;
+  return ret;
 }
 
 
@@ -931,25 +934,42 @@ mapc_search(mnt_map *m, char *key, char **pval)
 static void
 mapc_sync(mnt_map *m)
 {
-  if (m->alloc != MAPC_ROOT) {
+  int need_mtime_update = 0;
 
-    /* do not clear map if map service is down */
-    if (m->isup) {
-      if (!((*m->isup)(m, m->map_name))) {
-	plog(XLOG_ERROR, "mapc_sync: map %s is down: not clearing map", m->map_name);
-	return;
-      }
+  if (m->alloc == MAPC_ROOT)
+    return;			/* nothing to do */
+
+  /* do not clear map if map service is down */
+  if (m->isup) {
+    if (!((*m->isup)(m, m->map_name))) {
+      plog(XLOG_ERROR, "mapc_sync: map %s is down: not clearing map", m->map_name);
+      return;
     }
+  }
 
-    if (m->alloc >= MAPC_ALL) {
-      /* mapc_reload_map() always works */
-      mapc_reload_map(m);
+  if (m->alloc >= MAPC_ALL) {
+    /* mapc_reload_map() always works */
+    need_mtime_update = mapc_reload_map(m);
+  } else {
+    mapc_clear(m);
+    /*
+     * Attempt to find the wildcard entry
+     */
+    mapc_find_wildcard(m);
+    need_mtime_update = 1;	/* because mapc_clear always works */
+  }
+
+  /*
+   * To be safe, update the mtime of the mnt_map's own node, so that the
+   * kernel will flush all of its cached entries.
+   */
+  if (need_mtime_update && m->cfm) {
+    am_node *mp = find_ap(m->cfm->cfm_dir);
+    if (mp) {
+      clocktime(&mp->am_fattr.na_mtime);
     } else {
-      mapc_clear(m);
-      /*
-       * Attempt to find the wildcard entry
-       */
-      mapc_find_wildcard(m);
+      plog(XLOG_ERROR, "cannot find map %s to update its mtime",
+	   m->cfm->cfm_dir);
     }
   }
 }
@@ -986,7 +1006,7 @@ mapc_reload(void)
 static int
 root_init(mnt_map *m, char *map, time_t *tp)
 {
-  *tp = clocktime();
+  *tp = clocktime(NULL);
   return STREQ(map, ROOT_MAP) ? 0 : ENOENT;
 }
 

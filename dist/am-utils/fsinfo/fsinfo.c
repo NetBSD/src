@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.11 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.12 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.c,v 1.15 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/fsinfo/fsinfo.c
  *
  */
 
