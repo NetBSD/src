@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.147 2005/06/14 12:26:32 peter Exp $
+$NetBSD: acronyms,v 1.148 2005/09/20 13:22:04 jschauma Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -148,6 +148,7 @@ NOYFB	none of your fucking business
 NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
+NSFW	not suitable for work
 OIC	oh, I see
 OMG	oh, my god
 OT	off topic
