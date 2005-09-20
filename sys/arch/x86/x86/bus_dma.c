@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.23 2005/08/22 11:09:39 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24 2005/09/20 04:48:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2005/08/22 11:09:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2005/09/20 04:48:10 thorpej Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -119,12 +119,22 @@ extern	paddr_t avail_end;
 typedef void (vector) __P((void));
 extern vector *IDTVEC(intr)[];
 
+#define	BUSDMA_BOUNCESTATS
+
 #ifdef BUSDMA_BOUNCESTATS
-int bus_dma_stats_nbouncebufs;
-int bus_dma_stats_loads;
-int bus_dma_stats_bounces;
-#define STAT_INCR(x)	(x)++
-#define STAT_DECR(x)	(x)++
+#define	BUSDMA_EVCNT_DECL(name)						\
+static struct evcnt bus_dma_ev_##name =					\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "bus_dma", #name);		\
+EVCNT_ATTACH_STATIC(bus_dma_ev_##name)
+
+#define	STAT_INCR(name)							\
+    bus_dma_ev_##name.ev_count++
+#define	STAT_DECR(name)							\
+    bus_dma_ev_##name.ev_count--
+
+BUSDMA_EVCNT_DECL(nbouncebufs);
+BUSDMA_EVCNT_DECL(loads);
+BUSDMA_EVCNT_DECL(bounces);
 #else
 #define STAT_INCR(x)
 #define STAT_DECR(x)
@@ -318,7 +328,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error;
 
-	STAT_INCR(bus_dma_stats_loads);
+	STAT_INCR(loads);
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -346,7 +356,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * First attempt failed; bounce it.
 	 */
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -543,7 +553,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 * First attempt failed; bounce it.
 	 */
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -629,7 +639,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
 		return error;
 
-	STAT_INCR(bus_dma_stats_bounces);
+	STAT_INCR(bounces);
 
 	/*
 	 * Allocate bounce pages, if necessary.
@@ -894,7 +904,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 		cookie->id_nbouncesegs = 0;
 	} else {
 		cookie->id_flags |= X86_DMA_HAS_BOUNCE;
-		STAT_INCR(bus_dma_stats_nbouncebufs);
+		STAT_INCR(nbouncebufs);
 	}
 
 	return (error);
@@ -910,7 +920,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 		panic("_bus_dma_alloc_bouncebuf: no cookie");
 #endif
 
-	STAT_DECR(bus_dma_stats_nbouncebufs);
+	STAT_DECR(nbouncebufs);
 
 	_bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
 	_bus_dmamem_free(t, cookie->id_bouncesegs,
