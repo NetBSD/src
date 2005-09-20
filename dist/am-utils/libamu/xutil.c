@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.12 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.13 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xutil.c,v 1.37 2005/04/07 05:50:39 ezk Exp
+ * File: am-utils/libamu/xutil.c
  *
  */
 
@@ -69,9 +69,6 @@ int syslogging;
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS;
 int xlog_level_init = ~0;
 static int amd_program_number = AMQ_PROGRAM;
-
-time_t clock_valid = 0;
-time_t xclock_valid = 0;
 
 #ifdef DEBUG_MEM
 # if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
@@ -338,7 +335,7 @@ show_time_host_and_name(int lvl)
   }
   else
 #endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
-    t = clocktime();
+    t = clocktime(NULL);
 
   if (t != last_t) {
     last_ctime = ctime(&t);
@@ -780,7 +777,7 @@ get_syslog_facility(const char *logfile)
  * Change current logfile
  */
 int
-switch_to_logfile(char *logfile, int old_umask)
+switch_to_logfile(char *logfile, int old_umask, int truncate_log)
 {
   FILE *new_logfp = stderr;
 
@@ -809,8 +806,10 @@ switch_to_logfile(char *logfile, int old_umask)
       plog(XLOG_WARNING, "syslog option not supported, logging unchanged");
 #endif /* not HAVE_SYSLOG */
 
-    } else {
+    } else {			/* regular log file */
       (void) umask(old_umask);
+      if (truncate_log)
+	truncate(logfile, 0);
       new_logfp = fopen(logfile, "a");
       umask(0);
     }
@@ -843,9 +842,14 @@ switch_to_logfile(char *logfile, int old_umask)
 void
 unregister_amq(void)
 {
-  if (!amuDebug(D_AMQ))
+  if (amuDebug(D_AMQ)) {
     /* find which instance of amd to unregister */
-    pmap_unset(get_amd_program_number(), AMQ_VERSION);
+    u_long amd_prognum = get_amd_program_number();
+
+    if (pmap_unset(amd_prognum, AMQ_VERSION) != 1)
+      dlog("failed to de-register Amd program %lu, version %lu",
+	   amd_prognum, AMQ_VERSION);
+  }
 }
 
 
@@ -859,12 +863,21 @@ going_down(int rc)
       unregister_amq();
     }
   }
+
+#ifdef MOUNT_TABLE_ON_FILE
+  /*
+   * Call unlock_mntlist to free any important resources such as an on-disk
+   * lock file (/etc/mtab~).
+   */
+  unlock_mntlist();
+#endif /* MOUNT_TABLE_ON_FILE */
+
   if (foreground) {
     plog(XLOG_INFO, "Finishing with status %d", rc);
   } else {
     dlog("background process exiting with status %d", rc);
   }
-
+  /* bye bye... */
   exit(rc);
 }
 
@@ -953,4 +966,64 @@ amu_release_controlling_tty(void)
 #endif /* not TIOCNOTTY */
 
   plog(XLOG_ERROR, "unable to release controlling tty");
+}
+
+
+/* our version of snprintf */
+int
+xsnprintf(char *str, size_t size, const char *format, ...)
+{
+  va_list ap;
+  int ret;
+
+  va_start(ap, format);
+#ifdef HAVE_VSNPRINTF
+  ret = vsnprintf(str, size, format, ap);
+#else /* not HAVE_VSNPRINTF */
+  ret = vsprintf(str, format, ap); /* less secure version */
+#endif /* not HAVE_VSNPRINTF */
+  va_end(ap);
+  return ret;
+}
+
+
+/* setup a single signal handler */
+void
+setup_sighandler(int signum, void (*handler)(int))
+{
+#ifdef HAVE_SIGACTION
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_flags = 0;		/* unnecessary */
+  sa.sa_handler = handler;
+  sigemptyset(&(sa.sa_mask));	/* probably unnecessary too */
+  sigaddset(&(sa.sa_mask), signum);
+  sigaction(signum, &sa, NULL);
+#else /* not HAVE_SIGACTION */
+  (void) signal(signum, handler);
+#endif /* not HAVE_SIGACTION */
+}
+
+
+/*
+ * Return current time in seconds.  If passed a non-null argyument, then
+ * fill it in with the current time in seconds and microseconds (useful
+ * for mtime updates).
+ */
+time_t
+clocktime(nfstime *nt)
+{
+  static struct timeval now;	/* keep last time, as default */
+
+  if (gettimeofday(&now, NULL) < 0) {
+    plog(XLOG_ERROR, "clocktime: gettimeofday: %m");
+    /* hack: force time to have incremented by at least 1 second */
+    now.tv_sec++;
+  }
+  /* copy seconds and microseconds. may demote a long to an int */
+  if (nt) {
+    nt->nt_seconds = (u_int) now.tv_sec;
+    nt->nt_useconds = (u_int) now.tv_usec;
+  }
+  return (time_t) now.tv_sec;
 }

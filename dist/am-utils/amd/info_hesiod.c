@@ -1,4 +1,4 @@
-/*	$NetBSD: info_hesiod.c,v 1.5 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.6 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_hesiod.c,v 1.16 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_hesiod.c
  *
  */
 
@@ -80,7 +80,7 @@ amu_hesiod_init(mnt_map *m, char *map, time_t *tp)
   *tp = 0;
 
 #ifdef HAVE_HESIOD_INIT
-  if(!hesiod_context && hesiod_init(&hesiod_context) != 0)
+  if (!hesiod_context && hesiod_init(&hesiod_context) != 0)
     return ENOENT;
 #endif /* HAVE_HESIOD_INIT */
 

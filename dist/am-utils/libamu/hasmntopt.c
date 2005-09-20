@@ -1,4 +1,4 @@
-/*	$NetBSD: hasmntopt.c,v 1.7 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.8 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@ n * modification, are permitted provided that the following conditions
  * SUCH DAMAGE.
  *
  *
- * Id: hasmntopt.c,v 1.11 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/libamu/hasmntopt.c
  *
  */
 

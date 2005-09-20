@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.8 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.9 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_sockets.c,v 1.34 2005/03/03 02:59:02 ezk Exp
+ * File: am-utils/conf/transp/transp_sockets.c
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>

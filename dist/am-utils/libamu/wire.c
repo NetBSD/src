@@ -1,4 +1,4 @@
-/*	$NetBSD: wire.c,v 1.9 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: wire.c,v 1.10 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wire.c,v 1.22 2005/02/17 03:37:42 ezk Exp
+ * File: am-utils/libamu/wire.c
  *
  */
 
@@ -82,6 +82,10 @@ struct addrlist {
   char *ip_net_name;		/* name of network */
 };
 static addrlist *localnets = NULL;
+
+#ifndef INADDR_NONE
+# define INADDR_NONE ((unsigned long) -1)
+#endif /* INADDR_NONE */
 
 #if defined(IFF_LOCAL_LOOPBACK) && !defined(IFF_LOOPBACK)
 # define IFF_LOOPBACK	IFF_LOCAL_LOOPBACK
@@ -201,7 +205,7 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
      */
     if (!np) {
       u_long short_subnet = subnet;
-      while(short_subnet && (short_subnet & 0x000000ff) == 0)
+      while (short_subnet && (short_subnet & 0x000000ff) == 0)
 	short_subnet >>= 8;
       np = getnetbyaddr(short_subnet, AF_INET);
       if (np)
@@ -328,8 +332,9 @@ is_network_member(const char *net)
     /* check if netmask uses a dotted-quad or bit-length, or not defined at all */
     if (maskstr) {
       if (strchr(maskstr, '.')) {
+	/* XXX: inet_addr is obsolste, convert to inet_aton() */
 	masknum = inet_addr(maskstr);
-	if (masknum < 0)		/* can be invalid (-1) or all-1s */
+	if (masknum == INADDR_NONE) /* can be invalid (-1) or all-1s */
 	  masknum = 0xffffffff;
       } else if (NSTRCEQ(maskstr, "0x", 2)) {
 	masknum = strtoul(maskstr, NULL, 16);

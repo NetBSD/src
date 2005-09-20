@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2005/04/24 13:34:18 kleink Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: util.c,v 1.16 2005/04/09 18:15:35 ottavio Exp
+ * File: am-utils/libamu/util.c
  *
  */
 
@@ -95,10 +95,6 @@ str3cat(char *p, char *s1, char *s2, char *s3)
 void
 xstrlcpy(char *dst, const char *src, size_t len)
 {
-  if (len < 0) {
-    plog(XLOG_ERROR, "xstrlcpy: illegal len %lu", (unsigned long)len);
-    return;
-  }
   if (len == 0)
     return;
   if (strlcpy(dst, src, len) >= len)

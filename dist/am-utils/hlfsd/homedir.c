@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: homedir.c,v 1.20 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/hlfsd/homedir.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -90,8 +90,6 @@ homedir(int userid, int groupid)
   char *homename;
   struct stat homestat;
   int old_groupid, old_userid;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if ((found = plt_search(userid)) == (uid2home_t *) NULL) {
     return alt_spooldir;	/* use alt spool for unknown uid */
@@ -230,8 +228,6 @@ hlfsd_diskspace(char *path)
 {
   char buf[MAXPATHLEN];
   int fd, len;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   snprintf(buf, sizeof(buf), "%s/._hlfstmp_%lu", path, (long) getpid());
   if ((fd = open(buf, O_RDWR | O_CREAT, 0600)) < 0) {
@@ -486,8 +482,6 @@ hlfsd_getpwent(void)
     return getpwent();
   }
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   /* return here to read another entry */
 readent:
 
@@ -596,8 +590,6 @@ plt_reset(void)
 {
   int i;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   hlfsd_setpwent();
   if (hlfsd_getpwent() == (struct passwd *) NULL) {
     hlfsd_endpwent();
@@ -641,8 +633,6 @@ static void
 table_add(u_int u, const char *h, const char *n)
 {
   int i;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (max_pwtab_num <= 0) {	/* was never initialized */
     max_pwtab_num = 1;

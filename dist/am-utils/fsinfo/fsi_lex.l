@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_lex.l,v 1.7 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.8 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 %{
 /*
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_lex.l,v 1.14 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/fsinfo/fsi_lex.l
  *
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: info_union.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: info_union.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_union.c,v 1.11 2005/02/17 03:37:42 ezk Exp
+ * File: am-utils/amd/info_union.c
  *
  */
 
@@ -135,10 +135,10 @@ union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
    * Add wildcard entry
    */
   {
-    size_t l = strlen(*(dir-1)) + 5;
-    char *val = xmalloc(l);
+    size_t len = strlen(*(dir-1)) + 5;
+    char *val = xmalloc(len);
 
-    snprintf(val, l, "fs:=%s", *(dir-1));
+    xsnprintf(val, len, "fs:=%s", *(dir-1));
     (*fn) (m, strdup("*"), val);
   }
   XFREE(mapd);

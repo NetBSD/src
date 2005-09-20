@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.8 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.9 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: opts.c,v 1.39 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/opts.c
  *
  */
 
@@ -1030,12 +1030,12 @@ expand_op(char *opt, int sel_p)
      */
     {
       int len = dp - cp;
-      
+
       if (len > 0) {
-	if (BUFSPACE(ep, len)) { 
-	  /* 
-	   * We use strncpy (not xstrlen) because 'ep' relies on it's symantics.
-	   * BUFSPACE guarantees that ep can hold len.
+	if (BUFSPACE(ep, len)) {
+	  /*
+	   * We use strncpy (not xstrlcpy) because 'ep' relies on its
+	   * semantics.  BUFSPACE guarantees that ep can hold len.
 	   */
 	  strncpy(ep, cp, len);
 	  ep += len;
@@ -1133,7 +1133,7 @@ expand_op(char *opt, int sel_p)
        */
       strncpy(nbuf, cp, len);
       nbuf[len] = '\0';
-      
+
       /*
        * Advance cp
        */

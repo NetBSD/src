@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.6 2005/04/23 18:38:17 christos Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.7 2005/09/20 17:57:44 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_host.c,v 1.30 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/amd/amfs_host.c
  *
  */
 
@@ -531,7 +531,7 @@ static int
 amfs_host_umount(am_node *am, mntfs *mf)
 {
   mntlist *ml, *mprev;
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   int xerror = 0;
 
   /*
@@ -570,12 +570,20 @@ amfs_host_umount(am_node *am, mntfs *mf)
       /*
        * Unmount "dir"
        */
-      error = UMOUNT_FS(dir, mnttab_file_name, on_autofs);
+      error = UMOUNT_FS(dir, mnttab_file_name, unmount_flags);
       /*
        * Keep track of errors
        */
       if (error) {
-	if (!xerror)
+	/*
+	 * If we have not already set xerror and error is not ENOENT,
+	 * then set xerror equal to error and log it.
+	 * 'xerror' is the return value for this function.
+	 *
+	 * We do not want to pass ENOENT as an error because if the
+	 * directory does not exists our work is done anyway.
+	 */
+	if (!xerror && error != ENOENT)
 	  xerror = error;
 	if (error != EBUSY) {
 	  errno = error;

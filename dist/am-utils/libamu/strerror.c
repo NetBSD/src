@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.4 2005/04/23 18:38:18 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.5 2005/09/20 17:57:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Ion Badulescu
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strerror.c,v 1.5 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/libamu/strerror.c
  *
  */
 
