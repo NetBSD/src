@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.12 2005/04/30 08:37:16 yamt Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.13 2005/09/20 20:33:53 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.12 2005/04/30 08:37:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.13 2005/09/20 20:33:53 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -73,19 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.12 2005/04/30 08:37:16 yamt
 #include "opt_xen.h"
 
 /* #define PORT_DEBUG -1 */
-
-/*
- * Force a proper event-channel callback from Xen after clearing the
- * callback mask. We do this in a very simple manner, by making a call
- * down into Xen. The pending flag will be checked by Xen on return.
- */
-void
-hypervisor_force_callback(void)
-{
-	// DDD printf("hypervisor_force_callback\n");
-
-	(void)HYPERVISOR_xen_version(0);
-}
 
 int stipending(void);
 int
