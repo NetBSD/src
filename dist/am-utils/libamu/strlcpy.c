@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.1.1.1 2005/04/23 18:13:29 christos Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.1.1.2 2005/09/20 17:16:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strlcpy.c,v 1.1 2005/04/07 03:50:42 ezk Exp
+ * File: am-utils/libamu/strlcpy.c
  *
  */
 

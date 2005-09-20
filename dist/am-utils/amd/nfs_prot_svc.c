@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.8 2005/04/23 18:09:25 christos Exp $	*/
+/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.9 2005/09/20 17:14:45 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_svc.c,v 1.15 2005/03/02 03:00:09 ezk Exp
+ * File: am-utils/amd/nfs_prot_svc.c
  *
  */
 

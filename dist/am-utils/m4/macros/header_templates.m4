@@ -412,6 +412,12 @@ AH_TEMPLATE([MNT2_GEN_OPT_CACHE],
 AH_TEMPLATE([MNT2_GEN_OPT_DATA],
 [6-argument mount])
 
+AH_TEMPLATE([MNT2_GEN_OPT_DETACH],
+[Use a lazy unmount (detach)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_FORCE],
+[Use a forced unmount])
+
 AH_TEMPLATE([MNT2_GEN_OPT_FSS],
 [old (4-argument) mount (compatibility)])
 
@@ -898,6 +904,9 @@ AH_TEMPLATE([HAVE_EXTERN_INNETGR],
 AH_TEMPLATE([HAVE_EXTERN_MKSTEMP],
 [does extern definition for mkstemp() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_MNTCTL],
+[does extern definition for mntctl() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_SBRK],
 [does extern definition for sbrk() exist?])
 
@@ -907,11 +916,17 @@ AH_TEMPLATE([HAVE_EXTERN_SETEUID],
 AH_TEMPLATE([HAVE_EXTERN_SETITIMER],
 [does extern definition for setitimer() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_SLEEP],
+[does extern definition for sleep() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_STRCASECMP],
 [does extern definition for strcasecmp() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRDUP],
 [does extern definition for strdup() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_STRLCAT],
+[does extern definition for strlcat() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRLCPY],
 [does extern definition for strlcpy() exist?])

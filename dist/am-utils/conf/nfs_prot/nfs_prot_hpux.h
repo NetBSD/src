@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_hpux.h,v 1.1.1.8 2005/04/23 18:12:30 christos Exp $	*/
+/*	$NetBSD: nfs_prot_hpux.h,v 1.1.1.9 2005/09/20 17:15:15 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_hpux.h,v 1.11 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_hpux.h
  *
  */
 
@@ -65,6 +65,10 @@
 #ifdef HAVE_RPCSVC_MOUNT_H
 # include <rpcsvc/mount.h>
 #endif /* HAVE_RPCSVC_MOUNT_H */
+
+#ifdef HAVE_NETDB_H
+extern int h_errno;		/* missing from older hpux10 systems */
+#endif /* HAVE_NETDB_H */
 
 
 /*

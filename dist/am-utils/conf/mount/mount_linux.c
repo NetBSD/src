@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.8 2005/04/23 18:12:22 christos Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.9 2005/09/20 17:15:09 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_linux.c,v 1.42 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/conf/mount/mount_linux.c
  */
 
 /*
@@ -52,6 +52,14 @@
 #include <am_defs.h>
 #include <amu.h>
 
+
+#ifndef MOUNT_TYPE_UFS
+/*
+ * Autoconf didn't find any disk-based f/s on this system,
+ * So provide some default definition for this file to compile.
+ */
+# define MOUNT_TYPE_UFS		"no_disk_fs"
+#endif /* not MOUNT_TYPE_UFS */
 
 struct opt_map {
   const char *opt;		/* option name */
@@ -529,10 +537,12 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 #define NE_FBIG		27
 #define NE_NOSPC	28
 #define NE_ROFS		30
+#define NE_OPNOTSUPP	45
 #define NE_NAMETOOLONG	63
 #define NE_NOTEMPTY	66
 #define NE_DQUOT	69
 #define NE_STALE	70
+#define NE_REMOTE	71
 
 #define NFS_LOMAP	0
 #define NFS_HIMAP	122
@@ -671,10 +681,14 @@ static int nfs_errormap[] = {
 int
 linux_nfs_error(int e)
 {
+  int ret = (nfsstat) NE_IO;
+
   if (e < NFS_LOMAP || e > NFS_HIMAP)
-    return (nfsstat)NE_IO;
-  e = nfs_errormap[e - NFS_LOMAP];
-  return (nfsstat)e;
+    ret = (nfsstat) NE_IO;
+  else
+    ret = nfs_errormap[e - NFS_LOMAP];
+  dlog("linux_nfs_error: map error %d to NFS error %d", e, ret);
+  return (nfsstat) ret;
 }
 
 
@@ -748,7 +762,7 @@ find_unused_loop_device(void)
 	somedev++;
 	fd = open(dev, O_RDONLY);
 	if (fd >= 0) {
-	  if(ioctl(fd, LOOP_GET_STATUS, &loopinfo) == 0)
+	  if (ioctl(fd, LOOP_GET_STATUS, &loopinfo) == 0)
 	    someloop++;		/* in use */
 	  else if (errno == ENXIO) {
 	    close(fd);
@@ -777,7 +791,7 @@ find_unused_loop_device(void)
 
   if (!somedev) {
     dlog("Could not find any device /dev/loop#");
-  } else if(!someloop) {
+  } else if (!someloop) {
     if (loop_known == 1) {
       dlog("Could not find any loop device.");
       dlog("...Maybe /dev/loop# has a wrong major number?");

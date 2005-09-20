@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.1.1.8 2005/04/23 18:13:24 christos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.9 2005/09/20 17:16:03 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: stubs.c,v 1.17 2005/04/07 05:50:39 ezk Exp
+ * File: am-utils/hlfsd/stubs.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>

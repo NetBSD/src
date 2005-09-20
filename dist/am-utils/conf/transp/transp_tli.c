@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.8 2005/04/23 18:12:45 christos Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.9 2005/09/20 17:15:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_tli.c,v 1.31 2005/03/19 03:05:25 ezk Exp
+ * File: am-utils/conf/transp/transp_tli.c
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -748,11 +748,7 @@ u_long
 get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto)
 {
   CLIENT *clnt = NULL;
-#ifdef HAVE_CLNT_CREATE_VERS_TIMED
   rpcvers_t versout;
-#else /* not HAVE_CLNT_CREATE_VERS_TIMED */
-  u_long versout;
-#endif /* not HAVE_CLNT_CREATE_VERS_TIMED */
   struct timeval tv;
 
   /*

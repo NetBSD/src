@@ -19,7 +19,7 @@ case "${host_os}" in
 		ac_cv_nfs_fh_dref_style=bsd44 ;;
 	# all new BSDs changed the type of the
 	# filehandle in nfs_args from nfsv2fh_t to u_char.
-	freebsd* | freebsdelf* | bsdi* | netbsd* | openbsd* | darwin* | rhapsody* )
+	freebsd* | freebsdelf* | bsdi* | netbsd* | openbsd* | darwin* | macosx* | rhapsody* )
 		ac_cv_nfs_fh_dref_style=freebsd22 ;;
 	aix[[1-3]]* | aix4.[[01]]* )
 		ac_cv_nfs_fh_dref_style=aix3 ;;

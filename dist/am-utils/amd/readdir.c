@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.1.1.2 2005/04/23 18:09:29 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.1.1.3 2005/09/20 17:14:53 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: readdir.c,v 1.5 2005/03/21 00:16:53 ezk Exp
+ * File: am-utils/amd/readdir.c
  *
  */
 

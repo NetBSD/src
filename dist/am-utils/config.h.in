@@ -22,14 +22,6 @@
 /* Define configuration date */
 #undef CONFIG_DATE
 
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-#undef CRAY_STACKSEG_END
-
-/* Define to 1 if using `alloca.c'. */
-#undef C_ALLOCA
-
 /* Turn off general debugging by default */
 #undef DEBUG
 
@@ -46,13 +38,6 @@
 
 /* Define to 1 if the `getpgrp' function requires zero arguments. */
 #undef GETPGRP_VOID
-
-/* Define to 1 if you have `alloca', as a function or macro. */
-#undef HAVE_ALLOCA
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-#undef HAVE_ALLOCA_H
 
 /* Define if have automount filesystem */
 #undef HAVE_AMU_FS_AUTO
@@ -238,6 +223,9 @@
 /* does extern definition for mkstemp() exist? */
 #undef HAVE_EXTERN_MKSTEMP
 
+/* does extern definition for mntctl() exist? */
+#undef HAVE_EXTERN_MNTCTL
+
 /* does extern definition for optarg exist? */
 #undef HAVE_EXTERN_OPTARG
 
@@ -250,11 +238,17 @@
 /* does extern definition for setitimer() exist? */
 #undef HAVE_EXTERN_SETITIMER
 
+/* does extern definition for sleep() exist? */
+#undef HAVE_EXTERN_SLEEP
+
 /* does extern definition for strcasecmp() exist? */
 #undef HAVE_EXTERN_STRCASECMP
 
 /* does extern definition for strdup() exist? */
 #undef HAVE_EXTERN_STRDUP
+
+/* does extern definition for strlcat() exist? */
+#undef HAVE_EXTERN_STRLCAT
 
 /* does extern definition for strlcpy() exist? */
 #undef HAVE_EXTERN_STRLCPY
@@ -502,6 +496,9 @@
 /* Define to 1 if you have the <linux/loop.h> header file. */
 #undef HAVE_LINUX_LOOP_H
 
+/* Define to 1 if you have the <linux/nfs2.h> header file. */
+#undef HAVE_LINUX_NFS2_H
+
 /* Define to 1 if you have the <linux/nfs.h> header file. */
 #undef HAVE_LINUX_NFS_H
 
@@ -510,6 +507,9 @@
 
 /* Define to 1 if you have the <linux/posix_types.h> header file. */
 #undef HAVE_LINUX_POSIX_TYPES_H
+
+/* Define to 1 if you have the <linux/socket.h> header file. */
+#undef HAVE_LINUX_SOCKET_H
 
 /* Define to 1 if you support file names longer than 14 characters. */
 #undef HAVE_LONG_FILE_NAMES
@@ -649,8 +649,14 @@
 /* Define to 1 if you have the <nfsclient/nfsargs.h> header file. */
 #undef HAVE_NFSCLIENT_NFSARGS_H
 
+/* Define to 1 if `acdirmax' is member of `nfs_args_t'. */
+#undef HAVE_NFS_ARGS_T_ACDIRMAX
+
 /* Define to 1 if `acdirmin' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_ACDIRMIN
+
+/* Define to 1 if `acregmax' is member of `nfs_args_t'. */
+#undef HAVE_NFS_ARGS_T_ACREGMAX
 
 /* Define to 1 if `acregmin' is member of `nfs_args_t'. */
 #undef HAVE_NFS_ARGS_T_ACREGMIN
@@ -883,6 +889,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
@@ -1384,6 +1393,12 @@
 
 /* 6-argument mount */
 #undef MNT2_GEN_OPT_DATA
+
+/* Use a lazy unmount (detach) */
+#undef MNT2_GEN_OPT_DETACH
+
+/* Use a forced unmount */
+#undef MNT2_GEN_OPT_FORCE
 
 /* old (4-argument) mount (compatibility) */
 #undef MNT2_GEN_OPT_FSS
@@ -1969,14 +1984,6 @@
 /* Define to 1 if the `setpgrp' function takes no argument. */
 #undef SETPGRP_VOID
 
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
-#undef STACK_DIRECTION
-
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 #undef STAT_MACROS_BROKEN
 
@@ -2075,6 +2082,9 @@
 
 /* Define a type for the rfs_args structure */
 #undef rfs_args_t
+
+/* Check if rpcvers_t is defined in <rpc/types.h> */
+#undef rpcvers_t
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t

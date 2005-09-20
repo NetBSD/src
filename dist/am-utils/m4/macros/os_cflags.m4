@@ -12,6 +12,10 @@ case "${host_os}" in
 				# do not use 64-bit compiler
 				ac_cv_os_cflags="-n32 -mips3 -Wl,-woff,84"
 				;;
+			gcc )	# with gcc 3.4.3 on irix-6.5, we get pte_t
+				# undefined.  So give it a dummy value.
+				ac_cv_os_cflags="-Dpte_t=u_int"
+				;;
 		esac
 		;;
 	osf[[1-3]]* )
@@ -76,7 +80,7 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	darwin* | rhapsody* )
+	darwin* | macosx* | rhapsody* )
 		ac_cv_os_cflags="-D_P1003_1B_VISIBLE"
 		;;
 	* )
@@ -85,5 +89,8 @@ case "${host_os}" in
 esac
 ])
 AMU_CFLAGS="$AMU_CFLAGS $ac_cv_os_cflags"
+# use same flags for configuring, so it matches what we do at compile time
+CFLAGS="$CFLAGS $ac_cv_os_cflags"
+export CFLAGS
 ])
 dnl ======================================================================

@@ -11,7 +11,7 @@ case "${host_os}" in
 		ac_cv_yp_order_outorder=int ;;
 	solaris* | svr4* | sysv4* | sunos* | hpux* | aix* )
 		ac_cv_yp_order_outorder="unsigned long" ;;
-	osf* )
+	linux* | osf* )
 		# DU4 man page is wrong, headers are right
 		ac_cv_yp_order_outorder="unsigned int" ;;
 	* )

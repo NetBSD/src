@@ -1,4 +1,4 @@
-/*	$NetBSD: am_xdr_func.h,v 1.1.1.8 2005/04/23 18:13:24 christos Exp $	*/
+/*	$NetBSD: am_xdr_func.h,v 1.1.1.9 2005/09/20 17:16:04 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_xdr_func.h,v 1.16 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/include/am_xdr_func.h
  *
  */
 
@@ -104,7 +104,7 @@ enum am_mountstat3 {
        AM_MNT3ERR_INVAL = 22,
        AM_MNT3ERR_NAMETOOLONG = 63,
        AM_MNT3ERR_NOTSUPP = 10004,
-       AM_MNT3ERR_SERVERFAULT = 10006,
+       AM_MNT3ERR_SERVERFAULT = 10006
 };
 typedef enum am_mountstat3 am_mountstat3;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_parse.y,v 1.1.1.8 2005/04/23 18:09:22 christos Exp $	*/
+/*	$NetBSD: conf_parse.y,v 1.1.1.9 2005/09/20 17:14:40 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: conf_parse.y,v 1.14 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/conf_parse.y
  *
  */
 

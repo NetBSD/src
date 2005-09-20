@@ -9,7 +9,7 @@ ac_cv_style_mnttab,
 case "${host_os_name}" in
 	aix* )
 			ac_cv_style_mnttab=aix ;;
-	bsd* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
+	bsd* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | macosx* | rhapsody* )
 			ac_cv_style_mnttab=bsd ;;
 	isc3* )
 			ac_cv_style_mnttab=isc3 ;;
@@ -21,6 +21,8 @@ case "${host_os_name}" in
 			ac_cv_style_mnttab=svr4 ;;
 	ultrix* )
 			ac_cv_style_mnttab=ultrix ;;
+	linux*)
+			ac_cv_style_mnttab=linux ;;
 	* )
 			ac_cv_style_mnttab=file ;;
 esac
