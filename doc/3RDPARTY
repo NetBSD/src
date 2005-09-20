@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.362 2005/09/20 09:14:40 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.363 2005/09/20 18:41:43 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -37,13 +37,13 @@ The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
 Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
-Version:	6.1-rc2 [20050417]
+Version:	6.1.2.1
 Current Vers:	6.1.2.1
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
 Mailing List:	am-utils
-Responsible:	christos
+Responsible:	christos, rpaulo
 Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
