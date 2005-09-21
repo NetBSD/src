@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.32 2005/08/02 01:35:05 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.33 2005/09/21 18:49:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.32 2005/08/02 01:35:05 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.33 2005/09/21 18:49:16 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,7 @@ struct mach64_softc {
 	int mclk_post_div;
 	int mclk_fb_div;
 
+	struct videomode *sc_my_mode;
 	struct mach64screen *wanted;
 	struct mach64screen *active;
 	void (*switchcb)(void *, int, int);
@@ -198,7 +199,7 @@ struct {
 };
 
 static int mach64_chip_id, mach64_chip_rev;
-static struct videomode default_mode;
+static struct videomode default_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static struct mach64screen mach64_console_screen;
 
 static const char *mach64_memtype_names[] = {
@@ -241,9 +242,8 @@ static int	mach64_calc_crtcregs(struct mach64_softc *,
 				     struct videomode *);
 static void	mach64_set_crtcregs(struct mach64_softc *,
 				    struct mach64_crtcregs *);
-#if 0
+
 static int	mach64_modeswitch(struct mach64_softc *, struct videomode *);
-#endif
 static void	mach64_set_dsp(struct mach64_softc *);
 static void	mach64_set_pll(struct mach64_softc *, int);
 static void	mach64_reset_engine(struct mach64_softc *);
@@ -307,56 +307,56 @@ static const struct wsdisplay_emulops mach64_emulops = {
 
 static struct wsscreen_descr mach64_defaultscreen = {
 	"default",
-	0, 0,
-	&mach64_console_screen.ri.ri_ops,
+	80, 30,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&default_mode
 }, mach64_80x25_screen = {
 	"80x25", 80, 25,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_80x30_screen = {
 	"80x30", 80, 30,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[1]
 }, mach64_80x40_screen = {
 	"80x40", 80, 40,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 10,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_80x50_screen = {
 	"80x50", 80, 50,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 8,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_100x37_screen = {
 	"100x37", 100, 37,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[2]
 }, mach64_128x48_screen = {
 	"128x48", 128, 48,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[3]
 }, mach64_144x54_screen = {
 	"144x54", 144, 54,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[4]
 }, mach64_160x64_screen = {
 	"160x54", 160, 64,
-	&mach64_console_screen.ri.ri_ops,
+	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[5]
@@ -576,18 +576,28 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	if (console) {
 		mach64_get_mode(sc, &default_mode);
 		setmode = 0;
+		sc->sc_my_mode = &default_mode;
 	} else {
-		memcpy(&default_mode, &mach64_modes[4], sizeof(default_mode));
+		/* fill in default_mode if it's empty */
+		if (default_mode.dot_clock == 0) {
+			memcpy(&default_mode, &mach64_modes[4], 
+			    sizeof(default_mode));
+		}
+		sc->sc_my_mode = &mach64_modes[4];
 		setmode = 1;
 	}
 #else
-	memcpy(&default_mode, &mach64_modes[0], sizeof(default_mode));
-	setmode = 1;
+		if (default_mode.dot_clock == 0) {
+			memcpy(&default_mode, &mach64_modes[0], 
+			    sizeof(default_mode));
+		}
+		sc->sc_my_mode = &mach64_modes[0];
+		setmode = 1;
 #endif
 
 	sc->bits_per_pixel = 8;
-	sc->virt_x = default_mode.hdisplay;
-	sc->virt_y = default_mode.vdisplay;
+	sc->virt_x = sc->sc_my_mode->hdisplay;
+	sc->virt_y = sc->sc_my_mode->vdisplay;
 	sc->max_x = sc->virt_x - 1;
 	sc->max_y = (sc->memsize * 1024) /
 	    (sc->virt_x * (sc->bits_per_pixel / 8)) - 1;
@@ -602,66 +612,73 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	printf("%s: initial resolution %dx%d at %d bpp\n", sc->sc_dev.dv_xname,
-	    default_mode.hdisplay, default_mode.vdisplay,
+	    sc->sc_my_mode->hdisplay, sc->sc_my_mode->vdisplay,
 	    sc->bits_per_pixel);
 
-	mach64_console_screen.ri.ri_hw = &mach64_console_screen;
-	mach64_console_screen.ri.ri_depth = sc->bits_per_pixel;
-	mach64_console_screen.ri.ri_width = default_mode.hdisplay;
-	mach64_console_screen.ri.ri_height = default_mode.vdisplay;
-	mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
-
-	mach64_console_screen.ri.ri_bits=(void *)(uintptr_t)sc->sc_aperbase;
-
-	mach64_console_screen.ri.ri_flg = RI_CENTER;
-	mach64_console_screen.active = 1;
-	sc->active = &mach64_console_screen;
-
-	/* XXX width/height are nonsense, we only want to pick a font */
-	rasops_init(&mach64_console_screen.ri,
-	    mach64_console_screen.ri.ri_height / 16,
-	    mach64_console_screen.ri.ri_width / 8);
-
-	/* now get the real values */
-	rasops_reconfig(&mach64_console_screen.ri,
-	    mach64_console_screen.ri.ri_height /
-	    mach64_console_screen.ri.ri_font->fontheight,
-	    mach64_console_screen.ri.ri_width /
-	    mach64_console_screen.ri.ri_font->fontwidth);
-
-	set_address(&mach64_console_screen.ri, sc->sc_aperbase);
-
-	/* enable acceleration */
-	mach64_console_screen.ri.ri_ops.copyrows = mach64_copyrows;
-	mach64_console_screen.ri.ri_ops.eraserows = mach64_eraserows;
-	mach64_console_screen.ri.ri_ops.copycols = mach64_copycols;
-	mach64_console_screen.ri.ri_ops.erasecols = mach64_erasecols;
-	mach64_console_screen.ri.ri_ops.putchar = mach64_putchar;
-	mach64_console_screen.ri.ri_ops.cursor = mach64_cursor;
-
-	mach64_defaultscreen.nrows = mach64_console_screen.ri.ri_rows;
-	mach64_defaultscreen.ncols = mach64_console_screen.ri.ri_cols;
-
-	mach64_allocattr(&mach64_console_screen.ri, WS_DEFAULT_FG, 
-	    WS_DEFAULT_BG, 0, &defattr);
-
-	sc->sc_bg = WS_DEFAULT_BG;
-
-	/* really necessary? */
-	mach64_defaultscreen.capabilities = mach64_console_screen.ri.ri_caps;
-	mach64_defaultscreen.textops = &mach64_console_screen.ri.ri_ops;
-
-	/* Initialize fonts */
-	/* XXX shouldn't that happen /before/ we call rasops_init()? */
-	wsfont_init();
-
-	mach64_init_screen(sc, &mach64_console_screen,
-	    &mach64_defaultscreen, 1, &defattr, setmode);
 	if (console) {
+		mach64_console_screen.ri.ri_hw = &mach64_console_screen;
+		mach64_console_screen.ri.ri_depth = sc->bits_per_pixel;
+		mach64_console_screen.ri.ri_width = sc->sc_my_mode->hdisplay;
+		mach64_console_screen.ri.ri_height = sc->sc_my_mode->vdisplay;
+		mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
+
+		mach64_console_screen.ri.ri_bits=(void *)(uintptr_t)sc->sc_aperbase;
+
+		mach64_console_screen.ri.ri_flg = RI_CENTER;
+		mach64_console_screen.active = 1;
+		sc->active = &mach64_console_screen;
+	
+		/* XXX width/height are nonsense, we only want to pick a font */
+		rasops_init(&mach64_console_screen.ri,
+		    mach64_console_screen.ri.ri_height / 16,
+		    mach64_console_screen.ri.ri_width / 8);
+
+		/* now get the real values */
+		rasops_reconfig(&mach64_console_screen.ri,
+		    mach64_console_screen.ri.ri_height /
+		    mach64_console_screen.ri.ri_font->fontheight,
+		    mach64_console_screen.ri.ri_width /
+		    mach64_console_screen.ri.ri_font->fontwidth);
+
+		set_address(&mach64_console_screen.ri, sc->sc_aperbase);
+
+		/* enable acceleration */
+		mach64_console_screen.ri.ri_ops.copyrows = mach64_copyrows;
+		mach64_console_screen.ri.ri_ops.eraserows = mach64_eraserows;
+		mach64_console_screen.ri.ri_ops.copycols = mach64_copycols;
+		mach64_console_screen.ri.ri_ops.erasecols = mach64_erasecols;
+		mach64_console_screen.ri.ri_ops.putchar = mach64_putchar;
+		mach64_console_screen.ri.ri_ops.cursor = mach64_cursor;
+
+		mach64_defaultscreen.nrows = mach64_console_screen.ri.ri_rows;
+		mach64_defaultscreen.ncols = mach64_console_screen.ri.ri_cols;
+
+		mach64_allocattr(&mach64_console_screen.ri, WS_DEFAULT_FG, 
+		    WS_DEFAULT_BG, 0, &defattr);
+
+		sc->sc_bg = WS_DEFAULT_BG;
+
+		/* really necessary? */
+		mach64_defaultscreen.capabilities = mach64_console_screen.ri.ri_caps;
+		mach64_defaultscreen.textops = &mach64_console_screen.ri.ri_ops;
+
+		/* Initialize fonts */
+		/* XXX shouldn't that happen /before/ we call rasops_init()? */
+		wsfont_init();
+
+		mach64_init_screen(sc, &mach64_console_screen,
+		    &mach64_defaultscreen, 1, &defattr, setmode);
 		wsdisplay_cnattach(&mach64_defaultscreen, 
 		    &mach64_console_screen.ri, 0, 0, defattr);
+	} else {
+		/*
+		 * since we're not the console we can postpone the rest
+		 * until someone actually allocates a screen for us
+		 */
+		 mach64_modeswitch(sc, sc->sc_my_mode);		 
+		 
 	}
-
+	
 	mach64_init_lut(sc);
 	mach64_clearscreen(sc);
 
@@ -698,8 +715,8 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 	 * because they have the (potentially) bigger alignment 
 	 */
 	ri->ri_depth = sc->bits_per_pixel;
-	ri->ri_width = default_mode.hdisplay;
-	ri->ri_height = default_mode.vdisplay;
+	ri->ri_width = sc->sc_my_mode->hdisplay;
+	ri->ri_height = sc->sc_my_mode->vdisplay;
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER;
 
@@ -765,7 +782,6 @@ mach64_get_memsize(struct mach64_softc *sc)
 	int mem_tab[] = {
 		512, 1024, 2048, 4096, 6144, 8192, 12288, 16384
 	};
-
 	tmp = regr(sc, MEM_CNTL);
 	printf("memctl: %08x\n",tmp);
 	if (sc->has_dsp) {
@@ -899,7 +915,6 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 	    CRTC_EXT_DISP_EN | CRTC_EXT_EN);
 }
 
-#if 0
 static int
 mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 {
@@ -911,7 +926,6 @@ mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 	mach64_set_crtcregs(sc, &crtc);
 	return 0;
 }
-#endif
 
 static void
 mach64_reset_engine(struct mach64_softc *sc)
@@ -974,7 +988,7 @@ mach64_init_engine(struct mach64_softc *sc)
 
 	regw(sc, SC_LEFT, 0);
 	regw(sc, SC_TOP, 0);
-	regw(sc, SC_BOTTOM, default_mode.vdisplay - 1);
+	regw(sc, SC_BOTTOM, sc->sc_my_mode->vdisplay - 1);
 	regw(sc, SC_RIGHT, pitch_value - 1);
 
 	regw(sc, DP_BKGD_CLR, 0);
@@ -1695,6 +1709,7 @@ mach64_mmap(void *v, off_t offset, int prot)
 {
 	struct mach64_softc *sc = v;
 	paddr_t pa;
+	pcireg_t reg;
 	
 #ifndef __sparc64__
 	/* 
@@ -1710,6 +1725,21 @@ mach64_mmap(void *v, off_t offset, int prot)
 		return pa;
 	}
 #endif
+	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);
+	if (reg != sc->sc_regphys) {
+		printf("%s: BAR 0x18 changed! (%x %x)\n", 
+		    sc->sc_dev.dv_xname, (uint32_t)sc->sc_regphys, 
+		    (uint32_t)reg);
+		sc->sc_regphys = reg;
+	}
+
+	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x10) & 0xffffff00);
+	if (reg != sc->sc_aperphys) {
+		printf("%s: BAR 0x10 changed! (%x %x)\n", 
+		    sc->sc_dev.dv_xname, (uint32_t)sc->sc_aperphys, 
+		    (uint32_t)reg);
+		sc->sc_aperphys = reg;
+	}
 
 #if 0
 	/* evil hack to allow mmap()ing other devices as well */
@@ -1744,7 +1774,7 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct mach64_softc *sc = v;
 	struct mach64screen *scr;
 	struct rasops_info *ri;
-	int cnt = type->nrows * type->ncols;
+	int cnt;
 
 	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK | M_ZERO);
 	mach64_init_screen(sc, scr, type, 0, defattrp, sc->active == NULL);
@@ -1754,11 +1784,12 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 #ifdef notdef
 	ri->ri_bits = (void *)sc->sc_aperbase;
 #endif
-	rasops_init(ri, mach64_console_screen.ri.ri_height / 8,
-	    mach64_console_screen.ri.ri_width / 8);
+	rasops_init(ri, sc->sc_my_mode->vdisplay / 8,
+	    sc->sc_my_mode->hdisplay / 8);
 
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
+	cnt = ri->ri_cols * ri->ri_rows;
 	set_address(ri, sc->sc_aperbase);
 	mach64_allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG, 0, defattrp);
 
