@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.19 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.20 2005/09/21 14:32:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.19 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.20 2005/09/21 14:32:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,14 +604,14 @@ cmd680_setup_channel(struct ata_channel *chp)
 			off = 0xa8 + chp->ch_channel * 16 + drive * 2;
 			val = dma_tbl[drvp->DMA_mode];
 			pciide_pci_write(pc, pa, off, val & 0xff);
-			pciide_pci_write(pc, pa, off, val >> 8);
+			pciide_pci_write(pc, pa, off+1, val >> 8);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			mode |= 0x01 << (drive * 4);
 			off = 0xa4 + chp->ch_channel * 16 + drive * 2;
 			val = pio_tbl[drvp->PIO_mode];
 			pciide_pci_write(pc, pa, off, val & 0xff);
-			pciide_pci_write(pc, pa, off, val >> 8);
+			pciide_pci_write(pc, pa, off+1, val >> 8);
 		}
 	}
 
