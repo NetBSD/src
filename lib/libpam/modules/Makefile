@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2005/02/27 21:01:59 thorpej Exp $
+# $NetBSD: Makefile,v 1.9 2005/09/21 14:19:08 tsarna Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -40,8 +40,10 @@ SUBDIR+= pam_skey
 .endif
 
 .if (${MKKERBEROS} != "no")
-SUBDIR+= pam_krb5 pam_ksu
+SUBDIR+= pam_afslog pam_krb5 pam_ksu
 LIBDPLIBS+=	krb5	${LIB_ROOT_DIR}/libkrb5 \
+		kafs	${LIB_ROOT_DIR}/libkafs \
+		krb	${LIB_ROOT_DIR}/libkrb \
 		asn1	${LIB_ROOT_DIR}/libasn1 \
 		roken	${LIB_ROOT_DIR}/libroken \
 		com_err	${LIB_ROOT_DIR}/libcom_err \
