@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.12 2005/09/20 18:07:04 rpaulo Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.13 2005/09/21 16:28:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -319,8 +319,6 @@ extern void going_down(int);
 extern void mnt_free(mntent_t *);
 extern void plog(int, const char *,...)
      __attribute__ ((__format__ (__printf__, 2, 3)));
-extern void dplog(const char *fmt, ...) 
-     __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void rmdirs(char *);
 extern void rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
 extern void set_amd_program_number(int program);
@@ -441,6 +439,8 @@ extern void malloc_verify(void);
 /* functions that depend solely on debugging */
 extern void print_nfs_args(const nfs_args_t *nap, u_long nfs_version);
 extern int debug_option (char *opt);
+extern void dplog(const char *fmt, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
 
 #else /* not DEBUG */
 
