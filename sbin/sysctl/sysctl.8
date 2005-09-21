@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.124 2005/09/06 03:22:58 rpaulo Exp $
+.\"	$NetBSD: sysctl.8,v 1.125 2005/09/21 19:08:44 xtraeme Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 6, 2005
+.Dd September 21, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -533,6 +533,10 @@ privilege can change the value.
 .It vfs.ffs.log_changeopt	integer	yes
 .It vfs.nfs.iothreads	integer	yes
 .It vfs.cd9660.utf8_joliet	integer	yes
+.It vfs.sync.delay	integer	yes
+.It vfs.sync.filedelay	integer	yes
+.It vfs.sync.dirdelay	integer	yes
+.It vfs.sync.metadelay	integer	yes	
 .It vm.anonmax	integer	yes
 .It vm.anonmin	integer	yes
 .It vm.bufcache	integer	yes
