@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.8 2005/04/25 01:34:38 matt Exp $       */
+/*     $NetBSD: login_pam.c,v 1.9 2005/09/21 12:24:11 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.8 2005/04/25 01:34:38 matt Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.9 2005/09/21 12:24:11 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -108,7 +108,8 @@ u_int	timeout = 300;
 
 struct	passwd *pwd, pwres;
 char	pwbuf[1024];
-struct	group *gr;
+struct	group grs, *grp;
+char	grbuf[1024];
 int	failures, have_ss;
 char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
 struct timeval now;
@@ -476,8 +477,9 @@ skip_auth:
 	setgroups(nsaved_gids, saved_gids);
 	seteuid(saved_uid);
 
+	(void)getgrnam_r(TTYGRPNAME, &grs, grbuf, sizeof(grbuf), &grp);
 	(void)chown(ttyn, pwd->pw_uid,
-	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+	    (grp != NULL) ? grp->gr_gid : pwd->pw_gid);
 
 	if (ttyaction(ttyn, "login", pwd->pw_name))
 		(void)printf("Warning: ttyaction failed.\n");
