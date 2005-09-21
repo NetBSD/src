@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.7 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.8 2005/09/21 12:46:08 tron Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.26.2.5 2005/05/10 09:45:46 manubsd Exp */
 
@@ -730,6 +730,12 @@ isakmp_cfg_net(iph1, attr)
 			/* FALLTHROUGH */
 #endif
 		case ISAKMP_CFG_CONF_LOCAL:
+			if (isakmp_cfg_getport(iph1) == -1) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Port pool depleted\n");
+				break;
+			}
+
 			iph1->mode_cfg->addr4.s_addr = 
 			    htonl(ntohl(isakmp_cfg_config.network4) 
 			    + iph1->mode_cfg->port);
@@ -1156,6 +1162,9 @@ isakmp_cfg_getport(iph1)
 {
 	unsigned int i;
 	size_t size = isakmp_cfg_config.pool_size;
+
+	if (iph1->mode_cfg->flags & ISAKMP_CFG_PORT_ALLOCATED)
+		return iph1->mode_cfg->port;
 
 	if (isakmp_cfg_config.port_pool == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
