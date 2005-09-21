@@ -1,23 +1,23 @@
-#	$NetBSD: TODO.nits,v 1.4 2005/09/21 03:13:44 christos Exp $
+#	$NetBSD: TODO.nits,v 1.5 2005/09/21 09:19:23 simonb Exp $
 #
 # This file documents small nits in our code (often marked in comments
 # with /* XXX */) and similar "small fixes needed" so that they will not
 # be forgotten.
-# 
+#
 # Generally speaking, this file represents a queue of small,
 # straightforward things to fix. If something is a serious project, it
 # should probably go in to TODO. If it is unlikely something will ever
 # be fixed, do not put it in this file, just document it in a comment.
-# 
+#
 # The entry format is:
-# 
+#
 #   YYYY-MM-DD (userid) Explanation
-# 
+#
 # The date is the date the nit was first added.
 #
 # Try to keep the format consistent -- we may want to machine parse it
 # someday.
-# 
+#
 # Add new nits at the bottom of the file. Remove old nits as you fix
 # them.
 
