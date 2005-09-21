@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.25 2003/08/07 10:04:12 agc Exp $
+.\"	$NetBSD: disklabel.5,v 1.26 2005/09/21 14:51:20 tsutsui Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)disklabel.5.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 13, 2003
+.Dd January 7, 2005
 .Dt DISKLABEL 5
 .Os
 .Sh NAME
@@ -257,6 +257,9 @@ struct disklabel {
 #define DTYPE_RAID	14	/* RAIDframe */
 #define DTYPE_LD	15	/* logical disk */
 #define DTYPE_JFS2	16	/* IBM JFS2 */
+#define DTYPE_CGD	17	/* cryptographic pseudo-disk */
+#define DTYPE_VINUM	18	/* vinum volume */
+#define DTYPE_FLASH	19	/* flash memory device */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -277,6 +280,9 @@ static const char *const dktypenames[] = {
 	"RAID",
 	"ld",
 	"jfs",
+	"cgd",
+	"vinum",
+	"flash",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -310,6 +316,7 @@ static const char *const dktypenames[] = {
 #define	FS_CCD		20	/* concatenated disk component */
 #define	FS_JFS2		21	/* IBM JFS2 */
 #define	FS_APPLEUFS	22	/* Apple UFS */
+#define	FS_VINUM	23	/* Vinum */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -336,6 +343,7 @@ static const char *const fstypenames[] = {
 	"ccd",
 	"jfs",
 	"Apple UFS",
+	"vinum",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
