@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.292 2005/08/22 06:36:31 riz Exp $
+.\"	$NetBSD: main,v 1.293 2005/09/21 14:25:09 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1697,6 +1697,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
 .It Ta SOMEYA Yoshihiko Ta Mt someya@NetBSD.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.org
+.It Ta J\(:org Sonnenberger Ta Mt joerg@NetBSD.org
 .It Ta Ignatios Souvatzis Ta Mt is@NetBSD.org
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
 .It Ta Jonathan Stone Ta Mt jonathan@NetBSD.org
