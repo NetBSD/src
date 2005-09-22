@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.55 2005/09/07 05:25:41 dogcow Exp $ */
+/* $NetBSD: rtw.c,v 1.56 2005/09/22 16:15:20 gdt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.55 2005/09/07 05:25:41 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.56 2005/09/22 16:15:20 gdt Exp $");
 
 #include "bpfilter.h"
 
@@ -4044,7 +4044,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	rtw_setifprops(ifp, sc->sc_dev.dv_xname, (void*)sc);
 
-	IFQ_SET_READY(ifp->if_snd);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->sc_ic.ic_ifp = ifp;
 	rtw_set80211props(&sc->sc_ic);
