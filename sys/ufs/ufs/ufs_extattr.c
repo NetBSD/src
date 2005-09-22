@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.3 2005/09/12 16:10:11 rpaulo Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.4 2005/09/22 13:49:03 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.3 2005/09/12 16:10:11 rpaulo Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.4 2005/09/22 13:49:03 rpaulo Exp $");
 
 #include "opt_ffs.h"
 
@@ -566,8 +566,10 @@ ufs_extattr_stop(struct mount *mp, struct proc *p)
 	 * If we haven't been started, no big deal.  Just short-circuit
 	 * the processing work.
 	 */
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)) {
+		error = EOPNOTSUPP;
 		goto unlock;
+	}
 
 	while (LIST_FIRST(&ump->um_extattr.uepm_list) != NULL) {
 		uele = LIST_FIRST(&ump->um_extattr.uepm_list);
