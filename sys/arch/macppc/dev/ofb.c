@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.41 2004/12/17 05:44:12 briggs Exp $	*/
+/*	$NetBSD: ofb.c,v 1.42 2005/09/22 18:16:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41 2004/12/17 05:44:12 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.42 2005/09/22 18:16:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -147,6 +147,9 @@ ofbattach(parent, self, aux)
 	struct ofb_devconfig *dc;
 	char devinfo[256];
 
+	sc->sc_memt = pa->pa_memt;
+	sc->sc_iot = pa->pa_iot;	
+	
 	console = ofb_is_console();
 
 	if (console) {
@@ -300,8 +303,9 @@ ofb_common_init(node, dc)
 		ri->ri_wsfcookie = -1;		/* not using wsfont */
 		rasops_init(ri, rows, cols);
 
-		ri->ri_xorigin = 2;
-		ri->ri_yorigin = 3;
+		ri->ri_xorigin = (width - cols * ri->ri_font->fontwidth) >> 1;
+		ri->ri_yorigin = (height - rows * ri->ri_font->fontheight) 
+		    >> 1;
 		ri->ri_bits = (char *)addr + ri->ri_xorigin +
 			      ri->ri_stride * ri->ri_yorigin;
 	} else {
@@ -394,19 +398,42 @@ ofb_mmap(v, offset, prot)
 	struct ofb_devconfig *dc = sc->sc_dc;
 	struct rasops_info *ri = &dc->dc_ri;
 	u_int32_t *ap = sc->sc_addrs;
-	paddr_t pa;
+	struct proc *me;
 	int i;
 
+	/* framebuffer at offset 0 */
 	if (offset >=0 && offset < (ri->ri_stride * ri->ri_height))
 		return dc->dc_paddr + offset;
 
-	pa = offset;
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	me = __curproc();
+	if (me != NULL) {
+		if (suser(me->p_ucred, NULL) != 0) {
+			return -1;
+		}
+	}
+
+	/* let them mmap() 0xa0000 - 0xbffff if it's not covered above */
+#ifdef OFB_FAKE_VGA_FB
+	if (offset >=0xa0000 && offset < 0xbffff)
+		return dc->dc_paddr + offset - 0xa0000;
+#endif
+
+	/* allow to map our IO space */
+	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
+		return bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+	}
+	
 	for (i = 0; i < 6; i++) {
 		switch (ap[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
 		case OFW_PCI_PHYS_HI_SPACE_MEM32:
-			if (pa >= ap[2] && pa < ap[2] + ap[4])
-				return pa;
-		/* XXX I/O space? */
+			if (offset >= ap[2] && offset < ap[2] + ap[4])
+				return bus_space_mmap(sc->sc_memt, offset, 0, 
+				    prot, BUS_SPACE_MAP_LINEAR);
 		}
 		ap += 5;
 	}
