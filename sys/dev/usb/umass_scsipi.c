@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.25 2005/07/07 17:27:37 drochner Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.26 2005/09/22 22:39:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.25 2005/07/07 17:27:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.26 2005/09/22 22:39:37 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -487,8 +487,6 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-
-	xs->xs_status |= XS_STS_DONE;
 
 	DPRINTF(UDMASS_CMD,("umass_scsipi_sense_cb: return xs->error=%d, "
 		"xs->xs_status=0x%x xs->resid=%d\n", xs->error, xs->xs_status,
