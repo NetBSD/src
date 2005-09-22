@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.171 2005/09/12 20:23:03 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.172 2005/09/22 13:50:55 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.171 2005/09/12 20:23:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.172 2005/09/22 13:50:55 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1143,7 +1143,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 #ifdef UFS_EXTATTR
 	if (ump->um_fstype == UFS1) {
 		error = ufs_extattr_stop(mp, p);
-		if (error)
+		if (error && error != EOPNOTSUPP)
 			printf("%s: ufs_extattr_stop returned %d\n",
 			    fs->fs_fsmnt, error);
 		else
