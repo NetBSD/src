@@ -1,4 +1,4 @@
-# $NetBSD: ftpd,v 1.5 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: ftpd,v 1.6 2005/09/22 01:02:12 tsarna Exp $
 #
 # PAM configuration for the "ftpd" service
 #
@@ -8,6 +8,7 @@
 # pam_unix.
 auth		required	pam_nologin.so		no_warn
 auth		sufficient	pam_krb5.so		no_warn try_first_pass
+auth		optional	pam_afslog.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
