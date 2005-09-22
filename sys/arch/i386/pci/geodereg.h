@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.1 2005/09/22 07:09:35 dyoung Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.2 2005/09/22 18:57:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -137,19 +137,19 @@
 #define	SC1100_GCB_WDSTS		0x04
 #define	SC1100_WDSTS_RESERVED		BIT(7,4)	/* write as read */
 /* Set to 1 when watchdog reset is asserted.  Read-only.  Reset either by
- * POR# (power-on reset) or by writing writing 0 to WDOVF.
+ * POR# (power-on reset) or by writing 0 to WDOVF.
  */
 #define	SC1100_WDSTS_WDRST		BIT(3)
 /* Set to 1 when watchdog SMI is asserted.  Read-only.  Reset either by
- * POR# (power-on reset) or by writing writing 0 to WDOVF.
+ * POR# (power-on reset) or by writing 0 to WDOVF.
  */
 #define	SC1100_WDSTS_WDSMI		BIT(2)
 /* Set to 1 when watchdog interrupt is asserted.  Read-only.  Reset either by
- * POR# (power-on reset) or by writing writing 0 to WDOVF.
+ * POR# (power-on reset) or by writing 0 to WDOVF.
  */
 #define	SC1100_WDSTS_WDINT		BIT(1)
 /* Set to 1 when watchdog overflow is asserted.  Reset either by
- * POR# (power-on reset) or by writing writing 1 to this bit.
+ * POR# (power-on reset) or by writing 1 to this bit.
  */
 #define	SC1100_WDSTS_WDOVF		BIT(0)
 
