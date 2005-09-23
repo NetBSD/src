@@ -1,4 +1,4 @@
-.\"	$NetBSD: psh3lcd.4,v 1.1 2005/09/05 19:23:29 kiyohara Exp $
+.\"	$NetBSD: psh3lcd.4,v 1.2 2005/09/23 20:52:05 wiz Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,23 +24,37 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Sep 6, 2005
+.Dd September 6, 2005
 .Dt PSH3LCD 4 hpcsh
 .Os
 .Sh NAME
 .Nm psh3lcd
-.Nd driver for PERSONA SH3 LCD screen
+.Nd PERSONA SH3 LCD screen driver
 .Sh SYNOPSIS
 .Cd "psh3lcd* at shb?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for controlling brightness, contrast and power of
-the LCD screen inin PERSONA SH3 series machines.
+driver provides support for controlling brightness, contrast, and power of
+the LCD screen in PERSONA SH3 series machines.
 .Pp
-Default keymap binds <Ctrl> + <Alt> + <functionkey> to control brightness
-with F7 and F8, and to control contrast with F5 and F6 keys.
-.Pp
+In the default keymap,
+.Aq Ctrl
++
+.Aq Alt
++
+.Aq F7
+and
+.Aq F8
+control brightness, and
+.Aq Ctrl
++
+.Aq Alt
++
+.Aq F5
+and
+.Aq F6
+control contrast.
 .Sh HISTORY
 The
 .Nm
