@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.58 2005/09/06 21:40:45 kleink Exp $	*/
+/*	$NetBSD: ucom.c,v 1.59 2005/09/23 14:15:30 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.58 2005/09/06 21:40:45 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.59 2005/09/23 14:15:30 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,10 +178,8 @@ USB_ATTACH(ucom)
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
 
-	if (uca->portno != UCOM_UNK_PORTNO)
-		printf(": portno %d", uca->portno);
 	if (uca->info != NULL)
-		printf(", %s", uca->info);
+		printf(": %s", uca->info);
 	printf("\n");
 
 	sc->sc_udev = uca->device;
