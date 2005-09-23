@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.21 2005/09/23 12:10:32 jmmv Exp $
+.\"	$NetBSD: nfssvc.2,v 1.22 2005/09/23 20:27:10 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ struct nfsd_cargs {
 	char		*ncd_authstr;	/* Authenticator string */
 };
 .Ed
-.sp
+.Pp
 structure.
 The initial call has only the
 .Dv NFSSVC_MNTD
@@ -87,9 +87,10 @@ If the mount point is using Kerberos, then the
 .Xr mount_nfs 8
 daemon will return from
 .Fn nfssvc
-with errno ==
+with errno set to
 .Er ENEEDAUTH
-whenever the client side requires an ``rcmd''
+whenever the client side requires an
+.Dq rcmd
 authentication ticket for the user.
 The
 .Xr mount_nfs 8
@@ -110,7 +111,7 @@ failed to get the ticket,
 .Fn nfssvc
 will be called with the flags
 .Dv NFSSVC_MNTD ,
-.Dv NFSSVC_GOTAUTH
+.Dv NFSSVC_GOTAUTH ,
 and
 .Dv NFSSVC_AUTHINFAIL
 to denote a failed authentication attempt.
@@ -130,7 +131,7 @@ struct nfsd_srvargs {
 	char		*nsd_authstr;	/* Auth string (ret) */
 };
 .Ed
-.sp
+.Pp
 to enter the kernel as an
 .Xr nfsd 8
 daemon.
@@ -138,15 +139,17 @@ Whenever an
 .Xr nfsd 8
 daemon receives a Kerberos authentication ticket, it will return from
 .Fn nfssvc
-with errno ==
+with errno set to
 .Er ENEEDAUTH .
 The
 .Xr nfsd 8
 will attempt to authenticate the ticket and generate a set of credentials
-on the server for the ``user id'' specified in the field nsd_uid.
+on the server for the
+.Dq user id
+specified in the field nsd_uid.
 This is done by first authenticating the Kerberos ticket and then mapping
 the Kerberos principal to a local name and getting a set of credentials for
-that user via.
+that user via
 .Xr getpwnam 3
 and
 .Xr getgrouplist 3 .
@@ -184,7 +187,7 @@ struct nfsd_args {
 	int	namelen;	/* Length of name */
 };
 .Ed
-.sp
+.Pp
 to pass a server side
 .Tn NFS
 socket into the kernel for servicing by the
@@ -213,9 +216,8 @@ If zero, the exports list will be cleared for the given file system.
 .It Vt struct export_args mel_export[AF_MAX]
 Set of exports to be used for the given file system.
 .El
-.Pp
 .Sh RETURN VALUES
-Normally
+Usually
 .Nm
 does not return unless the server
 is terminated by a signal when a value of 0 is returned.
@@ -225,9 +227,8 @@ is set to specify the error.
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ENEEDAUTH
-This special error value
-is really used for authentication support, particularly Kerberos,
-as explained above.
+This special error value is really used for authentication support,
+particularly Kerberos, as explained above.
 .It Bq Er EPERM
 The caller is not the super-user.
 .El
@@ -251,5 +252,5 @@ support, since
 is not really an error.
 Several fields of the argument structures are assumed to be valid and
 sometimes to be unchanged from a previous call, such that
-.Nm nfssvc
+.Nm
 must be used with extreme care.
