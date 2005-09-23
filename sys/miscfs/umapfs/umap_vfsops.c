@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.54 2005/08/30 20:08:02 xtraeme Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.55 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.54 2005/08/30 20:08:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.55 2005/09/23 12:10:33 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ umapfs_mount(mp, path, data, ndp, p)
 		if (amp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &amp->umapm_export);
 		args.nentries = amp->info_nentries;
 		args.gnentries = amp->info_gnentries;
 		return copyout(&args, data, sizeof(args));
@@ -104,16 +103,10 @@ umapfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		amp = MOUNTTOUMAPMOUNT(mp);
-		if (args.umap_target == 0)
-			return (vfs_export(mp, &amp->umapm_export,
-					&args.umap_export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
@@ -334,9 +327,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,

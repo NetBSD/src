@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.173 2005/09/22 14:04:29 rpaulo Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.174 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.173 2005/09/22 14:04:29 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.174 2005/09/23 12:10:33 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -104,9 +104,7 @@ struct vfsops ffs_vfsops = {
 	ffs_init,
 	ffs_reinit,
 	ffs_done,
-	NULL,
 	ffs_mountroot,
-	ufs_check_export,
 	ffs_snapshot,
 	ffs_extattrctl,
 	ffs_vnodeopv_descs,
@@ -190,7 +188,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		if (ump == NULL)
 			return EIO;
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &ump->um_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof (struct ufs_args));
@@ -414,12 +411,8 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (fs->fs_snapinum[0] != 0)
 				ffs_snapshot_mount(mp);
 		}
-		if (args.fspec == 0) {
-			/*
-			 * Process export requests.
-			 */
-			return (vfs_export(mp, &ump->um_export, &args.export));
-		}
+		if (args.fspec == NULL)
+			return EINVAL;
 		if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
 		    (MNT_SOFTDEP | MNT_ASYNC)) {
 			printf("%s fs uses soft updates, ignoring async mode\n",

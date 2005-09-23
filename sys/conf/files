@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.731 2005/09/17 14:38:40 yamt Exp $
+#	$NetBSD: files,v 1.732 2005/09/23 12:10:31 jmmv Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1293,6 +1293,7 @@ file	kern/uipc_usrreq.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
 file	kern/vfs_getcwd.c
+file	kern/vfs_hooks.c
 file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c

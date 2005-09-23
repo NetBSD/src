@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.26 2005/08/30 18:47:19 xtraeme Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.27 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.26 2005/08/30 18:47:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.27 2005/09/23 12:10:32 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -99,9 +99,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_reinit,
 	cd9660_done,
-	NULL,
 	cd9660_mountroot,
-	cd9660_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	cd9660_vnodeopv_descs,
@@ -179,7 +177,6 @@ cd9660_mount(mp, path, data, ndp, p)
 			return EIO;
 		args.fspec = NULL;
 		args.flags = imp->im_flags;
-		vfs_showexport(mp, &args.export, &imp->im_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof (struct iso_args));
@@ -189,15 +186,9 @@ cd9660_mount(mp, path, data, ndp, p)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		imp = VFSTOISOFS(mp);
-		if (args.fspec == 0)
-			return (vfs_export(mp, &imp->im_export, &args.export));
-	}
+	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+		return EINVAL;
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -694,34 +685,6 @@ cd9660_fhtovp(mp, fhp, vpp)
 		return (ESTALE);
 	}
 	*vpp = nvp;
-	return (0);
-}
-
-/* ARGSUSED */
-int
-cd9660_check_export(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct iso_mnt *imp = VFSTOISOFS(mp);
-
-#ifdef	ISOFS_DBG
-	printf("check_export: ino %d, start %ld\n",
-	    ifhp->ifid_ino, ifhp->ifid_start);
-#endif
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &imp->im_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 

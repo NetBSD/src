@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.2 2003/10/03 16:34:31 yamt Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.3 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -33,7 +33,7 @@
 
 struct ntfs_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
+	struct	compat_export_args _pad1; /* compat with old userland tools */
 	uid_t	uid;			/* uid that owns ntfs files */
 	gid_t	gid;			/* gid that owns ntfs files */
 	mode_t	mode;			/* mask to be applied for ntfs perms */

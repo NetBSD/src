@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.17 2005/02/05 14:54:35 xtraeme Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.18 2005/09/23 12:10:35 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.17 2005/02/05 14:54:35 xtraeme Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.18 2005/09/23 12:10:35 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,13 +121,6 @@ mount_ffs(int argc, char *argv[])
 		warnx("\"%s\" is a relative path.", argv[1]);
 		warnx("using \"%s\" instead.", fs_name);
 	}
-
-#define DEFAULT_ROOTUID	-2
-	args.export.ex_root = DEFAULT_ROOTUID;
-	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
-	else
-		args.export.ex_flags = 0;
 
 	if (mount(MOUNT_FFS, fs_name, mntflags, &args) < 0) {
 		switch (errno) {

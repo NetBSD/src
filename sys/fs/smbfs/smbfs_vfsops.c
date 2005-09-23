@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.49 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.50 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.49 2005/06/20 02:49:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.50 2005/09/23 12:10:32 jmmv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -109,8 +109,6 @@ void smbfs_reinit(void);
 void smbfs_done(void);
 
 int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
-int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int smbfs_vptofh(struct vnode *, struct fid *);
 
 POOL_INIT(smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0, "smbfsnopl",
     &pool_allocator_nointr);
@@ -131,15 +129,12 @@ struct vfsops smbfs_vfsops = {
 	smbfs_statvfs,
 	smbfs_sync,
 	smbfs_vget,
-	smbfs_fhtovp,
-	smbfs_vptofh,
+	NULL,			/* vfs_fhtovp */
+	NULL,			/* vfs_vptofh */
 	smbfs_init,
 	smbfs_reinit,
 	smbfs_done,
-	NULL,
 	(int (*) (void)) eopnotsupp, /* mountroot */
-	(int (*) (struct mount *, struct mbuf *, int *,
-		  struct ucred **)) eopnotsupp, /* checkexp */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	smbfs_vnodeopv_descs,
@@ -490,27 +485,6 @@ int smbfs_vget(mp, ino, vpp)
 	struct vnode **vpp;
 {
 	return (EOPNOTSUPP);
-}
-
-/* ARGSUSED */
-int smbfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-	return (EINVAL);
-}
-
-/*
- * Vnode pointer to File handle, should never happen either
- */
-/* ARGSUSED */
-int
-smbfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-	return (EINVAL);
 }
 
 #endif /* __FreeBSD_version < 400009 */

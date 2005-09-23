@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.186 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.187 2005/09/23 12:10:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.186 2005/08/23 08:05:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.187 2005/09/23 12:10:34 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -153,9 +153,7 @@ struct vfsops lfs_vfsops = {
 	lfs_init,
 	lfs_reinit,
 	lfs_done,
-	NULL,
 	lfs_mountroot,
-	ufs_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	lfs_vnodeopv_descs,
@@ -357,7 +355,6 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		if (ump == NULL)
 			return EIO;
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &ump->um_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof (struct ufs_args));
@@ -479,12 +476,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			 */
 			fs->lfs_ronly = 0;
 		}
-		if (args.fspec == 0) {
-			/*
-			 * Process export requests.
-			 */
-			return (vfs_export(mp, &ump->um_export, &args.export));
-		}
+		if (args.fspec == NULL)
+			return EINVAL;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,

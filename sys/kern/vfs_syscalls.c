@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.230 2005/08/30 09:37:41 jmmv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.231 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.230 2005/08/30 09:37:41 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.231 2005/09/23 12:10:33 jmmv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -541,8 +541,6 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	vn_start_write(NULL, &mp, V_WAIT);
 
-	if (mp->mnt_flag & MNT_EXPUBLIC)
-		vfs_setpublicfs(NULL, NULL, NULL);
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
@@ -597,6 +595,7 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 		ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_slock);
 	}
 	simple_unlock(&mp->mnt_slock);
+	vfs_hooks_unmount(mp);
 	free(mp, M_MOUNT);
 	return (0);
 }
@@ -1192,6 +1191,8 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
+	if (vp->v_mount->mnt_op->vfs_vptofh == NULL)
+		return EOPNOTSUPP;
 	memset(&fh, 0, sizeof(fh));
 	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
@@ -1248,6 +1249,11 @@ sys_fhopen(struct lwp *l, void *v, register_t *retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL) {
 		error = ESTALE;
+		goto bad;
+	}
+
+	if (mp->mnt_op->vfs_fhtovp == NULL) {
+		error = EOPNOTSUPP;
 		goto bad;
 	}
 
@@ -1368,6 +1374,8 @@ sys_fhstat(struct lwp *l, void *v, register_t *retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
 	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return (error);
 	error = vn_stat(vp, &sb, p);
@@ -1405,6 +1413,8 @@ sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return ESTALE;
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
 	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return error;
 
