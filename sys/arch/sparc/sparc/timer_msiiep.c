@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.14 2004/07/01 10:23:41 pk Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.15 2005/09/23 23:22:57 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.14 2004/07/01 10:23:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.15 2005/09/23 23:22:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,11 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.14 2004/07/01 10:23:41 pk Exp $")
 
 static struct intrhand level10;
 static struct intrhand level14;
-
-/* XXX: move this stuff to msiiepreg.h? */
-
-/* ms-IIep PCIC registers mapped at fixed VA (see vaddrs.h) */
-#define	msiiep	((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
 
 /*
  * ms-IIep counters tick every 4 CPU clock @100MHz.
@@ -98,8 +93,8 @@ timer_init_msiiep(void)
 {
 
 	/* ms-IIep kernels support *only* IIep */
-	msiiep->pcic_sclr = tmr_ustolimIIep(tick);
-	msiiep->pcic_pclr = tmr_ustolimIIep(statint);
+	mspcic_write_4(pcic_sclr, tmr_ustolimIIep(tick));
+	mspcic_write_4(pcic_pclr, tmr_ustolimIIep(statint));
 	/* XXX: ensure interrupt target mask doesn't masks them? */
 }
 
@@ -111,7 +106,7 @@ clockintr_msiiep(void *cap)
 {
 
 	/* read the limit register to clear the interrupt */
-	*((volatile int *)&msiiep->pcic_sclr);
+	mspcic_read_4(pcic_sclr);
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -126,7 +121,7 @@ statintr_msiiep(void *cap)
 	u_long newint;
 
 	/* read the limit register to clear the interrupt */
-	*((volatile int *)&msiiep->pcic_pclr);
+	mspcic_read_4(pcic_pclr);
 
 	statclock(frame);
 
@@ -140,7 +135,7 @@ statintr_msiiep(void *cap)
 	 * loose the counter ticks that happened since this
 	 * interrupt was raised.
 	 */
-	msiiep->pcic_pclr_nr = tmr_ustolimIIep(newint);
+	mspcic_write_4(pcic_pclr_nr, tmr_ustolimIIep(newint));
 
 	/*
 	 * The factor 8 is only valid for stathz==100.
@@ -182,9 +177,9 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	 */
 
 	/* Put processor counter in "counter" mode */
-	msiiep->pcic_pc_ctl = 0; /* stop user timer (just in case) */
-	msiiep->pcic_pc_cfg = 0; /* timer mode disabled (processor counter) */
-
+	mspcic_write_1(pcic_pc_ctl, 0); /* stop user timer (just in case) */
+	mspcic_write_1(pcic_pc_cfg, 0); /* timer mode disabled (processor counter) */
+	
 	/*
 	 * Calibrate delay() by tweaking the magic constant
 	 * until a delay(100) actually reads (at least) 100 us on the clock.
@@ -194,10 +189,10 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 		volatile int t;
 
 		/* clear the limit bit */
-		*((volatile int *)&msiiep->pcic_pclr);
-		msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
+		mspcic_read_4(pcic_pclr);
+		mspcic_write_4(pcic_pclr, 0); /* reset counter to 1, free run */
 		delay(100);
-		t = msiiep->pcic_pccr;
+		t = mspcic_read_4(pcic_pccr);
 
 		if (t & TMR_LIMIT) /* cannot happen */
 			panic("delay calibration");
@@ -214,7 +209,7 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	 * upper 4 bits are for system counter: level 10
 	 * lower 4 bits are for processor counter: level 14
 	 */
-	msiiep->pcic_cipar = 0xae;
+	mspcic_write_1(pcic_cipar, 0xae);
 
 	timer_init = timer_init_msiiep;
 	level10.ih_fun = clockintr_msiiep;

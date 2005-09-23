@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.88 2005/09/10 01:27:54 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.89 2005/09/23 23:22:57 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.88 2005/09/10 01:27:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.89 2005/09/23 23:22:57 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -394,9 +394,6 @@ static void xcallintr(void *v)
 
 #include <sparc/sparc/msiiepreg.h>
 
-/* ms-IIep PCIC registers are mapped at fixed VA */
-#define mspcic ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
-
 void	nmi_hard_msiiep(void);
 void	nmi_soft_msiiep(void);
 
@@ -409,7 +406,7 @@ nmi_hard_msiiep(void)
 	char bits[128];
 	int fatal = 0;
 
-	si = mspcic->pcic_sys_ipr;
+	si = mspcic_read_4(pcic_sys_ipr);
 	printf("NMI: system interrupts: %s\n",
 	       bitmask_snprintf(si, MSIIEP_SYS_IPR_BITS, bits, sizeof(bits)));
 
@@ -437,7 +434,7 @@ nmi_hard_msiiep(void)
 		fatal = 0;
 	}
 
-	byteswap = mspcic->pcic_pio_ctrl & MSIIEP_PIO_CTRL_BIG_ENDIAN;
+	byteswap = mspcic_read_1(pcic_pio_ctrl) & MSIIEP_PIO_CTRL_BIG_ENDIAN;
 
 	if (si & MSIIEP_SYS_IPR_SERR) {	/* XXX */
 		printf("serr#\n");
@@ -445,7 +442,7 @@ nmi_hard_msiiep(void)
 	}
 
 	if (si & MSIIEP_SYS_IPR_DMA_ERR) {
-		uint32_t iotlb_err_addr = mspcic->pcic_iotlb_err_addr;
+		uint32_t iotlb_err_addr = mspcic_read_4(pcic_iotlb_err_addr);
 
 		if (byteswap)
 			iotlb_err_addr = bswap32(iotlb_err_addr);
@@ -455,13 +452,13 @@ nmi_hard_msiiep(void)
 	}
 
 	if (si & MSIIEP_SYS_IPR_PIO_ERR) {
-		uint32_t pio_err_addr = mspcic->pcic_pio_err_addr;
+		uint32_t pio_err_addr = mspcic_read_4(pcic_pio_err_addr);
 
 		if (byteswap)
 			pio_err_addr = bswap32(pio_err_addr);
 
 		printf("pio: addr=%08x, cmd=%x\n",
-		       pio_err_addr, mspcic->pcic_pio_err_cmd);
+		       pio_err_addr, mspcic_read_1(pcic_pio_err_cmd));
 		fatal = 0;
 	}
 
@@ -469,7 +466,7 @@ nmi_hard_msiiep(void)
 		panic("nmi");
 
 	/* Clear the NMI if it was PCIC related */
-	mspcic->pcic_sys_ipr_clr = MSIIEP_SYS_IPR_CLR_ALL;
+	mspcic_write_1(pcic_sys_ipr_clr, MSIIEP_SYS_IPR_CLR_ALL);
 }
 
 

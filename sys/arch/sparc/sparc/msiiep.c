@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.25 2005/09/10 02:22:33 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.26 2005/09/23 23:22:57 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.25 2005/09/10 02:22:33 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.26 2005/09/23 23:22:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -79,12 +79,6 @@ static int	mspcic_print(void *, const char *);
 
 CFATTACH_DECL(mspcic, sizeof(struct mspcic_softc),
     mspcic_match, mspcic_attach, NULL, NULL);
-
-/**
- * ms-IIep PCIC registers are mapped at fixed VA
- */
-#define mspcic ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
-
 
 /**
  * Only one PCI controller per MS-IIep and only one MS-IIep per system
@@ -193,7 +187,7 @@ msiiep_match(struct device *parent, struct cfdata *cf, void *aux)
 	 * bootstrap code maps them at a fixed va, MSIIEP_PCIC_VA, and
 	 * switches the endian-swapping mode on.
 	 */
-	id = mspcic->pcic_id;
+	id = mspcic_read_4(pcic_id);
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
 	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
 		panic("msiiep_match: id %08x", id);
@@ -234,15 +228,15 @@ msiiep_swap_endian(int on)
 {
 	uint8_t pioctl;
 
-	pioctl = mspcic->pcic_pio_ctrl;
+	pioctl = mspcic_read_1(pcic_pio_ctrl);
 	if (on)
 		pioctl |= MSIIEP_PIO_CTRL_BIG_ENDIAN;
 	else
 		pioctl &= ~MSIIEP_PIO_CTRL_BIG_ENDIAN;
-	mspcic->pcic_pio_ctrl = pioctl;
+	mspcic_write_1(pcic_pio_ctrl, pioctl);
 
 	/* read it back to make sure transaction completed */
-	pioctl = mspcic->pcic_pio_ctrl;
+	pioctl = mspcic_read_1(pcic_pio_ctrl);
 }
 
 
@@ -286,8 +280,8 @@ mspcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bh = (bus_space_handle_t)MSIIEP_PCIC_VA;
 
 	/* print our PCI device info and bus clock frequency */
-	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo,
-	    sizeof(devinfo));
+	pci_devinfo(mspcic_read_4(pcic_id), mspcic_read_4(pcic_class), 0,
+		    devinfo, sizeof(devinfo));
 	printf(": %s: clock = %s MHz\n", devinfo, clockfreq(sc->sc_clockfreq));
 
 	mspcic_init_maps();
@@ -357,9 +351,9 @@ mspcic_assigned_interrupt(int line)
 		return (-1);
 
 	if (line < 4) {
-		intrmap = mspcic->pcic_intr_asgn_sel;
+		intrmap = mspcic_read_2(pcic_intr_asgn_sel);
 	} else {
-		intrmap = mspcic->pcic_intr_asgn_sel_hi;
+		intrmap = mspcic_read_2(pcic_intr_asgn_sel_hi);
 		line -= 4;
 	}
 	return ((intrmap >> (line * 4)) & 0xf);
@@ -403,33 +397,39 @@ mspcic_init_maps(void)
 
 #ifdef DEBUG
 	printf("mspcic0: SMBAR0 %02x  PMBAR0 %02x  MSIZE0 %02x\n",
-	       mspcic->pcic_smbar0, mspcic->pcic_pmbar0, mspcic->pcic_msize0);
+	       mspcic_read_1(pcic_smbar0), mspcic_read_1(pcic_pmbar0),
+	       mspcic_read_1(pcic_msize0));
 	printf("mspcic0: SMBAR1 %02x  PMBAR1 %02x  MSIZE1 %02x\n",
-	       mspcic->pcic_smbar1, mspcic->pcic_pmbar1, mspcic->pcic_msize1);
+	       mspcic_read_1(pcic_smbar1), mspcic_read_1(pcic_pmbar1),
+	       mspcic_read_1(pcic_msize1));
 	printf("mspcic0: SIBAR  %02x  PIBAR  %02x  IOSIZE %02x\n",
-	       mspcic->pcic_sibar, mspcic->pcic_pibar, mspcic->pcic_iosize);
+	       mspcic_read_1(pcic_sibar), mspcic_read_1(pcic_pibar),
+	       mspcic_read_1(pcic_iosize));
 #endif
 	nmem = nio = 1;
 
 	m0 = &mspcic_pci_memmap[nmem];
-	mspcic_pci_map_from_reg(m0, mspcic->pcic_smbar0, mspcic->pcic_pmbar0,
-				mspcic->pcic_msize0);
+	mspcic_pci_map_from_reg(m0,
+		mspcic_read_1(pcic_smbar0), mspcic_read_1(pcic_pmbar0),
+		mspcic_read_1(pcic_msize0));
 	if (OVERLAP_FIXED(m0))
 		m0 = NULL;
 	else
 		++nmem;
 
 	m1 = &mspcic_pci_memmap[nmem];
-	mspcic_pci_map_from_reg(m1, mspcic->pcic_smbar1, mspcic->pcic_pmbar1,
-				mspcic->pcic_msize1);
+	mspcic_pci_map_from_reg(m1,
+		mspcic_read_1(pcic_smbar1), mspcic_read_1(pcic_pmbar1),
+		mspcic_read_1(pcic_msize1));
 	if (OVERLAP_FIXED(m1) || OVERLAP_MAP(m1, m0))
 		m1 = NULL;
 	else
 		++nmem;
 
 	io = &mspcic_pci_iomap[nio];
-	mspcic_pci_map_from_reg(io, mspcic->pcic_sibar, mspcic->pcic_pibar,
-				mspcic->pcic_iosize);
+	mspcic_pci_map_from_reg(io,
+		mspcic_read_1(pcic_sibar), mspcic_read_1(pcic_pibar),
+		mspcic_read_1(pcic_iosize));
 	if (OVERLAP_FIXED(io) || OVERLAP_MAP(io, m0) || OVERLAP_MAP(io, m1))
 		io = NULL;
 	else

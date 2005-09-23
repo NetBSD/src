@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.3 2005/09/10 01:01:40 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.4 2005/09/23 23:22:57 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -224,5 +224,21 @@ struct msiiep_pcic_reg {
 	uint8_t		pcic_unused_d3;
 	uint32_t	pcic_unused_pad[11];
 };
+
+
+/* XXX: these are temporary hacks to for the conversion of the sources */
+#define mspcic_read_1(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+#define mspcic_read_2(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+#define mspcic_read_4(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+
+#define mspcic_write_1(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+#define mspcic_write_2(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+#define mspcic_write_4(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
 
 #endif /* _SPARC_MSIIEP_REG_H_ */
