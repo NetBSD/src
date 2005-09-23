@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.290 2005/09/17 14:44:09 yamt Exp $
+.\"	$NetBSD: options.4,v 1.291 2005/09/23 17:31:10 gavan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1087,7 +1087,8 @@ and
 This options makes the
 .Xr md 4
 .Tn RAM
-disk size dynamically sized.
+disk size dynamically sized. It is incompatible with
+.Xr mdsetimage 8 .
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the
