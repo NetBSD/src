@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_afslog.8,v 1.1 2005/09/21 14:19:08 tsarna Exp $
+.\" $NetBSD: pam_afslog.8,v 1.2 2005/09/23 19:56:16 wiz Exp $
 .\"
 .\" Copyright 2005 Tyler C. Sarna <tsarna@netbsd.org>
 .\"
@@ -39,42 +39,45 @@
 .Pa pam_afslog
 .Op Ar arguments
 .Sh DESCRIPTION
-The pam_afslog authentication service module for PAM
-provides functionality for only one PAM category:
-authentication
-.Ar ( module-type 
+The
+.Nm
+authentication service module for PAM provides functionality for
+only one PAM category: authentication
+.Ar ( module-type
 of
 .Dq Li auth ) .
 .Pp
 The
-.Fn pam_sm_authenticate 
+.Fn pam_sm_authenticate
 function does nothing and thus the module should be used with an
 .Ar control-flag
 of
-.Dq Li optional.
+.Dq Li optional .
 .Pp
 The value of the module comes from its
 .Fn pam_sm_setcred
 function.
-If the 
+If the
 .Ar afslog
 parameter is enabled in
 .Xr krb5.conf 5 ,
-then the module will take Kerberos 5 credentials from the cache created by
+then the module will take Kerberos 5 credentials from the cache
+created by
 .Xr pam_krb5 8
 and convert them into AFS tokens, after first creating a PAG (Process
 Authentication Group) if necessary.
 .Sh SEE ALSO
 .Xr kafs 3 ,
 .Xr pam.conf 5 ,
-.Xr pam_krb5 8 ,
-.Xr pam 8
+.Xr pam 8 ,
+.Xr pam_krb5 8
 .Sh HISTORY
 The
 .Nm
 module was developed for
 .Nx
-by Tyler C. Sarna.
+by
+.An Tyler C. Sarna .
 The
 .Nm
 module appeared in
