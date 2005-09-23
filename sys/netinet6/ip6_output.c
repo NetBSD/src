@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.91 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.92 2005/09/23 21:21:58 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.91 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.92 2005/09/23 21:21:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -444,7 +444,7 @@ skip_ipsec2:;
 			 rh0 = (struct ip6_rthdr0 *)rh;
 			 addr = (struct in6_addr *)(rh0 + 1);
 			 ip6->ip6_dst = addr[0];
-			 bcopy(&addr[1], &addr[0],
+			 (void)memmove(&addr[0], &addr[1],
 			     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
 			 addr[rh0->ip6r0_segleft - 1] = finaldst;
 			 break;
