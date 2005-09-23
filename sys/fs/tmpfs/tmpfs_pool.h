@@ -1,11 +1,12 @@
-/*	$NetBSD: tmpfs_pool.h,v 1.2 2005/09/12 19:56:58 yamt Exp $	*/
+/*	$NetBSD: tmpfs_pool.h,v 1.3 2005/09/23 15:36:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,15 +54,33 @@
  */
 struct tmpfs_pool {
 	struct pool		tp_pool;
+
+	/* Reference to the mount point that holds the pool.  This is used
+	 * by the tmpfs_pool_allocator to access and modify the memory
+	 * accounting variables for the mount point. */
 	struct tmpfs_mount *	tp_mount;
+
+	/* The pool's name.  Used as the wait channel. */
 	char			tp_name[64];
 };
 
 /* --------------------------------------------------------------------- */
 
 /*
- * Collection of fixed-size pools to simulate variable-sized allocation
- * of memory objects.
+ * tmpfs uses variable-length strings to store file names and to store
+ * link targets.  Reserving a fixed-size buffer for each of them is
+ * inefficient because it will consume a lot more memory than is really
+ * necessary.  However, managing variable-sized buffers is difficult as
+ * regards memory allocation and very inefficient in computation time.
+ * This is why tmpfs provides an hybrid scheme to store strings: string
+ * pools.
+ *
+ * A string pool is a collection of memory pools, each one with elements
+ * of a fixed size.  In tmpfs's case, a string pool contains independent
+ * memory pools for 16-byte, 32-byte, 64-byte, 128-byte, 256-byte,
+ * 512-byte and 1024-byte long objects.  Whenever an object is requested
+ * from the pool, the new object's size is rounded to the closest upper
+ * match and an item from the corresponding pool is returned.
  */
 struct tmpfs_str_pool {
 	struct tmpfs_pool	tsp_pool_16;
