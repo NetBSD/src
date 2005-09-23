@@ -5,7 +5,7 @@
 
 - Optimize for speed and memory usage.  Nodes are still quite big; their
   size should be reduced if possible.  But most importantly, the algorithm
-  used to resize anonoymous memory objects in regular files is extremely
+  used to resize anonymous memory objects in regular files is extremely
   inefficient.
 
 - Verify that file holes work (they should, but must be checked).  Add a
@@ -13,7 +13,7 @@
 
 - NFS support is broken.  The readdir operation does not work until wcc is
   disabled (which happens as soon as doing a `touch foo' over the NFS
-  mount point.  Furthermore, the system crashes if a file is created on the
+  mount point).  Furthermore, the system crashes if a file is created on the
   original file system and is read through NFS; the system spits a panic
   about busy pages.
 
