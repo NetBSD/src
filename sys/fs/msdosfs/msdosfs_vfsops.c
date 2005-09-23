@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.27 2005/09/10 17:33:45 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.28 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.27 2005/09/10 17:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.28 2005/09/23 12:10:32 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,8 +95,6 @@ int msdosfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 int msdosfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_checkexp(struct mount *, struct mbuf *, int *,
-    struct ucred **);
 int msdosfs_vptofh(struct vnode *, struct fid *);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct proc *,
@@ -131,9 +129,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_init,
 	msdosfs_reinit,
 	msdosfs_done,
-	NULL,
 	msdosfs_mountroot,
-	msdosfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	msdosfs_vnodeopv_descs,
@@ -265,7 +261,6 @@ msdosfs_mount(mp, path, data, ndp, p)
 		args.version = MSDOSFSMNT_VERSION;
 		args.dirmask = pmp->pm_dirmask;
 		args.gmtoff = pmp->pm_gmtoff;
-		vfs_showexport(mp, &args.export, &pmp->pm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof(struct msdosfs_args));
@@ -321,20 +316,8 @@ msdosfs_mount(mp, path, data, ndp, p)
 			}
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
-		if (args.fspec == 0) {
-#ifdef	__notyet__		/* doesn't work correctly with current mountd	XXX */
-			if (args.flags & MSDOSFSMNT_MNTOPT) {
-				pmp->pm_flags &= ~MSDOSFSMNT_MNTOPT;
-				pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
-				if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-					pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
-			}
-#endif
-			/*
-			 * Process export requests.
-			 */
-			return (vfs_export(mp, &pmp->pm_export, &args.export));
-		}
+		if (args.fspec == NULL)
+			return EINVAL;
 	}
 	/*
 	 * Not an update, or updating the name: look up the name
@@ -989,24 +972,6 @@ msdosfs_fhtovp(mp, fhp, vpp)
 		return (error);
 	}
 	*vpp = DETOV(dep);
-	return (0);
-}
-
-int
-msdosfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct netcred *np;
-
-	np = vfs_export_lookup(mp, &pmp->pm_export, nam);
-	if (np == NULL)
-		return (EACCES);
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 

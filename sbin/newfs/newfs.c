@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.85 2004/11/15 12:21:29 he Exp $	*/
+/*	$NetBSD: newfs.c,v 1.86 2005/09/23 12:10:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.85 2004/11/15 12:21:29 he Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.86 2005/09/23 12:10:35 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -674,11 +674,6 @@ main(int argc, char *argv[])
 		(void) close(2);
 		(void) chdir("/");
 
-		args.export.ex_root = -2;
-		if (mntflags & MNT_RDONLY)
-			args.export.ex_flags = MNT_EXRDONLY;
-		else
-			args.export.ex_flags = 0;
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)

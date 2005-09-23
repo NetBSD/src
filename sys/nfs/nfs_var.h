@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.51 2005/07/07 02:05:03 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.52 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -288,8 +288,6 @@ void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *));
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
 		      struct nfssvc_sock *, struct mbuf *, int *, int, int));
-int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
-			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
 
@@ -332,4 +330,9 @@ int nfs_getnickauth __P((struct nfsmount *, struct ucred *, char **, int *,
 			 char *, int));
 int nfs_savenickauth __P((struct nfsmount *, struct ucred *, int, NFSKERBKEY_T,
 			  struct mbuf **, char **, struct mbuf *));
+
+/* nfs_export.c */
+extern struct nfs_public nfs_pub;
+int mountd_set_exports_list(const struct mountd_exports_list *, struct proc *);
+int nfs_check_export(struct mount *, struct mbuf *, int *, struct ucred **);
 #endif /* _KERNEL */

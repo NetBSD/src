@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.20 2005/07/24 17:33:24 erh Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.21 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.20 2005/07/24 17:33:24 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.21 2005/09/23 12:10:33 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -240,27 +240,6 @@ layerfs_fhtovp(mp, fidp, vpp)
 		return (error);
 	}
 
-	return (0);
-}
-
-int
-layerfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred**credanonp;
-{
-	struct	netcred *np;
-	struct	layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-
-	/*
-	 * get the export permission structure for this <mp, client> tuple.
-	 */
-	if ((np = vfs_export_lookup(mp, &lmp->layerm_export, nam)) == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 

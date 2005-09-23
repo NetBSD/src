@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.24 2005/07/10 01:08:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.25 2005/09/23 12:10:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.24 2005/07/10 01:08:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.25 2005/09/23 12:10:34 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -161,29 +161,6 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct proc *p)
 	vfs_unbusy(mp);
 	return (error);
 #endif
-}
-
-/*
- * Verify a remote client has export rights and return these rights via.
- * exflagsp and credanonp.
- */
-int
-ufs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
-    struct ucred **credanonp)
-{
-	struct netcred *np;
-	struct ufsmount *ump = VFSTOUFS(mp);
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
 }
 
 /*

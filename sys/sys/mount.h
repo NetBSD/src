@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.131 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.132 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -197,10 +197,7 @@ struct vfsops {
 	void	(*vfs_init)	(void);
 	void	(*vfs_reinit)	(void);
 	void	(*vfs_done)	(void);
-	int	*vfs_wassysctl;			/* @@@ no longer useful */
 	int	(*vfs_mountroot)(void);
-	int	(*vfs_checkexp) (struct mount *, struct mbuf *, int *,
-				    struct ucred **);
 	int	(*vfs_snapshot)	(struct mount *, struct vnode *,
 				    struct timespec *);
 	int	(*vfs_extattrctl) (struct mount *, int,
@@ -223,41 +220,34 @@ struct vfsops {
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
 #define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
-	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, P) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, P)
-#endif /* _KERNEL */
 
-#ifdef _KERNEL
-#include <net/radix.h>
-#include <sys/socket.h>		/* XXX for AF_MAX */
-
-/*
- * Network address lookup element
- */
-struct netcred {
-	struct	radix_node netc_rnodes[2];
-	int	netc_refcnt;
-	int	netc_exflags;
-	struct	ucred netc_anon;
+struct vfs_hooks {
+	void	(*vh_unmount)(struct mount *);
 };
+#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_rodata(vfs_hooks, hooks)
 
-/*
- * Network export information
- */
-struct netexport {
-	struct	netcred ne_defexported;		      /* Default export */
-	struct	radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
-};
+void	vfs_hooks_unmount(struct mount *);
+
 #endif /* _KERNEL */
 
 /*
  * Export arguments for local filesystem mount calls.
+ *
+ * This structure is deprecated and is only provided for compatibility
+ * reasons with old binary utilities; several file systems expose an
+ * instance of this structure in their mount arguments structure, thus
+ * needing a padding in place of the old values.  This definition cannot
+ * change in the future due to this reason.
+ * XXX: We could drop this structure if we are able to version all other
+ * structures used as mount arguments.
+ *
+ * The current export_args structure can be found in nfs/nfs.h.
  */
-struct export_args {
+struct compat_export_args {
 	int	ex_flags;		/* export related flags */
 	uid_t	ex_root;		/* mapping for root uid */
 	struct	uucred ex_anon;		/* mapping for anonymous user */
@@ -268,17 +258,6 @@ struct export_args {
 	char	*ex_indexfile;		/* index file for WebNFS URLs */
 };
 
-/*
- * Structure holding information for a publicly exported filesystem
- * (WebNFS). Currently the specs allow just for one such filesystem.
- */
-struct nfs_public {
-	int		np_valid;	/* Do we hold valid information */
-	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
-	struct mount	*np_mount;	/* Mountpoint of exported fs */
-	char		*np_index;	/* Index file */
-};
-
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_MOUNT);
@@ -287,13 +266,6 @@ MALLOC_DECLARE(M_MOUNT);
  * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
-int	vfs_export			    /* process mount export info */
-	 (struct mount *, struct netexport *, struct export_args *);
-#define	vfs_showexport(a, b, c)	(void)memset((b), 0, sizeof(*(b)))
-struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
-	 (struct mount *, struct netexport *, struct mbuf *);
-int	vfs_setpublicfs			    /* set publicly exported fs */
-	 (struct mount *, struct netexport *, struct export_args *);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
@@ -312,7 +284,6 @@ int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern	struct nfs_public nfs_pub;
 extern	struct simplelock mountlist_slock;
 extern	struct simplelock spechash_slock;
 long	makefstype(const char *);

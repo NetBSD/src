@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.12 2004/11/29 09:48:03 agc Exp $
+#	$NetBSD: TODO,v 1.13 2005/09/23 12:10:32 jmmv Exp $
 
 THINGS TO BE DONE:
 
@@ -93,4 +93,7 @@ This is a list of suggested smaller projects (in no particular order):
   be easy to accommodate MP code
 + Examine our vnode locking and vfs layer and see what needs to be changed
   for locking in layered filesystems to really work
-
++ Make mountd(8) update the in-kernel exports list for each file system
+  atomically.  Many parts of the utility will need a rewrite, but the kernel
+  functionality is already there (just enable the "notyet" blocks of code in
+  sys/nfs/nfs_export.c).

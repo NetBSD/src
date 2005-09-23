@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.3 2003/10/03 16:34:31 yamt Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.4 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1995 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 struct filecore_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export info */
+	struct	compat_export_args _pad1; /* compat with old userland tools */
 	uid_t	uid;			/* uid that owns filecore files */
 	gid_t	gid;			/* gid that owns filecore files */
 	int	flags;			/* mounting flags, see below */

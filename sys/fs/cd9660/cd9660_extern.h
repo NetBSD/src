@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.14 2005/08/30 18:47:19 xtraeme Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.15 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -74,7 +74,6 @@ struct iso_mnt {
 	int im_bmask;
 
 	int volume_space_size;
-	struct netexport im_export;
 
 	char root[ISODCL (157, 190)];
 	int root_extent;
@@ -105,8 +104,6 @@ int cd9660_statvfs(struct mount *, struct statvfs *, struct proc *);
 int cd9660_sync(struct mount *, int, struct ucred *, struct proc *);
 int cd9660_vget(struct mount *, ino_t, struct vnode **);
 int cd9660_fhtovp(struct mount *, struct fid *, struct vnode **);
-int cd9660_check_export(struct mount *, struct mbuf *, int *,
-	    struct ucred **);
 int cd9660_vptofh(struct vnode *, struct fid *);
 void cd9660_init(void);
 void cd9660_reinit(void);

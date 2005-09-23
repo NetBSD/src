@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.36 2005/02/05 15:02:20 xtraeme Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.37 2005/09/23 12:10:35 jmmv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.36 2005/02/05 15:02:20 xtraeme Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.37 2005/09/23 12:10:35 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -166,11 +166,6 @@ mount_msdos(int argc, char **argv)
 	}
 
 	args.fspec = dev;
-	args.export.ex_root = -2;	/* unchecked anyway on DOS fs */
-	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
-	else
-		args.export.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.149 2005/09/19 00:49:52 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.150 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.149 2005/09/19 00:49:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.150 2005/09/23 12:10:33 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -109,9 +109,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vfs_init,
 	nfs_vfs_reinit,
 	nfs_vfs_done,
-	NULL,
 	nfs_mountroot,
-	nfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	nfs_vnodeopv_descs,
@@ -1027,18 +1025,6 @@ nfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-{
-
-	return (EINVAL);
-}
-
-/* ARGSUSED */
-int
-nfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 
 	return (EINVAL);

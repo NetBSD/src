@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.25 2005/06/27 02:56:20 christos Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.26 2005/09/23 12:10:35 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.25 2005/06/27 02:56:20 christos Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.26 2005/09/23 12:10:35 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,14 +148,6 @@ mount_lfs(int argc, char *argv[])
 		warnx("\"%s\" is a relative path.", argv[1]);
 		warnx("using \"%s\" instead.", fs_name);
 	}
-
-#define DEFAULT_ROOTUID	-2
-	args.export.ex_root = DEFAULT_ROOTUID;
-	if (mntflags & MNT_RDONLY) {
-		args.export.ex_flags = MNT_EXRDONLY;
-		noclean = 1;
-	} else
-		args.export.ex_flags = 0;
 
 	/*
 	 * Record the previous status of this filesystem (if any) before

@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.11 2005/02/05 14:55:44 xtraeme Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.12 2005/09/23 12:10:35 jmmv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -187,9 +187,7 @@ mount_filecore(int argc, char **argv)
 	 */
 	mntflags |= MNT_RDONLY;
 	if (useuid) args.flags |= FILECOREMNT_USEUID;
-	args.export.ex_flags = MNT_EXRDONLY;
 	args.fspec = dev;
-	args.export.ex_root = DEFAULT_ROOTUID;
 	args.flags = opts;
 
 	if (mount(MOUNT_FILECORE, dir, mntflags, &args) < 0)

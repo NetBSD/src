@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.8 2005/05/29 21:00:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.9 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.8 2005/05/29 21:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.9 2005/09/23 12:10:32 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,6 @@ int	ptyfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 int	ptyfs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
 int	ptyfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	ptyfs_vget(struct mount *, ino_t, struct vnode **);
-int	ptyfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	ptyfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
-int	ptyfs_vptofh(struct vnode *, struct fid *);
 
 static int ptyfs__allocvp(struct ptm_pty *, struct proc *, struct vnode **,
     dev_t, char);
@@ -328,20 +325,6 @@ ptyfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	return EOPNOTSUPP;
 }
 
-/*ARGSUSED*/
-int
-ptyfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
-{
-	return EOPNOTSUPP;
-}
-
-/*ARGSUSED*/
-int
-ptyfs_checkexp(struct mount *mp, struct mbuf *mb, int *wh, struct ucred **anon)
-{
-	return EOPNOTSUPP;
-}
-
 SYSCTL_SETUP(sysctl_vfs_ptyfs_setup, "sysctl vfs.ptyfs subtree setup")
 {
 
@@ -364,13 +347,6 @@ SYSCTL_SETUP(sysctl_vfs_ptyfs_setup, "sysctl vfs.ptyfs subtree setup")
 }
 
 
-/*ARGSUSED*/
-int
-ptyfs_vptofh(struct vnode *vp, struct fid *fhp)
-{
-	return EOPNOTSUPP;
-}
-
 extern const struct vnodeopv_desc ptyfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const ptyfs_vnodeopv_descs[] = {
@@ -388,14 +364,12 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
-	ptyfs_fhtovp,
-	ptyfs_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofp */
 	ptyfs_init,
 	ptyfs_reinit,
 	ptyfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	ptyfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *))eopnotsupp,
 	(int (*)(struct mount *, int, struct vnode *, int, const char *,
 	    struct proc *))eopnotsupp,

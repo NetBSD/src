@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.57 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.56 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.57 2005/09/23 12:10:33 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -70,10 +70,6 @@ int	fdesc_quotactl(struct mount *, int, uid_t, void *,
 int	fdesc_statvfs(struct mount *, struct statvfs *, struct proc *);
 int	fdesc_sync(struct mount *, int, struct ucred *, struct proc *);
 int	fdesc_vget(struct mount *, ino_t, struct vnode **);
-int	fdesc_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	fdesc_checkexp(struct mount *, struct mbuf *, int *,
-			    struct ucred **);
-int	fdesc_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -271,38 +267,6 @@ fdesc_vget(mp, ino, vpp)
 }
 
 
-/*ARGSUSED*/
-int
-fdesc_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-fdesc_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-fdesc_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_fdesc_setup, "sysctl vfs.fdesc subtree setup")
 {
 
@@ -341,14 +305,12 @@ struct vfsops fdesc_vfsops = {
 	fdesc_statvfs,
 	fdesc_sync,
 	fdesc_vget,
-	fdesc_fhtovp,
-	fdesc_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	fdesc_init,
 	NULL,
 	fdesc_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	fdesc_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	fdesc_vnodeopv_descs,

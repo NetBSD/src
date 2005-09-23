@@ -1,0 +1,723 @@
+/*	$NetBSD: nfs_export.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $	*/
+
+/*-
+ * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Julio M. Merino Vidal.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vfs_subr.c	8.13 (Berkeley) 4/18/94
+ */
+
+/*
+ * VFS exports list management.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $");
+
+#include "opt_inet.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/queue.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
+#include <sys/namei.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
+#include <sys/dirent.h>
+#include <sys/socket.h>		/* XXX for AF_MAX */
+
+#include <net/radix.h>
+
+#include <netinet/in.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfs_var.h>
+
+/*
+ * Network address lookup element.
+ */
+struct netcred {
+	struct	radix_node netc_rnodes[2];
+	int	netc_refcnt;
+	int	netc_exflags;
+	struct	ucred netc_anon;
+};
+
+/*
+ * Network export information.
+ */
+struct netexport {
+	struct	netcred ne_defexported;		      /* Default export */
+	struct	radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
+};
+
+/*
+ * Structures to map between standard mount points to their corresponding
+ * network export information.
+ */
+struct mount_netexport_pair {
+	CIRCLEQ_ENTRY(mount_netexport_pair) mnp_entries;
+	const struct mount *mnp_mount;
+	struct netexport mnp_netexport;
+};
+CIRCLEQ_HEAD(mount_netexport_map, mount_netexport_pair)
+    mount_netexport_map = CIRCLEQ_HEAD_INITIALIZER(mount_netexport_map);
+
+/* Malloc type used by the mount<->netexport map. */
+MALLOC_DEFINE(M_NFS_EXPORT, "nfs_export", "NFS export data");
+
+/* Publicly exported file system. */
+struct nfs_public nfs_pub;
+
+/*
+ * Local prototypes.
+ */
+static int init_exports(struct mount *, struct mount_netexport_pair **);
+static int hang_addrlist(struct mount *, struct netexport *,
+    const struct export_args *);
+static int sacheck(struct sockaddr *);
+static int free_netcred(struct radix_node *, void *);
+static void clear_exports(struct mount *, struct netexport *);
+static int export(struct mount *, struct netexport *,
+    const struct export_args *);
+static int setpublicfs(struct mount *, struct netexport *,
+    const struct export_args *);
+static struct netcred *export_lookup(struct mount *, struct netexport *,
+    struct mbuf *);
+
+/*
+ * PUBLIC INTERFACE
+ */
+
+/*
+ * Declare and initialize the file system export hooks.
+ */
+static void nfs_export_unmount(struct mount *);
+
+struct vfs_hooks nfs_export_hooks = {
+	nfs_export_unmount
+};
+VFS_HOOKS_ATTACH(nfs_export_hooks);
+
+/*
+ * VFS unmount hook for NFS exports.
+ *
+ * Releases NFS exports list resources if the given mount point has some.
+ * As allocation happens lazily, it may be that it doesn't has this
+ * information, although it theorically should.
+ */
+static void
+nfs_export_unmount(struct mount *mp)
+{
+	boolean_t found;
+	struct mount_netexport_pair *mnp;
+
+	KASSERT(mp != NULL);
+
+	found = FALSE;
+	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
+		if (mnp->mnp_mount == mp) {
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL)
+		KASSERT(!found);
+	else if (found) {
+		if (mp->mnt_flag & MNT_EXPUBLIC)
+			setpublicfs(NULL, NULL, NULL);
+
+		free(mnp, M_NFS_EXPORT);
+	}
+}
+
+/*
+ * Atomically set the NFS exports list of the given file system, replacing
+ * it with a new list of entries.
+ *
+ * Returns zero on success or an appropriate error code otherwise.
+ *
+ * Helper function for the nfssvc(2) system call (NFSSVC_SETEXPORTSLIST
+ * command).
+ */
+int
+mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
+{
+	boolean_t found;
+	int error;
+#ifdef notyet
+	/* XXX: See below to see the reason why this is disabled. */
+	size_t i;
+#endif
+	struct mount *mp;
+	struct mount_netexport_pair *mnp;
+	struct nameidata nd;
+	struct vnode *vp;
+
+	if (suser(p->p_ucred, &p->p_acflag) != 0)
+		return EPERM;
+
+	/* Lookup the file system path. */
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path, p);
+	error = namei(&nd);
+	if (error != 0)
+		return error;
+	vp = (struct vnode *)nd.ni_vp;
+	mp = (struct mount *)vp->v_mount;
+
+	/* The selected file system may not support NFS exports, so ensure
+	 * it does. */
+	if (mp->mnt_op->vfs_vptofh == NULL && mp->mnt_op->vfs_fhtovp == NULL) {
+		error = EOPNOTSUPP;
+		goto out_locked;
+	}
+	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
+	    mp->mnt_op->vfs_fhtovp != NULL);
+
+	/* Mark the file system busy. */
+	error = vfs_busy(mp, LK_NOWAIT, NULL);
+	if (error != 0)
+		goto out_locked;
+
+	found = FALSE;
+	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
+		if (mnp->mnp_mount == mp) {
+			found = TRUE;
+			break;
+		}
+	}
+	if (!found) {
+		error = init_exports(mp, &mnp);
+		if (error != 0) {
+			vfs_unbusy(mp);
+			goto out_locked;
+		}
+	}
+
+	/*
+	 * XXX: The part marked as 'notyet' works fine from the kernel's
+	 * point of view, in the sense that it is able to atomically update
+	 * the complete exports list for a file system.  However, supporting
+	 * this in mountd(8) requires a lot of work; so, for now, keep the
+	 * old behavior of updating a single entry per call.
+	 *
+	 * When mountd(8) is fixed, just remove the second branch of this
+	 * preprocessor conditional and enable the first one.
+	 */
+#ifdef notyet
+	clear_exports(mp, &mnp->mnp_netexport);
+	for (i = 0; error == 0 && i < mel->mel_nexports; i++)
+		error = export(mp, &mnp->mnp_netexport, &mel->mel_exports[i]);
+#else
+	if (mel->mel_nexports == 0)
+		clear_exports(mp, &mnp->mnp_netexport);
+	else if (mel->mel_nexports == 1)
+		error = export(mp, &mnp->mnp_netexport, &mel->mel_exports[0]);
+	else {
+		printf("mountd_set_exports_list: Cannot set more than one "
+		    "entry at once (unimplemented)\n");
+		error = EOPNOTSUPP;
+	}
+#endif
+
+	vfs_unbusy(mp);
+
+out_locked:
+	vput(vp);
+
+	return 0;
+}
+
+/*
+ * Check if the file system specified by the 'mp' mount structure is
+ * exported to a client with 'anon' anonymous credentials.  The 'mb'
+ * argument is an mbuf containing the network address of the client.
+ * The return parameters for the export flags for the client are returned
+ * in the address specified by 'wh'.
+ *
+ * This function is used exclusively by the NFS server.  It is generally
+ * invoked before VFS_FHTOVP to validate that client has access to the
+ * file system.
+ */
+int
+nfs_check_export(struct mount *mp, struct mbuf *mb, int *wh,
+    struct ucred **anon)
+{
+	boolean_t found;
+	struct mount_netexport_pair *mnp;
+	struct netcred *np;
+
+	found = FALSE;
+	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
+		if (mnp->mnp_mount == mp) {
+			found = TRUE;
+			break;
+		}
+	}
+	if (!found)
+		return EACCES;
+
+	np = export_lookup(mp, &mnp->mnp_netexport, mb);
+	if (np != NULL) {
+		*wh = np->netc_exflags;
+		*anon = &np->netc_anon;
+	}
+
+	return np == NULL ? EACCES : 0;
+}
+
+/*
+ * INTERNAL FUNCTIONS
+ */
+
+/*
+ * Initializes NFS exports for the file system given in 'mp' if it supports
+ * file handles; this is determined by checking whether mp's vfs_vptofh and
+ * vfs_fhtovp operations are NULL or not.
+ *
+ * If successful, returns 0 and sets *mnpp to the address of the new
+ * mount_netexport_pair item; otherwise returns and appropriate error code
+ * and *mnpp remains unmodified.
+ */
+static int
+init_exports(struct mount *mp, struct mount_netexport_pair **mnpp)
+{
+	int error;
+	struct export_args ea;
+	struct mount_netexport_pair *mnp;
+
+	KASSERT(mp != NULL);
+	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
+	    mp->mnt_op->vfs_fhtovp != NULL);
+
+#ifdef DIAGNOSTIC
+	/* Ensure that we do not already have this mount point. */
+	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
+		if (mnp->mnp_mount == mp)
+			KASSERT(0);
+	}
+#endif
+
+	mnp = (struct mount_netexport_pair *)
+	    malloc(sizeof(struct mount_netexport_pair), M_NFS_EXPORT, M_WAITOK);
+	KASSERT(mnp != NULL);
+	mnp->mnp_mount = mp;
+	memset(&mnp->mnp_netexport, 0, sizeof(mnp->mnp_netexport));
+
+	/* Set the default export entry.  Handled internally by export upon
+	 * first call. */
+	memset(&ea, 0, sizeof(ea));
+	ea.ex_root = -2;
+	if (mp->mnt_flag & MNT_RDONLY)
+		ea.ex_flags |= MNT_EXRDONLY;
+	error = export(mp, &mnp->mnp_netexport, &ea);
+	if (error != 0)
+		free(mnp, M_NFS_EXPORT);
+	else {
+		CIRCLEQ_INSERT_TAIL(&mount_netexport_map, mnp, mnp_entries);
+		*mnpp = mnp;
+	}
+
+	return error;
+}
+
+/*
+ * Build hash lists of net addresses and hang them off the mount point.
+ * Called by export() to set up a new entry in the lists of export
+ * addresses.
+ */
+static int
+hang_addrlist(struct mount *mp, struct netexport *nep,
+    const struct export_args *argp)
+{
+	int error, i;
+	struct netcred *np, *enp;
+	struct radix_node_head *rnh;
+	struct sockaddr *saddr, *smask;
+	struct domain *dom;
+
+	smask = NULL;
+
+	if (argp->ex_addrlen == 0) {
+		if (mp->mnt_flag & MNT_DEFEXPORTED)
+			return EPERM;
+		np = &nep->ne_defexported;
+		np->netc_exflags = argp->ex_flags;
+		crcvt(&np->netc_anon, &argp->ex_anon);
+		np->netc_anon.cr_ref = 1;
+		mp->mnt_flag |= MNT_DEFEXPORTED;
+		return 0;
+	}
+
+	if (argp->ex_addrlen > MLEN || argp->ex_masklen > MLEN)
+		return EINVAL;
+
+	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
+	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
+	memset((caddr_t)np, 0, i);
+	saddr = (struct sockaddr *)(np + 1);
+	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
+	if (error)
+		goto out;
+	if (saddr->sa_len > argp->ex_addrlen)
+		saddr->sa_len = argp->ex_addrlen;
+	if (sacheck(saddr) == -1)
+		return EINVAL;
+	if (argp->ex_masklen) {
+		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
+		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
+		if (error)
+			goto out;
+		if (smask->sa_len > argp->ex_masklen)
+			smask->sa_len = argp->ex_masklen;
+		if (smask->sa_family != saddr->sa_family)
+			return EINVAL;
+		if (sacheck(smask) == -1)
+			return EINVAL;
+	}
+	i = saddr->sa_family;
+	if ((rnh = nep->ne_rtable[i]) == 0) {
+		/*
+		 * Seems silly to initialize every AF when most are not
+		 * used, do so on demand here
+		 */
+		DOMAIN_FOREACH(dom) {
+			if (dom->dom_family == i && dom->dom_rtattach) {
+				dom->dom_rtattach((void **)&nep->ne_rtable[i],
+					dom->dom_rtoffset);
+				break;
+			}
+		}
+		if ((rnh = nep->ne_rtable[i]) == 0) {
+			error = ENOBUFS;
+			goto out;
+		}
+	}
+
+	enp = (struct netcred *)(*rnh->rnh_addaddr)(saddr, smask, rnh,
+	    np->netc_rnodes);
+	if (enp != np) {
+		if (enp == NULL) {
+			enp = (struct netcred *)(*rnh->rnh_lookup)(saddr,
+			    smask, rnh);
+			if (enp == NULL) {
+				error = EPERM;
+				goto out;
+			}
+		} else
+			enp->netc_refcnt++;
+
+		goto check;
+	} else
+		enp->netc_refcnt = 1;
+
+	np->netc_exflags = argp->ex_flags;
+	crcvt(&np->netc_anon, &argp->ex_anon);
+	np->netc_anon.cr_ref = 1;
+	return 0;
+check:
+	if (enp->netc_exflags != argp->ex_flags ||
+	    crcmp(&enp->netc_anon, &argp->ex_anon) != 0)
+		error = EPERM;
+	else
+		error = 0;
+out:
+	free(np, M_NETADDR);
+	return error;
+}
+
+/*
+ * Ensure that the address stored in 'sa' is valid.
+ * Returns zero on success, otherwise -1.
+ */
+static int
+sacheck(struct sockaddr *sa)
+{
+
+	switch (sa->sa_family) {
+#ifdef INET
+	case AF_INET: {
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		char *p = (char *)sin->sin_zero;
+		size_t i;
+
+		if (sin->sin_len != sizeof(*sin))
+			return -1;
+		if (sin->sin_port != 0)
+			return -1;
+		for (i = 0; i < sizeof(sin->sin_zero); i++)
+			if (*p++ != '\0')
+				return -1;
+		return 0;
+	}
+#endif
+#ifdef INET6
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+
+		if (sin6->sin6_len != sizeof(*sin6))
+			return -1;
+		if (sin6->sin6_port != 0)
+			return -1;
+		return 0;
+	}
+#endif
+	default:
+		return -1;
+	}
+}
+
+/*
+ * Free the netcred object pointed to by the 'rn' radix node.
+ * 'w' holds a pointer to the radix tree head.
+ */
+static int
+free_netcred(struct radix_node *rn, void *w)
+{
+	struct radix_node_head *rnh = (struct radix_node_head *)w;
+	struct netcred *np = (struct netcred *)(void *)rn;
+
+	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
+	if (--(np->netc_refcnt) <= 0)
+		free(np, M_NETADDR);
+	return 0;
+}
+
+/*
+ * Clears the exports list for a given file system.
+ */
+static void
+clear_exports(struct mount *mp, struct netexport *nep)
+{
+	int i;
+	struct radix_node_head *rnh;
+
+	if (mp->mnt_flag & MNT_EXPUBLIC) {
+		setpublicfs(NULL, NULL, NULL);
+		mp->mnt_flag &= ~MNT_EXPUBLIC;
+	}
+
+	for (i = 0; i <= AF_MAX; i++) {
+		if ((rnh = nep->ne_rtable[i]) != NULL) {
+			(*rnh->rnh_walktree)(rnh, free_netcred, rnh);
+			free((caddr_t)rnh, M_RTABLE);
+			nep->ne_rtable[i] = 0;
+		}
+	}
+
+	mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
+}
+
+/*
+ * Add a new export entry (described by an export_args structure) to the
+ * given file system.
+ */
+static int
+export(struct mount *mp, struct netexport *nep, const struct export_args *argp)
+{
+	int error;
+
+	if (argp->ex_flags & MNT_EXPORTED) {
+		if (argp->ex_flags & MNT_EXPUBLIC) {
+			if ((error = setpublicfs(mp, nep, argp)) != 0)
+				return error;
+			mp->mnt_flag |= MNT_EXPUBLIC;
+		}
+		if ((error = hang_addrlist(mp, nep, argp)) != 0)
+			return error;
+		mp->mnt_flag |= MNT_EXPORTED;
+	}
+	return 0;
+}
+
+/*
+ * Set the publicly exported filesystem (WebNFS).  Currently, only
+ * one public filesystem is possible in the spec (RFC 2054 and 2055)
+ */
+static int
+setpublicfs(struct mount *mp, struct netexport *nep,
+    const struct export_args *argp)
+{
+	char *cp;
+	int error;
+	struct vnode *rvp;
+
+	/*
+	 * mp == NULL -> invalidate the current info, the FS is
+	 * no longer exported. May be called from either export
+	 * or unmount, so check if it hasn't already been done.
+	 */
+	if (mp == NULL) {
+		if (nfs_pub.np_valid) {
+			nfs_pub.np_valid = 0;
+			if (nfs_pub.np_index != NULL) {
+				FREE(nfs_pub.np_index, M_TEMP);
+				nfs_pub.np_index = NULL;
+			}
+		}
+		return 0;
+	}
+
+	/*
+	 * Only one allowed at a time.
+	 */
+	if (nfs_pub.np_valid != 0 && mp != nfs_pub.np_mount)
+		return EBUSY;
+
+	/*
+	 * Get real filehandle for root of exported FS.
+	 */
+	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
+	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
+
+	if ((error = VFS_ROOT(mp, &rvp)))
+		return error;
+
+	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
+		return error;
+
+	vput(rvp);
+
+	/*
+	 * If an indexfile was specified, pull it in.
+	 */
+	if (argp->ex_indexfile != NULL) {
+		MALLOC(nfs_pub.np_index, char *, MAXNAMLEN + 1, M_TEMP,
+		    M_WAITOK);
+		error = copyinstr(argp->ex_indexfile, nfs_pub.np_index,
+		    MAXNAMLEN, (size_t *)0);
+		if (!error) {
+			/*
+			 * Check for illegal filenames.
+			 */
+			for (cp = nfs_pub.np_index; *cp; cp++) {
+				if (*cp == '/') {
+					error = EINVAL;
+					break;
+				}
+			}
+		}
+		if (error) {
+			FREE(nfs_pub.np_index, M_TEMP);
+			return error;
+		}
+	}
+
+	nfs_pub.np_mount = mp;
+	nfs_pub.np_valid = 1;
+	return 0;
+}
+
+/*
+ * Lookup an export entry in the exports list that matches the address
+ * stored in 'nam'.  If no entry is found, the default one is used instead
+ * (if available).
+ */
+static struct netcred *
+export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
+{
+	struct netcred *np;
+	struct radix_node_head *rnh;
+	struct sockaddr *saddr;
+
+	np = NULL;
+	if (mp->mnt_flag & MNT_EXPORTED) {
+		/*
+		 * Lookup in the export list first.
+		 */
+		if (nam != NULL) {
+			saddr = mtod(nam, struct sockaddr *);
+			rnh = nep->ne_rtable[saddr->sa_family];
+			if (rnh != NULL) {
+				np = (struct netcred *)
+					(*rnh->rnh_matchaddr)((caddr_t)saddr,
+							      rnh);
+				if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
+					np = NULL;
+			}
+		}
+		/*
+		 * If no address match, use the default if it exists.
+		 */
+		if (np == NULL && mp->mnt_flag & MNT_DEFEXPORTED)
+			np = &nep->ne_defexported;
+	}
+	return np;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.3 2005/09/13 21:30:52 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.4 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.3 2005/09/13 21:30:52 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.4 2005/09/23 12:10:32 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,8 +70,6 @@ static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 static int	tmpfs_sync(struct mount *, int, struct ucred *, struct proc *);
 static void	tmpfs_init(void);
 static void	tmpfs_done(void);
-static int	tmpfs_checkexp(struct mount *, struct mbuf *, int *,
-		    struct ucred **);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
 		    struct timespec *);
 
@@ -95,7 +93,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 		tmp = VFS_TO_TMPFS(mp);
 
 		args.ta_version = TMPFS_ARGS_VERSION;
-		args.ta_fspec = NULL;
 		args.ta_nodes_max = tmp->tm_nodes_max;
 		args.ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
 
@@ -103,8 +100,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 		args.ta_root_uid = root->tn_uid;
 		args.ta_root_gid = root->tn_gid;
 		args.ta_root_mode = root->tn_mode;
-
-		vfs_showexport(mp, &args, &tmp->tm_export);
 
 		return copyout(&args, data, sizeof(args));
 	}
@@ -119,15 +114,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 		return error;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
-		if (mp->mnt_data == NULL)
-			return EIO;
-		tmp = VFS_TO_TMPFS(mp);
-
-		if (args.ta_fspec == NULL) {
-			/* Update NFS export information. */
-			return vfs_export(mp, &tmp->tm_export, &args.ta_export);
-		}
-
 		/* XXX: There is no support yet to update file system
 		 * settings.  Should be added. */
 
@@ -174,7 +160,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	tmpfs_pool_init(&tmp->tm_node_pool, sizeof(struct tmpfs_node),
 	    "node", tmp);
 	tmpfs_str_pool_init(&tmp->tm_str_pool, tmp);
-	bzero(&tmp->tm_export, sizeof(struct netexport));
 
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args.ta_root_uid,
@@ -423,26 +408,6 @@ tmpfs_done(void)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_checkexp(struct mount *mp, struct mbuf *mb, int *wh,
-    struct ucred **anon)
-{
-	struct netcred *np;
-	struct tmpfs_mount *tmp;
-
-	tmp = VFS_TO_TMPFS(mp);
-
-	np = vfs_export_lookup(mp, &tmp->tm_export, mb);
-	if (np != NULL) {
-		*wh = np->netc_exflags;
-		*anon = &np->netc_anon;
-	}
-
-	return np == NULL ? EACCES : 0;
-}
-
-/* --------------------------------------------------------------------- */
-
-static int
 tmpfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 {
 
@@ -481,9 +446,7 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_init,			/* vfs_init */
 	NULL,				/* vfs_reinit */
 	tmpfs_done,			/* vfs_done */
-	NULL,				/* vfs_wassysctl: deprecated */
 	NULL,				/* vfs_mountroot */
-	tmpfs_checkexp,			/* vfs_checkexp */
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
 	tmpfs_vnodeopv_descs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.34 2005/09/18 23:44:54 christos Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.35 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,8 +195,6 @@ int	nfs_sync __P((struct mount *mp, int waitfor, struct ucred *cred,
 		struct proc *p));
 int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
-int	nfs_checkexp __P((struct mount *mp, struct mbuf *nam, int *exflagsp,
-		struct ucred **credanonp));
 int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp));
 int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, struct ucred *,
 			struct proc *));

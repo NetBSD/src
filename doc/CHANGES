@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.524 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.525 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -109,3 +109,12 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: Reset the AMD Geode SC1100 microcontroller. [dyoung 20050922]
 	geodewdog(4): Add driver for AMD Geode SC1100 microcontroller's
 		watchdog timer. [dyoung 20050922]
+	kernel: Add the VFS hooks interface so that kernel subsystems
+		other than VFS can execute code upon VFS operations.
+		[jmmv 20050923]
+	kernel: Re-factor NFS exports list code handling, making it simpler
+		by abstracting all the details into the NFS generic code,
+		using the previously mentioned VFS hooks interface to make
+		it work. [jmmv 20050923]
+	mountd(8): Make this utility file system independent, also simplifying
+		its code. [jmmv 20050923]

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.45 2005/08/30 22:24:11 xtraeme Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.46 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.45 2005/08/30 22:24:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.46 2005/09/23 12:10:32 jmmv Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -110,16 +110,12 @@ struct vfsops coda_vfsops = {
     coda_nb_statvfs,
     coda_sync,
     coda_vget,
-    (int (*) (struct mount *, struct fid *, struct vnode ** ))
-	eopnotsupp,
-    (int (*) (struct vnode *, struct fid *)) eopnotsupp,
+    NULL,		/* vfs_fhtovp */
+    NULL,		/* vfs_vptofh */
     coda_init,
     NULL,
     coda_done,
-    NULL,
     (int (*)(void)) eopnotsupp,
-    (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
-	eopnotsupp,
     (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
     vfs_stdextattrctl,
     coda_vnodeopv_descs,

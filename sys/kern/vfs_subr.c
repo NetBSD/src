@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.253 2005/09/13 01:45:14 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.254 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.253 2005/09/13 01:45:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.254 2005/09/23 12:10:33 jmmv Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.253 2005/09/13 01:45:14 christos Exp 
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/time.h>
-#include <sys/event.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
@@ -107,19 +105,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.253 2005/09/13 01:45:14 christos Exp 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
-#include <sys/dirent.h>
 #include <sys/filedesc.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include <netinet/in.h>
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
-
-#include <netinet/in.h>
 
 #include <sys/sysctl.h>
 
@@ -154,8 +147,6 @@ struct mntlist mountlist =			/* mounted filesystem list */
 struct vfs_list_head vfs_list =			/* vfs list */
     LIST_HEAD_INITIALIZER(vfs_list);
 
-struct nfs_public nfs_pub;			/* publicly exported FS */
-
 struct simplelock mountlist_slock = SIMPLELOCK_INITIALIZER;
 static struct simplelock mntid_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock mntvnode_slock = SIMPLELOCK_INITIALIZER;
@@ -185,10 +176,6 @@ int getdevvp(dev_t, struct vnode **, enum vtype);
 
 void vclean(struct vnode *, int, struct proc *);
 
-static int vfs_hang_addrlist(struct mount *, struct netexport *,
-			     struct export_args *);
-static int vfs_free_netcred(struct radix_node *, void *);
-static void vfs_free_addrlist(struct netexport *);
 static struct vnode *getcleanvnode(struct proc *);
 
 #ifdef DEBUG
@@ -2111,311 +2098,6 @@ vfs_mountedon(struct vnode *vp)
 		simple_unlock(&spechash_slock);
 	}
 	return (error);
-}
-
-static int
-sacheck(struct sockaddr *sa)
-{
-	switch (sa->sa_family) {
-#ifdef INET
-	case AF_INET: {
-		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-		char *p = (char *)sin->sin_zero;
-		size_t i;
-
-		if (sin->sin_len != sizeof(*sin))
-			return -1;
-		if (sin->sin_port != 0)
-			return -1;
-		for (i = 0; i < sizeof(sin->sin_zero); i++)
-			if (*p++ != '\0')
-				return -1;
-		return 0;
-	}
-#endif
-#ifdef INET6
-	case AF_INET6: {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
-
-		if (sin6->sin6_len != sizeof(*sin6))
-			return -1;
-		if (sin6->sin6_port != 0)
-			return -1;
-		return 0;
-	}
-#endif
-	default:
-		return -1;
-	}
-}
-
-/*
- * Build hash lists of net addresses and hang them off the mount point.
- * Called by ufs_mount() to set up the lists of export addresses.
- */
-static int
-vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
-    struct export_args *argp)
-{
-	struct netcred *np, *enp;
-	struct radix_node_head *rnh;
-	int i;
-	struct sockaddr *saddr, *smask = 0;
-	struct domain *dom;
-	int error;
-
-	if (argp->ex_addrlen == 0) {
-		if (mp->mnt_flag & MNT_DEFEXPORTED)
-			return (EPERM);
-		np = &nep->ne_defexported;
-		np->netc_exflags = argp->ex_flags;
-		crcvt(&np->netc_anon, &argp->ex_anon);
-		np->netc_anon.cr_ref = 1;
-		mp->mnt_flag |= MNT_DEFEXPORTED;
-		return (0);
-	}
-
-	if (argp->ex_addrlen > MLEN || argp->ex_masklen > MLEN)
-		return (EINVAL);
-
-	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
-	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
-	memset((caddr_t)np, 0, i);
-	saddr = (struct sockaddr *)(np + 1);
-	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
-	if (error)
-		goto out;
-	if (saddr->sa_len > argp->ex_addrlen)
-		saddr->sa_len = argp->ex_addrlen;
-	if (sacheck(saddr) == -1)
-		return EINVAL;
-	if (argp->ex_masklen) {
-		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
-		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
-		if (error)
-			goto out;
-		if (smask->sa_len > argp->ex_masklen)
-			smask->sa_len = argp->ex_masklen;
-		if (smask->sa_family != saddr->sa_family)
-			return EINVAL;
-		if (sacheck(smask) == -1)
-			return EINVAL;
-	}
-	i = saddr->sa_family;
-	if ((rnh = nep->ne_rtable[i]) == 0) {
-		/*
-		 * Seems silly to initialize every AF when most are not
-		 * used, do so on demand here
-		 */
-		DOMAIN_FOREACH(dom) {
-			if (dom->dom_family == i && dom->dom_rtattach) {
-				dom->dom_rtattach((void **)&nep->ne_rtable[i],
-					dom->dom_rtoffset);
-				break;
-			}
-		}
-		if ((rnh = nep->ne_rtable[i]) == 0) {
-			error = ENOBUFS;
-			goto out;
-		}
-	}
-
-	enp = (struct netcred *)(*rnh->rnh_addaddr)(saddr, smask, rnh,
-	    np->netc_rnodes);
-	if (enp != np) {
-		if (enp == NULL) {
-			enp = (struct netcred *)(*rnh->rnh_lookup)(saddr,
-			    smask, rnh);
-			if (enp == NULL) {
-				error = EPERM;
-				goto out;
-			}
-		} else
-			enp->netc_refcnt++;
-
-		goto check;
-	} else
-		enp->netc_refcnt = 1;
-
-	np->netc_exflags = argp->ex_flags;
-	crcvt(&np->netc_anon, &argp->ex_anon);
-	np->netc_anon.cr_ref = 1;
-	return 0;
-check:
-	if (enp->netc_exflags != argp->ex_flags ||
-	    crcmp(&enp->netc_anon, &argp->ex_anon) != 0)
-		error = EPERM;
-	else
-		error = 0;
-out:
-	free(np, M_NETADDR);
-	return error;
-}
-
-/* ARGSUSED */
-static int
-vfs_free_netcred(struct radix_node *rn, void *w)
-{
-	struct radix_node_head *rnh = (struct radix_node_head *)w;
-	struct netcred *np = (struct netcred *)(void *)rn;
-
-	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
-	if (--(np->netc_refcnt) <= 0)
-		free(np, M_NETADDR);
-	return (0);
-}
-
-/*
- * Free the net address hash lists that are hanging off the mount points.
- */
-static void
-vfs_free_addrlist(struct netexport *nep)
-{
-	int i;
-	struct radix_node_head *rnh;
-
-	for (i = 0; i <= AF_MAX; i++)
-		if ((rnh = nep->ne_rtable[i]) != NULL) {
-			(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
-			free((caddr_t)rnh, M_RTABLE);
-			nep->ne_rtable[i] = 0;
-		}
-}
-
-int
-vfs_export(struct mount *mp, struct netexport *nep, struct export_args *argp)
-{
-	int error;
-
-	if (argp->ex_flags & MNT_DELEXPORT) {
-		if (mp->mnt_flag & MNT_EXPUBLIC) {
-			vfs_setpublicfs(NULL, NULL, NULL);
-			mp->mnt_flag &= ~MNT_EXPUBLIC;
-		}
-		vfs_free_addrlist(nep);
-		mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
-	}
-	if (argp->ex_flags & MNT_EXPORTED) {
-		if (argp->ex_flags & MNT_EXPUBLIC) {
-			if ((error = vfs_setpublicfs(mp, nep, argp)) != 0)
-				return (error);
-			mp->mnt_flag |= MNT_EXPUBLIC;
-		}
-		if ((error = vfs_hang_addrlist(mp, nep, argp)) != 0)
-			return (error);
-		mp->mnt_flag |= MNT_EXPORTED;
-	}
-	return (0);
-}
-
-/*
- * Set the publicly exported filesystem (WebNFS). Currently, only
- * one public filesystem is possible in the spec (RFC 2054 and 2055)
- */
-int
-vfs_setpublicfs(struct mount *mp, struct netexport *nep,
-    struct export_args *argp)
-{
-	int error;
-	struct vnode *rvp;
-	char *cp;
-
-	/*
-	 * mp == NULL -> invalidate the current info, the FS is
-	 * no longer exported. May be called from either vfs_export
-	 * or unmount, so check if it hasn't already been done.
-	 */
-	if (mp == NULL) {
-		if (nfs_pub.np_valid) {
-			nfs_pub.np_valid = 0;
-			if (nfs_pub.np_index != NULL) {
-				FREE(nfs_pub.np_index, M_TEMP);
-				nfs_pub.np_index = NULL;
-			}
-		}
-		return (0);
-	}
-
-	/*
-	 * Only one allowed at a time.
-	 */
-	if (nfs_pub.np_valid != 0 && mp != nfs_pub.np_mount)
-		return (EBUSY);
-
-	/*
-	 * Get real filehandle for root of exported FS.
-	 */
-	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
-	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
-
-	if ((error = VFS_ROOT(mp, &rvp)))
-		return (error);
-
-	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
-		return (error);
-
-	vput(rvp);
-
-	/*
-	 * If an indexfile was specified, pull it in.
-	 */
-	if (argp->ex_indexfile != NULL) {
-		MALLOC(nfs_pub.np_index, char *, MAXNAMLEN + 1, M_TEMP,
-		    M_WAITOK);
-		error = copyinstr(argp->ex_indexfile, nfs_pub.np_index,
-		    MAXNAMLEN, (size_t *)0);
-		if (!error) {
-			/*
-			 * Check for illegal filenames.
-			 */
-			for (cp = nfs_pub.np_index; *cp; cp++) {
-				if (*cp == '/') {
-					error = EINVAL;
-					break;
-				}
-			}
-		}
-		if (error) {
-			FREE(nfs_pub.np_index, M_TEMP);
-			return (error);
-		}
-	}
-
-	nfs_pub.np_mount = mp;
-	nfs_pub.np_valid = 1;
-	return (0);
-}
-
-struct netcred *
-vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
-{
-	struct netcred *np;
-	struct radix_node_head *rnh;
-	struct sockaddr *saddr;
-
-	np = NULL;
-	if (mp->mnt_flag & MNT_EXPORTED) {
-		/*
-		 * Lookup in the export list first.
-		 */
-		if (nam != NULL) {
-			saddr = mtod(nam, struct sockaddr *);
-			rnh = nep->ne_rtable[saddr->sa_family];
-			if (rnh != NULL) {
-				np = (struct netcred *)
-					(*rnh->rnh_matchaddr)((caddr_t)saddr,
-							      rnh);
-				if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
-					np = NULL;
-			}
-		}
-		/*
-		 * If no address match, use the default if it exists.
-		 */
-		if (np == NULL && mp->mnt_flag & MNT_DEFEXPORTED)
-			np = &nep->ne_defexported;
-	}
-	return (np);
 }
 
 /*

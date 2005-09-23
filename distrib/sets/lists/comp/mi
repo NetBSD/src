@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.816 2005/09/19 03:16:40 simonb Exp $
+#	$NetBSD: mi,v 1.817 2005/09/23 12:10:32 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5739,6 +5739,8 @@
 ./usr/share/man/cat9/vfs_getnewfsid.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_getopsbyname.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_hooks.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_hooks_unmount.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman		.cat
@@ -9648,6 +9650,8 @@
 ./usr/share/man/man9/vfs_getnewfsid.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_getopsbyname.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_getvfs.9		comp-sys-man		.man
+./usr/share/man/man9/vfs_hooks.9		comp-sys-man		.man
+./usr/share/man/man9/vfs_hooks_unmount.9	comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountedon.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountroot.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_reinit.9		comp-sys-man		.man

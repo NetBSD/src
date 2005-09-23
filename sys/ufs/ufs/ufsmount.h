@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.19 2005/08/28 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.20 2005/09/23 12:10:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,6 @@
  */
 struct ufs_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
 };
 
 /*
@@ -47,7 +46,7 @@ struct ufs_args {
  */
 struct mfs_args {
 	char	*fspec;			/* name to export for statfs */
-	struct	export_args export;	/* if exported MFSes are supported */
+	struct	compat_export_args _pad1; /* compat with old userland tools */
 	caddr_t	base;			/* base of file system in memory */
 	u_long	size;			/* size of file system */
 };
@@ -67,7 +66,6 @@ struct timeval;
 struct ucred;
 struct uio;
 struct vnode;
-struct netexport;
 
 /* This structure describes the UFS specific mount structure data. */
 struct ufsmount {
@@ -98,7 +96,6 @@ struct ufsmount {
 	time_t	um_btime[MAXQUOTAS];		/* block quota time limit */
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
-	struct	netexport um_export;		/* export information */
 	void	*um_oldfscompat;		/* save 4.2 rotbl */
 	TAILQ_HEAD(inodelst, inode) um_snapshots; /* list of active snapshots */
 	daddr_t	*um_snapblklist;		/* snapshot block hints list */

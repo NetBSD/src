@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.9 2005/08/30 19:01:29 xtraeme Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.10 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -261,7 +261,6 @@ struct ntfsmount {
 	cn_t		ntm_cfree;
 	struct ntvattrdef *ntm_ad;
 	int		ntm_adnum;
-	struct netexport ntm_export;	/* export information */
 	ntfs_wget_func_t *ntm_wget;	/* decode string to Unicode string */
 	ntfs_wput_func_t *ntm_wput;	/* encode Unicode string to string */
 	ntfs_wcmp_func_t *ntm_wcmp;	/* compare to wide characters */

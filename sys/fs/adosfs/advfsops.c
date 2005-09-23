@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.24 2005/08/19 04:15:02 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.25 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.24 2005/08/19 04:15:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.25 2005/09/23 12:10:32 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -70,8 +70,6 @@ int adosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
-		       struct ucred **));
 int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
@@ -114,7 +112,6 @@ adosfs_mount(mp, path, data, ndp, p)
 		args.gid = amp->gid;
 		args.mask = amp->mask;
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &amp->export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof(struct adosfs_args));
@@ -123,15 +120,10 @@ adosfs_mount(mp, path, data, ndp, p)
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		amp = VFSTOADOSFS(mp);
-		if (args.fspec == 0)
-			return (vfs_export(mp, &amp->export, &args.export));
-	}
+
+	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+		return EOPNOTSUPP;
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -740,35 +732,6 @@ adosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-adosfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct adosfsmount *amp = VFSTOADOSFS(mp);
-#if 0
-	struct anode *ap;
-#endif
-	struct netcred *np;
-
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adcheckexp(%x, %x, %x)\n", mp, nam, exflagsp);
-#endif
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &amp->export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return(0);
-}
-
-int
 adosfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
@@ -883,9 +846,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_init,
 	NULL,
 	adosfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	adosfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	adosfs_vnodeopv_descs,

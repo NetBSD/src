@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.20 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: nfssvc.2,v 1.21 2005/09/23 12:10:32 jmmv Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd September 23, 2005
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ once in the kernel and the
 .Fa argstructp
 points to one of three structures depending on which bits are set in
 flags.
-.Pp
+.Ss Calls used by Xr mount_nfs 8
 On the client side,
 .Fn nfssvc
 is only used for
@@ -114,7 +114,7 @@ will be called with the flags
 and
 .Dv NFSSVC_AUTHINFAIL
 to denote a failed authentication attempt.
-.Pp
+.Ss Calls used by Xr nfsd 8
 On the server side,
 .Fn nfssvc
 is called with the flag
@@ -190,6 +190,30 @@ to pass a server side
 socket into the kernel for servicing by the
 .Xr nfsd 8
 daemons.
+.Ss Calls used by Xr mountd 8
+The
+.Xr mountd 8
+server daemon calls
+.Fn nfssvc
+with the flag
+.Dv NFSSVC_SETEXPORTSLIST
+and a pointer to a
+.Ft struct mountd_exports_list
+object to atomically change the exports lists of a specific file system.
+This structure has the following fields:
+.Bl -tag
+.It Vt const char *mel_path
+Path to the file system that will have its exports list replaced by the
+one described in the other fields.
+.It Vt size_t mel_nexports
+Number of valid entries in the
+.Vt mel_export
+field.
+If zero, the exports list will be cleared for the given file system.
+.It Vt struct export_args mel_export[AF_MAX]
+Set of exports to be used for the given file system.
+.El
+.Pp
 .Sh RETURN VALUES
 Normally
 .Nm

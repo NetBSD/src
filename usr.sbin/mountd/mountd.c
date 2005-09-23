@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.97 2005/09/19 22:43:21 wiz Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.98 2005/09/23 12:10:35 jmmv Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.97 2005/09/19 22:43:21 wiz Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.98 2005/09/23 12:10:35 jmmv Exp $");
 #endif
 #endif				/* not lint */
 
@@ -71,11 +71,6 @@ __RCSID("$NetBSD: mountd.c,v 1.97 2005/09/19 22:43:21 wiz Exp $");
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-
-#include <ufs/ufs/ufsmount.h>
-#include <isofs/cd9660/cd9660_mount.h>
-#include <msdosfs/msdosfsmount.h>
-#include <adosfs/adosfs.h>
 
 #include <arpa/inet.h>
 
@@ -191,7 +186,7 @@ static int check_options __P((const char *, size_t, struct dirlist *));
 static int chk_host __P((struct dirlist *, struct sockaddr *, int *, int *));
 static int del_mlist __P((char *, char *, struct sockaddr *));
 static struct dirlist *dirp_search __P((struct dirlist *, char *));
-static int do_mount __P((const char *, size_t, struct exportlist *,
+static int do_nfssvc __P((const char *, size_t, struct exportlist *,
     struct grouplist *, int, struct uucred *, char *, int, struct statvfs *));
 static int do_opt __P((const char *, size_t, char **, char **,
     struct exportlist *, struct grouplist *, int *, int *, struct uucred *));
@@ -1008,38 +1003,18 @@ get_exportlist(n)
 	/*
 	 * And delete exports that are in the kernel for all local
 	 * file systems.
-	 * XXX: Should know how to handle all local exportable file systems
-	 *      instead of just MOUNT_FFS.
 	 */
 	num = getmntinfo(&fsp, MNT_NOWAIT);
 	for (i = 0; i < num; i++) {
-		union {
-			struct ufs_args ua;
-			struct iso_args ia;
-			struct mfs_args ma;
-			struct msdosfs_args da;
-			struct adosfs_args aa;
-		} targs;
+		struct mountd_exports_list mel;
 
-		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_LFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_UMAP, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_UNION, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_NTFS, MFSNAMELEN)) {
-			bzero((char *) &targs, sizeof(targs));
-			targs.ua.fspec = NULL;
-			targs.ua.export.ex_flags = MNT_DELEXPORT;
-			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-			    fsp->f_flag | MNT_UPDATE, &targs) == -1)
-				syslog(LOG_ERR, "Can't delete exports for %s",
-				    fsp->f_mntonname);
-		}
+		/* Delete all entries from the export list. */
+		mel.mel_path = fsp->f_mntonname;
+		mel.mel_nexports = 0;
+		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1)
+			syslog(LOG_ERR, "Can't delete exports for %s",
+			    fsp->f_mntonname);
+
 		fsp++;
 	}
 
@@ -1191,7 +1166,7 @@ get_exportlist(n)
 		 */
 		grp = tgrp;
 		do {
-			if (do_mount(line, lineno, ep, grp, exflags, &anon,
+			if (do_nfssvc(line, lineno, ep, grp, exflags, &anon,
 			    dirp, dirplen, &fsb))
 				goto badline;
 		} while (grp->gr_next && (grp = grp->gr_next));
@@ -2011,11 +1986,10 @@ estrdup(s)
 }
 
 /*
- * Do the mount syscall with the update flag to push the export info into
- * the kernel.
+ * Do the nfssvc syscall to push the export info into the kernel.
  */
 static int
-do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
+do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	const char *line;
 	size_t lineno;
 	struct exportlist *ep;
@@ -2033,18 +2007,11 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	char *cp = NULL;
 	int done;
 	char savedc = '\0';
-	union {
-		struct ufs_args ua;
-		struct iso_args ia;
-		struct mfs_args ma;
-		struct msdosfs_args da;
-		struct adosfs_args aa;
-	} args;
+	struct export_args export;
 
-	args.ua.fspec = 0;
-	args.ua.export.ex_flags = exflags;
-	args.ua.export.ex_anon = *anoncrp;
-	args.ua.export.ex_indexfile = ep->ex_indexfile;
+	export.ex_flags = exflags;
+	export.ex_anon = *anoncrp;
+	export.ex_indexfile = ep->ex_indexfile;
 	if (grp->gr_type == GT_HOST) {
 		ai = grp->gr_ptr.gt_addrinfo;
 		addrp = ai->ai_addr;
@@ -2061,21 +2028,20 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			if (addrp != NULL && addrp->sa_family == AF_INET6 &&
 			    have_v6 == 0)
 				goto skip;
-			args.ua.export.ex_addr = addrp;
-			args.ua.export.ex_addrlen = addrlen;
-			args.ua.export.ex_masklen = 0;
+			export.ex_addr = addrp;
+			export.ex_addrlen = addrlen;
+			export.ex_masklen = 0;
 			break;
 		case GT_NET:
-			args.ua.export.ex_addr = (struct sockaddr *)
+			export.ex_addr = (struct sockaddr *)
 			    &grp->gr_ptr.gt_net.nt_net;
-			if (args.ua.export.ex_addr->sa_family == AF_INET6 &&
+			if (export.ex_addr->sa_family == AF_INET6 &&
 			    have_v6 == 0)
 				goto skip;
-			args.ua.export.ex_addrlen =
-			    args.ua.export.ex_addr->sa_len;
+			export.ex_addrlen = export.ex_addr->sa_len;
 			memset(&ss, 0, sizeof ss);
-			ss.ss_family = args.ua.export.ex_addr->sa_family;
-			ss.ss_len = args.ua.export.ex_addr->sa_len;
+			ss.ss_family = export.ex_addr->sa_family;
+			ss.ss_len = export.ex_addr->sa_len;
 			if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
 				syslog(LOG_ERR,
 				    "\"%s\", line %ld: Bad network flag",
@@ -2084,16 +2050,16 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 					*cp = savedc;
 				return (1);
 			}
-			args.ua.export.ex_mask = (struct sockaddr *)&ss;
-			args.ua.export.ex_masklen = ss.ss_len;
+			export.ex_mask = (struct sockaddr *)&ss;
+			export.ex_masklen = ss.ss_len;
 			break;
 #ifdef ISO
 		case GT_ISO:
-			args.ua.export.ex_addr =
+			export.ex_addr =
 			    (struct sockaddr *) grp->gr_ptr.gt_isoaddr;
-			args.ua.export.ex_addrlen =
+			export.ex_addrlen =
 			    sizeof(struct sockaddr_iso);
-			args.ua.export.ex_masklen = 0;
+			export.ex_masklen = 0;
 			break;
 #endif				/* ISO */
 		default:
@@ -2108,11 +2074,17 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		 * XXX:
 		 * Maybe I should just use the fsb->f_mntonname path instead
 		 * of looping back up the dirp to the mount point??
-		 * Also, needs to know how to export all types of local
-		 * exportable file systems and not just MOUNT_FFS.
 		 */
-		while (mount(fsb->f_fstypename, dirp,
-		    fsb->f_flag | MNT_UPDATE, &args) == -1) {
+		for (;;) {
+			struct mountd_exports_list mel;
+
+			mel.mel_path = dirp;
+			mel.mel_nexports = 1;
+			mel.mel_exports = &export;
+
+			if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != -1)
+				break;
+
 			if (cp)
 				*cp-- = savedc;
 			else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33 2005/08/30 19:01:30 xtraeme Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.34 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33 2005/08/30 19:01:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.34 2005/09/23 12:10:32 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,6 @@ static void	ntfs_reinit(void);
 static void	ntfs_done(void);
 static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct vnode **);
-static int	ntfs_checkexp(struct mount *, struct mbuf *,
-				   int *, struct ucred **);
 static int	ntfs_mountroot(void);
 #else
 static int	ntfs_init(void);
@@ -114,31 +112,6 @@ static const struct genfs_ops ntfs_genfsops = {
 };
 
 #ifdef __NetBSD__
-/*
- * Verify a remote client has export rights and return these rights via.
- * exflagsp and credanonp.
- */
-static int
-ntfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct ntfsmount *ntm = VFSTONTFS(mp);
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ntm->ntm_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}
 
 SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 {
@@ -277,7 +250,6 @@ ntfs_mount (
 		args.gid = ntmp->ntm_gid;
 		args.mode = ntmp->ntm_mode;
 		args.flag = ntmp->ntm_flag;
-		vfs_showexport(mp, &args.export, &ntmp->ntm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	/*
@@ -296,16 +268,6 @@ ntfs_mount (
 	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
-		/* if not updating name...*/
-		if (args.fspec == 0) {
-			/*
-			 * Process export requests.  Jumping to "success"
-			 * will return the vfs_export() error code.
-			 */
-			struct ntfsmount *ntm = VFSTONTFS(mp);
-			return (vfs_export(mp, &ntm->ntm_export, &args.export));
-		}
-
 		printf("ntfs_mount(): MNT_UPDATE not supported\n");
 		return (EINVAL);
 	}
@@ -1027,9 +989,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_init,
 	ntfs_reinit,
 	ntfs_done,
-	NULL,
 	ntfs_mountroot,
-	ntfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,
