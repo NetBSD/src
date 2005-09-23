@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.3 2005/09/23 14:22:27 manu Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -99,7 +99,7 @@ base_i1send(iph1, msg)
 	struct payload_list *plist = NULL;
 	int error = -1;
 #ifdef ENABLE_NATT
-	vchar_t *vid_natt[MAX_NATT_VID_COUNT];
+	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
 	int i, vid_natt_i = 0;
 #endif
 #ifdef ENABLE_FRAG

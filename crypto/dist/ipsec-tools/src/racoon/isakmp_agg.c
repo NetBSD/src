@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.5 2005/09/23 14:22:27 manu Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.20.2.1 2005/04/09 22:32:06 manubsd Exp */
 
@@ -113,7 +113,7 @@ agg_i1send(iph1, msg)
 	vchar_t *cr = NULL, *gsstoken = NULL;
 	int error = -1;
 #ifdef ENABLE_NATT
-	vchar_t *vid_natt[MAX_NATT_VID_COUNT];
+	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
 	int i;
 #endif
 #ifdef ENABLE_HYBRID
@@ -252,11 +252,12 @@ agg_i1send(iph1, msg)
 		plist = isakmp_plist_append(plist, vid_frag, ISAKMP_NPTYPE_VID);
 #endif
 #ifdef ENABLE_NATT
-	/* set VID payload for NAT-T if NAT-T support allowed in the config file */
+	/* 
+	 * set VID payload for NAT-T if NAT-T 
+	 * support allowed in the config file 
+	 */
 	if (iph1->rmconf->nat_traversal) 
 		plist = isakmp_plist_append_natt_vids(plist, vid_natt);
-	else
-		vid_natt[0]=NULL;
 #endif
 #ifdef ENABLE_HYBRID
 	if (vid_xauth)

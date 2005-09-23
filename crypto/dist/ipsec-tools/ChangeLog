@@ -1,3 +1,8 @@
+2005-08-23  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/{isakmp_agg.c|isakmp_ident.c|isakmp_base.c}: Correctly
+	  initialize NAT-T VID to avoid freeing unallocated stuff.
+
 ---------------------------------------------
 
 	0.6.1 released
