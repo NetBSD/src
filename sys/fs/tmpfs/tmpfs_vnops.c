@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.10 2005/09/15 12:34:35 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.11 2005/09/23 14:27:55 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.10 2005/09/15 12:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.11 2005/09/23 14:27:55 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -845,6 +845,14 @@ tmpfs_rename(void *v)
 	}
 	KASSERT(de->td_node == fnode);
 
+	/* If we need to move the directory between entries, lock the
+	 * source so that we can safely operate on it. */
+	if (fdnode != tdnode) {
+		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
+			goto out_locked;
+	}
+
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
 	if (fcnp->cn_namelen != tcnp->cn_namelen ||
@@ -940,6 +948,10 @@ tmpfs_rename(void *v)
 	VN_KNOTE(tdvp, NOTE_WRITE);
 
 	error = 0;
+
+out_locked:
+	if (fdnode != tdnode)
+		VOP_UNLOCK(fdvp, 0);
 
 out:
 	/* Release target nodes. */
