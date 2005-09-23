@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.14 2005/09/21 16:28:03 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.15 2005/09/23 22:27:14 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -838,7 +838,7 @@ switch_to_logfile(char *logfile, int old_umask, int truncate_log)
 void
 unregister_amq(void)
 {
-  if (amuDebug(D_AMQ)) {
+  if (!amuDebug(D_AMQ)) {
     /* find which instance of amd to unregister */
     u_long amd_prognum = get_amd_program_number();
 
