@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattrctl.8,v 1.1 2005/08/28 19:37:59 thorpej Exp $
+.\"	$NetBSD: extattrctl.8,v 1.2 2005/09/23 20:58:50 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -80,8 +80,9 @@ Operation must be one of the following:
 .It Cm start Ar path
 Start extended attribute support on the file system named using
 .Ar path .
-The file system must be an UFS1 file system, and the UFS_EXTATTR kernel
-option must have been enabled.
+The file system must be a UFS1 file system, and the
+.Dv UFS_EXTATTR
+kernel option must have been enabled.
 .It Cm stop Ar path
 Stop extended attribute support on the file system named using
 .Ar path .
@@ -126,7 +127,10 @@ on the file system identified using
 .Ar path ,
 and backed by initialized attribute file
 .Ar attrfile .
-Available namespaces are "user" and "system".
+Available namespaces are
+.Dq user
+and
+.Dq system .
 The backing file must have been initialized using
 .Cm initattr
 before its first use.
@@ -139,7 +143,10 @@ in namespace
 .Ar attrnamespace
 on the file system identified by
 .Ar path .
-Available namespaces are "user" and "system".
+Available namespaces are
+.Dq user
+and
+.Dq system .
 The file system must have attributes started on it, and the attribute
 most have been enabled using
 .Cm enable .
@@ -149,7 +156,7 @@ The kernel also includes support for automatic starting of extended
 attributes on a file system at mount time once configured with
 .Nm .
 If the kernel is built with the
-.Dq UFS_EXTATTR_AUTOSTART
+.Dv UFS_EXTATTR_AUTOSTART
 option, UFS will search for a
 .Pa .attribute
 sub-directory of the file system root during the mount operation.
@@ -170,14 +177,15 @@ Start extended attributes on the root file system.
 .Pp
 .Dl extattrctl initattr 17 /.attribute/system/md5
 .Pp
-Create an attribute backing file in /.attribute/system/md5, and set the maximum
-size of each attribute to 17 bytes, with a sparse file used for storing
-the attributes.
+Create an attribute backing file in
+.Pa /.attribute/system/md5 ,
+and set the maximum size of each attribute to 17 bytes, with a
+sparse file used for storing the attributes.
 .Pp
 .Dl extattrctl enable / system md5 /.attribute/system/md5
 .Pp
 Enable an attribute named md5 on the root file system, backed from the file
-/.attribute/system/md5.
+.Pa /.attribute/system/md5 .
 .Pp
 .Dl extattrctl disable / md5
 .Pp
@@ -189,21 +197,21 @@ Stop extended attributes on the root file system.
 .Sh SEE ALSO
 .Xr extattr_get_file 2 ,
 .\" .Xr ffs 7 ,
-.Xr getextattr 1 ,
+.Xr getextattr 8 ,
 .Xr extattr 9
 .Sh HISTORY
-Extended attribute support was developed as part of the TrustedBSD Project,
-and introduced in
+Extended attribute support was developed as part of the TrustedBSD
+Project, and introduced in
 .Fx 5.0
 and
 .Nx 4.0 .
-It was developed to support security extensions requiring additional labels
-to be associated with each file or directory.
+It was developed to support security extensions requiring additional
+labels to be associated with each file or directory.
 .Sh AUTHORS
-Robert N M Watson
+.An Robert N M Watson
 .Sh BUGS
 .Nm
 works only on UFS1 file systems.
-The kernel support for extended attribute backing files and this control
-program should be generalized for any file system that lacks native extended
-attribute support.
+The kernel support for extended attribute backing files and this
+control program should be generalized for any file system that
+lacks native extended attribute support.
