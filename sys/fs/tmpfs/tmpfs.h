@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.4 2005/09/15 12:34:35 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.5 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@ struct tmpfs_mount {
 	size_t			tm_pages_used;
 
 	struct tmpfs_node *	tm_root;
-	struct netexport	tm_export;
 
 	ino_t			tm_nodes_max;
 	ino_t			tm_nodes_last;
@@ -344,12 +343,4 @@ struct tmpfs_args {
 	uid_t			ta_root_uid;
 	gid_t			ta_root_gid;
 	mode_t			ta_root_mode;
-
-	/* Used to update NFS export properties.  Due to the way these
-	 * fields are used by mountd(8), they must come first, but as
-	 * I would like to remove this restriction, I'm placing them
-	 * here (there is no problem in doing so because, ATM, mountd(8)
-	 * does not recognize tmpfs).  XXX */
-	const char *		ta_fspec;
-	struct export_args	ta_export;
 };

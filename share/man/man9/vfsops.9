@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.21 2005/07/20 12:55:14 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.22 2005/09/23 12:10:32 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2005
+.Dd September 23, 2005
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -49,7 +49,6 @@
 .Nm VFS_VGET ,
 .Nm VFS_FHTOVP ,
 .Nm VFS_VPTOFH ,
-.Nm VFS_CHECKEXP ,
 .Nm VFS_SNAPSHOT
 .Nd kernel file system interface
 .Sh SYNOPSIS
@@ -80,8 +79,6 @@
 .Ft int
 .Fn VFS_VPTOFH "struct vnode *vp" "struct fid *fhp"
 .Ft int
-.Fn VFS_CHECKEXP "struct mount *mp" "struct mbuf *nam" \
-"int *extflagsp" "struct ucred **credanonp"
 .Ft int
 .Fn VFS_SNAPSHOT "struct mount *mp" "struct vnode *vp" "struct timespec *ts"
 .Sh DESCRIPTION
@@ -125,7 +122,6 @@ void (*vfs_init)()	-	Initialise file system
 void (*vfs_reinit)()	-	Reinitialise file system
 void (*vfs_done)()	-	Cleanup unmounted file system
 int  (*vfs_mountroot)()	-	Mount the root file system
-int  (*vfs_checkexp)()	VFS_CHECKEXP	Check if file system is exported
 int  (*vfs_snapshot)()	VFS_SNAPSHOT	Take a snapshot
 .fi
 .Pp
@@ -139,9 +135,11 @@ operation, but it must assign each member function pointer to a
 suitable function to do the minimum required of it.
 In most cases, such functions either do nothing or return an error
 value to the effect that it is not supported.
-.Em vfs_reinit
+.Em vfs_reinit ,
+.Em vfs_mountroot ,
+.Em vfs_fhtovp
 and
-.Em vfs_mountroot
+.Em vfs_vptofh
 may
 be
 .Dv NULL .
@@ -316,8 +314,14 @@ The locked vnode is returned in
 A call to
 .Fn VFS_FHTOVP
 should generally be followed by a call to
-.Fn VFS_CHECKEXP
+.Fn nfs_check_export
 to check if the file is accessable to the client.
+.Pp
+If this function's pointer is set to NULL, the underlying file system will
+not be NFS exportable.
+If it is defined, though,
+.Fn VFS_VPTOFH
+must be defined too.
 .It Fn VFS_VPTOFH "vp" "fhp"
 Get a unique NFS file handle for the file specified by the vnode
 .Fa vp .
@@ -328,25 +332,12 @@ not examined by any other subsystems.
 It should contain enough information to uniquely identify a file within
 the file system as well as noticing when a file has been removed and
 the file system resources have been recycled for a new file.
-.It Fn VFS_CHECKEXP "mp" "nam" "extflagsp" "credanonp"
-Check if the file system specified by the mount structure
-.Fa mp
-is exported to a client with anonymous credentials
-.Fa credanonp .
-The argument
-.Fa nam
-is an mbuf containing the network address of the client.
-The return parameters for the export flags for the client are returned
-in the address specified by
-.Fa exflagsp .
-This function is used by the NFS server.
-It is generally invoked before
+.Pp
+If this function's pointer is set to NULL, the underlying file system will
+not be NFS exportable.
+If it is defined, though,
 .Fn VFS_FHTOVP
-to validate that client has access to the file system.
-The file system should call
-.Fn vfs_export_lookup
-with the address of an appropriate netexport structure and the address
-of the client to verify that the client can access this file system.
+must be defined too.
 .It Fn VFS_SNAPSHOT "mp" "vp" "ts"
 Take a snapshot of the file system specified by the mount structure
 .Fa mp

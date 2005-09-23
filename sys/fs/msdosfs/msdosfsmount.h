@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.8 2005/08/30 18:49:19 xtraeme Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.9 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
  */
 struct msdosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
+	struct	compat_export_args _pad1; /* compat with old userland tools */
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */
@@ -130,7 +130,6 @@ struct msdosfsmount {
 	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	u_int pm_flags;		/* see below */
-	struct netexport pm_export;	/* export information */
 };
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	((cn) * (pmp)->pm_fatmult / (pmp)->pm_fatdiv)

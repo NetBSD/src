@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.20 2005/06/28 09:30:37 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.21 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.20 2005/06/28 09:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.21 2005/09/23 12:10:32 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -117,9 +117,7 @@ struct vfsops filecore_vfsops = {
 	filecore_init,
 	filecore_reinit,
 	filecore_done,
-	NULL,
 	NULL,				/* filecore_mountroot */
-	filecore_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	filecore_vnodeopv_descs,
@@ -203,7 +201,6 @@ filecore_mount(mp, path, data, ndp, p)
 		args.uid = fcmp->fc_uid;
 		args.gid = fcmp->fc_gid;
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &fcmp->fc_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof (struct filecore_args));
@@ -213,15 +210,9 @@ filecore_mount(mp, path, data, ndp, p)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		fcmp = VFSTOFILECORE(mp);
-		if (args.fspec == 0)
-			return (vfs_export(mp, &fcmp->fc_export, &args.export));
-	}
+	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+		return EINVAL;
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -566,29 +557,6 @@ filecore_fhtovp(mp, fhp, vpp)
                 return (ESTALE);
         }
 	*vpp = nvp;
-	return (0);
-}
-
-/* ARGSUSED */
-int
-filecore_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
-	struct netcred *np;
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &fcmp->fc_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 

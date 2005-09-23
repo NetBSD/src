@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.81 2005/09/11 20:19:31 rpaulo Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.82 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.81 2005/09/11 20:19:31 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.82 2005/09/23 12:10:33 jmmv Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -248,6 +248,31 @@ sys_nfssvc(l, v, retval)
 		}
 		error = nfssvc_addsock(fp, nam);
 		FILE_UNUSE(fp, NULL);
+#endif /* !NFSSERVER */
+	} else if (SCARG(uap, flag) & NFSSVC_SETEXPORTSLIST) {
+#ifndef NFSSERVER
+		error = ENOSYS;
+#else
+		struct export_args *args;
+		struct mountd_exports_list mel;
+
+		error = copyin(SCARG(uap, argp), &mel, sizeof(mel));
+		if (error != 0)
+			return error;
+
+		args = (struct export_args *)malloc(mel.mel_nexports *
+		    sizeof(struct export_args), M_TEMP, M_WAITOK);
+		error = copyin(mel.mel_exports, args, mel.mel_nexports *
+		    sizeof(struct export_args));
+		if (error != 0) {
+			free(args, M_TEMP);
+			return error;
+		}
+		mel.mel_exports = args;
+
+		error = mountd_set_exports_list(&mel, p);
+
+		free(args, M_TEMP);
 #endif /* !NFSSERVER */
 	} else {
 #ifndef NFSSERVER

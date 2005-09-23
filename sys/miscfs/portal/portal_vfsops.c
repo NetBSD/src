@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.53 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.53 2005/09/23 12:10:33 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,10 +78,6 @@ int	portal_quotactl(struct mount *, int, uid_t, void *,
 int	portal_statvfs(struct mount *, struct statvfs *, struct proc *);
 int	portal_sync(struct mount *, int, struct ucred *, struct proc *);
 int	portal_vget(struct mount *, ino_t, struct vnode **);
-int	portal_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	portal_checkexp(struct mount *, struct mbuf *, int *,
-			   struct ucred **);
-int	portal_vptofh(struct vnode *, struct fid *);
 
 void
 portal_init()
@@ -304,36 +300,6 @@ portal_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-int
-portal_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_checkexp(mp, mb, what, anon)
-	struct mount *mp;
-	struct mbuf *mb;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
 {
 
@@ -372,14 +338,12 @@ struct vfsops portal_vfsops = {
 	portal_statvfs,
 	portal_sync,
 	portal_vget,
-	portal_fhtovp,
-	portal_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	portal_init,
 	NULL,
 	portal_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	portal_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	portal_vnodeopv_descs,

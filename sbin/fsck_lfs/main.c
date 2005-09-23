@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.26 2005/08/19 02:07:19 christos Exp $	 */
+/* $NetBSD: main.c,v 1.27 2005/09/23 12:10:34 jmmv Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -286,8 +286,6 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;
-				args.export.ex_flags = 0;
-				args.export.ex_root = 0;
 				flags |= MNT_UPDATE | MNT_RELOAD;
 				ret = mount(MOUNT_LFS, "/", flags, &args);
 				if (ret == 0)

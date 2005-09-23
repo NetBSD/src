@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.5 2005/06/23 01:59:31 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.6 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,6 +70,7 @@ typedef struct fhandle	fhandle_t;
  * one of the __MNT_UNUSED flags.
  */
 
+#define	__MNT_UNUSED3	0x00020000
 #define	__MNT_UNUSED4	0x00200000
 #define	__MNT_UNUSED5	0x01000000
 #define	__MNT_UNUSED6	0x02000000
@@ -170,14 +171,12 @@ typedef struct fhandle	fhandle_t;
  * External filesystem control flags.
  */
 #define	MNT_UPDATE	0x00010000	/* not a real mount, just an update */
-#define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_GETARGS	0x00400000	/* retrieve file system specific args */
 
 #define __MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \
-	{ MNT_DELEXPORT,	1,	"delete export list" }, \
 	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
 	{ MNT_FORCE,		1,	"force unmount or readonly change" }, \
 	{ MNT_GETARGS,		1,	"retrieve mount arguments" },

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.9 2004/05/20 06:34:26 atatat Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.10 2005/09/23 12:10:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -92,7 +92,6 @@ struct filecore_mnt {
 	uid_t fc_uid;		/* uid to set as owner of the files */
 	gid_t fc_gid;		/* gid to set as owner of the files */
 	int fc_mntflags;
-	struct netexport fc_export;
 	struct filecore_disc_record drec;
 };
 

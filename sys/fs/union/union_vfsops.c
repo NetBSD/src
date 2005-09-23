@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.29 2005/08/30 19:11:43 xtraeme Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.30 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.29 2005/08/30 19:11:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.30 2005/09/23 12:10:33 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,6 @@ int union_quotactl(struct mount *, int, uid_t, void *, struct proc *);
 int union_statvfs(struct mount *, struct statvfs *, struct proc *);
 int union_sync(struct mount *, int, struct ucred *, struct proc *);
 int union_vget(struct mount *, ino_t, struct vnode **);
-int union_fhtovp(struct mount *, struct fid *, struct vnode **);
-int union_checkexp(struct mount *, struct mbuf *, int *,
-		      struct ucred **);
-int union_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount union filesystem
@@ -561,39 +557,6 @@ union_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-/*ARGSUSED*/
-int
-union_fhtovp(mp, fidp, vpp)
-	struct mount *mp;
-	struct fid *fidp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-union_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-union_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
 
@@ -632,14 +595,12 @@ struct vfsops union_vfsops = {
 	union_statvfs,
 	union_sync,
 	union_vget,
-	union_fhtovp,
-	union_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	union_init,
 	NULL,				/* vfs_reinit */
 	union_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	union_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	union_vnodeopv_descs,
