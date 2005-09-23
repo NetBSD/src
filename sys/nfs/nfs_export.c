@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.2 2005/09/23 19:39:15 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.1 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.2 2005/09/23 19:39:15 jmmv Exp $");
 
 #include "opt_inet.h"
 
@@ -203,6 +203,8 @@ nfs_export_unmount(struct mount *mp)
 	else if (found) {
 		if (mp->mnt_flag & MNT_EXPUBLIC)
 			setpublicfs(NULL, NULL, NULL);
+
+		CIRCLEQ_REMOVE(&mount_netexport_map, mnp, mnp_entries);
 
 		free(mnp, M_NFS_EXPORT);
 	}
