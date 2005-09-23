@@ -1,11 +1,12 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.5 2005/09/23 13:59:16 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.6 2005/09/23 15:36:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,10 +39,17 @@
 
 /*
  * Efficient memory file system.
+ *
+ * tmpfs is a file system that uses NetBSD's virtual memory sub-system
+ * (the well-known UVM) to store file data and metadata in an efficient
+ * way.  This means that it does not follow the structure of an on-disk
+ * file system because it simply does not need to.  Instead, it uses
+ * memory-specific data structures and algorithms to automatically
+ * allocate and release resources.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.5 2005/09/23 13:59:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.6 2005/09/23 15:36:15 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

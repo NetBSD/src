@@ -1,11 +1,12 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.7 2005/09/17 10:28:26 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.8 2005/09/23 15:36:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.7 2005/09/17 10:28:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.8 2005/09/23 15:36:15 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -65,6 +66,28 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.7 2005/09/17 10:28:26 yamt Exp $");
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Allocates a new node of type 'type' inside the 'tmp' mount point, with
+ * its owner set to 'uid', its group to 'gid' and its mode set to 'mode',
+ * using the credentials of the process 'p'.
+ *
+ * If the node type is set to 'VDIR', then the parent parameter must point
+ * to the parent directory of the node being created.  It may only be NULL
+ * while allocating the root node.
+ *
+ * If the node type is set to 'VBLK' or 'VCHR', then the rdev parameter
+ * specifies the device the node represents.
+ *
+ * If the node type is set to 'VLNK', then the parameter target specifies
+ * the file name of the target file for the symbolic link that is being
+ * created.
+ *
+ * Note that new nodes are retrieved from the available list if it has
+ * items or, if it is empty, from the node pool as long as there is enough
+ * space to create them.
+ *
+ * Returns zero on success or an appropriate error code on failure.
+ */
 int
 tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
@@ -164,6 +187,23 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Destroys the node pointed to by node from the file system 'tmp'.
+ * If the node does not belong to the given mount point, the results are
+ * unpredicted.
+ *
+ * If the node references a directory; no entries are allowed because
+ * their removal could need a recursive algorithm, something forbidden in
+ * kernel space.  Furthermore, there is not need to provide such
+ * functionality (recursive removal) because the only primitives offered
+ * to the user are the removal of empty directories and the deletion of
+ * individual files.
+ *
+ * Note that nodes are not really deleted; in fact, when a node has been
+ * allocated, it cannot be deleted during the whole life of the file
+ * system.  Instead, they are moved to the available list and remain there
+ * until reused.
+ */
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
@@ -221,6 +261,15 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Allocates a new directory entry for the node node with a name of name.
+ * The new directory entry is returned in *de.
+ *
+ * The link count of node is increased by one to reflect the new object
+ * referencing it.
+ *
+ * Returns zero on success or an appropriate error code on failure.
+ */
 int
 tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
     const char *name, uint16_t len, struct tmpfs_dirent **de)
@@ -248,6 +297,15 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Frees a directory entry.  It is the caller's responsibility to destroy
+ * the node referenced by it if needed.
+ *
+ * The link count of node is decreased by one to reflect the removal of an
+ * object that referenced it.  This only happens if 'node_exists' is true;
+ * otherwise the function will not access the node referred to by the
+ * directory entry, as it may already have been released from the outside.
+ */
 void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
     boolean_t node_exists)
@@ -267,6 +325,13 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Allocates a new vnode for the node node or returns a new reference to
+ * an existing one if the node had already a vnode referencing it.  The
+ * resulting locked vnode is returned in *vpp.
+ *
+ * Returns zero on success or an appropriate error code on failure.
+ */
 int
 tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 {
@@ -365,6 +430,10 @@ out:
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Destroys the association between the vnode vp and the node it
+ * references.
+ */
 void
 tmpfs_free_vp(struct vnode *vp)
 {
@@ -462,6 +531,11 @@ out:
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Attaches the directory entry de to the directory represented by vp.
+ * Note that this does not change the link count of the node pointed by
+ * the directory entry, as this is done by tmpfs_alloc_dirent.
+ */
 void
 tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 {
@@ -478,6 +552,11 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Detaches the directory entry de from the directory represented by vp.
+ * Note that this does not change the link count of the node pointed by
+ * the directory entry, as this is done by tmpfs_free_dirent.
+ */
 void
 tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 {
@@ -501,6 +580,14 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Looks for a directory entry in the directory represented by node.
+ * 'cnp' describes the name of the entry to look for.  Note that the .
+ * and .. components are not allowed as they do not physically exist
+ * within directories.
+ *
+ * Returns a pointer to the entry when found, otherwise NULL.
+ */
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
@@ -738,6 +825,13 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Resizes the aobj associated to the regular file pointed to by vp to
+ * the size newsize.  'vp' must point to a vnode that represents a regular
+ * file.  'newsize' must be positive.
+ *
+ * Returns zero on success or an appropriate error code on failure.
+ */
 int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {

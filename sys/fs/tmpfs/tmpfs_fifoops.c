@@ -1,11 +1,12 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.3 2005/09/23 15:36:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.2 2005/09/10 22:28:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.3 2005/09/23 15:36:15 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>

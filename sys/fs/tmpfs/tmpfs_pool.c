@@ -1,11 +1,12 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.2 2005/09/12 19:56:58 yamt Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.3 2005/09/23 15:36:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.2 2005/09/12 19:56:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.3 2005/09/23 15:36:15 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -62,6 +63,51 @@ extern void	pool_page_free_nointr(struct pool *, void *);
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * tmpfs provides a custom pool allocator mostly to exactly keep track of
+ * how many memory is used for each file system instance.  These pools are
+ * never shared across multiple mount points for the reasons described
+ * below:
+ *
+ * - It is very easy to control how many memory is associated with a
+ *   given file system.  tmpfs provides a custom pool allocator that
+ *   controls memory usage according to previously specified usage
+ *   limits, by simply increasing or decreasing a counter when pages
+ *   are allocated or released, respectively.
+ *
+ *   If the pools were shared, we could easily end up with unaccounted
+ *   memory, thus taking incorrect decisions on the amount of memory
+ *   use.  As an example to prove this point, consider two mounted
+ *   instances of tmpfs, one mounted on A and another one on B. Assume
+ *   that each memory page can hold up to four directory entries and
+ *   that, for each entry you create on A, you create three on B
+ *   afterwards.  After doing this, each memory page will be holding an
+ *   entry from A and three for B.  If you sum up all the space taken by
+ *   the total amount of allocated entries, rounded up to a page
+ *   boundary, that number will match the number of allocated pages, so
+ *   everything is fine.
+ *
+ *   Now suppose we unmount B.  Given that the file system has to
+ *   disappear, we have to delete all the directory entries attached to
+ *   it.  But the problem is that freeing those entries will not release
+ *   any memory page.  Instead, each page will be filled up to a 25%,
+ *   and the rest, a 75%, will be lost.  Not lost in a strict term,
+ *   because the memory can be reused by new entries, but lost in the
+ *   sense that it is not accounted by any file system.  Despite A will
+ *   think it is using an amount 'X' of memory, it will be really using
+ *   fourth times that number, thus causing mistakes when it comes to
+ *   decide if there is more free space for that specific instance of
+ *   tmpfs.
+ *
+ * - The number of page faults and cache misses is reduced given that all
+ *   entries of a given file system are stored in less pages.  Note that
+ *   this is true because it is common to allocate and/or access many
+ *   entries at once on a specific file system.
+ *
+ *   Following the example given above, listing a directory on file system
+ *   A could result, in the worst case scenario, in fourth times more page
+ *   faults if we shared the pools.
+ */
 struct pool_allocator tmpfs_pool_allocator = {
 	tmpfs_pool_page_alloc,
 	tmpfs_pool_page_free,
@@ -70,6 +116,12 @@ struct pool_allocator tmpfs_pool_allocator = {
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Initializes the pool pointed to by tpp and associates it to the mount
+ * point tmp.  The size of its elements is set to size.  Its wait channel
+ * is derived from the string given in what and the mount point given in
+ * 'tmp', which should result in a unique string among all existing pools.
+ */
 void
 tmpfs_pool_init(struct tmpfs_pool *tpp, size_t size, const char *what,
     struct tmpfs_mount *tmp)
@@ -87,6 +139,9 @@ tmpfs_pool_init(struct tmpfs_pool *tpp, size_t size, const char *what,
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Destroys the pool pointed to by 'tpp'.
+ */
 void
 tmpfs_pool_destroy(struct tmpfs_pool *tpp)
 {
@@ -133,6 +188,10 @@ tmpfs_pool_page_free(struct pool *pp, void *v)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Initialize the string pool pointed to by 'tsp' and attach it to the
+ * 'tmp' mount point.
+ */
 void
 tmpfs_str_pool_init(struct tmpfs_str_pool *tsp, struct tmpfs_mount *tmp)
 {
@@ -148,6 +207,9 @@ tmpfs_str_pool_init(struct tmpfs_str_pool *tsp, struct tmpfs_mount *tmp)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Destroy the given string pool.
+ */
 void
 tmpfs_str_pool_destroy(struct tmpfs_str_pool *tsp)
 {
@@ -163,6 +225,11 @@ tmpfs_str_pool_destroy(struct tmpfs_str_pool *tsp)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Allocate a new string with a minimum length of len from the 'tsp'
+ * string pool.  The pool can return a bigger string, but the caller must
+ * not make any assumptions about the real object size.
+ */
 char *
 tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 {
@@ -187,6 +254,11 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Destroy the str string, which was allocated from the 'tsp' string pool
+ * with a length of 'len'.  The length must match the one given during
+ * allocation.
+ */
 void
 tmpfs_str_pool_put(struct tmpfs_str_pool *tsp, char *str, size_t len)
 {
