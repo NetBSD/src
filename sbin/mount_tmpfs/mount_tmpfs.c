@@ -1,11 +1,12 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.2 2005/09/23 12:10:35 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.3 2005/09/23 15:36:16 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
+ * 2005 program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.2 2005/09/23 12:10:35 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.3 2005/09/23 15:36:16 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
