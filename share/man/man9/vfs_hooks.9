@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfs_hooks.9,v 1.1 2005/09/23 12:10:32 jmmv Exp $
+.\"     $NetBSD: vfs_hooks.9,v 1.2 2005/09/23 20:29:08 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@ Note that any of these fields may be a null pointer.
 After the definition of a
 .Ft struct vfs_hooks
 object, the kernel has to add it to the
-.Dt vfs_hooks
+.Va vfs_hooks
 link set using the
 .Fn VFS_HOOKS_ATTACH "struct vfs_hooks *"
 macro.
