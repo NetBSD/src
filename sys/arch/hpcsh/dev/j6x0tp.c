@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.8 2005/07/16 16:36:23 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.9 2005/09/23 23:29:29 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.8 2005/07/16 16:36:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.9 2005/09/23 23:29:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -272,7 +272,7 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	wska.accessops = &j6x0tp_wskbd_accessops;
 	wska.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found_ia(self,"wskbddev",  &wska,
+	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &wska,
 					  wskbddevprint);
 
 	/* init calibration, set default parameters */
