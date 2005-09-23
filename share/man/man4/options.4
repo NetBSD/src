@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.291 2005/09/23 17:31:10 gavan Exp $
+.\"	$NetBSD: options.4,v 1.292 2005/09/23 20:47:25 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1087,7 +1087,8 @@ and
 This options makes the
 .Xr md 4
 .Tn RAM
-disk size dynamically sized. It is incompatible with
+disk size dynamically sized.
+It is incompatible with
 .Xr mdsetimage 8 .
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
@@ -1124,7 +1125,8 @@ Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4
-driver to also handle compressed images. See
+driver to also handle compressed images.
+See
 .Xr vndcompress 1 ,
 .Xr vnd 4
 and
