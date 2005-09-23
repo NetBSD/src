@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.61 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.62 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.61 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.62 2005/09/23 12:10:33 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -112,10 +112,6 @@ int	procfs_quotactl(struct mount *, int, uid_t, void *,
 int	procfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 int	procfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	procfs_vget(struct mount *, ino_t, struct vnode **);
-int	procfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	procfs_checkexp(struct mount *, struct mbuf *, int *,
-			   struct ucred **);
-int	procfs_vptofh(struct vnode *, struct fid *);
 
 /*
  * VFS Operations.
@@ -284,39 +280,6 @@ procfs_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-/*ARGSUSED*/
-int
-procfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EINVAL);
-}
-
-/*ARGSUSED*/
-int
-procfs_checkexp(mp, mb, what, anon)
-	struct mount *mp;
-	struct mbuf *mb;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EINVAL);
-}
-
-/*ARGSUSED*/
-int
-procfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EINVAL);
-}
-
 void
 procfs_init()
 {
@@ -373,14 +336,12 @@ struct vfsops procfs_vfsops = {
 	procfs_statvfs,
 	procfs_sync,
 	procfs_vget,
-	procfs_fhtovp,
-	procfs_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	procfs_init,
 	procfs_reinit,
 	procfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	procfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	procfs_vnodeopv_descs,

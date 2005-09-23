@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.152 2005/09/19 00:53:55 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.153 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.152 2005/09/19 00:53:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153 2005/09/23 12:10:33 jmmv Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2073,6 +2073,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 }
 #endif /* NFS */
 
+#ifdef NFSSERVER
 /*
  * Set up nameidata for a lookup() call and do it.
  *
@@ -2324,6 +2325,7 @@ out:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	return (error);
 }
+#endif /* NFSSERVER */
 
 /*
  * A fiddled version of m_adj() that ensures null fill to a 32-bit
@@ -2510,6 +2512,7 @@ nfsm_srvfattr(nfsd, vap, fp)
 	}
 }
 
+#ifdef NFSSERVER
 /*
  * nfsrv_fhtovp() - convert a fh to a vnode ptr (optionally locked)
  * 	- look up fsid in mount list (if not found ret error)
@@ -2545,7 +2548,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	mp = vfs_getvfs(&fhp->fh_fsid);
 	if (!mp)
 		return (ESTALE);
-	error = VFS_CHECKEXP(mp, nam, &exflags, &credanon);
+	error = nfs_check_export(mp, nam, &exflags, &credanon);
 	if (error)
 		return (error);
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
@@ -2611,6 +2614,7 @@ nfs_ispublicfh(fhp)
 			return (FALSE);
 	return (TRUE);
 }
+#endif /* NFSSERVER */
 
 /*
  * This function compares two net addresses by family and returns TRUE

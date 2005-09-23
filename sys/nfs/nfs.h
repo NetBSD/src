@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.49 2005/09/18 23:44:54 christos Exp $	*/
+/*	$NetBSD: nfs.h,v 1.50 2005/09/23 12:10:33 jmmv Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -165,8 +165,24 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10)))
 
 /*
- * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
- * should ever try and use it.
+ * Export arguments for local filesystem mount calls.
+ * Keep in mind that changing this structure modifies nfssvc(2)'s ABI (see
+ * 'struct mountd_exports_list' below).
+ */
+struct export_args {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
+	struct	sockaddr *ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+	char	*ex_indexfile;		/* index file for WebNFS URLs */
+};
+
+/*
+ * Structures for the nfssvc(2) syscall. Not that anyone but mountd, nfsd and
+ * mount_nfs should ever try and use it.
  */
 struct nfsd_args {
 	int	sock;		/* Socket to serve */
@@ -197,6 +213,12 @@ struct nfsd_cargs {
 	u_int		ncd_verflen;	/* and the verifier */
 	u_char		*ncd_verfstr;
 	NFSKERBKEY_T	ncd_key;	/* Session key */
+};
+
+struct mountd_exports_list {
+	const char		*mel_path;
+	size_t			mel_nexports;
+	struct export_args	*mel_exports;
 };
 
 /*
@@ -248,6 +270,7 @@ struct nfsstats {
 #define	NFSSVC_GOTAUTH	0x040
 #define	NFSSVC_AUTHINFAIL 0x080
 #define	NFSSVC_MNTD	0x100
+#define	NFSSVC_SETEXPORTSLIST	0x200
 
 /*
  * fs.nfs sysctl(3) identifiers
@@ -544,6 +567,17 @@ extern int nfs_numasync;
 	    ((c) >= 'A' ? ((c) - ('A' - 10)) : ((c) - '0')))
 #define HEXSTRTOI(p) \
 	((HEXTOC(p[0]) << 4) + HEXTOC(p[1]))
+
+/*
+ * Structure holding information for a publicly exported filesystem
+ * (WebNFS).  Currently the specs allow just for one such filesystem.
+ */
+struct nfs_public {
+	int		np_valid;	/* Do we hold valid information */
+	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	struct mount	*np_mount;	/* Mountpoint of exported fs */
+	char		*np_index;	/* Index file */
+};
 #endif	/* _KERNEL */
 
 #endif /* _NFS_NFS_H */

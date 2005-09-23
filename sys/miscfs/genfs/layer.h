@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.8 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: layer.h,v 1.9 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
 
 struct layer_args {
 	char	*target;		/* Target of loopback  */
-	struct	export_args	export;	/* network export info */
+	struct compat_export_args _pad1; /* compat with old userland tools */
 };
 
 #ifdef _KERNEL
@@ -85,7 +85,6 @@ LIST_HEAD(layer_node_hashhead, layer_node);
 struct layer_mount {
 	struct mount		*layerm_vfs;
 	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
-	struct netexport	layerm_export;	/* export info */
 	u_int			layerm_flags;	/* mount point layer flags */
 	u_int			layerm_size;	/* size of fs's struct node */
 	enum vtype		layerm_tag;	/* vtag of our vnodes */

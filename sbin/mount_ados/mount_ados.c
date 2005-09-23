@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.19 2005/02/05 14:47:18 xtraeme Exp $ */
+/* $NetBSD: mount_ados.c,v 1.20 2005/09/23 12:10:34 jmmv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.19 2005/02/05 14:47:18 xtraeme Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.20 2005/09/23 12:10:34 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -133,11 +133,6 @@ mount_ados(int argc, char **argv)
 	}
 
 	args.fspec = dev;
-	args.export.ex_root = -2;	/* unchecked anyway on DOS fs */
-	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
-	else
-		args.export.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);
@@ -157,7 +152,6 @@ mount_ados(int argc, char **argv)
 		err(1, "%s on %s", dev, dir);
 
 	mntflags |= MNT_RDONLY;
-	args.export.ex_flags = MNT_EXRDONLY;
 
 	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) == -1)
 		err(1, "%s on %s", dev, dir);

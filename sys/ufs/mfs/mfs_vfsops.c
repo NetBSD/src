@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.68 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.69 2005/09/23 12:10:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.68 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.69 2005/09/23 12:10:34 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -100,8 +100,6 @@ struct vfsops mfs_vfsops = {
 	mfs_reinit,
 	mfs_done,
 	NULL,
-	NULL,
-	ufs_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	mfs_vnodeopv_descs,
@@ -268,7 +266,6 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 			return EIO;
 
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &ump->um_export);
 		args.base = mfsp->mfs_baseoff;
 		args.size = mfsp->mfs_size;
 		return copyout(&args, data, sizeof(args));
@@ -305,8 +302,8 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 		}
 		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR))
 			fs->fs_ronly = 0;
-		if (args.fspec == 0)
-			return (vfs_export(mp, &ump->um_export, &args.export));
+		if (args.fspec == NULL)
+			return EINVAL;
 		return (0);
 	}
 	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);

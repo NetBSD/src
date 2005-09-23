@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.68 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.69 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.68 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.69 2005/09/23 12:10:33 jmmv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -77,10 +77,6 @@ int	kernfs_quotactl(struct mount *, int, uid_t, void *,
 			     struct proc *);
 int	kernfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	kernfs_vget(struct mount *, ino_t, struct vnode **);
-int	kernfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	kernfs_checkexp(struct mount *, struct mbuf *, int *,
-			   struct ucred **);
-int	kernfs_vptofh(struct vnode *, struct fid *);
 
 void
 kernfs_init()
@@ -276,39 +272,6 @@ kernfs_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-/*ARGSUSED*/
-int
-kernfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-kernfs_checkexp(mp, mb, what, anon)
-	struct mount *mp;
-	struct mbuf *mb;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-kernfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_kernfs_setup, "sysctl vfs.kern subtree setup")
 {
 
@@ -347,14 +310,12 @@ struct vfsops kernfs_vfsops = {
 	kernfs_statvfs,
 	kernfs_sync,
 	kernfs_vget,
-	kernfs_fhtovp,
-	kernfs_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	kernfs_init,
 	kernfs_reinit,
 	kernfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	kernfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	kernfs_vnodeopv_descs,

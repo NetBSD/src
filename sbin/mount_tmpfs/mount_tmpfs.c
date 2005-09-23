@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.2 2005/09/23 12:10:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.1 2005/09/10 19:20:51 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.2 2005/09/23 12:10:35 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,13 +158,6 @@ mount_tmpfs(int argc, char *argv[])
 		usage();
 		/* NOTREACHED */
 	}
-
-	args.ta_fspec = "tmpfs";
-	args.ta_export.ex_root = -2; /* Default root ID. */
-	if (mntflags & MNT_RDONLY)
-		args.ta_export.ex_flags = MNT_EXRDONLY;
-	else
-		args.ta_export.ex_flags = 0;
 
 	if (realpath(argv[1], canon_dir) == NULL) {
 		err(EXIT_FAILURE, "realpath %s", argv[0]);

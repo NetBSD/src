@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.92 2005/07/23 18:54:07 cube Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.93 2005/09/23 12:10:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.92 2005/07/23 18:54:07 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.93 2005/09/23 12:10:33 jmmv Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.92 2005/07/23 18:54:07 cube Exp $");
 #if defined(NFS) || defined(NFSSERVER)
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
 #endif
 

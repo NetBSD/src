@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.30 2005/09/19 22:43:13 wiz Exp $
+.\"	$NetBSD: mountd.8,v 1.31 2005/09/23 12:10:35 jmmv Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd September 18, 2005
+.Dd September 23, 2005
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ When
 is started,
 it loads the export host addresses and options into the kernel
 using the
-.Xr mount 2
+.Xr nfssvc 2
 system call.
 After changing the exports file,
 a hangup signal should be sent to the
@@ -138,6 +138,7 @@ the pid of the currently running
 .El
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
+.Xr nfssvc 2 ,
 .Xr exports 5 ,
 .Xr nfsd 8 ,
 .Xr rpcbind 8 ,
