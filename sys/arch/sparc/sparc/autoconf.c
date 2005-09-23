@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.211 2005/09/23 23:22:57 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.211 2005/09/23 23:22:57 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,8 +441,6 @@ bootstrap4m()
 
 
 #if defined(SUN4M) && defined(MSIIEP)
-#define msiiep ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
-
 /*
  * On ms-IIep all the interrupt registers, counters etc
  * are PCIC registers, so we need to map it early.
@@ -469,7 +467,7 @@ bootstrapIIep()
 		panic("bootstrap: unable to map ms-IIep pcic registers");
 
 	/* verify that it's PCIC (it's still little-endian at this point) */
-	id = le32toh(msiiep->pcic_id);
+	id = le32toh(mspcic_read_4(pcic_id));
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
 	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
 		panic("bootstrap: PCI id %08x", id);
@@ -478,7 +476,7 @@ bootstrapIIep()
 	msiiep_swap_endian(1);
 
 	/* sanity check (it's big-endian now!) */
-	id = msiiep->pcic_id;
+	id = mspcic_read_4(pcic_id);
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
 	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
 		panic("bootstrap: PCI id %08x (big-endian mode)", id);
