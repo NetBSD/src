@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.52 2005/09/13 03:23:34 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.53 2005/09/24 21:34:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.52 2005/09/13 03:23:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.53 2005/09/24 21:34:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.52 2005/09/13 03:23:34 christ
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+#include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 
 #ifndef SUN4U
