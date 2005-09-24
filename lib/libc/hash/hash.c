@@ -14,6 +14,8 @@
  * Modified April 29, 1997 by Jason R. Thorpe <thorpej@NetBSD.org>
  */
 
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
