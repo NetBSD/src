@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.12 2005/09/13 03:23:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.13 2005/09/24 17:29:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.12 2005/09/13 03:23:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.13 2005/09/24 17:29:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.12 2005/09/13 03:23:09 christo
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+#include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 
 int
