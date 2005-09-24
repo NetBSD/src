@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.6 2005/07/26 22:52:48 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.7 2005/09/24 23:57:12 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.6 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7 2005/09/24 23:57:12 dyoung Exp $");
 #endif
 
 /*
@@ -606,8 +606,8 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
 	    ether_sprintf(ni->ni_macaddr));
 
+	memset(&iev, 0, sizeof(iev));
 	if (ni == ic->ic_bss) {
-		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_bssid);
 		rt_ieee80211msg(ifp, newassoc ?
 			RTM_IEEE80211_ASSOC : RTM_IEEE80211_REASSOC,
@@ -615,7 +615,6 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 		if_link_state_change(ifp, LINK_STATE_UP);
 	} else if (newassoc) {
 		/* fire off wireless event only for new station */
-		memset(&iev, 0, sizeof(iev));
 		IEEE80211_ADDR_COPY(iev.iev_addr, ni->ni_macaddr);
 		rt_ieee80211msg(ifp, RTM_IEEE80211_JOIN, &iev, sizeof(iev));
 	}
