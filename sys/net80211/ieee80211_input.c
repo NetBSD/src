@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.45 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.46 2005/09/24 23:04:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.62 2005/07/11 03:00:20 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.45 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.46 2005/09/24 23:04:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -328,15 +328,6 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				ic->ic_stats.is_rx_wrongdir++;
 				goto out;
 			}
-			if (ic->ic_state != IEEE80211_S_SCAN &&
-			    !IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid)) {
-				/* Source address is not our BSS. */
-				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
-					"%s: discard frame from SA %s\n",
-					__func__, ether_sprintf(wh->i_addr2));
-				ic->ic_stats.is_rx_wrongbss++;
-				goto out;
-			}
 			if ((ifp->if_flags & IFF_SIMPLEX) &&
 			    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
@@ -364,16 +355,6 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_NO_HOSTAP
 			if (dir != IEEE80211_FC1_DIR_TODS) {
 				ic->ic_stats.is_rx_wrongdir++;
-				goto out;
-			}
-			if (ic->ic_state != IEEE80211_S_SCAN &&
-			    !IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_bss->ni_bssid) &&
-			    !IEEE80211_ADDR_EQ(wh->i_addr1, ifp->if_broadcastaddr)) {
-				/* BSS is not us or broadcast. */
-				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
-					"%s: discard data frame to BSS %s\n",
-					__func__, ether_sprintf(wh->i_addr1));
-				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
 			/* check if source STA is associated */
