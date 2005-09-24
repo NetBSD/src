@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.13 2005/09/24 17:29:47 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.14 2005/09/24 21:34:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.13 2005/09/24 17:29:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.14 2005/09/24 21:34:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.13 2005/09/24 17:29:47 christo
 #include <compat/sys/signalvar.h>
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
+
+static void netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+#ifdef unused
+static void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
+#endif
+
 
 int
 netbsd32_sigaction(l, v, retval)
@@ -224,7 +230,8 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 	return (0);
 }
 
-void
+#ifdef unused
+static void
 netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 {
 	memset(si, 0, sizeof (*si));
@@ -264,8 +271,9 @@ netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 		break;
 	}
 }
+#endif
 
-void
+static void
 netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 {
 	memset(si32, 0, sizeof (*si32));
