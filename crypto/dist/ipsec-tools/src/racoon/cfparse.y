@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.5 2005/09/24 14:40:59 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.6 2005/09/24 17:34:17 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.37.2.4 2005/05/10 09:45:45 manubsd Exp */
 
@@ -295,7 +295,7 @@ privsep_stmt
 	|	GROUP QUOTEDSTRING
 		{
 			struct group *gr, grres;
-			char buf[1024]
+			char buf[1024];
 
 			(void)getgrnam_r($2->v, &grres, buf, sizeof(buf), &gr);
 			if (gr == NULL) {
