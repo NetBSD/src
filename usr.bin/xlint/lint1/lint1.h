@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.18 2005/07/17 19:35:48 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.19 2005/09/24 15:30:35 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -219,7 +219,7 @@ typedef	struct sym {
 	u_int	s_reg : 1;	/* symbol is register variable */
 	u_int	s_defarg : 1;	/* undefined symbol in old style function
 				   definition */
-	u_int	s_rimpl : 1;	/* return value of function implizit decl. */
+	u_int	s_rimpl : 1;	/* return value of function implicit decl. */
 	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
 	u_int	s_inline : 1;	/* true if this is a inline function */
 	struct	sym *s_xsym;	/* for local declared external symbols pointer
@@ -271,7 +271,7 @@ typedef	struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
 	u_int	tn_lvalue : 1;	/* node is lvalue */
-	u_int	tn_cast : 1;	/* if tn_op == CVT its an explizit cast */
+	u_int	tn_cast : 1;	/* if tn_op == CVT its an explicit cast */
 	u_int	tn_parn : 1;	/* node parenthesized */
 	union {
 		struct {
