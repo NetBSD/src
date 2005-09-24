@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.6 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.7 2005/09/24 14:40:39 christos Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1667,7 +1667,7 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, type, (u_int)len,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len,
 	    SADB_SATYPE_UNSPEC, seq, getpid());
 	if (!p) {
 		free(newmsg);
