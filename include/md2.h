@@ -1,10 +1,13 @@
-/*	$NetBSD: md2.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: md2.h,v 1.3 2005/09/24 21:30:38 elad Exp $	*/
 
 #ifndef _MD2_H_
 #define _MD2_H_
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+
+#define	MD2_DIGEST_LENGTH		16
+#define	MD2_DIGEST_STRING_LENGTH	33
 
 /* MD2 context. */
 typedef struct MD2Context {
