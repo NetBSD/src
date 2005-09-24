@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: hash.c,v 1.3 2005/09/24 19:30:06 elad Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,6 +13,8 @@
  * Modified September 24, 2005 by Elad Efrat <elad@NetBSD.org>
  * Modified April 29, 1997 by Jason R. Thorpe <thorpej@NetBSD.org>
  */
+
+#ifdef HASH_ALGORITHM
 
 #include "namespace.h"
 
@@ -123,3 +125,5 @@ FNPREFIX(Data)(const unsigned char *data, size_t len, char *buf)
 	FNPREFIX(Update)(&ctx, data, (unsigned int)len);
 	return (FNPREFIX(End)(&ctx, buf));
 }
+
+#endif /* HASH_ALGORITHM */
