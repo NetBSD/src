@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.31 2005/09/13 03:23:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.32 2005/09/24 15:42:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.31 2005/09/13 03:23:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.32 2005/09/24 15:42:58 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.31 2005/09/13 03:23:09 chri
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/sa.h>
