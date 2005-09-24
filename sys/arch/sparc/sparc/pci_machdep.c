@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2005/09/24 01:07:25 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.11 2005/09/24 22:30:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2005/09/24 01:07:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2005/09/24 22:30:15 macallan Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -305,12 +305,8 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	mode1_data_reg_pa = PCI_MODE1_DATA_REG_PA
 		| (reg & PCI_MODE1_DATA_REG_MASK);
 
-	/* 
-	 * NB: we run in endian-swapping mode, so we don't need to
-	 * convert mode1_addr and val.
-	 */
-	sta(PCI_MODE1_ADDRESS_REG_PA, ASI_BYPASS, mode1_addr);
-	val = lda(mode1_data_reg_pa, ASI_BYPASS);
+	sta(PCI_MODE1_ADDRESS_REG_PA, ASI_BYPASS, htole32(mode1_addr));
+	val = le32toh(lda(mode1_data_reg_pa, ASI_BYPASS));
 
 	DPRINTF(SPDB_CONF, ("reading %08x\n", val));
 
@@ -348,12 +344,8 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 	DPRINTF(SPDB_CONF, ("writing %08x\n", data));
 
-	/* 
-	 * NB: we run in endian-swapping mode, so we don't need to
-	 * convert mode1_addr and data.
-	 */
-	sta(PCI_MODE1_ADDRESS_REG_PA, ASI_BYPASS, mode1_addr);
-	sta(mode1_data_reg_pa, ASI_BYPASS, data);
+	sta(PCI_MODE1_ADDRESS_REG_PA, ASI_BYPASS, htole32(mode1_addr));
+	sta(mode1_data_reg_pa, ASI_BYPASS, htole32(data));
 }
 
 
