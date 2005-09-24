@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.13 2005/04/19 03:38:19 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.14 2005/09/24 14:26:12 christos Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.13 2005/04/19 03:38:19 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.14 2005/09/24 14:26:12 christos Exp $");
 #endif
 #endif
 
@@ -274,11 +274,12 @@ static void group_option(value, request)
 char   *value;
 struct request_info *request;
 {
-    struct group *grp;
+    struct group grs, *grp;
+    char grbuf[1024];
 
-    if ((grp = getgrnam(value)) == 0)
+    (void)getgrnam_r(value, &grs, grbuf, sizeof(grbuf), &grp);
+    if (grp == NULL)
 	tcpd_jump("unknown group: \"%s\"", value);
-    endgrent();
 
     if (dry_run == 0 && setgid(grp->gr_gid))
 	tcpd_jump("setgid(%s): %m", value);
@@ -298,9 +299,9 @@ struct request_info *request;
 
     if ((group = split_at(value, '.')) != 0)
 	group_option(group, request);
-    if (getpwnam_r(value, &pws, pwbuf, sizeof(pwbuf), &pwd) != 0 || pwd == NULL)
+    (void)getpwnam_r(value, &pws, pwbuf, sizeof(pwbuf), &pwd);
+    if (pwd == NULL)
 	tcpd_jump("unknown user: \"%s\"", value);
-    endpwent();
 
     if (dry_run == 0 && setuid(pwd->pw_uid))
 	tcpd_jump("setuid(%s): %m", value);
