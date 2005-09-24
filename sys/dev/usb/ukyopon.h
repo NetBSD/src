@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.h,v 1.1 2005/04/15 17:18:18 itohy Exp $	*/
+/*	$NetBSD: ukyopon.h,v 1.2 2005/09/24 12:03:31 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,6 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
+#include <machine/limits.h>
+#else
+#include <limits.h>
+#endif
+
 struct ukyopon_identify {
 	char	ui_name[16];		/* driver name */
 
@@ -43,13 +49,15 @@ struct ukyopon_identify {
 	uint8_t	ui_address;		/* device address */
 
 	enum ukyopon_model {
-		UKYOPON_MODEL_UNKNOWN
-		/* , UKYOPON_MODEL_AHK3001V, ... */
+		UKYOPON_MODEL_UNKNOWN,
+		/* UKYOPON_MODEL_AHK3001V, ... */
+		_UKYOPON_MODEL_KEEPSZ = INT_MAX	/* fix size of this field */
 	} ui_model;			/* possibly future use */
 	enum ukyopon_port {
 		UKYOPON_PORT_UNKNOWN,
 		UKYOPON_PORT_MODEM,	/* modem port */
-		UKYOPON_PORT_DATA	/* data transfer port */
+		UKYOPON_PORT_DATA,	/* data transfer port */
+		_UKYOPON_PORT_KEEPSZ = INT_MAX	/* fix size of this field */
 	} ui_porttype;			/* port type */
 	int	ui_rsvd1, ui_rsvd2;
 };
