@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/09/24 13:51:47 chs Exp $
 
 .include <bsd.own.mk>
 
@@ -37,8 +37,6 @@ CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\"
 LIBDPLIBS=\
 	Xmu	${.CURDIR}/../Xmu \
 	Xt	${.CURDIR}/../Xt \
-	SM	${.CURDIR}/../SM \
-	ICE	${.CURDIR}/../ICE \
 	Xpm	${.CURDIR}/../Xpm \
 	Xext	${.CURDIR}/../Xext \
 	X11	${.CURDIR}/../X11/dynamic
