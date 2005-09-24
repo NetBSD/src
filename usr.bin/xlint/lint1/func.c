@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.21 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: func.c,v 1.22 2005/09/24 15:30:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.21 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: func.c,v 1.22 2005/09/24 15:30:35 perry Exp $");
 #endif
 
 #include <stdlib.h>
@@ -355,7 +355,7 @@ funcend(void)
 	}
 
 	/*
-	 * This warning is printed only if the return value was implizitly
+	 * This warning is printed only if the return value was implicitly
 	 * declared to be int. Otherwise the wrong return statement
 	 * has already printed a warning.
 	 */
