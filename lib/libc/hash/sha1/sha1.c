@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.13 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1 2005/09/24 19:04:52 elad Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.13 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.1 2005/09/24 19:04:52 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
