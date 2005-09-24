@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepvar.h,v 1.5 2005/09/24 00:49:23 uwe Exp $ */
+/*	$NetBSD: msiiepvar.h,v 1.6 2005/09/24 00:51:21 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -51,6 +51,6 @@ struct mspcic_softc {
 	bus_dma_tag_t		sc_dmat;
 };
 
-extern int	mspcic_assigned_interrupt(int line);
+extern int	mspcic_assigned_interrupt(int);
 
 #endif /* _SPARC_MSIIEP_VAR_H_ */
