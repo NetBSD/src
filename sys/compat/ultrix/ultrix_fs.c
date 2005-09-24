@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.32 2005/08/31 16:01:56 he Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.33 2005/09/24 21:44:15 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.32 2005/08/31 16:01:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.33 2005/09/24 21:44:15 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,8 +401,8 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		/* attempt to mount a native, rather than 4.2bsd, ffs */
 		struct ufs_args ua;
 
+		memset(&ua, 0, sizeof(ua));
 		ua.fspec = SCARG(uap, special);
-		memset(&ua.export, 0, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
 
 		if ((error = copyout(&ua, SCARG(&nuap, data),
