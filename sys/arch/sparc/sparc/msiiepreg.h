@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.5 2005/09/24 00:12:20 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.6 2005/09/24 22:30:15 macallan Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -49,6 +49,11 @@
  */
 
 #define MSIIEP_PCIC_PA	((paddr_t)0x300c0000)
+#define MSIIEP_MID_PA	((paddr_t)0x10002000)
+#define MID_IOA_ENABLE	0x10000		/* IO arbitration */
+#define MID_STANDBY	0x0800		/* put CPU into power saving mode */
+#define MID_MASK	0x000108fc	/* bits masked out are reserved */
+
 
 struct msiiep_pcic_reg {
 	/* PCI_ID_REG */
@@ -226,19 +231,20 @@ struct msiiep_pcic_reg {
 };
 
 
+
 /* XXX: these are temporary hacks to for the conversion of the sources */
 #define mspcic_read_1(reg) \
 	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
 #define mspcic_read_2(reg) \
-	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+	(le16toh(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg))
 #define mspcic_read_4(reg) \
-	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+	(le32toh(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg))
 
 #define mspcic_write_1(reg, val) \
 	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
 #define mspcic_write_2(reg, val) \
-	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (htole16(val))
 #define mspcic_write_4(reg, val) \
-	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (htole32(val))
 
 #endif /* _SPARC_MSIIEP_REG_H_ */

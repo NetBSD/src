@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.89 2005/09/23 23:22:57 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.90 2005/09/24 22:30:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.89 2005/09/23 23:22:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.90 2005/09/24 22:30:15 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -434,8 +434,6 @@ nmi_hard_msiiep(void)
 		fatal = 0;
 	}
 
-	byteswap = mspcic_read_1(pcic_pio_ctrl) & MSIIEP_PIO_CTRL_BIG_ENDIAN;
-
 	if (si & MSIIEP_SYS_IPR_SERR) {	/* XXX */
 		printf("serr#\n");
 		fatal = 0;
@@ -444,18 +442,12 @@ nmi_hard_msiiep(void)
 	if (si & MSIIEP_SYS_IPR_DMA_ERR) {
 		uint32_t iotlb_err_addr = mspcic_read_4(pcic_iotlb_err_addr);
 
-		if (byteswap)
-			iotlb_err_addr = bswap32(iotlb_err_addr);
-
 		printf("dma: %08x\n", iotlb_err_addr);
 		fatal = 0;
 	}
 
 	if (si & MSIIEP_SYS_IPR_PIO_ERR) {
 		uint32_t pio_err_addr = mspcic_read_4(pcic_pio_err_addr);
-
-		if (byteswap)
-			pio_err_addr = bswap32(pio_err_addr);
 
 		printf("pio: addr=%08x, cmd=%x\n",
 		       pio_err_addr, mspcic_read_1(pcic_pio_err_cmd));

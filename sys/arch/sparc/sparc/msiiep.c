@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.27 2005/09/24 00:49:23 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.28 2005/09/24 22:30:15 macallan Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.27 2005/09/24 00:49:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.28 2005/09/24 22:30:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -167,8 +167,18 @@ static struct sparc_bus_dma_tag mspcic_dma_tag = {
 	_bus_dmamem_mmap
 };
 
-
-
+static uint16_t mspcic_bus_read_2(bus_space_tag_t, bus_space_handle_t, 
+    bus_size_t);
+static uint32_t mspcic_bus_read_4(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
+static uint64_t mspcic_bus_read_8(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
+static void mspcic_bus_write_2(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t,	uint16_t);
+static void mspcic_bus_write_4(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, uint32_t);
+static void mspcic_bus_write_8(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, uint64_t);
 
 
 static int
@@ -184,8 +194,7 @@ msiiep_match(struct device *parent, struct cfdata *cf, void *aux)
 	/*
 	 * Verify that PCIC was successfully mapped by bootstrap code.
 	 * Since PCIC contains all the registers vital to the kernel,
-	 * bootstrap code maps them at a fixed va, MSIIEP_PCIC_VA, and
-	 * switches the endian-swapping mode on.
+	 * bootstrap code maps them at a fixed va, MSIIEP_PCIC_VA
 	 */
 	id = mspcic_read_4(pcic_id);
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
@@ -201,7 +210,10 @@ msiiep_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct msiiep_attach_args msa;
-
+	bus_space_handle_t hmid;
+	struct cpu_info *cur;
+	uint32_t mid;
+	
 	aprint_normal("\n");
 
 	/* pass on real mainbus_attach_args */
@@ -245,6 +257,56 @@ msiiep_swap_endian(int on)
  *
  *		      Real ms-IIep PCIC driver.
  */
+ 
+static uint16_t
+mspcic_bus_read_2(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset)
+{
+	uint16_t val = *(volatile uint16_t *)(handle + offset);
+	return le16toh(val);
+}
+
+static uint32_t
+mspcic_bus_read_4(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset)
+{
+	uint32_t val = *(volatile uint32_t *)(handle + offset);
+	
+	return le32toh(val);
+}
+
+static uint64_t
+mspcic_bus_read_8(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset)
+{
+	uint64_t val = *(volatile uint64_t *)(handle + offset);
+	
+	return le64toh(val);
+}
+
+static void
+mspcic_bus_write_2(bus_space_tag_t space, bus_space_handle_t handle, 
+    bus_size_t offset, uint16_t value)
+{
+
+	(*(volatile uint16_t *)(handle + offset)) = htole16(value);
+}
+
+static void
+mspcic_bus_write_4(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset, uint32_t value)
+{
+
+	(*(volatile uint32_t *)(handle + offset)) = htole32(value);
+}
+
+static void
+mspcic_bus_write_8(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset, uint64_t value)
+{
+
+	(*(volatile uint64_t *)(handle + offset)) = htole64(value);
+}
 
 static int
 mspcic_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -289,6 +351,13 @@ mspcic_attach(struct device *parent, struct device *self, void *aux)
 	mspcic_io_tag.sparc_bus_mmap = mspcic_bus_mmap;
 	mspcic_io_tag.sparc_intr_establish = mspcic_intr_establish;
 	mspcic_io_tag.parent = sc->sc_bustag;
+	
+	mspcic_io_tag.sparc_read_2 = mspcic_bus_read_2;
+	mspcic_io_tag.sparc_read_4 = mspcic_bus_read_4;
+	mspcic_io_tag.sparc_read_8 = mspcic_bus_read_8;
+	mspcic_io_tag.sparc_write_2 = mspcic_bus_write_2;
+	mspcic_io_tag.sparc_write_4 = mspcic_bus_write_4;
+	mspcic_io_tag.sparc_write_8 = mspcic_bus_write_8;
 
 	mspcic_mem_tag = *sc->sc_bustag;
 	mspcic_mem_tag.cookie = &mspcic_mem_cookie;
@@ -298,6 +367,13 @@ mspcic_attach(struct device *parent, struct device *self, void *aux)
 	mspcic_mem_tag.sparc_bus_mmap = mspcic_bus_mmap;
 	mspcic_mem_tag.sparc_intr_establish = mspcic_intr_establish;
 	mspcic_mem_tag.parent = sc->sc_bustag;
+
+	mspcic_mem_tag.sparc_read_2 = mspcic_bus_read_2;
+	mspcic_mem_tag.sparc_read_4 = mspcic_bus_read_4;
+	mspcic_mem_tag.sparc_read_8 = mspcic_bus_read_8;
+	mspcic_mem_tag.sparc_write_2 = mspcic_bus_write_2;
+	mspcic_mem_tag.sparc_write_4 = mspcic_bus_write_4;
+	mspcic_mem_tag.sparc_write_8 = mspcic_bus_write_8;
 
 	mspcic_dma_tag._cookie = sc;
 	mspcic_pc_tag.cookie = sc;
@@ -401,7 +477,7 @@ mspcic_init_maps(void)
 	       mspcic_read_1(pcic_iosize));
 #endif
 	nmem = nio = 1;
-
+	
 	m0 = &mspcic_pci_memmap[nmem];
 	mspcic_pci_map_from_reg(m0,
 		mspcic_read_1(pcic_smbar0), mspcic_read_1(pcic_pmbar0),
