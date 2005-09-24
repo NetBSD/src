@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.30 2005/09/02 17:39:23 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.31 2005/09/24 22:40:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.30 2005/09/02 17:39:23 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.31 2005/09/24 22:40:32 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -96,7 +96,7 @@ __RCSID("$NetBSD: cksum.c,v 1.30 2005/09/02 17:39:23 elad Exp $");
 #include <md2.h>
 #include <sha1.h>
 #include <crypto/sha2.h>
-#include <rmd160.h>
+#include <crypto/rmd160.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
