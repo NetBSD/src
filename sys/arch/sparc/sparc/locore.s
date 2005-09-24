@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.218 2005/09/24 22:30:15 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.219 2005/09/24 22:44:44 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5021,12 +5021,29 @@ idle_enter:
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
 	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	tst	%o3
-	bz	1b
+	bz	ispin2
 	 nop
 
 	call	_C_LABEL(uvm_pageidlezero)
 	 nop
-	b,a	1b
+	
+ispin:
+	! check if we're still idle, if so we'll spin in cpu_idlespin()
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	tst	%o3
+	bnz,a	idle_leave
+	 wr	%l1, (IPL_SCHED << 8), %psr	! (void) splsched();
+	 
+ispin2:
+	sethi	%hi(CPUINFO_VA), %o0
+	ld	[%o0 + CPUINFO_IDLESPIN], %o3
+	tst	%o3
+	bz	1b
+	 nop
+	
+	call	%o3
+	 nop	! CPUINFO_VA is already in %o0
+	b,a	ispin
 
 idle_leave:
 	! just wrote to %psr; observe psr delay before doing a `save'

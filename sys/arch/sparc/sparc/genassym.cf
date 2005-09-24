@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46 2005/09/10 01:27:54 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.47 2005/09/24 22:44:44 macallan Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ define	CPUINFO_XMSG_ARG0	offsetof(struct cpu_info, msg.u.xpmsg_func.arg0)
 define	CPUINFO_XMSG_ARG1	offsetof(struct cpu_info, msg.u.xpmsg_func.arg1)
 define	CPUINFO_XMSG_ARG2	offsetof(struct cpu_info, msg.u.xpmsg_func.arg2)
 define	CPUINFO_XMSG_CMPLT	offsetof(struct cpu_info, msg.complete)
+define	CPUINFO_IDLESPIN	offsetof(struct cpu_info, idlespin)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -197,7 +198,6 @@ define PCIC_PROC_IPR_REG	offsetof(struct msiiep_pcic_reg, pcic_proc_ipr)
 define PCIC_SOFT_INTR_CLEAR_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_clear)
 define PCIC_SOFT_INTR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_set)
 define PCIC_SCCR_REG		offsetof(struct msiiep_pcic_reg, pcic_sccr)
-
 define PCIC_SYS_ITMR_CLR_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_clr)
 define PCIC_SYS_ITMR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_set)
 define MSIIEP_SYS_ITMR_ALL	MSIIEP_SYS_ITMR_ALL
