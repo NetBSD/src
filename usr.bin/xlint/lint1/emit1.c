@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.15 2004/09/12 08:58:52 yamt Exp $ */
+/* $NetBSD: emit1.c,v 1.16 2005/09/24 15:30:35 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.15 2004/09/12 08:58:52 yamt Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.16 2005/09/24 15:30:35 perry Exp $");
 #endif
 
 #include <ctype.h>
@@ -436,7 +436,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 			if (isityp(t = arg->tn_type->t_tspec)) {
 				/*
 				 * XXX it would probably be better to
-				 * explizitly test the sign
+				 * explicitly test the sign
 				 */
 				if ((q = arg->tn_val->v_quad) == 0) {
 					/* zero constant */
