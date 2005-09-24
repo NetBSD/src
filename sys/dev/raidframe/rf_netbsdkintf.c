@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.188 2005/08/20 12:01:04 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.189 2005/09/24 22:51:55 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.188 2005/08/20 12:01:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.189 2005/09/24 22:51:55 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -980,7 +980,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		rs->sc_flags &= ~RAIDF_INITED;
 
 		/* Detach the disk. */
-		disk_detach(&rs->sc_dkdev);
+		pseudo_disk_detach(&rs->sc_dkdev);
 
 		raidunlock(rs);
 
