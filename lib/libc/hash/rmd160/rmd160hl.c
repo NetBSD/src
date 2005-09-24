@@ -1,4 +1,4 @@
-/* $NetBSD: rmd160hl.c,v 1.1 2005/09/24 19:04:52 elad Exp $ */
+/* $NetBSD: rmd160hl.c,v 1.2 2005/09/24 19:33:52 elad Exp $ */
 
 /*
  * Derived from code ritten by Jason R. Thorpe <thorpej@NetBSD.org>,
@@ -8,13 +8,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rmd160hl.c,v 1.1 2005/09/24 19:04:52 elad Exp $");
+__RCSID("$NetBSD: rmd160hl.c,v 1.2 2005/09/24 19:33:52 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define	HASH_ALGORITHM	RMD160
 
 #include "namespace.h"
-#include <rmd160.h> /* XXX */
+#include <crypto/rmd160.h>
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
