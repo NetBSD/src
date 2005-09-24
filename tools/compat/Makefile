@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.38 2005/09/24 19:06:20 elad Exp $
+#	$NetBSD: Makefile,v 1.39 2005/09/24 20:52:22 elad Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
-		getmode.c getopt_long.c gettemp.c heapsort.c issetugid.c \
-		lchflags.c lchmod.c lchown.c libyywrap.c \
-		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c mkdtemp.c \
+		getmode.c getopt_long.c gettemp.c heapsort.c \
+		issetugid.c lchflags.c lchmod.c lchown.c libyywrap.c \
+		md2.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c mkdtemp.c \
 		mkstemp.c pread.c putc_unlocked.c pwcache.c pwrite.c \
 		pw_scan.c rmd160.c rmd160hl.c setenv.c setgroupent.c \
 		setpassent.c setprogname.c sha1.c sha1hl.c sha2.c \
@@ -29,6 +29,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
+		${.CURDIR}/../../lib/libc/hash/md2 \
 		${.CURDIR}/../../lib/libc/hash/md5 \
 		${.CURDIR}/../../lib/libc/hash/rmd160 \
 		${.CURDIR}/../../lib/libc/hash/sha1 \
