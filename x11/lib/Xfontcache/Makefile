@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2005/09/24 13:51:47 chs Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xfontcache
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}
+
+LIBDPLIBS=\
+	Xext	${.CURDIR}/../Xext \
+	X11	${.CURDIR}/../X11/dynamic
 
 SRCS=	FontCache.c
 
