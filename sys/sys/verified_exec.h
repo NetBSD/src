@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.18 2005/08/26 22:53:56 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.19 2005/09/24 17:47:34 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -40,8 +40,6 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/hash.h>
-
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.18 2005/08/26 22:53:56 elad Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
