@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.40 2005/08/20 15:02:36 kent Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.41 2005/09/24 21:34:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -604,9 +604,6 @@ typedef struct firm_event32 {
 
 /* from <sys/uuid.h> */
 typedef netbsd32_pointer_t netbsd32_uuidp_t;
-
-void netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
-void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
