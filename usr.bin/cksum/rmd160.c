@@ -1,7 +1,7 @@
-/*	$NetBSD: rmd160.c,v 1.1 2001/03/20 18:46:26 atatat Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.2 2005/09/24 22:40:32 elad Exp $	*/
 
-#include <rmd160.h>	/* this hash type */
-#include <md5.h>	/* the hash we're replacing */
+#include <crypto/rmd160.h>	/* this hash type */
+#include <md5.h>		/* the hash we're replacing */
 
 #define HASHTYPE	"RMD160"
 #define HASHLEN		40
