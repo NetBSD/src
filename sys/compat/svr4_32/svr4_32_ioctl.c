@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.9 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.10 2005/09/24 15:51:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.10 2005/09/24 15:51:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9 2005/02/26 23:10:21 perry Exp 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <compat/sys/socket.h>
+
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_util.h>
 #include <compat/svr4_32/svr4_32_signal.h>
@@ -68,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9 2005/02/26 23:10:21 perry Exp 
 #include <compat/svr4/svr4_ttold.h>
 #include <compat/svr4/svr4_filio.h>
 #include <compat/svr4_32/svr4_32_sockio.h>
+
 
 #ifdef DEBUG_SVR4
 static void svr4_32_decode_cmd __P((netbsd32_u_long, char *, char *, int *, int *));

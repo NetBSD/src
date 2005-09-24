@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.23 2005/02/26 23:10:18 perry Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.24 2005/09/24 15:51:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.23 2005/02/26 23:10:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.24 2005/09/24 15:51:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +50,17 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.23 2005/02/26 23:10:18 perry 
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/mbuf.h>		/* for MLEN */
+#include <sys/protosw.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <compat/sys/socket.h>
+#include <net/if.h>
+
 #include <compat/common/compat_util.h>
+#include <compat/sys/socket.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -445,4 +450,60 @@ compat_43_sa_put(from)
 		return (error);
 
 	return (0);
+}
+
+int
+compat_ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
+{
+	int error, ocmd = cmd;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifnet *ifp = ifunit(ifr->ifr_name);
+
+	if (ifp == NULL)
+		return ENXIO;
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCSIFNETMASK:
+#if BYTE_ORDER != BIG_ENDIAN
+		if (ifr->ifr_addr.sa_family == 0 &&
+		    ifr->ifr_addr.sa_len < 16) {
+			ifr->ifr_addr.sa_family = ifr->ifr_addr.sa_len;
+			ifr->ifr_addr.sa_len = 16;
+		}
+#else
+		if (ifr->ifr_addr.sa_len == 0)
+			ifr->ifr_addr.sa_len = 16;
+#endif
+		break;
+
+	case OSIOCGIFADDR:
+		cmd = SIOCGIFADDR;
+		break;
+
+	case OSIOCGIFDSTADDR:
+		cmd = SIOCGIFDSTADDR;
+		break;
+
+	case OSIOCGIFBRDADDR:
+		cmd = SIOCGIFBRDADDR;
+		break;
+
+	case OSIOCGIFNETMASK:
+		cmd = SIOCGIFNETMASK;
+	}
+
+	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, p);
+
+	switch (ocmd) {
+	case OSIOCGIFADDR:
+	case OSIOCGIFDSTADDR:
+	case OSIOCGIFBRDADDR:
+	case OSIOCGIFNETMASK:
+		*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
+	}
+	return error;
 }
