@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.2 2005/09/24 11:50:25 itohy Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.3 2005/09/24 12:00:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.2 2005/09/24 11:50:25 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.3 2005/09/24 12:00:18 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,11 @@ struct ukyopon_softc {
 #define UKYOPON_MODEM_IFACE_INDEX	0
 #define UKYOPON_DATA_IFACE_INDEX	3
 
+Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
 Static int	ukyopon_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
 
 Static struct ucom_methods ukyopon_methods = {
-	umodem_get_status,
+	ukyopon_get_status,
 	umodem_set,
 	umodem_param,
 	ukyopon_ioctl,
@@ -142,6 +143,21 @@ USB_ATTACH(ukyopon)
 	if (umodem_common_attach(self, &sc->sc_umodem, uaa, &uca))
 		USB_ATTACH_ERROR_RETURN;
 	USB_ATTACH_SUCCESS_RETURN;
+}
+
+Static void
+ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+{
+	struct ukyopon_softc *sc = addr;
+
+	/*
+	 * The device doesn't set DCD (Data Carrier Detect) bit properly.
+	 * Assume DCD is always present.
+	 */
+	if ((sc->sc_umodem.sc_msr & UMSR_DCD) == 0)
+		sc->sc_umodem.sc_msr |= UMSR_DCD;
+
+	return umodem_get_status(addr, portno, lsr, msr);
 }
 
 Static int
