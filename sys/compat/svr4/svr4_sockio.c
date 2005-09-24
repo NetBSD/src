@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.20 2005/09/24 15:51:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.20 2005/09/24 15:51:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/socket.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
