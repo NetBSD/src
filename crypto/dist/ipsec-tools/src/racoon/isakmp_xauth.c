@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.5 2005/09/24 14:40:59 christos Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.6 2005/09/24 17:34:17 christos Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.17.2.5 2005/05/20 07:31:09 manubsd Exp */
 
@@ -693,7 +693,7 @@ xauth_login_system(usr, pwd)
 	struct passwd *pw, pwres;
 	char *cryptpwd;
 	char *syscryptpwd;
-	char buf;
+	char buf[1024];
 #ifdef HAVE_SHADOW_H
 	struct spwd *spw;
 
