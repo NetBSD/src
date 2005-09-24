@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.211 2005/09/23 23:22:57 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.212 2005/09/24 22:30:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.211 2005/09/23 23:22:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.212 2005/09/24 22:30:15 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -466,20 +466,12 @@ bootstrapIIep()
 			   MSIIEP_PCIC_VA, &bh) != 0)
 		panic("bootstrap: unable to map ms-IIep pcic registers");
 
-	/* verify that it's PCIC (it's still little-endian at this point) */
-	id = le32toh(mspcic_read_4(pcic_id));
+	/* verify that it's PCIC */
+	id = mspcic_read_4(pcic_id);
+
 	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
 	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
 		panic("bootstrap: PCI id %08x", id);
-
-	/* turn on automagic endian-swapping for PCI accesses */
-	msiiep_swap_endian(1);
-
-	/* sanity check (it's big-endian now!) */
-	id = mspcic_read_4(pcic_id);
-	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
-	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
-		panic("bootstrap: PCI id %08x (big-endian mode)", id);
 }
 
 #undef msiiep
@@ -1024,10 +1016,6 @@ void
 sync_crash()
 {
 
-#if defined(MSIIEP)
-	/* we are back from prom */
-	msiiep_swap_endian(1);
-#endif
 	panic("PROM sync command");
 }
 
