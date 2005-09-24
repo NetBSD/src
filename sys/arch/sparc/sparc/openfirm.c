@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10 2005/05/31 00:54:57 christos Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.11 2005/09/24 22:30:15 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10 2005/05/31 00:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.11 2005/09/24 22:30:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,13 +583,7 @@ OF_enter(void)
 	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
-#if defined(MSIIEP)
-	msiiep_swap_endian(0);
-#endif
 	openfirmware(&args);
-#if defined(MSIIEP)
-	msiiep_swap_endian(1);
-#endif
 }
 
 void
@@ -604,13 +598,7 @@ OF_exit(void)
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
-#if defined(MSIIEP)
-	msiiep_swap_endian(0);
-#endif
 	openfirmware(&args);
-#if defined(MSIIEP)
-	msiiep_swap_endian(1);
-#endif
 	panic("OF_exit failed");
 }
 
