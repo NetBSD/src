@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.h,v 1.5 2005/09/24 18:12:35 elad Exp $	*/
+/*	$NetBSD: rmd160.h,v 1.6 2005/09/24 21:31:53 elad Exp $	*/
 /*	$KAME: rmd160.h,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 /*
@@ -31,7 +31,7 @@
 #include <sys/types.h>
 
 #define RMD160_DIGEST_LENGTH		20
-#define RMD160_DIGEST_STRING_LENGTH	40
+#define RMD160_DIGEST_STRING_LENGTH	41
 
 /* RMD160 context. */
 typedef struct RMD160Context {
