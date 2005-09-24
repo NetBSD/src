@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.65 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.66 2005/09/24 22:44:44 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
-
+	void		(*idlespin)(struct cpu_info *);
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
 	/*bus_space_handle_t*/ long ci_mxccregs;
