@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/03/21 14:38:48 tron Exp $
+#	$NetBSD: Makefile,v 1.11 2005/09/24 13:51:47 chs Exp $
 
 .include <bsd.own.mk>
 
@@ -168,7 +168,11 @@ SRCS=		${SRCS.bitmap} ${SRCS.fontfile} ${SRCS.fc} \
 
 SUBDIR=	stubs
 
+LIBDPLIBS=\
+	freetype	${.CURDIR}/../freetype2 \
+	Xext		${.CURDIR}/../Xext \
+	X11		${.CURDIR}/../X11/dynamic
+
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-
