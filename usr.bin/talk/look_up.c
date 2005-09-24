@@ -1,4 +1,4 @@
-/*	$NetBSD: look_up.c,v 1.6 2003/08/07 11:16:05 agc Exp $	*/
+/*	$NetBSD: look_up.c,v 1.7 2005/09/24 16:40:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: look_up.c,v 1.6 2003/08/07 11:16:05 agc Exp $");
+__RCSID("$NetBSD: look_up.c,v 1.7 2005/09/24 16:40:01 christos Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -55,7 +55,7 @@ check_local()
 	/* the rest of msg was set up in get_names */
 #ifdef MSG_EOR
 	/* copy new style sockaddr to old, swap family (short in old) */
-	msg.ctl_addr = *(struct osockaddr *)&ctl_addr;
+	msg.ctl_addr = *(struct talkd_sockaddr *)(void *)&ctl_addr;
 	msg.ctl_addr.sa_family = htons(ctl_addr.sin_family);
 #else
 	msg.ctl_addr = *(struct sockaddr *)&ctl_addr;
