@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.10 2005/09/24 01:07:25 uwe Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2005/09/24 01:07:25 uwe Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -102,7 +102,6 @@ int sparc_pci_debug = 0;
  * simple to just hardcode it here.
  */
 
-
 struct mspcic_pci_intr_wiring {
 	u_int		mpiw_bus;
 	u_int		mpiw_device;
@@ -136,10 +135,8 @@ static int wiring_map_size;
 
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent;
-	struct device *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+		struct pcibus_attach_args *pba)
 {
 	struct mspcic_known_model *p;
 	char buf[32];
@@ -167,21 +164,15 @@ pci_attach_hook(parent, self, pba)
 
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
-	return (32);
+	return 32;
 }
 
 
 pcitag_t
-pci_make_tag(pc, b, d, f)
-	pci_chipset_tag_t pc;
-	int b;
-	int d;
-	int f;
+pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 {
 	struct mspcic_softc *sc = (struct mspcic_softc *)pc->cookie;
 	pcitag_t tag;
@@ -195,7 +186,7 @@ pci_make_tag(pc, b, d, f)
 	tag = PCITAG_CREATE(-1, b, d, f);
 	if (b >= 256 || d >= 32 || f >= 8) {
 		printf("pci_make_tag: bad request %d/%d/%d\n", b, d, f);
-		return (tag); /* a dead one */
+		return tag;	/* a dead one */
 	}
 
 	/*
@@ -208,7 +199,7 @@ pci_make_tag(pc, b, d, f)
 	 */
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
 		struct ofw_pci_register reg;
-		u_int32_t busrange[2];
+		uint32_t busrange[2];
 
 #ifdef SPARC_PCI_DEBUG
 		if (sparc_pci_debug & SPDB_PROBE) {
@@ -263,20 +254,19 @@ pci_make_tag(pc, b, d, f)
 			PCI_COMMAND_MASTER_ENABLE
 			| PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_IO_ENABLE);
 		DPRINTF(SPDB_PROBE, ("> found node %x %s\n", node, name));
-		return (tag);
+		return tag;
 	}
 
 	/* No device found - return a dead tag */
-	return (tag);
+	return tag;
 }
 
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
+		  int *bp, int *dp, int *fp)
 {
+
 	if (bp != NULL)
 		*bp = PCITAG_BUS(tag);
 	if (dp != NULL)
@@ -287,14 +277,11 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	u_int32_t mode1_addr;
-	u_int32_t mode1_data_reg_pa;
-	pcireg_t val = (pcireg_t)~0;
+	uint32_t mode1_addr;
+	uint32_t mode1_data_reg_pa;
+	uint32_t val;
 
 	DPRINTF(SPDB_CONF,
 		("pci_conf_read:  tag=%x.%x (%d/%d/%d), reg=%02x; ",
@@ -311,7 +298,7 @@ pci_conf_read(pc, tag, reg)
 
 	if (PCITAG_NODE(tag) == -1) {
 		DPRINTF(SPDB_CONF, ("\n"));
-		return (val);
+		return ~0;
 	}
 
 	mode1_addr = PCITAG_OFFSET(tag) | reg;
@@ -325,21 +312,17 @@ pci_conf_read(pc, tag, reg)
 	sta(PCI_MODE1_ADDRESS_REG_PA, ASI_BYPASS, mode1_addr);
 	val = lda(mode1_data_reg_pa, ASI_BYPASS);
 
-	DPRINTF(SPDB_CONF, ("reading %08x\n", (u_int)val));
+	DPRINTF(SPDB_CONF, ("reading %08x\n", val));
 
-	return (val);
+	return val;
 }
 
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	u_int32_t mode1_addr;
-	u_int32_t mode1_data_reg_pa;
+	uint32_t mode1_addr;
+	uint32_t mode1_data_reg_pa;
 
 	DPRINTF(SPDB_CONF,
 		("pci_conf_write: tag=%x.%x (%d/%d/%d); reg=%02x; ",
@@ -380,9 +363,7 @@ pci_conf_write(pc, tag, reg, data)
  */
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int i;
 
@@ -399,33 +380,29 @@ pci_intr_map(pa, ihp)
 		{
 			DPRINTF(SPDB_INTMAP, ("line %d\n", w->mpiw_line));
 			*ihp = w->mpiw_line;
-			return (0);
+			return 0;
 		}
 	}
 
 	DPRINTF(SPDB_INTMAP, ("not found\n"));
-	return (-1);
+	return -1;
 }
 
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[16];
 	int pil;
 
 	pil = mspcic_assigned_interrupt(ih);
 	sprintf(str, "line %d (pil %d)", ih, pil);
-	return (str);
+	return str;
 }
 
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -434,15 +411,11 @@ pci_intr_evcnt(pc, ih)
 
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
-	void *arg;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+		   int level, int (*func)(void *), void *arg)
 {
 	struct mspcic_softc *sc = (struct mspcic_softc *)pc->cookie;
-	void *cookie = NULL;
+	void *cookie;
 
 	DPRINTF(SPDB_INTR,
 		("pci_intr_establish(line %d, ipl %d)\n", ih, level));
@@ -459,14 +432,12 @@ pci_intr_establish(pc, ih, level, func, arg)
 
 	DPRINTF(SPDB_INTR,
 		("pci_intr_establish: returning handle %p\n", cookie));
-	return (cookie);
+	return cookie;
 }
 
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	DPRINTF(SPDB_INTR, ("pci_intr_disestablish: cookie %p\n", cookie));
