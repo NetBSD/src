@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.1 2005/04/15 17:18:18 itohy Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.2 2005/09/24 11:50:25 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1 2005/04/15 17:18:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.2 2005/09/24 11:50:25 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ struct ukyopon_softc {
 	struct umodem_softc	sc_umodem;
 
 	/* ukyopon addition */
-	enum ukyopon_port	sc_porttype;
 };
 
 #define UKYOPON_MODEM_IFACE_INDEX	0
@@ -134,10 +133,8 @@ USB_ATTACH(ukyopon)
 	USB_ATTACH_START(ukyopon, sc, uaa);
 	struct ucom_attach_args uca;
 
-	sc->sc_porttype = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
-
-	uca.portno = UCOM_UNK_PORTNO;
 	uca.methods = &ukyopon_methods;
 	uca.info = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 	    "modem port" : "data transfer port";
@@ -162,7 +159,7 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 		    USBDEVUNIT(*(device_ptr_t)sc->sc_umodem.sc_udev->bus->usbctl);
 		arg_id->ui_address = sc->sc_umodem.sc_udev->address;
 		arg_id->ui_model = UKYOPON_MODEL_UNKNOWN;
-		arg_id->ui_porttype = sc->sc_porttype;
+		arg_id->ui_porttype = portno;
 		break;
 
 	default:
