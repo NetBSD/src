@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2005/09/13 15:32:48 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2005/09/24 19:06:20 elad Exp $
 
 HOSTLIB=	nbcompat
 
@@ -29,6 +29,9 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
+		${.CURDIR}/../../lib/libc/hash/md5 \
+		${.CURDIR}/../../lib/libc/hash/rmd160 \
+		${.CURDIR}/../../lib/libc/hash/sha1 \
 		${.CURDIR}/../../lib/libc/hash/sha2 \
 		${.CURDIR}/../../lib/libc/md \
 		${.CURDIR}/../../lib/libc/stdio \
