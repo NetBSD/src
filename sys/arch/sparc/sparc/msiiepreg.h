@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.4 2005/09/23 23:22:57 uwe Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.5 2005/09/24 00:12:20 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -38,7 +38,7 @@
  * We map it at a fixed MSIIEP_PCIC_VA (see vaddrs.h).
  *
  * Field names are chosen to match relevant OFW forth words.
- * 
+ *
  * NB: Upon reset the PCIC registers and PCI bus accesses are in
  * little-endian mode.  We configure PCIC to do endian-swapping
  * automagically by setting MSIIEP_PIO_CTRL_BIG_ENDIAN bit in
@@ -84,7 +84,7 @@ struct msiiep_pcic_reg {
 
 
 	/* 9.6.3  PIO control */
-	uint8_t	pcic_pio_ctrl;		/* @60/1 (no word?) */
+	uint8_t		pcic_pio_ctrl;		/* @60/1 (no word?) */
 #define MSIIEP_PIO_CTRL_PREFETCH_ENABLE		0x80
 #define MSIIEP_PIO_CTRL_BURST_ENABLE		0x40
 #define MSIIEP_PIO_CTRL_BIG_ENDIAN		0x04
@@ -208,7 +208,7 @@ struct msiiep_pcic_reg {
 
 
 	/* 9.5.9  PIO Error Command and Address Registers */
-	uint8_t	pcic_pio_err_cmd;	/* @c7/1 */
+	uint8_t		pcic_pio_err_cmd;	/* @c7/1 */
 	uint32_t	pcic_pio_err_addr;	/* @c8/4 */
 
 	/* 9.5.8.3  IOTLB Error Address */
