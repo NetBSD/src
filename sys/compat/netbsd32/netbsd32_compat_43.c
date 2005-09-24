@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.32 2005/09/24 15:42:58 chs Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.33 2005/09/24 21:34:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.32 2005/09/24 15:42:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.33 2005/09/24 21:34:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.32 2005/09/24 15:42:58 chs 
 #include <compat/sys/stat.h>
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+#include <compat/sys/socket.h>
 
 int compat_43_netbsd32_sethostid __P((struct lwp *, void *, register_t *));
 int compat_43_netbsd32_killpg __P((struct lwp *, void *, register_t *retval));
