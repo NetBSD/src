@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.32 2004/07/02 16:26:53 christos Exp $	*/
+/*	$NetBSD: ftree.c,v 1.33 2005/09/24 17:05:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.32 2004/07/02 16:26:53 christos Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.33 2005/09/24 17:05:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -746,7 +746,8 @@ next_file(ARCHD *arcn)
 	 * copy file name, set file name length
 	 */
 	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
-	arcn->org_name = ftent->fts_path;
+	arcn->org_name = arcn->fts_name;
+	strlcpy(arcn->fts_name, ftent->fts_path, sizeof arcn->fts_name);
 	if (strcmp(NM_CPIO, argv0) == 0) {
 		/*
 		 * cpio does *not* descend directories listed in the
