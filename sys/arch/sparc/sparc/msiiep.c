@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.26 2005/09/23 23:22:57 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.27 2005/09/24 00:49:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.26 2005/09/23 23:22:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.27 2005/09/24 00:49:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -267,22 +267,16 @@ mspcic_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 
 	sc->sc_node = node;
-	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 33333333);
 
 	/* copy parent tags */
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
-	/*
-	 * PCIC registers are mapped at a fixed VA because counters,
-	 * interrupt registers etc are there.  Just save that mapping.
-	 */
-	sc->sc_bh = (bus_space_handle_t)MSIIEP_PCIC_VA;
-
 	/* print our PCI device info and bus clock frequency */
 	pci_devinfo(mspcic_read_4(pcic_id), mspcic_read_4(pcic_class), 0,
 		    devinfo, sizeof(devinfo));
-	printf(": %s: clock = %s MHz\n", devinfo, clockfreq(sc->sc_clockfreq));
+	printf(": %s: clock = %s MHz\n", devinfo,
+	       clockfreq(prom_getpropint(node, "clock-frequency", 33333333)));
 
 	mspcic_init_maps();
 
