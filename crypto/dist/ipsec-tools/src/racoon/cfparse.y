@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.6 2005/09/24 17:34:17 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.7 2005/09/24 22:45:51 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.37.2.4 2005/05/10 09:45:45 manubsd Exp */
 
@@ -285,7 +285,7 @@ privsep_stmt
 
 			(void)getpwnam_r($2->v, &pwres, buf, sizeof(buf), &pw);
 			if (pw == NULL) {
-				yyerror("unkown user \"%s\"", $2->v);
+				yyerror("Unknown user `%s'", $2->v);
 				return -1;
 			}
 			lcconf->uid = pw->pw_uid;
@@ -299,7 +299,7 @@ privsep_stmt
 
 			(void)getgrnam_r($2->v, &grres, buf, sizeof(buf), &gr);
 			if (gr == NULL) {
-				yyerror("unkown group \"%s\"", $2->v);
+				yyerror("Unknown group `%s'", $2->v);
 				return -1;
 			}
 			lcconf->gid = gr->gr_gid;
