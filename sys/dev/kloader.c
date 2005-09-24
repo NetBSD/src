@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.4 2005/09/24 11:20:07 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2005/05/31 22:22:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.4 2005/09/24 11:20:07 peter Exp $");
 
 #include "debug_kloader.h"
 
@@ -162,7 +162,7 @@ kloader_reboot()
 	}
 
 	if (kloader.ops->reset != NULL) {
-		PRINTF("Reseting...\n");
+		PRINTF("Resetting...\n");
 		(*kloader.ops->reset)();
 	}
 	while (/*CONSTCOND*/1)
@@ -243,7 +243,7 @@ kloader_load()
 
 
 	/*
-	 * Calcurate memory size
+	 * Calculate memory size
 	 */
 	sz = 0;
 
