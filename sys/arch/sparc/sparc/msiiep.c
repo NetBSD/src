@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.29 2005/09/25 00:06:52 macallan Exp $ */
+/*	$NetBSD: msiiep.c,v 1.30 2005/09/25 21:57:02 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.29 2005/09/25 00:06:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.30 2005/09/25 21:57:02 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -253,30 +253,6 @@ msiiep_cpu_sleep(struct cpu_info *ci)
 	reg = *msiiep_mid;
 	*msiiep_mid = (reg & MID_MASK) | MID_STANDBY;
 }
-
-/*
- * Turn PCIC endian swapping on/off.  The kernel runs with endian
- * swapping turned on early in bootstrap(), but we need to turn it off
- * before we pass control to PROM's repl (e.g. in OF_enter and OF_exit).
- * PROM expects PCIC to be in little endian mode and would wedge if we
- * didn't turn endian swapping off.
- */
-void
-msiiep_swap_endian(int on)
-{
-	uint8_t pioctl;
-
-	pioctl = mspcic_read_1(pcic_pio_ctrl);
-	if (on)
-		pioctl |= MSIIEP_PIO_CTRL_BIG_ENDIAN;
-	else
-		pioctl &= ~MSIIEP_PIO_CTRL_BIG_ENDIAN;
-	mspcic_write_1(pcic_pio_ctrl, pioctl);
-
-	/* read it back to make sure transaction completed */
-	pioctl = mspcic_read_1(pcic_pio_ctrl);
-}
-
 
 
 /* ======================================================================
