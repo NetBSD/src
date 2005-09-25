@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.7 2005/09/17 12:40:28 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.8 2005/09/25 06:49:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -30,6 +30,9 @@
 #define IWI_CMD_RING_COUNT	16
 #define IWI_TX_RING_COUNT	64
 #define IWI_RX_RING_COUNT	32
+
+#define IWI_TX_DESC_SIZE	(sizeof (struct iwi_tx_desc))
+#define IWI_CMD_DESC_SIZE	(sizeof (struct iwi_cmd_desc))
 
 #define IWI_CSR_INTR		0x0008
 #define IWI_CSR_INTR_MASK	0x000c
