@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.44 2005/02/26 22:14:39 perry Exp $
+#	$NetBSD: vnode_if.src,v 1.45 2005/09/25 12:50:14 isaki Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -267,7 +267,7 @@ vop_fsync {
 
 #
 # Needs work: Is newoff right?  What's it mean?
-# XXX Locking prototocl?
+# XXX Locking protocol?
 #
 vop_seek {
 	IN struct vnode *vp;
