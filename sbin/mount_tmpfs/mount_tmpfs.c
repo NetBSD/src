@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.5 2005/09/25 08:11:50 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.6 2005/09/25 08:15:30 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.5 2005/09/25 08:11:50 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.6 2005/09/25 08:15:30 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -290,7 +290,8 @@ dehumanize_off(const char *str, off_t *size)
 {
 	char *ep, unit;
 	const char *delimit;
-	size_t len, multiplier, tmp;
+	long multiplier, tmp;
+	size_t len;
 
 	len = strlen(str);
 	if (len < 1)
@@ -329,8 +330,7 @@ dehumanize_off(const char *str, off_t *size)
 	tmp = strtol(str, &ep, 10);
 	if (str[0] == '\0' || (ep != delimit && *ep != '\0'))
 		return 0; /* Not a number. */
-	else if (errno == ERANGE &&
-	    (tmp == LONG_MAX || tmp == LONG_MIN))
+	else if (errno == ERANGE && (tmp == LONG_MAX || tmp == LONG_MIN))
 		return 0; /* Out of range. */
 
 	*size = tmp * multiplier;
