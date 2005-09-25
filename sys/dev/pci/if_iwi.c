@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.26 2005/09/25 11:55:05 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.27 2005/09/25 15:18:21 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.26 2005/09/25 11:55:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.27 2005/09/25 15:18:21 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1761,14 +1761,17 @@ static int
 iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 {
 	bus_dmamap_t map;
-	bus_dma_segment_t seg;
-	caddr_t virtaddr;
 	u_char *p, *end;
-	uint32_t sentinel, ctl, src, dst, sum, len, mlen;
+	uint32_t sentinel, ctl, sum;
+	uint32_t cs, sl, cd, cl;
 	int ntries, nsegs, error;
+	int sn;
 
-	/* Allocate DMA memory for storing firmware image */
-	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+
+	nsegs = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+
+	/* Create a DMA map memory for the firmware image */
+	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, size, 0,
 	    BUS_DMA_NOWAIT, &map);
 	if (error != 0) {
 		aprint_error("%s: could not create firmware DMA map\n",
@@ -1776,36 +1779,13 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 		goto fail1;
 	}
 
-	/*
-	 * We cannot map fw directly because of some hardware constraints on
-	 * the mapping address.
-	 */
-	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, map, fw, size, NULL,
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0) {
-		aprint_error("%s: could not allocate firmware DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: could not load fw dma map(%d)\n",
+		    sc->sc_dev.dv_xname, error);
 		goto fail2;
 	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, nsegs, size, &virtaddr,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not load firmware DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, map, virtaddr, size, NULL,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not load fw dma map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
-	/* Copy firmware image to DMA memory */
-	memcpy(virtaddr, fw, size);
 
 	/* Make sure the adapter will get up-to-date values */
 	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_PREWRITE);
@@ -1818,31 +1798,46 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	 * indirections. The adapter will read the firmware image through DMA
 	 * using information stored in command blocks.
 	 */
-	src = map->dm_segs[0].ds_addr;
-	p = virtaddr;
+	p = fw;
 	end = p + size;
 	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_ADDR, 0x27000);
 
+	sn = 0;
+	sl = cl = 0;
+	cs = cd = 0;
 	while (p < end) {
-		dst = GETLE32(p); p += 4; src += 4;
-		len = GETLE32(p); p += 4; src += 4;
-		p += len;
+		if (sl == 0) {
+			cs = map->dm_segs[sn].ds_addr;
+			sl = map->dm_segs[sn].ds_len;
+			sn++;
+		}
+		if (cl == 0) {
+			cd = GETLE32(p); p += 4; cs += 4; sl -= 4;
+			cl = GETLE32(p); p += 4; cs += 4; sl -= 4;
+		}
+		while (sl > 0 && cl > 0) {
+			int len = min(cl, sl);
 
-		while (len > 0) {
-			mlen = min(len, IWI_CB_MAXDATALEN);
+			sl -= len;
+			cl -= len;
+			p += len;
 
-			ctl = IWI_CB_DEFAULT_CTL | mlen;
-			sum = ctl ^ src ^ dst;
+			while (len > 0) {
+				int mlen = min(len, IWI_CB_MAXDATALEN);
 
-			/* Write a command block */
-			CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, ctl);
-			CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, src);
-			CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, dst);
-			CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, sum);
+				ctl = IWI_CB_DEFAULT_CTL | mlen;
+				sum = ctl ^ cs ^ cd;
 
-			src += mlen;
-			dst += mlen;
-			len -= mlen;
+				/* Write a command block */
+				CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, ctl);
+				CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, cs);
+				CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, cd);
+				CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, sum);
+
+				cs += mlen;
+				cd += mlen;
+				len -= mlen;
+			}
 		}
 	}
 
@@ -1866,7 +1861,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 		aprint_error("%s: timeout processing cb\n",
 		    sc->sc_dev.dv_xname);
 		error = EIO;
-		goto fail5;
+		goto fail2;
 	}
 
 	/* We're done with command blocks processing */
@@ -1884,16 +1879,17 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	if ((error = tsleep(sc, 0, "iwiinit", hz)) != 0) {
 		aprint_error("%s: timeout waiting for firmware initialization "
 		    "to complete\n", sc->sc_dev.dv_xname);
-		goto fail5;
+		goto fail3;
 	}
 
-fail5:	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
+fail3:
+	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, map);
-fail4:	bus_dmamem_unmap(sc->sc_dmat, virtaddr, size);
-fail3:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
-fail2:	bus_dmamap_destroy(sc->sc_dmat, map);
+fail2:
+	bus_dmamap_destroy(sc->sc_dmat, map);
 
-fail1:	return error;
+fail1:
+	return error;
 }
 
 /*
