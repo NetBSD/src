@@ -1,4 +1,4 @@
-/* $NetBSD: hash.c,v 1.3 2005/09/24 19:30:06 elad Exp $ */
+/* $NetBSD: hash.c,v 1.4 2005/09/25 22:20:59 elad Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -46,6 +46,15 @@
 #define	HASH_CTX	CONCAT(HASH_ALGORITHM,_CTX)
 #define	HASH_LEN	CONCAT(HASH_ALGORITHM,_DIGEST_LENGTH)
 #define	HASH_STRLEN	CONCAT(HASH_ALGORITHM,_DIGEST_STRING_LENGTH)
+
+#if !defined(_KERNEL) && defined(__weak_alias)
+#define	WA(a,b)	__weak_alias(a,b)
+WA(FNPREFIX(End),CONCAT(_,FNPREFIX(End)))
+WA(FNPREFIX(FileChunk),CONCAT(_,FNPREFIX(FileChunk)))
+WA(FNPREFIX(File),CONCAT(_,FNPREFIX(File)))
+WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
+#undef WA
+#endif
 
 char *
 FNPREFIX(End)(HASH_CTX *ctx, char *buf)

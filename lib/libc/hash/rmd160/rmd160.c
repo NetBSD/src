@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.2 2005/09/24 22:09:07 elad Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.3 2005/09/25 22:20:59 elad Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -94,6 +94,13 @@ static const u_char PADDING[64] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
+
+#ifdef __weak_alias
+__weak_alias(RMD160Init,_RMD160Init) 
+__weak_alias(RMD160Update,_RMD160Update)
+__weak_alias(RMD160Final,_RMD160Final)
+__weak_alias(RMD160Transform,_RMD160Transform)
+#endif
 
 void
 RMD160Init(RMD160_CTX *ctx)
