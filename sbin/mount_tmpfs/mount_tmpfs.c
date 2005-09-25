@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.6 2005/09/25 08:15:30 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.7 2005/09/25 18:55:51 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.6 2005/09/25 08:15:30 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.7 2005/09/25 18:55:51 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -229,10 +229,10 @@ dehumanize_group(const char *str, gid_t *gid)
 		error = 1;
 	} else {
 		char *ep;
-		long tmp;
+		unsigned long tmp;
 
 		errno = 0;
-		tmp = strtol(str, &ep, 10);
+		tmp = strtoul(str, &ep, 0);
 		if (str[0] == '\0' || *ep != '\0')
 			error = 0; /* Not a number. */
 		else if (errno == ERANGE &&
@@ -359,10 +359,10 @@ dehumanize_user(const char *str, uid_t *uid)
 		error = 1;
 	} else {
 		char *ep;
-		long tmp;
+		unsigned long tmp;
 
 		errno = 0;
-		tmp = strtol(str, &ep, 10);
+		tmp = strtoul(str, &ep, 0);
 		if (str[0] == '\0' || *ep != '\0')
 			error = 0; /* Not a number. */
 		else if (errno == ERANGE &&
