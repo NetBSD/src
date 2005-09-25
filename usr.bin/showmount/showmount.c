@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.14 2005/09/25 18:50:28 rpaulo Exp $	*/
+/*	$NetBSD: showmount.c,v 1.15 2005/09/25 18:56:33 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.14 2005/09/25 18:50:28 rpaulo Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.15 2005/09/25 18:56:33 rpaulo Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,15 +89,13 @@ static struct mountlist *mntdump;
 static struct exportslist *exports;
 static int type = 0;
 
-int	main __P((int, char **));
-void	print_dump __P((struct mountlist *));
-void	usage __P((void));
-int	xdr_mntdump __P((XDR *, struct mountlist **));
-int	xdr_exports __P((XDR *, struct exportslist **));
-int	tcp_callrpc __P((char *host,
-		     int prognum, int versnum, int procnum,
-		     xdrproc_t inproc, char *in,
-		     xdrproc_t outproc, char *out));
+int	main(int, char **);
+void	print_dump(struct mountlist *);
+void	usage(void);
+int	xdr_mntdump(XDR *, struct mountlist **);
+int	xdr_exports(XDR *, struct exportslist **);
+int	tcp_callrpc(const char *host, int prognum, int versnum, int procnum, 
+    xdrproc_t inproc, char *in, xdrproc_t outproc, char *out);
 
 /*
  * This command queries the NFS mount daemon for it's mount list and/or
@@ -107,9 +105,7 @@ int	tcp_callrpc __P((char *host,
  * for detailed information on the protocol.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct exportslist *exp;
 	struct grouplist *grp;
@@ -157,16 +153,16 @@ main(argc, argv)
 
 	if (rpcs & DODUMP)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			RPCMNT_DUMP, xdr_void, (char *)0,
-			xdr_mntdump, (char *)&mntdump)) != 0) {
+			 RPCMNT_DUMP, xdr_void, (char *)0,
+			 xdr_mntdump, (char *)&mntdump)) != 0) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
 			clnt_perrno(estat);
 			exit(1);
 		}
 	if (rpcs & DOEXPORTS)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			RPCMNT_EXPORT, xdr_void, (char *)0,
-			xdr_exports, (char *)&exports)) != 0) {
+			 RPCMNT_EXPORT, xdr_void, (char *)0,
+			 xdr_exports, (char *)&exports)) != 0) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
 			clnt_perrno(estat);
 			exit(1);
@@ -217,15 +213,8 @@ main(argc, argv)
  */
 
 int 
-tcp_callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
-	char *host;
-	int prognum;
-	int versnum;
-	int procnum;
-	xdrproc_t inproc;
-	char *in;
-	xdrproc_t outproc;
-	char *out;
+tcp_callrpc(const char *host, int prognum, int versnum, int procnum,
+    xdrproc_t inproc, char *in, xdrproc_t outproc, char *out)
 {
 	CLIENT *client;
 	struct timeval timeout;
@@ -249,9 +238,7 @@ tcp_callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
  * Xdr routine for retrieving the mount dump list
  */
 int
-xdr_mntdump(xdrsp, mlp)
-	XDR *xdrsp;
-	struct mountlist **mlp;
+xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 {
 	struct mountlist *mp, **otp, *tp;
 	int bool, val, val2;
@@ -329,9 +316,7 @@ next:
  * Xdr routine to retrieve exports list
  */
 int
-xdr_exports(xdrsp, exp)
-	XDR *xdrsp;
-	struct exportslist **exp;
+xdr_exports(XDR *xdrsp, struct exportslist **exp)
 {
 	struct exportslist *ep;
 	struct grouplist *gp;
@@ -383,8 +368,7 @@ usage()
  * Print the binary tree in inorder so that output is sorted.
  */
 void
-print_dump(mp)
-	struct mountlist *mp;
+print_dump(struct mountlist *mp)
 {
 
 	if (mp == NULL)
