@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.13 2004/08/06 16:10:54 mycroft Exp $	*/
+/*	$NetBSD: showmount.c,v 1.14 2005/09/25 18:50:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.13 2004/08/06 16:10:54 mycroft Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.14 2005/09/25 18:50:28 rpaulo Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -227,43 +227,12 @@ tcp_callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	xdrproc_t outproc;
 	char *out;
 {
-	struct hostent *hp;
-	struct sockaddr_in server_addr;
 	CLIENT *client;
-	int sock;	
 	struct timeval timeout;
 	int rval;
-	
-	hp = gethostbyname(host);
 
-	if (!hp)
-		return ((int) RPC_UNKNOWNHOST);
-
-	memset(&server_addr,0,sizeof(server_addr));
-	memcpy((char *) &server_addr.sin_addr,
-	       hp->h_addr,
-	       hp->h_length);
-	server_addr.sin_len = sizeof(struct sockaddr_in);
-	server_addr.sin_family =AF_INET;
-	server_addr.sin_port = 0;
-			
-	sock = RPC_ANYSOCK;
-			
-	client = clnttcp_create(&server_addr,
-				(u_long) prognum,
-				(u_long) versnum, &sock, 0, 0);
-	if (!client) {
-		timeout.tv_sec = 5;
-		timeout.tv_usec = 0;
-		server_addr.sin_port = 0;
-		sock = RPC_ANYSOCK;
-		client = clntudp_create(&server_addr,
-					(u_long) prognum,
-					(u_long) versnum,
-					timeout,
-					&sock);
-	}
-	if (!client)
+	if ((client = clnt_create(host, prognum, versnum, "tcp")) == NULL &&
+	    (client = clnt_create(host, prognum, versnum, "udp")) == NULL)
 		return ((int) rpc_createerr.cf_stat);
 
 	timeout.tv_sec = 25;
