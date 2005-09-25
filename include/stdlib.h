@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.71 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.72 2005/09/25 20:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -111,6 +111,7 @@ div_t	 div(int, int);
 __dead	 void exit(int) __attribute__((__noreturn__));
 void	 free(void *);
 __aconst char *getenv(const char *);
+int	 getenv_r(const char *, char *, size_t);
 __pure long
 	 labs(long);
 ldiv_t	 ldiv(long, long);
