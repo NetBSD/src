@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.9 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.10 2005/09/25 21:17:05 jmmv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
  */
 struct msdosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	compat_export_args _pad1; /* compat with old userland tools */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */

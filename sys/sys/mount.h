@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.132 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: mount.h,v 1.133 2005/09/25 21:17:05 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -242,12 +242,12 @@ void	vfs_hooks_unmount(struct mount *);
  * instance of this structure in their mount arguments structure, thus
  * needing a padding in place of the old values.  This definition cannot
  * change in the future due to this reason.
- * XXX: We could drop this structure if we are able to version all other
- * structures used as mount arguments.
+ * XXX: This should be moved to the compat subtree but cannot be done
+ * until we can move the mount args structures themselves.
  *
  * The current export_args structure can be found in nfs/nfs.h.
  */
-struct compat_export_args {
+struct export_args30 {
 	int	ex_flags;		/* export related flags */
 	uid_t	ex_root;		/* mapping for root uid */
 	struct	uucred ex_anon;		/* mapping for anonymous user */
