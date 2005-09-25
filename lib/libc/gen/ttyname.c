@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.21 2005/09/25 20:08:01 christos Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.22 2005/09/25 20:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.21 2005/09/25 20:08:01 christos Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.22 2005/09/25 20:43:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,9 +59,9 @@ __weak_alias(ttyname,_ttyname)
 __weak_alias(ttyname_r,_ttyname_r)
 #endif
 
-static char *oldttyname(const struct stat *, char *, size_t);
+static int oldttyname(const struct stat *, char *, size_t);
 
-char *
+int
 ttyname_r(int fd, char *buf, size_t len)
 {
 	struct stat sb;
@@ -79,24 +79,24 @@ ttyname_r(int fd, char *buf, size_t len)
 
 	if (len <= DEVSZ) {
 		errno = ERANGE;
-		return NULL;
+		return -1;
 	}
 
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
 		if (strlcpy(buf, ptm.sn, len) >= len) {
 			errno = ERANGE;
-			return NULL;
+			return -1;
 		}
-		return buf;
+		return 0;
 	}
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)
-		return NULL;
+		return -1;
 
 	/* Must be a character device. */
 	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
-		return NULL;
+		return -1;
 
 	(void)memcpy(buf, _PATH_DEV, DEVSZ);
 	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) != NULL) {
@@ -108,18 +108,18 @@ ttyname_r(int fd, char *buf, size_t len)
 		if (!(db->get)(db, &key, &data, 0)) {
 			if (len - DEVSZ <= data.size) {
 				errno = ERANGE;
-				return NULL;
+				return -1;
 			}
 			(void)memcpy(buf + DEVSZ, data.data, data.size);
 			(void)(db->close)(db);
-			return buf;
+			return 0;
 		}
 		(void)(db->close)(db);
 	}
 	return oldttyname(&sb, buf, len);
 }
 
-static char *
+static int
 oldttyname(const struct stat *sb, char *buf, size_t len)
 {
 	struct dirent *dirp;
@@ -130,7 +130,7 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 	_DIAGASSERT(sb != NULL);
 
 	if ((dp = opendir(_PATH_DEV)) == NULL)
-		return NULL;
+		return -1;
 
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_fileno != sb->st_ino)
@@ -142,22 +142,27 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 			 * fit
 			 */
 			errno = ERANGE;
-			return NULL;
+			return -1;
 		}
 		(void)memcpy(buf + DEVSZ, dirp->d_name, dlen);
 		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
 		    sb->st_ino != dsb.st_ino)
 			continue;
 		(void)closedir(dp);
-		return buf;
+		return 0;
 	}
 	(void)closedir(dp);
-	return NULL;
+	/*
+	 * XXX: Documented by TOG to return EBADF or ENOTTY only; neither are
+	 * applicable here.
+	 */
+	errno = ENOENT;
+	return -1;
 }
 
 char *
 ttyname(int fd)
 {
 	static char buf[MAXPATHLEN];
-	return ttyname_r(fd, buf, sizeof(buf));
+	return ttyname_r(fd, buf, sizeof(buf)) == -1 ? NULL : buf;
 }
