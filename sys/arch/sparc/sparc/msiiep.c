@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.30 2005/09/25 21:57:02 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.31 2005/09/25 23:14:06 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.30 2005/09/25 21:57:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.31 2005/09/25 23:14:06 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -62,13 +62,20 @@ __KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.30 2005/09/25 21:57:02 uwe Exp $");
  * but I'd rather insulate the rest of the source from ms-IIep quirks.
  */
 
-/* parent "stub" device that knows how to attach various functions */
+/*
+ * "Stub" ms-IIep parent that knows how to attach various functions.
+ */
 static int	msiiep_match(struct device *, struct cfdata *, void *);
 static void	msiiep_attach(struct device *, struct device *, void *);
-/* static int	msiiep_print(void *, const char *); */
 
 CFATTACH_DECL(msiiep, sizeof(struct device),
     msiiep_match, msiiep_attach, NULL, NULL);
+
+
+/* sleep in idle spin */
+static void	msiiep_cpu_sleep(struct cpu_info *);
+volatile uint32_t *msiiep_mid = NULL;
+
 
 /*
  * The real thing.
@@ -79,6 +86,7 @@ static int	mspcic_print(void *, const char *);
 
 CFATTACH_DECL(mspcic, sizeof(struct mspcic_softc),
     mspcic_match, mspcic_attach, NULL, NULL);
+
 
 /**
  * Only one PCI controller per MS-IIep and only one MS-IIep per system
@@ -136,8 +144,23 @@ static paddr_t	mspcic_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static void	*mspcic_intr_establish(bus_space_tag_t, int, int,
 				       int (*)(void *), void *, void (*)(void));
 
+/* bus space methods that do byteswapping */
+static uint16_t	mspcic_bus_read_2(bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t);
+static uint32_t	mspcic_bus_read_4(bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t);
+static uint64_t	mspcic_bus_read_8(bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t);
+static void	mspcic_bus_write_2(bus_space_tag_t, bus_space_handle_t,
+				   bus_size_t, uint16_t);
+static void	mspcic_bus_write_4(bus_space_tag_t, bus_space_handle_t,
+				   bus_size_t, uint32_t);
+static void	mspcic_bus_write_8(bus_space_tag_t, bus_space_handle_t,
+				   bus_size_t, uint64_t);
+
 static struct sparc_bus_space_tag mspcic_io_tag;
 static struct sparc_bus_space_tag mspcic_mem_tag;
+
 
 /*
  * DMA tag
@@ -147,9 +170,6 @@ static int	mspcic_dmamap_load(bus_dma_tag_t, bus_dmamap_t,
 static void	mspcic_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 static int	mspcic_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
 				  int, size_t, caddr_t *, int);
-
-volatile uint32_t *msiiep_mid = NULL;
-void 		msiiep_cpu_sleep(struct cpu_info *);
 
 static struct sparc_bus_dma_tag mspcic_dma_tag = {
 	NULL,			/* _cookie */
@@ -169,19 +189,6 @@ static struct sparc_bus_dma_tag mspcic_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
-
-static uint16_t mspcic_bus_read_2(bus_space_tag_t, bus_space_handle_t, 
-    bus_size_t);
-static uint32_t mspcic_bus_read_4(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t);
-static uint64_t mspcic_bus_read_8(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t);
-static void mspcic_bus_write_2(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t,	uint16_t);
-static void mspcic_bus_write_4(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t, uint32_t);
-static void mspcic_bus_write_8(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t, uint64_t);
 
 
 static int
@@ -260,56 +267,6 @@ msiiep_cpu_sleep(struct cpu_info *ci)
  *		      Real ms-IIep PCIC driver.
  */
  
-static uint16_t
-mspcic_bus_read_2(bus_space_tag_t space, bus_space_handle_t handle,
-    bus_size_t offset)
-{
-	uint16_t val = *(volatile uint16_t *)(handle + offset);
-	return le16toh(val);
-}
-
-static uint32_t
-mspcic_bus_read_4(bus_space_tag_t space, bus_space_handle_t handle,
-    bus_size_t offset)
-{
-	uint32_t val = *(volatile uint32_t *)(handle + offset);
-	
-	return le32toh(val);
-}
-
-static uint64_t
-mspcic_bus_read_8(bus_space_tag_t space, bus_space_handle_t handle,
-    bus_size_t offset)
-{
-	uint64_t val = *(volatile uint64_t *)(handle + offset);
-	
-	return le64toh(val);
-}
-
-static void
-mspcic_bus_write_2(bus_space_tag_t space, bus_space_handle_t handle, 
-    bus_size_t offset, uint16_t value)
-{
-
-	(*(volatile uint16_t *)(handle + offset)) = htole16(value);
-}
-
-static void
-mspcic_bus_write_4(bus_space_tag_t space, bus_space_handle_t handle,
-    bus_size_t offset, uint32_t value)
-{
-
-	(*(volatile uint32_t *)(handle + offset)) = htole32(value);
-}
-
-static void
-mspcic_bus_write_8(bus_space_tag_t space, bus_space_handle_t handle,
-    bus_size_t offset, uint64_t value)
-{
-
-	(*(volatile uint64_t *)(handle + offset)) = htole64(value);
-}
-
 static int
 mspcic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -430,6 +387,7 @@ mspcic_assigned_interrupt(int line)
 	}
 	return ((intrmap >> (line * 4)) & 0xf);
 }
+
 
 /* ======================================================================
  *
@@ -608,6 +566,63 @@ mspcic_intr_establish(bus_space_tag_t t, int line, int ipl,
 	intr_establish(pil, ipl, ih, fastvec);
 
 	return(ih);
+}
+
+
+static uint16_t
+mspcic_bus_read_2(bus_space_tag_t space, bus_space_handle_t handle,
+		  bus_size_t offset)
+{
+	uint16_t val = *(volatile uint16_t *)(handle + offset);
+
+	return le16toh(val);
+}
+
+
+static uint32_t
+mspcic_bus_read_4(bus_space_tag_t space, bus_space_handle_t handle,
+		  bus_size_t offset)
+{
+	uint32_t val = *(volatile uint32_t *)(handle + offset);
+	
+	return le32toh(val);
+}
+
+
+static uint64_t
+mspcic_bus_read_8(bus_space_tag_t space, bus_space_handle_t handle,
+		  bus_size_t offset)
+{
+	uint64_t val = *(volatile uint64_t *)(handle + offset);
+	
+	return le64toh(val);
+}
+
+
+static void
+mspcic_bus_write_2(bus_space_tag_t space, bus_space_handle_t handle, 
+		   bus_size_t offset, uint16_t value)
+{
+
+	(*(volatile uint16_t *)(handle + offset)) = htole16(value);
+}
+
+
+static void
+mspcic_bus_write_4(bus_space_tag_t space, bus_space_handle_t handle,
+		   bus_size_t offset, uint32_t value)
+{
+
+	(*(volatile uint32_t *)(handle + offset)) = htole32(value);
+}
+
+
+static void
+mspcic_bus_write_8(bus_space_tag_t space, bus_space_handle_t handle,
+		   bus_size_t offset, uint64_t value)
+{
+
+	(*(volatile uint64_t *)(handle + offset)) = htole64(value);
 }
 
 
