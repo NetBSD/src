@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.3 2005/09/23 15:36:16 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.4 2005/09/25 08:08:12 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,11 +39,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.3 2005/09/23 15:36:16 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.4 2005/09/25 08:08:12 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 
 #include <fs/tmpfs/tmpfs.h>
 
@@ -53,6 +54,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.3 2005/09/23 15:36:16 jmmv Exp $");
 #include <grp.h>
 #include <mntopts.h>
 #include <pwd.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,10 +82,15 @@ int
 mount_tmpfs(int argc, char *argv[])
 {
 	char canon_dir[MAXPATHLEN];
+	bool gidset, modeset, uidset;
 	int ch, mntflags;
+	gid_t gid;
+	uid_t uid;
+	mode_t mode;
 	off_t offtmp;
 	mntoptparse_t mo;
 	struct tmpfs_args args;
+	struct stat sb;
 
 	setprogname(argv[0]);
 
@@ -91,28 +98,31 @@ mount_tmpfs(int argc, char *argv[])
 	args.ta_version = TMPFS_ARGS_VERSION;
 	args.ta_size_max = 0;
 	args.ta_nodes_max = 0;
-	args.ta_root_uid = getuid();
-	args.ta_root_gid = getgid();
-	args.ta_root_mode = 0755;
 	mntflags = 0;
+
+	gidset = false; gid = 0;
+	uidset = false; uid = 0;
+	modeset = false; mode = 0;
 
 	optind = optreset = 1;
 	while ((ch = getopt(argc, argv, "g:m:n:o:s:u:")) != -1 ) {
 		switch (ch) {
 		case 'g':
-			if (!dehumanize_group(optarg, &args.ta_root_gid)) {
+			if (!dehumanize_group(optarg, &gid)) {
 				errx(EXIT_FAILURE, "failed to parse group "
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
+			gidset = true;
 			break;
 
 		case 'm':
-			if (!dehumanize_mode(optarg, &args.ta_root_mode)) {
+			if (!dehumanize_mode(optarg, &mode)) {
 				errx(EXIT_FAILURE, "failed to parse mode "
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
+			modeset = true;
 			break;
 
 		case 'n':
@@ -139,11 +149,12 @@ mount_tmpfs(int argc, char *argv[])
 			break;
 
 		case 'u':
-			if (!dehumanize_user(optarg, &args.ta_root_uid)) {
+			if (!dehumanize_user(optarg, &uid)) {
 				errx(EXIT_FAILURE, "failed to parse user "
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
+			uidset = true;
 			break;
 
 		case '?':
@@ -169,6 +180,14 @@ mount_tmpfs(int argc, char *argv[])
 		warnx("\"%s\" is a relative path", argv[0]);
 		warnx("using \"%s\" instead", canon_dir);
 	}
+
+	if (stat(canon_dir, &sb) == -1) {
+		err(EXIT_FAILURE, "cannot stat");
+		/* NOTREACHED */
+	}
+	args.ta_root_uid = uidset ? uid : sb.st_uid;
+	args.ta_root_gid = gidset ? gid : sb.st_gid;
+	args.ta_root_mode = modeset ? mode : sb.st_mode;
 
 	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args)) {
 		err(EXIT_FAILURE, "tmpfs on %s", canon_dir);
