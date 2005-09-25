@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.106 2005/08/07 20:32:58 veego Exp $	*/
+/*	$NetBSD: namespace.h,v 1.107 2005/09/25 20:08:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #define fseeko		_fseeko
 #define ftello		_ftello
 #define getcontext	_getcontext
+#define getenv_r	_getenv_r
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
@@ -542,6 +543,7 @@
 #define timeoff			_timeoff
 #define times			_times
 #define ttyname			_ttyname
+#define ttyname_r		_ttyname_r
 #define ttyslot			_ttyslot
 #define tzname			_tzname
 #define tzset			_tzset

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyname.3,v 1.16 2004/11/11 00:57:57 wiz Exp $
+.\"	$NetBSD: ttyname.3,v 1.17 2005/09/25 20:08:01 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)ttyname.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 11, 2004
+.Dd September 25, 2005
 .Dt TTYNAME 3
 .Os
 .Sh NAME
 .Nm ttyname ,
+.Nm ttyname_r ,
 .Nm isatty ,
 .Nm ttyslot
 .Nd get name of associated terminal (tty) from file descriptor
@@ -43,6 +44,8 @@
 .In unistd.h
 .Ft char *
 .Fn ttyname "int fd"
+.Ft char *
+.Fn ttyname_r "int fd" "char *buf" "size_t len"
 .Ft int
 .Fn isatty "int fd"
 .In stdlib.h
@@ -81,6 +84,14 @@ gets the related device name of
 a file descriptor for which
 .Fn isatty
 is true.
+The
+.Fn ttyname_r
+is the reentrant version of the above, and it places the results in
+.Fa buf .
+If there is not enough space to place the results (indicated by
+.Fa len ),
+then it returns
+.Dv NULL .
 .Pp
 The
 .Fn ttyslot
@@ -98,8 +109,10 @@ device without requiring one to enumerate all of them in
 .Sh RETURN VALUES
 The
 .Fn ttyname
-function
-returns the null terminated name if the device is found and
+and
+.Fn ttyname_r
+functions
+return the NUL terminated name if the device is found and
 .Fn isatty
 is true; otherwise
 a
@@ -128,7 +141,8 @@ the value zero is returned.
 .El
 .Sh ERRORS
 The
-.Fn ttyname
+.Fn ttyname , 
+.Fn ttyname_r ,
 and
 .Fn isatty
 functions will fail if:
@@ -141,6 +155,13 @@ argument is not a valid file descriptor.
 The
 .Fa fd
 argument does not refer to a terminal device.
+.El
+The
+.Fn ttyname_r
+function will also fail if:
+.Bl -tag -width Er
+.It Bq Er ERANGE
+The buffer provided is not large enough to fit the result.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,

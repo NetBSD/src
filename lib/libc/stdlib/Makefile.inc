@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.60 2005/09/13 01:44:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.61 2005/09/25 20:08:01 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -36,6 +36,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
+MLINKS+=getenv.3 getenv_r.3
 MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+=insque.3 remque.3
 MLINKS+=lsearch.3 lfind.3

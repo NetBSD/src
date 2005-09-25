@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.145 2005/09/13 01:44:09 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.146 2005/09/25 20:08:01 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -134,7 +134,7 @@ MLINKS+=sysctl.3 sysctlbyname.3 sysctl.3 sysctlgetmibinfo.3 \
 	sysctl.3 sysctlnametomib.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
-MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
+MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
 MLINKS+=unvis.3 strunvis.3
 MLINKS+=vis.3 svis.3 vis.3 strvis.3 vis.3 strvisx.3 vis.3 strsvis.3 \
 	vis.3 strsvisx.3
