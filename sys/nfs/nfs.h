@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.50 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: nfs.h,v 1.51 2005/09/25 21:57:40 jmmv Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -168,6 +168,9 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * Export arguments for local filesystem mount calls.
  * Keep in mind that changing this structure modifies nfssvc(2)'s ABI (see
  * 'struct mountd_exports_list' below).
+ * When modifying this structure, take care to also edit the
+ * nfs_update_exports_30 function in nfs_export.c accordingly to convert
+ * export_args to export_args30.
  */
 struct export_args {
 	int	ex_flags;		/* export related flags */

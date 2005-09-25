@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.2 2005/09/23 19:39:15 jmmv Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,8 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.2 2005/09/23 19:39:15 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -344,6 +345,55 @@ nfs_check_export(struct mount *mp, struct mbuf *mb, int *wh,
 
 	return np == NULL ? EACCES : 0;
 }
+
+#ifdef COMPAT_30
+/*
+ * Handles legacy export requests.  In this case, the export information
+ * is hardcoded in a specific place of the mount arguments structure (given
+ * in data); the request for an update is given through the fspec field
+ * (also in a known location), which must be a null pointer.
+ *
+ * Returns EJUSTRETURN if the given command was not a export request.
+ * Otherwise, returns 0 on success or an appropriate error code otherwise.
+ */
+int
+nfs_update_exports_30(struct mount *mp, const char *path, void *data,
+    struct proc *p)
+{
+	int error;
+	struct {
+		const char *fspec;
+		struct export_args30 eargs;
+	} args;
+	struct mountd_exports_list mel;
+
+	mel.mel_path = path;
+
+	error = copyin(data, &args, sizeof(args));
+	if (error != 0)
+		return EJUSTRETURN;
+
+	if (args.fspec != NULL)
+		return EJUSTRETURN;
+
+	if (mp->mnt_flag & 0x00020000) {
+		/* Request to delete exports.  The mask above holds the
+		 * value that used to be in MNT_DELEXPORT. */
+		mel.mel_nexports = 0;
+	} else {
+		struct export_args eargs;
+
+		/* The following assumes export_args has not changed since
+		 * export_args30. */
+		memcpy(&eargs, &args.eargs, sizeof(struct export_args));
+
+		mel.mel_nexports = 1;
+		mel.mel_exports = &eargs;
+	}
+
+	return mountd_set_exports_list(&mel, p);
+}
+#endif
 
 /*
  * INTERNAL FUNCTIONS
