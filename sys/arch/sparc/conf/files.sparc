@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.134 2005/07/10 17:02:19 christos Exp $
+#	$NetBSD: files.sparc,v 1.135 2005/09/25 00:06:14 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -105,6 +105,10 @@ attach cpu at mainbus with cpu_mainbus
 attach cpu at cpuunit with cpu_cpuunit
 file	arch/sparc/sparc/cpu.c
 
+device clkctrl
+attach clkctrl at obio
+file	arch/sparc/sparc/clkctrl.c		clkctrl
+
 device memreg
 attach memreg at mainbus with memreg_mainbus
 attach memreg at obio with memreg_obio
@@ -155,7 +159,6 @@ file	arch/sparc/dev/ts102.c			tslot
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
-
 
 #
 # Console related stuff
