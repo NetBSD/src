@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.17 2003/08/07 16:43:39 agc Exp $	*/
+/*	$NetBSD: getenv.c,v 1.18 2005/09/25 20:08:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.17 2003/08/07 16:43:39 agc Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.18 2005/09/25 20:08:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -50,13 +51,17 @@ rwlock_t __environ_lock = RWLOCK_INITIALIZER;
 #endif
 extern char **environ;
 
+__weak_alias(getenv_r, _getenv_r)
+
 /*
  * getenv --
  *	Returns ptr to value associated with name, if any, else NULL.
+ *	XXX: we cannot use getenv_r to implement this, because getenv()
+ *	cannot use a shared buffer, because if it did, subsequent calls
+ *	to getenv would trash previous results.
  */
 char *
-getenv(name)
-	const char *name;
+getenv(const char *name)
 {
 	int offset;
 	char *result;
@@ -66,7 +71,32 @@ getenv(name)
 	rwlock_rdlock(&__environ_lock);
 	result = __findenv(name, &offset);
 	rwlock_unlock(&__environ_lock);
-	return (result);
+	return result;
+}
+
+int
+getenv_r(const char *name, char *buf, size_t len)
+{
+	int offset;
+	char *result;
+	int rv = -1;
+
+	_DIAGASSERT(name != NULL);
+
+	rwlock_rdlock(&__environ_lock);
+	result = __findenv(name, &offset);
+	if (result == NULL) {
+		errno = ENOENT;
+		goto out;
+	}
+	if (strlcpy(buf, result, len) >= len) {
+		errno = ERANGE;
+		goto out;
+	}
+	rv = 0;
+out:
+	rwlock_unlock(&__environ_lock);
+	return rv;
 }
 
 /*
@@ -79,23 +109,21 @@ getenv(name)
  *	This routine *should* be a static; don't use it.
  */
 char *
-__findenv(name, offset)
-	const char *name;
-	int *offset;
+__findenv(const char *name, int *offset)
 {
 	size_t len;
 	const char *np;
 	char **p, *c;
 
 	if (name == NULL || environ == NULL)
-		return (NULL);
+		return NULL;
 	for (np = name; *np && *np != '='; ++np)
 		continue;
 	len = np - name;
 	for (p = environ; (c = *p) != NULL; ++p)
 		if (strncmp(c, name, len) == 0 && c[len] == '=') {
 			*offset = p - environ;
-			return (c + len + 1);
+			return c + len + 1;
 		}
-	return (NULL);
+	return NULL;
 }
