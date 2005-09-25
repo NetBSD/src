@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.23 2005/02/04 16:14:21 perry Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.24 2005/09/25 14:34:54 elad Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.23 2005/02/04 16:14:21 perry Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.24 2005/09/25 14:34:54 elad Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@ __RCSID("$NetBSD: skeysubr.c,v 1.23 2005/02/04 16:14:21 perry Exp $");
 
 #include <md4.h>
 #include <md5.h>
-#include <rmd160.h>
+#include <crypto/rmd160.h>
 #include <sha1.h>
 
 #include "skey.h"
