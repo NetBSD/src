@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.9 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: layer.h,v 1.10 2005/09/25 21:17:05 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
 
 struct layer_args {
 	char	*target;		/* Target of loopback  */
-	struct compat_export_args _pad1; /* compat with old userland tools */
+	struct export_args30 _pad1; /* compat with old userland tools */
 };
 
 #ifdef _KERNEL

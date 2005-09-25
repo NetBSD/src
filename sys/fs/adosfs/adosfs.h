@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.6 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.7 2005/09/25 21:17:05 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,7 +36,7 @@
  */
 struct adosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	compat_export_args _pad1; /* compat with old userland tools */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;		/* uid that owns adosfs files */
 	gid_t	gid;		/* gid that owns adosfs files */
 	mode_t	mask;		/* mask to be applied for adosfs perms */
