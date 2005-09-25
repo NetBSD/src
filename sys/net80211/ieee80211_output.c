@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.37 2005/08/21 00:07:57 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.38 2005/09/25 00:04:01 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.37 2005/08/21 00:07:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.38 2005/09/25 00:04:01 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -249,8 +249,8 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, struct ieee80211_nod
 	v_wme_ac = 0;
 	if (ni->ni_vlan != 0) {
 		/* XXX used to check ec_nvlans. */
-		 struct m_tag *mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
-		 if (mtag == NULL) {
+		struct m_tag *mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
+		if (mtag == NULL) {
 			IEEE80211_NODE_STAT(ni, tx_novlantag);
 			return 1;
 		}
