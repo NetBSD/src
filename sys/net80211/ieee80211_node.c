@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.43 2005/07/26 23:07:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.44 2005/09/25 00:03:06 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.48 2005/07/06 01:51:44 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.43 2005/07/26 23:07:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.44 2005/09/25 00:03:06 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -106,7 +106,6 @@ MALLOC_DEFINE(M_80211_NODE, "80211node", "802.11 node state");
 void
 ieee80211_node_attach(struct ieee80211com *ic)
 {
-	u_long sz;
 
 	ieee80211_node_table_init(ic, &ic->ic_sta, "station",
 		IEEE80211_INACT_INIT, ieee80211_timeout_stations);
@@ -139,8 +138,9 @@ ieee80211_node_attach(struct ieee80211com *ic)
 	}
 
 	/* XXX defer until using hostap/ibss mode */
-	ic->ic_tim_len = sz = howmany(ic->ic_max_aid, 8) * sizeof(u_int8_t);
-	MALLOC(ic->ic_tim_bitmap, u_int8_t *, sz, M_DEVBUF, M_NOWAIT | M_ZERO);
+	ic->ic_tim_len = howmany(ic->ic_max_aid, 8) * sizeof(u_int8_t);
+	MALLOC(ic->ic_tim_bitmap, u_int8_t *, ic->ic_tim_len,
+		M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_tim_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for TIM bitmap!\n", __func__);
@@ -420,11 +420,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		/* XXX recovery? */
 		return;
 	}
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-	    (ic->ic_flags & IEEE80211_F_DESBSSID) != 0)
-		IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_des_bssid);
-	else
-		IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
 	ni->ni_esslen = ic->ic_des_esslen;
 	memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
 	copy_bss(ni, ic->ic_bss);
@@ -441,7 +437,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		if (ic->ic_flags & IEEE80211_F_DESBSSID)
 			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_des_bssid);
 		else
-		ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
+			ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
 	}
 	/* 
 	 * Fix the channel and related attributes.
