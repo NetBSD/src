@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.54 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.55 2005/09/25 04:16:22 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.54 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.55 2005/09/25 04:16:22 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: tape.c,v 1.54 2005/08/19 02:07:19 christos Exp $");
 #include <unistd.h>
 
 #include <md5.h>
-#include <rmd160.h>
+#include <crypto/rmd160.h>
 #include <sha1.h>
 
 #include "restore.h"
