@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.90 2005/09/24 22:30:15 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.91 2005/09/25 20:49:43 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.90 2005/09/24 22:30:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.91 2005/09/25 20:49:43 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -402,7 +402,6 @@ void
 nmi_hard_msiiep(void)
 {
 	uint32_t si;
-	int byteswap;
 	char bits[128];
 	int fatal = 0;
 
