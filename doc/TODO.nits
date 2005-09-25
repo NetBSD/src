@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.nits,v 1.7 2005/09/25 17:53:33 rpaulo Exp $
+#	$NetBSD: TODO.nits,v 1.8 2005/09/25 18:59:50 rpaulo Exp $
 #
 # This file documents small nits in our code (often marked in comments
 # with /* XXX */) and similar "small fixes needed" so that they will not
@@ -32,4 +32,3 @@
     necessary for nfsv4 to nfs_args (so that we bump the args version
     only once). Make NFSMNT_NOAC read/write data without cacheing too.
 2005-09-24 (christos) remove __HAVE_SIGINFO; everyone has it.
-2005-09-24 (rpaulo) showmount(8) should understand IPv6.
