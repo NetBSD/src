@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.231 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.232 2005/09/25 21:57:40 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.231 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.232 2005/09/25 21:57:40 jmmv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -70,6 +70,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.231 2005/09/23 12:10:33 jmmv Exp 
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+
+#ifdef COMPAT_30
+#include "opt_nfsserver.h"
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfs_var.h>
+#endif
 
 #if NFSS > 0
 #include <dev/fssvar.h>
@@ -345,6 +353,22 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
+#if defined(COMPAT_30) && defined(NFSSERVER)
+		if (mp->mnt_flag & MNT_UPDATE && error != 0) {
+			int error2;
+
+			/* Update failed; let's try and see if it was an
+			 * export request. */
+			error2 = nfs_update_exports_30(mp, SCARG(uap, path),
+			    SCARG(uap, data), p);
+
+			/* Only update error code if the export request was
+			 * understood but some problem occurred while
+			 * processing it. */
+			if (error2 != EJUSTRETURN)
+				error = error2;
+		}
+#endif
 		if (mp->mnt_iflag & IMNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
 		if (error)
