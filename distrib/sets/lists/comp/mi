@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.819 2005/09/25 14:27:26 elad Exp $
+#	$NetBSD: mi,v 1.820 2005/09/25 20:11:03 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3196,6 +3196,7 @@
 ./usr/share/man/cat3/getdomainname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdtablesize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getenv.0			comp-c-catman		.cat
+./usr/share/man/cat3/getenv_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getfsent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getfsfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getfsspec.0		comp-c-catman		.cat
@@ -3994,6 +3995,7 @@
 ./usr/share/man/cat3/pam_get_item.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_get_user.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_getenvlist.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_info.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_open_session.0		comp-c-catman		.cat,pam
@@ -4603,6 +4605,7 @@
 ./usr/share/man/cat3/ttylock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttymsg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyname.0			comp-c-catman		.cat
+./usr/share/man/cat3/ttyname_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ttyslot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyunlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/twalk.0			comp-c-catman		.cat
@@ -7112,6 +7115,7 @@
 ./usr/share/man/man3/getdomainname.3		comp-c-man		.man
 ./usr/share/man/man3/getdtablesize.3		comp-c-man		.man
 ./usr/share/man/man3/getenv.3			comp-c-man		.man
+./usr/share/man/man3/getenv_r.3			comp-c-man		.man
 ./usr/share/man/man3/getfsent.3			comp-c-man		.man
 ./usr/share/man/man3/getfsfile.3		comp-c-man		.man
 ./usr/share/man/man3/getfsspec.3		comp-c-man		.man
@@ -8515,6 +8519,7 @@
 ./usr/share/man/man3/ttylock.3			comp-c-man		.man
 ./usr/share/man/man3/ttymsg.3			comp-c-man		.man
 ./usr/share/man/man3/ttyname.3			comp-c-man		.man
+./usr/share/man/man3/ttyname_r.3		comp-c-man		.man
 ./usr/share/man/man3/ttyslot.3			comp-c-man		.man
 ./usr/share/man/man3/ttyunlock.3		comp-c-man		.man
 ./usr/share/man/man3/twalk.3			comp-c-man		.man
