@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.107 2005/09/25 20:08:01 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.108 2005/09/25 22:20:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -78,17 +78,33 @@
 #define warnx		_warnx
 
 #ifdef __weak_alias
+#define MD2Data			_MD2Data
+#define MD2End			_MD2End
+#define MD2FileChunk		_MD2FileChunk
+#define MD2File			_MD2File
 #define MD2Final		_MD2Final
 #define MD2Init			_MD2Init
+#define MD2Transform		_MD2Transform
 #define MD2Update		_MD2Update
+#define MD4Data			_MD4Data
+#define MD4End			_MD4End
+#define MD4FileChunk		_MD4FileChunk
+#define MD4File			_MD4File
 #define MD4Final		_MD4Final
 #define MD4Init			_MD4Init
+#define MD4Transform		_MD4Transform
 #define MD4Update		_MD4Update
+#define MD5Data			_MD5Data
+#define MD5End			_MD5End
+#define MD5FileChunk		_MD5FileChunk
+#define MD5File			_MD5File
 #define MD5Final		_MD5Final
 #define MD5Init			_MD5Init
+#define MD5Transform		_MD5Transform
 #define MD5Update		_MD5Update
 #define RMD160Data		_RMD160Data
 #define RMD160End		_RMD160End
+#define RMD160FileChunk		_RMD160FileChunk
 #define RMD160File		_RMD160File
 #define RMD160Final		_RMD160Final
 #define RMD160Init		_RMD160Init
@@ -96,11 +112,36 @@
 #define RMD160Update		_RMD160Update
 #define SHA1Data		_SHA1Data
 #define SHA1End			_SHA1End
+#define SHA1FileChunk		_SHA1FileChunk
 #define SHA1File		_SHA1File
 #define SHA1Final		_SHA1Final
 #define SHA1Init		_SHA1Init
 #define SHA1Transform		_SHA1Transform
 #define SHA1Update		_SHA1Update
+#define SHA256Data		_SHA256Data
+#define SHA256End		_SHA256End
+#define SHA256FileChunk		_SHA256FileChunk
+#define SHA256File		_SHA256File
+#define SHA256Final		_SHA256Final
+#define SHA256Init		_SHA256Init
+#define SHA256Transform		_SHA256Transform
+#define SHA256Update		_SHA256Update
+#define SHA384Data		_SHA384Data
+#define SHA384End		_SHA384End
+#define SHA384FileChunk		_SHA384FileChunk
+#define SHA384File		_SHA384File
+#define SHA384Final		_SHA384Final
+#define SHA384Init		_SHA384Init
+#define SHA384Transform		_SHA384Transform
+#define SHA384Update		_SHA384Update
+#define SHA512Data		_SHA512Data
+#define SHA512End		_SHA512End
+#define SHA512FileChunk		_SHA512FileChunk
+#define SHA512File		_SHA512File
+#define SHA512Final		_SHA512Final
+#define SHA512Init		_SHA512Init
+#define SHA512Transform		_SHA512Transform
+#define SHA512Update		_SHA512Update
 #define a64l			_a64l
 #define adjtime			_adjtime
 #define alarm			_alarm
