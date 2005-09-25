@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.1 2005/09/24 20:51:14 elad Exp $	*/
+/*	$NetBSD: md2.c,v 1.2 2005/09/25 22:20:59 elad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md2.c,v 1.1 2005/09/24 20:51:14 elad Exp $");
+__RCSID("$NetBSD: md2.c,v 1.2 2005/09/25 22:20:59 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -108,6 +108,7 @@ static void MD2Transform __P((MD2_CTX *));
 __weak_alias(MD2Init,_MD2Init)
 __weak_alias(MD2Update,_MD2Update)
 __weak_alias(MD2Final,_MD2Final)
+__weak_alias(MD2Transform,_MD2Transform)
 #endif
 
 void

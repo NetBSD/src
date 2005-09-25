@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.3 2005/08/26 15:58:17 elad Exp $ */
+/* $NetBSD: sha2.c,v 1.4 2005/09/25 22:20:59 elad Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -307,6 +307,23 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
 };
+
+#ifdef __weak_alias
+__weak_alias(SHA256_Init,_SHA256_Init) 
+__weak_alias(SHA256_Update,_SHA256_Update)
+__weak_alias(SHA256_Final,_SHA256_Final)
+__weak_alias(SHA256_Transform,_SHA256_Transform)
+
+__weak_alias(SHA384_Init,_SHA384_Init) 
+__weak_alias(SHA384_Update,_SHA384_Update)
+__weak_alias(SHA384_Final,_SHA384_Final)
+__weak_alias(SHA384_Transform,_SHA384_Transform)
+
+__weak_alias(SHA512_Init,_SHA512_Init) 
+__weak_alias(SHA512_Update,_SHA512_Update)
+__weak_alias(SHA512_Final,_SHA512_Final)
+__weak_alias(SHA512_Transform,_SHA512_Transform)
+#endif
 
 /*** SHA-256: *********************************************************/
 void SHA256_Init(SHA256_CTX* context) {
