@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.189 2005/09/24 22:51:55 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.190 2005/09/25 19:47:17 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.189 2005/09/24 22:51:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.190 2005/09/25 19:47:17 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -735,7 +735,8 @@ raidstrategy(struct buf *bp)
 	/* stuff it onto our queue */
 	BUFQ_PUT(&rs->buf_queue, bp);
 
-	raidstart(raidPtrs[raidID]);
+	/* scheduled the IO to happen at the next convenient time */
+	wakeup(&(raidPtrs[raidID]->iodone));
 
 	splx(s);
 }
@@ -3329,4 +3330,24 @@ rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);
 	pool_setlowat(p, xmin);
+}
+
+/*
+ * rf_buf_queue_check(int raidid) -- looks into the buf_queue to see
+ * if there is IO pending and if that IO could possibly be done for a
+ * given RAID set.  Returns 0 if IO is waiting and can be done, 1
+ * otherwise.
+ *
+ */
+
+int
+rf_buf_queue_check(int raidid)
+{
+	if ((BUFQ_PEEK(&(raid_softc[raidid].buf_queue)) != NULL) &&
+	    raidPtrs[raidid]->openings > 0) {
+		/* there is work to do */
+		return 0;
+	} 
+	/* default is nothing to do */
+	return 1;
 }
