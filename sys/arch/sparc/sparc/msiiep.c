@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.28 2005/09/24 22:30:15 macallan Exp $ */
+/*	$NetBSD: msiiep.c,v 1.29 2005/09/25 00:06:52 macallan Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.28 2005/09/24 22:30:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.29 2005/09/25 00:06:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -148,6 +148,9 @@ static void	mspcic_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 static int	mspcic_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
 				  int, size_t, caddr_t *, int);
 
+volatile uint32_t *msiiep_mid = NULL;
+void 		msiiep_cpu_sleep(struct cpu_info *);
+
 static struct sparc_bus_dma_tag mspcic_dma_tag = {
 	NULL,			/* _cookie */
 
@@ -216,6 +219,17 @@ msiiep_attach(struct device *parent, struct device *self, void *aux)
 	
 	aprint_normal("\n");
 
+	if (bus_space_map(ma->ma_bustag, MSIIEP_MID_PA, 4, 0, &hmid) == 0) {
+		mid = bus_space_read_4(ma->ma_bustag, hmid, 0);
+#ifdef DIAGNOSTICS
+		printf("MID: %08x\n", mid);
+#endif
+		msiiep_mid = (volatile uint32_t *)bus_space_vaddr(ma->ma_bustag,
+		    hmid);
+		cur = curcpu();
+		cur->idlespin = msiiep_cpu_sleep;
+	}
+	
 	/* pass on real mainbus_attach_args */
 	msa.msa_ma = ma;
 
@@ -226,6 +240,18 @@ msiiep_attach(struct device *parent, struct device *self, void *aux)
 	/* config PCI tree */
 	msa.msa_name = "pcic";
 	config_found(self, &msa, NULL);
+}
+
+/* ARGSUSED */
+void 
+msiiep_cpu_sleep(struct cpu_info *ci)
+{
+	uint32_t reg;
+
+	if (msiiep_mid == 0)
+		return;
+	reg = *msiiep_mid;
+	*msiiep_mid = (reg & MID_MASK) | MID_STANDBY;
 }
 
 /*
