@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.4 2005/09/25 08:08:12 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.5 2005/09/25 08:11:50 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.4 2005/09/25 08:08:12 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.5 2005/09/25 08:11:50 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -300,7 +300,7 @@ dehumanize_off(const char *str, off_t *size)
 
 	unit = str[len - 1];
 	if (isalpha((int)unit)) {
-		switch (unit) {
+		switch (tolower((int)unit)) {
 		case 'b':
 			multiplier = 1;
 			break;
@@ -309,11 +309,11 @@ dehumanize_off(const char *str, off_t *size)
 			multiplier = 1024;
 			break;
 
-		case 'M':
+		case 'm':
 			multiplier = 1024 * 1024;
 			break;
 
-		case 'G':
+		case 'g':
 			multiplier = 1024 * 1024 * 1024;
 			break;
 
