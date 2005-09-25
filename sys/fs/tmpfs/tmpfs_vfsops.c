@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.6 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.7 2005/09/25 16:28:43 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.6 2005/09/23 15:36:15 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.7 2005/09/25 16:28:43 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -140,16 +140,18 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	 * allowed to use, based on the maximum size the user passed in
 	 * the mount structure.  A value of zero is treated as if the
 	 * maximum available space was requested. */
-	if (args.ta_size_max == 0)
+	if (args.ta_size_max < PAGE_SIZE)
 		pages = SIZE_MAX;
 	else
 		pages = args.ta_size_max / PAGE_SIZE +
 		    (args.ta_size_max % PAGE_SIZE == 0 ? 0 : 1);
+	KASSERT(pages > 0);
 
-	if (args.ta_nodes_max == 0)
-		nodes = pages * PAGE_SIZE / 1024;
+	if (args.ta_nodes_max <= 3)
+		nodes = 3 + pages * PAGE_SIZE / 1024;
 	else
 		nodes = args.ta_nodes_max;
+	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = (struct tmpfs_mount *)malloc(sizeof(struct tmpfs_mount),

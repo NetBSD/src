@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_mount,v 1.2 2005/09/23 15:36:15 jmmv Exp $
+# $NetBSD: t_mount,v 1.3 2005/09/25 16:28:43 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,6 +64,10 @@ test_run() {
 	[ ${st_uid} = 1000 ] || die
 	[ ${st_gid} = 100 ] || die
 	[ ${st_mode} = 040755 ] || die
+	test_unmount
+
+	test_name "Negative values are correctly handled"
+	test_mount -o "-s -10"
 	test_unmount
 }
 
