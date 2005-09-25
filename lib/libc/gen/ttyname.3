@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyname.3,v 1.17 2005/09/25 20:08:01 christos Exp $
+.\"	$NetBSD: ttyname.3,v 1.18 2005/09/25 20:43:54 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .In unistd.h
 .Ft char *
 .Fn ttyname "int fd"
-.Ft char *
+.Ft int
 .Fn ttyname_r "int fd" "char *buf" "size_t len"
 .Ft int
 .Fn isatty "int fd"
@@ -91,7 +91,10 @@ is the reentrant version of the above, and it places the results in
 If there is not enough space to place the results (indicated by
 .Fa len ),
 then it returns
-.Dv NULL .
+.Dv -1 
+and
+.Va errno
+is set to indicate the error.
 .Pp
 The
 .Fn ttyslot
@@ -109,10 +112,7 @@ device without requiring one to enumerate all of them in
 .Sh RETURN VALUES
 The
 .Fn ttyname
-and
-.Fn ttyname_r
-functions
-return the NUL terminated name if the device is found and
+function returns the NUL terminated name if the device is found and
 .Fn isatty
 is true; otherwise
 a
@@ -120,6 +120,12 @@ a
 pointer is returned and
 .Va errno
 is set to indicate the error.
+.Pp
+The
+.Fn ttyname_r
+functions returns 0 on success and -1 on failure with
+.Va errno
+set to indicate the error.
 .Pp
 The
 .Fn isatty
@@ -162,6 +168,9 @@ function will also fail if:
 .Bl -tag -width Er
 .It Bq Er ERANGE
 The buffer provided is not large enough to fit the result.
+.It Bq Er ENOENT
+The terminal device is not found.
+This can happen if the device node has been removed after it was opened.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
