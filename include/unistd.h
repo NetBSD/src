@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.105 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.106 2005/09/25 20:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ long	 sysconf(int);
 pid_t	 tcgetpgrp(int);
 int	 tcsetpgrp(int, pid_t);
 __aconst char *ttyname(int);
+__aconst char *ttyname_r(int, char *, size_t);
 int	 unlink(const char *);
 ssize_t	 write(int, const void *, size_t);
 
