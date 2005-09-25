@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.91 2005/06/11 22:59:05 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.92 2005/09/25 14:35:54 elad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.91 2005/06/11 22:59:05 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.92 2005/09/25 14:35:54 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.91 2005/06/11 22:59:05 christos Exp $");
 #include <vis.h>
 
 #include <md5.h>
-#include <rmd160.h>
+#include <crypto/rmd160.h>
 #include <sha1.h>
 
 #include "pathnames.h"
