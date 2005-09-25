@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.7 2005/09/25 18:55:51 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.8 2005/09/25 19:04:49 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.7 2005/09/25 18:55:51 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.8 2005/09/25 19:04:49 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.7 2005/09/25 18:55:51 jmmv Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
@@ -192,6 +193,32 @@ mount_tmpfs(int argc, char *argv[])
 	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args)) {
 		err(EXIT_FAILURE, "tmpfs on %s", canon_dir);
 		/* NOTREACHED */
+	}
+	if (mntflags & MNT_GETARGS) {
+		struct passwd *pw;
+		struct group *gr;
+
+		(void)printf("version=%d\n", args.ta_version);
+		(void)printf("size_max=%" PRIuMAX "\n",
+		    (uintmax_t)args.ta_size_max);
+		(void)printf("nodes_max=%" PRIuMAX "\n",
+		    (uintmax_t)args.ta_nodes_max);
+
+		pw = getpwuid(args.ta_root_uid);
+		if (pw == NULL)
+			(void)printf("root_uid=%" PRIuMAX "\n",
+			    (uintmax_t)args.ta_root_uid);
+		else
+			(void)printf("root_uid=%s\n", pw->pw_name);
+
+		gr = getgrgid(args.ta_root_gid);
+		if (gr == NULL)
+			(void)printf("root_gid=%" PRIuMAX "\n",
+			    (uintmax_t)args.ta_root_gid);
+		else
+			(void)printf("root_gid=%s\n", gr->gr_name);
+
+		(void)printf("root_mode=%o\n", args.ta_root_mode);
 	}
 
 	return EXIT_SUCCESS;
