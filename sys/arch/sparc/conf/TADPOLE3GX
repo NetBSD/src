@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.32 2005/08/19 05:20:03 christos Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.33 2005/09/25 00:06:13 macallan Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -198,6 +198,9 @@ auxreg0	at obio0				# sun4m
 
 ## Additional auxiliary system registers on Sparcbook
 auxiotwo0	at obio0				# sun4m
+
+## Clock control on SPARCbook - used to put the COPU to sleep when idle
+clkctrl0 at obio0
 
 ## Mostek clock found on 4/300, sun4c, and sun4m systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
