@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: cpu.h,v 1.73 2005/09/25 21:57:02 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -235,8 +235,6 @@ void mp_halt_cpus(void);
 void mp_pause_cpus_ddb(void);
 void mp_resume_cpus_ddb(void);
 #endif
-/* msiiep.c */
-void msiiep_swap_endian(int);
 /* intr.c */
 u_int setitr(u_int);
 u_int getitr(void);
