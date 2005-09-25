@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.6 2005/09/24 22:30:15 macallan Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.7 2005/09/25 22:50:57 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -240,11 +240,25 @@ struct msiiep_pcic_reg {
 #define mspcic_read_4(reg) \
 	(le32toh(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg))
 
+#define mspcic_read_stream_1(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+#define mspcic_read_stream_2(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+#define mspcic_read_stream_4(reg) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg)
+
 #define mspcic_write_1(reg, val) \
 	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
 #define mspcic_write_2(reg, val) \
 	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (htole16(val))
 #define mspcic_write_4(reg, val) \
 	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (htole32(val))
+
+#define mspcic_write_stream_1(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+#define mspcic_write_stream_2(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
+#define mspcic_write_stream_4(reg, val) \
+	(((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)->reg) = (val)
 
 #endif /* _SPARC_MSIIEP_REG_H_ */
