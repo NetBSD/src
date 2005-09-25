@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.20 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.21 2005/09/25 21:17:05 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,7 +46,7 @@ struct ufs_args {
  */
 struct mfs_args {
 	char	*fspec;			/* name to export for statfs */
-	struct	compat_export_args _pad1; /* compat with old userland tools */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	caddr_t	base;			/* base of file system in memory */
 	u_long	size;			/* size of file system */
 };
