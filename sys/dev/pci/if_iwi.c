@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.25 2005/09/25 06:49:54 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.26 2005/09/25 11:55:05 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.25 2005/09/25 06:49:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.26 2005/09/25 11:55:05 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2110,24 +2110,49 @@ static int
 iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwi_scan scan;
+	struct iwi_scan_v2 scan;
+	uint32_t type;
 	uint8_t *p;
-	int i, count;
+	int i, count, idx;
 
 	(void)memset(&scan, 0, sizeof scan);
-	scan.type = IWI_SCAN_TYPE_BROADCAST;
-	scan.dwelltime = htole16(sc->dwelltime);
+	scan.dwelltime[IWI_SCAN_TYPE_ACTIVE_BROADCAST] =
+	    htole16(sc->dwelltime);
+	scan.dwelltime[IWI_SCAN_TYPE_ACTIVE_BDIRECT] =
+	    htole16(sc->dwelltime);
 
-	p = scan.channels;
-	count = 0;
+	/* tell the firmware about the desired essid */
+	if (ic->ic_des_esslen) {
+		int error;
+
+		DPRINTF(("%s: Setting adapter desired ESSID to %s\n",
+		    __func__, ic->ic_des_essid));
+
+		error = iwi_cmd(sc, IWI_CMD_SET_ESSID,
+		    ic->ic_des_essid, ic->ic_des_esslen, 1);
+		if (error)
+			return error;
+
+		type = IWI_SCAN_TYPE_ACTIVE_BDIRECT;
+	} else {
+		type = IWI_SCAN_TYPE_ACTIVE_BROADCAST;
+	}
+
+	p = &scan.channels[0];
+	count = idx = 0;
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		if (IEEE80211_IS_CHAN_5GHZ(&ic->ic_channels[i]) &&
 		    isset(ic->ic_chan_active, i)) {
 			*++p = i;
 			count++;
+			idx++;
+ 			iwi_scan_type_set(scan, idx, type);
 		}
 	}
-	*(p - count) = IWI_CHAN_5GHZ | count;
+	if (count) {
+		*(p - count) = IWI_CHAN_5GHZ | count;
+		p++;
+	}
 
 	count = 0;
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
@@ -2135,12 +2160,14 @@ iwi_scan(struct iwi_softc *sc)
 		    isset(ic->ic_chan_active, i)) {
 			*++p = i;
 			count++;
+			idx++;
+			iwi_scan_type_set(scan, idx, type);
 		}
 	}
 	*(p - count) = IWI_CHAN_2GHZ | count;
 
 	DPRINTF(("Start scanning\n"));
-	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, 1);
+	return iwi_cmd(sc, IWI_CMD_SCAN_V2, &scan, sizeof scan, 1);
 }
 
 static int
