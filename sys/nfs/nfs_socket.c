@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.115 2005/09/25 00:20:38 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.116 2005/09/25 02:48:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.115 2005/09/25 00:20:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.116 2005/09/25 02:48:40 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1220,6 +1220,10 @@ tryagain:
 				error = ENOENT;
 				break;
 
+			case NFSERR_IO:
+				error = ENO;
+				break;
+
 			case NFSERR_NXIO:
 				error = ENXIO;
 				break;
@@ -1280,6 +1284,10 @@ tryagain:
 
 			case NFSERR_MLINK:
 				error = EMLINK;
+				break;
+
+			case NFSERR_TIMEDOUT:
+				error = ETIMEDOUT;
 				break;
 
 			case NFSERR_NAMETOL:
