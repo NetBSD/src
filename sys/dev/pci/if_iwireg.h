@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.8 2005/09/25 06:49:54 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.9 2005/09/25 11:55:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -256,6 +256,7 @@ struct iwi_cmd_desc {
 #define IWI_CMD_ASSOCIATE			21
 #define IWI_CMD_SET_RATES			22
 #define IWI_CMD_ABORT_SCAN			23
+#define IWI_CMD_SCAN_V2				26
 #define IWI_CMD_SET_OPTIE			31
 #define IWI_CMD_DISABLE				33
 #define IWI_CMD_SET_IV				34
@@ -326,12 +327,16 @@ struct iwi_associate {
 
 #define IWI_SCAN_CHANNELS	54
 
+#define IWI_SCAN_TYPE_FIRST_BEACON	0
+#define IWI_SCAN_TYPE_PASSIVE		1
+#define IWI_SCAN_TYPE_ACTIVE_DIRECT	2
+#define IWI_SCAN_TYPE_ACTIVE_BROADCAST	3
+#define IWI_SCAN_TYPE_ACTIVE_BDIRECT	4
+#define IWI_SCAN_TYPES			5
+
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
 	uint8_t		type;
-#define IWI_SCAN_TYPE_PASSIVE		1
-#define IWI_SCAN_TYPE_BROADCAST		3
-
 	uint16_t	dwelltime;
 	uint8_t		channels[IWI_SCAN_CHANNELS];
 #define IWI_CHAN_5GHZ	(0 << 6)
@@ -339,6 +344,28 @@ struct iwi_scan {
 
 	uint8_t		reserved[3];
 } __attribute__((__packed__));
+
+#define iwi_scan_type_set(s, i, t) 			\
+	do { 						\
+		if ((i) % 2 == 0)			\
+			(s).type[(i) / 2].lsn = (t);	\
+		else					\
+			(s).type[(i) / 2].msn = (t);	\
+	} while(0)
+
+/* structure for command IWI_CMD_SCAN_V2 */
+struct iwi_scan_v2 {
+	u_int32_t	fsidx;
+	u_int8_t	channels[IWI_SCAN_CHANNELS];
+	struct {
+		u_int8_t lsn:4;
+		u_int8_t msn:4;
+	} __attribute__ ((__packed__)) type[IWI_SCAN_CHANNELS / 2];
+
+	u_int8_t	reserved1;
+	u_int16_t	dwelltime[IWI_SCAN_TYPES];
+
+} __attribute__ ((__packed__));
 
 /* structure for command IWI_CMD_SET_CONFIGURATION */
 struct iwi_configuration {
