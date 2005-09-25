@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.91 2005/09/25 20:49:43 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.92 2005/09/25 22:52:30 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.91 2005/09/25 20:49:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.92 2005/09/25 22:52:30 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -439,17 +439,15 @@ nmi_hard_msiiep(void)
 	}
 
 	if (si & MSIIEP_SYS_IPR_DMA_ERR) {
-		uint32_t iotlb_err_addr = mspcic_read_4(pcic_iotlb_err_addr);
-
-		printf("dma: %08x\n", iotlb_err_addr);
+		printf("dma: %08x\n",
+		       mspcic_read_stream_4(pcic_iotlb_err_addr));
 		fatal = 0;
 	}
 
 	if (si & MSIIEP_SYS_IPR_PIO_ERR) {
-		uint32_t pio_err_addr = mspcic_read_4(pcic_pio_err_addr);
-
 		printf("pio: addr=%08x, cmd=%x\n",
-		       pio_err_addr, mspcic_read_1(pcic_pio_err_cmd));
+		       mspcic_read_stream_4(pcic_pio_err_addr),
+		       mspcic_read_stream_1(pcic_pio_err_cmd));
 		fatal = 0;
 	}
 
@@ -464,9 +462,9 @@ nmi_hard_msiiep(void)
 void
 nmi_soft_msiiep(void)
 {
+
 	panic("soft nmi");
 }
-
 
 #endif /* MSIIEP */
 
