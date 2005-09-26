@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.28 2004/07/27 14:24:18 wiz Exp $
+.\"	$NetBSD: pfil.9,v 1.29 2005/09/26 01:04:34 rpaulo Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 27, 2004
+.Dd September 26, 2005
 .Dt PFIL 9
 .Os
 .Sh NAME
@@ -45,21 +45,21 @@
 .In net/if.h
 .In net/pfil.h
 .Ft int
-.Fn pfil_head_register "struct pfil_head *head"
+.Fn pfil_head_register "struct pfil_head *ph"
 .Ft int
-.Fn pfil_head_unregister "struct pfil_head *head"
+.Fn pfil_head_unregister "struct pfil_head *ph"
 .Ft struct pfil_head *
 .Fn pfil_head_get "int af" "u_long dlt"
 .Ft struct packet_filter_hook *
-.Fn pfil_hook_get "int dir" "struct pfil_head *head"
+.Fn pfil_hook_get "int dir" "struct pfil_head *ph"
 .Ft void
-.Fn pfil_add_hook "int (*func)()" "void *arg" "int flags" "struct pfil_head *"
+.Fn pfil_add_hook "int (*func)()" "void *arg" "int flags" "struct pfil_head *ph"
 .Ft void
-.Fn pfil_remove_hook "int (*func)()" "void *arg" "int flags" "struct pfil_head *"
+.Fn pfil_remove_hook "int (*func)()" "void *arg" "int flags" "struct pfil_head *ph"
 .Ft int
 .Fn (*func) "void *arg" "struct mbuf **mp" "struct ifnet *" "int dir"
 .Ft int
-.Fn pfil_run_hooks "struct pfil_head *head" "struct mbuf **mp" "struct ifnet *" "int dir"
+.Fn pfil_run_hooks "struct pfil_head *ph" "struct mbuf **mp" "struct ifnet *ifp" "int dir"
 .Sh DESCRIPTION
 The
 .Nm
