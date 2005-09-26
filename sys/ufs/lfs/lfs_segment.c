@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.166 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.167 2005/09/26 13:52:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.166 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.167 2005/09/26 13:52:20 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -168,7 +168,7 @@ lfs_imtime(struct lfs *fs)
 	struct inode *ip;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	nanotime(&ts);
 	ip = VTOI(fs->lfs_ivnode);
 	ip->i_ffs1_mtime = ts.tv_sec;
 	ip->i_ffs1_mtimensec = ts.tv_nsec;

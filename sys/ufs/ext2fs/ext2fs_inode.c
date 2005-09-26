@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.48 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.49 2005/09/26 13:52:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.48 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.49 2005/09/26 13:52:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ ext2fs_inactive(void *v)
 		if (ext2fs_size(ip) != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
 		}
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		nanotime(&ts);
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
