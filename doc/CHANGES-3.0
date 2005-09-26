@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.255 2005/09/19 21:23:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.256 2005/09/26 20:37:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12995,4 +12995,47 @@ distrib/utils/sysinst/arch/sgimips/msg.md.de	1.5
 
 	Fix a couple of md translations that seem to have got awry.
 	[dsl, ticket #809]
+
+distrib/utils/sysinst/arch/evbarm/msg.md.es	1.3
+
+	Provide a translation for set_kernel_6 as well (cut+paste from #5).
+	[dsl, ticket #810]
+
+distrib/utils/sysinst/arch/alpha/md.h		1.20
+
+	An xserver set is created - allow sysinst to handle it.
+	[dsl, ticket #811]
+
+sys/miscfs/specfs/spec_vnops.c			1.83
+
+	In spec_ioctl(), don't dereference v_specinfo if it's NULL.
+	This is needed due to rev. 1.231 of kern/vfs_subr.c, which now sets
+	v_specinfo to NULL before changing the vnode's ops vector.
+	[chs, ticket #812]
+
+sys/arch/i386/i386/pmap.c			1.185
+sys/arch/xen/i386/pmap.c			1.15
+
+	Remove the part of rev. 1.168 that skips TLB invalidations in
+	pmap_enter(). It's wrong for wired mappings. Fixes PR kern/29804.
+	[chs, ticket #813]
+
+usr.bin/tn3270/Makefile				1.8
+usr.bin/tn3270/tools/Makefile			1.6
+usr.bin/tn3270/tools/prt3270/Makefile		1.10
+
+	Fix build problems with parallel make.
+	[chs, ticket #815]
+
+sys/nfs/nfs.h					1.49
+sys/nfs/nfsmount.h				1.34
+usr.sbin/amd/include/config.h			1.36
+
+	Allow amd to turn off the attribute cache.
+	[christos, ticket #816]
+
+sys/dev/wsfont/gallant12x22.h			1.10
+
+	Extend the gallant font to full ISO8859-1.
+	[martin, ticket #817]
 
