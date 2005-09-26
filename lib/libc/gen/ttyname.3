@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyname.3,v 1.18 2005/09/25 20:43:54 christos Exp $
+.\"	$NetBSD: ttyname.3,v 1.19 2005/09/26 10:54:46 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,7 @@ typedef, but refer to the special device files found in
 .Pa /dev
 and named
 .Pa /dev/tty Ns Em xx
-and for which an entry exists
-in the initialization file
+and for which an entry exists in the initialization file
 .Pa /etc/ttys
 (see
 .Xr ttys 5 ) ,
@@ -74,14 +73,12 @@ The
 function
 determines if the file descriptor
 .Fa fd
-refers to a valid
-terminal type device.
+refers to a valid terminal type device.
 .Pp
 The
 .Fn ttyname
-function
-gets the related device name of
-a file descriptor for which
+function gets the related device name of a file descriptor for
+which
 .Fn isatty
 is true.
 The
@@ -89,10 +86,8 @@ The
 is the reentrant version of the above, and it places the results in
 .Fa buf .
 If there is not enough space to place the results (indicated by
-.Fa len ),
-then it returns
-.Dv -1 
-and
+.Fa len ) ,
+then it returns \-1 and
 .Va errno
 is set to indicate the error.
 .Pp
@@ -105,14 +100,15 @@ file entry.
 If the terminal is a pseudo-terminal, and there is no special entry
 in the
 .Xr ttys 5
-file for it, the slot number returned is 1 + (last slot number) + minor(tty).
+file for it, the slot number returned is 1 + (last slot number) +
+minor(tty).
 This will return a consistent and unique number for each pseudo-terminal
 device without requiring one to enumerate all of them in
 .Xr ttys 5 .
 .Sh RETURN VALUES
 The
 .Fn ttyname
-function returns the NUL terminated name if the device is found and
+function returns the NUL-terminated name if the device is found and
 .Fn isatty
 is true; otherwise
 a
@@ -123,7 +119,7 @@ is set to indicate the error.
 .Pp
 The
 .Fn ttyname_r
-functions returns 0 on success and -1 on failure with
+functions returns 0 on success and \-1 on failure with
 .Va errno
 set to indicate the error.
 .Pp
@@ -147,7 +143,7 @@ the value zero is returned.
 .El
 .Sh ERRORS
 The
-.Fn ttyname , 
+.Fn ttyname ,
 .Fn ttyname_r ,
 and
 .Fn isatty
@@ -183,13 +179,11 @@ and
 functions conform to
 .St -p1003.1-90 .
 .Sh HISTORY
-A
 .Fn isatty ,
 .Fn ttyname ,
 and
 .Fn ttyslot
-function
-appeared in
+functions appeared in
 .At v7 .
 .Sh BUGS
 The
