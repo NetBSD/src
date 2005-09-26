@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.108 2005/09/25 22:20:59 elad Exp $	*/
+/*	$NetBSD: namespace.h,v 1.109 2005/09/26 02:12:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -118,30 +118,30 @@
 #define SHA1Init		_SHA1Init
 #define SHA1Transform		_SHA1Transform
 #define SHA1Update		_SHA1Update
-#define SHA256Data		_SHA256Data
-#define SHA256End		_SHA256End
-#define SHA256FileChunk		_SHA256FileChunk
-#define SHA256File		_SHA256File
-#define SHA256Final		_SHA256Final
-#define SHA256Init		_SHA256Init
-#define SHA256Transform		_SHA256Transform
-#define SHA256Update		_SHA256Update
-#define SHA384Data		_SHA384Data
-#define SHA384End		_SHA384End
-#define SHA384FileChunk		_SHA384FileChunk
-#define SHA384File		_SHA384File
-#define SHA384Final		_SHA384Final
-#define SHA384Init		_SHA384Init
-#define SHA384Transform		_SHA384Transform
-#define SHA384Update		_SHA384Update
-#define SHA512Data		_SHA512Data
-#define SHA512End		_SHA512End
-#define SHA512FileChunk		_SHA512FileChunk
-#define SHA512File		_SHA512File
-#define SHA512Final		_SHA512Final
-#define SHA512Init		_SHA512Init
-#define SHA512Transform		_SHA512Transform
-#define SHA512Update		_SHA512Update
+#define SHA256_Data		_SHA256_Data
+#define SHA256_End		_SHA256_End
+#define SHA256_FileChunk	_SHA256_FileChunk
+#define SHA256_File		_SHA256_File
+#define SHA256_Final		_SHA256_Final
+#define SHA256_Init		_SHA256_Init
+#define SHA256_Transform	_SHA256_Transform
+#define SHA256_Update		_SHA256_Update
+#define SHA384_Data		_SHA384_Data
+#define SHA384_End		_SHA384_End
+#define SHA384_FileChunk	_SHA384_FileChunk
+#define SHA384_File		_SHA384_File
+#define SHA384_Final		_SHA384_Final
+#define SHA384_Init		_SHA384_Init
+#define SHA384_Transform	_SHA384_Transform
+#define SHA384_Update		_SHA384_Update
+#define SHA512_Data		_SHA512_Data
+#define SHA512_End		_SHA512_End
+#define SHA512_FileChunk	_SHA512_FileChunk
+#define SHA512_File		_SHA512_File
+#define SHA512_Final		_SHA512_Final
+#define SHA512_Init		_SHA512_Init
+#define SHA512_Transform	_SHA512_Transform
+#define SHA512_Update		_SHA512_Update
 #define a64l			_a64l
 #define adjtime			_adjtime
 #define alarm			_alarm
