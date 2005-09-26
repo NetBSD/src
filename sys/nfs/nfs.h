@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.48 2004/10/26 00:58:54 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.48.10.1 2005/09/26 20:31:03 tron Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -157,11 +157,12 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 /*
  * Set the attribute timeout based on how recently the file has been modified.
  */
-#define	NFS_ATTRTIMEO(np) \
+#define	NFS_ATTRTIMEO(nmp, np) \
+    ((nmp->nm_flag & NFSMNT_NOAC) ? 0 : \
 	((((np)->n_flag & NMODIFIED) || \
 	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
 	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10))
+	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10)))
 
 /*
  * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
