@@ -1,4 +1,4 @@
-/* $NetBSD: hash.c,v 1.4 2005/09/25 22:20:59 elad Exp $ */
+/* $NetBSD: hash.c,v 1.5 2005/09/26 03:01:41 christos Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -16,26 +16,9 @@
 
 #ifdef HASH_ALGORITHM
 
-#include "namespace.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <assert.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#ifndef MIN
-#define	MIN(x,y)	((x)<(y)?(x):(y))
-#endif /* !MIN */
-
+/*
+ * Do all the name mangling before we include "namespace.h"
+ */
 #define	CONCAT(x,y)	__CONCAT(x,y)
 
 #ifndef HASH_FNPREFIX
@@ -55,6 +38,28 @@ WA(FNPREFIX(File),CONCAT(_,FNPREFIX(File)))
 WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
 #undef WA
 #endif
+
+#include "namespace.h"
+#include HASH_INCLUDE
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <assert.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#ifndef MIN
+#define	MIN(x,y)	((x)<(y)?(x):(y))
+#endif /* !MIN */
+
 
 char *
 FNPREFIX(End)(HASH_CTX *ctx, char *buf)
