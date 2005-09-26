@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.80 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.80.2.1 2005/09/26 20:22:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.80 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.80.2.1 2005/09/26 20:22:55 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -460,9 +460,26 @@ spec_ioctl(v)
 	} */ *ap = v;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
-	dev_t dev = ap->a_vp->v_rdev;
+	struct vnode *vp;
+	dev_t dev;
 
-	switch (ap->a_vp->v_type) {
+	/*
+	 * Extract all the info we need from the vnode, taking care to
+	 * avoid a race with VOP_REVOKE().
+	 */
+
+	vp = ap->a_vp;
+	dev = NODEV;
+	simple_lock(&vp->v_interlock);
+	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+		dev = vp->v_rdev;
+	}
+	simple_unlock(&vp->v_interlock);
+	if (dev == NODEV) {
+		return ENXIO;
+	}
+
+	switch (vp->v_type) {
 
 	case VCHR:
 		cdev = cdevsw_lookup(dev);
