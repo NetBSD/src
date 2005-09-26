@@ -1,3 +1,10 @@
+2005-08-26  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/racoon/cfparse.y: handle xauth_login correctly
+	* src/racoon/isakmp.c: catch internal error
+	* src/raccon/isakmp_agg.c: fix racoon as Xauth client
+	* src/raccon/{isakmp_agg.c|isakmp_base.c}: Proposal safety checks
+
 2005-08-23  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/{isakmp_agg.c|isakmp_ident.c|isakmp_base.c}: Correctly

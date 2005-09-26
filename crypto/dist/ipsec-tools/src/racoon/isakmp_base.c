@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.3 2005/09/23 14:22:27 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.4 2005/09/26 16:24:57 manu Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -426,6 +426,11 @@ base_i2send(iph1, msg)
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+		break;
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
 		break;
 	}
 
@@ -1125,6 +1130,11 @@ base_r2send(iph1, msg)
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+		break;
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
 		break;
 	}
 

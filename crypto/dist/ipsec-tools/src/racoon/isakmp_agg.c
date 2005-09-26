@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.5 2005/09/23 14:22:27 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.6 2005/09/26 16:24:57 manu Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.20.2.1 2005/04/09 22:32:06 manubsd Exp */
 
@@ -650,6 +650,10 @@ agg_i2send(iph1, msg)
 
 	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
+#endif  
 		/* set HASH payload */
 		plist = isakmp_plist_append(plist, iph1->hash, ISAKMP_NPTYPE_HASH);
 		break;
@@ -695,6 +699,11 @@ agg_i2send(iph1, msg)
 		plist = isakmp_plist_append(plist, gsshash, ISAKMP_NPTYPE_HASH);
 		break;
 #endif
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
+		break;
 	}
 
 #ifdef ENABLE_NATT
@@ -1205,6 +1214,11 @@ agg_r1send(iph1, msg)
 
 		break;
 #endif
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "Invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
+		break;
 	}
 
 #ifdef ENABLE_NATT

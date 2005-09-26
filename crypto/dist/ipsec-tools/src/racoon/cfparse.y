@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.7 2005/09/24 22:45:51 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.8 2005/09/26 16:24:57 manu Exp $	*/
 
 /* Id: cfparse.y,v 1.37.2.4 2005/05/10 09:45:45 manubsd Exp */
 
@@ -1263,6 +1263,7 @@ remote_spec
 		{
 #ifdef ENABLE_HYBRID
 			/* formerly identifier type login */
+			cur_rmconf->idvtype = IDTYPE_LOGIN;
 			if (set_identifier(&cur_rmconf->idv, IDTYPE_LOGIN, $2) != 0) {
 				yyerror("failed to set identifer.\n");
 				return -1;
