@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.107 2005/09/25 20:28:56 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.108 2005/09/26 12:52:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -140,7 +140,6 @@ long	 sysconf(int);
 pid_t	 tcgetpgrp(int);
 int	 tcsetpgrp(int, pid_t);
 __aconst char *ttyname(int);
-int	 ttyname_r(int, char *, size_t);
 int	 unlink(const char *);
 ssize_t	 write(int, const void *, size_t);
 
@@ -196,6 +195,14 @@ int	 fdatasync(int);
 int	 fsync(int);
 #endif
 
+
+/*
+ * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
+ */
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+int	 ttyname_r(int, char *, size_t);
+#endif
 
 /*
  * X/Open Portability Guide, all issues
