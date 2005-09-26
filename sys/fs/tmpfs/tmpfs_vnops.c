@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.12 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.13 2005/09/26 00:46:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.12 2005/09/23 15:36:15 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.13 2005/09/26 00:46:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -851,7 +851,7 @@ tmpfs_rename(void *v)
 	if (fdnode != tdnode) {
 		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
-			goto out_locked;
+			goto out;
 	}
 
 	/* Ensure that we have enough memory to hold the new name, if it
@@ -862,7 +862,7 @@ tmpfs_rename(void *v)
 		    tcnp->cn_namelen, 0);
 		if (newname == NULL) {
 			error = ENOSPC;
-			goto out;
+			goto out_locked;
 		}
 	} else
 		newname = NULL;
@@ -882,7 +882,7 @@ tmpfs_rename(void *v)
 			while (n != n->tn_parent) {
 				if (n == fnode) {
 					error = EINVAL;
-					goto out;
+					goto out_locked;
 				}
 				n = n->tn_parent;
 			}
