@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.86 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.87 2005/09/26 13:52:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.86 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.87 2005/09/26 13:52:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -724,7 +724,7 @@ ffs_valloc(void *v)
 	ip->i_gen++;
 	DIP_ASSIGN(ip, gen, ip->i_gen);
 	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		nanotime(&ts);
 		ip->i_ffs2_birthtime = ts.tv_sec;
 		ip->i_ffs2_birthnsec = ts.tv_nsec;
 	}
