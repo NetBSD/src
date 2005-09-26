@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.820 2005/09/25 20:11:03 christos Exp $
+#	$NetBSD: mi,v 1.821 2005/09/26 12:24:13 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2362,8 +2362,10 @@
 ./usr/share/man/cat3/MD2Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2File.0			comp-c-catman		.cat
+./usr/share/man/cat3/MD2FileChunk.0		comp-c-catman		.cat
 ./usr/share/man/cat3/MD2Final.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2Init.0			comp-c-catman		.cat
+./usr/share/man/cat3/MD2Transform.0		comp-c-catman		.cat
 ./usr/share/man/cat3/MD2Update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/MD4Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD4End.0			comp-c-catman		.cat
@@ -2437,6 +2439,7 @@
 ./usr/share/man/cat3/SHA1Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1File.0			comp-c-catman		.cat
+./usr/share/man/cat3/SHA1FileChunk.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Final.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Transform.0		comp-c-catman		.cat
@@ -6281,6 +6284,7 @@
 ./usr/share/man/man3/MD2Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD2End.3			comp-c-man		.man
 ./usr/share/man/man3/MD2File.3			comp-c-man		.man
+./usr/share/man/man3/MD2FileChunk.3		comp-c-man		.man
 ./usr/share/man/man3/MD2Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD2Init.3			comp-c-man		.man
 ./usr/share/man/man3/MD2Update.3		comp-c-man		.man
@@ -6289,6 +6293,7 @@
 ./usr/share/man/man3/MD4File.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Init.3			comp-c-man		.man
+./usr/share/man/man3/MD2Transform.3		comp-c-man		.man
 ./usr/share/man/man3/MD4Update.3		comp-c-man		.man
 ./usr/share/man/man3/MD5Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD5End.3			comp-c-man		.man
@@ -6356,6 +6361,7 @@
 ./usr/share/man/man3/SHA1Data.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1End.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1File.3			comp-c-man		.man
+./usr/share/man/man3/SHA1FileChunk.3		comp-c-man		.man
 ./usr/share/man/man3/SHA1Final.3		comp-c-man		.man
 ./usr/share/man/man3/SHA1Init.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1Transform.3		comp-c-man		.man
