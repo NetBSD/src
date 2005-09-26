@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.4 2005/09/25 22:20:59 elad Exp $ */
+/* $NetBSD: sha2.c,v 1.5 2005/09/26 02:59:29 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -204,6 +204,7 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
  */
 void SHA512_Last(SHA512_CTX*);
 void SHA256_Transform(SHA256_CTX*, const sha2_word32*);
+void SHA384_Transform(SHA384_CTX*, const sha2_word64*);
 void SHA512_Transform(SHA512_CTX*, const sha2_word64*);
 
 
@@ -931,6 +932,10 @@ void SHA384_Init(SHA384_CTX* context) {
 
 void SHA384_Update(SHA384_CTX* context, const sha2_byte* data, size_t len) {
 	SHA512_Update((SHA512_CTX*)context, data, len);
+}
+
+void SHA384_Transform(SHA512_CTX* context, const sha2_word64* data) {
+	SHA512_Transform((SHA512_CTX*)context, data);
 }
 
 void SHA384_Final(sha2_byte digest[], SHA384_CTX* context) {
