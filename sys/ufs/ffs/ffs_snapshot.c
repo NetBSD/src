@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.20 2005/09/26 13:52:20 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.21 2005/09/26 14:10:32 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.20 2005/09/26 13:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.21 2005/09/26 14:10:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -510,7 +510,7 @@ out1:
 	/*
 	 * Set the mtime to the time the snapshot has been taken.
 	 */
-	nanotime(&ts);
+	TIMEVAL_TO_TIMESPEC(&starttime, &ts);
 	if (ctime)
 		*ctime = ts;
 	DIP_ASSIGN(ip, mtime, ts.tv_sec);
