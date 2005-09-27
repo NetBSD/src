@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.66 2005/09/27 14:34:15 macallan Exp $
+#	$NetBSD: files.macppc,v 1.67 2005/09/27 15:04:26 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -88,7 +88,6 @@ include "dev/rasops/files.rasops"
 device ofb: wsemuldisplaydev, rasops8
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
-file arch/macppc/dev/ofb_cons.c			ofb needs-flag
 
 # PCI-Host bridge chipsets
 device pchb
