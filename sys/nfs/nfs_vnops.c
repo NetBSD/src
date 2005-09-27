@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.220.2.1 2005/09/27 10:31:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.220 2005/02/26 22:39:50 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.220.2.1 2005/09/27 10:31:29 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -334,9 +334,10 @@ nfs_access(v)
 #endif
 	int cachevalid;
 	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	cachevalid = (np->n_accstamp != -1 &&
-	    (mono_time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(np) &&
+	    (mono_time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(nmp, np) &&
 	    np->n_accuid == ap->a_cred->cr_uid);
 
 	/*
