@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.13 2005/09/23 12:10:32 jmmv Exp $
+#	$NetBSD: TODO,v 1.14 2005/09/27 20:15:15 hubertf Exp $
 
 THINGS TO BE DONE:
 
@@ -38,12 +38,11 @@ High Kernel:
 
 User programs:
     rwall nfs-mountees on shutdown
-    add detachment to window
+    add detachment to window(1)
     clean up gas config files, set up common defines
 
 Pie-in-the-Sky:
     someone should actually test all the netiso stuff.
-    SMB filesystem
 
 Documentation:
     modify sys docs to reflect NetBSD/arch-specific stuff
@@ -75,6 +74,7 @@ This is a list of suggested smaller projects (in no particular order):
 + kernel fine-grained locking
 + write a BSD-licensed web browser
 + write a BSD-licensed privacy guard like gnupg or pgp
+  (see http://netbsd-soc.sourceforge.net/projects/bpg/)
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
 + investigate ProPolice
 + document autoconf framework
@@ -97,3 +97,5 @@ This is a list of suggested smaller projects (in no particular order):
   atomically.  Many parts of the utility will need a rewrite, but the kernel
   functionality is already there (just enable the "notyet" blocks of code in
   sys/nfs/nfs_export.c).
++ Kerberize more services like ftp, ftpd, rsh, rshd, rlogind, ...
+  (see PR bin/31378)
