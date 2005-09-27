@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.42 2005/09/27 14:37:06 chs Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.43 2005/09/27 15:09:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -631,6 +631,7 @@ int	coredump_netbsd32(struct lwp *, void *);
  * random other stuff
  */
 #include <compat/common/compat_util.h>
+#include <compat/sys/siginfo.h>
 
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 
