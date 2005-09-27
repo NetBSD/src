@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.256 2005/09/26 20:37:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.257 2005/09/27 10:33:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13028,6 +13028,9 @@ usr.bin/tn3270/tools/prt3270/Makefile		1.10
 	[chs, ticket #815]
 
 sys/nfs/nfs.h					1.49
+sys/nfs/nfs_subs.c				1.152
+sys/nfs/nfs_vfsops.c				1.149
+sys/nfs/nfs_vnops.c				1.227
 sys/nfs/nfsmount.h				1.34
 usr.sbin/amd/include/config.h			1.36
 
