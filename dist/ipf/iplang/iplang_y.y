@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.7 2005/02/08 07:01:53 martti Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.8 2005/09/27 12:22:27 martti Exp $	*/
 
 %{
 /*
@@ -1290,8 +1290,13 @@ void prep_packet()
 	if (ifp->if_fd == -1)
 		ifp->if_fd = initdevice(ifp->if_name, 5);
 	gwip = sending.snd_gw;
-	if (!gwip.s_addr)
+	if (!gwip.s_addr) {
+		if (!aniphead) {
+			fprintf(stderr, "no destination address defined for sending!\n");
+			return;
+		}
 		gwip = aniphead->ah_ip->ip_dst;
+	}
 	(void) send_ip(ifp->if_fd, ifp->if_MTU, (ip_t *)ipbuffer, gwip, 2);
 }
 
