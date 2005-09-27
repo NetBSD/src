@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.91 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.92 2005/09/27 06:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.91 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.92 2005/09/27 06:48:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -149,6 +149,10 @@ static const struct genfs_ops ext2fs_genfsops = {
 	.gop_markupdate = ufs_gop_markupdate,
 };
 
+static const struct ufs_ops ext2fs_ufsops = {
+	.uo_itimes = ext2fs_itimes,
+};
+
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
  */
@@ -169,7 +173,6 @@ ext2fs_init(void)
 	    "ext2dinopl", &pool_allocator_nointr);
 #endif
 	ufs_init();
-	ext2fs_itimesfn = ext2fs_itimes;
 }
 
 void
@@ -186,7 +189,6 @@ ext2fs_done(void)
 	pool_destroy(&ext2fs_inode_pool);
 	pool_destroy(&ext2fs_dinode_pool);
 #endif
-	ext2fs_itimesfn = NULL;
 }
 
 /*
@@ -624,6 +626,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
 	ump->um_fstype = UFS1;
+	ump->um_ops = &ext2fs_ufsops;
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
 	memset(ump->um_e2fs, 0, sizeof(struct m_ext2fs));
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
