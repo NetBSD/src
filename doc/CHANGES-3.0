@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.257 2005/09/27 10:33:21 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.258 2005/09/27 20:25:22 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13041,4 +13041,32 @@ sys/dev/wsfont/gallant12x22.h			1.10
 
 	Extend the gallant font to full ISO8859-1.
 	[martin, ticket #817]
+
+sys/arch/i386/stand/Makefile.booters		1.61 via patch
+sys/arch/i386/stand/boot/Makefile.boot		1.24 via patch
+sys/arch/i386/stand/bootxx/Makefile.bootxx	1.18 via patch
+
+	Use a .BEGIN target to make the various symlinks,
+	the previous way had problems with parallel make.
+	[chs, ticket #814]
+
+lib/libpthread/pthread_attr.c			1.5
+
+	pthread_attr_getschedpolicy() wasn't setting the return buffer at all.
+	[tv, ticket #818]
+
+distrib/utils/sysinst/arch/cats/msg.md.es	1.3
+distrib/utils/sysinst/arch/sgimips/msg.md.es	1.3
+
+	Provide a translation for set_kernel_2, copied from set_kernel_1.
+	Provide translaqtion for set_kernel_3 via cut+paste from #2.
+	[riz, ticket #819]
+
+xfree/xc/programs/xdm/config/NetBSD.xpm		1.2
+xfree/xc/programs/xdm/config/NetBSDbw.xpm	1.2
+xfree/xc/programs/xdm/config/NetBSDinv.xpm	1.2
+
+	Make XDM work on machines with black and white or 8Bit framebuffers.
+	This fixes PR xsrc/30451.
+	[jschauma, ticket #835]
 
