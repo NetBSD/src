@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.1 2005/09/27 02:38:03 jmcneill Exp $
+.\" $NetBSD: gpio.4,v 1.2 2005/09/27 09:13:00 wiz Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -25,9 +25,9 @@
 .Cd "gpio* at nsclpcsio?"
 .Cd "gpio* at gscpcib?"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <sys/gpio.h>
-.Fd #include <sys/ioctl.h>
+.In sys/types.h
+.In sys/gpio.h
+.In sys/ioctl.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -155,14 +155,19 @@ file.
 The
 .Nm
 device first appeared in
-.Ox 3.6 .
+.Ox 3.6
+and
+.Nx 4.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
-.An Alexander Yurchenko Aq grange@openbsd.org . 
+.An Alexander Yurchenko Aq grange@openbsd.org .
 .Nm
-and was ported to NetBSD by
+and was ported to
+.Nx
+by
 .An Jared D. McNeill Aq jmcneill@NetBSD.org .
 .Sh BUGS
 Event capabilities are not supported.
