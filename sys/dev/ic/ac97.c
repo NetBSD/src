@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.76 2005/06/20 02:49:18 atatat Exp $ */
+/*      $NetBSD: ac97.c,v 1.77 2005/09/27 05:24:40 simonb Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.76 2005/06/20 02:49:18 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.77 2005/09/27 05:24:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -673,6 +673,7 @@ static const struct ac97_codecid {
 	{ 0x83847609, 0xffffffff,	"SigmaTel STAC9721/23",	},
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
 	{ 0x83847650, 0xffffffff,	"SigmaTel STAC9750/51",	},
+	{ 0x83847652, 0xffffffff,	"SigmaTel STAC9752/53",	},
 	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
 	{ 0x83847658, 0xffffffff,	"SigmaTel STAC9758/59",	},
 	{ 0x83847666, 0xffffffff,	"SigmaTel STAC9766/67",	},
