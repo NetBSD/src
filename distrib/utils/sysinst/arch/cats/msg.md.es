@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3.2.3 2005/09/19 21:19:12 tron Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.2.4 2005/09/27 20:06:20 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,3 +54,6 @@ Compensación en %s):
 
 message set_kernel_1
 {Núcleo (GENERIC)}
+
+message set_kernel_2
+{Núcleo (GENERIC.ABLE)}
