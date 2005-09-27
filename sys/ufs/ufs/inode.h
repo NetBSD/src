@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.44 2005/09/12 20:23:04 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.45 2005/09/27 06:48:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -265,17 +265,6 @@ struct indir {
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
-
-typedef void (*ufs_itimes_t)(struct inode *ip, const struct timespec *,
-    const struct timespec *, const struct timespec *);
-
-extern ufs_itimes_t ffs_itimesfn, ext2fs_itimesfn;
-
-#define	ITIMES(ip, acc, mod, cre) \
-	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
-		IS_EXT2_VNODE((ip)->i_vnode) ? \
-		    (*ext2fs_itimesfn)(ip, acc, mod, cre) : \
-		    (*ffs_itimesfn)(ip, acc, mod, cre)
 
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)

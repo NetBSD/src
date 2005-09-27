@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.174 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.175 2005/09/27 06:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.174 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.175 2005/09/27 06:48:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -116,6 +116,10 @@ static const struct genfs_ops ffs_genfsops = {
 	.gop_alloc = ufs_gop_alloc,
 	.gop_write = genfs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
+};
+
+static const struct ufs_ops ffs_ufsops = {
+	.uo_itimes = ffs_itimes,
 };
 
 POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
@@ -803,6 +807,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	memset(ump, 0, sizeof *ump);
 	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
+	ump->um_ops = &ffs_ufsops;
 
 #ifdef FFS_EI
 	if (needswap) {
@@ -1552,7 +1557,6 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
-	ffs_itimesfn = ffs_itimes;
 #ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "ffsinopl", &pool_allocator_nointr);
@@ -1585,7 +1589,6 @@ ffs_done(void)
 	pool_destroy(&ffs_dinode1_pool);
 	pool_destroy(&ffs_inode_pool);
 #endif
-	ffs_itimesfn = NULL;
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")

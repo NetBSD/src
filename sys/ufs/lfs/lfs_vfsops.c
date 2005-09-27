@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.187 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.188 2005/09/27 06:48:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.187 2005/09/23 12:10:34 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.188 2005/09/27 06:48:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,6 +165,10 @@ const struct genfs_ops lfs_genfsops = {
 	.gop_alloc = ufs_gop_alloc,
 	.gop_write = lfs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
+};
+
+static const struct ufs_ops lfs_ufsops = {
+	.uo_itimes = NULL,
 };
 
 /*
@@ -1051,6 +1055,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_lfs = fs;
+	ump->um_ops = &lfs_ufsops;
 	ump->um_fstype = UFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		bp->b_flags |= B_INVAL;

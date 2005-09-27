@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.134 2005/09/12 20:23:04 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.135 2005/09/27 06:48:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.134 2005/09/12 20:23:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.135 2005/09/27 06:48:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -89,8 +89,6 @@ static const struct dirtemplate mastertemplate = {
 	0,	12,		DT_DIR,	1,	".",
 	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
-
-ufs_itimes_t ffs_itimesfn = NULL, ext2fs_itimesfn = NULL;
 
 /*
  * Create a regular file
@@ -222,7 +220,7 @@ ufs_close(void *v)
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1)
-		ITIMES(ip, NULL, NULL, NULL);
+		UFS_ITIMES(vp, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (0);
 }
@@ -299,7 +297,7 @@ ufs_getattr(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	vap = ap->a_vap;
-	ITIMES(ip, NULL, NULL, NULL);
+	UFS_ITIMES(vp, NULL, NULL, NULL);
 
 	/*
 	 * Copy from inode table
@@ -1839,7 +1837,7 @@ ufsspec_close(void *v)
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1)
-		ITIMES(ip, NULL, NULL, NULL);
+		UFS_ITIMES(vp, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
@@ -1905,7 +1903,7 @@ ufsfifo_close(void *v)
 	ip = VTOI(vp);
 	simple_lock(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
-		ITIMES(ip, NULL, NULL, NULL);
+		UFS_ITIMES(vp, NULL, NULL, NULL);
 	simple_unlock(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
