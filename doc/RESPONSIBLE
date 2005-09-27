@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.57 2005/09/13 17:13:50 christos Exp $
+#	$NetBSD: RESPONSIBLE,v 1.58 2005/09/27 03:04:43 jmcneill Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -89,6 +89,7 @@ acpi		mycroft, thorpej, kochi
 audio		augustss, mycroft, jmcneill
 cgd		elric
 firewire	jmc
+gpio		jmcneill
 ide/atapi	bouyer, mycroft
 irda		augustss, kenh
 isdn		martin
