@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.140 2005/08/14 04:15:44 joff Exp $
+#	$NetBSD: files.isa,v 1.141 2005/09/27 02:56:27 jmcneill Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -484,7 +484,7 @@ attach	joy at isa with joy_isa
 file	dev/isa/joy_isa.c		joy_isa
 
 # NSC PC87366 Super IO / monitor chip
-device nsclpcsio: sysmon_envsys
+device nsclpcsio: sysmon_envsys, gpiobus
 attach nsclpcsio at isa with nsclpcsio_isa
 file dev/isa/nsclpcsio_isa.c nsclpcsio_isa
 
