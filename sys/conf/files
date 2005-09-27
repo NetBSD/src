@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.733 2005/09/26 14:14:26 yamt Exp $
+#	$NetBSD: files,v 1.734 2005/09/27 02:41:10 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -236,6 +236,7 @@ define	ata_hl		{[drive = -1]}
 define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
+define	gpiobus		{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 
@@ -1437,3 +1438,8 @@ device	joy
 file	dev/ic/joy.c			joy needs-flag
 
 include	"net/agr/files.agr"
+
+#
+# General Purpose Input/Output framework
+#
+include	"dev/gpio/files.gpio"
