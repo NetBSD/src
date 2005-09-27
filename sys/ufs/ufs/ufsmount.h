@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.22 2005/09/27 06:48:16 yamt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.23 2005/09/27 06:48:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,7 +102,17 @@ struct ufsmount {
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
 	u_int64_t um_maxfilesize;
+
+	const struct ufs_ops *um_ops;
 };
+
+struct ufs_ops {
+	void (*uo_itimes)(struct inode *ip, const struct timespec *,
+	    const struct timespec *, const struct timespec *);
+};
+
+#define	UFS_ITIMES(vp, acc, mod, cre) \
+	(*VFSTOUFS((vp)->v_mount)->um_ops->uo_itimes)((ip), (acc), (mod), (cre))
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
