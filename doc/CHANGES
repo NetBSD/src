@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.525 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.526 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -118,3 +118,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		it work. [jmmv 20050923]
 	mountd(8): Make this utility file system independent, also simplifying
 		its code. [jmmv 20050923]
+	gpio(4): Import general purpose I/O framework from OpenBSD.
+		[jmcneill 20050926]
+	gpioctl(8): Import utility to talk to general purpose I/O devices
+		from OpenBSD [jmcneill 20050926]
