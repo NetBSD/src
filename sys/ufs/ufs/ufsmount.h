@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.21 2005/09/25 21:17:05 jmmv Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.22 2005/09/27 06:48:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -101,7 +101,7 @@ struct ufsmount {
 	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
-	off_t	um_maxfilesize;
+	u_int64_t um_maxfilesize;
 };
 
 /* UFS-specific flags */
