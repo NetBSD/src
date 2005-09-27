@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.703 2005/09/27 02:57:02 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.704 2005/09/27 02:57:47 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.703 $"
+#ident 		"GENERIC-$Revision: 1.704 $"
 
 maxusers	32		# estimated number of users
 
@@ -574,6 +574,7 @@ lpt2	at isa? port 0x3bc
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
+#gpio*		at nsclpcsio?
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
