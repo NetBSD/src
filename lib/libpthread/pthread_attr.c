@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.4 2004/12/29 00:59:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.4.2.1 2005/09/27 20:23:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.4 2004/12/29 00:59:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.4.2.1 2005/09/27 20:23:04 tron Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -286,7 +286,7 @@ pthread_attr_getschedpolicy(const pthread_attr_t *attr,
     int *policy)
 {
 
-	policy = SCHED_OTHER;
+	*policy = SCHED_OTHER;
 
 	return 0;
 }
