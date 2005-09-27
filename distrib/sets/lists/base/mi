@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.570 2005/09/10 19:20:48 jmmv Exp $
+# $NetBSD: mi,v 1.571 2005/09/27 02:55:15 jmcneill Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -976,6 +976,7 @@
 ./usr/sbin/getencstat				base-sysutil-bin
 ./usr/sbin/gettable				base-obsolete		obsolete
 ./usr/sbin/gifconfig				base-obsolete		obsolete
+./usr/sbin/gpioctl				base-sysutil-bin
 ./usr/sbin/greconfig				base-obsolete		obsolete
 ./usr/sbin/group				base-sysutil-bin
 ./usr/sbin/groupadd				base-sysutil-bin
