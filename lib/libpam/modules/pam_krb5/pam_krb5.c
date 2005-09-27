@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.9 2005/04/19 03:38:47 lukem Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.10 2005/09/27 14:38:19 tsarna Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.9 2005/04/19 03:38:47 lukem Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.10 2005/09/27 14:38:19 tsarna Exp $");
 #endif
 
 #include <sys/types.h>
@@ -362,15 +362,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	gid_t egid;
 
 	if (flags & PAM_DELETE_CRED)
-		return (PAM_SUCCESS);
+		return (PAM_SUCCESS); /* XXX */
 
-	if (flags & PAM_REFRESH_CRED)
-		return (PAM_SUCCESS);
-
-	if (flags & PAM_REINITIALIZE_CRED)
-		return (PAM_SUCCESS);
-
-	if (!(flags & PAM_ESTABLISH_CRED))
+	if (!(flags & (PAM_REFRESH_CRED|PAM_REINITIALIZE_CRED|PAM_ESTABLISH_CRED)))
 		return (PAM_SERVICE_ERR);
 
 	/* If a persistent cache isn't desired, stop now. */
@@ -434,44 +428,51 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 
 	PAM_LOG("Done setegid() & seteuid()");
 
-	/* Get the cache name */
-	cache_name = openpam_get_option(pamh, PAM_OPT_CCACHE);
-	if (cache_name == NULL) {
-		asprintf(&cache_name_buf, "FILE:/tmp/krb5cc_%d", pwd->pw_uid);
-		cache_name = cache_name_buf;
-	}
+	if (flags & (PAM_REFRESH_CRED|PAM_REINITIALIZE_CRED)) {
+                cache_name = getenv("KRB5CCNAME");
+                if (!cache_name)
+                	goto cleanup3;
+	} else {
+		/* Get the cache name */
+		cache_name = openpam_get_option(pamh, PAM_OPT_CCACHE);
+		if (cache_name == NULL) {
+			asprintf(&cache_name_buf, "FILE:/tmp/krb5cc_%d", pwd->pw_uid);
+			cache_name = cache_name_buf;
+		}
 
-	p = calloc(PATH_MAX + 16, sizeof(char));
-	q = cache_name;
+		/* XXX potential overflow */
+		p = calloc(PATH_MAX + 16, sizeof(char));
+		q = cache_name;
+	
+		if (p == NULL) {
+			PAM_LOG("Error malloc(): failure");
+			retval = PAM_BUF_ERR;
+			goto cleanup3;
+		}
+		cache_name = p;
 
-	if (p == NULL) {
-		PAM_LOG("Error malloc(): failure");
-		retval = PAM_BUF_ERR;
-		goto cleanup3;
-	}
-	cache_name = p;
-
-	/* convert %u and %p */
-	while (*q) {
-		if (*q == '%') {
-			q++;
-			if (*q == 'u') {
-				sprintf(p, "%d", pwd->pw_uid);
-				p += strlen(p);
-			}
-			else if (*q == 'p') {
-				sprintf(p, "%d", getpid());
-				p += strlen(p);
+		/* convert %u and %p */
+		while (*q) {
+			if (*q == '%') {
+				q++;
+				if (*q == 'u') {
+					sprintf(p, "%d", pwd->pw_uid);
+					p += strlen(p);
+				}
+				else if (*q == 'p') {
+					sprintf(p, "%d", getpid());
+					p += strlen(p);
+				}
+				else {
+					/* Not a special token */
+					*p++ = '%';
+					q--;
+				}
+				q++;
 			}
 			else {
-				/* Not a special token */
-				*p++ = '%';
-				q--;
+				*p++ = *q++;
 			}
-			q++;
-		}
-		else {
-			*p++ = *q++;
 		}
 	}
 
@@ -492,6 +493,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 		retval = PAM_SERVICE_ERR;
 		goto cleanup2;
 	}
+
 	krbret = krb5_cc_initialize(pam_context, ccache_perm, princ);
 	if (krbret != 0) {
 		PAM_LOG("Error krb5_cc_initialize(): %s",
@@ -517,6 +519,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	/* Copy the creds (should be two of them) */
 	while ((krbret = krb5_cc_next_cred(pam_context, ccache_temp,
 				&cursor, &creds) == 0)) {
+
 		krbret = krb5_cc_store_cred(pam_context, ccache_perm, &creds);
 		if (krbret != 0) {
 			PAM_LOG("Error krb5_cc_store_cred(): %s",
@@ -526,29 +529,33 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 			retval = PAM_SERVICE_ERR;
 			goto cleanup2;
 		}
+
 		krb5_free_cred_contents(pam_context, &creds);
 		PAM_LOG("Iteration");
 	}
+
 	krb5_cc_end_seq_get(pam_context, ccache_temp, &cursor);
 
 	PAM_LOG("Done iterating");
 
-	if (strstr(cache_name, "FILE:") == cache_name) {
-		if (chown(&cache_name[5], pwd->pw_uid, pwd->pw_gid) == -1) {
-			PAM_LOG("Error chown(): %s", strerror(errno));
-			krb5_cc_destroy(pam_context, ccache_perm);
-			retval = PAM_SERVICE_ERR;
-			goto cleanup2;
-		}
-		PAM_LOG("Done chown()");
+	if (flags & PAM_ESTABLISH_CRED) {
+		if (strstr(cache_name, "FILE:") == cache_name) {
+			if (chown(&cache_name[5], pwd->pw_uid, pwd->pw_gid) == -1) {
+				PAM_LOG("Error chown(): %s", strerror(errno));
+				krb5_cc_destroy(pam_context, ccache_perm);
+				retval = PAM_SERVICE_ERR;
+				goto cleanup2;
+			}
+			PAM_LOG("Done chown()");
 
-		if (chmod(&cache_name[5], (S_IRUSR | S_IWUSR)) == -1) {
-			PAM_LOG("Error chmod(): %s", strerror(errno));
-			krb5_cc_destroy(pam_context, ccache_perm);
-			retval = PAM_SERVICE_ERR;
-			goto cleanup2;
+			if (chmod(&cache_name[5], (S_IRUSR | S_IWUSR)) == -1) {
+				PAM_LOG("Error chmod(): %s", strerror(errno));
+				krb5_cc_destroy(pam_context, ccache_perm);
+				retval = PAM_SERVICE_ERR;
+				goto cleanup2;
+			}
+			PAM_LOG("Done chmod()");
 		}
-		PAM_LOG("Done chmod()");
 	}
 
 	krb5_cc_close(pam_context, ccache_perm);
