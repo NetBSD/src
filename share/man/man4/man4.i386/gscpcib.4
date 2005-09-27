@@ -1,4 +1,4 @@
-.\" $NetBSD: gscpcib.4,v 1.1 2005/09/27 10:59:45 jmcneill Exp $
+.\" $NetBSD: gscpcib.4,v 1.2 2005/09/27 13:23:55 wiz Exp $
 .\"	$OpenBSD: gscpcib.4,v 1.4 2005/01/20 22:08:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -32,7 +32,7 @@ driver provides support for the National Semiconductor Geode SC1100
 System-on-Chip
 .Tn PCI-ISA
 bridge.
-This device is mostly usual
+This device is mostly a usual
 .Tn PCI-ISA
 bridge but with some additional sub-devices.
 Besides the core
@@ -43,8 +43,7 @@ driver provides support for the
 .Tn GPIO
 interface of this device.
 .Pp
-The device has 64 I/O pins which can be accessed
-through the
+The device has 64 I/O pins which can be accessed through the
 .Xr gpio 4
 framework.
 The
@@ -61,7 +60,7 @@ program allows to easily manipulate pins from userland.
 The
 .Nm
 driver first appeared in
-.Ox 3.6 
+.Ox 3.6
 and
 .Nx 4.0 .
 .Sh AUTHORS
@@ -69,7 +68,7 @@ and
 The
 .Nm
 driver was written by
-.An Alexander Yurchenko Aq grange@openbsd.org  
+.An Alexander Yurchenko Aq grange@openbsd.org
 and was ported to
 .Nx
 by
