@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.17 2005/07/12 15:06:17 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.18 2005/09/27 15:06:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -32,7 +32,8 @@
 #define _MACHINE_NETBSD32_H_
 
 #include <sys/types.h>
-#include <sys/proc.h>
+
+struct proc;
 
 typedef	u_int32_t netbsd32_pointer_t;
 
@@ -40,8 +41,6 @@ typedef	u_int32_t netbsd32_pointer_t;
  * Convert a pointer in the 32-bit world to a valid 64-bit pointer.
  */
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
-
-#include <compat/netbsd32/netbsd32.h>
 
 /* from <arch/sparc/include/signal.h> */
 typedef u_int32_t netbsd32_sigcontextp_t;
