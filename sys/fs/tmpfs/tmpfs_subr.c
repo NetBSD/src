@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.8 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.9 2005/09/27 20:35:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.8 2005/09/23 15:36:15 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.9 2005/09/27 20:35:33 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -447,14 +447,16 @@ tmpfs_free_vp(struct vnode *vp)
 
 /* --------------------------------------------------------------------- */
 
-/* Allocates a new file of type 'type' and adds it to the parent directory
+/*
+ * Allocates a new file of type 'type' and adds it to the parent directory
  * 'dvp'; this addition is done using the component name given in 'cnp'.
  * The ownership of the new file is automatically assigned based on the
  * credentials of the caller (through 'cnp'), the group is set based on
  * the parent directory and the mode is determined from the 'vap' argument.
  * If successful, *vpp holds a vnode to the newly created file and zero
  * is returned.  Otherwise *vpp is NULL and the function returns an
- * appropriate error code .*/
+ * appropriate error code.
+ */
 int
 tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
     struct componentname *cnp, char *target)
@@ -616,11 +618,13 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 /* --------------------------------------------------------------------- */
 
-/* Helper function for tmpfs_readdir.  Creates a '.' entry for the given
+/*
+ * Helper function for tmpfs_readdir.  Creates a '.' entry for the given
  * directory and returns it in the uio space.  The function returns 0
  * on success, -1 if there was not enough space in the uio structure to
  * hold the directory entry or an appropriate error code if another
- * error happens. */
+ * error happens.
+ */
 int
 tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 {
@@ -652,11 +656,13 @@ tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 
 /* --------------------------------------------------------------------- */
 
-/* Helper function for tmpfs_readdir.  Creates a '..' entry for the given
+/*
+ * Helper function for tmpfs_readdir.  Creates a '..' entry for the given
  * directory and returns it in the uio space.  The function returns 0
  * on success, -1 if there was not enough space in the uio structure to
  * hold the directory entry or an appropriate error code if another
- * error happens. */
+ * error happens.
+ */
 int
 tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 {
@@ -696,7 +702,9 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 
 /* --------------------------------------------------------------------- */
 
-/* lookup a directory entry by cookie */
+/*
+ * Lookup a directory entry by its associated cookie.
+ */
 struct tmpfs_dirent *
 tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
@@ -718,11 +726,13 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 
 /* --------------------------------------------------------------------- */
 
-/* Helper function for tmpfs_readdir.  Returns as much directory entries
+/*
+ * Helper function for tmpfs_readdir.  Returns as much directory entries
  * as can fit in the uio space.  The read starts at uio->uio_offset.
  * The function returns 0 on success, -1 if there was not enough space
  * in the uio structure to hold the directory entry or an appropriate
- * error code if another error happens. */
+ * error code if another error happens.
+ */
 int
 tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 {
@@ -874,7 +884,8 @@ out:
 
 /* --------------------------------------------------------------------- */
 
-/* Returns information about the number of available memory pages,
+/*
+ * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
  * If 'total' is TRUE, the value returned is the total amount of memory 
@@ -889,7 +900,8 @@ out:
  * object allocation.  The time it takes to run this function so many
  * times is not negligible, so this value should be stored as an
  * aggregate somewhere, possibly within UVM (we cannot do it ourselves
- * because we can't get notifications on memory usage changes). */
+ * because we can't get notifications on memory usage changes).
+ */
 size_t
 tmpfs_mem_info(boolean_t total)
 {
@@ -923,9 +935,11 @@ tmpfs_mem_info(boolean_t total)
 
 /* --------------------------------------------------------------------- */
 
-/* Change flags of the given vnode.
+/*
+ * Change flags of the given vnode.
  * Caller should execute VOP_UPDATE on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit. */
+ * The vnode must be locked on entry and remain locked on exit.
+ */
 int
 tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 {
@@ -976,9 +990,11 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 
 /* --------------------------------------------------------------------- */
 
-/* Change access mode on the given vnode.
+/*
+ * Change access mode on the given vnode.
  * Caller should execute VOP_UPDATE on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit. */
+ * The vnode must be locked on entry and remain locked on exit.
+ */
 int
 tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
 {
@@ -1023,11 +1039,13 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
 
 /* --------------------------------------------------------------------- */
 
-/* Change ownership of the given vnode.  At least one of uid or gid must
+/*
+ * Change ownership of the given vnode.  At least one of uid or gid must
  * be different than VNOVAL.  If one is set to that value, the attribute
  * is unchanged.
  * Caller should execute VOP_UPDATE on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit. */
+ * The vnode must be locked on entry and remain locked on exit.
+ */
 int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
     struct proc *p)
@@ -1077,9 +1095,11 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 
 /* --------------------------------------------------------------------- */
 
-/* Change size of the given vnode.
+/*
+ * Change size of the given vnode.
  * Caller should execute VOP_UPDATE on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit. */
+ * The vnode must be locked on entry and remain locked on exit.
+ */
 int
 tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
     struct proc *p)
@@ -1136,9 +1156,11 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 
 /* --------------------------------------------------------------------- */
 
-/* Change access and modification times of the given vnode.
+/*
+ * Change access and modification times of the given vnode.
  * Caller should execute VOP_UPDATE on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit. */
+ * The vnode must be locked on entry and remain locked on exit.
+ */
 int
 tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
     int vaflags, struct ucred *cred, struct proc *p)
