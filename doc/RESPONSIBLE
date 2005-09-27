@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.58 2005/09/27 03:04:43 jmcneill Exp $
+#	$NetBSD: RESPONSIBLE,v 1.59 2005/09/27 10:12:46 rpaulo Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -11,7 +11,7 @@ necessarily incomplete!
 
 Userland Programs:
 
-amd		christos
+amd		christos, rpaulo
 awk		jdolecek
 audioplay	mrg
 audiorecord	mrg
