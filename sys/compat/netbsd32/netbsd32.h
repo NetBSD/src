@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.41 2005/09/24 21:34:18 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.42 2005/09/27 14:37:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -636,6 +636,8 @@ void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
+
+void    netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
