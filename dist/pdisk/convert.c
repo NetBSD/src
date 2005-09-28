@@ -29,6 +29,8 @@
 
 #ifdef __linux__
 #include <endian.h>
+#elif __NetBSD__
+#include <machine/endian.h>
 #else
 #define LITTLE_ENDIAN 1234
 #define BIG_ENDIAN 4321
