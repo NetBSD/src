@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.6 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.7 2005/09/28 23:42:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -328,6 +328,8 @@ int	tmpfs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
 int	tmpfs_chsize(struct vnode *, u_quad_t, struct ucred *, struct proc *);
 int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
 	    int, struct ucred *, struct proc *);
+void	tmpfs_itimes(struct vnode *, const struct timespec *,
+	    const struct timespec *);
 
 /* --------------------------------------------------------------------- */
 

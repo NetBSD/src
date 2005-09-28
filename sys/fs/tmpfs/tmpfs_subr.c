@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.9 2005/09/27 20:35:33 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.10 2005/09/28 23:42:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.9 2005/09/27 20:35:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.10 2005/09/28 23:42:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1200,4 +1200,40 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	KASSERT(VOP_ISLOCKED(vp));
 
 	return error;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Sync timestamps */
+void
+tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod)
+{
+	struct tmpfs_node *node;
+	const struct timespec *ts = NULL;
+	struct timespec tsb;
+
+	node = VP_TO_TMPFS_NODE(vp);
+
+	if ((node->tn_status & (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
+	    TMPFS_NODE_CHANGED)) == 0)
+		return;
+
+	if (node->tn_status & TMPFS_NODE_ACCESSED) {
+		if (acc == NULL)
+			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		node->tn_atime = *acc;
+	}
+	if (node->tn_status & TMPFS_NODE_MODIFIED) {
+		if (mod == NULL)
+			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		node->tn_mtime = *mod;
+	}
+	if (node->tn_status & TMPFS_NODE_CHANGED) {
+		if (ts == NULL)
+			ts = nanotime(&tsb);
+		node->tn_ctime = *ts;
+	}
+	node->tn_status &=
+	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
 }
