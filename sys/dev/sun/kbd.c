@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.51 2005/09/14 07:32:43 martin Exp $	*/
+/*	$NetBSD: kbd.c,v 1.52 2005/09/28 21:36:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.51 2005/09/14 07:32:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.52 2005/09/28 21:36:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,6 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		printf("kbd: returning ENOTTY\n");
 		error = ENOTTY;
 		break;
 	}
