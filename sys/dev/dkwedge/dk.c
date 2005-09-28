@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.7 2005/05/29 22:13:33 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.8 2005/09/28 18:25:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7 2005/05/29 22:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.8 2005/09/28 18:25:19 nathanw Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -348,7 +348,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_cfdata.cf_name = dk_cd.cd_name;
 	sc->sc_cfdata.cf_atname = dk_ca.ca_name;
 	/* sc->sc_cfdata.cf_unit set below */
-	sc->sc_cfdata.cf_fstate = FSTATE_NOTFOUND;
+	sc->sc_cfdata.cf_fstate = FSTATE_STAR;
 
 	/* Insert the larval wedge into the array. */
 	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
