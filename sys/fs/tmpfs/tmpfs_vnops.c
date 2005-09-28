@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.13 2005/09/26 00:46:59 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.14 2005/09/28 23:42:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.13 2005/09/26 00:46:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.14 2005/09/28 23:42:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -419,6 +419,8 @@ tmpfs_getattr(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 
 	VATTR_NULL(vap);
+
+	tmpfs_itimes(vp, NULL, NULL);
 
 	vap->va_type = vp->v_type;
 	vap->va_mode = node->tn_mode;
@@ -1392,7 +1394,6 @@ tmpfs_update(void *v)
 	struct timespec *mod = ((struct vop_update_args *)v)->a_modify;
 	int flags = ((struct vop_update_args *)v)->a_flags;
 
-	struct timespec *ts = NULL, tsb;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1402,26 +1403,7 @@ tmpfs_update(void *v)
 	if (flags & UPDATE_CLOSE)
 		; /* XXX Need to do anything special? */
 
-	if (node->tn_status != 0) {
-		if (node->tn_status & TMPFS_NODE_ACCESSED) {
-			if (acc == NULL)
-				acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
-			node->tn_atime = *acc;
-		}
-		if (node->tn_status & TMPFS_NODE_MODIFIED) {
-			if (mod == NULL)
-				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
-			node->tn_mtime = *mod;
-		}
-		if (node->tn_status & TMPFS_NODE_CHANGED) {
-			if (ts == NULL)
-				ts = nanotime(&tsb);
-			node->tn_ctime = *ts;
-		}
-		node->tn_status &=
-		    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
-		    TMPFS_NODE_CHANGED);
-	}
+	tmpfs_itimes(vp, acc, mod);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
