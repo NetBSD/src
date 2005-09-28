@@ -1,4 +1,4 @@
-/* $NetBSD: sha512hl.c,v 1.5 2005/09/26 03:01:41 christos Exp $ */
+/* $NetBSD: sha512hl.c,v 1.6 2005/09/28 16:31:45 christos Exp $ */
 
 /*
  * Derived from code ritten by Jason R. Thorpe <thorpej@NetBSD.org>,
@@ -8,11 +8,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha512hl.c,v 1.5 2005/09/26 03:01:41 christos Exp $");
+__RCSID("$NetBSD: sha512hl.c,v 1.6 2005/09/28 16:31:45 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define	HASH_ALGORITHM	SHA512
 #define	HASH_FNPREFIX	SHA512_
 #define HASH_INCLUDE	<crypto/sha2.h>
 
-#include "../hash.c"
+#include "../hashhl.c"
