@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.7 2005/09/28 23:42:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.8 2005/09/29 19:48:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -144,6 +144,9 @@ struct tmpfs_node {
 	struct timespec		tn_ctime;
 	struct timespec		tn_birthtime;
 	unsigned long		tn_gen;
+
+	/* Head of byte-level lock list (used by tmpfs_advlock). */
+	struct lockf *		tn_lockf;
 
 	/* As there is a single vnode for each active file within the
 	 * system, care has to be taken to avoid allocating more than one

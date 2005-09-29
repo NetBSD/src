@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.14 2005/09/28 23:42:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.15 2005/09/29 19:48:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.14 2005/09/28 23:42:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.15 2005/09/29 19:48:21 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.14 2005/09/28 23:42:14 yamt Exp $"
 #include <sys/uio.h>
 #include <sys/unistd.h>
 #include <sys/vnode.h>
+#include <sys/lockf.h>
 
 #include <uvm/uvm.h>
 
@@ -1345,6 +1346,20 @@ tmpfs_pathconf(void *v)
 	}
 
 	return error;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+tmpfs_advlock(void *v)
+{
+	struct vnode *vp = ((struct vop_advlock_args *)v)->a_vp;
+
+	struct tmpfs_node *node;
+
+	node = VP_TO_TMPFS_NODE(vp);
+
+	return lf_advlock(v, &node->tn_lockf, node->tn_size);
 }
 
 /* --------------------------------------------------------------------- */
