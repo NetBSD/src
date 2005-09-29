@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.14 2005/09/28 14:26:19 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.15 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.14 2005/09/28 14:26:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.15 2005/09/29 04:14:03 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1022,6 +1022,9 @@ azalia_codec_init(codec_t *this)
 		DPRINTF(("\n"));
 	}
 #endif
+	this->cur_dac = 0;
+	this->cur_adc = 0;
+
 	err = azalia_codec_construct_format(this);
 	if (err)
 		return err;
@@ -2284,6 +2287,8 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		    COP_AMPCAP_NUMSTEPS(this->outamp_cap),
 		    COP_AMPCAP_OFFSET(this->outamp_cap)));
 	}
+	if (codec->init_widget != NULL)
+		codec->init_widget(codec, this, nid);
 	return 0;
 }
 
