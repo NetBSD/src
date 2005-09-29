@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.26 2005/08/24 20:55:41 elad Exp $	*/
+/*	$NetBSD: misc.c,v 1.27 2005/09/29 14:29:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.26 2005/08/24 20:55:41 elad Exp $");
+__RCSID("$NetBSD: misc.c,v 1.27 2005/09/29 14:29:03 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,18 +76,18 @@ static KEY keylist[] = {
 	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"sha1",	F_SHA1,		NEEDVALUE},
 	{"sha1digest",	F_SHA1,		NEEDVALUE},
-	{"size",	F_SIZE,		NEEDVALUE},
-	{"tags",	F_TAGS,		NEEDVALUE},
-	{"time",	F_TIME,		NEEDVALUE},
-	{"type",	F_TYPE,		NEEDVALUE},
-	{"uid",		F_UID,		NEEDVALUE},
-	{"uname",	F_UNAME,	NEEDVALUE},
 	{"sha256",	F_SHA256,	NEEDVALUE},
 	{"sha256digest",F_SHA256,	NEEDVALUE},
 	{"sha384",	F_SHA384,	NEEDVALUE},
 	{"sha384digest",F_SHA384,	NEEDVALUE},
 	{"sha512",	F_SHA512,	NEEDVALUE},
 	{"sha512digest",F_SHA512,	NEEDVALUE},
+	{"size",	F_SIZE,		NEEDVALUE},
+	{"tags",	F_TAGS,		NEEDVALUE},
+	{"time",	F_TIME,		NEEDVALUE},
+	{"type",	F_TYPE,		NEEDVALUE},
+	{"uid",		F_UID,		NEEDVALUE},
+	{"uname",	F_UNAME,	NEEDVALUE}
 };
 
 static KEY typelist[] = {
