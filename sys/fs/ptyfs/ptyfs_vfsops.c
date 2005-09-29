@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.9 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.10 2005/09/29 14:45:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.9 2005/09/23 12:10:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.10 2005/09/29 14:45:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args args;
 
+	/* Don't allow more than one mount */
+	if (ptyfs_save_ptm != NULL)
+		return EBUSY;
+
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
 		return EINVAL;
@@ -227,12 +231,11 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "ptyfs",
 	    UIO_SYSSPACE, mp, p)) != 0) {
+		free(pmnt, M_UFSMNT);
 		return error;
 	}
 
 	/* Point pty access to us */
-	if (ptyfs_save_ptm != NULL)
-		return EBUSY;
 
 	ptm_ptyfspty.arg = mp;
 	ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
@@ -260,9 +263,10 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 
 	/* Restore where pty access was pointing */
-	ptm_ptyfspty.arg = NULL;
+	KASSERT(ptyfs_save_ptm != NULL);
 	(void)pty_sethandler(ptyfs_save_ptm);
 	ptyfs_save_ptm = NULL;
+	ptm_ptyfspty.arg = NULL;
 
 	/*
 	 * Finally, throw away the ptyfsmount structure
