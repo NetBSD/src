@@ -1,0 +1,3 @@
+#	$NetBSD: fstab.tmpfs,v 1.1 2005/09/29 21:06:43 jmmv Exp $
+tmpfs	/tmp		tmpfs	rw
+tmpfs	/var/run	tmpfs	rw
