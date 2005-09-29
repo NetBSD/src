@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.9 2005/09/25 11:55:05 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.10 2005/09/29 19:45:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -358,8 +358,8 @@ struct iwi_scan_v2 {
 	u_int32_t	fsidx;
 	u_int8_t	channels[IWI_SCAN_CHANNELS];
 	struct {
-		u_int8_t lsn:4;
 		u_int8_t msn:4;
+		u_int8_t lsn:4;
 	} __attribute__ ((__packed__)) type[IWI_SCAN_CHANNELS / 2];
 
 	u_int8_t	reserved1;
