@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.4 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.5 2005/09/29 19:48:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ int	tmpfs_reclaim		(void *);
 int	tmpfs_print		(void *);
 int	tmpfs_pathconf		(void *);
 #define	tmpfs_islocked		genfs_islocked
-#define	tmpfs_advlock		genfs_eopnotsupp
+int	tmpfs_advlock		(void *);
 #define	tmpfs_blkatoff		genfs_eopnotsupp
 #define	tmpfs_valloc		genfs_eopnotsupp
 #define	tmpfs_reallocblks	genfs_eopnotsupp
