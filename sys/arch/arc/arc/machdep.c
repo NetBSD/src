@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2005/06/09 16:02:19 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2005/09/29 10:39:43 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/06/09 16:02:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/09/29 10:39:43 tsutsui Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -110,10 +110,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2005/06/09 16:02:19 he Exp $");
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 #ifdef MFS
-#include <ufs/mfs/mfs_extern.h>
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 #endif
 
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -179,7 +178,7 @@ int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	ncpu = 1;		/* At least one CPU in the system */
 int	cpuspeed = 150;		/* approx CPU clock [MHz] */
-vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
+vsize_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 
