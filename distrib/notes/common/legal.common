@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.39 2005/06/30 02:32:06 perry Exp $
+.\"	$NetBSD: legal.common,v 1.40 2005/09/29 17:15:52 perry Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,8 @@ See the extract-contrib-string.pl script for help on updating this list!
 ..
 .
 .
+NetBSD is a registered trademark of The NetBSD Foundation, Inc.
+.It
 This product includes software developed by the University of
 California, Berkeley and its contributors.
 .It
