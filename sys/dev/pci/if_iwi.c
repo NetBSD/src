@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.28 2005/09/25 15:29:37 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.29 2005/09/29 19:57:36 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.28 2005/09/25 15:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.29 2005/09/29 19:57:36 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1264,8 +1264,8 @@ iwi_intr(void *arg)
 	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
 
-	/* Disable interrupts */
-	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
+	/* Acknowledge interrupts */
+	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
@@ -1292,12 +1292,6 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_TX1_DONE)
 		iwi_tx_intr(sc);
-
-	/* Acknowledge interrupts */
-	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
-
-	/* Re-enable interrupts */
-	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, IWI_INTR_MASK);
 
 	return 1;
 }
