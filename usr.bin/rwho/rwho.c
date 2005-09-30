@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.14 2003/08/07 11:15:47 agc Exp $	*/
+/*	$NetBSD: rwho.c,v 1.15 2005/09/30 17:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.14 2003/08/07 11:15:47 agc Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.15 2005/09/30 17:58:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: rwho.c,v 1.14 2003/08/07 11:15:47 agc Exp $");
 
 #include <dirent.h>
 #include <err.h>
-#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,52 +54,56 @@ __RCSID("$NetBSD: rwho.c,v 1.14 2003/08/07 11:15:47 agc Exp $");
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <utmp.h>
+#include <sysexits.h>
 
-void usage(void);
-int utmpcmp(const void *, const void *);
+static void usage(void) __attribute__((__noreturn__));
+static int utmpcmp(const void *, const void *);
 
-DIR	*dirp;
-
-struct	whod wd;
-#define	NUSERS	1000
-struct	myutmp {
-	char	myhost[MAXHOSTNAMELEN];
-	int	myidle;
-	struct	outmp myutmp;
-} myutmp[NUSERS];
-int	nusers;
-
-#define	WHDRSIZE	(sizeof (wd) - sizeof (wd.wd_we))
 /* 
  * this macro should be shared with ruptime.
  */
-#define	down(w,now)	((now) - (w)->wd_recvtime > 11 * 60)
+#define	DOWN(w,now)	((now) - (w).wd_recvtime > 11 * 60)
+#define WHDRSIZE	(sizeof(struct whod) - \
+    sizeof (((struct whod *)NULL)->wd_we))
 
-int	utmpcmp __P((const void *, const void *));
-int	main __P((int, char **));
-
-time_t	now;
-int	aflg;
+struct	my_utmp {
+	char	myhost[MAXHOSTNAMELEN];
+	int	myidle;
+	struct	outmp myutmp;
+};
 
 int
 main(int argc, char **argv)
 {
-	int ch;
+	DIR *dirp;
 	struct dirent *dp;
-	int cc, width;
-	struct whod *w = &wd;
 	struct whoent *we;
-	struct myutmp *mp;
-	int f, n, i, nhosts;
+	struct whod wd;
+	struct my_utmp *mp, *start;
+	time_t now;
+	int ch;
+	size_t width, n, i, nhosts, nusers, namount;
+	int aflg, qflg, hflg;
 
-	setlocale(LC_TIME, "");
+	setprogname(argv[0]);
+	(void)setlocale(LC_TIME, "");
+	aflg = nusers = nhosts = qflg = hflg = 0;
+	namount = 40;
+	start = NULL;
+	now = 0;
 
-	while ((ch = getopt(argc, argv, "a")) != -1)
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, "aHq")) != -1)
+		switch(ch) {
 		case 'a':
 			aflg = 1;
 			break;
-		case '?':
+		case 'q':
+			qflg = 1;
+			break;
+		case 'H':
+			hflg = 1;
+			break;
 		default:
 			usage();
 		}
@@ -108,105 +111,141 @@ main(int argc, char **argv)
 	if(optind != argc)
 		usage();
 
-	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL)
-		err(1, "%s", _PATH_RWHODIR);
+	if (qflg) {
+		aflg = 0;
+		hflg = 0;
+	}
 
-	mp = myutmp;
-	nhosts = 0;
+	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL)
+		err(EXIT_FAILURE, "Cannot access `%s'", _PATH_RWHODIR);
+
 	(void)time(&now);
+
+	if ((start = malloc(sizeof(*start) * namount)) == NULL)
+		err(EXIT_FAILURE, "malloc");
+
 	while ((dp = readdir(dirp)) != NULL) {
+		int f;
+		ssize_t cc;
+
 		if (dp->d_ino == 0 || strncmp(dp->d_name, "whod.", 5))
 			continue;
+
 		f = open(dp->d_name, O_RDONLY);
 		if (f < 0)
 			continue;
-		cc = read(f, (char *)&wd, sizeof (struct whod));
+		cc = read(f, &wd, sizeof (wd));
 		if (cc < WHDRSIZE) {
-			(void) close(f);
+			(void)close(f);
 			continue;
 		}
 		nhosts++;
-		if (down(w,now)) {
-			(void) close(f);
+		if (DOWN(wd, now)) {
+			(void)close(f);
 			continue;
 		}
 		cc -= WHDRSIZE;
-		we = w->wd_we;
+		we = wd.wd_we;
 		for (n = cc / sizeof (struct whoent); n > 0; n--) {
 			if (aflg == 0 && we->we_idle >= 60*60) {
 				we++;
 				continue;
 			}
-			if (nusers >= NUSERS)
-				err(1, "too many users");
 
-			mp->myutmp = we->we_utmp; mp->myidle = we->we_idle;
-			(void) strcpy(mp->myhost, w->wd_hostname);
+			if (nusers == namount) {
+				namount = namount + 40;
+				if ((start = realloc(start,
+				    sizeof(struct my_utmp) * namount)) == NULL)
+					err(1, "realloc");
+			}
+
+			mp = start + nusers;
+	
+			mp->myutmp = we->we_utmp;
+			mp->myidle = we->we_idle;
+			(void)strcpy(mp->myhost, wd.wd_hostname);
 			nusers++; we++; mp++;
 		}
-		(void) close(f);
+		(void)close(f);
 	}
+
 	if (nhosts == 0)
-		errx(0, "no hosts in %s.", _PATH_RWHODIR);
-	qsort((char *)myutmp, nusers, sizeof (struct myutmp), utmpcmp);
-	mp = myutmp;
+		errx(EX_OK, "No hosts in `%s'.", _PATH_RWHODIR);
+
+	mp = start;
+	qsort(start, nusers, sizeof(*start), utmpcmp);
 	width = 0;
 	for (i = 0; i < nusers; i++) {
-		int j = strlen(mp->myhost) + 1 + strlen(mp->myutmp.out_line);
+		size_t j = strlen(mp->myhost) + 1 + strlen(mp->myutmp.out_line);
 		if (j > width)
 			width = j;
 		mp++;
 	}
-	mp = myutmp;
+	mp = start;
+	if (hflg) {
+		(void)printf("%-*.*s %-*s %-12s %-*s\n", UT_NAMESIZE,
+		    UT_NAMESIZE, "USER", (int)width, "LINE", "WHEN",
+		    (int)width, "IDLE");
+	}
 	for (i = 0; i < nusers; i++) {
 		char buf[BUFSIZ], cbuf[80];
-		strftime(cbuf, sizeof(cbuf), "%c", localtime((time_t *)&mp->myutmp.out_time));
-/*		cbuf = ctime((time_t *)&mp->myutmp.out_time); */
-		(void)sprintf(buf, "%s:%s", mp->myhost, mp->myutmp.out_line);
-		printf("%-8.8s %-*s %.12s",
-		   mp->myutmp.out_name,
-		   width,
-		   buf,
-		   cbuf + 4);
+		time_t t;
+
+		if (qflg) {
+			(void)printf("%-*.*s\n", UT_NAMESIZE, UT_NAMESIZE,
+			    mp->myutmp.out_name);
+			mp++;
+			continue;
+		}
+		t = mp->myutmp.out_time;
+		(void)strftime(cbuf, sizeof(cbuf), "%c", localtime(&t));
+		(void)snprintf(buf, sizeof(buf), "%s:%s", mp->myhost,
+		    mp->myutmp.out_line);
+		(void)printf("%-*.*s %-*s %.12s", UT_NAMESIZE, UT_NAMESIZE,
+		    mp->myutmp.out_name, (int)width, buf, cbuf + 4);
 		mp->myidle /= 60;
 		if (mp->myidle) {
 			if (aflg) {
-				if (mp->myidle >= 100*60)
-					mp->myidle = 100*60 - 1;
+				if (mp->myidle >= 100 * 60)
+					mp->myidle = 100 * 60 - 1;
 				if (mp->myidle >= 60)
-					printf(" %2d", mp->myidle / 60);
+					(void)printf(" %2d", mp->myidle / 60);
 				else
-					printf("   ");
+					(void)printf("   ");
 			} else
-				printf(" ");
-			printf(":%02d", mp->myidle % 60);
+				(void)printf(" ");
+			(void)printf(":%02d", mp->myidle % 60);
 		}
-		printf("\n");
+		(void)printf("\n");
 		mp++;
 	}
-	exit(0);
+
+	if (qflg)
+		(void)printf("# users = %d\n", nusers);
+
+	return EX_OK;
 }
 
-int
+static int
 utmpcmp(const void *v1, const void *v2)
 {
-	const struct myutmp *u1, *u2;
+	const struct my_utmp *u1, *u2;
 	int rc;
 
 	u1 = v1;
 	u2 = v2;
 	rc = strncmp(u1->myutmp.out_name, u2->myutmp.out_name, 8);
 	if (rc)
-		return (rc);
+		return rc;
 	rc = strcmp(u1->myhost, u2->myhost);
 	if (rc)
-		return (rc);
-	return (strncmp(u1->myutmp.out_line, u2->myutmp.out_line, 8));
+		return rc;
+	return strncmp(u1->myutmp.out_line, u2->myutmp.out_line, 8);
 }
 
-void
+static void
 usage(void)
 {
-	fprintf(stderr, "usage: rwho [-a]\n");
+	(void)fprintf(stderr, "Usage: %s [-aHq]\n", getprogname());
 	exit(1);
 }
