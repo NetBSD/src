@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.2 2005/09/30 22:51:46 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,9 @@ void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		setfstype(const char **, const char *);
 void		adddev(const char *, const char *, struct nvlist *, int);
-void		deldev(const char *, const char *);
+void		deldevi(const char *, const char *);
+void		deldeva(const char *);
+void		deldev(const char *);
 void		addpseudo(const char *, int);
 void		delpseudo(const char *);
 void		adddevm(const char *, int, int, struct nvlist *);
