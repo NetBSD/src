@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2005/09/30 22:58:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -17,12 +17,11 @@ CLEANFILES+=	XDPSpwraps.c XDPSpwraps.h XDPSswraps.c XDPSswraps.h
 .include "${NETBSDSRCDIR}/x11/tools/pswrap/Makefile.pswrap"
 
 LIBDPLIBS=\
-	Xt	${.CURDIR}/../Xt \
-	SM	${.CURDIR}/../SM \
-	ICE	${.CURDIR}/../ICE \
 	dps	${.CURDIR}/../dps \
-	Xext	${.CURDIR}/../Xext \
 	X11	${.CURDIR}/../X11/dynamic
+
+LDADD+=		-lm
+DPADD+=		${LIBM}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

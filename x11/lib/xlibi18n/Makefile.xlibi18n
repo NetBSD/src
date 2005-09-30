@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xlibi18n,v 1.6 2005/01/21 05:15:37 rtr Exp $
+#	$NetBSD: Makefile.xlibi18n,v 1.6.2.1 2005/09/30 22:58:57 tron Exp $
 
 MKLINKLIB=	no
 
@@ -11,7 +11,8 @@ SHLIB_MINOR=	0
 
 CPPFLAGS+=	${X11FLAGS.THREADS}
 
-LIBDPLIBS=X11 ${NETBSDSRCDIR}/x11/lib/X11/dynamic
+LIBDPLIBS=\
+	X11	${NETBSDSRCDIR}/x11/lib/X11/dynamic
 
 .include <bsd.x11.mk>
 

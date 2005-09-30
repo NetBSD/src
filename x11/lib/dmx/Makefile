@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2005/04/06 21:22:45 tron Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2005/09/30 22:58:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,10 @@ SRCS=	dmx.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/include/extensions
 CPPFLAGS+=	${X11FLAGS.THREADS}
+
+LIBDPLIBS=\
+	Xext	${.CURDIR}/../Xext \
+	X11	${.CURDIR}/../X11/dynamic
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
