@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.9 2005/09/26 09:49:22 jmmv Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.10 2005/09/30 14:25:07 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.9 2005/09/26 09:49:22 jmmv Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.10 2005/09/30 14:25:07 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.9 2005/09/26 09:49:22 jmmv Exp $");
 #include <grp.h>
 #include <mntopts.h>
 #include <pwd.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,7 +82,7 @@ int
 mount_tmpfs(int argc, char *argv[])
 {
 	char canon_dir[MAXPATHLEN];
-	bool gidset, modeset, uidset;
+	int gidset, modeset, uidset; /* Ought to be 'bool'. */
 	int ch, mntflags;
 	gid_t gid;
 	uid_t uid;
@@ -101,9 +100,9 @@ mount_tmpfs(int argc, char *argv[])
 	args.ta_nodes_max = 0;
 	mntflags = 0;
 
-	gidset = false; gid = 0;
-	uidset = false; uid = 0;
-	modeset = false; mode = 0;
+	gidset = 0; gid = 0;
+	uidset = 0; uid = 0;
+	modeset = 0; mode = 0;
 
 	optind = optreset = 1;
 	while ((ch = getopt(argc, argv, "g:m:n:o:s:u:")) != -1 ) {
@@ -114,7 +113,7 @@ mount_tmpfs(int argc, char *argv[])
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
-			gidset = true;
+			gidset = 1;
 			break;
 
 		case 'm':
@@ -123,7 +122,7 @@ mount_tmpfs(int argc, char *argv[])
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
-			modeset = true;
+			modeset = 1;
 			break;
 
 		case 'n':
@@ -155,7 +154,7 @@ mount_tmpfs(int argc, char *argv[])
 				    "'%s'", optarg);
 				/* NOTREACHED */
 			}
-			uidset = true;
+			uidset = 1;
 			break;
 
 		case '?':
