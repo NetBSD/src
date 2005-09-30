@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.258 2005/09/27 20:25:22 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.259 2005/09/30 08:51:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13069,4 +13069,10 @@ xfree/xc/programs/xdm/config/NetBSDinv.xpm	1.2
 	Make XDM work on machines with black and white or 8Bit framebuffers.
 	This fixes PR xsrc/30451.
 	[jschauma, ticket #835]
+
+sys/arch/sh5/include/vmparam.h			1.10
+sys/arch/sh5/sh5/netbsd32_machdep.c		1.6
+
+	Add netbsd32_vm_default_addr() and MAXDSIZ32/MAXSSIZ32.
+	[scw, ticket #850]
 
