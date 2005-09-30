@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.261 2005/09/30 17:51:39 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.262 2005/09/30 23:02:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13097,4 +13097,68 @@ distrib/utils/sysinst/arch/i386/md.c		1.108
 	Change default countdown time to 5 seconds to match i386 bootblock
 	defaults in sys/arch/i386/stand/lib/boot_params.S
 	[dsl, ticket #825]
+
+distrib/sets/makesums				1.8
+
+	Generate SHA512 checksums too.
+	[elad, ticket #827]
+
+distrib/utils/sysinst/mbr.c			1.70
+
+	Avoid another divide-by-zero while computing geometry.
+	[chs, ticket #830]
+
+sys/arch/amd64/include/profile.h		1.4
+
+	Pull in changes from i386 profile.h:
+	- Allow profiling of MP kernels, add a spinlock around the body of
+          mcount(). Fixes PR port-amd64/31360.
+	- Save and restore eflags instead of just doing cli/sti.
+	[chs, ticket #831]
+
+x11/lib/GL/Makefile				1.13
+x11/lib/GLU/Makefile				1.7
+x11/lib/GLw/Makefile				1.4
+x11/lib/Makefile				1.10
+x11/lib/OSmesa/Makefile				1.19
+x11/lib/SM/Makefile				1.6
+x11/lib/XRes/Makefile				1.6
+x11/lib/XTrap/Makefile				1.8
+x11/lib/Xaw/Makefile				1.6
+x11/lib/Xaw6/Makefile				1.6
+x11/lib/Xcursor/Makefile			1.11
+x11/lib/Xext/Makefile				1.7
+x11/lib/Xfontcache/Makefile			1.6
+x11/lib/Xft/Makefile				1.10
+x11/lib/Xft1/Makefile				1.8
+x11/lib/Xinerama/Makefile			1.5
+x11/lib/Xmu/Makefile				1.7
+x11/lib/Xmuu/Makefile				1.7
+x11/lib/Xpm/Makefile				1.7
+x11/lib/Xss/Makefile				1.8
+x11/lib/XvMC/Makefile				1.5
+x11/lib/Xxf86dga/Makefile			1.7
+x11/lib/Xxf86misc/Makefile			1.4
+x11/lib/Xxf86vm/Makefile			1.4
+x11/lib/dmx/Makefile				1.2
+x11/lib/dps/Makefile				1.8
+x11/lib/dpstk/Makefile				1.6
+x11/lib/font/Makefile				1.11
+x11/lib/fontconfig/src/Makefile			1.10
+x11/lib/xkbfile/Makefile			1.4
+x11/lib/xkbui/Makefile				1.4
+x11/lib/xlibi18n/Makefile.xlibi18n		1.7
+
+	Fix many problems in the reachover Makefiles for X11 libraries:
+	 - add many missing shared-library dependencies
+	 - remove many unnecessary shared-library dependencies
+	 - add many missing files to the Mesa source list
+	 - fix the ordering of the SUBDIR list in the top level
+	   to match the actual inter-library dependencies
+	[chs, ticket #832]
+
+sys/dev/raidframe/rf_dagdegwr.c			1.26
+
+	Remove an RF_ASSERT that is just plain wrong.
+	[oster, ticket #833]
 
