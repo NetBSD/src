@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.3 2005/08/25 15:01:07 drochner Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.4 2005/09/30 22:36:20 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,7 @@ emitparents(FILE *fp)
 
 	NEWLINE;
 	TAILQ_FOREACH(p, &allpspecs, p_list) {
-		if (p->p_devs == NULL)
+		if (p->p_devs == NULL || !p->p_active)
 			continue;
 		if (fprintf(fp,
 "static const struct cfparent pspec%d = {\n", p->p_inst) < 0)
