@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.822 2005/09/27 02:37:03 jmcneill Exp $
+#	$NetBSD: mi,v 1.823 2005/09/30 20:57:15 rpaulo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4421,6 +4421,7 @@
 ./usr/share/man/cat3/standout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
+./usr/share/man/cat3/sysexits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
@@ -8338,6 +8339,7 @@
 ./usr/share/man/man3/standout.3			comp-c-man		.man
 ./usr/share/man/man3/start_color.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
+./usr/share/man/man3/sysexits.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
