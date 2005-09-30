@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.106.2.1 2005/09/30 17:43:31 tron Exp $ */
+/*	$NetBSD: md.c,v 1.106.2.2 2005/09/30 17:45:09 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -299,8 +299,13 @@ md_post_newfs(void)
 	int td, sd;
 	char bootxx[8192 + 4];
 	char *bootxx_filename;
+	/*
+	 * XXX - should either find some way to pull this automatically
+	 * from sys/arch/i386/stand/lib/boot_params.S, or just bite the
+	 * bullet and include /sbin/installboot on the ramdisk
+	 */
 	static struct x86_boot_params boottype =
-		{sizeof boottype, 0, 10, 0, 9600, { '\0' }};
+		{sizeof boottype, 0, 5, 0, 9600, { '\0' }};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
