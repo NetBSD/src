@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.63 2005/06/01 15:41:19 lukem Exp $	*/
+/*	$NetBSD: jobs.c,v 1.64 2005/09/30 18:57:55 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.63 2005/06/01 15:41:19 lukem Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.64 2005/09/30 18:57:55 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,14 +205,14 @@ out:
 		setsignal(SIGTSTP, 0);
 		setsignal(SIGTTOU, 0);
 		setsignal(SIGTTIN, 0);
-		if (getpgid(0) != rootpid && setpgid(0, rootpid) == -1)
+		if (getpgrp() != rootpid && setpgid(0, rootpid) == -1)
 			error("Cannot set process group (%s) at %d",
 			    strerror(errno), __LINE__);
 		if (tcsetpgrp(ttyfd, rootpid) == -1)
 			error("Cannot set tty process group (%s) at %d",
 			    strerror(errno), __LINE__);
 	} else { /* turning job control off */
-		if (getpgid(0) != initialpgrp && setpgid(0, initialpgrp) == -1)
+		if (getpgrp() != initialpgrp && setpgid(0, initialpgrp) == -1)
 			error("Cannot set process group (%s) at %d",
 			    strerror(errno), __LINE__);
 		if (tcsetpgrp(ttyfd, initialpgrp) == -1)
@@ -1149,7 +1149,7 @@ waitproc(int block, struct job *jp, int *status)
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
-	return wait3(status, flags, (struct rusage *)NULL);
+	return waitpid(-1, status, flags);
 #else
 #ifdef SYSV
 	int (*save)();
