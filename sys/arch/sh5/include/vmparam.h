@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2004/03/17 20:23:28 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.14.1 2005/09/30 08:50:32 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -123,8 +123,14 @@
 #ifndef MAXDSIZ
 #define MAXDSIZ                 (512 * 1024 * 1024)     /* max data size */
 #endif
+#ifndef MAXDSIZ32
+#define MAXDSIZ32		MAXDSIZ
+#endif
 #ifndef MAXSSIZ
 #define MAXSSIZ                 (32 * 1024 * 1024)      /* max stack size */
+#endif
+#ifndef MAXSSIZ32
+#define MAXSSIZ32		MAXSSIZ
 #endif
 
 /* initial data size limit */
