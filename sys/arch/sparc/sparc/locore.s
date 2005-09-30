@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.219 2005/09/24 22:44:44 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.220 2005/09/30 22:09:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6633,29 +6633,27 @@ ENTRY(microtime)
 	bz	3f				! if limit not reached yet
 	 clr	%g4				!  then use timer as is
 
-	! now we're sure we need the timer value so let's endian-swap it
-	! %o4 = le32toh(%o4)
-	! since we're going to overwrite %g4 anyway we can use it
-	! for intermediate values here
-	mov	%o4, %o2
-	set	0xff00ff, %g4
-	sll	%o4, 16, %o4	! first swap the upper and lower 16 bit
-	srl	%o2, 16, %o2
-	or	%o2, %o4, %o4	! result in %o4
-	and	%o4, %g4, %o2	! now grab byte 0 and 2
-	andn	%o4, %g4, %o4	! %o4 now contains byte 1 and 3
-	srl	%o4, 8, %o4	! shift them so they swap positions
-	sll	%o2, 8, %o2
-	or	%o2, %o4, %o4	! put them back together. 
-
-
-	set	0x80000000, %g5
 	sethi	%hi(_C_LABEL(tick)), %g4
-	bclr	%g5, %o4			! clear limit reached flag
+	bclr	0x80, %o4			! clear limit reached flag
 	ld	[%g4+%lo(_C_LABEL(tick))], %g4
 
 	!! %g4 - either 0 or tick (if timer has hit the limit)
 3:
+	! now we're sure we need the timer value so let's endian-swap it
+	! %o4 = le32toh(%o4)
+	! since we're going to overwrite %g5 and don't need %g3 we can use them
+	! for intermediate values here
+	mov	%o4, %g3
+	set	0xff00ff, %g5
+	sll	%o4, 16, %o4	! first swap the upper and lower 16 bit
+	srl	%g3, 16, %g3
+	or	%g3, %o4, %o4	! result in %o4
+	and	%o4, %g5, %g3	! now grab byte 0 and 2
+	andn	%o4, %g5, %o4	! %o4 now contains byte 1 and 3
+	srl	%o4, 8, %o4	! shift them so they swap positions
+	sll	%g3, 8, %g3
+	or	%g3, %o4, %o4	! put them back together. 
+
 	inc	-1, %o4				! timer is 1-based, adjust
 	!! divide by 25 magic stolen from a gcc output
 	set	1374389535, %g5
@@ -6663,6 +6661,7 @@ ENTRY(microtime)
 	rd	%y, %o4
 	srl	%o4, 3, %o4
 	add	%o4, %g4, %o4			! may be bump usec by tick
+	
 !!! END ms-IIep specific code
 
 	add	%o3, %o4, %o3			! add timer to time.tv_usec
