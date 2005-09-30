@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.2 2005/09/10 15:38:46 martin Exp $	*/
+/*	$NetBSD: gram.y,v 1.3 2005/09/30 22:51:46 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -447,7 +447,9 @@ config_spec:
 	NO PSEUDO_DEVICE WORD		{ delpseudo($3); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
 	NO device_instance AT attachment
-					{ deldev($2, $4); } |
+					{ deldevi($2, $4); } |
+	NO DEVICE AT attachment		{ deldeva($4); } |
+	NO device_instance		{ deldev($2); } |
 	device_instance AT attachment locators flags_opt
 					{ adddev($1, $3, $4, $5); };
 
