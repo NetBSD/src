@@ -1,13 +1,20 @@
-#	$NetBSD: Makefile,v 1.5.4.4 2005/09/02 14:53:14 riz Exp $
+#	$NetBSD: Makefile,v 1.5.4.5 2005/09/30 22:58:58 tron Exp $
 
-SUBDIR=	X11 ICE Xau .WAIT \
-	SM Xext .WAIT \
-	Xt Xpm Xrender GL .WAIT \
-	Xmu dps .WAIT \
-	FS GLU GLw OSmesa XRes XTrap Xaw Xaw6 Xcursor Xdmcp Xft Xft1 \
-	Xfontcache Xi Xinerama Xmuu Xp Xrandr Xss Xtst Xv XvMC \
-	Xxf86dga Xxf86misc Xxf86vm dmx dpstk expat font .WAIT \
-	fontconfig fontenc freetype2 lbxutil psres oldX xkbfile xkbui xtrans
+# we encode the inter-library dependencies in the SUBDIR order:
+# each library depends on at least one library in the previous group.
+
+SUBDIR=\
+	X11 ICE Xau freetype2 expat FS fontenc lbxutil psres xtrans Xdmcp \
+	 .WAIT \
+	SM Xext oldX fontconfig Xmuu Xpm \
+	 .WAIT \
+	Xt Xrender GL Xfontcache font xkbfile XRes Xi Xinerama Xp Xss Xtst \
+	Xv XvMC Xxf86dga Xxf86misc Xxf86vm dmx \
+	 .WAIT \
+	Xmu dps XTrap GLU GLw OSmesa Xcursor Xrandr Xft Xft1 xkbui \
+	 .WAIT \
+	Xaw Xaw6 dpstk
+ 
 
 .include <bsd.own.mk>
 
@@ -17,11 +24,12 @@ SUBDIR+= xlibi18n
 
 # Cache .OBJDIRS of LIBDPLIBS commonly used in SUBDIRs.
 #
-LIBDPLIBS=	X11	${.CURDIR}/X11/dynamic \
-		Xext	${.CURDIR}/Xext \
-		ICE	${.CURDIR}/ICE \
-		SM	${.CURDIR}/SM \
-		Xt	${.CURDIR}/Xt
+LIBDPLIBS=\
+	X11	${.CURDIR}/X11/dynamic \
+	Xext	${.CURDIR}/Xext \
+	ICE	${.CURDIR}/ICE \
+	SM	${.CURDIR}/SM \
+	Xt	${.CURDIR}/Xt
 
 libinstall::
 

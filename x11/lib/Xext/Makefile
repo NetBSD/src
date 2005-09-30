@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2005/09/30 22:58:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ SRCS=	DPMS.c MITMisc.c XAppgroup.c XEVI.c XLbx.c XMultibuf.c XSecurity.c \
 CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/X11
 
-LIBDPLIBS=	X11	${.CURDIR}/../X11/dynamic
+LIBDPLIBS=\
+	X11	${.CURDIR}/../X11/dynamic
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

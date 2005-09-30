@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2005/09/30 22:58:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,12 @@ SRCS=	xftcolor.c xftcore.c xftdbg.c xftdpy.c xftdraw.c xftextent.c \
 
 INCS=	Xft.h XftCompat.h
 INCSDIR=${X11INCDIR}/X11/Xft
+
+LIBDPLIBS=\
+	X11		${.CURDIR}/../X11/dynamic \
+	freetype	${.CURDIR}/../freetype2 \
+	fontconfig	${.CURDIR}/../fontconfig/src \
+	Xrender		${.CURDIR}/../Xrender
 
 MAN=	Xft.3
 
