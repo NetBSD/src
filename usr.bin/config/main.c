@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2005/09/30 22:36:20 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,9 @@ static	int	badstar(void);
 	int	main(int, char **);
 static	int	mksymlinks(void);
 static	int	mkident(void);
-static	int	hasparent(struct devi *);
+static	void	kill_orphans(void);
+static	void	do_kill_orphans(struct devbase *, struct attr *, struct devbase *);
+static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
 static	const char *strtolower(const char *);
 void	defopt(struct hashtab *ht, const char *fname,
@@ -249,6 +251,7 @@ main(int argc, char **argv)
 	initsem();
 	ident = NULL;
 	devbasetab = ht_new();
+	devroottab = ht_new();
 	devatab = ht_new();
 	devitab = ht_new();
 	selecttab = ht_new();
@@ -335,6 +338,11 @@ main(int argc, char **argv)
 
 	if (removeit)
 		unlink(cname);
+
+	/*
+	 * Detect and properly ignore orphaned devices
+	 */
+	kill_orphans();
 
 	/*
 	 * Select devices and pseudo devices and their attributes
@@ -987,10 +995,9 @@ deva_has_instances(struct deva *deva, int unit)
 {
 	struct devi *i;
 
-	if (unit == WILD)
-		return (deva->d_ihead != NULL);
 	for (i = deva->d_ihead; i != NULL; i = i->i_asame)
-		if (unit == i->i_unit)
+		if (i->i_active &&
+		    (unit == WILD || unit == i->i_unit || i->i_unit == STAR))
 			return (1);
 	return (0);
 }
@@ -1030,44 +1037,6 @@ devbase_has_instances(struct devbase *dev, int unit)
 	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
 		if (deva_has_instances(da, unit))
 			return (1);
-	return (0);
-}
-
-static int
-hasparent(struct devi *i)
-{
-	struct pspec *p;
-	struct nvlist *nv;
-
-	/*
-	 * We determine whether or not a device has a parent in in one
-	 * of two ways:
-	 *	(1) If a parent device was named in the config file,
-	 *	    i.e. cases (2) and (3) in sem.c:adddev(), then
-	 *	    we search its devbase for a matching unit number.
-	 *	(2) If the device was attach to an attribute, then we
-	 *	    search all attributes the device can be attached to
-	 *	    for parents (with appropriate unit numebrs) that
-	 *	    may be able to attach the device.
-	 */
-
-	/* No pspec, no parent (root node). */
-	if ((p = i->i_pspec) == NULL)
-		return (0);
-
-	/*
-	 * Case (1): A parent was named.  Either it's configured, or not.
-	 */
-	if (p->p_atdev != NULL)
-		return (devbase_has_instances(p->p_atdev, p->p_atunit));
-
-	/*
-	 * Case (2): No parent was named.  Look for devs that provide the attr.
-	 */
-	if (p->p_iattr != NULL)
-		for (nv = p->p_iattr->a_refs; nv != NULL; nv = nv->nv_next)
-			if (devbase_has_instances(nv->nv_ptr, p->p_atunit))
-				return (1);
 	return (0);
 }
 
@@ -1120,21 +1089,10 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 int
 crosscheck(void)
 {
-	struct pspec *p;
-	struct devi *i;
 	struct config *cf;
 	int errs;
 
 	errs = 0;
-	TAILQ_FOREACH(i, &alldevi, i_next) {
-		if ((p = i->i_pspec) == NULL || hasparent(i))
-			continue;
-		(void)fprintf(stderr,
-		    "%s:%d: `%s at %s' is orphaned (%s `%s' declared)\n",
-		    conffile, i->i_lineno, i->i_name, i->i_at,
-		    p->p_atunit == WILD ? "nothing matching" : "no",
-		    i->i_at);
-	}
 	if (TAILQ_EMPTY(&allcf)) {
 		(void)fprintf(stderr, "%s has no configurations!\n",
 		    conffile);
@@ -1517,4 +1475,78 @@ extract_config(const char *kname, const char *cname, int cfd)
 	close(kfd);
 
 	return found;
+}
+
+static void
+do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent)
+{
+	struct nvlist *nv, *nv1;
+	struct attr *a;
+	struct devi *i, *j = NULL;
+	struct pspec *p;
+
+	/*
+	 * A pseudo-device will always attach at root, and if it has an
+	 * instance (it cannot have more than one), it is enough to consider
+	 * it active, as there is no real attachment.
+	 */
+	if (d->d_ispseudo) {
+		if (d->d_ihead == NULL)
+			return;
+		d->d_ihead->i_active = 1;
+	} else {
+		int active = 0;
+		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
+			for (j = i; j != NULL; j = j->i_alias) {
+				p = j->i_pspec;
+				if ((p == NULL && at == NULL) ||
+				    (p != NULL && p->p_iattr == at &&
+				    (p->p_atdev == NULL ||
+				    p->p_atdev == parent))) {
+					if (p != NULL &&
+					    !devbase_has_instances(parent,
+					      p->p_atunit))
+						continue;
+					/*
+					 * There are Fry-like devices which can
+					 * be their own grand-parent (or even
+					 * parent, like uhub).  We don't want
+					 * to loop, so if we've already reached
+					 * an instance for one reason or
+					 * another, stop there.
+					 */
+					if (j->i_active)
+						/*
+						 * Device has already been
+						 * seen
+						 */
+						return;
+					j->i_active = active = 1;
+					if (p != NULL)
+						p->p_active = 1;
+				}
+			}
+		}
+		if (!active)
+			return;
+	}
+
+	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
+		a = nv->nv_ptr;
+		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
+			do_kill_orphans(nv1->nv_ptr, a, d);
+	}
+}
+
+static int
+kill_orphans_cb(const char *key, void *value, void *aux)
+{
+	do_kill_orphans((struct devbase *)value, NULL, NULL);
+	return 0;
+}
+
+static void
+kill_orphans()
+{
+	ht_enumerate(devroottab, kill_orphans_cb, NULL);
 }

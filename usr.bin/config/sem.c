@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.5 2005/08/07 15:11:12 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.6 2005/09/30 22:36:20 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@ static int resolve(struct nvlist **, const char *, const char *,
 static struct pspec *getpspec(struct attr *, struct devbase *, int);
 static struct devi *newdevi(const char *, int, struct devbase *d);
 static struct devi *getdevi(const char *);
+static void remove_devi(struct devi *);
 static const char *concat(const char *, int);
 static char *extend(char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
@@ -346,6 +347,13 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 			goto bad;
 		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
 		    attrs);
+
+		/*
+		 * Pseudo-devices can have children.  Consider them as
+		 * attaching at root.
+		 */
+		if (ispseudo)
+			ht_insert(devroottab, dev->d_name, dev);
 	}
 
 	/* Committed!  Set up fields. */
@@ -493,8 +501,10 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 				error("attach at `%s' already done by `%s'",
 				     a ? a->a_name : "root", da->d_name);
 
-		if (a == NULL)
+		if (a == NULL) {
+			ht_insert(devroottab, dev->d_name, dev);
 			continue;		/* at root; don't add */
+		}
 		if (!a->a_iattr)
 			error("%s cannot be at plain attribute `%s'",
 			    dev->d_name, a->a_name);
@@ -867,6 +877,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
 	i->i_lineno = currentline();
+	i->i_active = 0;
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
@@ -1275,10 +1286,22 @@ fixdevis(void)
 	struct devi *i;
 
 	TAILQ_FOREACH(i, &alldevi, i_next)
-		selectbase(i->i_base, i->i_atdeva);
+		if (i->i_active)
+			selectbase(i->i_base, i->i_atdeva);
+		else
+			/*
+			 * At this point, we can't have instances for which
+			 * i_at or i_pspec are NULL.
+			 */
+			(void)fprintf(stderr,
+			    "%s:%d: `%s at %s' is orphaned"
+			    " (%s `%s' found)\n", conffile, i->i_lineno,
+			    i->i_name, i->i_at, i->i_pspec->p_atunit == WILD ?
+			    "nothing matching" : "no", i->i_at);
 
 	TAILQ_FOREACH(i, &allpseudo, i_next)
-		selectbase(i->i_base, NULL);
+		if (i->i_active)
+			selectbase(i->i_base, NULL);
 }
 
 /*
@@ -1302,6 +1325,7 @@ getpspec(struct attr *attr, struct devbase *ab, int atunit)
 	p->p_atdev = ab;
 	p->p_atunit = atunit;
 	p->p_inst = npspecs++;
+	p->p_active = 0;
 
 	TAILQ_INSERT_TAIL(&allpspecs, p, p_list);
 
