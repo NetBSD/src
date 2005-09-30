@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.23 2005/09/30 22:28:19 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.24 2005/09/30 23:16:26 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.23 2005/09/30 22:28:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.24 2005/09/30 23:16:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,9 +703,8 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data));
 
 	case WSDISPLAYIO_SCURSOR:
-		if (cursor_busy) {
+		if (cursor_busy)
 			return (EBUSY);
-		}
 		return (igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data));
 	}
 
@@ -923,6 +922,7 @@ igsfb_set_cursor(dc, p)
 	cc = &dc->dc_cursor;
 	v = p->which;
 	index = count = icount = iwidth = 0;	/* XXX: gcc */
+
 	/* copy in the new cursor colormap */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
