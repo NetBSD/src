@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.22 2005/09/12 12:07:47 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.23 2005/09/30 22:28:19 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.22 2005/09/12 12:07:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.23 2005/09/30 22:28:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,8 +639,15 @@ igsfb_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
-		if (d == WSDISPLAYIO_MODE_MAPPED)
+		if (d != WSDISPLAYIO_MODE_EMUL)
 			dc->dc_mapped = 1;
+			/* turn off hardware cursor */
+			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
+				dc->dc_curenb = 0;
+				igsfb_update_cursor(dc,
+					WSDISPLAY_CURSOR_DOCUR);
+			}
+			
 		else {
 			dc->dc_mapped = 0;
 			/* reinit sprite for text cursor */
@@ -696,8 +703,9 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data));
 
 	case WSDISPLAYIO_SCURSOR:
-		if (cursor_busy)
+		if (cursor_busy) {
 			return (EBUSY);
+		}
 		return (igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data));
 	}
 
@@ -915,7 +923,6 @@ igsfb_set_cursor(dc, p)
 	cc = &dc->dc_cursor;
 	v = p->which;
 	index = count = icount = iwidth = 0;	/* XXX: gcc */
-
 	/* copy in the new cursor colormap */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
@@ -954,10 +961,10 @@ igsfb_set_cursor(dc, p)
 		struct rasops_info *ri = &dc->dc_ri;
 
 		pos = p->pos;	/* local copy we can write to */
-		if (pos.x >= ri->ri_width)
-			pos.x = ri->ri_width - 1;
-		if (pos.y >= ri->ri_height)
-			pos.y = ri->ri_height - 1;
+		if (pos.x >= (ri->ri_width + 64))
+			pos.x = ri->ri_width +63;
+		if (pos.y >= (ri->ri_height + 64))
+			pos.y = ri->ri_height + 63;
 	}
 
 	/* enforce that the hot spot is within sprite bounds */
