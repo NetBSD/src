@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.83.2.3 2005/09/19 21:03:13 tron Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.83.2.4 2005/09/30 17:42:02 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -615,25 +615,26 @@ message netok
 
 Domaine (DNS):			 %s 
 Nom de machine:			 %s 
-Adresse IP:			 %s 
-Masque de réseau (Netmask):	 %s 
-Adresse du serveur de noms:	 %s 
-Adresse de la paserelle:	 %s 
+Adapteur de réseau		 %s
+Adresse IPv4			 %s
+Masque de réseau (Netmask):	 %s
+Adresse IPv4 du serveur de noms: %s
+Adresse IPv4 de la passerelle: 	 %s
 Type de réseau (media):		 %s 
 }
 
 message netok_slip
-{The following are the values you entered.  Are they OK?
+{Vous avez spécifié les valeurs suivantes. Sont-ils d'accord?
 
-DNS Domain:		%s
-Host Name:		%s
-Primary Interface:	%s
-Host IP			%s
-Server IP:		%s
-Netmask:		%s
-IPv4 Nameserver:	%s
-IPv4 Gateway:		%s
-Media type:		%s
+Domaine (DNS):			 %s
+Nom de machine:			 %s
+Adapteur de réseau		 %s
+Adresse IPv4			 %s
+Adresse IPv4 du serveur:	 %s
+Masque de réseau (Netmask):	 %s
+Adresse IPv4 du serveur de noms: %s
+Adresse IPv4 de la passerelle:	 %s
+Type de réseau (media):		 %s
 }
 
 message netokv6
