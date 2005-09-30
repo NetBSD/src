@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.6 2005/09/30 22:36:20 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.7 2005/09/30 22:51:46 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1028,10 +1028,9 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 }
 
 void
-deldev(const char *name, const char *at)
+deldevi(const char *name, const char *at)
 {
-	struct devi *firsti, *i, *match, *previ, **ppi;
-	struct deva *iba;
+	struct devi *firsti, *i;
 	struct devbase *d;
 	int unit;
 	char base[NAMESIZE];
@@ -1053,30 +1052,28 @@ deldev(const char *name, const char *at)
 		error("`%s' not defined", name);
 		return;
 	}
-	match = NULL;
-	previ = NULL;
-	if (at == NULL)
+	if (at == NULL && firsti->i_at == NULL) {
 		/* 'at root' */
-		match = firsti;
-	else {
-		if (strcmp(at, firsti->i_at) == 0) {
-			match = firsti;
-		} else {
-			for (i = firsti; i != NULL; i = i->i_alias) {
-				if (strcmp(at, i->i_at) == 0) {
-					match = i;
-					break;
-				}
-				previ = i;
+		remove_devi(firsti);
+		return;
+	} else if (at != NULL)
+		for (i = firsti; i != NULL; i = i->i_alias)
+			if (strcmp(at, i->i_at) == 0) {
+				remove_devi(i);
+				return;
 			}
-		}
-		if (match == NULL) {
-			error("`%s' at `%s' not found", name, at);
-			return;
-		}
-	}
+	error("`%s' at `%s' not found", name, at ? at : "root");
+}
 
-	i = match;
+static void
+remove_devi(struct devi *i)
+{
+	struct devbase *d = i->i_base;
+	struct devi *f, *j, **ppi;
+	struct deva *iba;
+
+	f = ht_lookup(devitab, i->i_name);
+
 	/*
 	 * We have the device instance, i.
 	 * We have to:
@@ -1089,21 +1086,20 @@ deldev(const char *name, const char *at)
 	 *      If it was the only entry, we must remove i's entry from d's
 	 *      list.
 	 */
-	if (previ != NULL) {
-		previ->i_alias = i->i_alias;
-		if (i == firsti)
-			ht_replace(devitab, name, previ);
+	if (i != f) {
+		for (j = f; j->i_alias != i; j = j->i_alias);
+		j->i_alias = i->i_alias;
 	} else {
 		if (i->i_alias == NULL) {
 			/* No alias, must unlink the entry from devitab */
-			ht_remove(devitab, name);
-			match = i->i_bsame;
+			ht_remove(devitab, i->i_name);
+			j = i->i_bsame;
 		} else {
 			/* Or have the first alias replace i in d's list */
 			i->i_alias->i_bsame = i->i_bsame;
-			match = i->i_alias;
-			if (i == firsti)
-				ht_replace(devitab, name, i->i_alias);
+			j = i->i_alias;
+			if (i == f)
+				ht_replace(devitab, i->i_name, i->i_alias);
 		}
 
 		/*
@@ -1118,18 +1114,18 @@ deldev(const char *name, const char *at)
 		if (*ppi == NULL)
 			panic("deldev: dev (%s) doesn't list the devi"
 			    " (%s at %s)", d->d_name, i->i_name, i->i_at);
-		previ = *ppi;
-		if (previ == i)
+		f = *ppi;
+		if (f == i)
 			/* That implies d->d_ihead == i */
-			*ppi = match;
+			*ppi = j;
 		else
-			(*ppi)->i_bsame = match;
+			(*ppi)->i_bsame = j;
 		if (d->d_ipp == &i->i_bsame) {
 			if (i->i_alias == NULL) {
-				if (previ == i)
+				if (f == i)
 					d->d_ipp = &d->d_ihead;
 				else
-					d->d_ipp = &previ->i_bsame;
+					d->d_ipp = &f->i_bsame;
 			} else
 				d->d_ipp = &i->i_alias->i_bsame;
 		}
@@ -1144,17 +1140,17 @@ deldev(const char *name, const char *at)
 	if (*ppi == NULL)
 		panic("deldev: deva (%s) doesn't list the devi (%s)",
 		    iba->d_name, i->i_name);
-	previ = *ppi;
-	if (previ == i)
+	f = *ppi;
+	if (f == i)
 		/* That implies iba->d_ihead == i */
 		*ppi = i->i_asame;
 	else
 		(*ppi)->i_asame = i->i_asame;
 	if (iba->d_ipp == &i->i_asame) {
-		if (previ == i)
+		if (f == i)
 			iba->d_ipp = &iba->d_ihead;
 		else
-			iba->d_ipp = &previ->i_asame;
+			iba->d_ipp = &f->i_asame;
 	}
 	/*
 	 *   - delete the pspec
@@ -1185,6 +1181,7 @@ deldev(const char *name, const char *at)
 	 */
 	TAILQ_REMOVE(&alldevi, i, i_next);
 	ndevi--;
+	free(i);
 	/*
 	 *   - reconstuct d->d_umax
 	 */
@@ -1192,6 +1189,134 @@ deldev(const char *name, const char *at)
 	for (i = d->d_ihead; i != NULL; i = i->i_bsame)
 		if (i->i_unit >= d->d_umax)
 			d->d_umax = i->i_unit + 1;
+}
+
+void
+deldeva(const char *at)
+{
+	int unit;
+	const char *cp;
+	struct devbase *d, *ad;
+	struct devi *i, *j;
+	struct attr *a;
+	struct pspec *p;
+	struct nvlist *nv, *stack = NULL;
+
+	if (at == NULL) {
+		TAILQ_FOREACH(i, &alldevi, i_next)
+			if (i->i_at == NULL)
+				stack = newnv(NULL, NULL, i, 0, stack);
+	} else {
+		int l;
+
+		l = strlen(at) - 1;
+		if (at[l] == '?' || isdigit((unsigned char)at[l])) {
+			char base[NAMESIZE];
+
+			if (split(at, l+1, base, sizeof base, &unit)) {
+				error("invalid attachment name `%s'", at);
+				return;
+			}
+			cp = intern(base);
+		} else {
+			cp = intern(at);
+			unit = STAR;
+		}
+
+		ad = ht_lookup(devbasetab, cp);
+		a = ht_lookup(attrtab, cp);
+		if (a == NULL) {
+			error("unknown attachment attribute or device `%s'",
+			    cp);
+			return;
+		}
+		if (!a->a_iattr) {
+			error("plain attribute `%s' cannot have children",
+			    a->a_name);
+			return;
+		}
+
+		/*
+		 * remove_devi() makes changes to the devbase's list and the
+		 * alias list, * so the actual deletion of the instances must
+		 * be delayed.
+		 */
+		for (nv = a->a_devs; nv != NULL; nv = nv->nv_next) {
+			d = nv->nv_ptr;
+			for (i = d->d_ihead; i != NULL; i = i->i_bsame)
+				for (j = i; j != NULL; j = j->i_alias) {
+					/* Ignore devices at root */
+					if (j->i_at == NULL)
+						continue;
+					p = j->i_pspec;
+					/*
+					 * There are three cases:
+					 *
+					 * 1.  unit is not STAR.  Consider 'at'
+					 *     to be explicit, even if it
+					 *     references an interface
+					 *     attribute.
+					 *
+					 * 2.  unit is STAR and 'at' references
+					 *     a real device.  Look for pspec
+					 *     that have a matching p_atdev
+					 *     field.
+					 *
+					 * 3.  unit is STAR and 'at' references
+					 *     an interface attribute.  Look
+					 *     for pspec that have a matching
+					 *     p_iattr field.
+					 */
+					if ((unit != STAR &&        /* Case */
+					     !strcmp(j->i_at, at)) ||  /* 1 */
+					    (unit == STAR &&
+					     ((ad != NULL &&        /* Case */
+					       p->p_atdev == ad) ||    /* 2 */
+					      (ad == NULL &&        /* Case */
+					       p->p_iattr == a))))     /* 3 */
+						stack = newnv(NULL, NULL, j, 0,
+						    stack);
+				}
+		}
+	}
+
+	for (nv = stack; nv != NULL; nv = nv->nv_next)
+		remove_devi(nv->nv_ptr);
+}
+
+void
+deldev(const char *name)
+{
+	int l;
+	struct devi *firsti, *i;
+	struct nvlist *nv, *stack = NULL;
+
+	l = strlen(name) - 1;
+	if (name[l] == '*' || isdigit((unsigned char)name[l])) {
+		/* `no mydev0' or `no mydev*' */
+		firsti = ht_lookup(devitab, name);
+		if (firsti == NULL) {
+			error("unknown instance %s", name);
+			return;
+		}
+		for (i = firsti; i != NULL; i = i->i_alias)
+			stack = newnv(NULL, NULL, i, 0, stack);
+	} else {
+		struct devbase *d = ht_lookup(devbasetab, name);
+
+		if (d == NULL) {
+			error("unknown device %s", name);
+			return;
+		}
+
+		for (firsti = d->d_ihead; firsti != NULL;
+		    firsti = firsti->i_bsame)
+			for (i = firsti; i != NULL; i = i->i_alias)
+				stack = newnv(NULL, NULL, i, 0, stack);
+	}
+
+	for (nv = stack; nv != NULL; nv = nv->nv_next)
+		remove_devi(nv->nv_ptr);
 }
 
 void
@@ -1216,6 +1341,9 @@ addpseudo(const char *name, int number)
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
 	if (ht_insert(devitab, name, i))
 		panic("addpseudo(%s)", name);
+	/* Useful to retrieve the instance from the devbase */
+	d->d_ihead = i;
+	i->i_active = 1;
 	TAILQ_INSERT_TAIL(&allpseudo, i, i_next);
 }
 
