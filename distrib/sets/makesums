@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.7 2004/04/20 05:37:15 lukem Exp $
+# $NetBSD: makesums,v 1.7.2.1 2005/09/30 22:43:47 tron Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -63,10 +63,11 @@ if [ $dash_all = yes ]; then
 elif [ -z "$pat" ]; then
 	pat='*.tgz'
 fi
-lists=$(find $pat -prune \( -type f -o -type l \) \! -name '*SUM' \! -name MD5 2>/dev/null)
+lists=$(find $pat -prune \( -type f -o -type l \) \! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)
 if [ -n "$lists" ]; then
 	${CKSUM} -o1 $lists > BSDSUM
 	${CKSUM}     $lists > CKSUM
-	${CKSUM} -m  $lists > MD5
+	${CKSUM} -a md5  $lists > MD5
 	${CKSUM} -o2 $lists > SYSVSUM
+	${CKSUM} -a sha512  $lists > SHA512
 fi
