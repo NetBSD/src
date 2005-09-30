@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5.14.1 2005/09/30 08:50:32 tron Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5.14.1 2005/09/30 08:50:32 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_param.h>
+
 #include <net/if.h>
 #include <net/route.h>
 
@@ -69,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2004/03/17 20:23:28 scw Exp
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/vmparam.h>
+
+#include <machine/netbsd32_machdep.h>
 
 #include <sh5/fpu.h>
 
@@ -175,4 +180,11 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &l->l_addr->u_pcb);
+}
+
+vaddr_t
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }
