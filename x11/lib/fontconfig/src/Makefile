@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2005/09/30 22:54:29 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,8 @@ SRCS=	fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 	fclist.c fcmatch.c fcmatrix.c fcname.c fcpat.c fcstr.c fcxml.c
 
 LIBDPLIBS=\
-	expat	${.CURDIR}/../../expat
+	expat		${.CURDIR}/../../expat \
+	freetype	${.CURDIR}/../../freetype2
 
 MAN=	fontconfig.3
 
