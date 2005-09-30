@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.10 2005/09/28 23:42:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.11 2005/09/30 14:29:19 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.10 2005/09/28 23:42:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.11 2005/09/30 14:29:19 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -136,6 +136,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_uid = uid;
 	nnode->tn_gid = gid;
 	nnode->tn_mode = mode;
+	nnode->tn_lockf = NULL;
 	nnode->tn_vnode = NULL;
 
 	/* Type-specific initialization. */
