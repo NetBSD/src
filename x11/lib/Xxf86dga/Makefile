@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2005/09/30 22:58:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,10 @@ LIB=	Xxf86dga
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}
 
 SRCS=	XF86DGA.c XF86DGA2.c
+
+LIBDPLIBS=\
+	Xext	${.CURDIR}/../Xext \
+	X11	${.CURDIR}/../X11/dynamic
 
 MAN=	XDGA.3
 MLINKS=	XDGA.3 XF86DGA.3 \

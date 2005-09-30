@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2005/09/30 22:58:59 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -72,9 +72,6 @@ CLEANFILES+=	dpsops.h dpsops.h.tmp
 
 LIBDPLIBS=\
 	Xt	${.CURDIR}/../Xt \
-	SM	${.CURDIR}/../SM \
-	ICE	${.CURDIR}/../ICE \
-	Xext	${.CURDIR}/../Xext \
 	X11	${.CURDIR}/../X11/dynamic
 
 .include <bsd.x11.mk>
