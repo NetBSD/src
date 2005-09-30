@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.3 2003/11/28 23:22:45 fvdl Exp $	*/
+/*	$NetBSD: profile.h,v 1.3.14.1 2005/09/30 22:48:11 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,6 +30,12 @@
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
+#include <machine/cpufunc.h>
 
 #define	_MCOUNT_DECL void _mcount
 
@@ -73,6 +79,27 @@ __asm(" .globl __mcount		\n"			\
 
 
 #ifdef _KERNEL
-#define MCOUNT_ENTER	(void)&s; __asm__("cli");
-#define MCOUNT_EXIT	__asm__("sti");
+
+#ifdef MULTIPROCESSOR
+__cpu_simple_lock_t __mcount_lock;
+
+#define	MCOUNT_ENTER_MP							\
+	__cpu_simple_lock(&__mcount_lock);
+#define	MCOUNT_EXIT_MP							\
+	__cpu_simple_unlock(&__mcount_lock);
+
+#else
+#define MCOUNT_ENTER_MP
+#define MCOUNT_EXIT_MP
+#endif
+
+#define	MCOUNT_ENTER							\
+	s = (int)read_psl();						\
+	disable_intr();							\
+	MCOUNT_ENTER_MP
+
+#define	MCOUNT_EXIT							\
+	MCOUNT_EXIT_MP							\
+	write_psl(s);
+
 #endif /* _KERNEL */
