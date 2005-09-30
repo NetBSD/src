@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.68.2.1 2005/09/19 21:14:40 tron Exp $ */
+/*	$NetBSD: mbr.c,v 1.68.2.2 2005/09/30 22:44:54 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1699,7 +1699,7 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 			a2 -= s2;
 			num = (uint64_t)h1 * a2 - (quad_t)h2 * a1;
 			denom = (uint64_t)c2 * a1 - (quad_t)c1 * a2;
-			if (denom != 0 && num % denom == 0) {
+			if (num != 0 && denom != 0 && num % denom == 0) {
 				xheads = (int)(num / denom);
 				xsectors = a1 / (c1 * xheads + h1);
 				break;
