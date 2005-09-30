@@ -1,4 +1,4 @@
-/*	$NetBSD: sysexits.h,v 1.6 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: sysexits.h,v 1.7 2005/09/30 20:56:19 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -89,6 +89,8 @@
  *		perform the operation.  This is not intended for
  *		file system problems, which should use NOINPUT or
  *		CANTCREAT, but rather for higher level permissions.
+ *
+ *	Please update the sysexits(3) man page after adding more entries.
  */
 
 #define EX_OK		0	/* successful termination */
