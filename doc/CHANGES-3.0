@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.259 2005/09/30 08:51:18 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.260 2005/09/30 17:48:22 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13075,4 +13075,27 @@ sys/arch/sh5/sh5/netbsd32_machdep.c		1.6
 
 	Add netbsd32_vm_default_addr() and MAXDSIZ32/MAXSSIZ32.
 	[scw, ticket #850]
+
+distrib/utils/sysinst/msg.mi.de			1.20
+
+	Use "domain" verbatim in DNS context - the german translation is hardly
+	ever used.
+	[martin, ticket #821]
+
+distrib/utils/sysinst/msg.mi.fr			1.85
+
+	Translation of the new messages.
+	[dsl, ticket #822]
+
+distrib/utils/sysinst/arch/i386/md.c		1.107
+
+	If there's bootxx_lfsv2 on the ramdisk, we could use LFS for the
+	root filesystem, add the missing bit for that.
+	[dsl, ticket #824]
+
+distrib/utils/sysinst/arch/i386/md.c		1.108
+
+	Change default countdown time to 5 seconds to match i386 bootblock
+	defaults in sys/arch/i386/stand/lib/boot_params.S
+	[dsl, ticket #825]
 
