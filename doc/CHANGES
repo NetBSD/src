@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.526 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.527 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -122,3 +122,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[jmcneill 20050926]
 	gpioctl(8): Import utility to talk to general purpose I/O devices
 		from OpenBSD [jmcneill 20050926]
+	config(1): Implement "no device at <attachment>" and "no <device>".
+		[cube 20050930]
