@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwho.1,v 1.11 2005/09/12 18:35:32 wiz Exp $
+.\"	$NetBSD: rwho.1,v 1.12 2005/09/30 17:58:24 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwho.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: rwho.1,v 1.11 2005/09/12 18:35:32 wiz Exp $
+.\"	$NetBSD: rwho.1,v 1.12 2005/09/30 17:58:24 christos Exp $
 .\"
-.Dd June 6, 1993
+.Dd September 30, 2005
 .Dt RWHO 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd who is logged in on local machines
 .Sh SYNOPSIS
 .Nm
-.Op Fl a
+.Op Fl aHq
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,19 +48,23 @@ but for all machines on the local network.
 If no report has been
 received from a machine for 11 minutes then
 .Nm
-assumes the machine is down, and does not report users last known
+assumes the machine is down, and does not report the users last known
 to be logged into that machine.
 .Pp
-If a users hasn't typed to the system for a minute or more, then
+If a user hasn't typed to the system for a minute or more, then
 .Nm
 reports this idle time.
-If a user hasn't typed to the system for
-an hour or more, then
-the user will be omitted from the output of
-.Nm
-unless the
-.Fl a
-flag is given.
+.Bl -tag -width Fl
+.It Fl a 
+Include all users. By default, if a user hasn't typed to the
+system for an hour or more, then the user will be omitted from
+the output.
+.It Fl q
+``Quick mode'': List only the names and the number of users cur-
+rently logged on. When this option is used, all other options are
+ignored.
+.It Fl H
+Write column headings above the regular output.
 .Sh FILES
 .Bl -tag -width /var/rwho/whod.* -compact
 .It Pa /var/rwho/whod.*
