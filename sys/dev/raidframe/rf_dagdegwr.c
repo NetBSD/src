@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.25.2.1 2005/09/30 23:01:12 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.25.2.1 2005/09/30 23:01:12 tron Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -278,7 +278,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
-	RF_ASSERT(i == nNodes);
 
 	/* this dag can not commit until all rrd and xor Nodes have completed */
 	dag_h->numCommitNodes = 1;
