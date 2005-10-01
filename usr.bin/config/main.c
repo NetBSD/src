@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2005/09/30 22:36:20 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2005/10/01 23:30:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,12 @@ static	int	badstar(void);
 	int	main(int, char **);
 static	int	mksymlinks(void);
 static	int	mkident(void);
+static	int	devbase_has_dead_instances(const char *, void *, void *);
+static	int	devbase_has_any_instance(struct devbase *, int, int);
+static	int	check_dead_devi(const char *, void *, void *);
 static	void	kill_orphans(void);
-static	void	do_kill_orphans(struct devbase *, struct attr *, struct devbase *);
+static	void	do_kill_orphans(struct devbase *, struct attr *,
+    struct devbase *, int);
 static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
 static	const char *strtolower(const char *);
@@ -254,6 +258,7 @@ main(int argc, char **argv)
 	devroottab = ht_new();
 	devatab = ht_new();
 	devitab = ht_new();
+	deaddevitab = ht_new();
 	selecttab = ht_new();
 	needcnttab = ht_new();
 	opttab = ht_new();
@@ -347,7 +352,8 @@ main(int argc, char **argv)
 	/*
 	 * Select devices and pseudo devices and their attributes
 	 */
-	fixdevis();
+	if (fixdevis())
+		stop();
 
 	/*
 	 * Deal with option dependencies.
@@ -996,7 +1002,7 @@ deva_has_instances(struct deva *deva, int unit)
 	struct devi *i;
 
 	for (i = deva->d_ihead; i != NULL; i = i->i_asame)
-		if (i->i_active &&
+		if (i->i_active == DEVI_ACTIVE &&
 		    (unit == WILD || unit == i->i_unit || i->i_unit == STAR))
 			return (1);
 	return (0);
@@ -1477,25 +1483,127 @@ extract_config(const char *kname, const char *cname, int cfd)
 	return found;
 }
 
+struct dhdi_params {
+	struct devbase *d;
+	int unit;
+};
+
+static int
+devbase_has_dead_instances(const char *key, void *value, void *aux)
+{
+	struct devi *i = value;
+	struct dhdi_params *dhdi = aux;
+
+	if (i->i_base == dhdi->d &&
+	    (dhdi->unit == WILD || dhdi->unit == i->i_unit ||
+	     i->i_unit == STAR))
+		return 1;
+	return 0;
+}
+
+/*
+ * This is almost the same as devbase_has_instances, except it
+ * may have special considerations regarding ignored instances.
+ */
+
+static int
+devbase_has_any_instance(struct devbase *dev, int unit, int state)
+{
+	struct deva *da;
+	struct devi *i;
+
+	if (dev->d_ispseudo) {
+		if (dev->d_ihead != NULL)
+			return 1;
+		else if (state == DEVI_IGNORED)
+			return (ht_lookup(deaddevitab, dev->d_name) != NULL);
+		else
+			return 0;
+	}
+
+	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
+		for (i = da->d_ihead; i != NULL; i = i->i_asame)
+			if ((i->i_active == DEVI_ACTIVE ||
+			     i->i_active == state) &&
+			    (unit == WILD || unit == i->i_unit ||
+			     i->i_unit == STAR))
+				return 1;
+
+	if (state == DEVI_IGNORED) {
+		struct dhdi_params dhdi = { dev, unit };
+		/* also check dead devices */
+		return ht_enumerate(deaddevitab, devbase_has_dead_instances,
+		    &dhdi);
+	}
+		
+	return 0;
+}
+
+/*
+ * check_dead_devi(), used with ht_enumerate, checks if any of the removed
+ * device instances would have been a valid instance considering the devbase,
+ * the parent device and the interface attribute.
+ *
+ * In other words, for a non-active device, it checks if children would be
+ * actual orphans or the result of a negative statement in the config file.
+ */
+
+struct cdd_params {
+	struct devbase *d;
+	struct attr *at;
+	struct devbase *parent;
+};
+
+static int
+check_dead_devi(const char *key, void *value, void *aux)
+{
+	struct cdd_params *cdd = aux;
+	struct devi *i = value;
+	struct pspec *p = i->i_pspec;
+
+	if (i->i_base != cdd->d)
+		return 0;
+
+	if ((p == NULL && cdd->at == NULL) ||
+	    (p != NULL && p->p_iattr == cdd->at &&
+	     (p->p_atdev == NULL || p->p_atdev == cdd->parent))) {
+		if (p != NULL &&
+		    !devbase_has_any_instance(cdd->parent, p->p_atunit,
+		    DEVI_IGNORED))
+			return 0;
+		else
+			return 1;
+	}
+	return 0;
+}
+
 static void
-do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent)
+do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
+    int state)
 {
 	struct nvlist *nv, *nv1;
 	struct attr *a;
 	struct devi *i, *j = NULL;
 	struct pspec *p;
+	int active = 0;
 
 	/*
 	 * A pseudo-device will always attach at root, and if it has an
 	 * instance (it cannot have more than one), it is enough to consider
 	 * it active, as there is no real attachment.
+	 *
+	 * A pseudo device can never be marked DEVI_IGNORED.
 	 */
 	if (d->d_ispseudo) {
-		if (d->d_ihead == NULL)
-			return;
-		d->d_ihead->i_active = 1;
+		if (d->d_ihead != NULL)
+			d->d_ihead->i_active = active = DEVI_ACTIVE;
+		else {
+			if (ht_lookup(deaddevitab, d->d_name) != NULL)
+				active = DEVI_IGNORED;
+			else
+				return;
+		}
 	} else {
-		int active = 0;
 		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
 			for (j = i; j != NULL; j = j->i_alias) {
 				p = j->i_pspec;
@@ -1504,8 +1612,8 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent)
 				    (p->p_atdev == NULL ||
 				    p->p_atdev == parent))) {
 					if (p != NULL &&
-					    !devbase_has_instances(parent,
-					      p->p_atunit))
+					    !devbase_has_any_instance(parent,
+					      p->p_atunit, state))
 						continue;
 					/*
 					 * There are Fry-like devices which can
@@ -1515,33 +1623,45 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent)
 					 * an instance for one reason or
 					 * another, stop there.
 					 */
-					if (j->i_active)
+					if (j->i_active == DEVI_ACTIVE ||
+					    j->i_active == state)
 						/*
 						 * Device has already been
 						 * seen
 						 */
 						return;
-					j->i_active = active = 1;
+					j->i_active = active = state;
 					if (p != NULL)
-						p->p_active = 1;
+						p->p_active = state;
 				}
 			}
 		}
-		if (!active)
-			return;
+		if (!active) {
+			struct cdd_params cdd = { d, at, parent };
+			/* Look for a matching dead devi */
+			if (ht_enumerate(deaddevitab, check_dead_devi, &cdd))
+				/*
+				 * That device had its instances removed.
+				 * Continue the loop marking descendants
+				 * with DEVI_IGNORED instead of DEVI_ACTIVE.
+				 */
+				active = DEVI_IGNORED;
+			else
+				return;
+		}
 	}
 
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
-			do_kill_orphans(nv1->nv_ptr, a, d);
+			do_kill_orphans(nv1->nv_ptr, a, d, active);
 	}
 }
 
 static int
 kill_orphans_cb(const char *key, void *value, void *aux)
 {
-	do_kill_orphans((struct devbase *)value, NULL, NULL);
+	do_kill_orphans((struct devbase *)value, NULL, NULL, DEVI_ACTIVE);
 	return 0;
 }
 

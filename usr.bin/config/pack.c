@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.2 2005/09/30 22:36:20 cube Exp $	*/
+/*	$NetBSD: pack.c,v 1.3 2005/10/01 23:30:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ pack(void)
 	 */
 	locspace = 0;
 	TAILQ_FOREACH(i, &alldevi, i_next) {
-		if (!i->i_active || i->i_collapsed)
+		if (!i->i_active == DEVI_ACTIVE || i->i_collapsed)
 			continue;
 		if ((p = i->i_pspec) == NULL)
 			continue;
@@ -186,7 +186,7 @@ packdevi(void)
 		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
 			m = n;
 			for (l = i; l != NULL; l = l->i_alias) {
-				if (!l->i_active)
+				if (l->i_active != DEVI_ACTIVE)
 					continue;
 				l->i_locoff = -1;
 				/* try to find an equivalent for l */

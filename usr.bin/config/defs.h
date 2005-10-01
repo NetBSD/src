@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2005/09/30 22:36:20 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 2005/10/01 23:30:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -243,7 +243,10 @@ struct devi {
 	const char **i_locs;	/* locators (as given by pspec's iattr) */
 	int	i_cfflags;	/* flags from config line */
 	int	i_lineno;	/* line # in config, for later errors */
-	int	i_active;	/* instance is not orphaned in any way */
+	int	i_active;
+#define	DEVI_ORPHAN	0	/* instance has no active parent */
+#define	DEVI_ACTIVE	1	/* instance has an active parent */
+#define	DEVI_IGNORED	2	/* instance's parent has been removed */
 
 	/* created during packing or ioconf.c generation */
 	short	i_collapsed;	/* set => this alias no longer needed */
@@ -367,6 +370,7 @@ struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devroottab;	/* attach at root lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
 struct	hashtab *devitab;	/* device instance lookup */
+struct	hashtab *deaddevitab;	/* removed instances lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
