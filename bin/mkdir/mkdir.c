@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.35 2004/01/04 16:04:18 jschauma Exp $ */
+/* $NetBSD: mkdir.c,v 1.36 2005/10/01 20:22:29 christos Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.35 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.36 2005/10/01 20:22:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,8 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			if ((set = setmode(optarg)) == NULL) {
-				errx(EXIT_FAILURE, "invalid file mode: %s",
-					optarg);
+				err(EXIT_FAILURE, "Cannot set file mode `%s'",
+				    optarg);
 				/* NOTREACHED */
 			}
 			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
