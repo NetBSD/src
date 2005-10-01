@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.92 2005/09/25 14:35:54 elad Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.93 2005/10/01 20:25:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.92 2005/09/25 14:35:54 elad Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.93 2005/10/01 20:25:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			if (!(set = setmode(optarg)))
-				errx(1, "%s: invalid file mode", optarg);
+				err(1, "Cannot set file mode `%s'", optarg);
 			mode = getmode(set, 0);
 			free(set);
 			break;
