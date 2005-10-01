@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.206 2005/09/27 02:54:27 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.207 2005/10/01 18:50:42 scw Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -20,8 +20,8 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	sliplogin slstats sntp \
 	spray sunlabel sup sushi syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed tpctl traceroute trpt trsp unlink \
-	usbdevs user videomode vipw vnconfig wiconfig wlanctl wsconscfg \
-	wsfontload wsmoused wsmuxctl zdump zic
+	usbdevs user videomode vipw vnconfig wiconfig wlanctl wpa \
+	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+= hprop kadmin kdc kstash ktutil
