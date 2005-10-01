@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.57 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: procfs.h,v 1.58 2005/10/01 03:17:37 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -100,6 +100,8 @@ typedef enum {
 	PFSfd,		/* a directory containing the processes open fd's */
 	PFSuptime,	/* elapsed time since (if -o linux) */
 	PFSmounts,	/* mounted filesystems (if -o linux) */
+	PFScwd,		/* the process's current working directory */
+	PFSchroot,	/* the process's current root directory */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
