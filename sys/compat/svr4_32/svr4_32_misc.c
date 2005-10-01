@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.30 2005/02/26 23:10:21 perry Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.30.2.1 2005/10/01 10:39:27 tron Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.30 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.30.2.1 2005/10/01 10:39:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,10 @@ again:
 			panic("svr4_32_getdents64: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		svr4_32_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -338,7 +341,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -447,7 +453,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("svr4_32_getdents: bad reclen");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			compat_offseterr(vp, "svr4_32_getdents");
 			error = EINVAL;

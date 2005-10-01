@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.73 2005/03/05 17:47:06 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.73.2.1 2005/10/01 10:39:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.73 2005/03/05 17:47:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.73.2.1 2005/10/01 10:39:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,14 +465,17 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_getdents: bad reclen");
-		if ((*cookie >> 32) != 0) {
+		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "ibcs2_getdents");
 			error = EINVAL;
 			goto out;
 		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		ibcs2_reclen = IBCS2_RECLEN(&idb, bdp->d_namlen);
@@ -481,7 +484,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a iBCS2-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -598,7 +604,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_sys_read");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			error = EINVAL;
 			goto out;
