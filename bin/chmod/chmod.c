@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.32 2004/01/04 03:34:01 jschauma Exp $ */
+/* $NetBSD: chmod.c,v 1.33 2005/10/01 20:09:18 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.32 2004/01/04 03:34:01 jschauma Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.33 2005/10/01 20:09:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ done:	argv += optind;
 
 	mode = *argv;
 	if ((set = setmode(mode)) == NULL) {
-		errx(EXIT_FAILURE, "invalid file mode: %s", mode);
+		err(EXIT_FAILURE, "Cannot set file mode `%s'", mode);
 		/* NOTREACHED */
 	}
 
