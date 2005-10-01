@@ -1,3 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/10/01 18:50:12 scw Exp $
+# $NetBSD: Makefile.inc,v 1.2 2005/10/01 20:46:43 christos Exp $
 
 BINDIR?=	/usr/sbin
+
+WPA_SUPPLICANT_DISTDIR?= ${.CURDIR}/../../../gnu/dist/wpa_supplicant
+.PATH: ${WPA_SUPPLICANT_DISTDIR}
