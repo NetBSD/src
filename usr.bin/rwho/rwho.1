@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwho.1,v 1.12 2005/09/30 17:58:24 christos Exp $
+.\"	$NetBSD: rwho.1,v 1.13 2005/10/01 00:03:47 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwho.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: rwho.1,v 1.12 2005/09/30 17:58:24 christos Exp $
+.\"	$NetBSD: rwho.1,v 1.13 2005/10/01 00:03:47 wiz Exp $
 .\"
 .Dd September 30, 2005
 .Dt RWHO 1
@@ -55,16 +55,17 @@ If a user hasn't typed to the system for a minute or more, then
 .Nm
 reports this idle time.
 .Bl -tag -width Fl
-.It Fl a 
-Include all users. By default, if a user hasn't typed to the
-system for an hour or more, then the user will be omitted from
-the output.
-.It Fl q
-``Quick mode'': List only the names and the number of users cur-
-rently logged on. When this option is used, all other options are
-ignored.
+.It Fl a
+Include all users.
+By default, if a user hasn't typed to the system for an hour or
+more, then the user will be omitted from the output.
 .It Fl H
 Write column headings above the regular output.
+.It Fl q
+.Dq Quick mode :
+List only the names and the number of users currently logged on.
+When this option is used, all other options are ignored.
+.El
 .Sh FILES
 .Bl -tag -width /var/rwho/whod.* -compact
 .It Pa /var/rwho/whod.*
