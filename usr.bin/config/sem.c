@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.7 2005/09/30 22:51:46 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.8 2005/10/01 23:30:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,7 @@ static const char *major2name(int);
 static int dev2major(struct devbase *);
 
 extern const char *yyfile;
+extern int vflag;
 
 void
 initsem(void)
@@ -877,7 +878,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
 	i->i_lineno = currentline();
-	i->i_active = 0;
+	i->i_active = DEVI_ORPHAN; /* Proper analysis comes later */
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
@@ -1181,7 +1182,19 @@ remove_devi(struct devi *i)
 	 */
 	TAILQ_REMOVE(&alldevi, i, i_next);
 	ndevi--;
-	free(i);
+	/*
+	 * Put it in deaddevitab
+	 */
+	i->i_alias = NULL;
+	f = ht_lookup(deaddevitab, i->i_name);
+	if (f == NULL) {
+		if (ht_insert(deaddevitab, i->i_name, i))
+			panic("remove_devi(%s) - can't add to deaddevitab",
+			    i->i_name);
+	} else {
+		for (j = f; j->i_alias != NULL; j = j->i_alias);
+		j->i_alias = i;
+	}
 	/*
 	 *   - reconstuct d->d_umax
 	 */
@@ -1343,7 +1356,7 @@ addpseudo(const char *name, int number)
 		panic("addpseudo(%s)", name);
 	/* Useful to retrieve the instance from the devbase */
 	d->d_ihead = i;
-	i->i_active = 1;
+	i->i_active = DEVI_ACTIVE;
 	TAILQ_INSERT_TAIL(&allpseudo, i, i_next);
 }
 
@@ -1367,9 +1380,12 @@ delpseudo(const char *name)
 		return;
 	}
 	d->d_umax = 0;		/* clear neads-count entries */
+	d->d_ihead = NULL;	/* make sure it won't be considered active */
 	TAILQ_REMOVE(&allpseudo, i, i_next);
 	if (ht_remove(devitab, name))
 		panic("delpseudo(%s) - can't remove from devitab", name);
+	if (ht_insert(deaddevitab, name, i))
+		panic("delpseudo(%s) - can't add to deaddevitab", name);
 }
 
 void
@@ -1408,28 +1424,38 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 	maxbdevm = MAX(maxbdevm, dm->dm_bmajor);
 }
 
-void
+int
 fixdevis(void)
 {
 	struct devi *i;
+	int error = 0;
 
 	TAILQ_FOREACH(i, &alldevi, i_next)
-		if (i->i_active)
+		if (i->i_active == DEVI_ACTIVE)
 			selectbase(i->i_base, i->i_atdeva);
-		else
+		else if (i->i_active == DEVI_ORPHAN) {
 			/*
 			 * At this point, we can't have instances for which
 			 * i_at or i_pspec are NULL.
 			 */
+			++error;
 			(void)fprintf(stderr,
 			    "%s:%d: `%s at %s' is orphaned"
 			    " (%s `%s' found)\n", conffile, i->i_lineno,
 			    i->i_name, i->i_at, i->i_pspec->p_atunit == WILD ?
 			    "nothing matching" : "no", i->i_at);
+		} else if (vflag && i->i_active == DEVI_IGNORED)
+			(void)fprintf(stderr, "%s:%d: ignoring explicitely"
+			    " orphaned instance `%s at %s'\n", conffile,
+			    i->i_lineno, i->i_name, i->i_at);
+
+	if (error)
+		return error;
 
 	TAILQ_FOREACH(i, &allpseudo, i_next)
-		if (i->i_active)
+		if (i->i_active == DEVI_ACTIVE)
 			selectbase(i->i_base, NULL);
+	return 0;
 }
 
 /*
