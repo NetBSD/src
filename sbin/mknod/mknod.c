@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.34 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: mknod.c,v 1.35 2005/10/01 20:24:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.34 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.35 2005/10/01 20:24:44 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 		case 'm':
 			modes = setmode(optarg);
 			if (modes == NULL)
-				errx(1, "invalid mode: %s", optarg);
+				err(1, "Cannot set file mode `%s'", optarg);
 			break;
 
 		case 'u':

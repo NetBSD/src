@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.49 2004/12/28 05:11:07 atatat Exp $	*/
+/*	$NetBSD: function.c,v 1.50 2005/10/01 20:27:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.49 2004/12/28 05:11:07 atatat Exp $");
+__RCSID("$NetBSD: function.c,v 1.50 2005/10/01 20:27:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1274,7 +1274,7 @@ c_perm(argvp, isok)
 	}
 
 	if ((set = setmode(perm)) == NULL)
-		err(1, "-perm: %s: illegal mode string", perm);
+		err(1, "-perm: Cannot set file mode `%s'", perm);
 
 	new->m_data = getmode(set, 0);
 	free(set);
