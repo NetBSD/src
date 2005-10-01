@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.25 2005/03/10 14:12:28 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.25.2.1 2005/10/01 10:39:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.25 2005/03/10 14:12:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.25.2.1 2005/10/01 10:39:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,10 @@ again:
 			panic("linux_readdir");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
@@ -488,7 +491,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

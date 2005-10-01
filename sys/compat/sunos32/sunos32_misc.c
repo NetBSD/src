@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.29 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.29.2.1 2005/10/01 10:39:27 tron Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.29 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.29.2.1 2005/10/01 10:39:27 tron Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -765,14 +765,17 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("sunos_getdents");
-		if ((*cookie >> 32) != 0) {
+		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "sunos_getdents");
 			error = EINVAL;
 			goto out;
 		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		sunos_reclen = SUNOS32_RECLEN(&idb, bdp->d_namlen);
@@ -781,7 +784,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Sun-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
