@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.264 2005/10/01 05:59:00 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.265 2005/10/01 10:43:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13174,4 +13174,43 @@ usr.sbin/mtree/misc.c				1.27
 	searched with bsearch(3).  Correcting this makes mtree(8)
 	work again under Solaris.
 	[tron, ticket #839]
+
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.38-1.39
+
+	Fix problem with icache invalidation of the PLT.
+	[chs, ticket #834]
+
+dist/ipf/iplang/iplang_y.y			1.8
+
+	Avoid crash with invalid input.
+	[martti, ticket #836]
+
+sys/netinet6/esp_aesctr.c			1.2
+
+	AES counter mode uses 8byte IV, not 16 bytes. This fixes PR kern/30291.
+	[kleink, ticket #837]
+
+sys/compat/ibcs2/ibcs2_misc.c			1.74
+sys/compat/irix/irix_dirent.c			1.14
+sys/compat/linux/common/linux_file64.c		1.26
+sys/compat/linux/common/linux_misc.c		1.136
+sys/compat/sunos/sunos_misc.c			1.132
+sys/compat/sunos32/sunos32_misc.c		1.30
+sys/compat/svr4/svr4_misc.c			1.112
+sys/compat/svr4_32/svr4_32_misc.c		1.31
+
+	PR kern/29696: NetBSD freezes when accessing smbfs mounted FS with
+	firefox/linux due to compat getdents() call assumption that all
+	filesystems support cookies.
+	[christos, ticket #838]
+
+sys/arch/alpha/conf/GENERIC			1.276
+
+	If we're enabling ipfilter then we should really have IPFILTER_LOG.
+	[abs, ticket #840]
+
+sys/dev/sun/kbd.c				1.52
+
+	Remove spurious debug output accidently commited in revision 1.44.
+	[martin, ticket #841]
 
