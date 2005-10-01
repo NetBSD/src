@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.5 2005/09/03 07:03:50 snj Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.6 2005/10/01 05:41:45 snj Exp $
 .\"
-.\" Id: racoon.conf.5,v 1.27.2.8 2005/07/07 14:55:58 manubsd Exp
+.\" Id: racoon.conf.5,v 1.41 2005/09/21 14:35:16 manubsd Exp
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -480,9 +480,6 @@ Default is
 .\"
 .It Ic mode_cfg (on \(ba off) ;
 Gather network information through ISAKMP mode configuration.
-This only works if
-.Ic hybrid_rsa_client
-is the approved proposal.
 Default is off.
 .\"
 .It Ic peers_certfile ( dnssec | Ar certfile ) ;
@@ -939,15 +936,12 @@ The default is off.
 Defines the information to return for remote hosts' ISAKMP mode config
 requests.
 Also defines the authentication source for remote peers
-authenticating through Xauth/hybrid auth.
+authenticating through Xauth.
 .Pp
-This section is currently only useful if you selected the
-.Ic hybrid_rsa_server
-authentication method.
 The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic auth_source (system \(ba radius \(ba pam) ;
-Specify the source for authentication of users through Xauth/hybrid auth.
+Specify the source for authentication of users through Xauth.
 .Ar system
 means to use the Unix user database.
 This is the default.
@@ -963,8 +957,8 @@ It works only if
 .Xr racoon 8
 was built with libpam support.
 .It Ic conf_source (local \(ba radius) ;
-Specify the source for IP addresses and netmask of users authenticated
-through Xauth/hybrid auth.
+Specify the source for IP addresses and netmask allocated through ISAKMP
+mode config. 
 .Ar local
 means to use the local IP pool defined by the
 .Ic network4
@@ -980,7 +974,7 @@ was built with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 RADIUS configuration requires RADIUS authentication.
 .It Ic accounting (none \(ba radius \(ba pam) ;
-Enable or disable accounting.
+Enable or disable accounting for Xauth logins and logouts.
 Default is
 .Ar none ,
 which disable accounting.
@@ -1002,7 +996,7 @@ Specify the size of the IP address pool, either local or allocated
 through RADIUS.
 .Ic conf_source
 selects the local pool or the RADIUS configuration, but in both
-configuration, you cannot have more than
+configurations, you cannot have more than
 .Ar size
 users connected at the same time.
 The default is 255.
