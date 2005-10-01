@@ -1,7 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/10/01 18:50:12 scw Exp $
-
-WPA_SUPPLICANT_DISTDIR?= ${.CURDIR}/../../../dist/wpa_supplicant
-.PATH: ${.CURDIR}/.. ${WPA_SUPPLICANT_DISTDIR}
+# $NetBSD: Makefile,v 1.2 2005/10/01 20:46:43 christos Exp $
 
 PROG=	wpa_supplicant
 SRCS=	config.c eloop.c common.c md5.c rc4.c sha1.c aes_wrap.c \
@@ -9,6 +6,9 @@ SRCS=	config.c eloop.c common.c md5.c rc4.c sha1.c aes_wrap.c \
 	ctrl_iface.c l2_packet.c drivers.c driver_netbsd.c
 
 MAN=	wpa_supplicant.8 wpa_supplicant.conf.5
+
+# XXX for l2_packet.c
+.PATH.c: ${.CURDIR}/..
 
 CFLAGS+= -I${.CURDIR} -I${WPA_SUPPLICANT_DISTDIR}
 CFLAGS+= -DCONFIG_DRIVER_BSD
