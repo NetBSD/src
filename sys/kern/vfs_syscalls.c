@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.232 2005/09/25 21:57:40 jmmv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.233 2005/10/01 06:13:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.232 2005/09/25 21:57:40 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.233 2005/10/01 06:13:42 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2771,7 +2771,6 @@ sys_lutimes(struct lwp *l, void *v, register_t *retval)
 static int
 change_utimes(struct vnode *vp, const struct timeval *tptr, struct proc *p)
 {
-	struct timeval tv[2];
 	struct mount *mp;
 	struct vattr vattr;
 	int error;
@@ -2780,20 +2779,20 @@ change_utimes(struct vnode *vp, const struct timeval *tptr, struct proc *p)
 		return (error);
 	VATTR_NULL(&vattr);
 	if (tptr == NULL) {
-		microtime(&tv[0]);
-		tv[1] = tv[0];
+		nanotime(&vattr.va_atime);
+		vattr.va_mtime = vattr.va_atime;
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
+		struct timeval tv[2];
+
 		error = copyin(tptr, tv, sizeof(tv));
 		if (error)
 			goto out;
+		TIMEVAL_TO_TIMESPEC(&tv[0], &vattr.va_atime);
+		TIMEVAL_TO_TIMESPEC(&tv[1], &vattr.va_mtime);
 	}
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	vattr.va_atime.tv_sec = tv[0].tv_sec;
-	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-	vattr.va_mtime.tv_sec = tv[1].tv_sec;
-	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	VOP_UNLOCK(vp, 0);
 out:
