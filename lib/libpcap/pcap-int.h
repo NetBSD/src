@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.10 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.11 2005/10/01 09:55:01 scw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -132,6 +132,7 @@ struct pcap {
 	 * Methods.
 	 */
 	int	(*read_op)(pcap_t *, int cnt, pcap_handler, u_char *);
+	int	(*inject_op)(pcap_t *, const void *buf, size_t);
 	int	(*setfilter_op)(pcap_t *, struct bpf_program *);
 	int	(*set_datalink_op)(pcap_t *, int);
 	int	(*getnonblock_op)(pcap_t *, char *);
