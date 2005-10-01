@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.263 2005/10/01 05:44:01 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.264 2005/10/01 05:59:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13167,4 +13167,11 @@ crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.21
 
 	Make "Mode Config" work if XAuth is not used.
 	[tron, ticket #820]
+
+usr.sbin/mtree/misc.c				1.27
+
+	The list of keywords must be sorted because it is
+	searched with bsearch(3).  Correcting this makes mtree(8)
+	work again under Solaris.
+	[tron, ticket #839]
 
