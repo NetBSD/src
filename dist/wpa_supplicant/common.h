@@ -5,7 +5,7 @@
 #include <endian.h>
 #include <byteswap.h>
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/types.h>
 #include <sys/endian.h>
 #define __BYTE_ORDER	_BYTE_ORDER
