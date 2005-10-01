@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/09/22 18:53:26 macallan Exp $
+#	$NetBSD: Makefile,v 1.12 2005/10/01 22:51:31 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -44,7 +44,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 SRCS.bsd+=	sparc64_video.c bsdResource.c pm_noop.c lnx_agp.c \
 		ioperm_noop.c netbsdSbus.c
 .for _FN in ${SRCS.bsd}
@@ -67,7 +67,8 @@ SRCS.bus+=	ix86Pci.c
 .endif
 
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "sgimips" || ${MACHINE} == "sparc64"
+    ${MACHINE} == "sgimips" || ${MACHINE} == "sparc64" || \
+    ${MACHINE} == "sparc"
 SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -84,7 +85,7 @@ CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 
 .if 	${MACHINE} == "amd64" || ${MACHINE} == "macppc" || \
 	${MACHINE} == "cats" || ${MACHINE} == "sgimips" || \
-	${MACHINE} == "sparc64"
+	${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
