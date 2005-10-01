@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.15 2005/09/30 17:58:24 christos Exp $	*/
+/*	$NetBSD: rwho.c,v 1.16 2005/10/01 13:33:21 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.15 2005/09/30 17:58:24 christos Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.16 2005/10/01 13:33:21 he Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 	}
 
 	if (qflg)
-		(void)printf("# users = %d\n", nusers);
+		(void)printf("# users = %zd\n", nusers);
 
 	return EX_OK;
 }
