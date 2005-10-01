@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.262 2005/09/30 23:02:12 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.263 2005/10/01 05:44:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13161,4 +13161,10 @@ sys/dev/raidframe/rf_dagdegwr.c			1.26
 
 	Remove an RF_ASSERT that is just plain wrong.
 	[oster, ticket #833]
+
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.8
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.21
+
+	Make "Mode Config" work if XAuth is not used.
+	[tron, ticket #820]
 
