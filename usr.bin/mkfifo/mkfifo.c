@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfifo.c,v 1.10 2003/08/07 11:15:13 agc Exp $	*/
+/*	$NetBSD: mkfifo.c,v 1.11 2005/10/01 20:26:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
 #endif
-__RCSID("$NetBSD: mkfifo.c,v 1.10 2003/08/07 11:15:13 agc Exp $");
+__RCSID("$NetBSD: mkfifo.c,v 1.11 2005/10/01 20:26:26 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ main(argc, argv)
 		switch(ch) {
 		case 'm':
 			if (!(set = setmode(optarg))) {
-				errx(1, "invalid file mode.");
+				err(1, "Cannot set file mode `%s'", optarg);
 				/* NOTREACHED */
 			}
 			/* In symbolic mode strings, the + and - operators are

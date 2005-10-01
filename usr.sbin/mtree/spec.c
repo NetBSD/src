@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.60 2005/08/24 20:55:41 elad Exp $	*/
+/*	$NetBSD: spec.c,v 1.61 2005/10/01 20:28:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.60 2005/08/24 20:55:41 elad Exp $");
+__RCSID("$NetBSD: spec.c,v 1.61 2005/10/01 20:28:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,8 @@ set(char *t, NODE *ip)
 			break;
 		case F_MODE:
 			if ((m = setmode(val)) == NULL)
-				mtree_err("invalid file mode `%s'", val);
+				mtree_err("cannot set file mode `%s' (%s)",
+				    val, strerror(errno));
 			ip->st_mode = getmode(m, 0);
 			free(m);
 			break;
