@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.14 2005/06/10 19:00:09 dyoung Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.15 2005/10/01 09:55:00 scw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/pcap-bpf.c,v 1.67.2.4 2003/11/22 00:06:28 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.14 2005/06/10 19:00:09 dyoung Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.15 2005/10/01 09:55:00 scw Exp $");
 #endif
 #endif
 
@@ -300,6 +300,24 @@ pcap_read_bpf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 #undef bhp
 	p->cc = 0;
 	return (n);
+}
+
+/*
+ * XXXSCW: Temporary addition for the benefit of wpa_supplicant and hostapd,
+ * until libpcap >= 0.9.3 is imported.
+ */
+static int
+pcap_inject_bpf(pcap_t *p, const void *buf, size_t size)
+{
+	int ret;
+
+	ret = write(p->fd, buf, size);
+	if (ret == -1) {
+		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "send: %s",
+		    pcap_strerror(errno));
+		return (-1);
+	}
+	return (ret);
 }
 
 #ifdef _AIX
@@ -856,6 +874,7 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 	}
 
 	p->read_op = pcap_read_bpf;
+	p->inject_op = pcap_inject_bpf;
 	p->setfilter_op = pcap_setfilter_bpf;
 	p->set_datalink_op = pcap_set_datalink_bpf;
 	p->getnonblock_op = pcap_getnonblock_fd;

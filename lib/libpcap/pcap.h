@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.11 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: pcap.h,v 1.12 2005/10/01 09:55:00 scw Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -225,6 +225,12 @@ u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 int	bpf_validate(struct bpf_insn *f, int len);
 char	*bpf_image(struct bpf_insn *, int);
 void	bpf_dump(struct bpf_program *, int);
+
+/*
+ * XXXSCW: Temporary addition for the benefit of wpa_supplicant and hostapd,
+ * until libpcap >= 0.9.3 is imported.
+ */
+int	pcap_inject(pcap_t *, const void *, size_t);
 
 #ifdef WIN32
 /*
