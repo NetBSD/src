@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.30 2005/08/28 14:57:18 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.31 2005/10/01 06:12:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.30 2005/08/28 14:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.31 2005/10/01 06:12:44 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -557,6 +557,19 @@ lwp_exit(struct lwp *l)
 	cpu_lwp_free(l, 0);
 #endif
 
+	pmap_deactivate(l);
+
+	if (l->l_flag & L_DETACHED) {
+		simple_lock(&p->p_lock);
+		LIST_REMOVE(l, l_sibling);
+		p = l->l_proc;
+		p->p_nlwps--;
+		simple_unlock(&p->p_lock);
+
+		curlwp = NULL;
+		l->l_proc = NULL;
+	}
+
 	SCHED_LOCK(s);
 	p->p_nrlwps--;
 	l->l_stat = LSDEAD;
@@ -564,8 +577,6 @@ lwp_exit(struct lwp *l)
 
 	/* This LWP no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
-
-	pmap_deactivate(l);
 
 	/* cpu_exit() will not return */
 	cpu_exit(l);
@@ -593,13 +604,6 @@ lwp_exit2(struct lwp *l)
 
 	if (l->l_flag & L_DETACHED) {
 		/* Nobody waits for detached LWPs. */
-
-		if ((l->l_flag & L_PROCEXIT) == 0) {
-			LIST_REMOVE(l, l_sibling);
-			p = l->l_proc;
-			p->p_nlwps--;
-		}
-
 		pool_put(&lwp_pool, l);
 		KERNEL_UNLOCK();
 	} else {

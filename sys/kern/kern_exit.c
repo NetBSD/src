@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.151 2005/08/28 14:57:18 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.152 2005/10/01 06:12:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.151 2005/08/28 14:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.152 2005/10/01 06:12:44 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -443,7 +443,7 @@ exit1(struct lwp *l, int rv)
 
 	LIST_REMOVE(l, l_list);
 	LIST_REMOVE(l, l_sibling);
-	l->l_flag |= L_DETACHED|L_PROCEXIT;	/* detached from proc too */
+	l->l_flag |= L_DETACHED;	/* detached from proc too */
 	l->l_stat = LSDEAD;
 
 	KASSERT(p->p_nrlwps == 1);
