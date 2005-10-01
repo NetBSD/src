@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.35.6.1 2005/10/01 10:33:01 tron Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.35.6.2 2005/10/01 10:33:31 tron Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -51,6 +51,16 @@ void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 
 /*
+ * The PPC PLT format consists of three sections:
+ * (1) The "pltcall" and "pltresolve" glue code.  This is always 18 words.
+ * (2) The code part of the PLT entries.  There are 2 words per entry for
+ *     up to 8192 entries, then 4 words per entry for any additional entries.
+ * (3) The data part of the PLT entries, comprising a jump table.
+ *     This section is half the size of the second section (ie. 1 or 2 words
+ *     per entry).
+ */
+
+/*
  * Setup the plt glue routines.
  */
 #define PLTCALL_SIZE	20
@@ -82,7 +92,11 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	pltresolve[3] |= ha(obj);
 	pltresolve[4] |= l(obj);
 
-	__syncicache(pltcall, 72 + N * 12);
+	/*
+	 * Invalidate the icache for only the code part of the PLT
+	 * (and not the jump table at the end).
+	 */
+	__syncicache(pltcall, (char *)jmptab - (char *)pltcall);
 }
 
 void
@@ -211,6 +225,13 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 		/* b	pltresolve */
 		distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
 		*where++ = 0x48000000 | (distance & 0x03fffffc);
+
+		/*
+		 * Icache invalidation is not done for each entry here
+		 * because we sync the entire code part of the PLT once
+		 * in _rtld_setup_pltgot() after all the entries have been
+		 * initialized.
+		 */
 		/* __syncicache(where - 3, 12); */
 	}
 
