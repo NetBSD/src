@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.135 2005/02/26 23:10:19 perry Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.135.2.1 2005/10/01 10:39:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.135 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.135.2.1 2005/10/01 10:39:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,7 +851,10 @@ again:
 			panic("linux_readdir");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
@@ -886,7 +889,10 @@ again:
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		off = *cookie++;	/* each entry points to itself */
+		if (cookie)
+			off = *cookie++; /* each entry points to itself */
+		else
+			off += reclen;
 		/* advance output past Linux-shaped entry */
 		outp += linux_reclen;
 		resid -= linux_reclen;
