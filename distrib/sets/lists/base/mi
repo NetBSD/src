@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.571 2005/09/27 02:55:15 jmcneill Exp $
+# $NetBSD: mi,v 1.572 2005/10/01 18:51:15 scw Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1186,6 +1186,8 @@
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
 ./usr/sbin/wlanctl				base-sysutil-bin
+./usr/sbin/wpa_cli				base-sysutil-bin
+./usr/sbin/wpa_supplicant			base-sysutil-bin
 ./usr/sbin/wsconscfg				base-sysutil-bin
 ./usr/sbin/wsfontload				base-sysutil-bin
 ./usr/sbin/wsmoused				base-sysutil-bin
