@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.527 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.528 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		from OpenBSD [jmcneill 20050926]
 	config(1): Implement "no device at <attachment>" and "no <device>".
 		[cube 20050930]
+	wpa:	Add wpa_cli and wpa_supplicant.
+		[scw 20051001]
