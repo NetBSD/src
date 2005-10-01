@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.24 2005/09/30 23:16:26 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.25 2005/10/01 01:10:50 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.24 2005/09/30 23:16:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.25 2005/10/01 01:10:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,7 @@ igsfb_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
-		if (d != WSDISPLAYIO_MODE_EMUL)
+		if (d != WSDISPLAYIO_MODE_EMUL) {
 			dc->dc_mapped = 1;
 			/* turn off hardware cursor */
 			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
@@ -647,8 +647,7 @@ igsfb_ioctl(v, cmd, data, flag, p)
 				igsfb_update_cursor(dc,
 					WSDISPLAY_CURSOR_DOCUR);
 			}
-			
-		else {
+		} else {
 			dc->dc_mapped = 0;
 			/* reinit sprite for text cursor */
 			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
@@ -961,10 +960,10 @@ igsfb_set_cursor(dc, p)
 		struct rasops_info *ri = &dc->dc_ri;
 
 		pos = p->pos;	/* local copy we can write to */
-		if (pos.x >= (ri->ri_width + 64))
-			pos.x = ri->ri_width +63;
-		if (pos.y >= (ri->ri_height + 64))
-			pos.y = ri->ri_height + 63;
+		if (pos.x >= ri->ri_width)
+			pos.x = ri->ri_width - 1;
+		if (pos.y >= ri->ri_height)
+			pos.y = ri->ri_height - 1;
 	}
 
 	/* enforce that the hot spot is within sprite bounds */
