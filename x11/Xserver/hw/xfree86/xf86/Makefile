@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/07/13 02:04:01 macallan Exp $
+#	$NetBSD: Makefile,v 1.9 2005/10/01 22:51:31 macallan Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -17,7 +17,7 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
 	xf86xvmc.c xf86cmap.c xf86PM.c xf86Versions.c xf86Debug.c \
 	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 SRCS+=	xf86sbusBus.c
 CPPFLAGS+=-DUSE_MODULAR_KBD
 .endif

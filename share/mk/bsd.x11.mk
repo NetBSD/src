@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.49 2005/04/06 08:32:11 martin Exp $
+#	$NetBSD: bsd.x11.mk,v 1.50 2005/10/01 22:51:31 macallan Exp $
 
 .include <bsd.init.mk>
 
@@ -51,7 +51,6 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
-    ${MACHINE} == "sparc"	|| \
     ${MACHINE} == "sun3"	|| \
     ${MACHINE} == "vax")
 #	EXT_DEFINES
@@ -74,7 +73,8 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "sgimips"	|| \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "sparc64"	|| \
+    ${MACHINE} == "sparc"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 			-fno-merge-constants
