@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.152 2005/10/01 06:12:44 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.153 2005/10/01 21:07:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.152 2005/10/01 06:12:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.153 2005/10/01 21:07:38 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -424,7 +424,7 @@ exit1(struct lwp *l, int rv)
 			} else
 				proc_reparent(q, initproc);
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-			psignal(q, SIGKILL);
+			killproc(q, "orphaned traced process");
 		} else {
 			proc_reparent(q, initproc);
 		}
