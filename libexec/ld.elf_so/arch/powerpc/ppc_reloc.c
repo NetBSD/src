@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.35 2003/07/24 10:12:29 skrll Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.35.6.1 2005/10/01 10:33:01 tron Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -82,7 +82,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	pltresolve[3] |= ha(obj);
 	pltresolve[4] |= l(obj);
 
-	__syncicache(pltcall, 72 + N * 8);
+	__syncicache(pltcall, 72 + N * 12);
 }
 
 void
@@ -211,7 +211,7 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 		/* b	pltresolve */
 		distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
 		*where++ = 0x48000000 | (distance & 0x03fffffc);
-		/* __syncicache(where - 12, 12); */
+		/* __syncicache(where - 3, 12); */
 	}
 
 	return 0;
@@ -267,7 +267,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		/* b	pltcall	*/
 		distance = (Elf_Addr)pltcall - (Elf_Addr)where;
 		*where++ = 0x48000000 | (distance & 0x03fffffc);
-		__syncicache(where - 12, 12);
+		__syncicache(where - 3, 12);
 	}
 
 	return (caddr_t)value;
