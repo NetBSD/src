@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/11/14 02:47:26 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2005/10/01 17:12:01 macallan Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -8,7 +8,7 @@ MODULE=	wsfb_drv
 MAN=	wsfb.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/wsfb
 
-SRCS=	wsfb_driver.c
+SRCS=	wsfb_driver.c wsfb_cursor.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/dummy \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
