@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43.2.8 2005/09/15 20:48:34 tron Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43.2.9 2005/10/01 10:42:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.8 2005/09/15 20:48:34 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43.2.9 2005/10/01 10:42:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,6 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		printf("kbd: returning ENOTTY\n");
 		error = ENOTTY;
 		break;
 	}
