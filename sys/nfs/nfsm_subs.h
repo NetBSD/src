@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.41 2005/05/29 20:58:13 christos Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.42 2005/10/01 06:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -513,7 +513,10 @@
 		nfsm_srvpostopattr(nfsd, (r), (a), &mb, &bpos)
 
 #define nfsm_srvsattr(a) \
-		{ nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
+		{ \
+		const struct timespec *ts = NULL; \
+		struct timespec tsb; \
+		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			(a)->va_mode = nfstov_mode(*tl); \
@@ -540,8 +543,8 @@
 			fxdr_nfsv3time(tl, &(a)->va_atime); \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_atime.tv_sec = time.tv_sec; \
-			(a)->va_atime.tv_nsec = time.tv_usec * 1000; \
+			ts = nanotime(&tsb); \
+			(a)->va_atime = *ts; \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; \
@@ -553,8 +556,8 @@
 			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_mtime.tv_sec = time.tv_sec; \
-			(a)->va_mtime.tv_nsec = time.tv_usec * 1000; \
+			ts = ts ? ts : nanotime(&tsb); \
+			(a)->va_atime = *ts; \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; }
