@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.134 2005/08/19 10:08:48 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.135 2005/10/01 21:09:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.134 2005/08/19 10:08:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.135 2005/10/01 21:09:03 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -951,9 +951,7 @@ nfs_doio_read(bp, uiop)
 		      np->n_lrev != np->n_brev) ||
 		     (!(nmp->nm_flag & NFSMNT_NQNFS) &&
 		      timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)))) {
-			uprintf("Process killed due to "
-				"text file modification\n");
-			psignal(p, SIGKILL);
+			killproc(p, "process text file was modified");
 #if 0 /* XXX NJWLWP */
 			p->p_holdcnt++;
 #endif
