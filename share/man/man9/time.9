@@ -1,4 +1,4 @@
-.\" $NetBSD: time.9,v 1.14 2003/02/14 15:20:22 grant Exp $
+.\" $NetBSD: time.9,v 1.15 2005/10/01 04:09:06 yamt Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,21 +32,18 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 13, 1995
+.Dd October 1, 2005
 .Dt TIME 9
 .Os
 .Sh NAME
 .Nm boottime ,
 .Nm mono_time ,
-.Nm runtime ,
 .Nm time
 .Nd system time variables
 .Sh SYNOPSIS
 .Va extern struct timeval boottime;
 .br
 .Va extern volatile struct timeval mono_time;
-.br
-.Va extern struct timeval runtime;
 .br
 .Va extern volatile struct timeval time;
 .Sh DESCRIPTION
@@ -69,20 +66,6 @@ It is set from
 at system boot, and is updated when the system time is adjusted
 with
 .Xr settimeofday 2 .
-.Pp
-The
-.Va runtime
-variable holds the time that the system switched to the
-current process.
-It is set after each context switch,
-and is updated when the system time is adjusted with
-.Xr settimeofday 2 .
-Because
-.Va runtime
-is used for system accounting, it is set with the high-resolution
-.Xr microtime 9
-function, rather than being copied from
-.Va time .
 .Pp
 The
 .Va mono_time
@@ -114,13 +97,3 @@ may be read and written without special precautions.
 .Xr hz 9 ,
 .Xr inittodr 9 ,
 .Xr microtime 9
-.Sh BUGS
-.Va runtime
-should not be updated when the system time is
-changed with
-.Xr settimeofday 2 ,
-because it is used for resource accounting.
-.Pp
-The notion of having a single
-.Va runtime
-variable obviously won't be appropriate in multiprocessor systems.
