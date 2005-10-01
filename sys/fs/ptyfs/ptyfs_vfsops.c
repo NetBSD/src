@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.10 2005/09/29 14:45:56 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.11 2005/10/01 05:30:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.10 2005/09/29 14:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.11 2005/10/01 05:30:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
  * ptm glue: When we mount, we make ptm point to us.
  */
 struct ptm_pty *ptyfs_save_ptm;
+static int ptyfs_count;
 
 struct ptm_pty ptm_ptyfspty = {
 	ptyfs__allocvp,
@@ -186,7 +187,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	struct ptyfs_args args;
 
 	/* Don't allow more than one mount */
-	if (ptyfs_save_ptm != NULL)
+	if (ptyfs_count)
 		return EBUSY;
 
 	if (UIO_MX & (UIO_MX - 1)) {
@@ -239,6 +240,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 
 	ptm_ptyfspty.arg = mp;
 	ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
+	ptyfs_count++;
 	return 0;
 }
 
@@ -263,7 +265,6 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 
 	/* Restore where pty access was pointing */
-	KASSERT(ptyfs_save_ptm != NULL);
 	(void)pty_sethandler(ptyfs_save_ptm);
 	ptyfs_save_ptm = NULL;
 	ptm_ptyfspty.arg = NULL;
@@ -273,6 +274,7 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	 */
 	free(mp->mnt_data, M_UFSMNT);
 	mp->mnt_data = 0;
+	ptyfs_count--;
 
 	return 0;
 }
