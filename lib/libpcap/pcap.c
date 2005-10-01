@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.10 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: pcap.c,v 1.11 2005/10/01 09:55:00 scw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/pcap.c,v 1.63.2.9 2004/03/25 22:40:52 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.10 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.11 2005/10/01 09:55:00 scw Exp $");
 #endif
 #endif
 
@@ -777,3 +777,13 @@ pcap_lib_version(void)
 	return (pcap_version_string);
 }
 #endif
+
+/*
+ * XXXSCW: Temporary addition for the benefit of wpa_supplicant and hostapd,
+ * until libpcap >= 0.9.3 is imported.
+ */
+int
+pcap_inject(pcap_t *p, const void *buf, size_t size)
+{
+	return (p->inject_op(p, buf, size));
+}
