@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.323 2005/09/25 20:11:03 christos Exp $
+# $NetBSD: shl.mi,v 1.324 2005/10/01 09:56:39 scw Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.135				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
@@ -63,7 +63,7 @@
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
 ./usr/lib/libpam.so.0.0				base-sys-shlib		pam
-./usr/lib/libpcap.so.1.4			base-net-shlib
+./usr/lib/libpcap.so.1.5			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
 ./usr/lib/libpthread.so.0.6			base-sys-shlib
