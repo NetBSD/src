@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2005/10/02 21:22:56 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1604,6 +1604,8 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 				return;
 		}
 	} else {
+		int seen = 0;
+
 		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
 			for (j = i; j != NULL; j = j->i_alias) {
 				p = j->i_pspec;
@@ -1624,18 +1626,25 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 					 * another, stop there.
 					 */
 					if (j->i_active == DEVI_ACTIVE ||
-					    j->i_active == state)
+					    j->i_active == state) {
 						/*
 						 * Device has already been
-						 * seen
+						 * seen.  However it might
+						 * have siblings who still
+						 * have to be activated or
+						 * orphaned.
 						 */
-						return;
+						seen = 1;
+						continue;
+					}
 					j->i_active = active = state;
 					if (p != NULL)
 						p->p_active = state;
 				}
 			}
 		}
+		if (seen)
+			return;
 		if (!active) {
 			struct cdd_params cdd = { d, at, parent };
 			/* Look for a matching dead devi */
