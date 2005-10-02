@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.36 2005/09/12 16:30:46 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.37 2005/10/02 21:39:41 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.36 2005/09/12 16:30:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.37 2005/10/02 21:39:41 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -135,6 +135,7 @@ static void network_alloc_rx_buffers(struct xennet_softc *);
 int  xennet_init(struct ifnet *);
 void xennet_stop(struct ifnet *, int);
 void xennet_reset(struct xennet_softc *);
+void xennet_softstart(void *);
 #ifdef mediacode
 static int xennet_mediachange (struct ifnet *);
 static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -227,6 +228,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	struct xennet_softc *sc = (struct xennet_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int idx;
+	extern int ifqmaxlen; /* XXX */
 
 	aprint_normal(": Xen Virtual Network Interface\n");
 
@@ -243,6 +245,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags =
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_timer = 0;
+	ifp->if_snd.ifq_maxlen = max(ifqmaxlen, NETIF_TX_RING_SIZE * 2);
 	IFQ_SET_READY(&ifp->if_snd);
 
 #ifdef mediacode
@@ -475,19 +478,6 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		}
 
 		memcpy(sc->sc_enaddr, status->mac, ETHER_ADDR_LEN);
-#if 0
-		if (xen_start_info.flags & SIF_PRIVILEGED) {
-			/* XXX for domain-0 change out ethernet address to be
-			 * different than the physical address since arp
-			 * replies from other domains will report the physical
-			 * address.
-			 */
-			if (sc->sc_enaddr[0] != 0xaa)
-				sc->sc_enaddr[0] = 0xaa;
-			else
-				sc->sc_enaddr[0] = 0xab;
-		}
-#endif
 
 		/* Recovery procedure: */
 
@@ -510,6 +500,11 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 
 		if_attach(ifp);
 		ether_ifattach(ifp, sc->sc_enaddr);
+
+		sc->sc_softintr = softintr_establish(IPL_SOFTNET,
+		    xennet_softstart, sc);
+		if (sc->sc_softintr == NULL)
+			panic(" xennet: can't establish soft interrupt");
 
 		sc->sc_evtchn = status->evtchn;
 		aprint_verbose("%s: using event channel %d\n",
@@ -641,9 +636,7 @@ xen_network_handler(void *arg)
 	multicall_entry_t *mcl = rx_mcl;
 	struct mbuf *m;
 
-	network_tx_buf_gc(sc);
-	ifp->if_flags &= ~IFF_OACTIVE;
-	xennet_start(ifp);
+	xennet_start(ifp); /* to cleanup TX bufs and keep the ifq_send going */
 
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rx_resp_cons);
@@ -664,6 +657,7 @@ xen_network_handler(void *arg)
                 MGETHDR(m, M_DONTWAIT, MT_DATA);
                 if (m == NULL) {
 			printf("xennet: rx no mbuf\n");
+			ifp->if_ierrors++;
 			break;
 		}
 
@@ -802,6 +796,7 @@ network_tx_buf_gc(struct xennet_softc *sc)
 				     sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id,
 				     sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m,
 				     mtod(sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m, void *)));
+
 			m_freem(sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m);
 			put_bufarray_entry(sc->sc_tx_bufa,
 			    sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id);
@@ -814,7 +809,8 @@ network_tx_buf_gc(struct xennet_softc *sc)
 				ifp->if_oerrors++;
 			}
 		}
-
+		if (sc->sc_tx_resp_cons != prod)
+			ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_tx_resp_cons = prod;
 
 		/*
@@ -942,11 +938,6 @@ void
 xennet_start(struct ifnet *ifp)
 {
 	struct xennet_softc *sc = ifp->if_softc;
-	struct mbuf *m, *new_m;
-	netif_tx_request_t *txreq;
-	NETIF_RING_IDX idx;
-	paddr_t pa;
-	int bufid;
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", sc->sc_dev.dv_xname));
 
@@ -954,22 +945,55 @@ xennet_start(struct ifnet *ifp)
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx->req_prod);
 #endif
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	network_tx_buf_gc(sc);
+
+	if (__predict_false(
+	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING))
 		return;
 
-	network_tx_buf_gc(sc);
+	/*
+	 * The Xen communication channel is much more efficient if we can
+	 * schedule batch of packets for domain0. To achieve this, we
+	 * schedule a soft interrupt, and just return. This way, the network
+	 * stack will enqueue all pending mbufs in the interface's send queue
+	 * before it is processed by xennet_softstart().
+	 */
+	softintr_schedule(sc->sc_softintr);
+	return;
+}
+
+/*
+ * called at splsoftnet
+ */
+void
+xennet_softstart(void *arg)
+{
+	struct xennet_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mbuf *m, *new_m;
+	netif_tx_request_t *txreq;
+	NETIF_RING_IDX idx;
+	paddr_t pa;
+	int bufid;
+	int s;
+
+	s = splnet();
+	if (__predict_false(
+	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)) {
+		splx(s);
+		return;
+	}
 
 	idx = sc->sc_tx->req_prod;
 	while (/*CONSTCOND*/1) {
-
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-
-		if (sc->sc_tx_entries >= NETIF_TX_RING_SIZE - 1) {
+		if (__predict_false(
+		    sc->sc_tx_entries >= NETIF_TX_RING_SIZE - 1)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
 		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
 		case M_EXT|M_EXT_CLUSTER:
@@ -983,8 +1007,9 @@ xennet_start(struct ifnet *ifp)
 				(m->m_data - M_BUFADDR(m));
 			break;
 		default:
-			if (!pmap_extract(pmap_kernel(), (vaddr_t)m->m_data,
-			    &pa)) {
+			if (__predict_false(
+			    !pmap_extract(pmap_kernel(), (vaddr_t)m->m_data,
+			    &pa))) {
 				panic("xennet_start: no pa");
 			}
 			break;
@@ -994,13 +1019,14 @@ xennet_start(struct ifnet *ifp)
 		    (pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
-			if (new_m == NULL) {
+			if (__predict_false(new_m == NULL)) {
 				printf("xennet: no mbuf\n");
 				break;
 			}
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(new_m, M_DONTWAIT);
-				if ((new_m->m_flags & M_EXT) == 0) {
+				if (__predict_false(
+				    (new_m->m_flags & M_EXT) == 0)) {
 					printf("xennet: no mbuf cluster\n");
 					m_freem(new_m);
 					break;
@@ -1063,8 +1089,9 @@ xennet_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
+		if (ifp->if_bpf) {
 			bpf_mtap(ifp->if_bpf, m);
+		}
 #endif
 	}
 
@@ -1073,6 +1100,7 @@ xennet_start(struct ifnet *ifp)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		ifp->if_timer = 5;
 	}
+	splx(s);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start() done\n",
 	    sc->sc_dev.dv_xname));
@@ -1106,8 +1134,9 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 xennet_watchdog(struct ifnet *ifp)
 {
+	struct xennet_softc *sc = ifp->if_softc;
 
-	panic("xennet_watchdog\n");
+	printf("%s: xennet_watchdog\n", sc->sc_dev.dv_xname);
 }
 
 int
