@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.55 2005/08/24 15:51:41 ginsbach Exp $	*/
+/*	$NetBSD: conf.c,v 1.56 2005/10/02 23:03:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.55 2005/08/24 15:51:41 ginsbach Exp $");
+__RCSID("$NetBSD: conf.c,v 1.56 2005/10/02 23:03:04 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ static int filetypematch(char *, int);
 #define DEFAULT_MAXFILESIZE	-1		/* unlimited file size */
 #define DEFAULT_MAXTIMEOUT	7200		/* 2 hours */
 #define DEFAULT_TIMEOUT		900		/* 15 minutes */
-#define DEFAULT_UMASK		027		/* 15 minutes */
+#define DEFAULT_UMASK		027		/* rw-r----- */
 
 /*
  * Initialise curclass to an `empty' state
