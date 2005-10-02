@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2003/08/07 16:29:02 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2005/10/02 15:07:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2003/08/07 16:29:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2005/10/02 15:07:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;

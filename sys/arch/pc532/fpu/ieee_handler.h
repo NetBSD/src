@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.6 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.7 2005/10/02 15:07:41 chs Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -124,7 +124,7 @@ typedef struct ns532_combined_state state;
 #define PC scp->sc_pc
 #define PSR scp->sc_ps
 
-int ieee_sig(int sig, int code, struct sigcontext *scp);
+int ieee_sig(int, int, struct sigcontext *);
 
 #ifdef __NetBSD__
 #define PSR_N	PSL_N
@@ -134,6 +134,6 @@ int ieee_sig(int sig, int code, struct sigcontext *scp);
 
 #endif /* KERNEL */
 
-int ieee_handle_exception(state *state);
+int ieee_handle_exception(state *);
 
 #endif /* _IEEE_HANDLER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.65 2005/09/06 21:40:38 kleink Exp $ */
+/*	$NetBSD: scn.c,v 1.66 2005/10/02 15:07:41 chs Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.65 2005/09/06 21:40:38 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.66 2005/10/02 15:07:41 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,7 +186,7 @@ static int scn_config __P((int, int, int, int, u_char, u_char));
 static void scn_rxenable __P((struct scn_softc *));
 static void scn_rxdisable __P((struct scn_softc *));
 static void dcd_int __P((struct scn_softc *, struct tty *, u_char));
-static void scnoverrun __P((int, long *, char *));
+static void scnoverrun __P((int, long *, const char *));
 static unsigned char opbits __P((struct scn_softc *, int));
 
 static int scnsir = -1;		/* s/w intr number */
@@ -817,7 +817,7 @@ scnattach(parent, self, aux)
 	u_char delim = ':';
 	u_char mr1, mr2;
 	enum scntype scntype = SCNUNK;
-	char *duart_type = "Unknown";
+	const char *duart_type = "Unknown";
 	char *intrname;
 	boolean_t console, first;
 
@@ -1342,7 +1342,7 @@ static void
 scnoverrun(unit, ptime, what)
 	int unit;
 	long *ptime;
-	char *what;
+	const char *what;
 {
 	if (*ptime != time.tv_sec) {
 		*ptime = time.tv_sec;

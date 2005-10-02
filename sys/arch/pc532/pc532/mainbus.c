@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2005/10/02 15:07:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2005/10/02 15:07:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ mbprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	char *delim;
+	const char *delim;
 	struct confargs *ca = aux;
 
 	if (ca->ca_addr != -1) {

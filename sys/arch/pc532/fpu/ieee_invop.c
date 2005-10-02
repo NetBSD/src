@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_invop.c,v 1.7 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.8 2005/10/02 15:07:41 chs Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_invop.c,v 1.7 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_invop.c,v 1.8 2005/10/02 15:07:41 chs Exp $");
 
 #include "ieee_internal.h"
 
@@ -207,9 +207,9 @@ static int dot_iv (struct operand *op1, struct operand *op2, struct operand *op3
     return ret;
   case 5: case 6: case 7:
     {
-      struct operand t = *op2;
-      mul_iv(op1, &t);
-      add_iv(&t, op3);
+      struct operand top = *op2;
+      mul_iv(op1, &top);
+      add_iv(&top, op3);
       return ret;
     }
   }
@@ -268,19 +268,19 @@ static int logb_iv (struct operand *op1, struct operand *op2)
   return ret;
 }
 
-static void cmp_iv(struct operand *op1, struct operand *op2, state *state)
+static void cmp_iv(struct operand *op1, struct operand *op2, state *mystate)
 {
-  state->PSR &= ~(PSR_N | PSR_Z | PSR_L);
+  mystate->PSR &= ~(PSR_N | PSR_Z | PSR_L);
 
   if (ISNAN(op1->data) || ISNAN(op2->data)) {
     return;
   }
-  ieee_cmp(op1->data.d, op2->data.d, state);
+  ieee_cmp(op1->data.d, op2->data.d, mystate);
   return;
 }
 
 int ieee_invop(struct operand *op1, struct operand *op2,
-	       struct operand *f0_op, int xopcode, state *state)
+	       struct operand *f0_op, int xopcode, state *mystate)
 {
   int user_trap = FPC_TT_NONE;
 
@@ -302,7 +302,7 @@ int ieee_invop(struct operand *op1, struct operand *op2,
     op2->data = op1->data;
     break;
   case CMPF:
-    cmp_iv(op1, op2, state);
+    cmp_iv(op1, op2, mystate);
     break;
   case SUBF:
     if(! ISNAN(op1->data))
