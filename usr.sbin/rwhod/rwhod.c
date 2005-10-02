@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.32 2005/09/12 18:34:37 wiz Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.33 2005/10/02 16:49:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.32 2005/09/12 18:34:37 wiz Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.33 2005/10/02 16:49:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,9 +378,9 @@ send_host_information(int s)
 		wlast = &mywd.wd_we[1024 / sizeof(struct whoent) - 1];
 		for (; ep; ep = ep->next) {
 			(void)strncpy(we->we_utmp.out_line, ep->line,
-			    sizeof(we->we_utmp.out_line) - 1);
+			    sizeof(we->we_utmp.out_line));
 			(void)strncpy(we->we_utmp.out_name, ep->name,
-			    sizeof(we->we_utmp.out_name) - 1);
+			    sizeof(we->we_utmp.out_name));
 			we->we_utmp.out_time = htonl(ep->tv.tv_sec);
 			if (we >= wlast)
 				break;
