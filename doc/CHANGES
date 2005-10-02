@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.528 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.529 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -126,3 +126,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[cube 20050930]
 	wpa:	Add wpa_cli and wpa_supplicant.
 		[scw 20051001]
+	Xen:	Improvements to the network backend to avoid data copy when
+		possible. [bouyer 20051002]
