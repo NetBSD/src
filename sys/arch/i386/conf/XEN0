@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.14 2005/09/14 19:06:15 bouyer Exp $
+# $NetBSD: XEN0,v 1.15 2005/10/02 17:53:23 chs Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -204,7 +204,7 @@ xencons*	at hypervisor?		# Xen virtual console
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 # Xen will hide ppb devices from the guests kernels, and instead present all
-# PCI busses from the hyperviror. So ppb devices should never probe.
+# PCI busses from the hypervisor. So ppb devices should never probe.
 #pci*		at ppb? bus ?
 
 # PCI network interfaces
