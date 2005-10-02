@@ -1,0 +1,14 @@
+deffs   REGRESSFS
+
+device	master { }
+attach	master at root
+
+define	hook { }
+
+device	parentii:	hook
+attach	parentii at master
+device	parenti:	hook
+attach	parenti at master
+
+device	child
+attach	child at hook
