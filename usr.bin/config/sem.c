@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.8 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.9 2005/10/02 00:18:09 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,10 +158,12 @@ void
 setmaxusers(int n)
 {
 
-	if (maxusers != 0) {
+	if (maxusers == n) {
 		error("duplicate maxusers parameter");
 		return;
 	}
+	if (vflag && maxusers != 0)
+		warn("maxusers already defined");
 	maxusers = n;
 	if (n < minmaxusers) {
 		error("warning: minimum of %d maxusers assumed", minmaxusers);
