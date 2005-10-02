@@ -1,0 +1,15 @@
+include "arch/regress/conf/std.regress"
+
+maxusers 4
+
+file-system 	REGRESSFS
+
+master0 	at root
+
+parenti* 	at master?
+parentii* 	at master?
+
+child* 	at hook?
+child* 	at parentii?
+
+config regress root on ?
