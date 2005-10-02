@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2005/01/14 07:44:21 skrll Exp $
+#	$NetBSD: Makefile,v 1.23 2005/10/02 17:52:22 chs Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,8 @@ INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
 
 BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
 BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
+
+${PROG}.info: configdoc.texi
 
 .for f in ${G_EMULATION_OFILES:S/^e//:R}
 .if exists(.depend.${f})
