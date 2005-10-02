@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.13 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: mcount.c,v 1.14 2005/10/02 15:34:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -30,21 +30,26 @@
  */
 
 /* If building a standalone libkern, don't include mcount. */
-#ifndef _STANDALONE
+#if defined(GPROF) && !defined(_STANDALONE)
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.13 2005/02/26 22:58:56 perry Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.14 2005/10/02 15:34:17 chs Exp $");
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
 
-_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
+_MCOUNT_DECL __P((u_long, u_long))
+	__attribute__((__unused__,__no_instrument_function__));	/* see below. */
 
 /*
  * mcount is called on entry to each function compiled with the profiling
@@ -192,4 +197,4 @@ overflow:
 MCOUNT
 #endif
 
-#endif /* !_STANDALONE */
+#endif /* GPROF && !_STANDALONE */
