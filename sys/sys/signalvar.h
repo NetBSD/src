@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.58 2005/09/13 01:42:51 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.59 2005/10/02 17:51:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -177,6 +177,8 @@ void	sigactsunshare(struct proc *);
 void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
+siginfo_t *siginfo_alloc(int);
+void	siginfo_free(void *);
 
 int	__sigtimedwait1(struct lwp *, void *, register_t *, copyinout_t,
     copyinout_t, copyinout_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.93 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.94 2005/10/02 17:51:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.93 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.94 2005/10/02 17:51:27 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.93 2005/09/23 12:10:33 jmmv Exp $");
 #include <machine/cpu.h>
 
 static void timerupcall(struct lwp *, void *);
-
 
 /* Time of day and interval timer support.
  *
@@ -874,7 +873,6 @@ timerupcall(struct lwp *l, void *arg)
 {
 	struct ptimers *pt = (struct ptimers *)arg;
 	unsigned int i, fired, done;
-	extern struct pool siginfo_pool;	/* XXX Ew. */
 
 	KDASSERT(l->l_proc->p_sa);
 	/* Bail out if we do not own the virtual processor */
@@ -892,11 +890,11 @@ timerupcall(struct lwp *l, void *arg)
 
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
-		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si = siginfo_alloc(PR_WAITOK);
 		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(*si), si) != 0) {
-			pool_put(&siginfo_pool, si);
+		    sizeof(*si), si, siginfo_free) != 0) {
+			siginfo_free(si);
 			/* XXX What do we do here?? */
 		} else
 			done |= mask;
