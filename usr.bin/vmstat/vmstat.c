@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.136 2005/08/07 12:23:20 blymn Exp $ */
+/* $NetBSD: vmstat.c,v 1.137 2005/10/02 17:29:31 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.136 2005/08/07 12:23:20 blymn Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.137 2005/10/02 17:29:31 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -1155,17 +1155,17 @@ dopool(int verbose, int wide)
 	int first, ovflw;
 	void *addr;
 	long total, inuse, this_total, this_inuse;
-	TAILQ_HEAD(,pool) pool_head;
+	LIST_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	struct pool_allocator pa;
 	char name[32], maxp[32];
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
-	addr = TAILQ_FIRST(&pool_head);
+	addr = LIST_FIRST(&pool_head);
 
 	total = inuse = 0;
 
-	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
+	for (first = 1; addr != NULL; addr = LIST_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
 		deref_kptr(pp->pr_alloc, &pa, sizeof(pa),
 		    "pool allocator trashed");
@@ -1281,35 +1281,49 @@ dopoolcache(struct pool *pp, int verbose)
 	if (verbose < 1)
 		return;
 
-	for (addr = TAILQ_FIRST(&pp->pr_cachelist); addr != NULL;
-	    addr = TAILQ_NEXT(pc, pc_poollist)) {
+#define PR_GROUPLIST							\
+	deref_kptr(pcg_addr, pcg, sizeof(*pcg),				\
+	    "pool cache group trashed");				\
+	printf("\t\tgroup %p: avail %d\n", pcg_addr,			\
+	    pcg->pcg_avail);						\
+	for (i = 0; i < PCG_NOBJECTS; i++) {				\
+		if (pcg->pcg_objects[i].pcgo_pa !=			\
+		    POOL_PADDR_INVALID) {				\
+			printf("\t\t\t%p, 0x%llx\n",			\
+			    pcg->pcg_objects[i].pcgo_va,		\
+			    (unsigned long long)			\
+			    pcg->pcg_objects[i].pcgo_pa);		\
+		} else {						\
+			printf("\t\t\t%p\n",				\
+			    pcg->pcg_objects[i].pcgo_va);		\
+		}							\
+	}
+
+	for (addr = LIST_FIRST(&pp->pr_cachelist); addr != NULL;
+	    addr = LIST_NEXT(pc, pc_poollist)) {
 		deref_kptr(addr, pc, sizeof(*pc), "pool cache trashed");
-		printf("\tcache %p: allocfrom %p freeto %p\n", addr,
-		    pc->pc_allocfrom, pc->pc_freeto);
 		printf("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
 		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
 		if (verbose < 2)
 			continue;
-		for (pcg_addr = TAILQ_FIRST(&pc->pc_grouplist);
-		    pcg_addr != NULL; pcg_addr = TAILQ_NEXT(pcg, pcg_list)) {
-			deref_kptr(pcg_addr, pcg, sizeof(*pcg),
-			    "pool cache group trashed");
-			printf("\t\tgroup %p: avail %d\n", pcg_addr,
-			    pcg->pcg_avail);
-			for (i = 0; i < PCG_NOBJECTS; i++) {
-				if (pcg->pcg_objects[i].pcgo_pa !=
-				    POOL_PADDR_INVALID) {
-					printf("\t\t\t%p, 0x%llx\n",
-					    pcg->pcg_objects[i].pcgo_va,
-					    (unsigned long long)
-					    pcg->pcg_objects[i].pcgo_pa);
-				} else {
-					printf("\t\t\t%p\n",
-					    pcg->pcg_objects[i].pcgo_va);
-				}
-			}
+		printf("\t    full groups:\n");
+		for (pcg_addr = LIST_FIRST(&pc->pc_fullgroups);
+		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
+			PR_GROUPLIST;
+		}
+		printf("\t    partial groups:\n");
+		for (pcg_addr = LIST_FIRST(&pc->pc_partgroups);
+		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
+			PR_GROUPLIST;
+		}
+		printf("\t    empty groups:\n");
+		for (pcg_addr = LIST_FIRST(&pc->pc_emptygroups);
+		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
+			PR_GROUPLIST;
 		}
 	}
+
+#undef PR_GROUPLIST
 
 }
 
