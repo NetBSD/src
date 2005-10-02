@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 2005/10/02 15:07:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2005/07/01 18:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2005/10/02 15:07:41 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -184,7 +184,7 @@ userret(l, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"non-vectored interrupt",		/*  0 T_NVI */
 	"non-maskable interrupt",		/*  1 T_NMI */
 	"abort trap",				/*  2 T_ABT */
