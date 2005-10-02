@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.364 2005/10/01 10:29:32 scw Exp $
+#	$NetBSD: 3RDPARTY,v 1.365 2005/10/02 01:18:59 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -803,6 +803,17 @@ Notes:
         should remain effectively identical to the NetBSD branch
         except during testing.
 
+Package:	wpa_supplicant
+Version:	0.3.9
+Current Vers:	0.3.9
+Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
+Archive Site:	http://hostap.epitest.fi/releases/
+Home Page:	http://hostap.epitest.fi/
+Mailing List:
+Responsible:	scw, dyoung
+Notes:
+See /usr/src/dist/wpa_supplicant/NetBSD-upgrade for update instructions.
+
 Package:	XFree86
 Version:	4.5.0
 Current Vers:	4.5.0
@@ -834,14 +845,3 @@ The Makefile is completely new (*BSD style, of course).  Lastly,
 the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
 all references to deflate.c and friends, which permits building
 a really small zcat implementation.  (src/distrib/utils/zcat)
-
-Package:	wpa_supplicant
-Version:	0.3.9
-Current Vers:	0.3.9
-Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
-Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/
-Mailing List:
-Responsible:	scw, dyoung
-Notes:
-See /usr/src/dist/wpa_supplicant/NetBSD-upgrade for update instructions.
