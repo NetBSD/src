@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2004/10/23 17:12:22 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 2005/10/02 15:07:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2004/10/23 17:12:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2005/10/02 15:07:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,7 +78,7 @@ cpu_configure()
 	safepri = splhigh();
 
 	/* Find out what the hardware configuration looks like! */
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("No mainbus found!");
 
 	for (i = 0; i < NIPL; i++)
@@ -93,7 +93,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	int booted_partition = B_PARTITION(bootdev);
+	booted_partition = B_PARTITION(bootdev);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
