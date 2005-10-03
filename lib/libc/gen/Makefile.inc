@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.146 2005/09/25 20:08:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.147 2005/10/03 14:56:32 wiz Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -94,7 +94,7 @@ MLINKS+=getcwd.3 getwd.3
 MLINKS+=getdiskbyname.3 setdisktab.3
 MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
-	getfsent.3 getfstype.3 getfsent.3 setfsent.3
+	getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3
 MLINKS+=getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3 getgrent.3 getgrent_r.3
