@@ -1,4 +1,4 @@
-/*	$NetBSD: machfbreg.h,v 1.1 2002/10/24 18:15:57 junyoung Exp $	*/
+/*	$NetBSD: machfbreg.h,v 1.2 2005/10/03 10:26:24 macallan Exp $	*/
 
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -183,6 +183,8 @@
 #define CRTC_VSYNC_DIS		0x00000008
 #define CRTC_CSYNC_EN		0x00000010
 #define CRTC_PIX_BY_2_EN	0x00000020
+
+#define CRTC_DISPLAY_DIS        0x00000040
 
 #define CRTC_PIX_WIDTH		0x00000700
 #define CRTC_PIX_WIDTH_4BPP	0x00000100
