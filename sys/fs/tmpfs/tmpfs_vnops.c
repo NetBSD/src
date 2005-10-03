@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.15 2005/09/29 19:48:21 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.16 2005/10/03 19:36:42 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.15 2005/09/29 19:48:21 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.16 2005/10/03 19:36:42 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -212,8 +212,11 @@ tmpfs_lookup(void *v)
 			tnode = de->td_node;
 
 			/* If we are not at the last path component and
-			 * found a non-directory entry, raise an error. */
-			if ((tnode->tn_type != VDIR) &&
+			 * found a non-directory or non-link entry (which
+			 * may itself be pointing to a directory), raise
+			 * an error. */
+			if ((tnode->tn_type != VDIR &&
+			    tnode->tn_type != VLNK) &&
 			    !(cnp->cn_flags & ISLASTCN)) {
 				error = ENOTDIR;
 				goto out;
