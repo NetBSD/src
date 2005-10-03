@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.16 2005/10/02 21:53:16 bouyer Exp $
+# $NetBSD: XEN0,v 1.17 2005/10/03 20:50:25 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -15,7 +15,7 @@ options  	XEN
 options 	DOM0OPS
 #making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # do a domU, at the expense of a highter memory usage by the network stack.
-options 	MCLSHIFT=12
+#options 	MCLSHIFT=12
 
 #options 	I586_CPU
 options 	I686_CPU
