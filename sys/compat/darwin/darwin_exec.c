@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.43 2005/10/03 17:11:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.43 2005/10/03 17:11:25 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Ex
 
 #include <dev/wscons/wsconsio.h>
 
-#include <machine/darwin_machdep.h>
-
 #include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
@@ -75,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.42 2005/09/13 01:42:32 christos Ex
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_iohidsystem.h>
+
+#include <machine/darwin_machdep.h>
 
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
