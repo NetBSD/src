@@ -1,4 +1,4 @@
-/*	$NetBSD: display.h,v 1.6 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: display.h,v 1.7 2005/10/03 05:34:51 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -40,7 +40,7 @@ struct statics;
 int display_init __P((struct statics *));
 void i_loadave __P((int, double *));
 void u_loadave __P((int, double *));
-void i_timeofday __P((time_t *));
+void i_timeofday __P((time_t *, time_t *));
 void i_procstates __P((int, int *));
 void u_procstates __P((int, int *));
 char *cpustates_tag __P((void));

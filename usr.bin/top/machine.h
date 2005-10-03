@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.8 2003/10/03 15:32:06 christos Exp $	*/
+/*	$NetBSD: machine.h,v 1.9 2005/10/03 05:34:51 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -63,6 +63,7 @@ struct system_info
 {
     int    last_pid;
     double load_avg[NUM_AVERAGES];
+    time_t uptime;
     int    p_total;
     int    P_ACTIVE;     /* number of procs considered "active" */
     int    *procstates;
