@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.154 2005/09/24 12:05:45 rpaulo Exp $
+.\"	$NetBSD: sysctl.3,v 1.155 2005/10/03 22:22:10 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2005
+.Dd October 4, 2005
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -235,6 +235,7 @@ listed here, and described in separate sections below.
 .It CTL\_PROC	sys/sysctl.h	Per-process
 .It CTL\_VENDOR	?	Vendor specific
 .It CTL\_EMUL	sys/sysctl.h	Emulation settings
+.It CTL\_SECURITY	sys/sysctl.h	Security settings
 .El
 .Pp
 For example, the following retrieves the maximum number of processes allowed
@@ -1874,6 +1875,31 @@ These MIB nodes are also available as variables from within the DDB.
 See
 .Xr ddb 4
 for more details.
+.Sh CTL_SECURITY
+The security level contains various security-related settings for
+the system. Available settings are detailed below.
+.Bl -column "SECURITY_CUTRAIN" "integerXXX" -offset indent
+.It Sy Second level name	Type	Changeable
+.It SECURITY_CURTAIN	integer	yes
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li SECURITY_CURTAIN
+If non-zero, will filter return objects according to the user-id
+requesting information about them, preventing from users any
+access to objects they don't own.
+.Pp
+At the moment, it affects
+.Xr ps 1
+.Xr netstat 1
+(for
+.Dq PF_INET ,
+.Dq PF_INET6 ,
+and
+.Dq PF_UNIX
+PCBs), and
+.Xr w 1 .
+.El
 .Sh CTL_VENDOR
 The "vendor" toplevel name is reserved to be used by vendors who wish to
 have their own private MIB tree.
