@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.23 2005/06/16 14:58:51 christos Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.23 2005/06/16 14:58:51 christos Exp $
+ * $Id: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.23 2005/06/16 14:58:51 christos Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.24 2005/10/03 05:34:51 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -339,7 +339,9 @@ get_system_info(si)
 	int mib[2];
 	struct uvmexp_sysctl uvmexp;
 	struct swapent *sep, *seporig;
+	struct timeval boottime;
 	u_int64_t totalsize, totalinuse;
+	time_t now;
 	int size, inuse, ncounted, i;
 	int rnswap, nswap;
 
@@ -435,6 +437,16 @@ get_system_info(si)
 	si->memory = memory_stats;
 	si->swap = swap_stats;
 	si->last_pid = -1;
+
+	time(&now);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BOOTTIME;
+	ssize = sizeof(boottime);
+	if (sysctl(mib, 2, &boottime, &ssize, NULL, 0) != -1 &&
+    	    boottime.tv_sec != 0)
+		si->uptime = now - boottime.tv_sec;
+	else
+		si->uptime = 0;
 }
 
 

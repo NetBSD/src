@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.22 2005/07/19 12:24:39 yamt Exp $	*/
+/*	$NetBSD: top.c,v 1.23 2005/10/03 05:34:51 christos Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.22 2005/07/19 12:24:39 yamt Exp $");
+__RCSID("$NetBSD: top.c,v 1.23 2005/10/03 05:34:51 christos Exp $");
 #endif
 
 #include "os.h"
@@ -520,7 +520,7 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 	/* display the current time */
 	/* this method of getting the time SHOULD be fairly portable */
 	time(&curr_time);
-	i_timeofday(&curr_time);
+	i_timeofday(&curr_time, &system_info.uptime);
 
 	/* display process state breakdown */
 	(*d_procstates)(system_info.p_total,
