@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.135 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.135 2005/08/19 02:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,7 +554,8 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case F_GETOWN:
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, retval, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, &tmp, p);
+		*retval = tmp;
 		break;
 
 	case F_SETOWN:
