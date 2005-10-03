@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.11 2005/02/28 01:59:21 thorpej Exp $
+# $NetBSD: TODO,v 1.12 2005/10/03 00:17:53 christos Exp $
 
 Status:
 
@@ -39,9 +39,9 @@ racoon		- Check racoon.conf(5). XXX: No /etc/pam.d/racoon, this is
 		  currently under discussion in the mailing lists.
 rexecd		- Nothing
 rsh		- Nothing
-sshd		- add "UsePam yes" in /etc/ssh/sshd_config
+sshd		- Nothing
 su		- Nothing
 system		- Internal
-telnetd		- add "-a valid" in /etc/inetd.conf telnet invocations
+telnetd		- Nothing
 xdm		- Nothing. Note that both the Xserver and xdm need to be
 		  compiled with PAM enabled.
