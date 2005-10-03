@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.143 2005/09/14 00:32:26 lukem Exp $
+$NetBSD: UPDATING,v 1.144 2005/10/03 04:45:52 yamt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20050917:
+	arch/*/conf/std.* was changed to include conf/std, which
+	contains MI options previously enabled by default.
+	If you have kernel config files which doesn't include
+	arch/*/conf/std.*, you need to edit them to include conf/std
+	to get the previous configuration.
 
 20050830:
 	named.conf was moved from /etc/namedb to /etc.
