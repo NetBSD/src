@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.25 2004/05/17 00:32:26 thorpej Exp $
+.\"	$NetBSD: ifmedia.4,v 1.26 2005/10/03 18:08:03 rpaulo Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001, 2002, 2003, 2004
 .\"	The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 16, 2004
+.Dd October 3, 2005
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -215,7 +215,7 @@ Dual-attached station vs. Single-attached station.  [dual-attach, das]
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
 The following media types are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_DS11 -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_OFDM12 -compact
 .It Dv IFM_IEEE80211_FH1
 Frequency Hopping 1Mbps.  [FH1]
 .It Dv IFM_IEEE80211_FH2
@@ -228,10 +228,30 @@ Direct Sequence 2Mbps.  [DS2]
 Direct Sequence 5Mbps.  [DS5]
 .It Dv IFM_IEEE80211_DS11
 Direct Sequence 11Mbps.  [DS11]
+.It Dv IFM_IEEE80211_DS22
+Direct Sequence 22Mbps.  [DS22]
+.It Dv IFM_IEEE80211_OFDM6
+Orthogonal Frequency Division Multiplexing 6Mbps.  [OFDM6]
+.It Dv IFM_IEEE80211_OFDM9
+Orthogonal Frequency Division Multiplexing 9Mbps.  [OFDM9]
+.It Dv IFM_IEEE80211_OFDM12
+Orthogonal Frequency Division Multiplexing 12Mbps.  [OFDM12]
+.It Dv IFM_IEEE80211_OFDM18
+Orthogonal Frequency Division Multiplexing 18Mbps.  [OFDM18]
+.It Dv IFM_IEEE80211_OFDM24
+Orthogonal Frequency Division Multiplexing 24Mbps.  [OFDM24]
+.It Dv IFM_IEEE80211_OFDM36
+Orthogonal Frequency Division Multiplexing 36Mbps.  [OFDM36]
+.It Dv IFM_IEEE80211_OFDM48
+Orthogonal Frequency Division Multiplexing 48Mbps.  [OFDM48]
+.It Dv IFM_IEEE80211_OFDM54
+Orthogonal Frequency Division Multiplexing 54Mbps.  [OFDM54]
+.It Dv IFM_IEEE80211_OFDM72
+Orthogonal Frequency Division Multiplexing 72Mbps.  [OFDM72]
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_HOSTAP -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_MONITOR -compact
 .It Dv IFM_IEEE80211_ADHOC
 Ad-hoc (IBSS) mode. [adhoc, ibss]
 .br
@@ -241,6 +261,10 @@ it may be used with the
 [flag0] media option to specify non-standard ad-hoc demo mode.
 .It Dv IFM_IEEE80211_HOSTAP
 Access Point mode [hostap]
+.It Dv IFM_IEEE80211_MONITOR
+Monitor mode [monitor]
+.It Dv IFM_IEEE80211_TURBO
+Turbo mode [turbo]
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,
