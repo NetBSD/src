@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.34 2005/10/01 19:01:01 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.35 2005/10/03 11:22:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.34 2005/10/01 19:01:01 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.35 2005/10/03 11:22:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,11 @@ CFATTACH_DECL(machfb, sizeof(struct mach64_softc), mach64_match, mach64_attach,
 static void	mach64_init(struct mach64_softc *);
 static int	mach64_get_memsize(struct mach64_softc *);
 static int	mach64_get_max_ramdac(struct mach64_softc *);
+
+#if defined(__sparc__) || defined(__powerpc)
 static void	mach64_get_mode(struct mach64_softc *, struct videomode *);
+#endif
+
 static int	mach64_calc_crtcregs(struct mach64_softc *,
 				     struct mach64_crtcregs *,
 				     struct videomode *);
@@ -591,12 +595,12 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		setmode = 1;
 	}
 #else
-		if (default_mode.dot_clock == 0) {
-			memcpy(&default_mode, &mach64_modes[0], 
-			    sizeof(default_mode));
-		}
-		sc->sc_my_mode = &mach64_modes[0];
-		setmode = 1;
+	if (default_mode.dot_clock == 0) {
+		memcpy(&default_mode, &mach64_modes[0], 
+		    sizeof(default_mode));
+	}
+	sc->sc_my_mode = &mach64_modes[0];
+	setmode = 1;
 #endif
 
 	sc->bits_per_pixel = 8;
@@ -771,6 +775,7 @@ mach64_get_max_ramdac(struct mach64_softc *sc)
 		return 80000;
 }
 
+#if defined(__sparc__) || defined(__powerpc)
 static void
 mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 {
@@ -797,6 +802,7 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
 #endif
 }
+#endif
 
 static int
 mach64_calc_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc,
