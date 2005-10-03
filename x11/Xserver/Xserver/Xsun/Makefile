@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/05/06 22:55:09 martin Exp $
+#	$NetBSD: Makefile,v 1.9 2005/10/03 20:22:08 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ LDADD=	${LIBDIR.hw/sun}/sunInit.o ${LDADD.dix} ${LDADD.hw/sun} ${LDADD.os} \
 	${LDADD.cfb} ${LDADD.mfb} ${LDADD.dix/xpstubs} ${LDADD.mi} \
 	${LDADD.Xext/ext} ${LDADD.xkb}
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 LDADD+=	${LDADD.xinput}
 DPADD=	${DPADD.xinput}
 .endif
