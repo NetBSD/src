@@ -2067,7 +2067,6 @@ getfsent
 getfsent.3x
 getfsfile
 getfsspec
-getfstype
 getgrent.3
 gethost
 gethostbyaddr
@@ -3459,7 +3458,6 @@ fstab.h
 getfsent
 getfsfile
 getfsspec
-getfstype
 gethostent
 getnetent
 getprotoent
