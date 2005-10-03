@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.13 2005/01/24 10:38:47 simonb Exp $	*/
+/*	$NetBSD: display.c,v 1.14 2005/10/03 05:34:51 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,13 +47,14 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.13 2005/01/24 10:38:47 simonb Exp $");
+__RCSID("$NetBSD: display.c,v 1.14 2005/10/03 05:34:51 christos Exp $");
 #endif
 
 #include "os.h"
 #include <ctype.h>
 #include <time.h>
 #include <stdarg.h>
+#include <tzfile.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -268,11 +269,30 @@ double *avenrun;
 }
 
 void
-i_timeofday(tod)
+i_timeofday(tod, uptimep)
 
 time_t *tod;
+time_t *uptimep;
 
 {
+    char up[MAX_COLS];
+    time_t uptime;
+    int days, hrs, mins;
+
+    uptime = *uptimep;/* work on local copy */
+    uptime += 30;/* round off to nearest minute */
+    if (uptime > SECSPERMIN)
+    {
+	days = uptime / SECSPERDAY;
+	uptime %= SECSPERDAY;
+	hrs = uptime / SECSPERHOUR;
+	uptime %= SECSPERHOUR;
+	mins = uptime / SECSPERMIN;
+	(void)snprintf(up, sizeof(up), "up %d day%s, %2d:%02d", days,
+	    days != 1 ? "s" : "", hrs, mins);
+    } else
+	up[0] = '\0';/* null string if we don't know the uptime */
+
     /*
      *  Display the current time.
      *  "ctime" always returns a string that looks like this:
@@ -286,20 +306,20 @@ time_t *tod;
 
     if (smart_terminal)
     {
-	Move_to(screen_width - 8, 0);
+	Move_to(screen_width - 8 - (3 + strlen(up)), 0);
     }
     else
     {
-	fputs("    ", stdout);
+	fprintf(stdout, "    %s    ", up);
     }
 #ifdef DEBUG
     {
 	char *foo;
 	foo = ctime(tod);
-	fputs(foo, stdout);
+	printf("%s  %s", up, foo);
     }
 #endif
-    printf("%-8.8s\n", &(ctime(tod)[11]));
+    printf("%s   %-8.8s\n", up, &(ctime(tod)[11]));
     lastline = 1;
 }
 
