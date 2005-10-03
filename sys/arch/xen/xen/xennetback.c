@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.13 2005/10/02 21:49:23 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.14 2005/10/03 22:15:44 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -669,14 +669,44 @@ again:
 			XENPRINTF(("pkt_page refcount %d va 0x%lx m %p\n",
 			    pkt_page->refcount, pkt_va, m));
 		}
-		SLIST_INSERT_HEAD(&pkt_page->xni_pkt_head, pkt, pkt_next);
-		pkt_page->refcount++;
+		if (MASK_NETIF_TX_IDX(req_cons + 1) ==
+		    MASK_NETIF_TX_IDX(xneti->xni_txring->resp_prod)) {
+			/*
+			 * This is the last TX buffer. Copy the data and
+			 * ack it. Delaying it until the mbuf is
+			 * freed will stall transmit.
+			 */
+			pool_put(&xni_pkt_pool, pkt);
+			m->m_len = min(MHLEN, txreq->size);
+			m->m_pkthdr.len = 0;
+			m_copyback(m, 0, txreq->size,
+			    (caddr_t)(pkt_va | (txreq->addr & PAGE_MASK)));
+			if (pkt_page->refcount == 0) {
+				xen_shm_unmap(pkt_page->va, &pkt_page->ma, 1,
+				    xneti->domid);
+				SLIST_REMOVE(pkt_hash, pkt_page, xni_page,
+				    xni_page_next);
+				pool_put(&xni_page_pool, pkt_page);
+			}
+			if (m->m_pkthdr.len < txreq->size) {
+				ifp->if_ierrors++;
+				m_freem(m);
+				xennetback_tx_response(xneti, txreq->id,
+				    NETIF_RSP_DROPPED);
+				continue;
+			}
+			xennetback_tx_response(xneti, txreq->id,
+			    NETIF_RSP_OKAY);
+		} else {
+			SLIST_INSERT_HEAD(&pkt_page->xni_pkt_head, pkt, pkt_next);
+			pkt_page->refcount++;
 
-		pkt->pkt_id = txreq->id;
+			pkt->pkt_id = txreq->id;
 
-		MEXTADD(m, pkt_va | (txreq->addr & PAGE_MASK),
-		    txreq->size, M_DEVBUF, xennetback_tx_free, pkt_page);
-		m->m_pkthdr.len = m->m_len = txreq->size;
+			MEXTADD(m, pkt_va | (txreq->addr & PAGE_MASK),
+			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt_page);
+			m->m_pkthdr.len = m->m_len = txreq->size;
+		}
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
 		
