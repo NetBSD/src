@@ -1,18 +1,5 @@
-#	$NetBSD: LAST_MINUTE,v 1.2.2.2 2004/12/06 05:46:24 jmc Exp $
+#	$NetBSD: LAST_MINUTE,v 1.2.2.2.2.1 2005/10/03 22:43:34 riz Exp $
 
-This file contains important information on the NetBSD 2.0 release that
+This file contains important information on the NetBSD 2.1 release that
 did not make it into the main documentation.
 
-[cats]
-
-        The xserver does not currently work with module support for cats. This
-	will be fixed shortly and released as part of the 2.1 release.
-
-[sparc64]
-
-	There are 3 known PR's dealing with cache related memory corruption
-	issues: 24126, 25669, 27730
-	
-	Fixes for these have been identified but did not make the 2.0 release.
-	They will be part of the source/binary release for 2.1 and available
-	on the 2.0 source tree immediately after release.
