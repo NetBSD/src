@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 2005/10/04 12:35:00 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 2005/10/04 13:06:45 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,6 +248,7 @@ struct devi {
 #define	DEVI_ORPHAN	0	/* instance has no active parent */
 #define	DEVI_ACTIVE	1	/* instance has an active parent */
 #define	DEVI_IGNORED	2	/* instance's parent has been removed */
+#define DEVI_BROKEN	3	/* instance is broken (syntax error) */
 
 	/* created during packing or ioconf.c generation */
 	short	i_collapsed;	/* set => this alias no longer needed */

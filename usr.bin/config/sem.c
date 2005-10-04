@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.10 2005/10/04 12:35:00 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.11 2005/10/04 13:06:45 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -927,6 +927,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 			}
 		if (!hit) {
 			error("`%s' cannot attach to the root", ib->d_name);
+			i->i_active = DEVI_BROKEN;
 			goto bad;
 		}
 		attr = &errattr;	/* a convenient "empty" attr */
@@ -982,6 +983,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		if (ab == NULL) {
 			error("%s at %s: `%s' unknown",
 			    name, at, atbuf);
+			i->i_active = DEVI_BROKEN;
 			goto bad;
 		}
 
@@ -995,6 +997,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 				goto findattachment;
 		}
 		error("`%s' cannot attach to `%s'", ib->d_name, atbuf);
+		i->i_active = DEVI_BROKEN;
 		goto bad;
 
  findattachment:
@@ -1015,8 +1018,10 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		if (!hit)
 			panic("adddev: can't figure out attachment");
 	}
-	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL)
+	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL) {
+		i->i_active = DEVI_BROKEN;
 		goto bad;
+	}
 	i->i_at = at;
 	i->i_pspec = p;
 	i->i_atdeva = iba;
