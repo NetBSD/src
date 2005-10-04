@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.12 2005/10/04 13:33:20 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.13 2005/10/04 20:13:39 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -882,6 +882,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_lineno = currentline();
 	i->i_srcfile = yyfile;
 	i->i_active = DEVI_ORPHAN; /* Proper analysis comes later */
+	i->i_level = devilevel;
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
@@ -1192,7 +1193,15 @@ remove_devi(struct devi *i)
 	ndevi--;
 	/*
 	 * Put it in deaddevitab
+	 *
+	 * Each time a devi is removed, devilevel is increased so that later on
+	 * it is possible to tell if an instance was added before or after the
+	 * removal of its parent.
+	 *
+	 * For active instances, i_level contains the number of devi removed so
+	 * far, and for dead devis, it contains its index.
 	 */
+	i->i_level = devilevel++;
 	i->i_alias = NULL;
 	f = ht_lookup(deaddevitab, i->i_name);
 	if (f == NULL) {
