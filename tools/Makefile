@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2005/06/12 20:24:14 dyoung Exp $
+#	$NetBSD: Makefile,v 1.92 2005/10/04 04:27:32 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -32,9 +32,9 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		file lint1 \
 		makefs menuc mkcsmapper mkesdb mklocale mknod msgc \
 		pax .WAIT \
-		disklabel \
-		fdisk \
-		installboot \
+		disklabel .WAIT \
+		fdisk .WAIT \
+		installboot .WAIT \
 		pwd_mkdb stat sunlabel zic
 
 .if ${MKMAN} != "no"
