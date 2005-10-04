@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.265 2005/10/01 10:43:25 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.266 2005/10/04 14:18:19 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13213,4 +13213,32 @@ sys/dev/sun/kbd.c				1.52
 
 	Remove spurious debug output accidently commited in revision 1.44.
 	[martin, ticket #841]
+
+sys/kern/kern_exit.c				1.151
+sys/kern/kern_lwp.c				1.30
+sys/sys/proc.h					1.206
+
+	Protect p_nrlwps by sched_lock. PR kern/29652.
+	[yamt, ticket #842]
+
+sys/dev/raidframe/rf_engine.c			1.36
+sys/dev/raidframe/rf_netbsd.h			1.24
+sys/dev/raidframe/rf_netbsdkintf.c		1.190
+sys/dev/raidframe/rf_states.c			1.39
+
+	Re-work the handling of incoming I/O in RAIDframe.
+	This fixes PR kern/30233.
+	[oster, ticket #853]
+
+usr.sbin/postinstall/postinstall		1.8
+
+	Fix do_defaults() so that it errors when there's a mismatch.
+	[lukem, ticket #858]
+
+sys/netkey/key.c				1.136
+
+	Make sure that the port numbers are set to 0 in SAD and SPD when NAT-T
+	is not enabled. While we are here, add some safety tests on PFKEY
+	messages. This fixes the problem described in PR bin/30437.
+	[manu, ticket #859]
 
