@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.145.2.2 2005/08/21 22:06:14 tron Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.145.2.3 2005/10/04 14:16:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.145.2.2 2005/08/21 22:06:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.145.2.3 2005/10/04 14:16:42 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -449,6 +449,8 @@ exit1(struct lwp *l, int rv)
 	l->l_flag |= L_DETACHED|L_PROCEXIT;	/* detached from proc too */
 	l->l_stat = LSDEAD;
 
+	KASSERT(p->p_nrlwps == 1);
+	KASSERT(p->p_nlwps == 1);
 	p->p_nrlwps--;
 	p->p_nlwps--;
 
