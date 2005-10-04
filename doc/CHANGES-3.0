@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.266 2005/10/04 14:18:19 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.267 2005/10/04 22:19:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -12843,13 +12843,14 @@ distrib/utils/sysinst/msg.mi.pl			1.47
 	Change the message above the selection menu for root's shell to show
 	the correct default (ie what happens if you type enter) of /bin/sh.
 	Fixes PR install/32159.
-	[dsl, ticket #796]
+	[dsl, ticket #796, #851]
 
 distrib/utils/sysinst/msg.mi.fr			1.87
 distrib/utils/sysinst/msg.mi.pl			1.48
+distrib/utils/sysinst/msg.mi.es			1.4
 
 	Correct some messages which had the wrong number of format specifiers.
-	[dsl, ticket #797]
+	[dsl, ticket #797, #852]
 
 distrib/common/buildfloppies.sh			1.10
 
@@ -13241,4 +13242,30 @@ sys/netkey/key.c				1.136
 	is not enabled. While we are here, add some safety tests on PFKEY
 	messages. This fixes the problem described in PR bin/30437.
 	[manu, ticket #859]
+
+sys/kern/kern_sa.c				1.64
+
+	Prevent sa_setconcurrency before sa_enable, rather than crashing.
+	[yamt, ticket #843]
+
+lib/libc/sys/sa_setconcurrency.2		1.4
+
+	Sync with kernel.
+	[yamt, ticket #844]
+
+sys/ufs/ufs/ufs_inode.c				1.53
+
+	ufs_balloc_range: correct range to clear PG_RDONLY.
+	This fixes a panic in ubc_fault.
+	[yamt, ticket #848]
+
+sys/compat/mach/mach_thread.c			1.35
+
+	Protect p_nrlwps by sched_lock.
+	[yamt, ticket #849]
+
+distrib/utils/sysinst/msg.mi.es			1.4
+
+Correct some messages which had the wrong number of format specifiers.
+[dsl, ticket #852]
 
