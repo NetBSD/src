@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2005/10/04 13:44:23 cube Exp $
+# $NetBSD: Makefile,v 1.3 2005/10/04 22:56:20 cube Exp $
 
 # Those configurations only have to be understood by config(1) without
 # errors.
 
-SIMPLE_SUCCESS=	SHADOW_INSTANCE
+SIMPLE_SUCCESS=	SHADOW_INSTANCE LOOP
 SIMPLE_FAILURE=	POSTPONED_ORPHAN
 
 SIMPLE=	${SIMPLE_SUCCESS} ${SIMPLE_FAILURE}
@@ -43,7 +43,7 @@ CONFIG_LINE.${__conf__}=	${TOOL_CONFIG} ${CONFIG_OPTS.${__conf__}} \
 
 ${__conf__}-regress:
 	@mkdir -p compile/${__conf__}
-	${CONFIG_LINE.${__conf__}}
+	@${CONFIG_LINE.${__conf__}}
 
 ${__conf__}-clean:
 	@if [ -d compile/${__conf__} ]; then rm -Rf compile/${__conf__}; fi
