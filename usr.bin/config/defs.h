@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 2005/10/04 13:06:45 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 2005/10/04 20:13:39 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -244,6 +244,7 @@ struct devi {
 	int	i_cfflags;	/* flags from config line */
 	int	i_lineno;	/* line # in config, for later errors */
 	const char *i_srcfile;	/* file it appears in */
+	int	i_level;	/* position between negated instances */
 	int	i_active;
 #define	DEVI_ORPHAN	0	/* instance has no active parent */
 #define	DEVI_ACTIVE	1	/* instance has an active parent */
@@ -399,6 +400,7 @@ int	maxbdevm;			/* max number of block major */
 int	maxcdevm;			/* max number of character major */
 int	do_devsw;			/* 0 if pre-devsw config */
 int	oktopackage;			/* 0 before setmachine() */
+int	devilevel;			/* used for devi->i_level */
 
 TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
 TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and

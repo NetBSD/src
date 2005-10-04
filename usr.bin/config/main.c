@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2005/10/02 21:22:56 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2005/10/04 20:13:39 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ static	int	badstar(void);
 static	int	mksymlinks(void);
 static	int	mkident(void);
 static	int	devbase_has_dead_instances(const char *, void *, void *);
-static	int	devbase_has_any_instance(struct devbase *, int, int);
+static	int	devbase_has_any_instance(struct devbase *, int, int, int);
 static	int	check_dead_devi(const char *, void *, void *);
 static	void	kill_orphans(void);
 static	void	do_kill_orphans(struct devbase *, struct attr *,
@@ -1486,18 +1486,21 @@ extract_config(const char *kname, const char *cname, int cfd)
 struct dhdi_params {
 	struct devbase *d;
 	int unit;
+	int level;
 };
 
 static int
 devbase_has_dead_instances(const char *key, void *value, void *aux)
 {
-	struct devi *i = value;
+	struct devi *i;
 	struct dhdi_params *dhdi = aux;
 
-	if (i->i_base == dhdi->d &&
-	    (dhdi->unit == WILD || dhdi->unit == i->i_unit ||
-	     i->i_unit == STAR))
-		return 1;
+	for (i = value; i != NULL; i = i->i_alias)
+		if (i->i_base == dhdi->d &&
+		    (dhdi->unit == WILD || dhdi->unit == i->i_unit ||
+		     i->i_unit == STAR) &&
+		    i->i_level >= dhdi->level)
+			return 1;
 	return 0;
 }
 
@@ -1507,7 +1510,7 @@ devbase_has_dead_instances(const char *key, void *value, void *aux)
  */
 
 static int
-devbase_has_any_instance(struct devbase *dev, int unit, int state)
+devbase_has_any_instance(struct devbase *dev, int unit, int state, int level)
 {
 	struct deva *da;
 	struct devi *i;
@@ -1515,10 +1518,11 @@ devbase_has_any_instance(struct devbase *dev, int unit, int state)
 	if (dev->d_ispseudo) {
 		if (dev->d_ihead != NULL)
 			return 1;
-		else if (state == DEVI_IGNORED)
-			return (ht_lookup(deaddevitab, dev->d_name) != NULL);
-		else
+		else if (state != DEVI_IGNORED)
 			return 0;
+		if ((i = ht_lookup(deaddevitab, dev->d_name)) == NULL)
+			return 0;
+		return (i->i_level >= level);
 	}
 
 	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
@@ -1530,7 +1534,7 @@ devbase_has_any_instance(struct devbase *dev, int unit, int state)
 				return 1;
 
 	if (state == DEVI_IGNORED) {
-		struct dhdi_params dhdi = { dev, unit };
+		struct dhdi_params dhdi = { dev, unit, level };
 		/* also check dead devices */
 		return ht_enumerate(deaddevitab, devbase_has_dead_instances,
 		    &dhdi);
@@ -1559,20 +1563,23 @@ check_dead_devi(const char *key, void *value, void *aux)
 {
 	struct cdd_params *cdd = aux;
 	struct devi *i = value;
-	struct pspec *p = i->i_pspec;
+	struct pspec *p;
 
 	if (i->i_base != cdd->d)
 		return 0;
 
-	if ((p == NULL && cdd->at == NULL) ||
-	    (p != NULL && p->p_iattr == cdd->at &&
-	     (p->p_atdev == NULL || p->p_atdev == cdd->parent))) {
-		if (p != NULL &&
-		    !devbase_has_any_instance(cdd->parent, p->p_atunit,
-		    DEVI_IGNORED))
-			return 0;
-		else
-			return 1;
+	for (; i != NULL; i = i->i_alias) {
+		p = i->i_pspec;
+		if ((p == NULL && cdd->at == NULL) ||
+		    (p != NULL && p->p_iattr == cdd->at &&
+		     (p->p_atdev == NULL || p->p_atdev == cdd->parent))) {
+			if (p != NULL &&
+			    !devbase_has_any_instance(cdd->parent, p->p_atunit,
+			    DEVI_IGNORED, i->i_level))
+				return 0;
+			else
+				return 1;
+		}
 	}
 	return 0;
 }
@@ -1615,7 +1622,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 				    p->p_atdev == parent))) {
 					if (p != NULL &&
 					    !devbase_has_any_instance(parent,
-					      p->p_atunit, state))
+					      p->p_atunit, state, j->i_level))
 						continue;
 					/*
 					 * There are Fry-like devices which can
