@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.129.2.5 2005/07/11 15:04:29 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.129.2.6 2005/10/04 14:12:40 tron Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.5 2005/07/11 15:04:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129.2.6 2005/10/04 14:12:40 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -386,10 +386,12 @@ static struct mbuf *key_setsadbxtag __P((u_int16_t));
 #ifdef IPSEC_NAT_T
 static struct mbuf *key_setsadbxport __P((u_int16_t, u_int16_t));
 static struct mbuf *key_setsadbxtype __P((u_int16_t));
+#endif
 static void key_porttosaddr __P((struct sockaddr *, u_int16_t));
 #define KEY_PORTTOSADDR(saddr, port) \
-     key_porttosaddr((struct sockaddr *)(saddr), (port))
-#endif
+	key_porttosaddr((struct sockaddr *)(saddr), (port))
+static int key_checksalen __P((const struct sockaddr *));
+#define KEY_CHECKSALEN(saddr) key_checksalen((const struct sockaddr *)(saddr))
 static struct mbuf *key_setsadblifetime __P((u_int16_t, u_int32_t,
 	u_int64_t, u_int64_t, u_int64_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
@@ -803,7 +805,9 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			sin.sin_len = sizeof(sin);
 			bcopy(src, &sin.sin_addr,
 			    sizeof(sin.sin_addr));
+#ifdef IPSEC_NAT_T
 			sin.sin_port = sport;
+#endif
 			if (key_sockaddrcmp((struct sockaddr*)&sin,
 			    (struct sockaddr *)&sav->sah->saidx.src, 
 			    chkport) != 0)
@@ -816,7 +820,9 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			sin6.sin6_len = sizeof(sin6);
 			bcopy(src, &sin6.sin6_addr,
 			    sizeof(sin6.sin6_addr));
+#ifdef IPSEC_NAT_T
 			sin6.sin6_port = sport;
+#endif
 			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
 				/* kame fake scopeid */
 				sin6.sin6_scope_id =
@@ -844,7 +850,9 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			sin.sin_len = sizeof(sin);
 			bcopy(dst, &sin.sin_addr,
 			    sizeof(sin.sin_addr));
+#ifdef IPSEC_NAT_T
 			sin.sin_port = dport;
+#endif
 			if (key_sockaddrcmp((struct sockaddr*)&sin,
 			    (struct sockaddr *)&sav->sah->saidx.dst,
 			    chkport) != 0)
@@ -857,7 +865,9 @@ key_allocsa(family, src, dst, proto, spi, sport, dport)
 			sin6.sin6_len = sizeof(sin6);
 			bcopy(dst, &sin6.sin6_addr,
 			    sizeof(sin6.sin6_addr));
+#ifdef IPSEC_NAT_T
 			sin6.sin6_port = dport;
+#endif
 			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
 				/* kame fake scopeid */
 				sin6.sin6_scope_id =
@@ -4038,7 +4048,7 @@ key_portfromsaddr(saddr)
 
 	return port;
 }
-
+#endif /* IPSEC_NAT_T */
 
 /*
  * Set port is struct sockaddr. port is in network order
@@ -4064,13 +4074,41 @@ key_porttosaddr(saddr, port)
 	}
 #endif
 	default:
-		printf("key_porttosaddr: unexpected address family\n");
+		printf("key_porttosaddr: unexpected address family %d\n", 
+		    saddr->sa_family);
 		break;
 	}
 
 	return;
 }
-#endif /* IPSEC_NAT_T */
+
+/*
+ * Safety check sa_len 
+ */
+static int 
+key_checksalen(saddr)
+	const struct sockaddr *saddr;
+{
+	switch (saddr->sa_family) {
+	case AF_INET:
+		if (saddr->sa_len != sizeof(struct sockaddr_in))
+			return -1;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (saddr->sa_len != sizeof(struct sockaddr_in6))
+			return -1;
+		break;
+#endif
+	default:
+		printf("key_checksalen: unexpected sa_family %d\n", 
+		    saddr->sa_family);
+		return -1;
+		break;
+	}
+
+	return 0;
+}
 
 /*
  * set data into sadb_lifetime
@@ -5028,53 +5066,19 @@ key_getspi(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
-	/* 
-	 * make sure if port number is zero. 
-	 * If using NAT-T, skip that check.
-	 */
-	switch (((struct sockaddr *)(src0 + 1))->sa_family) {
-	case AF_INET:
-		if (((struct sockaddr *)(src0 + 1))->sa_len !=
-		    sizeof(struct sockaddr_in))
-			return key_senderror(so, m, EINVAL);
-#ifndef IPSEC_NAT_T
-		((struct sockaddr_in *)(src0 + 1))->sin_port = 0;
-#endif
-		break;
-	case AF_INET6:
-		if (((struct sockaddr *)(src0 + 1))->sa_len !=
-		    sizeof(struct sockaddr_in6))
-			return key_senderror(so, m, EINVAL);
-#ifndef IPSEC_NAT_T
-		((struct sockaddr_in6 *)(src0 + 1))->sin6_port = 0;
-#endif
-		break;
-	default:
-		; /*???*/
-	}
-	switch (((struct sockaddr *)(dst0 + 1))->sa_family) {
-	case AF_INET:
-		if (((struct sockaddr *)(dst0 + 1))->sa_len !=
-		    sizeof(struct sockaddr_in))
-			return key_senderror(so, m, EINVAL);
-#ifndef IPSEC_NAT_T
-		((struct sockaddr_in *)(dst0 + 1))->sin_port = 0;
-#endif
-		break;
-	case AF_INET6:
-		if (((struct sockaddr *)(dst0 + 1))->sa_len !=
-		    sizeof(struct sockaddr_in6))
-			return key_senderror(so, m, EINVAL);
-#ifndef IPSEC_NAT_T
-		((struct sockaddr_in6 *)(dst0 + 1))->sin6_port = 0;
-#endif
-		break;
-	default:
-		; /*???*/
-	}
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
 
-	/* XXX boundary check against sa_len */
 	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure port numbers are set to zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* SPI allocation */
 	spi = key_do_getnewspi((struct sadb_spirange *)mhp->ext[SADB_EXT_SPIRANGE],
@@ -5326,8 +5330,19 @@ key_update(so, m, mhp)
 	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
 	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	
 	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* get a SA header */
 	if ((sah = key_getsah(&saidx)) == NULL) {
@@ -5576,8 +5591,19 @@ key_add(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	
 	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* get a SA header */
 	if ((newsah = key_getsah(&saidx)) == NULL) {
@@ -5865,8 +5891,19 @@ key_delete(so, m, mhp)
 	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
 	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+
 	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* get a SA header */
 	LIST_FOREACH(sah, &sahtree, chain) {
@@ -5932,8 +5969,19 @@ key_delete_all(so, m, mhp, proto)
 	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
 	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+
 	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
@@ -6041,8 +6089,19 @@ key_get(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+
 	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* get a SA header */
 	LIST_FOREACH(sah, &sahtree, chain) {
@@ -6732,8 +6791,19 @@ key_acquire2(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 
-	/* XXX boundary check against sa_len */
+	/* sa_len safety check */
+	if (KEY_CHECKSALEN(src0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+	if (KEY_CHECKSALEN(dst0 + 1) != 0)
+		return key_senderror(so, m, EINVAL);
+
 	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* If not using NAT-T, make sure if port number is zero. */
+#ifndef IPSEC_NAT_T
+	KEY_PORTTOSADDR(&saidx.src, 0);
+	KEY_PORTTOSADDR(&saidx.dst, 0);
+#endif
 
 	/* get a SA index */
 	LIST_FOREACH(sah, &sahtree, chain) {
