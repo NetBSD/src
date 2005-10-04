@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2005/10/04 20:13:39 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2005/10/04 23:00:34 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1650,7 +1650,10 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 				}
 			}
 		}
-		if (seen)
+		/*
+		 * If we've been there but have made no change, stop.
+		 */
+		if (seen && !active)
 			return;
 		if (!active) {
 			struct cdd_params cdd = { d, at, parent };
