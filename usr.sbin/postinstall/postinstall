@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2.2.8 2005/09/15 21:01:31 tron Exp $
+# $NetBSD: postinstall,v 1.2.2.9 2005/10/04 14:11:33 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -513,15 +513,21 @@ additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
+	op=$1
+	failed=0
 
-	compare_dir $1 ${SRC_DIR}/etc/defaults ${DEST_DIR}/etc/defaults 444 \
+	compare_dir $op ${SRC_DIR}/etc/defaults ${DEST_DIR}/etc/defaults 444 \
 		daily.conf monthly.conf rc.conf security.conf weekly.conf
+	failed=$(( ${failed} + $? ))
 
 	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
 	    ${SRC_DIR}/usr.sbin/pf/etc/defaults ${SRC_DIR}/etc/defaults \
 	    || return 1
 
-	compare_dir $1 ${dir} ${DEST_DIR}/etc/defaults 444 pf.boot.conf
+	compare_dir $op ${dir} ${DEST_DIR}/etc/defaults 444 pf.boot.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
