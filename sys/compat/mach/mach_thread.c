@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.34 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.34.2.1 2005/10/04 22:08:11 tron Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.34 2005/02/26 23:10:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.34.2.1 2005/10/04 22:08:11 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,10 +232,8 @@ mach_thread_create_running(args)
 	mctc.mctc_lwp->l_private = 0;
 	mctc.mctc_lwp->l_stat = LSRUN;
 	setrunqueue(mctc.mctc_lwp);
-	SCHED_UNLOCK(s);
-	simple_lock(&p->p_lock);
 	p->p_nrlwps++;
-	simple_unlock(&p->p_lock);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Get the child's kernel port
