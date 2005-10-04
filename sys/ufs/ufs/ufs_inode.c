@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47.6.1 2005/08/24 18:43:38 riz Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47.6.2 2005/10/04 22:05:12 tron Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.6.1 2005/08/24 18:43:38 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.6.2 2005/10/04 22:05:12 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -198,6 +198,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	int flags;
 {
 	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;
+	off_t eob;
 	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
@@ -277,12 +278,13 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 * (since they now have backing store) and unbusy them.
 	 */
 
+	GOP_SIZE(vp, off + len, &eob, GOP_SIZE_WRITE);
 	simple_lock(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
 		} else if (off <= pagestart + (i << PAGE_SHIFT) &&
-		    pagestart + ((i + 1) << PAGE_SHIFT) <= off + len) {
+		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
 			pgs[i]->flags &= ~PG_RDONLY;
 		}
 	}
