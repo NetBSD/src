@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 2005/10/04 12:35:00 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -243,6 +243,7 @@ struct devi {
 	const char **i_locs;	/* locators (as given by pspec's iattr) */
 	int	i_cfflags;	/* flags from config line */
 	int	i_lineno;	/* line # in config, for later errors */
+	const char *i_srcfile;	/* file it appears in */
 	int	i_active;
 #define	DEVI_ORPHAN	0	/* instance has no active parent */
 #define	DEVI_ACTIVE	1	/* instance has an active parent */
@@ -506,6 +507,8 @@ void	prefix_pop(void);
 char	*sourcepath(const char *);
 void	warn(const char *, ...)				/* immediate warns */
      __attribute__((__format__(__printf__, 1, 2)));	
+void	xwarn(const char *, int, const char *, ...)	/* delayed warns */
+     __attribute__((__format__(__printf__, 3, 4)));
 void	error(const char *, ...)			/* immediate errs */
      __attribute__((__format__(__printf__, 1, 2)));
 void	xerror(const char *, int, const char *, ...)	/* delayed errs */

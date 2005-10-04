@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9 2005/10/02 00:18:09 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.10 2005/10/04 12:35:00 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -880,6 +880,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
 	i->i_lineno = currentline();
+	i->i_srcfile = yyfile;
 	i->i_active = DEVI_ORPHAN; /* Proper analysis comes later */
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
@@ -1441,15 +1442,14 @@ fixdevis(void)
 			 * i_at or i_pspec are NULL.
 			 */
 			++error;
-			(void)fprintf(stderr,
-			    "%s:%d: `%s at %s' is orphaned"
-			    " (%s `%s' found)\n", conffile, i->i_lineno,
+			xerror(i->i_srcfile, i->i_lineno,
+			    "`%s at %s' is orphaned (%s `%s' found)", 
 			    i->i_name, i->i_at, i->i_pspec->p_atunit == WILD ?
 			    "nothing matching" : "no", i->i_at);
 		} else if (vflag && i->i_active == DEVI_IGNORED)
-			(void)fprintf(stderr, "%s:%d: ignoring explicitely"
-			    " orphaned instance `%s at %s'\n", conffile,
-			    i->i_lineno, i->i_name, i->i_at);
+			xwarn(i->i_srcfile, i->i_lineno, "ignoring explicitely"
+			    " orphaned instance `%s at %s'\n", i->i_name,
+			    i->i_at);
 
 	if (error)
 		return error;
