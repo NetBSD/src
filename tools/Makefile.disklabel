@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.disklabel,v 1.2 2005/06/22 21:35:28 he Exp $
+#	$NetBSD: Makefile.disklabel,v 1.3 2005/10/04 04:27:32 jmc Exp $
 
 _ARCHDIR=	${.CURDIR}/../../sys/arch
 _INCDIR=	${.CURDIR}/../../include
@@ -13,7 +13,7 @@ _SYSINCS=	bootblock.h \
 
 HOST_CPPFLAGS+=	-I${TOOLDIR}/include
 
-beforedepend:
+beforedepend: ${TOOLDIR}/include/nbinclude/sys/bootblock.h
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/sys
 	cd ${_ARCHDIR} && \
