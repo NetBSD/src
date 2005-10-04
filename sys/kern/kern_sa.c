@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.60 2005/03/02 11:05:34 mycroft Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.60.2.1 2005/10/04 21:57:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.60 2005/03/02 11:05:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.60.2.1 2005/10/04 21:57:13 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,6 +551,9 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 
 	/* We have to be using scheduler activations */
 	if (sa == NULL)
+		return (EINVAL);
+
+	if ((l->l_proc->p_flag & P_SA) == 0)
 		return (EINVAL);
 
 	if (SCARG(uap, concurrency) < 1)
