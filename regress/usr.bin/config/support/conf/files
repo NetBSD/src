@@ -12,3 +12,13 @@ attach	parenti at master
 
 device	child
 attach	child at hook
+
+device	looper { }
+attach	looper at master with looper_master
+attach	looper at looper with looper_looper 
+ 
+device	loopchild { } 
+attach	loopchild at looper
+ 
+device	loopbaby
+attach	loopbaby at loopchild
