@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.11 2005/10/04 13:06:45 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.12 2005/10/04 13:33:20 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1453,7 +1453,7 @@ fixdevis(void)
 			    "nothing matching" : "no", i->i_at);
 		} else if (vflag && i->i_active == DEVI_IGNORED)
 			xwarn(i->i_srcfile, i->i_lineno, "ignoring explicitely"
-			    " orphaned instance `%s at %s'\n", i->i_name,
+			    " orphaned instance `%s at %s'", i->i_name,
 			    i->i_at);
 
 	if (error)
