@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2005/10/04 12:35:00 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -259,6 +259,15 @@ warn(const char *fmt, ...)
 	va_end(ap);
 }
 
+void
+xwarn(const char *file, int line, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vxwarn(file, line, fmt, ap);
+	va_end(ap);
+}
 
 static void
 vxwarn(const char *file, int line, const char *fmt, va_list ap)
