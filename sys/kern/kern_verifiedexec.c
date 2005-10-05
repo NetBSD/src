@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.40 2005/10/05 15:59:31 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.41 2005/10/05 16:21:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.40 2005/10/05 15:59:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.41 2005/10/05 16:21:46 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -540,6 +540,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	(vhe->ops->final)(fp, ctx);
 
 	pmap_kremove(kva, PAGE_SIZE);
+	uvm_unmap(kernel_map, kva, kva + PAGE_SIZE);
 
 	error = veriexec_fp_cmp(vhe->ops, page_fp, fp);
 	if (error) {
