@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.732 2005/09/04 19:44:09 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.733 2005/10/05 00:46:00 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.732 2005/09/04 19:42:26 tron Exp
+ *	NetBSD: pcidevs,v 1.733 2005/10/05 00:43:58 jonathan Exp
  */
 
 /*
@@ -5796,6 +5796,42 @@ static const struct pci_product pci_products[] = {
 	    "i82541PI Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER,
+	    "i82571EB 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER,
+	    "i82571EB 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES,
+	    "i82571EB Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER,
+	    "i82572EI 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER,
+	    "i82572EI 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_SERDES,
+	    "i82572EI Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E,
+	    "i82573E Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IAMT,
+	    "i82573E Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
+	    "i82573L Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -10512,4 +10548,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2046;
+const int pci_nproducts = 2055;
