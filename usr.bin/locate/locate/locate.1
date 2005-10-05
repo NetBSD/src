@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.1,v 1.15 2004/04/19 00:32:44 lukem Exp $
+.\"	$NetBSD: locate.1,v 1.16 2005/10/05 06:29:03 hubertf Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,14 +79,13 @@ encountered.
 .Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
 Default database
-.It /usr/libexec/locate.updatedb
-Script to update database.
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
 .Xr fnmatch 3 ,
 .Xr locate.conf 5 ,
-.Xr weekly.conf 5
+.Xr weekly.conf 5 ,
+.Xr locate.updatedb 8
 .Rs
 .%A Woods, James A.
 .%D 1983
