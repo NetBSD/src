@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.7 2005/08/02 18:54:53 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.8 2005/10/05 13:48:48 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexec.4,v 1.7 2005/08/02 18:54:53 elad Exp $
+.\"	$Id: veriexec.4,v 1.8 2005/10/05 13:48:48 elad Exp $
 .\"
-.Dd August 2, 2005
+.Dd October 4, 2005
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -87,6 +87,8 @@ Allow execution of the file as a script interpreter only, direct command
 line invocation is disallowed.
 .It Dv VERIEXEC_FILE
 The file is a plain file, not an executable.
+.It Dv VERIEXEC_UNTRUSTED
+The file is located on untrusted storage.
 .El
 .Pp
 Followed by fp_type, which is the fingerprint type.

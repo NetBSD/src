@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.19 2005/09/24 17:47:34 christos Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.20 2005/10/05 13:48:48 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -40,6 +40,9 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/hash.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_pglist.h>
+#include <uvm/uvm_page.h>
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
@@ -64,6 +67,7 @@ struct veriexec_sizing_params {
 #define VERIEXEC_DIRECT		0x01 /* Direct execution (exec) */
 #define VERIEXEC_INDIRECT	0x02 /* Indirect execution (#!) */
 #define VERIEXEC_FILE		0x04 /* Plain file (open) */
+#define	VERIEXEC_UNTRUSTED	0x10 /* Untrusted storage */
 
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
@@ -118,7 +122,10 @@ struct veriexec_hash_entry {
         ino_t         inode;                        /* Inode number. */
         unsigned char type;                         /* Entry type. */
 	unsigned char status;			    /* Evaluation status. */
+	unsigned char page_fp_status;		    /* Per-page FP status. */
         unsigned char *fp;                          /* Fingerprint. */
+	void *page_fp;				    /* Per-page fingerprints */
+	size_t last_page;			    /* Index of last page. */
 	struct veriexec_fp_ops *ops;                /* Fingerprint ops vector*/
         LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
@@ -127,6 +134,11 @@ struct veriexec_hash_entry {
 #define FINGERPRINT_NOTEVAL  0  /* fingerprint has not been evaluated */
 #define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
 #define FINGERPRINT_NOMATCH  2  /* fingerprint evaluated but does not match */
+
+/* Per-page fingerprint status. */
+#define	PAGE_FP_NONE	0	/* no per-page fingerprints. */
+#define	PAGE_FP_READY	1	/* per-page fingerprints ready for use. */
+#define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
 LIST_HEAD(veriexec_hashhead, veriexec_hash_entry) *hash_tbl;
 
@@ -185,6 +197,8 @@ struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
 int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
 int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
 		    const u_char *, int, struct veriexec_hash_entry **);
+int veriexec_page_verify(struct veriexec_hash_entry *, struct vattr *,
+			 struct vm_page *, u_int);
 int veriexec_removechk(struct proc *, struct vnode *, const char *);
 int veriexec_renamechk(struct vnode *, const char *, const char *);
 void veriexec_init_fp_ops(void);
