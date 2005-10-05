@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.833 2005/10/01 18:51:15 scw Exp $
+# $NetBSD: mi,v 1.834 2005/10/05 06:29:03 hubertf Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1887,6 +1887,7 @@
 ./usr/share/man/cat8/lmcctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/lmtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/local.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/locate.updatedb.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/lockd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/lpc.0			man-lpr-catman		.cat
 ./usr/share/man/cat8/lpd.0			man-lpr-catman		.cat
@@ -4165,6 +4166,7 @@
 ./usr/share/man/man8/lmcctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/lmtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/local.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/locate.updatedb.8		man-sysutil-man 	.man
 ./usr/share/man/man8/lockd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/lpc.8			man-lpr-man		.man
 ./usr/share/man/man8/lpd.8			man-lpr-man		.man
