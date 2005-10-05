@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.22 2005/06/28 07:41:46 rillig Exp $
+#	$NetBSD: TODO,v 1.23 2005/10/05 16:44:39 rpaulo Exp $
 
 Things to do ....  in no specific order.
 
@@ -120,3 +120,12 @@ Things to do ....  in no specific order.
 	-- Provide the user a menu to select each installation step on
 	   its own. Currently there's no way to repeat steps or leave
 	   them out. (See the Debian installer for a good example.)
+
+	-- Allow the user to install binary snapshots available from releng.
+	   This could be done in the following way:
+		* list the available snapshots in ftp.NetBSD.org
+		  (eg.: ls /pub/NetBSD-daily/*/*/${ARCH} using ftp(1)).
+		* present the user with the possible selections (handle the
+		  case of zero options).
+		* set the variables and install via FTP showing first the
+		  FTP installation screen.
