@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.104 2005/07/26 08:06:29 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.105 2005/10/05 13:48:48 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.104 2005/07/26 08:06:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.105 2005/10/05 13:48:48 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
+#include "opt_verified_exec.h"
 #endif
 
 #include <sys/param.h>
@@ -49,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.104 2005/07/26 08:06:29 yamt Exp $
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
+#endif /* VERIFIED_EXEC */
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -899,6 +903,38 @@ loopdone:
 	splx(s);
 	uvm_pagermapout(kva, npages);
 	raoffset = startoffset + totalbytes;
+
+#ifdef VERIFIED_EXEC
+	if (!error && !sawhole && !write) {
+		struct proc *veriexec_p = curlwp->l_proc;
+		struct vattr veriexec_va;
+		struct veriexec_hash_entry *vhe;
+		size_t last_page;
+
+		/* XXXEE: try to eliminate this. */
+		error = VOP_GETATTR(vp, &veriexec_va, veriexec_p->p_ucred,  
+				    veriexec_p);
+		if (error)
+			goto skip_veriexec;
+
+		vhe = veriexec_lookup(veriexec_va.va_fsid,
+				      veriexec_va.va_fileid);
+		if (vhe == NULL || vhe->page_fp == NULL)
+			goto skip_veriexec;
+   
+		last_page = (ridx + npages - 1);
+
+		for (i = ridx; i < ridx + npages; i++) {
+			error = veriexec_page_verify(vhe, &veriexec_va,
+						     pgs[i],
+						     ((i == last_page) ? 1
+								       : 0));
+			if (error)
+				break;
+		}
+	}
+skip_veriexec:
+#endif /* VERIFIED_EXEC */
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.

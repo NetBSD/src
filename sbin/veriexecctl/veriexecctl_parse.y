@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.12 2005/08/06 09:00:20 blymn Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.13 2005/10/05 13:48:48 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -141,10 +141,7 @@ fingerprint	:	STRING {
 }
 	    ;
 
-flags		:	/* empty */ {
-	if (phase == 2)
-		params.type = VERIEXEC_DIRECT;
-}
+flags		:	/* empty */
 		|	flags_spec
 		;
 
@@ -168,6 +165,8 @@ flag_spec	:	STRING {
 			params.type |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
 		} else if (strcasecmp($1, "library") == 0) {
 			params.type |= VERIEXEC_FILE;
+		} else if (strcasecmp($1, "untrusted") == 0) {
+			params.type |= VERIEXEC_UNTRUSTED;
 		} else {
 			yyerror("Bad flag");
 			YYERROR;
