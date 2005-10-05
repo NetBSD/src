@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.16 2005/06/13 15:18:44 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.17 2005/10/05 13:48:48 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -137,6 +137,11 @@ phase1_preload(void)
 void
 phase2_load(void)
 {
+	/*
+	 * If there's no access type specified, use the default.
+	 */
+	if (!(params.type & (VERIEXEC_DIRECT|VERIEXEC_INDIRECT|VERIEXEC_FILE)))
+		params.type |= VERIEXEC_DIRECT;
 	if (ioctl(gfd, VERIEXEC_LOAD, &params) == -1)
 		warn("Cannot load params from `%s'", params.file);
 	free(params.fingerprint);

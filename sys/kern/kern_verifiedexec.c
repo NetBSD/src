@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.38 2005/09/02 14:16:50 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.39 2005/10/05 13:48:48 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.38 2005/09/02 14:16:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.39 2005/10/05 13:48:48 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.38 2005/09/02 14:16:50 elad 
 #include "crypto/sha2/sha2.h"
 #include "crypto/ripemd160/rmd160.h"
 #include <sys/md5.h>
+#include <uvm/uvm_extern.h>
 
 int veriexec_verbose = 0;
 int veriexec_strict = 0;
@@ -206,10 +207,10 @@ int
 veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		 struct veriexec_hash_entry *vhe, uint64_t size, u_char *fp)
 {
-	void *ctx = NULL;
-	u_char *buf = NULL;
+	void *ctx = NULL, *page_ctx = NULL;
+	u_char *buf = NULL, *page_fp = NULL;
 	off_t offset, len;
-	size_t resid;
+	size_t resid, npages = 0;
 	int error = 0;
 
 	/* XXX: This should not happen. Print more details? */
@@ -222,7 +223,17 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
-	(vhe->ops->init)(ctx); /* init the fingerprint context */
+	if (vhe->type & VERIEXEC_UNTRUSTED) {
+		npages = (size >> PAGE_SHIFT) + 1;
+		vhe->page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
+						 M_TEMP, M_WAITOK|M_ZERO);
+		page_fp = vhe->page_fp;
+		vhe->last_page = size % PAGE_SIZE;
+		page_ctx = (void *) malloc(vhe->ops->context_size, M_TEMP,
+					   M_WAITOK);
+	}
+
+	(vhe->ops->init)(ctx);
 
 	/*
 	 * The vnode is locked. sys_execve() does it for us; We have our
@@ -241,17 +252,42 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 #endif
 				p->p_ucred, &resid, NULL);
 
-		if (error)
+		if (error) {
+			if (vhe->page_fp) {
+				free(vhe->page_fp, M_TEMP);
+				vhe->page_fp = NULL;
+			}
+
 			goto bad;
+		}
 
 		/* calculate fingerprint for each chunk */
 		(vhe->ops->update)(ctx, buf, (unsigned int) len);
+
+		/* calculate per-page fingerprint if needed */
+		if (vhe->type & VERIEXEC_UNTRUSTED) {
+			memset(page_ctx, 0, vhe->ops->context_size);
+			(vhe->ops->init)(page_ctx);
+			(vhe->ops->update)(page_ctx, buf, (unsigned int) len);
+			(vhe->ops->final)(page_fp, page_ctx);
+
+			page_fp += vhe->ops->hash_len;
+		}
+
+		/* XXXEE: don't overflow offset */
+		if (len != PAGE_SIZE)
+			break;
 	}
 
 	/* finalise the fingerprint calculation */
 	(vhe->ops->final)(fp, ctx);
 
+	if (vhe->type & VERIEXEC_UNTRUSTED)
+		vhe->page_fp_status = PAGE_FP_READY;  
+
 bad:
+	if (page_ctx)
+		free(page_ctx, M_TEMP);
 	free(ctx, M_TEMP);
 	free(buf, M_TEMP);
 
@@ -438,6 +474,12 @@ out:
 		if (veriexec_strict >= 1)
 			error = EPERM;
 
+		if (vhe->page_fp != NULL) {
+			free(vhe->page_fp, M_TEMP);
+			vhe->page_fp = NULL;
+			vhe->page_fp_status = PAGE_FP_FAIL;
+		}
+
 		break;
 
 	default:
@@ -449,6 +491,95 @@ out:
 		    "post evaluation.", name, va, NULL, REPORT_NOVERBOSE,
 		    REPORT_NOALARM, REPORT_PANIC);
         }
+
+	return (error);
+}
+
+/*
+ * Evaluate per-page fingerprints.
+ */
+int
+veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
+		     struct vm_page *pg, u_int is_last_page)
+{
+	static void *ctx = NULL; /* XXXEE */
+	static u_char *fp = NULL; /* XXXEE */
+	u_char *page_fp;
+	int error;
+	size_t pagen;
+	vaddr_t kva;
+
+	if (vhe->page_fp_status == PAGE_FP_NONE) {
+		return (0);
+	}
+
+	if (vhe->page_fp_status == PAGE_FP_FAIL) {
+		return (EPERM);
+	}
+
+	if (ctx == NULL) {
+		ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
+	}
+	if (fp == NULL) {
+		fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
+	}
+
+	pagen = pg->offset >> PAGE_SHIFT;
+
+	error = uvm_map(kernel_map, &kva, PAGE_SIZE, NULL,
+			UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_READ,
+			UVM_PROT_READ, UVM_INH_NONE, UVM_ADV_NORMAL,
+			UVM_FLAG_NOMERGE));
+	if (error)
+		goto bad;
+
+	pmap_kenter_pa(kva, pg->phys_addr, VM_PROT_READ);
+
+	page_fp = (u_char *) vhe->page_fp + pagen;
+
+	memset(ctx, 0, vhe->ops->context_size);
+	(vhe->ops->init)(ctx);
+	(vhe->ops->update)(ctx, (void *) &kva, is_last_page ? vhe->last_page :
+							 PAGE_SIZE);
+	(vhe->ops->final)(fp, ctx);
+
+	pmap_kremove(kva, PAGE_SIZE);
+
+	error = veriexec_fp_cmp(vhe->ops, page_fp, fp);
+	if (error) {
+		struct proc *p = curproc;
+		const char *msg = NULL;
+
+		if (veriexec_strict > 0) {
+			msg = "Pages modified: Killing process.";
+		} else {
+			msg = "Pages modified.";
+			error = 0;
+		}
+
+		veriexec_report(msg, "[page_in]", va, p, REPORT_NOVERBOSE,
+				REPORT_ALARM, REPORT_NOPANIC);
+
+		if (error) {
+			ksiginfo_t ksi;
+
+			KSI_INIT(&ksi);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = SI_NOINFO; /* XXXEE */
+			ksi.ksi_pid = p->p_pid;
+			ksi.ksi_uid = 0;
+
+			kpsignal(p, &ksi, NULL);
+		}
+	}
+
+bad:
+	if (error || is_last_page) {
+		free(ctx, M_TEMP);
+		ctx = NULL;
+		free(fp, M_TEMP);
+		fp = NULL;
+	}
 
 	return (error);
 }
@@ -494,6 +625,8 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 
 	LIST_REMOVE(vhe, entries);
 	free(vhe->fp, M_TEMP);
+	if (vhe->page_fp)
+		free(vhe->page_fp, M_TEMP);
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
 
