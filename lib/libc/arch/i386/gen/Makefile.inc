@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.22 2005/09/13 01:44:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2005/10/05 20:18:12 christos Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S modf.S \
 	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S \
 	fpsetmask.S fpsetround.S fpsetsticky.S 
 
-SRCS+=	setjmp.S sigsetjmp.S
-
-SRCS+=	resumecontext.S swapcontext.S
+SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
 # objects built from C sources
 SRCS+=	bswap64.c ldexp.c _lwp.c makecontext.c
@@ -33,7 +31,7 @@ SRCS.i386.gen=\
 	Lint___setjmp14.c Lint___sigsetjmp14.c Lint_flt_rounds.c \
 	Lint_fpgetmask.c Lint_fpgetround.c Lint_fpgetsticky.c \
 	Lint_fpsetmask.c Lint_fpsetround.c Lint_fpsetsticky.c \
-	Lint_resumecontext.c Lint_swapcontext.c
+	Lint_resumecontext.c Lint_swapcontext.c Lint__setjmp.c
 LSRCS+=		${SRCS.i386.gen}
 DPSRCS+=	${SRCS.i386.gen}
 CLEANFILES+=	${SRCS.i386.gen}
