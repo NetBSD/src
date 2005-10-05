@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.5 2004/04/19 10:00:16 wiz Exp $
+.\"	$NetBSD: locate.conf.5,v 1.6 2005/10/05 06:29:03 hubertf Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 19, 2004
+.Dd October 1, 2005
 .Dt LOCATE.CONF 5
 .Os
 .Sh NAME
@@ -44,8 +44,8 @@
 The
 .Nm locate.conf
 file specifies the behavior of
-.Pa /usr/libexec/locate.updatedb ,
-which creates
+.Xr locate.updatedb 8 ,
+which creates the
 .Xr locate 1
 database.
 .Pp
@@ -147,13 +147,11 @@ The file
 .Nm
 resides in
 .Pa /etc .
-.It Pa /usr/libexec/locate.updatedb
-Uses settings in
-.Nm locate.conf .
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
 .Xr locate 1 ,
+.Xr locate.updatedb 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
