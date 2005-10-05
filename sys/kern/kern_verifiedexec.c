@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.39 2005/10/05 13:48:48 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.40 2005/10/05 15:59:31 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.39 2005/10/05 13:48:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.40 2005/10/05 15:59:31 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -502,8 +502,8 @@ int
 veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 		     struct vm_page *pg, u_int is_last_page)
 {
-	static void *ctx = NULL; /* XXXEE */
-	static u_char *fp = NULL; /* XXXEE */
+	void *ctx;
+	u_char *fp;
 	u_char *page_fp;
 	int error;
 	size_t pagen;
@@ -517,12 +517,8 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 		return (EPERM);
 	}
 
-	if (ctx == NULL) {
-		ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
-	}
-	if (fp == NULL) {
-		fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
-	}
+	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
+	fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
 
 	pagen = pg->offset >> PAGE_SHIFT;
 
