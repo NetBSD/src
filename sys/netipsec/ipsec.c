@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.18 2005/10/05 12:59:24 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.17 2005/06/10 13:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.18 2005/10/05 12:59:24 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -111,7 +111,7 @@ int ipsec_debug = 0;
 /* NB: name changed so netstat doesn't use it */
 struct newipsecstat newipsecstat;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
-int ip4_ipsec_dfbit = 0;	/* DF bit on encap. 0: clear 1: set 2: copy */
+int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
 int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
