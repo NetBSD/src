@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1.2.3 2005/07/18 21:13:01 riz Exp $
+# $NetBSD: XEN0,v 1.1.2.4 2005/10/05 12:35:04 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -31,7 +31,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
