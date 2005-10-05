@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.267 2005/10/04 22:19:26 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.268 2005/10/05 12:38:05 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13264,8 +13264,25 @@ sys/compat/mach/mach_thread.c			1.35
 	Protect p_nrlwps by sched_lock.
 	[yamt, ticket #849]
 
-distrib/utils/sysinst/msg.mi.es			1.4
+gnu/usr.bin/binutils/ld/Makefile		1.23
 
-Correct some messages which had the wrong number of format specifiers.
-[dsl, ticket #852]
+	Add a missing dependency (discovered by parallel build).
+	[chs, ticket #854]
+
+share/man/man9/pool.9				1.37
+
+	Update pool_prime description to match change in v1.55 of
+	kern/subr_pool.c
+	[bouyer, ticket #855]
+
+share/man/man9/pool.9				1.38
+
+	Xref pool_cache(9) and bump date.
+	[bouyer, ticket #856]
+
+sys/arch/i386/conf/XEN0				1.14
+sys/arch/i386/conf/XENU				1.9
+
+	Enable systrace for Xen, there's no reasons for it to be disabled.
+	[bouyer, ticket #857]
 
