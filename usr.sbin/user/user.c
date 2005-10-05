@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.94 2005/09/19 00:43:17 rpaulo Exp $ */
+/* $NetBSD: user.c,v 1.95 2005/10/05 21:17:53 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.94 2005/09/19 00:43:17 rpaulo Exp $");
+__RCSID("$NetBSD: user.c,v 1.95 2005/10/05 21:17:53 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1474,6 +1474,8 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					 */
 					if (asprintf(&locked_pwd, "%s%s",
 					    LOCKED, up->u_password) == -1) {
+						(void)close(ptmpfd);
+						(void)pw_abort();
 						err(EXIT_FAILURE,
 						    "asprintf failed");
 					}
@@ -1493,6 +1495,8 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 			} else {
 				if (asprintf(&locked_pwd, "%s%s", LOCKED,
 				    pwp->pw_passwd) == -1) {
+					(void)close(ptmpfd);
+					(void)pw_abort();
 					err(EXIT_FAILURE, "asprintf failed");
 				}
 				pwp->pw_passwd = locked_pwd;
