@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.4 2005/07/20 03:27:51 junyoung Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.5 2005/10/06 08:19:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include <machine/asm.h>
+#include <sys/bootblock.h>
 
 #define BOOT_ADDR	0x7c00
 #define BLOCK_SIZE	2048		/* Default for ISO 9660 */
@@ -53,6 +54,12 @@
 #define PVD_ADDR	0x1000		/* Where Primary VD is loaded */
 #define ROOTDIR_ADDR	0x1800		/* Where Root Directory is loaded */
 #define LOADER_ADDR	SECONDARY_LOAD_ADDRESS
+
+#ifdef BOOT_FROM_FAT
+#define MBR_AFTERBPB	90		/* BPB size in FAT32 partition BR */
+#else
+#define MBR_AFTERBPB	62		/* BPB size in floppy master BR */
+#endif
 
 /*
  * See src/sys/sys/bootblock.h for details.
@@ -92,7 +99,31 @@
 	.text
 	.code16
 ENTRY(start)
-	xorw	%ax, %ax
+	jmp	start1
+
+	. = start + MBR_AFTERBPB	/* skip BPB */
+	. = start + MBR_DSN_OFFSET
+	.long	0
+
+/* mbr_bootsel_magic (not used here) */
+	. = start + MBR_BS_MAGIC_OFFSET
+	.word	0
+
+	. = start + MBR_PART_OFFSET
+	. = start + MBR_MAGIC_OFFSET
+pbr_magic:
+	.word	MBR_MAGIC
+	.fill	512			/* reserve space for disklabel */
+start1:
+	jmp	1f
+	.balign	4
+	.long	X86_BOOT_MAGIC_1	/* checked by installboot & pbr code */
+boot_params:				/* space for patchable variables */
+	.long	1f - boot_params	/* length of this data area */
+#include <boot_params.S>
+	. = start1 + 0x80		/* Space for patching unknown params */
+
+1:	xorw	%ax, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %ss
@@ -254,7 +285,7 @@ load_loader:
 	movb	%dl, %dh
 	movl	$LOADER_ADDR, %ebx
 	call	read_sectors
-	xorl	%esi, %esi		/* Don't provide boot_params */
+	movl	$boot_params, %esi	/* Provide boot_params */
 	xorl	%edx, %edx
 	movb	boot_drive, %dl
 	xorl	%ebx, %ebx		/* Zero sector number */
