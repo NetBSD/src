@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.4 2003/10/25 15:52:38 simonb Exp $ */
+/* $NetBSD: softintr.c,v 1.5 2005/10/06 02:23:51 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4 2003/10/25 15:52:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2005/10/06 02:23:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -148,7 +148,7 @@ dosoftints(void)
 }
 
 void
-setsoftclock()
+setsoftclock(void)
 {
 	static struct sh sh_softclock = { NULL, dosoftclock, NULL, };
 
@@ -164,7 +164,7 @@ dosoftclock(void *unused)
 }
 
 void
-setsoftnet()
+setsoftnet(void)
 {
 	static struct sh sh_softnet = { NULL, dosoftnet, NULL, };
 
