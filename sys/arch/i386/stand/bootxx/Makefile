@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2004/08/23 06:52:04 dsl Exp $
+# $NetBSD: Makefile,v 1.8 2005/10/06 08:22:58 dyoung Exp $
 
-SUBDIR=	bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
+SUBDIR=	bootxx_cd9660 .WAIT bootxx_ffsv1 bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
 SUBDIR+=bootxx_msdos bootxx_ustarfs
 
 LIBOBJ:= ${.OBJDIR}
