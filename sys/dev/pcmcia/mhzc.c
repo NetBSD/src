@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.32 2005/05/30 04:28:49 christos Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.33 2005/10/06 20:54:31 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.32 2005/05/30 04:28:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.33 2005/10/06 20:54:31 jdc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -545,7 +545,7 @@ mhzc_em3336_enable(sc)
 	struct mhzc_softc *sc;
 {
 	struct pcmcia_mem_handle memh;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 	int memwin, reg;
 
 	/*
