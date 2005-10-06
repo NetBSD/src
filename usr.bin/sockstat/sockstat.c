@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.4.2.5 2005/10/06 11:36:28 tron Exp $ */
+/*	$NetBSD: sockstat.c,v 1.4.2.6 2005/10/06 11:36:37 tron Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.4.2.5 2005/10/06 11:36:28 tron Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.4.2.6 2005/10/06 11:36:37 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -290,8 +290,11 @@ get_sockets(const char *mib)
 
 	sz = CTL_MAXNAME;
 	rc = sysctlnametomib(mib, &name[0], &sz);
-	if (rc == -1)
+	if (rc == -1) {
+		if (errno == ENOENT)
+			return;
 		err(1, "sysctlnametomib: %s", mib);
+	}
 	namelen = sz;
 
 	name[namelen++] = PCB_ALL;
