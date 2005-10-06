@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2005/01/20 08:05:55 jmc Exp $
+# $NetBSD: Makefile,v 1.24.2.1 2005/10/06 11:45:59 tron Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -365,6 +365,11 @@ ${file:C/^.*://}: .PHONY
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 size-${image}: all-macppc_installboot
 .endif
+.if !empty(BASE_PORTS.${image}:Msgimips)
+SGIVOLHDR.size != ( fgrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
+		${EXTFILEDIR}/sgimips.bootblock.h | \
+		 sed -e 's/[^0-9]*//' )
+.endif
 
 size-${image}: stage-${image} extfileprep fileprep-${image}
 	@size=$$((`cd ${STAGEDIR}/${image} && ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -print-size . 2>&1 | tee /dev/stderr | sed '/=/!d;s/^[^=]*=//'` * 2048)) && \
@@ -384,6 +389,9 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mvax}" != "" ]; then \
 		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.vax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
+	fi && \
+	if [ "${BASE_PORTS.${image}:Msgimips}" != "" ]; then \
+		size=$$(($$size + ${SGIVOLHDR.size} * 512)); \
 	fi && \
 	size=$$(($$(($$size + 16383)) / 16384 * 16384 + 32768)) && \
 	sizek=$$(($$size / 1024)) && \
@@ -417,6 +425,17 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 .endif
 .if !empty(BASE_PORTS.${image}:Malpha)
 	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
+.endif
+.if !empty(BASE_PORTS.${image}:Msgimips)
+	@echo "Prepending SGI volume header"
+	cp $@ $@.tmp
+	dd if=/dev/zero bs=512 count=${SGIVOLHDR.size} >> $@
+	${TOOLDIR}/bin/nbsgivol -f -i $@
+	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${STAGEDIR}/sgimipscd/aoutboot $@
+	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${STAGEDIR}/sgimipscd/ip2xboot $@
+	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${STAGEDIR}/sgimipscd/ip3xboot $@
+	dd if=$@.tmp of=$@ bs=512 seek=${SGIVOLHDR.size}
+	rm -f $@.tmp
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
 	@size=`ls -l $@ | awk '{print $$5}'` && \

@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.2 2004/12/06 20:05:10 jmc Exp $
+# $NetBSD: NetBSD-current.mk,v 1.2.2.1 2005/10/06 11:45:59 tron Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -32,6 +32,17 @@ BOOTFILE.pmax=		${EXTFILEDIR}/pmax.bootxx
 EXTFILES.pmax=		pmax.bootxx:pmax/binary/sets/base.tgz,./usr/mdec/bootxx_cd9660
 INTFILES.pmax=		netbsd.pmax:pmax/binary/kernel/netbsd-INSTALL.gz,link \
 			boot.pmax:pmax/binary/sets/base.tgz,./usr/mdec/boot.pmax
+
+# sgimips needs the compressed kernels with short names in /, the various
+# boot files that go into the volume header and the bootblock.h file
+# to grep for the volume header size
+EXTFILES.sgimips=	sgimips.bootblock.h:sgimips/binary/sets/comp.tgz,./usr/include/sys/bootblock.h
+INTFILES.sgimips=	aoutboot:sgimips/binary/sets/base.tgz,./usr/mdec/aoutboot \
+			ip2xboot:sgimips/binary/sets/base.tgz,./usr/mdec/ip2xboot \
+			ip3xboot:sgimips/binary/sets/base.tgz,./usr/mdec/ip3xboot \
+			ip2x:sgimips/binary/kernel/netbsd-INSTALL32_IP2x.gz,link \
+			ip3x:sgimips/binary/kernel/netbsd-INSTALL32_IP3x.gz,link
+
 
 # BOOTFILE.sparc is absolute
 BOOTFILE.sparc=		${EXTFILEDIR}/sparc-boot.fs
