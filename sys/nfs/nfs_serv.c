@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.97 2005/09/06 09:36:28 jmmv Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.98 2005/10/06 10:23:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.97 2005/09/06 09:36:28 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.98 2005/10/06 10:23:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.97 2005/09/06 09:36:28 jmmv Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/kernel.h>
-#include <ufs/ufs/dir.h>
 
 #include <uvm/uvm.h>
 
@@ -2532,7 +2531,7 @@ out:
 /*
  * nfs readdir service
  * - mallocs what it thinks is enough to read
- *	count rounded up to a multiple of NFS_DIRBLKSIZ <= NFS_MAXREADDIR
+ *	count rounded up to a multiple of NFS_SRVDIRBLKSIZ <= NFS_MAXREADDIR
  * - calls VOP_READDIR()
  * - loops around building the reply
  *	if the output generated exceeds count break out of loop
@@ -2560,6 +2559,9 @@ out:
  *	to including the status longwords that are not a part of the dir.
  *	"entry" structures, but are in the rpc.
  */
+
+#define	NFS_SRVDIRBLKSIZ	1024
+
 struct flrep {
 	nfsuint64 fl_off;
 	u_int32_t fl_postopok;
@@ -2616,7 +2618,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	}
 	off = toff;
 	cnt = fxdr_unsigned(int, *tl);
-	siz = ((cnt + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	siz = ((cnt + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
@@ -2875,7 +2877,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	siz = fxdr_unsigned(int, *tl++);
 	cnt = fxdr_unsigned(int, *tl);
 	off = toff;
-	siz = ((siz + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	siz = ((siz + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
