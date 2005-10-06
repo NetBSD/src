@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.4.2.3 2005/10/06 11:36:05 tron Exp $ */
+/*	$NetBSD: sockstat.c,v 1.4.2.4 2005/10/06 11:36:14 tron Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.4.2.3 2005/10/06 11:36:05 tron Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.4.2.4 2005/10/06 11:36:14 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -397,13 +397,13 @@ islistening(struct kinfo_pcb *kp)
 	case PF_INET:
 		if (kp->ki_type == SOCK_RAW ||
 		    (kp->ki_type == SOCK_DGRAM &&
-		     ntohs(satosin6(&kp->ki_src)->sin6_port) != 0))
+		     ntohs(satosin(&kp->ki_src)->sin_port) != 0))
 			return (1);
 		break;
 	case PF_INET6:
 		if (kp->ki_type == SOCK_RAW ||
 		    (kp->ki_type == SOCK_DGRAM &&
-		     ntohs(satosin(&kp->ki_src)->sin_port) != 0))
+		     ntohs(satosin6(&kp->ki_src)->sin6_port) != 0))
 			return (1);
 		break;
 	case PF_LOCAL:
