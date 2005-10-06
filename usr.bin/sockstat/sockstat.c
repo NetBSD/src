@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.4.2.1 2005/10/06 11:35:47 tron Exp $ */
+/*	$NetBSD: sockstat.c,v 1.4.2.2 2005/10/06 11:35:55 tron Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.4.2.1 2005/10/06 11:35:47 tron Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.4.2.2 2005/10/06 11:35:55 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -529,7 +529,7 @@ print_socket(struct kinfo_file *kf, struct kinfo_pcb *kp, struct kinfo_proc2 *p)
 	else
 		printf("%-8d ", (int)p->p_uid);
 
-	printf("%-10.*s ", (int)sizeof(p->p_comm), p->p_comm);
+	printf("%-10.10s ", p->p_comm);
 	printf("%-5d ", (int)kf->ki_pid);
 	printf("%2d ", (int)kf->ki_fd);
 
