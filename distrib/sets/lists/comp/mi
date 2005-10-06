@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.825 2005/10/03 14:56:32 wiz Exp $
+#	$NetBSD: mi,v 1.826 2005/10/06 23:39:26 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1207,7 +1207,7 @@
 ./usr/include/regexp.h				comp-c-include
 ./usr/include/res_update.h			comp-c-include
 ./usr/include/resolv.h				comp-c-include
-./usr/include/rmd160.h				comp-obsolete		obsolete
+./usr/include/rmd160.h				comp-c-include
 ./usr/include/rmt.h				comp-c-include
 ./usr/include/rpc/auth.h			comp-c-include
 ./usr/include/rpc/auth_unix.h			comp-c-include
