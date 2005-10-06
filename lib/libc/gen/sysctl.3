@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.155 2005/10/03 22:22:10 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.156 2005/10/06 11:17:11 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1878,7 +1878,7 @@ for more details.
 .Sh CTL_SECURITY
 The security level contains various security-related settings for
 the system. Available settings are detailed below.
-.Bl -column "SECURITY_CUTRAIN" "integerXXX" -offset indent
+.Bl -column "SECURITY_CURTAIN" "integerXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It SECURITY_CURTAIN	integer	yes
 .El
@@ -1890,13 +1890,13 @@ requesting information about them, preventing from users any
 access to objects they don't own.
 .Pp
 At the moment, it affects
-.Xr ps 1
+.Xr ps 1 ,
 .Xr netstat 1
 (for
-.Dq PF_INET ,
-.Dq PF_INET6 ,
+.Dv PF_INET ,
+.Dv PF_INET6 ,
 and
-.Dq PF_UNIX
+.Dv PF_UNIX
 PCBs), and
 .Xr w 1 .
 .El
