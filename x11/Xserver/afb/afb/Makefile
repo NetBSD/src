@@ -1,6 +1,3 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2005/07/03 17:05:28 snj Exp $
-
-.include "../Makefile.afb"
-#	$NetBSD: Makefile,v 1.1.2.2 2005/07/03 17:05:28 snj Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2005/10/06 11:54:44 tron Exp $
 
 .include "../Makefile.afb"
