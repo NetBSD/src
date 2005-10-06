@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.4.2.4 2005/10/06 11:36:14 tron Exp $ */
+/*	$NetBSD: sockstat.c,v 1.4.2.5 2005/10/06 11:36:28 tron Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.4.2.4 2005/10/06 11:36:14 tron Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.4.2.5 2005/10/06 11:36:28 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -71,7 +71,9 @@ __RCSID("$NetBSD: sockstat.c,v 1.4.2.4 2005/10/06 11:36:14 tron Exp $");
 
 #define satosun(sa)	((struct sockaddr_un *)(sa))
 #define satosin(sa)	((struct sockaddr_in *)(sa))
+#ifdef INET6
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
+#endif
 
 void	parse_ports(const char *);
 int	get_num(const char *, const char **, const char **);
@@ -103,7 +105,9 @@ int pf_list, only, nonames;
 bitstr_t *portmap;
 
 #define PF_LIST_INET	1
+#ifdef INET6
 #define PF_LIST_INET6	2
+#endif
 #define PF_LIST_LOCAL	4
 #define ONLY_CONNECTED	1
 #define ONLY_LISTEN	2
@@ -117,28 +121,37 @@ main(int argc, char *argv[])
 
 	pf_list = only = 0;
 
+#ifdef INET6
 	while ((ch = getopt(argc, argv, "46cf:lnp:u")) != - 1) {
+#else
+	while ((ch = getopt(argc, argv, "4cf:lnp:u")) != - 1) {
+#endif
 		switch (ch) {
 		case '4':
 			pf_list |= PF_LIST_INET;
 			break;
+#ifdef INET6
 		case '6':
 			pf_list |= PF_LIST_INET6;
 			break;
+#endif
 		case 'c':
 			only |= ONLY_CONNECTED;
 			break;
 		case 'f':
 			if (strcasecmp(optarg, "inet") == 0)
 				pf_list |= PF_LIST_INET;
+#ifdef INET6
 			else if (strcasecmp(optarg, "inet6") == 0)
 				pf_list |= PF_LIST_INET6;
+#endif
 			else if (strcasecmp(optarg, "local") == 0)
 				pf_list |= PF_LIST_LOCAL;
 			else if (strcasecmp(optarg, "unix") == 0)
 				pf_list |= PF_LIST_LOCAL;
 			else
-				errx(1, "%s: unsupported protocol family", optarg);
+				errx(1, "%s: unsupported protocol family",
+				    optarg);
 			break;
 		case 'l':
 			only |= ONLY_LISTEN;
@@ -160,10 +173,18 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((portmap != NULL) && (pf_list == 0))
-		pf_list = PF_LIST_INET | PF_LIST_INET6;
-	if (pf_list == 0)
-		pf_list = PF_LIST_INET | PF_LIST_INET6 | PF_LIST_LOCAL;
+	if ((portmap != NULL) && (pf_list == 0)) {
+		pf_list = PF_LIST_INET;
+#ifdef INET6
+		pf_list |= PF_LIST_INET6;
+#endif
+	}
+	if (pf_list == 0) {
+		pf_list = PF_LIST_INET | PF_LIST_LOCAL;
+#ifdef INET6
+		pf_list |= PF_LIST_INET6;
+#endif
+	}
 	if ((portmap != NULL) && (pf_list & PF_LIST_LOCAL))
 		errx(1, "local domain sockets do not have ports");
 
@@ -174,12 +195,14 @@ main(int argc, char *argv[])
 			get_sockets("net.inet.raw.pcblist");
 	}
 
+#ifdef INET6
 	if (pf_list & PF_LIST_INET6) {
 		get_sockets("net.inet6.tcp6.pcblist");
 		get_sockets("net.inet6.udp6.pcblist");
 		if (portmap == NULL)
 			get_sockets("net.inet6.raw6.pcblist");
 	}
+#endif
 
 	if (pf_list & PF_LIST_LOCAL) {
 		get_sockets("net.local.stream.pcblist");
@@ -400,12 +423,14 @@ islistening(struct kinfo_pcb *kp)
 		     ntohs(satosin(&kp->ki_src)->sin_port) != 0))
 			return (1);
 		break;
+#ifdef INET6
 	case PF_INET6:
 		if (kp->ki_type == SOCK_RAW ||
 		    (kp->ki_type == SOCK_DGRAM &&
 		     ntohs(satosin6(&kp->ki_src)->sin6_port) != 0))
 			return (1);
 		break;
+#endif
 	case PF_LOCAL:
 		if (satosun(&kp->ki_src)->sun_path[0] != '\0')
 			return (1);
@@ -471,13 +496,15 @@ pick_socket(struct kinfo_file *f)
 				      ntohs(satosin(&kp->ki_dst)->sin_port)))
 				return (NULL);
 			break;
+#ifdef INET6
 		case AF_INET6:
 			if (!bit_test(portmap,
-				      ntohs(satosin6(&kp->ki_src)->sin6_port)) &&
+			    ntohs(satosin6(&kp->ki_src)->sin6_port)) &&
 			    !bit_test(portmap,
 				      ntohs(satosin6(&kp->ki_dst)->sin6_port)))
 				return (NULL);
 			break;
+#endif
 		default:
 			return (NULL);
 		}
@@ -544,6 +571,7 @@ print_socket(struct kinfo_file *kf, struct kinfo_pcb *kp, struct kinfo_proc2 *p)
 		default:		t = proto;	break;
 		}
 		break;
+#ifdef INET6
 	case PF_INET6:
 		switch (kp->ki_protocol) {
 		case IPPROTO_TCP:	t = "tcp6";	break;
@@ -552,6 +580,7 @@ print_socket(struct kinfo_file *kf, struct kinfo_pcb *kp, struct kinfo_proc2 *p)
 		default:		t = proto;	break;
 		}
 		break;
+#endif
 	case PF_LOCAL:
 		switch (kp->ki_type) {
 		case SOCK_STREAM:	t = "stream";	break;
@@ -588,7 +617,11 @@ print_socket(struct kinfo_file *kf, struct kinfo_pcb *kp, struct kinfo_proc2 *p)
 
 	if (isconnected(kp))
 		print_addr(0, kp->ki_type, kp->ki_pflags, &kp->ki_dst);
-	else if (kp->ki_family == PF_INET || kp->ki_family == PF_INET6)
+	else if (kp->ki_family == PF_INET
+#ifdef INET6
+	    || kp->ki_family == PF_INET6
+#endif
+	    )
 		printf("%-*s", 0, "*.*");
 	/* else if (kp->ki_src.sa_len == 2)
 	   printf("%-*s", 0, "-"); */
@@ -632,6 +665,7 @@ print_addr(int l, int t, int f, struct sockaddr *sa)
 			r = printf("*.*");
 		break;
 	}
+#ifdef INET6
 	case PF_INET6: {
 		struct sockaddr_in6 *si6 = satosin6(sa);
 		if (!IN6_IS_ADDR_UNSPECIFIED(&si6->sin6_addr))
@@ -642,6 +676,7 @@ print_addr(int l, int t, int f, struct sockaddr *sa)
 			r = printf("*.*");
 		break;
 	}
+#endif
 	case PF_LOCAL: {
 		struct sockaddr_un *sun = satosun(sa);
 		r = printf("%s", sun->sun_path);
