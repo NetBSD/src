@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.79.2.1 2005/10/06 11:48:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79.2.1 2005/10/06 11:48:49 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -787,9 +787,12 @@ ex_txstat(sc)
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
+	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER
+	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
+	 * upper byte?
 	 */
-	while ((i = bus_space_read_1(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
-		bus_space_write_1(iot, ioh, ELINK_TXSTATUS, 0x0);
+	while ((i = bus_space_read_2(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
+		bus_space_write_2(iot, ioh, ELINK_TXSTATUS, 0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
@@ -811,11 +814,12 @@ ex_txstat(sc)
 			ex_init(ifp);
 			/* TODO: be more subtle here */
 		} else if (i & TXS_MAX_COLLISION) {
+			++sc->sc_ethercom.ec_if.if_oerrors;
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		} else
-			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
+		} else if (sc->tx_succ_ok < 100)
+			sc->tx_succ_ok++;
 	}
 }
 
