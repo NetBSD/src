@@ -1,15 +1,17 @@
-# $NetBSD: GENERIC3X,v 1.81 2005/09/04 10:41:36 isaki Exp $
+# $NetBSD: GENERIC3X,v 1.82 2005/10/06 15:13:26 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
 
-include "arch/sun3/conf/std.sun3x"
+include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
+#ident		"GENERIC3X-$Revision: 1.82 $"
+
 # Machines to be supported by this kernel
-# options 	FPU_EMULATE	# XXX - Ever needed?
-# options 	HAVE_IOCACHE	# XXX - Not yet supported.
+#options 	FPU_EMULATE	# XXX - Ever needed?
+#options 	HAVE_IOCACHE	# XXX - Not yet supported.
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
@@ -84,6 +86,7 @@ file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
@@ -103,7 +106,7 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
