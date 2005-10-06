@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.122 2005/03/04 05:03:19 mycroft Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.122.2.1 2005/10/06 11:40:52 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.122 2005/03/04 05:03:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.122.2.1 2005/10/06 11:40:52 tron Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -754,15 +754,6 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 			 ep->edesc->bEndpointAddress, usbd_errstr(err)));
 		free(p, M_USB);
 		return (err);
-	}
-	/* Clear any stall and make sure DATA0 toggle will be used next. */
-	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT) {
-		err = usbd_clear_endpoint_stall(p);
-		/* Some devices reject this command, so ignore a STALL. */
-		if (err && err != USBD_STALLED) {
-			printf("usbd_setup_pipe: failed to start endpoint, %s\n", usbd_errstr(err));
-			return (err);
-		}
 	}
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
