@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.19 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.20 2005/10/06 16:32:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.19 2005/02/26 22:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.20 2005/10/06 16:32:14 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ pk_accton(path)
 
 	if (path == 0)
 		goto close;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = vn_open (&nd, FWRITE, 0644)) != 0)
 		return (error);
 	vp = nd.ni_vp;
