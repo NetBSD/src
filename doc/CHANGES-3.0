@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.268 2005/10/05 12:38:05 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.269 2005/10/06 12:00:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13285,4 +13285,41 @@ sys/arch/i386/conf/XENU				1.9
 
 	Enable systrace for Xen, there's no reasons for it to be disabled.
 	[bouyer, ticket #857]
+
+usr.bin/sockstat/Makefile			1.2
+usr.bin/sockstat/sockstat.c			1.5-1.10
+
+	Various bug-fixes for sockstat(1).
+	[rpaulo, ticket #860]
+
+sys/dev/usb/usb_subr.c				1.130
+
+	usbd_setup_pipe(): Don't call usbd_clear_endpoint_stall(). It's not
+	necessary for normal devices, and it prevents some common (but
+	apparantly buggy) devices from working, including the Apple iPod (mini
+	and photo) and certain M-Systems DiskOnKey flash devices.
+	[nathanw, ticket #861]
+
+distrib/cdrom/Makefile				1.25
+distrib/cdrom/NetBSD-current.mk			1.3
+etc/etc.sgimips/Makefile.inc			1.12-1.14
+
+	Make creation of bootable CD-ROMs for NetBSD-sgimips work.
+	[martin, ticket #862]
+
+sys/dev/ic/elinkxl.c				1.84
+
+	Fix PR kern/31455: ex (905[BC]) cards can hang in -current kernels.
+	[christos, ticket #863]
+
+sys/arch/sgimips/sgimips/disksubr.c		1.16
+
+	Fix "resource shortage" messages on mounting a bootable CD-ROM image
+	which has the SGI volhdr.
+	[tsutsui, ticket #864]
+
+x11/Xserver/afb/afb/Makefile			patch
+
+	Fix problem caused by pullup of ticket #832.
+	[chs, ticket #865]
 
