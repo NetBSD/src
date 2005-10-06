@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.21 2005/05/29 21:19:12 christos Exp $ */
+/* $NetBSD: sched.h,v 1.22 2005/10/06 07:02:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -206,27 +206,8 @@ void schedclock(struct lwp *);
 void sched_wakeup(__volatile const void *);
 void roundrobin(struct cpu_info *);
 
-/*
- * scheduler_fork_hook:
- *
- *	Inherit the parent's scheduler history.
- */
-#define	scheduler_fork_hook(parent, child)				\
-do {									\
-	(child)->p_estcpu = (parent)->p_estcpu;				\
-} while (/* CONSTCOND */ 0)
-
-/*
- * scheduler_wait_hook:
- *
- *	Chargeback parents for the sins of their children.
- */
-#define	scheduler_wait_hook(parent, child)				\
-do {									\
-	/* XXX Only if parent != init?? */				\
-	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu +		\
-	    (child)->p_estcpu);						\
-} while (/* CONSTCOND */ 0)
+void scheduler_fork_hook(struct proc *, struct proc *);
+void scheduler_wait_hook(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>
