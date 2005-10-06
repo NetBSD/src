@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2005/10/06 06:46:04 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,10 +144,10 @@ arranque?}
 message no_extended_bootmenu
 {Ha pedido que una partición extendida sea incluida en el menú de arranque.
 Sin embargo la BIOS de su sistema no parece soportar el comando de lectura
-usado por esa versión del código del menu de arranque
+usado por esa versión del código del menu de arranque.
 ¿Está seguro de que quiere hacer eso?
 
-(Seleccionando 'no' le devolvera al menu de edicion de particiones.)}
+(Seleccionando 'no' le devolverá al menú de edición de particiones.)}
 
 message installbootsel
 {Su configuración requiere el código de bootselect de NetBSD
