@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.8 2005/09/13 16:38:01 elad Exp $
+# $NetBSD: makesums,v 1.9 2005/10/06 02:12:49 jmc Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -11,10 +11,10 @@
 # If -a is given, then the list of sets is ignored, and ``*'' is used.
 #
 # After shell glob expansion, the list of sets is filtered to remove known
-# output file names (of the form *SUM and MD5), non-existent files, and
+# output file names (of the form *SUM, SHA512 and MD5), non-existent files, and
 # subdirectories. If this filtering leaves no files, then no output files are
-# produced. Otherwise the resulting list of files are checksummed and four
-# output files (BSDSUM, CKSUM, MD5, SYSVSUM) are produced.
+# produced. Otherwise the resulting list of files are checksummed and five
+# output files (BSDSUM, CKSUM, MD5, SHA512, SYSVSUM) are produced.
 #
 
 prog=${0##*/}
