@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2004/11/24 21:59:32 jmc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.10.1 2005/10/06 11:51:21 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2004/11/24 21:59:32 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14.10.1 2005/10/06 11:51:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,9 @@ disklabel_sgimips_to_bsd(struct sgi_boot_block *vh, struct disklabel *lp)
 	if (mipsvh_cksum(vh))
 		return ("sgimips disk label corrupted");
 
+#if 0 /* ARCS ignores dp_secbytes and it may be wrong; use default instead */
 	lp->d_secsize    = vh->dp.dp_secbytes;
+#endif
 	lp->d_nsectors   = vh->dp.dp_secs;
 	lp->d_ntracks    = vh->dp.dp_trks0;
 	lp->d_ncylinders = vh->dp.dp_cyls;
@@ -331,6 +333,9 @@ disklabel_sgimips_to_bsd(struct sgi_boot_block *vh, struct disklabel *lp)
 
 		lpp = &lp->d_partitions[bp];
 		lpp->p_offset = vh->partitions[mp].first;
+		/* XXX ARCS ignores dp_secbytes on calculating offsets */
+		if (lp->d_secsize > DEV_BSIZE)
+			lpp->p_offset /= lp->d_secsize / DEV_BSIZE;
 		lpp->p_size = vh->partitions[mp].blocks;
 		lpp->p_fstype = partition_map[i].bsd_type;
 		if (lpp->p_fstype == FS_BSDFFS) {
@@ -369,7 +374,11 @@ disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgi_boot_block *vh)
 	vh->dp.dp_shd0 = 0;
 	vh->dp.dp_trks0 = lp->d_ntracks;
 	vh->dp.dp_secs = lp->d_nsectors;
+#if 0 /* ARCS ignores dp_secbytes; leave it default */
 	vh->dp.dp_secbytes = lp->d_secsize;
+#else
+	vh->dp.dp_secbytes = SGI_BOOT_BLOCK_BLOCKSIZE;
+#endif
 	vh->dp.dp_interleave = lp->d_interleave;
 	vh->dp.dp_nretries = 22;
 
@@ -379,6 +388,10 @@ disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgi_boot_block *vh)
 
 		lpp = &lp->d_partitions[bp];
 		vh->partitions[mp].first = lpp->p_offset;
+		/* XXX ARCS ignores dp_secbytes on calculating offsets */
+		if (lp->d_secsize > SGI_BOOT_BLOCK_BLOCKSIZE)
+			vh->partitions[mp].first *=
+			    lp->d_secsize / SGI_BOOT_BLOCK_BLOCKSIZE;
 		vh->partitions[mp].blocks = lpp->p_size;
 		vh->partitions[mp].type = partition_map[i].mips_type;
 	}
