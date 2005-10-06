@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.150 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.150 2005/10/02 17:51:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1189,6 +1189,31 @@ suspendsched()
 	}
 	SCHED_UNLOCK(s);
 	proclist_unlock_read();
+}
+
+/*
+ * scheduler_fork_hook:
+ *
+ *	Inherit the parent's scheduler history.
+ */
+void
+scheduler_fork_hook(struct proc *parent, struct proc *child)
+{
+
+	child->p_estcpu = parent->p_estcpu;
+}
+
+/*
+ * scheduler_wait_hook:
+ *
+ *	Chargeback parents for the sins of their children.
+ */
+void
+scheduler_wait_hook(struct proc *parent, struct proc *child)
+{
+
+	/* XXX Only if parent != init?? */
+	parent->p_estcpu = ESTCPULIM(parent->p_estcpu + child->p_estcpu);
 }
 
 /*
