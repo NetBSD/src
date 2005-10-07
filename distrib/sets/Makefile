@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2005/10/06 02:22:11 jmc Exp $
+#	$NetBSD: Makefile,v 1.48 2005/10/07 20:00:54 jmc Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -17,10 +17,10 @@ SETSCMD=	cd ${.CURDIR} && \
 
 .if ${MKX11} != "no"
 MAKEFLIST_FLAGS=	-b
-MAKESRCTARS_FLAGS=	-x ${X11SRCDIR}
+MAKESRCTARS_FLAGS=	-x ${X11SRCDIR} -N ${NETBSDSRCDIR}/etc
 .else
 MAKEFLIST_FLAGS=
-MAKESRCTARS_FLAGS=
+MAKESRCTARS_FLAGS= 	-N ${NETBSDSRCDIR}/etc
 .endif
 
 .if !defined(MAKETARSETS)
