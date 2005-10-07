@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.20 2005/10/05 13:48:48 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.21 2005/10/07 18:07:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -125,7 +125,8 @@ struct veriexec_hash_entry {
 	unsigned char page_fp_status;		    /* Per-page FP status. */
         unsigned char *fp;                          /* Fingerprint. */
 	void *page_fp;				    /* Per-page fingerprints */
-	size_t last_page;			    /* Index of last page. */
+	size_t npages;			    	    /* Number of pages. */
+	size_t last_page_size;
 	struct veriexec_fp_ops *ops;                /* Fingerprint ops vector*/
         LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
@@ -198,7 +199,7 @@ int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
 int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
 		    const u_char *, int, struct veriexec_hash_entry **);
 int veriexec_page_verify(struct veriexec_hash_entry *, struct vattr *,
-			 struct vm_page *, u_int);
+			 struct vm_page *, size_t);
 int veriexec_removechk(struct proc *, struct vnode *, const char *);
 int veriexec_renamechk(struct vnode *, const char *, const char *);
 void veriexec_init_fp_ops(void);

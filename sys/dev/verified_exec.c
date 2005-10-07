@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.24 2005/10/05 13:48:48 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.25 2005/10/07 18:07:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.24 2005/10/05 13:48:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.25 2005/10/07 18:07:46 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.24 2005/10/05 13:48:48 elad Exp $\n$NetBSD: verified_exec.c,v 1.24 2005/10/05 13:48:48 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.25 2005/10/07 18:07:46 elad Exp $\n$NetBSD: verified_exec.c,v 1.25 2005/10/07 18:07:46 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -272,7 +272,8 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		e->status = FINGERPRINT_NOTEVAL;
 		e->page_fp = NULL;
 		e->page_fp_status = PAGE_FP_NONE;
-		e->last_page = 0;
+		e->npages = 0;
+		e->last_page_size = 0;
 		if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
 			free(e, M_TEMP);
 			printf("Veriexec: veriexecioctl: Invalid or unknown "
