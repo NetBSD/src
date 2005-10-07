@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.2.2.3 2005/09/19 21:12:58 tron Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.2.2.4 2005/10/07 11:48:55 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@ message fullpart
 
 NetBSD requiere una sola partición en la tabla de particiones MBR del disco,
 que es partida adecuadamente por el disklabel de NetBSD.
-NetBSD tambien puede acceder a sistemas de archivos en otras particiones MBR.
+NetBSD también puede acceder a sistemas de archivos en otras particiones MBR.
 
 Si selecciona 'Usar todo el disco' entonces el contenido previo del
 disco será sobreescrito y una sola partición MBR sera usada para cubrir
@@ -59,7 +59,7 @@ Proporcione al menos 5GB si quiere construir el propio NetBSD.
 }
 
 message Select_your_choice
-{¿Que desearia hacer?}
+{¿Que desearía hacer?}
 message Use_only_part_of_the_disk
 {Editar la tabla de particiones MBR}
 message Use_the_entire_disk
@@ -84,7 +84,7 @@ message part_row_used
 
 message noactivepart
 {No ha marcado una partición activa. Esto podría causar que su sistema
-no arrancara correctamente. ¿Deberia estar la partición NetBSD marcada
+no arrancara correctamente. ¿Debería estar la partición NetBSD marcada
 como activa?}
 
 message setbiosgeom
@@ -116,7 +116,7 @@ sobreescribir dicha partición con NetBSD?
 }
 
 message Partition_OK
-{Particion OK}
+{Partición OK}
 
 message ptn_type
 {      tipo: %s}

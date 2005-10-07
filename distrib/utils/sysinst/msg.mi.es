@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.4.2.5 2005/10/04 22:17:11 tron Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.4.2.6 2005/10/07 11:48:55 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,13 +70,13 @@ message upgrade
 message hello
 {Bienvenido a sysinst, la herramienta de instalación de NetBSD-@@VERSION@@.
 Esta herramienta guiada por menús, está diseñada para ayudarle a instalar
-NetBSD en un disco duro, o actualizar un sistema NetBSD existente, con
-un trabajo minimo. 
+NetBSD en un disco duro, o actualizar un sistema NetBSD existente con
+un trabajo mínimo. 
 En los siguientes menús teclee la letra de referencia (a b, c, ...) para
 seleccionar el item, o teclee CTRL+N/CTRL+P para seleccionar la opción
 siguiente/anterior. 
 Las teclas de flechas y AvPag/RePag también funcionan. 
-Active la seleccion actual desde el menú pulsando la tecla enter.
+Active la selección actual desde el menú pulsando la tecla enter.
 
 }
 
@@ -96,13 +96,13 @@ operaciones:
 	d) Algunas configuraciones iniciales del sistema
 
 (Despues de introducir la información de las particiones pero antes de que
-su disco sea cambiado, tendrá la oportunidad de salir del programa.
+su disco sea cambiado, tendrá la oportunidad de salir del programa.)
 
-¿Deberiamos continuar?
+¿Deberíamos continuar?
 }
 
 message upgradeusure
-{Esta bien, vamos a actualizar NetBSD en su disco duro. Sin embargo, esto
+{Vamos a actualizar NetBSD en su disco duro. Sin embargo, esto
 cambiará información de su disco duro. ¡Debería hacer una copia de seguridad
 completa antes de este procedimiento! ¿Realmente desea actualizar NetBSD?
 (Este es su último aviso antes de que el programa empiece a modificar
@@ -110,7 +110,7 @@ sus discos.)
 }
 
 message reinstallusure
-{Esta bien, vamos a desempaquetar los sets de la distribución NetBSD
+{Vamos a desempaquetar los sets de la distribución NetBSD
 a un disco duro marcado como iniciable.
 Este procedimiento solo baja y desempaqueta los sets en un disco iniciable
 pre-particionado. No pone nombre a discos, actualiza bootblocks, o guarda
@@ -125,17 +125,17 @@ sus discos.)
 
 
 message nodisk
-{No puedo encontrar ningun disco duro para usar con NetBSD. Volverá
-al menu original.
+{No puedo encontrar ningún disco duro para usar con NetBSD. Volverá
+al menú original.
 }
 
 message onedisk
 {Solamente he encontrado un disco, %s. 
-Por eso asumiré que quiere instalar NetBSD en %s.
+Por eso asumiré que quiere instalar NetBSD en ese disco.
 }
 
 message ask_disk
-{¿En que disco quiere instalar NetBSD? }
+{¿En cual disco quiere instalar NetBSD? }
 
 message Available_disks
 {Discos disponibles}
@@ -169,7 +169,7 @@ message layout
 en multiples particiones BSD. Ahora debería configurar su BSD disklabel.
 
 Puede usar un editor simple para ajustar los tamaños de las particiones NetBSD,
-o dejar las particiones existentes, tamaños y contenidos.
+o dejar las particiones existentes, tamaños y contenidos tal como están.
 
 Entonces tendrá la oportunidad de cambiar cualquier campo de disklabel.
 
@@ -202,7 +202,7 @@ defecto se aloja todo el espacio a la particion root, sin embargo
 podria querer separar /usr (archivos de sistema adicionales), /var
 (archivos de log etc) o /home (directorios hogar de los usuarios).
 
-El espacio libre sobrante sera añadido a la partición marcada con '+'.
+El espacio libre sobrante será añadido a la partición marcada con '+'.
 }
 
 message ptnheaders
@@ -220,7 +220,7 @@ message askunits
 {Cambiar unidades de entrada (sectores/cilindros/MB)}
 
 message NetBSD_partition_cant_change
-{particion NetBSD}
+{partición NetBSD}
 
 message Whole_disk_cant_change
 {Todo el disco}
@@ -327,7 +327,7 @@ message label_size
 {%s
 Valores especiales que pueden ser entrados para el valor del tamaño:
      -1:   usar hasta la parte final del disco NetBSD
-   a-%c:   acabe esta particion donde la particion X empieza
+   a-%c:   acabe esta partición donde la partición X empieza
 
 tamaño (%s)}
 
@@ -335,7 +335,7 @@ message label_offset
 {%s
 Valores especiales que pueden ser entrados para el valor de compensado:
      -1:   empezar al principio de la parte NetBSD del disco
-   a-%c:   empezar al final de la particion previa (a, b, ..., %c)
+   a-%c:   empezar al final de la partición previa (a, b, ..., %c)
 
 inicio (%s)}
 
@@ -437,7 +437,7 @@ message instcomplete
 arrancar desde el disco duro. Siga las instrucciones del documento
 INSTALL sobre la configuración final de su sistema. La pagina man
 de afterboot(8) es otra lectura recomendada; contiene una lista de
-cosas a comprobar despues del primer inicio completo.
+cosas a comprobar despúes del primer inicio completo.
 
 Como minimo, debe editar /etc/rc.conf para cumplir sus necesidades.
 Vea /etc/defaults/rc.conf para los valores por defecto.
@@ -448,10 +448,10 @@ message upgrcomplete
 seguir las instrucciones del documento INSTALL en cuanto a lo que
 usted necesita hacer para conseguir tener su sistema configurado
 de nuevo para su situación.
-Recuerde (re)leer la pagina del man afterboot(8) ya que puede contener
+Recuerde (re)leer la página del man afterboot(8), ya que puede contener
 nuevos apartados desde su ultima actualización.
 
-Como minimo, debe editar rc.conf para su entorno local y cambiar
+Como mínimo, debe editar rc.conf para su entorno local y cambiar
 rc_configured=NO a rc_configured=YES o los reinicios se pararán en
 single-user, y copie de nuevo los archivos de password (considerando
 nuevas cuentas que puedan haber sido creadas para esta release) si
@@ -461,11 +461,11 @@ estuviera usando archivos de password locales.
 
 message unpackcomplete
 {Desempaquetamiento de sets adicionales de NetBSD-@@VERSION@@ completado. 
-Ahora necesitara seguir las instrucciones en el documento INSTALL para
+Ahora necesitará seguir las instrucciones en el documento INSTALL para
 tener su sistema reconfigurado para su situación.
-La pagina de man afterboot(8) también puede serle de ayuda.
+La página man afterboot(8) también puede serle de ayuda.
 
-Como minimo, debe editar /etc/rc.conf para cumplir sus necesidades.
+Como mínimo, debe editar /etc/rc.conf para cumplir sus necesidades.
 Vea /etc/defaults/rc.conf para los valores por defecto.
 }
 
@@ -473,7 +473,7 @@ message distmedium
 {Su disco ahora está preparado para instalar el nucleo y los sets de
 distribución. Como aparece anotado en las notas INSTALL, tiene diversas
 opciones. Para ftp o nfs, tiene que estar conectado a una red con acceso
-a las maquinas apropiadas. Si no esta preparado para completar la
+a las maquinas apropiadas. Si no está preparado para completar la
 instalación en este momento, deberá seleccionar "ninguno" y será retornado
 al menú principal. Cuando esté preparado mas tarde, deberá seleccionar
 "actualizar" desde el menú principal para completar la instalación.
@@ -541,7 +541,7 @@ dir de sets:	%s
 }
 
 message localdir
-{Entre el directorio local ya montado donde esta localizada la distribución.
+{Entre el directorio local ya montado donde está localizada la distribución.
 Recuerde, el directorio debe contener los archivos .tgz.
 
 dir base:	%s 
@@ -581,7 +581,7 @@ message asknetdev
 message badnet
 {No ha seleccionado una interfaz de las listadas. Por favor vuelva a
 intentarlo.
-Las siguientes interfaces de red estan disponibles: %s
+Las siguientes interfaces de red están disponibles: %s
 \n¿Cual debería usar?}
 
 message netinfo
@@ -596,13 +596,13 @@ message net_host
 {Su nombre del host}
 
 message net_ip
-{Su numero IPv4}
+{Su número IPv4}
 
 message net_ip_2nd
-{Numero servidor IPv4}
+{Número servidor IPv4}
 
 message net_mask
-{Mascara IPv4}
+{Máscara IPv4}
 
 message net_namesrv6
 {Servidor de nombres IPv6}
@@ -623,7 +623,7 @@ Dominio DNS: 		%s
 Nombre del Host:	%s 
 Interfaz primaria:	%s 
 Host IP:		%s 
-Mascara:		%s 
+Máscara:		%s 
 Serv de nombres IPv4:	%s 
 Pasarela IPv4:		%s 
 Tipo de medio:		%s 
@@ -637,7 +637,7 @@ Nombre del Host:	%s
 Interfaz primaria:	%s 
 Host IP:		%s 
 Server IP:		%s 
-Mascara:		%s 
+Máscara:		%s 
 Serv de nombres IPv4:	%s 
 Pasarela IPv4:		%s 
 Tipo de medio:		%s 
@@ -702,7 +702,7 @@ message endtar
 Su instalación está incompleta.
 
 Ha seleccionado %d sets de distribución. %d sets no se han
-encontrado y %d han sido saltados despues de que ocurriera un
+encontrado y %d han sido saltados después de que ocurriera un
 error. De los %d que se han intentado, %d se han desempaquetado
 sin errores y %d con errores.
 
@@ -727,7 +727,7 @@ a mano. Instalación abortada.
 message abortunpack
 {Desempaquetamiento de sets adicionales no satisfactoria. Necesitará
 proceder a mano, o escoger una fuente diferente para los sets de
-esta release y volver a intentarlo.
+esta distribución y volver a intentarlo.
 }
 
 message createfstab
@@ -786,11 +786,11 @@ message badmount
 Actualización abortada.}
 
 message rootmissing
-{ el directorio raiz objetivo no existe %s.
+{ el directorio raíz objetivo no existe %s.
 }
 
 message badroot
-{El nuevo sistema de archivos raiz no ha pasado la comprobación básica.
+{El nuevo sistema de archivos raíz no ha pasado la comprobación básica.
  ¿Está seguro de que ha instalado todos los sets requeridos? 
 
 }
@@ -930,7 +930,7 @@ fallido. No puedo continuar.}
 
 message upgradeparttype
 {La unica partición adecuada que se ha encontrado para la instalación de
-NetBSD es del tipo viejo de partición de NetBSD/386BSD/FreeBSD. ¿Quiere
+NetBSD es del tipo antiguo (NetBSD/386BSD/FreeBSD). ¿Quiere
 cambiar el tipo de esta partición al nuevo tipo de partición de
 solo-NetBSD?}
 
@@ -950,7 +950,7 @@ message tz_back
 { Volver a la lista principal de zona horaria}
 
 message choose_crypt
-{Por favor seleccione el cifrador de password a usar. NetBSD puede ser
+{Por favor seleccione el algoritmo de claves a usar. NetBSD puede ser
 configurado para usar los esquemas DES, MD5 o Blowfish.
 
 El esquema tradicional DES es compatible con la mayoria de sistemas operativos
@@ -971,19 +971,19 @@ message swapactive
 en uso actualmente si su sistema tiene poca memoria. Como está a punto
 de reparticionar este disco, esta partición swap será desactivada ahora.
 Por favor tenga en cuenta que esto puede conducir a problemas de swap.
-Si obtuviera algun error, por favor reinicie el sistema e intente de nuevo.}
+Si obtuviera algun error, reinicie el sistema e intente de nuevo.}
 
 message swapdelfailed
 {sysinst ha fallado en la desactivación de la partición swap en el disco
 que ha escogido para la instalación. Por favor reinicie e intente de nuevo.}
 
 message rootpw
-{El password de root del nuevo sistema instalado no ha sido fijado todavia,
-y por eso está vacio. ¿Quiere fijar un password de root para el sistema ahora?}
+{La contraseña de root del nuevo sistema instalado no ha sido asignada todavia,
+y por eso está vacia. ¿Quiere asignar una contraseña de root para el sistema ahora?}
 
 message rootsh
 {Ahora puede seleccionar que shell quiere usar para el usuario root. Por
-defecto es /bin/sh, pero podria preferir otra.}
+defecto es /bin/sh, pero podría preferir otra.}
 
 message postuseexisting
 {
@@ -993,14 +993,14 @@ que vaya a ser montado. Presione <return> para continuar.
 
 message no_root_fs
 {
-No hay un sistema de archivos raiz definido. Necesitara al menos un punto
+No hay un sistema de archivos raíz definido. Necesitará al menos un punto
 de montaje con "/".
 
 Presione <return> para continuar.
 }
 
 message slattach {
-Especifique los parametros de slattach
+Especifique los parámetros de slattach
 }
 
 message Pick_an_option {Seleccione una opción para activar/desactivar.}
@@ -1028,7 +1028,7 @@ message Configure_network {Configurar red}
 message Partition_a_disk {Particionar un disco}
 message Logging_functions {Funciones de loggeo}
 message Halt_the_system {Parar el sistema}
-message yes_or_no {¿si o no?}
+message yes_or_no {¿sí o no?}
 message Hit_enter_to_continue {Presione enter para continuar}
 message Choose_your_installation {Seleccione su instalación}
 message Set_Sizes {Ajustar tamaños de particiones NetBSD}
