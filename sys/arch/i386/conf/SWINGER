@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.74 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: SWINGER,v 1.75 2005/10/07 08:18:13 abs Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.74 $"
+#ident 		"SWINGER-$Revision: 1.75 $"
 
 maxusers	64		# estimated number of users
 
@@ -348,7 +348,7 @@ sysbeep0	at pcppi?
 #lpt2	at isa? port 0x3bc
 
 # LM7[89] and compatible hardware monitors
-lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
 # SCSI Controllers and Devices
 
