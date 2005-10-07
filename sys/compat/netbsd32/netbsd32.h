@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.43 2005/09/27 15:09:04 chs Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.44 2005/10/07 14:40:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -494,7 +494,7 @@ struct netbsd32_stat13 {
 	u_int32_t st_spare;		/* file generation number */
 	struct	  netbsd32_timespec st_birthtimespec;
 	u_int32_t st_spare2;
-};
+} __attribute__((packed));
 
 typedef netbsd32_pointer_t netbsd32_statp_t;
 struct netbsd32_stat {
