@@ -1,4 +1,4 @@
-/*	$NetBSD: compat__setjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.20 2005/10/07 17:16:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: compat__setjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.20 2005/10/07 17:16:40 tsutsui Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
