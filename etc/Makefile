@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306.2.7 2005/09/04 19:57:50 tron Exp $
+#	$NetBSD: Makefile,v 1.306.2.8 2005/10/07 11:56:16 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -280,15 +280,15 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 		uucp dialer		640	/var/log/aculog \
 		${BINOWN} ${BINGRP}	600	/var/log/authlog \
 		root wheel		600	/var/log/cron \
-		${BINOWN} ${BINGRP}	664	/var/log/lastlog \
-		${BINOWN} ${BINGRP}	664	/var/log/lastlogx \
+		${BINOWN} ${UTMPGRP}	664	/var/log/lastlog \
+		${BINOWN} ${UTMPGRP}	664	/var/log/lastlogx \
 		${BINOWN} ${BINGRP}	640	/var/log/lpd-errs \
 		${BINOWN} ${BINGRP}	600	/var/log/maillog \
 		${BINOWN} ${BINGRP}	644	/var/log/messages \
 		${BINOWN} ${BINGRP}	600	/var/log/secure \
 		${BINOWN} ${BINGRP}	644	/var/log/sendmail.st \
-		${BINOWN} ${BINGRP}	644	/var/log/wtmp \
-		${BINOWN} ${BINGRP}	644	/var/log/wtmpx \
+		${BINOWN} ${UTMPGRP}	664	/var/log/wtmp \
+		${BINOWN} ${UTMPGRP}	664	/var/log/wtmpx \
 		${BINOWN} ${BINGRP}	600	/var/log/xferlog \
 		daemon staff		664	/var/msgs/bounds \
 		${BINOWN} ${UTMPGRP}	664	/var/run/utmp \
