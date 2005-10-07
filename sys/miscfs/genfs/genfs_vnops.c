@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.106 2005/10/07 18:07:46 elad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.107 2005/10/07 18:19:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.106 2005/10/07 18:07:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.107 2005/10/07 18:19:14 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
-#include "opt_verified_exec.h"
 #endif
 
 #include <sys/param.h>
@@ -50,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.106 2005/10/07 18:07:46 elad Exp $
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
-#ifdef VERIFIED_EXEC
-#include <sys/verified_exec.h>
-#endif /* VERIFIED_EXEC */
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -903,43 +899,6 @@ loopdone:
 	splx(s);
 	uvm_pagermapout(kva, npages);
 	raoffset = startoffset + totalbytes;
-
-#if 0
-	/*
-	 * XXX This should not be here. We can't rely on all
-	 * XXX filesystems to use genfs_getpages(), even though at the
-	 * XXX moment that's the most common case (with the exception
-	 * XXX of smbfs).
-	 */
-#ifdef VERIFIED_EXEC
-	if (!error && !sawhole && !write) {
-		struct proc *veriexec_p = curlwp->l_proc;
-		struct vattr veriexec_va;
-		struct veriexec_hash_entry *vhe;
-
-		/* XXXEE: try to eliminate this. */
-		error = VOP_GETATTR(vp, &veriexec_va, veriexec_p->p_ucred,  
-				    veriexec_p);
-		if (error)
-			goto skip_veriexec;
-
-		vhe = veriexec_lookup(veriexec_va.va_fsid,
-				      veriexec_va.va_fileid);
-		if (vhe == NULL || vhe->page_fp == NULL)
-			goto skip_veriexec;
-
-		pidx = origoffset >> PAGE_SHIFT;
-
-		for (i = ridx; i < ridx + npages; i++) {
-			error = veriexec_page_verify(vhe, &veriexec_va, pgs[i],
-						     pidx + i);
-			if (error)
-				break;
-		}
-	}
-skip_veriexec:
-#endif /* VERIFIED_EXEC */
-#endif /* 0 */
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
