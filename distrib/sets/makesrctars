@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.20 2005/07/05 08:41:16 tron Exp $
+#	$NetBSD: makesrctars,v 1.21 2005/10/07 03:42:47 jmc Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -112,6 +112,7 @@ echo "Creating checksum files"
 (cd ${setdir}
 	${CKSUM} -o1 *.tgz > BSDSUM
 	${CKSUM}     *.tgz > CKSUM
-	${CKSUM} -m  *.tgz > MD5
+	${CKSUM} -a md5  *.tgz > MD5
 	${CKSUM} -o2 *.tgz > SYSVSUM
+	${CKSUM} -a sha512 *.tgz > SHA512
 )
