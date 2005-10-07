@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.111.10.4 2005/08/14 21:14:32 riz Exp $	*/
+/*	$NetBSD: vnd.c,v 1.111.10.5 2005/10/07 11:47:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.4 2005/08/14 21:14:32 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.5 2005/10/07 11:47:40 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -992,6 +992,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  
                         vnd->sc_flags |= VNF_COMP | VNF_READONLY;
 #else /* !VND_COMPRESSION */
+			VOP_UNLOCK(nd.ni_vp, 0);
 			error = EOPNOTSUPP;
 			goto close_and_exit;
 #endif /* VND_COMPRESSION */
