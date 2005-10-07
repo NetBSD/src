@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.41 2005/08/19 05:19:49 christos Exp $
+# $NetBSD: WSCONS,v 1.42 2005/10/07 17:51:07 tsutsui Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.41 2005/07/31 04:04:31 yamt Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.44 2005/10/07 17:46:33 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 
 maxusers	8
@@ -121,6 +121,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # Filesystem options
 
