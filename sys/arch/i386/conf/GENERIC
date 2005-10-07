@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.704 2005/09/27 02:57:47 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.705 2005/10/07 08:18:13 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.704 $"
+#ident 		"GENERIC-$Revision: 1.705 $"
 
 maxusers	32		# estimated number of users
 
@@ -570,7 +570,7 @@ lpt2	at isa? port 0x3bc
 # Hardware monitors
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
