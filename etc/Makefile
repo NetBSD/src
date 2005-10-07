@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.314 2005/08/30 10:58:33 tron Exp $
+#	$NetBSD: Makefile,v 1.315 2005/10/07 17:22:12 jmc Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -380,6 +380,8 @@ release snapshot: .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
 		    snap_post .WAIT snap_md_post
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets sets
+	${MAKESUMS} -A -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets \
+		${KERNEL_SETS:@.SETS.@kern-${.SETS.}.tgz@}
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel '*.gz'
 
 
