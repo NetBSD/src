@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.56 2005/08/19 05:19:54 christos Exp $
+# 	$NetBSD: INSTALL,v 1.57 2005/10/07 18:01:39 tsutsui Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -40,7 +40,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
