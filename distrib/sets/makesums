@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.9 2005/10/06 02:12:49 jmc Exp $
+# $NetBSD: makesums,v 1.10 2005/10/07 17:21:36 jmc Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -8,6 +8,8 @@
 # If -t is omitted, RELEASEDIR must be set and not empty.
 # The ``setname'' arguments comprise a list of files to checksum,
 # and may be omitted (in which case ``*.tgz'' is used).
+# If -A is given, then the checksum are appended to possibly existing files.
+# NOTE: Don't use this when running parallel jobs
 # If -a is given, then the list of sets is ignored, and ``*'' is used.
 #
 # After shell glob expansion, the list of sets is filtered to remove known
@@ -23,11 +25,13 @@ prog=${0##*/}
 : ${CKSUM=cksum}
 targetdir=$RELEASEDIR
 dash_all=no
+append=\>
 
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${prog} [-a] [-t targetdir] [setname [...]]
+Usage: ${prog} [-A] [-a] [-t targetdir] [setname [...]]
+	-A		Append to possible existing checksum files 
 	-a		checksum all plain files instead of [setname [...]]
 	-t targetdir	\$RELEASEDIR		[$targetdir]
 	setname [...]	sets to checksum 	[*.tgz]
@@ -36,8 +40,11 @@ USAGE
 }
 
 # handle args
-while getopts at: ch; do
+while getopts aAt: ch; do
 	case ${ch} in
+	A)
+		append=\>\>
+		;;
 	a)
 		dash_all=yes
 		;;
@@ -65,9 +72,9 @@ elif [ -z "$pat" ]; then
 fi
 lists=$(find $pat -prune \( -type f -o -type l \) \! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)
 if [ -n "$lists" ]; then
-	${CKSUM} -o1 $lists > BSDSUM
-	${CKSUM}     $lists > CKSUM
-	${CKSUM} -a md5  $lists > MD5
-	${CKSUM} -o2 $lists > SYSVSUM
-	${CKSUM} -a sha512  $lists > SHA512
+	eval ${CKSUM} -o1 $lists $append BSDSUM
+	eval ${CKSUM}     $lists $append CKSUM
+	eval ${CKSUM} -a md5  $lists $append MD5
+	eval ${CKSUM} -o2 $lists $append SYSVSUM
+	eval ${CKSUM} -a sha512  $lists $append SHA512
 fi
