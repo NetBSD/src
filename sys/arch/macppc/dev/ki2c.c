@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.3 2005/08/10 14:26:46 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.4 2005/10/07 23:53:11 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -86,7 +86,7 @@ ki2c_attach(parent, self, aux)
 	struct ki2c_softc *sc = (struct ki2c_softc *)self;
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
-	int rate, child, namelen;
+	int rate, child, namelen, i2cbus;
 	struct ki2c_confargs ka;
 	struct i2cbus_attach_args iba;
 
@@ -135,8 +135,23 @@ ki2c_attach(parent, self, aux)
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
 
-
-	for (child = OF_child(node); child; child = OF_peer(child)) {
+	/* 
+	 * newer OF puts I2C devices under 'i2c-bus' instead of attaching them 
+	 * directly to the ki2c node so we just check if we have a child named
+	 * 'i2c-bus' and if so we attach its children, not ours 
+	 */
+	i2cbus = 0;
+	child = OF_child(node);
+	while ((child != 0) && (i2cbus == 0)) {
+		OF_getprop(child, "name", name, sizeof(name));
+		if (strcmp(name, "i2c-bus") == 0)
+			i2cbus = child;
+		child = OF_peer(child);
+	}
+	if (i2cbus == 0) 
+		i2cbus = node;
+		
+	for (child = OF_child(i2cbus); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
 			continue;
