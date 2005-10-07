@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.4.2.6 2005/10/07 11:48:55 tron Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.4.2.7 2005/10/07 11:54:52 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,7 +131,7 @@ al menú original.
 
 message onedisk
 {Solamente he encontrado un disco, %s. 
-Por eso asumiré que quiere instalar NetBSD en ese disco.
+Por eso asumiré que quiere %s NetBSD en ese disco.
 }
 
 message ask_disk
