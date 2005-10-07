@@ -1,4 +1,4 @@
-.\"	$NetBSD: elansc.4,v 1.4 2005/01/21 15:04:25 wiz Exp $
+.\"	$NetBSD: elansc.4,v 1.5 2005/10/07 15:59:49 riz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2002
+.Dd October 6, 2005
 .Dt ELANSC 4 i386
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nd AMD Elan SC520 System Controller driver
 .Sh SYNOPSIS
 .Cd "elansc* at pci? dev ? function ?"
+.Cd "gpio* at elansc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,14 +60,36 @@ driver:
 Watchdog timer.  The watchdog timer may be configured for a 1
 second, 2 second, 4 second, 8 second, 16 second, or 32 second
 expiration period.
+.It
+Programmable Input/Output.
+The SC520 microcontroller supports 32 programmable I/O signals (PIOs)
+that can be used on the system board to monitor signals or control devices
+that are not handled by the other functions in the SC520 microcontroller.
+These signals can be programmed to be inputs or to be driven
+.Dq high
+or
+.Dq low
+as outputs.
+Pins can be accessed through the
+.Xr gpio 4
+framework.
+The
+.Xr gpioctl 8
+program allows easy manipulation of pins from userland.
 .El
 .Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr gpioctl 8 ,
 .Xr wdogctl 8
 .Sh HISTORY
 The
 .Nm
 device first appeared in
 .Nx 2.0 .
+PIO function support was added in
+.Ox 3.6 ,
+and subsequently ported to
+.Nx 4.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -75,3 +98,11 @@ driver was written by
 .An Jasper Wallace
 provided the work-around for a hardware bug related to the watchdog timer
 in some steppings of the SC520 CPU.
+Support for the PIO function was added to
+.Ox 3.6
+by
+.An Alexander Yurchenko Aq grange@openbsd.org
+and was ported to
+.Nx
+by
+.An Jeff Rizzo Aq riz@NetBSD.org .
