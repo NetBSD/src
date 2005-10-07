@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.50 2005/06/02 14:38:05 he Exp $
+# $NetBSD: HACKS,v 1.51 2005/10/07 08:42:24 simonb Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -473,4 +473,20 @@ port	hppa
 		structures, but it only shows up when booting from disk.
 		For now, we'll add some padding to scsipi_xfer so that
 		the corrupted memory is not otherwise used.
+	kcah
+
+port	mips
+
+	hack	mips-shared-linker-load-address
+	cdate	Fri Oct  7 08:33:10 UTC 2005
+	who	simonb
+	file	src/sys/kern/exec_elf32.c : 1.107
+	descr
+		With COMPAT_16 or previous enabled (which enables
+		ELF_INTERP_NON_RELOCATABLE) a recent ld.elf_so will
+		load and run at address 0.  The check to fix this in
+		rev 1.107 only checks the first psection of the ELF
+		executable, which may not be loadable.  A more correct
+		fix is to check the first loadable psection instead of
+		just the first psection.
 	kcah
