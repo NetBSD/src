@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.41 2005/10/05 16:21:46 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.42 2005/10/07 18:07:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.41 2005/10/05 16:21:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.42 2005/10/07 18:07:46 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -209,26 +209,34 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 {
 	void *ctx = NULL, *page_ctx = NULL;
 	u_char *buf = NULL, *page_fp = NULL;
-	off_t offset, len;
+	off_t offset, len = 0;
 	size_t resid, npages = 0;
-	int error = 0;
+	int error = 0, do_perpage = 0;
 
-	/* XXX: This should not happen. Print more details? */
 	if (vhe->ops == NULL) {
 		panic("veriexec: Operations vector is NULL");
 	}
+
+#if 0
+	/*
+	 * XXX Until we have a better way to do per-page fingerprints,
+	 * XXX avoid using them.
+	 */
+	if ((vhe->type & VERIEXEC_UNTRUSTED) &&
+	    (vhe->page_fp_status == PAGE_FP_NONE))
+		do_perpage = 1;
+#endif
 
 	memset(fp, 0, vhe->ops->hash_len);
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
-	if (vhe->type & VERIEXEC_UNTRUSTED) {
+	if (do_perpage) {
 		npages = (size >> PAGE_SHIFT) + 1;
-		vhe->page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
+		page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
 						 M_TEMP, M_WAITOK|M_ZERO);
-		page_fp = vhe->page_fp;
-		vhe->last_page = size % PAGE_SIZE;
+		vhe->page_fp = page_fp;
 		page_ctx = (void *) malloc(vhe->ops->context_size, M_TEMP,
 					   M_WAITOK);
 	}
@@ -241,7 +249,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 	 */
 	for (offset = 0; offset < size; offset += PAGE_SIZE) {
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
-			: PAGE_SIZE;
+						    : PAGE_SIZE;
 
 		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
 				UIO_SYSSPACE,
@@ -253,7 +261,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 				p->p_ucred, &resid, NULL);
 
 		if (error) {
-			if (vhe->page_fp) {
+			if (do_perpage) {
 				free(vhe->page_fp, M_TEMP);
 				vhe->page_fp = NULL;
 			}
@@ -265,16 +273,13 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		(vhe->ops->update)(ctx, buf, (unsigned int) len);
 
 		/* calculate per-page fingerprint if needed */
-		if (vhe->type & VERIEXEC_UNTRUSTED) {
-			memset(page_ctx, 0, vhe->ops->context_size);
+		if (do_perpage) {
 			(vhe->ops->init)(page_ctx);
-			(vhe->ops->update)(page_ctx, buf, (unsigned int) len);
+			(vhe->ops->update)(page_ctx, buf, (unsigned int)len);
 			(vhe->ops->final)(page_fp, page_ctx);
-
 			page_fp += vhe->ops->hash_len;
 		}
 
-		/* XXXEE: don't overflow offset */
 		if (len != PAGE_SIZE)
 			break;
 	}
@@ -282,11 +287,14 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 	/* finalise the fingerprint calculation */
 	(vhe->ops->final)(fp, ctx);
 
-	if (vhe->type & VERIEXEC_UNTRUSTED)
-		vhe->page_fp_status = PAGE_FP_READY;  
+	if (do_perpage) {
+		vhe->last_page_size = len;
+		vhe->page_fp_status = PAGE_FP_READY;
+		vhe->npages = npages;
+	}
 
 bad:
-	if (page_ctx)
+	if (do_perpage)
 		free(page_ctx, M_TEMP);
 	free(ctx, M_TEMP);
 	free(buf, M_TEMP);
@@ -405,7 +413,8 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		goto out;
 
 	/* Evaluate fingerprint if needed. */
-	if (vhe->status == FINGERPRINT_NOTEVAL) {
+	if ((vhe->status == FINGERPRINT_NOTEVAL) ||
+	    (vhe->type & VERIEXEC_UNTRUSTED)) {
 		/* Calculate fingerprint for on-disk file. */
 		digest = (u_char *) malloc(vhe->ops->hash_len, M_TEMP,
 					   M_WAITOK);
@@ -474,12 +483,6 @@ out:
 		if (veriexec_strict >= 1)
 			error = EPERM;
 
-		if (vhe->page_fp != NULL) {
-			free(vhe->page_fp, M_TEMP);
-			vhe->page_fp = NULL;
-			vhe->page_fp_status = PAGE_FP_FAIL;
-		}
-
 		break;
 
 	default:
@@ -500,27 +503,22 @@ out:
  */
 int
 veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
-		     struct vm_page *pg, u_int is_last_page)
+		     struct vm_page *pg, size_t idx)
 {
 	void *ctx;
 	u_char *fp;
 	u_char *page_fp;
 	int error;
-	size_t pagen;
-	vaddr_t kva;
+	vaddr_t kva = 0;
 
-	if (vhe->page_fp_status == PAGE_FP_NONE) {
+	if (vhe->page_fp_status == PAGE_FP_NONE)
 		return (0);
-	}
 
-	if (vhe->page_fp_status == PAGE_FP_FAIL) {
+	if (vhe->page_fp_status == PAGE_FP_FAIL)
 		return (EPERM);
-	}
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
-
-	pagen = pg->offset >> PAGE_SHIFT;
 
 	error = uvm_map(kernel_map, &kva, PAGE_SIZE, NULL,
 			UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_READ,
@@ -531,12 +529,12 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 
 	pmap_kenter_pa(kva, pg->phys_addr, VM_PROT_READ);
 
-	page_fp = (u_char *) vhe->page_fp + pagen;
+	page_fp = (u_char *) vhe->page_fp + (vhe->ops->hash_len * idx);
 
-	memset(ctx, 0, vhe->ops->context_size);
 	(vhe->ops->init)(ctx);
-	(vhe->ops->update)(ctx, (void *) &kva, is_last_page ? vhe->last_page :
-							 PAGE_SIZE);
+	(vhe->ops->update)(ctx, (void *) kva,
+			   ((vhe->npages - 1) == idx) ? vhe->last_page_size
+						      : PAGE_SIZE);
 	(vhe->ops->final)(fp, ctx);
 
 	pmap_kremove(kva, PAGE_SIZE);
@@ -562,7 +560,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 
 			KSI_INIT(&ksi);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = SI_NOINFO; /* XXXEE */
+			ksi.ksi_code = SI_NOINFO;
 			ksi.ksi_pid = p->p_pid;
 			ksi.ksi_uid = 0;
 
@@ -571,12 +569,8 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	}
 
 bad:
-	if (error || is_last_page) {
-		free(ctx, M_TEMP);
-		ctx = NULL;
-		free(fp, M_TEMP);
-		fp = NULL;
-	}
+	free(ctx, M_TEMP);
+	free(fp, M_TEMP);
 
 	return (error);
 }
@@ -622,8 +616,12 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 
 	LIST_REMOVE(vhe, entries);
 	free(vhe->fp, M_TEMP);
-	if (vhe->page_fp)
+	if (vhe->page_fp) {
+		vhe->page_fp_status = PAGE_FP_NONE;
 		free(vhe->page_fp, M_TEMP);
+		vhe->page_fp = NULL;
+		vhe->npages = 0;
+	}
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
 
