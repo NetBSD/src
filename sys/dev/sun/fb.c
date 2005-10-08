@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.21 2005/06/24 06:40:05 jdc Exp $ */
+/*	$NetBSD: fb.c,v 1.22 2005/10/08 00:46:44 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.21 2005/06/24 06:40:05 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.22 2005/10/08 00:46:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ fbopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -220,8 +220,10 @@ fbopen(dev, flags, mode, p)
 		fbl = fbl->fb_next;
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
-
-	return (fbl->fb_dev->fb_driver->fbd_open)(dev, flags, mode, p);
+		
+	nunit = fbl->fb_dev->fb_device->dv_unit;
+	return (fbl->fb_dev->fb_driver->fbd_open)(makedev(0, nunit), flags,
+	    mode, p);
 }
 
 int
@@ -230,7 +232,7 @@ fbclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -239,7 +241,9 @@ fbclose(dev, flags, mode, p)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	return (fbl->fb_dev->fb_driver->fbd_close)(dev, flags, mode, p);
+	nunit = fbl->fb_dev->fb_device->dv_unit;
+	return (fbl->fb_dev->fb_driver->fbd_close)(makedev(0, nunit), flags,
+	    mode, p);
 }
 
 int
@@ -250,7 +254,7 @@ fbioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -259,7 +263,9 @@ fbioctl(dev, cmd, data, flags, p)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	return (fbl->fb_dev->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
+	nunit = fbl->fb_dev->fb_device->dv_unit;
+	return (fbl->fb_dev->fb_driver->fbd_ioctl)(makedev(0, nunit), cmd, 
+	    data, flags, p);
 }
 
 int
@@ -268,7 +274,7 @@ fbpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -277,7 +283,9 @@ fbpoll(dev, events, p)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	return (fbl->fb_dev->fb_driver->fbd_poll)(dev, events, p);
+	nunit = fbl->fb_dev->fb_device->dv_unit;
+	return (fbl->fb_dev->fb_driver->fbd_poll)(makedev(0, nunit), events,
+	    p);
 }
 
 int
@@ -285,7 +293,7 @@ fbkqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -294,7 +302,8 @@ fbkqfilter(dev, kn)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	return (fbl->fb_dev->fb_driver->fbd_kqfilter)(dev, kn);
+	nunit = fbl->fb_dev->fb_device->dv_unit;
+	return (fbl->fb_dev->fb_driver->fbd_kqfilter)(makedev(0, nunit), kn);
 }
 
 paddr_t
@@ -303,7 +312,7 @@ fbmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	int unit;
+	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
 
 	unit = minor(dev);
@@ -312,11 +321,12 @@ fbmmap(dev, off, prot)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
+	nunit = fbl->fb_dev->fb_device->dv_unit;
 	paddr_t (*map)(dev_t, off_t, int) = fbl->fb_dev->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
-	return (map(dev, off, prot));
+	return (map(makedev(0, nunit), off, prot));
 }
 
 void
