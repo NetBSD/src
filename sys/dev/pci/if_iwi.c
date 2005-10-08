@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.29 2005/09/29 19:57:36 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.30 2005/10/08 06:19:46 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.29 2005/09/29 19:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.30 2005/10/08 06:19:46 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2082,17 +2082,18 @@ static int
 iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwi_scan scan;
+	struct iwi_scan_v2 scan;
 
 	(void)memset(&scan, 0, sizeof scan);
-	scan.type = IWI_SCAN_TYPE_PASSIVE;
-	scan.dwelltime = htole16(2000);
-	scan.channels[0] = 1 | (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ :
-	    IWI_CHAN_2GHZ);
+
+	scan.dwelltime[IWI_SCAN_TYPE_PASSIVE] = htole16(2000);
+	scan.channels[0] = 1 |
+	    (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ : IWI_CHAN_2GHZ);
 	scan.channels[1] = ieee80211_chan2ieee(ic, chan);
+	iwi_scan_type_set(scan, 1, IWI_SCAN_TYPE_PASSIVE);
 
 	DPRINTF(("Setting channel to %u\n", ieee80211_chan2ieee(ic, chan)));
-	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, 1);
+	return iwi_cmd(sc, IWI_CMD_SCAN_V2, &scan, sizeof scan, 1);
 }
 
 static int
