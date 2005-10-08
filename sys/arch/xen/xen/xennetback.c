@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.15 2005/10/08 20:22:05 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.16 2005/10/08 20:23:59 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -75,7 +75,6 @@
 /* hash list for TX requests */
 /* descriptor of a packet being handled by the kernel */
 struct xni_pkt {
-	SLIST_ENTRY(xni_pkt) pkt_next;
 	int pkt_id; /* packet's ID */
 	struct xnetback_instance *pkt_xneti; /* pointer back to our softc */
 	struct xni_page *pkt_page; /* page containing this packet */
