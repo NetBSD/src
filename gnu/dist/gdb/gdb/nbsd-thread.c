@@ -262,11 +262,14 @@ static void
 nbsd_thread_resume (ptid_t ptid, int step, enum target_signal signo)
 {
 
-  /* If a particular ptid is specified, then gdb wants to resume or
+  /* If a particular thread is specified, then gdb wants to resume or
      step just that thread. If it isn't on a processor, then it needs
-     to be put on one, and nothing else can be on the runnable
-     list. */
-  if (GET_PID (ptid) != -1)
+     to be put on one, and nothing else can be on the runnable list.
+     XXX If GDB asks us to step a LWP rather than a thread, there
+     isn't anything we can do but pass it down to the ptrace call;
+     given the flexibility of the LWP-to-thread mapping, this might or
+     might not accomplish what the user wanted. */
+  if (GET_PID (ptid) != -1 && IS_THREAD (ptid))
     {
       int val;
 
