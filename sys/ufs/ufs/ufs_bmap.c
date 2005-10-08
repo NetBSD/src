@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.37 2005/08/12 22:31:51 jmmv Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.38 2005/10/08 03:21:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.37 2005/08/12 22:31:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.38 2005/10/08 03:21:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,11 +354,7 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	}
 
 	/* Calculate the address of the first meta-block. */
-	metalbn = 0;		/* XXX: gcc3 */
-	if (realbn >= 0)
-		metalbn = -(realbn - bn + NIADDR - i);
-	else
-		metalbn = -(-realbn - bn + NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
 
 	/*
 	 * At each iteration, off is the offset into the bap array which is

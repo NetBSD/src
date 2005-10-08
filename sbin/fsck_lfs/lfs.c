@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.17 2005/09/13 04:14:17 christos Exp $ */
+/* $NetBSD: lfs.c,v 1.18 2005/10/08 03:21:17 chs Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -240,8 +240,6 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 	int i, numlevels, off;
 	int lognindir, indir;
 
-	metalbn = 0;	/* XXXGCC -Wuninitialized [dreamcast] */
-
 	if (nump)
 		*nump = 0;
 	numlevels = 0;
@@ -271,10 +269,7 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 	}
 
 	/* Calculate the address of the first meta-block. */
-	if (realbn >= 0)
-		metalbn = -(realbn - bn + NIADDR - i);
-	else
-		metalbn = -(-realbn - bn + NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
 
 	/* At each iteration, off is the offset into the bap array which is an
 	 * array of disk addresses at the current level of indirection. The
