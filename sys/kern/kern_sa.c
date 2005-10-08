@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.66 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.67 2005/10/08 06:37:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.66 2005/10/02 17:51:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.67 2005/10/08 06:37:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -977,20 +977,10 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * on the VP, but we're going back to sleep without
 		 * having returned to userland and delivering the
 		 * SA_UNBLOCKED upcall (select and poll cause this
-		 * kind of behavior a lot). We just switch back to the
-		 * LWP that had been running and let it have another
-		 * go. If the LWP on the VP was idling, don't make it
-		 * run again, though.
+		 * kind of behavior a lot).
 		 */
 		freesau = sau;
-		if (vp->savp_lwp->l_flag & L_SA_YIELD)
-			l2 = NULL;
-		else {
-			/* XXXUPSXXX Unfair advantage for l2 ? */
-			l2 = vp->savp_lwp;
-			if (l2->l_stat != LSRUN || (l2->l_flag & L_INMEM) == 0)
-				l2 = NULL;
-		}
+		l2 = NULL;
 	} else {
 		/* NOTREACHED */
 		panic("sa_vp empty");
