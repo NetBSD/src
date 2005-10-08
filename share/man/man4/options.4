@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.292 2005/09/23 20:47:25 wiz Exp $
+.\"	$NetBSD: options.4,v 1.293 2005/10/08 11:22:13 jmmv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 17, 2005
+.Dd October 8, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -870,6 +870,13 @@ Includes code for a special file system (normally mounted on
 in which pseudo-terminal slave devices become visible in the file system.
 See
 .Xr mount_ptyfs 8
+for details.
+.It Cd file-system TMPFS
+.Bq Em EXPERIMENTAL
+Includes code for the efficient memory file system, normally used over
+.Pa /tmp .
+See
+.Xr mount_tmpfs 8
 for details.
 .El
 .Ss File System Options
