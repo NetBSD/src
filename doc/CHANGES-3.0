@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.270 2005/10/07 12:04:02 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.271 2005/10/08 08:46:37 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13364,4 +13364,12 @@ etc/mtree/special				1.87
 	Consistently use 0664 root:utmp for /var/log/{lastlog,wtmp}{,x}.
 	Rest of PR misc/18670.
 	[lukem, ticket #871]
+
+sys/kern/exec_elf32.c				1.107
+
+
+	Add a hack to deal with MIPS relocatable shared-linker problem on
+	COMPAT_16 and earlier that results in a current shared linker running
+	at address 0 (and thus allows NULL pointer derefs to work).
+	[simonb, ticket #872]
 
