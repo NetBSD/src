@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.271 2005/10/08 08:46:37 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.272 2005/10/08 12:26:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13367,9 +13367,17 @@ etc/mtree/special				1.87
 
 sys/kern/exec_elf32.c				1.107
 
-
 	Add a hack to deal with MIPS relocatable shared-linker problem on
 	COMPAT_16 and earlier that results in a current shared linker running
 	at address 0 (and thus allows NULL pointer derefs to work).
 	[simonb, ticket #872]
+
+doc/3RDPARTY					1.367
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			1.9
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Update to tzdata2005n.
+	[kleink, ticket #873]
 
