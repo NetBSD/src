@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.14 2005/10/03 22:15:44 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.15 2005/10/08 20:22:05 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -77,6 +77,8 @@
 struct xni_pkt {
 	SLIST_ENTRY(xni_pkt) pkt_next;
 	int pkt_id; /* packet's ID */
+	struct xnetback_instance *pkt_xneti; /* pointer back to our softc */
+	struct xni_page *pkt_page; /* page containing this packet */
 };
 
 struct xni_page {
@@ -84,8 +86,6 @@ struct xni_page {
 	int refcount;
 	vaddr_t va; /* address the page is mapped to */
 	paddr_t ma; /* page's machine address */
-	SLIST_HEAD(xni_pkt_head, xni_pkt) xni_pkt_head;
-	struct xnetback_instance *xneti; /* pointer back to our softc */
 };
 
 /* hash list of packets mapped by machine address */
@@ -643,9 +643,7 @@ again:
 				pool_put(&xni_pkt_pool, pkt);
 				continue;
 			}
-			pkt_page->xneti = xneti;
 			pkt_page->refcount = 0;
-			SLIST_INIT(&pkt_page->xni_pkt_head);
 			if (xen_shm_map(&pkt_ma,
 			    1, xneti->domid, &pkt_va, 0) != 0) {
 				static struct timeval lasttime;
@@ -664,7 +662,7 @@ again:
 			pkt_page->va = pkt_va;
 			SLIST_INSERT_HEAD(pkt_hash, pkt_page, xni_page_next);
 		} else {
-			KASSERT(pkt_page->refcount != 0);
+			KASSERT(pkt_page->refcount > 0);
 			pkt_va = pkt_page->va;
 			XENPRINTF(("pkt_page refcount %d va 0x%lx m %p\n",
 			    pkt_page->refcount, pkt_va, m));
@@ -698,13 +696,13 @@ again:
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_OKAY);
 		} else {
-			SLIST_INSERT_HEAD(&pkt_page->xni_pkt_head, pkt, pkt_next);
+			pkt->pkt_id = txreq->id;
+			pkt->pkt_xneti = xneti;
+			pkt->pkt_page = pkt_page;
 			pkt_page->refcount++;
 
-			pkt->pkt_id = txreq->id;
-
 			MEXTADD(m, pkt_va | (txreq->addr & PAGE_MASK),
-			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt_page);
+			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
 			m->m_pkthdr.len = m->m_len = txreq->size;
 		}
 		m->m_pkthdr.rcvif = ifp;
@@ -734,40 +732,37 @@ static void
 xennetback_tx_free(struct mbuf *m, caddr_t va, size_t size, void * arg)
 {
 	int s = splnet();
-	struct xni_page *pkt_page = arg;
-	struct xni_pkt *pkt;
-	struct xnetback_instance *xneti = pkt_page->xneti;
-	NETIF_RING_IDX resp_prod = xneti->xni_txring->resp_prod;
+	struct xni_pkt *pkt = arg;
+	struct xni_page *pkt_page = pkt->pkt_page;
+	struct xnetback_instance *xneti = pkt->pkt_xneti;
+	NETIF_RING_IDX resp_prod;
 	netif_tx_response_t *txresp;
 	struct xni_pages_hash *pkt_hash;
 
 	XENPRINTF(("xennetback_tx_free ma 0x%lx refcount %d\n",
 	   pkt_page->ma, pkt_page->refcount));
 
+	resp_prod = xneti->xni_txring->resp_prod;
+	XENPRINTF(("ack id %d resp_prod %d\n",
+	    pkt->pkt_id, MASK_NETIF_TX_IDX(resp_prod)));
+	txresp = &xneti->xni_txring->ring[MASK_NETIF_TX_IDX(resp_prod)].resp;
+	txresp->id = pkt->pkt_id;
+	txresp->status = NETIF_RSP_OKAY;
+	x86_lfence();
+	resp_prod++;
+	xneti->xni_txring->resp_prod = resp_prod;
+	x86_lfence();
+	if (resp_prod == xneti->xni_txring->event) {
+		XENPRINTF(("%s send event\n",
+		    xneti->xni_if.if_xname));
+		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
+	}
+	KASSERT(pkt_page->refcount > 0);
 	pkt_page->refcount--;
+	pool_put(&xni_pkt_pool, pkt);
+
 	if (pkt_page->refcount == 0) {
-		int do_event = 0;
 		xen_shm_unmap(pkt_page->va, &pkt_page->ma, 1, xneti->domid);
-		while (!SLIST_EMPTY(&pkt_page->xni_pkt_head)) {
-			pkt = SLIST_FIRST(&pkt_page->xni_pkt_head);
-			XENPRINTF(("ack id %d resp_prod %d\n",
-			    pkt->pkt_id, MASK_NETIF_TX_IDX(resp_prod)));
-			txresp = &xneti->xni_txring->ring[
-			    MASK_NETIF_TX_IDX(resp_prod)].resp;
-			txresp->id = pkt->pkt_id;
-			txresp->status = NETIF_RSP_OKAY;
-			if (resp_prod == xneti->xni_txring->event)
-				do_event = 1;
-			resp_prod++;
-			SLIST_REMOVE_HEAD(&pkt_page->xni_pkt_head, pkt_next);
-			pool_put(&xni_pkt_pool, pkt);
-		}
-		x86_lfence();
-		xneti->xni_txring->resp_prod = resp_prod;
-		if (do_event) {
-			XENPRINTF(("%s send event\n", xneti->xni_if.if_xname));
-			hypervisor_notify_via_evtchn(xneti->xni_evtchn);
-		}
 		pkt_hash = &xni_tx_pages_hash[
 		    (pkt_page->ma >> PAGE_SHIFT) & XNI_PAGE_HASH_MASK];
 		SLIST_REMOVE(pkt_hash, pkt_page, xni_page, xni_page_next);
