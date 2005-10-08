@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.55 2005/09/07 17:30:07 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.56 2005/10/08 06:35:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.55 2005/09/07 17:30:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.56 2005/10/08 06:35:56 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2276,6 +2276,10 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	int nargv, type, error;
 	char *arg;
 	char *tmp;
+	struct vmspace *vmspace;
+	vaddr_t psstr_addr;
+	vaddr_t offsetn;
+	vaddr_t offsetv;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -2296,19 +2300,27 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	/* check pid */
-	if ((p = pfind(pid)) == NULL)
-		return (EINVAL);
+	proclist_lock_read();
 
-	if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
-		return (EPERM);
+	/* check pid */
+	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
+		error = EINVAL;
+		goto out_locked;
+	}
+
+	if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid)) {
+		error = EPERM;
+		goto out_locked;
+	}
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
 		if (up->p_ucred->cr_uid != 0) {
 			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
-			    up->p_cred->p_ruid != p->p_cred->p_svuid)
-				return (EPERM);
+			    up->p_cred->p_ruid != p->p_cred->p_svuid) {
+				error = EPERM;
+				goto out_locked;
+			}
 		}
 	}
 
@@ -2317,24 +2329,40 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			*oldlenp = sizeof (int);
 		else
 			*oldlenp = ARG_MAX;	/* XXX XXX XXX */
-		return (0);
+		error = 0;
+		goto out_locked;
 	}
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
-		return (EINVAL);
+	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+		error = EINVAL;
+		goto out_locked;
+	}
 
 	/*
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
-		return (EFAULT);
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+		error = EFAULT;
+		goto out_locked;
+	}
 
-	p->p_vmspace->vm_refcnt++;	/* XXX */
+	psstr_addr = (vaddr_t)p->p_psstr;
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV) {
+		offsetn = p->p_psnargv;
+		offsetv = p->p_psargv;
+	} else {
+		offsetn = p->p_psnenv;
+		offsetv = p->p_psenv;
+	}
+	vmspace = p->p_vmspace;
+	vmspace->vm_refcnt++;	/* XXX */
+
+	proclist_unlock_read();
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2348,19 +2376,16 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	aiov.iov_len = sizeof(pss);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)p->p_psstr;
+	auio.uio_offset = psstr_addr;
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
-	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
-		memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
-	else
-		memcpy(&nargv, (char *)&pss + p->p_psnenv, sizeof(nargv));
+	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
 		error = copyout(&nargv, oldp, sizeof(nargv));
 		*oldlenp = sizeof(nargv);
@@ -2372,10 +2397,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	switch (type) {
 	case KERN_PROC_ARGV:
 		/* XXX compat32 stuff here */
-		memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
-		break;
+		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
-		memcpy(&tmp, (char *)&pss + p->p_psenv, sizeof(tmp));
+		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
 		break;
 	default:
 		return (EINVAL);
@@ -2389,7 +2413,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
@@ -2411,7 +2435,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
-		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		error = uvm_io(&vmspace->vm_map, &auio);
 		if (error)
 			goto done;
 
@@ -2439,10 +2463,14 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	*oldlenp = len;
 
 done:
-	uvmspace_free(p->p_vmspace);
+	uvmspace_free(vmspace);
 
 	free(arg, M_TEMP);
-	return (error);
+	return error;
+
+out_locked:
+	proclist_unlock_read();
+	return error;
 }
 
 /*
