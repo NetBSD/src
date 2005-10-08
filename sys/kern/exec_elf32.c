@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.102.2.1 2005/09/18 20:09:50 tron Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.102.2.2 2005/10/08 08:44:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.102.2.1 2005/09/18 20:09:50 tron Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.102.2.2 2005/10/08 08:44:30 tron Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -397,6 +397,18 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 
 	if ((error = exec_read_from(p, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
+
+#ifdef ELF_INTERP_NON_RELOCATABLE
+	/*
+	 * Evil hack:  Only MIPS should be non-relocatable, and the
+	 * psections should have a high address (typically 0x5ffe0000).
+	 * If it's now relocatable, it should be linked at 0 and the
+	 * psections should have zeros in the upper part of the address.
+	 * Otherwise, force the load at the linked address.
+	 */
+	if (*last == ELF_LINK_ADDR && (ph->p_vaddr & 0xffff0000) == 0)
+		*last = ELFDEFNNAME(NO_ADDR);
+#endif
 
 	/*
 	 * If no position to load the interpreter was set by a probe
