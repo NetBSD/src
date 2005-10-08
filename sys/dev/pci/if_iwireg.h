@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.10 2005/09/29 19:45:57 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.11 2005/10/08 06:19:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -334,17 +334,6 @@ struct iwi_associate {
 #define IWI_SCAN_TYPE_ACTIVE_BDIRECT	4
 #define IWI_SCAN_TYPES			5
 
-/* structure for command IWI_CMD_SCAN */
-struct iwi_scan {
-	uint8_t		type;
-	uint16_t	dwelltime;
-	uint8_t		channels[IWI_SCAN_CHANNELS];
-#define IWI_CHAN_5GHZ	(0 << 6)
-#define IWI_CHAN_2GHZ	(1 << 6)
-
-	uint8_t		reserved[3];
-} __attribute__((__packed__));
-
 #define iwi_scan_type_set(s, i, t) 			\
 	do { 						\
 		if ((i) % 2 == 0)			\
@@ -357,6 +346,9 @@ struct iwi_scan {
 struct iwi_scan_v2 {
 	u_int32_t	fsidx;
 	u_int8_t	channels[IWI_SCAN_CHANNELS];
+#define IWI_CHAN_5GHZ	(0 << 6)
+#define IWI_CHAN_2GHZ	(1 << 6)
+
 	struct {
 		u_int8_t msn:4;
 		u_int8_t lsn:4;
