@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.17 2005/07/22 11:56:50 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.18 2005/10/08 18:18:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.17 2005/07/22 11:56:50 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.18 2005/10/08 18:18:18 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,6 +190,7 @@ guess_and_rotate(void)
 int
 main(int argc, char **argv)
 {
+
 	if (argc == 1) {
 		guess_and_rotate();
 	} else if (argc == 2) {
