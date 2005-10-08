@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.88 2005/06/01 13:12:49 blymn Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.89 2005/10/08 03:18:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.88 2005/06/01 13:12:49 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.89 2005/10/08 03:18:25 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -161,7 +161,7 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 
 #ifdef DDB /* { */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 int simple_lock_debugger = 1;	/* more serious on MP */
 #else
 int simple_lock_debugger = 0;
