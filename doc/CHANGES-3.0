@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.272 2005/10/08 12:26:01 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.273 2005/10/08 16:04:50 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13380,4 +13380,13 @@ share/zoneinfo/southamerica			patch
 
 	Update to tzdata2005n.
 	[kleink, ticket #873]
+
+gnu/dist/gdb/gdb/nbsd-thread.c			1.16
+
+	nbsd_thread_resume(): make sure that we've been passed a thread ID in
+	ptid before invoking the suspend-all-but-this-thread logic. Otherwise,
+	when passed an LWP (as a result of 1.15 making LWPs the primary
+	identifier of live execution contexts), we try to suspend everything,
+	which goes poorly.
+	[chs, ticket #874]
 
