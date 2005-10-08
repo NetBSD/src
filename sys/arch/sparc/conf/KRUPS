@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.31 2005/08/19 05:20:03 christos Exp $
-# From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
+# $NetBSD: KRUPS,v 1.32 2005/10/08 01:49:40 uwe Exp $
+# From: NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp
 #
 # Krups (JavaStation-NC) machine description file
 #
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.31 $"
+#ident 		"KRUPS-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -190,6 +190,7 @@ file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -262,6 +263,7 @@ com*	at ebus?
 ## miniroot images, etc.
 
 #pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
@@ -292,6 +294,7 @@ pseudo-device	loop
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 #pseudo-device	tun		4
+#pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
