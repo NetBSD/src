@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.15 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: renice.c,v 1.16 2005/10/09 18:23:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.15 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: renice.c,v 1.16 2005/10/09 18:23:52 christos Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>
@@ -49,12 +49,11 @@ __RCSID("$NetBSD: renice.c,v 1.15 2004/01/05 23:23:36 jmmv Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 static int	getnum(const char *, const char *, int *);
-static int	donice(int, int, int, int);
+static int	donice(int, id_t, int, int);
 static void	usage(void) __attribute__((__noreturn__));
-
-int	main(int, char **);
 
 /*
  * Change the priority (nice) of processes
@@ -65,7 +64,8 @@ int
 main(int argc, char **argv)
 {
 	int which = PRIO_PROCESS;
-	int who = 0, prio, errs = 0, incr = 0;
+	int prio, errs = 0, incr = 0;
+	id_t who = 0;
 
 	argc--, argv++;
 	if (argc < 2)
@@ -97,20 +97,26 @@ main(int argc, char **argv)
 			
 			if (pwd == NULL) {
 				warnx("%s: unknown user", *argv);
+				errs++;
 				continue;
 			}
-			who = pwd->pw_uid;
+			who = (id_t)pwd->pw_uid;
 		} else {
-			if (getnum("pid", *argv, &who))
-				continue;
-			if (who < 0) {
-				warnx("%s: bad value", *argv);
+			int twho;
+			if (getnum("pid", *argv, &twho)) {
+				errs++;
 				continue;
 			}
+			if (twho < 0) {
+				warnx("%s: bad value", *argv);
+				errs++;
+				continue;
+			}
+			who = (id_t)twho;
 		}
 		errs += donice(which, who, prio, incr);
 	}
-	exit(errs != 0);
+	return errs == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 static int
@@ -136,14 +142,14 @@ getnum(const char *com, const char *str, int *val)
 }
 
 static int
-donice(int which, int who, int prio, int incr)
+donice(int which, id_t who, int prio, int incr)
 {
 	int oldprio;
 
 	errno = 0;
 	if ((oldprio = getpriority(which, who)) == -1 && errno != 0) {
 		warn("%d: getpriority", who);
-		return (1);
+		return 1;
 	}
 
 	if (incr)
@@ -156,18 +162,20 @@ donice(int which, int who, int prio, int incr)
 
 	if (setpriority(which, who, prio) == -1) {
 		warn("%d: setpriority", who);
-		return (1);
+		return 1;
 	}
-	printf("%d: old priority %d, new priority %d\n", who, oldprio, prio);
-	return (0);
+	(void)printf("%d: old priority %d, new priority %d\n",
+	    who, oldprio, prio);
+	return 0;
 }
 
 static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [<priority> | -n <incr>] ", getprogname());
-	fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
-	fprintf(stderr, "[-u <user>...]\n");
+	(void)fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ",
+	    getprogname());
+	(void)fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
+	(void)fprintf(stderr, "[-u <user>...]\n");
 	exit(1);
 }
