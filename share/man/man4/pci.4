@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.79 2005/10/09 01:54:10 sekiya Exp $
+.\"	$NetBSD: pci.4,v 1.80 2005/10/09 15:15:36 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 20, 2005
+.Dd October 9, 2005
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Cd options PCI_ADDR_FIXUP
 .Cd options PCI_BUS_FIXUP
 .Cd options PCI_INTR_FIXUP
-.Pp
+.Sh DESCRIPTION
 Other
 .Nm
 attachments are machine-dependent and depend on the bus topology and
@@ -75,7 +75,7 @@ for additional information.
 .Sh OPTIONS
 .Bl -tag -width PCI_ADDR_FIXUP -offset 3n
 .It Nm PCI_ADDR_FIXUP
-fixup PCI I/O and memory addresses.
+Fixup PCI I/O and memory addresses.
 .Pp
 Some i386 and amd64 BIOS implementations don't allocate I/O space and
 memory space for some PCI devices -- primarily BIOS in PnP mode, or laptops
@@ -90,13 +90,14 @@ If necessary space is already correctly assigned to the devices,
 this option leaves the space as is.
 .Pp
 .It Nm PCI_BUS_FIXUP
-fixup PCI bus numbering; needed for many
+Fixup PCI bus numbering; needed for many
 .Xr cardbus 4
 bridges.
 .Pp
 Each PCI bus and CardBus should have a unique bus number.
 But some BIOS implementations don't assign a bus number
-for subordinate PCI buses. And many BIOS implementations
+for subordinate PCI buses.
+And many BIOS implementations
 don't assign a bus number for CardBuses.
 .Pp
 A typical symptom of this is the following boot message:
@@ -104,8 +105,8 @@ A typical symptom of this is the following boot message:
 Please note that this cardbus0 has a bus number
 .Sq 0 ,
 but normally the bus number 0 is used by the machine's
-primary PCI bus. Thus, this bus number for cardbus is
-incorrect
+primary PCI bus.
+Thus, this bus number for cardbus is incorrect
 .Pq not assigned .
 In this situation, a device located in cardbus0 doesn't
 show correct device ID,
@@ -120,7 +121,7 @@ Since this option renumbers all PCI buses and CardBuses,
 all bus numbers of subordinate buses become different
 when this option is enabled.
 .It Nm PCI_INTR_FIXUP
-fixup PCI interrupt routing via PCIBIOS or ACPI.
+Fixup PCI interrupt routing via PCIBIOS or ACPI.
 .Pp
 Some i386 and amd64 BIOS implementations don't assign an interrupt for
 some devices.
@@ -251,7 +252,8 @@ interfaces.
 .It le
 PCNet-PCI
 .Tn Ethernet
-interfaces.  Note, the
+interfaces.
+Note, the
 .Xr pcn 4
 driver supersedes this driver.
 .It lmc
