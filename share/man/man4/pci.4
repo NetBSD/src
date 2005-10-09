@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.78 2005/02/20 21:28:02 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.79 2005/10/09 01:54:10 sekiya Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -42,6 +42,9 @@
 .Pp
 .Cd options PCIVERBOSE
 .Cd options PCI_CONFIG_DUMP
+.Cd options PCI_ADDR_FIXUP
+.Cd options PCI_BUS_FIXUP
+.Cd options PCI_INTR_FIXUP
 .Pp
 Other
 .Nm
@@ -51,7 +54,7 @@ bus interface of your system.
 See
 .Xr intro 4
 for your system for details.
-.Sh DESCRIPTION
+.Pp
 .Nx
 includes a machine-independent
 .Tn PCI
@@ -69,6 +72,64 @@ devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
+.Sh OPTIONS
+.Bl -tag -width PCI_ADDR_FIXUP -offset 3n
+.It Nm PCI_ADDR_FIXUP
+fixup PCI I/O and memory addresses.
+.Pp
+Some i386 and amd64 BIOS implementations don't allocate I/O space and
+memory space for some PCI devices -- primarily BIOS in PnP mode, or laptops
+that expect devices to be configured via ACPI.
+Since necessary space isn't allocated, those devices
+will not work without special handling.
+.Pp
+This option allocates I/O space and memory space
+instead of relying upon the BIOS to do so.
+.Pp
+If necessary space is already correctly assigned to the devices,
+this option leaves the space as is.
+.Pp
+.It Nm PCI_BUS_FIXUP
+fixup PCI bus numbering; needed for many
+.Xr cardbus 4
+bridges.
+.Pp
+Each PCI bus and CardBus should have a unique bus number.
+But some BIOS implementations don't assign a bus number
+for subordinate PCI buses. And many BIOS implementations
+don't assign a bus number for CardBuses.
+.Pp
+A typical symptom of this is the following boot message:
+.D1 Sy cardbus0 at cardslot0: bus 0 device 0...
+Please note that this cardbus0 has a bus number
+.Sq 0 ,
+but normally the bus number 0 is used by the machine's
+primary PCI bus. Thus, this bus number for cardbus is
+incorrect
+.Pq not assigned .
+In this situation, a device located in cardbus0 doesn't
+show correct device ID,
+because its bus number 0 incorrectly refers to the primary
+PCI bus, and a device ID in the primary PCI bus is shown
+in the boot message instead of the device's ID in the cardbus0.
+.Pp
+This option assigns bus numbers for all subordinate
+PCI buses and CardBuses.
+.Pp
+Since this option renumbers all PCI buses and CardBuses,
+all bus numbers of subordinate buses become different
+when this option is enabled.
+.It Nm PCI_INTR_FIXUP
+fixup PCI interrupt routing via PCIBIOS or ACPI.
+.Pp
+Some i386 and amd64 BIOS implementations don't assign an interrupt for
+some devices.
+.Pp
+This option assigns an interrupt for such devices instead
+of relying upon the BIOS to do so.
+.Pp
+If a valid interrupt has already been assigned to a device, this
+option leaves the interrupt as is.
 .Sh HARDWARE
 .Nx
 includes machine-independent
