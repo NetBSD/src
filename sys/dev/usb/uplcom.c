@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.45 2005/08/13 21:50:45 martin Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.46 2005/10/09 02:16:35 sekiya Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.45 2005/08/13 21:50:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.46 2005/10/09 02:16:35 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
+	/* ELECOM UC-SGT0 */
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
 	/* Panasonic 50" Touch Panel */
 	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
 	/* RATOC REX-USB60 */
