@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.47.8.1.2.3 2005/07/24 03:20:50 snj Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47.8.1.2.4 2005/10/09 17:50:19 tron Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -506,7 +506,7 @@ action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
 action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
 action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
 action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
-action(KB_FI,	0,	0x0900,	"fi",	,	"Finish")	\
+action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
 action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
 action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
 action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")	\
