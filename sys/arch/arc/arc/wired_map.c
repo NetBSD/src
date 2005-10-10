@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.9 2005/10/10 02:14:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.9 2005/10/10 02:14:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,9 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $"
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <arc/arc/wired_map.h>
-
-#define MIPS3_PG_SIZE_MASK_TO_SIZE(sizemask)	\
-	((((sizemask) | 0x00001fff) + 1) / 2)
 
 #define VA_FREE_START	0xe0000000	/* XXX */
 

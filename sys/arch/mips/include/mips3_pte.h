@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.17 2005/09/08 15:11:43 tsutsui Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.18 2005/10/10 02:14:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,9 +178,15 @@ struct tlb {
 #define	MIPS3_PG_SIZE_64M	0x07ffe000
 #define	MIPS3_PG_SIZE_256M	0x1fffe000
 
+#define	MIPS3_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
+    ((((pg_mask) | 0x00001fff) + 1) / 2)
+
 /* NEC Vr41xx uses different pagemask values. */
 #define	MIPS4100_PG_SIZE_1K	0x00000000
 #define	MIPS4100_PG_SIZE_4K	0x00001800
 #define	MIPS4100_PG_SIZE_16K	0x00007800
 #define	MIPS4100_PG_SIZE_64K	0x0001f800
 #define	MIPS4100_PG_SIZE_256K	0x0007f800
+
+#define	MIPS4100_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
+    ((((pg_mask) | 0x000007ff) + 1) / 2)
