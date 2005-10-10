@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.273 2005/10/08 16:04:50 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.274 2005/10/10 11:34:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13389,4 +13389,11 @@ gnu/dist/gdb/gdb/nbsd-thread.c			1.16
 	identifier of live execution contexts), we try to suspend everything,
 	which goes poorly.
 	[chs, ticket #874]
+
+include/sched.h					1.8
+lib/libpthread/sched.c				1.4
+
+	Change the sched_*() functions to return -1 and set errno to ENOSYS
+	(per the standard) instead of returning ENOSYS, PR lib/30970.
+	[kleink, ticket #875]
 
