@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.53 2005/08/13 15:59:28 elad Exp $
+.\"	$NetBSD: ls.1,v 1.54 2005/10/10 20:30:34 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -238,12 +238,23 @@ the format used for non-printable characters.
 The
 .Fl 1 ,
 .Fl C ,
+.Fl g ,
 .Fl l ,
 .Fl m ,
 and
 .Fl x
 options all override each other; the last one specified determines
-the format used.
+the format used with the exception that if both
+.Fl l
+and
+.Fl g
+are specified,
+.Fl l
+will always override
+.Fl g ,
+even if
+.Fl g
+was specified last.
 .Pp
 The
 .Fl c
