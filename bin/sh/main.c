@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2005/07/15 17:49:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2005/10/10 21:14:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.49 2005/07/15 17:49:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2005/10/10 21:14:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,6 +174,7 @@ main(int argc, char **argv)
 	rootpid = getpid();
 	rootshell = 1;
 	init();
+	initpwd();
 	setstackmark(&smark);
 	procargs(argc, argv);
 	if (argv[0] && argv[0][0] == '-') {
