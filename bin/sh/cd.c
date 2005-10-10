@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.36 2005/08/20 21:07:42 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.37 2005/10/10 21:14:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.36 2005/08/20 21:07:42 dsl Exp $");
+__RCSID("$NetBSD: cd.c,v 1.37 2005/10/10 21:14:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -331,6 +331,12 @@ pwdcmd(int argc, char **argv)
 
 
 
+void
+initpwd(void)
+{
+	getpwd(0);
+	setvar("PWD", curdir, VEXPORT);
+}
 
 #define MAXPWD 256
 
