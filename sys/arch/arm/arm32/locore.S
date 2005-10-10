@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2004/11/19 07:59:53 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2005/10/10 09:58:54 pooka Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -79,7 +79,7 @@ ASENTRY_NP(start)
 
 	adr	r0, .Lmainreturned
 	b	_C_LABEL(panic)
-	/* NOTEACHED */
+	/* NOTREACHED */
 
 .Lstart:
 	.word	_edata
