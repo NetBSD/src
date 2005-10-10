@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: sched.h,v 1.7.2.1 2005/10/10 11:32:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 __BEGIN_DECLS
 /* 
- * These are permitted to fail and return ENOSYS if
+ * These are permitted to fail and return -1 and set errno = ENOSYS if
  * _POSIX_PRIORITY_SCHEDULING is not defined.
  */
 int	sched_setparam(pid_t, const struct sched_param *);

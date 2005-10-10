@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.3 2003/03/08 08:03:36 lukem Exp $	*/
+/*	$NetBSD: sched.c,v 1.3.6.1 2005/10/10 11:32:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.3 2003/03/08 08:03:36 lukem Exp $");
+__RCSID("$NetBSD: sched.c,v 1.3.6.1 2005/10/10 11:32:28 tron Exp $");
 
 #include <errno.h>
 #include <sched.h>
@@ -48,14 +48,18 @@ int	pthread__sched_binder;
 int
 sched_setparam(pid_t pid, const struct sched_param *param)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
 int
 sched_getparam(pid_t pid, struct sched_param *param)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
@@ -63,33 +67,43 @@ int
 sched_setscheduler(pid_t pid, int policy,
     const struct sched_param *param)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
 int
 sched_getscheduler(pid_t pid)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
 int
 sched_get_priority_max(int policy)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
 int
 sched_get_priority_min(int policy)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
 
 /* ARGSUSED */
 int
 sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
-	return ENOSYS;
+
+	errno = ENOSYS;
+	return -1;
 }
