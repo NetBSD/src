@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/08/18 22:30:37 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.12 2005/10/10 15:34:30 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,7 @@ PFX_READMES= ADDRESS_CLASS_README.html ADDRESS_REWRITING_README.html \
 	XCLIENT_README.html XFORWARD_README.html
 
 FILES=	$(PFX_DAEMONS) $(PFX_COMMANDS) $(PFX_CONFIG) $(PFX_READMES) \
-	index.html postconf.5.html OVERVIEW.html
+	index.html postconf.5.html OVERVIEW.html postfix-logo.jpg
 
 SYMLINKS= bounce.8.html ${BINDIR}/defer.8.html
 SYMLINKS+=bounce.8.html ${BINDIR}/trace.8.html
