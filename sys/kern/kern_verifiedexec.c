@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.42 2005/10/07 18:07:46 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.43 2005/10/10 17:36:29 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.42 2005/10/07 18:07:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.43 2005/10/10 17:36:29 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -52,18 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.42 2005/10/07 18:07:46 elad 
 #else
 # include <sys/sha1.h>
 #endif
-#include "crypto/sha2/sha2.h"
-#include "crypto/ripemd160/rmd160.h"
+#include <crypto/sha2/sha2.h>
+#include <crypto/ripemd160/rmd160.h>
 #include <sys/md5.h>
 #include <uvm/uvm_extern.h>
 
-int veriexec_verbose = 0;
-int veriexec_strict = 0;
+int veriexec_verbose;
+int veriexec_strict;
 
-char *veriexec_fp_names = NULL;
-unsigned int veriexec_name_max = 0;
+char *veriexec_fp_names;
+size_t veriexec_name_max;
 
-const struct sysctlnode *veriexec_count_node = NULL;
+const struct sysctlnode *veriexec_count_node;
 
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
@@ -130,9 +130,11 @@ int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
 void
 veriexec_init_fp_ops(void)
 {
-	struct veriexec_fp_ops *ops = NULL;
+	struct veriexec_fp_ops *ops;
 
 	LIST_INIT(&veriexec_ops_list);
+	veriexec_fp_names = NULL;
+	veriexec_name_max = 0;
 
 #ifdef VERIFIED_EXEC_FP_RMD160
 	ops = (struct veriexec_fp_ops *) malloc(sizeof(*ops), M_TEMP, M_WAITOK);
@@ -207,31 +209,31 @@ int
 veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		 struct veriexec_hash_entry *vhe, uint64_t size, u_char *fp)
 {
-	void *ctx = NULL, *page_ctx = NULL;
-	u_char *buf = NULL, *page_fp = NULL;
-	off_t offset, len = 0;
-	size_t resid, npages = 0;
-	int error = 0, do_perpage = 0;
+	void *ctx, *page_ctx;
+	u_char *buf, *page_fp;
+	off_t offset, len;
+	size_t resid, npages;
+	int error, do_perpage, pagen;
 
 	if (vhe->ops == NULL) {
 		panic("veriexec: Operations vector is NULL");
 	}
 
-#if 0
-	/*
-	 * XXX Until we have a better way to do per-page fingerprints,
-	 * XXX avoid using them.
-	 */
+#if 0 /* XXX - for now */
 	if ((vhe->type & VERIEXEC_UNTRUSTED) &&
 	    (vhe->page_fp_status == PAGE_FP_NONE))
 		do_perpage = 1;
+	else
 #endif
-
-	memset(fp, 0, vhe->ops->hash_len);
+		do_perpage = 0;
 
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	buf = (u_char *) malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
+	page_ctx = NULL;
+	page_fp = NULL;
+	npages = 0;
+	pagen = 0;
 	if (do_perpage) {
 		npages = (size >> PAGE_SHIFT) + 1;
 		page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
@@ -243,10 +245,8 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 
 	(vhe->ops->init)(ctx);
 
-	/*
-	 * The vnode is locked. sys_execve() does it for us; We have our
-	 * own locking in vn_open().
-	 */
+	len = 0;
+	error = 0;
 	for (offset = 0; offset < size; offset += PAGE_SIZE) {
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
 						    : PAGE_SIZE;
@@ -269,22 +269,28 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 			goto bad;
 		}
 
-		/* calculate fingerprint for each chunk */
 		(vhe->ops->update)(ctx, buf, (unsigned int) len);
 
-		/* calculate per-page fingerprint if needed */
 		if (do_perpage) {
 			(vhe->ops->init)(page_ctx);
 			(vhe->ops->update)(page_ctx, buf, (unsigned int)len);
 			(vhe->ops->final)(page_fp, page_ctx);
 			page_fp += vhe->ops->hash_len;
+
+			if (veriexec_verbose >= 2) {
+				int i;
+
+				printf("hash for page %d: ", pagen);
+				for (i = 0; i < vhe->ops->hash_len; i++)
+					printf("%02x", page_fp[i]);
+				printf("\n");
+			}
 		}
 
 		if (len != PAGE_SIZE)
 			break;
 	}
 
-	/* finalise the fingerprint calculation */
 	(vhe->ops->final)(fp, ctx);
 
 	if (do_perpage) {
@@ -312,11 +318,11 @@ veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
 		printf("comparing hashes...\n");
 		printf("fp1: ");
 		for (i = 0; i < ops->hash_len; i++) {
-			printf("%x", fp1[i]);
+			printf("%02x", fp1[i]);
 		}
 		printf("\nfp2: ");
 		for (i = 0; i < ops->hash_len; i++) {
-			printf("%x", fp2[i]);
+			printf("%02x", fp2[i]);
 		}
 		printf("\n");
 	}
@@ -397,9 +403,9 @@ int
 veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		const u_char *name, int flag, struct veriexec_hash_entry **ret)
 {
-	struct veriexec_hash_entry *vhe = NULL;
-        u_char *digest = NULL;
-        int error = 0;
+	struct veriexec_hash_entry *vhe;
+	u_char *digest;
+	int error;
 
 	if (vp->v_type != VREG)
 		return (0);
@@ -413,6 +419,8 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		goto out;
 
 	/* Evaluate fingerprint if needed. */
+	error = 0;
+	digest = NULL;
 	if ((vhe->status == FINGERPRINT_NOTEVAL) ||
 	    (vhe->type & VERIEXEC_UNTRUSTED)) {
 		/* Calculate fingerprint for on-disk file. */
@@ -490,7 +498,7 @@ out:
 		 * Should never happen.
 		 * XXX: Print vnode/process?
 		 */
-		veriexec_report("veriexec_verify: Invalid stats "
+		veriexec_report("veriexec_verify: Invalid status "
 		    "post evaluation.", name, va, NULL, REPORT_NOVERBOSE,
 		    REPORT_NOALARM, REPORT_PANIC);
         }
@@ -509,7 +517,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	u_char *fp;
 	u_char *page_fp;
 	int error;
-	vaddr_t kva = 0;
+	vaddr_t kva;
 
 	if (vhe->page_fp_status == PAGE_FP_NONE)
 		return (0);
@@ -517,9 +525,13 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	if (vhe->page_fp_status == PAGE_FP_FAIL)
 		return (EPERM);
 
+	if (idx >= vhe->npages)
+		return (0);
+
 	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
 	fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
 
+	kva = 0;
 	error = uvm_map(kernel_map, &kva, PAGE_SIZE, NULL,
 			UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_READ,
 			UVM_PROT_READ, UVM_INH_NONE, UVM_ADV_NORMAL,
@@ -542,8 +554,8 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 
 	error = veriexec_fp_cmp(vhe->ops, page_fp, fp);
 	if (error) {
-		struct proc *p = curproc;
-		const char *msg = NULL;
+		struct proc *p;
+		const char *msg;
 
 		if (veriexec_strict > 0) {
 			msg = "Pages modified: Killing process.";
@@ -552,6 +564,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 			error = 0;
 		}
 
+		p = curlwp->l_proc;
 		veriexec_report(msg, "[page_in]", va, p, REPORT_NOVERBOSE,
 				REPORT_ALARM, REPORT_NOPANIC);
 
@@ -582,7 +595,7 @@ int
 veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_hashtbl *tbl;
-	struct veriexec_hash_entry *vhe = NULL;
+	struct veriexec_hash_entry *vhe;
 	struct vattr va;
 	int error;
 
@@ -634,11 +647,12 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 int
 veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 {
-	struct proc *p = curlwp->l_proc;
+	struct proc *p;
 	struct veriexec_hash_entry *vhe;
 	struct vattr va;
 	int error;
 
+	p = curlwp->l_proc;
 	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
 	if (error)
 		return (error);
