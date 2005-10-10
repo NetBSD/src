@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.46 2005/10/06 10:43:45 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.47 2005/10/10 05:41:28 dyoung Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -532,7 +532,7 @@ file system for a system with a serial console:
 .Dl Ic cp /usr/mdec/bootxx_cd9660 bootxx
 .Dl Ic installboot -t raw -o console=com0,speed=19200 bootxx \
 	/usr/mdec/bootxx_cd9660
-.Dl Ic makefs -t cd9660 -o bootimage=i386;bootxx,no-emul-boot boot.iso \
+.Dl Ic makefs -t cd9660 -o 'bootimage=i386;bootxx,no-emul-boot' boot.iso \
 	cdrom
 .
 .Pp
