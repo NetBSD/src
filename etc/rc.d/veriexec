@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-#	$NetBSD: veriexec,v 1.5 2005/06/15 18:49:40 elad Exp $
+#	$NetBSD: veriexec,v 1.6 2005/10/11 21:24:09 elad Exp $
 #
 
 # PROVIDE: veriexec
-# REQUIRE: mountcritlocal
+# REQUIRE: mountall
 # BEFORE:  securelevel sysctl
 
 $_rc_subr_loaded . /etc/rc.subr
