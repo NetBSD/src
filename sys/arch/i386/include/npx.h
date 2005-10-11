@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.20 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: npx.h,v 1.20.2.1 2005/10/11 17:14:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,6 +149,21 @@ struct emcsts {
  * Set Reference, pg. 3-369.
  */
 #define	__INITIAL_MXCSR__	0x1f80
+
+
+/*
+ * 80387 control word bits
+ */
+#define EN_SW_INVOP	0x0001  /* Invalid operation */
+#define EN_SW_DENORM	0x0002  /* Denormalized operand */
+#define EN_SW_ZERODIV	0x0004  /* Divide by zero */
+#define EN_SW_OVERFLOW	0x0008  /* Overflow */
+#define EN_SW_UNDERFLOW	0x0010  /* Underflow */
+#define EN_SW_PRECLOSS	0x0020  /* Loss of precision */
+#define EN_SW_DATACHAIN	0x0080	/* Data chain exception */
+#define EN_SW_CTL_PREC	0x0300	/* Precision control */
+#define EN_SW_CTL_ROUND	0x0c00	/* Rounding control */
+#define EN_SW_CTL_INF	0x1000	/* Infinity control */
 
 /*
  * The standard control word from finit is 0x37F, giving:
