@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.195 2005/10/11 16:58:49 riz Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.196 2005/10/11 17:21:40 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3859,4 +3859,12 @@ etc/rc.lkm					1.9
 	Unconditionally passing -A in rc.lkm prevents the loading of inter-
 	dependent modules from rc.d.
 	[cube, ticket #5925]
+
+sys/arch/i386/i386/trap.c			1.205
+sys/arch/i386/i386/vector.S			1.20
+sys/arch/i386/include/npx.h			1.21
+
+	Handle MMX faults as floating exceptions. Tested by Hauke Fath; matlab
+	passes all its regression suite without panicking the kernel.
+	[christos, ticket #5923]
 
