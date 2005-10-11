@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.45 2005/10/11 17:00:09 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.46 2005/10/11 17:21:33 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -513,4 +513,12 @@ share/zoneinfo/southamerica			1.1.1.30
 
 	Update to tzdata2005n.
 	[kleink, ticket #5911]
+
+sys/arch/i386/i386/trap.c			1.205
+sys/arch/i386/i386/vector.S			1.20
+sys/arch/i386/include/npx.h			1.21
+
+	Handle MMX faults as floating exceptions. Tested by Hauke Fath; matlab
+	passes all its regression suite without panicking the kernel.
+	[christos, ticket #5923]
 
