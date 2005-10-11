@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.155 2005/09/14 22:36:11 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.156 2005/10/11 21:13:57 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1913,4 +1913,9 @@ xfree/xc/config/cf/NetBSD.cf			1.80
 	Remove unsafe /tmp file creation for the file.0 target. Just make
 	the file in the current build directory instead of temp directory.
 	[reed, ticket #5866]
+
+crypto/dist/openssl/ssl/s23_srvr.c		1.2
+
+	Fix openssl 2.0 rollback, CAN-2005-2969.
+	[gendalia, ticket #5908]
 
