@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.200.4.1 2005/10/11 17:14:45 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200.4.1 2005/10/11 17:14:45 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp $");
 
 #include "npx.h"
 
+static __inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 #if defined(I386_CPU)
@@ -198,6 +199,45 @@ trap_tss(struct i386tss *tss, int trapno, int code)
 	tf.tf_ss = tss->__tss_ss;
 	trap(&tf);
 }
+
+static __inline int
+xmm_si_code(struct lwp *l)
+{
+	uint32_t mxcsr, mask;
+
+	if (!i386_use_fxsave) {
+#ifdef DIAGNOSTIC
+		panic("SSE FP Exception, but no SSE");
+#endif
+		return 0;
+	}
+	mxcsr = l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
+
+	/*
+         * Since we only have a single status and control register,
+	 * we use the exception mask bits to mask disabled exceptions
+	 */
+	mask = ~((mxcsr & __INITIAL_MXCSR__) >> 7) & 0xff;
+        switch (mask & mxcsr) {
+	case EN_SW_INVOP:
+		return FPE_FLTINV;
+	case EN_SW_DENORM:
+	case EN_SW_PRECLOSS:
+		return FPE_FLTRES;
+	case EN_SW_ZERODIV:
+		return FPE_FLTDIV;
+	case EN_SW_OVERFLOW:
+		return FPE_FLTOVF;
+	case EN_SW_UNDERFLOW:
+		return FPE_FLTUND;
+	case EN_SW_DATACHAIN:
+		return FPE_FLTSUB;
+	case 0:
+	default:
+		return 0;
+        }
+}
+
 
 /*
  * trap(frame):
@@ -491,6 +531,7 @@ copyfault:
 #endif
 	}
 
+	case T_XMM|T_USER:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
@@ -499,6 +540,9 @@ copyfault:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_eip;
 		switch (type) {
+		case T_XMM|T_USER:
+			ksi.ksi_code = xmm_si_code(l);
+			break;
 		case T_BOUND|T_USER:
 		case T_OFLOW|T_USER:
 			ksi.ksi_code = FPE_FLTOVF;
