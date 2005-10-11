@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.275 2005/10/11 21:02:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.276 2005/10/11 21:06:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13401,4 +13401,12 @@ crypto/dist/openssl/ssl/s23_srvr.c		1.2
 
 	Fix openssl 2.0 rollback, CAN-2005-2969.
 	[gendalia, ticket #882]
+
+sys/arch/i386/i386/trap.c			1.205
+sys/arch/i386/i386/vector.S			1.20
+sys/arch/i386/include/npx.h			1.21
+
+	Handle MMX faults as floating exceptions. MATLAB now passes all its
+	regression suite without panicking the kernel.
+	[christos, ticket #880]
 
