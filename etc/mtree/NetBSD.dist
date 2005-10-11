@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.290 2005/09/14 14:01:57 tsarna Exp $
+#	$NetBSD: NetBSD.dist,v 1.291 2005/10/11 06:12:43 he Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -325,6 +325,8 @@
 ./usr/share/dict/special
 ./usr/share/doc
 ./usr/share/doc/html
+./usr/share/doc/html/bind9
+./usr/share/doc/html/bind9/arm
 ./usr/share/doc/html/bzip2
 ./usr/share/doc/html/postfix
 ./usr/share/doc/psd
