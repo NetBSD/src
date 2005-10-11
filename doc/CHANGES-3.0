@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.274 2005/10/10 11:34:16 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.275 2005/10/11 21:02:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13396,4 +13396,9 @@ lib/libpthread/sched.c				1.4
 	Change the sched_*() functions to return -1 and set errno to ENOSYS
 	(per the standard) instead of returning ENOSYS, PR lib/30970.
 	[kleink, ticket #875]
+
+crypto/dist/openssl/ssl/s23_srvr.c		1.2
+
+	Fix openssl 2.0 rollback, CAN-2005-2969.
+	[gendalia, ticket #882]
 
