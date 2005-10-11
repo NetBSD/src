@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.43 2005/10/10 17:36:29 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.44 2005/10/11 23:59:40 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.43 2005/10/10 17:36:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.44 2005/10/11 23:59:40 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.43 2005/10/10 17:36:29 elad 
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/inttypes.h>
 #define VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
 #if defined(__FreeBSD__)
@@ -628,13 +629,10 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	}
 
 	LIST_REMOVE(vhe, entries);
-	free(vhe->fp, M_TEMP);
-	if (vhe->page_fp) {
-		vhe->page_fp_status = PAGE_FP_NONE;
+	if (vhe->fp != NULL)
+		free(vhe->fp, M_TEMP);
+	if (vhe->page_fp != NULL)
 		free(vhe->page_fp, M_TEMP);
-		vhe->page_fp = NULL;
-		vhe->npages = 0;
-	}
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
 
@@ -715,11 +713,11 @@ veriexec_report(const u_char *msg, const u_char *filename,
 
 	if (!verbose || (verbose <= veriexec_verbose)) {
 		if (!alarm || p == NULL)
-			f("veriexec: %s [%s, %ld:%ld%s", msg, filename,
+			f("veriexec: %s [%s, %ld:%" PRIu64 "%s", msg, filename,
 			    va->va_fsid, va->va_fileid,
 			    die ? "]" : "]\n");
 		else
-			f("veriexec: %s [%s, %ld:%ld, pid=%u, uid=%u, "
+			f("veriexec: %s [%s, %ld:%" PRIu64 ", pid=%u, uid=%u, "
 			    "gid=%u%s", msg, filename, va->va_fsid,
 			    va->va_fileid, p->p_pid, p->p_cred->p_ruid,
 			    p->p_cred->p_rgid, die ? "]" : "]\n");
