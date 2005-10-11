@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.2 2005/10/11 09:56:51 cube Exp $ */
+/* $NetBSD: gpio.c,v 1.3 2005/10/11 16:01:03 drochner Exp $ */
 /*	$OpenBSD: gpio.c,v 1.4 2004/11/23 21:18:37 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.2 2005/10/11 09:56:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.3 2005/10/11 16:01:03 drochner Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -32,6 +32,8 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.2 2005/10/11 09:56:51 cube Exp $");
 #include <sys/vnode.h>
 
 #include <dev/gpio/gpiovar.h>
+
+#include "locators.h"
 
 struct gpio_softc {
 	struct device sc_dev;
@@ -68,10 +70,6 @@ extern struct cfdriver gpio_cd;
 int
 gpio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct gpiobus_attach_args *gba = aux;
-
-	if (strcmp(gba->gba_name, cf->cf_name) != 0)
-		return (0);
 
 	return (1);
 }
@@ -136,8 +134,8 @@ gpio_search(struct device *parent, struct cfdata *cf,
 {
 	struct gpio_attach_args ga;
 
-	ga.ga_pin = cf->cf_loc[0];
-	ga.ga_mask = cf->cf_loc[1];
+	ga.ga_pin = cf->cf_loc[GPIOCF_PIN];
+	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
 
 	if (config_match(parent, cf, &ga) > 0)
 		config_attach(parent, cf, &ga, gpio_print);
@@ -162,10 +160,11 @@ gpio_print(void *aux, const char *pnp)
 int
 gpiobus_print(void *aux, const char *pnp)
 {
+#if 0
 	struct gpiobus_attach_args *gba = aux;
-
+#endif
 	if (pnp != NULL)
-		printf("%s at %s", gba->gba_name, pnp);
+		printf("%s at %s", "gpiobus", pnp);
 
 	return (UNCONF);
 }

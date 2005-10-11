@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.1 2005/09/27 02:34:02 jmcneill Exp $ */
+/* $NetBSD: gpiovar.h,v 1.2 2005/10/11 16:01:03 drochner Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -38,7 +38,6 @@ typedef struct gpio_pin {
 
 /* Attach GPIO framework to the controller */
 struct gpiobus_attach_args {
-	const char		*gba_name;	/* bus name */
 	gpio_chipset_tag_t	gba_gc;		/* underlying controller */
 	gpio_pin_t		*gba_pins;	/* pins array */
 	int			gba_npins;	/* total number of pins */
