@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.1 2003/07/25 09:48:18 itojun Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.1.2.1 2005/10/11 16:29:31 riz Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.1 2003/07/25 09:48:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.1.2.1 2005/10/11 16:29:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.1 2003/07/25 09:48:18 itojun Exp $"
 union cblock {
 	struct {
 		u_int8_t nonce[4];
-		u_int8_t iv[16];
+		u_int8_t iv[8];
 		u_int32_t ctr;
 	} v __attribute__((__packed__));
 	u_int8_t cblock[16];
