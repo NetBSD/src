@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.1 2005/09/27 02:34:02 jmcneill Exp $ */
+/* $NetBSD: gpio.c,v 1.2 2005/10/11 09:56:51 cube Exp $ */
 /*	$OpenBSD: gpio.c,v 1.4 2004/11/23 21:18:37 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.2 2005/10/11 09:56:51 cube Exp $");
 
 /*
  * General Purpose Input/Output framework.
