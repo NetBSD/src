@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.11 2005/09/27 02:56:27 jmcneill Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.12 2005/10/11 15:58:38 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.11 2005/09/27 02:56:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.12 2005/10/11 15:58:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.11 2005/09/27 02:56:27 jmcneill 
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include "gpio.h"
+#if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
+#endif
 #include <dev/sysmon/sysmonvar.h>
 
 static int nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
@@ -59,9 +62,11 @@ struct nsclpcsio_softc {
 	struct sysmon_envsys sc_sysmon;
 	struct simplelock sc_lock;
 
+#if NGPIO > 0
 	/* GPIO */
 	struct gpio_chipset_tag sc_gpio_gc;
 	struct gpio_pin sc_gpio_pins[GPIO_NPINS];
+#endif
 };
 
 #define GPIO_READ(sc, reg)			\
@@ -86,11 +91,13 @@ static void tms_update(struct nsclpcsio_softc *, int);
 static int tms_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 static int tms_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
+#if NGPIO > 0
 static void nsclpcsio_gpio_init(struct nsclpcsio_softc *);
 static void nsclpcsio_gpio_pin_select(struct nsclpcsio_softc *, int);
 static void nsclpcsio_gpio_pin_write(void *, int, int);
 static int nsclpcsio_gpio_pin_read(void *, int);
 static void nsclpcsio_gpio_pin_ctl(void *, int, int);
+#endif
 
 static u_int8_t
 nsread(iot, ioh, idx)
@@ -183,7 +190,9 @@ nsclpcsio_isa_attach(parent, self, aux)
 {
 	struct nsclpcsio_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+#if NGPIO > 0
 	struct gpiobus_attach_args gba;
+#endif
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_int8_t val;
@@ -217,7 +226,9 @@ nsclpcsio_isa_attach(parent, self, aux)
 		}
 		printf("%s: GPIO at 0x%x\n", sc->sc_dev.dv_xname, gpio_iobase);
 
+#if NGPIO > 0
 		nsclpcsio_gpio_init(sc);
+#endif
 	}
 
 	nswrite(iot, ioh, 0x07, 0x0e); /* select tms */
@@ -287,15 +298,15 @@ nsclpcsio_isa_attach(parent, self, aux)
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
+#if NGPIO > 0
 	/* attach GPIO framework */
 	if (gpio_iobase != 0) {
-		gba.gba_name = "gpio";
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = GPIO_NPINS;
-		config_found(&sc->sc_dev, &gba, NULL);
+		config_found_ia(&sc->sc_dev, "gpiobus", &gba, NULL);
 	}
-
+#endif
 	return;
 }
 
@@ -415,6 +426,7 @@ tms_streinfo(sme, info)
 	return (0);
 }
 
+#if NGPIO > 0
 static void
 nsclpcsio_gpio_pin_select(struct nsclpcsio_softc *sc, int pin)
 {
@@ -533,3 +545,4 @@ nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 
 	return;
 }
+#endif /* NGPIO */

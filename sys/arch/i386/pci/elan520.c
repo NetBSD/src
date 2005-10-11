@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.9 2005/10/07 15:59:50 riz Exp $	*/
+/*	$NetBSD: elan520.c,v 1.10 2005/10/11 15:58:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.9 2005/10/07 15:59:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.10 2005/10/11 15:58:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.9 2005/10/07 15:59:50 riz Exp $");
 
 #include <dev/pci/pcidevs.h>
 
+#include "gpio.h"
+#if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
+#endif
 
 #include <arch/i386/pci/elan520reg.h>
 
@@ -81,9 +84,11 @@ struct elansc_softc {
 	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
 };
 
+#if NGPIO > 0
 static int	elansc_gpio_pin_read(void *, int);
 static void	elansc_gpio_pin_write(void *, int, int);
 static void	elansc_gpio_pin_ctl(void *, int, int);
+#endif
 
 static void
 elansc_wdogctl_write(struct elansc_softc *sc, uint16_t val)
@@ -226,12 +231,14 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct elansc_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
-	struct gpiobus_attach_args gba;
 	uint16_t rev;
 	uint8_t ressta, cpuctl;
+#if NGPIO > 0
+	struct gpiobus_attach_args gba;
 	int pin;
 	int reg, shift;
 	uint16_t data;
+#endif
 
 	printf(": AMD Elan SC520 System Controller\n");
 
@@ -297,6 +304,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
 
+#if NGPIO > 0
 	/* Initialize GPIO pins array */
 	for (pin = 0; pin < ELANSC_PIO_NPINS; pin++) {
 		sc->sc_gpio_pins[pin].pin_num = pin;
@@ -323,18 +331,19 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio_gc.gp_pin_write = elansc_gpio_pin_write;
 	sc->sc_gpio_gc.gp_pin_ctl = elansc_gpio_pin_ctl;
 
-	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ELANSC_PIO_NPINS;
 
 	/* Attach GPIO framework */
-	config_found(&sc->sc_dev, &gba, gpiobus_print);
+	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+#endif /* NGPIO */
 }
 
 CFATTACH_DECL(elansc, sizeof(struct elansc_softc),
     elansc_match, elansc_attach, NULL, NULL);
 
+#if NGPIO > 0
 static int
 elansc_gpio_pin_read(void *arg, int pin)
 {
@@ -384,3 +393,4 @@ elansc_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	bus_space_write_2(sc->sc_memt, sc->sc_memh, reg, data);
 }
+#endif /* NGPIO */
