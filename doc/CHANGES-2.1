@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.194 2005/10/09 17:52:05 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.195 2005/10/11 16:58:49 riz Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -3832,4 +3832,31 @@ sys/dev/wscons/wsksymdef.h			1.52
 
 	Correct name of finnish keymap.
 	[riz, ticket #5919]
+
+distrib/notes/sgimips/hardware			patch
+
+	Remove MACE ethernet from the unsupported list.
+	[tsutsui, ticket #5924]
+
+sys/netinet6/esp_aesctr.c			1.2
+
+	AES counter mode uses 8byte IV, not 16 bytes. PR#30291. 
+	[kleink, ticket #5899]
+
+doc/3RDPARTY					1.367
+share/zoneinfo/asia				1.1.1.34
+share/zoneinfo/australasia			1.9
+share/zoneinfo/northamerica			1.1.1.31
+share/zoneinfo/southamerica			1.1.1.30
+
+	Update to tzdata2005n.
+	[kleink, ticket #5911]
+
+etc/rc.lkm					1.9
+
+	modload(8) already obtain the value of the machdep.booted_kernel sysctl
+	node, and use it as a reasonable default when no -A option is passed.
+	Unconditionally passing -A in rc.lkm prevents the loading of inter-
+	dependent modules from rc.d.
+	[cube, ticket #5925]
 
