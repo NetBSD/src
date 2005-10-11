@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.20 2003/08/07 11:13:43 agc Exp $	*/
+/*	$NetBSD: option.c,v 1.20.4.1 2005/10/11 22:56:27 reed Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.20 2003/08/07 11:13:43 agc Exp $");
+__RCSID("$NetBSD: option.c,v 1.20.4.1 2005/10/11 22:56:27 reed Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ static OPTION const options[] = {
 	{ "-execdir",	N_EXECDIR,	c_execdir,	1 },
 	{ "-flags",	N_FLAGS,	c_flags,	1 },
 	{ "-follow",	N_FOLLOW,	c_follow,	0 },
+	{ "-fprint",	N_FPRINT,	c_fprint,	1 },
 	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
 	{ "-group",	N_GROUP,	c_group,	1 },
 	{ "-iname",	N_INAME,	c_iname,	1 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.46 2003/08/07 11:13:41 agc Exp $	*/
+/*	$NetBSD: function.c,v 1.46.4.1 2005/10/11 22:56:27 reed Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.46 2003/08/07 11:13:41 agc Exp $");
+__RCSID("$NetBSD: function.c,v 1.46.4.1 2005/10/11 22:56:27 reed Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_exec __P((PLAN *, FTSENT *));
 	int	f_execdir __P((PLAN *, FTSENT *));
 	int	f_flags __P((PLAN *, FTSENT *));
+	int	f_fprint __P((PLAN *, FTSENT *));
 	int	f_fstype __P((PLAN *, FTSENT *));
 	int	f_group __P((PLAN *, FTSENT *));
 	int	f_iname __P((PLAN *, FTSENT *));
@@ -708,6 +709,43 @@ c_follow(argvp, isok)
 	return (palloc(N_FOLLOW, f_always_true));
 }
  
+/* -fprint functions --
+ *
+ *	Causes the current pathame to be written to the defined output file.
+ */
+int
+f_fprint(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	if (-1 == fprintf(plan->fprint_file, "%s\n", entry->fts_path))
+		warn("fprintf");
+
+	return(1);
+
+	/* no descriptors are closed; they will be closed by
+	   operating system when this find command exits.  */
+}
+ 
+PLAN *
+c_fprint(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	PLAN *new;
+
+	isoutput = 1; /* do not assume -print */
+
+	new = palloc(N_FPRINT, f_fprint);
+
+	if (NULL == (new->fprint_file = fopen(**argvp, "w")))
+		err(1, "-fprint: %s: cannot create file", **argvp);
+
+	(*argvp)++;
+	return (new);
+}
+
 /*
  * -fstype functions --
  *

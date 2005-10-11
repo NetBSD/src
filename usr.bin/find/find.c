@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.18.2.1 2004/03/31 18:07:46 tron Exp $	*/
+/*	$NetBSD: find.c,v 1.18.2.1.2.1 2005/10/11 22:56:27 reed Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.18.2.1 2004/03/31 18:07:46 tron Exp $");
+__RCSID("$NetBSD: find.c,v 1.18.2.1.2.1 2005/10/11 22:56:27 reed Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,9 +98,9 @@ find_formplan(argv)
 	}
 
 	/*
-	 * if the user didn't specify one of -print, -ok or -exec, then -print
-	 * is assumed so we bracket the current expression with parens, if
-	 * necessary, and add a -print node on the end.
+	 * if the user didn't specify one of -print, -ok, -fprint, or -exec,
+	 * then -print is assumed so we bracket the current expression with
+	 * parens, if necessary, and add a -print node on the end.
 	 */
 	if (!isoutput) {
 		if (plan == NULL) {
