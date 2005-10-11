@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7.2.3 2004/07/23 07:06:14 tron Exp $
+.\"	$NetBSD: hardware,v 1.7.2.3.2.1 2005/10/11 16:21:16 riz Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
@@ -108,6 +108,4 @@ Video hardware
 Parallel ports
 .It
 zs keyboard/mouse
-.It
-Mace Ethernet controller (IP32)
 .bullet)
