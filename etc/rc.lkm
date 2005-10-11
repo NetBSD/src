@@ -1,4 +1,4 @@
-#	$NetBSD: rc.lkm,v 1.8 2003/01/05 22:47:13 christos Exp $
+#	$NetBSD: rc.lkm,v 1.8.4.1 2005/10/11 16:54:38 riz Exp $
 #
 # this script loads or unloads LKMs (loadable kernel modules).
 
@@ -77,14 +77,6 @@ if [ -s /etc/lkm.conf ]; then
 				continue
 			fi
 	
-			# try to find out booted kernel via sysctl
-			# if supported
-			booted_kernel=`/sbin/sysctl -n machdep.booted_kernel 2>/dev/null`
-			if [ ! -z "$booted_kernel" -a -r "$booted_kernel" ];
-			then
-				flags="-A $booted_kernel $flags"
-			fi
-
 			echo -n "${path##*/}: "
 			modload $flags $path
 			rm -f /tmp/lkm.$$
