@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.1 2005/09/27 02:42:44 jmcneill Exp $ */
+/* $NetBSD: gscpcib.c,v 1.2 2005/10/11 15:59:16 drochner Exp $ */
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -120,7 +120,6 @@ gscpcib_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio_gc.gp_pin_write = gscpcib_gpio_pin_write;
 	sc->sc_gpio_gc.gp_pin_ctl = gscpcib_gpio_pin_ctl;
 
-	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = GSCGPIO_NPINS;
@@ -135,7 +134,7 @@ corepcib:
 #ifndef SMALL_KERNEL
 	/* Attach GPIO framework */
 	if (gpio_present)
-		config_found(&sc->sc_dev, &gba, gpiobus_print);
+		config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 #endif	/* !SMALL_KERNEL */
 }
 
