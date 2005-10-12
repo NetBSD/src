@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.156 2005/10/11 21:13:57 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.157 2005/10/12 00:53:54 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1914,8 +1914,11 @@ xfree/xc/config/cf/NetBSD.cf			1.80
 	the file in the current build directory instead of temp directory.
 	[reed, ticket #5866]
 
+crypto/dist/openssl/crypto/opensslv.h		1.2
 crypto/dist/openssl/ssl/s23_srvr.c		1.2
 
-	Fix openssl 2.0 rollback, CAN-2005-2969.
+	Fix openssl 2.0 rollback, CAN-2005-2969. Also, add a
+	preprocessor symbol so we can distinguish fixed openssl
+	from the vanilla openssl.
 	[gendalia, ticket #5908]
 
