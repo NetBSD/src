@@ -92,5 +92,11 @@
 #define SHLIB_VERSION_HISTORY ""
 #define SHLIB_VERSION_NUMBER "0.9.6"
 
+/* The following macro indicates that this version of OpenSSL
+ * contains the security related patch from
+ * http://www.openssl.org/news/patch-CAN-2005-2969.txt
+ */
+#define OPENSSL_HAS_20051011_FIX
+
 
 #endif /* HEADER_OPENSSLV_H */
