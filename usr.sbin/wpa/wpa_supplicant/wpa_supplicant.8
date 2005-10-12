@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.8,v 1.1 2005/10/01 18:50:12 scw Exp $
+.\" $NetBSD: wpa_supplicant.8,v 1.2 2005/10/12 09:19:34 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm wpa_supplicant
-.Nd "WPA/802.11i Supplicant for wireless network devices"
+.Nd WPA/802.11i Supplicant for wireless network devices
 .Sh SYNOPSIS
 .Nm
 .Op Fl BdehLqvw
@@ -81,7 +81,7 @@ for a description of the configuration file syntax and contents.
 .Pp
 Changes to the configuration file can be reloaded by sending a
 .Dv SIGHUP
-to the
+signal to the
 .Nm
 process or with the
 .Xr wpa_cli 8
@@ -91,6 +91,9 @@ utility, using
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width indent
+.It Fl B
+Detach from the controlling terminal and run as a daemon process
+in the background.
 .It Fl d
 Enable debugging messages.
 If this option is supplied twice, more verbose messages are displayed.
@@ -100,6 +103,15 @@ internal Supplicant.
 This option is not normally used.
 .It Fl h
 Show help text.
+.It Fl K
+Include key information in debugging output.
+.It Fl L
+Display the license for this program on the terminal and exit.
+.It Fl N i Ar ifname Fl c Ar config-file ...
+Specify an additional interface and configuration file.
+If multiple interfaces are specified then
+.Nm
+will manage them all with a single process.
 .It Fl q
 Decrease debugging verbosity (i.e., counteract the use of the
 .Fl d
@@ -114,18 +126,6 @@ This option is not normally used; instead,
 should be configured to launch
 .Nm
 when a device is created.
-.It Fl B
-Detach from the controlling terminal and run as a daemon process
-in the background.
-.It Fl K
-Include key information in debugging output.
-.It Fl L
-Display the license for this program on the terminal and exit.
-.It Fl N i Ar ifname Fl c Ar config-file ...
-Specify an additional interface and configuration file.
-If multiple interfaces are specified then
-.Nm
-will manage them all with a single process.
 .El
 .Sh SEE ALSO
 .Xr ath 4 ,
