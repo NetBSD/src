@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.44 2005/10/11 23:59:40 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.45 2005/10/12 14:26:47 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.44 2005/10/11 23:59:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.45 2005/10/12 14:26:47 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -234,7 +234,6 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 	page_ctx = NULL;
 	page_fp = NULL;
 	npages = 0;
-	pagen = 0;
 	if (do_perpage) {
 		npages = (size >> PAGE_SHIFT) + 1;
 		page_fp = (u_char *) malloc(vhe->ops->hash_len * npages,
@@ -248,6 +247,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 
 	len = 0;
 	error = 0;
+	pagen = 0;
 	for (offset = 0; offset < size; offset += PAGE_SIZE) {
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
 						    : PAGE_SIZE;
@@ -276,7 +276,6 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 			(vhe->ops->init)(page_ctx);
 			(vhe->ops->update)(page_ctx, buf, (unsigned int)len);
 			(vhe->ops->final)(page_fp, page_ctx);
-			page_fp += vhe->ops->hash_len;
 
 			if (veriexec_verbose >= 2) {
 				int i;
@@ -286,6 +285,9 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 					printf("%02x", page_fp[i]);
 				printf("\n");
 			}
+
+			page_fp += vhe->ops->hash_len;
+			pagen++;
 		}
 
 		if (len != PAGE_SIZE)
