@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.conf.5,v 1.1 2005/10/01 18:50:12 scw Exp $
+.\" $NetBSD: wpa_supplicant.conf.5,v 1.2 2005/10/12 09:19:02 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -138,7 +138,7 @@ or hex string enclosed in quotation marks.
 SSID scan technique; 0 (default) or 1.
 Technique 0 scans for the SSID using a broadcast Probe Request
 frame while 1 uses a directed Probe Request frame.
-Access points that cloak themself by not braodcasting their SSID
+Access points that cloak themself by not broadcasting their SSID
 require technique 1, but beware that this scheme can cause scanning
 to take longer to complete.
 .It Va bssid
@@ -237,10 +237,10 @@ used only as a Phase 2 method with EAP-PEAP or EAP-TTLS),
 used only as a Phase 2 method with EAP-PEAP or EAP-TTLS),
 .Li OTP
 (EAP-OTP, cannot be used with WPA;
-used only as a Phase 2 metod with EAP-PEAP or EAP-TTLS),
+used only as a Phase 2 method with EAP-PEAP or EAP-TTLS),
 .Li GTC
 (EAP-GTC, cannot be used with WPA;
-used only as a Phase 2 metod with EAP-PEAP or EAP-TTLS),
+used only as a Phase 2 method with EAP-PEAP or EAP-TTLS),
 .Li TLS
 (EAP-TLS, client and server certificate),
 .Li PEAP
@@ -251,11 +251,12 @@ If not set this defaults to all available methods compiled in to
 .Xr wpa_supplicant 8 .
 Note that by default
 .Xr wpa_supplicant 8
-is not compiled with EAP support; see
-.Xr make.conf 5
-for the
-.Va ENABLE_WPA_SUPPLICANT_EAPOL
-configuration variable.
+is not compiled with EAP support.
+.\"; see
+.\".Xr make.conf 5
+.\"for the
+.\".Va ENABLE_WPA_SUPPLICANT_EAPOL
+.\"configuration variable.
 .It Va identity
 Identity string for EAP.
 .It Va anonymous_identity
