@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.369 2005/10/12 11:23:32 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.370 2005/10/12 11:25:54 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -501,7 +501,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenPAM
 Version:	20050201
-Current Vers:	20050201
+Current Vers:	20050616
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
