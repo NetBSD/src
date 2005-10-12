@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.47 2005/10/11 21:10:39 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.48 2005/10/12 00:49:48 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -522,8 +522,11 @@ sys/arch/i386/include/npx.h			1.21
 	passes all its regression suite without panicking the kernel.
 	[christos, ticket #5923]
 
+crypto/dist/openssl/crypto/opensslv.h		1.2
 crypto/dist/openssl/ssl/s23_srvr.c		1.2
 
-	Fix openssl 2.0 rollback, CAN-2005-2969.
+	Fix openssl 2.0 rollback, CAN-2005-2969. Also, add a
+	preprocessor symbol so we can distinguish fixed openssl
+	from the vanilla openssl.
 	[gendalia, ticket #5926]
 
