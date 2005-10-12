@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_cli.8,v 1.1 2005/10/01 18:50:12 scw Exp $
+.\" $NetBSD: wpa_cli.8,v 1.2 2005/10/12 09:07:34 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm wpa_cli
-.Nd "text-based frontend program for interacting with wpa_supplicant"
+.Nd text-based frontend program for interacting with wpa_supplicant
 .Sh SYNOPSIS
 .Nm
 .Op Ar commands
@@ -65,7 +65,7 @@ The
 .Nm
 utility
 provides an interface to supply authentication information
-such as username and password when it is not provided in
+such as username and password when it is not provided in the
 .Xr wpa_supplicant.conf 5
 configuration file.
 This can be used, for example, to implement
@@ -79,7 +79,9 @@ The
 utility
 supports two modes: interactive and command line.
 Both modes share the same command set and the main difference
-is in interactive mode providing access to unsolicited messages
+is that in interactive mode,
+.Nm
+provides access to unsolicited messages
 (event messages, username/password requests).
 .Pp
 Interactive mode is started when
@@ -125,7 +127,7 @@ or
 .Li OTP
 (one-time password),
 .Aq Ar id
-is a unique identifier for the current network,
+is a unique identifier for the current network, and
 .Aq Ar text
 is description of the request.
 In the case of a
@@ -140,12 +142,12 @@ the needed parameters in response to these requests.
 For example,
 .Bd -literal -offset indent
 CTRL-REQ-PASSWORD-1:Password needed for SSID foobar
-> password 1 mysecretpassword
+\*[Gt] password 1 mysecretpassword
 
 Example request for generic token card challenge-response:
 
 CTRL-REQ-OTP-2:Challenge 1235663 needed for SSID foobar
-> otp 2 9876
+\*[Gt] otp 2 9876
 .Ed
 .Sh COMMANDS
 The following commands may be supplied on the command line
