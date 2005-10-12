@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.9 2005/09/12 16:42:09 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.10 2005/10/12 15:23:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.9 2005/09/12 16:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.10 2005/10/12 15:23:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -800,11 +800,16 @@ ptyfs_read(void *v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
+	struct timespec ts;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
 	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
+	/* hardclock() resolution is good enough for ptyfs */
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	(void)VOP_UPDATE(vp, &ts, &ts, 0);
+
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 		VOP_UNLOCK(vp, 0);
@@ -832,11 +837,16 @@ ptyfs_write(void *v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	int error;
+	struct timespec ts;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
+	int error;
 
 	ptyfs->ptyfs_flag |= PTYFS_MODIFY;
+	/* hardclock() resolution is good enough for ptyfs */
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	(void)VOP_UPDATE(vp, &ts, &ts, 0);
+
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 		VOP_UNLOCK(vp, 0);
