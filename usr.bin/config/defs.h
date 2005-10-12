@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 2005/10/04 20:13:39 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 2005/10/12 01:17:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,6 +93,13 @@ extern const char *progname;
 #define	getprogname()	(progname)
 
 #define ARRCHR '#'
+
+/*
+ * The next two lines define the current version of the config(1) binary,
+ * and the minimum version of the configuration files it supports.
+ */
+#define CONFIG_VERSION		20051003
+#define CONFIG_MINVERSION	0
 
 /*
  * Name/value lists.  Values can be strings or pointers and/or can carry
@@ -364,6 +371,7 @@ int	defmaxusers;		/* default "maxusers" parameter */
 int	maxmaxusers;		/* default "maxusers" parameter */
 int	maxusers;		/* configuration's "maxusers" parameter */
 int	maxpartitions;		/* configuration's "maxpartitions" parameter */
+int	version;		/* version of the configuration file */
 struct	nvlist *options;	/* options */
 struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */

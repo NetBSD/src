@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.3 2005/09/30 22:51:46 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.4 2005/10/12 01:17:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,6 +114,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	ROOT
 %token	SOURCE
 %token	TYPE
+%token	VERSION
 %token	WITH
 %token	<num> NUMBER
 %token	<str> PATHNAME QSTRING WORD EMPTY
@@ -171,7 +172,7 @@ Configuration:
 	topthings			/* dirspecs, include "std.arch" */
 	machine_spec			/* "machine foo" from machine descr. */
 	dev_defs ENDDEFS		/* all machine definition files */
-					{ check_maxpart(); }
+					{ check_maxpart(); check_version(); }
 	specs;				/* rest of machine description */
 
 topthings:
@@ -292,7 +293,8 @@ one_def:
 	MAKEOPTIONS condmkopt_list |
 	DEFPSEUDO devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 1); } |
-	MAJOR '{' majorlist '}';
+	MAJOR '{' majorlist '}' |
+	VERSION NUMBER			{ setversion($2.val); };
 
 atlist:
 	atlist ',' atname		{ $$ = new_nx($3, $1); } |
@@ -652,6 +654,16 @@ check_maxpart(void)
 	if (maxpartitions <= 0) {
 		stop("cannot proceed without maxpartitions specifier");
 	}
+}
+
+static void
+check_version(void)
+{
+	/*
+	 * In essence, version is 0 and is not supported anymore
+	 */
+	if (version < CONFIG_MINVERSION)
+		stop("your sources are out of date -- please update.");
 }
 
 static void
