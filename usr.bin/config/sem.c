@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.13 2005/10/04 20:13:39 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.14 2005/10/12 01:17:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1743,4 +1743,16 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 		lp = NULL;
 	}
 	return (lp);
+}
+
+void
+setversion(int newver)
+{
+	if (newver > CONFIG_VERSION)
+		error("your sources require a newer version of config(1) "
+		    "-- please rebuild it.");
+	else if (newver < CONFIG_MINVERSION)
+		error("your sources are out of date -- please update.");
+	else
+		version = newver;
 }

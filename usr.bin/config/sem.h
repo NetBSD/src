@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.3 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: sem.h,v 1.4 2005/10/12 01:17:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,7 @@
 
 void		enddefs(void);
 
+void		setversion(int);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
