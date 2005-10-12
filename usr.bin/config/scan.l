@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.2 2005/09/10 15:38:46 martin Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 2005/10/12 01:17:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,6 +125,7 @@ pseudo-device	return PSEUDO_DEVICE;
 root		return ROOT;
 source		return SOURCE;
 type		return TYPE;
+version 	return VERSION;
 with		return WITH;
 
 \+=		return PLUSEQ;
