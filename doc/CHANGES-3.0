@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.276 2005/10/11 21:06:45 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.277 2005/10/12 00:43:25 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13397,9 +13397,12 @@ lib/libpthread/sched.c				1.4
 	(per the standard) instead of returning ENOSYS, PR lib/30970.
 	[kleink, ticket #875]
 
+crypto/dist/openssl/crypto/opensslv.h		1.2
 crypto/dist/openssl/ssl/s23_srvr.c		1.2
 
-	Fix openssl 2.0 rollback, CAN-2005-2969.
+	Fix openssl 2.0 rollback, CAN-2005-2969. Also, add a
+	preprocessor symbol so we can distinguish fixed openssl
+	from the vanilla openssl.
 	[gendalia, ticket #882]
 
 sys/arch/i386/i386/trap.c			1.205
