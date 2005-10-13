@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.372 2005/10/12 14:27:16 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.373 2005/10/13 17:51:45 kleink Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -211,7 +211,7 @@ Maintainer:	David M. Gay <dmg@acm.org>
 Archive Site:	ftp://netlib.lucent.com/netlib/fp/
 Home Page:	http://www.netlib.org/fp/
 Mailing List:	none
-Responsible:
+Responsible:	kleink
 Notes:
 Added conditionals to automagically determine type and endianness of
 FP numbers.  Added ULong type (but Gay says he'll adopt that change
