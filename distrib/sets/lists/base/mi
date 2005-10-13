@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.573 2005/10/10 13:28:07 rpaulo Exp $
+# $NetBSD: mi,v 1.574 2005/10/13 20:30:38 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1338,6 +1338,7 @@
 ./usr/share/examples/supfiles			base-sup-examples
 ./usr/share/examples/syslogd			base-sysutil-examples
 ./usr/share/examples/veriexecctl		base-sysutil-examples
+./usr/share/examples/veriexecctl/fpgen.sh	base-sysutil-examples	share
 ./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples	share
 ./usr/share/examples/veriexecctl/gen_sha1	base-sysutil-examples	share
 ./usr/share/examples/veriexecctl/gen_rmd160	base-sysutil-examples	share
