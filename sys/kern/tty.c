@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.175 2005/07/25 17:32:03 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.176 2005/10/13 16:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.175 2005/07/25 17:32:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.176 2005/10/13 16:18:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1259,7 +1259,9 @@ filt_ttyrdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	s = spltty();
+	TTY_LOCK(tp);
 	SLIST_REMOVE(&tp->t_rsel.sel_klist, kn, knote, kn_selnext);
+	TTY_UNLOCK(tp);
 	splx(s);
 }
 
@@ -1340,7 +1342,7 @@ ttykqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ttywrite_filtops;
 		break;
 	default:
-		return (1);
+		return EINVAL;
 	}
 
 	kn->kn_hook = tp;
