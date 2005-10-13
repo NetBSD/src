@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsncpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wcsncpy.c,v 1.3 2005/10/13 21:13:05 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsncpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wcsncpy.c,v 1.3 2005/10/13 21:13:05 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -43,19 +43,19 @@ wcsncpy(s1, s2, n)
 	size_t n;
 {
 	wchar_t *p;
-	const wchar_t *q;
 
 	_DIAGASSERT(s1 != NULL);
 	_DIAGASSERT(s2 != NULL);
 
-	*s1 = '\0';
 	p = s1;
-	q = s2;
-	while (n && *q) {
-		*p++ = *q++;
+	while (n && *s2) {
+		*p++ = *s2++;
 		n--;
 	}
-	*p = '\0';
+	while (n) {
+		*p++ = L'\0';
+		n--;
+	}
 
 	return s1;
 }
