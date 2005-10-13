@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2005/04/21 09:57:03 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.3 2005/10/13 13:49:47 elad Exp $
 
 NOOBJ=	# defined
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILES=	gen_md5 gen_sha1 gen_rmd160
+FILES=	gen_md5 gen_sha1 gen_rmd160 fpgen.sh
 FILESDIR=/usr/share/examples/veriexecctl
 .endif
 
