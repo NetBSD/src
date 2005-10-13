@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.39 2005/05/10 13:15:56 chs Exp $	 */
+/*	$NetBSD: symbol.c,v 1.40 2005/10/13 11:14:09 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.39 2005/05/10 13:15:56 chs Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.40 2005/10/13 11:14:09 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -196,79 +196,33 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 {
 	const Elf_Sym  *ref;
 	const Elf_Sym  *def;
-	const Elf_Sym  *symp;
-	const Obj_Entry *obj;
 	const Obj_Entry *defobj;
-	const Objlist_Entry *elm;
 	const char     *name;
 	unsigned long   hash;
 
 	ref = refobj->symtab + symnum;
 	name = refobj->strtab + ref->st_name;
 
-	hash = _rtld_elf_hash(name);
-	def = NULL;
-	defobj = NULL;
-	
-	/* Look first in the referencing object if linked symbolically */
-	if (refobj->symbolic) {
-		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
-		if (symp != NULL) {
-			def = symp;
-			defobj = refobj;
-		}
-	}
-	
-	/* Search all objects loaded at program start up. */
-	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search _rtld_list_main"));
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
-		if (symp != NULL &&
-		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-			def = symp;
-			defobj = obj;
-		}
-	}
-	
-	/* Search all RTLD_GLOBAL objects. */
-	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search _rtld_list_global"));
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
-		if (symp != NULL &&
-		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-			def = symp;
-			defobj = obj;
-		}
-	}
-	
-	/* Search all dlopened DAGs containing the referencing object. */
-	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
-		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
-			break;
-		rdbg(("search DAG with root %p (%s)", elm->obj, elm->obj->path));
-		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj, in_plt);
-		if (symp != NULL &&
-		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-			def = symp;
-			defobj = obj;
-		}
-	}
-	
 	/*
-	 * Search the dynamic linker itself, and possibly resolve the
-	 * symbol from there.  This is how the application links to
-	 * dynamic linker services such as dlopen.  Only the values listed
-	 * in the "_rtld_exports" array can be resolved from the dynamic linker.
+	 * We don't have to do a full scale lookup if the symbol is local.
+	 * We know it will bind to the instance in this load module; to
+	 * which we already have a pointer (ie ref).
 	 */
-	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search rtld itself"));
-		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
-		if (symp != NULL && _rtld_is_exported(symp)) {
-			def = symp;
-			defobj = &_rtld_objself;
-		}
+	if (ELF_ST_BIND(ref->st_info) != STB_LOCAL) {
+		if (ELF_ST_TYPE(ref->st_info) == STT_SECTION) {
+			_rtld_error("%s: Bogus symbol table entry %lu",
+			    refobj->path, symnum);
+        	}
+
+		hash = _rtld_elf_hash(name);
+		defobj = NULL;
+		def = _rtld_symlook_default(name, hash, refobj, &defobj, in_plt);
+	} else {
+		rdbg(("STB_LOCAL symbol %s in %s", name, refobj->path));
+		def = ref;
+		defobj = refobj;
 	}
-	
+		
 	/*
 	 * If we found no definition and the reference is weak, treat the
 	 * symbol as having the value zero.
@@ -309,6 +263,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 
 	/* Look first in the referencing object if linked symbolically. */
 	if (refobj->symbolic) {
+		rdbg(("search referencing object"));
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
 			def = symp;
@@ -318,20 +273,36 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 
 	/* Search all objects loaded at program start up. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
+		rdbg(("search _rtld_list_main"));
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj,
+		    in_plt);
 		if (symp != NULL &&
-		  (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
 			defobj = obj;
 		}
 	}
 
+	/* Search all RTLD_GLOBAL objects. */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("search _rtld_list_global"));
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_global,
+		    &obj, in_plt);
+		if (symp != NULL &&
+		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
+			def = symp;
+			defobj = obj;
+		}
+	}
+	
 	/* Search all dlopened DAGs containing the referencing object. */
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
-		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
-		    in_plt);
+		rdbg(("search DAG with root %p (%s)", elm->obj,
+		    elm->obj->path));
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers,
+		    &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -339,34 +310,21 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 		}
 	}
 
-	/* Search all DAGs whose roots are RTLD_GLOBAL objects. */
-	SIMPLEQ_FOREACH(elm, &_rtld_list_global, link) {
-		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
-			break;
-		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj,
-		    in_plt);
-		if (symp != NULL &&
-		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
-			def = symp;
-			defobj = obj;
-		}
-	}
-
-#ifdef notyet
 	/*
 	 * Search the dynamic linker itself, and possibly resolve the
 	 * symbol from there.  This is how the application links to
 	 * dynamic linker services such as dlopen.  Only the values listed
-	 * in the "exports" array can be resolved from the dynamic linker.
+	 * in the "_rtld_exports" array can be resolved from the dynamic
+	 * linker.
 	 */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("Search the dynamic linker itself."));
 		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
-		if (symp != NULL && is_exported(symp)) {
+		if (symp != NULL && _rtld_is_exported(symp)) {
 			def = symp;
 			defobj = &_rtld_objself;
 		}
 	}
-#endif
 
 	if (def != NULL)
 		*defobj_out = defobj;
