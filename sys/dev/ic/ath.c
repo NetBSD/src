@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.59 2005/09/13 05:50:29 martin Exp $	*/
+/*	$NetBSD: ath.c,v 1.60 2005/10/14 00:26:45 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.59 2005/09/13 05:50:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.60 2005/10/14 00:26:45 gdt Exp $");
 #endif
 
 /*
@@ -1787,6 +1787,7 @@ ath_mode_init(struct ath_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	u_int32_t rfilt, mfilt[2];
+	int i;
 
 	/* configure rx filter */
 	rfilt = ath_calcrxfilter(sc, ic->ic_state);
@@ -1794,6 +1795,15 @@ ath_mode_init(struct ath_softc *sc)
 
 	/* configure operational mode */
 	ath_hal_setopmode(ah);
+
+	/* Write keys to hardware; it may have been powered down. */
+	ath_key_update_begin(ic);
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		ath_key_set(ic,
+			    &ic->ic_crypto.cs_nw_keys[i],
+			    ic->ic_myaddr);
+	}
+	ath_key_update_end(ic);
 
 	/*
 	 * Handle any link-level address change.  Note that we only
