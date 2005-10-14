@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostname.3,v 1.15 2003/08/07 16:42:50 agc Exp $
+.\"	$NetBSD: gethostname.3,v 1.16 2005/10/14 23:53:41 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gethostname.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd October 14, 2005
 .Dt GETHOSTNAME 3
 .Os
 .Sh NAME
@@ -70,18 +70,13 @@ If the call fails, a value of \-1 is returned and an error code is
 placed in the global location
 .Va errno .
 .Sh ERRORS
-The following errors may be returned by these calls:
-.Bl -tag -width Er
-.It Bq Er EFAULT
-The
-.Fa name
-or
-.Fa namelen
-parameter gave an
-invalid address.
-.It Bq Er EPERM
-The caller tried to set the hostname and was not the super-user.
-.El
+If the
+.Fn
+functions fail,
+they will set
+.Va errno
+for any of the errors specified for the routine
+.Xr sysctl 3 .
 .Sh SEE ALSO
 .Xr gethostid 3 ,
 .Xr sysctl 3 ,
