@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.7 2005/09/24 14:40:39 christos Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.8 2005/10/14 14:01:34 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1968,6 +1968,10 @@ pfkey_align(msg, mhp)
 #ifdef SADB_X_EXT_TAG
 		case SADB_X_EXT_TAG:
 #endif
+#ifdef SADB_X_EXT_PACKET
+		case SADB_X_EXT_PACKET:
+#endif
+
 			mhp[ext->sadb_ext_type] = (void *)ext;
 			break;
 		default:

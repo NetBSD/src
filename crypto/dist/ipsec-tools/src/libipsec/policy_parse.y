@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.6 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.7 2005/10/14 14:01:34 manu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -536,7 +536,7 @@ set_x_request(src, dst)
 {
 	struct sadb_x_ipsecrequest *p;
 	int reqlen;
-	caddr_t n;
+	u_int8_t *n;
 
 	reqlen = sizeof(*p)
 		+ (src ? sysdep_sa_len(src) : 0)

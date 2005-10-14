@@ -1,14 +1,68 @@
+---------------------------------------------
+
+	0.6.2 released
+
+2005-10-14  Yvan Vanhullebus  <vanhu@netasq.com>
+
+	* src/racoon/ipsec_doi.c: don't allow NULL or empty FQDNs or
+	  USER_FQDNs (problem reported by Bernhard Suttner).
+
+---------------------------------------------
+
+	0.6.2.beta3 released
+
+2005-09-05   Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Andreas Hasenack <ahasenack@terra.com.br>
+	* configure.ac: More build fixes for Linux
+
+---------------------------------------------
+
+	0.6.2.beta2 released
+
+2005-09-04  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Wilfried Weissmann
+	* src/libipsec/policy_parse.y src/racoon/{ipsec_doi.c|oakley.c}
+	  src/racoon/{sockmisc.c|sockmisc.h}: build fixes
+
+---------------------------------------------
+
+	0.6.2.beta1 released
+
+2005-09-03  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Francis Dupont <Francis.Dupont@enst-bretagne.fr>
+	* src/libipsec/pfkey.c src/racoon/pfkey.c: Cope with extensions
+
 2005-08-26  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/cfparse.y: handle xauth_login correctly
 	* src/racoon/isakmp.c: catch internal error
 	* src/raccon/isakmp_agg.c: fix racoon as Xauth client
 	* src/raccon/{isakmp_agg.c|isakmp_base.c}: Proposal safety checks
+	* src/racoon/evt.c: Fix memory leak when event queue overflows
 
 2005-08-23  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	* src/racoon/{isakmp_agg.c|isakmp_ident.c|isakmp_base.c}: Correctly
 	  initialize NAT-T VID to avoid freeing unallocated stuff.
+
+2005-08-21  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Matthias Scheler <matthias.scheler@tadpole.com>
+	* src/racoon/{isakmp_cfg.c|racoon.conf.5}: enable the use of
+	  ISAKMP mode config without Xauth.
+
+2005-09-16  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/policy.c: Do not parse all sptree in inssp() if we
+	  don't use Policies priority.
+
+2005-08-15  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From: Thomas Klausner <wiz@netbsd.org>
+	src/setkey/setkey.8: Drop trailing spaces
 
 ---------------------------------------------
 
