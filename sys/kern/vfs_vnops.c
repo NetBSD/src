@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.95 2005/09/20 09:49:01 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.96 2005/10/14 12:47:04 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.95 2005/09/20 09:49:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.96 2005/10/14 12:47:04 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -104,6 +104,24 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	int error;
 #ifdef VERIFIED_EXEC
 	struct veriexec_hash_entry *vhe = NULL;
+	char pathbuf[MAXPATHLEN];
+	size_t pathlen;
+#endif /* VERIFIED_EXEC */
+
+#ifdef VERIFIED_EXEC
+	if (ndp->ni_segflg == UIO_SYSSPACE)
+		error = copystr(__UNCONST(ndp->ni_dirp), pathbuf,
+				sizeof(pathbuf), &pathlen);
+	else
+		error = copyinstr(__UNCONST(ndp->ni_dirp), pathbuf,
+				  sizeof(pathbuf), &pathlen);
+	if (error) {
+		if (veriexec_verbose >= 1)
+			printf("veriexec: Can't copy path. (error=%d)\n",
+			       error);
+
+		return (error);
+	}
 #endif /* VERIFIED_EXEC */
 
 restart:
@@ -123,7 +141,7 @@ restart:
 
 				printf("Veriexec: vn_open: Preventing "
 				       "new file creation in %s.\n",
-				       ndp->ni_dirp);
+				       pathbuf);
 
 				vp = ndp->ni_dvp;
 				error = EPERM;
@@ -191,8 +209,7 @@ restart:
 
 	if ((fmode & O_CREAT) == 0) {
 #ifdef VERIFIED_EXEC
-		/* XXX may need pathbuf instead */
-		if ((error = veriexec_verify(p, vp, &va, ndp->ni_dirp,
+		if ((error = veriexec_verify(p, vp, &va, pathbuf,
 					     VERIEXEC_FILE, &vhe)) != 0)
 			goto bad;
 #endif
@@ -213,7 +230,7 @@ restart:
 #ifdef VERIFIED_EXEC
 			if (vhe != NULL) {
 				veriexec_report("Write access request.",
-						ndp->ni_dirp, &va, p,
+						pathbuf, &va, p,
 						REPORT_NOVERBOSE,
 						REPORT_ALARM,
 						REPORT_NOPANIC);
