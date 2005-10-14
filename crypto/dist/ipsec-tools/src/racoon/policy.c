@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: policy.c,v 1.3 2005/10/14 14:01:34 manu Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -373,6 +373,7 @@ void
 inssp(new)
 	struct secpolicy *new;
 {
+#ifdef HAVE_PFKEY_POLICY_PRIORITY
 	struct secpolicy *p;
 
 	TAILQ_FOREACH(p, &sptree, chain) {
@@ -382,6 +383,7 @@ inssp(new)
 		}
 	}
 	if (p == NULL)
+#endif
 		TAILQ_INSERT_TAIL(&sptree, new, chain);
 
 	return;
