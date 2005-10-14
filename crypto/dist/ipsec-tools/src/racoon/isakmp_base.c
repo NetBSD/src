@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.1.1.2 2005/02/23 14:54:18 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.1.1.3 2005/10/14 13:21:47 manu Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -99,7 +99,7 @@ base_i1send(iph1, msg)
 	struct payload_list *plist = NULL;
 	int error = -1;
 #ifdef ENABLE_NATT
-	vchar_t *vid_natt[MAX_NATT_VID_COUNT];
+	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
 	int i, vid_natt_i = 0;
 #endif
 #ifdef ENABLE_FRAG
@@ -426,6 +426,11 @@ base_i2send(iph1, msg)
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+		break;
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
 		break;
 	}
 
@@ -1125,6 +1130,11 @@ base_r2send(iph1, msg)
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+		break;
+	default:
+		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
+			iph1->approval->authmethod);
+		goto end;
 		break;
 	}
 

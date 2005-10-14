@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.5 2005/08/20 00:41:34 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.6 2005/10/14 13:21:46 manu Exp $	*/
 
-/* Id: isakmp.c,v 1.34.2.19 2005/08/11 14:58:51 vanhu Exp */
+/* Id: isakmp.c,v 1.34.2.20 2005/09/26 16:12:20 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2853,13 +2853,21 @@ isakmp_plist_append (struct payload_list *plist, vchar_t *payload, int payload_t
 vchar_t * 
 isakmp_plist_set_all (struct payload_list **plist, struct ph1handle *iph1)
 {
-	struct payload_list *ptr = *plist, *first;
+	struct payload_list *ptr, *first;
 	size_t tlen = sizeof (struct isakmp), n = 0;
 	vchar_t *buf;
 	char *p;
 
+	if (plist == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "in isakmp_plist_set_all: plist == NULL\n");
+		return NULL;
+	}
+
 	/* Seek to the first item.  */
-	while (ptr->prev) ptr = ptr->prev;
+	ptr = *plist;
+	while (ptr->prev)
+		ptr = ptr->prev;
 	first = ptr;
 	
 	/* Compute the whole length.  */

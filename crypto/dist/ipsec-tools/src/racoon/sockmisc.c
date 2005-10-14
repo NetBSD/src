@@ -1,6 +1,6 @@
-/*	$NetBSD: sockmisc.c,v 1.1.1.3 2005/08/07 08:48:05 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.1.1.4 2005/10/14 13:21:50 manu Exp $	*/
 
-/* Id: sockmisc.c,v 1.17.4.3 2005/06/29 13:01:29 manubsd Exp */
+/* Id: sockmisc.c,v 1.17.4.4 2005/10/04 09:54:27 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -314,7 +314,7 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	size_t buflen;
 	int flags;
 	struct sockaddr *from;
-	int *fromlen;
+	socklen_t *fromlen;
 	struct sockaddr *to;
 	u_int *tolen;
 {

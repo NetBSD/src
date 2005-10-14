@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: netbsd-import.sh,v 1.1.1.3 2005/08/07 08:46:13 manu Exp $
+#	$NetBSD: netbsd-import.sh,v 1.1.1.4 2005/10/14 13:21:43 manu Exp $
 #
 # Copyright (c) 2000-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
