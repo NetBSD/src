@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.6.2.1 2005/04/07 11:22:04 tron Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.6.2.2 2005/10/14 06:53:34 jdc Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -865,7 +865,7 @@ getuser:
 	        } else {
 getgroup:	
 	                if ((gr = getgrnam(group)) != NULL) {
-	                        sw_gid = pw->pw_gid;
+	                        sw_gid = gr->gr_gid;
 	                } else {
 	                        errno = 0;
 	                        msyslog(LOG_ERR, "Cannot find group `%s'", group);
