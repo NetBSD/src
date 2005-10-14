@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.8 2005/09/26 16:24:57 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.9 2005/10/14 14:01:34 manu Exp $	*/
 
 /* Id: cfparse.y,v 1.37.2.4 2005/05/10 09:45:45 manubsd Exp */
 
@@ -280,12 +280,10 @@ privsep_stmts
 privsep_stmt
 	:	USER QUOTEDSTRING
 		{
-			struct passwd *pw, pwres;
-			char buf[1024];
+			struct passwd *pw;
 
-			(void)getpwnam_r($2->v, &pwres, buf, sizeof(buf), &pw);
-			if (pw == NULL) {
-				yyerror("Unknown user `%s'", $2->v);
+			if ((pw = getpwnam($2->v)) == NULL) {
+				yyerror("unkown user \"%s\"", $2->v);
 				return -1;
 			}
 			lcconf->uid = pw->pw_uid;
@@ -294,12 +292,10 @@ privsep_stmt
 	|	USER NUMBER { lcconf->uid = $2; } EOS
 	|	GROUP QUOTEDSTRING
 		{
-			struct group *gr, grres;
-			char buf[1024];
+			struct group *gr;
 
-			(void)getgrnam_r($2->v, &grres, buf, sizeof(buf), &gr);
-			if (gr == NULL) {
-				yyerror("Unknown group `%s'", $2->v);
+			if ((gr = getgrnam($2->v)) == NULL) {
+				yyerror("unkown group \"%s\"", $2->v);
 				return -1;
 			}
 			lcconf->gid = gr->gr_gid;
@@ -1988,13 +1984,12 @@ adminsock_conf(path, owner, group, mode_dec)
 	vchar_t *group;
 	int mode_dec;
 {
-	struct passwd *pw = NULL, pwres;
-	struct group *gr = NULL, grres;
+	struct passwd *pw = NULL;
+	struct group *gr = NULL;
 	mode_t mode = 0;
 	uid_t uid;
 	gid_t gid;
 	int isnum;
-	char buf[1024];
 
 	adminsock_path = path->v;
 
@@ -2004,8 +1999,7 @@ adminsock_conf(path, owner, group, mode_dec)
 	errno = 0;
 	uid = atoi(owner->v);
 	isnum = !errno;
-	(void)getpwnam_r(owner->v, &pwres, buf, sizeof(buf), &pw);
-	if ((pw == NULL) && !isnum)
+	if (((pw = getpwnam(owner->v)) == NULL) && !isnum)
 		yyerror("User \"%s\" does not exist", owner->v);
 
 	if (pw)
@@ -2019,8 +2013,7 @@ adminsock_conf(path, owner, group, mode_dec)
 	errno = 0;
 	gid = atoi(group->v);
 	isnum = !errno;
-	(void)getgrnam_r(group->v, &grres, buf, sizeof(buf), &gr);
-	if ((gr == NULL) && !isnum)
+	if (((gr = getgrnam(group->v)) == NULL) && !isnum)
 		yyerror("Group \"%s\" does not exist", group->v);
 
 	if (gr)
