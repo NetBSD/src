@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.277 2005/10/12 00:43:25 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.278 2005/10/14 07:01:09 jdc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13413,3 +13413,8 @@ sys/arch/i386/include/npx.h			1.21
 	regression suite without panicking the kernel.
 	[christos, ticket #880]
 
+dist/ntp/ntpd/ntpd.c				1.8
+
+	Use group-id from ``gr'' and not ``pw''.
+	Fixes security issue addressed by CAN-2005-2496.
+	[elad, ticket #889]
