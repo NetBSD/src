@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.96 2005/10/14 12:47:04 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.97 2005/10/14 17:18:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.96 2005/10/14 12:47:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.97 2005/10/14 17:18:59 christos Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -106,19 +106,16 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct veriexec_hash_entry *vhe = NULL;
 	char pathbuf[MAXPATHLEN];
 	size_t pathlen;
+	void (*copyfun)(const void *, void *, size_t, size_t *) =
+	    ndp->ni_segflg == UIO_SYSSPACE ? copystr : copyinstr;
 #endif /* VERIFIED_EXEC */
 
 #ifdef VERIFIED_EXEC
-	if (ndp->ni_segflg == UIO_SYSSPACE)
-		error = copystr(__UNCONST(ndp->ni_dirp), pathbuf,
-				sizeof(pathbuf), &pathlen);
-	else
-		error = copyinstr(__UNCONST(ndp->ni_dirp), pathbuf,
-				  sizeof(pathbuf), &pathlen);
+	error = (*copyfun)(ndp->ni_dirp, pathbuf, sizeof(pathbuf), &pathlen);
 	if (error) {
 		if (veriexec_verbose >= 1)
 			printf("veriexec: Can't copy path. (error=%d)\n",
-			       error);
+			    error);
 
 		return (error);
 	}
