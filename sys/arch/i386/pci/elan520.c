@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.10 2005/10/11 15:58:37 drochner Exp $	*/
+/*	$NetBSD: elan520.c,v 1.11 2005/10/14 19:21:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.10 2005/10/11 15:58:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.11 2005/10/14 19:21:07 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,11 @@ struct elansc_softc {
 	int sc_echobug;
 
 	struct sysmon_wdog sc_smw;
+#if NGPIO > 0
 	/* GPIO interface */
 	struct gpio_chipset_tag sc_gpio_gc;
 	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
+#endif
 };
 
 #if NGPIO > 0
