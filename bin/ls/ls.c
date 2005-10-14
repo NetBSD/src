@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.56 2005/06/17 14:36:16 hira Exp $	*/
+/*	$NetBSD: ls.c,v 1.57 2005/10/14 16:02:26 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.56 2005/06/17 14:36:16 hira Exp $");
+__RCSID("$NetBSD: ls.c,v 1.57 2005/10/14 16:02:26 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,9 +123,7 @@ ls_main(int argc, char *argv[])
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
-		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
 			termwidth = win.ws_col;
 		f_column = f_nonprint = 1;
@@ -278,6 +276,11 @@ ls_main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (f_column || f_columnacross || f_stream) {
+		if ((p = getenv("COLUMNS")) != NULL)
+			termwidth = atoi(p);
+	}
 
 	/*
 	 * If both -g and -l options, let -l take precedence.
