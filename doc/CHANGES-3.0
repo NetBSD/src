@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.282 2005/10/15 17:45:01 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.283 2005/10/15 22:03:03 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13489,4 +13489,27 @@ sys/arch/i386/i386/est.c			1.10
 
 	More Dothan entries from OpenBSD.
 	[xtraeme, ticket #887]
+
+distrib/sets/lists/base/mi			1.574
+share/examples/veriexecctl/Makefile		1.3
+
+	Install fpgen.sh too.
+	[elad, ticket #888]
+
+sys/kern/vfs_vnops.c				patch
+
+	Fix a crash whenever the nameidata has the pathname in userspace.
+	[elad, ticket #891]
+
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+
+	Add atu(4).
+	[xtraeme, ticket #892]
+
+share/man/man4/lm.4				1.17
+sys/dev/ic/nslm7x.c				1.23
+sys/dev/ic/nslm7xvar.h				1.16
+
+	Added support for Winbond 83627THF, from OpenBSD.
+	[xtraeme, ticket #893]
 
