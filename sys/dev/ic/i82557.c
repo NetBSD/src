@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.93 2005/10/12 19:26:10 abs Exp $	*/
+/*	$NetBSD: i82557.c,v 1.94 2005/10/15 19:32:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.93 2005/10/12 19:26:10 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.94 2005/10/15 19:32:36 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1003,6 +1003,7 @@ fxp_start(struct ifnet *ifp)
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_IPCB) {
+			struct m_tag *vtag;
 			struct fxp_ipcb *ipcb;
 			/*
 			 * Deal with TCP/IP checksum offload. Note that
@@ -1037,16 +1038,12 @@ fxp_start(struct ifnet *ifp)
 			/*
 			 * request VLAN tag insertion if needed.
 			 */
-			if (sc->sc_ethercom.ec_nvlans != 0) {
-				struct m_tag *vtag;
-
-				vtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL);
-				if (vtag) {
-					ipcb->ipcb_vlan_id =
-					    htobe16(*(u_int *)(vtag + 1));
-					ipcb->ipcb_ip_activation_high |=
-					    FXP_IPCB_INSERTVLAN_ENABLE;
-				}
+			vtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
+			if (vtag) {
+				ipcb->ipcb_vlan_id =
+				    htobe16(*(u_int *)(vtag + 1));
+				ipcb->ipcb_ip_activation_high |=
+				    FXP_IPCB_INSERTVLAN_ENABLE;
 			}
 		} else {
 			KASSERT((csum_flags &
