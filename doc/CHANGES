@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.531 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.532 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,7 +31,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	openssh: Upgrade to 4.0. [christos 20050423]
 	crypto: Upgrade to OpenSSL 0.9.7g [christos 20050423]
 	gettext: Upgrade to 0.14.4 [christos 20050429]
-	sparc64: Switch to wscons [martin 20050429]
 	ehci(4): Various bug fixes.  The most visible is that low/full speed
 		devices can now be connected to high speed hubs.
 		[augustss 20050501]
@@ -62,8 +61,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ral(4): Add driver for Ralink PCI/Cardbus/USB wlan adapters
 		(written by Damien Bergamini, ported by FUKAUMI Naoki)
 		[drochner 20050714]
-	vnd(4): Add support for configuring cloop2-compressed images
-		read-only, written by Cliff Wright. [hubertf 20050716]
 	uipaq(4): USB driver for iPAQ devices.  From OpenBSD.
 		[augustss 20050718]
 	netinet: Implement PMTU checks and ignore ICMP Source Quench messages
@@ -86,13 +83,10 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ftpd(8): Add new ftpd.conf(5) option, recvbufsize, and make
 		readsize option also apply to network reads for transfers to
 		the server. [ginsbach 20050824]
-	sysinst: Added Spanish language translation. [xtraeme 20050826]
 	UFS: Add experimental support for file-backed extended attributes
 		on UFS1 file systems, adapted from FreeBSD.  [thorpej 20050828]
 	psh3lcd(4): Support LCD screen driver for PERSONA SH3 machines.
 		   [kiyohara 20050906]
-	xge(4): Add driver for the Neterion Xframe-I 10 gigabit ethernet
-		controller [ragge 20050909]
 	i386: WSDISPLAY_SCROLLSUPPORT enabled in GENERIC.MPACPI,
 		GENERIC_LAPTOP and XEN0 kernels. [rpaulo 20050909]
 	amd64: WSDISPLAY_SCROLLSUPPORT enabled in GENERIC kernel.
