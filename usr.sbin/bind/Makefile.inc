@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2005/01/10 03:01:18 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.1 2005/10/15 16:45:21 riz Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -11,6 +11,8 @@ NAMED_USE_PTHREADS?=yes
 
 IDIST=		${NETBSDSRCDIR}/dist/bind
 BIND_SRCDIR=	${NETBSDSRCDIR}/usr.sbin/bind
+BIND_HTMLDIR=	/usr/share/doc/html/bind9
+
 .include "${IDIST}/version"
 
 VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
