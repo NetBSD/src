@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.5 2005/05/04 14:38:44 martin Exp $ */
+/*	$NetBSD: fbio.h,v 1.6 2005/10/15 15:41:22 macallan Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  * 	@(#)fbio.h	7.2 (Berkeley) 4/1/92
  */
+
+#ifndef FBIO_H
+#define FBIO_H
 
 /*
  * Frame buffer ioctls (from Sprite, trimmed to essentials for X11).
@@ -197,3 +200,5 @@ struct fbcursor {
 
 /* get max cursor size */
 #define FBIOGCURMAX	_IOR('F', 28, struct fbcurpos)
+
+#endif /* FBIO_H */
