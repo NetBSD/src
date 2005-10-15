@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.9.2.6 2005/10/15 16:34:24 riz Exp $	*/
+/*	$NetBSD: pkill.c,v 1.9.2.7 2005/10/15 16:36:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.9.2.6 2005/10/15 16:34:24 riz Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.9.2.7 2005/10/15 16:36:44 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -426,7 +426,7 @@ usage(void)
 		"             [-t tty] [-u euid] pattern ...\n", getprogname(),
 		ustr);
 
-	exit(STATUS_ERROR);
+	exit(STATUS_BADUSAGE);
 }
 
 static int
