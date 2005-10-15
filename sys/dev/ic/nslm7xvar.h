@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.14.2.1 2005/05/01 10:38:37 tron Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.14.2.2 2005/10/15 21:48:44 riz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #define WB_CHIPID_83781_2	0x11
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
+#define WB_CHIPID_83627THF	0x90
 #define WB_CHIPID_83697		0x60
 #define WB_BANK0_FANBAT	0x5D
 /* Bank1 regs */

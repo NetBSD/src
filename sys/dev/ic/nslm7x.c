@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.21.2.1 2005/05/01 10:38:44 tron Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.21.2.2 2005/10/15 21:48:44 riz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.21.2.1 2005/05/01 10:38:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.21.2.2 2005/10/15 21:48:44 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ lm_probe(iot, ioh)
 	cr = bus_space_read_1(iot, ioh, LMC_DATA);
 
 	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01))
+	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03))
 		rv = 1;
 	else
 		rv = 0;
@@ -373,6 +373,9 @@ wb_match(sc)
 		break;
 	case WB_CHIPID_83627:
 		printf(": W83627HF\n");
+		break;
+	case WB_CHIPID_83627THF:
+		printf(": W83627THF\n");
 		break;
 	default:
 		printf(": unknow winbond chip ID 0x%x\n", j);
