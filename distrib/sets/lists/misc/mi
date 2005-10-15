@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113.2.4 2005/07/02 23:37:52 tron Exp $
+# $NetBSD: mi,v 1.113.2.5 2005/10/15 16:46:53 riz Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -114,6 +114,16 @@
 ./usr/share/doc/html/ntp/tickadj.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/vxworks.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/y2k.htm		misc-obsolete		obsolete
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch01.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch02.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch03.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch04.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch05.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch06.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch07.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch08.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.ch09.html	misc-bind-htmldoc	share
+./usr/share/doc/html/bind9/arm/Bv9ARM.html	misc-bind-htmldoc	share
 ./usr/share/doc/html/postfix/ADDRESS_CLASS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ADDRESS_REWRITING_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ADDRESS_VERIFICATION_README.html	misc-postfix-htmldoc	postfix,doc

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.22 2005/09/06 21:29:20 riz Exp $
+# $NetBSD: mi,v 1.532.2.23 2005/10/15 16:46:53 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1206,6 +1206,8 @@
 ./usr/share/dict/special			base-reference-share
 ./usr/share/doc					base-sys-share
 ./usr/share/doc/html				base-htmldoc-share
+./usr/share/doc/html/bind9			base-htmldoc-share
+./usr/share/doc/html/bind9/arm			base-htmldoc-share
 ./usr/share/doc/html/bzip2			base-htmldoc-share
 ./usr/share/doc/html/ntp			base-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints			base-obsolete		obsolete
