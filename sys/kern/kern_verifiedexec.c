@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.27 2005/09/08 21:06:31 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.28 2005/10/15 17:33:31 riz Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.27 2005/09/08 21:06:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.28 2005/10/15 17:33:31 riz Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -496,7 +496,8 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
 	}
 
 	LIST_REMOVE(vhe, entries);
-	free(vhe->fp, M_TEMP);
+	if (vhe->fp != NULL)
+		free(vhe->fp, M_TEMP);
 	free(vhe, M_TEMP);
 	tbl->hash_count--;
 
