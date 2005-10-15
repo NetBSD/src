@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.280 2005/10/15 16:15:54 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.281 2005/10/15 16:50:05 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13438,4 +13438,39 @@ usr.bin/vi/ex/version.h				1.19
 	Fix the bad behavior of '\' in arguments of the "set" command,
 	indirectly introduced by recent changes to the ex code.
 	[aymeric, ticket #878]
+
+usr.bin/pkill/pkill.c				1.10-1.15
+
+	* If a process dissappears while we are signalling it, don't
+	  count it as a match/error.
+	* Downgrade failure to kill(2) (other than ESRCH) from fatal
+	  error to a warning; otherwise processing aborts and possibly
+	  matching killees would remain unsignalled.  This makes pkill
+	  match the Solaris behavior.  Fixes PR bin/21933. 
+	[kleink, ticket #890]
+
+usr.bin/pkill/pkill.c				1.16
+
+	Exit with 2 on usage errors as documented.  Noted by Christian Biere in
+	PR bin/21933.
+	[kleink, ticket #879]
+
+sys/dev/ic/i82557.c				1.93
+
+	Make receiver lock-up workaround conditional on setting link1,
+	as we have too many false positives - should address PR/30505
+	[abs, ticket #886]
+
+distrib/sets/comments				1.5
+distrib/sets/deps				1.2
+distrib/sets/descrs				1.5
+distrib/sets/lists/base/mi			1.573
+distrib/sets/lists/misc/mi			1.126,1.128
+etc/mtree/NetBSD.dist				1.291
+usr.sbin/bind/Makefile				1.14
+usr.sbin/bind/Makefile.inc			1.20
+usr.sbin/bind/html/Makefile			1.1 (new file)
+
+	Install HTML BIND 9 Documentation
+	[rpaulo, ticket #881]
 
