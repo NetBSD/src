@@ -441,6 +441,7 @@ man-uucp-man base-man-share
 misc-amd-examples base-amd-examples
 misc-amd-examples base-sys-examples
 misc-bind-examples base-bind-examples
+misc-bind-htmldoc base-htmldoc-share
 misc-crypto-examples base-crypto-examples
 misc-dhcpd-examples base-dhcpd-examples
 misc-fstab-examples base-fstab-examples

@@ -703,6 +703,7 @@ man-uucp-info	texinfo documentation for the UUCP UNIX-to-UNIX Connection Protoco
 man-uucp-man	manual pages source for the UUCP UNIX-to-UNIX Connection Protocol
 misc-amd-examples	example configuration files for automatically mount file systems
 misc-bind-examples	example configuration files for bind
+misc-bind-htmldoc	HTML documentation for bind
 misc-crypto-examples	example configuration files for cryptographic software
 misc-dhcpd-examples	example configuration files for dhcpd(8)
 misc-fstab-examples	example configuration files for file system tables
