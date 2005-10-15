@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.5 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.6 2005/10/15 08:58:15 tls Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -161,8 +161,14 @@ struct hifn_softc {
 #define	HIFN_IS_7956		0x10	/* Hifn 7956/7955 don't have SDRAM */
 #define	HIFN_NO_BURSTWRITE	0x20
 #define	HIFN_HAS_LEDS		0x40
+
+#define HIFN_RNG_BITSPER	17	/* From Hifn 6500 paper: 0.06 bits
+					   of entropy per RNG register bit
+					   worst-case */
+
 	struct callout		sc_rngto;	/* rng timeout */
 	struct callout		sc_tickto;	/* led-clear timeout */
+	rndsource_element_t	sc_rnd_source;
 	int			sc_rngfirst;
 	int			sc_rnghz;
 	int			sc_c_busy;	/* command ring busy */
