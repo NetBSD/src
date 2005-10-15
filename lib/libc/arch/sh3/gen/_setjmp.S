@@ -1,4 +1,4 @@
-/*	$NetBSD: compat__setjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.4 2005/10/15 16:00:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: compat__setjmp.S,v 1.1 2005/09/15 22:44:58 uwe Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.4 2005/10/15 16:00:42 uwe Exp $")
 #endif
 
 /*
