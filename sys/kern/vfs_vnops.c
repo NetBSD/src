@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.97 2005/10/14 17:18:59 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.98 2005/10/15 21:18:54 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.97 2005/10/14 17:18:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.98 2005/10/15 21:18:54 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -106,7 +106,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct veriexec_hash_entry *vhe = NULL;
 	char pathbuf[MAXPATHLEN];
 	size_t pathlen;
-	void (*copyfun)(const void *, void *, size_t, size_t *) =
+	int (*copyfun)(const void *, void *, size_t, size_t *) =
 	    ndp->ni_segflg == UIO_SYSSPACE ? copystr : copyinstr;
 #endif /* VERIFIED_EXEC */
 
