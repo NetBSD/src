@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.4 2004/03/26 19:36:40 drochner Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.1 2005/10/15 22:11:22 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg

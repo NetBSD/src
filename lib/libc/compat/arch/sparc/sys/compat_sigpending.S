@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:26 agc Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.1 2005/10/15 22:11:22 uwe Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,25 +31,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sigsuspend.s,v 1.1 91/07/06 13:06:01 torek Exp
+ * from: Header: sigpending.s,v 1.1 91/07/06 13:06:00 torek Exp
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 #if 0
-	.asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93"
+	.asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:26 agc Exp $")
+	RCSID("$NetBSD: compat_sigpending.S,v 1.1 2005/10/15 22:11:22 uwe Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigsuspend, \
-    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
-ENTRY(sigsuspend)
-	ld	[%o0], %o0		! indirect to mask argument
-	mov	SYS_compat_13_sigsuspend13, %g1
-	t	ST_SYSCALL
-	ERROR()				! always terminates with EINTR
+ENTRY(sigpending)
+	mov	%o0, %o2		! save pointer
+	mov	SYS_compat_13_sigpending13, %g1
+	t	ST_SYSCALL		! sigpending()
+	bcc,a	1f			! if success,
+	 st	%o0, [%o2]		!    store return value
+	ERROR()
+1:
+	retl				! and return 0
+	 clr	%o0

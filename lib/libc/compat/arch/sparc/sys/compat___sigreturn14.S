@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.6 2004/03/26 22:15:03 drochner Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.1 2005/10/15 22:11:22 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,16 +40,13 @@
 #if 0
 	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.6 2004/03/26 22:15:03 drochner Exp $")
+	RCSID("$NetBSD: compat___sigreturn14.S,v 1.1 2005/10/15 22:11:22 uwe Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn()")
-
-ENTRY(sigreturn)
-	mov	SYS_compat_13_sigreturn13, %g1
+ENTRY(__sigreturn14)
+	mov	SYS_compat_16___sigreturn14, %g1
 	t	ST_SYSCALL
 	ERROR()

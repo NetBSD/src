@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.4 2003/08/07 16:42:25 agc Exp $	*/
+/*	$NetBSD: compat_Ovfork.S,v 1.1 2005/10/15 22:11:22 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.4 2003/08/07 16:42:25 agc Exp $")
+	RCSID("$NetBSD: compat_Ovfork.S,v 1.1 2005/10/15 22:11:22 uwe Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
