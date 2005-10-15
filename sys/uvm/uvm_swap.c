@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.95 2005/09/17 14:51:50 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.96 2005/10/15 17:29:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.95 2005/09/17 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.96 2005/10/15 17:29:32 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -142,7 +142,7 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct bufq_state	swd_tab;	/* buffer list */
+	struct bufq_state	*swd_tab;	/* buffer list */
 	int			swd_active;	/* number of active buffers */
 };
 
@@ -595,12 +595,12 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		sdp->swd_flags = SWF_FAKE;
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-		bufq_alloc(&sdp->swd_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+		bufq_alloc(&sdp->swd_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 		simple_lock(&uvm.swap_data_lock);
 		if (swaplist_find(vp, 0) != NULL) {
 			error = EBUSY;
 			simple_unlock(&uvm.swap_data_lock);
-			bufq_free(&sdp->swd_tab);
+			bufq_free(sdp->swd_tab);
 			free(sdp, M_VMSWAP);
 			free(spp, M_VMSWAP);
 			break;
@@ -625,7 +625,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
-			bufq_free(&sdp->swd_tab);
+			bufq_free(sdp->swd_tab);
 			free(sdp->swd_path, M_VMSWAP);
 			free(sdp, M_VMSWAP);
 			break;
@@ -1023,7 +1023,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
 	blist_destroy(sdp->swd_blist);
-	bufq_free(&sdp->swd_tab);
+	bufq_free(sdp->swd_tab);
 	free(sdp, M_VMSWAP);
 	return (0);
 }
@@ -1278,7 +1278,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		vnx->vx_pending++;
 
 		/* sort it in and start I/O if we are not over our limit */
-		BUFQ_PUT(&sdp->swd_tab, &nbp->vb_buf);
+		BUFQ_PUT(sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1322,7 +1322,7 @@ sw_reg_start(struct swapdev *sdp)
 	sdp->swd_flags |= SWF_BUSY;
 
 	while (sdp->swd_active < sdp->swd_maxactive) {
-		bp = BUFQ_GET(&sdp->swd_tab);
+		bp = BUFQ_GET(sdp->swd_tab);
 		if (bp == NULL)
 			break;
 		sdp->swd_active++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.31 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.32 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.31 2005/06/01 12:25:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.32 2005/10/15 17:29:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,8 +298,10 @@ db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 				    ? ' ' : '!', i);
 				first = 0;
 			}
-			db_printf("\t%d.%d (%s)\n", l->l_proc->p_pid,
-			    l->l_lid, l->l_proc->p_comm);
+			db_printf("\t%d.%d (%s) pri=%d usrpri=%d\n",
+			    l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm,
+			    (int)l->l_priority, (int)l->l_usrpri);
 		}
 	}
 }

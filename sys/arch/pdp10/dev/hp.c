@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.2 2004/10/28 07:07:38 yamt Exp $ */
+/*	$NetBSD: hp.c,v 1.3 2005/10/15 17:29:11 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -184,7 +184,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Init the common struct for both the adapter and its slaves.
 	 */
-	bufq_alloc(&sc->sc_md.md_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&sc->sc_md.md_q, "disksort", BUFQ_SORT_CYLINDER);
 	sc->sc_md.md_softc = (void *)sc;	/* Pointer to this softc */
 	sc->sc_md.md_rh = (void *)parent;	/* Pointer to parent softc */
 	sc->sc_md.md_start = hpstart;		/* Disk start routine */
@@ -237,8 +237,8 @@ hpstrategy(struct buf *bp)
 
 	s = splbio();
 
-	gp = BUFQ_PEEK(&sc->sc_md.md_q);
-	BUFQ_PUT(&sc->sc_md.md_q, bp);
+	gp = BUFQ_PEEK(sc->sc_md.md_q);
+	BUFQ_PUT(sc->sc_md.md_q, bp);
 	if (gp == 0)
 		rhqueue(&sc->sc_md);
 
@@ -258,7 +258,7 @@ hpstart(struct	rh_device *md)
 {
 	struct	hp_softc *sc = md->md_softc;
 	struct	disklabel *lp = sc->sc_disk.dk_label;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 	unsigned bn, cn, sn, tn;
 
 	/*
@@ -402,7 +402,7 @@ int
 hpfinish(struct rh_device *md, int mbasr, int *attn)
 {
 	struct	hp_softc *sc = md->md_softc;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 	int er1, er2;
 
 	HP_RCSR(HP_ER1, er1);
@@ -447,8 +447,8 @@ hper2:
 		printf("massbuss error :%s %x\n",
 		    sc->sc_dev.dv_xname, mbasr);
 
-	BUFQ_PEEK(&md->md_q)->b_resid = 0;
-	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(&md->md_q)->b_bcount,
+	BUFQ_PEEK(md->md_q)->b_resid = 0;
+	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(md->md_q)->b_bcount,
 	    (bp->b_flags & B_READ));
 	return XFER_FINISH;
 }

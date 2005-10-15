@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.122 2005/08/28 08:56:14 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.123 2005/10/15 17:29:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.122 2005/08/28 08:56:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.123 2005/10/15 17:29:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -276,7 +276,7 @@ vndattach(int num)
 		vnd_softc[i].sc_comp_buff = NULL;
 		vnd_softc[i].sc_comp_decombuf = NULL;
 		bufq_alloc(&vnd_softc[i].sc_tab,
-		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+		    "disksort", BUFQ_SORT_RAWBLOCK);
 		pseudo_disk_init(&vnd_softc[i].sc_dkdev);
 	}
 }
@@ -292,7 +292,7 @@ vnddetach(void)
 			return (EBUSY);
 
 	for (i = 0; i < numvnd; i++)
-		bufq_free(&vnd_softc[i].sc_tab);
+		bufq_free(vnd_softc[i].sc_tab);
 
 	free(vnd_softc, M_DEVBUF);
 	vndattached = 0;
@@ -454,7 +454,7 @@ vndstrategy(struct buf *bp)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
-	BUFQ_PUT(&vnd->sc_tab, bp);
+	BUFQ_PUT(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
@@ -486,7 +486,7 @@ vndthread(void *arg)
 	 * VOP_BMAP/VOP_STRATEGY.
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
-		bp = BUFQ_GET(&vnd->sc_tab);
+		bp = BUFQ_GET(vnd->sc_tab);
 		if (bp == NULL) {
 			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
 			continue;
@@ -1428,7 +1428,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 		fflags |= FWRITE;
 
 	s = splbio();
-	bufq_drain(&vnd->sc_tab);
+	bufq_drain(vnd->sc_tab);
 	splx(s);
 
 	vnd->sc_flags |= VNF_VUNCONF;

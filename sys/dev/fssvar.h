@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.9 2005/04/17 16:28:26 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.10 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct fss_softc {
 	long		sc_clresid;	/* Bytes in last cluster */
 	int		sc_cache_size;	/* Number of entries in sc_cache */
 	struct fss_cache *sc_cache;	/* Cluster cache */
-	struct bufq_state sc_bufq;	/* Transfer queue */
+	struct bufq_state *sc_bufq;	/* Transfer queue */
 	u_int32_t	sc_clnext;	/* Next free cluster on backing store */
 	int		sc_indir_size;	/* # clusters for indirect mapping */
 	u_int8_t	*sc_indir_valid; /* Map of valid indirect clusters */

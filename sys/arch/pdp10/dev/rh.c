@@ -1,4 +1,4 @@
-/*	$NetBSD: rh.c,v 1.1 2003/08/19 10:51:57 ragge Exp $ */
+/*	$NetBSD: rh.c,v 1.2 2005/10/15 17:29:11 yamt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -188,7 +188,7 @@ rhintr(void *rh)
 		return;	/* During autoconfig */
 
 	md = sc->sc_first;
-	bp = BUFQ_PEEK(&md->md_q);
+	bp = BUFQ_PEEK(md->md_q);
 	/*
 	 * A data-transfer interrupt. Current operation is finished,
 	 * call that device's finish routine to see what to do next.
@@ -205,13 +205,13 @@ rhintr(void *rh)
 			 * If more to transfer, start the adapter again
 			 * by calling rhstart().
 			 */
-			(void)BUFQ_GET(&md->md_q);
+			(void)BUFQ_GET(md->md_q);
 			sc->sc_first = md->md_back;
 			md->md_back = 0;
 			if (sc->sc_first == 0)
 				sc->sc_last = (void *)&sc->sc_first;
 
-			if (BUFQ_PEEK(&md->md_q) != NULL) {
+			if (BUFQ_PEEK(md->md_q) != NULL) {
 				sc->sc_last->md_back = md;
 				sc->sc_last = md;
 			}
@@ -281,7 +281,7 @@ void
 rhstart(struct rh_softc *sc)
 {
 	struct	rh_device *md = sc->sc_first;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 	int ncnt = bp->b_bcount/4;
 	int blkcnt = ncnt/128;
 	paddr_t pap;

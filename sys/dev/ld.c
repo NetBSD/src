@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.37 2005/05/30 04:44:52 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.38 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37 2005/05/30 04:44:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.38 2005/10/15 17:29:11 yamt Exp $");
 
 #include "rnd.h"
 
@@ -155,7 +155,7 @@ ldattach(struct ld_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
-	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sc->sc_dk);
@@ -217,10 +217,10 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	bufq_drain(&sc->sc_bufq);
+	bufq_drain(sc->sc_bufq);
 	splx(s);
 
-	bufq_free(&sc->sc_bufq);
+	bufq_free(sc->sc_bufq);
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
@@ -589,7 +589,7 @@ ldstrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	ldstart(sc);
 	splx(s);
 	return;
@@ -609,7 +609,7 @@ ldstart(struct ld_softc *sc)
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
-		if ((bp = BUFQ_PEEK(&sc->sc_bufq)) == NULL)
+		if ((bp = BUFQ_PEEK(sc->sc_bufq)) == NULL)
 			break;
 
 		disk_busy(&sc->sc_dk);
@@ -620,7 +620,7 @@ ldstart(struct ld_softc *sc)
 			 * The back-end is running the job; remove it from
 			 * the queue.
 			 */
-			(void) BUFQ_GET(&sc->sc_bufq);
+			(void) BUFQ_GET(sc->sc_bufq);
 		} else  {
 			disk_unbusy(&sc->sc_dk, 0, (bp->b_flags & B_READ));
 			sc->sc_queuecnt--;
@@ -635,7 +635,7 @@ ldstart(struct ld_softc *sc)
 				 */
 				break;
 			} else {
-				(void) BUFQ_GET(&sc->sc_bufq);
+				(void) BUFQ_GET(sc->sc_bufq);
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;

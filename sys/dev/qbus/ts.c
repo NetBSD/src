@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.13 2005/02/26 12:45:06 simonb Exp $ */
+/*	$NetBSD: ts.c,v 1.14 2005/10/15 17:29:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.14 2005/10/15 17:29:25 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -126,7 +126,7 @@ struct	ts_softc {
 	struct	ts *sc_bts;		/* Unibus address of ts struct */
 	int	sc_type;		/* TS11 or TS05? */
 	short	sc_waddr;		/* Value to write to TSDB */
-	struct	bufq_state sc_bufq;	/* pending I/O requests */
+	struct	bufq_state *sc_bufq;	/* pending I/O requests */
 
 	short	sc_mapped;		/* Unibus map allocated ? */
 	short	sc_state;		/* see below: ST_xxx */
@@ -250,7 +250,7 @@ tsattach(struct device *parent, struct device *self, void *aux)
 	    0, BUS_DMA_NOWAIT, &sc->sc_dmam)))
 		return printf(": failed create DMA map %d\n", error);
 
-	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 
 	/*
 	 * write the characteristics (again)
@@ -376,10 +376,10 @@ tsstart(struct ts_softc *sc, int isloaded)
 	struct buf *bp;
 	int cmd;
 
-	if (TAILQ_EMPTY(&sc->sc_bufq.bq_head))
+	bp = BUFQ_PEEK(sc->sc_bufq);
+	if (bp == NULL) {
 		return 0;
-
-	bp = BUFQ_PEEK(&sc->sc_bufq);
+	}
 #ifdef TSDEBUG
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
@@ -467,7 +467,7 @@ int
 tsready(struct uba_unit *uu)
 {
 	struct ts_softc *sc = uu->uu_softc;
-	struct buf *bp = BUFQ_PEEK(&sc->sc_bufq);
+	struct buf *bp = BUFQ_PEEK(sc->sc_bufq);
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT))
@@ -785,9 +785,9 @@ tsintr(void *arg)
 			sc->sc_dev.dv_xname, sr & TS_TC);
 		tsreset(sc);
 	}
-	if ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
+	if ((bp = BUFQ_GET(sc->sc_bufq)) != NULL) {
 #ifdef TSDEBUG
-		printf("tsintr2: que %p\n", TAILQ_FIRST(&sc->sc_bufq.bq_head));
+		printf("tsintr2: que %p\n", BUFQ_PEEK(sc->sc_bufq));
 #endif
 		if (bp != &sc->ts_cbuf) {	/* no ioctl */
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
@@ -909,8 +909,8 @@ tsstrategy(struct buf *bp)
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
 	s = splbio ();
-	empty = (BUFQ_PEEK(&sc->sc_bufq) == NULL);
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	empty = (BUFQ_PEEK(sc->sc_bufq) == NULL);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	if (empty)
 		tsstart(sc, 0);
 	splx(s);

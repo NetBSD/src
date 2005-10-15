@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.3 2004/11/25 04:52:24 yamt Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.4 2005/10/15 17:29:26 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.3 2004/11/25 04:52:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.4 2005/10/15 17:29:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ static void bufq_readprio_init(struct bufq_state *);
 static void bufq_prio_put(struct bufq_state *, struct buf *);
 static struct buf *bufq_prio_get(struct bufq_state *, int);
 
-BUFQ_DEFINE(readprio, BUFQ_READ_PRIO, bufq_readprio_init);
+BUFQ_DEFINE(readprio, 30, bufq_readprio_init);
 
 static void
 bufq_prio_put(struct bufq_state *bufq, struct buf *bp)

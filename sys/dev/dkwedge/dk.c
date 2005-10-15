@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.8 2005/09/28 18:25:19 nathanw Exp $	*/
+/*	$NetBSD: dk.c,v 1.9 2005/10/15 17:29:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.8 2005/09/28 18:25:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.9 2005/10/15 17:29:12 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -88,7 +88,7 @@ struct dkwedge_softc {
 	LIST_ENTRY(dkwedge_softc) sc_plink;
 
 	struct disk	sc_dk;		/* our own disk structure */
-	struct bufq_state sc_bufq;	/* buffer queue */
+	struct bufq_state *sc_bufq;	/* buffer queue */
 	struct callout	sc_restart_ch;	/* callout to restart I/O */
 
 	u_int		sc_iopend;	/* I/Os pending */
@@ -301,7 +301,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	memcpy(sc->sc_ptype, dkw->dkw_ptype, sizeof(sc->sc_ptype));
 	sc->sc_ptype[sizeof(sc->sc_ptype) - 1] = '\0';
 
-	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 
 	callout_init(&sc->sc_restart_ch);
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
@@ -339,7 +339,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	}
 	(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
 	if (error) {
-		bufq_free(&sc->sc_bufq);
+		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (error);
 	}
@@ -392,7 +392,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
 
-		bufq_free(&sc->sc_bufq);
+		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (error);
 	}
@@ -419,7 +419,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
 
-		bufq_free(&sc->sc_bufq);
+		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (ENOMEM);
 	}
@@ -532,7 +532,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 	(void) lockmgr(&sc->sc_parent->dk_openlock, LK_RELEASE, NULL);
 
 	/* Delete our buffer queue. */
-	bufq_free(&sc->sc_bufq);
+	bufq_free(sc->sc_bufq);
 
 	/* Detach from the disk list. */
 	disk_detach(&sc->sc_dk);
@@ -997,7 +997,7 @@ dkstrategy(struct buf *bp)
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
 	sc->sc_iopend++;
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	dkstart(sc);
 	splx(s);
 	return;
@@ -1019,9 +1019,9 @@ dkstart(struct dkwedge_softc *sc)
 	struct buf *bp, *nbp;
 
 	/* Do as much work as has been enqueued. */
-	while ((bp = BUFQ_PEEK(&sc->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_PEEK(sc->sc_bufq)) != NULL) {
 		if (sc->sc_state != DKW_STATE_RUNNING) {
-			(void) BUFQ_GET(&sc->sc_bufq);
+			(void) BUFQ_GET(sc->sc_bufq);
 			if (sc->sc_iopend-- == 1 &&
 			    (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
@@ -1048,7 +1048,7 @@ dkstart(struct dkwedge_softc *sc)
 			return;
 		}
 
-		(void) BUFQ_GET(&sc->sc_bufq);
+		(void) BUFQ_GET(sc->sc_bufq);
 
 		BUF_INIT(nbp);
 		nbp->b_data = bp->b_data;

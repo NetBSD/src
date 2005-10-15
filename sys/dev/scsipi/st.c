@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.184 2005/08/13 10:50:50 blymn Exp $ */
+/*	$NetBSD: st.c,v 1.185 2005/10/15 17:29:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.184 2005/08/13 10:50:50 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.185 2005/10/15 17:29:26 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -394,7 +394,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	bufq_alloc(&st->buf_queue, BUFQ_FCFS);
+	bufq_alloc(&st->buf_queue, "fcfs", 0);
 
 	callout_init(&st->sc_callout);
 
@@ -466,9 +466,9 @@ stdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&st->buf_queue);
+	bufq_drain(st->buf_queue);
 
-	bufq_free(&st->buf_queue);
+	bufq_free(st->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(st->sc_periph);
@@ -1144,7 +1144,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(&st->buf_queue, bp);
+	BUFQ_PUT(st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1208,7 +1208,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 				bp->b_flags |= B_ERROR;
@@ -1221,7 +1221,7 @@ ststart(struct scsipi_periph *periph)
 			}
 		}
 
-		if ((bp = BUFQ_PEEK(&st->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
 			return;
 
 		if (st->stats->busy++ == 0) {
@@ -1247,14 +1247,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						BUFQ_GET(&st->buf_queue);
+						BUFQ_GET(st->buf_queue);
 						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
 					}
 				} else {
-					BUFQ_GET(&st->buf_queue);
+					BUFQ_GET(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					bp->b_flags &= ~B_ERROR;
@@ -1269,7 +1269,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			BUFQ_GET(&st->buf_queue);
+			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING) {
 				bp->b_error = EIO;
@@ -1331,10 +1331,10 @@ ststart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&st->buf_queue) != bp)
+		if (BUFQ_GET(st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&st->buf_queue);
+		BUFQ_GET(st->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */

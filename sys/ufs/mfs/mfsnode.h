@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.15 2004/11/09 08:46:08 yamt Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.16 2005/10/15 17:29:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ struct mfsnode {
 	struct	proc *mfs_proc;		/* supporting process */
 	int	mfs_shutdown;		/* shutdown this mfsnode */
 #if defined(_KERNEL)
-	struct	bufq_state mfs_buflist;	/* list of I/O requests */
+	struct	bufq_state *mfs_buflist;/* list of I/O requests */
 #endif /* defined(_KERNEL) */
 };
 
