@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.7 2005/02/24 08:25:28 martin Exp $	*/
+/*	$NetBSD: est.c,v 1.7.2.1 2005/10/15 17:43:51 riz Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -75,13 +75,16 @@
  *   http://www.intel.com/design/mobile/datashts/252612.htm
  *   http://www.intel.com/design/mobile/datashts/302189.htm
  *
+ * - Intel Pentium M Processor on 90 nm Process with 2-MB L2 Cache Datasheet
+ *   Table 3-4, Voltage and Current Specifications.
+ *
  * - Linux cpufreq patches, speedstep-centrino.c.
  *   Encoding of MSR_PERF_CTL and MSR_PERF_STATUS.
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.7 2005/02/24 08:25:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.7.2.1 2005/10/15 17:43:51 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +188,61 @@ static const struct fq_info pentium_m_1700[] = {
 	{  600,  956 }
 };
 
+
+/* Intel Pentium M processor 723 1.0 GHz */
+static const struct fq_info pentium_m_n723[] = {
+	{ 1000,  940 },
+	{  900,  908 },
+	{  800,  876 },
+	{  600,  812 } 
+};
+
+/* Intel Pentium M processor 733 1.1 GHz */
+static const struct fq_info pentium_m_n733[] = {
+	{ 1100,  940 },
+	{ 1000,  924 },
+	{  900,  892 },
+	{  800,  876 },
+	{  600,  812 }
+};
+
+/* Intel Pentium M processor 753 1.2 GHz */
+static const struct fq_info pentium_m_n753[] = {
+	{ 1200,  940 },
+	{ 1100,  924 },
+	{ 1000,  908 },
+	{  900,  876 },
+	{  800,  860 },
+	{  600,  812 }
+};
+
+/* Intel Pentium M processor 738 1.4 GHz */
+static const struct fq_info pentium_m_n738[] = {
+	{ 1400, 1116 },
+	{ 1300, 1116 },
+	{ 1200, 1100 },
+	{ 1100, 1068 },
+	{ 1000, 1052 },
+	{  900, 1036 },
+	{  800, 1020 },
+	{  600,  988 }
+};
+
+#if 0
+/* Intel Pentium M processor 758 1.5 GHz */
+static const struct fq_info pentium_m_n758[] = {
+	{ 1500, 1116 },
+	{ 1400, 1116 },
+	{ 1300, 1100 },
+	{ 1200, 1084 },
+	{ 1100, 1068 },
+	{ 1000, 1052 },
+	{  900, 1036 },
+	{  800, 1020 },
+	{  600,  988 }
+};
+#endif
+
 /* Intel Pentium M processor 715 1.5 GHz */
 static const struct fq_info pentium_m_n715[] = {
 	{ 1500, 1340 },
@@ -249,35 +307,6 @@ static const struct fq_info pentium_m_n765[] = {
 	{  600,  988 }
 };
 
-/* Intel Pentium M processor 723 1.0 GHz */
-static const struct fq_info pentium_m_n723[] = {
-	{ 1000, 940 },
-	{  900, 908 },
-	{  800, 876 },
-	{  600, 812 }
-};
-
-/* Intel Pentium M processor 733 1.1 GHz */
-static const struct fq_info pentium_m_n733[] = {
-	{ 1100, 940 },
-	{ 1000, 920 },
-	{  900, 892 },
-	{  800, 876 },
-	{  600, 812 }
-};
-
-/* Intel Pentium M processor 738 1.4 GHz */
-static const struct fq_info pentium_m_n738[] = {
-	{ 1400, 1116 },
-	{ 1300, 1116 },
-	{ 1200, 1100 },
-	{ 1100, 1068 },
-	{ 1000, 1052 },
-	{  900, 1036 },
-	{  800, 1020 },
-	{  600,  988 }
-};
-
 struct fqlist {
 	const char *brand_tag;
 	size_t tablec;
@@ -298,6 +327,13 @@ static const struct fqlist pentium_m[] = {
 };
 
 static const struct fqlist pentium_m_dothan[] = {
+	ENTRY("1.00", pentium_m_n723),
+	ENTRY("1.10", pentium_m_n733),
+	ENTRY("1.20", pentium_m_n753),
+	ENTRY("1.40", pentium_m_n738),
+#if 0
+	ENTRY("1.50", pentium_m_n758),
+#endif
 	ENTRY("1.50", pentium_m_n715),
 	ENTRY("1.60", pentium_m_n725),
 	ENTRY("1.70", pentium_m_n735),
