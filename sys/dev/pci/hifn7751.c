@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.23 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.24 2005/10/15 04:31:20 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.24 2005/10/15 04:31:20 tls Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -1702,11 +1702,19 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	 * We don't worry about missing an interrupt (which a "command wait"
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
+	 *
+	 * XXX We do seem to miss some interrupts.  So we always enable
+	 * XXX command wait.  From OpenBSD revision 1.149.
+	 *
 	 */
+#if 0
 	if (dma->cmdu > 1) {
+#endif
 		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+#if 0
 	}
+#endif
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
