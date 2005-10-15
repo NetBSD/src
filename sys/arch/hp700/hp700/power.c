@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.3 2005/06/20 02:49:19 atatat Exp $ */
+/* $NetBSD: power.c,v 1.4 2005/10/15 16:16:38 itohy Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.3 2005/06/20 02:49:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.4 2005/10/15 16:16:38 itohy Exp $");
 
 
 /*
@@ -259,8 +259,11 @@ pwr_sw_ctrl(int enable)
 #ifdef DEBUG
 	printf("pwr_sw_control=%d enable=%d\n", pwr_sw_control, enable);
 #endif /* DEBUG */
-	if (cold != 0)
+	if (cold != 0) {
+		if (panicstr)
+			return;
 		panic("pwr_sw_ctrl can only be called when machine is warm!");
+	}
 	if (pwr_sw_reg_bst == NULL && lasi_pwr_sw_reg == NULL)
 		return;
 	if (enable < PWR_SW_CTRL_MIN || enable > PWR_SW_CTRL_MAX)
