@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.88.4.2 2005/09/18 20:09:50 tron Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.88.4.3 2005/10/15 15:34:08 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.88.4.2 2005/09/18 20:09:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.88.4.3 2005/10/15 15:34:08 riz Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -604,8 +604,6 @@ sys___msync13(l, v, retval)
 		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
-	else
-		uvmflags |= PGO_SYNCIO;	 /* XXXCDC: force sync for now! */
 
 	error = uvm_map_clean(map, addr, addr+size, uvmflags);
 	return error;
