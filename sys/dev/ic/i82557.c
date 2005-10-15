@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.89.10.1 2005/08/16 11:53:22 tron Exp $	*/
+/*	$NetBSD: i82557.c,v 1.89.10.2 2005/10/15 16:39:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.89.10.1 2005/08/16 11:53:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.89.10.2 2005/10/15 16:39:17 riz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -663,12 +663,12 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 		}
 	}
 
-	/* Receiver lock-up workaround detection. */
+	/* Receiver lock-up workaround detection. (FXPF_RECV_WORKAROUND) */
+	/* Due to false positives we make it conditional on setting link1 */
 	fxp_read_eeprom(sc, &data, 3, 1);
 	if ((data & 0x03) != 0x03) {
-		aprint_verbose("%s: Enabling receiver lock-up workaround\n",
+		aprint_verbose("%s: May need receiver lock-up workaround\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_flags |= FXPF_RECV_WORKAROUND;
 	}
 }
 
@@ -1710,6 +1710,11 @@ fxp_init(struct ifnet *ifp)
 	 * Load microcode for this controller.
 	 */
 	fxp_load_ucode(sc);
+
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_LINK1))
+		sc->sc_flags |= FXPF_RECV_WORKAROUND;
+	else
+		sc->sc_flags &= ~FXPF_RECV_WORKAROUND;
 
 	/*
 	 * This copy is kind of disgusting, but there are a bunch of must be
