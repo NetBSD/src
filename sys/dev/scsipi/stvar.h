@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.14 2005/08/07 12:25:08 blymn Exp $ */
+/*	$NetBSD: stvar.h,v 1.15 2005/10/15 17:29:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ struct st_softc {
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */
-	struct bufq_state buf_queue;	/* the queue of pending IO */
+	struct bufq_state *buf_queue;	/* the queue of pending IO */
 					/* operations */
 	struct callout sc_callout;	/* restarting the queue after */
 					/* transient error */

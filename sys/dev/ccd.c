@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.105 2005/08/20 12:01:04 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.106 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.105 2005/08/20 12:01:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.106 2005/10/15 17:29:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,7 +692,7 @@ ccdstrategy(struct buf *bp)
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
-	BUFQ_PUT(&cs->sc_bufq, bp);
+	BUFQ_PUT(cs->sc_bufq, bp);
 	ccdstart(cs);
 	splx(s);
 	return;
@@ -718,7 +718,7 @@ ccdstart(struct ccd_softc *cs)
 #endif
 
 	/* See if there is work for us to do. */
-	while ((bp = BUFQ_PEEK(&cs->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_PEEK(cs->sc_bufq)) != NULL) {
 		/* Instrumentation. */
 		disk_busy(&cs->sc_dkdev);
 
@@ -754,7 +754,7 @@ ccdstart(struct ccd_softc *cs)
 		}
 
 		/* Transfer all set up, remove job from the queue. */
-		(void) BUFQ_GET(&cs->sc_bufq);
+		(void) BUFQ_GET(cs->sc_bufq);
 
 		/* Now fire off the requests. */
 		while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
@@ -1129,7 +1129,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ccio->ccio_unit = unit;
 		ccio->ccio_size = cs->sc_size;
 
-		bufq_alloc(&cs->sc_bufq, BUFQ_FCFS);
+		bufq_alloc(&cs->sc_bufq, "fcfs", 0);
 
 		/* Attach the disk. */
 		pseudo_disk_attach(&cs->sc_dkdev);
@@ -1155,10 +1155,10 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		/* Kill off any queued buffers. */
 		s = splbio();
-		bufq_drain(&cs->sc_bufq);
+		bufq_drain(cs->sc_bufq);
 		splx(s);
 
-		bufq_free(&cs->sc_bufq);
+		bufq_free(cs->sc_bufq);
 
 		/*
 		 * Free ccd_softc information and clear entry.

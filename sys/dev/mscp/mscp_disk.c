@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.47 2005/02/27 00:27:32 perry Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.48 2005/10/15 17:29:25 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.47 2005/02/27 00:27:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.48 2005/10/15 17:29:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -342,7 +342,7 @@ raclose(dev, flags, fmt, p)
 #if notyet
 	if (ra->ra_openpart == 0) {
 		s = spluba();
-		while (BUFQ_PEEK(&udautab[unit]) != NULL)
+		while (BUFQ_PEEK(udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
