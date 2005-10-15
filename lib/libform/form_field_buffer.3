@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.11 2004/11/24 12:26:23 wiz Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.12 2005/10/15 12:43:20 peter Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 24, 2004
+.Dd October 15, 2005
 .Dt FORMS 3
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@
 .Fn set_field_printf "FIELD *field" "int buffer" "char *fmt" "..."
 .Ft int
 .Fn set_field_status "FIELD *field" "int status"
+.Ft int
+.Fn set_max_field "FIELD *field" "int max"
 .Sh DESCRIPTION
 The
 .Fn field_buffer
