@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.129 2005/10/06 11:17:38 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.130 2005/10/15 23:05:45 xtraeme Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 4, 2005
+.Dd October 16, 2005
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -281,6 +281,7 @@ privilege can change the value.
 .It kern.autonicetime	integer	yes
 .It kern.autoniceval	integer	yes
 .It kern.boottime	struct	no
+.It kern.bufq.strategies	string	no
 .It kern.ccpu	integer	no
 .It kern.chown_restricted	integer	no
 .It kern.clockrate	struct	no
