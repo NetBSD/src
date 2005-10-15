@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.1 2003/01/08 23:51:11 jmcneill Exp $ */
+/* $NetBSD: fdvar.h,v 1.2 2005/10/15 17:29:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
-	struct bufq_state sc_q;	/* pending I/O requests */
+	struct bufq_state *sc_q;/* pending I/O requests */
 	int sc_active;		/* number of active I/O operations */
 
 #if NRND > 0

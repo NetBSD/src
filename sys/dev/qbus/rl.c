@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.25 2005/06/27 11:05:24 ragge Exp $	*/
+/*	$NetBSD: rl.c,v 1.26 2005/10/15 17:29:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.25 2005/06/27 11:05:24 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.26 2005/10/15 17:29:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -221,7 +221,7 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 		printf(": Failed to allocate DMA map, error %d\n", error);
 		return;
 	}
-	bufq_alloc(&sc->sc_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_CYLINDER);
 	for (i = 0; i < RL_MAXDPC; i++) {
 		waitcrdy(sc);
 		RL_WREG(RL_DA, RLDA_GS|RLDA_RST);
@@ -431,7 +431,7 @@ rlstrategy(struct buf *bp)
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_q, bp);
+	BUFQ_PUT(sc->sc_q, bp);
 	rlcstart(sc, 0);
 	splx(s);
 	return;
@@ -647,7 +647,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		return;	/* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(&sc->sc_q);
+		bp = BUFQ_GET(sc->sc_q);
 		if (bp == NULL)
 			return;	/* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;
@@ -740,7 +740,7 @@ rlcreset(struct device *dev)
 	if (sc->sc_active == 0)
 		return;
 
-	BUFQ_PUT(&sc->sc_q, sc->sc_active);
+	BUFQ_PUT(sc->sc_q, sc->sc_active);
 	sc->sc_active = 0;
 	rlcstart(sc, 0);
 }

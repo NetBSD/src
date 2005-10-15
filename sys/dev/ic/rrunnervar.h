@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.9 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.10 2005/10/15 17:29:12 yamt Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@ struct esh_send_ring_ctl {
 	struct buf *ec_cur_buf;		/* current buf being processed */
 	struct esh_dmainfo *ec_cur_dmainfo;
 					/* current dmainfo being processed */
-	struct bufq_state ec_buf_queue;	/* queue of bufs to send */
+	struct bufq_state *ec_buf_queue;/* queue of bufs to send */
 	int ec_error;			/* encountered error? */
 	u_int16_t ec_producer;		/* latest buffer driver produced */
 	u_int16_t ec_consumer;		/* latest buffer runcode consumed */

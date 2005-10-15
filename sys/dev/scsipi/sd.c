@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.241 2005/10/15 17:29:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240 2005/05/29 22:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.241 2005/10/15 17:29:25 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -229,8 +229,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	    periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-	bufq_alloc(&sd->buf_queue,
-	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&sd->sc_callout);
 
@@ -369,9 +368,9 @@ sddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&sd->buf_queue);
+	bufq_drain(sd->buf_queue);
 
-	bufq_free(&sd->buf_queue);
+	bufq_free(sd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
@@ -725,7 +724,7 @@ sdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(&sd->buf_queue, bp);
+	BUFQ_PUT(sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -798,7 +797,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
@@ -812,7 +811,7 @@ sdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&sd->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(sd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -900,10 +899,10 @@ sdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&sd->buf_queue) != bp)
+		if (BUFQ_GET(sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&sd->buf_queue);
+		BUFQ_GET(sd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */

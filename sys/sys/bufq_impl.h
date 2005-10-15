@@ -1,4 +1,5 @@
-/*	$NetBSD: bufq.h,v 1.4 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
+/*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -78,37 +79,58 @@
 #error not supposed to be exposed to userland.
 #endif
 
-struct buf;
-struct bufq_state;
+/*
+ * Device driver buffer queue.
+ */
+struct bufq_state {
+	void (*bq_put)(struct bufq_state *, struct buf *);
+	struct buf *(*bq_get)(struct bufq_state *, int);
+	void *bq_private;
+	int bq_flags;			/* Flags from bufq_alloc() */
+};
+
+static __inline void *bufq_private(const struct bufq_state *) __unused;
+static __inline int buf_inorder(const struct buf *, const struct buf *, int)
+    __unused;
+
+#include <sys/null.h> /* for NULL */
+
+static __inline void *
+bufq_private(const struct bufq_state *bufq)
+{
+
+	return bufq->bq_private;
+}
 
 /*
- * Special strategies for bufq_alloc.
+ * Check if two buf's are in ascending order.
  */
-#define	BUFQ_STRAT_ANY		NULL 	/* let bufq_alloc select one. */
-#define	BUFQ_DISK_DEFAULT_STRAT	BUFQ_STRAT_ANY	/* default for disks. */
+static __inline int
+buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
+{
 
-/*
- * Flags for bufq_alloc.
- */
-#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
-#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
+	if (bp == NULL || bq == NULL)
+		return (bq == NULL);
 
-#define BUFQ_SORT_MASK		0x000f
+	if (sortby == BUFQ_SORT_CYLINDER) {
+		if (bp->b_cylinder != bq->b_cylinder)
+			return bp->b_cylinder < bq->b_cylinder;
+		else
+			return bp->b_rawblkno < bq->b_rawblkno;
+	} else
+		return bp->b_rawblkno < bq->b_rawblkno;
+}
 
-#define	BUFQ_EXACT		0x0010	/* Don't fall back to other strategy */
+struct bufq_strat {
+	const char *bs_name;
+	void (*bs_initfn)(struct bufq_state *);
+	int bs_prio;
+};
 
-int	bufq_alloc(struct bufq_state **, const char *, int);
-void	bufq_drain(struct bufq_state *);
-void	bufq_free(struct bufq_state *);
-void	bufq_put(struct bufq_state *, struct buf *);
-struct buf *bufq_get(struct bufq_state *);
-struct buf *bufq_peek(struct bufq_state *);
-
-/* Put buffer in queue */
-#define BUFQ_PUT(bufq, bp)	bufq_put(bufq, bp)
-
-/* Get and remove buffer from queue */
-#define BUFQ_GET(bufq)		bufq_get(bufq)
-
-/* Get buffer from queue */
-#define BUFQ_PEEK(bufq)		bufq_get(bufq)
+#define	BUFQ_DEFINE(name, prio, initfn)			\
+static const struct bufq_strat bufq_strat_##name = {	\
+	.bs_name = #name,				\
+	.bs_prio = prio,					\
+	.bs_initfn = initfn				\
+};							\
+__link_set_add_rodata(bufq_strats, bufq_strat_##name)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.43 2005/10/15 17:29:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42 2005/06/02 16:25:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.43 2005/10/15 17:29:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ struct	ct_softc {
 	struct	ct_ulcmd sc_ul;
 	struct	ct_wfmcmd sc_wfm;
 	struct	ct_clearcmd sc_clear;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	struct	buf *sc_bp;
 	struct	buf sc_bufstore;	/* XXX */
@@ -231,7 +231,7 @@ ctattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 
 	/* Initialize hpib job queue entry. */
 	sc->sc_hq.hq_softc = sc;
@@ -497,7 +497,7 @@ ctstrategy(struct buf *bp)
 	sc = ct_cd.cd_devs[unit];
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -510,7 +510,7 @@ ctustart(struct ct_softc *sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
@@ -527,7 +527,7 @@ ctstart(void *arg)
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
 	slave = sc->sc_slave;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -637,7 +637,7 @@ ctgo(void *arg)
 	struct buf *bp;
 	int rw;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_dev.dv_parent->dv_unit, sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
@@ -730,7 +730,7 @@ ctintr(void *arg)
 	slave = sc->sc_slave;
 	unit = sc->sc_dev.dv_unit;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", sc->sc_dev.dv_xname);
 		return;
@@ -865,10 +865,10 @@ static void
 ctdone(struct ct_softc *sc, struct buf *bp)
 {
 
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (BUFQ_PEEK(&sc->sc_tab) == NULL) {
+	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}

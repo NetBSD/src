@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.69 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.70 2005/10/15 17:29:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.69 2005/09/23 12:10:34 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.70 2005/10/15 17:29:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -191,11 +191,11 @@ mfs_mountroot(void)
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	mfsp->mfs_shutdown = 0;
-	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		bufq_free(&mfsp->mfs_buflist);
+		bufq_free(mfsp->mfs_buflist);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
@@ -320,7 +320,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
-	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
@@ -367,7 +367,7 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 	l = curlwp;
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
-		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
+		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}
@@ -394,8 +394,8 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
-	KASSERT(BUFQ_PEEK(&mfsp->mfs_buflist) == NULL);
-	bufq_free(&mfsp->mfs_buflist);
+	KASSERT(BUFQ_PEEK(mfsp->mfs_buflist) == NULL);
+	bufq_free(mfsp->mfs_buflist);
 	return (sleepreturn);
 }
 

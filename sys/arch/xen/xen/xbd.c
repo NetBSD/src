@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.22 2005/08/21 22:20:28 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.23 2005/10/15 17:29:11 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.22 2005/08/21 22:20:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.23 2005/10/15 17:29:11 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -312,7 +312,7 @@ static SIMPLEQ_HEAD(, xbdreq) xbdr_suspended =
 	SLIST_INSERT_HEAD(&xbdreqs, _xr, xr_unused);	\
 } while (/*CONSTCOND*/0)
 
-static struct bufq_state bufq;
+static struct bufq_state *bufq;
 static int bufq_users = 0;
 
 #define XEN_MAJOR(_dev)	((_dev) >> 8)
@@ -1387,7 +1387,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		    xr_suspended);
 		DPRINTF(XBDB_IO, ("xbdstart: suspended xbdreq %p "
 		    "for bp %p\n", pxr, bp));
-	} else if (CANGET_XBDREQ() && BUFQ_PEEK(&bufq) != NULL) {
+	} else if (CANGET_XBDREQ() && BUFQ_PEEK(bufq) != NULL) {
 		/* 
 		 * We have enough resources to start another bp and
 		 * there are additional bps on the queue, dk_start
@@ -1606,16 +1606,14 @@ xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 	 * available in xbdstart and this device had no requests
 	 * in-flight which would trigger a dk_start from the interrupt
 	 * handler.
-	 * XXX this assumes that we can just memcpy struct bufq_state
-	 *     to share it between devices.
 	 * XXX we reference count the usage in case so we can de-alloc
 	 *     the bufq if all devices are deconfigured.
 	 */
 	if (bufq_users == 0) {
-		bufq_alloc(&bufq, BUFQ_FCFS);
+		bufq_alloc(&bufq, "fcfs", 0);
 		bufq_users = 1;
 	}
-	memcpy(&xs->sc_dksc.sc_bufq, &bufq, sizeof(struct bufq_state));
+	xs->sc_dksc.sc_bufq = bufq;
 
 	xs->sc_dksc.sc_flags |= DKF_INITED;
 

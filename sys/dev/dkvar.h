@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.7 2005/08/20 12:03:52 yamt Exp $ */
+/* $NetBSD: dkvar.h,v 1.8 2005/10/15 17:29:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct dk_softc {
 #define DK_XNAME_SIZE 8
 	char			 sc_xname[DK_XNAME_SIZE]; /* external name */
 	struct disk		 sc_dkdev;	/* generic disk info */
-	struct bufq_state	 sc_bufq;	/* buffer queue */
+	struct bufq_state	*sc_bufq;	/* buffer queue */
 };
 
 /* sc_flags:

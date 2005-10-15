@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.29 2005/08/20 12:03:52 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.30 2005/10/15 17:29:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.29 2005/08/20 12:03:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.30 2005/10/15 17:29:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -568,7 +568,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 		goto bail;
 	}
 
-	bufq_alloc(&cs->sc_dksc.sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&cs->sc_dksc.sc_bufq, "fcfs", 0);
 
 	cs->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
 	cs->sc_data_used = 0;
@@ -602,9 +602,9 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	bufq_drain(&cs->sc_dksc.sc_bufq);
+	bufq_drain(cs->sc_dksc.sc_bufq);
 	splx(s);
-	bufq_free(&cs->sc_dksc.sc_bufq);
+	bufq_free(cs->sc_dksc.sc_bufq);
 
 	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, p->p_ucred, p);
 	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);

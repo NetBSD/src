@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.190 2005/09/25 19:47:17 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.191 2005/10/15 17:29:25 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.190 2005/09/25 19:47:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.191 2005/10/15 17:29:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -253,7 +253,7 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct bufq_state buf_queue;	/* used for the device queue */
+	struct bufq_state *buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -395,7 +395,7 @@ raidattach(int num)
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
-		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
+		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
 		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
@@ -733,7 +733,7 @@ raidstrategy(struct buf *bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_PUT(&rs->buf_queue, bp);
+	BUFQ_PUT(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
 	wakeup(&(raidPtrs[raidID]->iodone));
@@ -1701,7 +1701,7 @@ raidstart(RF_Raid_t *raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_GET(&rs->buf_queue)) == NULL) {
+		if ((bp = BUFQ_GET(rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
@@ -3343,7 +3343,7 @@ rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 int
 rf_buf_queue_check(int raidid)
 {
-	if ((BUFQ_PEEK(&(raid_softc[raidid].buf_queue)) != NULL) &&
+	if ((BUFQ_PEEK(raid_softc[raidid].buf_queue) != NULL) &&
 	    raidPtrs[raidid]->openings > 0) {
 		/* there is work to do */
 		return 0;

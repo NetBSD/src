@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.33 2004/10/31 12:52:55 he Exp $ */
+/*	$NetBSD: mba.c,v 1.34 2005/10/15 17:29:11 yamt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.33 2004/10/31 12:52:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.34 2005/10/15 17:29:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ mbaintr(void *mba)
 		return;	/* During autoconfig */
 
 	md = sc->sc_first;
-	bp = BUFQ_PEEK(&md->md_q);
+	bp = BUFQ_PEEK(md->md_q);
 	/*
 	 * A data-transfer interrupt. Current operation is finished,
 	 * call that device's finish routine to see what to do next.
@@ -205,13 +205,13 @@ mbaintr(void *mba)
 			 * If more to transfer, start the adapter again
 			 * by calling mbastart().
 			 */
-			(void)BUFQ_GET(&md->md_q);
+			(void)BUFQ_GET(md->md_q);
 			sc->sc_first = md->md_back;
 			md->md_back = 0;
 			if (sc->sc_first == 0)
 				sc->sc_last = (void *)&sc->sc_first;
 
-			if (BUFQ_PEEK(&md->md_q) != NULL) {
+			if (BUFQ_PEEK(md->md_q) != NULL) {
 				sc->sc_last->md_back = md;
 				sc->sc_last = md;
 			}
@@ -281,7 +281,7 @@ void
 mbastart(struct mba_softc *sc)
 {
 	struct	mba_device *md = sc->sc_first;
-	struct	buf *bp = BUFQ_PEEK(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(md->md_q);
 
 	disk_reallymapin(bp, (void *)(sc->sc_ioh + MAPREG(0)), 0, PG_V);
 

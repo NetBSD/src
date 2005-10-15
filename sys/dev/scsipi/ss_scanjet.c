@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.42 2005/05/30 04:25:32 christos Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.43 2005/10/15 17:29:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.42 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.43 2005/10/15 17:29:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,10 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 		return(0);
 	}
 #ifdef DIAGNOSTIC
-	if (BUFQ_GET(&ss->buf_queue) != bp)
+	if (BUFQ_GET(ss->buf_queue) != bp)
 		panic("ssstart(): dequeued wrong buf");
 #else
-	BUFQ_GET(&ss->buf_queue);
+	BUFQ_GET(ss->buf_queue);
 #endif
 	error = scsipi_execute_xs(xs);
 	/* with a scsipi_xfer preallocated, scsipi_command can't fail */

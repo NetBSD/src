@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.26 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.27 2005/10/15 17:29:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct sd_softc {
 		u_int64_t disksize512;	/* total number sectors */
 	} params;
 
-	struct bufq_state buf_queue;
+	struct bufq_state *buf_queue;
 	struct callout sc_callout;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */

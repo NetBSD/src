@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.3 2004/10/28 07:07:40 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.4 2005/10/15 17:29:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.4 2005/10/15 17:29:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ struct	mt_softc {
 	short	sc_density;	/* current density of tape (mtio.h format) */
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	tpr_t	sc_ttyp;
-	struct bufq_state sc_tab;/* buf queue */
+	struct bufq_state *sc_tab;/* buf queue */
 	int	sc_active;
 	struct buf sc_bufstore;	/* XXX buffer storage */
 
@@ -278,7 +278,7 @@ mtattach(parent, self, aux)
 	sc->sc_type = type;
 	sc->sc_flags = MTF_EXISTS;
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 	callout_init(&sc->sc_start_ch);
 	callout_init(&sc->sc_intr_ch);
 
@@ -588,7 +588,7 @@ mtstrategy(bp)
 		}
 	}
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		mtustart(sc);
@@ -662,7 +662,7 @@ mtstart(sc)
 
 	DPRINTF(MDB_ANY, ("%s start", sc->sc_dev.dv_xname));
 	sc->sc_flags &= ~MTF_WRT;
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -843,10 +843,10 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(&sc->sc_tab)) == NULL)
+	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -862,7 +862,7 @@ mtintr(sc)
 
 	slave = sc->sc_slave;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
@@ -1010,10 +1010,10 @@ error:
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) gpibsend(sc->sc_ic, slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if (BUFQ_PEEK(&sc->sc_tab) == NULL)
+	if (BUFQ_PEEK(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);

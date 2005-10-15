@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.49 2005/06/03 15:07:12 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.50 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49 2005/06/03 15:07:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.50 2005/10/15 17:29:11 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -446,7 +446,7 @@ xdcattach(struct device *parent, struct device *self, void *aux)
 
 	/* init queue of waiting bufs */
 
-	bufq_alloc(&xdc->sc_wq, BUFQ_FCFS);
+	bufq_alloc(&xdc->sc_wq, "fcfs", 0);
 	callout_init(&xdc->sc_tick_ch);
 
 	/*
@@ -1047,7 +1047,7 @@ xdstrategy(struct buf *bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && BUFQ_PEEK(&parent->sc_wq) != NULL)
+	while (parent->nfree > 0 && BUFQ_PEEK(parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1056,7 +1056,7 @@ xdstrategy(struct buf *bp)
 	 * buffs will get picked up later by xdcintr().
 	 */
 	if (parent->nfree == 0) {
-		BUFQ_PUT(&parent->sc_wq, bp);
+		BUFQ_PUT(parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1102,7 +1102,7 @@ xdcintr(void *v)
 	xdc_start(xdcsc, XDC_MAXIOPB);
 
 	/* fill up any remaining iorq's with queue'd buffers */
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1326,7 +1326,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = BUFQ_GET(&xdcsc->sc_wq);
+		bp = BUFQ_GET(xdcsc->sc_wq);
 		if (bp == NULL)
 			panic("xdc_startbuf bp");
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
@@ -1369,7 +1369,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 		printf("%s: warning: out of DVMA space\n",
 			   xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		BUFQ_PUT(&xdcsc->sc_wq, bp);
+		BUFQ_PUT(xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 		                         * call-back scheme here? */
 	}
@@ -1561,7 +1561,7 @@ xdc_piodriver(struct xdc_softc *xdcsc, int iorqno, int freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 

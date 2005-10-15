@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.5 2005/02/19 15:40:16 tsutsui Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.6 2005/10/15 17:29:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.5 2005/02/19 15:40:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.6 2005/10/15 17:29:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -152,7 +152,7 @@ struct mmem_softc {
 #define sc_reqm	sc_req.req_minfo
 
 	/* pending buffers */
-	struct bufq_state sc_q;
+	struct bufq_state *sc_q;
 
 	/* current I/O access */
 	struct buf	*sc_bp;
@@ -252,7 +252,7 @@ mmemattach(struct device *parent, struct device *self, void *aux)
 	 * start init sequence
 	 */
 	sc->sc_stat = MMEM_INIT;
-	bufq_alloc(&sc->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_RAWBLOCK);
 
 	/* check consistency */
 	if (sc->sc_wacc != 0) {
@@ -324,13 +324,13 @@ mmemdetach(struct device *self, int flags)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
-	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
+	while ((bp = BUFQ_GET(sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
-	bufq_free(&sc->sc_q);
+	bufq_free(sc->sc_q);
 
 	/*
 	 * revoke vnodes
@@ -738,7 +738,7 @@ mmemstrategy(struct buf *bp)
 	bp->b_rawblkno = off;
 
 	/* queue this transfer */
-	BUFQ_PUT(&sc->sc_q, bp);
+	BUFQ_PUT(sc->sc_q, bp);
 
 	if (sc->sc_stat == MMEM_IDLE)
 		mmemstart(sc);
@@ -761,7 +761,7 @@ mmemstart(struct mmem_softc *sc)
 	struct mmem_pt *pt;
 	int s;
 
-	if ((bp = BUFQ_GET(&sc->sc_q)) == NULL) {
+	if ((bp = BUFQ_GET(sc->sc_q)) == NULL) {
 		sc->sc_stat = MMEM_IDLE;
 		maple_enable_unit_ping(sc->sc_parent, sc->sc_unit,
 		    MAPLE_FN_MEMCARD, 1);

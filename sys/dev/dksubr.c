@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.16 2005/08/20 12:03:52 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.17 2005/10/15 17:29:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.16 2005/08/20 12:03:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.17 2005/10/15 17:29:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	 * provided by the individual driver.
 	 */
 	s = splbio();
-	BUFQ_PUT(&dksc->sc_bufq, bp);
+	BUFQ_PUT(dksc->sc_bufq, bp);
 	dk_start(di, dksc);
 	splx(s);
 	return;
@@ -236,9 +236,9 @@ dk_start(struct dk_intf *di, struct dk_softc *dksc)
 	DPRINTF_FOLLOW(("dk_start(%s, %p)\n", di->di_dkname, dksc));
 
 	/* Process the work queue */
-	while ((bp = BUFQ_GET(&dksc->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_GET(dksc->sc_bufq)) != NULL) {
 		if (di->di_diskstart(dksc, bp) != 0) {
-			BUFQ_PUT(&dksc->sc_bufq, bp);
+			BUFQ_PUT(dksc->sc_bufq, bp);
 			break;
 		}
 	}

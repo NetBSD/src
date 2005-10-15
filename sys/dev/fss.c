@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.15 2005/04/17 16:28:26 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.16 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15 2005/04/17 16:28:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.16 2005/10/15 17:29:11 yamt Exp $");
 
 #include "fss.h"
 
@@ -165,7 +165,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		bufq_alloc(&sc->sc_bufq, BUFQ_FCFS|BUFQ_SORT_RAWBLOCK);
+		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
 
@@ -244,7 +244,7 @@ fss_strategy(struct buf *bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	wakeup(&sc->sc_bs_proc);
 
 	FSS_UNLOCK(sc, s);
@@ -1283,7 +1283,7 @@ fss_bs_thread(void *arg)
 		if (sc->sc_flags & FSS_PERSISTENT) {
 			nfreed = nio = 0;
 
-			if ((bp = BUFQ_GET(&sc->sc_bufq)) == NULL)
+			if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 				continue;
 
 			nio++;
@@ -1346,7 +1346,7 @@ fss_bs_thread(void *arg)
 		 */
 		nio = 0;
 
-		if ((bp = BUFQ_GET(&sc->sc_bufq)) == NULL)
+		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 			continue;
 
 		nio++;

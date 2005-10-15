@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.42 2005/10/15 17:29:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.41 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.42 2005/10/15 17:29:11 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -86,7 +86,7 @@ struct md_softc {
 	struct device sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
-	struct bufq_state sc_buflist;
+	struct bufq_state *sc_buflist;
 };
 /* shorthand for fields in sc_md: */
 #define sc_addr sc_md.md_addr
@@ -163,7 +163,7 @@ md_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
-	bufq_alloc(&sc->sc_buflist, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
 #ifdef	MEMORY_DISK_HOOKS
@@ -326,7 +326,7 @@ mdstrategy(struct buf *bp)
 #if MEMORY_DISK_SERVER
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
-		BUFQ_PUT(&sc->sc_buflist, bp);
+		BUFQ_PUT(sc->sc_buflist, bp);
 		wakeup((caddr_t)sc);
 		/* see md_server_loop() */
 		/* no biodone in this case */
@@ -475,7 +475,7 @@ md_server_loop(struct md_softc *sc)
 
 	for (;;) {
 		/* Wait for some work to arrive. */
-		while ((bp = BUFQ_GET(&sc->sc_buflist)) == NULL) {
+		while ((bp = BUFQ_GET(sc->sc_buflist)) == NULL) {
 			error = tsleep((caddr_t)sc, md_sleep_pri, "md_idle", 0);
 			if (error)
 				return error;
