@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.278 2005/10/14 07:01:09 jdc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.279 2005/10/15 15:47:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13418,3 +13418,24 @@ dist/ntp/ntpd/ntpd.c				1.8
 	Use group-id from ``gr'' and not ``pw''.
 	Fixes security issue addressed by CAN-2005-2496.
 	[elad, ticket #889]
+
+share/man/man9/bufq.9				1.8
+
+	* bufq functions are defined in bufq.h not buf.h.
+	* Add missing bufq_drain() function.
+	[xtraeme, ticket #876]
+
+sys/uvm/uvm_mmap.c				1.93
+
+	Stop converting async msync() to sync.
+	This hasn't been needed for years (if it ever was).
+	[chs, ticket #877]
+
+usr.bin/vi/ex/ex.c				1.16
+usr.bin/vi/ex/ex_argv.c				1.15
+usr.bin/vi/ex/version.h				1.19
+
+	Fix the bad behavior of '\' in arguments of the "set" command,
+	indirectly introduced by recent changes to the ex code.
+	[878, ticket #aymeric]
+
