@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.281 2005/10/15 16:50:05 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.282 2005/10/15 17:45:01 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13473,4 +13473,20 @@ usr.sbin/bind/html/Makefile			1.1 (new file)
 
 	Install HTML BIND 9 Documentation
 	[rpaulo, ticket #881]
+
+doc/CHANGES					patch
+
+	Note some changes which have been pullup up for 3.0
+	[xtraeme, ticket #884]
+
+sys/kern/kern_verifiedexec.c			patch
+
+	Check if vhe->fp is not NULL before passing it to free(), to prevent
+	a crash.
+	[elad, ticket #885]
+
+sys/arch/i386/i386/est.c			1.10
+
+	More Dothan entries from OpenBSD.
+	[xtraeme, ticket #887]
 
