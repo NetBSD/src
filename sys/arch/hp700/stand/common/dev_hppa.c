@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.5 2005/10/15 11:34:17 itohy Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -71,6 +71,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct hppa_dev *hpd;
 	const struct pdc_devs *dp = pdc_devs;
+	int bdev, badapt, bctlr, bunit, bpart;
+	unsigned long n;
+	char *p;
 	int rc = 1;
 
 	if (!(*file = strchr(fname, ':')))
@@ -89,6 +92,20 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	if (dp >= &pdc_devs[NENTS(pdc_devs)] || dp->dev_type < 0)
 		return ENODEV;
+	bdev = dp->dev_type;
+	n = strtoul(fname + sizeof(dp->name)-1, &p, 10);
+	if (n == ULONG_MAX)
+		return ENODEV;
+	bunit = n & 0xf;
+	bctlr = (n >> 4) & 0xf;
+	badapt = (n >> 8) & 0xf;
+	if (*p >= 'a' && *p < 'a' + MAXPARTITIONS) {
+	        bpart = *p - 'a';
+	} else {
+		bpart = 0;
+	}
+	bootdev = MAKEBOOTDEV(bdev, badapt, bctlr, bunit, bpart);
+
 #ifdef DEBUGBUG
 	if (debug)
 		printf("%s\n", dp->name);
