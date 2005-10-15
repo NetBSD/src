@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.311 2005/09/05 22:55:31 riz Exp $ */
+/*	$NetBSD: wd.c,v 1.312 2005/10/15 17:29:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.311 2005/09/05 22:55:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.312 2005/10/15 17:29:12 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -294,7 +294,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
-	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
 #endif
@@ -452,9 +452,9 @@ wddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&sc->sc_q);
+	bufq_drain(sc->sc_q);
 
-	bufq_free(&sc->sc_q);
+	bufq_free(sc->sc_q);
 	sc->atabus->ata_killpending(sc->drvp);
 
 	splx(s);
@@ -571,7 +571,7 @@ wdstrategy(struct buf *bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	BUFQ_PUT(&wd->sc_q, bp);
+	BUFQ_PUT(wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -597,7 +597,7 @@ wdstart(void *arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_GET(&wd->sc_q)) == NULL)
+		if ((bp = BUFQ_GET(wd->sc_q)) == NULL)
 			return;
 
 		/*

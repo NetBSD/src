@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.30 2005/08/26 11:20:33 drochner Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.31 2005/10/15 17:29:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.30 2005/08/26 11:20:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.31 2005/10/15 17:29:25 yamt Exp $");
 
 #include "rnd.h"
 
@@ -862,7 +862,7 @@ edcworker(arg)
 
 			/* Is there a buf for us ? */
 			simple_lock(&ed->sc_q_lock);
-			if ((bp = BUFQ_GET(&ed->sc_q)) == NULL) {
+			if ((bp = BUFQ_GET(ed->sc_q)) == NULL) {
 				simple_unlock(&ed->sc_q_lock);
 				i++;
 				continue;

@@ -1,8 +1,8 @@
-/*	$NetBSD: bufq.h,v 1.4 2005/10/15 17:29:26 yamt Exp $	*/
-/*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
+/*	$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 /*
- * Copyright (c) 1982, 1986, 1989, 1993
+ * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
@@ -71,44 +71,143 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)buf.h	8.9 (Berkeley) 3/30/95
+ *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
 
-#if !defined(_KERNEL)
-#error not supposed to be exposed to userland.
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
+#include <sys/bufq_impl.h>
+#include <sys/malloc.h>
+
+BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
+
+#define	STRAT_MATCH(id, bs)	\
+	((id) == BUFQ_STRAT_ANY || strcmp((id), (bs)->bs_name) == 0)
+
+/*
+ * Create a device buffer queue.
+ */
+int
+bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
+{
+	__link_set_decl(bufq_strats, const struct bufq_strat);
+	const struct bufq_strat *bsp;
+	const struct bufq_strat * const *it;
+	struct bufq_state *bufq;
+	int error = 0;
+
+	KASSERT((flags & BUFQ_EXACT) == 0 || strategy != BUFQ_STRAT_ANY);
+
+	switch (flags & BUFQ_SORT_MASK) {
+	case BUFQ_SORT_RAWBLOCK:
+	case BUFQ_SORT_CYLINDER:
+		break;
+	case 0:
+		/*
+		 * for strategies which don't care about block numbers.
+		 * eg. fcfs
+		 */
+		flags |= BUFQ_SORT_RAWBLOCK;
+		break;
+	default:
+		panic("bufq_alloc: sort out of range");
+	}
+
+	/*
+	 * select strategy.
+	 * if a strategy specified by flags is found, use it.
+	 * otherwise, select one with the largest bs_prio.
+	 */
+	bsp = NULL;
+	__link_set_foreach(it, bufq_strats) {
+		if ((*it) == &bufq_strat_dummy)
+			continue;
+		if (STRAT_MATCH(strategy, (*it))) {
+			bsp = *it;
+			break;
+		}
+		if (bsp == NULL || (*it)->bs_prio > bsp->bs_prio)
+			bsp = *it;
+	}
+
+	if (bsp == NULL) {
+		panic("bufq_alloc: no strategy");
+	}
+	if (!STRAT_MATCH(strategy, bsp)) {
+		if ((flags & BUFQ_EXACT)) {
+			error = ENOENT;
+			goto out;
+		}
+#if defined(DEBUG)
+		printf("bufq_alloc: '%s' is not available. using '%s'.\n",
+		    strategy, bsp->bs_name);
+#endif
+	}
+#if defined(BUFQ_DEBUG)
+	/* XXX aprint? */
+	printf("bufq_alloc: using '%s'\n", bsp->bs_name);
 #endif
 
-struct buf;
-struct bufq_state;
+	*bufqp = bufq = malloc(sizeof(*bufq), M_DEVBUF, M_WAITOK | M_ZERO);
+	bufq->bq_flags = flags;
+	(*bsp->bs_initfn)(bufq);
+
+out:
+	return 0;
+}
+
+void
+bufq_put(struct bufq_state *bufq, struct buf *bp)
+{
+
+	(*bufq->bq_put)(bufq, bp);
+}
+
+struct buf *
+bufq_get(struct bufq_state *bufq)
+{
+
+	return (*bufq->bq_get)(bufq, 1);
+}
+
+struct buf *
+bufq_peek(struct bufq_state *bufq)
+{
+
+	return (*bufq->bq_get)(bufq, 0);
+}
 
 /*
- * Special strategies for bufq_alloc.
+ * Drain a device buffer queue.
  */
-#define	BUFQ_STRAT_ANY		NULL 	/* let bufq_alloc select one. */
-#define	BUFQ_DISK_DEFAULT_STRAT	BUFQ_STRAT_ANY	/* default for disks. */
+void
+bufq_drain(struct bufq_state *bufq)
+{
+	struct buf *bp;
+
+	while ((bp = BUFQ_GET(bufq)) != NULL) {
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+}
 
 /*
- * Flags for bufq_alloc.
+ * Destroy a device buffer queue.
  */
-#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
-#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
+void
+bufq_free(struct bufq_state *bufq)
+{
 
-#define BUFQ_SORT_MASK		0x000f
+	KASSERT(bufq->bq_private != NULL);
+	KASSERT(BUFQ_PEEK(bufq) == NULL);
 
-#define	BUFQ_EXACT		0x0010	/* Don't fall back to other strategy */
-
-int	bufq_alloc(struct bufq_state **, const char *, int);
-void	bufq_drain(struct bufq_state *);
-void	bufq_free(struct bufq_state *);
-void	bufq_put(struct bufq_state *, struct buf *);
-struct buf *bufq_get(struct bufq_state *);
-struct buf *bufq_peek(struct bufq_state *);
-
-/* Put buffer in queue */
-#define BUFQ_PUT(bufq, bp)	bufq_put(bufq, bp)
-
-/* Get and remove buffer from queue */
-#define BUFQ_GET(bufq)		bufq_get(bufq)
-
-/* Get buffer from queue */
-#define BUFQ_PEEK(bufq)		bufq_get(bufq)
+	free(bufq->bq_private, M_DEVBUF);
+	free(bufq, M_DEVBUF);
+}

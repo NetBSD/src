@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.91 2005/10/15 17:29:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.90 2005/03/12 22:54:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.91 2005/10/15 17:29:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ struct mcd_softc {
 #define	MCD_MD_UNKNOWN	-1
 	int	lastupc;
 #define	MCD_UPC_UNKNOWN	-1
-	struct bufq_state buf_queue;
+	struct bufq_state *buf_queue;
 	int	active;
 	u_char	readcmd;
 	u_char	debug;
@@ -262,7 +262,7 @@ mcdattach(parent, self, aux)
 		return;
 	}
 
-	bufq_alloc(&sc->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
 	callout_init(&sc->sc_pintr_ch);
 
 	/*
@@ -481,7 +481,7 @@ mcdstrategy(bp)
 
 	/* Queue it. */
 	s = splbio();
-	BUFQ_PUT(&sc->buf_queue, bp);
+	BUFQ_PUT(sc->buf_queue, bp);
 	splx(s);
 	if (!sc->active)
 		mcdstart(sc);
@@ -504,7 +504,7 @@ mcdstart(sc)
 loop:
 	s = splbio();
 
-	if ((bp = BUFQ_GET(&sc->buf_queue)) == NULL) {
+	if ((bp = BUFQ_GET(sc->buf_queue)) == NULL) {
 		/* Nothing to do. */
 		sc->active = 0;
 		splx(s);

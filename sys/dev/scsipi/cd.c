@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.227 2005/09/06 22:19:14 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.228 2005/10/15 17:29:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.227 2005/09/06 22:19:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.228 2005/10/15 17:29:25 yamt Exp $");
 
 #include "rnd.h"
 
@@ -231,7 +231,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	    periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
 
-	bufq_alloc(&cd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&cd->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&cd->sc_callout);
 
@@ -309,9 +309,9 @@ cddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&cd->buf_queue);
+	bufq_drain(cd->buf_queue);
 
-	bufq_free(&cd->buf_queue);
+	bufq_free(cd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(cd->sc_periph);
@@ -697,7 +697,7 @@ cdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(&cd->buf_queue, bp);
+	BUFQ_PUT(cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -768,7 +768,7 @@ cdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&cd->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
@@ -782,7 +782,7 @@ cdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&cd->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(cd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -855,10 +855,10 @@ cdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&cd->buf_queue) != bp)
+		if (BUFQ_GET(cd->buf_queue) != bp)
 			panic("cdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&cd->buf_queue);
+		BUFQ_GET(cd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -961,7 +961,7 @@ cdbounce(struct buf *bp)
 			 * XXX Only do disksort() if the current operating mode
 			 * XXX does not include tagged queueing.
 			 */
-			BUFQ_PUT(&cd->buf_queue, nbp);
+			BUFQ_PUT(cd->buf_queue, nbp);
 
 			/*
 			 * Tell the device to get going on the transfer if it's
