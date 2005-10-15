@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.11 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.12 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -261,7 +261,10 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[sketch 20050316]
 	postinstall(8): Moved from /etc to /usr/sbin.  [lukem 20050417]
 	am-utils: Upgrade to 6.1-rc2 [christos 20050423]
+	sparc64: Switch to wscons [martin 20050429]
 	azalia(4): Add driver for High Definition Audio. [kent 20050621]
+	vnd(4): Add support for configuring cloop2-compressed images
+		read-only, written by Cliff Wright. [hubertf 20050716]
 	vndcompress(1): Add vndcompress(1) and vnduncompress(1) to transform
 		filesystem/disk images from "normal" into cloop2-format
 		compressed images and back (written by Florian Stoehr).
@@ -269,3 +272,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		compiled with VND_COMPRESSION and "vnconfig -z". 
 		Useful for creation of Live CDs/DVDs. [hubertf 20050725]
 	racoon(8): ipsec-tools updated to 0.6.1 [manu 20050820]
+	sysinst: Added Spanish language translation. [xtraeme 20050826]
+	xge(4): Add driver for the Neterion Xframe-I 10 gigabit ethernet
+		controller [ragge 20050909]
