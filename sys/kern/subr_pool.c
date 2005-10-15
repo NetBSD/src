@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.102 2005/10/02 17:29:31 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.103 2005/10/15 21:22:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.102 2005/10/02 17:29:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.103 2005/10/15 21:22:46 chs Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1717,17 +1717,21 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	}
 
 	LIST_FOREACH(pc, &pp->pr_cachelist, pc_poollist) {
+		(*pr)("\tcache %p\n", pc);
 		(*pr)("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
 		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
 		(*pr)("\t    full groups:\n");
-		LIST_FOREACH(pcg, &pc->pc_fullgroups, pcg_list)
+		LIST_FOREACH(pcg, &pc->pc_fullgroups, pcg_list) {
 			PR_GROUPLIST(pcg);
+		}
 		(*pr)("\t    partial groups:\n");
-		LIST_FOREACH(pcg, &pc->pc_partgroups, pcg_list)
+		LIST_FOREACH(pcg, &pc->pc_partgroups, pcg_list) {
 			PR_GROUPLIST(pcg);
+		}
 		(*pr)("\t    empty groups:\n");
-		LIST_FOREACH(pcg, &pc->pc_emptygroups, pcg_list)
+		LIST_FOREACH(pcg, &pc->pc_emptygroups, pcg_list) {
 			PR_GROUPLIST(pcg);
+		}
 	}
 #undef PR_GROUPLIST
 
@@ -2069,18 +2073,14 @@ pool_do_cache_invalidate(struct pool_cache *pc, struct pool_pagelist *pq,
 {
 	struct pool_cache_group *pcg, *npcg;
 	void *object;
-	boolean_t firstpass = TRUE;
 
 	LOCK_ASSERT(simple_lock_held(&pc->pc_slock));
 	LOCK_ASSERT(simple_lock_held(&pc->pc_pool->pr_slock));
 
-	for (pcg = LIST_FIRST(&pc->pc_partgroups); pcg != NULL;
-	     pcg = npcg) {
+	for (pcg = LIST_FIRST(&pc->pc_fullgroups); pcg != NULL; pcg = npcg) {
+
+loop:
 		npcg = LIST_NEXT(pcg, pcg_list);
-		if (npcg == NULL && firstpass) {
-			npcg = LIST_FIRST(&pc->pc_fullgroups);
-			firstpass = FALSE;
-		}
 		while (pcg->pcg_avail != 0) {
 			pc->pc_nitems--;
 			object = pcg_get(pcg, NULL);
@@ -2088,9 +2088,18 @@ pool_do_cache_invalidate(struct pool_cache *pc, struct pool_pagelist *pq,
 				(*pc->pc_dtor)(pc->pc_arg, object);
 			pool_do_put(pc->pc_pool, object, pq);
 		}
+		pc->pc_ngroups--;
 		LIST_REMOVE(pcg, pcg_list);
 		LIST_INSERT_HEAD(pcgl, pcg, pcg_list);
 	}
+	pcg = LIST_FIRST(&pc->pc_partgroups);
+	if (pcg != NULL) {
+		goto loop;
+	}
+
+	KASSERT(LIST_EMPTY(&pc->pc_partgroups));
+	KASSERT(LIST_EMPTY(&pc->pc_fullgroups));
+	KASSERT(pc->pc_nitems == 0);
 }
 
 /*
