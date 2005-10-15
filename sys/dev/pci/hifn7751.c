@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.24 2005/10/15 04:31:20 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.25 2005/10/15 08:58:15 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.24 2005/10/15 04:31:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.25 2005/10/15 08:58:15 tls Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.24 2005/10/15 04:31:20 tls Exp $");
 #undef HIFN_DEBUG
 
 #ifdef __NetBSD__
-#define	HIFN_NO_RNG			/* until statistically tested */
 #define M_DUP_PKTHDR M_COPY_PKTHDR	/* XXX */
 #endif
 
@@ -149,9 +148,7 @@ static int	hifn_dmamap_load_src(struct hifn_softc *,
 static int	hifn_dmamap_load_dst(struct hifn_softc *,
 				     struct hifn_command *);
 static int	hifn_init_pubrng(struct hifn_softc *);
-#ifndef HIFN_NO_RNG
-static static	void hifn_rng(void *);
-#endif
+static void	hifn_rng(void *);
 static void	hifn_tick(void *);
 static void	hifn_abort(struct hifn_softc *);
 static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
@@ -512,20 +509,41 @@ hifn_init_pubrng(struct hifn_softc *sc)
 			    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
 			    HIFN_RNGCFG_ENA);
 
+		/*
+		 * The Hifn RNG documentation states that at their
+		 * recommended "conservative" RNG config values,
+		 * the RNG must warm up for 0.4s before providing
+		 * data that meet their worst-case estimate of 0.06
+		 * bits of random data per output register bit.
+		 */
+		DELAY(4000);
+
+#ifdef __NetBSD__
+		/*
+		 * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
+		 * XXX here is unobvious: we later feed raw bits
+		 * XXX into the "entropy pool" with rnd_add_data,
+		 * XXX explicitly supplying an entropy estimate.
+		 * XXX In this context, NO_ESTIMATE serves only
+		 * XXX to prevent rnd_add_data from trying to
+		 * XXX use the *time at which we added the data*
+		 * XXX as entropy, which is not a good idea since
+		 * XXX we add data periodically from a callout.
+		 */
+		rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
+				  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+#endif
+
 		sc->sc_rngfirst = 1;
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
 			sc->sc_rnghz = 1;
-#ifndef	HIFN_NO_RNG
 #ifdef	__OpenBSD__
 		timeout_set(&sc->sc_rngto, hifn_rng, sc);
-		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else	/* !__OpenBSD__ */
 		callout_init(&sc->sc_rngto);
-		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
 #endif	/* !__OpenBSD__ */
-#endif	/* HIFN_NO_RNG */
 	}
 
 	/* Enable public key engine, if available */
@@ -535,20 +553,26 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
 
+	/* Call directly into the RNG once to prime the pool. */
+	hifn_rng(sc);   /* Sets callout/timeout at end */
+
 	return (0);
 }
 
-#ifndef HIFN_NO_RNG
 static void
 hifn_rng(void *vsc)
 {
-#ifndef	__NetBSD__
 	struct hifn_softc *sc = vsc;
-	u_int32_t num1, sts, num2;
+#ifdef __NetBSD__
+	u_int32_t num[HIFN_RNG_BITSPER * RND_ENTROPY_THRESHOLD];
+#else
+	u_int32_t num[2];
+#endif
+	u_int32_t sts;
 	int i;
 
 	if (sc->sc_flags & HIFN_IS_7811) {
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < 5; i++) {	/* XXX why 5? */
 			sts = READ_REG_1(sc, HIFN_1_7811_RNGSTS);
 			if (sts & HIFN_7811_RNGSTS_UFL) {
 				printf("%s: RNG underflow: disabling\n",
@@ -562,22 +586,85 @@ hifn_rng(void *vsc)
 			 * There are at least two words in the RNG FIFO
 			 * at this point.
 			 */
-			num1 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
-			num2 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num[0] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num[1] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+
 			if (sc->sc_rngfirst)
 				sc->sc_rngfirst = 0;
-			else {
-				add_true_randomness(num1);
-				add_true_randomness(num2);
-			}
+#ifdef __NetBSD__
+			rnd_add_data(&sc->sc_rnd_source, num,
+			    2 * sizeof(num[0]),
+			    (2 * sizeof(num[0]) * NBBY) /
+			    HIFN_RNG_BITSPER);
+#else
+			/*
+			 * XXX This is a really bad idea.
+			 * XXX Hifn estimate as little as 0.06
+			 * XXX actual bits of entropy per output
+			 * XXX register bit.  How can we tell the
+			 * XXX kernel RNG subsystem we're handing
+			 * XXX it 64 "true" random bits, for any
+			 * XXX sane value of "true"?
+			 * XXX
+			 * XXX The right thing to do here, if we
+			 * XXX cannot supply an estimate ourselves,
+			 * XXX would be to hash the bits locally.
+			 */
+			add_true_randomness(num[0]);
+			add_true_randomness(num[1]);
+#endif
+				
 		}
 	} else {
-		num1 = READ_REG_1(sc, HIFN_1_RNG_DATA);
+#ifdef __NetBSD__
+		/* First time through, try to help fill the pool. */
+		int nwords = sc->sc_rngfirst ?
+		    sizeof(num) / sizeof(num[0]) : 4;
+#else
+		int nwords = 2;
+#endif
+		/*
+		 * We must be *extremely* careful here.  The Hifn
+		 * 795x differ from the published 6500 RNG design
+		 * in more ways than the obvious lack of the output
+		 * FIFO and LFSR control registers.  In fact, there
+		 * is only one LFSR, instead of the 6500's two, and
+		 * it's 32 bits, not 31.
+		 *
+		 * Further, a block diagram obtained from Hifn shows
+		 * a very curious latching of this register: the LFSR
+		 * rotates at a frequency of RNG_Clk / 8, but the
+		 * RNG_Data register is latched at a frequency of
+		 * RNG_Clk, which means that it is possible for
+		 * consecutive reads of the RNG_Data register to read
+		 * identical state from the LFSR.  The simplest
+		 * workaround seems to be to read eight samples from
+		 * the register for each one that we use.  Since each
+		 * read must require at least one PCI cycle, and
+		 * RNG_Clk is at least PCI_Clk, this is safe.
+		 */
 
-		if (sc->sc_rngfirst)
+
+		if (sc->sc_rngfirst) {
 			sc->sc_rngfirst = 0;
-		else
-			add_true_randomness(num1);
+		}
+		
+
+		for(i = 0 ; i < nwords * 8; i++)
+		{
+			volatile u_int32_t regtmp;
+			regtmp = READ_REG_1(sc, HIFN_1_RNG_DATA);
+			num[i / 8] = regtmp;
+		}
+#ifdef __NetBSD__
+		rnd_add_data(&sc->sc_rnd_source, num,
+		    nwords * sizeof(num[0]),
+		    (nwords * sizeof(num[0]) * NBBY) /
+		    HIFN_RNG_BITSPER);
+#else
+		/* XXX a bad idea; see 7811 block above */
+		add_true_randomness(num[0]);
+#endif
 	}
 
 #ifdef	__OpenBSD__
@@ -585,9 +672,7 @@ hifn_rng(void *vsc)
 #else
 	callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
 #endif
-#endif	/*!__NetBSD__*/
 }
-#endif
 
 static void
 hifn_puc_wait(struct hifn_softc *sc)
