@@ -1,5 +1,5 @@
-/*	$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
-/*	$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.1 2005/10/15 17:29:26 yamt Exp $");
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 
 BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
+#define	STRAT_MAX_NAME	32
 #define	STRAT_MATCH(id, bs)	\
 	((id) == BUFQ_STRAT_ANY || strcmp((id), (bs)->bs_name) == 0)
 
@@ -210,4 +212,87 @@ bufq_free(struct bufq_state *bufq)
 
 	free(bufq->bq_private, M_DEVBUF);
 	free(bufq, M_DEVBUF);
+}
+
+/*
+ * sysctl function that will print all bufq strategies
+ * built in the kernel.
+ */
+static int
+sysctl_kern_bufq_strategies(SYSCTLFN_ARGS)
+{
+	 __link_set_decl(bufq_strats, const struct bufq_strat);
+	const struct bufq_strat * const *bq_strat;
+	const char *strat;
+	char bf[STRAT_MAX_NAME];
+	char *where = oldp;
+	size_t needed, left, slen;
+	int error, first;
+
+	first = 1;
+	error = needed = 0;
+	left = *oldlenp;
+	strat = NULL;
+
+	__link_set_foreach(bq_strat, bufq_strats) {
+		strat = (*bq_strat)->bs_name;
+		if (strat != NULL &&
+		    strncmp(strat, "dummy", sizeof(strat)) != 0) {
+			/*
+			 * The following code comes from
+			 * sysctl_vfs_generic_fstypes() (vfs_subr.c).
+			 */
+			if (where == NULL)
+				needed += strlen(strat) + 1;
+			else {
+				memset(bf, 0, sizeof(bf));
+				if (first) {
+					strncpy(bf, strat, sizeof(bf));
+					first = 0;
+				} else {
+					bf[0] = ' ';
+					strncpy(bf + 1, strat, sizeof(bf) - 1);
+				}
+				bf[sizeof(bf)-1] = '\0';
+				slen = strlen(bf);
+				if (left < slen + 1)
+					break;
+				/* +1 to copy out the trailing NUL byte */
+				error = copyout(bf, where, slen + 1);
+				if (error)
+					break;
+				where += slen;
+				needed += slen;
+				left -= slen;
+			}
+		}
+	}
+	*oldlenp = needed;
+	return error;
+}
+
+SYSCTL_SETUP(sysctl_kern_bufq_strategies_setup, "sysctl kern.bufq tree setup")
+{
+	const struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "kern", NULL,
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_EOL);
+	node = NULL;
+	sysctl_createv(clog, 0, NULL, &node,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "bufq",
+			SYSCTL_DESCR("buffer queue subtree"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	if (node != NULL) {
+		sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "strategies",
+			SYSCTL_DESCR("List of bufq strategies present"),
+			sysctl_kern_bufq_strategies, 0, NULL, 0,
+			CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
 }
