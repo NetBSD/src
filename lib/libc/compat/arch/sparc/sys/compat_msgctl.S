@@ -1,4 +1,4 @@
-/*	$NetBSD: shmctl.S,v 1.1 1999/08/25 05:09:31 thorpej Exp $	*/
+/*	$NetBSD: compat_msgctl.S,v 1.1 2005/10/15 22:11:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include "SYS.h"
 
-WARN_REFERENCES(shmctl, \
-    "warning: reference to compatibility shmctl(); include <sys/shm.h> for correct reference")
+WARN_REFERENCES(msgctl, \
+    "warning: reference to compatibility msgctl(); include <sys/msg.h> for correct reference")
 
-PSEUDO(shmctl,compat_14_shmctl)
+PSEUDO(msgctl,compat_14_msgctl)
