@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.37 2005/08/15 17:13:35 elad Exp $ */
+/* $NetBSD: cp.c,v 1.38 2005/10/15 18:22:18 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.37 2005/08/15 17:13:35 elad Exp $");
+__RCSID("$NetBSD: cp.c,v 1.38 2005/10/15 18:22:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
-			break;
+			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
@@ -227,10 +227,8 @@ main(int argc, char *argv[])
 		/*
 		 * Case (1).  Target is not a directory.
 		 */ 
-		if (argc > 1) {
+		if (argc > 1)
 			usage();
-			exit(1);
-		}
 		/*
 		 * Need to detect the case:
 		 *	cp -R dir foo
@@ -271,7 +269,8 @@ copy(char *argv[], enum op type, int fts_options)
 	struct stat to_stat;
 	FTS *ftsp;
 	FTSENT *curr;
-	int base, dne, nlen, rval;
+	int base, dne, rval;
+	size_t nlen;
 	char *p, *tmp;
 
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
@@ -471,7 +470,7 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 			break;
 		}
-		if (vflag)
+		if (vflag && !rval)
 			(void)printf("%s -> %s\n", curr->fts_path, to.p_path);
 	}
 	if (errno) {

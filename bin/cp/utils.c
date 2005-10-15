@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.28 2005/08/15 17:13:35 elad Exp $ */
+/* $NetBSD: utils.c,v 1.29 2005/10/15 18:22:18 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.28 2005/08/15 17:13:35 elad Exp $");
+__RCSID("$NetBSD: utils.c,v 1.29 2005/10/15 18:22:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,19 +141,20 @@ copy_file(FTSENT *entp, int dne)
 		 */
 
 		if (fs->st_size <= 8 * 1048576) {
-			p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
-			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0);
+			size_t fsize = (size_t)fs->st_size;
+			p = mmap(NULL, fsize, PROT_READ, MAP_FILE|MAP_SHARED,
+			    from_fd, (off_t)0);
 			if (p == MAP_FAILED) {
 				goto mmap_failed;
 			} else {
 				(void) madvise(p, (size_t)fs->st_size,
 				     MADV_SEQUENTIAL);
-				if (write(to_fd, p, fs->st_size) !=
+				if (write(to_fd, p, fsize) !=
 				    fs->st_size) {
 					warn("%s", to.p_path);
 					rval = 1;
 				}
-				if (munmap(p, fs->st_size) < 0) {
+				if (munmap(p, fsize) < 0) {
 					warn("%s", entp->fts_path);
 					rval = 1;
 				}
@@ -161,7 +162,7 @@ copy_file(FTSENT *entp, int dne)
 		} else {
 mmap_failed:
 			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
-				wcount = write(to_fd, buf, rcount);
+				wcount = write(to_fd, buf, (size_t)rcount);
 				if (rcount != wcount || wcount == -1) {
 					warn("%s", to.p_path);
 					rval = 1;
@@ -300,6 +301,7 @@ setfile(struct stat *fs, int fd)
 	}
 
 	if (!islink && !Nflag) {
+		unsigned long fflags = fs->st_flags;
 		/*
 		 * XXX
 		 * NFS doesn't support chflags; ignore errors unless
@@ -309,8 +311,8 @@ setfile(struct stat *fs, int fd)
 		 * on a file that we copied, i.e., that we didn't create.)
 		 */
 		errno = 0;
-		if (fd ? fchflags(fd, fs->st_flags) :
-		    chflags(to.p_path, fs->st_flags))
+		if ((fd ? fchflags(fd, fflags) :
+		    chflags(to.p_path, fflags)) == -1)
 			if (errno != EOPNOTSUPP || fs->st_flags != 0) {
 				warn("chflags: %s", to.p_path);
 				rval = 1;
