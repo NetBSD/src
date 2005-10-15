@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.9.2.2 2005/10/15 16:32:20 riz Exp $	*/
+/*	$NetBSD: pkill.c,v 1.9.2.3 2005/10/15 16:33:15 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.9.2.2 2005/10/15 16:32:20 riz Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.9.2.3 2005/10/15 16:33:15 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -244,7 +244,7 @@ main(int argc, char **argv)
 	 * Allocate memory which will be used to keep track of the
 	 * selection.
 	 */
-	if ((selected = calloc(1, nproc)) == NULL)
+	if ((selected = calloc((size_t)1, (size_t)nproc)) == NULL)
 		err(STATUS_ERROR, "Cannot allocate memory for %d processes",
 		    nproc);
 
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 	 */
 	for (; *argv != NULL; argv++) {
 		if ((rv = regcomp(&reg, *argv, cflags)) != 0) {
-			regerror(rv, &reg, buf, sizeof(buf));
+			(void)regerror(rv, &reg, buf, sizeof(buf));
 			errx(STATUS_BADUSAGE,
 			    "Cannot compile regular expression `%s' (%s)",
 			    *argv, buf);
@@ -288,7 +288,7 @@ main(int argc, char **argv)
 				} else
 					selected[i] = 1;
 			} else if (rv != REG_NOMATCH) {
-				regerror(rv, &reg, buf, sizeof(buf));
+				(void)regerror(rv, &reg, buf, sizeof(buf));
 				errx(STATUS_ERROR,
 				    "Regular expression evaluation error (%s)",
 				    buf);
@@ -384,7 +384,7 @@ main(int argc, char **argv)
 			}
 		}
 
-		(void)memset(selected, 0, nproc);
+		(void)memset(selected, 0, (size_t)nproc);
 		if (bestidx != -1)
 			selected[bestidx] = 1;
 	}
@@ -407,7 +407,7 @@ main(int argc, char **argv)
 		rv |= (*action)(kp);
 	}
 
-	exit(rv ? STATUS_MATCH : STATUS_NOMATCH);
+	return rv ? STATUS_MATCH : STATUS_NOMATCH;
 }
 
 static void
@@ -514,6 +514,7 @@ makelist(struct listhead *head, enum listtype type, char *src)
 				break;
 			case LT_TTY:
 				usage();
+				/*NOTREACHED*/
 			default:
 				break;
 			}
