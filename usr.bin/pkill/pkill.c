@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.9.2.5 2005/10/15 16:34:04 riz Exp $	*/
+/*	$NetBSD: pkill.c,v 1.9.2.6 2005/10/15 16:34:24 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.9.2.5 2005/10/15 16:34:04 riz Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.9.2.6 2005/10/15 16:34:24 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -437,14 +437,17 @@ killact(const struct kinfo_proc2 *kp)
 		/*
 		 * Check for ESRCH, which indicates that the process
 		 * disappeared between us matching it and us
-		 * signalling it.  Return 0 to indicate that the
-		 * process should not be considered a match, since we
-		 * didn't actually get to signal it.
+		 * signalling it; don't issue a warning about it.
 		 */
-		if (errno == ESRCH)
-			return 0;
+		if (errno != ESRCH)
+			warn("signalling pid %d", (int)kp->p_pid);
 
-		err(STATUS_ERROR, "signalling pid %d", (int)kp->p_pid);
+		/*
+		 * Return 0 to indicate that the process should not be
+		 * considered a match, since we didn't actually get to
+		 * signal it.
+		 */
+		return 0;
 	}
 
 	return 1;
