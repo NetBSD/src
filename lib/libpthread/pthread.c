@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.42 2005/07/01 12:35:18 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.43 2005/10/16 00:07:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.42 2005/07/01 12:35:18 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.43 2005/10/16 00:07:24 chs Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -237,7 +237,7 @@ pthread__child_callback(void)
 	pthread__started = 0;
 }
 
-static void
+void
 pthread__start(void)
 {
 	pthread_t self, idle;

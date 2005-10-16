@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.12 2005/10/16 00:07:24 chs Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.12 2005/10/16 00:07:24 chs Exp $");
 
 #include <errno.h>
 
@@ -248,6 +248,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
 	int retval;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -258,8 +259,8 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	    (abs_timeout->tv_nsec < 0) ||
 	    (abs_timeout->tv_sec < 0))
 		return EINVAL;
+
 	self = pthread__self();
-	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
@@ -316,8 +317,10 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 {
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
-	int retval;
 	pthread_t self;
+	int retval;
+	extern int pthread__started;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -328,8 +331,13 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	    (abs_timeout->tv_nsec < 0) ||
 	    (abs_timeout->tv_sec < 0))
 		return EINVAL;
+
+	if (pthread__started == 0) {
+		pthread__start();
+		pthread__started = 1;
+	}
+
 	self = pthread__self();
-	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
