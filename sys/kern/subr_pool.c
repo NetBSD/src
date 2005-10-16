@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.105 2005/10/16 02:21:40 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.106 2005/10/16 02:55:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.105 2005/10/16 02:21:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.106 2005/10/16 02:55:18 christos Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2068,14 +2068,14 @@ pool_cache_destruct_object(struct pool_cache *pc, void *object)
 }
 
 static void
-pool_do_cache_invalidate_grouplist(struct pool_cache_group *pcg,
+pool_do_cache_invalidate_grouplist(struct pool_cache_grouplist *pcgsl,
     struct pool_cache *pc, struct pool_pagelist *pq,
-    struct pool_cache_grouplist *pcgl)
+    struct pool_cache_grouplist *pcgdl)
 {
-	struct pool_cache_group *npcg;
+	struct pool_cache_group *pcg, *npcg;
 	void *object;
 
-	for (; pcg != NULL; pcg = npcg) {
+	for (pcg = LIST_FIRST(pcgsl); pcg != NULL; pcg = npcg) {
 		npcg = LIST_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
 			pc->pc_nitems--;
@@ -2086,7 +2086,7 @@ pool_do_cache_invalidate_grouplist(struct pool_cache_group *pcg,
 		}
 		pc->pc_ngroups--;
 		LIST_REMOVE(pcg, pcg_list);
-		LIST_INSERT_HEAD(pcgl, pcg, pcg_list);
+		LIST_INSERT_HEAD(pcgdl, pcg, pcg_list);
 	}
 }
 
@@ -2098,10 +2098,8 @@ pool_do_cache_invalidate(struct pool_cache *pc, struct pool_pagelist *pq,
 	LOCK_ASSERT(simple_lock_held(&pc->pc_slock));
 	LOCK_ASSERT(simple_lock_held(&pc->pc_pool->pr_slock));
 
-	pool_do_cache_invalidate_grouplist(LIST_FIRST(&pc->pc_fullgroups),
-	    pc, pq, pcgl);
-	pool_do_cache_invalidate_grouplist(LIST_FIRST(&pc->pc_partgroups),
-	    pc, pq, pcgl);
+	pool_do_cache_invalidate_grouplist(&pc->pc_fullgroups, pc, pq, pcgl);
+	pool_do_cache_invalidate_grouplist(&pc->pc_partgroups, pc, pq, pcgl);
 
 	KASSERT(LIST_EMPTY(&pc->pc_partgroups));
 	KASSERT(LIST_EMPTY(&pc->pc_fullgroups));
