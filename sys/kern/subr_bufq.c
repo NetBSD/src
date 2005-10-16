@@ -1,5 +1,5 @@
-/*	$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $	*/
-/*	$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.3 2005/10/16 00:28:32 yamt Exp $	*/
+/*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.2 2005/10/15 22:36:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.3 2005/10/16 00:28:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
