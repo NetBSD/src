@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.7 2004/03/26 22:15:03 drochner Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.7 2004/03/26 22:15:03 drochner Exp $")
+	RCSID("$NetBSD: compat_sigreturn.S,v 1.1 2005/10/16 04:41:34 christos Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
