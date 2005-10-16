@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.9 2005/10/16 04:06:20 yamt Exp $
+.\"     $NetBSD: bufq.9,v 1.10 2005/10/16 04:11:02 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,10 @@ if the queue is empty.
 .It Fn BUFQ_PEEK "bufq"
 Get the next buf from the queue without removal.
 The next buf will remain the same until
-.Fn BUFQ_GET
+.Fn BUFQ_GET ,
+.Fn BUFQ_PUT
+or
+.Fn bufq_drain
 is called.
 Returns
 .Dv NULL
