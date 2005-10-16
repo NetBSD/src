@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.13 2005/04/15 22:39:10 kleink Exp $
+# $NetBSD: Makefile.inc,v 1.14 2005/10/16 17:25:50 christos Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 	fabs.c flt_rounds.c
@@ -15,9 +15,9 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	nanf.c
 
-SRCS+=	setjmp.S __setjmp14.S
+SRCS+=	setjmp.S
 SRCS+=	_setjmp.S
-SRCS+=	sigsetjmp.S __sigsetjmp14.S
+SRCS+=	sigsetjmp.S
 
 SRCS+=	makecontext.c resumecontext.c swapcontext.S
 
