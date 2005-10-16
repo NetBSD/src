@@ -1,12 +1,8 @@
-/*	$NetBSD: compat_sigreturn.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.2 2005/10/16 22:16:05 christos Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +28,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sigreturn.s,v 1.1 91/07/06 13:06:01 torek Exp
+ *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
  */
 
-#include <machine/asm.h>
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-#if 0
-	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
-#else
-	RCSID("$NetBSD: compat_sigreturn.S,v 1.1 2005/10/16 17:27:50 christos Exp $")
-#endif
-#endif /* SYSLIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
 
 WARN_REFERENCES(sigreturn, \
     "warning: reference to compatibility sigreturn()")
 
-ENTRY(sigreturn)
-	mov	SYS_compat_13_sigreturn13, %g1
-	t	ST_SYSCALL
-	ERROR()
+PSEUDO(sigreturn,compat_13_sigreturn13)
