@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.3 2005/10/16 00:28:32 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.4 2005/10/16 00:30:03 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.3 2005/10/16 00:28:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.4 2005/10/16 00:30:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ bufq_free(struct bufq_state *bufq)
 static int
 sysctl_kern_bufq_strategies(SYSCTLFN_ARGS)
 {
-	 __link_set_decl(bufq_strats, const struct bufq_strat);
+	__link_set_decl(bufq_strats, const struct bufq_strat);
 	const struct bufq_strat * const *bq_strat;
 	const char *strat;
 	char bf[STRAT_MAX_NAME];
