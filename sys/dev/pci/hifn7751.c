@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.27 2005/10/16 00:14:22 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.28 2005/10/16 20:26:47 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.27 2005/10/16 00:14:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.28 2005/10/16 20:26:47 tls Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -1995,7 +1995,6 @@ hifn_intr(void *arg)
 
 		if (i != HIFN_D_RES_RSIZE) {
 			struct hifn_command *cmd;
-			u_int8_t *macbuf = NULL;
 
 			HIFN_RES_SYNC(sc, i, BUS_DMASYNC_POSTREAD);
 			cmd = dma->hifn_commands[i];
@@ -2003,12 +2002,7 @@ hifn_intr(void *arg)
 				/*("hifn_intr: null command slot %u", i)*/);
 			dma->hifn_commands[i] = NULL;
 
-			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
-				macbuf = dma->result_bufs[i];
-				macbuf += 12;
-			}
-
-			hifn_callback(sc, cmd, macbuf);
+			hifn_callback(sc, cmd, dma->result_bufs[i]);
 			hifnstats.hst_opackets++;
 		}
 
@@ -2449,15 +2443,8 @@ hifn_abort(struct hifn_softc *sc)
 
 		if ((dma->resr[i].l & htole32(HIFN_D_VALID)) == 0) {
 			/* Salvage what we can. */
-			u_int8_t *macbuf;
-
-			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
-				macbuf = dma->result_bufs[i];
-				macbuf += 12;
-			} else
-				macbuf = NULL;
 			hifnstats.hst_opackets++;
-			hifn_callback(sc, cmd, macbuf);
+			hifn_callback(sc, cmd, dma->result_bufs[i]);
 		} else {
 			if (cmd->src_map == cmd->dst_map) {
 				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
