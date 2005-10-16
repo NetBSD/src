@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.5 2005/09/13 09:52:17 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.1 2005/10/16 17:15:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.7 2004/01/19 18:17:21 martin Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.8 2005/10/16 17:15:38 christos Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
