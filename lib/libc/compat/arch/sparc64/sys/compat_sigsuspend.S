@@ -1,5 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:36:40 drochner Exp $	*/
-
+/*	$NetBSD: compat_sigsuspend.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,21 +31,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sigreturn.s,v 1.1 91/07/06 13:06:01 torek Exp
+ * from: Header: sigsuspend.s,v 1.1 91/07/06 13:06:01 torek Exp
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 #if 0
-	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
+	.asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:36:40 drochner Exp $")
+	RCSID("$NetBSD: compat_sigsuspend.S,v 1.1 2005/10/16 04:41:34 christos Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-ENTRY(__sigreturn14)
-	mov	SYS_compat_16___sigreturn14, %g1
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
+
+ENTRY(sigsuspend)
+	ld	[%o0], %o0		/* indirect to mask argument */
+	mov	SYS_compat_13_sigsuspend13, %g1
 	t	ST_SYSCALL
-	ERROR()
+	ERROR()				/* always terminates with EINTR */
