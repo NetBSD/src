@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.26 2005/10/16 00:12:42 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.27 2005/10/16 00:14:22 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.26 2005/10/16 00:12:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.27 2005/10/16 00:14:22 tls Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -2113,7 +2113,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 				return (EINVAL);
 			cry = 1;
 			break;
-#ifdef HAVE_CRYPTO_LSZ
+#ifdef HAVE_CRYPTO_LZS
 		case CRYPTO_LZS_COMP:
 			if (comp)
 				return (EINVAL);
@@ -2224,7 +2224,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
 			enccrd = crd1;
-#ifdef	HAVE_CRYPTO_LSZ
+#ifdef	HAVE_CRYPTO_LZS
 		} else if (crd1->crd_alg == CRYPTO_LZS_COMP) {
 		  return (hifn_compression(sc, crp, cmd));
 #endif
@@ -2647,7 +2647,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 	crypto_done(crp);
 }
 
-#ifdef HAVE_CRYPTO_LSZ
+#ifdef HAVE_CRYPTO_LZS
 
 static int
 hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
@@ -3058,7 +3058,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 
 	return (m0);
 }
-#endif	/* HAVE_CRYPTO_LSZ */
+#endif	/* HAVE_CRYPTO_LZS */
 
 static void
 hifn_write_4(struct hifn_softc *sc, int reggrp, bus_size_t reg, u_int32_t val)
