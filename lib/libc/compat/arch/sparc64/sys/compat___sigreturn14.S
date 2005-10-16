@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.4 2003/08/07 16:42:29 agc Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,31 +32,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: Ovfork.s,v 1.1 91/07/06 13:05:56 torek Exp
+ * from: Header: sigreturn.s,v 1.1 91/07/06 13:06:01 torek Exp
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 #if 0
-	.asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93"
+	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.4 2003/08/07 16:42:29 agc Exp $")
+	RCSID("$NetBSD: compat___sigreturn14.S,v 1.1 2005/10/16 04:41:34 christos Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
-/*
- * pid = vfork();
- *
- * %o1 == 0 in parent process, 1 in child process.
- * %o0 == pid of child in parent, pid of parent in child.
- */
-
 #include "SYS.h"
 
-WARN_REFERENCES(vfork, \
-    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
-
-SYSCALL(vfork)
-	dec	%o1		/* from 1 to 0 in child, 0 to -1 in parent */
-	retl
-	 and	%o0, %o1, %o0	/* return 0 in child, pid in parent */
+ENTRY(__sigreturn14)
+	mov	SYS_compat_16___sigreturn14, %g1
+	t	ST_SYSCALL
+	ERROR()

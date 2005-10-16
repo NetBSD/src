@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.5 2004/03/26 19:36:40 drochner Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath

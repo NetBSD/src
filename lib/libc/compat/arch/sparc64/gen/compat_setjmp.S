@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.5 2003/08/07 16:42:27 agc Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.5 2003/08/07 16:42:27 agc Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 04:41:34 christos Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
