@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.6 2005/10/16 08:27:51 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.7 2005/10/16 08:30:37 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.6 2005/10/16 08:27:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.7 2005/10/16 08:30:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,9 +256,9 @@ sysctl_kern_bufq_strategies(SYSCTLFN_ARGS)
 	int error, first;
 
 	first = 1;
-	error = needed = 0;
+	error = 0;
+	needed = 0;
 	left = *oldlenp;
-	strat = NULL;
 
 	__link_set_foreach(bq_strat, bufq_strats) {
 		strat = (*bq_strat)->bs_name;
