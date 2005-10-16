@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2003/10/05 19:48:39 matt Exp $
+# $NetBSD: Makefile.inc,v 1.7 2005/10/16 17:26:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ KMINCLUDES=
 KMSRCS=arch/arm/gen/divsi3.S arch/arm/string/memmove.S \
 	arch/arm/string/memcpy.S
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
 CPPFLAGS += -DSOFTFLOAT
 
