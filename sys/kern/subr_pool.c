@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.103 2005/10/15 21:22:46 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.104 2005/10/16 00:28:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.103 2005/10/15 21:22:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.104 2005/10/16 00:28:04 christos Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2077,9 +2077,8 @@ pool_do_cache_invalidate(struct pool_cache *pc, struct pool_pagelist *pq,
 	LOCK_ASSERT(simple_lock_held(&pc->pc_slock));
 	LOCK_ASSERT(simple_lock_held(&pc->pc_pool->pr_slock));
 
-	for (pcg = LIST_FIRST(&pc->pc_fullgroups); pcg != NULL; pcg = npcg) {
-
-loop:
+	for (pcg = LIST_FIRST(&pc->pc_fullgroups); pcg != NULL;
+	    pcg = npcg ? npcg : LIST_FIRST(&pc->pc_partgroups)) {
 		npcg = LIST_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
 			pc->pc_nitems--;
@@ -2091,10 +2090,6 @@ loop:
 		pc->pc_ngroups--;
 		LIST_REMOVE(pcg, pcg_list);
 		LIST_INSERT_HEAD(pcgl, pcg, pcg_list);
-	}
-	pcg = LIST_FIRST(&pc->pc_partgroups);
-	if (pcg != NULL) {
-		goto loop;
 	}
 
 	KASSERT(LIST_EMPTY(&pc->pc_partgroups));
