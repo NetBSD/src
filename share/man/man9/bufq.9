@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.10 2005/10/16 04:11:02 yamt Exp $
+.\"     $NetBSD: bufq.9,v 1.11 2005/10/16 19:25:31 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ descriptor.
 The argument
 .Fa strategy
 specifies a buffer queue strategy to be used for this buffer queue.
-Following special values can be used.
+The following special values can be used:
 .Pp
 .Bl -tag -offset indent -width BUFQ_DISK_DEFAULT_STRAT -compact
 .It Dv BUFQ_STRAT_ANY
@@ -115,7 +115,7 @@ returns
 .Dv ENOENT .
 If this flag is not specified,
 .Fn bufq_alloc
-will silently uses one of available strategies.
+will silently use one of available strategies.
 .El
 .It Fn bufq_drain "bufq"
 Drain a
