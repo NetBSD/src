@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.43 2005/10/16 00:31:35 chs Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.44 2005/10/16 00:37:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.43 2005/10/16 00:31:35 chs Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.44 2005/10/16 00:37:52 chs Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -918,6 +918,9 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		PTQ_REMOVE(target->pt_sleepq, target, pt_sleep);
 		pthread_spinunlock(self, target->pt_sleeplock);
 		break;
+	case PT_STATE_ZOMBIE:
+		pthread_spinunlock(self, &target->pt_statelock);
+		return;
 	default:
 		;
 	}
