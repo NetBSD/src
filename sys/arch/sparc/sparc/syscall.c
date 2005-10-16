@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2005/07/10 19:07:03 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.3 2005/10/16 14:36:28 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2005/07/10 19:07:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2005/10/16 14:36:28 uwe Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -149,7 +149,7 @@ getargs(struct proc *p, struct trapframe *tf, register_t *code,
 
 	if (*code < 0 || *code >= p->p_emul->e_nsysent)
 		return ENOSYS;
-	
+
 	*callp += *code;
 	i = (*callp)->sy_argsize / sizeof(register_t);
 	if (__predict_false(i > nap)) {	/* usually false */
@@ -199,7 +199,7 @@ syscall_intern(struct proc *p)
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
 		p->p_md.md_syscall = syscall_fancy;
 		return;
-	} 
+	}
 #endif
 	p->p_md.md_syscall = syscall_plain;
 }
@@ -318,10 +318,10 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	l->l_md.md_tf = tf;
 
 #ifdef FPU_DEBUG
-	save_fpu(tf); 
+	save_fpu(tf);
 #endif
 	new = handle_new(tf, &code);
-	
+
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
@@ -426,7 +426,7 @@ upcallret(struct lwp *l)
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void
