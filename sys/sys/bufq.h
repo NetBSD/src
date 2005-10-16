@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.4 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: bufq.h,v 1.5 2005/10/16 02:02:23 yamt Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -103,6 +103,8 @@ void	bufq_free(struct bufq_state *);
 void	bufq_put(struct bufq_state *, struct buf *);
 struct buf *bufq_get(struct bufq_state *);
 struct buf *bufq_peek(struct bufq_state *);
+const char *bufq_getstrategyname(struct bufq_state *);
+void	bufq_move(struct bufq_state *, struct bufq_state *);
 
 /* Put buffer in queue */
 #define BUFQ_PUT(bufq, bp)	bufq_put(bufq, bp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_impl.h,v 1.1 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.2 2005/10/16 02:02:23 yamt Exp $	*/
 /*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
@@ -79,6 +79,8 @@
 #error not supposed to be exposed to userland.
 #endif
 
+struct bufq_strat;
+
 /*
  * Device driver buffer queue.
  */
@@ -87,6 +89,7 @@ struct bufq_state {
 	struct buf *(*bq_get)(struct bufq_state *, int);
 	void *bq_private;
 	int bq_flags;			/* Flags from bufq_alloc() */
+	const struct bufq_strat *bq_strat;
 };
 
 static __inline void *bufq_private(const struct bufq_state *) __unused;
