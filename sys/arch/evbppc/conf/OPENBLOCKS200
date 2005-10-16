@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.7 2005/09/09 16:35:29 drochner Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.8 2005/10/16 16:35:44 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -151,7 +151,7 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 
-gpio0	at opb? addr ? irq ?		# On-chip GPIO controller
+ppcgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
 
 pchb0	at plb?				# PCI-Host bridges
 
