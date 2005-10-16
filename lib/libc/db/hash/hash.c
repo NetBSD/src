@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.21 2005/03/29 23:37:15 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.22 2005/10/16 02:39:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.21 2005/03/29 23:37:15 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.22 2005/10/16 02:39:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -740,7 +740,7 @@ hash_seq(dbp, key, data, flag)
 	u_int32_t flag;
 {
 	register u_int32_t bucket;
-	register BUFHEAD *bufp;
+	register BUFHEAD *bufp = NULL; /* XXX: gcc */
 	HTAB *hashp;
 	u_int16_t *bp, ndx;
 
