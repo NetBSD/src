@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.6 2005/10/06 20:47:14 agc Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.7 2005/10/16 20:39:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -255,7 +255,7 @@ Esta es su última oportunidad para cambiarlas.
 }
 
 message fspart_header
-{  Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont. 
+{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont. 
    ---------- --------- ---------- ---------- ----- ----- -----------
 }
 
