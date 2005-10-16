@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.4 2005/10/16 00:30:03 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.5 2005/10/16 02:02:23 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.4 2005/10/16 00:30:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.5 2005/10/16 02:02:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 
 	*bufqp = bufq = malloc(sizeof(*bufq), M_DEVBUF, M_WAITOK | M_ZERO);
 	bufq->bq_flags = flags;
+	bufq->bq_strat = bsp;
 	(*bsp->bs_initfn)(bufq);
 
 out:
@@ -213,6 +214,31 @@ bufq_free(struct bufq_state *bufq)
 	free(bufq->bq_private, M_DEVBUF);
 	free(bufq, M_DEVBUF);
 }
+
+#if 0
+/*
+ * get a strategy identifier of a buffer queue.
+ */
+const char *
+bufq_getstrategyname(struct bufq_state *bufq)
+{
+
+	return bufq->bq_strat->bs_name;
+}
+
+/*
+ * move all requests on a buffer queue to another.
+ */
+void
+bufq_move(struct bufq_state *dst, struct bufq_state *src)
+{
+	struct buf *bp;
+
+	while ((bp = BUFQ_GET(src)) != NULL) {
+		BUFQ_PUT(dst, bp);
+	}
+}
+#endif
 
 /*
  * sysctl function that will print all bufq strategies
