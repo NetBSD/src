@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.12 2005/09/10 04:34:39 kiyohara Exp $
+#	$NetBSD: files.obs405,v 1.13 2005/10/16 16:35:44 he Exp $
 #
 # obs405-specific configuration info
 
@@ -15,7 +15,7 @@ file	arch/evbppc/obs405/obs405_autoconf.c
 file	arch/evbppc/obs405/obs405_machdep.c
 
 device obsled
-attach  obsled at gpio
+attach  obsled at ppcgpio
 file	arch/evbppc/obs405/dev/obsled.c		obsled
 
 # Memory Disk for install kernel

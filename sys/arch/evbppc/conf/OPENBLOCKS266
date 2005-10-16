@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.25 2005/08/24 19:54:50 shige Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.26 2005/10/16 16:35:44 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.25 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.26 $"
 
 maxusers	32
 
@@ -166,10 +166,10 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 xrtc0	at iic? addr 0x6f		# RTC
-gpio0	at opb? addr ? irq ?		# On-chip GPIO controller
-obsled0	at gpio? addr 0x0c		# OBS LED connected GPIO
-obsled1	at gpio? addr 0x0d		# OBS LED connected GPIO
-obsled2	at gpio? addr 0x0e		# OBS LED connected GPIO
+ppcgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
+obsled0	at ppcgpio? addr 0x0c		# OBS LED connected GPIO
+obsled1	at ppcgpio? addr 0x0d		# OBS LED connected GPIO
+obsled2	at ppcgpio? addr 0x0e		# OBS LED connected GPIO
 
 # PCI bus support
 pci*	at pchb?
