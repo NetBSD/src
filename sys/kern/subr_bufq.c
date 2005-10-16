@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.5 2005/10/16 02:02:23 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.6 2005/10/16 08:27:51 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.5 2005/10/16 02:02:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.6 2005/10/16 08:27:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,35 +262,35 @@ sysctl_kern_bufq_strategies(SYSCTLFN_ARGS)
 
 	__link_set_foreach(bq_strat, bufq_strats) {
 		strat = (*bq_strat)->bs_name;
-		if (strat != NULL &&
-		    strncmp(strat, "dummy", sizeof(strat)) != 0) {
-			/*
-			 * The following code comes from
-			 * sysctl_vfs_generic_fstypes() (vfs_subr.c).
-			 */
-			if (where == NULL)
-				needed += strlen(strat) + 1;
-			else {
-				memset(bf, 0, sizeof(bf));
-				if (first) {
-					strncpy(bf, strat, sizeof(bf));
-					first = 0;
-				} else {
-					bf[0] = ' ';
-					strncpy(bf + 1, strat, sizeof(bf) - 1);
-				}
-				bf[sizeof(bf)-1] = '\0';
-				slen = strlen(bf);
-				if (left < slen + 1)
-					break;
-				/* +1 to copy out the trailing NUL byte */
-				error = copyout(bf, where, slen + 1);
-				if (error)
-					break;
-				where += slen;
-				needed += slen;
-				left -= slen;
+		if ((*bq_strat) == &bufq_strat_dummy)
+			continue;
+
+		/*
+		 * The following code comes from
+		 * sysctl_vfs_generic_fstypes() (vfs_subr.c).
+		 */
+		if (where == NULL)
+			needed += strlen(strat) + 1;
+		else {
+			memset(bf, 0, sizeof(bf));
+			if (first) {
+				strncpy(bf, strat, sizeof(bf));
+				first = 0;
+			} else {
+				bf[0] = ' ';
+				strncpy(bf + 1, strat, sizeof(bf) - 1);
 			}
+			bf[sizeof(bf)-1] = '\0';
+			slen = strlen(bf);
+			if (left < slen + 1)
+				break;
+			/* +1 to copy out the trailing NUL byte */
+			error = copyout(bf, where, slen + 1);
+			if (error)
+				break;
+			where += slen;
+			needed += slen;
+			left -= slen;
 		}
 	}
 	*oldlenp = needed;
