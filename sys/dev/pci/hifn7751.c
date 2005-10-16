@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.25 2005/10/15 08:58:15 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.26 2005/10/16 00:12:42 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.25 2005/10/15 08:58:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.26 2005/10/16 00:12:42 tls Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -2091,11 +2091,16 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
+			/* Note that this is an initialization
+			   vector, not a cipher key; any function
+			   giving sufficient Hamming distance
+			   between outputs is fine.  Use of RC4
+			   to generate IVs has been FIPS140-2
+			   certified by several labs. */
 #ifdef __NetBSD__
-			rnd_extract_data(sc->sc_sessions[i].hs_iv,
+			arc4randbytes(sc->sc_sessions[i].hs_iv,
 			    c->cri_alg == CRYPTO_AES_CBC ?
-				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH,
-			    RND_EXTRACT_ANY);
+				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 #else	/* FreeBSD and OpenBSD have get_random_bytes */
 			/* XXX this may read fewer, does it matter? */
  			get_random_bytes(sc->sc_sessions[i].hs_iv,
