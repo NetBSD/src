@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.8 2005/10/10 15:28:42 xtraeme Exp $
+.\"     $NetBSD: bufq.9,v 1.9 2005/10/16 04:06:20 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 10, 2005
+.Dd October 16, 2005
 .Dt BUFQ 9
 .Os
 .Sh NAME
@@ -49,8 +49,8 @@
 .Nd device buffer queues
 .Sh SYNOPSIS
 .In sys/bufq.h
-.Ft void
-.Fn bufq_alloc "struct bufq_state *bufq" "int flags"
+.Ft int
+.Fn bufq_alloc "struct bufq_state **bufq" "const char *strategy" "int flags"
 .Ft void
 .Fn bufq_drain "struct bufq_state *bufq"
 .Ft void
@@ -68,20 +68,33 @@ subsystem is a set of operations for the management of device buffer queues.
 .Pp
 The primary data type for using the operations is the
 .Em bufq_state
-structure in
-.Pa sys/bufq.h :
-.Bd -literal
-struct bufq_state {
-	void (*bq_put)(struct bufq_state *, struct buf *);
-	struct buf *(*bq_get)(struct bufq_state *, int);
-	void *bq_private;
-	int bq_flags;		/* Flags from bufq_alloc() */
-};
-.Ed
+structure, which is opaque for users.
+.Sh FUNCTIONS
+.Bl -tag -width compact
+.It Fn bufq_alloc "bufq" "strategy" "flags"
+Allocate and initialize a
+.Em bufq_state
+descriptor.
 .Pp
-Valid values for the
-.Em flags
-argument are:
+The argument
+.Fa strategy
+specifies a buffer queue strategy to be used for this buffer queue.
+Following special values can be used.
+.Pp
+.Bl -tag -offset indent -width BUFQ_DISK_DEFAULT_STRAT -compact
+.It Dv BUFQ_STRAT_ANY
+Let
+.Fn bufq_alloc
+select a strategy.
+.It Dv BUFQ_DISK_DEFAULT_STRAT
+Let
+.Fn bufq_alloc
+select a strategy, assuming it will be used for a normal disk device.
+.El
+.Pp
+Valid bits for the
+.Fa flags
+are:
 .Pp
 .Bl -tag -offset indent -width BUFQ_SORT_RAWBLOCK -compact
 .It Dv BUFQ_SORT_RAWBLOCK
@@ -92,25 +105,18 @@ sort by
 .Em b_cylinder
 and then by
 .Em b_rawblkno
-.It Dv BUFQ_FCFS
-queue strategy is first-come first-serve
-.It Dv BUFQ_DISKSORT
-queue strategy is min seek sort
-.It Dv BUFQ_READ_PRIO
-queue strategy is min seek sort for writes and first-come first-serve
-for reads with read priority
-.It Dv BUFQ_PRIOCSCAN
-queue strategy is per-priority cyclical scan
+.It Dv BUFQ_EXACT
+Fail if a strategy specified by
+.Fa strategy
+is not available.
+In that case,
+.Fa bufq_alloc
+returns
+.Dv ENOENT .
+If this flag is not specified,
+.Fn bufq_alloc
+will silently uses one of available strategies.
 .El
-.Sh FUNCTIONS
-.Bl -tag -width compact
-.It Fn bufq_alloc "bufq" "flags"
-Initialize a
-.Em bufq_state
-descriptor.
-The argument
-.Fa flags
-controls the strategy and sort order.
 .It Fn bufq_drain "bufq"
 Drain a
 .Em bufq_state
@@ -140,7 +146,7 @@ if the queue is empty.
 .Sh CODE REFERENCES
 The actual code implementing the device buffer queues can be found
 in the file
-.Pa sys/kern/subr_disk.c .
+.Pa sys/kern/subr_bufq.c .
 .Sh HISTORY
 The
 .Nm
