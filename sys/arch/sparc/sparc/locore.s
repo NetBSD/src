@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.220 2005/09/30 22:09:29 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.221 2005/10/16 16:34:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2434,8 +2434,8 @@ _C_LABEL(_syscall):
 	mov	%l1, %o2		! (pc)
 	std	%i4, [%sp + CCFSZ + 64]
 
-	set	curlwp, %l1
-	ld	[%l1], %l1
+	sethi	%hi(curlwp), %l1
+	ld	[%l1 + %lo(curlwp)], %l1
 	ld	[%l1 + L_PROC], %l1
 	ld	[%l1 + P_MD_SYSCALL], %l1
 	call	%l1			! syscall(code, &tf, pc, suncompat)
