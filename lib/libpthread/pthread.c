@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.43 2005/10/16 00:07:24 chs Exp $	*/
+/*	$NetBSD: pthread.c,v 1.44 2005/10/16 00:37:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.43 2005/10/16 00:07:24 chs Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.44 2005/10/16 00:37:52 chs Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -406,7 +406,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	nthreads++;
 	pthread_spinunlock(self, &pthread__allqueue_lock);
 
-	SDPRINTF(("(pthread_create %p) Created new thread %p (name pointer %p).\n", self, newthread, newthread->pt_name));
+	SDPRINTF(("(pthread_create %p) new thread %p (name pointer %p).\n",
+		  self, newthread, newthread->pt_name));
 	/* 6. Put on appropriate queue. */
 	if (newthread->pt_flags & PT_FLAG_SUSPENDED) {
 		pthread_spinlock(self, &newthread->pt_statelock);
@@ -437,11 +438,16 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 int
 pthread_suspend_np(pthread_t thread)
 {
-	pthread_t self = pthread__self();
+	pthread_t self;
+
+	self = pthread__self();
 	if (self == thread) {
-		fprintf(stderr, "suspend_np: can't suspend self\n");
 		return EDEADLK;
 	}
+#ifdef ERRORCHECK
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+#endif
 	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p (state %d).\n",
 		     self, thread, thread->pt_state));
 	pthread_spinlock(self, &thread->pt_statelock);
@@ -468,10 +474,14 @@ pthread_suspend_np(pthread_t thread)
 		PTQ_REMOVE(thread->pt_sleepq, thread, pt_sleep);
 		pthread_spinunlock(self, thread->pt_sleeplock);
 		break;
+	case PT_STATE_ZOMBIE:
+		goto out;
 	default:
 		break;			/* XXX */
 	}
 	pthread__suspend(self, thread);
+
+out:
 	pthread_spinunlock(self, &thread->pt_statelock);
 	return 0;
 }
@@ -479,8 +489,13 @@ pthread_suspend_np(pthread_t thread)
 int
 pthread_resume_np(pthread_t thread)
 {
+	pthread_t self;
 
-	pthread_t self = pthread__self();
+	self = pthread__self();
+#ifdef ERRORCHECK
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+#endif
 	SDPRINTF(("(pthread_resume_np %p) Resume thread %p (state %d).\n",
 		     self, thread, thread->pt_state));
 	pthread_spinlock(self, &thread->pt_statelock);
@@ -548,7 +563,8 @@ pthread_exit(void *retval)
 	int nt;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_exit %p) Exiting (status %p, flags %x, cancel %d).\n", self, retval, self->pt_flags, self->pt_cancel));
+	SDPRINTF(("(pthread_exit %p) status %p, flags %x, cancel %d\n",
+		  self, retval, self->pt_flags, self->pt_cancel));
 
 	/* Disable cancellability. */
 	pthread_spinlock(self, &self->pt_flaglock);
@@ -597,6 +613,7 @@ pthread_exit(void *retval)
 		pthread_spinlock(self, &pthread__deadqueue_lock);
 		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
 		pthread__block(self, &pthread__deadqueue_lock);
+		SDPRINTF(("(pthread_exit %p) walking dead\n", self));
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
 		/* Note: name will be freed by the joiner. */
@@ -614,6 +631,7 @@ pthread_exit(void *retval)
 		 */
 		pthread__sched_sleepers(self, &self->pt_joiners);
 		pthread__block(self, &self->pt_join_lock);
+		SDPRINTF(("(pthread_exit %p) walking zombie\n", self));
 	}
 
 	/*NOTREACHED*/
@@ -813,10 +831,11 @@ pthread_getname_np(pthread_t thread, char *name, size_t len)
 int
 pthread_setname_np(pthread_t thread, const char *name, void *arg)
 {
-	pthread_t self = pthread_self();
+	pthread_t self;
 	char *oldname, *cp, newname[PTHREAD_MAX_NAMELEN_NP];
 	int namelen;
 
+	self = pthread__self();
 	if (pthread__find(self, thread) != 0)
 		return ESRCH;
 
@@ -869,12 +888,15 @@ pthread_cancel(pthread_t thread)
 {
 	pthread_t self;
 
+	self = pthread__self();
+#ifdef ERRORCHECK
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+#endif
 	if (!(thread->pt_state == PT_STATE_RUNNING ||
 	    thread->pt_state == PT_STATE_RUNNABLE ||
 	    thread->pt_state == PT_STATE_BLOCKED_QUEUE))
 		return ESRCH;
-
-	self = pthread__self();
 
 	pthread_spinlock(self, &thread->pt_flaglock);
 	thread->pt_flags |= PT_FLAG_CS_PENDING;
