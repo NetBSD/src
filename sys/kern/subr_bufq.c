@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.8 2005/10/17 12:25:15 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.9 2005/10/17 12:28:21 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.8 2005/10/17 12:25:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.9 2005/10/17 12:28:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.8 2005/10/17 12:25:15 yamt Exp $");
 
 BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
-#define	STRAT_MATCH(id, bs)	\
-	((id) == BUFQ_STRAT_ANY || strcmp((id), (bs)->bs_name) == 0)
+#define	STRAT_MATCH(id, bs)	(strcmp((id), (bs)->bs_name) == 0)
 
 /*
  * Create a device buffer queue.
@@ -128,7 +127,8 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	__link_set_foreach(it, bufq_strats) {
 		if ((*it) == &bufq_strat_dummy)
 			continue;
-		if (STRAT_MATCH(strategy, (*it))) {
+		if (strategy != BUFQ_STRAT_ANY &&
+		    STRAT_MATCH(strategy, (*it))) {
 			bsp = *it;
 			break;
 		}
@@ -139,7 +139,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	if (bsp == NULL) {
 		panic("bufq_alloc: no strategy");
 	}
-	if (!STRAT_MATCH(strategy, bsp)) {
+	if (strategy != BUFQ_STRAT_ANY && !STRAT_MATCH(strategy, bsp)) {
 		if ((flags & BUFQ_EXACT)) {
 			error = ENOENT;
 			goto out;
