@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.13 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.14 2005/10/17 18:00:00 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
-#include <fcntl.h>	/* for open() */
 #ifdef QUICK
 #include <sys/mman.h>
 #endif
@@ -66,9 +65,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.25 2005/01/07 19:17:27 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.32 2005/10/17 15:31:10 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.13 2005/02/21 15:00:05 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.14 2005/10/17 18:00:00 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -81,6 +80,10 @@ protected int file_os2_apptype(struct magic_set *ms, const char *fn,
 private void free_mlist(struct mlist *);
 private void close_and_restore(const struct magic_set *, const char *, int,
     const struct stat *);
+
+#ifndef	STDIN_FILENO
+#define	STDIN_FILENO	0
+#endif
 
 public struct magic_set *
 magic_open(int flags)
@@ -185,8 +188,11 @@ private void
 close_and_restore(const struct magic_set *ms, const char *name, int fd,
     const struct stat *sb)
 {
+	if (fd == STDIN_FILENO)
+		return;
 	(void) close(fd);
-	if (fd != STDIN_FILENO && (ms->flags & MAGIC_PRESERVE_ATIME) != 0) {
+
+	if ((ms->flags & MAGIC_PRESERVE_ATIME) != 0) {
 		/*
 		 * Try to restore access, modification times if read it.
 		 * This is really *bad* because it will modify the status
@@ -217,41 +223,57 @@ public const char *
 magic_file(struct magic_set *ms, const char *inname)
 {
 	int	fd = 0;
-	unsigned char buf[HOWMANY+1];	/* one extra for terminating '\0' */
+	int	rv = -1;
+	unsigned char *buf;
 	struct stat	sb;
 	ssize_t nbytes = 0;	/* number of bytes read from a datafile */
 
-	if (file_reset(ms) == -1)
+	/*
+	 * one extra for terminating '\0', and
+	 * some overlapping space for matches near EOF
+	 */
+#define SLOP (1 + sizeof(union VALUETYPE))
+	if ((buf = malloc(HOWMANY + SLOP)) == NULL)
 		return NULL;
+
+	if (file_reset(ms) == -1)
+		goto done;
 
 	switch (file_fsmagic(ms, inname, &sb)) {
 	case -1:
-		return NULL;
+		goto done;
 	case 0:
 		break;
 	default:
-		return file_getbuffer(ms);
+		rv = 0;
+		goto done;
 	}
 
-#ifndef	STDIN_FILENO
-#define	STDIN_FILENO	0
-#endif
 	if (inname == NULL)
 		fd = STDIN_FILENO;
-	else if ((fd = open(inname, O_RDONLY)) < 0) {
+	else if ((fd = open(inname, O_RDONLY|O_BINARY)) < 0) {
+#ifdef __CYGWIN__
+	    char *tmp = alloca(strlen(inname) + 5);
+	    (void)strcat(strcpy(tmp, inname), ".exe");
+	    if ((fd = open(tmp, O_RDONLY|O_BINARY)) < 0) {
+#endif
 		/* We cannot open it, but we were able to stat it. */
 		if (sb.st_mode & 0222)
 			if (file_printf(ms, "writable, ") == -1)
-				return NULL;
+				goto done;
 		if (sb.st_mode & 0111)
 			if (file_printf(ms, "executable, ") == -1)
-				return NULL;
+				goto done;
 		if (S_ISREG(sb.st_mode))
 			if (file_printf(ms, "regular file, ") == -1)
-				return NULL;
+				goto done;
 		if (file_printf(ms, "no read permission") == -1)
-			return NULL;
-		return file_getbuffer(ms);
+			goto done;
+		rv = 0;
+		goto done;
+#ifdef __CYGWIN__
+	    }
+#endif
 	}
 
 	/*
@@ -266,13 +288,11 @@ magic_file(struct magic_set *ms, const char *inname)
 		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
 		    "application/x-empty" : "empty") == -1)
 			goto done;
-		goto gotit;
 	} else if (nbytes == 1) {
 		if (file_printf(ms, "very short file (no magic)") == -1)
 			goto done;
-		goto gotit;
 	} else {
-		buf[nbytes] = '\0';	/* null-terminate it */
+		(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
 #ifdef __EMX__
 		switch (file_os2_apptype(ms, inname, buf, nbytes)) {
 		case -1:
@@ -280,7 +300,8 @@ magic_file(struct magic_set *ms, const char *inname)
 		case 0:
 			break;
 		default:
-			goto gotit;
+			rv = 0;
+			goto done;
 		}
 #endif
 		if (file_buffer(ms, fd, buf, (size_t)nbytes) == -1)
@@ -299,12 +320,11 @@ magic_file(struct magic_set *ms, const char *inname)
 		}
 #endif
 	}
-gotit:
-	close_and_restore(ms, inname, fd, &sb);
-	return file_getbuffer(ms);
+	rv = 0;
 done:
+	free(buf);
 	close_and_restore(ms, inname, fd, &sb);
-	return NULL;
+	return rv == 0 ? file_getbuffer(ms) : NULL;
 }
 
 

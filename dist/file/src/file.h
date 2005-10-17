@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.10 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.11 2005/10/17 18:00:00 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.65 2005/01/07 19:17:26 christos Exp
+ * @(#)Id: file.h,v 1.72 2005/10/17 15:36:22 christos Exp
  */
 
 #ifndef __file_h__
@@ -45,6 +45,7 @@
 
 #include <stdio.h>	/* Include that here, to make sure __P gets defined */
 #include <errno.h>
+#include <fcntl.h>	/* For open and flags */
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -71,9 +72,9 @@
 #define public
 
 #ifndef HOWMANY
-# define HOWMANY 65536		/* how much of the file to look at */
+# define HOWMANY (256 * 1024)	/* how much of the file to look at */
 #endif
-#define MAXMAGIS 4096		/* max entries in /etc/magic */
+#define MAXMAGIS 8192		/* max entries in /etc/magic */
 #define MAXDESC	64		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
 
@@ -93,6 +94,7 @@ struct magic {
 #define INDIR	1		/* if '>(...)' appears,  */
 #define	UNSIGNED 2		/* comparison is unsigned */
 #define OFFADD	4		/* if '>&' appears,  */
+#define INDIROFFADD	8	/* if '>&(' appears,  */
 	/* Word 2 */
 	uint8_t reln;		/* relation (0=eq, '>'=gt, etc) */
 	uint8_t vallen;		/* length of string value, if any */
@@ -116,6 +118,7 @@ struct magic {
 #define				FILE_REGEX	17
 #define				FILE_BESTRING16	18
 #define				FILE_LESTRING16	19
+#define				FILE_SEARCH	20
 
 #define				FILE_FORMAT_NAME	\
 /* 0 */ 			"invalid 0",		\
@@ -127,7 +130,7 @@ struct magic {
 /* 6 */ 			"date",			\
 /* 7 */ 			"beshort",		\
 /* 8 */ 			"belong",		\
-/* 9 */ 			"bedate"		\
+/* 9 */ 			"bedate",		\
 /* 10 */ 			"leshort",		\
 /* 11 */ 			"lelong",		\
 /* 12 */ 			"ledate",		\
@@ -137,7 +140,8 @@ struct magic {
 /* 16 */ 			"leldate",		\
 /* 17 */ 			"regex",		\
 /* 18 */			"bestring16",		\
-/* 19 */			"lestring16",
+/* 19 */			"lestring16",		\
+/* 20 */ 			"search",
 
 #define	FILE_FMT_NUM	"cduxXi"
 #define FILE_FMT_STR	"s"	
@@ -162,7 +166,8 @@ struct magic {
 /* 16 */ 			FILE_FMT_STR,		\
 /* 17 */ 			FILE_FMT_STR,		\
 /* 18 */			FILE_FMT_STR,		\
-/* 19 */			FILE_FMT_STR,
+/* 19 */			FILE_FMT_STR,		\
+/* 20 */			FILE_FMT_STR,
 
 	/* Word 3 */
 	uint8_t in_op;		/* operator for indirection */
@@ -178,11 +183,12 @@ struct magic {
 #define				FILE_OPMULTIPLY	5
 #define				FILE_OPDIVIDE	6
 #define				FILE_OPMODULO	7
-#define				FILE_OPINVERSE	0x80
+#define				FILE_OPINVERSE	0x40
+#define				FILE_OPINDIRECT	0x80
 	/* Word 4 */
 	uint32_t offset;	/* offset to magic number */
 	/* Word 5 */
-	uint32_t in_offset;	/* offset from indirection */
+	int32_t in_offset;	/* offset from indirection */
 	/* Word 6 */
 	uint32_t mask;	/* mask before comparison with value */
 	/* Word 7 */
@@ -195,7 +201,10 @@ struct magic {
 		uint16_t h;
 		uint32_t l;
 		char s[MAXstring];
-		char *buf;
+		struct {
+			char *buf;
+			size_t buflen;
+		} search;
 		uint8_t hs[2];	/* 2 bytes of a fixed-endian "short" */
 		uint8_t hl[4];	/* 4 bytes of a fixed-endian "long" */
 	} value;		/* either number or string */
@@ -246,7 +255,7 @@ struct magic_set {
 };
 
 struct stat;
-protected char *file_fmttime(uint32_t, int);
+protected const char *file_fmttime(uint32_t, int);
 protected int file_buffer(struct magic_set *, int, const void *, size_t);
 protected int file_fsmagic(struct magic_set *, const char *, struct stat *);
 protected int file_pipe2file(struct magic_set *, int, const void *, size_t);
@@ -281,8 +290,16 @@ extern char *sys_errlist[];
 #define strtoul(a, b, c)	strtol(a, b, c)
 #endif
 
+#ifndef HAVE_SNPRINTF
+int snprintf(char *, size_t, const char *, ...);
+#endif
+
 #if defined(HAVE_MMAP) && defined(HAVE_SYS_MMAN_H) && !defined(QUICK)
 #define QUICK
+#endif
+
+#ifndef O_BINARY
+#define O_BINARY	0
 #endif
 
 #define FILE_RCSID(id) \

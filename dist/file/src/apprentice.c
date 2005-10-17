@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.8 2005/03/25 18:07:09 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.9 2005/10/17 18:00:00 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -48,9 +48,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.82 2004/11/24 18:56:04 christos Exp")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.85 2005/10/17 15:31:10 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.8 2005/03/25 18:07:09 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.9 2005/10/17 18:00:00 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -80,8 +80,11 @@ __RCSID("$NetBSD: apprentice.c,v 1.8 2005/03/25 18:07:09 christos Exp $");
 #define MAXPATHLEN	1024
 #endif
 
-#define IS_STRING(t) ((t) == FILE_STRING || (t) == FILE_PSTRING || \
+#define IS_PLAINSTRING(t) ((t) == FILE_STRING || (t) == FILE_PSTRING || \
     (t) == FILE_BESTRING16 || (t) == FILE_LESTRING16)
+    
+#define IS_STRING(t) (IS_PLAINSTRING(t) || (t) == FILE_REGEX || \
+    (t) == FILE_SEARCH)
 
 private int getvalue(struct magic_set *ms, struct magic *, char **);
 private int hextoint(int);
@@ -381,8 +384,8 @@ file_signextend(struct magic_set *ms, struct magic *m, uint32_t v)
 		case FILE_PSTRING:
 		case FILE_BESTRING16:
 		case FILE_LESTRING16:
-			break;
 		case FILE_REGEX:
+		case FILE_SEARCH:
 			break;
 		default:
 			if (ms->flags & MAGIC_CHECK)
@@ -429,9 +432,15 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 		m->cont_level++; 
 	}
 
+	if (m->cont_level != 0 && *l == '&') {
+                ++l;            /* step over */
+                m->flag |= OFFADD;
+        }
 	if (m->cont_level != 0 && *l == '(') {
 		++l;		/* step over */
 		m->flag |= INDIR;
+		if (m->flag & OFFADD)
+			m->flag = (m->flag & ~OFFADD) | INDIROFFADD;
 	}
 	if (m->cont_level != 0 && *l == '&') {
                 ++l;            /* step over */
@@ -484,7 +493,7 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 			l++;
 		}
 		if (*l == '~') {
-			m->in_op = FILE_OPINVERSE;
+			m->in_op |= FILE_OPINVERSE;
 			l++;
 		}
 		switch (*l) {
@@ -521,11 +530,16 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 			l++;
 			break;
 		}
-		if (isdigit((unsigned char)*l)) 
-			m->in_offset = (uint32_t)strtoul(l, &t, 0);
+		if (*l == '(') {
+			m->in_op |= FILE_OPINDIRECT;
+			l++;
+		}
+		if (isdigit((unsigned char)*l) || *l == '-') 
+			m->in_offset = (int32_t)strtol(l, &t, 0);
 		else
 			t = l;
-		if (*t++ != ')') 
+		if (*t++ != ')' ||
+		    ((m->in_op & FILE_OPINDIRECT) && *t++ != ')')) 
 			if (ms->flags & MAGIC_CHECK)
 				file_magwarn(ms,
 				    "missing ')' in indirect offset");
@@ -555,6 +569,7 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 #define NREGEX		5
 #define NBESTRING16	10
 #define NLESTRING16	10
+#define NSEARCH		6
 
 	if (*l == 'u') {
 		++l;
@@ -619,6 +634,9 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 	} else if (strncmp(l, "lestring16", NLESTRING16)==0) {
 		m->type = FILE_LESTRING16;
 		l += NLESTRING16;
+	} else if (strncmp(l, "search", NSEARCH)==0) {
+		m->type = FILE_SEARCH;
+		l += NSEARCH;
 	} else {
 		if (ms->flags & MAGIC_CHECK)
 			file_magwarn(ms, "type `%s' invalid", l);
@@ -628,12 +646,12 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 	/* New and improved: ~ & | ^ + - * / % -- exciting, isn't it? */
 	if (*l == '~') {
 		if (!IS_STRING(m->type))
-			m->mask_op = FILE_OPINVERSE;
+			m->mask_op |= FILE_OPINVERSE;
 		++l;
 	}
 	if ((t = strchr(fops,  *l)) != NULL) {
 		uint32_t op = (uint32_t)(t - fops);
-		if (op != FILE_OPDIVIDE || !IS_STRING(m->type)) {
+		if (op != FILE_OPDIVIDE || !IS_PLAINSTRING(m->type)) {
 			++l;
 			m->mask_op |= op;
 			val = (uint32_t)strtoul(l, &l, 0);
@@ -661,6 +679,7 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 					return -1;
 				}
 			}
+			++l;
 		}
 	}
 	/*
@@ -684,15 +703,12 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 		}
 		break;
 	case '!':
-		if (!IS_STRING(m->type)) {
-			m->reln = *l;
-			++l;
-			break;
-		}
-		/*FALLTHROUGH*/
+		m->reln = *l;
+		++l;
+		break;
 	default:
-		if (*l == 'x' && isascii((unsigned char)l[1]) && 
-		    isspace((unsigned char)l[1])) {
+		if (*l == 'x' && ((isascii((unsigned char)l[1]) && 
+		    isspace((unsigned char)l[1])) || !l[1])) {
 			m->reln = *l;
 			++l;
 			goto GetDesc;	/* Bill The Cat */
@@ -807,6 +823,7 @@ getvalue(struct magic_set *ms, struct magic *m, char **p)
 	case FILE_STRING:
 	case FILE_PSTRING:
 	case FILE_REGEX:
+	case FILE_SEARCH:
 		*p = getstr(ms, *p, m->value.s, sizeof(m->value.s), &slen);
 		if (*p == NULL) {
 			if (ms->flags & MAGIC_CHECK)
@@ -1048,7 +1065,7 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	if (dbname == NULL)
 		return -1;
 
-	if ((fd = open(dbname, O_RDONLY)) == -1)
+	if ((fd = open(dbname, O_RDONLY|O_BINARY)) == -1)
 		return -1;
 
 	if (fstat(fd, &st) == -1) {
@@ -1138,7 +1155,7 @@ apprentice_compile(struct magic_set *ms, struct magic **magicp,
 	if (dbname == NULL) 
 		return -1;
 
-	if ((fd = open(dbname, O_WRONLY|O_CREAT|O_TRUNC, 0644)) == -1) {
+	if ((fd = open(dbname, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0644)) == -1) {
 		file_error(ms, errno, "cannot open `%s'", dbname);
 		return -1;
 	}
