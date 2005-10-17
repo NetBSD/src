@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.4 2005/10/17 18:13:04 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,7 +44,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.74 2005/07/29 17:57:20 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.3 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.4 2005/10/17 18:13:04 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -650,8 +650,8 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 
 	if (indir == 0 && (type == FILE_BESTRING16 || type == FILE_LESTRING16))
 	{
-		const char *src = s + offset;
-		const char *esrc = s + nbytes;
+		const unsigned char *src = s + offset;
+		const unsigned char *esrc = s + nbytes;
 		char *dst = p->s, *edst = &p->s[sizeof(p->s) - 1];
 
 		if (type == FILE_BESTRING16)
