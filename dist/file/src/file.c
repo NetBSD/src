@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.14 2005/10/17 18:51:40 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.15 2005/10/17 19:07:43 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -76,7 +76,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.98 2005/10/17 15:31:10 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.14 2005/10/17 18:51:40 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.15 2005/10/17 19:07:43 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -355,6 +355,7 @@ unwrap(char *fn)
 	char buf[MAXPATHLEN];
 	FILE *f;
 	int wid = 0, cwid;
+	size_t len;
 
 	if (strcmp("-", fn) == 0) {
 		f = stdin;
@@ -367,7 +368,10 @@ unwrap(char *fn)
 		}
 
 		while (fgets(buf, MAXPATHLEN, f) != NULL) {
-			cwid = file_mbswidth(buf) - 1;
+			len = strlen(buf);
+			if (len > 0 && buf[len - 1] == '\n')
+				buf[len - 1] = '\0';
+			cwid = file_mbswidth(buf);
 			if (cwid > wid)
 				wid = cwid;
 		}
@@ -376,7 +380,9 @@ unwrap(char *fn)
 	}
 
 	while (fgets(buf, MAXPATHLEN, f) != NULL) {
-		buf[file_mbswidth(buf)-1] = '\0';
+		len = strlen(buf);
+		if (len > 0 && buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
 		process(buf, wid);
 		if(nobuffer)
 			(void)fflush(stdout);
