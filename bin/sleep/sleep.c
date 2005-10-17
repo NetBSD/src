@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.19 2003/08/07 09:05:41 agc Exp $ */
+/* $NetBSD: sleep.c,v 1.20 2005/10/17 10:11:46 elad Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.19 2003/08/07 09:05:41 agc Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.20 2005/10/17 10:11:46 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	if (fracflag) {
 		val = atof(arg);
 		if (val <= 0)
-			exit(0);
+			usage();
 		ival = floor(val);
 		fval = (1000000000 * (val-ival));
 		ntime.tv_sec = ival;
