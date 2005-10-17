@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.7 2005/10/16 08:30:37 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.8 2005/10/17 12:25:15 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.7 2005/10/16 08:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.8 2005/10/17 12:25:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.7 2005/10/16 08:30:37 yamt Exp $");
 
 BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
-#define	STRAT_MAX_NAME	32
 #define	STRAT_MATCH(id, bs)	\
 	((id) == BUFQ_STRAT_ANY || strcmp((id), (bs)->bs_name) == 0)
 
@@ -240,6 +239,44 @@ bufq_move(struct bufq_state *dst, struct bufq_state *src)
 }
 #endif
 
+static int
+docopy(char *buf, size_t *bufoffp, size_t buflen,
+    const char *datap, size_t datalen)
+{
+	int error = 0;
+
+	if (buf != NULL && datalen > 0) {
+
+		if (*bufoffp + datalen > buflen) {
+			goto out;
+		}
+		error = copyout(datap, buf + *bufoffp, datalen);
+		if (error) {
+			goto out;
+		}
+	}
+out:
+	if (error == 0) {
+		*bufoffp += datalen;
+	}
+
+	return error;
+}
+
+static int
+docopystr(char *buf, size_t *bufoffp, size_t buflen, const char *datap)
+{
+
+	return docopy(buf, bufoffp, buflen, datap, strlen(datap));
+}
+
+static int
+docopynul(char *buf, size_t *bufoffp, size_t buflen)
+{
+
+	return docopy(buf, bufoffp, buflen, "", 1);
+}
+
 /*
  * sysctl function that will print all bufq strategies
  * built in the kernel.
@@ -249,51 +286,30 @@ sysctl_kern_bufq_strategies(SYSCTLFN_ARGS)
 {
 	__link_set_decl(bufq_strats, const struct bufq_strat);
 	const struct bufq_strat * const *bq_strat;
-	const char *strat;
-	char bf[STRAT_MAX_NAME];
-	char *where = oldp;
-	size_t needed, left, slen;
-	int error, first;
-
-	first = 1;
-	error = 0;
-	needed = 0;
-	left = *oldlenp;
+	const char *delim = "";
+	size_t off = 0;
+	size_t buflen = *oldlenp;
+	int error;
 
 	__link_set_foreach(bq_strat, bufq_strats) {
-		strat = (*bq_strat)->bs_name;
-		if ((*bq_strat) == &bufq_strat_dummy)
+		if ((*bq_strat) == &bufq_strat_dummy) {
 			continue;
-
-		/*
-		 * The following code comes from
-		 * sysctl_vfs_generic_fstypes() (vfs_subr.c).
-		 */
-		if (where == NULL)
-			needed += strlen(strat) + 1;
-		else {
-			memset(bf, 0, sizeof(bf));
-			if (first) {
-				strncpy(bf, strat, sizeof(bf));
-				first = 0;
-			} else {
-				bf[0] = ' ';
-				strncpy(bf + 1, strat, sizeof(bf) - 1);
-			}
-			bf[sizeof(bf)-1] = '\0';
-			slen = strlen(bf);
-			if (left < slen + 1)
-				break;
-			/* +1 to copy out the trailing NUL byte */
-			error = copyout(bf, where, slen + 1);
-			if (error)
-				break;
-			where += slen;
-			needed += slen;
-			left -= slen;
 		}
+		error = docopystr(oldp, &off, buflen, delim);
+		if (error) {
+			goto out;
+		}
+		error = docopystr(oldp, &off, buflen, (*bq_strat)->bs_name);
+		if (error) {
+			goto out;
+		}
+		delim = " ";
 	}
-	*oldlenp = needed;
+
+	/* NUL terminate */
+	error = docopynul(oldp, &off, buflen);
+out:
+	*oldlenp = off;
 	return error;
 }
 
