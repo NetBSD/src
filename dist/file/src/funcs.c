@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.4 2005/10/17 18:03:01 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.5 2005/10/17 18:34:47 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)Id: funcs.c,v 1.15 2005/07/12 20:05:38 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.4 2005/10/17 18:03:01 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.5 2005/10/17 18:34:47 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -185,9 +185,9 @@ file_getbuffer(struct magic_set *ms)
 			*np++ = *op;	
 		} else {
 			*np++ = '\\';
-			*np++ = ((*op >> 6) & 3) + '0';
-			*np++ = ((*op >> 3) & 7) + '0';
-			*np++ = ((*op >> 0) & 7) + '0';
+			*np++ = (((uint32_t)*op >> 6) & 3) + '0';
+			*np++ = (((uint32_t)*op >> 3) & 7) + '0';
+			*np++ = (((uint32_t)*op >> 0) & 7) + '0';
 		}
 	}
 	*np = '\0';
