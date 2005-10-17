@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.2 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.3 2005/10/17 03:08:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.2 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.3 2005/10/17 03:08:24 simonb Exp $");
 
 /*
  *
@@ -93,8 +93,9 @@ swwdogattach(int count)
 
 		if (sysmon_wdog_register(&sc->sc_smw) == 0)
 			printf("software watchdog initialized\n");
-		else printf("unable to register software watchdog "
-				"with sysmon\n");
+		else
+			printf("unable to register software watchdog "
+			    "with sysmon\n");
 	}
 }
 
@@ -111,7 +112,8 @@ swwdog_setmode(struct sysmon_wdog *smw)
 			return EINVAL;
 		else if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 			sc->sc_smw.smw_period = SWDOG_DEFAULT;
-		else sc->sc_smw.smw_period = smw->smw_period;
+		else
+			sc->sc_smw.smw_period = smw->smw_period;
 		error = swwdog_arm(sc);
 	}
 	return error;
@@ -155,5 +157,6 @@ swwdog_panic(void *vsc)
 
 	if (do_panic)
 		panic("watchdog timer expired");
-	else cpu_reboot(0, NULL);
+	else
+		cpu_reboot(0, NULL);
 }
