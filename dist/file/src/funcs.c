@@ -1,5 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.8 2005/02/21 14:33:38 pooka Exp $	*/
-
+/*	$NetBSD: funcs.c,v 1.1.1.9 2005/10/17 17:48:22 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,11 +35,16 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: funcs.c,v 1.14 2005/01/07 19:17:27 christos Exp")
+FILE_RCSID("@(#)Id: funcs.c,v 1.15 2005/07/12 20:05:38 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.8 2005/02/21 14:33:38 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.1.1.9 2005/10/17 17:48:22 pooka Exp $");
 #endif
 #endif	/* lint */
+
+#ifndef HAVE_VSNPRINTF
+int vsnprintf(char *, size_t, const char *, va_list);
+#endif
+
 /*
  * Like printf, only we print to a buffer and advance it.
  */
@@ -189,3 +193,27 @@ file_getbuffer(struct magic_set *ms)
 	*np = '\0';
 	return ms->o.pbuf;
 }
+
+/*
+ * Yes these suffer from buffer overflows, but if your OS does not have
+ * these functions, then maybe you should consider replacing your OS?
+ */
+#ifndef HAVE_VSNPRINTF
+int
+vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
+{
+	vsprintf(buf, fmt, ap);
+}
+#endif
+
+#ifndef HAVE_SNPRINTF
+/*ARGSUSED*/
+int
+snprintf(char *buf, size_t len, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vsprintf(buf, fmt, ap);
+	va_end(ap);
+}
+#endif

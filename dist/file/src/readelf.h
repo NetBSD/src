@@ -1,5 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.3 2005/02/21 14:33:40 pooka Exp $	*/
-
+/*	$NetBSD: readelf.h,v 1.1.1.4 2005/10/17 17:48:24 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -226,6 +225,7 @@ typedef struct {
 #define NT_NETBSD_EMULATION	2
 #define NT_FREEBSD_VERSION	1
 #define NT_OPENBSD_VERSION	1
+#define NT_DRAGONFLY_VERSION	1
 /* GNU executables (name = "GNU") */
 #define NT_GNU_VERSION		1
 

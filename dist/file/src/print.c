@@ -1,5 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.5 2005/02/21 14:33:39 pooka Exp $	*/
-
+/*	$NetBSD: print.c,v 1.1.1.6 2005/10/17 17:48:14 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -45,9 +44,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.46 2004/11/13 08:11:39 christos Exp")
+FILE_RCSID("@(#)Id: print.c,v 1.48 2005/10/12 19:29:42 christos Exp")
 #else
-__RCSID("$NetBSD: print.c,v 1.1.1.5 2005/02/21 14:33:39 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.1.1.6 2005/10/17 17:48:14 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -57,13 +56,9 @@ __RCSID("$NetBSD: print.c,v 1.1.1.5 2005/02/21 14:33:39 pooka Exp $");
 protected void
 file_mdump(struct magic *m)
 {
-	private const char *typ[] = { "invalid", "byte", "short", "invalid",
-				     "long", "string", "date", "beshort",
-				     "belong", "bedate", "leshort", "lelong",
-				     "ledate", "pstring", "ldate", "beldate",
-				     "leldate", "regex" };
-	private const char optyp[] = { '@', '&', '|', '^', '+', '-', 
-				      '*', '/', '%' };
+	private const char *typ[] = { FILE_FORMAT_NAME };
+	private const char optyp[] = { FILE_OPS };
+
 	(void) fputc('[', stderr);
 	(void) fprintf(stderr, ">>>>>>>> %d" + 8 - (m->cont_level & 7),
 		       m->offset);
@@ -159,7 +154,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 	fputc('\n', stderr);
 }
 
-protected char *
+protected const char *
 file_fmttime(uint32_t v, int local)
 {
 	char *pp, *rt;
@@ -178,6 +173,8 @@ file_fmttime(uint32_t v, int local)
 			struct tm *tm1;
 			(void)time(&now);
 			tm1 = localtime(&now);
+			if (tm1 == NULL)
+				return "*Invalid time*";
 			daylight = tm1->tm_isdst;
 		}
 #endif /* HAVE_TM_ISDST */
@@ -185,6 +182,8 @@ file_fmttime(uint32_t v, int local)
 		if (daylight)
 			t += 3600;
 		tm = gmtime(&t);
+		if (tm == NULL)
+			return "*Invalid time*";
 		pp = asctime(tm);
 	}
 
