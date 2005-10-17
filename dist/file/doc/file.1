@@ -1,14 +1,14 @@
-.\"	$NetBSD: file.1,v 1.11 2005/02/21 15:00:04 pooka Exp $
+.\"	$NetBSD: file.1,v 1.12 2005/10/17 18:00:00 pooka Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.55 2005/02/09 19:07:30 christos Exp
+.\" Id: file.man,v 1.57 2005/08/18 15:18:22 christos Exp
 .SH NAME
 file
 \- determine file type
 .SH SYNOPSIS
 .B file
 [
-.B \-bcikLnNprsvz
+.B \-bchikLnNprsvz
 ]
 [
 .B \-f
@@ -31,7 +31,7 @@ file
 .B \-m 
 magicfile ]
 .SH DESCRIPTION
-This manual page documents version 4.13 of the
+This manual page documents version 4.16 of the
 .B file
 command.
 .PP
@@ -188,6 +188,13 @@ to test the standard input, use ``\-'' as a filename argument.
 Use the specified string as the separator between the filename and the
 file result returned. Defaults to ``:''.
 .TP 8
+.B "\-h, \-\-no-dereference"
+option causes symlinks not to be followed
+(on systems that support symbolic links). This is the default if the
+environment variable
+.I POSIXLY_CORRECT
+is not defined.
+.TP 8
 .B "\-i, \-\-mime"
 Causes the file command to output mime type strings rather than the more
 traditional human readable ones. Thus it may say
@@ -205,8 +212,11 @@ Don't stop at the first match, keep going.
 .TP 8
 .B "\-L, \-\-dereference"
 option causes symlinks to be followed, as the like-named option in
-.BR ls (1).
+.BR ls (1)
 (on systems that support symbolic links).
+This is the default if the environment variable
+.I POSIXLY_CORRECT
+is defined.
 .TP 8
 .BI "\-m, \-\-magic\-file" " list"
 Specify an alternate list of files containing magic numbers.
@@ -281,9 +291,6 @@ the -i option is specified.
 .I /usr/share/misc/magic.mime
 Default list of magic numbers, used to output mime types when the -i option
 is specified.
-.TP
-.I /etc/magic
-Local additions to magic wisdom.
 
 .SH ENVIRONMENT
 The environment variable
@@ -295,6 +302,18 @@ will not attempt to open
 .B $HOME/.magic .
 .B file
 adds ".mime" and/or ".mgc" to the value of this variable as appropriate.
+The environment variable
+.B POSIXLY_CORRECT
+controls (on systems that support symbolic links), if
+.B file
+will attempt to follow symlinks or not. If set, then
+.B file
+follows symlink, otherwise it does not. This is also controlled
+by the
+.B L
+and
+.B h
+options.
 .SH SEE ALSO
 .BR magic (5)
 \- description of magic file format.
@@ -426,7 +445,7 @@ to identify character codes and attempt to identify the languages
 of non-ASCII files.
 .PP
 The list of contributors to the "Magdir" directory (source for the
-/etc/magic
+.I /usr/share/misc/magic
 file) is too long to include here.
 You know who you are; thank you.
 .SH LEGAL NOTICE
