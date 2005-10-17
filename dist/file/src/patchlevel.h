@@ -1,13 +1,22 @@
-/*	$NetBSD: patchlevel.h,v 1.2 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
 
 #define	FILE_VERSION_MAJOR	4
-#define	patchlevel		13
+#define	patchlevel		16
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * Id: patchlevel.h,v 1.56 2005/02/09 19:25:13 christos Exp
+ * Id: patchlevel.h,v 1.59 2005/10/17 17:15:21 christos Exp
  *
  * Log: patchlevel.h,v
+ * Revision 1.59  2005/10/17 17:15:21  christos
+ * welcome to 4.16
+ *
+ * Revision 1.58  2005/08/18 15:52:56  christos
+ * welcome to 4.15
+ *
+ * Revision 1.57  2005/06/25 15:52:14  christos
+ * Welcome to 4.14
+ *
  * Revision 1.56  2005/02/09 19:25:13  christos
  * Welcome to 4.13
  *
