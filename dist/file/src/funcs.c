@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.4 2005/10/17 18:03:01 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)Id: funcs.c,v 1.15 2005/07/12 20:05:38 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.3 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.4 2005/10/17 18:03:01 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -202,7 +202,7 @@ file_getbuffer(struct magic_set *ms)
 int
 vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 {
-	vsprintf(buf, fmt, ap);
+	return vsprintf(buf, fmt, ap);
 }
 #endif
 
@@ -211,9 +211,13 @@ vsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 int
 snprintf(char *buf, size_t len, const char *fmt, ...)
 {
+	int rv;
+
 	va_list ap;
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	rv = vsprintf(buf, fmt, ap);
 	va_end(ap);
+
+	return rv;
 }
 #endif
