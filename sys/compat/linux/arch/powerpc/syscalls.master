@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2005/10/18 18:37:44 joerg Exp $
+	$NetBSD: syscalls.master,v 1.25 2005/10/18 19:51:47 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,6 +82,8 @@
 #include <compat/linux/common/linux_mmap.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+%%
 
 0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
