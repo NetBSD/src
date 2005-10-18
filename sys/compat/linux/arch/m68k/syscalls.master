@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2005/05/23 23:21:49 jmc Exp $
+	$NetBSD: syscalls.master,v 1.47 2005/10/18 18:37:44 joerg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -177,7 +177,11 @@
 #endif
 85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
+#ifdef EXEC_AOUT
 86	STD		{ int linux_sys_uselib(const char *path); }
+#else
+86	UNIMPL		sys_uselib
+#endif
 87	STD		{ int linux_sys_swapon(char *name); }
 88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }

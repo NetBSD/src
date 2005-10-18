@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2005/06/22 15:10:51 manu Exp $
+	$NetBSD: syscalls.master,v 1.6 2005/10/18 18:37:44 joerg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -259,7 +259,11 @@
 			    struct linux_utimbuf *times); }
 133	STD		{ int linux_sys_mknod(const char *path, int mode, \
 			    int dev); }
+#ifdef EXEC_AOUT
 134	STD		{ int linux_sys_uselib(const char *path); }
+#else
+134	UNIMPL		sys_uselib
+#endif
 135	STD		{ int linux_sys_personality(int per); }
 136	UNIMPL		ustat
 137	STD		{ int linux_sys_statfs64(const char *path, \
