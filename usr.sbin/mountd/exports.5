@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.24 2005/10/18 06:02:59 hubertf Exp $
+.\"	$NetBSD: exports.5,v 1.25 2005/10/18 11:01:39 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,20 +52,24 @@ and
 .%T "NFS: Network File System Version 3 Specification, Appendix I" .
 .Pp
 Each line in the file
-(other than comment lines that begin with a #)
+(other than comment lines that begin with a 
+.Sq # )
 specifies the mount point(s) and export flags within one local server
 filesystem for one or more hosts.
 A host may be specified only once for each local filesystem on the
 server and there may be only one default entry for each server
 filesystem that applies to all other hosts.
-The latter exports the filesystem to the ``world'' and should
+The latter exports the filesystem to the
+.Dq world
+and should
 be used only when the filesystem contains public information.
 .Pp
 If you have modified the
 .Pa /etc/exports
 file, send the mountd a SIGHUP to make it re-read the
 .Pa /etc/exports
-file: ``kill -HUP `cat /var/run/mountd.pid`''.
+file:
+.Dq kill -HUP `cat /var/run/mountd.pid` .
 .Pp
 In a mount entry,
 the first field(s) specify the directory path(s) within a server filesystem
@@ -82,11 +86,16 @@ including regular files.
 Note that the
 .Fl alldirs
 option should not be used as a security measure to make clients mount
-only those subdirectories that they should have access to. A client
+only those subdirectories that they should have access to.
+A client
 can still access the whole filesystem via individual RPCs if it
 wanted to, even if just one subdirectory has been mounted.
 The pathnames must not have any symbolic links in them and should not have
-any "." or ".." components.
+any
+.Dq .
+or
+.Dq ..
+components.
 Mount points for a filesystem may appear on multiple lines each with
 different sets of hosts and export options.
 .Pp
@@ -152,8 +161,8 @@ place of their own.
 The
 .Fl kerb
 option specifies that the Kerberos authentication server should be
-used to authenticate and map client credentials. This option is currently
-not implemented.
+used to authenticate and map client credentials.
+This option is currently not implemented.
 .Pp
 The
 .Fl ro
@@ -168,23 +177,25 @@ in an effort to be backward compatible with older export file formats.
 The
 .Fl noresvport
 option specifies that NFS RPC calls for the filesystem do not have to come
-from reserved ports. Normally, clients are required to use reserved
-ports for operations. Using this option decreases the security of your
-system.
+from reserved ports.
+Normally, clients are required to use reserved ports for operations.
+Using this option decreases the security of your system.
 .Pp
 The
 .Fl noresvmnt
 option specifies that mount RPC requests for the filesystem do not have
-to come from reserved ports. Normally, clients are required to use reserved
-ports for mount requests. Using this option decreases the security of
-your system.
+to come from reserved ports.
+Normally, clients are required to use reserved ports for mount requests.
+Using this option decreases the security of your system.
 .Pp
 WebNFS exports strictly according to the spec (RFC 2054 and RFC 2055) can
 be done with the
 .Fl public
-flag. However, this flag in itself allows r/w access to all files in
-the filesystem, not requiring reserved ports and not remapping uids. It
-is only provided to conform to the spec, and should normally not be used.
+flag.
+However, this flag in itself allows r/w access to all files in
+the filesystem, not requiring reserved ports and not remapping uids.
+It is only provided to conform to the spec, and should normally
+not be used.
 For a WebNFS export,
 use the
 .Fl webnfs
@@ -201,8 +212,9 @@ A
 .Fl index No = Sy file
 .Sm on
 option can be used to specify a file whose handle will be returned if
-a directory is looked up using the public filehandle (WebNFS). This
-is to mimic the behavior of URLs. If no
+a directory is looked up using the public filehandle (WebNFS).
+This is to mimic the behavior of URLs.
+If no
 .Fl index
 option is specified, a directory filehandle will be returned as usual.
 The
@@ -227,8 +239,12 @@ The third component of a line specifies the host set to which the line applies.
 If no host set is specified, the filesystem is exported to everyone.
 The set may be specified in three ways.
 The first way is to list the host name(s) separated by white space.
-(Standard internet ``dot'' addresses may be used in place of names.)
-The second way is to specify a ``netgroup'' as defined in the netgroup file (see
+(Standard internet
+.Dq dot
+addresses may be used in place of names.)
+The second way is to specify a
+.Dq netgroup
+as defined in the netgroup file (see
 .Xr netgroup 5 ) .
 A netgroup that contains an item that does have a host entry
 is treated like an error.
@@ -241,8 +257,9 @@ large number of clients within an administrative subnet.
 .Pp
 The first two cases are specified by simply listing the name(s) separated
 by whitespace.
-All names are checked to see if they are ``netgroup'' names
-first and are assumed to be hostnames otherwise.
+All names are checked to see if they are
+.Dq netgroup
+names first and are assumed to be hostnames otherwise.
 Using the full domain specification for a hostname can normally
 circumvent the problem of a host that has the same name as a netgroup.
 The third case is specified by the flag
@@ -276,51 +293,64 @@ For example:
 .Ed
 .Pp
 Given that
-.Sy /usr ,
-.Sy /u
+.Pa /usr ,
+.Pa /u ,
 and
-.Sy /u2
-are
-local filesystem mount points, the above example specifies the following:
-.Sy /usr
+.Pa /u2
+are local filesystem mount points, the above example specifies the
+following:
+.Pa /usr
 is exported to hosts
 .Em friends
 where friends is specified in the netgroup file
 with users mapped to their remote credentials and
 root mapped to uid 0 and group 10.
-It is exported read-write and the hosts in ``friends'' can mount either /usr
-or /usr/local.
+It is exported read-write and the hosts in
+.Dq friends
+can mount either
+.Pa /usr
+or
+.Pa /usr/local .
 It is exported to
 .Em 131.104.48.16
 and
 .Em grumpy.cis.uoguelph.ca
 with users mapped to their remote credentials and
-root mapped to the user and groups associated with ``daemon'';
+root mapped to the user and groups associated with
+.Dq daemon ;
 it is exported to the rest of the world as read-only with
-all users mapped to the user and groups associated with ``nobody''.
+all users mapped to the user and groups associated with
+.Dq nobody .
 .Pp
-.Sy /u
+.Pa /u
 is exported to all hosts on the subnetwork
 .Em 131.104.48
-with root mapped to the uid for ``bin'' and with no group access.
+with root mapped to the uid for
+.Dq bin
+and with no group access.
 .Pp
-.Sy /u2
-is exported to the hosts in ``friends'' with root mapped to uid and groups
-associated with ``root'';
-it is exported to all hosts on network ``cis-net'' allowing mounts at any
+.Pa /u2
+is exported to the hosts in
+.Dq friends
+with root mapped to uid and groups associated with
+.Dq root ;
+it is exported to all hosts on network
+.Dq cis-net
+allowing mounts at any
 directory within /u2 and mapping all uids to credentials for the principal
 that is authenticated by a Kerberos ticket.
 .Pp
-.Sy /a
+.Pa /a
 is exported to the network 192.168.0.0, with a netmask of 255.255.255.0.
 However, the netmask length in the entry for /a is not specified through
 a -mask option, but through the /prefix notation.
 .Pp
-.Sy /a
+.Pa /a
 is also exported to the IPv6 network 3ffe:1ce1:1:fe80:: address, using
-the upper 64 bits as the prefix. Note that, unlike with IPv4 network
-addresses, the specified network address must be complete, and not just
-contain the upper bits. With IPv6 addresses, the -mask option must not
+the upper 64 bits as the prefix.
+Note that, unlike with IPv4 network addresses, the specified network
+address must be complete, and not just contain the upper bits.
+With IPv6 addresses, the -mask option must not
 be used.
 .Sh FILES
 .Bl -tag -width /etc/exports -compact
