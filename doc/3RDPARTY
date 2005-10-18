@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.374 2005/10/17 21:39:14 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.375 2005/10/18 00:47:05 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -149,8 +149,8 @@ Package:	cvs
 Version:	1.11.20
 Current Vers:	1.11.20/1.12.12
 Maintainer:	cvshome
-Archive Site:	ftp://ftp.cvshome.org/pub/
-Home Page:	https://www.cvshome.org/
+Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
+Home Page:	http://cvs.nongnu.org/
 Mailing List:	bug-cvs@gnu.org
 Responsible:	Christos Zoulas <christos@NetBSD.org>, wiz
 Notes:
