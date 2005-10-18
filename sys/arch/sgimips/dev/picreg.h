@@ -1,4 +1,4 @@
-/*	$NetBSD: picreg.h,v 1.2 2004/04/10 19:02:39 pooka Exp $	*/
+/*	$NetBSD: picreg.h,v 1.3 2005/10/18 11:31:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -35,7 +35,7 @@
 #define PIC_CPUCTRL_REFRESH	0x0001	/* refresh enable */
 #define PIC_CPUCTRL_BIGENDIAN	0x0002	/* big endian mode */
 #define PIC_CPUCTRL_DBREFILL	0x0004	/* data block refill */
-#define PIC_CPUCTRL_IBREFILL	0x0008	/* instruction block refill */ 
+#define PIC_CPUCTRL_IBREFILL	0x0008	/* instruction block refill */
 #define PIC_CPUCTRL_GDMAINTR	0x0010	/* gfx intr on completion */
 #define PIC_CPUCTRL_GDMASYNC	0x0020	/* gfx dma sync */
 #define PIC_CPUCTRL_FREFRESH	0x0040	/* fast refresh on 33mhz+ gio */
@@ -81,10 +81,10 @@
 
 #define PIC_MEMCFG_BADSIZ	0x0000	/* bad memory size */
 #define PIC_MEMCFG_ADDRMASK	0x003f	/* memory address mask */
-#define PIC_MEMCFG_BADADDR	0x003f	/* no memory in bank */	
+#define PIC_MEMCFG_BADADDR	0x003f	/* no memory in bank */
 #define	PIC_MEMCFG_SIZMASK	0x0f00	/* bank size mask */
 
-/* 
+/*
  * The bank memory address is computed the same way mc's is.
  * Size is similar, only having one less bit (max. 64MB per bank).
  */
@@ -99,11 +99,11 @@
 
 #define PIC_PARITY_ERROR_GDMA	0x0001	/* graphics dma */
 #define PIC_PARITY_ERROR_DMA	0x0002
-#define PIC_PARITY_ERROR_CPU	0x0004	
+#define PIC_PARITY_ERROR_CPU	0x0004
 #define PIC_PARITY_ERROR_VME	0x0008
 #define PIC_PARITY_ERROR_BYTE3	0x0010	/* error in fourth byte */
 #define PIC_PARITY_ERROR_BYTE2	0x0020	/* error in third byte */
-#define PIC_PARITY_ERROR_BYTE1	0x0040	/* error in second byte */ 
+#define PIC_PARITY_ERROR_BYTE1	0x0040	/* error in second byte */
 #define PIC_PARITY_ERROR_BYTE0	0x0080	/* error in first byte */
 
 #define	PIC_PARITY_ADDR_CPU	0x10204	/* cpu error address */

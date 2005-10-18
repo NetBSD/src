@@ -1,7 +1,7 @@
-/*	$NetBSD: wskbdmap_sgi.c,v 1.2 2004/09/29 03:21:14 sekiya Exp $	*/
+/*	$NetBSD: wskbdmap_sgi.c,v 1.3 2005/10/18 11:31:12 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 2004 Steve Rumble 
+ * Copyright (c) 2004 Steve Rumble
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.2 2004/09/29 03:21:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.3 2005/10/18 11:31:12 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -49,12 +49,12 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x08),				KS_Tab,
 	KC(0x09),				KS_q,
 	KC(0x0A),				KS_a,
-	KC(0x0B),				KS_s,	
+	KC(0x0B),				KS_s,
 	KC(0x0C),				/* no scroll - not impl */
 	KC(0x0D),				KS_2,		KS_at,
 	KC(0x0E),				KS_3,		KS_numbersign,
 	KC(0x0F),				KS_w,
-	KC(0x10),				KS_e, 
+	KC(0x10),				KS_e,
 	KC(0x11),				KS_d,
 	KC(0x12),				KS_f,
 	KC(0x13),				KS_z,
@@ -90,8 +90,8 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x31),				KS_apostrophe,	KS_quotedbl,
 	KC(0x32),				KS_Return,
 	KC(0x33),				KS_period,	KS_greater,
-	KC(0x34),				KS_slash,	KS_question,	
-	KC(0x35),				KS_equal,	KS_plus,	
+	KC(0x34),				KS_slash,	KS_question,
+	KC(0x35),				KS_equal,	KS_plus,
 	KC(0x36),				KS_grave,	KS_asciitilde,
 	KC(0x37),				KS_bracketright,KS_braceright,
 	KC(0x38),				KS_backslash,	KS_bar,

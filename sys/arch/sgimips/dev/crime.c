@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.20 2005/06/03 18:55:53 martin Exp $	*/
+/*	$NetBSD: crime.c,v 1.21 2005/10/18 11:31:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.20 2005/06/03 18:55:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.21 2005/10/18 11:31:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,13 +147,13 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 		- baseline) < 50 * 1000000 / 15)
 		continue;
 	cps = mips3_cp0_count_read() - cps;
-	cps = cps / 5; 
-  
+	cps = cps / 5;
+
 	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
 	curcpu()->ci_cpu_freq = cps * 2 * hz;
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu()); 
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	/* Turn on memory error and crime error interrupts.
 	   All others turned on as devices are registered. */
@@ -185,7 +185,7 @@ crime_intr_establish(int irq, int level, int (*func)(void *), void *arg)
 {
 	if (irq < 16)
 		return mace_intr_establish(irq, level, func, arg);
-	
+
 	if (crime[irq].func != NULL)
 		return NULL;	/* panic("Cannot share CRIME interrupts!"); */
 
@@ -212,7 +212,7 @@ crime_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	if (crime_ipending & 0xffff)
 		mace_intr(crime_ipending & 0xffff);
 
-        if (crime_ipending & 0xffff0000) {
+	if (crime_ipending & 0xffff0000) {
 	/*
 	 * CRIME interrupts for CPU and memory errors
 	 */
@@ -287,7 +287,7 @@ crime_watchdog_disable(void)
 	u_int64_t reg;
 
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
-        reg = bus_space_read_8(crm_iot, crm_ioh, CRIME_CONTROL)
+	reg = bus_space_read_8(crm_iot, crm_ioh, CRIME_CONTROL)
 			& ~CRIME_CONTROL_DOG_ENABLE;
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_CONTROL, reg);
 }
