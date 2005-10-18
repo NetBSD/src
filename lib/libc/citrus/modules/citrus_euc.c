@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.8 2003/08/07 16:42:38 agc Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.9 2005/10/18 06:42:12 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.8 2003/08/07 16:42:38 agc Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.9 2005/10/18 06:42:12 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -323,7 +323,7 @@ _citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
 		ret = E2BIG;
 		goto err;
 	}
-	m = (cs % 2) ? 0x80 : 0x00;
+	m = (cs) ? 0x80 : 0x00;
 	switch (cs) {
 	case 2:
 		*s++ = _SS2;
