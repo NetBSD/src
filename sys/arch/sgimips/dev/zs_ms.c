@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.1 2004/07/08 22:30:53 sekiya Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.2 2005/10/18 11:20:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.1 2004/07/08 22:30:53 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.2 2005/10/18 11:20:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ struct zsms_softc {
 #define	ZSMS_PACKET_Y1		2
 #define	ZSMS_PACKET_X2		3
 #define	ZSMS_PACKET_Y2		4
-	u_char		packet[5];
+	int8_t		packet[5];
 
 #define ZSMS_STATE_SYNC	0x01
 #define ZSMS_STATE_X1	0x02
@@ -220,7 +220,7 @@ zsms_softint(struct zs_chanstate *cs)
 	 * then let wsmouse know what has happened.
 	 */
 	while (sc->rxq_head != sc->rxq_tail) {
-		u_char c = sc->rxq[sc->rxq_head];
+		int8_t c = sc->rxq[sc->rxq_head];
 
 		switch (sc->state) {
 		case ZSMS_STATE_SYNC:
@@ -265,16 +265,21 @@ zsms_softint(struct zs_chanstate *cs)
 static void
 zsms_wsmouse_input(struct zsms_softc *sc)
 {
-	int	x, y;
 	u_int	btns;
+	int bl, bm, br;
+	int	x, y;
 
-	btns = sc->packet[ZSMS_PACKET_SYNC] & ZSMS_SYNC_BTN_MASK;
-	x = sc->packet[ZSMS_PACKET_X1] + sc->packet[ZSMS_PACKET_X2];
-	y = sc->packet[ZSMS_PACKET_Y1] + sc->packet[ZSMS_PACKET_Y2];
+	btns = (uint8_t)sc->packet[ZSMS_PACKET_SYNC] & ZSMS_SYNC_BTN_MASK;
 
-	/*
-	 * XXX - how does wsmouse want the buttons represented???
-	 */
+	bl = (btns & ZSMS_SYNC_BTN_L) == 0;
+	bm = (btns & ZSMS_SYNC_BTN_M) == 0;
+	br = (btns & ZSMS_SYNC_BTN_R) == 0;
+
+	/* for wsmouse(4), 1 is down, 0 is up, the most left button is LSB */
+	btns = (bl ? (1 << 0) : 0) | (bm ? (1 << 1) : 0) | (br ? (1 << 2) : 0);
+
+	x = (int)sc->packet[ZSMS_PACKET_X1] + (int)sc->packet[ZSMS_PACKET_X2];
+	y = (int)sc->packet[ZSMS_PACKET_Y1] + (int)sc->packet[ZSMS_PACKET_Y2];
 
 	wsmouse_input(sc->wsmousedev, btns, x, y, 0, WSMOUSE_INPUT_DELTA);	
 }
