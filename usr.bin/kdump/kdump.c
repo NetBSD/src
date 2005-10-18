@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.81 2005/07/16 22:00:01 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.82 2005/10/18 01:49:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.81 2005/07/16 22:00:01 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.82 2005/10/18 01:49:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,15 @@ ktrsyscall(struct ktr_syscall *ktr)
 			argcount--;
 			c = ',';
 
-		} else if (strcmp(sys_name, "kill") == 0 && argcount >= 2) {
+		} else if ((strstr(sys_name, "sigaction") != NULL ||
+		    strstr(sys_name, "sigvec") != NULL) && argcount >= 1) {
+			(void)printf("(SIG%s", signame(ap[0], 1));
+			ap += 1;
+			argcount -= 1;
+			c = ',';
+
+		} else if ((strcmp(sys_name, "kill") == 0 ||
+		    strcmp(sys_name, "killpg") == 0) && argcount >= 2) {
 			putchar('(');
 			output_long((long)ap[0], !(decimal || small(*ap)));
 			(void)printf(", SIG%s", signame(ap[1], 1));
