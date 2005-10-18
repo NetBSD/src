@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.30 2005/10/15 17:29:11 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.31 2005/10/18 00:14:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.30 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.31 2005/10/18 00:14:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -293,7 +293,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	cgd_softc *cs = dksc->sc_osc;
 	struct	buf *nbp;
-	struct	partition *pp;
 	caddr_t	addr;
 	caddr_t	newaddr;
 	daddr_t	bn;
@@ -302,17 +301,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
 
-	/* XXXrcd:
-	 * Translate partition relative blocks to absolute blocks,
-	 * this probably belongs (somehow) in dksubr.c, since it
-	 * is independant of the underlying code...  This will require
-	 * that the interface be expanded slightly, though.
-	 */
-	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &cs->sc_dksc.sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
-	}
+	bn = bp->b_rawblkno;
 
 	/*
 	 * We attempt to allocate all of our resources up front, so that
