@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2005/10/18 11:31:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2005/06/03 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.27 2005/10/18 11:31:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -628,10 +628,10 @@ zs_get_chan_addr(int zs_unit, int channel)
 			addr = (struct zsdevice *)
 						MIPS_PHYS_TO_KSEG1(0x1fb80d10);
 		} else {
-			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit); 
+			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit);
 		}
 		break;
- 
+
 	case MACH_SGI_IP22:
 		if (zs_unit != 0)
 			panic("zs_get_chan_addr zs_unit != 0 on IP%d",
@@ -646,13 +646,13 @@ zs_get_chan_addr(int zs_unit, int channel)
 
 	/*
 	 * We need to swap serial ports to match reality on
-	 * non-keyboard channels. 
+	 * non-keyboard channels.
 	 */
 	if (mach_type == MACH_SGI_IP22) {
 		if (channel == 0)
 			zc = &addr->zs_chan_b;
 		else
-			zc = &addr->zs_chan_a; 
+			zc = &addr->zs_chan_a;
 	} else {
 		if (zs_unit == 0) {
 			if (channel == 0)

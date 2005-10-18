@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.23 2004/09/29 03:11:28 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.24 2005/10/18 11:31:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.23 2004/09/29 03:11:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.24 2005/10/18 11:31:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,8 +102,8 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 
 	isc.iot = SGIMIPS_BUS_SPACE_HPC;
 	if (bus_space_map(isc.iot, ma->ma_addr, 0,
-            BUS_SPACE_MAP_LINEAR, &isc.ioh))
-                panic("imc_attach: could not allocate memory\n");
+	    BUS_SPACE_MAP_LINEAR, &isc.ioh))
+		panic("imc_attach: could not allocate memory\n");
 
 	platform.bus_reset = imc_bus_reset;
 	platform.watchdog_reset = imc_watchdog_reset;
@@ -181,10 +181,10 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 		reg |=   IMC_GIO64ARB_ONEGIO;
 	        reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);
 		reg |=  (IMC_GIO64ARB_EXP0MST	| IMC_GIO64ARB_EXP1MST);
-                reg &= ~(IMC_GIO64ARB_HPC64	|
-                         IMC_GIO64ARB_HPCEXP64	| IMC_GIO64ARB_EISA64 |
-                         IMC_GIO64ARB_EXP064	| IMC_GIO64ARB_EXP164 |
-                         IMC_GIO64ARB_EXP0PIPE	| IMC_GIO64ARB_EXP1PIPE);
+		reg &= ~(IMC_GIO64ARB_HPC64	|
+			 IMC_GIO64ARB_HPCEXP64	| IMC_GIO64ARB_EISA64 |
+			 IMC_GIO64ARB_EXP064	| IMC_GIO64ARB_EXP164 |
+			 IMC_GIO64ARB_EXP0PIPE	| IMC_GIO64ARB_EXP1PIPE);
 	}
 	else
 	{
@@ -281,7 +281,7 @@ imc_watchdog_disable(void)
 	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
 	reg &= ~(IMC_CPUCTRL0_WDOG);
-        bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
 }
 
 static void
