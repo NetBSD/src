@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.18 2005/10/08 18:18:18 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.19 2005/10/18 20:13:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,11 +48,10 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.18 2005/10/08 18:18:18 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.19 2005/10/18 20:13:04 rillig Exp $");
 #endif
 #endif /* not lint */
 
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
