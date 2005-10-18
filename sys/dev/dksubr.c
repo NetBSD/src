@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.17 2005/10/15 17:29:11 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.18 2005/10/18 00:14:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.17 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.18 2005/10/18 00:14:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 {
 	int	s;
 	int	wlabel;
+	daddr_t	blkno;
 
 	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
 	    di->di_dkname, dksc, bp));
@@ -216,6 +217,16 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 		biodone(bp);
 		return;
 	}
+
+	blkno = bp->b_blkno;
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		struct partition *pp;
+
+		pp =
+		    &dksc->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		blkno += pp->p_offset;
+	}
+	bp->b_rawblkno = blkno;
 
 	/*
 	 * Start the unit by calling the start routine

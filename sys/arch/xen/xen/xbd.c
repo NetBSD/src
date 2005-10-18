@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.23 2005/10/15 17:29:11 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.24 2005/10/18 00:14:43 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.23 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.24 2005/10/18 00:14:43 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1315,7 +1315,6 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	xbd_softc *xs;
 	struct xbdreq *pxr, *xr;
-	struct	partition *pp;
 	daddr_t	bn;
 	int ret, runqueue;
 
@@ -1333,18 +1332,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 	dksc = &xs->sc_dksc;
 
-	/* XXXrcd:
-	 * Translate partition relative blocks to absolute blocks,
-	 * this probably belongs (somehow) in dksubr.c, since it
-	 * is independant of the underlying code...  This will require
-	 * that the interface be expanded slightly, though.
-	 */
-	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &xs->sc_dksc.sc_dkdev.dk_label->
-			d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
-	}
+	bn = bp->b_rawblkno;
 
 	DPRINTF(XBDB_IO, ("xbdstart: addr %p, sector %llu, "
 	    "count %d [%s]\n", bp->b_data, (unsigned long long)bn,
