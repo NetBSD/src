@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.32 2005/10/16 00:07:24 chs Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.33 2005/10/19 02:15:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -274,7 +274,6 @@ pthread_t pthread__next(pthread_t self);
 
 int	pthread__stackalloc(pthread_t *t);
 void	pthread__initmain(pthread_t *t);
-void	pthread__start(void);
 
 void	pthread__sa_start(void);
 void	pthread__sa_recycle(pthread_t old, pthread_t new);
