@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2005/10/19 12:17:22 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2005/10/19 12:25:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.23 2005/10/19 12:17:22 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2005/10/19 12:25:51 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,10 +149,6 @@ main(argc, argv)
 
 	if (p == start)
 		usage();
-
-	*p = &(*start)[strlen(*start) - 1];
-	while (**p == '/')
-		*(*p)-- = '\0';
 
 	*p = NULL;
 
