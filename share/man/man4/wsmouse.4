@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.12 2004/05/25 10:54:22 wiz Exp $
+.\" $NetBSD: wsmouse.4,v 1.13 2005/10/19 18:33:25 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -46,8 +46,12 @@ The
 .Nm
 driver is an abstraction layer for mice within the
 .Xr wscons 4
-framework. It is attached to the hardware specific keyboard drivers and
-provides a character device interface. For use with X servers,
+framework. It is attached to the hardware specific mouse drivers and
+provides a character device interface which returns
+.Fa struct wscons_event
+via
+.Xr read 2 .
+For use with X servers,
 .Dq mouse events
 can be generated.
 .Pp
