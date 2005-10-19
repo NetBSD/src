@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2005/06/23 00:54:47 fvdl Exp $
+#	$NetBSD: Makefile,v 1.58 2005/10/19 21:22:21 dsl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -13,11 +13,6 @@ LDADD+= -lutil
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
 	|| (${MACHINE} == "sun3")
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
-.endif
-
-.if (${MACHINE} == "alpha") || (${MACHINE} == "x68k") || (${MACHINE} == "hp700")
-# preserve the non-disklabel portions of the first 8KB of the disk
-CPPFLAGS+= -DSAVEBOOTAREA
 .endif
 
 .if ( 0 \
@@ -40,8 +35,6 @@ CPPFLAGS+= -DSAVEBOOTAREA
     )
 # use MBR partition info
 CPPFLAGS+= -DUSE_MBR
-# preserve the non-disklabel portions of the first 8KB of the disk
-CPPFLAGS+= -DSAVEBOOTAREA
 # recognize old MBR partition ID for a while
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 .endif
