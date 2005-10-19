@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2001/12/13 13:52:13 reinoud Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2005/10/19 21:22:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,13 +29,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	writelabel(int, char *, struct disklabel *);
+int	writelabel(int, struct disklabel *);
 int	checklabel(struct disklabel *);
 void	showinfo(FILE *, struct disklabel *, const char *);
 void	showpartitions(FILE *, struct disklabel *, int);
 void	showpartition(FILE *, struct disklabel *, int, int);
 void	interact(struct disklabel *, int);
 
-extern	char	 bootarea[];
-extern	char	*specname;
+extern	char	specname[];
 extern	int	 Cflag;
