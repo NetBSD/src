@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.139 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: Makefile.i386,v 1.140 2005/10/19 09:01:27 dyoung Exp $
 
 # Makefile for NetBSD
 #
@@ -118,9 +118,6 @@ ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${UUDECODE} -p $> > ${.TARGET}
 athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
 	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-i386-elf.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##
