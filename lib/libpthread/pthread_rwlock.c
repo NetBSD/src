@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.12 2005/10/16 00:07:24 chs Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.12 2005/10/16 00:07:24 chs Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $");
 
 #include <errno.h>
 
@@ -169,6 +169,8 @@ int
 pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
 	pthread_t self;
+	extern int pthread__started;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -187,6 +189,12 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 	 * waiting readers.
 	 */
 	while ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL)) {
+#ifdef ERRORCHECK
+		if (pthread__started == 0) {
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			return EDEADLK;
+		}
+#endif
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -332,11 +340,6 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	    (abs_timeout->tv_sec < 0))
 		return EINVAL;
 
-	if (pthread__started == 0) {
-		pthread__start();
-		pthread__started = 1;
-	}
-
 	self = pthread__self();
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
@@ -352,6 +355,12 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	retval = 0;
 	while (retval == 0 &&
 	    ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL))) {
+#ifdef ERRORCHECK
+		if (pthread__started == 0) {
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			return EDEADLK;
+		}
+#endif
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_wblocked;
