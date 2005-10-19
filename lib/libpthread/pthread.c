@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.45 2005/10/19 02:15:03 chs Exp $	*/
+/*	$NetBSD: pthread.c,v 1.46 2005/10/19 02:44:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.45 2005/10/19 02:15:03 chs Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.46 2005/10/19 02:44:45 chs Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -373,7 +373,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		}
 #ifdef PTHREAD_MLOCK_KLUDGE
 		ret = mlock(newthread, sizeof(struct __pthread_st));
-		pthread__assert(ret == 0);
+		if (ret < 0) {
+			return EAGAIN;
+		}
 #endif
 	}
 
