@@ -33,9 +33,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.4 2005/09/13 05:50:29 martin Exp $
+ * $Id: athhal_osdep.c,v 1.5 2005/10/19 09:04:23 dyoung Exp $
  */
-#include "opt_ah.h"
+#include "opt_athhal.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
