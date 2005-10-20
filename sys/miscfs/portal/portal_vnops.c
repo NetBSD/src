@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.60 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.60.2.1 2005/10/20 03:46:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.60 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.60.2.1 2005/10/20 03:46:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,6 @@ int	portal_print(void *);
 #define	portal_islocked	genfs_islocked
 int	portal_pathconf(void *);
 #define	portal_advlock	genfs_badop
-#define	portal_blkatoff	genfs_badop
-#define	portal_valloc	genfs_eopnotsupp
-#define	portal_vfree	genfs_nullop
-#define	portal_truncate	genfs_eopnotsupp
-#define	portal_update	genfs_eopnotsupp
 #define	portal_bwrite	genfs_eopnotsupp
 #define	portal_putpages	genfs_null_putpages
 
@@ -152,11 +147,6 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_islocked_desc, portal_islocked },	/* islocked */
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, portal_valloc },		/* valloc */
-	{ &vop_vfree_desc, portal_vfree },		/* vfree */
-	{ &vop_truncate_desc, portal_truncate },	/* truncate */
-	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, portal_putpages },	/* putpages */
 	{ NULL, NULL }
