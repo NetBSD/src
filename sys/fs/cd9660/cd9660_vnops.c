@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.15 2005/08/30 18:47:19 xtraeme Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.15.2.1 2005/10/20 05:16:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.15 2005/08/30 18:47:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.15.2.1 2005/10/20 05:16:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ cd9660_readdir(v)
 	idp->curroff = uio->uio_offset;
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
-	    (error = VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))) {
+	    (error = cd9660_blkatoff(vdp, (off_t)idp->curroff, NULL, &bp))) {
 		FREE(idp, M_TEMP);
 		return (error);
 	}
@@ -481,7 +481,7 @@ cd9660_readdir(v)
 		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)idp->curroff,
+			error = cd9660_blkatoff(vdp, (off_t)idp->curroff,
 					     NULL, &bp);
 			if (error)
 				break;
@@ -879,7 +879,7 @@ cd9660_setattr(v)
 	    )
 		return EOPNOTSUPP;
 
-	return VOP_TRUNCATE(vp, vap->va_size, 0, ap->a_cred, ap->a_p);
+	return EOPNOTSUPP;
 }
 
 /*
@@ -895,10 +895,6 @@ cd9660_setattr(v)
 #define	cd9660_mkdir	genfs_eopnotsupp
 #define	cd9660_rmdir	genfs_eopnotsupp
 #define	cd9660_advlock	genfs_einval
-#define	cd9660_valloc	genfs_eopnotsupp
-#define	cd9660_vfree	genfs_nullop
-#define	cd9660_truncate	genfs_eopnotsupp
-#define	cd9660_update	genfs_nullop
 #define	cd9660_bwrite	genfs_eopnotsupp
 #define cd9660_revoke	genfs_revoke
 
@@ -945,11 +941,6 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, cd9660_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, cd9660_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, cd9660_valloc },		/* valloc */
-	{ &vop_vfree_desc, cd9660_vfree },		/* vfree */
-	{ &vop_truncate_desc, cd9660_truncate },	/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -1002,11 +993,6 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_vfree_desc, spec_vfree },		/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -1056,11 +1042,6 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
