@@ -1,4 +1,0 @@
-#!/bin/sh
-# $NetBSD: script2,v 1.1 2001/04/26 02:44:47 garbled Exp $
-
-sysctl -n $1
