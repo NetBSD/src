@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.227 2005/09/19 00:49:52 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.227.2.1 2005/10/20 03:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.227 2005/09/19 00:49:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.227.2.1 2005/10/20 03:17:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -129,11 +129,6 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
-	{ &vop_valloc_desc, genfs_badop },		/* valloc */
-	{ &vop_reallocblks_desc, genfs_badop },		/* reallocblks */
-	{ &vop_vfree_desc, genfs_badop },		/* vfree */
-	{ &vop_truncate_desc, genfs_badop },		/* truncate */
 	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -186,11 +181,6 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
-	{ &vop_valloc_desc, genfs_badop },		/* valloc */
-	{ &vop_reallocblks_desc, genfs_badop },		/* reallocblks */
-	{ &vop_vfree_desc, genfs_badop },		/* vfree */
-	{ &vop_truncate_desc, genfs_badop },		/* truncate */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -240,11 +230,6 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
-	{ &vop_valloc_desc, genfs_badop },		/* valloc */
-	{ &vop_reallocblks_desc, genfs_badop },	/* reallocblks */
-	{ &vop_vfree_desc, genfs_badop },		/* vfree */
-	{ &vop_truncate_desc, genfs_badop },		/* truncate */
 	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
