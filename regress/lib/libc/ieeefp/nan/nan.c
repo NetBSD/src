@@ -1,4 +1,4 @@
-/*	$NetBSD: nan.c,v 1.4 2004/03/05 01:00:53 kleink Exp $	*/
+/*	$NetBSD: nan.c,v 1.5 2005/10/20 18:02:52 drochner Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -20,7 +20,8 @@ int
 main(int argc, char **argv)
 {
 
-	/* NAN is meant to be a NaN. */
+	/* NAN is meant to be a (float) NaN. */
 	assert(isnan(NAN));
+	assert(isnan((double)NAN));
 	return 0;
 }
