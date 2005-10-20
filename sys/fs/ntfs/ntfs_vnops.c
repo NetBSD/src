@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.24 2005/08/30 19:01:30 xtraeme Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.24.2.1 2005/10/20 06:03:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.24 2005/08/30 19:01:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.24.2.1 2005/10/20 06:03:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,8 @@ static int	ntfs_bmap(struct vop_bmap_args *ap);
 #if defined(__FreeBSD__)
 static int	ntfs_getpages(struct vop_getpages_args *ap);
 static int	ntfs_putpages(struct vop_putpages_args *);
-static int	ntfs_fsync(struct vop_fsync_args *ap);
 #endif
+static int	ntfs_fsync(struct vop_fsync_args *ap);
 static int	ntfs_pathconf(void *);
 
 extern int prtactive;
@@ -823,7 +823,6 @@ ntfs_lookup(ap)
 	return (error);
 }
 
-#if defined(__FreeBSD__)
 /*
  * Flush the blocks of a file to disk.
  *
@@ -835,15 +834,25 @@ ntfs_fsync(ap)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
-		int a_waitfor;
+		int a_flags;
 		off_t offlo;
 		off_t offhi;
 		struct proc *a_p;
 	} */ *ap;
 {
-	return (0);
+
+	struct vnode *vp = ap->a_vp;
+	int wait;
+
+	if (ap->a_flags & FSYNC_CACHE) {
+		return EOPNOTSUPP;
+	}
+
+	wait = (ap->a_flags & FSYNC_WAIT) != 0;
+	vflushbuf(vp, wait);
+
+	return 0;
 }
-#endif
 
 /*
  * Return POSIX pathconf information applicable to NTFS filesystem
@@ -951,7 +960,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
-	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
+	{ &vop_fsync_desc, (vop_t *) ntfs_fsync },	/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
 	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
@@ -972,12 +981,6 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ntfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, genfs_nullop },		/* advlock */
-	{ &vop_blkatoff_desc, genfs_eopnotsupp },	/* blkatoff */
-	{ &vop_valloc_desc, genfs_eopnotsupp },		/* valloc */
-	{ &vop_reallocblks_desc, genfs_eopnotsupp },	/* reallocblks */
-	{ &vop_vfree_desc, genfs_eopnotsupp },		/* vfree */
-	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
-	{ &vop_update_desc, genfs_nullop },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_compat_getpages },	/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
