@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.52.2.1 2005/10/20 05:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.52 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.52.2.1 2005/10/20 05:02:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,6 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fifo_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, fifo_update },		/* update */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }

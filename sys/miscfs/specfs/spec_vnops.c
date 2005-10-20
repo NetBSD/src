@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.83 2005/09/11 14:18:54 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.83.2.1 2005/10/20 05:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.83 2005/09/11 14:18:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.83.2.1 2005/10/20 05:02:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,11 +117,6 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_islocked_desc, spec_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_vfree_desc, spec_vfree },		/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, spec_update },		/* update */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
