@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2005/10/19 21:22:21 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2005/10/20 20:08:33 dsl Exp $	*/
 #define USE_ACORN
 
 /*
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.6 2005/10/19 21:22:21 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2005/10/20 20:08:33 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -922,7 +922,7 @@ write_bootarea(int f, u_int sector)
 	if (sector == 0) {
 		struct alpha_boot_block *bb;
 
-		bb = (struct alpha_boot_block *)boot;
+		bb = (struct alpha_boot_block *)bootarea;
 		bb->bb_cksum = 0;
 		ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 	}
