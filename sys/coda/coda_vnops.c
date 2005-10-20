@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.43 2005/08/30 22:24:11 xtraeme Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.43.2.1 2005/10/20 03:33:49 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.43 2005/08/30 22:24:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.43.2.1 2005/10/20 03:33:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,6 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
     { &vop_lease_desc, coda_vop_nop },		/* lease */
-    { &vop_blkatoff_desc, coda_vop_error },	/* blkatoff */
-    { &vop_valloc_desc, coda_vop_error },	/* valloc */
-    { &vop_vfree_desc, coda_vop_error },	/* vfree */
-    { &vop_truncate_desc, coda_vop_error },	/* truncate */
-    { &vop_update_desc, coda_vop_error },	/* update */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
     { &vop_getpages_desc, coda_getpages },	/* getpages */
