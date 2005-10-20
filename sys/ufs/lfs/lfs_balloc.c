@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.56 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.56.4.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.56 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.56.4.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -114,21 +114,12 @@ u_int64_t locked_fakequeue_count;
  */
 /* VOP_BWRITE NIADDR+2 times */
 int
-lfs_balloc(void *v)
+lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, struct ucred *cred,
+    int flags, struct buf **bpp)
 {
-	struct vop_balloc_args /* {
-		struct vnode *a_vp;
-		off_t a_startoffset;
-		int a_size;
-		struct ucred *a_cred;
-		int a_flags;
-		struct buf *a_bpp;
-	} */ *ap = v;
-	struct vnode *vp;
 	int offset;
-	u_long iosize;
 	daddr_t daddr, idaddr;
-	struct buf *ibp, *bp, **bpp;
+	struct buf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
 	struct indir indirs[NIADDR+2], *idp;
@@ -136,15 +127,12 @@ lfs_balloc(void *v)
 	int bb, bcount;
 	int error, frags, i, nsize, osize, num;
 
-	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	offset = blkoff(fs, ap->a_startoffset);
-	iosize = ap->a_size;
+	offset = blkoff(fs, startoffset);
 	KASSERT(iosize <= fs->lfs_bsize);
-	lbn = lblkno(fs, ap->a_startoffset);
+	lbn = lblkno(fs, startoffset);
 	/* (void)lfs_check(vp, lbn, 0); */
-	bpp = ap->a_bpp;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 
@@ -174,8 +162,7 @@ lfs_balloc(void *v)
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
 						    lastblock,
-						    (bpp ? &bp : NULL),
-						    ap->a_cred)))
+						    (bpp ? &bp : NULL), cred)))
 				return (error);
 			ip->i_ffs1_size = ip->i_size =
 			    (lastblock + 1) * fs->lfs_bsize;
@@ -201,12 +188,12 @@ lfs_balloc(void *v)
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
 			bb = fragstofsb(fs, frags);
-			if (!ISSPACE(fs, bb, ap->a_cred))
+			if (!ISSPACE(fs, bb, cred))
 				return ENOSPC;
 			if (bpp) {
-				*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
+				*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 				bp->b_blkno = UNWRITTEN;
-				if (ap->a_flags & B_CLRBUF)
+				if (flags & B_CLRBUF)
 					clrbuf(bp);
 			}
 			ip->i_lfs_effnblks += bb;
@@ -223,8 +210,7 @@ lfs_balloc(void *v)
 				/* Extend existing block */
 				if ((error =
 				     lfs_fragextend(vp, osize, nsize, lbn,
-						    (bpp ? &bp : NULL),
-						    ap->a_cred)))
+						    (bpp ? &bp : NULL), cred)))
 					return error;
 			}
 			if (bpp)
@@ -254,7 +240,7 @@ lfs_balloc(void *v)
 			bcount += bb;
 		}
 	}
-	if (ISSPACE(fs, bcount, ap->a_cred)) {
+	if (ISSPACE(fs, bcount, cred)) {
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_bfree -= bcount;
 		simple_unlock(&fs->lfs_interlock);
@@ -333,7 +319,7 @@ lfs_balloc(void *v)
 	 */
 	if (daddr == UNASSIGNED) {
 		if (bpp) {
-			if (ap->a_flags & B_CLRBUF)
+			if (flags & B_CLRBUF)
 				clrbuf(bp);
 
 			/* Note the new address */

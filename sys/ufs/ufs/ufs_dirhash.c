@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.5 2005/07/10 01:08:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.5.2.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -198,7 +198,7 @@ ufsdirhash_build(struct inode *ip)
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (VOP_BLKATOFF(vp, (off_t)pos, NULL, &bp) != 0)
+			if (UFS_BLKATOFF(vp, (off_t)pos, NULL, &bp) != 0)
 				goto fail;
 		}
 
@@ -393,7 +393,7 @@ restart:
 			if (bp != NULL)
 				brelse(bp);
 			blkoff = offset & ~bmask;
-			if (VOP_BLKATOFF(vp, (off_t)blkoff, NULL, &bp) != 0)
+			if (UFS_BLKATOFF(vp, (off_t)blkoff, NULL, &bp) != 0)
 				return (EJUSTRETURN);
 		}
 		dp = (struct direct *)(bp->b_data + (offset & bmask));
@@ -502,7 +502,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	    dh->dh_blkfree[dirblock] >= howmany(slotneeded, DIRALIGN));
 	DIRHASH_UNLOCK(dh);
 	pos = dirblock * dirblksiz;
-	error = VOP_BLKATOFF(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
+	error = UFS_BLKATOFF(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
 	if (error)
 		return (-1);
 	/* Find the first entry with free space. */

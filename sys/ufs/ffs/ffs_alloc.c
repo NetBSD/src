@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.87 2005/09/26 13:52:20 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.87.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.87 2005/09/26 13:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.87.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -384,6 +384,7 @@ nospace:
 	return (ENOSPC);
 }
 
+#if 0
 /*
  * Reallocate a sequence of blocks into a contiguous sequence of blocks.
  *
@@ -578,7 +579,7 @@ ffs_reallocblks(void *v)
 	} else {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (!doasyncfree)
-			VOP_UPDATE(vp, NULL, NULL, 1);
+			UFS_UPDATE(vp, NULL, NULL, 1);
 	}
 	if (ssize < len) {
 		if (doasyncfree)
@@ -623,6 +624,7 @@ fail:
 	return (ENOSPC);
 #endif /* XXXUBC */
 }
+#endif /* 0 */
 
 /*
  * Allocate an inode in the file system.
@@ -640,24 +642,17 @@ fail:
  *      available inode is located.
  */
 int
-ffs_valloc(void *v)
+ffs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
+    struct vnode **vpp)
 {
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-	struct vnode *pvp = ap->a_pvp;
 	struct inode *pip;
 	struct fs *fs;
 	struct inode *ip;
 	struct timespec ts;
-	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
 
-	*ap->a_vpp = NULL;
+	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_fs;
 	if (fs->fs_cstotal.cs_nifree == 0)
@@ -684,12 +679,12 @@ ffs_valloc(void *v)
 	ino = (ino_t)ffs_hashalloc(pip, cg, ipref, mode, ffs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
+	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		VOP_VFREE(pvp, ino, mode);
+		UFS_VFREE(pvp, ino, mode);
 		return (error);
 	}
-	ip = VTOI(*ap->a_vpp);
+	ip = VTOI(*vpp);
 	if (ip->i_mode) {
 #if 0
 		printf("mode = 0%o, inum = %d, fs = %s\n",
@@ -730,7 +725,7 @@ ffs_valloc(void *v)
 	}
 	return (0);
 noinodes:
-	ffs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");
+	ffs_fserr(fs, cred->cr_uid, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }
@@ -1691,20 +1686,14 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
  * Free an inode.
  */
 int
-ffs_vfree(void *v)
+ffs_vfree(struct vnode *vp, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
 
-	if (DOINGSOFTDEP(ap->a_pvp)) {
-		softdep_freefile(ap);
+	if (DOINGSOFTDEP(vp)) {
+		softdep_freefile(vp, ino, mode);
 		return (0);
 	}
-	return (ffs_freefile(VTOI(ap->a_pvp)->i_fs, VTOI(ap->a_pvp)->i_devvp,
-	    ap->a_ino, ap->a_mode));
+	return ffs_freefile(VTOI(vp)->i_fs, VTOI(vp)->i_devvp, ino, mode);
 }
 
 /*

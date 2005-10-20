@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.135 2005/09/27 06:48:56 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.135.2.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.135 2005/09/27 06:48:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.135.2.1 2005/10/20 03:00:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -445,7 +445,7 @@ ufs_setattr(void *v)
 		default:
 			break;
 		}
-		error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, p);
+		error = UFS_TRUNCATE(vp, vap->va_size, 0, cred, p);
 		if (error)
 			return (error);
 	}
@@ -471,7 +471,7 @@ ufs_setattr(void *v)
 			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
 			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
 		}
-		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
+		error = UFS_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
 			return (error);
 	}
@@ -708,7 +708,7 @@ ufs_link(void *v)
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
 		softdep_change_linkcnt(ip);
-	error = VOP_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
+	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
 		ufs_makedirentry(ip, cnp, newdir);
@@ -961,7 +961,7 @@ ufs_rename(void *v)
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
-	if ((error = VOP_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+	if ((error = UFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
 	}
@@ -1024,7 +1024,7 @@ ufs_rename(void *v)
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
 				softdep_change_linkcnt(dp);
-			if ((error = VOP_UPDATE(tdvp, NULL, NULL,
+			if ((error = UFS_UPDATE(tdvp, NULL, NULL,
 			    UPDATE_DIROP)) != 0) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
@@ -1047,7 +1047,7 @@ ufs_rename(void *v)
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
-				(void)VOP_UPDATE(tdvp, NULL, NULL,
+				(void)UFS_UPDATE(tdvp, NULL, NULL,
 						 UPDATE_WAIT|UPDATE_DIROP);
 			}
 			goto bad;
@@ -1128,7 +1128,7 @@ ufs_rename(void *v)
 			xp->i_nlink--;
 			DIP_ASSIGN(xp, nlink, xp->i_nlink);
 			xp->i_flag |= IN_CHANGE;
-			if ((error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
+			if ((error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC,
 			    tcnp->cn_cred, tcnp->cn_proc)))
 				goto bad;
 		}
@@ -1256,7 +1256,7 @@ ufs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = VOP_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
+	if ((error = UFS_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
 		goto out;
 	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
@@ -1268,7 +1268,7 @@ ufs_mkdir(void *v)
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		PNBUF_PUT(cnp->cn_pnbuf);
-		VOP_VFREE(tvp, ip->i_number, dmode);
+		UFS_VFREE(tvp, ip->i_number, dmode);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -1299,7 +1299,7 @@ ufs_mkdir(void *v)
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
 		softdep_change_linkcnt(dp);
-	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = UFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/*
@@ -1326,7 +1326,7 @@ ufs_mkdir(void *v)
 		} else
 			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
 	}
-	if ((error = VOP_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
+	if ((error = UFS_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
 	ip->i_size = dirblksiz;
@@ -1361,7 +1361,7 @@ ufs_mkdir(void *v)
 	 */
 	if (!DOINGSOFTDEP(tvp) && ((error = VOP_BWRITE(bp)) != 0))
 		goto bad;
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		if (DOINGSOFTDEP(tvp))
 			(void)VOP_BWRITE(bp);
 		goto bad;
@@ -1381,7 +1381,7 @@ ufs_mkdir(void *v)
 		if (DOINGSOFTDEP(dvp))
 			softdep_change_linkcnt(dp);
 		/*
-		 * No need to do an explicit VOP_TRUNCATE here, vrele will
+		 * No need to do an explicit UFS_TRUNCATE here, vrele will
 		 * do this for us because we set the link count to 0.
 		 */
 		ip->i_ffs_effnlink = 0;
@@ -1493,7 +1493,7 @@ ufs_rmdir(void *v)
 		ip->i_ffs_effnlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
+		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
 		    cnp->cn_proc);
 	}
 	cache_purge(vp);
@@ -2057,7 +2057,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
-	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
+	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
 		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
@@ -2071,7 +2071,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		VOP_VFREE(tvp, ip->i_number, mode);
+		UFS_VFREE(tvp, ip->i_number, mode);
 		vput(tvp);
 		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
@@ -2102,7 +2102,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
@@ -2160,13 +2160,13 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         while (len > 0) {
                 bsize = MIN(bsize, len);
 
-                error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL);
+                error = UFS_BALLOC(vp, off, bsize, cred, flags, NULL);
                 if (error) {
                         goto out;
                 }
 
                 /*
-                 * increase file size now, VOP_BALLOC() requires that
+                 * increase file size now, UFS_BALLOC() requires that
                  * EOF be up-to-date before each call.
                  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.70 2005/09/09 15:04:07 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.70.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.70 2005/09/09 15:04:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.70.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2337,15 +2337,9 @@ free_newdirblk(newdirblk)
  * done until the zero'ed inode has been written to disk.
  */
 void
-softdep_freefile(v)
-	void *v;
+softdep_freefile(struct vnode *pvp, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_pvp);
+	struct inode *ip = VTOI(pvp);
 	struct inodedep *inodedep;
 	struct freefile *freefile;
 
@@ -2355,8 +2349,8 @@ softdep_freefile(v)
 	freefile = pool_get(&freefile_pool, PR_WAITOK);
 	freefile->fx_list.wk_type = D_FREEFILE;
 	freefile->fx_list.wk_state = 0;
-	freefile->fx_mode = ap->a_mode;
-	freefile->fx_oldinum = ap->a_ino;
+	freefile->fx_mode = mode;
+	freefile->fx_oldinum = ino;
 	freefile->fx_devvp = ip->i_devvp;
 	freefile->fx_fs = ip->i_fs;
 	freefile->fx_mnt = ITOV(ip)->v_mount;
@@ -2370,7 +2364,7 @@ softdep_freefile(v)
 	 * case we can free the file immediately.
 	 */
 	ACQUIRE_LOCK(&lk);
-	if (inodedep_lookup(ip->i_fs, ap->a_ino, 0, &inodedep) == 0 ||
+	if (inodedep_lookup(ip->i_fs, ino, 0, &inodedep) == 0 ||
 	    check_inode_unwritten(inodedep)) {
 		FREE_LOCK(&lk);
 		handle_workitem_freefile(freefile);
@@ -3314,7 +3308,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
+	if ((error = UFS_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -4757,7 +4751,7 @@ softdep_fsync(vp, f)
 		 */
 		if (flushparent) {
 			VTOI(pvp)->i_flag |= IN_MODIFIED;
-			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
+			error = UFS_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 			if (error) {
 				vput(pvp);
 				return (error);
@@ -5279,7 +5273,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		if (dap->da_state & MKDIR_PARENT) {
 			FREE_LOCK(&lk);
 			VTOI(pvp)->i_flag |= IN_MODIFIED;
-			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
+			error = UFS_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 			if (error)
 				break;
 			ACQUIRE_LOCK(&lk);
@@ -5331,7 +5325,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 * Having accounted for MKDIR_PARENT and MKDIR_BODY above,
 		 * the only remaining dependency is that the updated inode
 		 * count must get pushed to disk. The inode has already
-		 * been pushed into its inode buffer (via VOP_UPDATE) at
+		 * been pushed into its inode buffer (via UFS_UPDATE) at
 		 * the time of the reference count change. So we need only
 		 * locate that buffer, ensure that there will be no rollback
 		 * caused by a bitmap dependency, then write the inode buffer.

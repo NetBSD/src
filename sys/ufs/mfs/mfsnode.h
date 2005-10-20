@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.16 2005/10/15 17:29:32 yamt Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.16.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -82,11 +82,6 @@ struct mfsnode {
 #define	mfs_islocked	genfs_noislocked
 #define	mfs_pathconf	genfs_badop
 #define	mfs_advlock	genfs_badop
-#define	mfs_blkatoff	genfs_badop
-#define	mfs_valloc	genfs_badop
-#define	mfs_vfree	genfs_badop
-#define	mfs_truncate	genfs_badop
-#define	mfs_update	genfs_badop
 #define	mfs_bwrite	vn_bwrite
 #define	mfs_revoke	genfs_revoke
 #define	mfs_putpages	genfs_null_putpages

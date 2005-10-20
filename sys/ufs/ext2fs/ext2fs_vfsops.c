@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.92 2005/09/27 06:48:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.92.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.92 2005/09/27 06:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.92.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -151,6 +151,7 @@ static const struct genfs_ops ext2fs_genfsops = {
 
 static const struct ufs_ops ext2fs_ufsops = {
 	.uo_itimes = ext2fs_itimes,
+	.uo_update = ext2fs_update,
 };
 
 /*
@@ -868,7 +869,7 @@ loop:
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
-			error = VOP_UPDATE(vp, NULL, NULL, 0);
+			error = ext2fs_update(vp, NULL, NULL, 0);
 		else
 			error = VOP_FSYNC(vp, cred,
 			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);

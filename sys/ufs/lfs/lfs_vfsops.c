@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.188 2005/09/27 06:48:56 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.188.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.188 2005/09/27 06:48:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.188.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -169,6 +169,12 @@ const struct genfs_ops lfs_genfsops = {
 
 static const struct ufs_ops lfs_ufsops = {
 	.uo_itimes = NULL,
+	.uo_update = lfs_update,
+	.uo_truncate = lfs_truncate,
+	.uo_valloc = lfs_valloc,
+	.uo_vfree = lfs_vfree,
+	.uo_balloc = lfs_balloc,
+	.uo_blkatoff = lfs_blkatoff,
 };
 
 /*
@@ -528,7 +534,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 		return error;
 	}
 
-	if ((error = VOP_BALLOC(vp, (lbn << fs->lfs_bshift), size,
+	if ((error = UFS_BALLOC(vp, (lbn << fs->lfs_bshift), size,
 				NOCRED, 0, &bp)) != 0) {
 		vput(vp);
 		return (error);
@@ -629,7 +635,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 			}
 			ip = VTOI(vp);
 			if (dip->di_size != ip->i_size)
-				VOP_TRUNCATE(vp, dip->di_size, 0, NOCRED, p);
+				UFS_TRUNCATE(vp, dip->di_size, 0, NOCRED, p);
 			/* Get mode, link count, size, and times */
 			memcpy(ip->i_din.ffs1_din, dip,
 			       offsetof(struct ufs1_dinode, di_db[0]));
@@ -2462,7 +2468,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Allocate new Ifile blocks */
 	for (i = ilast; i < ilast + noff; i++) {
-		if (VOP_BALLOC(ivp, i * fs->lfs_bsize, fs->lfs_bsize, NOCRED, 0,
+		if (UFS_BALLOC(ivp, i * fs->lfs_bsize, fs->lfs_bsize, NOCRED, 0,
 			       &bp) != 0)
 			panic("balloc extending ifile");
 		memset(bp->b_data, 0, fs->lfs_bsize);
@@ -2558,7 +2564,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Truncate Ifile if necessary */
 	if (noff < 0)
-		VOP_TRUNCATE(ivp, ivp->v_size + (noff << fs->lfs_bshift), 0,
+		UFS_TRUNCATE(ivp, ivp->v_size + (noff << fs->lfs_bshift), 0,
 			     NOCRED, curproc);
 
 	/* Update cleaner info so the cleaner can die */

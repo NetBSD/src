@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.71 2005/09/13 04:13:25 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.71.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -135,8 +135,11 @@ __BEGIN_DECLS
 /* lfs_alloc.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct proc *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
+int lfs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
+int lfs_vfree(struct vnode *, ino_t, int);
 
 /* lfs_balloc.c */
+int lfs_balloc(struct vnode *, off_t, int, struct ucred *, int, struct buf **);
 void lfs_register_block(struct vnode *, daddr_t);
 void lfs_deregister_block(struct vnode *, daddr_t);
 void lfs_deregister_all(struct vnode *);
@@ -171,6 +174,9 @@ void lfs_debug_log(int, const char *, ...);
 #endif /* DEBUG */
 
 /* lfs_inode.c */
+int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
+    int);
+int lfs_truncate(struct vnode *, off_t, int, struct ucred *, struct proc *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 
 /* lfs_segment.c */
@@ -199,6 +205,7 @@ void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
 
 /* lfs_subr.c */
+int lfs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void lfs_setup_resblks(struct lfs *);
 void lfs_pad_check(unsigned char *, int, char *, int);
 void lfs_free_resblks(struct lfs *);
@@ -241,13 +248,7 @@ void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
 
-int lfs_balloc	 (void *);
-int lfs_valloc	 (void *);
-int lfs_vfree	 (void *);
 int lfs_bwrite	 (void *);
-int lfs_update	 (void *);
-int lfs_truncate (void *);
-int lfs_blkatoff (void *);
 int lfs_fsync	 (void *);
 int lfs_symlink	 (void *);
 int lfs_mknod	 (void *);

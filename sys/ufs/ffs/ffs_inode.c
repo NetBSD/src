@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.76 2005/09/27 06:48:55 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.76.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.76 2005/09/27 06:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.76.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,14 +75,9 @@ static int ffs_indirtrunc(struct inode *, daddr_t, daddr_t, daddr_t, int,
  */
 
 int
-ffs_update(void *v)
+ffs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int updflags)
 {
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_flags;
-	} */ *ap = v;
 	struct fs *fs;
 	struct buf *bp;
 	struct inode *ip;
@@ -90,11 +85,11 @@ ffs_update(void *v)
 	caddr_t cp;
 	int waitfor, flags;
 
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	ip = VTOI(ap->a_vp);
-	FFS_ITIMES(ip, ap->a_access, ap->a_modify, NULL);
-	if (ap->a_flags & UPDATE_CLOSE)
+	ip = VTOI(vp);
+	FFS_ITIMES(ip, acc, mod, NULL);
+	if (updflags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 	else
 		flags = ip->i_flag & IN_MODIFIED;
@@ -103,9 +98,9 @@ ffs_update(void *v)
 	fs = ip->i_fs;
 
 	if ((flags & IN_MODIFIED) != 0 &&
-	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
-		waitfor = ap->a_flags & UPDATE_WAIT;
-		if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
+	    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+		waitfor = updflags & UPDATE_WAIT;
+		if ((updflags & UPDATE_DIROP) && !DOINGSOFTDEP(vp))
 			waitfor |= UPDATE_WAIT;
 	} else
 		waitfor = 0;
@@ -127,7 +122,7 @@ ffs_update(void *v)
 		return (error);
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
-	if (DOINGSOFTDEP(ap->a_vp))
+	if (DOINGSOFTDEP(vp))
 		softdep_update_inodeblock(ip, bp, waitfor);
 	else if (ip->i_ffs_effnlink != ip->i_nlink)
 		panic("ffs_update: bad link cnt");
@@ -168,26 +163,18 @@ ffs_update(void *v)
  * disk blocks.
  */
 int
-ffs_truncate(void *v)
+ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
+    struct proc *p)
 {
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	daddr_t blks[NDADDR + NIADDR];
-	off_t length = ap->a_length;
 	struct fs *fs;
 	int offset, size, level;
 	int64_t count, blocksreleased = 0;
-	int i, ioflag, aflag, nblocks;
+	int i, aflag, nblocks;
 	int error, allerror = 0;
 	off_t osize;
 	int sync;
@@ -204,11 +191,11 @@ ffs_truncate(void *v)
 		oip->i_size = 0;
 		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (UFS_UPDATE(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (UFS_UPDATE(ovp, NULL, NULL, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -222,7 +209,6 @@ ffs_truncate(void *v)
 		ffs_snapremove(ovp);
 
 	osize = oip->i_size;
-	ioflag = ap->a_flags;
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 
 	/*
@@ -239,7 +225,7 @@ ffs_truncate(void *v)
 
 			eob = blkroundup(fs, osize);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
-			    ap->a_cred, aflag);
+			    cred, aflag);
 			if (error)
 				return error;
 			if (ioflag & IO_SYNC) {
@@ -250,17 +236,16 @@ ffs_truncate(void *v)
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 			}
 		}
-		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-		    aflag);
+		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
-			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
-			    ap->a_cred, ap->a_p);
+			(void) UFS_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
+			    cred, p);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(ovp->v_size == oip->i_size);
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (UFS_UPDATE(ovp, NULL, NULL, 0));
 	}
 
 	/*
@@ -280,8 +265,7 @@ ffs_truncate(void *v)
 		daddr_t lbn;
 		voff_t eoz;
 
-		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-		    aflag);
+		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error)
 			return error;
 		lbn = lblkno(fs, length);
@@ -312,8 +296,8 @@ ffs_truncate(void *v)
 			 * rarely, we solve the problem by syncing the file
 			 * so that it will have no data structures left.
 			 */
-			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
-			    0, 0, ap->a_p)) != 0) {
+			if ((error = VOP_FSYNC(ovp, cred, FSYNC_WAIT,
+			    0, 0, p)) != 0) {
 				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
 			}
@@ -325,10 +309,10 @@ ffs_truncate(void *v)
  			(void) chkdq(oip, -DIP(oip, blocks), NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length, 0);
-			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
+			(void) vinvalbuf(ovp, 0, cred, p, 0, 0);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+			return (UFS_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
 	oip->i_size = length;
@@ -369,7 +353,7 @@ ffs_truncate(void *v)
 	}
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (sync) {
-		error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+		error = UFS_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
 		if (error && !allerror)
 			allerror = error;
 	}

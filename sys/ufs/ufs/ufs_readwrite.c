@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.63 2005/04/19 20:59:05 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.63.4.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63 2005/04/19 20:59:05 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63.4.1 2005/10/20 03:00:31 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -175,7 +175,7 @@ READ(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -423,7 +423,7 @@ WRITE(void *v)
 			break;
 		need_unreserve = TRUE;
 #endif
-		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
+		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
 
 		if (error)
@@ -487,12 +487,12 @@ out:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
 		    uio->uio_procp);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ip->i_size);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.23 2005/09/27 06:48:56 yamt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.23.2.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -109,10 +109,33 @@ struct ufsmount {
 struct ufs_ops {
 	void (*uo_itimes)(struct inode *ip, const struct timespec *,
 	    const struct timespec *, const struct timespec *);
+	int (*uo_update)(struct vnode *, const struct timespec *,
+	    const struct timespec *, int);
+	int (*uo_truncate)(struct vnode *, off_t, int, struct ucred *,
+	    struct proc *);
+	int (*uo_valloc)(struct vnode *, int, struct ucred *, struct vnode **);
+	int (*uo_vfree)(struct vnode *, ino_t, int);
+	int (*uo_balloc)(struct vnode *, off_t, int, struct ucred *, int,
+	    struct buf **);
+	int (*uo_blkatoff)(struct vnode *, off_t, char **, struct buf **);
 };
 
+#define	UFS_OPS(vp)	(VFSTOUFS((vp)->v_mount)->um_ops)
+
 #define	UFS_ITIMES(vp, acc, mod, cre) \
-	(*VFSTOUFS((vp)->v_mount)->um_ops->uo_itimes)((ip), (acc), (mod), (cre))
+	(*UFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
+#define	UFS_UPDATE(vp, acc, mod, flags) \
+	(*UFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
+#define	UFS_TRUNCATE(vp, off, flags, cr, p) \
+	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr), (p))
+#define	UFS_VALLOC(vp, mode, cr, vpp) \
+	(*UFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
+#define	UFS_VFREE(vp, ino, mode) \
+	(*UFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
+#define	UFS_BALLOC(vp, off, size, cr, flags, bpp) \
+	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
+#define	UFS_BLKATOFF(vp, off, res, bpp) \
+	(*UFS_OPS(vp)->uo_blkatoff)((vp), (off), (res), (bpp))
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.84 2005/08/19 02:04:09 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.84.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.84 2005/08/19 02:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.84.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -137,7 +137,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct proc *p,
 		if (ip->i_gen == vers)
 			return 0;
 		else if (ip->i_gen < vers) {
-			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+			UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 			ip->i_gen = ip->i_ffs1_gen = vers;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
@@ -238,7 +238,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
 	blkno = lblkno(fs, ip->i_size);
-	if ((error = VOP_BALLOC(vp, ip->i_size, fs->lfs_bsize, cred, 0,
+	if ((error = UFS_BALLOC(vp, ip->i_size, fs->lfs_bsize, cred, 0,
 				&bp)) != 0) {
 		return (error);
 	}
@@ -284,14 +284,8 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(void *v)
+lfs_valloc(struct vnode *pvp, int mode, struct ucred *cred, struct vnode **vpp)
 {
-	struct vop_valloc_args /* {
-				  struct vnode *a_pvp;
-				  int a_mode;
-				  struct ucred *a_cred;
-				  struct vnode **a_vpp;
-				  } */ *ap = v;
 	struct lfs *fs;
 	struct buf *bp, *cbp;
 	struct ifile *ifp;
@@ -300,7 +294,7 @@ lfs_valloc(void *v)
 	int new_gen;
 	CLEANERINFO *cip;
 
-	fs = VTOI(ap->a_pvp)->i_lfs;
+	fs = VTOI(pvp)->i_lfs;
 	if (fs->lfs_ronly)
 		return EROFS;
 
@@ -339,7 +333,7 @@ lfs_valloc(void *v)
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
-		if ((error = extend_ifile(fs, ap->a_cred)) != 0) {
+		if ((error = extend_ifile(fs, cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 			VOP_UNLOCK(fs->lfs_ivnode, 0);
 			lfs_segunlock(fs);
@@ -360,7 +354,7 @@ lfs_valloc(void *v)
 	VOP_UNLOCK(fs->lfs_ivnode, 0);
 	lfs_segunlock(fs);
 
-	return lfs_ialloc(fs, ap->a_pvp, new_ino, new_gen, ap->a_vpp);
+	return lfs_ialloc(fs, pvp, new_ino, new_gen, vpp);
 }
 
 /*
@@ -459,26 +453,19 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 /* ARGUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_vfree(void *v)
+lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-				 struct vnode *a_pvp;
-				 ino_t a_ino;
-				 int a_mode;
-				 } */ *ap = v;
 	SEGUSE *sup;
 	CLEANERINFO *cip;
 	struct buf *cbp, *bp;
 	struct ifile *ifp;
 	struct inode *ip;
-	struct vnode *vp;
 	struct lfs *fs;
 	daddr_t old_iaddr;
-	ino_t ino, otail;
+	ino_t otail;
 	int s;
 
 	/* Get the inode number and file system. */
-	vp = ap->a_pvp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
