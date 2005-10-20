@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.10 2005/10/12 15:23:33 simonb Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.10.2.1 2005/10/20 03:45:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.10 2005/10/12 15:23:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.10.2.1 2005/10/20 03:45:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,14 +146,11 @@ int	ptyfs_print	(void *);
 int	ptyfs_pathconf	(void *);
 #define	ptyfs_islocked	genfs_islocked
 #define	ptyfs_advlock	genfs_einval
-#define	ptyfs_blkatoff	genfs_eopnotsupp
-#define	ptyfs_valloc	genfs_eopnotsupp
-#define	ptyfs_vfree	genfs_nullop
-#define	ptyfs_truncate	genfs_eopnotsupp
-int	ptyfs_update	(void *);
 #define	ptyfs_bwrite	genfs_eopnotsupp
 #define ptyfs_putpages	genfs_null_putpages
 
+static int ptyfs_update(struct vnode *, const struct timespec *,
+    const struct timespec *, int);
 static int ptyfs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
     struct proc *);
 static int ptyfs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
@@ -204,11 +201,6 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, ptyfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ptyfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ptyfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, ptyfs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, ptyfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, ptyfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, ptyfs_truncate },		/* truncate */
-	{ &vop_update_desc, ptyfs_update },		/* update */
 	{ &vop_bwrite_desc, ptyfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, ptyfs_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -446,7 +438,7 @@ ptyfs_setattr(void *v)
 		if (vap->va_birthtime.tv_sec != VNOVAL)
 			ptyfs->ptyfs_birthtime = vap->va_birthtime;
 		ptyfs->ptyfs_flag |= PTYFS_CHANGE;
-		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
+		error = ptyfs_update(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
 			return error;
 	}
@@ -808,7 +800,7 @@ ptyfs_read(void *v)
 	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
 	/* hardclock() resolution is good enough for ptyfs */
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	(void)VOP_UPDATE(vp, &ts, &ts, 0);
+	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
@@ -845,7 +837,7 @@ ptyfs_write(void *v)
 	ptyfs->ptyfs_flag |= PTYFS_MODIFY;
 	/* hardclock() resolution is good enough for ptyfs */
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	(void)VOP_UPDATE(vp, &ts, &ts, 0);
+	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
@@ -932,22 +924,16 @@ ptyfs_kqfilter(void *v)
 	}
 }
 
-int
-ptyfs_update(v)
-	void *v;
+static int
+ptyfs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int flags)
 {
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_flags;
-	} */ *ap = v;
-	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
+	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return 0;
 
-	PTYFS_ITIMES(ptyfs, ap->a_access, ap->a_modify, NULL);
+	PTYFS_ITIMES(ptyfs, acc, mod, NULL);
 	return 0;
 }
 
