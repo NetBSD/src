@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.13 2005/08/19 04:47:55 christos Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.13.2.1 2005/10/20 05:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.13 2005/08/19 04:47:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.13.2.1 2005/10/20 05:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,13 +542,8 @@ filecore_pathconf(v)
 #define	filecore_mkdir	genfs_eopnotsupp
 #define	filecore_rmdir	genfs_eopnotsupp
 #define	filecore_advlock	genfs_eopnotsupp
-#define	filecore_valloc	genfs_eopnotsupp
-#define	filecore_vfree	genfs_nullop
-#define	filecore_truncate	genfs_eopnotsupp
-#define	filecore_update	genfs_nullop
 #define	filecore_bwrite	genfs_eopnotsupp
 #define filecore_revoke	genfs_revoke
-#define filecore_blkatoff	genfs_eopnotsupp
 
 /*
  * Global vfs data structures for filecore
@@ -594,11 +589,6 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, filecore_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, filecore_advlock },       	/* advlock */
-	{ &vop_blkatoff_desc, filecore_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, filecore_valloc },		/* valloc */
-	{ &vop_vfree_desc, filecore_vfree },		/* vfree */
-	{ &vop_truncate_desc, filecore_truncate },	/* truncate */
-	{ &vop_update_desc, filecore_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
