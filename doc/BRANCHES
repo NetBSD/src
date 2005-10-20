@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.49 2005/07/07 19:20:20 mrg Exp $
+#	$NetBSD: BRANCHES,v 1.50 2005/10/20 00:42:40 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -811,6 +811,17 @@ Base Tag:	yamt-lazymbuf-base
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		
+
+
+Branch:		yamt-vop
+Description:	remove several VOPs
+Status:		Active
+Start Date:	Wed Oct 19 2005
+End Date:	
+Base Tag:	yamt-vop-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys
+Notes:		http://mail-index.NetBSD.org/tech-kern/2005/09/27/0000.html
 
 
 # Other:
