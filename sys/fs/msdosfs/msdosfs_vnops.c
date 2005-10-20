@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.20 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.20.2.1 2005/10/20 03:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.20 2005/09/12 16:24:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.20.2.1 2005/10/20 03:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,24 +688,18 @@ errexit:
 }
 
 int
-msdosfs_update(v)
-	void *v;
+msdosfs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int flags)
 {
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_flags;
-	} */ *ap = v;
 	struct buf *bp;
 	struct direntry *dirp;
 	struct denode *dep;
 	int error;
 
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	dep = VTODE(ap->a_vp);
-	DETIMES(dep, ap->a_access, ap->a_modify, NULL, dep->de_pmp->pm_gmtoff);
+	dep = VTODE(vp);
+	DETIMES(dep, acc, mod, NULL, dep->de_pmp->pm_gmtoff);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
 	dep->de_flag &= ~DE_MODIFIED;
@@ -717,7 +711,7 @@ msdosfs_update(v)
 	if (error)
 		return (error);
 	DE_EXTERNALIZE(dirp, dep);
-	if (ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP))
+	if (flags & (UPDATE_WAIT|UPDATE_DIROP))
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);
@@ -1710,21 +1704,6 @@ msdosfs_bmap(v)
 }
 
 int
-msdosfs_reallocblks(v)
-	void *v;
-{
-#if 0
-	struct vop_reallocblks_args /* {
-		struct vnode *a_vp;
-		struct cluster_save *a_buflist;
-	} */ *ap = v;
-#endif
-
-	/* Currently no support for clustering */		/* XXX */
-	return (ENOSPC);
-}
-
-int
 msdosfs_strategy(v)
 	void *v;
 {
@@ -1839,6 +1818,41 @@ msdosfs_pathconf(v)
 	/* NOTREACHED */
 }
 
+int
+msdosfs_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_flags;
+		off_t offlo;
+		off_t offhi;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int wait;
+	int error;
+
+	wait = (ap->a_flags & FSYNC_WAIT) != 0;
+	vflushbuf(vp, wait);
+	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
+		error = 0;
+	else
+		error = msdosfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		struct denode *dep = VTODE(vp);
+		struct vnode *devvp = dep->de_devvp;
+
+		int l = 0;
+		error = VOP_IOCTL(devvp, DIOCCACHESYNC, &l, FWRITE,
+					  ap->a_p->p_ucred, ap->a_p);
+	}
+
+	return (error);
+}
+
 void
 msdosfs_detimes(struct denode *dep, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre, int gmtoff)
@@ -1912,8 +1926,6 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
-	{ &vop_reallocblks_desc, msdosfs_reallocblks },	/* reallocblks */
-	{ &vop_update_desc, msdosfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */

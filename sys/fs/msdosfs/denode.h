@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.8 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.8.2.1 2005/10/20 03:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -260,7 +260,7 @@ int	msdosfs_write		(void *);
 #define	msdosfs_poll		genfs_poll
 #define	msdosfs_revoke		genfs_revoke
 #define	msdosfs_mmap		genfs_mmap
-#define	msdosfs_fsync		genfs_fsync
+int	msdosfs_fsync		(void *);
 #define	msdosfs_seek		genfs_seek
 int	msdosfs_remove		(void *);
 int	msdosfs_link		(void *);
@@ -277,13 +277,13 @@ int	msdosfs_bmap		(void *);
 int	msdosfs_strategy	(void *);
 int	msdosfs_print		(void *);
 int	msdosfs_advlock		(void *);
-int	msdosfs_reallocblks	(void *);
 int	msdosfs_pathconf	(void *);
-int	msdosfs_update		(void *);
 
 /*
  * Internal service routine prototypes.
  */
+int msdosfs_update(struct vnode *, const struct timespec *,
+	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
 int deextend(struct denode *, u_long, struct ucred *);
