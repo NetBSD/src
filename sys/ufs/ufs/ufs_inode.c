@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.53 2005/09/14 10:33:25 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.53.2.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.53 2005/09/14 10:33:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.53.2.1 2005/10/20 03:00:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -105,7 +105,7 @@ ufs_inactive(void *v)
 		ufs_extattr_vnode_inactive(vp, p);
 #endif
 		if (ip->i_size != 0) {
-			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
@@ -120,13 +120,13 @@ ufs_inactive(void *v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-		VOP_VFREE(vp, ip->i_number, mode);
+		UFS_VFREE(vp, ip->i_number, mode);
 		vn_finished_write(mp, V_LOWER);
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		VOP_UPDATE(vp, NULL, NULL, 0);
+		UFS_UPDATE(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);
 	}
 out:
@@ -154,7 +154,7 @@ ufs_reclaim(struct vnode *vp, struct proc *p)
 		vprint("ufs_reclaim: pushing active", vp);
 
 	vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-	VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 	vn_finished_write(mp, V_LOWER);
 
 	/*

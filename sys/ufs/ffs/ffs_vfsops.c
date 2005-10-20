@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.175 2005/09/27 06:48:55 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.175.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.175 2005/09/27 06:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.175.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -120,6 +120,12 @@ static const struct genfs_ops ffs_genfsops = {
 
 static const struct ufs_ops ffs_ufsops = {
 	.uo_itimes = ffs_itimes,
+	.uo_update = ffs_update,
+	.uo_truncate = ffs_truncate,
+	.uo_valloc = ffs_valloc,
+	.uo_vfree = ffs_vfree,
+	.uo_balloc = ffs_balloc,
+	.uo_blkatoff = ffs_blkatoff,
 };
 
 POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
@@ -1327,7 +1333,7 @@ loop:
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
-			error = VOP_UPDATE(vp, NULL, NULL, 0);
+			error = UFS_UPDATE(vp, NULL, NULL, 0);
 		else
 			error = VOP_FSYNC(vp, cred,
 			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
@@ -1593,7 +1599,9 @@ ffs_done(void)
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 {
+#if 0
 	extern int doasyncfree;
+#endif
 	extern int ffs_log_changeopt;
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1626,12 +1634,14 @@ SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 		       CTLTYPE_INT, "doreallocblks", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
+#if 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "doasyncfree",
 		       SYSCTL_DESCR("Release dirty blocks asynchronously"),
 		       NULL, 0, &doasyncfree, 0,
 		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "log_changeopt",

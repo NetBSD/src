@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.37 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.37.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.37 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.37.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ ext2fs_lookup(void *v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = ext2fs_blkatoff(vdp, (off_t)dp->i_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
@@ -368,7 +368,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
+			error = ext2fs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error != 0)
 				return (error);
@@ -847,7 +847,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	if ((error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp)) != 0)
+	if ((error = ext2fs_blkatoff(dvp, (off_t)dp->i_offset, &dirbuf, &bp)) != 0)
 		return (error);
 	/*
 	 * Find space for the new entry. In the simple case, the entry at
@@ -900,7 +900,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
-		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC,
+		error = ext2fs_truncate(dvp, (off_t)dp->i_endoff, IO_SYNC,
 		    cnp->cn_cred, cnp->cn_proc);
 	return (error);
 }
@@ -930,7 +930,7 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset,
+		error = ext2fs_blkatoff(dvp, (off_t)dp->i_offset,
 		    (void *)&ep, &bp);
 		if (error != 0)
 			return (error);
@@ -942,7 +942,7 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 	/*
 	 * Collapse new free space into previous entry.
 	 */
-	error = VOP_BLKATOFF(dvp, (off_t)(dp->i_offset - dp->i_count),
+	error = ext2fs_blkatoff(dvp, (off_t)(dp->i_offset - dp->i_count),
 	    (void *)&ep, &bp);
 	if (error != 0)
 		return (error);
@@ -966,7 +966,7 @@ ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
+	error = ext2fs_blkatoff(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error != 0)
 		return (error);
 	ep->e2d_ino = h2fs32(ip->i_number);

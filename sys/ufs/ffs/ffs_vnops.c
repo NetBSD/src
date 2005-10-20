@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.75 2005/09/09 15:00:39 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.75.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.75 2005/09/09 15:00:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.75.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,13 +107,6 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
-	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
-	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -169,12 +162,6 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -230,12 +217,6 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
@@ -334,7 +315,7 @@ ffs_fsync(void *v)
 	}
 	splx(s);
 
-	error = VOP_UPDATE(vp, NULL, NULL,
+	error = UFS_UPDATE(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
 	    ? UPDATE_WAIT : 0);
 
@@ -475,7 +456,7 @@ loop:
 		waitfor = 0;
 	else
 		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = VOP_UPDATE(vp, NULL, NULL, waitfor);
+	error = UFS_UPDATE(vp, NULL, NULL, waitfor);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;

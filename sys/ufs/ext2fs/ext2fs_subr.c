@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.17 2005/09/27 06:48:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.17.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.17 2005/09/27 06:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.17.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,32 +82,26 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.17 2005/09/27 06:48:55 yamt Exp $"
  * remaining space in the directory.
  */
 int
-ext2fs_blkatoff(void *v)
+ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	daddr_t lbn;
 	int error;
 
-	ip = VTOI(ap->a_vp);
+	ip = VTOI(vp);
 	fs = ip->i_e2fs;
-	lbn = lblkno(fs, ap->a_offset);
+	lbn = lblkno(fs, offset);
 
-	*ap->a_bpp = NULL;
-	if ((error = bread(ap->a_vp, lbn, fs->e2fs_bsize, NOCRED, &bp)) != 0) {
+	*bpp = NULL;
+	if ((error = bread(vp, lbn, fs->e2fs_bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
-	if (ap->a_res)
-		*ap->a_res = (char *)bp->b_data + blkoff(fs, ap->a_offset);
-	*ap->a_bpp = bp;
+	if (res)
+		*res = (char *)bp->b_data + blkoff(fs, offset);
+	*bpp = bp;
 	return (0);
 }
 
