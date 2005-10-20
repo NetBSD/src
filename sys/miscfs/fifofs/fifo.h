@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.22 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: fifo.h,v 1.22.2.1 2005/10/20 05:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,12 +71,6 @@ int	fifo_print(void *);
 #define fifo_islocked	genfs_islocked
 int	fifo_pathconf(void *);
 #define	fifo_advlock	genfs_einval
-#define fifo_blkatoff	genfs_badop
-#define fifo_valloc	genfs_badop
-#define fifo_reallocblks genfs_badop
-#define fifo_vfree	genfs_badop
-#define fifo_truncate	genfs_nullop
-#define fifo_update	genfs_nullop
 #define fifo_bwrite	genfs_nullop
 #define	fifo_putpages	genfs_null_putpages
 

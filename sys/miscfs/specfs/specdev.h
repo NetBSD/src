@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.27 2005/08/30 20:08:02 xtraeme Exp $	*/
+/*	$NetBSD: specdev.h,v 1.27.2.1 2005/10/20 05:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -141,12 +141,6 @@ int	spec_print(void *);
 #define	spec_islocked	genfs_noislocked
 int	spec_pathconf(void *);
 int	spec_advlock(void *);
-#define	spec_blkatoff	genfs_badop
-#define	spec_valloc	genfs_badop
-#define	spec_reallocblks genfs_badop
-#define	spec_vfree	genfs_badop
-#define	spec_truncate	genfs_nullop
-#define	spec_update	genfs_nullop
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
