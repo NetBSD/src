@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.45 2005/09/25 12:50:14 isaki Exp $
+#	$NetBSD: vnode_if.src,v 1.45.2.1 2005/10/20 01:34:57 yamt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -473,76 +473,6 @@ vop_advlock {
 	IN void *id;
 	IN int op;
 	IN struct flock *fl;
-	IN int flags;
-};
-
-#
-#% blkatoff   vp      L L L
-#
-vop_blkatoff {
-	IN LOCKED=YES struct vnode *vp;
-	IN off_t offset;
-	OUT char **res;
-	OUT struct buf **bpp;
-};
-
-#
-#% valloc     pvp     L L L
-#
-vop_valloc {
-	IN LOCKED=YES struct vnode *pvp;
-	IN int mode;
-	IN struct ucred *cred;
-	OUT struct vnode **vpp;
-};
-
-#
-#% balloc     vp      L L L
-#
-vop_balloc {
-	IN LOCKED=YES struct vnode *vp;
-	IN off_t startoffset;
-	IN int size;
-	IN struct ucred *cred;	
-	IN int flags;
-	OUT struct buf **bpp;
-};
-
-#
-#% reallocblks        vp      L L L
-#
-vop_reallocblks {
-	IN LOCKED=YES struct vnode *vp;
-	IN struct cluster_save *buflist;
-};
-
-#
-#% vfree      pvp     L L L
-#
-vop_vfree {
-	IN LOCKED=YES struct vnode *pvp;
-	IN ino_t ino;
-	IN int mode;
-};
-
-#
-#% truncate   vp      L L L
-#
-vop_truncate {
-	IN LOCKED=YES struct vnode *vp;
-	IN off_t length;
-	IN int flags;
-	IN struct ucred *cred;
-	IN struct proc *p;
-};
-
-#
-#% update     vp      L L L
-#
-vop_update {
-	IN LOCKED=YES struct vnode *vp;
-	IN struct timespec *access;
-	IN struct timespec *modify;
 	IN int flags;
 };
 
