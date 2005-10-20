@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.126 2005/10/01 03:17:37 atatat Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.126.2.1 2005/10/20 05:03:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.126 2005/10/01 03:17:37 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.126.2.1 2005/10/20 05:03:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,11 +202,6 @@ int	procfs_print(void *);
 int	procfs_pathconf(void *);
 #define	procfs_islocked	genfs_islocked
 #define	procfs_advlock	genfs_einval
-#define	procfs_blkatoff	genfs_eopnotsupp
-#define	procfs_valloc	genfs_eopnotsupp
-#define	procfs_vfree	genfs_nullop
-#define	procfs_truncate	genfs_eopnotsupp
-#define	procfs_update	genfs_nullop
 #define	procfs_bwrite	genfs_eopnotsupp
 #define procfs_putpages	genfs_null_putpages
 
@@ -253,11 +248,6 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, procfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, procfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, procfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, procfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, procfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, procfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, procfs_truncate },	/* truncate */
-	{ &vop_update_desc, procfs_update },		/* update */
 	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
