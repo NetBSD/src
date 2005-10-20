@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.40 2005/10/15 17:29:32 yamt Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.40.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.40 2005/10/15 17:29:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.40.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,6 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, mfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, mfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, mfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, mfs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, mfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, mfs_vfree },			/* vfree */
-	{ &vop_truncate_desc, mfs_truncate },		/* truncate */
-	{ &vop_update_desc, mfs_update },		/* update */
 	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, mfs_putpages },		/* putpages */
 	{ NULL, NULL }

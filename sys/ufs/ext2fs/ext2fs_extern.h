@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.28 2005/09/12 20:23:03 christos Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.28.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -97,12 +97,11 @@ int ext2fs_alloc(struct inode *, daddr_t, daddr_t , struct ucred *,
 		   daddr_t *);
 int ext2fs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 			  struct ucred *, struct buf **);
-int ext2fs_reallocblks(void *);
-int ext2fs_valloc(void *);
+int ext2fs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
 /* XXX ondisk32 */
 daddr_t ext2fs_blkpref(struct inode *, daddr_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, daddr_t);
-int ext2fs_vfree(void *);
+int ext2fs_vfree(struct vnode *, ino_t, int);
 
 /* ext2fs_balloc.c */
 int ext2fs_balloc(struct inode *, daddr_t, int, struct ucred *,
@@ -115,8 +114,9 @@ int ext2fs_bmap(void *);
 /* ext2fs_inode.c */
 u_int64_t ext2fs_size(struct inode *);
 int ext2fs_setsize(struct inode *, u_int64_t);
-int ext2fs_update(void *);
-int ext2fs_truncate(void *);
+int ext2fs_update(struct vnode *, const struct timespec *,
+    const struct timespec *, int);
+int ext2fs_truncate(struct vnode *, off_t, int, struct ucred *, struct proc *);
 int ext2fs_inactive(void *);
 
 /* ext2fs_lookup.c */
@@ -131,7 +131,7 @@ int ext2fs_dirempty(struct inode *, ino_t, struct ucred *);
 int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */
-int ext2fs_blkatoff(void *);
+int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
 void ext2fs_itimes(struct inode *, const struct timespec *,
     const struct timespec *, const struct timespec *);
@@ -177,13 +177,12 @@ int ext2fs_rmdir(void *);
 int ext2fs_symlink(void *);
 int ext2fs_readlink(void *);
 int ext2fs_advlock(void *);
+int ext2fs_fsync(void *);
 int ext2fs_vinit(struct mount *, int (**specops)(void *),
 		      int (**fifoops)(void *), struct vnode **);
 int ext2fs_makeinode(int, struct vnode *, struct vnode **,
 			  struct componentname *cnp);
 int ext2fs_reclaim(void *);
-
-#define ext2fs_fsync genfs_fsync
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ext2fs_setup);

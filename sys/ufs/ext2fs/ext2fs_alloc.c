@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.26 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.26.2.1 2005/10/20 03:00:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.26 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.26.2.1 2005/10/20 03:00:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.26 2005/08/30 22:01:12 xtraeme Ex
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
@@ -164,23 +165,16 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(void *v)
+ext2fs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
+    struct vnode **vpp)
 {
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-	struct vnode *pvp = ap->a_pvp;
 	struct inode *pip;
 	struct m_ext2fs *fs;
 	struct inode *ip;
-	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
 
-	*ap->a_vpp = NULL;
+	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if (fs->e2fs.e2fs_ficount == 0)
@@ -194,12 +188,12 @@ ext2fs_valloc(void *v)
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
+	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		VOP_VFREE(pvp, ino, mode);
+		ext2fs_vfree(pvp, ino, mode);
 		return (error);
 	}
-	ip = VTOI(*ap->a_vpp);
+	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
 		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
 		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
@@ -217,7 +211,7 @@ ext2fs_valloc(void *v)
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:
-	ext2fs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");
+	ext2fs_fserr(fs, cred->cr_uid, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
 	return (ENOSPC);
 }
@@ -549,21 +543,15 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
  * The specified inode is placed back in the free map.
  */
 int
-ext2fs_vfree(void *v)
+ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
 	struct m_ext2fs *fs;
 	char *ibp;
 	struct inode *pip;
-	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
 
-	pip = VTOI(ap->a_pvp);
+	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
@@ -587,7 +575,7 @@ ext2fs_vfree(void *v)
 	clrbit(ibp, ino);
 	fs->e2fs.e2fs_ficount++;
 	fs->e2fs_gd[cg].ext2bgd_nifree++;
-	if ((ap->a_mode & IFMT) == IFDIR) {
+	if ((mode & IFMT) == IFDIR) {
 		fs->e2fs_gd[cg].ext2bgd_ndirs--;
 	}
 	fs->e2fs_fmod = 1;

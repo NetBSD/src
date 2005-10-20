@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.68 2005/09/26 13:52:20 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.68.2.1 2005/10/20 03:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.68 2005/09/26 13:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.68.2.1 2005/10/20 03:00:31 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -244,7 +244,7 @@ ufs_lookup(void *v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
@@ -263,7 +263,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
+			error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
 				return (error);
@@ -789,7 +789,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		flags = B_CLRBUF;
 		if (!DOINGSOFTDEP(dvp))
 			flags |= B_SYNC;
-		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, dirblksiz,
+		if ((error = UFS_BALLOC(dvp, (off_t)dp->i_offset, dirblksiz,
 		    cr, flags, &bp)) != 0) {
 			if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 				bdwrite(newdirbp);
@@ -840,7 +840,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			    ufs_rw32(dirp->d_ino, needswap), newdirbp, 1) == 0) {
 				bdwrite(bp);
 				nanotime(&ts);
-				return VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+				return UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 			}
 			/* We have just allocated a directory block in an
 			 * indirect block. Rather than tracking when it gets
@@ -865,7 +865,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			error = VOP_BWRITE(bp);
 		}
 		nanotime(&ts);
-		ret = VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+		ret = UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 		if (error == 0)
 			return (ret);
 		return (error);
@@ -895,7 +895,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
+	error = UFS_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
 	if (error) {
 		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 			bdwrite(newdirbp);
@@ -1000,7 +1000,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, dp->i_endoff);
 #endif
-		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
+		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
@@ -1034,7 +1034,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (void *)&ep,
+		error = UFS_BLKATOFF(dvp, (off_t)dp->i_offset, (void *)&ep,
 				     &bp);
 		if (error)
 			return (error);
@@ -1043,7 +1043,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		goto out;
 	}
 
-	if ((error = VOP_BLKATOFF(dvp,
+	if ((error = UFS_BLKATOFF(dvp,
 	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
 		return (error);
 
@@ -1123,7 +1123,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
+	error = UFS_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
