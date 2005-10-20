@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.112 2005/09/01 06:25:26 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.112.2.1 2005/10/20 05:02:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.112 2005/09/01 06:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.112.2.1 2005/10/20 05:02:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -203,11 +203,6 @@ int	kernfs_print(void *);
 #define	kernfs_islocked	genfs_islocked
 int	kernfs_pathconf(void *);
 #define	kernfs_advlock	genfs_einval
-#define	kernfs_blkatoff	genfs_eopnotsupp
-#define	kernfs_valloc	genfs_eopnotsupp
-#define	kernfs_vfree	genfs_nullop
-#define	kernfs_truncate	genfs_eopnotsupp
-#define	kernfs_update	genfs_nullop
 #define	kernfs_bwrite	genfs_eopnotsupp
 #define	kernfs_putpages	genfs_putpages
 
@@ -253,11 +248,6 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, kernfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, kernfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, kernfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, kernfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, kernfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, kernfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, kernfs_truncate },	/* truncate */
-	{ &vop_update_desc, kernfs_update },		/* update */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, kernfs_putpages },	/* putpages */
 	{ NULL, NULL }
