@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.11 2005/09/30 14:29:19 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.11.2.1 2005/10/20 07:13:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.11 2005/09/30 14:29:19 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.11.2.1 2005/10/20 07:13:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -938,7 +938,7 @@ tmpfs_mem_info(boolean_t total)
 
 /*
  * Change flags of the given vnode.
- * Caller should execute VOP_UPDATE on vp after a successful execution.
+ * Caller should execute tmpfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
@@ -993,7 +993,7 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 
 /*
  * Change access mode on the given vnode.
- * Caller should execute VOP_UPDATE on vp after a successful execution.
+ * Caller should execute tmpfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
@@ -1044,7 +1044,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
  * Change ownership of the given vnode.  At least one of uid or gid must
  * be different than VNOVAL.  If one is set to that value, the attribute
  * is unchanged.
- * Caller should execute VOP_UPDATE on vp after a successful execution.
+ * Caller should execute tmpfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
@@ -1098,7 +1098,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 
 /*
  * Change size of the given vnode.
- * Caller should execute VOP_UPDATE on vp after a successful execution.
+ * Caller should execute tmpfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
@@ -1146,7 +1146,7 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = VOP_TRUNCATE(vp, size, 0, cred, p);
+	error = tmpfs_truncate(vp, size);
 	/* tmpfs_truncate will raise the NOTE_EXTEND and NOTE_ATTRIB kevents
 	 * for us, as will update tn_status; no need to do that here. */
 
@@ -1159,7 +1159,7 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 
 /*
  * Change access and modification times of the given vnode.
- * Caller should execute VOP_UPDATE on vp after a successful execution.
+ * Caller should execute tmpfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
@@ -1196,7 +1196,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (mtime->tv_sec != VNOVAL && mtime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_MODIFIED;
 
-	error = VOP_UPDATE(vp, atime, mtime, 0);
+	error = tmpfs_update(vp, atime, mtime, 0);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -1237,4 +1237,61 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	}
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+tmpfs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int flags)
+{
+
+	struct tmpfs_node *node;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
+	node = VP_TO_TMPFS_NODE(vp);
+
+	if (flags & UPDATE_CLOSE)
+		; /* XXX Need to do anything special? */
+
+	tmpfs_itimes(vp, acc, mod);
+
+	KASSERT(VOP_ISLOCKED(vp));
+
+	return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+tmpfs_truncate(struct vnode *vp, off_t length)
+{
+	boolean_t extended;
+	int error;
+	struct tmpfs_node *node;
+
+	node = VP_TO_TMPFS_NODE(vp);
+	extended = length > node->tn_size;
+
+	if (length < 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if (node->tn_size == length) {
+		error = 0;
+		goto out;
+	}
+
+	error = tmpfs_reg_resize(vp, length);
+	if (error == 0) {
+		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
+		node->tn_status |= TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
+	}
+
+out:
+	(void)tmpfs_update(vp, NULL, NULL, 0);
+
+	return error;
 }
