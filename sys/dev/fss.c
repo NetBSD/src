@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.16 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.16.2.1 2005/10/20 02:47:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.16 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.16.2.1 2005/10/20 02:47:18 yamt Exp $");
 
 #include "fss.h"
 
@@ -828,7 +828,10 @@ static int
 fss_bmap(struct fss_softc *sc, off_t start, int len,
     struct vnode **vpp, daddr_t *bnp, int *runp)
 {
-	int l, s, error;
+#if 0
+	int l, s;
+#endif
+	int error;
 	struct buf *bp, **bpp;
 
 	if ((sc->sc_bs_vp->v_mount->mnt_flag & MNT_SOFTDEP) != 0)
@@ -846,6 +849,7 @@ fss_bmap(struct fss_softc *sc, off_t start, int len,
 		goto out;
 	}
 
+#if 0
 	for (l = 0; l < len; l += FSS_FSBSIZE(sc)) {
 		error = VOP_BALLOC(sc->sc_bs_vp, start+l, FSS_FSBSIZE(sc),
 		    sc->sc_bs_proc->p_ucred, 0, bpp);
@@ -871,6 +875,7 @@ fss_bmap(struct fss_softc *sc, off_t start, int len,
 	}
 
 	error = VOP_BMAP(sc->sc_bs_vp, FSS_BTOFSB(sc, start), vpp, bnp, runp);
+#endif
 
 out:
 
