@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.4 2003/12/04 17:22:31 drochner Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.5 2005/10/20 15:41:01 christos Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -924,7 +924,7 @@ loop_config(
 			ntv.modes = MOD_OFFSET | MOD_FREQUENCY;
 			if (kern_enable) {
 				ntv.modes |= MOD_STATUS;
-				ntv.status = STA_PLL;
+				ntv.status = STA_PLL | STA_UNSYNC;
 				ntv.freq = (int32)(drift_comp *
 				    65536e6);
 			}
