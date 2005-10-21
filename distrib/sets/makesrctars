@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.25 2005/10/21 02:56:27 jmc Exp $
+#	$NetBSD: makesrctars,v 1.26 2005/10/21 03:57:07 jmc Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -31,7 +31,6 @@ USAGE
 	exit 1
 }
 
-PASSWD=
 # handle args
 while getopts N:x: ch; do
 	case ${ch} in
