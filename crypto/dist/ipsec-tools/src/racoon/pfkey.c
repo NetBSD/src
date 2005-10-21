@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2.2.6 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.7 2005/10/21 17:08:17 riz Exp $	*/
 
 /* Id: pfkey.c,v 1.31.2.9 2005/07/28 05:05:52 manubsd Exp */
 
@@ -156,6 +156,10 @@ NULL,	/* SADB_X_SPDSETIDX */
 pk_recvspdexpire,
 NULL,	/* SADB_X_SPDDELETE2 */
 NULL,	/* SADB_X_NAT_T_NEW_MAPPING */
+NULL, /* SADB_X_MIGRATE */
+#if (SADB_MAX > 24)
+#error "SADB extra message?"
+#endif
 };
 
 static int addnewsp __P((caddr_t *));

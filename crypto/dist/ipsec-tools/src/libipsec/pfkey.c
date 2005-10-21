@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.3 2005/10/21 17:08:17 riz Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1667,7 +1667,7 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	}
 	ep = ((caddr_t)(void *)newmsg) + len;
 
-	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, type, (u_int)len,
+	p = pfkey_setsadbmsg((void *)newmsg, ep, type, (u_int)len,
 	    SADB_SATYPE_UNSPEC, seq, getpid());
 	if (!p) {
 		free(newmsg);
@@ -1968,6 +1968,10 @@ pfkey_align(msg, mhp)
 #ifdef SADB_X_EXT_TAG
 		case SADB_X_EXT_TAG:
 #endif
+#ifdef SADB_X_EXT_PACKET
+		case SADB_X_EXT_PACKET:
+#endif
+
 			mhp[ext->sadb_ext_type] = (void *)ext;
 			break;
 		default:
