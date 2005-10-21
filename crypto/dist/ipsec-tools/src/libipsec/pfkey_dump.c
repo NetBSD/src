@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.1.1.2.2.4 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.1.1.2.2.5 2005/10/21 17:08:17 riz Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -271,7 +271,6 @@ pfkey_sadump(m)
 	if (natt_type && natt_type->sadb_x_nat_t_type_type)
 		use_natt = 1;
 #endif
-
 	/* source address */
 	if (m_saddr == NULL) {
 		printf("no ADDRESS_SRC extension.\n");

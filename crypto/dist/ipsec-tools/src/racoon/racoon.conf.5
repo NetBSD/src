@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.6 2005/10/01 05:41:45 snj Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.7 2005/10/21 17:08:17 riz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.41 2005/09/21 14:35:16 manubsd Exp
 .\"
@@ -936,12 +936,12 @@ The default is off.
 Defines the information to return for remote hosts' ISAKMP mode config
 requests.
 Also defines the authentication source for remote peers
-authenticating through Xauth.
+authenticating through hybrid auth.
 .Pp
 The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic auth_source (system \(ba radius \(ba pam) ;
-Specify the source for authentication of users through Xauth.
+Specify the source for authentication of users through hybrid auth.
 .Ar system
 means to use the Unix user database.
 This is the default.

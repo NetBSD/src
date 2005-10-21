@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.1.1.3.2.3 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: oakley.c,v 1.1.1.3.2.4 2005/10/21 17:08:17 riz Exp $	*/
 
 /* Id: oakley.c,v 1.17.2.4 2005/07/12 11:50:15 manubsd Exp */
 
@@ -2261,7 +2261,7 @@ save_certx509(cert)
 		new = NULL;
 		return NULL;
 	}
-        bp = new->pl->v;
+        bp = (u_char *) new->pl->v;
         len = i2d_X509(cert, &bp);
 	new->type = ISAKMP_CERT_X509SIGN;
 	new->cert.v = new->pl->v;

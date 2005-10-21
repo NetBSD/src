@@ -1,8 +1,8 @@
 dnl -*- mode: m4 -*-
-dnl Id: configure.ac,v 1.47.2.24 2005/08/19 22:46:45 manubsd Exp
+dnl Id: configure.ac,v 1.47.2.29 2005/10/14 09:24:43 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, 0.6.1)
+AC_INIT(ipsec-tools, 0.6.2)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
@@ -294,6 +294,8 @@ if test "x$enable_gssapi" = "xyes"; then
 	# Check if iconv 2nd argument needs const 
 	AC_CHECK_HEADER([iconv.h], [], [AC_MSG_ERROR([iconv.h not found, but needed for GSSAPI support. Aborting.])])
 	AC_MSG_CHECKING([if iconv second argument needs const])
+	saved_CFLAGS=$CFLAGS
+	CFLAGS="$CFLAGS -Wall -Werror"
 	AC_TRY_COMPILE([
 		#include <iconv.h>
 		#include <stdio.h>
@@ -308,7 +310,7 @@ if test "x$enable_gssapi" = "xyes"; then
 	], [AC_MSG_RESULT(yes)
 	    AC_DEFINE([HAVE_ICONV_2ND_CONST], [], [Have iconv using const])
 	], [AC_MSG_RESULT(no)])
-
+	CFLAGS=$saved_CFLAGS
 fi
 
 AC_MSG_CHECKING([if --enable-hybrid option is specified])

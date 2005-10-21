@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.h,v 1.1.1.2.2.2 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: sockmisc.h,v 1.1.1.2.2.3 2005/10/21 17:08:17 riz Exp $	*/
 
 /* Id: sockmisc.h,v 1.5.10.3 2005/06/29 13:01:29 manubsd Exp */
 
@@ -58,7 +58,7 @@ extern int cmpsaddrstrict __P((const struct sockaddr *, const struct sockaddr *)
 extern struct sockaddr *getlocaladdr __P((struct sockaddr *));
 
 extern int recvfromto __P((int, void *, size_t, int,
-	struct sockaddr *, int *, struct sockaddr *, unsigned int *));
+	struct sockaddr *, socklen_t *, struct sockaddr *, unsigned int *));
 extern int sendfromto __P((int, const void *, size_t,
 	struct sockaddr *, struct sockaddr *, int));
 
