@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.25 2004/01/08 01:31:57 lukem Exp $
+#	$NetBSD: checkflist,v 1.26 2005/10/21 02:41:14 jmc Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -11,8 +11,8 @@ fi
 
 prog=${0##*/}
 
-: ${HOST_SH=sh}
-: ${MKTEMP=mktemp}
+: ${HOST_SH:=sh}
+: ${MKTEMP:=mktemp}
 SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 
 es=0
