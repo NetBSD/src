@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.285 2005/10/21 13:18:47 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.286 2005/10/21 17:46:50 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13561,4 +13561,55 @@ usr.bin/vi/ex/ex_argv.c				1.16
 	The last revision introduced a bug in the handling of escape characters
 	while trying to correct a corner case.
 	[aymeric, ticket #898]
+
+crypto/dist/ipsec-tools/ChangeLog			1.28-1.30
+crypto/dist/ipsec-tools/NEWS				1.1.1.4
+crypto/dist/ipsec-tools/configure.ac			1.1.1.7
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c		1.7-1.8
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c	1.10
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y	1.7
+crypto/dist/ipsec-tools/src/racoon/cfparse.y		1.5-1.9
+crypto/dist/ipsec-tools/src/racoon/evt.c		1.3
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c		1.11
+crypto/dist/ipsec-tools/src/racoon/isakmp.c		1.10
+crypto/dist/ipsec-tools/src/racoon/isakmp_agg.c		1.5-1.6
+crypto/dist/ipsec-tools/src/racoon/isakmp_base.c	1.3-1.4
+crypto/dist/ipsec-tools/src/racoon/isakmp_ident.c	1.3
+crypto/dist/ipsec-tools/src/racoon/oakley.c		1.6
+crypto/dist/ipsec-tools/src/racoon/pfkey.c		1.10
+crypto/dist/ipsec-tools/src/racoon/policy.c		1.3
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5	1.21-1.23
+crypto/dist/ipsec-tools/src/racoon/sockmisc.c		1.3
+crypto/dist/ipsec-tools/src/racoon/sockmisc.h		1.5
+crypto/dist/ipsec-tools/src/setkey/setkey.8		1.17
+lib/libipsec/package_version.h				1.15
+
+	Update to ipsec-tools 0.6.2
+	[manu, ticket #894]
+
+lib/libc/sys/msync.2				1.23
+
+	Remove text about converting async to sync, since we don't
+	do it anymore.
+	[chs, ticket #900]
+
+sys/kern/kern_sa.c				1.66
+sys/kern/kern_sig.c				1.209
+sys/kern/kern_synch.c				1.150
+sys/kern/kern_time.c				1.94
+sys/sys/savar.h					1.16
+sys/sys/signalvar.h				1.59
+
+	Avoid calling into the pool code while holding sched_lock
+	since both pool_get() and pool_put() can call wakeup().
+	instead, allocate the struct sadata_upcall before taking
+	sched_lock in mi_switch() and free it after releasing sched_lock.
+	Clean up some modularity warts by adding a callback to
+	struct sadata_upcall for freeing sa_arg.
+	[chs, ticket #901]
+
+distrib/sets/makesrctars			patch
+
+	Allow autobuild to create ready-to-release source tars with builds.
+	[jmc, ticket #906]
 
