@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.26 2005/10/21 03:57:07 jmc Exp $
+#	$NetBSD: makesrctars,v 1.27 2005/10/21 04:11:49 jmc Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -23,7 +23,7 @@ usage()
 	cat 1>&2 <<USAGE
 Usage: ${prog} [-N password/group dir] [-x xsrcdir] srcdir setdir
 	-N dir		location which contains master.passwd and group files
-			(defaults to ${srcdir}/etc)
+			(defaults to \${srcdir}/etc)
 	-x xsrcdir	build xsrc.tgz from xsrcdir
 	srcdir		location of sources
 	setdir		where to write the .tgz files to
@@ -34,7 +34,7 @@ USAGE
 # handle args
 while getopts N:x: ch; do
 	case ${ch} in
-	x)	
+	x)
 		xsrcdir=${OPTARG}
 		;;
 	N)
@@ -74,7 +74,7 @@ makeset()
 	echo "obj" > /tmp/in$$
 	egrep=$*
 	if [ "$egrep" = "" ]; then
-	    egrep='.'
+		egrep='.'
 	fi
 	set -f
 	${MTREE} -c -X /tmp/in$$ | ${MTREE} -C -k type | \
@@ -128,3 +128,4 @@ echo "Creating checksum files"
 	${CKSUM} -o2 *.tgz > SYSVSUM
 	${CKSUM} -a sha512 *.tgz > SHA512
 )
+exit 0
