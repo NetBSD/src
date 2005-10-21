@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.92 2005/10/19 21:06:38 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.93 2005/10/21 21:10:45 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,9 +306,11 @@ x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
 
-#define DKTYPE_NUMS(tag, number, name) DTYPE_##tag=number,
+#ifndef OMIT_DKTYPENUMS
+#define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
 enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
 #undef	DKTYPE_NUMS
+#endif /* OMIT_DKTYPENUMS */
 
 #ifdef DKTYPENAMES
 #define	DKTYPE_NAMES(tag, number, name) ARRAY_INIT(number,name),
@@ -346,9 +348,11 @@ x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
 /* XXX this is not the same as FreeBSD.  How to solve? */ \
 x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 
-#define	FS_TYPENUMS(tag, number, name, fsck, mount) FS_##tag=number,
+#ifndef OMIT_FSTYPENUMS
+#define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
 enum { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
 #undef	FS_TYPENUMS
+#endif /* OMIT_FSTYPENUMS */
 
 #ifdef	FSTYPENAMES
 #define	FS_TYPENAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,name),
