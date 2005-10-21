@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.42 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.42.2.1 2005/10/21 11:25:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -151,7 +151,6 @@ int ffs_write __P((void *));
 int ffs_fsync __P((void *));
 int ffs_reclaim __P((void *));
 int ffs_getpages __P((void *));
-int ffs_putpages __P((void *));
 void ffs_gop_size __P((struct vnode *, off_t, off_t *, int));
 
 #ifdef SYSCTL_SETUP_PROTO
