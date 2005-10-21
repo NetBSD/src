@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.286 2005/10/21 17:46:50 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.287 2005/10/21 18:59:04 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13612,4 +13612,20 @@ distrib/sets/makesrctars			patch
 
 	Allow autobuild to create ready-to-release source tars with builds.
 	[jmc, ticket #906]
+
+usr.sbin/mountd/exports.5			1.24
+
+	mountd's -r option always was a dummy, don't advertise using it.
+	[feyrer, ticket #902]
+
+sys/netinet/ip_output.c				1.156-1.157
+
+	Allow the multicast_ttl and the multicast_loop options to be set
+	with both u_char and u_int option variables.
+	[seb, ticket #903]
+
+sys/arch/arm/ep93xx/epe.c			1.3
+
+	Fix write sequence to PHY.
+	[hamajima, ticket #904]
 
