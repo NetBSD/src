@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.283 2005/10/15 22:03:03 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.284 2005/10/21 11:35:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13512,4 +13512,27 @@ sys/dev/ic/nslm7xvar.h				1.16
 
 	Added support for Winbond 83627THF, from OpenBSD.
 	[xtraeme, ticket #893]
+
+sys/ufs/ffs/ffs_extern.h			1.45 via patch
+sys/ufs/ffs/ffs_vnops.c				1.75 via patch
+sys/ufs/ffs/ffs_softdep.c			1.70 via patch
+
+	- Revert the code to expand putpage requests to block boundary.
+	  because:
+	  - It was incomplete in some cases.
+	  - It can confuse pagedaemon.
+	- For pagecache dependency, track which page in the block
+	  has been written or not individually by (ab)using b_resid
+	  in pcbp as a bitmap.
+	- Add a comment to explain why it's needed.
+	See PR kern/15364 for details.
+	[yamt, ticket #845]
+
+etc/newsyslog.conf				1.19-1.20
+
+	- Now that /var/log/wtmp and /var/log/wtmp should have group=utmp,
+	  instruct newsyslog to follow up this when rotating these logs.
+	- Update permissions of /var/log/wtmp{,x} to match those installed by
+	  etc/Makefile. Fixes PR misc/30717.
+	[lukem, ticket #907]
 
