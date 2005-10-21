@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.1.1.2.2.6 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.1.1.2.2.7 2005/10/21 17:08:17 riz Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.26.2.12 2005/07/12 11:50:15 manubsd Exp */
 
@@ -782,7 +782,7 @@ t2isakmpsa(trns, sa)
 
 			sa->gssid = vmalloc(len / 2);
 
-			src = (const char *)(d + 1);
+			src = (__iconv_const char *)(d + 1);
 			srcleft = len;
 
 			dst = sa->gssid->v;
@@ -3563,12 +3563,23 @@ set_identifier(vpp, type, value)
 	vchar_t *new = NULL;
 
 	/* simply return if value is null. */
-	if (!value)
+	if (!value){
+		if( type == IDTYPE_FQDN || type == IDTYPE_USERFQDN){
+			plog(LLV_ERROR, LOCATION, NULL,
+				 "No %s\n", type == IDTYPE_FQDN ? "fqdn":"user fqdn");
+			return -1;
+		}
 		return 0;
+	}
 
 	switch (type) {
 	case IDTYPE_FQDN:
 	case IDTYPE_USERFQDN:
+		if(value->l <= 1){
+			plog(LLV_ERROR, LOCATION, NULL,
+				 "Empty %s\n", type == IDTYPE_FQDN ? "fqdn":"user fqdn");
+			return -1;
+		}
 #ifdef ENABLE_HYBRID
 	case IDTYPE_LOGIN:
 #endif
