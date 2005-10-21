@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.284 2005/10/21 11:35:57 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.285 2005/10/21 13:18:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13535,4 +13535,30 @@ etc/newsyslog.conf				1.19-1.20
 	- Update permissions of /var/log/wtmp{,x} to match those installed by
 	  etc/Makefile. Fixes PR misc/30717.
 	[lukem, ticket #907]
+
+share/man/man4/fxp.4				1.13-1.14
+
+	Document the receiver lockup workaround.
+	[abs, ticket #895]
+
+etc/defaults/rc.conf				1.70
+etc/rc.d/veriexec				1.8
+
+	Load Veriexec signatures after mountall. Use veriexec_strict and
+	veriexec_verbose to set strict level and verbose level in rc.conf.
+	Defaults are 0.
+	[elad, ticket #896]
+
+sys/arch/powerpc/oea/pmap.c			1.33 via patch
+
+	Avoid calling into the pool code while PSL_EE is off.
+	The pool code can do spl*()/splx(), and splx() requires PSL_EE
+	to be on.
+	[chs, ticket #897]
+
+usr.bin/vi/ex/ex_argv.c				1.16
+
+	The last revision introduced a bug in the handling of escape characters
+	while trying to correct a corner case.
+	[aymeric, ticket #898]
 
