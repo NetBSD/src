@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_argv.c,v 1.12.2.3 2005/10/15 15:41:50 riz Exp $	*/
+/*	$NetBSD: ex_argv.c,v 1.12.2.4 2005/10/21 13:17:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_argv.c	10.26 (Berkeley) 9/20/96";
 #else
-__RCSID("$NetBSD: ex_argv.c,v 1.12.2.3 2005/10/15 15:41:50 riz Exp $");
+__RCSID("$NetBSD: ex_argv.c,v 1.12.2.4 2005/10/21 13:17:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,8 +310,7 @@ argv_exp3(sp, excp, cmd, cmdlen)
 		off = exp->argsoff;
 		exp->args[off]->len = len;
 		for (p = exp->args[off]->bp; len > 0; --len, *p++ = *ap++)
-			if ((IS_ESCAPE(sp, excp, *ap) || *ap == '\\') &&
-			    len > 1)
+			if (IS_ESCAPE(sp, excp, *ap) || *ap == '\\')
 				++ap;
 		*p = '\0';
 	}
