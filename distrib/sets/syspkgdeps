@@ -9,7 +9,7 @@
 
 #set -u
 
-: ${TOOL_DB=db}
+: ${TOOL_DB:=db}
 DB="${TOOL_DB} -q"
 
 #

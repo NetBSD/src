@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.54 2004/07/23 15:11:26 erh Exp $
+# $NetBSD: maketars,v 1.55 2005/10/21 02:41:14 jmc Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -17,10 +17,10 @@
 prog=${0##*/}
 
 # set defaults
-: ${HOST_SH=sh}
-: ${MKTEMP=mktemp}
-: ${MTREE=mtree}
-: ${PAX=pax}
+: ${HOST_SH:=sh}
+: ${MKTEMP:=mktemp}
+: ${MTREE:=/usr/sbin/mtree}
+: ${PAX:=pax}
 
 rundir=${0%/*}
 . ${rundir}/sets.subr

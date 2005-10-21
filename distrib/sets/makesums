@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.10 2005/10/07 17:21:36 jmc Exp $
+# $NetBSD: makesums,v 1.11 2005/10/21 02:41:14 jmc Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -22,7 +22,7 @@
 prog=${0##*/}
 
 # set defaults
-: ${CKSUM=cksum}
+: ${CKSUM:=cksum}
 targetdir=$RELEASEDIR
 dash_all=no
 append=\>

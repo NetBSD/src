@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.23 2005/10/12 02:11:58 jmc Exp $
+#	$NetBSD: makesrctars,v 1.24 2005/10/21 02:41:14 jmc Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -9,9 +9,9 @@
 prog=${0##*/}
 
 # set defaults
-: ${CKSUM=cksum}
-: ${MTREE=/usr/sbin/mtree}
-: ${PAX=pax}
+: ${CKSUM:=cksum}
+: ${MTREE:=/usr/sbin/mtree}
+: ${PAX:=pax}
 
 xsrcdir=
 
