@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.15.2.3 2004/05/11 13:11:18 tron Exp $
+#	$NetBSD: makesrctars,v 1.15.2.3.2.1 2005/10/21 05:51:17 riz Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -9,8 +9,9 @@
 prog=${0##*/}
 
 # set defaults
-: ${CKSUM=cksum}
-: ${PAX=pax}
+: ${CKSUM:=cksum}
+: ${MTREE:=/usr/sbin/mtree}
+: ${PAX:=pax}
 
 xsrcdir=
 
@@ -20,7 +21,9 @@ export GZIP
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${prog} [-x xsrcdir] srcdir setdir
+Usage: ${prog} [-N password/group dir] [-x xsrcdir] srcdir setdir
+	-N dir		location which contains master.passwd and group files
+			(defaults to \${srcdir}/etc)
 	-x xsrcdir	build xsrc.tgz from xsrcdir
 	srcdir		location of sources
 	setdir		where to write the .tgz files to
@@ -29,10 +32,13 @@ USAGE
 }
 
 # handle args
-while getopts x: ch; do
+while getopts N:x: ch; do
 	case ${ch} in
-	x)	
+	x)
 		xsrcdir=${OPTARG}
+		;;
+	N)
+		PASSWD=${OPTARG}
 		;;
 	*)
 		usage
@@ -42,11 +48,11 @@ done
 shift $((${OPTIND} - 1))
 
 if [ $# -ne 2 ]; then
-	echo "Usage: $0 srcdir setdir"
-	exit 1
+	usage
 fi
 srcdir=$1
 setdir=$2
+: ${PASSWD:=${srcdir}/etc}
 
 if [ ! -d "${setdir}" ]; then
 	echo "${setdir} is not a directory"
@@ -54,19 +60,32 @@ if [ ! -d "${setdir}" ]; then
 fi
 
 makeset()
-{
+{(
 	set=$1.tgz
 	shift
+	dir=$1
+	shift
 	echo "Creating ${set}"
+	if [ "${dir}" != "." ]; then
+		cd $dir
+		srcprefix="${srcprefix}/${dir}"
+	fi
+	# Gets rid of any obj dirs and things below it 
+	echo "obj" > /tmp/in$$
+	egrep=$*
+	if [ "$egrep" = "" ]; then
+		egrep='.'
+	fi
 	set -f
-	find -s $* \
-	    ! \( \( -name obj -o -name 'obj.*' \) \( -type l -o -type d \) -prune \) \
-	    -print \
-	    | ${PAX} -w -d -s'|^\.|'${srcprefix}'|' \
-	    | gzip \
-	    > "${setdir}/${set}"
-	set +f
-}
+	${MTREE} -c -X /tmp/in$$ | ${MTREE} -C -k type | \
+		egrep -v 'type=link' | egrep $egrep | \
+		sed -e 's:type=file:& mode=0664:' \
+			-e 's:type=dir:& mode=0775:' \
+			-e 's:$: uname=root gname=wsrc:' | \
+		${PAX} -M -N ${PASSWD} -w -d -s'|^\.|'${srcprefix}'|' | \
+		gzip > "${setdir}/${set}"
+	rm -f /tmp/in$$
+)}
 
 
 # create (base)src sets
@@ -78,22 +97,16 @@ if ! cd "${srcdir}"; then
 fi
 
 srcprefix=usr/src
+export setdir MTREE PAX CKSUM GZIP PASSWD srcprefix
 
-makeset src .						\
-		! \( \(	-path ./gnu			\
-		     -o -path ./share			\
-		     -o -path ./sys			\
-		     -o -path ./contrib/sys		\
-		     -o -path ./usr.sbin/config		\
-		    \) -prune \)
+makeset src . \
+    -v '^\.\/gnu|^\.\/share|^\.\/sys|^\.\/contrib\.sys|^\.\/usr\.bin\/config'
 
-makeset gnusrc ./gnu
+makeset gnusrc gnu
 
-makeset syssrc ./sys ./contrib/sys ./usr.sbin/config			\
-		! \( -path ./sys/arch/\*/compile/\* -type d		\
-		    ! -name CVS -prune \)
+makeset syssrc . -e '^\..type=dir|^\.\/sys|^\.\/contrib.type=dir|^\.\/contrib\/sys|^\.\/usr\.sbin.type=dir|^\.\/usr\.sbin\/config'
 
-makeset sharesrc ./share
+makeset sharesrc share
 
 
 # create xsrc sets
@@ -115,3 +128,4 @@ echo "Creating checksum files"
 	${CKSUM} -m  *.tgz > MD5
 	${CKSUM} -o2 *.tgz > SYSVSUM
 )
+exit 0
