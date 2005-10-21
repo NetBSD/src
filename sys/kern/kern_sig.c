@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.202 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.202.2.1 2005/10/21 17:39:40 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.202 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.202.2.1 2005/10/21 17:39:40 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1369,6 +1369,20 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		SCHED_UNLOCK(s);
 }
 
+siginfo_t *
+siginfo_alloc(int flags)
+{
+
+	return pool_get(&siginfo_pool, flags);
+}
+
+void
+siginfo_free(void *arg)
+{
+
+	pool_put(&siginfo_pool, arg);
+}
+
 void
 kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
@@ -1383,7 +1397,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
-		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si = siginfo_alloc(PR_WAITOK);
 		si->_info = ksi->ksi_info;
 		le = li = NULL;
 		if (KSI_TRAP_P(ksi))
@@ -1391,8 +1405,8 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		else
 			li = l;
 		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
-		    sizeof(*si), si) != 0) {
-			pool_put(&siginfo_pool, si);
+		    sizeof(*si), si, siginfo_free) != 0) {
+			siginfo_free(si);
 			if (KSI_TRAP_P(ksi))
 				/* XXX What do we do here?? */;
 		}
