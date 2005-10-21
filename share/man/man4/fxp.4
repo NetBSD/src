@@ -1,4 +1,4 @@
-.\"	$NetBSD: fxp.4,v 1.11 2002/04/05 23:25:36 wiz Exp $
+.\"	$NetBSD: fxp.4,v 1.11.8.1 2005/10/21 12:38:21 tron Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,17 @@ This option is enabled by setting the
 .Dq link0
 option with
 .Xr ifconfig 8 .
+.Pp
+Some chipset revisions can suffer from a receiver-side lockup bug which
+can be mitigated by resetting the chip every sixteen seconds without
+traffic.  Since the probe for affected chipsets generates false positives
+and the workaround can cause momentary loss of responsiveness, particularly
+noticeable when playing audio, the workaround is not enabled by default.
+The boot messages will indicate if any interface may have this issue.
+The workaround is enabled by setting the
+.Dq link1
+option with
+.Xr ifconfig 8 .
 .Sh HARDWARE
 Cards supported by the
 .Nm
@@ -132,6 +143,9 @@ panic the system.
 The MDIO failed to become ready during an MII read operation.
 .It "fxp0: fxp_mdi_write: timed out"
 The MDIO failed to become ready during an MII write operation.
+.It "fxp0: May need receiver lock-up workaround"
+The interface may need to be periodically reset to workaround a receiver
+lock-up bug.
 .El
 .Sh SEE ALSO
 .Xr cardbus 4 ,
