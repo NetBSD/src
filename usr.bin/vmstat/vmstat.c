@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.137 2005/10/02 17:29:31 chs Exp $ */
+/* $NetBSD: vmstat.c,v 1.138 2005/10/22 15:32:48 nonaka Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.137 2005/10/02 17:29:31 chs Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.138 2005/10/22 15:32:48 nonaka Exp $");
 #endif
 #endif /* not lint */
 
@@ -943,10 +943,10 @@ cpustats(void)
 void
 dointr(int verbose)
 {
-	unsigned long *intrcnt;
+	unsigned long *intrcnt, *ointrcnt;
 	unsigned long long inttotal, uptime;
 	int nintr, inamlen;
-	char *intrname;
+	char *intrname, *ointrname;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
 	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
@@ -957,8 +957,8 @@ dointr(int verbose)
 	nintr = intrnl[X_EINTRCNT].n_value - intrnl[X_INTRCNT].n_value;
 	inamlen = intrnl[X_EINTRNAMES].n_value - intrnl[X_INTRNAMES].n_value;
 	if (nintr != 0 && inamlen != 0) {
-		intrcnt = malloc((size_t)nintr);
-		intrname = malloc((size_t)inamlen);
+		ointrcnt = intrcnt = malloc((size_t)nintr);
+		ointrname = intrname = malloc((size_t)inamlen);
 		if (intrcnt == NULL || intrname == NULL)
 			errx(1, "%s", "");
 		kread(intrnl, X_INTRCNT, intrcnt, (size_t)nintr);
@@ -973,8 +973,8 @@ dointr(int verbose)
 			intrname += strlen(intrname) + 1;
 			inttotal += *intrcnt++;
 		}
-		free(intrcnt);
-		free(intrname);
+		free(ointrcnt);
+		free(ointrname);
 	}
 
 	kread(namelist, X_ALLEVENTS, &allevents, sizeof allevents);
