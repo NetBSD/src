@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2005/10/04 19:29:34 martin Exp $
+# $NetBSD: Makefile,v 1.26 2005/10/22 15:56:16 riz Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -365,10 +365,12 @@ ${file:C/^.*://}: .PHONY
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 size-${image}: all-macppc_installboot
 .endif
-.if !empty(BASE_PORTS.${image}:Msgimips)
-SGIVOLHDR.size != ( fgrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
+.if !empty(BASE_PORTS.${image}:Msgimips) && defined(EXTFILES.sgimips)
+SGIVOLHDR.size= ( fgrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
 		${EXTFILEDIR}/sgimips.bootblock.h | \
 		 sed -e 's/[^0-9]*//' )
+.else
+SGIVOLHDR.size= echo 0
 .endif
 
 size-${image}: stage-${image} extfileprep fileprep-${image}
@@ -390,8 +392,9 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 	if [ "${BASE_PORTS.${image}:Mvax}" != "" ]; then \
 		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.vax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
 	fi && \
-	if [ "${BASE_PORTS.${image}:Msgimips}" != "" ]; then \
-		size=$$(($$size + ${SGIVOLHDR.size} * 512)); \
+	if [ "${BASE_PORTS.${image}:Msgimips}" != "" && \
+	    "${EXTFILES.sgimips}" != "" ]; then \
+		size=$$(($$size + ${SGIVOLHDR.size:sh} * 512)); \
 	fi && \
 	size=$$(($$(($$size + 16383)) / 16384 * 16384 + 32768)) && \
 	sizek=$$(($$size / 1024)) && \
@@ -426,15 +429,15 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 .if !empty(BASE_PORTS.${image}:Malpha)
 	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
 .endif
-.if !empty(BASE_PORTS.${image}:Msgimips)
+.if !empty(BASE_PORTS.${image}:Msgimips) && defined(EXTFILES.sgimips)
 	@echo "Prepending SGI volume header"
 	cp $@ $@.tmp
-	dd if=/dev/zero bs=512 count=${SGIVOLHDR.size} >> $@
+	dd if=/dev/zero bs=512 count=${SGIVOLHDR.size:sh} >> $@
 	${TOOLDIR}/bin/nbsgivol -f -i $@
 	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${STAGEDIR}/sgimipscd/aoutboot $@
 	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${STAGEDIR}/sgimipscd/ip2xboot $@
 	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${STAGEDIR}/sgimipscd/ip3xboot $@
-	dd if=$@.tmp of=$@ bs=512 seek=${SGIVOLHDR.size}
+	dd if=$@.tmp of=$@ bs=512 seek=${SGIVOLHDR.size:sh}
 	rm -f $@.tmp
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
