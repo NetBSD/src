@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.136 2005/04/18 23:36:03 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.137 2005/10/22 09:31:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -472,9 +472,6 @@ set_selected_sets(menudesc *menu, void *arg)
 		none = msg_string(MSG_None);
 	}
 
-	msg_display(MSG_cur_distsets);
-	msg_table_add(MSG_cur_distsets_header);
-
 	m = menu->opts;
 	for (list = menu_info->dist; list->desc; list++) {
 		if (!(menu_info->sets & list->set))
@@ -604,6 +601,9 @@ customise_sets(void)
 
 	if (menu_no == -1)
 		return;
+
+	msg_display(MSG_cur_distsets);
+	msg_table_add(MSG_cur_distsets_header);
 
 	set_menu_info.dist = dist_list;
 	set_menu_info.sets = ~0u;
