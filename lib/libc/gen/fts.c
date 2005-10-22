@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.25 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.26 2005/10/22 20:55:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.25 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.26 2005/10/22 20:55:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -288,12 +288,12 @@ fts_close(sp)
 }
 
 /*
- * Special case a root of "/" so that slashes aren't appended which would
- * cause paths to be written as "//foo".
+ * Special case of "/" at the end of the path so that slashes aren't
+ * appended which would cause paths to be written as "....//foo".
  */
 #define	NAPPEND(p)							\
-	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&	\
-	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
+	(p->fts_path[p->fts_pathlen - 1] == '/'				\
+	    ? p->fts_pathlen - 1 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
