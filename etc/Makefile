@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.315 2005/10/07 17:22:12 jmc Exp $
+#	$NetBSD: Makefile,v 1.316 2005/10/22 05:46:06 hubertf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -68,7 +68,7 @@ MKISOFS_FLAGS+=	-quiet
  
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
-# are empty, to preserve the old semantics of setting them below with "=".
+# are empty, to preserve the old semantics of setting them below with "+=".
 #
 BIN1=
 BIN2=
