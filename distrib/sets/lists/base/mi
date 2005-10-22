@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.574 2005/10/13 20:30:38 riz Exp $
+# $NetBSD: mi,v 1.575 2005/10/22 06:04:57 hubertf Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1783,6 +1783,8 @@
 ./usr/share/keymaps/atari			base-sys-share
 ./usr/share/keymaps/x68k			base-sys-share
 ./usr/share/ldscripts				base-util-share
+./usr/share/legal				base-sys-share
+./usr/share/legal/COPYRIGHT			base-sys-share
 ./usr/share/lkm					base-obsolete		obsolete
 ./usr/share/lkm/README				base-obsolete		obsolete
 ./usr/share/lkm/misc				base-obsolete		obsolete
@@ -2106,7 +2108,7 @@
 ./usr/share/locale/zh_TW/LC_MESSAGES		base-locale-zh
 ./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/man					base-man-share
-./usr/share/man/COPYRIGHT			base-man-share		share
+./usr/share/man/COPYRIGHT			base-obsolete		obsolete
 ./usr/share/man/cat1				base-man-share
 ./usr/share/man/cat1/atari			base-man-share
 ./usr/share/man/cat1/hp300			base-man-share
