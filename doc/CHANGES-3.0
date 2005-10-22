@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.287 2005/10/21 18:59:04 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.288 2005/10/22 03:58:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13628,4 +13628,37 @@ sys/arch/arm/ep93xx/epe.c			1.3
 
 	Fix write sequence to PHY.
 	[hamajima, ticket #904]
+
+usr.sbin/rpc.statd/statd.c			1.24
+
+	PR/31502: John: rpc.statd doesn't save failed notifies in the database.
+	Tested by Martti Kuparinen.
+	[christos, ticket #905]
+
+share/misc/airport				1.27
+
+	It's HERakleion.
+	[is, ticket #908]
+
+sys/netinet6/icmp6.c				1.111
+
+	In icmp6_redirect_output(), sip6 is initialised to point to the data
+	area of m0. But m0 may be freed later, so trying to use sip6 at the
+	end of this function is wrong. My guess is that we want to reference
+	the data area of m (the mbuf about to be send) instead at this point.
+	Fix a panic on Xen (where a data area of a mbuf may be unmapped when the
+	mbuf is freed), and probably potential data/pool corruption in other
+	cases.
+	[bouyer, ticket #909]
+
+sys/netinet6/ip6_mroute.c			1.67
+
+	mif6table is used by netstat, so don't declare it static. Fix netstat -g
+	on Xen, whose ELF loader doesn't load local symbols in the symbol table.
+	[bouyer, ticket #910]
+
+sys/kern/uipc_socket.c				1.112
+
+	Check the argument to SO_LINGER.
+	[nathanw, ticket #911]
 
