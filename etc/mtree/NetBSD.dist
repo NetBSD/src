@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.291 2005/10/11 06:12:43 he Exp $
+#	$NetBSD: NetBSD.dist,v 1.292 2005/10/22 12:31:52 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -484,6 +484,7 @@
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
 ./usr/share/ldscripts
+./usr/share/legal
 ./usr/share/locale
 ./usr/share/locale/be
 ./usr/share/locale/be/LC_MESSAGES
