@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.12 2005/07/07 16:56:50 nonaka Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.13 2005/10/22 15:13:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.12 2005/07/07 16:56:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.13 2005/10/22 15:13:38 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,9 @@ static __inline__ void cache_sh4_op_line_32(vaddr_t, vaddr_t, uint32_t,
 static __inline__ void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, uint32_t,
     uint32_t);
 static __inline__ void cache_sh4_emode_op_line_32(vaddr_t, vaddr_t,
-    uint32_t, uint32_t);
+    uint32_t, uint32_t, uint32_t);
 static __inline__ void cache_sh4_emode_op_8lines_32(vaddr_t, vaddr_t,
-    uint32_t, uint32_t);
+    uint32_t, uint32_t, uint32_t);
 
 void
 sh4_cache_config(void)
@@ -344,7 +344,7 @@ sh4_dcache_wb_range(vaddr_t va, vsize_t sz)
  */
 static __inline__ void
 cache_sh4_emode_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask,
-    uint32_t bits)
+    uint32_t bits, uint32_t way_shift)
 {
 	vaddr_t cca;
 
@@ -352,10 +352,10 @@ cache_sh4_emode_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask,
 	va &= mask;
 
 	/* operate for each way */
-	cca = base | (0 << 14) | va;
+	cca = base | (0 << way_shift) | va;
 	_reg_bclr_4(cca, bits);
 
-	cca = base | (1 << 14) | va;
+	cca = base | (1 << way_shift) | va;
 	_reg_bclr_4(cca, bits);
 }
 
@@ -366,7 +366,7 @@ cache_sh4_emode_op_line_32(vaddr_t va, vaddr_t base, uint32_t mask,
  */
 static __inline__ void
 cache_sh4_emode_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask,
-    uint32_t bits)
+    uint32_t bits, uint32_t way_shift)
 {
 	__volatile__ uint32_t *cca;
 
@@ -374,7 +374,7 @@ cache_sh4_emode_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask,
 	va &= mask;
 
 	/* operate for each way */
-	cca = (__volatile__ uint32_t *)(base | (0 << 14) | va);
+	cca = (__volatile__ uint32_t *)(base | (0 << way_shift) | va);
 	cca[ 0] &= ~bits;
 	cca[ 8] &= ~bits;
 	cca[16] &= ~bits;
@@ -384,7 +384,7 @@ cache_sh4_emode_op_8lines_32(vaddr_t va, vaddr_t base, uint32_t mask,
 	cca[48] &= ~bits;
 	cca[56] &= ~bits;
 
-	cca = (__volatile__ uint32_t *)(base | (1 << 14) | va);
+	cca = (__volatile__ uint32_t *)(base | (1 << way_shift) | va);
 	cca[ 0] &= ~bits;
 	cca[ 8] &= ~bits;
 	cca[16] &= ~bits;
@@ -406,7 +406,7 @@ sh4_emode_icache_sync_all(void)
 	RUN_P2;
 	while (va < eva) {
 		cache_sh4_emode_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK,
-		    CCIA_V);
+		    CCIA_V, 13);
 		va += 32 * 8;
 	}
 	RUN_P1;
@@ -423,13 +423,13 @@ sh4_emode_icache_sync_range_index(vaddr_t va, vsize_t sz)
 	RUN_P2;
 	while ((eva - va) >= (8 * 32)) {
 		cache_sh4_emode_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK,
-		    CCIA_V);
+		    CCIA_V, 13);
 		va += 32 * 8;
 	}
 
 	while (va < eva) {
 		cache_sh4_emode_op_line_32(va, SH4_CCIA, CCIA_ENTRY_MASK,
-		    CCIA_V);
+		    CCIA_V, 13);
 		va += 32;
 	}
 	RUN_P1;
@@ -444,7 +444,7 @@ sh4_emode_dcache_wbinv_all(void)
 	RUN_P2;
 	while (va < eva) {
 		cache_sh4_emode_op_8lines_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
-		    (CCDA_U | CCDA_V));
+		    (CCDA_U | CCDA_V), 14);
 		va += 32 * 8;
 	}
 	RUN_P1;
@@ -459,13 +459,13 @@ sh4_emode_dcache_wbinv_range_index(vaddr_t va, vsize_t sz)
 	RUN_P2;
 	while ((eva - va) >= (8 * 32)) {
 		cache_sh4_emode_op_8lines_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
-		    (CCDA_U | CCDA_V));
+		    (CCDA_U | CCDA_V), 14);
 		va += 32 * 8;
 	}
 
 	while (va < eva) {
 		cache_sh4_emode_op_line_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
-		    (CCDA_U | CCDA_V));
+		    (CCDA_U | CCDA_V), 14);
 		va += 32;
 	}
 	RUN_P1;
