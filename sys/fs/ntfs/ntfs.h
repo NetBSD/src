@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.10 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.11 2005/10/23 04:28:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,7 +28,6 @@
  *	Id: ntfs.h,v 1.5 1999/05/12 09:42:51 semenu Exp
  */
 
-/*#define NTFS_DEBUG 1*/
 #if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
 #endif
@@ -321,7 +320,7 @@ typedef int (vop_t)(void *);
 #define PDIRUNLOCK		0
 #endif /* NetBSD */
 
-#if defined(NTFS_DEBUG)
+#ifdef NTFS_DEBUG
 extern int ntfs_debug;
 #define DPRINTF(X, Y) do { if(ntfs_debug >= (X)) printf Y; } while(0)
 #define dprintf(a) DPRINTF(1, a)
