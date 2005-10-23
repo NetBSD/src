@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.5 2002/04/12 18:50:33 thorpej Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.6 2005/10/23 15:02:30 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,7 +60,7 @@
 
 #ifndef _LOCORE
 typedef struct irqhandler {
-	int (*ih_func) __P((void *arg));/* handler function */
+	int (*ih_func)(void *);		/* handler function */
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_count;			/* Interrupt number (for accounting) */
@@ -76,10 +76,10 @@ typedef struct irqhandler {
 extern u_int imask[NIPL];
 extern irqhandler_t *irqhandlers[NIRQS];
 
-void irq_init __P((void));
-void irq_setmasks __P((void));
-void disable_irq __P((int));
-void enable_irq __P((int));
+void irq_init(void);
+void irq_setmasks(void);
+void disable_irq(int);
+void enable_irq(int);
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
