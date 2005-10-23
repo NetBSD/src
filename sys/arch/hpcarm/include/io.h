@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.1 2001/02/23 03:48:16 ichiro Exp $	*/
+/*	$NetBSD: io.h,v 1.2 2005/10/23 15:02:48 peter Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 /*
  * The podule addresses should be removed and localised for the podules.
- * This is difficuly as the podule addresses are interleaved with the
+ * This is difficult as the podule addresses are interleaved with the
  * other IO devices thus making it difficult to separate them.
  */
  
