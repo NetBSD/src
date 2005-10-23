@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.61 2005/02/18 22:16:27 dsl Exp $	*/
+/*	$NetBSD: refresh.c,v 1.62 2005/10/23 18:38:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.61 2005/02/18 22:16:27 dsl Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.62 2005/10/23 18:38:52 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -608,7 +608,7 @@ makech(wy)
 #endif
 		_cursesi_screen->ly = wy;
 		_cursesi_screen->lx = wx;
-		while (memcmp(nsp, csp, sizeof(__LDATA)) != 0 && wx <= lch) {
+		while (wx <= lch && memcmp(nsp, csp, sizeof(__LDATA)) != 0) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
 				/* Check for clear to end-of-line. */
