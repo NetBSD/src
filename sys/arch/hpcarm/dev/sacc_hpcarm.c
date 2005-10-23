@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.2 2005/06/30 17:03:53 drochner Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.3 2005/10/23 15:19:58 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.2 2005/06/30 17:03:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.3 2005/10/23 15:19:58 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.2 2005/06/30 17:03:53 drochner Exp
 
 #include "locators.h"
 
-static	void	sacc_attach(struct device *, struct device *, void *);
+static void	sacc_attach(struct device *, struct device *, void *);
 static int	sacc_intr(void *);
 
 struct platid_data sacc_platid_table[] = {
@@ -83,10 +83,7 @@ CFATTACH_DECL(sacc, sizeof(struct sacc_softc),
 #endif
 
 static void
-sacc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sacc_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i, gpiopin;
 	u_int32_t skid;
@@ -117,7 +114,7 @@ sacc_attach(parent, self, aux)
 	printf("%s: SA1111 rev %d.%d\n", sc->sc_dev.dv_xname,
 	       (skid & 0xf0) >> 3, skid & 0xf);
 
-	for(i = 0; i < SACCIC_LEN; i++)
+	for (i = 0; i < SACCIC_LEN; i++)
 		sc->sc_intrhand[i] = NULL;
 
 	/* initialize SA1111 interrupt controller */
@@ -139,8 +136,7 @@ sacc_attach(parent, self, aux)
 }
 
 static int
-sacc_intr(arg)
-	void *arg;
+sacc_intr(void *arg)
 {
 	int i;
 	u_int32_t mask;
@@ -158,7 +154,7 @@ sacc_intr(arg)
 	bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
 			  SAGPIO_EDR, sc->sc_gpiomask);
 
-	for(i = 0, mask = 1; i < 32; i++, mask <<= 1)
+	for (i = 0, mask = 1; i < 32; i++, mask <<= 1)
 		if (intstat.lo & mask) {
 			/*
 			 * Clear intr status before calling intr handlers.
@@ -168,14 +164,14 @@ sacc_intr(arg)
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR0, 1 << i);
 
-			for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
+			for (ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
 				softintr_schedule(ih->ih_soft);
 		}
-	for(i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
+	for (i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
 		if (intstat.hi & mask) {
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR1, 1 << i);
-			for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
+			for (ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
 				softintr_schedule(ih->ih_soft);
 		}
 	return 1;
