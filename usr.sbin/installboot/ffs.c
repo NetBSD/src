@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.16 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.17 2005/10/23 16:12:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.16 2005/08/19 02:09:50 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.17 2005/10/23 16:12:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -401,7 +401,7 @@ ffs_findstage2_ino(ib_params *params, void *_ino,
 	de = (struct direct *)&dirbuf[0];
 	ede = (struct direct *)&dirbuf[blksize];
 	while (de < ede) {
-		ino = de->d_ino;
+		ino = de->d_fileno;
 		if (params->fstype->needswap) {
 			ino = bswap32(ino);
 			de->d_reclen = bswap16(de->d_reclen);
