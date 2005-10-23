@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.25 2005/10/23 15:21:08 peter Exp $ */
+/* $NetBSD: j720ssp.c,v 1.26 2005/10/23 15:27:06 peter Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.25 2005/10/23 15:21:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.26 2005/10/23 15:27:06 peter Exp $");
 
 #include "apm.h"
 
@@ -408,6 +408,9 @@ j720kbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_KBD;
+		return 0;
+	case WSKBDIO_GETLEDS:	/* dummy for wsconsctl(8) */
+		*(int *)data = 0;
 		return 0;
 	}
 
