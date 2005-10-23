@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.21 2005/09/06 21:40:37 kleink Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.22 2005/10/23 15:30:02 peter Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.21 2005/09/06 21:40:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.22 2005/10/23 15:30:02 peter Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1671,6 +1671,7 @@ sacomcnpollc(dev, on)
 
 }
 
+#if 0
 #ifdef DEBUG
 int
 sacomcncharpoll()
@@ -1686,7 +1687,7 @@ sacomcncharpoll()
 
 	return (c);
 }
-
+#endif
 #endif
 
 /* helper function to identify the com ports used by
