@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.95 2005/08/19 12:29:18 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.96 2005/10/23 18:38:53 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.95 2005/08/19 12:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.96 2005/10/23 18:38:53 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -226,7 +226,7 @@ icmp_mtudisc_callback_register(void (*func)(struct in_addr))
  */
 void
 icmp_error(struct mbuf *n, int type, int code, n_long dest,
-    struct ifnet *destifp)
+    int destmtu)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
 	unsigned oiplen = oip->ip_hl << 2;
@@ -327,8 +327,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 			icp->icmp_pptr = code;
 			code = 0;
 		} else if (type == ICMP_UNREACH &&
-		    code == ICMP_UNREACH_NEEDFRAG && destifp)
-			icp->icmp_nextmtu = htons(destifp->if_mtu);
+		    code == ICMP_UNREACH_NEEDFRAG && destmtu)
+			icp->icmp_nextmtu = htons(destmtu);
 	}
 
 	icp->icmp_code = code;
