@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.6 2003/11/05 21:10:59 scw Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.7 2005/10/23 15:04:43 peter Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -70,7 +70,7 @@ Ldbg_str:
 AST_ALIGNMENT_FAULT_LOCALS
 
 /*
- * Regsister usage
+ * Register usage
  *
  *  r6  - Address of current handler
  *  r7  - Pointer to handler pointer list
@@ -151,7 +151,7 @@ Lfind_highest_ipl:
 	bl	_C_LABEL(printf)
 	ldmia	sp!, {r0,r1,r2}
 #endif
-        mrs     r0, cpsr_all		/* Enable IRQ's */
+        mrs     r0, cpsr_all		/* Enable IRQs */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -175,7 +175,7 @@ irqloop:
 	str	r1, [r0, #(V_INTR)]
 
 	/*
-	 * XXX: Should stats be accumlated for every interrupt routine
+	 * XXX: Should stats be accumulated for every interrupt routine
 	 * called or for every physical interrupt that is serviced.
 	 */
 
