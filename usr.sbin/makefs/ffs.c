@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.36 2005/08/20 15:00:27 kent Exp $	*/
+/*	$NetBSD: ffs.c,v 1.37 2005/10/23 16:12:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.36 2005/08/20 15:00:27 kent Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.37 2005/10/23 16:12:02 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -970,7 +970,7 @@ ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir, int needswap)
 		reclen = ufs_rw16(de->d_reclen, needswap);
 		printf(
 	    " inode %4d %7s offset %4d reclen %3d namlen %3d name %s\n",
-		    ufs_rw32(de->d_ino, needswap),
+		    ufs_rw32(de->d_fileno, needswap),
 		    inode_type(DTTOIF(de->d_type)), i, reclen,
 		    de->d_namlen, de->d_name);
 		i += reclen;
@@ -990,7 +990,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 	assert (node != NULL);
 					/* create direct entry */
 	(void)memset(&de, 0, sizeof(de));
-	de.d_ino = ufs_rw32(node->inode->ino, needswap);
+	de.d_fileno = ufs_rw32(node->inode->ino, needswap);
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
 	strcpy(de.d_name, name);
@@ -1007,7 +1007,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		    "ffs_make_dirbuf: dbuf siz %d cur %d lastlen %d\n"
 		    "  ino %d type %d reclen %d namlen %d name %.30s\n",
 		    dbuf->size, dbuf->cur, llen,
-		    ufs_rw32(de.d_ino, needswap), de.d_type, reclen,
+		    ufs_rw32(de.d_fileno, needswap), de.d_type, reclen,
 		    de.d_namlen, de.d_name);
 
 	if (reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
