@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.73 2005/06/02 21:26:00 uwe Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.74 2005/10/23 15:06:35 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,12 +44,9 @@
  *
  * Created      : 17/09/94
  */
-/*
- * hpc_machdep.c 
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.73 2005/06/02 21:26:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.74 2005/10/23 15:06:35 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -192,14 +189,14 @@ extern vaddr_t sa11x0_idle_mem;
 
 /* Prototypes */
 
-void physcon_display_base	__P((u_int addr));
-void consinit		__P((void));
+void physcon_display_base(u_int addr);
+void consinit(void);
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
+void data_abort_handler(trapframe_t *);
+void prefetch_abort_handler(trapframe_t *);
+void undefinedinstruction_bounce(trapframe_t *);
 
-u_int cpu_get_control		__P((void));
+u_int cpu_get_control(void);
 
 void rpc_sa110_cc_setup(void);
 
@@ -212,26 +209,21 @@ void dumppages(char *, int);
 #endif
 
 u_int initarm(int, char **, struct bootinfo *);
-extern void dump_spl_masks	__P((void));
-extern void dumpsys	__P((void));
+extern void dump_spl_masks(void);
+extern void dumpsys(void);
 
 /*
- * void cpu_reboot(int howto, char *bootstr)
- *
- * Reboots the system
+ * Reboots the system.
  *
  * Deal with any syncing, unmounting, dumping and shutdown hooks,
  * then reset the CPU.
  */
-
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/*
 	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
+	 * and crash to earth fast.
 	 */
 	if (cold) {
 		doshutdownhooks();
@@ -249,9 +241,10 @@ cpu_reboot(howto, bootstr)
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the unmount.
-	 * It looks like syslogd is getting woken up only to find that it cannot
-	 * page part of the binary in as the filesystem has been unmounted.
+	 * Note: Unless cold is set to 1 here, syslogd will die during
+	 * the unmount.  It looks like syslogd is getting woken up only
+	 * to find that it cannot page part of the binary in as the
+	 * file system has been unmounted.
 	 */
 	if (!(howto & RB_NOSYNC))
 		bootsync();
@@ -267,7 +260,7 @@ cpu_reboot(howto, bootstr)
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
-	/* Make sure IRQ's are disabled */
+	/* Make sure IRQs are disabled */
 	IRQdisable;
 
 	if (howto & RB_HALT) {
@@ -288,22 +281,17 @@ cpu_reboot(howto, bootstr)
 #endif
 
 /*
- *
  * Initial entry point on startup. This gets called before main() is
  * entered.
  * It should be responsible for setting up everything that must be
  * in place when main is called.
- * This includes
+ * This includes:
  *   Taking a copy of the boot configuration structure.
  *   Initialising the physical console so characters can be printed.
- *   Setting up page tables for the kernel
+ *   Setting up page tables for the kernel.
  */
-
 u_int
-initarm(argc, argv, bi)
-	int argc;
-	char **argv;
-	struct bootinfo *bi;
+initarm(int argc, char **argv, struct bootinfo *bi)
 {
 	int loop;
 	u_int kerneldatasize, symbolsize;
@@ -340,10 +328,10 @@ initarm(argc, argv, bi)
 
 	symbolsize = 0;
 #if NKSYMS || defined(DDB) || defined(LKM)
-	if (! memcmp(&end, "\177ELF", 4)) {
+	if (!memcmp(&end, "\177ELF", 4)) {
 		sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
 		loop = ((Elf_Ehdr *)&end)->e_shnum;
-		for(; loop; loop--, sh++)
+		for (; loop; loop--, sh++)
 			if (sh->sh_offset > 0 &&
 			    (sh->sh_offset + sh->sh_size) > symbolsize)
 				symbolsize = sh->sh_offset + sh->sh_size;
@@ -358,7 +346,7 @@ initarm(argc, argv, bi)
 	/* parse kernel args */
 	boot_file[0] = '\0';
 	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
-	for(argc--, argv++; argc; argc--, argv++)
+	for (argc--, argv++; argc; argc--, argv++)
 		switch(**argv) {
 		case 'a':
 			boothowto |= RB_ASKNAME;
@@ -395,12 +383,12 @@ initarm(argc, argv, bi)
 
 	/*
 	 * hpcboot has loaded me with MMU disabled.
-	 * So create kernel page tables and enable MMU
+	 * So create kernel page tables and enable MMU.
 	 */
 
 	/*
 	 * Set up the variables that define the availablilty of physcial
-	 * memory
+	 * memory.
 	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = physical_start
@@ -419,8 +407,8 @@ initarm(argc, argv, bi)
 	memset((void *)KERNEL_BASE, 0, KERNEL_TEXT_BASE - KERNEL_BASE);
 
 	/*
-	 * Right We have the bottom meg of memory mapped to 0x00000000
-	 * so was can get at it. The kernel will ocupy the start of it.
+	 * Right. We have the bottom meg of memory mapped to 0x00000000
+	 * so was can get at it. The kernel will occupy the start of it.
 	 * After the kernel/args we allocate some of the fixed page tables
 	 * we need to get the system going.
 	 * We allocate one page directory and 8 page tables and store the
@@ -428,16 +416,16 @@ initarm(argc, argv, bi)
 	 * Must remember that neither the page L1 or L2 page tables are the
 	 * same size as a page !
 	 *
-	 * Ok the next bit of physical allocate may look complex but it is
+	 * Ok, the next bit of physical allocate may look complex but it is
 	 * simple really. I have done it like this so that no memory gets
 	 * wasted during the allocate of various pages and tables that are
 	 * all different sizes.
 	 * The start address will be page aligned.
 	 * We allocate the kernel page directory on the first free 16KB
-	 * boundry we find.
-	 * We allocate the kernel page tables on the first 1KB boundry we find.
+	 * boundary we find.
+	 * We allocate the kernel page tables on the first 1KB boundary we find.
 	 * We allocate 9 PT's. This means that in the process we
-	 * KNOW that we will encounter at least 1 16KB boundry.
+	 * KNOW that we will encounter at least 1 16KB boundary.
 	 *
 	 * Eventually if the top end of the memory gets used for process L1
 	 * page tables the kernel L1 page table may be moved up there.
@@ -500,7 +488,7 @@ initarm(argc, argv, bi)
 	 * in recent versions of the pmap code. Due to the calls used there
 	 * we cannot allocate virtual memory during bootstrap.
 	 */
-	for(;;) {
+	for (;;) {
 		alloc_pages(sa1_cc_base, 1);
 		if (! (sa1_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
 			break;
@@ -515,8 +503,8 @@ initarm(argc, argv, bi)
 	alloc_pages(sa11x0_idle_mem, 1);
 
 	/*
-	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables
+	 * Ok, we have allocated physical pages for the primary kernel
+	 * page tables.
 	 */
 
 #ifdef VERBOSE_INIT_ARM
@@ -524,9 +512,9 @@ initarm(argc, argv, bi)
 #endif
 
 	/*
-	 * Now we start consturction of the L1 page table
+	 * Now we start construction of the L1 page table.
 	 * We start by mapping the L2 page tables into the L1.
-	 * This means that we can replace L1 mappings later on if necessary
+	 * This means that we can replace L1 mappings later on if necessary.
 	 */
 	l1pagetable = kernel_l1pt.pv_pa;
 
@@ -665,7 +653,7 @@ initarm(argc, argv, bi)
 
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references
-	 * this during uvm init
+	 * this during uvm init.
 	 */
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	lwp0.l_addr = proc0paddr;
@@ -742,7 +730,7 @@ initarm(argc, argv, bi)
 	}
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
 void
@@ -767,7 +755,7 @@ consinit(void)
 #ifdef DEBUG_BEFOREMMU
 cons_decl(sacom);
 void
-fakecninit()
+fakecninit(void)
 {
 	static struct consdev fakecntab = cons_init(sacom);
 	cn_tab = &fakecntab;
@@ -784,7 +772,7 @@ fakecninit()
  * and then we alternate the cache cleaning between the
  * two banks.
  * The cache cleaning code requires requires 2 banks aligned
- * on total size boundry so the banks can be alternated by
+ * on total size boundary so the banks can be alternated by
  * eorring the size bit (assumes the bank size is a power of 2)
  */
 void
@@ -812,12 +800,12 @@ void dumppages(char *start, int nbytes)
 	char *p1;
 	int i;
 
-	for(i = nbytes; i > 0; i -= 16, p += 16) {
-		for(p1 = p + 15; p != p1; p1--) {
+	for (i = nbytes; i > 0; i -= 16, p += 16) {
+		for (p1 = p + 15; p != p1; p1--) {
 			if (*p1)
 				break;
 		}
-		if (! *p1)
+		if (!*p1)
 			continue;
 		printf("%08x %02x %02x %02x %02x %02x %02x %02x %02x"
 		    " %02x %02x %02x %02x %02x %02x %02x %02x\n",
