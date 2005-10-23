@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.2 2005/10/23 15:04:43 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -232,7 +232,7 @@ sa11x0_bs_wr_2_loop:
 	mov	pc, lr
 
 /*
- * set regiuon
+ * set region
  */
 
 ENTRY(sa11x0_bs_sr_2)
