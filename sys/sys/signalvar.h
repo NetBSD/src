@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.59 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.60 2005/10/23 00:09:14 cube Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,7 @@
 #include <sys/siginfo.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/systm.h>
 
 /*
  * Kernel signal definitions and data structures,
@@ -180,8 +181,8 @@ void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
 
-int	__sigtimedwait1(struct lwp *, void *, register_t *, copyinout_t,
-    copyinout_t, copyinout_t);
+int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
+    copyin_t, copyout_t);
 
 /*
  * Machine-dependent functions:
