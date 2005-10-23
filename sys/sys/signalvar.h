@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.60 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.61 2005/10/23 11:41:08 cube Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,6 @@
 #include <sys/siginfo.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
-#include <sys/systm.h>
 
 /*
  * Kernel signal definitions and data structures,
@@ -131,6 +130,8 @@ do {									\
 #define	SA_NORESET	0x80		/* not reset when caught */
 
 #ifdef _KERNEL
+
+#include <sys/systm.h>			/* for copyin_t/copyout_t */
 
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
