@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.13 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.14 2005/10/23 16:39:29 kochi Exp $");
 
 #include "acpi.h"
 
@@ -323,6 +323,7 @@ AcpiEnterSleepState (
     ACPI_BIT_REGISTER_INFO  *SleepTypeRegInfo;
     ACPI_BIT_REGISTER_INFO  *SleepEnableRegInfo;
     UINT32                  InValue;
+    UINT32                  Retry;
     ACPI_STATUS             Status;
 
 
@@ -477,6 +478,7 @@ AcpiEnterSleepState (
 
     /* Wait until we enter sleep state */
 
+    Retry = 1000;
     do
     {
         Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue,
@@ -486,6 +488,14 @@ AcpiEnterSleepState (
             return_ACPI_STATUS (Status);
         }
 
+        /*
+         * Some BIOSs don't set WAK_STS at all. Give up waiting after
+         * 1000 retries if it still isn't set.
+         */
+        if (Retry-- == 0)
+        {
+            break;
+        }
         /* Spin until we wake */
 
     } while (!InValue);
