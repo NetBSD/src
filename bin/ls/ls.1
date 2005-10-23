@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.55 2005/10/10 20:46:17 wiz Exp $
+.\"	$NetBSD: ls.1,v 1.56 2005/10/23 20:52:47 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)ls.1	8.7 (Berkeley) 7/29/94
 .\"
-.Dd October 10, 2005
+.Dd October 23, 2005
 .Dt LS 1
 .Os
 .Sh NAME
@@ -129,7 +129,11 @@ and
 options, causing the sizes to be reported in bytes displayed in a human
 readable format.
 Overrides
-.Fl k .
+.Fl k
+and makes
+.Fl l
+suppress
+.Fl s .
 .It Fl i
 For each file, print the file's file serial number (inode number).
 .It Fl k
