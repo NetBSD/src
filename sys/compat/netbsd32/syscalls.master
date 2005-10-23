@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 2005/08/19 04:24:38 christos Exp $
+	$NetBSD: syscalls.master,v 1.40 2005/10/23 01:33:32 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -547,8 +547,11 @@
 342	UNIMPL
 343	STD		{ int netbsd32_rasctl(netbsd32_caddr_t addr, netbsd32_size_t len, \
 			    int op); }
-344	UNIMPL
-345	UNIMPL
+344	NOARGS		{ int sys_kqueue(void); }
+345	STD		{ int netbsd32_kevent(int fd, \
+			    netbsd32_keventp_t changelist, netbsd32_size_t nchanges, \
+			    netbsd32_keventp_t eventlist, netbsd32_size_t nevents, \
+			    netbsd32_timespecp_t timeout); }
 346	UNIMPL
 347	UNIMPL
 348	UNIMPL

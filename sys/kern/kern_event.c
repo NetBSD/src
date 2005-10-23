@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.23 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.24 2005/10/23 01:33:32 cube Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.24 2005/10/23 01:33:32 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23 2005/05/29 22:24:15 christos Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-static int	kqueue_scan(struct file *fp, size_t maxevents,
-		    struct kevent *ulistp, const struct timespec *timeout,
-		    struct proc *p, register_t *retval);
 static void	kqueue_wakeup(struct kqueue *kq);
 
+static int	kqueue_scan(struct file *, size_t, struct kevent *,
+    const struct timespec *, struct proc *, register_t *,
+    const struct kevent_ops *);
 static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 		    struct ucred *cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
@@ -629,6 +629,27 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 /*
  * kevent(2) system call.
  */
+static int
+kevent_fetch_changes(void *private, const struct kevent *changelist,
+    struct kevent *changes, size_t index, int n)
+{
+	return copyin(changelist + index, changes, n * sizeof(*changes));
+}
+
+static int
+kevent_put_events(void *private, struct kevent *events,
+    struct kevent *eventlist, size_t index, int n)
+{
+	return copyout(events, eventlist + index, n * sizeof(*events));
+}
+
+static const struct kevent_ops kevent_native_ops = {
+	keo_private: NULL,
+	keo_fetch_timeout: copyin,
+	keo_fetch_changes: kevent_fetch_changes,
+	keo_put_events: kevent_put_events,
+};
+
 int
 sys_kevent(struct lwp *l, void *v, register_t *retval)
 {
@@ -640,17 +661,29 @@ sys_kevent(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) nevents;
 		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
+
+	return kevent1(l, retval, SCARG(uap, fd), SCARG(uap, changelist),
+	    SCARG(uap, nchanges), SCARG(uap, eventlist), SCARG(uap, nevents),
+	    SCARG(uap, timeout), &kevent_native_ops);
+}
+
+int
+kevent1(struct lwp *l, register_t *retval, int fd,
+    const struct kevent *changelist, size_t nchanges, struct kevent *eventlist,
+    size_t nevents, const struct timespec *timeout,
+    const struct kevent_ops *keops)
+{
 	struct kevent	*kevp;
 	struct kqueue	*kq;
 	struct file	*fp;
 	struct timespec	ts;
 	struct proc	*p;
-	size_t		i, n;
+	size_t		i, n, ichange;
 	int		nerrors, error;
 
 	p = l->l_proc;
 	/* check that we're dealing with a kq */
-	fp = fd_getfile(p->p_fd, SCARG(uap, fd));
+	fp = fd_getfile(p->p_fd, fd);
 	if (fp == NULL)
 		return (EBADF);
 
@@ -661,22 +694,23 @@ sys_kevent(struct lwp *l, void *v, register_t *retval)
 
 	FILE_USE(fp);
 
-	if (SCARG(uap, timeout) != NULL) {
-		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
+	if (timeout != NULL) {
+		error = (*keops->keo_fetch_timeout)(timeout, &ts, sizeof(ts));
 		if (error)
 			goto done;
-		SCARG(uap, timeout) = &ts;
+		timeout = &ts;
 	}
 
 	kq = (struct kqueue *)fp->f_data;
 	nerrors = 0;
+	ichange = 0;
 
 	/* traverse list of events to register */
-	while (SCARG(uap, nchanges) > 0) {
+	while (nchanges > 0) {
 		/* copyin a maximum of KQ_EVENTS at each pass */
-		n = MIN(SCARG(uap, nchanges), KQ_NEVENTS);
-		error = copyin(SCARG(uap, changelist), kq->kq_kev,
-		    n * sizeof(struct kevent));
+		n = MIN(nchanges, KQ_NEVENTS);
+		error = (*keops->keo_fetch_changes)(keops->keo_private,
+		    changelist, kq->kq_kev, ichange, n);
 		if (error)
 			goto done;
 		for (i = 0; i < n; i++) {
@@ -685,24 +719,23 @@ sys_kevent(struct lwp *l, void *v, register_t *retval)
 			/* register each knote */
 			error = kqueue_register(kq, kevp, p);
 			if (error) {
-				if (SCARG(uap, nevents) != 0) {
+				if (nevents != 0) {
 					kevp->flags = EV_ERROR;
 					kevp->data = error;
-					error = copyout((caddr_t)kevp,
-					    (caddr_t)SCARG(uap, eventlist),
-					    sizeof(*kevp));
+					error = (*keops->keo_put_events)
+					    (keops->keo_private, kevp,
+					    eventlist, nerrors, 1);
 					if (error)
 						goto done;
-					SCARG(uap, eventlist)++;
-					SCARG(uap, nevents)--;
+					nevents--;
 					nerrors++;
 				} else {
 					goto done;
 				}
 			}
 		}
-		SCARG(uap, nchanges) -= n;	/* update the results */
-		SCARG(uap, changelist) += n;
+		nchanges -= n;	/* update the results */
+		ichange += n;
 	}
 	if (nerrors) {
 		*retval = nerrors;
@@ -711,8 +744,7 @@ sys_kevent(struct lwp *l, void *v, register_t *retval)
 	}
 
 	/* actually scan through the events */
-	error = kqueue_scan(fp, SCARG(uap, nevents), SCARG(uap, eventlist),
-	    SCARG(uap, timeout), p, retval);
+	error = kqueue_scan(fp, nevents, eventlist, timeout, p, retval, keops);
  done:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -866,18 +898,19 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
  */
 static int
 kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
-	const struct timespec *tsp, struct proc *p, register_t *retval)
+    const struct timespec *tsp, struct proc *p, register_t *retval,
+    const struct kevent_ops *keops)
 {
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timeval	atv;
 	struct knote	*kn, *marker=NULL;
-	size_t		count, nkev;
+	size_t		count, nkev, nevents;
 	int		s, timeout, error;
 
 	kq = (struct kqueue *)fp->f_data;
 	count = maxevents;
-	nkev = error = 0;
+	nkev = nevents = error = 0;
 	if (count == 0)
 		goto done;
 
@@ -996,9 +1029,9 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		if (nkev == KQ_NEVENTS) {
 			/* do copyouts in KQ_NEVENTS chunks */
 			splx(s);
-			error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
-			    sizeof(struct kevent) * nkev);
-			ulistp += nkev;
+			error = (*keops->keo_put_events)(keops->keo_private,
+			    &kq->kq_kev[0], ulistp, nevents, nkev);
+			nevents += nkev;
 			nkev = 0;
 			kevp = kq->kq_kev;
 			s = splsched();
@@ -1016,11 +1049,10 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	if (marker)
 		FREE(marker, M_KEVENT);
 
-	if (nkev != 0) {
+	if (nkev != 0)
 		/* copyout remaining events */
-		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
-		    sizeof(struct kevent) * nkev);
-	}
+		error = (*keops->keo_put_events)(keops->keo_private,
+		    &kq->kq_kev[0], ulistp, nevents, nkev);
 	*retval = maxevents - count;
 
 	return (error);

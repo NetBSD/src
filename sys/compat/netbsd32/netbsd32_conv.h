@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.10 2005/09/13 03:23:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.11 2005/10/23 01:33:32 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -50,6 +50,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/event.h>
 
 #include <compat/sys/dirent.h>
 
@@ -560,6 +561,28 @@ netbsd32_from_loadavg(av32, av)
 	av32->ldavg[1] = av->ldavg[1];
 	av32->ldavg[2] = av->ldavg[2];
 	av32->fscale = (netbsd32_long)av->fscale;
+}
+
+static __inline void
+netbsd32_to_kevent(struct netbsd32_kevent *ke32, struct kevent *ke)
+{
+	ke->ident = ke32->ident;
+	ke->filter = ke32->filter;
+	ke->flags = ke32->flags;
+	ke->fflags = ke32->fflags;
+	ke->data = ke32->data;
+	ke->udata = ke32->udata;
+}
+
+static __inline void
+netbsd32_from_kevent(struct kevent *ke, struct netbsd32_kevent *ke32)
+{
+	ke32->ident = ke->ident;
+	ke32->filter = ke->filter;
+	ke32->flags = ke->flags;
+	ke32->fflags = ke->fflags;
+	ke32->data = ke->data;
+	ke32->udata = ke->udata;
 }
 
 static __inline void
