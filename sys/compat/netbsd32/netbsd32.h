@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.46 2005/10/23 01:33:32 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.47 2005/10/24 15:28:09 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -623,9 +623,6 @@ struct netbsd32_kevent {
 
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
 
-void netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
-void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
-
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
  * note that they do *NOT* act like good macros and put ()'s around all
@@ -659,7 +656,8 @@ void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
 
-void    netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
