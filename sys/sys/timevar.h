@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.1 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: timevar.h,v 1.2 2005/10/24 13:43:27 simonb Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -50,4 +50,4 @@ int	dotimer_settime(int, struct itimerspec *, struct itimerspec *, int,
     struct proc *);
 int	dotimer_gettime(int, struct proc *, struct itimerspec *);
 
-#endif
+#endif /* !_SYS_TIMEVAR_H_ */
