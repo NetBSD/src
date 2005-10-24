@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.21 2005/03/16 02:56:18 xtraeme Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.22 2005/10/24 13:17:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.21 2005/03/16 02:56:18 xtraeme Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.22 2005/10/24 13:17:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.21 2005/03/16 02:56:18 xtraeme Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	usage(void);
+static void	usage(void) __attribute__((__unused__));
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 	FTS *ftsp;
 	FTSENT *p;
 	int ch;
-	u_char buf[MAXPATHLEN + 1];
+	char buf[MAXPATHLEN + 1];
 	char dbtmp[MAXPATHLEN + 1];
 	char dbname[MAXPATHLEN + 1];
 	char *dbname_arg = NULL;
@@ -92,6 +92,9 @@ main(int argc, char **argv)
 	char cur_dir[MAXPATHLEN + 1];
 	struct timeval tv;
 	char *q;
+	size_t dlen;
+
+	setprogname(argv[0]);
 
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
@@ -106,32 +109,36 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 1)
-		if (strlcpy(path_dev, argv[0], sizeof(path_dev)) >= sizeof(path_dev))
+		if (strlcpy(path_dev, argv[0], sizeof(path_dev)) >=
+		    sizeof(path_dev))
 			errx(1, "device path too long");
 
 	if (argc > 1)
 		usage();
 
-	if (!getcwd(cur_dir, sizeof(cur_dir)))
+	if (getcwd(cur_dir, sizeof(cur_dir)) == NULL)
 		err(1, "%s", cur_dir);
 
-	if (chdir(path_dev))
+	if (chdir(path_dev) == -1)
 		err(1, "%s", path_dev);
 
 	pathv[0] = path_dev;
 	pathv[1] = NULL;
+	dlen = strlen(path_dev);
 	ftsp = fts_open(pathv, FTS_PHYSICAL, NULL);
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
 
-	if (chdir(cur_dir))
+	if (chdir(cur_dir) == -1)
 		err(1, "%s", cur_dir);
 
 	if (dbname_arg) {
-		if (strlcpy(dbname, dbname_arg, sizeof(dbname)) >= sizeof(dbname))
+		if (strlcpy(dbname, dbname_arg, sizeof(dbname)) >=
+		    sizeof(dbname))
 			errx(1, "dbname too long");
 	} else {
-		if (snprintf(dbname, sizeof(dbname), "%sdev.db", _PATH_VARRUN) >= sizeof(dbname))
+		if (snprintf(dbname, sizeof(dbname), "%sdev.db",
+		    _PATH_VARRUN) >= sizeof(dbname))
 			errx(1, "dbname too long");
 	}
 	/* 
@@ -148,7 +155,7 @@ main(int argc, char **argv)
 	do {
 		(void)gettimeofday(&tv, NULL);
 		(void)snprintf(q, sizeof(dbtmp) - (q - dbtmp), 
-			    "%ld.tmp", tv.tv_usec);
+		    "%ld.tmp", tv.tv_usec);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &openinfo);
 	} while (!db && (errno == EEXIST));
@@ -161,10 +168,10 @@ main(int argc, char **argv)
 	 * that the structure may contain padding, so we have to clear it
 	 * out here.
 	 */
-	memset(&bkey, 0, sizeof(bkey));
+	(void)memset(&bkey, 0, sizeof(bkey));
 	key.data = &bkey;
 	key.size = sizeof(bkey);
-	data.data = buf;
+	data.data = (u_char *)(void *)buf;
 	while ((p = fts_read(ftsp)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DEFAULT:
@@ -185,28 +192,32 @@ main(int argc, char **argv)
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
-		 * have to.  Skip path_dev and slash.
+		 * have to.  Skip path_dev and slash. Handle old versions
+		 * of fts(3), that added multiple slashes, if the pathname
+		 * ended with a slash.
 		 */
-		strlcpy(buf, p->fts_path + (strlen(path_dev) + 1), sizeof(buf));
-		data.size = p->fts_pathlen - (strlen(path_dev) + 1) + 1;
-		if ((*db->put)(db, &key, &data, 0)) {
+		while (p->fts_path[dlen] == '/')
+			dlen++;
+		(void)strlcpy(buf, p->fts_path + dlen, sizeof(buf));
+		data.size = p->fts_pathlen - dlen + 1;
+		if ((*db->put)(db, &key, &data, 0))
 			err(1, "dbput %s", dbtmp);
-		}
 	}
 	(void)(*db->close)(db);
-	fts_close(ftsp);
+	(void)fts_close(ftsp);
 
-	if (chdir(cur_dir))
+	if (chdir(cur_dir) == -1)
 		err(1, "%s", cur_dir);
-	if (rename(dbtmp, dbname))
+	if (rename(dbtmp, dbname) == -1)
 		err(1, "rename %s to %s", dbtmp, dbname);
-	exit(0);
+	return 0;
 }
 
-void
+static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dev_mkdb [-o database] [directory]\n");
+	(void)fprintf(stderr, "Usage: %s [-o database] [directory]\n",
+	    getprogname());
 	exit(1);
 }
