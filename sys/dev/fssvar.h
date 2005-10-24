@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.10 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.11 2005/10/24 14:25:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@ struct fss_softc {
 #define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_EXCL	0x08		/* Exclusive access granted */
-#define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 #define FSS_CDEV_OPEN	0x40		/* character device open */
 #define FSS_BDEV_OPEN	0x80		/* block device open */
