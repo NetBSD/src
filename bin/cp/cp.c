@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.38 2005/10/15 18:22:18 christos Exp $ */
+/* $NetBSD: cp.c,v 1.39 2005/10/24 12:59:07 kleink Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.38 2005/10/15 18:22:18 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.39 2005/10/24 12:59:07 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,10 +194,6 @@ main(int argc, char *argv[])
 	}
 	(void)strcpy(to.p_path, target);
 	to.p_end = to.p_path + strlen(to.p_path);
-        if (to.p_path == to.p_end) {
-		*to.p_end++ = '.';
-		*to.p_end = 0;
-	}
         STRIP_TRAILING_SLASH(to);
 	to.target_end = to.p_end;
 
