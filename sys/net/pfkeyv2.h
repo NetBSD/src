@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.22 2005/06/28 15:33:27 christos Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.23 2005/10/25 06:12:49 yamt Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ you leave this credit intact on any copies of this file.
 #define SADB_X_SPDEXPIRE  21	/* not yet */
 #define SADB_X_SPDDELETE2 22	/* by policy id */
 #define SADB_X_NAT_T_NEW_MAPPING 23
+#if 0
+#define	SADB_X_MIGRATE    23	/* KAME */
+#endif
 #define SADB_MAX          23
 
 struct sadb_msg {
@@ -309,6 +312,11 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EXT_NAT_T_DPORT        22
 #define SADB_X_EXT_NAT_T_OA           23
 #define SADB_X_EXT_NAT_T_FRAG	      24
+#if 0
+#define	SADB_X_EXT_TAG		      25	/* KAME */
+#define	SADB_X_EXT_SA3		      26	/* KAME */
+#define	SADB_X_EXT_PACKET	      27	/* KAME */
+#endif
 #define SADB_EXT_MAX                  24
 
 #define SADB_SATYPE_UNSPEC	0
