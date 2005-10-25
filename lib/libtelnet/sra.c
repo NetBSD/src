@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.7 2005/10/25 22:03:34 christos Exp $");
+__RCSID("$NetBSD: sra.c,v 1.8 2005/10/25 23:36:07 christos Exp $");
 #endif
 
 #ifdef	SRA
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: sra.c,v 1.7 2005/10/25 22:03:34 christos Exp $");
 char pka[HEXKEYBYTES+1], ska[HEXKEYBYTES+1], pkb[HEXKEYBYTES+1];
 char *user, *pass, *xuser, *xpass;
 char *passprompt, *xpassprompt;
-size_t passpromptlen;
 DesData ck;
 IdeaData ik;
 
@@ -134,8 +133,6 @@ sra_init(Authenticator *ap __unused, int server)
 	NULL || passprompt == NULL || xpassprompt == NULL)
 		return 0; /* malloc failed */
 
-	strcpy(passprompt, "Password: ");
-	passpromptlen = strlen(passprompt);
 	passwd_sent = 0;
 	
 	genkeys(pka,ska);
@@ -322,10 +319,14 @@ sra_reply(Authenticator *ap, unsigned char *data, int cnt)
 			printf("[ SRA login failed ]\r\n");
 			goto enc_user;
 		}
-		if (cnt > 512) 
+		if (cnt > 512) { 
 			break;
-		memcpy(xpassprompt,data,cnt);
-		pk_decode(xpassprompt, passprompt, &ck);
+		} else if (cnt > 0) {
+			(void)memcpy(xpassprompt,data,cnt);
+			pk_decode(xpassprompt, passprompt, &ck);
+		} else {
+			(void)strcpy(passprompt, "Password: ");
+		}
 		/* encode password */
 		memset(pass,0,sizeof(pass));
 		if (telnet_gets(passprompt,pass,255,0) == NULL) {
