@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -70,7 +70,7 @@ debug_print_rrip_info(n)
 cd9660node *n;
 {
 	struct ISO_SUSP_ATTRIBUTES *t;
-	for (t = node->head.lh_first; t != 0; t = t->rr_ll.le_next) {
+	TAILQ_FOREACH(t, &node->head, rr_ll) {
 		
 	}
 }
@@ -81,7 +81,7 @@ debug_print_susp_attrs(cd9660node *n, int indent)
 {
 	struct ISO_SUSP_ATTRIBUTES *t;
 	
-	for (t = n->head.lh_first; t != 0; t = t->rr_ll.le_next) {
+	TAILQ_FOREACH(t, &n->head, rr_ll) {
 		print_n_tabs(indent);
 		printf("-");
 		printf("%c%c: L:%i",t->attr.su_entry.SP.h.type[0],
@@ -92,47 +92,37 @@ debug_print_susp_attrs(cd9660node *n, int indent)
 }
 
 void
-debug_print_tree(cd9660node *n, int level)
+debug_print_tree(cd9660node *node, int level)
 {
-	cd9660node *iterator = n;
-	int run = 1;
+	cd9660node *cn;
 
-	while (run && iterator != 0) {
-		print_n_tabs(level);
-		if (iterator->type & CD9660_TYPE_DOT) {
-			printf(". (%i)\n",
-			    isonum_733(iterator->isoDirRecord->extent));
-		} else if (iterator->type & CD9660_TYPE_DOTDOT) {
-			printf("..(%i)\n",
-			    isonum_733(iterator->isoDirRecord->extent));
-		} else if (iterator->isoDirRecord->name[0]=='\0') {
-			printf("(ROOT) (%i to %i)\n",
-			    iterator->fileDataSector,
-			    iterator->fileDataSector +
-				iterator->fileSectorsUsed - 1);
-		} else {
-			printf("%s (%s) (%i to %i)\n",
-			    iterator->isoDirRecord->name,
-			    (iterator->isoDirRecord->flags[0]
-				& ISO_FLAG_DIRECTORY) ?  "DIR" : "FILE",
-			    iterator->fileDataSector,
-			    (iterator->fileSectorsUsed == 0) ?
-				iterator->fileDataSector :
-				iterator->fileDataSector
-				    + iterator->fileSectorsUsed - 1);
-		}
-		if (diskStructure.rock_ridge_enabled) {
-			debug_print_susp_attrs(iterator, level + 1);
-		}
-		if (iterator->child != 0) {
-			debug_print_tree(iterator->child,level + 1);
-		}
-
-		iterator = iterator->next;
-		if (iterator == NULL) {
-			run = 0;
-		}
+	print_n_tabs(level);
+	if (node->type & CD9660_TYPE_DOT) {
+		printf(". (%i)\n",
+		    isonum_733(node->isoDirRecord->extent));
+	} else if (node->type & CD9660_TYPE_DOTDOT) {
+		printf("..(%i)\n",
+		    isonum_733(node->isoDirRecord->extent));
+	} else if (node->isoDirRecord->name[0]=='\0') {
+		printf("(ROOT) (%i to %i)\n",
+		    node->fileDataSector,
+		    node->fileDataSector +
+			node->fileSectorsUsed - 1);
+	} else {
+		printf("%s (%s) (%i to %i)\n",
+		    node->isoDirRecord->name,
+		    (node->isoDirRecord->flags[0]
+			& ISO_FLAG_DIRECTORY) ?  "DIR" : "FILE",
+		    node->fileDataSector,
+		    (node->fileSectorsUsed == 0) ?
+			node->fileDataSector :
+			node->fileDataSector
+			    + node->fileSectorsUsed - 1);
 	}
+	if (diskStructure.rock_ridge_enabled)
+		debug_print_susp_attrs(node, level + 1);
+	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child)
+		debug_print_tree(cn, level + 1);
 }
 
 void

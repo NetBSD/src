@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -305,9 +305,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 		 * Now loop over children, writing out their directory
 		 * records - beware of sector boundaries
 	 	 */
-		temp = writenode->child;
-		while (temp != NULL) {
-			
+		TAILQ_FOREACH(temp, &writenode->cn_children, cn_next_child) {
 			/*
 			 * Copy the temporary record and adjust its size
 			 * if necessary
@@ -329,8 +327,8 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 				    SEEK_SET);
 			}
                         
-			written = fwrite(&temp_record, 1,
-			    temp_record.length[0], fd);
+			written = fwrite(&temp_record, 1, temp_record.length[0],
+			    fd);
 			ca = 0;
 			if (diskStructure.rock_ridge_enabled) {
 				ca = cd9660_write_rr(fd, temp,
@@ -354,23 +352,18 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 					cur_sector_offset,
 				    SEEK_SET);
 			}
-			temp = temp->next;	
 		}
 		
 		/*
-		 * Now do the second loop, this time its recursive
+		 * Recurse on children.
 		 */
-		temp = writenode->child;
-		while (temp != NULL) {
-			ret = cd9660_write_file(fd, temp);
-			if (ret == 0) {
+		TAILQ_FOREACH(temp, &writenode->cn_children, cn_next_child) {
+			if ((ret = cd9660_write_file(fd, temp)) == 0) {
 				free(temp_file_name);
 				return 0;
 			}
-			temp = temp->next;
 		}
 	}
-
 	free(temp_file_name);
 	return 1;
 }
@@ -473,8 +466,7 @@ cd9660_write_rr(FILE *fd, cd9660node *writenode, int offset, int sector)
 	offset += writenode->isoDirRecord->length[0];
 
 	/* Offset now points at the end of the record */
-	for (myattr = writenode->head.lh_first; myattr != NULL;
-	     myattr = myattr->rr_ll.le_next) {
+	TAILQ_FOREACH(myattr, &writenode->head, rr_ll) {
 		fseek(fd, 
 		    in_ca ? offset : sector*diskStructure.sectorSize + offset,
 		    SEEK_SET);

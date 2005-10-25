@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -207,7 +207,7 @@ struct ISO_SUSP_ATTRIBUTES {
 	char susp_type; 	/* SUSP or RRIP */
 	char entry_type;	/* Record type */
 	char write_location;
-	LIST_ENTRY(ISO_SUSP_ATTRIBUTES) rr_ll;
+	TAILQ_ENTRY(ISO_SUSP_ATTRIBUTES) rr_ll;
 };
 
 #define CD9660_SUSP_ENTRY_SIZE(entry)\
@@ -230,10 +230,8 @@ int cd9660node_rrip_pn(struct ISO_SUSP_ATTRIBUTES *, fsnode *);
 int cd9660node_rrip_SL(struct ISO_SUSP_ATTRIBUTES *, fsnode *);
 
 /* Alternate Name function */
-struct ISO_SUSP_ATTRIBUTES *cd9660_rrip_NM(struct ISO_SUSP_ATTRIBUTES *,
-	cd9660node *);
-struct ISO_SUSP_ATTRIBUTES *cd9660_rrip_add_NM(struct ISO_SUSP_ATTRIBUTES *,
-    cd9660node *,const char *);
+void cd9660_rrip_NM(cd9660node *);
+void cd9660_rrip_add_NM(cd9660node *,const char *);
 
 /* Parent and child link function */
 int cd9660_rrip_PL(struct ISO_SUSP_ATTRIBUTES *, cd9660node *);
@@ -262,8 +260,8 @@ int cd9660_susp_pd (struct ISO_SUSP_ATTRIBUTES *, int);
 int cd9660_susp_sp (struct ISO_SUSP_ATTRIBUTES *, cd9660node *);
 int cd9660_susp_st (struct ISO_SUSP_ATTRIBUTES *, cd9660node *);
 
-struct ISO_SUSP_ATTRIBUTES *cd9660_susp_ER(struct ISO_SUSP_ATTRIBUTES *,
-    cd9660node *, u_char, const char *, const char *, const char *);
+struct ISO_SUSP_ATTRIBUTES *cd9660_susp_ER(cd9660node *, u_char, const char *,
+    const char *, const char *);
 struct ISO_SUSP_ATTRIBUTES *cd9660_susp_ES(struct ISO_SUSP_ATTRIBUTES*,
     cd9660node *);
 
@@ -271,20 +269,16 @@ struct ISO_SUSP_ATTRIBUTES *cd9660_susp_ES(struct ISO_SUSP_ATTRIBUTES*,
 /* Helper functions */
 
 /* Common SUSP/RRIP functions */
-int cd9660_susp_initialize(cd9660node *);
+int cd9660_susp_initialize(cd9660node *, cd9660node *, cd9660node *);
 int cd9660_susp_initialize_node(cd9660node *);
 struct ISO_SUSP_ATTRIBUTES *cd9660node_susp_create_node(int, int, const char *,
     int);
 struct ISO_SUSP_ATTRIBUTES *cd9660node_susp_add_entry(cd9660node *,
     struct ISO_SUSP_ATTRIBUTES *, struct ISO_SUSP_ATTRIBUTES *, int);
 
-/* SUSP Specific */
-int cd9660_rrip_initialize_node(cd9660node *);
-
 /* RRIP specific functions */
-int cd9660_rrip_initialize_node(cd9660node *);
-struct ISO_SUSP_ATTRIBUTES *cd9660_createSL(struct ISO_SUSP_ATTRIBUTES *,
-     cd9660node *);
+int cd9660_rrip_initialize_node(cd9660node *, cd9660node *, cd9660node *);
+void cd9660_createSL(cd9660node *);
 
 /* Functions that probably can be removed */
 /* int cd9660node_initialize_node(int, char *); */

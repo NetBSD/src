@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.3 2005/08/13 17:50:59 fvdl Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.4 2005/10/25 02:22:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -111,7 +111,8 @@ typedef struct {
 
 #define	CD9660_BLOCKS(S,X)	(((X) / S) + (((X)%S)?1:0))
 
-#define CD9660_MEM_ALLOC_ERROR(F) printf("%s: memory allocation error. File \"%s\", line %i.\n",(F),__FILE__,__LINE__);
+#define CD9660_MEM_ALLOC_ERROR(_F)	\
+    err(EXIT_FAILURE, "%s, %s l. %d", _F, __FILE__, __LINE__)
 
 #define CD9660_IS_COMMAND_ARG_DUAL(var,short,long)\
 		(strcmp((var),(short)) == 0) || (strcmp((var),(long))==0)
@@ -149,12 +150,9 @@ typedef struct _cd9660node {
 	u_char	type;/* Used internally */
 	/* Tree structure */
 	struct _cd9660node	*parent;	/* parent (NULL if root) */
-	struct _cd9660node	*child;		/* child (if type == S_IFDIR) */
-	struct _cd9660node	*next;		/* next */
-	struct _cd9660node	*prev;		/* previous - to facilitate faster sorting */
-	struct _cd9660node	*first;		/* first node of current level (".") */
-	struct _cd9660node	*last;		/* last node of current level, for faster sorting - probably not used */
-	
+	TAILQ_HEAD(cd9660_children_head, _cd9660node)	cn_children;
+	TAILQ_ENTRY(_cd9660node)		cn_next_child;
+
 	struct _cd9660node *dot_record; /* For directories, used mainly in RRIP */
 	struct _cd9660node *dot_dot_record;
 	
@@ -210,7 +208,7 @@ typedef struct _cd9660node {
 	struct _cd9660node *ptnext, *ptprev, *ptlast;
 
 	/* SUSP entries */
-	LIST_HEAD(susp_linked_list, ISO_SUSP_ATTRIBUTES) head;
+	TAILQ_HEAD(susp_linked_list, ISO_SUSP_ATTRIBUTES) head;
 } cd9660node;
 
 #if 0
