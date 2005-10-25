@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.6 2005/05/05 23:21:58 lukem Exp $");
+__RCSID("$NetBSD: sra.c,v 1.7 2005/10/25 22:03:34 christos Exp $");
 #endif
 
 #ifdef	SRA
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: sra.c,v 1.6 2005/05/05 23:21:58 lukem Exp $");
 
 char pka[HEXKEYBYTES+1], ska[HEXKEYBYTES+1], pkb[HEXKEYBYTES+1];
 char *user, *pass, *xuser, *xpass;
+char *passprompt, *xpassprompt;
+size_t passpromptlen;
 DesData ck;
 IdeaData ik;
 
@@ -125,11 +127,15 @@ sra_init(Authenticator *ap __unused, int server)
 	xuser = (char *)malloc(513);
 	pass = (char *)malloc(256);
 	xpass = (char *)malloc(513);
+	passprompt = (char *)malloc(256);
+	xpassprompt = (char *)malloc(513);
 
 	if (user == NULL || xuser == NULL || pass == NULL || xpass ==
-	NULL)
+	NULL || passprompt == NULL || xpassprompt == NULL)
 		return 0; /* malloc failed */
 
+	strcpy(passprompt, "Password: ");
+	passpromptlen = strlen(passprompt);
 	passwd_sent = 0;
 	
 	genkeys(pka,ska);
@@ -194,7 +200,11 @@ sra_is(Authenticator *ap, unsigned char *data, int cnt)
 		xuser[cnt] = '\0';
 		pk_decode(xuser,user,&ck);
 		auth_encrypt_user(user);
-		Data(ap, SRA_CONTINUE, (void *)0, 0);
+#ifndef NOPAM
+		(void)check_user(user, "*");
+#endif
+		pk_encode(passprompt,xpassprompt,&ck);
+		Data(ap, SRA_CONTINUE, (void *)xpassprompt, 512);
 
 		return;
 
@@ -225,7 +235,8 @@ sra_is(Authenticator *ap, unsigned char *data, int cnt)
 			}
 		}
 		else {
-			Data(ap, SRA_CONTINUE, (void *)0, 0);
+			pk_encode(passprompt,xpassprompt,&ck);
+			Data(ap, SRA_CONTINUE, (void *)xpassprompt, 512);
 /*
 			Data(ap, SRA_REJECT, (void *)0, 0);
 			sra_valid = 0;
@@ -277,7 +288,10 @@ sra_reply(Authenticator *ap, unsigned char *data, int cnt)
 		/* encode user */
 		memset(tuser,0,sizeof(tuser));
 		sprintf(uprompt,"User (%s): ",UserNameRequested);
-		telnet_gets(uprompt,tuser,255,1);
+		if (telnet_gets(uprompt,tuser,255,1) == NULL) {
+			printf("\n");
+			exit(1);
+		}
 		if (tuser[0] == '\n' || tuser[0] == '\r' )
 			strcpy(user,UserNameRequested);
 		else {
@@ -308,9 +322,16 @@ sra_reply(Authenticator *ap, unsigned char *data, int cnt)
 			printf("[ SRA login failed ]\r\n");
 			goto enc_user;
 		}
+		if (cnt > 512) 
+			break;
+		memcpy(xpassprompt,data,cnt);
+		pk_decode(xpassprompt, passprompt, &ck);
 		/* encode password */
 		memset(pass,0,sizeof(pass));
-		telnet_gets("Password: ",pass,255,0);
+		if (telnet_gets(passprompt,pass,255,0) == NULL) {
+			printf("\n");
+			exit(1);
+		}
 		pk_encode(pass,xpass,&ck);
 		/* send it off */
 		if (auth_debug_mode)
@@ -510,10 +531,11 @@ auth_conv(int num_msg, const struct pam_message **msg, struct pam_response **res
 			/* PAM frees resp. */
 			break;
 		case PAM_PROMPT_ECHO_OFF:       /* assume want password */
-			reply[i].resp_retcode = PAM_SUCCESS;
-			reply[i].resp = COPY_STRING(cred->pass);
-			/* PAM frees resp. */
-			break;
+		    (void)strlcpy(passprompt, msg[i]->msg, 256);
+		    reply[i].resp_retcode = PAM_SUCCESS;
+		    reply[i].resp = COPY_STRING(cred->pass);
+		    /* PAM frees resp. */
+		    break;
 		case PAM_TEXT_INFO:
 		case PAM_ERROR_MSG:
 			reply[i].resp_retcode = PAM_SUCCESS;
