@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.4 2005/09/11 22:03:48 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.5 2005/10/25 02:22:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.4 2005/09/11 22:03:48 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.5 2005/10/25 02:22:04 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -136,20 +136,20 @@ static int cd9660_setup_volume_descriptors(void);
 #if 0
 static int cd9660_fill_extended_attribute_record(cd9660node *);
 #endif
+static void cd9660_sort_nodes(cd9660node *);
 static int cd9960_translate_node_common(cd9660node *);
 static int cd9660_translate_node(fsnode *, cd9660node *);
 static int cd9660_compare_filename(const char *, const char *);
-static cd9660node *cd9660_sorted_node_insert(cd9660node *, cd9660node *);
+static void cd9660_sorted_child_insert(cd9660node *, cd9660node *);
 static int cd9660_handle_collisions(cd9660node *, int);
 static cd9660node *cd9660_rename_filename(cd9660node *, int, int);
 static void cd9660_copy_filenames(cd9660node *);
 static void cd9660_sorting_nodes(cd9660node *);
-static void cd9660_move_in_order(cd9660node *);
 static int cd9660_count_collisions(cd9660node *);
 static cd9660node *cd9660_rrip_move_directory(cd9660node *);
 static int cd9660_add_dot_records(cd9660node *);
 
-static cd9660node *cd9660_convert_structure(fsnode *, cd9660node *, int,
+static void cd9660_convert_structure(fsnode *, cd9660node *, int,
     int *, int *);
 static void cd9660_free_structure(cd9660node *);
 static int cd9660_generate_path_table(void);
@@ -180,20 +180,16 @@ cd9660_allocate_cd9660node(void)
 {
 	cd9660node *temp;
 
-	if ((temp = malloc(sizeof(cd9660node))) == NULL) {
-		err(1,"Memory allocation error");
-		return NULL;
-	} else {
-		temp->next = temp->prev = temp->child = 
-			temp->parent = temp->last = 
-			temp->dot_record = temp->dot_dot_record = 0;
-		temp->ptnext = temp->ptprev = temp->ptlast = 0;
-		temp->node = 0;
-		temp->isoDirRecord = 0;
-		temp->isoExtAttributes = 0;
-		temp->rr_real_parent = temp->rr_relocated = 0;
-		return temp;
-	}
+	if ((temp = calloc(1, sizeof(cd9660node))) == NULL)
+		err(EXIT_FAILURE, "%s: calloc", __func__);
+	TAILQ_INIT(&temp->cn_children);
+	temp->parent = temp->dot_record = temp->dot_dot_record = NULL;
+	temp->ptnext = temp->ptprev = temp->ptlast = NULL;
+	temp->node = NULL;
+	temp->isoDirRecord = NULL;
+	temp->isoExtAttributes = NULL;
+	temp->rr_real_parent = temp->rr_relocated = NULL;
+	return temp;
 }
 
 int cd9660_defaults_set = 0;
@@ -491,9 +487,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	diskStructure.rootNode = real_root;
 	real_root->type = CD9660_TYPE_DIR;
 	error = 0;
+	real_root->node = root;
 	cd9660_convert_structure(root, real_root, 1, &numDirectories, &error);
 	
-	if (real_root->child == NULL) {
+	if (TAILQ_EMPTY(&real_root->cn_children)) {
 		errx(1, "cd9660_makefs: converted directory is empty. "
 			"Tree conversion failed\n");
 	} else if (error != 0) {
@@ -512,8 +509,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		printf("cd9660_makefs: done converting tree\n");
 
 	/* Rock ridge / SUSP init pass */
-	if (diskStructure.rock_ridge_enabled)
-		cd9660_susp_initialize(diskStructure.rootNode);
+	if (diskStructure.rock_ridge_enabled) {
+		cd9660_susp_initialize(diskStructure.rootNode,
+		    diskStructure.rootNode, NULL);
+	}
 
 	/* Build path table structure */
 	diskStructure.pathTableLength = cd9660_generate_path_table();
@@ -943,131 +942,94 @@ cd9660_compare_filename(const char *first, const char *second)
  * @param cd9660node * The head node of the list
  * @param cd9660node * The node to be inserted
  */
-static cd9660node * 
-cd9660_sorted_node_insert(cd9660node *head, cd9660node *newnode)
+static void
+cd9660_sorted_child_insert(cd9660node *parent, cd9660node *cn_new)
 {
-	cd9660node *temp;
 	int compare;
+	cd9660node *cn;
+	struct cd9660_children_head *head = &parent->cn_children;
 
 	/* TODO: Optimize? */
-	newnode->parent = head->parent;
-	
-	if (head == newnode) {
-		head->parent->child = head;
-		return head;
-	}
-	
-	/* skip over the . and .. records */
+	cn_new->parent = parent;
 
-	/*
-	first = head->parent->child;
-	if (first != 0) {
-		if ((first->type & CD9660_TYPE_DOT) && (first->next != 0)) {
-			if (first->next->type & CD9660_TYPE_DOTDOT) {
-				printf("First is now DOTDOT\n");
-				first = first->next;
-			}
-		}
+#if 0	/* XXXDCY did this serve any purpose when head was a cd9660node? */
+	if (head == cn_new) {
+		head->parent->child = head;
+		return;
 	}
-	*/
-	
+#endif
+
 	/*
 	 * first will either be 0, the . or the ..
 	 * if . or .., this means no other entry may be written before first
 	 * if 0, the new node may be inserted at the head
 	 */
 	
-	temp = head;
-
-	while (1) {
+	TAILQ_FOREACH(cn, head, cn_next_child) {
 		/*
 		 * Dont insert a node twice -
 		 * that would cause an infinite loop
 		 */
-		assert(newnode != temp);
-		
-		compare = cd9660_compare_filename(newnode->isoDirRecord->name,
-			temp->isoDirRecord->name);
+		assert(cn_new != cn);
+
+		compare = cd9660_compare_filename(cn_new->isoDirRecord->name,
+			cn->isoDirRecord->name);
 		
 		if (compare == 0)
-			compare = cd9660_compare_filename(newnode->node->name,
-				temp->node->name);
-		
-		if (compare < 0) {
-			/*
-			if (temp == first) {
-				newnode->next = first->next;
-				if (first->next != 0)
-					first->next->prev = newnode;
-				first->next = newnode;
-				newnode->prev = first;
-			} else {
-			*/
-				newnode->prev = temp->prev;
-				if (temp->prev != 0)
-					temp->prev->next = newnode;
-				newnode->next = temp;
-				temp->prev = newnode;
-				
-				/*test for inserting before the first child*/
-				if (temp == head) {
-					if (head->parent != 0)
-						head->parent->child = newnode;
-					return newnode;
-				}
-			/* } */
-			return head;
-		}
-		if (temp->next == NULL) {
-			temp->next = newnode;
-			newnode->prev = temp;
-			return head;
-		}
-		temp = temp->next;
+			compare = cd9660_compare_filename(cn_new->node->name,
+				cn->node->name);
+
+		if (compare < 0)
+			break;
 	}
-	return head;
+	if (cn == NULL)
+		TAILQ_INSERT_TAIL(head, cn_new, cn_next_child);
+	else
+		TAILQ_INSERT_BEFORE(cn, cn_new, cn_next_child);
 }
 
 /*
- * Called After cd9660_sorted_node_insert
+ * Called After cd9660_sorted_child_insert
  * handles file collisions by suffixing each filname with ~n
  * where n represents the files respective place in the ordering
  */
 static int
 cd9660_handle_collisions(cd9660node *colliding, int past)
 {
-	cd9660node *iter = colliding;
+	cd9660node *iter, *next, *prev;
 	int skip;
 	int delete_chars = 0;
 	int temp_past = past;
 	int temp_skip;
 	int flag = 0;
 	cd9660node *end_of_range;
-	
-	while ((iter != 0) && (iter->next != 0)) {
-		if ( strcmp(iter->isoDirRecord->name,
-			iter->next->isoDirRecord->name) == 0) {
-			flag = 1;
-			temp_skip = skip = cd9660_count_collisions(iter);
-			end_of_range = iter;
-			while (temp_skip > 0){
-				temp_skip--;
-				end_of_range = end_of_range->next;
-			}
-			temp_past = past;
-			while (temp_past > 0){
-				if (end_of_range->next != 0)
-					end_of_range = end_of_range->next;
-				else if (iter->prev != 0)
-					iter = iter->prev;
-				else
-					delete_chars++;
-				temp_past--;
-			}
-			skip += past;
-			iter = cd9660_rename_filename(iter, skip, delete_chars);
-		} else
-			iter = iter->next;
+
+	for (iter = TAILQ_FIRST(&colliding->cn_children);
+	     iter != NULL && (next = TAILQ_NEXT(iter, cn_next_child)) != NULL;) {
+		if (strcmp(iter->isoDirRecord->name,
+		           next->isoDirRecord->name) != 0) {
+			iter = TAILQ_NEXT(iter, cn_next_child);
+			continue;
+		}
+		flag = 1;
+		temp_skip = skip = cd9660_count_collisions(iter);
+		end_of_range = iter;
+		while (temp_skip > 0) {
+			temp_skip--;
+			end_of_range = TAILQ_NEXT(end_of_range, cn_next_child);
+		}
+		temp_past = past;
+		while (temp_past > 0) {
+			if ((next = TAILQ_NEXT(end_of_range, cn_next_child)) != NULL)
+				end_of_range = next;
+			else if ((prev = TAILQ_PREV(iter, cd9660_children_head, cn_next_child)) != NULL)
+				iter = prev;
+			else
+				delete_chars++;
+			temp_past--;
+		}
+		skip += past;
+		iter = cd9660_rename_filename(iter, skip, delete_chars);
 	}
 	return flag;
 }
@@ -1182,7 +1144,7 @@ cd9660_rename_filename(cd9660node *iter, int num, int delete_chars)
 		 */
 		memcpy((iter->isoDirRecord->name), tmp, numbts + 2);  
 	
-		iter = iter->next;
+		iter = TAILQ_NEXT(iter, cn_next_child);
 		i++;
 	}
 
@@ -1194,88 +1156,76 @@ cd9660_rename_filename(cd9660node *iter, int num, int delete_chars)
 static void 
 cd9660_copy_filenames(cd9660node *node)
 {
-	cd9660node *temp;
+	cd9660node *cn;
 
-	if (node == NULL)
+	if (TAILQ_EMPTY(&node->cn_children))
 		return;
 
-	if (node->isoDirRecord == NULL) {
+	if (TAILQ_FIRST(&node->cn_children)->isoDirRecord == NULL) {
 		debug_print_tree(diskStructure.rootNode, 0);
 		exit(1);
 	}
 
-	temp = node;
-	while (temp != NULL) {
-		cd9660_copy_filenames(temp->child);
-		memcpy(temp->o_name, temp->isoDirRecord->name,
+	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child) {
+		cd9660_copy_filenames(cn);
+		memcpy(cn->o_name, cn->isoDirRecord->name,
 		    ISO_FILENAME_MAXLENGTH_WITH_PADDING);
-		temp = temp->next;
 	}
 }
 
 static void
 cd9660_sorting_nodes(cd9660node *node)
 {
-	cd9660node *temp;
+	cd9660node *cn;
 
-	if (node == NULL)
-		return;
-
-	temp = node;
-	while (temp != 0) {
-		cd9660_sorting_nodes(temp->child);
-		cd9660_move_in_order(temp);
-		temp = temp->next;
-	}
+	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child)
+		cd9660_sorting_nodes(cn);
+	cd9660_sort_nodes(node);
 }
 
+/* XXX Bubble sort. */
 static void
-cd9660_move_in_order(cd9660node *node)
+cd9660_sort_nodes(cd9660node *node)
 {
-	cd9660node * nxt;
+	cd9660node *cn, *next;
 
-	while (node->next != 0) {
-		nxt = node->next;
-		if (strcmp(nxt->isoDirRecord->name, node->isoDirRecord->name)
-		    < 0) {
-			if (node->parent->child == node)
-				node->parent->child = nxt;
-			if (node->prev != 0)
-				node->prev->next = nxt;
-			if (nxt->next != 0)
-				nxt->next->prev = node;
-			nxt->prev = node->prev;
-				node->next = nxt->next;
-			nxt->next = node;
-			node->prev = nxt;
-		} else
-			return;
-	}
-	return;
+	do {
+		TAILQ_FOREACH(cn, &node->cn_children, cn_next_child) {
+			if ((next = TAILQ_NEXT(cn, cn_next_child)) == NULL)
+				return;
+			else if (strcmp(next->isoDirRecord->name,
+				        cn->isoDirRecord->name) >= 0)
+				continue;
+			TAILQ_REMOVE(&node->cn_children, next, cn_next_child);
+			TAILQ_INSERT_BEFORE(node, next, cn_next_child);
+			break;
+		}
+	} while (cn != NULL);
 }
 
 static int
 cd9660_count_collisions(cd9660node *copy)
 {
 	int count = 0;
-	cd9660node *temp = copy;
+	cd9660node *iter, *next;
 
-	while (temp->next != 0) {
-		if (cd9660_compare_filename(temp->isoDirRecord->name,
-			temp->next->isoDirRecord->name) == 0)
-				count ++;
+	for (iter = copy;
+	     (next = TAILQ_NEXT(iter, cn_next_child)) != NULL;
+	     iter = next) {
+		if (cd9660_compare_filename(iter->isoDirRecord->name,
+			next->isoDirRecord->name) == 0)
+			count++;
 		else
 			return count;
-		temp = temp->next;
 	}
 #if 0
-	if (temp->next != NULL) {
+	if ((next = TAILQ_NEXT(iter, cn_next_child)) != NULL) {
 		printf("cd9660_recurse_on_collision: count is %i \n", count);     
-		compare = cd9660_compare_filename(temp->isoDirRecord->name,
-			temp->next->isoDirRecord->name);
+		compare = cd9660_compare_filename(iter->isoDirRecord->name,
+			next->isoDirRecord->name);
 		if (compare == 0) {
 			count++;
-			return cd9660_recurse_on_collision(temp->next, count);
+			return cd9660_recurse_on_collision(next, count);
 		} else
 			return count;
 	}
@@ -1319,10 +1269,11 @@ cd9660_rrip_move_directory(cd9660node *dir)
 	dir->rr_real_parent = dir->parent;
 
 	/* Place the placeholder file */
-	if (dir->rr_real_parent->child == NULL) {
-		dir->rr_real_parent->child = tfile;
+	if (TAILQ_EMPTY(&dir->rr_real_parent->cn_children)) {
+		TAILQ_INSERT_HEAD(&dir->rr_real_parent->cn_children, tfile,
+		    cn_next_child);
 	} else {
-		cd9660_sorted_node_insert(dir->rr_real_parent->child, tfile);
+		cd9660_sorted_child_insert(dir->rr_real_parent, tfile);
 	}
 	
 	/* Point to new parent */
@@ -1332,12 +1283,7 @@ cd9660_rrip_move_directory(cd9660node *dir)
 	tfile->rr_relocated = dir;
 
 	/* Actually move the directory */
-	if (diskStructure.rr_moved_dir->child == NULL) {
-		diskStructure.rr_moved_dir->child = dir;
-	} else {
-		cd9660_sorted_node_insert(diskStructure.rr_moved_dir->child,
-		    dir);
-	}
+	cd9660_sorted_child_insert(diskStructure.rr_moved_dir, dir);
 
 	/* TODO: Inherit permissions / ownership (basically the entire inode) */
 
@@ -1349,22 +1295,19 @@ cd9660_rrip_move_directory(cd9660node *dir)
 }
 
 static int
-cd9660_add_dot_records(cd9660node *node)
+cd9660_add_dot_records(cd9660node *root)
 {
-	cd9660node *temp;
+	struct cd9660_children_head *head = &root->cn_children;
+	cd9660node *cn;
 
-	temp = node;
-	while (temp != 0) {
-		if (temp->type & CD9660_TYPE_DIR) {
-			/* Recursion first */
-			if (temp->child != 0)
-				cd9660_add_dot_records(temp->child);
-			cd9660_create_special_directory(CD9660_TYPE_DOT, temp);
-			cd9660_create_special_directory(CD9660_TYPE_DOTDOT,
-			    temp);
-		}
-		temp = temp->next;
+	TAILQ_FOREACH(cn, head, cn_next_child) {
+		if ((cn->type & CD9660_TYPE_DIR) == 0)
+			continue;
+		/* Recursion first */
+		cd9660_add_dot_records(cn);
 	}
+	cd9660_create_special_directory(CD9660_TYPE_DOT, root);
+	cd9660_create_special_directory(CD9660_TYPE_DOTDOT, root);
 	return 1;
 }
 
@@ -1378,13 +1321,12 @@ cd9660_add_dot_records(cd9660node *node)
  * @param int Current directory depth
  * @param int* Running count of the number of directories that are being created
  */
-static cd9660node *
+static void
 cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 			 int *numDirectories, int *error)
 {
-	cd9660node *first_node = 0;
 	fsnode *iterator = root;
-	cd9660node *temp_node;
+	cd9660node *this_node;
 	int working_level;
 	int add;
 	int flag = 0;
@@ -1394,49 +1336,42 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 	 * Newer, more efficient method, reduces recursion depth
 	 */
 	if (root == NULL) {
-		printf("cd9660_convert_structure: root is null\n");
-		return 0;
+		warnx("%s: root is null\n", __func__);
+		return;
 	}
 
 	/* Test for an empty directory - makefs still gives us the . record */
 	if ((S_ISDIR(root->type)) && (root->name[0] == '.')
 		&& (root->name[1] == '\0')) {
 		root = root->next;
-		if (root == NULL) {
-			return NULL;
-		}
+		if (root == NULL)
+			return;
 	}
-	if ((first_node = cd9660_allocate_cd9660node()) == NULL) {
-		CD9660_MEM_ALLOC_ERROR("cd9660_convert_structure");
-		exit(1);
+	if ((this_node = cd9660_allocate_cd9660node()) == NULL) {
+		CD9660_MEM_ALLOC_ERROR(__func__);
 	}
 	
 	/*
 	 * To reduce the number of recursive calls, we will iterate over
 	 * the next pointers to the right.
 	 */
-	temp_node = first_node;
-	parent_node->child = 0;
-	while (iterator != 0) {
+	while (iterator != NULL) {
 		add = 1;
 		/*
 		 * Increment the directory count if this is a directory
 		 * Ignore "." entries. We will generate them later
 		 */
-		if (!((S_ISDIR(iterator->type)) &&
-			(iterator->name[0] == '.' &&
-			    iterator->name[1] == '\0'))) {
-			
-			if (S_ISDIR(iterator->type))
-				(*numDirectories)++;
+		if (!S_ISDIR(iterator->type) ||
+		    strcmp(iterator->name, ".") != 0) {
 
 			/* Translate the node, including its filename */
-			temp_node->parent = parent_node;
-			cd9660_translate_node(iterator, temp_node);
-			temp_node->level = level;
+			this_node->parent = parent_node;
+			cd9660_translate_node(iterator, this_node);
+			this_node->level = level;
 
 			if (S_ISDIR(iterator->type)) {
-				temp_node->type = CD9660_TYPE_DIR;
+				(*numDirectories)++;
+				this_node->type = CD9660_TYPE_DIR;
 				working_level = level + 1;
 
 				/*
@@ -1451,7 +1386,7 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 						     "with depth greater "
 						     "than 8.");
 						(*error) = 1;
-						return 0;
+						return;
 					} else if (diskStructure.
 						   rock_ridge_enabled) {
 						working_level = 3;
@@ -1459,16 +1394,16 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 						 * Moved directory is actually
 						 * at level 2.
 						 */
-						temp_node->level =	
+						this_node->level =	
 						    working_level - 1;
 						if (cd9660_rrip_move_directory(
-							temp_node) == 0) {
+							this_node) == 0) {
 							warnx("Failure in "
 							      "cd9660_rrip_"
 							      "move_directory"
 							);
 							(*error) = 1;
-							return 0;
+							return;
 						}
 						add = 0;
 					}
@@ -1477,70 +1412,52 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 				/* Do the recursive call on the children */
 				if (iterator->child != 0) {
 					cd9660_convert_structure(	
-					    iterator->child, temp_node,
+					    iterator->child, this_node,
 						working_level,
 						numDirectories, error);
 						
 					if ((*error) == 1) {
-						warnx("cd9660_convert_"
-						       "structure: Error on "
-						       "recursive call");
-						return 0;
+						warnx("%s: Error on recursive "
+						    "call", __func__);
+						return;
 					}
 				}
 				
 			} else {
 				/* Only directories should have children */ 
 				assert(iterator->child == NULL);
-				
-				temp_node->type = CD9660_TYPE_FILE;
+
+				this_node->type = CD9660_TYPE_FILE;
 			}
 			
 			/*
 			 * Finally, do a sorted insert
 			 */
 			if (add) {
-				/*
-				 * Recompute firstnode, as a recursive call
-				 * _might_ have changed it.
-				 */
-
-				/*
-				 * We can probably get rid of this first_node
-				 * variable.
-				 */
-				if (parent_node->child != 0)
-					first_node = parent_node->child;
-				first_node = cd9660_sorted_node_insert(
-				    first_node, temp_node);
+				cd9660_sorted_child_insert(
+				    parent_node, this_node);
 			}
 
 			/*Allocate new temp_node */
 			if (iterator->next != 0) {
-				temp_node = cd9660_allocate_cd9660node();
-				if (temp_node == NULL) {
-					CD9660_MEM_ALLOC_ERROR("cd9660_convert_"
-							       "structure");
-					exit(1);
-				}
+				this_node = cd9660_allocate_cd9660node();
+				if (this_node == NULL)
+					CD9660_MEM_ALLOC_ERROR(__func__);
 			}
 		}
 		iterator = iterator->next;
 	}
 
 	/* cd9660_handle_collisions(first_node); */
-	
+
 	/* TODO: need cleanup */
-	temp_node = first_node;
-	cd9660_copy_filenames(first_node);
-	
+	cd9660_copy_filenames(parent_node);
+
 	do {
-		flag = cd9660_handle_collisions(first_node, counter);
+		flag = cd9660_handle_collisions(parent_node, counter);
 		counter++;
-		cd9660_sorting_nodes(first_node);
+		cd9660_sorting_nodes(parent_node);
 	} while ((flag == 1) && (counter < 100));
-	
-	return first_node;
 }
 
 /*
@@ -1552,25 +1469,13 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 static void
 cd9660_free_structure(cd9660node *root)
 {
-#if 0
-	cd9660node *temp = root;
-	cd9660node *temp2;
+	cd9660node *cn;
 
-	while (temp != NULL)
-	{
-		if (temp->child != NULL)
-		{
-			cd9660_free_structure(temp->child);
-			free(temp->child);
-		}
-		temp2 = temp->next;
-		if (temp != root)
-		{
-			free(temp);
-		}
-		temp = temp2;
+	while ((cn = TAILQ_FIRST(&root->cn_children)) != NULL) {
+		TAILQ_REMOVE(&root->cn_children, cn, cn_next_child);
+		cd9660_free_structure(cn);
 	}
-#endif
+	free(root);
 }
 
 /*
@@ -1602,7 +1507,7 @@ struct ptq_entry
 static int
 cd9660_generate_path_table(void)
 {
-	cd9660node *dirNode = diskStructure.rootNode;
+	cd9660node *cn, *dirNode = diskStructure.rootNode;
 	cd9660node *last = dirNode;
 	int pathTableSize = 0;	/* computed as we go */
 	int counter = 1;	/* root gets a count of 0 */
@@ -1641,25 +1546,22 @@ cd9660_generate_path_table(void)
 			parentRecNum = dirNode->parent->ptnumber;
 
 		/* Push children onto queue */
-		dirNode = dirNode->child;
-		while (dirNode != 0) {
+		TAILQ_FOREACH(cn, &dirNode->cn_children, cn_next_child) {
 			/*
 			 * Dont add the DOT and DOTDOT types to the path
 			 * table.
 			 */
-			if ((dirNode->type != CD9660_TYPE_DOT)
-				&& (dirNode->type != CD9660_TYPE_DOTDOT)) {
+			if ((cn->type != CD9660_TYPE_DOT)
+				&& (cn->type != CD9660_TYPE_DOTDOT)) {
 				
-				if (S_ISDIR(dirNode->node->type)) {
-					PTQUEUE_NEW(n, ptq_entry, -1, dirNode);
+				if (S_ISDIR(cn->node->type)) {
+					PTQUEUE_NEW(n, ptq_entry, -1, cn);
 					TAILQ_INSERT_TAIL(&pt_head, n, ptq);
 				}
 			}
-			dirNode = dirNode->next;
 		}
 		counter++;
 	}
-	
 	return pathTableSize;
 }
 
@@ -1740,11 +1642,12 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 		}
 		oldname ++;
 	}
-	if (!found_ext && !diskStructure.omit_trailing_period)
-		*newname++ = '.';
-	/* Add version */
-	*newname++ = ';';
-	sprintf(newname, "%i", 1);
+	if (is_file) {
+		if (!found_ext && !diskStructure.omit_trailing_period)
+			*newname++ = '.';
+		/* Add version */
+		sprintf(newname, ";%i", 1);
+	}
 	return namelen + extlen + found_ext;
 }
 
@@ -1795,11 +1698,12 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 		}
 		oldname ++;
 	}
-	if (!found_ext && !diskStructure.omit_trailing_period)
-		*newname++ = '.';
-	/* Add version */
-	*newname++ = ';';
-	sprintf(newname, "%i", 1);
+	if (is_file) {
+		if (!found_ext && !diskStructure.omit_trailing_period)
+			*newname++ = '.';
+		/* Add version */
+		sprintf(newname, ";%i", 1);
+	}
 	return namelen + extlen + found_ext;
 }
 
@@ -1906,18 +1810,16 @@ cd9660_compute_offsets(cd9660node *node, int startOffset)
 		/*Set what sector this directory starts in*/
 		node->fileDataSector =
 		    CD9660_BLOCKS(diskStructure.sectorSize,startOffset);
-		
+
 		cd9660_bothendian_dword(node->fileDataSector,
 		    node->isoDirRecord->extent);
-		
+
 		/*
 		 * First loop over children, need to know the size of
 		 * their directory records
 		 */
-		child = node->child;
 		node->fileSectorsUsed = 1;
-		for (child = node->child; child != 0; child = child->next) {
-			
+		TAILQ_FOREACH(child, &node->cn_children, cn_next_child) {
 			node->fileDataLength +=
 			    cd9660_compute_record_size(child);
 			if ((cd9660_compute_record_size(child) +
@@ -1939,10 +1841,9 @@ cd9660_compute_offsets(cd9660node *node, int startOffset)
 		 * record (or, the first byte in that sector)
 		 */
 		used_bytes += node->fileSectorsUsed * diskStructure.sectorSize;
-		
-		
-		for (child = node->dot_dot_record->next; child != NULL;
-		     child = child->next) {
+
+		for (child = TAILQ_NEXT(node->dot_dot_record, cn_next_child);
+		     child != NULL; child = TAILQ_NEXT(child, cn_next_child)) {
 			/* Directories need recursive call */
 			if (S_ISDIR(child->node->type)) {
 				r = cd9660_compute_offsets(child,
@@ -1959,31 +1860,32 @@ cd9660_compute_offsets(cd9660node *node, int startOffset)
 		cd9660_populate_dot_records(node);
 		
 		/* Finally, do another iteration to write the file data*/
-		child = node->dot_dot_record->next;
-		while (child != 0) {
+		for (child = TAILQ_NEXT(node->dot_dot_record, cn_next_child);
+		     child != NULL;
+		     child = TAILQ_NEXT(child, cn_next_child)) {
 			/* Files need extent set */
-			if (!(S_ISDIR(child->node->type))) {
-				child->fileRecordSize =
-				    cd9660_compute_record_size(child);
+			if (S_ISDIR(child->node->type))
+				continue;
+			child->fileRecordSize =
+			    cd9660_compute_record_size(child);
 
-				/* For 0 byte files */
-				if (child->fileDataLength == 0)
-					child->fileSectorsUsed = 0;
-				else 
-					child->fileSectorsUsed =
-					    CD9660_BLOCKS(
-						diskStructure.sectorSize,
-						child->fileDataLength);
-				
-				child->fileDataSector =	
-					CD9660_BLOCKS(diskStructure.sectorSize,
-					    used_bytes + startOffset);
-				cd9660_bothendian_dword(child->fileDataSector,
-					child->isoDirRecord->extent);
-				used_bytes += child->fileSectorsUsed *
-				    diskStructure.sectorSize;
+			/* For 0 byte files */
+			if (child->fileDataLength == 0)
+				child->fileSectorsUsed = 0;
+			else {
+				child->fileSectorsUsed =
+				    CD9660_BLOCKS(
+					diskStructure.sectorSize,
+					child->fileDataLength);
 			}
-			child = child->next;
+			
+			child->fileDataSector =	
+				CD9660_BLOCKS(diskStructure.sectorSize,
+				    used_bytes + startOffset);
+			cd9660_bothendian_dword(child->fileDataSector,
+				child->isoDirRecord->extent);
+			used_bytes += child->fileSectorsUsed *
+			    diskStructure.sectorSize;
 		}
 	}
 
@@ -2055,11 +1957,11 @@ cd9660_create_virtual_entry(const char *name, cd9660node *parent, int file,
 	if (insert) {
 		if (temp->parent != NULL) {
 			temp->level = temp->parent->level + 1;
-			if (temp->parent->child != NULL)
-				cd9660_sorted_node_insert(temp->parent->child,
-				    temp);
+			if (!TAILQ_EMPTY(&temp->parent->cn_children))
+				cd9660_sorted_child_insert(temp->parent, temp);
 			else
-				temp->parent->child = temp;
+				TAILQ_INSERT_HEAD(&temp->parent->cn_children,
+				    temp, cn_next_child);
 		}
 	}
 
@@ -2126,7 +2028,7 @@ cd9660_create_directory(const char *name, cd9660node *parent)
 static cd9660node *
 cd9660_create_special_directory(u_char type, cd9660node *parent)
 {
-	cd9660node *temp;
+	cd9660node *temp, *first;
 	char na[2];
 	
 	assert(parent != NULL);
@@ -2148,37 +2050,22 @@ cd9660_create_special_directory(u_char type, cd9660node *parent)
 	/* Dot record is always first */
 	if (type == CD9660_TYPE_DOT) {
 		parent->dot_record = temp;
-		if (parent->child != NULL) {
-			parent->child->prev = temp;
-			temp->next = parent->child;
-			parent->child = temp;
-		} else
-			parent->child = temp;
+		TAILQ_INSERT_HEAD(&parent->cn_children, temp, cn_next_child);
 	/* DotDot should be second */
 	} else if (type == CD9660_TYPE_DOTDOT) {
 		parent->dot_dot_record = temp;
-		if (parent->child != NULL) {
-			/*
-			 * If the first child is the dot record,
-			 * insert this second.
-			 */
-			if (parent->child->type & CD9660_TYPE_DOT) {
-				if (parent->child->next != 0)
-					parent->child->next->prev = temp;
-				temp->next = parent->child->next;
-				temp->prev = parent->child;
-				parent->child->next = temp;
-			} else {
-				/*
-				 * Else, insert it first. Dot record
-				 * will be added later.
-				 */
-				parent->child->prev = temp;
-				temp->next = parent->child;
-				parent->child = temp;
-			}
-		} else
-			parent->child = temp;
+		/*
+                 * If the first child is the dot record, insert
+                 * this second.  Otherwise, insert it at the head.
+		 */
+		if ((first = TAILQ_FIRST(&parent->cn_children)) == NULL ||
+		    (first->type & CD9660_TYPE_DOT) == 0) {
+			TAILQ_INSERT_HEAD(&parent->cn_children, temp,
+			    cn_next_child);
+		} else {
+			TAILQ_INSERT_AFTER(&parent->cn_children, first, temp,
+			    cn_next_child);
+		}
 	}
 
 	return temp;
