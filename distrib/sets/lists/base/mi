@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.9 2003/10/20 06:21:59 jmc Exp $
+# $NetBSD: mi,v 1.324.2.10 2005/10/26 20:21:46 riz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1886,9 +1886,22 @@
 ./usr/share/zoneinfo/America/Anguilla		base-sys-share
 ./usr/share/zoneinfo/America/Antigua		base-sys-share
 ./usr/share/zoneinfo/America/Araguaina		base-sys-share
+./usr/share/zoneinfo/America/Argentina		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Buenos_Aires		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Catamarca		base-sys-share
+./usr/share/zoneinfo/America/Argentina/ComodRivadavia		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Cordoba		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Jujuy		base-sys-share
+./usr/share/zoneinfo/America/Argentina/La_Rioja		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Mendoza		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Rio_Gallegos		base-sys-share
+./usr/share/zoneinfo/America/Argentina/San_Juan		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Tucuman		base-sys-share
+./usr/share/zoneinfo/America/Argentina/Ushuaia		base-sys-share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share
 ./usr/share/zoneinfo/America/Atka		base-sys-share
+./usr/share/zoneinfo/America/Bahia		base-sys-share
 ./usr/share/zoneinfo/America/Barbados		base-sys-share
 ./usr/share/zoneinfo/America/Belem		base-sys-share
 ./usr/share/zoneinfo/America/Belize		base-sys-share
@@ -1897,6 +1910,7 @@
 ./usr/share/zoneinfo/America/Boise		base-sys-share
 ./usr/share/zoneinfo/America/Buenos_Aires		base-sys-share
 ./usr/share/zoneinfo/America/Cambridge_Bay		base-sys-share
+./usr/share/zoneinfo/America/Campo_Grande		base-sys-share
 ./usr/share/zoneinfo/America/Cancun		base-sys-share
 ./usr/share/zoneinfo/America/Caracas		base-sys-share
 ./usr/share/zoneinfo/America/Catamarca		base-sys-share
@@ -1904,6 +1918,7 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share
+./usr/share/zoneinfo/America/Coral_Harbour		base-sys-share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share
@@ -2002,6 +2017,7 @@
 ./usr/share/zoneinfo/America/Thule		base-sys-share
 ./usr/share/zoneinfo/America/Thunder_Bay		base-sys-share
 ./usr/share/zoneinfo/America/Tijuana		base-sys-share
+./usr/share/zoneinfo/America/Toronto		base-sys-share
 ./usr/share/zoneinfo/America/Tortola		base-sys-share
 ./usr/share/zoneinfo/America/Vancouver		base-sys-share
 ./usr/share/zoneinfo/America/Virgin		base-sys-share
@@ -2016,6 +2032,7 @@
 ./usr/share/zoneinfo/Antarctica/Mawson		base-sys-share
 ./usr/share/zoneinfo/Antarctica/McMurdo		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Palmer		base-sys-share
+./usr/share/zoneinfo/Antarctica/Rothera		base-sys-share
 ./usr/share/zoneinfo/Antarctica/South_Pole		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Syowa		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Vostok		base-sys-share
@@ -2127,6 +2144,7 @@
 ./usr/share/zoneinfo/Australia/Brisbane		base-sys-share
 ./usr/share/zoneinfo/Australia/Broken_Hill		base-sys-share
 ./usr/share/zoneinfo/Australia/Canberra		base-sys-share
+./usr/share/zoneinfo/Australia/Currie		base-sys-share
 ./usr/share/zoneinfo/Australia/Darwin		base-sys-share
 ./usr/share/zoneinfo/Australia/Hobart		base-sys-share
 ./usr/share/zoneinfo/Australia/LHI		base-sys-share
@@ -2230,6 +2248,7 @@
 ./usr/share/zoneinfo/Europe/Luxembourg		base-sys-share
 ./usr/share/zoneinfo/Europe/Madrid		base-sys-share
 ./usr/share/zoneinfo/Europe/Malta		base-sys-share
+./usr/share/zoneinfo/Europe/Mariehamn		base-sys-share
 ./usr/share/zoneinfo/Europe/Minsk		base-sys-share
 ./usr/share/zoneinfo/Europe/Monaco		base-sys-share
 ./usr/share/zoneinfo/Europe/Moscow		base-sys-share
