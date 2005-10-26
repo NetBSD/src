@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2005/07/10 17:02:19 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.160 2005/10/26 23:21:47 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2005/07/10 17:02:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2005/10/26 23:21:47 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -574,7 +574,7 @@ badtrap:
 		break;
 
 	case T_ALIGN:
-		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0) {
+		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
 			KERNEL_PROC_LOCK(l);
 			n = fixalign(l, tf);
 			KERNEL_PROC_UNLOCK(l);
@@ -687,7 +687,7 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		l->l_md.md_flags |= MDP_FIXALIGN;
+		p->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 
