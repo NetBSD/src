@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.32 2004/02/27 22:43:03 jmc Exp $
+.\"	$NetBSD: main,v 1.179.2.33 2005/10/26 18:27:03 riz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1266,7 +1266,7 @@ exists.
 .Pp
 .
 Refer to
-.Lk http://www.netbsd.org/Sites/net.html .
+.Lk http://www.NetBSD.org/mirrors/ .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
