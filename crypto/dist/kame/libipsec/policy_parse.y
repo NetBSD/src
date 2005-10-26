@@ -66,7 +66,7 @@
 #define ATOX(c) \
   (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10) ))
 
-static caddr_t pbuf = NULL;		/* sadb_x_policy buffer */
+static u_int8_t *pbuf = NULL;		/* sadb_x_policy buffer */
 static int tlen = 0;			/* total length of pbuf */
 static int offset = 0;			/* offset of pbuf */
 static int p_dir, p_type, p_protocol, p_mode, p_level, p_reqid;
@@ -292,7 +292,11 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	pbuf = malloc(tlen);
+	if (pbuf) {
+		free(pbuf);
+		tlen = 0;
+	}
+	pbuf = malloc(sizeof(struct sadb_x_policy));
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
