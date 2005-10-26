@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.160 2005/10/26 23:21:47 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.161 2005/10/26 23:41:56 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2005/10/26 23:21:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2005/10/26 23:41:56 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -678,7 +678,7 @@ badtrap:
 		sig = SIGILL;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
-		ksi.ksi_code = ILL_ILLADR;
+		ksi.ksi_code = ILL_ILLOPN;
 		ksi.ksi_addr = (void *)pc;
 		break;
 
