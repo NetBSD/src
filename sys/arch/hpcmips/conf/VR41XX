@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.8.4.2 2004/03/12 06:07:29 jmc Exp $
+# $NetBSD: VR41XX,v 1.8.4.3 2005/10/26 22:16:26 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.8.4.2 $"
+#ident 		"GENERIC-$Revision: 1.8.4.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -470,6 +470,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

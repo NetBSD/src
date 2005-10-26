@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.250.2.2 2003/01/26 09:14:25 jmc Exp $
+$NetBSD: usbdevs,v 1.250.2.3 2005/10/26 22:16:27 jmc Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
+vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
 vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq Computers
@@ -817,6 +818,9 @@ product KYE NICHE		0x0001	Niche mouse
 product KYE NETSCROLL		0x0003	Genius NetScroll mouse
 product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro scanner
+
+/* Kyocera products */
+product KYOCERA AHK3001V	0x0203	AH-K3001V
 
 /* LaCie products */
 product LACIE HD		0xa601	Hard Disk

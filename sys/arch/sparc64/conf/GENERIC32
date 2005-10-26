@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.39.4.4 2002/11/30 14:01:10 he Exp $
+# 	$NetBSD: GENERIC32,v 1.39.4.5 2005/10/26 22:16:27 jmc Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39.4.4 $"
+#ident 		"GENERIC-$Revision: 1.39.4.5 $"
 
 maxusers	64
 
@@ -458,6 +458,9 @@ uaudio*	at uhub? port ? configuration ?			# USB audio
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
+ucom*	at ukyopon? portno ?
 
 uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader
