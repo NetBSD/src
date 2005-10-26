@@ -1,5 +1,5 @@
-/*	$NetBSD: policy_parse.y,v 1.7.2.3 2003/10/05 09:10:05 tron Exp $	*/
-/*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.7.2.4 2005/10/26 18:59:45 riz Exp $	*/
+/*	$KAME: policy_parse.y,v 1.14 2003/06/27 03:39:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -67,7 +67,7 @@
 #define ATOX(c) \
   (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10) ))
 
-static caddr_t pbuf = NULL;		/* sadb_x_policy buffer */
+static u_int8_t *pbuf = NULL;		/* sadb_x_policy buffer */
 static int tlen = 0;			/* total length of pbuf */
 static int offset = 0;			/* offset of pbuf */
 static int p_dir, p_type, p_protocol, p_mode, p_level, p_reqid;
@@ -90,7 +90,6 @@ extern int yyparse __P((void));
 extern int yylex __P((void));
 
 extern char *__libyytext;	/*XXX*/
-
 
 %}
 
@@ -295,19 +294,25 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	pbuf = malloc(tlen);
+	if (pbuf) {
+		free(pbuf);
+		tlen = 0;
+	}
+	pbuf = malloc(sizeof(struct sadb_x_policy));
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
 	tlen = sizeof(struct sadb_x_policy);
 
+	memset(pbuf, 0, tlen);
 	p = (struct sadb_x_policy *)pbuf;
 	p->sadb_x_policy_len = 0;	/* must update later */
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	p->sadb_x_policy_type = p_type;
 	p->sadb_x_policy_dir = p_dir;
-	p->sadb_x_policy_reserved = 0;
+	p->sadb_x_policy_id = 0;
+
 	offset = tlen;
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
