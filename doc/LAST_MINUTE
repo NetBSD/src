@@ -1,10 +1,5 @@
-#	$NetBSD: LAST_MINUTE,v 1.2.2.2.2.2 2005/10/23 00:23:50 riz Exp $
+#	$NetBSD: LAST_MINUTE,v 1.2.2.2.2.3 2005/10/26 23:19:14 riz Exp $
 
-This file contains important information on the NetBSD 2.1 release that
+This file contains important information on the NetBSD 2.2 release that
 did not make it into the main documentation.
-
-[sgimips]
-
-	The ISO image for sgimips is _not_ bootable under the NetBSD 2.1
-	release.
 
