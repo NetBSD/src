@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.161 2005/10/26 19:57:35 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.162 2005/10/26 20:49:50 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1955,4 +1955,48 @@ sys/netinet/fil.c				patch
 	Don't pass a NULL pointer to ipfr_fastroute(). From Christoph
 	Egger in PR#26141.
 	[darrenr, ticket #1780]
+
+sys/netatalk/aarp.c				1.17
+
+	PR/31051: Kousaku Nakahara: can't find the device from Macintosh through
+	AppleTalk(Netatalk) in the network including a seed router
+	Byte order problem, fixed as suggested.
+	[taca, ticket #5851]
+
+distrib/sets/lists/base/mi			patch
+share/zoneinfo/africa				patch
+share/zoneinfo/antarctica			patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/backward				patch
+share/zoneinfo/etcetera				patch
+share/zoneinfo/europe				patch
+share/zoneinfo/iso3166.tab			patch
+share/zoneinfo/leapseconds			patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/solar87				patch
+share/zoneinfo/solar88				patch
+share/zoneinfo/solar89				patch
+share/zoneinfo/southamerica			patch
+share/zoneinfo/yearistype.sh			patch
+share/zoneinfo/zone.tab				patch
+
+	This update most importantly adds over the previous tzdata2002d ...
+	_lots_ of fixes, including most recently the leap second at the
+	end of 2005 and the U.S. DST changes taking effect in 2007.
+	[kleink, ticket #5859]
+
+share/zoneinfo/asia				1.1.1.34
+share/zoneinfo/australasia			1.9
+share/zoneinfo/northamerica			1.1.1.31
+share/zoneinfo/southamerica			1.1.1.30
+
+	Update to tzdata2005n.
+	[kleink, ticket #5903]
+
+games/phantasia/main.c				1.15
+games/phantasia/setup.c				1.14 via patch
+
+	Now games.tgz can be shared among MACHINE_ARCH's
+	[jmc, ticket #5921]
 
