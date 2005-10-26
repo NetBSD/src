@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.8 2005/04/02 18:56:50 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.3 2005/07/28 02:08:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.3.2.1 2005/10/26 08:32:45 yamt Exp $");
 #endif
 
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.3 2005/07/28 02:08:04 dyoung Ex
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 

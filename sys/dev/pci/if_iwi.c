@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.30 2005/10/08 06:19:46 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.30.2.1 2005/10/26 08:32:45 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.30 2005/10/08 06:19:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.30.2.1 2005/10/26 08:32:45 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -104,6 +104,8 @@ static int	iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
     int);
 static void	iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 static void	iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
+static struct mbuf *
+		iwi_alloc_rx_buf(struct iwi_softc *sc);
 static int	iwi_alloc_rx_ring(struct iwi_softc *, struct iwi_rx_ring *,
     int);
 static void	iwi_reset_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
@@ -663,26 +665,14 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 	for (i = 0; i < count; i++) {
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &ring->data[i].map);
+		    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ring->data[i].map);
 		if (error != 0) {
 			aprint_error("%s: could not create rx buf DMA map",
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 
-		MGETHDR(ring->data[i].m, M_DONTWAIT, MT_DATA);
-		if (ring->data[i].m == NULL) {
-			aprint_error("%s: could not allocate rx mbuf\n",
-			    sc->sc_dev.dv_xname);
-			error = ENOMEM;
-			goto fail;
-		}
-
-		MCLGET(ring->data[i].m, M_DONTWAIT);
-		if (!(ring->data[i].m->m_flags & M_EXT)) {
-			m_freem(ring->data[i].m);
-			aprint_error("%s: could not allocate rx mbuf cluster\n",
-			    sc->sc_dev.dv_xname);
+		if ((ring->data[i].m = iwi_alloc_rx_buf(sc)) == NULL) {
 			error = ENOMEM;
 			goto fail;
 		}
@@ -996,13 +986,36 @@ iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	}
 }
 
+static struct mbuf *
+iwi_alloc_rx_buf(struct iwi_softc *sc)
+{
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		aprint_error("%s: could not allocate rx mbuf\n",
+		    sc->sc_dev.dv_xname);
+		return NULL;
+	}
+
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		aprint_error("%s: could not allocate rx mbuf cluster\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return NULL;
+	}
+
+	return m;
+}
+
 static void
 iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
     struct iwi_frame *frame)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = ic->ic_ifp;
-	struct mbuf *m;
+	struct mbuf *m, *m_new;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	int error;
@@ -1021,10 +1034,47 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 		return;
 	}
 
+	/*
+	 * Try to allocate a new mbuf for this ring element and
+	 * load it before processing the current mbuf. If the ring
+	 * element cannot be reloaded, drop the received packet
+	 * and reuse the old mbuf. In the unlikely case that
+	 * the old mbuf can't be reloaded either, explicitly panic.
+	 *
+	 * XXX Reorganize buffer by moving elements from the logical
+	 * end of the ring to the front instead of dropping.
+	 */
+	if ((m_new = iwi_alloc_rx_buf(sc)) == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
+
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
-	/* Finalize mbuf */
+	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m_new, void *),
+	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: could not load rx buf DMA map\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m_new);
+		ifp->if_ierrors++;
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		if (error)
+			panic("%s: unable to remap rx buf",
+			    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/*
+	 * New mbuf successfully loaded, update RX ring and continue
+	 * processing.
+	 */
 	m = data->m;
+	data->m = m_new;
+	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, data->map->dm_segs[0].ds_addr);
+
+	/* Finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = sizeof (struct iwi_hdr) +
 	    sizeof (struct iwi_frame) + le16toh(frame->len);
@@ -1059,34 +1109,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	/* node is no longer needed */
 	ieee80211_free_node(ni);
-
-	MGETHDR(data->m, M_DONTWAIT, MT_DATA);
-	if (data->m == NULL) {
-		aprint_error("%s: could not allocate rx mbuf\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	MCLGET(data->m, M_DONTWAIT);
-	if (!(data->m->m_flags & M_EXT)) {
-		aprint_error("%s: could not allocate rx mbuf cluster\n",
-		    sc->sc_dev.dv_xname);
-		m_freem(data->m);
-		data->m = NULL;
-		return;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(data->m, void *),
-	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error("%s: could not load rx buf DMA map\n",
-		    sc->sc_dev.dv_xname);
-		m_freem(data->m);
-		data->m = NULL;
-		return;
-	}
-
-	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, data->map->dm_segs[0].ds_addr);
 }
 
 static void

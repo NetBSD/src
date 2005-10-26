@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.40 2005/08/19 05:19:50 christos Exp $
+#	$NetBSD: IPAQ,v 1.40.2.1 2005/10/26 08:32:44 yamt Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -117,8 +117,8 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 #options 	BOOT_DUMP	# Enable memorydump at boot
-#options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
+#options	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
@@ -203,6 +203,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# disk-like interface to files
@@ -217,3 +218,4 @@ pseudo-device	biconsdev 1		# build-in console device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms

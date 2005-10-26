@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.45 2005/10/07 14:46:04 chs Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.45.2.1 2005/10/26 08:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -609,6 +609,20 @@ typedef struct firm_event32 {
 /* from <sys/uuid.h> */
 typedef netbsd32_pointer_t netbsd32_uuidp_t;
 
+/* from <sys/event.h> */
+typedef netbsd32_pointer_t netbsd32_keventp_t;
+
+struct netbsd32_kevent {
+	netbsd32_uintptr_t	ident;
+	uint32_t		filter;
+	uint32_t		flags;
+	uint32_t		fflags;
+	int64_t			data;
+	netbsd32_intptr_t	udata;
+} __attribute__((packed));
+
+int	netbsd32_kevent(struct lwp *, void *, register_t *);
+
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
  * note that they do *NOT* act like good macros and put ()'s around all
@@ -642,7 +656,8 @@ void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
 
-void    netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
+void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);

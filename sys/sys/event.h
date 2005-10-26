@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.15 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: event.h,v 1.15.6.1 2005/10/26 08:32:52 yamt Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -198,12 +198,31 @@ struct knote {
 #define	kn_fp		kn_ptr.p_fp
 };
 
+#include <sys/systm.h> /* for copyin_t */
+
 struct proc;
+struct timespec;
 
 void	knote(struct klist *, long);
 void	knote_remove(struct proc *, struct klist *);
 void	knote_fdclose(struct proc *, int);
 int 	kqueue_register(struct kqueue *, struct kevent *, struct proc *);
+
+typedef	int (*kevent_fetch_changes_t)(void *, const struct kevent *,
+    struct kevent *, size_t, int);
+typedef	int (*kevent_put_events_t)(void *, struct kevent *, struct kevent *,
+    size_t, int);
+
+struct kevent_ops {
+	void *keo_private;
+	copyin_t keo_fetch_timeout;
+	kevent_fetch_changes_t keo_fetch_changes;
+	kevent_put_events_t keo_put_events;
+};
+
+int	kevent1(struct lwp *, register_t *, int, const struct kevent *,
+    size_t, struct kevent *, size_t, const struct timespec *,
+    const struct kevent_ops *);
 
 int	kfilter_register(const char *, const struct filterops *, int *);
 int	kfilter_unregister(const char *);

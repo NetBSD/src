@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.34 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.34.2.1 2005/10/26 08:32:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.34 2005/09/23 12:10:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.34.2.1 2005/10/26 08:32:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.34 2005/09/23 12:10:32 jmmv Exp $"
 
 #include <miscfs/specfs/specdev.h>
 
-/*#define NTFS_DEBUG 1*/
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_subr.h>
@@ -780,8 +779,8 @@ ntfs_fhtovp(
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
-	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat.f_mntonname,
-		ntfhp->ntfid_ino));
+	ddprintf(("ntfs_fhtovp(): %s: %llu\n", mp->mnt_stat.f_mntonname,
+	    (unsigned long long)ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
@@ -837,9 +836,9 @@ ntfs_vgetex(
 	struct vnode *vp;
 	enum vtype f_type = VBAD;
 
-	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
-		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
-		(u_long)flags ));
+	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx, f:"
+	    " 0x%lx\n", (unsigned long long)ino, attrtype,
+	    attrname ? attrname : "", (u_long)lkflags, (u_long)flags));
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -913,7 +912,8 @@ ntfs_vgetex(
 		ntfs_ntput(ip);
 		return (error);
 	}
-	dprintf(("ntfs_vget: vnode: %p for ntnode: %d\n", vp,ino));
+	dprintf(("ntfs_vget: vnode: %p for ntnode: %llu\n", vp,
+	    (unsigned long long)ino));
 
 #ifdef __FreeBSD__
 	lockinit(&fp->f_lock, PINOD, "fnode", 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.59 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.59.2.1 2005/10/26 08:32:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -131,6 +131,8 @@ do {									\
 
 #ifdef _KERNEL
 
+#include <sys/systm.h>			/* for copyin_t/copyout_t */
+
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
@@ -180,8 +182,8 @@ void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
 
-int	__sigtimedwait1(struct lwp *, void *, register_t *, copyinout_t,
-    copyinout_t, copyinout_t);
+int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
+    copyin_t, copyout_t);
 
 /*
  * Machine-dependent functions:

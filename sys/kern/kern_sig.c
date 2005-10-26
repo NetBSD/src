@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.209 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.209.2.1 2005/10/26 08:32:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.209 2005/10/02 17:51:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.209.2.1 2005/10/26 08:32:51 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2349,7 +2349,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 
 int
 __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
-    copyinout_t put_info, copyinout_t fetch_timeout, copyinout_t put_timeout)
+    copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
 {
 	struct sys___sigtimedwait_args /* {
 		syscallarg(const sigset_t *) set;

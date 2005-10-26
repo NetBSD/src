@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.24 2005/06/28 18:30:00 drochner Exp $ */
+/* $NetBSD: j720ssp.c,v 1.24.4.1 2005/10/26 08:32:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.24 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.24.4.1 2005/10/26 08:32:44 yamt Exp $");
 
 #include "apm.h"
 
@@ -194,7 +194,6 @@ static int j720ssp_powerstate = 1;
 static struct j720ssp_softc j720kbdcons_sc;
 static int j720kbdcons_initstate = 0;
 
-#define DEBUG
 #ifdef DEBUG
 int j720sspwaitcnt;
 int j720sspwaittime;
@@ -409,6 +408,9 @@ j720kbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_KBD;
+		return 0;
+	case WSKBDIO_GETLEDS:	/* dummy for wsconsctl(8) */
+		*(int *)data = 0;
 		return 0;
 	}
 

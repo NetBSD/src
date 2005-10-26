@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.66 2005/09/09 14:50:58 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.66.2.1 2005/10/26 08:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.66 2005/09/09 14:50:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.66.2.1 2005/10/26 08:32:45 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -386,7 +386,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cardbus_function_tag_t cf;
 	int cdstatus;
 	static int wildcard[CARDBUSCF_NLOCS] = {
-		CARDBUSCF_DEV_DEFAULT, CARDBUSCF_FUNCTION_DEFAULT
+		CARDBUSCF_FUNCTION_DEFAULT
 	};
 
 	cc = sc->sc_cc;
@@ -581,7 +581,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 			}
 		}
 
-		locs[CARDBUSCF_DEV] = 0;
 		locs[CARDBUSCF_FUNCTION] = function;
 
 		if ((csc = config_found_sm_loc((void *)sc, "cardbus", locs,

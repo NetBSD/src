@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.94 2005/10/02 17:51:27 chs Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.94.2.1 2005/10/26 08:32:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.94 2005/10/02 17:51:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.94.2.1 2005/10/26 08:32:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.94 2005/10/02 17:51:27 chs Exp $");
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
+#include <sys/timevar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -510,7 +511,7 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 
 int
 timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
-    copyinout_t fetch_event, struct proc *p)
+    copyin_t fetch_event, struct proc *p)
 {
 	int error;
 	timer_t timerid;
