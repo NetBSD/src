@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.258 2005/09/14 15:03:50 he Exp $ */
+/*	$NetBSD: machdep.c,v 1.259 2005/10/26 23:21:47 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2005/09/14 15:03:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2005/10/26 23:21:47 uwe Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -363,8 +363,8 @@ setregs(l, pack, stack)
 	struct fpstate *fs;
 	int psr;
 
-	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	/* Don't allow unaligned data references by default */
+	l->l_proc->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
