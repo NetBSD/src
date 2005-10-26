@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.73 2005/09/25 21:57:02 uwe Exp $ */
+/*	$NetBSD: cpu.h,v 1.74 2005/10/26 20:52:33 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 
 #if defined(MULTIPROCESSOR)
-void	cpu_boot_secondary_processors __P((void));
+void	cpu_boot_secondary_processors(void);
 #endif
 
 /*
@@ -122,7 +122,7 @@ extern int eintstack[];
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 #endif
 
-void	softintr_init __P((void));
+void	softintr_init(void);
 void	*softnet_cookie;
 
 #define setsoftnet()	softintr_schedule(softnet_cookie);
@@ -138,7 +138,7 @@ void	*softnet_cookie;
 	/* Just interrupt the target CPU, so it can notice its AST */	\
 	if ((ci)->ci_cpuid != cpu_number())				\
 		XCALL0(sparc_noop, 1U << (ci)->ci_cpuid);		\
-} while(0)
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -172,24 +172,28 @@ extern struct intrhand {
 	int	ih_classipl;
 } *intrhand[15];
 
-void	intr_establish(int level, int classipl, struct intrhand *,
-			void (*fastvec)(void));
-void	intr_disestablish(int level, struct intrhand *);
+void	intr_establish(int, int, struct intrhand *, void (*)(void));
+void	intr_disestablish(int, struct intrhand *);
 
 void	intr_lock_kernel(void);
 void	intr_unlock_kernel(void);
 
 /* disksubr.c */
 struct dkbad;
-int isbad(struct dkbad *bt, int, int, int);
+int isbad(struct dkbad *, int, int, int);
+
 /* machdep.c */
 int	ldcontrolb(caddr_t);
 void	dumpconf(void);
 caddr_t	reserve_dumppages(caddr_t);
+void	wcopy(const void *, void *, u_int);
+void	wzero(void *, u_int);
+
 /* clock.c */
 struct timeval;
 void	lo_microtime(struct timeval *);
 void	schedintr(void *);
+
 /* locore.s */
 struct fpstate;
 void	savefpstate(struct fpstate *);
@@ -205,28 +209,35 @@ int	xldcontrolb(caddr_t, struct pcb *);
 void	copywords(const void *, void *, size_t);
 void	qcopy(const void *, void *, size_t);
 void	qzero(void *, size_t);
+
 /* trap.c */
 void	kill_user_windows(struct lwp *);
 int	rwindow_save(struct lwp *);
+
 /* cons.c */
 int	cnrom(void);
+
 /* zs.c */
 void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
 #ifdef KGDB
 void zs_kgdb_init(void);
 #endif
+
 /* fb.c */
 void	fb_unblank(void);
+
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
 void kgdb_connect(int);
 void kgdb_panic(void);
 #endif
+
 /* emul.c */
 struct trapframe;
 int fixalign(struct lwp *, struct trapframe *);
 int emulinstr(int, struct trapframe *);
+
 /* cpu.c */
 void mp_pause_cpus(void);
 void mp_resume_cpus(void);
@@ -235,9 +246,11 @@ void mp_halt_cpus(void);
 void mp_pause_cpus_ddb(void);
 void mp_resume_cpus_ddb(void);
 #endif
+
 /* intr.c */
 u_int setitr(u_int);
 u_int getitr(void);
+
 
 /*
  *
@@ -256,10 +269,8 @@ u_int getitr(void);
 struct trapvec {
 	int	tv_instr[4];		/* the four instructions */
 };
-extern struct trapvec *trapbase;	/* the 256 vectors */
 
-extern void wzero __P((void *, u_int));
-extern void wcopy __P((const void *, void *, u_int));
+extern struct trapvec *trapbase;	/* the 256 vectors */
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */
