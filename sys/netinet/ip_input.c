@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.219 2005/08/05 09:21:26 elad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.219.2.1 2005/10/26 08:32:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.219 2005/08/05 09:21:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.219.2.1 2005/10/26 08:32:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1823,13 +1823,9 @@ ip_forward(struct mbuf *m, int srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0;
+	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
-	struct ifnet *destifp;
-#if defined(IPSEC) || defined(FAST_IPSEC)
-	struct ifnet dummyifp;
-#endif
 
 	/*
 	 * We are now in the output path.
@@ -1943,7 +1939,6 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 	if (mcopy == NULL)
 		return;
-	destifp = NULL;
 
 	switch (error) {
 
@@ -1965,7 +1960,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
 		if (ipforward_rt.ro_rt)
-			destifp = ipforward_rt.ro_rt->rt_ifp;
+			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #else
 		/*
 		 * If the packet is routed over IPsec tunnel, tell the
@@ -1984,7 +1979,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			    &ipsecerror);
 
 			if (sp == NULL)
-				destifp = ipforward_rt.ro_rt->rt_ifp;
+				destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 			else {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
@@ -1993,24 +1988,18 @@ ip_forward(struct mbuf *m, int srcrt)
 				/*
 				 * find the correct route for outer IPv4
 				 * header, compute tunnel MTU.
-				 *
-				 * XXX BUG ALERT
-				 * The "dummyifp" code relies upon the fact
-				 * that icmp_error() touches only ifp->if_mtu.
 				 */
-				/*XXX*/
-				destifp = NULL;
+
 				if (sp->req != NULL
 				 && sp->req->sav != NULL
 				 && sp->req->sav->sah != NULL) {
 					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
-						dummyifp.if_mtu =
+						destmtu =
 						    ro->ro_rt->rt_rmx.rmx_mtu ?
 						    ro->ro_rt->rt_rmx.rmx_mtu :
 						    ro->ro_rt->rt_ifp->if_mtu;
-						dummyifp.if_mtu -= ipsechdr;
-						destifp = &dummyifp;
+						destmtu -= ipsechdr;
 					}
 				}
 
@@ -2042,7 +2031,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		break;
 #endif
 	}
-	icmp_error(mcopy, type, code, dest, destifp);
+	icmp_error(mcopy, type, code, dest, destmtu);
 }
 
 void

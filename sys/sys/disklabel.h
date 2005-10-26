@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.91 2005/06/12 19:46:17 dyoung Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.91.4.1 2005/10/26 08:32:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -269,183 +269,111 @@ struct olddisklabel {
 	.set	d_end_,276		/* size of disk label */
 #endif /* _LOCORE */
 
+/*
+ * We normally use C99 initialisers (just in case the lists below are out
+ * of sequence, or have gaps), but lint doesn't grok them.
+ * Maybe some host compilers don't either, but many have for quite some time.
+ */
+
+#ifndef lint
+#define ARRAY_INIT(element,value) [element]=value
+#else
+#define ARRAY_INIT(element,value) value
+#endif
+
+/* Use pre-processor magic to get all the parameters one one line... */
+
 /* d_type values: */
-#define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
-#define	DTYPE_MSCP		2		/* MSCP */
-#define	DTYPE_DEC		3		/* other DEC (rk, rl) */
-#define	DTYPE_SCSI		4		/* SCSI */
-#define	DTYPE_ESDI		5		/* ESDI interface */
-#define	DTYPE_ST506		6		/* ST506 etc. */
-#define	DTYPE_HPIB		7		/* CS/80 on HP-IB */
-#define	DTYPE_HPFL		8		/* HP Fiber-link */
-#define	DTYPE_FLOPPY		10		/* floppy */
-#define	DTYPE_CCD		11		/* concatenated disk device */
-#define	DTYPE_VND		12		/* vnode pseudo-disk */
-#define	DTYPE_ATAPI		13		/* ATAPI */
-#define	DTYPE_RAID		14		/* RAIDframe */
-#define	DTYPE_LD		15		/* logical disk */
-#define	DTYPE_JFS2		16		/* IBM JFS2 */
-#define	DTYPE_CGD		17		/* cryptographic pseudo-disk */
-#define	DTYPE_VINUM		18		/* vinum volume */
-#define	DTYPE_FLASH		19		/* flash memory devices */
+#define DKTYPE_DEFN(x) \
+x(UNKNOWN,	0,	"unknown") \
+x(SMD,		1,	"SMD")		/* SMD, XSMD; VAX hp/up */ \
+x(MSCP,		2,	"MSCP")		/* MSCP */ \
+x(DEC,		3,	"old DEC")	/* other DEC (rk, rl) */ \
+x(SCSI,		4,	"SCSI")		/* SCSI */ \
+x(ESDI,		5,	"ESDI")		/* ESDI interface */ \
+x(ST506,	6,	"ST506")	/* ST506 etc. */ \
+x(HPIB,		7,	"HP-IB")	/* CS/80 on HP-IB */ \
+x(HPFL,		8,	"HP-FL")	/* HP Fiber-link */ \
+x(TYPE_9,	9,	"type 9") \
+x(FLOPPY,	10,	"floppy")	/* floppy */ \
+x(CCD,		11,	"ccd")		/* concatenated disk device */ \
+x(VND,		12,	"vnd")		/* uvnode pseudo-disk */ \
+x(ATAPI,	13,	"ATAPI")	/* ATAPI */ \
+x(RAID,		14,	"RAID")		/* RAIDframe */ \
+x(LD,		15,	"ld")		/* logical disk */ \
+x(JFS2,		16,	"jfs")		/* IBM JFS2 */ \
+x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
+x(VINUM,	18,	"vinum")	/* vinum volume */ \
+x(FLASH,	19,	"flash")	/* flash memory devices */ \
+
+#ifndef OMIT_DKTYPENUMS
+#define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
+enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
+#undef	DKTYPE_NUMS
+#endif /* OMIT_DKTYPENUMS */
 
 #ifdef DKTYPENAMES
-static const char *const dktypenames[] = {
-	"unknown",
-	"SMD",
-	"MSCP",
-	"old DEC",
-	"SCSI",
-	"ESDI",
-	"ST506",
-	"HP-IB",
-	"HP-FL",
-	"type 9",
-	"floppy",
-	"ccd",
-	"vnd",
-	"ATAPI",
-	"RAID",
-	"ld",
-	"jfs",
-	"cgd",
-	"vinum",
-	"flash",
-	NULL
-};
-#define	DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
+#define	DKTYPE_NAMES(tag, number, name) ARRAY_INIT(number,name),
+static const char *const dktypenames[] = { DKTYPE_DEFN(DKTYPE_NAMES) NULL };
+#undef	DKTYPE_NAMES
 #endif
 
 /*
- * Filesystem type and version.
- * Used to interpret other filesystem-specific
- * per-partition information.
- *
- * These are used only for COMPAT_09 support.
+ * Partition type names, numbers, label-names, fsck prog, and mount prog
  */
-#define	FS_UNUSED	0		/* unused */
-#define	FS_SWAP		1		/* swap */
-#define	FS_V6		2		/* Sixth Edition */
-#define	FS_V7		3		/* Seventh Edition */
-#define	FS_SYSV		4		/* System V */
-#define	FS_V71K		5		/* V7 with 1K blocks (4.1, 2.9) */
-#define	FS_V8		6		/* Eighth Edition, 4K blocks */
-#define	FS_BSDFFS	7		/* 4.2BSD fast file system */
-#define	FS_MSDOS	8		/* MSDOS file system */
-#define	FS_BSDLFS	9		/* 4.4BSD log-structured file system */
-#define	FS_OTHER	10		/* in use, but unknown/unsupported */
-#define	FS_HPFS		11		/* OS/2 high-performance file system */
-#define	FS_ISO9660	12		/* ISO 9660, normally CD-ROM */
-#define	FS_BOOT		13		/* partition contains bootstrap */
-#define	FS_ADOS		14		/* AmigaDOS fast file system */
-#define	FS_HFS		15		/* Macintosh HFS */
-#define	FS_FILECORE	16		/* Acorn Filecore Filing System */
-#define	FS_EX2FS	17		/* Linux Extended 2 file system */
-#define	FS_NTFS		18		/* Windows/NT file system */
-#define	FS_RAID		19		/* RAIDframe component */
-#define	FS_CCD		20		/* concatenated disk component */
-#define	FS_JFS2		21		/* IBM JFS2 */
-#define	FS_APPLEUFS	22		/* Apple UFS */
-/* XXX this is not the same as FreeBSD.  How to solve? */
-#define	FS_VINUM	23		/* Vinum */
+#define	FSTYPE_DEFN(x) \
+x(UNUSED,   0, "unused",     NULL,    NULL)   /* unused */ \
+x(SWAP,     1, "swap",       NULL,    NULL)   /* swap */ \
+x(V6,       2, "Version 6",  NULL,    NULL)   /* Sixth Edition */ \
+x(V7,       3, "Version 7",  NULL,    NULL)   /* Seventh Edition */ \
+x(SYSV,     4, "System V",   NULL,    NULL)   /* System V */ \
+x(V71K,     5, "4.1BSD",     NULL,    NULL)   /* V7, 1K blocks (4.1, 2.9) */ \
+x(V8,    6, "Eighth Edition",NULL,    NULL)   /* Eighth Edition, 4K blocks */ \
+x(BSDFFS,   7, "4.2BSD",    "ffs",   "ffs")   /* 4.2BSD fast file system */ \
+x(MSDOS,    8, "MSDOS",     "msdos", "msdos") /* MSDOS file system */ \
+x(BSDLFS,   9, "4.4LFS",    "lfs",   "lfs")   /* 4.4BSD log-structured FS */ \
+x(OTHER,   10, "unknown",    NULL,    NULL)   /* in use, unknown/unsupported */\
+x(HPFS,    11, "HPFS",       NULL,    NULL)   /* OS/2 high-performance FS */ \
+x(ISO9660, 12, "ISO9660",    NULL,   "cd9660")/* ISO 9660, normally CD-ROM */ \
+x(BOOT,    13, "boot",       NULL,    NULL)   /* bootstrap code in partition */\
+x(ADOS,    14, "ADOS",       NULL,   "ados")  /* AmigaDOS fast file system */ \
+x(HFS,     15, "HFS",        NULL,    NULL)   /* Macintosh HFS */ \
+x(FILECORE,16, "FILECORE",   NULL, "filecore")/* Acorn Filecore FS */ \
+x(EX2FS,   17, "Linux Ext2","ext2fs","ext2fs")/* Linux Extended 2 FS */ \
+x(NTFS,    18, "NTFS",       NULL,   "ntfs")  /* Windows/NT file system */ \
+x(RAID,    19, "RAID",       NULL,    NULL)   /* RAIDframe component */ \
+x(CCD,     20, "ccd",        NULL,    NULL)   /* concatenated disk component */\
+x(JFS2,    21, "jfs",        NULL,    NULL)   /* IBM JFS2 */ \
+x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
+/* XXX this is not the same as FreeBSD.  How to solve? */ \
+x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 
-/* Adjust the FSMAXTYPES def below if you add something after APPLEUFS */
+#ifndef OMIT_FSTYPENUMS
+#define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
+enum { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
+#undef	FS_TYPENUMS
+#endif /* OMIT_FSTYPENUMS */
 
 #ifdef	FSTYPENAMES
-static const char *const fstypenames[] = {
-	"unused",
-	"swap",
-	"Version 6",
-	"Version 7",
-	"System V",
-	"4.1BSD",
-	"Eighth Edition",
-	"4.2BSD",
-	"MSDOS",
-	"4.4LFS",
-	"unknown",
-	"HPFS",
-	"ISO9660",
-	"boot",
-	"ADOS",
-	"HFS",
-	"FILECORE",
-	"Linux Ext2",
-	"NTFS",
-	"RAID",
-	"ccd",
-	"jfs",
-	"Apple UFS",
-	"vinum",
-	NULL
-};
-#define	FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
-#else
-#define	FSMAXTYPES	(FS_VINUM + 1)
+#define	FS_TYPENAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,name),
+static const char *const fstypenames[] = { FSTYPE_DEFN(FS_TYPENAMES) NULL };
+#undef	FS_TYPENAMES
 #endif
 
 #ifdef FSCKNAMES
 /* These are the names MOUNT_XXX from <sys/mount.h> */
-static const char *const fscknames[] = {
-	NULL,		/* unused */
-	NULL,		/* swap */
-	NULL,		/* Version 6 */
-	NULL,		/* Version 7 */
-	NULL,		/* System V */
-	NULL,		/* 4.1BSD */
-	NULL,		/* Eighth edition */
-	"ffs",		/* 4.2BSD */
-	"msdos",	/* MSDOS */
-	"lfs",		/* 4.4LFS */
-	NULL,		/* unknown */
-	NULL,		/* HPFS */
-	NULL,		/* ISO9660 */
-	NULL,		/* boot */
-	NULL,		/* ADOS */
-	NULL,		/* HFS */
-	NULL,		/* FILECORE */
-	"ext2fs",	/* Linux Ext2 */
-	NULL,		/* Windows/NT */
-	NULL,		/* RAID Component */
-	NULL,		/* concatenated disk component */
-	NULL,		/* IBM JFS2 */
-	"ffs",		/* Apple UFS */
-	NULL		/* NULL */
-};
-#define	FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
-
+#define	FS_FSCKNAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,fsck),
+static const char *const fscknames[] = { FSTYPE_DEFN(FS_FSCKNAMES) NULL };
+#undef	FS_FSCKNAMES
+#define	FSMAXNAMES	FSMAXTYPES
 #endif
 
 #ifdef MOUNTNAMES
 /* These are the names MOUNT_XXX from <sys/mount.h> */
-static const char *const mountnames[] = {
-	NULL,		/* unused */
-	NULL,		/* swap */
-	NULL,		/* Version 6 */
-	NULL,		/* Version 7 */
-	NULL,		/* System V */
-	NULL,		/* 4.1BSD */
-	NULL,		/* Eighth edition */
-	"ffs",		/* 4.2BSD */
-	"msdos",	/* MSDOS */
-	"lfs",		/* 4.4LFS */
-	NULL,		/* unknown */
-	NULL,		/* HPFS */
-	"cd9660",	/* ISO9660 */
-	NULL,		/* boot */
-	"ados",		/* ADOS */
-	NULL,		/* HFS */
-	"filecore",	/* FILECORE */
-	"ext2fs",	/* Linux Ext2 */
-	"ntfs",		/* Windows/NT */
-	NULL,		/* RAID Component */
-	NULL,		/* concatenated disk component */
-	NULL,		/* IBM JFS2 */
-	"ffs",		/* Apple UFS */
-	NULL		/* NULL */
-};
-#define	FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)
-
+#define	FS_MOUNTNAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,mount),
+static const char *const mountnames[] = { FSTYPE_DEFN(FS_MOUNTNAMES) NULL };
+#undef	FS_MOUNTNAMES
+#define	FSMAXMOUNTNAMES	FSMAXTYPES
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.9 2005/01/01 10:39:30 toshii Exp $	*/
+/*	$NetBSD: softintr.c,v 1.9.12.1 2005/10/26 08:32:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.9 2005/01/01 10:39:30 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.9.12.1 2005/10/26 08:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 
 	sh = malloc(sizeof(*sh), M_DEVBUF, M_NOWAIT);
 	if (sh == NULL)
-		return(NULL);
+		return NULL;
 
 	sh->sh_fun = fun;
 	sh->sh_level = ipl_to_spl(level);

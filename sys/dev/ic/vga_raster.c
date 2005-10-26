@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.17 2005/07/07 12:57:03 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.17.2.1 2005/10/26 08:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.17 2005/07/07 12:57:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.17.2.1 2005/10/26 08:32:45 yamt Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -695,6 +695,7 @@ vga_raster_free_screen(void *v, void *cookie)
 	struct vga_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
+	vc->nscreens--;
 	if (vs != &vga_console_screen)
 		free(vs, M_DEVBUF);
 	else

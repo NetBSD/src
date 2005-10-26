@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.66 2005/10/17 15:56:43 rpaulo Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.66.2.1 2005/10/26 08:32:52 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.66 2005/10/17 15:56:43 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.66.2.1 2005/10/26 08:32:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -179,7 +179,7 @@ struct mrt6stat	mrt6stat;
 
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
 u_char		n6expire[MF6CTBLSIZ];
-static struct mif6 mif6table[MAXMIFS];
+struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
 u_int		mrt6debug = 0;	  /* debug level 	*/
 #define DEBUG_MFC	0x02
