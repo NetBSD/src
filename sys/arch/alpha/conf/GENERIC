@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.208.4.2 2003/08/31 09:35:52 tron Exp $
+# $NetBSD: GENERIC,v 1.208.4.3 2005/10/26 22:16:26 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.208.4.2 $"
+#ident 		"GENERIC-$Revision: 1.208.4.3 $"
 
 maxusers 32
 
@@ -480,6 +480,10 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 # FTDI FT8U100AX serial adapter
 uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

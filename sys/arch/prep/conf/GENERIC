@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51.4.2 2002/10/24 09:34:38 lukem Exp $
+# $NetBSD: GENERIC,v 1.51.4.3 2005/10/26 22:16:27 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.51.4.2 $"
+#ident		"GENERIC-$Revision: 1.51.4.3 $"
 
 maxusers	32
 
@@ -395,6 +395,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Handspring Visor
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?

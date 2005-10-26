@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.164.4.2 2002/10/24 09:34:11 lukem Exp $
+# $NetBSD: ALPHA,v 1.164.4.3 2005/10/26 22:16:26 jmc Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.164.4.2 $"
+ident		"ALPHA-$Revision: 1.164.4.3 $"
 
 maxusers 32
 
@@ -492,6 +492,10 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 # FTDI FT8U100AX serial adapter
 uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

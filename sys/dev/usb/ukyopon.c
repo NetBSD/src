@@ -1,12 +1,15 @@
-/*	$NetBSD: umodem.c,v 1.43.6.1 2005/10/26 22:16:27 jmc Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.3.6.2 2005/10/26 22:16:27 jmc Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by ITOH Yasufumi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,21 +40,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Comm Class spec:  http://www.usb.org/developers/devclass_docs/usbccs10.pdf
- *                   http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
- */
-
-/*
- * TODO:
- * - Add error recovery in various places; the big problem is what
- *   to do in a callback if there is an error.
- * - Implement a Call Device for modems without multiplexed commands.
- *
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.43.6.1 2005/10/26 22:16:27 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.3.6.2 2005/10/26 22:16:27 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,93 +56,141 @@ __KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.43.6.1 2005/10/26 22:16:27 jmc Exp $");
 #include <sys/device.h>
 #include <sys/poll.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/umodemvar.h>
+#include <dev/usb/ukyopon.h>
 
-#ifdef UMODEM_DEBUG
-#define DPRINTFN(n, x)	if (umodemdebug > (n)) logprintf x
-int	umodemdebug = 0;
+#ifdef UKYOPON_DEBUG
+#define DPRINTFN(n, x)	if (ukyopondebug > (n)) logprintf x
+int	ukyopondebug = 0;
 #else
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-Static struct ucom_methods umodem_methods = {
+struct ukyopon_softc {
+	/* generic umodem device */
+	struct umodem_softc	sc_umodem;
+
+	/* ukyopon addition */
+	enum ukyopon_port	sc_porttype;
+};
+
+#define UKYOPON_MODEM_IFACE_INDEX	0
+#define UKYOPON_DATA_IFACE_INDEX	3
+
+Static int	ukyopon_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+
+Static struct ucom_methods ukyopon_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,
-	umodem_ioctl,
+	ukyopon_ioctl,
 	umodem_open,
 	umodem_close,
 	NULL,
 	NULL,
 };
 
-USB_DECLARE_DRIVER(umodem);
+USB_DECLARE_DRIVER(ukyopon);
 
-USB_MATCH(umodem)
+USB_MATCH(ukyopon)
 {
-	USB_MATCH_START(umodem, uaa);
+	USB_MATCH_START(ukyopon, uaa);
+	usb_device_descriptor_t *dd;
 	usb_interface_descriptor_t *id;
-	int cm, acm;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL ||
-	    id->bInterfaceClass != UICLASS_CDC ||
-	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
+	dd = usbd_get_device_descriptor(uaa->device);
+	if (id == NULL || dd == NULL)
 		return (UMATCH_NONE);
 
-	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
-		return (UMATCH_NONE);
+	if (UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
+	    UGETW(dd->idProduct) == USB_PRODUCT_KYOCERA_AHK3001V &&
+	    (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
+	     uaa->ifaceno == UKYOPON_DATA_IFACE_INDEX))
+		return (UMATCH_VENDOR_PRODUCT);
 
-	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	return (UMATCH_NONE);
 }
 
-USB_ATTACH(umodem)
+USB_ATTACH(ukyopon)
 {
-	USB_ATTACH_START(umodem, sc, uaa);
+	USB_ATTACH_START(ukyopon, sc, uaa);
 	struct ucom_attach_args uca;
 
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.methods = &umodem_methods;
-	uca.info = NULL;
+	sc->sc_porttype = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
 
-	if (umodem_common_attach(self, sc, uaa, &uca))
+	uca.portno = UCOM_UNK_PORTNO;
+	uca.methods = &ukyopon_methods;
+	uca.info = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	    "modem port" : "data transfer port";
+
+	if (umodem_common_attach(self, &sc->sc_umodem, uaa, &uca))
 		USB_ATTACH_ERROR_RETURN;
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+Static int
+ukyopon_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
+	      usb_proc_ptr p)
+{
+	struct ukyopon_softc *sc = addr;
+	struct ukyopon_identify *arg_id = (void*)data;
+	int error = 0;
+
+	switch (cmd) {
+	case UKYOPON_IDENTIFY:
+		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof arg_id->ui_name);
+		arg_id->ui_busno =
+		    USBDEVUNIT(*(device_ptr_t)sc->sc_umodem.sc_udev->bus->usbctl);
+		arg_id->ui_address = sc->sc_umodem.sc_udev->address;
+		arg_id->ui_model = UKYOPON_MODEL_UNKNOWN;
+		arg_id->ui_porttype = sc->sc_porttype;
+		break;
+
+	default:
+		error = umodem_ioctl(addr, portno, cmd, data, flag, p);
+		break;
+	}
+
+	return (error);
+}
+
 #ifdef __strong_alias
-__strong_alias(umodem_activate,umodem_common_activate)
+__strong_alias(ukyopon_activate,umodem_common_activate)
 #else
 int
-umodem_activate(device_ptr_t self, enum devact act)
+ukyopon_activate(device_ptr_t self, enum devact act)
 {
-	struct umodem_softc *sc = (struct umodem_softc *)self;
+	struct ukyopon_softc *sc = (struct ukyopon_softc *)self;
 
-	return umodem_common_activate(sc, act);
+	return umodem_common_activate(&sc->sc_umodem, act);
 }
 #endif
 
-USB_DETACH(umodem)
+USB_DETACH(ukyopon)
 {
-	USB_DETACH_START(umodem, sc);
+	USB_DETACH_START(ukyopon, sc);
 #ifdef __FreeBSD__
 	int flags = 0;
 #endif
 
-	return umodem_common_detach(sc, flags);
+	return umodem_common_detach(&sc->sc_umodem, flags);
 }

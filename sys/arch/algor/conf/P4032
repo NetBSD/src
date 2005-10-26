@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.9.4.1 2002/08/01 04:15:14 lukem Exp $
+#	$NetBSD: P4032,v 1.9.4.2 2005/10/26 22:16:26 jmc Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.9.4.1 $"
+#ident 		"P4032-$Revision: 1.9.4.2 $"
 
 maxusers 32
 
@@ -264,6 +264,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # FTDI FT8U100AX serial adapter
 #uftdi*	at uhub? port ?
 #ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?

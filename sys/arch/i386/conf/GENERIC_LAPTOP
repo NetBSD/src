@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.50.4.7 2004/11/11 23:45:16 he Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.50.4.8 2005/10/26 22:16:26 jmc Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50.4.7 $"
+#ident 		"GENERIC-$Revision: 1.50.4.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -599,6 +599,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?

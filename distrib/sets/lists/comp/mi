@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.440.2.8 2004/03/26 22:54:58 jmc Exp $
+#	$NetBSD: mi,v 1.440.2.9 2005/10/26 22:16:25 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -187,6 +187,7 @@
 ./usr/include/dev/tc/sticio.h		comp-c-include
 ./usr/include/dev/tc/sticreg.h		comp-c-include
 ./usr/include/dev/usb			comp-c-include
+./usr/include/dev/usb/ukyopon.h		comp-c-include
 ./usr/include/dev/usb/urio.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
 ./usr/include/dev/usb/usbhid.h		comp-c-include
