@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2005/10/26 20:52:33 uwe Exp $ */
+/*	$NetBSD: cpu.h,v 1.75 2005/10/26 21:11:05 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@ extern int eintstack[];
 #endif
 
 void	softintr_init(void);
-void	*softnet_cookie;
+extern void *softnet_cookie;
 
 #define setsoftnet()	softintr_schedule(softnet_cookie);
 
