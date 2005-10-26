@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.160 2005/10/26 19:26:37 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.161 2005/10/26 19:57:35 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1949,4 +1949,10 @@ lib/libipsec/policy_parse.y			1.9-1.10,1.13-1.14 via patch
 
 	Avoid memory leak, and correct various malloc usage.  PR#23625
 	[wiz, ticket #1798]
+
+sys/netinet/fil.c				patch
+
+	Don't pass a NULL pointer to ipfr_fastroute(). From Christoph
+	Egger in PR#26141.
+	[darrenr, ticket #1780]
 
