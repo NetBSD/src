@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.37.16.1 2003/01/28 05:46:36 jmc Exp $ */
+/*	$NetBSD: if_ie.c,v 1.37.16.2 2005/10/26 18:05:28 riz Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -701,14 +701,11 @@ check_eh(sc, eh, to_bpf)
 	struct ether_header *eh;
 	int *to_bpf;
 {
+#if NBPFILTER > 0
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_if;
-
-#if NBPFILTER > 0
 	*to_bpf = (ifp->if_bpf != 0);
-#else
-	*to_bpf = 0;
 #endif
 
 	/*
@@ -984,7 +981,7 @@ ie_readframe(sc, num)
 #if NBPFILTER > 0
 		m = ieget(sc, &bpf_gets_it);
 #else
-		m = ieget(sc, 0);
+		m = ieget(sc, NULL);
 #endif
 		ie_drop_packet_buffer(sc);
 	}
