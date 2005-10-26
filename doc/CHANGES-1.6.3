@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.162 2005/10/26 20:49:50 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.163 2005/10/26 22:25:34 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2000,3 +2000,50 @@ games/phantasia/setup.c				1.14 via patch
 	Now games.tgz can be shared among MACHINE_ARCH's
 	[jmc, ticket #5921]
 
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/man/mi			patch
+share/man/man4/Makefile				patch
+share/man/man4/ukyopon.4			patch
+share/man/man4/usb.4				patch
+sys/arch/algor/conf/P4032			patch
+sys/arch/algor/conf/P5064			patch
+sys/arch/algor/conf/P6032			patch
+sys/arch/alpha/conf/ALPHA			patch
+sys/arch/alpha/conf/BASIL			patch
+sys/arch/alpha/conf/FRAU-FARBISSINA		patch
+sys/arch/alpha/conf/GENERIC			patch
+sys/arch/cats/conf/GENERIC			patch
+sys/arch/hpcmips/conf/GENERIC			patch
+sys/arch/hpcmips/conf/TX3922			patch
+sys/arch/hpcmips/conf/VR41XX			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+sys/arch/i386/conf/IOPENER			patch
+sys/arch/i386/conf/SWINGER			patch
+sys/arch/macppc/conf/GENERIC			patch
+sys/arch/playstation2/conf/DEBUG		patch
+sys/arch/prep/conf/GENERIC			patch
+sys/arch/prep/conf/NATSUMI			patch
+sys/arch/sparc64/conf/GENERIC32			patch
+sys/dev/DEVNAMES				patch
+sys/dev/usb/Makefile				patch
+sys/dev/usb/files.usb				patch
+sys/dev/usb/ukyopon.c				patch
+sys/dev/usb/ukyopon.h				patch
+sys/dev/usb/umodem.c				patch
+sys/dev/usb/umodem_common.c			patch
+sys/dev/usb/umodemvar.h				patch
+sys/dev/usb/usbdevs				patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h 			regen
+
+	Provide a backport for ukyopon(4) and pullup umodem(4) updates.
+	[itohy, ticket #5754]
+	
+sys/dev/pci/if_fxp_pci.c			patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for 82801FB 10/100 ethernet.
+	[riz, ticket #5773]
