@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.50 2005/10/20 00:42:40 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.51 2005/10/26 23:09:32 riz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -170,6 +170,18 @@ Base Tag:	netbsd-3-base
 Maintainer:	3 Release Engineering <releng-3@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-2-1
+Description:	Tracking security/critical fixes for NetBSD 2.1
+Status:		Active
+Start Date:     26 Oct 2005 
+End Date:
+Base Tag:	netbsd-2-1-RELEASE
+Maintainer:	2 Release Engineering <releng-2@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:		Branch contains only security/critical fixes to
+		NetBSD 2.1.  For new features, use netbsd-2 branch.
 		Commits restricted to Release Engineering.
 
 # Individual developers' branches:
