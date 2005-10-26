@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.12 2005/08/19 04:24:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.12.2.1 2005/10/26 08:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.12 2005/08/19 04:24:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.12.2.1 2005/10/26 08:32:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.12 2005/08/19 04:24:38 christos 
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/timevar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>

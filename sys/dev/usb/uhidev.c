@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.29 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.29.2.1 2005/10/26 08:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.29 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.29.2.1 2005/10/26 08:32:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,9 +164,7 @@ USB_ATTACH(uhidev)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			printf("%s: unexpected endpoint\n", USBDEVNAME(sc->sc_dev));
-			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			printf("%s: endpoint %d: ignored\n", USBDEVNAME(sc->sc_dev), i);
 		}
 	}
 

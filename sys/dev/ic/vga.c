@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.81 2005/02/27 00:27:03 perry Exp $ */
+/* $NetBSD: vga.c,v 1.81.6.1 2005/10/26 08:32:45 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.6.1 2005/10/26 08:32:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,6 +860,7 @@ vga_free_screen(void *v, void *cookie)
 	struct vga_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
+	vc->nscreens--;
 	if (vs->fontset1)
 		egavga_unreffont(vc, vs->fontset1);
 	if (vs->fontset2)

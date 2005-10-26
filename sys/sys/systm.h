@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.180 2005/08/28 20:58:14 reinoud Exp $	*/
+/*	$NetBSD: systm.h,v 1.180.2.1 2005/10/26 08:32:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -239,6 +239,11 @@ int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
+
+#ifdef _KERNEL
+typedef	int	(*copyin_t)(const void *, void *, size_t);
+typedef int	(*copyout_t)(const void *, void *, size_t);
+#endif
 
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);

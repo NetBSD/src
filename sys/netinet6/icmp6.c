@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.110 2005/08/18 00:30:59 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.110.2.1 2005/10/26 08:32:52 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.110 2005/08/18 00:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.110.2.1 2005/10/26 08:32:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2617,6 +2617,7 @@ noredhdropt:
 		m0 = NULL;
 	}
 
+	sip6 = mtod(m, struct ip6_hdr *);
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
 		sip6->ip6_src.s6_addr16[1] = 0;
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_dst))

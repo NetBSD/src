@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2 2003/11/10 08:51:52 wiz Exp $ */
+/*	$NetBSD: start.S,v 1.2.18.1 2005/10/26 08:32:44 yamt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,8 @@
 
 #define _LOCORE
 
+#define OMIT_DKTYPENUMS
+#define OMIT_FSTYPENUMS
 #include "sys/disklabel.h"
 
 #include "../include/mtpr.h"

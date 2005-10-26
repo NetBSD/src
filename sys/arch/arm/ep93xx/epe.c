@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.2 2005/01/17 02:32:29 joff Exp $	*/
+/*	$NetBSD: epe.c,v 1.2.12.1 2005/10/26 08:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.2 2005/01/17 02:32:29 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.2.12.1 2005/10/26 08:32:44 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -500,8 +500,8 @@ epe_mii_writereg(self, phy, reg, val)
 	sc = (struct epe_softc *)self;
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
-	EPE_WRITE(MIICmd, (MIICmd_WRITE | (phy << 5) | reg));
 	EPE_WRITE(MIIData, val);
+	EPE_WRITE(MIICmd, (MIICmd_WRITE | (phy << 5) | reg));
 	while(EPE_READ(MIISts) & MIISts_BUSY);
 	EPE_WRITE(SelfCtl, d); /* restore old value */
 }

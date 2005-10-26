@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.192 2005/06/19 20:00:28 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.192.4.1 2005/10/26 08:32:44 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192.4.1 2005/10/26 08:32:44 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1335,7 +1335,8 @@ getcacheinfo_obp(sc, node)
 
 		ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
 		ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
-		ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
+		ci->c_totalsize = max(ci->ic_totalsize, ci->dc_totalsize);
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 	} else {
 		/* unified I/D cache */
 		ci->c_nlines = prom_getpropint(node, "cache-nlines", 128);
@@ -1856,7 +1857,8 @@ getcacheinfo_sun4d(sc, node)
 
 	ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
 	ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
-	ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
+	ci->c_totalsize = max(ci->ic_totalsize, ci->dc_totalsize);
+	ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2003/07/15 00:25:09 lukem Exp $	*/
+/*	$NetBSD: intr.c,v 1.8.18.1 2005/10/26 08:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2003/07/15 00:25:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.18.1 2005/10/26 08:32:44 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -72,12 +72,12 @@ extern u_int sintrcnt[];
 
 #include "com.h"
 #if NCOM > 0
-extern void comsoft	__P((void));
+extern void comsoft(void);
 #endif	/* NCOM > 0 */
 
 #include "sacom.h"
 #if NSACOM > 0
-extern void sacomsoft	__P((void));
+extern void sacomsoft(void);
 #endif	/* NSACOM > 0 */
 
 /* Eventually these will become macros */
@@ -87,21 +87,19 @@ void clearsoftintr(u_int);
 void dosoftints(void);
 
 void
-setsoftintr(intrmask)
-	u_int intrmask;
+setsoftintr(u_int intrmask)
 {
 	atomic_set_bit(&soft_interrupts, intrmask);
 }
 
 void
-clearsoftintr(intrmask)
-	u_int intrmask;
+clearsoftintr(u_int intrmask)
 {
 	atomic_clear_bit(&soft_interrupts, intrmask);
 }
 
 void
-setsoftnet()
+setsoftnet(void)
 {
 	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
 }
@@ -111,7 +109,7 @@ int astpending;
 /* Handle software interrupts */
 
 void
-dosoftints()
+dosoftints(void)
 {
 	u_int softints;
 	int s;
@@ -119,7 +117,8 @@ dosoftints()
 	softintr_dispatch(current_spl_level);
 
 	softints = soft_interrupts & spl_smasks[current_spl_level];
-	if (softints == 0) return;
+	if (softints == 0)
+		return;
 
 	/*
 	 * Network software interrupts
@@ -145,5 +144,94 @@ dosoftints()
 		(void)splx(s);
 	}
 }
+
+/* This is interrupt / SPL related */
+
+void    set_spl_masks(void);
+int     ipl_to_spl(int);
+
+int current_spl_level = _SPL_HIGH;
+u_int spl_masks[_SPL_LEVELS + 1];
+u_int spl_smasks[_SPL_LEVELS];
+int safepri = _SPL_0;
+
+void
+set_spl_masks(void)
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop)
+		spl_smasks[loop] = 0;
+
+	for (loop = 0; loop <= _SPL_SOFTCLOCK; loop++)
+		spl_masks[loop]    = imask[IPL_SOFTCLOCK];
+
+	spl_masks[_SPL_SOFTNET]    = imask[IPL_SOFTNET];
+	spl_masks[_SPL_BIO]        = imask[IPL_BIO];
+	spl_masks[_SPL_NET]        = imask[IPL_NET];
+	spl_masks[_SPL_SOFTSERIAL] = imask[IPL_SOFTSERIAL];
+	spl_masks[_SPL_TTY]        = imask[IPL_TTY];
+	spl_masks[_SPL_VM]         = imask[IPL_VM];
+	spl_masks[_SPL_AUDIO]      = imask[IPL_AUDIO];
+	spl_masks[_SPL_CLOCK]      = imask[IPL_CLOCK];
+	spl_masks[_SPL_HIGH]       = imask[IPL_HIGH];
+	spl_masks[_SPL_SERIAL]     = imask[IPL_SERIAL];
+	spl_masks[_SPL_LEVELS]     = 0;
+
+	spl_smasks[_SPL_0] = 0xffffffff;
+	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_SERIAL);
+	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
+	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
+}
+
+int
+ipl_to_spl(int ipl)
+{
+
+	switch (ipl) {
+	case IPL_SOFTCLOCK:
+		return _SPL_SOFTCLOCK;
+	case IPL_SOFTNET:
+		return _SPL_SOFTNET;
+	case IPL_BIO:
+		return _SPL_BIO;
+	case IPL_NET:
+		return _SPL_NET;
+	case IPL_SOFTSERIAL:
+		return _SPL_SOFTSERIAL;
+	case IPL_TTY:
+		return _SPL_TTY;
+	case IPL_VM:
+		return _SPL_VM;
+	case IPL_AUDIO:
+		return _SPL_AUDIO;
+	case IPL_CLOCK:
+		return _SPL_CLOCK;
+	case IPL_HIGH:
+		return _SPL_HIGH;
+	case IPL_SERIAL:
+		return _SPL_SERIAL;
+	default:
+		panic("bogus ipl");
+	}
+}
+
+#ifdef DIAGNOSTIC
+void	dump_spl_masks(void);
+
+void
+dump_spl_masks(void)
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		    spl_masks[loop], loop, spl_smasks[loop]);
+	}
+}
+#endif
 
 /* End of intr.c */

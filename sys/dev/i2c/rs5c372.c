@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.2 2005/08/16 16:33:50 nonaka Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.2.2.1 2005/10/26 08:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -100,21 +100,12 @@ static int
 rs5c372rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt, check;
-	int retries;
+	struct clock_ymdhms dt;
 
 	memset(&dt, 0, sizeof(dt));
-	memset(&check, 0, sizeof(check));
 
-	/*
-	 * Since we don't support Burst Read, we have to read the clock twice
-	 * until we get two consecutive identical results.
-	 */
-	retries = 5;
-	do {
-		rs5c372rtc_clock_read(sc, &dt);
-		rs5c372rtc_clock_read(sc, &check);
-	} while (memcmp(&dt, &check, sizeof(check)) != 0 && --retries);
+	if (rs5c372rtc_clock_read(sc, &dt) == 0)
+		return (-1);
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = 0;
@@ -188,7 +179,7 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	}
 
 	cmdbuf[0] = (RS5C372_SECONDS << 4);
-	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		printf("%s: rs5c372rtc_clock_read: failed to read rtc\n",
@@ -236,7 +227,7 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	}
 
 	cmdbuf[0] = (RS5C372_SECONDS << 4);
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		printf("%s: rs5c372rtc_clock_write: failed to write rtc\n",

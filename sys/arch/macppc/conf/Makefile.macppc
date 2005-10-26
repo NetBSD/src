@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.22 2005/06/25 22:08:54 dyoung Exp $
+#	$NetBSD: Makefile.macppc,v 1.22.4.1 2005/10/26 08:32:44 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -133,9 +133,6 @@ ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${UUDECODE} -p $> > ${.TARGET}
 athhal-powerpc-be-eabi.hal.o: athhal-powerpc-be-eabi.hal.o.uue
 	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-powerpc-be-eabi.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##
