@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.158 2005/10/21 18:12:15 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.159 2005/10/26 18:34:59 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1926,4 +1926,21 @@ distrib/sets/makesrctars			patch
 
 	Allow autobuild to create source sets with builds.
 	[jmc, ticket #5912]
+
+sys/arch/sun3/dev/if_ie.c			1.42
+
+	Avoid NULL pointer dereference in case of #if NBPFILTER == 0.
+	Closes PR port-sun3/21699.
+	[tsutsui, ticket #5784]
+
+sys/arch/sun2/dev/if_ec.c			1.9
+
+	Make ec interfaces ifconfig up without panic.
+	[tsutsui, ticket #5785]
+
+distrib/notes/alpha/install			1.29 (via patch)
+distrib/notes/common/main			1.284 (via patch)
+
+	Updated URL for list of NetBSD mirrors.
+	[heinz, ticket #5790]
 
