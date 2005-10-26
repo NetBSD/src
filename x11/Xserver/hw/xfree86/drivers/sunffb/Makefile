@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/05/15 19:32:21 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2005/10/26 10:56:44 macallan Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -25,10 +25,13 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
 		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/dbe \
+		-I${X11SRCDIR.xc}/programs/Xserver/render \
+		-I${X11SRCDIR.xc}/programs/Xserver/fb \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf8_32wid \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/ramdac \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/ddc \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/i2c \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xaa \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/include/fonts \
                 -I${DESTDIR}${X11INCDIR}/X11 \
