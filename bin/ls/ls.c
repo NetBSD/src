@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.57 2005/10/14 16:02:26 jschauma Exp $	*/
+/*	$NetBSD: ls.c,v 1.58 2005/10/26 02:24:22 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.57 2005/10/14 16:02:26 jschauma Exp $");
+__RCSID("$NetBSD: ls.c,v 1.58 2005/10/26 02:24:22 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,13 +196,13 @@ ls_main(int argc, char *argv[])
 		case 'A':
 			f_listdot = 1;
 			break;
-		/* the -B option turns off the -b, -q and -w options. */
+		/* The -B option turns off the -b, -q and -w options. */
 		case 'B':
 			f_nonprint = 0;
 			f_octal = 1;
 			f_octal_escape = 0;
 			break;
-		/* the -b option turns off the -B, -q and -w options. */
+		/* The -b option turns off the -B, -q and -w options. */
 		case 'b':
 			f_nonprint = 0;
 			f_octal = 0;
@@ -223,10 +223,7 @@ ls_main(int argc, char *argv[])
 			blocksize = 1024;
 			kflag = 1;
 			break;
-		/*
-		 * The -h option forces all sizes to be measured in bytes.
-		 * It also makes -l suppress -s.
-		 */
+		/* The -h option forces all sizes to be measured in bytes. */
 		case 'h':
 			f_humanize = 1;
 			break;
@@ -239,7 +236,7 @@ ls_main(int argc, char *argv[])
 		case 'p':
 			f_typedir = 1;
 			break;
-		/* the -q option turns off the -B, -b and -w options. */
+		/* The -q option turns off the -B, -b and -w options. */
 		case 'q':
 			f_nonprint = 1;
 			f_octal = 0;
@@ -263,7 +260,7 @@ ls_main(int argc, char *argv[])
 		case 'W':
 			f_whiteout = 1;
 			break;
-		/* the -w option turns off the -B, -b and -q options. */
+		/* The -w option turns off the -B, -b and -q options. */
 		case 'w':
 			f_nonprint = 0;
 			f_octal = 0;
