@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.221 2005/10/16 16:34:17 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.222 2005/10/26 01:30:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -52,6 +52,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_multiprocessor.h"
@@ -4632,6 +4633,7 @@ _C_LABEL(cpu_hatch):
 
 #endif /* MULTIPROCESSOR */
 
+#ifdef COMPAT_16
 #include "sigcode_state.s"
 
 	.globl	_C_LABEL(sigcode)
@@ -4656,6 +4658,8 @@ _C_LABEL(sigcode):
 	t	ST_SYSCALL
 	/* NOTREACHED */
 _C_LABEL(esigcode):
+#endif /* COMPAT_16 */
+
 
 /*
  * Primitives
