@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2005/05/31 00:53:02 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.182 2005/10/27 20:43:30 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2005/05/31 00:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2005/10/27 20:43:30 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -259,7 +259,7 @@ setregs(l, pack, stack)
 	l->l_proc->p_flag &= ~P_32;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_proc->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
