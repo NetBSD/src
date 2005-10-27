@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.3 2005/10/27 02:23:50 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.4 2005/10/27 05:22:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -32,3 +32,20 @@ sys/dev/raidframe/rf_dagdegwr.c			1.26
 doc/README.files				patch
 
 	Note new CHANGES file and fix XXX's for release numbers.
+
+sys/nfs/nfs.h					1.49
+sys/nfs/nfs_subs.c				1.152 via patch
+sys/nfs/nfs_vfsops.c				1.149 via patch
+sys/nfs/nfs_vnops.c				1.227 via patch
+sys/nfs/nfsmount.h				1.34
+usr.sbin/amd/include/config.h			1.36
+
+	Allow the attribute cache to be turned off, and allow amd
+	to do it.
+	[christos, ticket #5863]
+
+sys/arch/alpha/conf/GENERIC			1.276
+
+	If we're enabling ipfilter then we should really have IPFILTER_LOG
+	[abs, ticket #5893]
+
