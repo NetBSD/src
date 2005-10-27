@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.12 2005/03/22 00:52:07 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.13 2005/10/27 03:22:51 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -432,11 +432,11 @@ release
 is the second security/critical update of the NetBSD 2.0
 release branch. This represents a selected subset of fixes deemed
 critical in nature for stability or security reasons. All of these fixes
-will also appear on future
+will also appear on future minor
 .Nx
 releases (e.g.
 .Nx 2.1
-, etc) from the NetBSD 2.0 release branch as well.
+, etc) from the NetBSD 2 release branch as well.
 .
 .Pp
 Specific updates are as follows:
@@ -514,11 +514,11 @@ release
 is the first security/critical update of the NetBSD 2.0
 release branch. This represents a selected subset of fixes deemed
 critical in nature for stability or security reasons. All of these fixes
-will also appear on future
+will also appear on future minor
 .Nx
 releases (e.g.
 .Nx 2.1
-, etc) from the NetBSD 2.0 release branch as well.
+, etc) from the NetBSD 2 release branch as well.
 .
 .Pp
 Specific updates are as follows:
