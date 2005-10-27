@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2005/10/26 21:11:05 uwe Exp $ */
+/*	$NetBSD: cpu.h,v 1.76 2005/10/27 00:36:16 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
 #define	cpu_swapin(p)		/* nothing */
 #define	cpu_swapout(p)		/* nothing */
 #define	cpu_number()		(cpuinfo.ci_cpuid)
-#define	cpu_proc_fork(p1, p2)	/* nothing */
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors(void);
