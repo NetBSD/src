@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc_control.2,v 1.5 2004/05/13 10:20:58 wiz Exp $
+.\" $NetBSD: pmc_control.2,v 1.6 2005/10/27 01:10:09 uwe Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -67,6 +67,23 @@ is of type
 Upon return, the integer pointed to by
 .Fa argp
 will contain the number of counters that are available in the system.
+.It PMC_INFO_CPUCTR_TYPE
+When querying the type of a counter in the system,
+.Fa ctr
+refers to the counter being queried, and
+.Fa argp
+is of type
+.Em int * .
+Upon return, the integer pointed to by
+.Fa argp
+will contain the implementation-dependent type of the specified counter.
+.Pp
+If
+.Fa ctr
+is \-1, the integer pointed to by
+.Fa argp
+will contain machine-dependent type
+describing the CPU or counter configuration.
 .It PMC_INFO_COUNTER_VALUE
 When querying the value of a counter in the system,
 .Fa ctr
