@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.575 2005/10/22 06:04:57 hubertf Exp $
+# $NetBSD: mi,v 1.576 2005/10/27 17:51:48 jmc Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1055,6 +1055,7 @@
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
+./usr/sbin/ncdcs				base-sysutil-root
 ./usr/sbin/ndbootd				base-bootserver-bin
 ./usr/sbin/ndc					base-obsolete		obsolete
 ./usr/sbin/ndp					base-netutil-bin	inet6
