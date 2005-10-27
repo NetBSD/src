@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.13 2005/10/27 03:22:51 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.14 2005/10/27 03:23:39 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -432,7 +432,7 @@ release
 is the second security/critical update of the NetBSD 2.0
 release branch. This represents a selected subset of fixes deemed
 critical in nature for stability or security reasons. All of these fixes
-will also appear on future minor
+will also appear on future
 .Nx
 releases (e.g.
 .Nx 2.1
