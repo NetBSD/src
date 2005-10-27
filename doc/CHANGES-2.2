@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.1 2005/10/26 23:20:25 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.2 2005/10/27 00:04:37 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -14,3 +14,18 @@ gnu/usr.bin/groff/tmac/mdoc.local               patch
 doc/LAST_MINUTE					patch
 
 	Null out in preparation for 2.2
+
+gnu/libexec/uucp/doc/uucp.texi			1.6
+gnu/libexec/uucp/libunix/pipe.c			1.3
+
+	Allow for \H -> "address ..." substitution in PIPE ports. Useful
+	e.g. for generic UUCP over SSH or SSL... Idea and part of the patch
+	by Joerg Durchain, has apparently been integrated in Debian for a
+	while.
+	[is, ticket #5825]
+
+sys/dev/raidframe/rf_dagdegwr.c			1.26
+
+	Remove an RF_ASSERT that is just plain wrong.
+	[oster, ticket #5878]
+
