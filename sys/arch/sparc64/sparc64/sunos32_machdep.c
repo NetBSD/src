@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.16 2005/09/13 03:23:34 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.17 2005/10/27 20:43:30 martin Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.16 2005/09/13 03:23:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.17 2005/10/27 20:43:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -117,7 +117,7 @@ sunos32_setregs(l, pack, stack)
 	struct proc *p = l->l_proc;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
