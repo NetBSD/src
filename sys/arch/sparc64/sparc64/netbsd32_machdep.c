@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.53 2005/09/24 21:34:59 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.54 2005/10/27 20:43:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.53 2005/09/24 21:34:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.54 2005/10/27 20:43:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
