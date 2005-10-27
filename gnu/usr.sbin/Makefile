@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2004/01/06 02:10:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2005/10/27 17:39:35 jmc Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		dbsym mdsetimage
-
-.if ${MACHINE} == "ibmnws"
-SUBDIR+=	ncdcs
-.endif
+SUBDIR=		dbsym mdsetimage ncdcs
 
 .if ${MKPOSTFIX} != "no"
 SUBDIR+=	postfix
