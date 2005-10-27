@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.16 2005/10/27 00:05:03 wrstuden Exp $
+.\"     $NetBSD: buffercache.9,v 1.17 2005/10/27 16:08:48 wrstuden Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd October 26, 2005
+.Dd October 27, 2005
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -199,7 +199,7 @@ and
 must be multiples of the underlying device's block size.
 For other files,
 .Fa blkno
-is in units of file system blocks for the file system containing
+is in units chosen by the file system containing
 .Fa vp .
 .Pp
 If the buffer is not found (i.e. the block is not cached in memory),
