@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.14 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: time.c,v 1.15 2005/10/27 01:43:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.14 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: time.c,v 1.15 2005/10/27 01:43:48 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ main(int argc, char **argv)
 #define SCALE(x) (long)(ticks ? x / ticks : 0)
 
 		ticks = hz * (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
-		     hz * (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000;
+		    hz * (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000;
 		prl(ru.ru_maxrss, "maximum resident set size");
 		prl(SCALE(ru.ru_ixrss), "average shared memory size");
 		prl(SCALE(ru.ru_idrss), "average unshared data size");
@@ -162,6 +162,7 @@ main(int argc, char **argv)
 static void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: %s [-lp] utility [argument ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
@@ -170,13 +171,15 @@ usage()
 static void
 prl(long val, const char *expn)
 {
-    (void)fprintf(stderr, "%10ld  %s\n", val, expn);
+
+	(void)fprintf(stderr, "%10ld  %s\n", val, expn);
 }
 
 static void
 prtv(const char *pre, const char *decpt, const struct timeval *tv,
     const char *post)
 {
-    (void)fprintf(stderr, "%s%9ld%s%02ld%s", pre, (long)tv->tv_sec, decpt,
-	(long)tv->tv_usec / 10000, post);
+
+	(void)fprintf(stderr, "%s%9ld%s%02ld%s", pre, (long)tv->tv_sec, decpt,
+	    (long)tv->tv_usec / 10000, post);
 }
