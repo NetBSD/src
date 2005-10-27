@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.161 2005/10/26 23:41:56 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.162 2005/10/27 00:04:55 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2005/10/26 23:41:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.162 2005/10/27 00:04:55 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -354,10 +354,12 @@ trap(type, psr, pc, tf)
 badtrap:
 #endif
 #ifdef DIAGNOSTIC
-		/* the following message is gratuitous */
-		/* ... but leave it in until we find anything */
-		uprintf("%s[%d]: unimplemented software trap 0x%x\n",
-			p->p_comm, p->p_pid, type);
+		if (type < 0x90 || type > 0x9f) {
+			/* the following message is gratuitous */
+			/* ... but leave it in until we find anything */
+			uprintf("%s[%d]: unimplemented software trap 0x%x\n",
+				p->p_comm, p->p_pid, type);
+		}
 #endif
 		sig = SIGILL;
 		KSI_INIT_TRAP(&ksi);
