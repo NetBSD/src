@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.24 2005/06/16 22:45:46 jmc Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24 2005/06/16 22:45:46 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $");
 
 #include "opt_adb.h"
 
@@ -166,7 +166,7 @@ char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr(char *, int, int, char *);
+void	pm_printerr(const char *, int, int, char *);
 #endif
 
 int	pm_wait_busy(int);
@@ -229,7 +229,7 @@ extern	void	adb_pass_up(struct adbCommand *);
  * This function dumps contents of the PMData
  */
 void
-pm_printerr(char *ttl, int rval, int num, char *data)
+pm_printerr(const char *ttl, int rval, int num, char *data)
 {
 	int i;
 
