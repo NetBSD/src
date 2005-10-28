@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.289 2005/10/28 20:13:28 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.290 2005/10/28 23:56:02 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13662,7 +13662,6 @@ sys/kern/uipc_socket.c				1.112
 	Check the argument to SO_LINGER.
 	[nathanw, ticket #911]
 
-
 sys/dev/ic/elinkxl.c				1.85
 
 	The previous change (to use bus_space_read_2), was broken because it was
@@ -13693,3 +13692,22 @@ sys/arch/i386/conf/GENERIC			patch
 
 	Fix txp cards so this compiles and enable in GENERIC.
 	[chs, ticket #912]
+
+usr.sbin/amd/doc/Makefile			1.11
+
+	Create version.texi using the same scheme am-utils natively does.
+	i.e. from the date/timestamp of the am-utils file and using mdate-sh
+	[jmc, ticket #917]
+
+distrib/sets/lists/base/md.ibmnws		delete
+distrib/sets/lists/base/mi			1.576
+distrib/sets/lists/man/md.ibmnws		delete
+distrib/sets/lists/man/mi			1.835
+gnu/usr.sbin/Makefile				1.14
+
+	Build ncdcs on everything. Allows better set sharing (and
+	we don't exclude other 'system specific' binaries from other
+	builds ala sunlabel, etc), and nuke only md man page in existence,
+	simplifying man.tgz set sharing.
+	[jmc, ticket #918]
+
