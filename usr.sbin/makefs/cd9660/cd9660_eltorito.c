@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.2 2005/08/19 01:24:21 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.3 2005/10/28 21:51:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.2 2005/08/19 01:24:21 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.3 2005/10/28 21:51:35 dyoung Exp $");
 #endif  /* !__lint */
 
 static struct boot_catalog_entry *cd9660_init_boot_catalog_entry(void);
@@ -147,15 +147,15 @@ const char * boot_info;
 	new_image->bootable = ET_BOOTABLE;
 	/* Add boot disk */
 
-	if (diskStructure.boot_images.lh_first == NULL) {
-		LIST_INSERT_HEAD(&(diskStructure.boot_images), new_image,
+	if (LIST_FIRST(&diskStructure.boot_images) == NULL) {
+		LIST_INSERT_HEAD(&diskStructure.boot_images, new_image,
 		    image_list);
 	} else {
-		tmp_image = diskStructure.boot_images.lh_first;
-		while (tmp_image->image_list.le_next != 0
-			&& tmp_image->image_list.le_next->system !=
+		tmp_image = LIST_FIRST(&diskStructure.boot_images);
+		while (LIST_NEXT(tmp_image, image_list) != NULL
+			&& LIST_NEXT(tmp_image, image_list)->system !=
 			    new_image->system) {
-			tmp_image = tmp_image->image_list.le_next;
+			tmp_image = LIST_NEXT(tmp_image, image_list);
 		}
 		LIST_INSERT_AFTER(tmp_image, new_image,image_list);
 	}
@@ -174,13 +174,13 @@ cd9660_eltorito_add_boot_option(const char *option_string, const char* value)
 	assert(option_string != NULL);
 	
 	/* Find the last image added */
-	image = diskStructure.boot_images.lh_first;
+	image = LIST_FIRST(&diskStructure.boot_images);
 	if (image == NULL)
 		errx(EXIT_FAILURE, "Attempted to add boot option, "
 		    "but no boot images have been specified");
 
-	while (image->image_list.le_next != NULL)
-		image = image->image_list.le_next;
+	while (LIST_NEXT(image, image_list) != NULL)
+		image = LIST_NEXT(image, image_list);
 
 	/* TODO : These options are NOT copied yet */
 	if (strcmp(option_string, "no-emul-boot") == 0) {
@@ -321,7 +321,7 @@ cd9660_setup_boot(int first_sector)
 	int catalog_sectors;
 	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head,
 		*last_x86, *last_ppc, *last_mac, *last_head, 
-		*valid_entry, *default_entry, *temp, *head_temp;
+		*valid_entry, *default_entry, *temp, *head_temp, *next;
 	struct cd9660_boot_image *tmp_disk;
 
 	head_temp = NULL;
@@ -330,7 +330,7 @@ cd9660_setup_boot(int first_sector)
 		last_x86 = last_ppc = last_mac = last_head = NULL;
 	
 	/* If there are no boot disks, don't bother building boot information */
-	if ((tmp_disk = diskStructure.boot_images.lh_first) == NULL)
+	if ((tmp_disk = LIST_FIRST(&diskStructure.boot_images)) == NULL)
 		return 0;
 
 	/* Point to catalog: For now assume it consumes one sector */
@@ -353,8 +353,7 @@ cd9660_setup_boot(int first_sector)
 	num_entries = 1;
 	used_sectors = 0;
 	
-	for (tmp_disk = diskStructure.boot_images.lh_first; tmp_disk != NULL;
-		tmp_disk = tmp_disk->image_list.le_next) {
+	LIST_FOREACH(tmp_disk, &diskStructure.boot_images, image_list) {
 		used_sectors += tmp_disk->num_sectors;
 		
 		/* One default entry per image */
@@ -369,8 +368,7 @@ cd9660_setup_boot(int first_sector)
 	
 	/* Populate sector numbers */
 	sector = first_sector + catalog_sectors;
-	for (tmp_disk = diskStructure.boot_images.lh_first; tmp_disk != NULL;
-		tmp_disk = tmp_disk->image_list.le_next) {
+	LIST_FOREACH(tmp_disk, &diskStructure.boot_images, image_list) {
 		tmp_disk->sector = sector;
 		sector += tmp_disk->num_sectors;
 	}
@@ -379,7 +377,7 @@ cd9660_setup_boot(int first_sector)
 	
 	/* Step 1b: Initial/default entry */
 	/* TODO : PARAM */
-	tmp_disk = diskStructure.boot_images.lh_first;
+	tmp_disk = LIST_FIRST(&diskStructure.boot_images);
 	default_entry = cd9660_boot_setup_default_entry(tmp_disk);
 	if (default_entry == NULL) {
 		warnx("Error: memory allocation failed in cd9660_setup_boot");
@@ -390,7 +388,7 @@ cd9660_setup_boot(int first_sector)
 	
 	/* Todo: multiple default entries? */
 	
-	tmp_disk = tmp_disk->image_list.le_next;
+	tmp_disk = LIST_NEXT(tmp_disk, image_list);
 	
 	temp = default_entry;
 	
@@ -435,15 +433,12 @@ cd9660_setup_boot(int first_sector)
 			return -1;
 		}
 
-		while (head_temp->ll_struct.le_next != NULL) {
-			if (head_temp->ll_struct.le_next->entry_type
-			    != ET_ENTRY_SE)
-				break;
-			head_temp = head_temp->ll_struct.le_next;
-		}
+		while ((next = LIST_NEXT(head_temp, ll_struct)) != NULL &&
+		       next->entry_type == ET_ENTRY_SE)
+			head_temp = LIST_NEXT(head_temp, ll_struct);
 		
 		LIST_INSERT_AFTER(head_temp,temp, ll_struct);
-		tmp_disk = tmp_disk->image_list.le_next;
+		tmp_disk = LIST_NEXT(tmp_disk, image_list);
 	}
 	
 	/* TODO: Remaining boot disks when implemented */
@@ -479,8 +474,7 @@ cd9660_write_boot(FILE *fd)
 	
 	printf("Writing boot catalog to sector %i\n",
 	    diskStructure.boot_catalog_sector);
-	for (e = diskStructure.boot_entries.lh_first; e != NULL;
-	     e = e->ll_struct.le_next) {
+	LIST_FOREACH(e, &diskStructure.boot_entries, ll_struct) {
 		printf("Writing catalog entry of type %i\n", e->entry_type);
 		/*
 		 * It doesnt matter which one gets written
@@ -491,8 +485,7 @@ cd9660_write_boot(FILE *fd)
 	printf("Finished writing boot catalog\n");
 	
 	/* copy boot images */
-	for (t = diskStructure.boot_images.lh_first; t != NULL;
-	     t = t->image_list.le_next) {
+	LIST_FOREACH(t, &diskStructure.boot_images, image_list) {
 		printf("Writing boot image from %s to sectors %i\n",
 		    t->filename,t->sector);
 		cd9660_copy_file(fd, t->sector, t->filename);
