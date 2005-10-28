@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.42 2005/10/28 13:20:55 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.43 2005/10/28 20:56:13 christos Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.42 2005/10/28 13:20:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.43 2005/10/28 20:56:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2016,7 +2016,6 @@ gem_mediastatus(ifp, ifmr)
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 }
 
-int gem_ioctldebug = 0;
 /*
  * Process an ioctl request.
  */
@@ -2033,10 +2032,6 @@ gem_ioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		gem_setladrf(sc);
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -2059,21 +2054,16 @@ gem_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING) {
-if (gem_ioctldebug) printf("reset1\n");
-				gem_init(ifp);
-				delay(50000);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				gem_setladrf(sc);
 			error = 0;
 		}
 		break;
 	}
 
 	/* Try to get things going again */
-	if (ifp->if_flags & IFF_UP) {
-if (gem_ioctldebug) printf("start\n");
+	if (ifp->if_flags & IFF_UP)
 		gem_start(ifp);
-	}
 	splx(s);
 	return (error);
 }
