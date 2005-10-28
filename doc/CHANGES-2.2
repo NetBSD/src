@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.6 2005/10/28 03:51:58 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.7 2005/10/28 20:13:48 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -69,3 +69,19 @@ usr.sbin/rpc.statd/statd.c			1.24
 
 	rpc.statd doesn't save failed notifies in the database. PR#31502
 	[christos, ticket #5934]
+
+share/misc/airport				1.26
+
+	Correct typo in the airport file.
+	[is, ticket #5937]
+
+sys/kern/uipc_socket.c				1.112
+
+	Check the argument to SO_LINGER.
+	[nathanw, ticket #5939]
+
+sys/dev/ic/elinkxl.c				1.85
+
+	The previous change (to use bus_space_read_2), was broken because it was
+	reading from an odd offset.
+	[christos, ticket #5942]
