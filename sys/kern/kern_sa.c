@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.60.2.2 2005/10/21 17:39:40 riz Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.60.2.3 2005/10/28 20:07:02 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.60.2.2 2005/10/21 17:39:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.60.2.3 2005/10/28 20:07:02 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ MALLOC_DEFINE(M_SA, "sa", "Scheduler activations");
 #define SA_DEBUG
 
 #ifdef SA_DEBUG
-#define DPRINTF(x)	do { if (sadebug) printf x; } while (0)
-#define DPRINTFN(n,x)	do { if (sadebug & (1<<(n-1))) printf x; } while (0)
+#define DPRINTF(x)	do { if (sadebug) printf_nolog x; } while (0)
+#define DPRINTFN(n,x)	do { if (sadebug & (1<<(n-1))) printf_nolog x; } while (0)
 int	sadebug = 0;
 #else
 #define DPRINTF(x)
@@ -949,6 +949,7 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 */
 		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
+			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			sadata_upcall_free(sau);
