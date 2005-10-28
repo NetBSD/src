@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470.2.2.2.3 2005/09/05 23:43:49 riz Exp $
+# $NetBSD: mi,v 1.470.2.2.2.4 2005/10/28 23:40:52 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1017,6 +1017,7 @@
 ./usr/sbin/named-bootconf			base-bind-bin
 ./usr/sbin/named.reload				base-bind-bin
 ./usr/sbin/named.restart			base-bind-bin
+./usr/sbin/ncdcs				base-sysutil-root
 ./usr/sbin/ndbootd				base-bootserver-bin
 ./usr/sbin/ndc					base-bind-bin
 ./usr/sbin/ndp					base-netutil-bin
