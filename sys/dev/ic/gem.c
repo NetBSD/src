@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.41 2005/10/28 00:01:53 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.42 2005/10/28 13:20:55 christos Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.41 2005/10/28 00:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.42 2005/10/28 13:20:55 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,7 +152,6 @@ gem_attach(sc, enaddr)
 
 	/* Make sure the chip is stopped. */
 	ifp->if_softc = sc;
-	gem_stop(ifp, 0);
 	gem_reset(sc);
 
 	/*
