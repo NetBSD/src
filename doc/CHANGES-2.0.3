@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.51 2005/10/27 03:24:21 jmc Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.52 2005/10/28 23:44:59 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -542,3 +542,48 @@ doc/README.files				patch
 distrib/notes/common/main			patch
 
 	Clean up some ambiguous wording.
+
+bin/sh/expand.c					1.68
+
+	expbackq() was incorrectly backing up a temporary buffer
+	when removing \n from the end of output of commands
+	inside $(...) substitutions.  If the program output
+	is n*128+1 bytes long (ending in a \n) then the code checks
+	buf[-1] for another \n - looking an uninitialised stack.
+	On a big-endian system an integer of value 10
+	will satisfy this (unlikely on little endian) and can
+	happen depending on the last code path to use a lot of stack!
+	This caused the problem with newvers.sh on
+	sparc64 after ', 2005' was added to the date list.
+	PR#28852
+	[martin, ticket #1418]
+
+sys/netinet6/icmp6.c				1.111
+
+	In icmp6_redirect_output(), sip6 is initialised to point to the
+	data area of m0. But m0 may be freed later, so trying to use
+	sip6 at the end of this function is wrong. My guess is that
+	we want to reference the data area of m (the mbuf about to be
+	send) instead at this point.  Fix a panic on Xen (where a data
+	area of a mbuf may be unmapped when the mbuf is freed), and
+	probably potential data/pool corruption in other cases.
+	[bouyer, ticket #5938]
+
+share/man/man4/fast_ipsec.4			1.2-1.3
+
+	Fix Dd argument; new sentence, new line; sort sections;
+	typo fixes.
+	[jmc, ticket #5946]
+
+distrib/sets/lists/base/md.ibmnws		delete
+distrib/sets/lists/base/mi			1.576
+distrib/sets/lists/man/md.ibmnws		delete
+distrib/sets/lists/man/mi			1.835 via patch
+gnu/usr.sbin/Makefile				1.14
+
+	Build ncdcs on everything. Allows better set sharing (and
+	we don't exclude other 'system specific' binaries from other
+	builds ala sunlabel, etc), and nuke only md man page in existence,
+	simplifying man.tgz set sharing.
+	[jmc, ticket #5948]
+
