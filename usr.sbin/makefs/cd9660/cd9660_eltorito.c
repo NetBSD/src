@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.3 2005/10/28 21:51:35 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.4 2005/10/28 21:54:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.3 2005/10/28 21:51:35 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.4 2005/10/28 21:54:21 dyoung Exp $");
 #endif  /* !__lint */
 
 static struct boot_catalog_entry *cd9660_init_boot_catalog_entry(void);
@@ -97,7 +97,8 @@ const char * boot_info;
 		new_image->system = ET_SYS_X86;
 	else if (strcmp(sysname, "powerpc") == 0)
 		new_image->system = ET_SYS_PPC;
-	else if (strcmp(sysname, "macppc") == 0 || strcmp(sysname, "mac68k"))
+	else if (strcmp(sysname, "macppc") == 0 ||
+	         strcmp(sysname, "mac68k") == 0)
 		new_image->system = ET_SYS_MAC;
 	else {
 		warnx("boot disk system must be "
