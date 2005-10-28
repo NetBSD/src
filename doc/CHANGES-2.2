@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.4 2005/10/27 05:22:04 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.5 2005/10/28 03:01:42 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -49,3 +49,18 @@ sys/arch/alpha/conf/GENERIC			1.276
 	If we're enabling ipfilter then we should really have IPFILTER_LOG
 	[abs, ticket #5893]
 
+sys/dev/ic/wdc.c				patch
+
+	In __wdccommand_start(), don't cann wdcwait() with ata_c->flags, as 
+	this gives  information about the context in which wdc_exec_command() 
+	was called, but we may be in interrupt context here. Call wdcwait() 
+	with flags derived from xfer->c_flags instead, as do other wdcwait() 
+	callers. PR#31083
+	[bouyer, ticket #5852]
+
+include/sched.h					1.8
+lib/libpthread/sched.c				1.4
+
+	Change the sched_*() functions to return -1 and set errno to ENOSYS
+	(per the standard) instead of returning ENOSYS. PR#30970
+	[kleink, ticket #5918]
