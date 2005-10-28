@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.288 2005/10/22 03:58:00 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.289 2005/10/28 20:13:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13662,3 +13662,34 @@ sys/kern/uipc_socket.c				1.112
 	Check the argument to SO_LINGER.
 	[nathanw, ticket #911]
 
+
+sys/dev/ic/elinkxl.c				1.85
+
+	The previous change (to use bus_space_read_2), was broken because it was
+	reading from an odd offset.
+	[christos, ticket #913]
+
+sys/uvm/uvm_glue.c				1.90
+
+	Remove the assertion in uvm_swapout_threads() about LSONPROC lwps
+	not running on the same CPU as the swapper.  l_stat is protected by
+	sched_lock, which isn't held here, so we can race with that lwp
+	starting to run and see its l_cpu not updated yet, as in PR 31870.
+	we check l_stat again in uvm_swapout() while holding sched_lock,
+	so the race itself is harmless.
+	[chs, ticket #914]
+
+sys/kern/kern_sa.c				1.68
+
+	In sa_switch(), if after we set up the LWP with cpu_setfunc(), we 
+	decide that we can't do an SA context switch after all, we need to 
+	clear the sau from the LWP's arg.  sa_switch() frees the sau in this 
+	case, but if we don't reset the LWP's state and the process exits, 
+	then the exiting LWP will try to free the sau again.
+	[chs, ticket #915]
+
+sys/dev/pci/if_txp.c				patch
+sys/arch/i386/conf/GENERIC			patch
+
+	Fix txp cards so this compiles and enable in GENERIC.
+	[chs, ticket #912]
