@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.2 2005/10/27 02:27:19 jmc Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.3 2005/10/28 23:46:04 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -14,3 +14,33 @@ gnu/usr.bin/groff/tmac/mdoc.local               patch
 doc/README.files				patch
 
 	Update for release and new CHANGES file.
+
+sys/netinet6/icmp6.c				1.111
+
+	In icmp6_redirect_output(), sip6 is initialised to point to the
+	data area of m0. But m0 may be freed later, so trying to use
+	sip6 at the end of this function is wrong. My guess is that
+	we want to reference the data area of m (the mbuf about to be
+	send) instead at this point.  Fix a panic on Xen (where a data
+	area of a mbuf may be unmapped when the mbuf is freed), and
+	probably potential data/pool corruption in other cases.
+	[bouyer, ticket #5938]
+
+share/man/man4/fast_ipsec.4			1.2-1.3
+
+	Fix Dd argument; new sentence, new line; sort sections;
+	typo fixes.
+	[jmc, ticket #5946]
+
+distrib/sets/lists/base/md.ibmnws		delete
+distrib/sets/lists/base/mi			1.576
+distrib/sets/lists/man/md.ibmnws		delete
+distrib/sets/lists/man/mi			1.835 via patch
+gnu/usr.sbin/Makefile				1.14
+
+	Build ncdcs on everything. Allows better set sharing (and
+	we don't exclude other 'system specific' binaries from other
+	builds ala sunlabel, etc), and nuke only md man page in existence,
+	simplifying man.tgz set sharing.
+	[jmc, ticket #5948]
+
