@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.79.2.1 2005/10/06 11:48:49 tron Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.79.2.2 2005/10/28 19:46:55 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79.2.1 2005/10/06 11:48:49 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79.2.2 2005/10/28 19:46:55 jmc Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -791,8 +791,8 @@ ex_txstat(sc)
 	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
 	 * upper byte?
 	 */
-	while ((i = bus_space_read_2(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
-		bus_space_write_2(iot, ioh, ELINK_TXSTATUS, 0x0);
+	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
+		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
