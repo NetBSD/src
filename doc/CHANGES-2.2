@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.5 2005/10/28 03:01:42 jmc Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.6 2005/10/28 03:51:58 jmc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -64,3 +64,8 @@ lib/libpthread/sched.c				1.4
 	Change the sched_*() functions to return -1 and set errno to ENOSYS
 	(per the standard) instead of returning ENOSYS. PR#30970
 	[kleink, ticket #5918]
+
+usr.sbin/rpc.statd/statd.c			1.24
+
+	rpc.statd doesn't save failed notifies in the database. PR#31502
+	[christos, ticket #5934]
