@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $ */
+/* $NetBSD: if_txp.c,v 1.10.2.1 2005/10/28 20:12:42 jmc Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.10.2.1 2005/10/28 20:12:42 jmc Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1467,7 +1467,7 @@ txp_start(ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		if ((mtag = VLAN_OUTPUT_TAG(sc->sc_ethercom, m)))
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_arpcom, m)))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
 			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
 
