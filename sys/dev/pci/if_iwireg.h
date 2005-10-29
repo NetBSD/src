@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.11 2005/10/08 06:19:46 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.12 2005/10/29 12:03:44 scw Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -350,8 +350,13 @@ struct iwi_scan_v2 {
 #define IWI_CHAN_2GHZ	(1 << 6)
 
 	struct {
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 		u_int8_t msn:4;
 		u_int8_t lsn:4;
+#else
+		u_int8_t lsn:4;
+		u_int8_t msn:4;
+#endif
 	} __attribute__ ((__packed__)) type[IWI_SCAN_CHANNELS / 2];
 
 	u_int8_t	reserved1;
