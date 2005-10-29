@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.576 2005/10/27 17:51:48 jmc Exp $
+# $NetBSD: mi,v 1.577 2005/10/29 08:17:18 scw Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1009,6 +1009,7 @@
 ./usr/sbin/isdntelctl				base-isdn-bin
 ./usr/sbin/isdntrace				base-isdn-bin
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
+./usr/sbin/iwictl				base-sysutil-bin
 ./usr/sbin/kadmin				base-krb5-bin		kerberos
 ./usr/sbin/kdc					base-krb5-bin		kerberos
 ./usr/sbin/kmpstat				base-obsolete		obsolete
