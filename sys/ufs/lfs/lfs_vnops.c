@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.155.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.155.2.2 2005/10/29 17:22:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.155.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.155.2.2 2005/10/29 17:22:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ lfs_fsync(void *v)
 			PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
 	if (error)
 		return error;
-	error = UFS_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+	error = lfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
