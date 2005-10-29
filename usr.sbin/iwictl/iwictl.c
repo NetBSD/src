@@ -1,4 +1,4 @@
-/*	$NetBSD: iwictl.c,v 1.4 2005/06/20 09:06:40 sekiya Exp $	*/
+/*	$NetBSD: iwictl.c,v 1.5 2005/10/29 08:14:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iwictl.c,v 1.4 2005/06/20 09:06:40 sekiya Exp $");
+__RCSID("$NetBSD: iwictl.c,v 1.5 2005/10/29 08:14:27 scw Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -54,11 +54,11 @@ __RCSID("$NetBSD: iwictl.c,v 1.4 2005/06/20 09:06:40 sekiya Exp $");
 
 struct firmware {
 	void	*boot;
-	int	boot_size;
+	size_t	boot_size;
 	void	*ucode;
-	int	ucode_size;
+	size_t	ucode_size;
 	void	*main;
-	int	main_size;
+	size_t	main_size;
 };
 
 struct header {
