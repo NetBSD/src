@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.82 2005/10/29 11:23:19 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.83 2005/10/29 14:16:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,9 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#if defined(_KERNEL)
 #include <sys/workqueue.h>
+#endif /* defined(_KERNEL) */
 
 struct buf;
 struct mount;
@@ -116,7 +118,9 @@ struct bio_ops {
 struct buf {
 	union {
 		TAILQ_ENTRY(buf) u_actq; /* Device driver queue when active. */
+#if defined(_KERNEL) /* u_work is smaller than u_actq. XXX */
 		struct work u_work;
+#endif /* defined(_KERNEL) */
 	} b_u;
 #define	b_actq	b_u.u_actq
 #define	b_work	b_u.u_work
