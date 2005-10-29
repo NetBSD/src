@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.175.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.175.2.2 2005/10/29 17:21:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.175.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.175.2.2 2005/10/29 17:21:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1333,7 +1333,7 @@ loop:
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
-			error = UFS_UPDATE(vp, NULL, NULL, 0);
+			error = ffs_update(vp, NULL, NULL, 0);
 		else
 			error = VOP_FSYNC(vp, cred,
 			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
