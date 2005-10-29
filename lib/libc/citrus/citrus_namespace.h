@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.5 2005/05/14 17:55:42 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.6 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -206,6 +206,7 @@
 #define _stdenc			_citrus_stdenc
 #define _stdenc_ops		_citrus_stdenc_ops
 #define _stdenc_traits		_citrus_stdenc_traits
+#define _stdenc_state_desc	_citrus_stdenc_state_desc
 #define _stdenc_open		_citrus_stdenc_open
 #define _stdenc_close		_citrus_stdenc_close
 #define _stdenc_init_state	_citrus_stdenc_init_state
@@ -216,6 +217,13 @@
 #define _stdenc_put_state_reset	_citrus_stdenc_put_state_reset
 #define _stdenc_get_state_size	_citrus_stdenc_get_state_size
 #define _stdenc_get_mb_cur_max	_citrus_stdenc_get_mb_cur_max
+#define _stdenc_get_state_desc	_citrus_stdenc_get_state_desc
+#define _STDENC_SDID_GENERIC	_CITRUS_STDENC_SDID_GENERIC
+#define _STDENC_SDGEN_UNKNOWN	_CITRUS_STDENC_SDGEN_UNKNOWN
+#define _STDENC_SDGEN_INITIAL	_CITRUS_STDENC_SDGEN_INITIAL
+#define _STDENC_SDGEN_STABLE	_CITRUS_STDENC_SDGEN_STABLE
+#define _STDENC_SDGEN_INCOMPLETE_CHAR _CITRUS_STDENC_SDGEN_INCOMPLETE_CHAR
+#define _STDENC_SDGEN_INCOMPLETE_SHIFT _CITRUS_STDENC_SDGEN_INCOMPLETE_SHIFT
 #endif /* _CITRUS_STDENC_NO_NAMESPACE */
 
 /* citrus_types.h */
