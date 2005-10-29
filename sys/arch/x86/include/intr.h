@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2005/10/28 10:34:18 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2005/10/29 11:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ spllower(int nlevel)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(IPL_SERIAL)
 #define splipi()	splraise(IPL_IPI)
+#define splraiseipl(x) 	splraise(x)
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
 
