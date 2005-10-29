@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2005/10/28 10:34:18 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2005/10/29 11:07:45 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -188,6 +188,7 @@ spllower(int nlevel)
 #ifndef MULTIPROCESSOR
 #define splipi() 	splhigh()
 #endif
+#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
 
 /*
