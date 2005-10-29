@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.8.2.1 2005/10/20 05:16:52 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.8.2.2 2005/10/29 17:31:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -129,7 +129,6 @@ int	cd9660_strategy(void *);
 int	cd9660_print(void *);
 int	cd9660_islocked(void *);
 int	cd9660_pathconf(void *);
-int	cd9660_setattr(void *);
 
 int	cd9660_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void	cd9660_defattr(struct iso_directory_record *,
