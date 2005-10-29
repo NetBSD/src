@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.3 2004/02/13 03:01:21 simonb Exp $
+$NetBSD: README.mknative,v 1.4 2005/10/29 20:43:35 martin Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -28,7 +28,7 @@ work.
    This will create just enough glue in src/gnu/lib/libgcc3/arch to make it
    possible to build, based on the toolchain built in ${.OBJDIR}/build.
    Because the files generated in this step contain things like
-   -DCROSS_COMPILE, they are not suitable for committing.  Step 7 below
+   -DCROSS_COMPILE, they are not suitable for committing.  Step 8 below
    will regenerate the "proper" libgcc config files.
 
 4. At top level, do
@@ -36,7 +36,9 @@ work.
 
 5. In src/gnu/lib/libgcc3, do "nbmake-MACHINE obj includes".
 
-6. In each of src/lib/csu, src/gnu/lib/libgcc3, src/lib/libdes, and src/lib,
+6. In src/gnu/lib/crtstuff3 do "nbmake-MACHINE depend all install"
+
+7. In each of src/lib/csu, src/gnu/lib/libgcc3, src/lib/libdes, and src/lib,
    do "nbmake-MACHINE all install".
 
    Optionally, all of the following may be set in the environment to reduce
@@ -50,7 +52,7 @@ work.
    MKPROFILE=no
    MKSHARE=no
 
-7. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
+8. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
 
    This will do a full configury in ${.OBJDIR}/.native that is a "Canadian"
    cross toolchain (--build reflects the host platform, but --host and
@@ -58,9 +60,9 @@ work.
    native-to-NetBSD compiler on a cross host, and mknative pulls glue data
    from this.
 
-8. Try out a full build using "nbmake-MACHINE"; the result should include
+9. Try out a full build using "nbmake-MACHINE"; the result should include
    a native compiler.
 
-9. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.
+10. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.
 
 - tv@NetBSD.org
