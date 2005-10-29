@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.15.2.1 2005/10/20 05:16:52 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.15.2.2 2005/10/29 17:31:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.15.2.1 2005/10/20 05:16:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.15.2.2 2005/10/29 17:31:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,52 +837,6 @@ cd9660_pathconf(v)
 }
 
 /*
- * Allow changing the size for special files (and fifos).
- */
-int
-cd9660_setattr(v)
-	void *v;
-{
-	struct vop_setattr_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vattr *vap = ap->a_vap;
-	struct vnode *vp = ap->a_vp;
-
-	/*
-	 * Only size is changeable.
-	 */
-	if (vap->va_type != VNON
-	    || vap->va_nlink != (nlink_t)VNOVAL
-	    || vap->va_fsid != VNOVAL
-	    || vap->va_fileid != VNOVAL
-	    || vap->va_blocksize != VNOVAL
-	    || vap->va_rdev != (dev_t)VNOVAL
-	    || (int)vap->va_bytes != VNOVAL
-	    || vap->va_gen != VNOVAL
-	    || vap->va_flags != VNOVAL
-	    || vap->va_uid != (uid_t)VNOVAL
-	    || vap->va_gid != (gid_t)VNOVAL
-	    || vap->va_atime.tv_sec != VNOVAL
-	    || vap->va_mtime.tv_sec != VNOVAL
-	    || vap->va_mode != (mode_t)VNOVAL)
-		return EOPNOTSUPP;
-
-	if (vap->va_size != VNOVAL
-	    && vp->v_type != VCHR
-	    && vp->v_type != VBLK
-	    && vp->v_type != VFIFO
-	    )
-		return EOPNOTSUPP;
-
-	return EOPNOTSUPP;
-}
-
-/*
  * Global vfs data structures for isofs
  */
 #define	cd9660_create	genfs_eopnotsupp
@@ -897,6 +851,7 @@ cd9660_setattr(v)
 #define	cd9660_advlock	genfs_einval
 #define	cd9660_bwrite	genfs_eopnotsupp
 #define cd9660_revoke	genfs_revoke
+#define	cd9660_setattr	genfs_eopnotsupp
 
 /*
  * Global vfs data structures for cd9660
