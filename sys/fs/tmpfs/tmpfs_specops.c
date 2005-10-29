@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.3.2.1 2005/10/20 07:13:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.3.2.2 2005/10/29 17:28:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.3.2.1 2005/10/20 07:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.3.2.2 2005/10/29 17:28:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -114,9 +114,8 @@ tmpfs_spec_close(void *v)
 
 	int error;
 
-	error = tmpfs_update(vp, NULL, NULL, UPDATE_CLOSE);
-	if (error != 0)
-		error = VOCALL(spec_vnodeop_p, VOFFSET(vop_close), v);
+	tmpfs_update(vp, NULL, NULL, UPDATE_CLOSE);
+	error = VOCALL(spec_vnodeop_p, VOFFSET(vop_close), v);
 
 	return error;
 }
