@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.2 2005/03/14 03:43:10 tnozaki Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.2 2005/03/14 03:43:10 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -511,6 +511,21 @@ _citrus_UTF7_stdenc_cstowc(_UTF7EncodingInfo * __restrict ei,
 	return (0);
 }
 
+static __inline int
+/*ARGSUSED*/
+_citrus_UTF7_stdenc_get_state_desc_generic(_UTF7EncodingInfo * __restrict ei,
+					   _UTF7State * __restrict psenc,
+					   int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0)
+		*rstate = _STDENC_SDGEN_INITIAL;
+	else
+		*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
+
+	return 0;
+}
+
 static void
 /*ARGSUSED*/
 _citrus_UTF7_encoding_module_uninit(_UTF7EncodingInfo *ei)
@@ -526,7 +541,7 @@ _citrus_UTF7_encoding_module_init(_UTF7EncodingInfo * __restrict ei,
 {
 	const char *s;
 
-	_DIAGASSERT(ei != NULL);	
+	_DIAGASSERT(ei != NULL);
 	/* var may be null */
 
 	memset(ei, 0, sizeof(*ei));
