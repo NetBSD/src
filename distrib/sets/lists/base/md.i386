@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.113 2005/10/06 08:22:58 dyoung Exp $
+# $NetBSD: md.i386,v 1.114 2005/10/29 08:17:18 scw Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -83,7 +83,6 @@
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/bad144				base-sysutil-bin
 ./usr/sbin/ipwctl				base-sysutil-bin
-./usr/sbin/iwictl				base-sysutil-bin
 ./usr/sbin/zzz					base-sysutil-bin
 ./usr/share/pcvt				base-obsolete		obsolete
 ./usr/share/pcvt/fonts				base-obsolete		obsolete
