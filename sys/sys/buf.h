@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.81 2005/05/31 02:57:58 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.82 2005/10/29 11:23:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/workqueue.h>
 
 struct buf;
 struct mount;
@@ -113,7 +114,12 @@ struct bio_ops {
  * The buffer header describes an I/O operation in the kernel.
  */
 struct buf {
-	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
+	union {
+		TAILQ_ENTRY(buf) u_actq; /* Device driver queue when active. */
+		struct work u_work;
+	} b_u;
+#define	b_actq	b_u.u_actq
+#define	b_work	b_u.u_work
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
 	volatile int b_flags;		/* B_* flags. */
 	int	b_error;		/* Errno value. */
