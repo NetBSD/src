@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.31 2005/10/19 20:18:00 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.32 2005/10/29 08:10:38 scw Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.31 2005/10/19 20:18:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.32 2005/10/29 08:10:38 scw Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -946,7 +946,7 @@ iwi_read_prom_word(struct iwi_softc *sc, uint8_t addr)
 	IWI_EEPROM_CTL(sc, 0);
 	IWI_EEPROM_CTL(sc, IWI_EEPROM_C);
 
-	return be16toh(val);
+	return bswap16(val);
 }
 
 /*
@@ -1449,18 +1449,18 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->nseg = htole32(data->map->dm_nsegs);
 	for (i = 0; i < data->map->dm_nsegs; i++) {
 		desc->seg_addr[i] = htole32(data->map->dm_segs[i].ds_addr);
-		desc->seg_len[i]  = htole32(data->map->dm_segs[i].ds_len);
+		desc->seg_len[i]  = htole16(data->map->dm_segs[i].ds_len);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.desc_map,
 	    sc->txq.cur * IWI_TX_DESC_SIZE,
 	    IWI_TX_DESC_SIZE, BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	DPRINTFN(5, ("sending data frame len=%u nseg=%u\n",
-	    desc->len, desc->nseg));
+	    le16toh(desc->len), le32toh(desc->nseg)));
 
 	/* Inform firmware about this new packet */
 	sc->txq.queued++;
@@ -1745,7 +1745,7 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 
 	/* Adapter is buggy, we must set the address for each word */
 	for (w = uc; size > 0; w++, size -= 2)
-		MEM_WRITE_2(sc, 0x200010, *w);
+		MEM_WRITE_2(sc, 0x200010, htole16(*w));
 
 	MEM_WRITE_1(sc, 0x200000, 0x00);
 	MEM_WRITE_1(sc, 0x200000, 0x80);
