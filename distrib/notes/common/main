@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.14 2005/10/27 03:23:39 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.15 2005/10/29 23:26:19 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -424,6 +424,183 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 2.0.2 and 2.0.3 updates
+.Pp    
+The 
+.Nx 2.0.3
+update    
+is the third security/critical update of the 
+.Nx 2.0
+release branch. This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
+.Pp
+All fixes in security/critical updates (i.e. 
+.Nx 2.0.2
+, 2.0.3, etc) are cumulative, so this latest update contains all such fixes since 
+the
+.Nx 2.0
+release. These fixes will also appear in future releases (
+.Nx 2.1
+, 2.2, etc), together with other less-critical fixes and feature enhancements.
+.Pp
+Specific updates are as follows:
+.
+.Ss2 Kernel
+.
+.(bullet
+Drop the big lock in upcallret() on powerpc to prevent hangs with pthreads
+on SMP systems.
+.It
+Fix "sleep forever" issue raise on sparc64 systems.
+.It
+For powerpc don't enable interrupts while calling trap() if the trapping frame
+didn't have them enabled either. Prevents crashes on some G4 based systems.
+.It
+Prevent random panics on process exit where calls to knote_fdclose() were
+being done on incorrect file descriptors.
+.It
+Remove code assuming kernfs supports mmap as it does not.
+.It
+Prevent a panic where disk interrupts could be enabled while the ATACH_TH_RUN 
+flag is still set.
+.It
+In pmap_enter(), preset the mod/ref bits based on the flags argument to avoid
+possible data loss.
+.It
+Make sure buffer sizes are initialized correctly even when the pause
+state is explicitly set. Avoids crashes on some audio hardware.
+.It
+Fix memory leak in uipc_usrreq calls.
+.It
+Make PCI cards work on NetBSD-mappc systems with a "Grackle" bridge.
+.It
+Avoids deadlocks in the alpha pmap code between pmap_activate() and it's
+use of sched_lock.
+.It
+Protect the ipsec ioctls from negative offsets to prevent panics in
+m_copydata().
+.It
+The maximum file size on MS-DOS filesystems is 4 GB - 1 byte, so 
+don't bother trying to write files bigger than this. Just return EFBIG 
+to caller, rather than panic()ing later.
+.It
+Range check calls correctly in freebsd compat code to prevent data corruption
+and possible crashes.
+.It
+Handle MMX faults as floating exceptions. Matlab full functional again.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Prevent panics where it was possible to end up with a negative RTT.
+.It
+When adding or deleting multicast addresses, only change the address filter 
+if the interface is marked RUNNING.
+.It
+Fix the HPC1 transmit logic on sgimips which was previously not working.
+.It
+Make sure to purge prefixes from the ND list or else panics can result.
+.It
+Avoid an optimization in m_pulldown to avoid a prepend to the next mbuf in the 
+chain if the result would still not have all data continous. Prevents panics
+under certain circumstances.
+.It
+Prevent a panic on sun3 where NULL could be de-referenced in the case of
+#if NBPFILTER == 0
+.It
+Fix a possible data/pool corruption in the icmp6 code where possibly free'd
+data is reused.
+.bullet)
+.
+.Ss2 File system
+.
+.(bullet
+Fix a silent truncation problem that could cause corruption with large
+FFSv1 file systems.
+.It
+In ext2 check that we are not the pagedaemon as getblk() can return NULL in
+this case.
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+Fix buffer overflows in
+.Xr telnet 1
+identified in CAN 2005-0468 and 2005-0469.
+.It
+Make verified exec functional again by using UIO_SYSSPACE for NDINIT.
+.It
+Prevent possible buffer overruns in
+.Xr telnetd 8
+by removing static local variables so its easier to correctly use strlcpy.
+.It
+Prevent buffer overflows in
+.Xr cvs 1
+by updating to version 1.11.20 in response to CAN-2005-0753.
+.It
+IPsec-AH was always calculated using the same key in AES-XCBC-MAC.
+.It
+Return correct error on all zero length codes in libz.
+.It
+Prevent vulnerability in
+.Xr cvs 1
+reported in SA16553.
+.It
+Simplify code in procfs to check for a negative uio_offset at the beginning
+and check for attempts to write to init sooner and in all cases.
+.It
+Don't allow negative offsets when reading the message buffer, because
+it can allow reading arbitrary kernel memory.
+.It
+Remove unsafe /tmp file creation for the file.0 target when building xsrc.
+.It
+Fix security hole in
+.Xr Xserver 1
+reported in CAN-2005-2495.
+.It
+Fix openssl 2.0 rollback, CAN-2005-2969.
+.bullet)
+.
+.Ss2 System administration and user tools
+.
+.(bullet
+Install xdm scripts as executable so that xdm will function and not consume
+100% cpu.
+.It
+In 
+.Xr user 8
+be consistent when deleting a non-existent group - tell if the group is
+non-existent.
+.It
+Correctly set LOGNAME in new environment when using
+.Xr su 1
+..
+.It
+In 
+.Xr amd 8
+embed machine and cpu architecture correctly from target host environment, 
+not from build host.
+.It
+Fix bug in
+.Xr sh 1
+on big endian systems where underflowing a buffer when evaluating output
+from a back tick substitution can cause a crash.
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+Update copyright to 2005.
+.It
+Update to tzdata2005n. Lots of fixes, including most recently the 
+leap second at the end of 2005 and the U.S. DST changes taking effect in 2007.
+.It
+Add support for ffsv2 to amd64 boot floppies.
+.bullet)
+.
+.Ss2 \*M specific
 .Ss Changes Between The NetBSD 2.0.1 and 2.0.2 updates
 .Pp
 The
