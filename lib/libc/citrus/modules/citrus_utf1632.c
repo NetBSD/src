@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.3 2003/06/27 12:55:13 yamt Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.4 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.3 2003/06/27 12:55:13 yamt Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.4 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -427,6 +427,20 @@ _citrus_UTF1632_stdenc_cstowc(_UTF1632EncodingInfo * __restrict ei,
 	return (0);
 }
 
+static __inline int
+/*ARGSUSED*/
+_citrus_UTF1632_stdenc_get_state_desc_generic(_UTF1632EncodingInfo * __restrict ei,
+					      _UTF1632State * __restrict psenc,
+					      int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0)
+		*rstate = _STDENC_SDGEN_INITIAL;
+	else
+		*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
+
+	return 0;
+}
 
 /* ----------------------------------------------------------------------
  * public interface for stdenc

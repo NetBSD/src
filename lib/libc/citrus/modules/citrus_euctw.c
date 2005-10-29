@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.9 2005/03/27 22:30:06 tnozaki Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.9 2005/03/27 22:30:06 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -393,6 +393,21 @@ _citrus_EUCTW_stdenc_cstowc(_EUCTWEncodingInfo * __restrict ei,
 	}
 
 	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUCTW_stdenc_get_state_desc_generic(_EUCTWEncodingInfo * __restrict ei,
+					    _EUCTWState * __restrict psenc,
+					    int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0)
+		*rstate = _STDENC_SDGEN_INITIAL;
+	else
+		*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
+
+	return 0;
 }
 
 /* ----------------------------------------------------------------------

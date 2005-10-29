@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.4 2003/06/26 12:09:57 tshiozak Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.5 2005/10/29 18:02:04 tshiozak Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.4 2003/06/26 12:09:57 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.5 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -397,6 +397,21 @@ _citrus_GBK2K_stdenc_cstowc(_GBK2KEncodingInfo * __restrict ei,
 	default:
 		return EILSEQ;
 	}
+
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_GBK2K_stdenc_get_state_desc_generic(_GBK2KEncodingInfo * __restrict ei,
+					    _GBK2KState * __restrict psenc,
+					    int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0)
+		*rstate = _STDENC_SDGEN_INITIAL;
+	else
+		*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
 
 	return 0;
 }

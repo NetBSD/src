@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.10 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.11 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.10 2005/02/11 06:21:21 simonb Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.11 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -132,6 +132,20 @@ put_state_resetx(struct _citrus_iconv_std_encoding *se,
 		 char *s, size_t n, size_t *nresult)
 {
 	return _stdenc_put_state_reset(se->se_handle, s, n, se->se_ps, nresult);
+}
+
+static __inline int
+get_state_desc_gen(struct _citrus_iconv_std_encoding *se, int *rstate)
+{
+	int ret;
+	struct _stdenc_state_desc ssd;
+
+	ret = _stdenc_get_state_desc(se->se_handle, se->se_ps,
+				     _STDENC_SDID_GENERIC, &ssd);
+	if (!ret)
+		*rstate = ssd.u.generic.state;
+
+	return ret;
 }
 
 /*
@@ -454,7 +468,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 	struct _citrus_iconv_std_context *sc = cv->cv_closure;
 	_index_t idx;
 	_csid_t csid;
-	int ret;
+	int ret, state;
 	size_t szrin, szrout;
 	size_t inval;
 	const char *tmpin;
@@ -508,6 +522,17 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 
 		if (szrin == (size_t)-2) {
 			/* incompleted character */
+			ret = get_state_desc_gen(&sc->sc_src_encoding, &state);
+			if (ret) {
+				ret = EINVAL;
+				goto err;
+			}
+			switch (state) {
+			case _STDENC_SDGEN_INITIAL:
+			case _STDENC_SDGEN_STABLE:
+				/* fetch shift sequences only. */
+				goto next;
+			}
 			ret = EINVAL;
 			goto err;
 		}

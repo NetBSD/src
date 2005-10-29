@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.13 2005/02/10 19:03:51 tnozaki Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.13 2005/02/10 19:03:51 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -561,9 +561,9 @@ terminate:
 
 static wchar_t
 _ISO2022_sgetwchar(_ISO2022EncodingInfo * __restrict ei,
-			  const char * __restrict string, size_t n,
-			  const char ** __restrict result,
-			  _ISO2022State * __restrict psenc)
+		const char * __restrict string, size_t n,
+		const char ** __restrict result,
+		_ISO2022State * __restrict psenc)
 {
 	wchar_t wchar = 0;
 	int cur;
@@ -879,8 +879,8 @@ _citrus_ISO2022_mbrtowc_priv(_ISO2022EncodingInfo * __restrict ei,
 
 		wchar = _ISO2022_sgetwchar(ei, p, psenc->chlen - (p-psenc->ch),
 					   &result, psenc);
+		c += result - p;
 		if (wchar != _ISO2022INVALID) {
-			c += result - p;
 			if (psenc->chlen > c)
 				memmove(psenc->ch, result, psenc->chlen - c);
 			if (psenc->chlen < c)
@@ -890,11 +890,14 @@ _citrus_ISO2022_mbrtowc_priv(_ISO2022EncodingInfo * __restrict ei,
 			goto output;
 		}
 
-		c += result - p;
-		p = result;
-
-		if (n == 0)
+		if (n == 0) {
+			if ((result - p) == psenc->chlen)
+				/* complete shift sequence. */
+				psenc->chlen = 0;
 			goto restart;
+		}
+
+		p = result;
 	}
 
 	/* escape sequence too long? */
@@ -908,11 +911,14 @@ emptybuf:
 		s0 = result;
 		goto output;
 	}
-	if (result > s0 && n > result - s0) {
+	if (result > s0) {
 		c += (result - s0);
 		n -= (result - s0);
 		s0 = result;
-		goto emptybuf;
+		if (n>0)
+			goto emptybuf;
+		/* complete shift sequence. */
+		goto restart;
 	}
 	n += c;
 	if (n < sizeof(psenc->ch)) {
@@ -1282,6 +1288,26 @@ _citrus_ISO2022_stdenc_cstowc(_ISO2022EncodingInfo * __restrict ei,
 	*wc = (wchar_t)(csid & 0x7F808080) | (wchar_t)idx;
 
 	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_ISO2022_stdenc_get_state_desc_generic(_ISO2022EncodingInfo * __restrict ei,
+					      _ISO2022State * __restrict psenc,
+					      int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0) {
+		/* XXX: it should distinguish initial and stable. */
+		*rstate = _STDENC_SDGEN_STABLE;
+	} else {
+		if (psenc->ch[0] == '\033')
+			*rstate = _STDENC_SDGEN_INCOMPLETE_SHIFT;
+		else
+			*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
+	}
+
+	return 0;
 }
 
 /* ----------------------------------------------------------------------
