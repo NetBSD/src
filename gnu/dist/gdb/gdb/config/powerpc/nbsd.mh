@@ -1,5 +1,0 @@
-# Host: PowerPC, running NetBSD
-NAT_CLIBS= -lkvm -lpthread_dbg
-NATDEPFILES= fork-child.o infptrace.o inftarg.o ppcnbsd-nat.o \
-	kcore-nbsd.o nbsd-thread.o
-NAT_FILE= nm-nbsd.h
