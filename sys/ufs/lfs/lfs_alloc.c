@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.84.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.84.2.2 2005/10/29 17:22:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.84.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.84.2.2 2005/10/29 17:22:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -137,7 +137,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct proc *p,
 		if (ip->i_gen == vers)
 			return 0;
 		else if (ip->i_gen < vers) {
-			UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+			lfs_truncate(vp, (off_t)0, 0, NOCRED, p);
 			ip->i_gen = ip->i_ffs1_gen = vers;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
@@ -238,7 +238,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
 	blkno = lblkno(fs, ip->i_size);
-	if ((error = UFS_BALLOC(vp, ip->i_size, fs->lfs_bsize, cred, 0,
+	if ((error = lfs_balloc(vp, ip->i_size, fs->lfs_bsize, cred, 0,
 				&bp)) != 0) {
 		return (error);
 	}
