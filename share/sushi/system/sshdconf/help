@@ -1,7 +1,0 @@
-It is advised that the user read the sshd(8) and sshd_config(5) manpage
-before editing any of the defaults provided.  Some of these options can
-seriously degrade the security of your system.  The defaults provided are
-generally considered to be fairly secure.
-
-WARNING:
-sushi rewrites the entire configuration file, so you may want to back it up!
