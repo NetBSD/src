@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.70.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.70.2.2 2005/10/29 17:21:12 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.70.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.70.2.2 2005/10/29 17:21:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3308,7 +3308,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = UFS_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
+	if ((error = ffs_truncate(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -4744,14 +4744,14 @@ softdep_fsync(vp, f)
 		/*
 		 * All MKDIR_PARENT dependencies and all the NEWBLOCK pagedeps
 		 * that are contained in direct blocks will be resolved by
-		 * doing a UFS_UPDATE. Pagedeps contained in indirect blocks
+		 * doing a ffs_update. Pagedeps contained in indirect blocks
 		 * may require a complete sync'ing of the directory. So, we
-		 * try the cheap and fast UFS_UPDATE first, and if that fails,
+		 * try the cheap and fast ffs_update first, and if that fails,
 		 * then we do the slower VOP_FSYNC of the directory.
 		 */
 		if (flushparent) {
 			VTOI(pvp)->i_flag |= IN_MODIFIED;
-			error = UFS_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
+			error = ffs_update(pvp, NULL, NULL, UPDATE_WAIT);
 			if (error) {
 				vput(pvp);
 				return (error);
@@ -5273,7 +5273,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		if (dap->da_state & MKDIR_PARENT) {
 			FREE_LOCK(&lk);
 			VTOI(pvp)->i_flag |= IN_MODIFIED;
-			error = UFS_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
+			error = ffs_update(pvp, NULL, NULL, UPDATE_WAIT);
 			if (error)
 				break;
 			ACQUIRE_LOCK(&lk);
@@ -5325,7 +5325,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 * Having accounted for MKDIR_PARENT and MKDIR_BODY above,
 		 * the only remaining dependency is that the updated inode
 		 * count must get pushed to disk. The inode has already
-		 * been pushed into its inode buffer (via UFS_UPDATE) at
+		 * been pushed into its inode buffer (via ffs_update) at
 		 * the time of the reference count change. So we need only
 		 * locate that buffer, ensure that there will be no rollback
 		 * caused by a bitmap dependency, then write the inode buffer.

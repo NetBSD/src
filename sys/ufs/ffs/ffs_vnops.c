@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.75.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.75.2.2 2005/10/29 17:21:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.75.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.75.2.2 2005/10/29 17:21:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ ffs_fsync(void *v)
 	}
 	splx(s);
 
-	error = UFS_UPDATE(vp, NULL, NULL,
+	error = ffs_update(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
 	    ? UPDATE_WAIT : 0);
 
@@ -456,7 +456,7 @@ loop:
 		waitfor = 0;
 	else
 		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = UFS_UPDATE(vp, NULL, NULL, waitfor);
+	error = ffs_update(vp, NULL, NULL, waitfor);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
