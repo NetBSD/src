@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.15 2005/10/29 19:19:38 martin Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.15 2005/10/29 19:19:38 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -486,7 +486,7 @@ _citrus_NONE_stdenc_get_state_desc(struct _stdenc * __restrict ce,
 				   int id,
 				   struct _stdenc_state_desc * __restrict d)
 {
-	int ret;
+	int ret = 0;
 
 	switch (id) {
 	case _STDENC_SDID_GENERIC:
