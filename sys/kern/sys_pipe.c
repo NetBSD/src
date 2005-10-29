@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.66 2005/09/11 17:55:26 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.67 2005/10/29 12:31:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.66 2005/09/11 17:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.67 2005/10/29 12:31:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,6 @@ pipe_create(pipep, allockva)
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
-	lockinit(&pipe->pipe_lock, PSOCK | PCATCH, "pipelk", 0, 0);
 
 	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
 		return (error);
@@ -343,40 +342,24 @@ pipelock(pipe, catch)
 	struct pipe *pipe;
 	int catch;
 {
-	int error;
 
 	LOCK_ASSERT(simple_lock_held(&pipe->pipe_slock));
 
-	while (1) {
-		error = lockmgr(&pipe->pipe_lock, LK_EXCLUSIVE | LK_INTERLOCK,
-				&pipe->pipe_slock);
-		if (error == 0)
-			break;
+	while (pipe->pipe_state & PIPE_LOCKFL) {
+		int error;
+		const int pcatch = catch ? PCATCH : 0;
 
-		simple_lock(&pipe->pipe_slock);
-		if (catch || (error != EINTR && error != ERESTART))
-			break;
-		/*
-		 * XXX XXX XXX
-		 * The pipe lock is initialised with PCATCH on and we cannot
-		 * override this in a lockmgr() call. Thus a pending signal
-		 * will cause lockmgr() to return with EINTR or ERESTART.
-		 * We cannot simply re-enter lockmgr() at this point since
-		 * the pending signals have not yet been posted and would
-		 * cause an immediate EINTR/ERESTART return again.
-		 * As a workaround we pause for a while here, giving the lock
-		 * a chance to drain, before trying again.
-		 * XXX XXX XXX
-		 *
-		 * NOTE: Consider dropping PCATCH from this lock; in practice
-		 * it is never held for long enough periods for having it
-		 * interruptable at the start of pipe_read/pipe_write to be
-		 * beneficial.
-		 */
-		(void) ltsleep(&lbolt, PSOCK, "rstrtpipelock", hz,
+		pipe->pipe_state |= PIPE_LWANT;
+		error = ltsleep(pipe, PSOCK | pcatch, "pipelk", 0,
 		    &pipe->pipe_slock);
+		if (error != 0)
+			return error;
 	}
-	return (error);
+
+	pipe->pipe_state |= PIPE_LOCKFL;
+	simple_unlock(&pipe->pipe_slock);
+
+	return 0;
 }
 
 /*
@@ -387,7 +370,13 @@ pipeunlock(pipe)
 	struct pipe *pipe;
 {
 
-	lockmgr(&pipe->pipe_lock, LK_RELEASE, NULL);
+	KASSERT(pipe->pipe_state & PIPE_LOCKFL);
+
+	pipe->pipe_state &= ~PIPE_LOCKFL;
+	if (pipe->pipe_state & PIPE_LWANT) {
+		pipe->pipe_state &= ~PIPE_LWANT;
+		wakeup(pipe);
+	}
 }
 
 /*
@@ -1352,8 +1341,9 @@ retry:
 		PIPE_UNLOCK(ppipe);
 	}
 
-	(void)lockmgr(&pipe->pipe_lock, LK_DRAIN | LK_INTERLOCK,
-			&pipe->pipe_slock);
+	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
+
+	PIPE_UNLOCK(pipe);
 
 	/*
 	 * free resources
