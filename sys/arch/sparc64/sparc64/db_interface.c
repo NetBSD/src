@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $ */
+/*	$NetBSD: db_interface.c,v 1.81 2005/10/29 21:18:28 jdc Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.81 2005/10/29 21:18:28 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2005/06/02 06:52:51 jdc Exp $"
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
+#include <ddb/ddbvar.h>
 
 #include <machine/instr.h>
 #include <machine/cpu.h>
@@ -298,6 +299,9 @@ kdb_trap(type, tf)
 		printf("kdb tf=%p\n", tf);
 		break;
 	default:
+		if (!db_onpanic && db_recover==0)
+			return (0);
+
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
 			prom_abort();
