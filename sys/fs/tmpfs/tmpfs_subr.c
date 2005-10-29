@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.11.2.1 2005/10/20 07:13:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.11.2.2 2005/10/29 17:28:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.11.2.1 2005/10/20 07:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.11.2.2 2005/10/29 17:28:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1196,11 +1196,11 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (mtime->tv_sec != VNOVAL && mtime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_MODIFIED;
 
-	error = tmpfs_update(vp, atime, mtime, 0);
+	tmpfs_update(vp, atime, mtime, 0);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
-	return error;
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1241,7 +1241,7 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 
 /* --------------------------------------------------------------------- */
 
-int
+void
 tmpfs_update(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod, int flags)
 {
@@ -1258,8 +1258,6 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 	tmpfs_itimes(vp, acc, mod);
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1291,7 +1289,7 @@ tmpfs_truncate(struct vnode *vp, off_t length)
 	}
 
 out:
-	(void)tmpfs_update(vp, NULL, NULL, 0);
+	tmpfs_update(vp, NULL, NULL, 0);
 
 	return error;
 }
