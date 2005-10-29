@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.34 2005/10/29 10:48:02 scw Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.35 2005/10/29 11:00:17 scw Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.34 2005/10/29 10:48:02 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.35 2005/10/29 11:00:17 scw Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1022,10 +1022,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	DPRINTFN(5, ("received frame len=%u chan=%u rssi=%u\n",
 	    le16toh(frame->len), frame->chan, frame->rssi_dbm));
-
-	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (struct iwi_hdr),
-	    sizeof (struct iwi_frame) + le16toh(frame->len),
-	    BUS_DMASYNC_POSTREAD);
 
 	if (le16toh(frame->len) < sizeof (struct ieee80211_frame) ||
 	    le16toh(frame->len) > MCLBYTES) {
