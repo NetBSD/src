@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.8.2.1 2005/10/20 07:13:14 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.8.2.2 2005/10/29 17:28:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -334,7 +334,7 @@ int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
 void	tmpfs_itimes(struct vnode *, const struct timespec *,
 	    const struct timespec *);
 
-int	tmpfs_update(struct vnode *, const struct timespec *,
+void	tmpfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int	tmpfs_truncate(struct vnode *, off_t);
 
