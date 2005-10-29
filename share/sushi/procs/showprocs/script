@@ -1,7 +1,0 @@
-#!/bin/sh
-# $NetBSD: script,v 1.2 2004/03/09 19:33:48 garbled Exp $
-
-for i in `ls -1 /etc/rc.d | egrep -v '(ntpdate|virecover|ipfilter|samba)'`
-do
-	/etc/rc.d/$i status
-done 2>&1 | grep -v unknown | grep -v Usage | grep -v 'not found'
