@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.c,v 1.2 2003/07/10 08:50:44 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_stdenc.c,v 1.2 2003/07/10 08:50:44 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_stdenc.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,6 +51,16 @@ struct _citrus_stdenc _citrus_stdenc_default = {
 };
 
 #ifdef _I18N_DYNAMIC
+
+static int
+/*ARGSUSED*/
+get_state_desc_default(struct _citrus_stdenc * __restrict ce,
+		       void * __restrict ps,
+		       int id,
+		       struct _citrus_stdenc_state_desc * __restrict d)
+{
+	return EOPNOTSUPP;
+}
 
 int
 _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict rce,
@@ -106,6 +116,9 @@ _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict rce,
 		goto bad;
 
 	/* If return ABI version is not expected, should fixup it */
+	if (ce->ce_ops->eo_abi_version < 0x00000002) {
+		ce->ce_ops->eo_get_state_desc = &get_state_desc_default;
+	}
 
 	/* validation check */
 	if (ce->ce_ops->eo_init == NULL ||
@@ -114,7 +127,8 @@ _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict rce,
 	    ce->ce_ops->eo_mbtocs == NULL ||
 	    ce->ce_ops->eo_cstomb == NULL ||
 	    ce->ce_ops->eo_mbtowc == NULL ||
-	    ce->ce_ops->eo_wctomb == NULL)
+	    ce->ce_ops->eo_wctomb == NULL ||
+	    ce->ce_ops->eo_get_state_desc == NULL)
 		goto bad;
 
 	/* allocate traits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.9 2005/10/18 06:42:12 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.9 2005/10/18 06:42:12 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -380,6 +380,21 @@ _citrus_EUC_stdenc_cstowc(_EUCEncodingInfo * __restrict ei,
 	*wc = (wchar_t)csid | (wchar_t)idx;
 
 	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUC_stdenc_get_state_desc_generic(_EUCEncodingInfo * __restrict ei,
+					  _EUCState * __restrict psenc,
+					  int * __restrict rstate)
+{
+
+	if (psenc->chlen == 0)
+		*rstate = _STDENC_SDGEN_INITIAL;
+	else
+		*rstate = _STDENC_SDGEN_INCOMPLETE_CHAR;
+
+	return 0;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.13 2005/03/27 18:51:19 christos Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.13 2005/03/27 18:51:19 christos Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -477,4 +477,24 @@ _citrus_NONE_stdenc_put_state_reset(struct _citrus_stdenc * __restrict ce,
 	*nresult = 0;
 
 	return (0);
+}
+
+static int
+/*ARGSUSED*/
+_citrus_NONE_stdenc_get_state_desc(struct _stdenc * __restrict ce,
+				   void * __restrict ps,
+				   int id,
+				   struct _stdenc_state_desc * __restrict d)
+{
+	int ret;
+
+	switch (id) {
+	case _STDENC_SDID_GENERIC:
+		d->u.generic.state = _STDENC_SDGEN_INITIAL;
+		break;
+	default:
+		ret = EOPNOTSUPP;
+	}
+
+	return ret;
 }
