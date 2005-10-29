@@ -18,15 +18,15 @@ the law!
 %
 10.0 times 0.1 is hardly ever 1.0.
 %
-100 buckets of bits on the bus	
+100 buckets of bits on the bus
 100 buckets of bits
 Take one down, short it to ground
-FF buckets of bits on the bus	
+FF buckets of bits on the bus
 
-FF buckets of bits on the bus	
+FF buckets of bits on the bus
 FF buckets of bits
 Take one down, short it to ground
-FE buckets of bits on the bus	
+FE buckets of bits on the bus
 
 ad infinitum...
 %
@@ -65,7 +65,7 @@ simulation!
 %
 3 syncs represent the trinity -- init, the child and the eternal zombie
 process.  In doing 3, you're paying homage to each and I think such
-traditions are important in this shallow, mercurial business we find 
+traditions are important in this shallow, mercurial business we find
 ourselves in.
 		-- Jordan K. Hubbard
 %
@@ -123,8 +123,7 @@ placed in the fairway at a point equal to the distance it carried or
 rolled into the rough.  Such veering right or left frequently results
 from friction between the face of the club and the cover of the ball
 and the player should not be penalized for the erratic behavior of the
-ball resulting from such uncontrollable physical
-phenomena.
+ball resulting from such uncontrollable physical phenomena.
 		-- Donald A. Metz
 %
 A baby is an alimentary canal with a loud voice at one end and no
@@ -283,7 +282,7 @@ favored by God with an extraordinary genius for swathing the bitter
 facts of life in bandages of self-illusion.
 		-- H. L. Mencken
 %
-A general leading the State Department resembles  a dragon commanding
+A general leading the State Department resembles a dragon commanding
 ducks.
 		-- New York Times, Jan. 20, 1981
 %
@@ -323,7 +322,7 @@ M is for Maud who was swept out to sea, N is for Nevil who died of ennui.
 O is for Olive, run through with an awl, P is for Prue, trampled flat in a brawl
 Q is for Quinton who sank in a mire, R is for Rhoda, consumed by a fire.
 S is for Susan who parished of fits, T is for Titas who flew into bits.
-U is for Una  who slipped down a drain, V is for Victor, squashed under a train.
+U is for Una who slipped down a drain, V is for Victor, squashed under a train.
 W is for Winnie, embedded in ice, X is for Xerxes, devoured by mice.
 Y is for Yoric whose head was bashed in, Z is for Zilla who drank too much gin.
 		-- Edward Gorey "The Gashlycrumb Tinies"
@@ -521,7 +520,7 @@ A physicist is an atom's way of knowing about atoms.
 %
 A pig is a jolly companion,
 Boar, sow, barrow, or gilt --
-A pig is a pal, who'll boost your morale, 
+A pig is a pal, who'll boost your morale,
 Though mountains may topple and tilt.
 When they've blackballed, bamboozled, and burned you,
 When they've turned on you, Tory and Whig,
@@ -968,7 +967,7 @@ to commit.
 %
 Ah say, son, you're about as sharp as a bowlin' ball.
 %
-Ah, but the choice of dreams to live, 
+Ah, but the choice of dreams to live,
 there's the rub.
 
 For all dreams are not equal,
@@ -1980,7 +1979,7 @@ lpr why
 santa claus <north pole >town
 
 cat /etc/passwd >list
-ncheck list 
+ncheck list
 ncheck list
 cat list | grep naughty >nogiftlist
 cat list | grep nice >giftlist
@@ -2088,7 +2087,7 @@ vividly manifests their lack of progress.
 Bombeck's Rule of Medicine:
 	Never go to a doctor whose office plants have died.
 %
-BOO!  We changed Coke again!  BLEAH!  BLEAH! 
+BOO!  We changed Coke again!  BLEAH!  BLEAH!
 %
 Boob's Law:
 	You always find something in the last place you look.
@@ -2659,7 +2658,7 @@ Cogito cogito ergo cogito sum --
 Cogito ergo I'm right and you're wrong.
 		-- Blair Houghton
 %
-Coincidence, n.: 
+Coincidence, n.:
 	You weren't paying attention to the other half of what was
 going on.
 %
@@ -3031,7 +3030,7 @@ come of nothing: speak again." -- King Lear
 		-- Stan Kelly-Bootle, "The Devil's DP Dictionary"
 %
 #define BITCOUNT(x)	(((BX_(x)+(BX_(x)>>4)) & 0x0F0F0F0F) % 255)
-#define  BX_(x)		((x) - (((x)>>1)&0x77777777)			\
+#define BX_(x)		((x) - (((x)>>1)&0x77777777)			\
 			     - (((x)>>2)&0x33333333)			\
 			     - (((x)>>3)&0x11111111))
 
@@ -3096,7 +3095,7 @@ Result is demagogism, license, agitation, discontent, anarchy.
 		   since withdrawn.
 %
 Demographic polls show that you have lost credibility across the
-board.  Especially with  those 14 year-old Valley girls.
+board.  Especially with those 14 year-old Valley girls.
 %
 Dentist, n.:
 	A Prestidigitator who, putting metal in one's mouth, pulls
@@ -3350,7 +3349,7 @@ W. C.:	It's almost impossible.
 		   E. Whipsnade and other Tarradiddles"
 %
 		Double Bucky
-	(Sung to the tune of "Rubber Duckie")	
+	(Sung to the tune of "Rubber Duckie")
 
 Double bucky, you're the one!
 You make my keyboard lots of fun
@@ -3362,7 +3361,7 @@ Augmented ASCII, nine bits wide!
 
 Oh, I sure wish that I,
 Had a couple of bits more!
-Perhaps a set of pedals to make the number of bits four.   
+Perhaps a set of pedals to make the number of bits four.
 
 Double bucky, left and right
 OR'd together, outta sight!
@@ -3521,7 +3520,7 @@ All the lonely users, why does it take so long?
 
 Hacker MacKensie
 Writing the code for a program that no one will run
-It's nearly done 
+It's nearly done
 Look at him working, fixing the bugs in the night when there's nobody there.
 What does he care?
 
@@ -5274,8 +5273,8 @@ Wir haben ihn in das Grab gesteckt,	Here lies a man with sundry flaws
 Weil es uns duenkt er sei verreckt.	And numerous Sins upon his head;
 					We buried him today because
 					As far as we can tell, he's dead.
-		-- PDQ Bach's epitaph, as requested by his cousin Betty
-		   Sue Bach and written by the local doggerel catcher;
+		-- PDQ Bach's epitaph, as requested by his cousin Betty-Sue
+		   Bach and written by the local doggerel catcher;
 		   "The Definitive Biography of PDQ Bach", Peter Schickele
 %
 Higgledy Piggledy,
@@ -5418,7 +5417,7 @@ Tear their clothes to rags.
 How I love to watch the morn,
 	With golden sun that shines,
 Up above to nicely warm
-	These frosty toes of mine.  
+	These frosty toes of mine.
 
 The wind doth taste so bitter sweet,
 	Like Jaspar wine and sugar,
@@ -5459,8 +5458,8 @@ back on the tray and bite another one and go, "Darn it!  Another
 cheese!" and so on.
 		-- Dave Barry, "The Stuff of Etiquette"
 %
-	How many seconds are there in a year?  If I tell you there  are
-3.155  x  10^7, you won't even try to remember it.  On the other hand,
+	How many seconds are there in a year?  If I tell you there are
+3.155 x 10^7, you won't even try to remember it.  On the other hand,
 who could forget that, to within half a percent, pi seconds is a
 nanocentury.
 		-- Tom Duff, Bell Labs
@@ -5844,7 +5843,7 @@ And think of the places my get-up has been.
 		-- Pete Seeger
 %
 I had this sudden vision of a klein pizza containing all the mozarella
-in the world. 
+in the world.
 		-- Peter da Silva
 %
 I had to censor everything my sons watched ... even on the Mary Tyler
@@ -5892,7 +5891,7 @@ of an insult than as a reflection on your ancestry.
 %
 I have learned
 To spell hors d'oeuvres
-Which still grates on 
+Which still grates on
 Some people's n'oeuvres.
 		-- Warren Knox
 %
@@ -6904,6 +6903,10 @@ If you think nobody cares if you're alive, try missing a couple of car
 payments.
 		-- Earl Wilson
 %
+If you think technology can solve your security problems, then you
+don't understand the problems and you don't understand the technology.
+		-- Bruce Schneier
+%
 If you think the problem is bad now, just wait until we've solved it.
 		-- Arthur Kasspe
 %
@@ -7278,7 +7281,7 @@ from now the Mississippi will be only a mile and three-quarters long.
 ... There is something fascinating about science.  One gets such
 wholesome returns of conjecture out of such a trifling investment of
 fact.
-		-- Mark Twain 
+		-- Mark Twain
 %
 In the Top 40, half the songs are secret messages to the teen world to
 drop out, turn on, and groove with the chemicals and light shows at
@@ -7971,7 +7974,7 @@ teenager stomp up to his branch and slam the leaves.
 		-- Dave Barry, "Kids Today: They Don't Know Dum Diddly Do"
 %
 Kin, n.:
-	An affliction of the blood
+	An affliction of the blood.
 %
 Kinkler's First Law:
 	Responsibility always exceeds authority.
@@ -8063,7 +8066,7 @@ Last yeer I kudn't spel Engineer.  Now I are won.
 %
 Laugh at your problems; everybody else does.
 %
-Laughter is the closest distance between two people." 
+Laughter is the closest distance between two people."
 		-- Victor Borge
 %
 Law of Communications:
@@ -8364,7 +8367,7 @@ Any kiddie in school can love like a fool,
 But Hating, my boy, is an Art.
 		-- Ogden Nash
 %
-Love is an ideal thing, marriage a real thing; a confusion of the real with 
+Love is an ideal thing, marriage a real thing; a confusion of the real with
 the ideal never goes unpunished.
 		-- Johann Wolfgang von Goethe
 %
@@ -8382,11 +8385,11 @@ Love your enemies: they'll go crazy trying to figure out what you're up to.
 %
 	Love's Drug
 
-My love is like an iron wand 
+My love is like an iron wand
 	That conks me on the head,
-My love is like the valium 
+My love is like the valium
 	That I take before my bed,
-My love is like the pint of scotch 
+My love is like the pint of scotch
 	That I drink when I be dry;
 And I shall love thee still, my dear,
 	Until my wife is wise.
@@ -9478,7 +9481,7 @@ direct sunlight.
 Nuclear war can ruin your whole compile.
 		-- Karl Lehenbauer
 %
-Nuclear war would mean abolition of most comforts, and disruption of 
+Nuclear war would mean abolition of most comforts, and disruption of
 normal routines, for children and adults alike.
 		-- Willard F. Libby, "You *Can* Survive Atomic Attack"
 %
@@ -10048,7 +10051,7 @@ Parker's Law:
 	Beauty is only skin deep, but ugly goes clean to the bone.
 %
 Parkinson's Fifth Law:
-	If there is a way to delay in important decision, the good
+	If there is a way to delay an important decision, the good
 bureaucracy, public or private, will find it.
 %
 Parkinson's Fourth Law:
@@ -10437,7 +10440,7 @@ Proof techniques #2: Proof by Oddity.
 (2) They have two legs in back and fore legs in front.
 (3) This makes a total of six legs, which certainly is an odd number of
     legs for a horse.
-(4) But the only number that is both odd and even is infinity. 
+(4) But the only number that is both odd and even is infinity.
 (5) Therefore, horses must have an infinite number of legs.
 
 Topics to be covered in future issues include proof by:
@@ -10491,11 +10494,11 @@ POPI	Punch Operator Immediately
 PVLC	Punch Variable Length Card
 RASC	Read And Shred Card
 RPM	Read Programmers Mind
-RSSC	reduce speed, step carefully  (for improved accuracy)
-RTAB	Rewind tape and break
-RWDSK	rewind disk
+RSSC	Reduce Speed, Step Carefully (for improved accuracy)
+RTAB	Rewind Tape and Break
+RWDSK	Rewind Disk
 RWOC	Read Writing On Card
-SCRBL	scribble to disk  - faster than a write
+SCRBL	Scribble to disk - faster than a write
 SLC	Search for Lost Chord
 SPSW	Scramble Program Status Word
 SRSD	Seek Record and Scar Disk
@@ -10909,7 +10912,7 @@ tempest of words.
 		-- Ambrose Bierce, "The Devil's Dictionary"
 %
 REPORTER: Senator, are you for or against the MX missile system?
- 
+
 SENATOR: Bob, the MX missile system reminds me of an old saying that
 the country folk in my state like to say.  It goes like this: "You can
 carry a pig for six miles, but if you set it down it might run away."
@@ -11972,7 +11975,7 @@ The advertisement is the most truthful part of a newspaper
 		-- Thomas Jefferson
 %
 The Advertising Agency Song:
- 
+
 	When your client's hopping mad,
 	Put his picture in the ad.
 	If he still should prove refractory,
@@ -12047,7 +12050,7 @@ Lover's Patties would be compressed into wads and sold as "Nuggets."
 The best book on programming for the layman is "Alice in Wonderland";
 but that's because it's the best book on anything for the layman.
 %
-The best cure for insomnia is to get a  lot of sleep.
+The best cure for insomnia is to get a lot of sleep.
 		-- W. C. Fields
 %
 The best defense against logic is ignorance.
@@ -14192,7 +14195,7 @@ And where does it go after it leaves the toaster?
 		-- Dave Barry, "What is Electricity?"
 %
 Today's thrilling story has been brought to you by Mushies, the great new
-cereal that gets soggy even without milk or cream.  Join us soon for more 
+cereal that gets soggy even without milk or cream.  Join us soon for more
 spectacular adventure starring ... Tippy, the Wonder Dog.
 		-- Bob & Ray
 %
@@ -14228,15 +14231,15 @@ Top 10 things likely to be overheard if you had a Klingon Programmer:
   8) Indentation?! - I will show you how to indent when I indent your skull!
   7) What is this talk of 'release'?  Klingons do not make software 'releases'.
      Our software 'escapes' leaving a bloody trail of designers and quality
-     assurance people in its wake.   
+     assurance people in its wake.
   6) Klingon function calls do not have 'parameters' - they have 'arguments'
-     - and they ALWAYS WIN THEM.   
+     - and they ALWAYS WIN THEM.
   5) Debugging?  Klingons do not debug.  Our software does not coddle the weak.
   4) A TRUE Klingon Warrior does not comment his code!
   3) Klingon software does NOT have BUGS.  It has FEATURES, and those features
      are too sophisticated for a Romulan pig like you to understand.
   2) You cannot truly appreciate Dilbert unless you've read it in the
-     original Klingon.   
+     original Klingon.
   1) Our users will know fear and cower before our software!  Ship it!
      Ship it and let them flee like the dogs they are!
 %
@@ -14253,7 +14256,7 @@ Follow these simple suggestions:
 (2)  Use tape, magnets, or glue instead of paperweights.
 (3)  Give up skiing and skydiving for more horizontal sports like
      curling.
-(4)  Avoid showers .. take baths instead.
+(4)  Avoid showers ... take baths instead.
 (5)  Don't hang all your clothes in the closet ... Keep them in one big
      pile.
 (6)  Stop flipping pancakes
@@ -15609,7 +15612,7 @@ will notice.
 %
 You are a very redundant person, that's what kind of person you are.
 %
-You are here:   
+You are here:
 		***
 		***
 	     *********
@@ -15726,7 +15729,7 @@ pound some old, hard fruit into it with a mallet.  Be sure to wear
 safety glasses.
 		-- Dave Barry, "Simple, Homespun Gifts"
 %
-You can bring any calculator you like to the midterm, as long as it 
+You can bring any calculator you like to the midterm, as long as it
 doesn't dim the lights when you turn it on.
 		-- Hepler, Systems Design 182
 %
@@ -15955,7 +15958,7 @@ another $2 if he claims it will be His Pleasure to serve you and
 another $2 for each "special" he describes involving confusing terms
 such as "shallots," and $4 if the menu contains the word "fixin's."  In
 many restaurants, this means the waiter will actually owe you money.
-If you are traveling with a child  aged six months to three years, you
+If you are traveling with a child aged six months to three years, you
 should leave an additional amount equal to twice the bill to compensate
 for the fact that they will have to take the banquette out and burn it
 because the cracks are wedged solid with gobbets made of partially
@@ -16110,10 +16113,10 @@ The whole room was cluttered		    An ant passing by,
 With memory-dumps, punch cards.		    Saluted his tombstone,
 "I'm close," he muttered.		    And whispered, "Nice try."
 
-The mumbling got louder,				
-Simple deduction,				
-"I've got it, it's right,				
-Just change one instruction."				
+The mumbling got louder,
+Simple deduction,
+"I've got it, it's right,
+Just change one instruction."
 %
 Speaking of the philosophy involved in moving humanity into space:
 
@@ -16139,7 +16142,7 @@ down to enshrine some underwear.  This, my friends, is no way to run a planet.
 %
 Nearly every software professional has heard the term spaghetti code as a
 pejorative description for complicated, difficult to understand, and impossible
-to maintain, software.  However, many people may not know the other two 
+to maintain, software.  However, many people may not know the other two
 elements of the complete Pasta Theory of Software.
 
 Lasagna code is used to describe software that has a simple, understandable,
@@ -16148,7 +16151,7 @@ monolithic and not easy to modify.  An attempt to change one layer conceptually
 simple, is often very difficult in actual practice.
 
 The ideal software structure is one having components that are small and
-loosely coupled; this ideal structure is called ravioli code.  In ravioli 
+loosely coupled; this ideal structure is called ravioli code.  In ravioli
 code, each of the components, or objects, is a package containing some meat
 or other nourishment for the system; any component can be modified or replaced
 without significantly affecting other components.
@@ -16158,8 +16161,8 @@ encouragement of ravioli code.
 		-- Raymond J. Rubey, in a letter to the editor of Crosstalk
 		   magazine
 %
-63,000 bugs in the code, 63,000 bugs, 
-ya get 1 whacked with a service pack, 
+63,000 bugs in the code, 63,000 bugs,
+ya get 1 whacked with a service pack,
 now there's 63,005 bugs in the code!!
 %
 "It's not very common in Crowthorne"
