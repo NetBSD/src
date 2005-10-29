@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.38.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.38.2.2 2005/10/29 17:21:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.38.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.38.2.2 2005/10/29 17:21:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -473,7 +473,7 @@ fail:
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
 		/*
@@ -485,7 +485,7 @@ fail:
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (DOINGSOFTDEP(vp))
-				UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
@@ -1016,7 +1016,7 @@ fail:
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
 		/*
@@ -1028,7 +1028,7 @@ fail:
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (DOINGSOFTDEP(vp))
-				UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 

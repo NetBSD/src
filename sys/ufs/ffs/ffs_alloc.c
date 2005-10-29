@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.87.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.87.2.2 2005/10/29 17:21:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.87.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.87.2.2 2005/10/29 17:21:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -579,7 +579,7 @@ ffs_reallocblks(void *v)
 	} else {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (!doasyncfree)
-			UFS_UPDATE(vp, NULL, NULL, 1);
+			ffs_update(vp, NULL, NULL, 1);
 	}
 	if (ssize < len) {
 		if (doasyncfree)
@@ -681,7 +681,7 @@ ffs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
 		goto noinodes;
 	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		UFS_VFREE(pvp, ino, mode);
+		ffs_vfree(pvp, ino, mode);
 		return (error);
 	}
 	ip = VTOI(*vpp);

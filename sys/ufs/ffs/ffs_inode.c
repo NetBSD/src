@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.76.2.1 2005/10/20 03:00:30 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.76.2.2 2005/10/29 17:21:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.76.2.1 2005/10/20 03:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.76.2.2 2005/10/29 17:21:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -191,11 +191,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
 		oip->i_size = 0;
 		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (UFS_UPDATE(ovp, NULL, NULL, 0));
+		return (ffs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (UFS_UPDATE(ovp, NULL, NULL, 0));
+		return (ffs_update(ovp, NULL, NULL, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -238,14 +238,14 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
 		}
 		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
-			(void) UFS_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
+			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC,
 			    cred, p);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(ovp->v_size == oip->i_size);
-		return (UFS_UPDATE(ovp, NULL, NULL, 0));
+		return (ffs_update(ovp, NULL, NULL, 0));
 	}
 
 	/*
@@ -312,7 +312,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
 			(void) vinvalbuf(ovp, 0, cred, p, 0, 0);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			return (UFS_UPDATE(ovp, NULL, NULL, 0));
+			return (ffs_update(ovp, NULL, NULL, 0));
 		}
 	}
 	oip->i_size = length;
@@ -353,7 +353,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
 	}
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (sync) {
-		error = UFS_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+		error = ffs_update(ovp, NULL, NULL, UPDATE_WAIT);
 		if (error && !allerror)
 			allerror = error;
 	}
