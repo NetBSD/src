@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.52 2005/10/28 23:44:59 riz Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.53 2005/10/29 20:32:02 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -100,8 +100,7 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.108
 sys/dev/ata/ata.c				1.69 via patch
 
 	Close a window where (disks) interrupts could be enabled while the
-	ATACH_TH_RUN flag is still set. Should fix panic reported by Jukka Salmi
-	on netbsd-users@.
+	ATACH_TH_RUN flag is still set.
 	[bouyer, ticket #1543]
 
 sys/arch/sun3/dev/if_ie.c			1.42
@@ -132,7 +131,7 @@ sys/arch/sun3/sun3x/pmap.c			1.87
 
 sys/dev/verified_exec.c				1.6
 
-	Use UIO_SYSSPACE for NDINIT. Found by Eike Dehling.
+	Use UIO_SYSSPACE for NDINIT.
 	[kleink, ticket #1988]
 
 sys/dev/audio.c					1.196 via patch
@@ -160,7 +159,7 @@ libexec/telnetd/telnetd.c			patch
 usr.sbin/user/user.c				1.80
 
 	Be consistent when deleting a non-existent group - tell if the group is
-	non-existent.  Problem noted by Geert Hendrickx, fix from Liam J. Foy.
+	non-existent.
 	[agc, ticket #2024]
 
 gnu/dist/cvs/AUTHORS				patch
@@ -300,8 +299,7 @@ src/gnu/usr.bin/cvs/libdiff/Makefile		patch
 usr.bin/su/su.1					1.44
 usr.bin/su/su.c					1.65
 
-	Set LOGNAME in the new environment (in addition to USER);
-	fixes PR bin/30670 from Pavel Cahyna.
+	Set LOGNAME in the new environment (in addition to USER). PR#30670
 	[kleink, ticket #2070]
 
 sys/kern/uipc_usrreq.c				1.83
@@ -316,8 +314,8 @@ sys/arch/macppc/pci/pci_machdep.c		1.26
 
 sys/netinet6/ah_aesxcbcmac.c			1.2
 
-	SUZUKI, Shinsuike: IPsec-AH is always calculated using the
-	same key in AES-XCBC-MAC.  PR#30821
+	IPsec-AH is always calculated using the same key in AES-XCBC-MAC.
+	PR#30821
 	[elad, ticket 5538]
 
 lib/libz/inftrees.c				1.10
@@ -359,7 +357,7 @@ distrib/notes/common/contents			1.115
 
 share/man/man4/options.4			1.283
 
-	remove reference to ncr(4)
+	Remove reference to ncr(4)
 	[riz, ticket #5569]
 
 distrib/notes/common/extract-contrib-string.pl	1.2
@@ -421,8 +419,8 @@ sys/miscfs/procfs/procfs_subr.c			1.59
 sys/miscfs/kernfs/kernfs_vnops.c		1.112
 
 	Also protect the ipsec ioctls from negative offsets to prevent panics
-	in m_copydata(). Pointed out by Karl Janmar. Move the negative offset
-	check from kernfs_xread() to kernfs_read().
+	in m_copydata(). Move the negative offset check from kernfs_xread() 
+	to kernfs_read().
 	[christos, ticket #5637]
 
 distrib/sets/lists/base/mi			1.525,1.543,1.569
@@ -518,8 +516,7 @@ sys/arch/i386/i386/trap.c			1.205
 sys/arch/i386/i386/vector.S			1.20
 sys/arch/i386/include/npx.h			1.21
 
-	Handle MMX faults as floating exceptions. Tested by Hauke Fath; matlab
-	passes all its regression suite without panicking the kernel.
+	Handle MMX faults as floating exceptions. Matlab full functional again.
 	[christos, ticket #5923]
 
 crypto/dist/openssl/crypto/opensslv.h		1.2
