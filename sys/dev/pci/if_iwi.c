@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.32 2005/10/29 08:10:38 scw Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.33 2005/10/29 08:44:28 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.32 2005/10/29 08:10:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.33 2005/10/29 08:44:28 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -297,14 +297,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
-	ic->ic_myaddr[0] = val >> 8;
-	ic->ic_myaddr[1] = val & 0xff;
+	ic->ic_myaddr[0] = val & 0xff;
+	ic->ic_myaddr[1] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 1);
-	ic->ic_myaddr[2] = val >> 8;
-	ic->ic_myaddr[3] = val & 0xff;
+	ic->ic_myaddr[2] = val & 0xff;
+	ic->ic_myaddr[3] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 2);
-	ic->ic_myaddr[4] = val >> 8;
-	ic->ic_myaddr[5] = val & 0xff;
+	ic->ic_myaddr[4] = val & 0xff;
+	ic->ic_myaddr[5] = val >> 8;
 
 	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
@@ -946,7 +946,7 @@ iwi_read_prom_word(struct iwi_softc *sc, uint8_t addr)
 	IWI_EEPROM_CTL(sc, 0);
 	IWI_EEPROM_CTL(sc, IWI_EEPROM_C);
 
-	return bswap16(val);
+	return val;
 }
 
 /*
