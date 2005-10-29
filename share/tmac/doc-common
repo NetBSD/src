@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.61.2.9 2005/03/16 12:34:05 tron Exp $
+.\"	$NetBSD: doc-common,v 1.61.2.10 2005/10/29 23:38:00 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -245,7 +245,7 @@
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
-.	ds oS NetBSD 2.0.2
+.	ds oS NetBSD 2.0.3
 .\}
 .if "\\$2"" \{\
 .	ds aa Non-Null
@@ -297,6 +297,7 @@
 .	if "\\$2"2.0"  .as oS \02.0
 .	if "\\$2"2.0.1"  .as oS \02.0.1
 .	if "\\$2"2.0.2"  .as oS \02.0.2
+.	if "\\$2"2.0.3"  .as oS \02.0.3
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
