@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.38 2005/09/09 20:29:12 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.39 2005/10/30 20:49:05 erh Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -497,6 +497,9 @@ If the file is successfully created, the address of the resulting
 locked vnode is returned in
 .Fa vpp
 and zero is returned.
+Regardless of the return value, the directory vnode
+.Fa dvp
+will be unlocked on return.
 .Pp
 This function is called after
 .Fn VOP_LOOKUP
