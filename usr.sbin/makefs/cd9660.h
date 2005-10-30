@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.7 2005/10/30 07:33:57 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.8 2005/10/30 09:27:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -57,6 +57,11 @@
 #include "cd9660/iso_rrip.h"
 #include "cd9660/cd9660_eltorito.h"
 
+#ifdef DEBUG
+#define	INODE_WARNX(__x)	warnx __x
+#else /* DEBUG */
+#define	INODE_WARNX(__x)
+#endif /* DEBUG */
 
 #define CD9660MAXPATH 4096
 
@@ -127,7 +132,7 @@ typedef struct {
 #define CD9660_TYPE_DOTDOT	0x08
 #define CD9660_TYPE_VIRTUAL 0x80
 
-#define CD9660_HASH_SIZE 512
+#define CD9660_INODE_HASH_SIZE 1024
 
 #define CD9660_END_PADDING 150
 
@@ -212,16 +217,13 @@ typedef struct _cd9660node {
 	TAILQ_HEAD(susp_linked_list, ISO_SUSP_ATTRIBUTES) head;
 } cd9660node;
 
-#if 0
-struct cd9660hash_node {
-	cd9660node *thenode;
-	LIST_ENTRY(cd9660hash_node) ll_struct;
+struct cd9660_inode {
+	uint32_t			in_ino;
+	int				in_data_sector;
+	SLIST_ENTRY(cd9660_inode)	in_link;
 };
 
-struct cd9660hash_table {
-	LIST_HEAD(node_hash_table,cd9660_node_hash) node_hash[CD9660_HASH_SIZE];
-};
-#endif
+#define	CD9660_INODE_HASH(__inode)	((__inode) % CD9660_INODE_HASH_SIZE)
 
 typedef struct _path_table_entry
 {
@@ -247,7 +249,9 @@ typedef struct _iso9660_disk {
 	volume_descriptor *firstVolumeDescriptor;
 
 	cd9660node *rootNode;
-	/*struct cd9660hash_table name_hash;*/
+
+	SLIST_HEAD(cd9660_inode_head,
+	           cd9660_inode)	inode_hash[CD9660_INODE_HASH_SIZE];
 
 	const char *rootFilesystemPath;
 
