@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2005/10/30 04:34:03 tsutsui Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -154,7 +154,7 @@
 #ifndef _LOCORE
 
 extern int cpuspeed;
-extern void delay(int n);
+extern void delay(unsigned int n);
 
 #if 0 /* XXX: should use mips_mcclock.c */
 #define	DELAY(n)	do {						\
