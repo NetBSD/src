@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.5 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.6 2005/10/30 03:50:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.5 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.6 2005/10/30 03:50:54 dyoung Exp $");
 #endif  /* !__lint */
 
 static struct boot_catalog_entry *cd9660_init_boot_catalog_entry(void);
@@ -50,8 +50,7 @@ static u_char cd9660_boot_get_system_type(struct cd9660_boot_image *);
 #endif
 
 int
-cd9660_add_boot_disk(boot_info)
-const char * boot_info;
+cd9660_add_boot_disk(const char *boot_info)
 {
 	struct stat stbuf;
 	char *temp;
@@ -168,7 +167,7 @@ const char * boot_info;
 }
 
 int
-cd9660_eltorito_add_boot_option(const char *option_string, const char* value)
+cd9660_eltorito_add_boot_option(const char *option_string, const char *value)
 {
 	struct cd9660_boot_image *image;
 
@@ -212,55 +211,57 @@ cd9660_init_boot_catalog_entry(void)
 static struct boot_catalog_entry *
 cd9660_boot_setup_validation_entry(char sys)
 {
-	struct boot_catalog_entry *validation_entry;
+	struct boot_catalog_entry *entry;
+	boot_catalog_validation_entry *ve;
 	int16_t checksum;
 	unsigned char *csptr;
 	int i;
+	entry = cd9660_init_boot_catalog_entry();
 
-	validation_entry = cd9660_init_boot_catalog_entry();
-
-	if (validation_entry == NULL) {
+	if (entry == NULL) {
 		warnx("Error: memory allocation failed in "
 		      "cd9660_boot_setup_validation_entry");
 		return 0;
 	}
-	validation_entry->entry_data.VE.header_id[0] = 1;
-	validation_entry->entry_data.VE.platform_id[0] = sys;
-	validation_entry->entry_data.VE.key[0] = 0x55;
-	validation_entry->entry_data.VE.key[1] = 0xAA;
+	ve = &entry->entry_data.VE;
+
+	ve->header_id[0] = 1;
+	ve->platform_id[0] = sys;
+	ve->key[0] = 0x55;
+	ve->key[1] = 0xAA;
 
 	/* Calculate checksum */
 	checksum = 0;
-	cd9660_721(0, validation_entry->entry_data.VE.checksum);
-	csptr = (unsigned char*) &(validation_entry->entry_data.VE);
-	for (i = 0; i < sizeof (boot_catalog_validation_entry); i += 2) {
-		checksum += (int16_t) csptr[i];
-		checksum += ((int16_t) csptr[i + 1]) * 256;
+	cd9660_721(0, ve->checksum);
+	csptr = (unsigned char*)&entry->entry_data.VE;
+	for (i = 0; i < sizeof(*ve); i += 2) {
+		checksum += (int16_t)csptr[i];
+		checksum += 256 * (int16_t)csptr[i + 1];
 	}
 	checksum = -checksum;
-	cd9660_721(checksum, validation_entry->entry_data.VE.checksum);
+	cd9660_721(checksum, ve->checksum);
 
-	return validation_entry;
+	return entry;
 }
 
 static struct boot_catalog_entry *
 cd9660_boot_setup_default_entry(struct cd9660_boot_image *disk)
 {
 	struct boot_catalog_entry *default_entry;
+	boot_catalog_initial_entry *ie;
 
 	default_entry = cd9660_init_boot_catalog_entry();
 	if (default_entry == NULL)
 		return NULL;
 
-	cd9660_721(1, default_entry->entry_data.IE.sector_count);
+	ie = &default_entry->entry_data.IE;
 
-	default_entry->entry_data.IE.boot_indicator[0] = disk->bootable;
-	default_entry->entry_data.IE.media_type[0] = disk->targetMode;
-	cd9660_721(disk->loadSegment,
-	    default_entry->entry_data.IE.load_segment);
-	default_entry->entry_data.IE.system_type[0] = disk->system;
-	cd9660_721(1, default_entry->entry_data.IE.sector_count);
-	cd9660_731(disk->sector, default_entry->entry_data.IE.load_rba);
+	ie->boot_indicator[0] = disk->bootable;
+	ie->media_type[0] = disk->targetMode;
+	cd9660_721(disk->loadSegment, ie->load_segment);
+	ie->system_type[0] = disk->system;
+	cd9660_721(1, ie->sector_count);
+	cd9660_731(disk->sector, ie->load_rba);
 
 	return default_entry;
 }
@@ -268,30 +269,35 @@ cd9660_boot_setup_default_entry(struct cd9660_boot_image *disk)
 static struct boot_catalog_entry *
 cd9660_boot_setup_section_head(char platform)
 {
-	struct boot_catalog_entry *sh;
+	struct boot_catalog_entry *entry;
+	boot_catalog_section_header *sh;
 
-	sh = cd9660_init_boot_catalog_entry();
-	if (sh == NULL)
+	entry = cd9660_init_boot_catalog_entry();
+	if (entry == NULL)
 		return NULL;
+
+	sh = &entry->entry_data.SH;
 	/* More by default. The last one will manually be set to 0x91 */
-	sh->entry_data.SH.header_indicator[0] = ET_SECTION_HEADER_MORE;
-	sh->entry_data.SH.platform_id[0] = platform;
-	sh->entry_data.SH.num_section_entries[0] = 0;
-	return sh;
+	sh->header_indicator[0] = ET_SECTION_HEADER_MORE;
+	sh->platform_id[0] = platform;
+	sh->num_section_entries[0] = 0;
+	return entry;
 }
 
 static struct boot_catalog_entry *
 cd9660_boot_setup_section_entry(struct cd9660_boot_image *disk)
 {
 	struct boot_catalog_entry *entry;
-
+	boot_catalog_section_entry *se;
 	if ((entry = cd9660_init_boot_catalog_entry()) == NULL)
 		return NULL;
 
-	entry->entry_data.SE.boot_indicator[0] = ET_BOOTABLE;
-	entry->entry_data.SE.media_type[0] = disk->targetMode;
-	cd9660_721(disk->loadSegment, entry->entry_data.SE.load_segment);
-	cd9660_721(1, entry->entry_data.SE.sector_count);
+	se = &entry->entry_data.SE;
+
+	se->boot_indicator[0] = ET_BOOTABLE;
+	se->media_type[0] = disk->targetMode;
+	cd9660_721(disk->loadSegment, se->load_segment);
+	cd9660_721(1, se->sector_count);
 
 	cd9660_731(disk->sector,entry->entry_data.IE.load_rba);
 	return entry;
