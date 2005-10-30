@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.290 2005/10/28 23:56:02 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.291 2005/10/30 02:35:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13711,3 +13711,17 @@ gnu/usr.sbin/Makefile				1.14
 	simplifying man.tgz set sharing.
 	[jmc, ticket #918]
 
+sys/arch/sparc/sparc/cpu.c			1.193
+
+	Compute c_totalsize for split caches correctly: it's max, not sum (and
+	we even have that documented in cache.h).  Initialize c_nlines for
+	split caches.
+	
+	This should fix srmmu cache flush routines for split I/D caches that
+	has been broken since cache.c revision 1.79 started using c_nlines.
+	[uwe, ticket #919]
+
+sys/dev/pci/auich.c				1.98-1.99
+
+	Fix debug printf in auich_halt_pipe. PR#31030
+	[rpaulo, ticket #920]
