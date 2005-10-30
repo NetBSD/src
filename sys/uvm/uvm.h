@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.40 2005/05/11 13:02:25 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.41 2005/10/30 11:56:51 yamt Exp $	*/
 
 /*
  *
@@ -197,11 +197,23 @@ do {									\
 
 #ifdef _KERNEL
 
+#if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C)
 #include <uvm/uvm_amap_i.h>
+#endif
+
 #include <uvm/uvm_fault_i.h>
+
+#if defined(UVM_MAP_INLINE) || defined(UVM_MAP_C)
 #include <uvm/uvm_map_i.h>
+#endif
+
+#if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE_C)
 #include <uvm/uvm_page_i.h>
+#endif
+
+#if defined(UVM_PAGER_INLINE) || defined(UVM_PAGER_C)
 #include <uvm/uvm_pager_i.h>
+#endif
 
 #endif /* _KERNEL */
 
