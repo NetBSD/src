@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.5 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.6 2005/10/30 06:45:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -109,7 +109,8 @@ typedef struct {
 #define ISO_RRIP_DEFAULT_MOVE_DIR_NAME "RR_MOVED"
 #define RRIP_DEFAULT_MOVE_DIR_NAME ".rr_moved"
 
-#define	CD9660_BLOCKS(S,X)	(((X) / S) + (((X)%S)?1:0))
+#define	CD9660_BLOCKS(__sector_size, __bytes)	\
+	howmany((__bytes), (__sector_size))
 
 #define CD9660_MEM_ALLOC_ERROR(_F)	\
     err(EXIT_FAILURE, "%s, %s l. %d", _F, __FILE__, __LINE__)
@@ -305,7 +306,7 @@ typedef struct _iso9660_disk {
 	boot_volume_descriptor *boot_descriptor;
 	char * boot_image_directory;
 
-	LIST_HEAD(boot_image_list,cd9660_boot_image) boot_images;
+	TAILQ_HEAD(boot_image_list,cd9660_boot_image) boot_images;
 	LIST_HEAD(boot_catalog_entries,boot_catalog_entry) boot_entries;
 
 } iso9660_disk;
