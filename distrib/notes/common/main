@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.15 2005/10/29 23:26:19 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.16 2005/10/30 00:55:57 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -554,7 +554,9 @@ and check for attempts to write to init sooner and in all cases.
 Don't allow negative offsets when reading the message buffer, because
 it can allow reading arbitrary kernel memory.
 .It
-Remove unsafe /tmp file creation for the file.0 target when building xsrc.
+Remove unsafe /tmp file creation for the file.0 target when using
+.Xr imake 1
+..
 .It
 Fix security hole in
 .Xr Xserver 1
