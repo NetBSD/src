@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.152 2005/10/30 20:28:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.152 2005/10/30 20:28:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -110,6 +110,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $"
 
 int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
+
+/*
+ * Sleep queues.
+ *
+ * We're only looking at 7 bits of the address; everything is
+ * aligned to 4, lots of things are aligned to greater powers
+ * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
+ */
+#define	SLPQUE_TABLESIZE	128
+#define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
+
+#define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
 
 /*
  * The global scheduler state.
@@ -241,6 +253,10 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * (more general) method of calculating the %age of CPU used by a process.
  */
 #define	CCPU_SHIFT	11
+
+#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
+#define NICE_WEIGHT 2			/* priorities per nice level */
+#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
 
 /*
  * Recompute process priorities, every hz ticks.
@@ -1306,7 +1322,7 @@ setrunqueue(struct lwp *l)
 {
 	struct prochd *rq;
 	struct lwp *prev;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, NULL);
@@ -1331,7 +1347,7 @@ void
 remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 #ifdef RQDEBUG
 	checkrunqueue(whichq, l);
 #endif
