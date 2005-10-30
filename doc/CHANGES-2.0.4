@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.2 2005/10/30 00:46:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.3 2005/10/30 17:42:41 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -8,3 +8,13 @@ File						Revision(s)
 sys/sys/param.h					patch
 
 	Update to 2.0.3_STABLE
+
+sys/arch/sparc/sparc/cpu.c			1.193
+
+	Compute c_totalsize for split caches correctly: it's max, not sum (and
+	we even have that documented in cache.h).  Initialize c_nlines for
+	split caches.
+	This should fix srmmu cache flush routines for split I/D caches that
+	has been broken since cache.c revision 1.79 started using c_nlines.
+	[uwe, ticket #5950]
+
