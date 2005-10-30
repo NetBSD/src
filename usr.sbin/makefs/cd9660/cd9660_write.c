@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.4 2005/10/30 07:40:45 dyoung Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.5 2005/10/30 09:27:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.4 2005/10/30 07:40:45 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.5 2005/10/30 09:27:49 dyoung Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -277,8 +277,15 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 
 	if ((writenode->level != 0) &&
 	    !(writenode->node->type & S_IFDIR)) {
-		/* Only attempt to write files that have length */
-		if (writenode->fileDataLength > 0) {
+		fsinode *inode = writenode->node->inode;
+		/* Only attempt to write unwritten files that have length. */
+		if ((inode->flags & FI_WRITTEN) != 0) {
+			INODE_WARNX(("%s: skipping written inode %d", __func__,
+			    (int)inode->st.st_ino));
+		} else if (writenode->fileDataLength > 0) {
+			INODE_WARNX(("%s: writing inode %d", __func__,
+			    (int)inode->st.st_ino));
+			inode->flags |= FI_WRITTEN;
 			cd9660_compute_full_filename(writenode,
 			    temp_file_name, 0);
 			ret = cd9660_copy_file(fd, writenode->fileDataSector,
