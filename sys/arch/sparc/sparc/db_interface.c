@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61 2004/05/13 09:36:44 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.61.10.1 2005/10/30 18:18:13 tron Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2004/05/13 09:36:44 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61.10.1 2005/10/30 18:18:13 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2004/05/13 09:36:44 pk Exp $")
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
+#include <ddb/ddbvar.h>
 
 #if defined(DDB)
 #include <ddb/db_command.h>
@@ -310,6 +311,9 @@ kdb_trap(type, tf)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
+		if (!db_onpanic && db_recover==0)
+			return (0);
+
 		printf("kernel: %s trap\n", trap_type[type & 0xff]);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
