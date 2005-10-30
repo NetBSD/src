@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.6 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.7 2005/10/30 06:45:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.6 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.7 2005/10/30 06:45:46 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -245,7 +245,7 @@ cd9660_set_defaults(void)
 	/*memset(diskStructure.boot_descriptor, 0, 2048);*/
 
 	diskStructure.is_bootable = 0;
-	LIST_INIT(&diskStructure.boot_images);
+	TAILQ_INIT(&diskStructure.boot_images);
 	LIST_INIT(&diskStructure.boot_entries);
 }
 
@@ -405,8 +405,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
 		    CD9660_IS_COMMAND_ARG(var, "no-boot") ||
 		    CD9660_IS_COMMAND_ARG(var, "hard-disk-boot") ||
-		    CD9660_IS_COMMAND_ARG(var, "boot-load-size") ||
 		    CD9660_IS_COMMAND_ARG(var, "boot-load-segment")) {
+		/* XXX check error! */
 		cd9660_eltorito_add_boot_option(var, val);
 	}
 		/* End of flag variables */
