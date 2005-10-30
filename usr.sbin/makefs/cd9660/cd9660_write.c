@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.4 2005/10/30 07:40:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.4 2005/10/30 07:40:45 dyoung Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -63,8 +63,10 @@ cd9660_write_image(const char* image)
 	int status;
 	char buf[2048];
 
-	if ((fd = fopen(image, "w+")) == NULL)
-		err(1, "Error: Can't open `%s' for writing", image);
+	if ((fd = fopen(image, "w+")) == NULL) {
+		err(EXIT_FAILURE, "%s: Can't open `%s' for writing", __func__,
+		    image);
+	}
 
 	if (diskStructure.verbose_level > 0)
 		printf("Writing image\n");
@@ -72,8 +74,8 @@ cd9660_write_image(const char* image)
 	/* Write the volume descriptors */
 	status = cd9660_write_volume_descriptors(fd);
 	if (status == 0) {
-		warnx("cd9660_write_image: Error writing volume "
-		       "descriptors to image");
+		warnx("%s: Error writing volume descriptors to image",
+		    __func__);
 		goto cleanup_bad_image;
 	}
 
@@ -86,7 +88,7 @@ cd9660_write_image(const char* image)
 	 */
 	status = cd9660_write_path_tables(fd);
 	if (status == 0) {
-		warnx("cd9660_write_image: Error writing path tables to image");
+		warnx("%s: Error writing path tables to image", __func__);
 		goto cleanup_bad_image;
 	}
 
@@ -96,7 +98,7 @@ cd9660_write_image(const char* image)
 	/* Write the directories and files */
 	status = cd9660_write_file(fd, diskStructure.rootNode);
 	if (status == 0) {
-		warnx("cd9660_write_image: Error writing files to image");
+		warnx("%s: Error writing files to image", __func__);
 		goto cleanup_bad_image;
 	}
 
@@ -161,8 +163,8 @@ cd9660_write_path_table(FILE *fd, int sector, int mode)
 
 	buffer = malloc(diskStructure.sectorSize * path_table_sectors);
 	if (buffer == NULL) {
-		warnx("cd9660_write_path_table: Memory allocation error "
-		      "allocating buffer");
+		warnx("%s: Memory allocation error allocating buffer",
+		    __func__);
 		return 0;
 	}
 	buffer_head = buffer;
@@ -265,13 +267,13 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 
 	temp_file_name = malloc(CD9660MAXPATH + 1);
 	if (temp_file_name == NULL)
-		errx(1, "cd9660_write_file: failed to allocate filename space");
+		err(EXIT_FAILURE, "%s: malloc", __func__);
 
 	memset(temp_file_name, 0, CD9660MAXPATH + 1);
 
 	buf = malloc(diskStructure.sectorSize);
 	if (buf == NULL)
-		errx(1, "cd9660_write_file: Failed to allocate buffer memory");
+		err(EXIT_FAILURE, "%s: malloc", __func__);
 
 	if ((writenode->level != 0) &&
 	    !(writenode->node->type & S_IFDIR)) {
@@ -336,7 +338,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 			}
 
 			if (ferror(fd)) {
-				warnx("Write error at %i", __LINE__);
+				warnx("%s: write error", __func__);
 				free(temp_file_name);
 				return 0;
 			}
@@ -424,11 +426,10 @@ cd9660_copy_file(FILE *fd, int start_sector, const char *filename)
 
 	buf = malloc(buf_size);
 	if (buf == NULL)
-		errx(1, "cd9660_copy_file: memory allocation error "
-			"allocating buffer");
+		err(EXIT_FAILURE, "%s: malloc", __func__);
 
 	if ((rf = fopen(filename, "rb")) == NULL) {
-		warnx("Cant open file %s",filename);
+		warn("%s: cannot open %s", __func__, filename);
 		return 0;
 	}
 
@@ -440,13 +441,13 @@ cd9660_copy_file(FILE *fd, int start_sector, const char *filename)
 	while (!feof(rf)) {
 		bytes_read = fread(buf,1,buf_size,rf);
 		if (ferror(rf)) {
-			warnx("cd9660_write_file: File read error");
+			warn("%s: fread", __func__);
 			return 0;
 		}
 
 		fwrite(buf,1,bytes_read,fd);
 		if (ferror(fd)) {
-			warnx("cd9660_write_file: File write error");
+			warn("%s: fwrite", __func__);
 			return 0;
 		}
 		sector++;
