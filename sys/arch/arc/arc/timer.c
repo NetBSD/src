@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.4 2005/10/30 04:34:03 tsutsui Exp $ */
+/* $NetBSD: timer.c,v 1.5 2005/10/30 05:27:14 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.4 2005/10/30 04:34:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.5 2005/10/30 05:27:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.4 2005/10/30 04:34:03 tsutsui Exp $");
 struct device *timerdev;
 const struct timerfns *timerfns;
 int timerinitted;
+uint32_t last_cp0_count;
 
 void
 timerattach(struct device *dev, const struct timerfns *fns)
