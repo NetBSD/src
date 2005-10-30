@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.9 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.10 2005/10/30 23:34:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -31,14 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.9 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.10 2005/10/30 23:34:04 simonb Exp $");
 
 #include <sys/types.h>
-#include <sys/systm.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
-#if !defined(_KERNEL)
+#if defined(_KERNEL)
+#include <sys/systm.h>
+#else
 #include <string.h>
 #endif
 

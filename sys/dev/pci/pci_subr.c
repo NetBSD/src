@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.61 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.62 2005/10/30 23:34:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,16 +40,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.61 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.62 2005/10/30 23:34:04 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
 
 #ifdef _KERNEL
+#include <sys/systm.h>
 #include <machine/intr.h>
 #else
 #include <pci.h>
