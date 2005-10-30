@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -61,7 +61,7 @@ print_n_tabs(int n)
 	int i;
 
 	for (i = 1; i <= n; i ++)
-		printf("\t");	
+		printf("\t");
 }
 
 #if 0
@@ -71,7 +71,7 @@ cd9660node *n;
 {
 	struct ISO_SUSP_ATTRIBUTES *t;
 	TAILQ_FOREACH(t, &node->head, rr_ll) {
-		
+
 	}
 }
 #endif
@@ -80,7 +80,7 @@ static void
 debug_print_susp_attrs(cd9660node *n, int indent)
 {
 	struct ISO_SUSP_ATTRIBUTES *t;
-	
+
 	TAILQ_FOREACH(t, &n->head, rr_ll) {
 		print_n_tabs(indent);
 		printf("-");
@@ -170,11 +170,11 @@ debug_print_volume_descriptor_information(void)
 
 		case 3:		/* Volume Partition Descriptor */
 			break;
-			
+
 		case 255:	/* terminator */
-			break;	
+			break;
 		}
-		tmp = tmp->next;	
+		tmp = tmp->next;
 	}
 
 	printf("==Done Listing Volume Descriptors==\n");
@@ -202,7 +202,7 @@ debug_dump_to_xml_path_table(FILE *fd, int sector, int size, int mode)
 	int n = 0;
 
 	fseek(fd, 2048 * sector, SEEK_SET);
-	
+
 	while (t < size) {
 		/* Read fixed data first */
 		fread(&pttemp, 1, 8, fd);
@@ -230,9 +230,9 @@ debug_dump_to_xml(FILE *fd)
 	int t, t2;
 	struct iso_primary_descriptor primaryVD;
 	struct _boot_volume_descriptor bootVD;
-		
+
 	printf("<cd9660dump>\n");
-	
+
 	/* Display Volume Descriptors */
 	sector = 16;
 	do {
@@ -250,18 +250,18 @@ debug_dump_to_xml(FILE *fd)
 		debug_dump_to_xml_volume_descriptor(buf, sector);
 		sector++;
 	} while (t != 255);
-	
+
 	t = debug_get_encoded_number((u_char *)primaryVD.type_l_path_table,
 	    731);
 	t2 = debug_get_encoded_number((u_char *)primaryVD.path_table_size, 733);
 	printf("Path table 1 located at sector %i and is %i bytes long\n",
 	    t,t2);
 	debug_dump_to_xml_path_table(fd, t, t2, 721);
-	
+
 	t = debug_get_encoded_number((u_char *)primaryVD.type_m_path_table,
 	    731);
 	debug_dump_to_xml_path_table(fd, t, t2, 722);
-	
+
 	printf("</cd9660dump>\n");
 }
 
@@ -271,7 +271,7 @@ debug_dump_to_xml_padded_hex_output(const char *element, unsigned char *buf,
 {
 	int i;
 	int t;
-	
+
 	printf("<%s>",element);
 	for (i = 0; i < len; i++) {
 		t = (unsigned char)buf[i];
@@ -279,7 +279,7 @@ debug_dump_to_xml_padded_hex_output(const char *element, unsigned char *buf,
 			printf("%c",t);
 	}
 	printf("</%s>\n",element);
-	
+
 	printf("<%s:hex>",element);
 	for (i = 0; i < len; i++) {
 		t = (unsigned char)buf[i];
@@ -337,7 +337,7 @@ debug_dump_integer(const char *element, char* buf, int mode)
 void
 debug_dump_string(const char *element, unsigned char *buf, int len)
 {
-	
+
 }
 
 void
@@ -464,7 +464,7 @@ debug_dump_to_xml_volume_descriptor(unsigned char* buf, int sector)
 		debug_dump_to_xml_padded_hex_output("bibliographic_file_id",
 		    (u_char *)((struct iso_primary_descriptor*) buf)->bibliographic_file_id,
 		    ISODCL (777, 813));
-			
+
 		debug_dump_to_xml_padded_hex_output("creation_date",
 		    (u_char *)((struct iso_primary_descriptor*) buf)->creation_date,
 		    ISODCL (814, 830));
@@ -477,7 +477,7 @@ debug_dump_to_xml_volume_descriptor(unsigned char* buf, int sector)
 		debug_dump_to_xml_padded_hex_output("effective_date",
 		    (u_char *)((struct iso_primary_descriptor*) buf)->effective_date,
 		    ISODCL (865, 881));
-				
+
 		debug_dump_to_xml_padded_hex_output("file_structure_version",
 		    (u_char *)((struct iso_primary_descriptor*) buf)->file_structure_version,
 		    ISODCL(882,882));

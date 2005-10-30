@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -56,13 +56,13 @@ static int cd9660_write_rr(FILE *, cd9660node *, int, int);
  * @param const char* The filename for the image
  * @returns int 1 on success, 0 on failure
  */
-int	
+int
 cd9660_write_image(const char* image)
 {
 	FILE *fd;
 	int status;
 	char buf[2048];
-	
+
 	if ((fd = fopen(image, "w+")) == NULL)
 		err(1, "Error: Can't open `%s' for writing", image);
 
@@ -76,10 +76,10 @@ cd9660_write_image(const char* image)
 		       "descriptors to image");
 		goto cleanup_bad_image;
 	}
-	
+
 	if (diskStructure.verbose_level > 0)
 		printf("Volume descriptors written\n");
-	
+
 	/*
 	 * Write the path tables: there are actually four, but right
 	 * now we are only concearned with two.
@@ -89,10 +89,10 @@ cd9660_write_image(const char* image)
 		warnx("cd9660_write_image: Error writing path tables to image");
 		goto cleanup_bad_image;
 	}
-	
+
 	if (diskStructure.verbose_level > 0)
 		printf("Path tables written\n");
-	
+
 	/* Write the directories and files */
 	status = cd9660_write_file(fd, diskStructure.rootNode);
 	if (status == 0) {
@@ -107,11 +107,11 @@ cd9660_write_image(const char* image)
 	/* Write padding bits. This is temporary */
 	memset(buf, 0, 2048);
 	cd9660_write_filedata(fd, diskStructure.totalSectors - 1, buf, 1);
-		
+
 	if (diskStructure.verbose_level > 0)
 		printf("Files written\n");
 	fclose(fd);
-	
+
 	if (diskStructure.verbose_level > 0)
 		printf("Image closed\n");
 	return 1;
@@ -169,7 +169,7 @@ cd9660_write_path_table(FILE *fd, int sector, int mode)
 	memset(buffer, 0, diskStructure.sectorSize * path_table_sectors);
 
 	ptcur = diskStructure.rootNode;
-	
+
 	while (ptcur != NULL) {
 		memset(&temp_entry, 0, sizeof(path_table_entry));
 		temp_entry.length[0] = ptcur->isoDirRecord->name_len[0];
@@ -195,14 +195,14 @@ cd9660_write_path_table(FILE *fd, int sector, int mode)
 				1 : ptcur->parent->ptnumber),
 			    temp_entry.parent_number);
 		}
-		
+
 
 		memcpy(buffer, &temp_entry, len);
 		buffer += len;
-        
+
 		ptcur = ptcur->ptnext;
 	}
-	
+
 	return cd9660_write_filedata(fd, sector, buffer_head,
 	    path_table_sectors);
 }
@@ -262,7 +262,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 	int ca = 0;
 
 	/* Todo : clean up variables */
-	
+
 	temp_file_name = malloc(CD9660MAXPATH + 1);
 	if (temp_file_name == NULL)
 		errx(1, "cd9660_write_file: failed to allocate filename space");
@@ -300,7 +300,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 		cur_sector_offset = 0;
 		working_sector = writenode->fileDataSector;
 		fseek(fd, working_sector * diskStructure.sectorSize, SEEK_SET);
-				
+
 		/*
 		 * Now loop over children, writing out their directory
 		 * records - beware of sector boundaries
@@ -315,7 +315,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 
 			temp_record.length[0] =
 			    cd9660_compute_record_size(temp);
-			
+
 			if (temp_record.length[0] + cur_sector_offset >=
 			    diskStructure.sectorSize) {
 				cur_sector_offset = 0;
@@ -326,7 +326,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 				    working_sector * diskStructure.sectorSize,
 				    SEEK_SET);
 			}
-                        
+
 			written = fwrite(&temp_record, 1, temp_record.length[0],
 			    fd);
 			ca = 0;
@@ -334,7 +334,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 				ca = cd9660_write_rr(fd, temp,
 				    cur_sector_offset, working_sector);
 			}
-			
+
 			if (ferror(fd)) {
 				warnx("Write error at %i", __LINE__);
 				free(temp_file_name);
@@ -353,7 +353,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 				    SEEK_SET);
 			}
 		}
-		
+
 		/*
 		 * Recurse on children.
 		 */
@@ -389,7 +389,7 @@ cd9660_write_filedata(FILE *fd, int sector, const unsigned char *buf,
 	size_t success;
 
 	curpos = ftello(fd);
-	
+
 	fseek(fd, sector * diskStructure.sectorSize, SEEK_SET);
 
 	success = fwrite(buf, diskStructure.sectorSize * numsecs, 1, fd);
@@ -408,7 +408,7 @@ cd9660_write_buffered(FILE *fd, int offset, int buff_len,
 {
 	static int working_sector = -1;
 	static char buf[2048];
-	
+
 	return 0;
 }
 #endif
@@ -426,32 +426,32 @@ cd9660_copy_file(FILE *fd, int start_sector, const char *filename)
 	if (buf == NULL)
 		errx(1, "cd9660_copy_file: memory allocation error "
 			"allocating buffer");
-	
+
 	if ((rf = fopen(filename, "rb")) == NULL) {
 		warnx("Cant open file %s",filename);
-		return 0;	
+		return 0;
 	}
 
 	if (diskStructure.verbose_level > 1)
 		printf("Writing file: %s\n",filename);
-	
+
 	fseek(fd, start_sector * diskStructure.sectorSize, SEEK_SET);
-	
+
 	while (!feof(rf)) {
 		bytes_read = fread(buf,1,buf_size,rf);
 		if (ferror(rf)) {
 			warnx("cd9660_write_file: File read error");
-			return 0;	
+			return 0;
 		}
-		
+
 		fwrite(buf,1,bytes_read,fd);
 		if (ferror(fd)) {
 			warnx("cd9660_write_file: File write error");
-			return 0;	
+			return 0;
 		}
 		sector++;
 	}
-	
+
 	fclose(rf);
 	free(buf);
 	return 1;
@@ -467,7 +467,7 @@ cd9660_write_rr(FILE *fd, cd9660node *writenode, int offset, int sector)
 
 	/* Offset now points at the end of the record */
 	TAILQ_FOREACH(myattr, &writenode->head, rr_ll) {
-		fseek(fd, 
+		fseek(fd,
 		    in_ca ? offset : sector*diskStructure.sectorSize + offset,
 		    SEEK_SET);
 		fwrite(&(myattr->attr), CD9660_SUSP_ENTRY_SIZE(myattr), 1, fd);
@@ -481,7 +481,7 @@ cd9660_write_rr(FILE *fd, cd9660node *writenode, int offset, int sector)
 				 * record's CE area
 				 */
 				offset = (diskStructure.
-					  susp_continuation_area_start_sector * 
+					  susp_continuation_area_start_sector *
 					    diskStructure.sectorSize)
 					+ writenode->susp_entry_ce_start;
 				in_ca = 1;

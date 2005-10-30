@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.2 2005/10/25 02:22:04 dyoung Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -80,7 +80,7 @@ cd9660_susp_initialize(cd9660node *node, cd9660node *parent,
 	/*
 	 * See if we need a CE record, and set all of the
 	 * associated counters.
-	 * 
+	 *
 	 * This should be called after all extensions. After
 	 * this is called, no new records should be added.
 	 */
@@ -100,12 +100,12 @@ cd9660_susp_finalize(cd9660node *node)
 {
 	cd9660node *temp;
 	int r;
-	
+
 	assert(node != NULL);
-	
+
 	if (node == diskStructure.rootNode)
 		diskStructure.susp_continuation_area_current_free = 0;
-	
+
 	if ((r = cd9660_susp_finalize_node(node)) < 0)
 		return r;
 	if ((r = cd9660_rrip_finalize_node(node)) < 0)
@@ -135,7 +135,7 @@ int
 cd9660_susp_finalize_node(cd9660node *node)
 {
 	struct ISO_SUSP_ATTRIBUTES *t;
-	
+
 	/* Handle CE counters */
 	if (node->susp_entry_ce_length > 0) {
 		node->susp_entry_ce_start =
@@ -143,7 +143,7 @@ cd9660_susp_finalize_node(cd9660node *node)
 		diskStructure.susp_continuation_area_current_free +=
 		    node->susp_entry_ce_length;
 	}
-	
+
 	TAILQ_FOREACH(t, &node->head, rr_ll) {
 		if (t->susp_type != SUSP_TYPE_SUSP ||
 		    t->entry_type != SUSP_ENTRY_SUSP_CE)
@@ -202,10 +202,10 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 {
 	int ca_used, susp_used, working;
 	struct ISO_SUSP_ATTRIBUTES *temp, *last = NULL, *CE;
-	
+
 	working = 254 - space;
 	/* printf("There are %i bytes to work with\n",working); */
-	
+
 	susp_used = 0;
 	ca_used = 0;
 	TAILQ_FOREACH(temp, &node->head, rr_ll) {
@@ -221,7 +221,7 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 			susp_used += CD9660_SUSP_ENTRY_SIZE(temp);
 		}
 	}
-	
+
 	/* A CE entry is needed */
 	if (working <= 0) {
 		CE = cd9660node_susp_create_node(SUSP_TYPE_SUSP,
@@ -230,7 +230,7 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 		/* This will automatically insert at the appropriate location */
 		TAILQ_INSERT_TAIL(&node->head, CE, rr_ll);
 		susp_used += 28;
-		
+
 		/* Count how much CA data is necessary */
 		for (temp = TAILQ_NEXT(CE, rr_ll); temp != NULL;
 		     temp = TAILQ_NEXT(temp, rr_ll)) {
@@ -250,13 +250,13 @@ static int
 cd9660_susp_handle_continuation(cd9660node *node)
 {
 	assert (node != NULL);
-	
+
 	/* Entry */
 	if (cd9660_susp_handle_continuation_common(
 		node,(int)(node->isoDirRecord->length[0])) < 0)
 		return 0;
-	
-	return 1;	
+
+	return 1;
 }
 
 int
@@ -341,7 +341,7 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 	struct ISO_SUSP_ATTRIBUTES *current = NULL;
 
 	assert(node != NULL);
-	
+
 	if (node->type & CD9660_TYPE_DOT) {
 		/*
 		 * Handle ER - should be the only entry to appear on
@@ -375,7 +375,7 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 		 * Not every node needs a NM set - only if the name is
 		 * actually different. IE: If a file is TEST -> TEST,
 		 * no NM. test -> TEST, need a NM
-		 * 
+		 *
 		 * The rr_moved_dir needs to be assigned a NM record as well.
 		 */
 		if (node == diskStructure.rr_moved_dir) {
@@ -388,11 +388,11 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 				(int) node->isoDirRecord->name_len[0]) != 0))) {
 			cd9660_rrip_NM(node);
 		}
-		
-	
-	
+
+
+
 		/* Rock ridge directory relocation code here. */
-	
+
 		/* First handle the CL for the placeholder file. */
 		if (node->rr_relocated != NULL) {
 			current = cd9660node_susp_create_node(SUSP_TYPE_RRIP,
@@ -407,7 +407,7 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 				SUSP_ENTRY_RRIP_RE, "RE", SUSP_LOC_ENTRY);
 			cd9660_rrip_RE(current,node);
 			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
-			
+
 			/* Handle PL */
 			current = cd9660node_susp_create_node(SUSP_TYPE_RRIP,
 				SUSP_ENTRY_RRIP_PL, "PL", SUSP_LOC_DOTDOT);
@@ -415,7 +415,7 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 			TAILQ_INSERT_TAIL(&node->dot_dot_record->head, current,
 			    rr_ll);
 			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
-		}	
+		}
 	}
 	return 1;
 }
@@ -430,7 +430,7 @@ cd9660node_susp_create_node(int susp_type, int entry_type, const char *type_id,
 		CD9660_MEM_ALLOC_ERROR("cd9660node_susp_create_node");
 		exit(1);
 	}
-	
+
 	temp->susp_type = susp_type;
 	temp->entry_type = entry_type;
 	/* Phase this out */
@@ -548,7 +548,7 @@ cd9660_createSL(cd9660node *node)
 					path_count,
 				    temp_sl, j);
 			}
-	       
+
 			path_count += j;
 			current->attr.rr_entry.SL.h.length[0] = path_count + 5;
 			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
@@ -586,7 +586,7 @@ cd9660_createSL(cd9660node *node)
 				path_count += dir_count + 2;
 			}
 		}
-	    
+
 		if (*sl_ptr == '\0') {
 			done = 1;
 			current->attr.rr_entry.SL.h.length[0] = path_count + 5;
@@ -667,11 +667,11 @@ cd9660node_rrip_tf(struct ISO_SUSP_ATTRIBUTES *p, fsnode *_node)
 	cd9660_time_915(p->attr.rr_entry.TF.timestamp,
 		_node->inode->st.st_atime);
 	p->attr.rr_entry.TF.h.length[0] += 7;
-	
+
 	cd9660_time_915(p->attr.rr_entry.TF.timestamp + 7,
 		_node->inode->st.st_mtime);
 	p->attr.rr_entry.TF.h.length[0] += 7;
-	
+
 	cd9660_time_915(p->attr.rr_entry.TF.timestamp + 14,
 		_node->inode->st.st_ctime);
 	p->attr.rr_entry.TF.h.length[0] += 7;
@@ -720,7 +720,7 @@ cd9660_rrip_add_NM(cd9660node *node, const char *name)
 	int working,len;
 	const char *p;
 	struct ISO_SUSP_ATTRIBUTES *r;
-	
+
 	/*
 	 * Each NM record has 254 byes to work with. This means that
 	 * the name data itself only has 249 bytes to work with. So, a
@@ -743,9 +743,9 @@ cd9660_rrip_add_NM(cd9660node *node, const char *name)
 		}
 		memcpy(r->attr.rr_entry.NM.altname, p, len);
 		r->attr.rr_entry.NM.h.length[0] = 5 + len;
-		
+
 		TAILQ_INSERT_TAIL(&node->head, r, rr_ll);
-		
+
 		p += len;
 	}
 }
@@ -766,25 +766,25 @@ cd9660_susp_ER(cd9660node *node,
 
 	r = cd9660node_susp_create_node(SUSP_TYPE_SUSP,
 			SUSP_ENTRY_SUSP_ER, "ER", SUSP_LOC_DOT);
-	
+
 	/* Fixed data is 8 bytes */
 	r->attr.su_entry.ER.h.length[0] = 8;
 	r->attr.su_entry.ER.h.version[0] = 1;
-	
+
 	r->attr.su_entry.ER.len_id[0] = (u_char)strlen(ext_id);
 	r->attr.su_entry.ER.len_des[0] = (u_char)strlen(ext_des);
 	r->attr.su_entry.ER.len_src[0] = (u_char)strlen(ext_src);
-	
+
 	l = r->attr.su_entry.ER.len_id[0] +
 		r->attr.su_entry.ER.len_src[0] +
 		r->attr.su_entry.ER.len_des[0];
 
 	/* Everything must fit. */
 	assert(l + r->attr.su_entry.ER.h.length[0] <= 254);
-	
+
 	r->attr.su_entry.ER.h.length[0] += (u_char)l;
 
-	
+
 	r->attr.su_entry.ER.ext_ver[0] = ext_version;
 	memcpy(r->attr.su_entry.ER.ext_data, ext_id,
 		(int)r->attr.su_entry.ER.len_id[0]);
@@ -795,7 +795,7 @@ cd9660_susp_ER(cd9660node *node,
 	l += (int)r->attr.su_entry.ER.len_des[0];
 	memcpy(r->attr.su_entry.ER.ext_data + l,ext_src,
 		(int)r->attr.su_entry.ER.len_src[0]);
-	
+
 	TAILQ_INSERT_TAIL(&node->head, r, rr_ll);
 	return r;
 }
