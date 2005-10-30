@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.20 2005/04/19 12:12:28 tsutsui Exp $
+$NetBSD: TODO,v 1.21 2005/10/30 07:55:46 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -143,8 +143,6 @@ XXX some entries might be obsolete.
     o   Can we have 32 double registers?
 
     o	64bit kernel/userland
-
-    o	fix implementation of DELAY(), clean up clock implementation
 
     o	omit __SWAP_BROKEN in <mips/types.h>
 
