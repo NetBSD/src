@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.7 2005/10/30 06:45:46 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.8 2005/10/30 07:33:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.7 2005/10/30 06:45:46 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.8 2005/10/30 07:33:57 dyoung Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -62,7 +62,7 @@ cd9660_add_boot_disk(const char *boot_info)
 	char *temp;
 	char *sysname;
 	char *filename;
-	struct cd9660_boot_image *new_image,*tmp_image;
+	struct cd9660_boot_image *new_image, *tmp_image;
 
 	assert(boot_info != NULL);
 
@@ -154,19 +154,19 @@ cd9660_add_boot_disk(const char *boot_info)
 	new_image->bootable = ET_BOOTABLE;
 	/* Add boot disk */
 
-	if (TAILQ_FIRST(&diskStructure.boot_images) == NULL) {
+	/* Group images for the same platform together. */
+	TAILQ_FOREACH(tmp_image, &diskStructure.boot_images, image_list) {
+		if (tmp_image->system != new_image->system)
+			break;
+	}
+
+	if (tmp_image == NULL) {
 		TAILQ_INSERT_HEAD(&diskStructure.boot_images, new_image,
 		    image_list);
-	} else {
-		tmp_image = TAILQ_FIRST(&diskStructure.boot_images);
-		while (TAILQ_NEXT(tmp_image, image_list) != NULL
-			&& TAILQ_NEXT(tmp_image, image_list)->system ==
-			    new_image->system) {
-			tmp_image = TAILQ_NEXT(tmp_image, image_list);
-		}
-		TAILQ_INSERT_AFTER(&diskStructure.boot_images, tmp_image,
-		    new_image, image_list);
-	}
+	} else
+		TAILQ_INSERT_BEFORE(tmp_image, new_image, image_list);
+
+	new_image->serialno = diskStructure.image_serialno++;
 
 	/* TODO : Need to do anything about the boot image in the tree? */
 	diskStructure.is_bootable = 1;
@@ -183,15 +183,14 @@ cd9660_eltorito_add_boot_option(const char *option_string, const char *value)
 	assert(option_string != NULL);
 
 	/* Find the last image added */
-	image = TAILQ_FIRST(&diskStructure.boot_images);
+	TAILQ_FOREACH(image, &diskStructure.boot_images, image_list) {
+		if (image->serialno + 1 == diskStructure.image_serialno)
+			break;
+	}
 	if (image == NULL)
 		errx(EXIT_FAILURE, "Attempted to add boot option, "
 		    "but no boot images have been specified");
 
-	while (TAILQ_NEXT(image, image_list) != NULL)
-		image = TAILQ_NEXT(image, image_list);
-
-	/* TODO : These options are NOT copied yet */
 	if (strcmp(option_string, "no-emul-boot") == 0) {
 		image->targetMode = ET_MEDIA_NOEM;
 	} else if (strcmp(option_string, "no-boot") == 0) {
@@ -341,23 +340,19 @@ cd9660_boot_get_system_type(struct cd9660_boot_image *disk)
 int
 cd9660_setup_boot(int first_sector)
 {
-	int need_head;
 	int sector;
 	int used_sectors;
 	int num_entries = 0;
 	int catalog_sectors;
 	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head,
-		*last_x86, *last_ppc, *last_mac, *last_head,
-		*valid_entry, *default_entry, *temp, *head_temp, *next;
+		*valid_entry, *default_entry, *temp, *head, **headp, *next;
 	struct cd9660_boot_image *tmp_disk;
 
-	head_temp = NULL;
-	need_head = 0;
-	x86_head = mac_head = ppc_head =
-		last_x86 = last_ppc = last_mac = last_head = NULL;
+	headp = NULL;
+	x86_head = mac_head = ppc_head = NULL;
 
 	/* If there are no boot disks, don't bother building boot information */
-	if ((tmp_disk = TAILQ_FIRST(&diskStructure.boot_images)) == NULL)
+	if (TAILQ_EMPTY(&diskStructure.boot_images))
 		return 0;
 
 	/* Point to catalog: For now assume it consumes one sector */
@@ -423,47 +418,47 @@ cd9660_setup_boot(int first_sector)
 		/* Step 2: Section header */
 		switch (tmp_disk->system) {
 		case ET_SYS_X86:
-			need_head = (x86_head == NULL);
-			if (!need_head)
-				head_temp = x86_head;
+			headp = &x86_head;
 			break;
 		case ET_SYS_PPC:
-			need_head = (ppc_head == NULL);
-			if (!need_head)
-				head_temp = ppc_head;
+			headp = &ppc_head;
 			break;
 		case ET_SYS_MAC:
-			need_head = (mac_head == NULL);
-			if (!need_head)
-				head_temp = mac_head;
+			headp = &mac_head;
 			break;
+		default:
+			warnx("%s: internal error: unknown system type",
+			    __func__);
+			return -1;
 		}
 
-		if (need_head) {
-			head_temp =
+		if (*headp == NULL) {
+			head =
 			    cd9660_boot_setup_section_head(tmp_disk->system);
-			if (head_temp == NULL) {
+			if (head == NULL) {
 				warnx("Error: memory allocation failed in "
 				      "cd9660_setup_boot");
 				return -1;
 			}
-			LIST_INSERT_AFTER(default_entry,head_temp, ll_struct);
-		}
-		head_temp->entry_data.SH.num_section_entries[0]++;
+			LIST_INSERT_AFTER(default_entry, head, ll_struct);
+			*headp = head;
+		} else
+			head = *headp;
+
+		head->entry_data.SH.num_section_entries[0]++;
 
 		/* Step 2a: Section entry and extensions */
 		temp = cd9660_boot_setup_section_entry(tmp_disk);
 		if (temp == NULL) {
-			warnx("Error: memory allocation failed in "
-			      "cd9660_setup_boot");
+			warn("%s: cd9660_boot_setup_section_entry", __func__);
 			return -1;
 		}
 
-		while ((next = LIST_NEXT(head_temp, ll_struct)) != NULL &&
+		while ((next = LIST_NEXT(head, ll_struct)) != NULL &&
 		       next->entry_type == ET_ENTRY_SE)
-			head_temp = LIST_NEXT(head_temp, ll_struct);
+			head = next;
 
-		LIST_INSERT_AFTER(head_temp,temp, ll_struct);
+		LIST_INSERT_AFTER(head, temp, ll_struct);
 		tmp_disk = TAILQ_NEXT(tmp_disk, image_list);
 	}
 
