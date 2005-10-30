@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_conversion.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660_conversion.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_conversion.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: cd9660_conversion.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $");
 #endif  /* !__lint */
 
 
@@ -152,7 +152,7 @@ cd9660_compute_gm_offset(time_t tim)
 {
 	struct tm* t;
 	struct tm* gm;
-	
+
 	t = localtime(&tim);
 	gm = gmtime(&tim);
 	gm->tm_year -= t->tm_year;
@@ -163,7 +163,7 @@ cd9660_compute_gm_offset(time_t tim)
 		gm->tm_yday = -1;
 	else if (gm->tm_year > 0)
 		gm->tm_yday = 1;
-	
+
 	return (char)(-(gm->tm_min + 60* (24 * gm->tm_yday + gm->tm_hour)) / 15);
 }
 
