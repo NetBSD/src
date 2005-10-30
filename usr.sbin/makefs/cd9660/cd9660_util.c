@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID(0, "$NetBSD: cd9660_util.c,v 1.1 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID(0, "$NetBSD: cd9660_util.c,v 1.2 2005/10/30 03:10:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ isofntrans(infn, infnlen, outfn, outfnlen, original, casetrans, assoc, joliet_le
 {
 	int fnidx = 0;
 	u_char *infnend = infn + infnlen;
-	
+
 	if (assoc) {
 		*outfn++ = ASSOCCHAR;
 		fnidx++;
