@@ -131,7 +131,6 @@
 #include <sys/sysctl.h>
 #include <sys/syslimits.h>
 #include <sys/syslog.h>
-#include <sys/systm.h>
 #include <sys/tablet.h>
 #include <sys/termios.h>
 #include <sys/time.h>
