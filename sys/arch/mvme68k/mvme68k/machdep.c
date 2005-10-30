@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2005/04/25 15:02:06 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2005/10/30 15:49:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2005/04/25 15:02:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2005/10/30 15:49:39 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -858,13 +858,15 @@ cpu_init_kcore_hdr()
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 int
 cpu_dumpsize()
 {
-	int size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -889,7 +891,7 @@ cpu_dump(dump, blknop)
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t)); 
 	daddr_t *blknop;
 {
-	int buf[dbtob(1) / sizeof(int)]; 
+	int buf[MDHDRSIZE / sizeof(int)]; 
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -900,7 +902,7 @@ cpu_dump(dump, blknop)
 
 	/* Create the segment header. */
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));

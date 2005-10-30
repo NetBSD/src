@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2005/10/30 15:49:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2005/06/13 19:31:54 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2005/10/30 15:49:39 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,6 +550,9 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 void
 cpu_dumpconf()
 {
@@ -660,7 +663,7 @@ dumpsys()
 	int     error = 0;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
-	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+	char	dump_hdr[MDHDRSIZE];
 	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
@@ -696,7 +699,7 @@ dumpsys()
 	 * Generate a segment header
 	 */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
 
 	/*
 	 * Add the md header
@@ -709,7 +712,8 @@ dumpsys()
 	seg = 0;
 	blkno = dumplo;
 	dump = bdev->d_dump;
-	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	error = (*dump) (dumpdev, blkno, (caddr_t)dump_hdr, sizeof(dump_hdr));
+	blkno += btodb(sizeof(dump_hdr));
 	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
