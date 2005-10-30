@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.6 2005/10/30 06:45:46 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.7 2005/10/30 07:33:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -307,6 +307,7 @@ typedef struct _iso9660_disk {
 	char * boot_image_directory;
 
 	TAILQ_HEAD(boot_image_list,cd9660_boot_image) boot_images;
+	int image_serialno;
 	LIST_HEAD(boot_catalog_entries,boot_catalog_entry) boot_entries;
 
 } iso9660_disk;

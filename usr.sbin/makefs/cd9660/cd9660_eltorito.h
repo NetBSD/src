@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.h,v 1.3 2005/10/30 06:45:46 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.h,v 1.4 2005/10/30 07:33:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -154,6 +154,7 @@ struct cd9660_boot_image {
 	 */
 	struct _cd9660node *boot_image_node;
 	TAILQ_ENTRY(cd9660_boot_image) image_list;
+	int serialno;
 };
 
 
