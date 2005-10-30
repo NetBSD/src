@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.16 2005/05/03 16:26:29 manu Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.17 2005/10/30 16:25:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #define LINUX_PROT_READ		0x01
 #define LINUX_PROT_WRITE	0x02
 #define LINUX_PROT_EXEC		0x04
+#define LINUX_PROT_GROWSDOWN	0x01000000
+#define LINUX_PROT_GROWSUP	0x02000000
 
 #define LINUX_MAP_SHARED	0x0001
 #define LINUX_MAP_PRIVATE	0x0002
