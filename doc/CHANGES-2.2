@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.8 2005/10/28 23:45:34 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.9 2005/10/30 17:42:50 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -114,4 +114,13 @@ gnu/usr.sbin/Makefile				1.14
 	builds ala sunlabel, etc), and nuke only md man page in existence,
 	simplifying man.tgz set sharing.
 	[jmc, ticket #5948]
+
+sys/arch/sparc/sparc/cpu.c			1.193
+
+	Compute c_totalsize for split caches correctly: it's max, not sum (and
+	we even have that documented in cache.h).  Initialize c_nlines for
+	split caches.
+	This should fix srmmu cache flush routines for split I/D caches that
+	has been broken since cache.c revision 1.79 started using c_nlines.
+	[uwe, ticket #5950]
 
