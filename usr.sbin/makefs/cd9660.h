@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.4 2005/10/25 02:22:04 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.5 2005/10/30 03:10:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.  IN NO EVENT SHALL DANIEL WATT, WALTER DEIGNAN, RYAN
  * GABRYS, ALAN PEREZ-RATHKE AND RAM VEDAM BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
@@ -155,16 +155,16 @@ typedef struct _cd9660node {
 
 	struct _cd9660node *dot_record; /* For directories, used mainly in RRIP */
 	struct _cd9660node *dot_dot_record;
-	
+
 	fsnode		*node;		/* pointer to fsnode */
 	struct _iso_directory_record_cd9660	*isoDirRecord;
 	struct iso_extended_attributes	*isoExtAttributes;
-	
+
 	/***** SIZE CALCULATION *****/
 	/*already stored in isoDirRecord, but this is an int version, and will be
 		copied to isoDirRecord on writing*/
 	int fileDataSector;
-	
+
 	/*
 	 * same thing, though some notes:
 	 * If a file, this is the file size
@@ -179,7 +179,7 @@ typedef struct _cd9660node {
 	 */
 	int fileSectorsUsed;
 	int fileRecordSize;/*copy of a variable, int for quicker calculations*/
-	
+
 	/* Old name, used for renaming - needs to be optimized but low priority */
 	char o_name [ISO_FILENAME_MAXLENGTH_WITH_PADDING];
 
@@ -188,7 +188,7 @@ typedef struct _cd9660node {
 		and point to null if not needed */
 	/* For Rock Ridge */
 	struct _cd9660node *rr_real_parent, *rr_relocated;
-	
+
 	int susp_entry_size;
 	int susp_dot_entry_size;
 	int susp_dot_dot_entry_size;
@@ -214,7 +214,7 @@ typedef struct _cd9660node {
 #if 0
 struct cd9660hash_node {
 	cd9660node *thenode;
-	LIST_ENTRY(cd9660hash_node) ll_struct;	
+	LIST_ENTRY(cd9660hash_node) ll_struct;
 };
 
 struct cd9660hash_table {
@@ -242,37 +242,37 @@ typedef struct _iso9660_disk {
 	int sectorSize;
 	struct iso_primary_descriptor		primaryDescriptor;
 	struct iso_supplementary_descriptor	supplementaryDescriptor;
-	
+
 	volume_descriptor *firstVolumeDescriptor;
-	
+
 	cd9660node *rootNode;
 	/*struct cd9660hash_table name_hash;*/
-	
+
 	const char *rootFilesystemPath;
-	
+
 	/* Important sector numbers here */
 	/* primaryDescriptor.type_l_path_table*/
 	int primaryBigEndianTableSector;
-	
+
 	/* primaryDescriptor.type_m_path_table*/
 	int primaryLittleEndianTableSector;
-	
+
 	/* primaryDescriptor.opt_type_l_path_table*/
 	int secondaryBigEndianTableSector;
-	
+
 	/* primaryDescriptor.opt_type_m_path_table*/
 	int secondaryLittleEndianTableSector;
-	
+
 	/* primaryDescriptor.path_table_size*/
 	int pathTableLength;
 	int dataFirstSector;
-	
+
 	int totalSectors;
 	/* OPTIONS GO HERE */
 	int	isoLevel;
-	
+
 	int include_padding_areas;
-	
+
 	int follow_sym_links;
 	int verbose_level;
 	int displayHelp;
@@ -288,8 +288,8 @@ typedef struct _iso9660_disk {
 	char *rock_ridge_renamed_dir_name;
 	int rock_ridge_move_count;
 	cd9660node *rr_moved_dir;
-	
-	
+
+
 	/* Spec breaking options */
 	u_char allow_deep_trees;
 	u_char allow_start_dot;
@@ -298,16 +298,16 @@ typedef struct _iso9660_disk {
 	u_char allow_lowercase;
 	u_char allow_multidot;
 	u_char omit_trailing_period;
-		
+
 	/* BOOT INFORMATION HERE */
 	int is_bootable;/* Default to 0 */
 	int boot_catalog_sector;
 	boot_volume_descriptor *boot_descriptor;
 	char * boot_image_directory;
-	
+
 	LIST_HEAD(boot_image_list,cd9660_boot_image) boot_images;
 	LIST_HEAD(boot_catalog_entries,boot_catalog_entry) boot_entries;
-	
+
 } iso9660_disk;
 
 /******** GLOBAL VARIABLES ***********/
