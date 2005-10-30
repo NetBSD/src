@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.10 2005/08/20 17:58:49 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.11 2005/10/30 05:27:14 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.10 2005/08/20 17:58:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.11 2005/10/30 05:27:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.10 2005/08/20 17:58:49 tsutsui Exp $"
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <mips/locore.h>
 #include <mips/pte.h>
 
 #include <dev/isa/isavar.h>
 
+#include <arc/arc/timervar.h>
 #include <arc/arc/wired_map.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
@@ -168,6 +170,7 @@ timer_magnum_intr(uint32_t mask, struct clockframe *cf)
 	int temp;
 
 	temp = inw(R4030_SYS_IT_STAT);
+	last_cp0_count = mips3_cp0_count_read();
 	hardclock(cf);
 	timer_jazzio_ev.ev_count++;
 

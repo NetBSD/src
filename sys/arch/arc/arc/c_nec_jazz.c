@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.9 2005/08/20 17:58:49 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.10 2005/10/30 05:27:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.9 2005/08/20 17:58:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.10 2005/10/30 05:27:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.9 2005/08/20 17:58:49 tsutsui Exp $
 
 #include <dev/isa/isavar.h>
 
+#include <arc/arc/timervar.h>
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/timer_jazziovar.h>
@@ -67,6 +68,7 @@ timer_nec_jazz_intr(uint32_t mask, struct clockframe *cf)
 	int temp;
 
 	temp = in32(RD94_SYS_INTSTAT3);
+	last_cp0_count = mips3_cp0_count_read();
 	hardclock(cf);
 	timer_jazzio_ev.ev_count++;
 
