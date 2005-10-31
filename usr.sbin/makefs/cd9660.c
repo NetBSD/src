@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.8 2005/10/30 09:27:49 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.9 2005/10/31 08:29:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.8 2005/10/30 09:27:49 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.9 2005/10/31 08:29:19 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -200,8 +200,6 @@ int cd9660_defaults_set = 0;
 static void
 cd9660_set_defaults(void)
 {
-	int i;
-
 	/*Fix the sector size for now, though the spec allows for other sizes*/
 	diskStructure.sectorSize = 2048;
 
@@ -249,8 +247,6 @@ cd9660_set_defaults(void)
 	diskStructure.is_bootable = 0;
 	TAILQ_INIT(&diskStructure.boot_images);
 	LIST_INIT(&diskStructure.boot_entries);
-	for (i = 0; i < CD9660_INODE_HASH_SIZE; i++)
-		SLIST_INIT(&diskStructure.inode_hash[i]);
 }
 
 void
@@ -1780,42 +1776,6 @@ cd9660_populate_dot_records(cd9660node *node)
 	    cd9660_compute_record_size(node->dot_dot_record);
 }
 
-static struct cd9660_inode *
-cd9660_inode_lookup(iso9660_disk *disk, uint32_t ino)
-{
-	struct cd9660_inode *in;
-	struct cd9660_inode_head *head;
-
-	head = &disk->inode_hash[CD9660_INODE_HASH(ino)];
-
-	SLIST_FOREACH(in, head, in_link) {
-		if (in->in_ino == ino)
-			break;
-		else if (in->in_ino > ino)
-			return NULL;
-	}
-	return in;
-}
-
-static void
-cd9660_inode_insert(iso9660_disk *disk, struct cd9660_inode *in)
-{
-	struct cd9660_inode *iter_in, *last_in = NULL;
-	struct cd9660_inode_head *head;
-	head = &disk->inode_hash[CD9660_INODE_HASH(in->in_ino)];
-
-	SLIST_FOREACH(iter_in, head, in_link) {
-		assert(iter_in->in_ino != in->in_ino);
-		if (iter_in->in_ino > in->in_ino)
-			break;
-		last_in = iter_in;
-	}
-	if (last_in == NULL)
-		SLIST_INSERT_HEAD(head, in, in_link);
-	else
-		SLIST_INSERT_AFTER(last_in, in, in_link);
-}
-
 /*
  * @param struct cd9660node *node The node
  * @param int The offset (in bytes) - SHOULD align to the beginning of a sector
@@ -1833,7 +1793,7 @@ cd9660_compute_offsets(cd9660node *node, int startOffset)
 	int used_bytes = 0;
 	int current_sector_usage = 0;
 	cd9660node *child;
-	struct cd9660_inode *in;
+	fsinode *inode;
 	int r;
 
 	assert(node != NULL);
@@ -1914,25 +1874,20 @@ cd9660_compute_offsets(cd9660node *node, int startOffset)
 			    CD9660_BLOCKS(diskStructure.sectorSize,
 				child->fileDataLength);
 
-			in = cd9660_inode_lookup(&diskStructure,
-			    child->node->inode->st.st_ino);
-			if (in != NULL) {
-				INODE_WARNX(("%s: already allocated inode %d"
-				      " (%" PRIu32 ") data sectors", __func__,
-				      (int)child->node->inode->st.st_ino,
-				      in->in_ino));
-			} else if ((in = calloc(1, sizeof(*in))) == NULL)
-				err(EXIT_FAILURE, "%s: calloc", __func__);
-			else {
-				in->in_ino = child->node->inode->st.st_ino;
-				in->in_data_sector =
+			inode = child->node->inode;
+			if ((inode->flags & FI_ALLOCATED) == 0) {
+				inode->ino =
 				    CD9660_BLOCKS(diskStructure.sectorSize,
 				        used_bytes + startOffset);
-				cd9660_inode_insert(&diskStructure, in);
+				inode->flags |= FI_ALLOCATED;
 				used_bytes += child->fileSectorsUsed *
 				    diskStructure.sectorSize;
+			} else {
+				INODE_WARNX(("%s: already allocated inode %d "
+				      "data sectors at %" PRIu32, __func__,
+				      (int)inode->st.st_ino, inode->ino));
 			}
-			child->fileDataSector = in->in_data_sector;
+			child->fileDataSector = inode->ino;
 			cd9660_bothendian_dword(child->fileDataSector,
 				child->isoDirRecord->extent);
 		}
