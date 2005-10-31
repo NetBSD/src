@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.3,v 1.5 2003/04/16 13:35:13 wiz Exp $
+.\"	$NetBSD: pmc.3,v 1.6 2005/10/31 11:45:49 uwe Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -783,7 +783,7 @@ The
 .Fn pmc_get_counter_value ,
 and
 .Fn pmc_get_accumulated_counter_value
-functions return 0 to indicate success and -1 to indicate failure,
+functions return 0 to indicate success and \-1 to indicate failure,
 in which case
 .Xr errno 2
 will be set to indicate the mode of failure.
