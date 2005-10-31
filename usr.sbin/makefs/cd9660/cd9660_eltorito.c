@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.9 2005/10/31 23:19:54 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.10 2005/10/31 23:21:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.9 2005/10/31 23:19:54 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.10 2005/10/31 23:21:25 dyoung Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -518,7 +518,8 @@ cd9660_write_boot(FILE *fd)
 		 */
 		fwrite(&(e->entry_data.VE), 1, 32, fd);
 	}
-	printf("Finished writing boot catalog\n");
+	if (diskStructure.verbose_level > 0)
+		printf("Finished writing boot catalog\n");
 
 	/* copy boot images */
 	TAILQ_FOREACH(t, &diskStructure.boot_images, image_list) {
