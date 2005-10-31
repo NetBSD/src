@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc_control.2,v 1.6 2005/10/27 01:10:09 uwe Exp $
+.\" $NetBSD: pmc_control.2,v 1.7 2005/10/31 11:34:16 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2002
+.Dd October 27, 2005
 .Dt PMC_CONTROL 2
 .Os
 .Sh NAME
@@ -57,23 +57,23 @@ The possible values for
 .Fa op
 are:
 .Bl -tag -width width
-.It PMC_INFO_NCOUNTERS
+.It Dv PMC_INFO_NCOUNTERS
 When querying the number of counters in the system,
 .Fa ctr
 is ignored and
 .Fa argp
 is of type
-.Em int * .
+.Ft int * .
 Upon return, the integer pointed to by
 .Fa argp
 will contain the number of counters that are available in the system.
-.It PMC_INFO_CPUCTR_TYPE
+.It Dv PMC_INFO_CPUCTR_TYPE
 When querying the type of a counter in the system,
 .Fa ctr
 refers to the counter being queried, and
 .Fa argp
 is of type
-.Em int * .
+.Ft int * .
 Upon return, the integer pointed to by
 .Fa argp
 will contain the implementation-dependent type of the specified counter.
@@ -82,25 +82,25 @@ If
 .Fa ctr
 is \-1, the integer pointed to by
 .Fa argp
-will contain machine-dependent type
+will contain the machine-dependent type
 describing the CPU or counter configuration.
-.It PMC_INFO_COUNTER_VALUE
+.It Dv PMC_INFO_COUNTER_VALUE
 When querying the value of a counter in the system,
 .Fa ctr
 refers to the counter being queried, and
 .Fa argp
 is of type
-.Em uint64_t * .
+.Ft uint64_t * .
 Upon return, the 64-bit integer pointed to by
 .Fa argp
 will contain the value of the specified counter.
-.It PMC_INFO_ACCUMULATED_COUNTER_VALUE
+.It Dv PMC_INFO_ACCUMULATED_COUNTER_VALUE
 When querying the value of a counter in the system,
 .Fa ctr
 refers to the counter being queried, and
 .Fa argp
 is of type
-.Em uint64_t * .
+.Ft uint64_t * .
 Upon return, the 64-bit integer pointed to by
 .Fa argp
 will contain the sum of the accumulated values of specified counter in
@@ -120,29 +120,29 @@ The possible values for
 .Fa op
 are:
 .Bl -tag -width width
-.It PMC_OP_START
+.It Dv PMC_OP_START
 Starts the specified
 .Fa ctr
 running.
 It must be preceded by a call with
-.Em PMC_OP_CONFIGURE .
+.Dv PMC_OP_CONFIGURE .
 .Fa argp
 is ignored in this case and may be
 .Dv NULL .
-.It PMC_OP_STOP
+.It Dv PMC_OP_STOP
 Stops the specified
 .Fa ctr
 from running.
 .Fa argp
 is ignored in this case and may be
 .Dv NULL .
-.It PMC_OP_CONFIGURE
+.It Dv PMC_OP_CONFIGURE
 Configures the specified
 .Fa ctr
 prior to running.
 .Fa argp
 is a pointer to a
-.Em struct pmc_counter_cfg .
+.Ft struct pmc_counter_cfg .
 .Bd -literal
 	struct pmc_counter_cfg {
 		pmc_evid_t	event_id;
@@ -157,7 +157,7 @@ is the event ID to be counted.
 is a value to which the counter should be reset on overflow (if supported
 by the implementation).
 This is most useful when profiling (see
-.Em PMC_OP_PROFSTART ,
+.Dv PMC_OP_PROFSTART ,
 below).
 This value is defined to be the number of counter ticks before
 the next overflow.
@@ -171,20 +171,20 @@ to 100.
 .It Dv flags
 Currently unused.
 .El
-.It PMC_OP_PROFSTART
+.It Dv PMC_OP_PROFSTART
 Configures the specified
 .Fa ctr
 for use in profiling.
 .Fa argp
 is a pointer to a
-.Em struct pmc_counter_cfg
+.Ft struct pmc_counter_cfg
 as in
-.Em PMC_OP_CONFIGURE ,
+.Dv PMC_OP_CONFIGURE ,
 above.
 This request allocates a kernel counter, which will fail if any
 process is using the requested counter.
 Not all implementations or counters may support this option.
-.It PMC_OP_PROFSTOP
+.It Dv PMC_OP_PROFSTOP
 Stops the specified
 .Fa ctr
 from being used for profiling.
