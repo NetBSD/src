@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.40 2004/11/17 17:00:00 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.41 2005/10/31 14:13:33 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.40 2004/11/17 17:00:00 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.41 2005/10/31 14:13:33 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,9 +114,19 @@ printlong(DISPLAY *dp)
 		if (f_inode)
 			(void)printf("%*lu ", dp->s_inode,
 			    (unsigned long)sp->st_ino);
-		if (f_size && !f_humanize) {
+		if (f_size) {
+			if (f_humanize) {
+				if ((humanize_number(szbuf, sizeof(szbuf),
+					sp->st_blocks * S_BLKSIZE,
+			    "", HN_AUTOSCALE,
+			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+				err(1, "humanize_number");
+			(void)printf("%*s ", dp->s_block, szbuf);
+			} else {
 			(void)printf("%*llu ", dp->s_block,
-			    (long long)howmany(sp->st_blocks, blocksize));
+					(long long)howmany(sp->st_blocks,
+							   	blocksize));
+			}
 		}
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
