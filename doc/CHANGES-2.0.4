@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.3 2005/10/30 17:42:41 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.4 2005/10/31 13:38:30 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -17,4 +17,9 @@ sys/arch/sparc/sparc/cpu.c			1.193
 	This should fix srmmu cache flush routines for split I/D caches that
 	has been broken since cache.c revision 1.79 started using c_nlines.
 	[uwe, ticket #5950]
+
+sys/kern/uipc_socket.c				1.112
+
+	Check the argument to SO_LINGER.
+	[nathanw, ticket #5939]
 
