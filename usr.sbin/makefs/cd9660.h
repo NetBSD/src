@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.8 2005/10/30 09:27:49 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.9 2005/10/31 08:29:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -169,7 +169,7 @@ typedef struct _cd9660node {
 	/***** SIZE CALCULATION *****/
 	/*already stored in isoDirRecord, but this is an int version, and will be
 		copied to isoDirRecord on writing*/
-	int fileDataSector;
+	uint32_t fileDataSector;
 
 	/*
 	 * same thing, though some notes:
@@ -217,14 +217,6 @@ typedef struct _cd9660node {
 	TAILQ_HEAD(susp_linked_list, ISO_SUSP_ATTRIBUTES) head;
 } cd9660node;
 
-struct cd9660_inode {
-	uint32_t			in_ino;
-	int				in_data_sector;
-	SLIST_ENTRY(cd9660_inode)	in_link;
-};
-
-#define	CD9660_INODE_HASH(__inode)	((__inode) % CD9660_INODE_HASH_SIZE)
-
 typedef struct _path_table_entry
 {
 	u_char length[ISODCL (1, 1)];
@@ -249,9 +241,6 @@ typedef struct _iso9660_disk {
 	volume_descriptor *firstVolumeDescriptor;
 
 	cd9660node *rootNode;
-
-	SLIST_HEAD(cd9660_inode_head,
-	           cd9660_inode)	inode_hash[CD9660_INODE_HASH_SIZE];
 
 	const char *rootFilesystemPath;
 
