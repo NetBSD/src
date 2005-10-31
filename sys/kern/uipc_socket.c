@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.97.2.1.2.2 2005/09/13 23:23:56 riz Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.97.2.1.2.2.2.1 2005/10/31 13:36:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97.2.1.2.2 2005/09/13 23:23:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97.2.1.2.2.2.1 2005/10/31 13:36:41 tron Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1389,6 +1389,11 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_LINGER:
 			if (m == NULL || m->m_len != sizeof(struct linger)) {
 				error = EINVAL;
+				goto bad;
+			}
+			if (mtod(m, struct linger *)->l_linger < 0 ||
+			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+				error = EDOM;
 				goto bad;
 			}
 			so->so_linger = mtod(m, struct linger *)->l_linger;
