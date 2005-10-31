@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.5 2005/10/31 11:55:04 uwe Exp $
+.\" $NetBSD: pmc.9,v 1.6 2005/10/31 12:05:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 22, 2002
+.Dd October 31, 2005
 .Dt PMC 9
 .Os
 .Sh NAME
@@ -114,8 +114,14 @@ If any function is not implemented as a macro, its prototype must be
 defined by the port-specific header
 .Aq Pa machine/pmc.h .
 .Pp
-Counters are numbered from 0..N-1 where N is the number of counters
-available on the system.
+Counters are numbered from 0 to
+.Dv N\-1
+where
+.Dv N
+is the number of counters available on the system
+(see
+.Fn pmc_get_num_counters
+below).
 .Pp
 Upon a process fork, implementations must
 .Bl -bullet
