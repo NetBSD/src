@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.4 2003/06/30 12:06:28 wiz Exp $
+.\" $NetBSD: pmc.9,v 1.5 2005/10/31 11:55:04 uwe Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -158,7 +158,9 @@ return value from this function.
 .sp
 .It Fn pmc_get_counter_type "int ctr"
 Returns an implementation-dependent type describing the specified counter.
-If ctr is specified as -1, returns a machine-dependent type describing the
+If
+.Fa ctr
+is specified as \-1, returns a machine-dependent type describing the
 CPU or counter configuration.
 For example, on an ia32 architecture, it may distinguish between
 586-, 686-, and K7-style counters.
