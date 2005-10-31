@@ -1,4 +1,4 @@
-/* $NetBSD: atrun.h,v 1.7 2003/07/26 19:32:06 salo Exp $ */
+/* $NetBSD: atrun.h,v 1.8 2005/10/31 15:46:50 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -37,5 +37,3 @@
  */
 
 #define ATRUN_MAXLOAD	1.5
-#define NOBODY_UID	32767
-#define NOBODY_GID	32767
