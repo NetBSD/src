@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.185.2.2 2004/06/27 13:33:52 he Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.185.2.2.2.1 2005/10/31 21:01:45 tron Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.185.2.2 2004/06/27 13:33:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.185.2.2.2.1 2005/10/31 21:01:45 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -739,8 +739,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-	} else
-		p->p_flag &= ~P_SUGID;
+	} else {
+		if (p->p_ucred->cr_uid == p->p_cred->p_ruid &&
+		    p->p_ucred->cr_gid == p->p_cred->p_rgid)
+			p->p_flag &= ~P_SUGID;
+	}
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
