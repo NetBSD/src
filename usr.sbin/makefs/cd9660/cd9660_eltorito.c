@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.8 2005/10/30 07:33:57 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.9 2005/10/31 23:19:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.8 2005/10/30 07:33:57 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.9 2005/10/31 23:19:54 dyoung Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -59,6 +59,7 @@ int
 cd9660_add_boot_disk(const char *boot_info)
 {
 	struct stat stbuf;
+	const char *mode_msg;
 	char *temp;
 	char *sysname;
 	char *filename;
@@ -88,8 +89,10 @@ cd9660_add_boot_disk(const char *boot_info)
 
 	*filename++ = '\0';
 
-	printf("Found bootdisk with system %s, and filename %s\n",
-	    sysname, filename);
+	if (diskStructure.verbose_level > 0) {
+		printf("Found bootdisk with system %s, and filename %s\n",
+		    sysname, filename);
+	}
 	if ((new_image = malloc(sizeof(*new_image))) == NULL) {
 		warn("%s: malloc", __func__);
 		return 0;
@@ -127,28 +130,33 @@ cd9660_add_boot_disk(const char *boot_info)
 	switch (stbuf.st_size) {
 	case 1440 * 1024:
 		new_image->targetMode = ET_MEDIA_144FDD;
-		printf("Assigned boot image to 1.44 emulation mode\n");
+		mode_msg = "Assigned boot image to 1.44 emulation mode";
 		break;
 	case 1200 * 1024:
 		new_image->targetMode = ET_MEDIA_12FDD;
-		printf("Assigned boot image to 1.2 emulation mode\n");
+		mode_msg = "Assigned boot image to 1.2 emulation mode";
 		break;
 	case 2880 * 1024:
 		new_image->targetMode = ET_MEDIA_288FDD;
-		printf("Assigned boot image to 2.88 emulation mode\n");
+		mode_msg = "Assigned boot image to 2.88 emulation mode";
 		break;
 	default:
 		new_image->targetMode = ET_MEDIA_NOEM;
-		printf("Assigned boot image to no emulation mode\n");
+		mode_msg = "Assigned boot image to no emulation mode";
 		break;
 	}
+
+	if (diskStructure.verbose_level > 0)
+		printf("%s\n", mode_msg);
 
 	new_image->size = stbuf.st_size;
 	new_image->num_sectors =
 	    howmany(new_image->size, diskStructure.sectorSize) *
 	    howmany(diskStructure.sectorSize, 512);
-	printf("New image has size %i, uses %i 512-byte sectors\n",
-	    new_image->size, new_image->num_sectors);
+	if (diskStructure.verbose_level > 0) {
+		printf("New image has size %d, uses %d 512-byte sectors\n",
+		    new_image->size, new_image->num_sectors);
+	}
 	new_image->sector = -1;
 	/* Bootable by default */
 	new_image->bootable = ET_BOOTABLE;
@@ -356,7 +364,7 @@ cd9660_setup_boot(int first_sector)
 		return 0;
 
 	/* Point to catalog: For now assume it consumes one sector */
-	ELTORITO_DPRINTF(("Boot catalog will go in sector %i\n", first_sector));
+	ELTORITO_DPRINTF(("Boot catalog will go in sector %d\n", first_sector));
 	diskStructure.boot_catalog_sector = first_sector;
 	cd9660_bothendian_dword(first_sector,
 		diskStructure.boot_descriptor->boot_catalog_pointer);
@@ -383,9 +391,11 @@ cd9660_setup_boot(int first_sector)
 	catalog_sectors = howmany(num_entries * 0x20, diskStructure.sectorSize);
 	used_sectors += catalog_sectors;
 
-	printf("%s: there will be %i entries consuming %i sectors. "
-	       "Catalog is %i sectors\n", __func__, num_entries, used_sectors,
-		catalog_sectors);
+	if (diskStructure.verbose_level > 0) {
+		printf("%s: there will be %i entries consuming %i sectors. "
+		       "Catalog is %i sectors\n", __func__, num_entries,
+		       used_sectors, catalog_sectors);
+	}
 
 	/* Populate sector numbers */
 	sector = first_sector + catalog_sectors;
@@ -493,10 +503,15 @@ cd9660_write_boot(FILE *fd)
 	fseek(fd, diskStructure.boot_catalog_sector * diskStructure.sectorSize,
 	    SEEK_SET);
 
-	printf("Writing boot catalog to sector %i\n",
-	    diskStructure.boot_catalog_sector);
+	if (diskStructure.verbose_level > 0) {
+		printf("Writing boot catalog to sector %d\n",
+		    diskStructure.boot_catalog_sector);
+	}
 	LIST_FOREACH(e, &diskStructure.boot_entries, ll_struct) {
-		printf("Writing catalog entry of type %i\n", e->entry_type);
+		if (diskStructure.verbose_level > 0) {
+			printf("Writing catalog entry of type %d\n",
+			    e->entry_type);
+		}
 		/*
 		 * It doesnt matter which one gets written
 		 * since they are the same size
@@ -507,8 +522,10 @@ cd9660_write_boot(FILE *fd)
 
 	/* copy boot images */
 	TAILQ_FOREACH(t, &diskStructure.boot_images, image_list) {
-		printf("Writing boot image from %s to sectors %i\n",
-		    t->filename,t->sector);
+		if (diskStructure.verbose_level > 0) {
+			printf("Writing boot image from %s to sectors %d\n",
+			    t->filename, t->sector);
+		}
 		cd9660_copy_file(fd, t->sector, t->filename);
 	}
 
