@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.164 2005/10/31 20:47:12 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.165 2005/10/31 21:33:39 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2053,4 +2053,10 @@ sys/kern/kern_exec.c				patch
 	Don't clear unconditionally P_SUGID when we exec. Clear it only when
 	the real and effective user and group ids match.
 	[dan, ticket #5924]
+
+dist/ntp/ntpd/ntpd.c				1.8
+
+	Use group-id from ``gr'' and not ``pw''.
+	Fixes security issue addressed by CAN-2005-2496.
+	[dan, ticket #5926]
 
