@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.28 2003/03/14 18:43:52 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.29 2005/10/31 15:29:23 wiz Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -187,8 +187,8 @@ main(argc, argv)
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-dDfMRs] [-c conffile] "
-			"interfaces...\n");
+			"usage: rtadvd [-DdfMRs] [-c configfile] "
+			"interface ...\n");
 		exit(1);
 	}
 
