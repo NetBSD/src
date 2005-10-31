@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.42 2005/10/01 06:13:55 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.43 2005/10/31 14:21:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -557,7 +557,7 @@
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
 			ts = ts ? ts : nanotime(&tsb); \
-			(a)->va_atime = *ts; \
+			(a)->va_mtime = *ts; \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; }
