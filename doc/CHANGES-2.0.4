@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.4 2005/10/31 13:38:30 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.5 2005/10/31 20:56:57 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -22,4 +22,16 @@ sys/kern/uipc_socket.c				1.112
 
 	Check the argument to SO_LINGER.
 	[nathanw, ticket #5939]
+
+sys/kern/kern_exec.c				patch
+
+	Don't clear unconditionally P_SUGID when we exec. Clear it only when
+	the real and effective user and group ids match.
+	[dan, ticket #5955]
+
+dist/ntp/ntpd/ntpd.c				1.8
+
+	Use group-id from ``gr'' and not ``pw''.
+	Fixes security issue addressed by CAN-2005-2496.
+	[dan, ticket #5958]
 
