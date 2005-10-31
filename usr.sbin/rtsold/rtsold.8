@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.20 2004/01/08 02:48:43 itojun Exp $
+.\"	$NetBSD: rtsold.8,v 1.21 2005/10/31 15:14:54 wiz Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,16 +38,16 @@
 .\"
 .Sh SYNOPSIS
 .Nm rtsold
-.Op Fl dDfm1
+.Op Fl 1Ddfm
 .Ar interface ...
 .Nm rtsold
-.Op Fl dDfm1
+.Op Fl 1Ddfm
 .Fl a
 .Nm rtsol
-.Op Fl dD
+.Op Fl Dd
 .Ar interface ...
 .Nm rtsol
-.Op Fl dD
+.Op Fl Dd
 .Fl a
 .\"
 .Sh DESCRIPTION
@@ -140,6 +140,12 @@ net.inet6.ip6.accept_rtadv=1.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl 1
+Perform only one probe.
+Transmit Router Solicitation packets until at least one valid Router
+Advertisement packet has arrived on each
+.Ar interface ,
+then exit.
 .It Fl a
 Autoprobe outgoing interface.
 .Nm
@@ -149,11 +155,12 @@ If
 finds multiple interfaces,
 .Nm
 will exit with error.
-.\"
+.It Fl D
+Enable more debugging (than that offered by the                                                    
+.Fl d                                                                                              
+option) including the printing of internal timer information.                                      
 .It Fl d
 Enable debugging.
-.It Fl D
-Enable more debugging including the printing of internal timer information.
 .It Fl f
 .Fl f
 prevents
@@ -174,13 +181,8 @@ Moreover, if the option is specified,
 periodically sends Router Solicitation on an interface that does not support
 .Dv SIOCGIFMEDIA
 ioctl.
-.It Fl 1
-Perform only one probe.
-Transmit Router Solicitation packets until at least one valid Router
-Advertisement packet has arrived on each
-.Ar interface ,
-then exit.
 .El
+.\"
 .Sh EXIT STATUS
 The
 .Nm
