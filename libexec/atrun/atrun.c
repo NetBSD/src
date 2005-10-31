@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.14 2004/11/05 21:38:40 dsl Exp $	*/
+/*	$NetBSD: atrun.c,v 1.15 2005/10/31 15:46:50 christos Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <pwd.h>
+#include <grp.h>
 #include <err.h>
 #include <paths.h>
 
@@ -57,7 +58,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.14 2004/11/05 21:38:40 dsl Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.15 2005/10/31 15:46:50 christos Exp $");
 #endif
 
 static int debug = 0;
@@ -68,6 +69,8 @@ static void perr2 __P((char *, char *));
 static int write_string __P((int, const char *));
 static void run_file __P((const char *, uid_t, gid_t));
 static void become_user __P((struct passwd *, uid_t));
+
+static const char nobody[] = "nobody";
 
 int main __P((int, char *[]));
 
@@ -393,14 +396,23 @@ main(argc, argv)
 	int c;
 	int run_batch;
 	double la, load_avg = ATRUN_MAXLOAD;
+	struct group *grp;
+	struct passwd *pwd;
+
+	if ((grp = getgrnam(nobody)) == NULL)
+		errx(1, "Cannot get gid for `%s'", nobody);
+
+	if ((pwd = getpwnam(nobody)) == NULL)
+		errx(1, "Cannot get uid for `%s'", nobody);
+
+	openlog("atrun", LOG_PID, LOG_CRON);
 
 	/*
 	 * We don't need root privileges all the time; running under uid
 	 * and gid nobody is fine except for privileged operations.
 	 */
-	RELINQUISH_PRIVS_ROOT(NOBODY_UID, NOBODY_GID)
+	RELINQUISH_PRIVS_ROOT(pwd->pw_uid, grp->gr_gid)
 
-	openlog("atrun", LOG_PID, LOG_CRON);
 
 	opterr = 0;
 	errno = 0;
