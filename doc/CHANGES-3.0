@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.292 2005/10/30 18:19:15 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.293 2005/10/31 13:30:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13731,4 +13731,10 @@ sys/arch/sparc64/sparc64/db_interface.c		1.81
 
 	Don't drop to ddb in the default case if ddb.onpanic is 0.
 	[jdc, ticket #921]
+
+sys/kern/kern_exec.c				patch
+
+	Don't clear unconditionally P_SUGID when we exec. Clear it only when
+	the real and effective user and group ids match.
+	[dan, ticket #922]
 
