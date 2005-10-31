@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.9 2005/10/31 08:29:19 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.10 2005/10/31 23:19:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.9 2005/10/31 08:29:19 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.10 2005/10/31 23:19:06 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -204,7 +204,7 @@ cd9660_set_defaults(void)
 	diskStructure.sectorSize = 2048;
 
 	/* Set up defaults in our own structure */
-	diskStructure.verbose_level = 2;
+	diskStructure.verbose_level = 0;
 	diskStructure.keep_bad_images = 0;
 	diskStructure.follow_sym_links = 0;
 	diskStructure.isoLevel = 2;
