@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.163 2005/10/26 22:25:34 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.164 2005/10/31 20:47:12 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2047,3 +2047,10 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for 82801FB 10/100 ethernet.
 	[riz, ticket #5773]
+
+sys/kern/kern_exec.c				patch
+
+	Don't clear unconditionally P_SUGID when we exec. Clear it only when
+	the real and effective user and group ids match.
+	[dan, ticket #5924]
+
