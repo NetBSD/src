@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.220 2005/10/23 18:38:53 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.221 2005/11/01 21:21:09 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.220 2005/10/23 18:38:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.221 2005/11/01 21:21:09 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1853,7 +1853,6 @@ ip_forward(struct mbuf *m, int srcrt)
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
 	}
-	ip->ip_ttl -= IPTTLDEC;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
@@ -1882,6 +1881,8 @@ ip_forward(struct mbuf *m, int srcrt)
 	mcopy = m_copym(m, 0, imin(ntohs(ip->ip_len), 68), M_DONTWAIT);
 	if (mcopy)
 		mcopy = m_pullup(mcopy, ip->ip_hl << 2);
+
+	ip->ip_ttl -= IPTTLDEC;
 
 	/*
 	 * If forwarding packet using same interface that it came in on,
