@@ -1,4 +1,4 @@
-/*	$NetBSD: mdconfig.c,v 1.3 1997/10/17 10:24:24 lukem Exp $	*/
+/*	$NetBSD: mdconfig.c,v 1.4 2005/11/01 01:42:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdconfig.c,v 1.3 1997/10/17 10:24:24 lukem Exp $");
+__RCSID("$NetBSD: mdconfig.c,v 1.4 2005/11/01 01:42:29 chs Exp $");
 #endif
 
 /*
@@ -61,7 +61,8 @@ main(argc, argv)
 	char **argv;
 {
 	struct md_conf md;
-	int nblks, fd;
+	size_t nblks;
+	int fd;
 
 	if (argc <= 2) {
 		fprintf(stderr, "usage: mdconfig <device> <%d-byte-blocks>\n",
@@ -69,8 +70,8 @@ main(argc, argv)
 		exit(1);
 	}
 
-	nblks = atoi(argv[2]);
-	if (nblks <= 0) {
+	nblks = (size_t)strtoul(argv[2], NULL, 0);
+	if (nblks == 0) {
 		fprintf(stderr, "invalid number of blocks\n");
 		exit(1);
 	}
@@ -86,7 +87,7 @@ main(argc, argv)
 				PROT_READ | PROT_WRITE,
 				MAP_ANON | MAP_PRIVATE,
 				-1, 0);
-	if (md.md_addr == (caddr_t)-1) {
+	if (md.md_addr == MAP_FAILED) {
 		perror("mmap");
 		exit(1);
 	}
