@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10 2005/11/01 09:13:48 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2005/11/01 09:13:48 manu Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -212,7 +212,9 @@ syscall_plain(frame) */
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
+#ifndef COMPAT_LINUX
 		frame->tf_rdx = rval[1];
+#endif
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -324,7 +326,9 @@ out:
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
+#ifndef COMPAT_LINUX
 		frame->tf_rdx = rval[1];
+#endif
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
