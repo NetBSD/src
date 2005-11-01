@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.7 2003/11/24 23:54:13 cl Exp $	*/
+/*	$NetBSD: sem.c,v 1.7.6.1 2005/11/01 20:01:44 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.7 2003/11/24 23:54:13 cl Exp $");
+__RCSID("$NetBSD: sem.c,v 1.7.6.1 2005/11/01 20:01:44 jmc Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -286,6 +286,7 @@ int
 sem_wait(sem_t *sem)
 {
 	pthread_t self;
+	extern int pthread__started;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -299,6 +300,22 @@ sem_wait(sem_t *sem)
 	if ((*sem)->usem_semid != USEM_USER) {
 		pthread__testcancel(self);
 		return (_ksem_wait((*sem)->usem_semid));
+	}
+
+	if (pthread__started == 0) {
+		sigset_t set, oset;
+
+		sigfillset(&set);
+		(void) sigprocmask(SIG_SETMASK, &set, &oset);
+		for (;;) {
+			if ((*sem)->usem_count > 0) {
+				break;
+			}
+			(void) sigsuspend(&oset);
+		}
+		(*sem)->usem_count--;
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+		return 0;
 	}
 
 	for (;;) {
@@ -339,6 +356,7 @@ int
 sem_trywait(sem_t *sem)
 {
 	pthread_t self;
+	extern int pthread__started;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -349,6 +367,22 @@ sem_trywait(sem_t *sem)
 
 	if ((*sem)->usem_semid != USEM_USER)
 		return (_ksem_trywait((*sem)->usem_semid));
+
+	if (pthread__started == 0) {
+		sigset_t set, oset;
+		int rv = 0;
+
+		sigfillset(&set);
+		(void) sigprocmask(SIG_SETMASK, &set, &oset);
+		if ((*sem)->usem_count > 0) {
+			(*sem)->usem_count--;
+		} else {
+			errno = EAGAIN;
+			rv = -1;
+		}
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+		return rv;
+	}
 
 	self = pthread__self();
 
