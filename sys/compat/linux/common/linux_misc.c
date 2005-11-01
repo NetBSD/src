@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.135.2.1 2005/10/01 10:39:27 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.135.2.2 2005/11/01 22:31:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.135.2.1 2005/10/01 10:39:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.135.2.2 2005/11/01 22:31:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,25 +669,33 @@ linux_sys_mprotect(l, v, retval)
 		syscallarg(unsigned long) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
-	unsigned long end, start = (unsigned long)SCARG(uap, start), len;
-	int prot = SCARG(uap, prot);
 	struct vm_map_entry *entry;
-	struct vm_map *map = &l->l_proc->p_vmspace->vm_map;
+	struct vm_map *map;
+	struct proc *p;
+	vaddr_t end, start, len, stacklim;
+	int prot, grows;
+
+	start = (vaddr_t)SCARG(uap, start);
+	len = round_page(SCARG(uap, len));
+	prot = SCARG(uap, prot);
+	grows = prot & (LINUX_PROT_GROWSDOWN | LINUX_PROT_GROWSUP);
+	prot &= ~grows;
+	end = start + len;
 
 	if (start & PAGE_MASK)
 		return EINVAL;
-
-	len = round_page(SCARG(uap, len));
-	end = start + len;
-
 	if (end < start)
 		return EINVAL;
-	else if (end == start)
+	if (end == start)
 		return 0;
 
-	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+	if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;
+	if (grows == (LINUX_PROT_GROWSDOWN | LINUX_PROT_GROWSUP))
 		return EINVAL;
 
+	p = l->l_proc;
+	map = &p->p_vmspace->vm_map;
 	vm_map_lock(map);
 #ifdef notdef
 	VM_MAP_RANGE_CHECK(map, start, end);
@@ -695,6 +703,25 @@ linux_sys_mprotect(l, v, retval)
 	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
 		vm_map_unlock(map);
 		return ENOMEM;
+	}
+
+	/*
+	 * Approximate the behaviour of PROT_GROWS{DOWN,UP}.
+	 */
+
+	stacklim = (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur;
+	if (grows & LINUX_PROT_GROWSDOWN) {
+		if (USRSTACK - stacklim <= start && start < USRSTACK) {
+			start = USRSTACK - stacklim;
+		} else {
+			start = entry->start;
+		}
+	} else if (grows & LINUX_PROT_GROWSUP) {
+		if (USRSTACK <= end && end < USRSTACK + stacklim) {
+			end = USRSTACK + stacklim;
+		} else {
+			end = entry->end;
+		}
 	}
 	vm_map_unlock(map);
 	return uvm_map_protect(map, start, end, prot, FALSE);
