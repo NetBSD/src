@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.53 2005/10/31 14:36:41 yamt Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.54 2005/11/01 15:40:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.53 2005/10/31 14:36:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.54 2005/11/01 15:40:00 bouyer Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -267,9 +267,9 @@ scsistrategy(struct buf *bp)
 		goto bad;
 	}
 
-	if (screq->flags & SCCMD_READ)
+	if ((screq->flags & SCCMD_READ) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_IN;
-	if (screq->flags & SCCMD_WRITE)
+	if ((screq->flags & SCCMD_WRITE) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_OUT;
 	if (screq->flags & SCCMD_TARGET)
 		flags |= XS_CTL_TARGET;
