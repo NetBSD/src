@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.39.2.2 2005/08/12 06:38:14 snj Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.39.2.3 2005/11/01 20:01:38 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.39.2.2 2005/08/12 06:38:14 snj Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.39.2.3 2005/11/01 20:01:38 jmc Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -298,13 +298,13 @@ pthread_sigtimedwait__callback(void *arg)
 }
 
 int
-sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const struct timespec * __restrict timeout)
+sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
+    const struct timespec * __restrict timeout)
 {
-	pthread_t self;
-	int error = 0;
-	pthread_t target;
+	pthread_t self, target;
 	sigset_t wset;
 	struct timespec timo;
+	int sig, error = 0;
 
 	/* if threading not started yet, just do the syscall */
 	if (__predict_false(pthread__started == 0))
@@ -313,30 +313,53 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 	self = pthread__self();
 	pthread__testcancel(self);
 
+	pthread_spinlock(self, &self->pt_siglock);
+
+	/*
+	 * Check if one of the signals that we will be waiting for
+	 * is already pending.  If so, return it immediately.
+	 * XXX the MP locking of this isn't right.
+	 */
+	wset = *set;
+	__sigandset(&self->pt_siglist, &wset);
+	sig = firstsig(&wset);
+	if (sig) {
+		info->si_signo = sig;
+		pthread_spinunlock(self, &self->pt_siglock);
+		pthread__testcancel(self);
+		return 0;
+	}
+
 	/* also call syscall if timeout is zero (i.e. polling) */
 	if (timeout && timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
+		pthread_spinunlock(self, &self->pt_siglock);
 		error = _sigtimedwait(set, info, timeout);
 		pthread__testcancel(self);
 		return (error);
 	}
-
 	if (timeout) {
-		if ((u_int) timeout->tv_nsec >= 1000000000)
-			return (EINVAL);
+		if ((u_int) timeout->tv_nsec >= 1000000000) {
+			pthread_spinunlock(self, &self->pt_siglock);
+			errno = EINVAL;
+			return (-1);
+		}
 
 		timo = *timeout;
 	}
 
+	pthread_spinunlock(self, &self->pt_siglock);
 	pthread_spinlock(self, &pt_sigwaiting_lock);
 
 	/*
-	 * If there is already master thread running, arrange things
-	 * to accomodate for eventual extra signals to wait for,
+	 * If there is already a master thread running, arrange things
+	 * to accomodate for eventual extra signals to wait for
 	 * and join the sigwaiting list.
 	 */
 	if (pt_sigwmaster) {
 		struct pt_alarm_t timoalarm;
 		struct timespec etimo;
+
+		SDPRINTF(("(stw %p) not master\n", self));
 
 		/*
 		 * Get current time. We need it if we would become master.
@@ -382,7 +405,9 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 
 		PTQ_INSERT_TAIL(&pt_sigwaiting, self, pt_sleep);
 
+		SDPRINTF(("(stw %p) not master blocking\n", self));
 		pthread__block(self, &pt_sigwaiting_lock);
+		SDPRINTF(("(stw %p) not master unblocked\n", self));
 
 		/* check if we got a signal we waited for */
 		if (info->si_signo) {
@@ -442,6 +467,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 
 	/* Master thread loop */
 	pt_sigwmaster = self;
+	SDPRINTF(("(stw %p) i am the master\n", self));
 	for(;;) {
 		/* Build our wait set */
 		wset = *set;
@@ -456,39 +482,50 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 		 * We are either the only one, or wait set was setup already.
 		 * Just do the syscall now.
 		 */
+		SDPRINTF(("(stw %p) master blocking\n", self));
 		error = __sigtimedwait(&wset, info, (timeout) ? &timo : NULL);
+		SDPRINTF(("(stw %p) master unblocking\n", self));
 
 		pthread_spinlock(self, &pt_sigwaiting_lock);
 		if ((error && (errno != ECANCELED || self->pt_cancel))
 		    || (!error && __sigismember14(set, info->si_signo)) ) {
+
 			/*
 			 * Normal function return. Clear pt_sigwmaster,
 			 * and if wait queue is nonempty, make first waiter
 			 * new master.
 			 */
+			SDPRINTF(("(stw %p) master normal self %d\n",
+				  self, info->si_signo));
 			pt_sigwmaster = NULL;
 			if (!PTQ_EMPTY(&pt_sigwaiting)) {
 				pt_sigwmaster = PTQ_FIRST(&pt_sigwaiting);
+				SDPRINTF(("(stw %p) new master %p\n", self,
+					  pt_sigwmaster));
 				PTQ_REMOVE(&pt_sigwaiting, pt_sigwmaster,
 					pt_sleep);
 				pthread__sched(self, pt_sigwmaster);
 			}
 
 			pthread_spinunlock(self, &pt_sigwaiting_lock);
-
 			pthread__testcancel(self);
 			return (error);
 		}
 
 		if (!error) {
+
 			/*
 			 * Got a signal, but not from _our_ wait set.
 			 * Scan the queue of sigwaiters and wakeup
 			 * the first thread waiting for this signal.
 			 */
 			PTQ_FOREACH(target, &pt_sigwaiting, pt_sleep) {
-			    if (__sigismember14(target->pt_sigwait, info->si_signo)) {
-				pthread__assert(target->pt_state == PT_STATE_BLOCKED_QUEUE);
+			    if (__sigismember14(target->pt_sigwait,
+						info->si_signo)) {
+				pthread__assert(target->pt_state ==
+						PT_STATE_BLOCKED_QUEUE);
+				SDPRINTF(("(stw %p) master target %p\n",
+					  self, target));
 
 				/* copy to waiter siginfo */
 				memcpy(target->pt_wsig, info, sizeof(*info));
@@ -499,6 +536,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 			}
 
 			if (!target) {
+
 				/*
 				 * Didn't find anyone waiting on this signal.
 				 * Deliver signal normally. This might
@@ -506,11 +544,14 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 				 * 'their' signal arrives before the master
 				 * thread would be scheduled after _lwp_wakeup().
 				 */
+				SDPRINTF(("(stw %p) master orphaned\n", self));
 				pthread__signal(self, NULL, info);
 			} else {
+
 				/*
 				 * Signal waiter removed, adjust our wait set.
 				 */
+				SDPRINTF(("(stw %p) master raced\n", self));
 				wset = *set;
 				PTQ_FOREACH(target, &pt_sigwaiting, pt_sleep)
 					__sigplusset(target->pt_sigwait, &wset);
@@ -786,14 +827,38 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 static void
 pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 {
+	int deliver;
 
 	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target,
 	    si->si_signo, si->si_code));
 
 	if (__sigismember14(&target->pt_sigmask, si->si_signo)) {
-		/* Record the signal for later delivery. */
-		__sigaddset14(&target->pt_siglist, si->si_signo);
-		return;
+		SDPRINTF(("(pthread__kill %p) target masked\n", target));
+
+		/*
+		 * If the target is waiting for this signal in sigtimedwait(),
+		 * make the target runnable but do not deliver the signal.
+		 * Otherwise record the signal for later delivery.
+		 * XXX not MPsafe.
+		 */
+		pthread_spinlock(self, &self->pt_statelock);
+		if (target->pt_state == PT_STATE_BLOCKED_QUEUE &&
+		    target->pt_sleepq == &pt_sigwaiting &&
+		    __sigismember14(target->pt_sigwait, si->si_signo)) {
+			SDPRINTF(("(pthread__kill %p) stw\n", target));
+			target->pt_wsig->si_signo = si->si_signo;
+			pthread_spinunlock(self, &self->pt_statelock);
+			deliver = 0;
+		} else {
+			SDPRINTF(("(pthread__kill %p) deferring\n", target));
+			pthread_spinunlock(self, &self->pt_statelock);
+			__sigaddset14(&target->pt_siglist, si->si_signo);
+			return;
+		}
+	} else {
+		SDPRINTF(("(pthread__kill %p) target %p delivering\n",
+			  self, target));
+		deliver = 1;
 	}
 
 	if (self == target) {
@@ -817,6 +882,8 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	 */
 	pthread_spinlock(self, &target->pt_statelock);
 	if (target->pt_blockgen != target->pt_unblockgen) {
+		SDPRINTF(("(pthread__kill %p) target blocked\n", target));
+
 		/*
 		 * The target is not on a queue at all, and
 		 * won't run again for a while. Try to wake it
@@ -832,6 +899,8 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		_lwp_wakeup(target->pt_blockedlwp);
 		return;
 	}
+	SDPRINTF(("(pthread__kill %p) target state %d\n", target,
+		  target->pt_state));
 	switch (target->pt_state) {
 	case PT_STATE_SUSPENDED:
 		pthread_spinlock(self, &pthread__runqueue_lock);
@@ -848,11 +917,15 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		PTQ_REMOVE(target->pt_sleepq, target, pt_sleep);
 		pthread_spinunlock(self, target->pt_sleeplock);
 		break;
+	case PT_STATE_ZOMBIE:
+		pthread_spinunlock(self, &target->pt_statelock);
+		return;
 	default:
 		;
 	}
 
-	pthread__deliver_signal(self, target, si);
+	if (deliver)
+		pthread__deliver_signal(self, target, si);
 	pthread__sched(self, target);
 	pthread_spinunlock(self, &target->pt_statelock);
 }
