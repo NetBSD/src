@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.18.6.1 2005/11/01 20:01:33 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.18.6.1 2005/11/01 20:01:33 jmc Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -189,6 +189,7 @@ static int
 pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 {
 	pthread_t self;
+	extern int pthread__started;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
@@ -202,6 +203,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 		
 		/* Okay, didn't look free. Get the interlock... */
 		pthread_spinlock(self, &mutex->ptm_interlock);
+
 		/*
 		 * The mutex_unlock routine will get the interlock
 		 * before looking at the list of sleepers, so if the
@@ -240,6 +242,21 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 					mp->recursecount++;
 					return 0;
 				}
+			}
+
+			if (pthread__started == 0) {
+				sigset_t ss;
+
+				/*
+				 * The spec says we must deadlock, so...
+				 */
+				pthread__assert(mp->type ==
+						PTHREAD_MUTEX_NORMAL);
+				(void) sigprocmask(SIG_SETMASK, NULL, &ss);
+				for (;;) {
+					sigsuspend(&ss);
+				}
+				/*NOTREACHED*/
 			}
 
 			/*
