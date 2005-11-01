@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.733 2005/10/05 00:46:00 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.734 2005/11/01 22:01:45 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.733 2005/10/05 00:43:58 jonathan Exp
+ *	NetBSD: pcidevs,v 1.734 2005/11/01 22:00:56 abs Exp
  */
 
 /*
@@ -3618,6 +3618,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_P,
 	    "3D Rage IIC (AGP)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9000_PCI,
+	    "Radeon 9000 (PCI)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP,
@@ -10548,4 +10552,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2055;
+const int pci_nproducts = 2056;
