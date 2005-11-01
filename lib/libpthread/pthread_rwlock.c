@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.11.2.1 2005/11/01 20:01:31 jmc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.11.2.1 2005/11/01 20:01:31 jmc Exp $");
 
 #include <errno.h>
 
@@ -169,6 +169,8 @@ int
 pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
 	pthread_t self;
+	extern int pthread__started;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -187,6 +189,12 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 	 * waiting readers.
 	 */
 	while ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL)) {
+#ifdef ERRORCHECK
+		if (pthread__started == 0) {
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			return EDEADLK;
+		}
+#endif
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -248,6 +256,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
 	int retval;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -258,8 +267,8 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	    (abs_timeout->tv_nsec < 0) ||
 	    (abs_timeout->tv_sec < 0))
 		return EINVAL;
+
 	self = pthread__self();
-	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
@@ -316,8 +325,10 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 {
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
-	int retval;
 	pthread_t self;
+	int retval;
+	extern int pthread__started;
+
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -328,8 +339,8 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	    (abs_timeout->tv_nsec < 0) ||
 	    (abs_timeout->tv_sec < 0))
 		return EINVAL;
+
 	self = pthread__self();
-	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
@@ -344,6 +355,12 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	retval = 0;
 	while (retval == 0 &&
 	    ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL))) {
+#ifdef ERRORCHECK
+		if (pthread__started == 0) {
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			return EDEADLK;
+		}
+#endif
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_wblocked;
