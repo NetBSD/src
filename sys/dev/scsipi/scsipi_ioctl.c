@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.54 2005/11/01 15:40:00 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.55 2005/11/01 20:44:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.54 2005/11/01 15:40:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.55 2005/11/01 20:44:04 martin Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -237,7 +237,8 @@ scsistrategy(struct buf *bp)
 
 	si = si_find(bp);
 	if (si == NULL) {
-		printf("user_strat: No ioctl\n");
+		printf("scsistrategy: "
+		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
 		goto bad;
 	}
