@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.206 2005/08/28 14:57:18 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.207 2005/11/01 09:07:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -201,7 +201,7 @@ struct proc {
 	struct sadata 	*p_sa;		/* Scheduler activation information */
 
 	/* scheduling */
-	u_int		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
+	fixpt_t		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	int		p_cpticks;	/* Ticks of CPU time */
 	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
