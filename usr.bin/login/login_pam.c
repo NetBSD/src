@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.9 2005/09/21 12:24:11 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.10 2005/11/01 15:47:43 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.9 2005/09/21 12:24:11 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.10 2005/11/01 15:47:43 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -122,9 +122,8 @@ main(int argc, char *argv[])
 {
 	extern char **environ;
 	struct stat st;
-	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin;
+	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin;
 	int auth_passed;
-	int Fflag;
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
@@ -167,7 +166,6 @@ main(int argc, char *argv[])
 	 *    login so that it may be placed in utmp/utmpx and wtmp/wtmpx
 	 * -a in addition to -h, a server my supply -a to pass the actual
 	 *    server address.
-	 * -s is used to force use of S/Key or equivalent.
 	 */
 	domain = NULL;
 	if (gethostname(localhost, sizeof(localhost)) < 0)
@@ -176,10 +174,10 @@ main(int argc, char *argv[])
 		domain = strchr(localhost, '.');
 	localhost[sizeof(localhost) - 1] = '\0';
 
-	Fflag = fflag = hflag = pflag = sflag = 0;
+	fflag = pflag = 0;
 	have_ss = 0;
 	uid = getuid();
-	while ((ch = getopt(argc, argv, "a:Ffh:ps")) != -1)
+	while ((ch = getopt(argc, argv, "a:fh:p")) != -1)
 		switch (ch) {
 		case 'a':
 			if (uid) {
@@ -192,9 +190,6 @@ main(int argc, char *argv[])
 			    sizeof(struct sockaddr_storage), "%a", (void *)&ss);
 #endif
 			break;
-		case 'F':
-			Fflag = 1;
-			/* FALLTHROUGH */
 		case 'f':
 			fflag = 1;
 			break;
@@ -203,7 +198,6 @@ main(int argc, char *argv[])
 				errno = EPERM;
 				err(EXIT_FAILURE, "-h option");
 			}
-			hflag = 1;
 			if (domain && (p = strchr(optarg, '.')) != NULL &&
 			    strcasecmp(p, domain) == 0)
 				*p = '\0';
@@ -211,9 +205,6 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			pflag = 1;
-			break;
-		case 's':
-			sflag = 1;
 			break;
 		default:
 		case '?':
@@ -841,7 +832,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-Ffps] [-a address] [-h hostname] [username]\n",
+	    "Usage: %s [-fp] [-a address] [-h hostname] [username]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
