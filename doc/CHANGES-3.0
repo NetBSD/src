@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.294 2005/11/01 20:04:23 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.295 2005/11/01 22:38:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13779,3 +13779,30 @@ lib/libpthread/sem.c				1.8-1.9
 	If mlock() fails in pthread_create(), return EAGAIN instead of
 	failing an assertion.
 	[chs, ticket #926]
+
+sys/arch/amiga/amiga/machdep.c			1.193
+sys/arch/atari/atari/atari_init.c		1.63
+sys/arch/hp300/hp300/machdep.c			1.184
+sys/arch/luna68k/luna68k/machdep.c		1.42
+sys/arch/mac68k/mac68k/machdep.c		1.306
+sys/arch/mvme68k/mvme68k/machdep.c		1.113
+sys/arch/news68k/news68k/machdep.c		1.61
+sys/arch/next68k/next68k/machdep.c		1.73
+sys/arch/x68k/x68k/machdep.c			1.129
+
+	Fix crash dumps on m68k platforms, cpu_kcore_hdr_t is larger than
+	512 bytes now so we need a bigger buffer. Fixes PR port-m68k/26958.
+	[chs, ticket #923]
+
+sys/compat/linux/common/linux_misc.c		1.141
+sys/compat/linux/common/linux_mmap.h		1.17
+
+	Add support for the linux PROT_GROWS{DOWN,UP} mprotect() flags.
+	Fixes PR kern/30008.
+	[chs, ticket #924]
+
+usr.sbin/mdconfig/mdconfig.c			1.4
+
+	Use correct types, allow size to be larger than 1 TB.
+	[chs, ticket #925]
+
