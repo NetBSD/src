@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.44 2005/09/17 06:05:04 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.45 2005/11/01 23:43:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.44 2005/09/17 06:05:04 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.45 2005/11/01 23:43:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,6 +346,11 @@ extract(void)
 			 * data and padding and go back for the next
 			 * archive member
 			 */
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
+		}
+
+		if (kflag && (lstat(arcn->name, &sb) == 0)) {
 			(void)rd_skip(arcn->skip + arcn->pad);
 			continue;
 		}
