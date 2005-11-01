@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.293 2005/10/31 13:30:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.294 2005/11/01 20:04:23 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13738,3 +13738,44 @@ sys/kern/kern_exec.c				patch
 	the real and effective user and group ids match.
 	[dan, ticket #922]
 
+
+lib/libpthread/pthread_rwlock.c			1.12-1.13
+lib/libpthread/pthread_rwlock.c			1.12-1.13
+lib/libpthread/pthread_mutex.c			1.20-1.21
+lib/libpthread/pthread_int.h			1.32-1.33
+lib/libpthread/pthread_sig.c			1.43-1.44
+lib/libpthread/pthread.c			1.43-1.46
+lib/libpthread/sem.c				1.8-1.9
+
+	In pthread_mutex_lock_slow(), pthread_rwlock_timedrdlock() and 
+	sem_wait(), call pthread__start() if it hasn't already been called. 
+	This avoids an internal assertion from the library if these routines 
+	are used before any threads are created and they need to sleep. 
+	PR#20256, PR#24241, PR#25722, PR#26096
+	
+	Fix the interaction between sigtimedwait() and pthread_kill(),
+	both waking up a sleeping thread and avoiding going to sleep if
+	a signal is already pending. PR#30348
+	
+	In pthread_kill() and pthread_suspend_np(), return without doing 
+	anything f the target thread is a zombie.
+	In all the functions that didn't do so already, verify a pthread_t 
+	before dereferencing it (under #ifdef ERRORCHECK, since these checks 
+	are not mandated by the standard).
+	
+	Starting the pthread library (ie. calling pthread__start()) before
+	any threads are created turned out to be not such a good idea.    
+	there are stronger requirements on what has to work in a forked child
+	while a process is still single-threaded.  so take all that stuff    
+	back out and fix the problems with single-threaded programs that     
+	are linked with libpthread differently, by checking if the library   
+	has been started and doing completely different stuff if it hasn't been:
+	 - for pthread_rwlock_timedrdlock(), just fail with EDEADLK immediately.
+	 - for sem_wait(), the only thing that can unlock the semaphore is a    
+	   signal handler, so use sigsuspend() to wait for a signal.
+	 - for pthread_mutex_lock_slow(), just go into an infinite loop
+	   waiting for signals.
+	
+	If mlock() fails in pthread_create(), return EAGAIN instead of
+	failing an assertion.
+	[chs, ticket #926]
