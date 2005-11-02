@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.15 2005/07/15 05:01:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.16 2005/11/02 22:10:41 gdt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.15 2005/07/15 05:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.16 2005/11/02 22:10:41 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -126,7 +126,7 @@ softdep_setup_freeblocks(struct inode *ip, off_t length, int flags)
 }
 
 void
-softdep_freefile(void *v)
+softdep_freefile(struct vnode *v, ino_t ino, int mode)
 {
 	panic("softdep_freefile called");
 }
