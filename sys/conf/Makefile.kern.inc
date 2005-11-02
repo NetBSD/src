@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.68 2005/06/18 22:56:02 martin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.69 2005/11/02 14:29:52 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -302,7 +302,12 @@ MKDEP_CFLAGS?=	${CFLAGS}
 # We already hit that on non-NetBSD hosts.
 _SFILES=${MD_SFILES} ${SFILES}
 _CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
-_XargsMKDEP=${MKDEP:M*=*} xargs -t ${MKDEP:N*=*}
+.if ${MAKEVERBOSE} == 2
+_T=-t
+.else
+_T=
+.endif
+_XargsMKDEP=${MKDEP:M*=*} xargs ${_T} ${MKDEP:N*=*}
 _SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
 
 # This dance is necessary to avoid long command lines.
