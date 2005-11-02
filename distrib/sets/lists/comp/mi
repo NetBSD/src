@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.827 2005/10/30 23:35:55 simonb Exp $
+#	$NetBSD: mi,v 1.828 2005/11/02 14:27:20 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4909,8 +4909,8 @@
 ./usr/share/man/cat9/VOP_ABORTOP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ACCESS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ADVLOCK.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_BALLOC.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_BLKATOFF.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_BALLOC.0		comp-obsolete		obsolete
+./usr/share/man/cat9/VOP_BLKATOFF.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_BMAP.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_BWRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_CLOSE.0		comp-sys-catman		.cat
@@ -4939,7 +4939,7 @@
 ./usr/share/man/cat9/VOP_READ.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_READDIR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_READLINK.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_REALLOCBLKS.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_REALLOCBLKS.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_RECLAIM.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_REMOVE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_RENAME.0		comp-sys-catman		.cat
@@ -4950,11 +4950,11 @@
 ./usr/share/man/cat9/VOP_SETEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_STRATEGY.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SYMLINK.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_TRUNCATE.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_TRUNCATE.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_UNLOCK.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_UPDATE.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_VALLOC.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VOP_VFREE.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_UPDATE.0		comp-obsolete		obsolete
+./usr/share/man/cat9/VOP_VALLOC.0		comp-obsolete		obsolete
+./usr/share/man/cat9/VOP_VFREE.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-sys-catman		.cat
@@ -8826,8 +8826,8 @@
 ./usr/share/man/man9/VOP_ABORTOP.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ACCESS.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ADVLOCK.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_BALLOC.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_BLKATOFF.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_BALLOC.9		comp-obsolete		obsolete
+./usr/share/man/man9/VOP_BLKATOFF.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_BMAP.9			comp-sys-man		.man
 ./usr/share/man/man9/VOP_BWRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_CLOSE.9		comp-sys-man		.man
@@ -8856,7 +8856,7 @@
 ./usr/share/man/man9/VOP_READ.9			comp-sys-man		.man
 ./usr/share/man/man9/VOP_READDIR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_READLINK.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_REALLOCBLKS.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_REALLOCBLKS.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_RECLAIM.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_REMOVE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_RENAME.9		comp-sys-man		.man
@@ -8867,11 +8867,11 @@
 ./usr/share/man/man9/VOP_SETEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_STRATEGY.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SYMLINK.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_TRUNCATE.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_TRUNCATE.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_UNLOCK.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_UPDATE.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_VALLOC.9		comp-sys-man		.man
-./usr/share/man/man9/VOP_VFREE.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_UPDATE.9		comp-obsolete		obsolete
+./usr/share/man/man9/VOP_VALLOC.9		comp-obsolete		obsolete
+./usr/share/man/man9/VOP_VFREE.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-sys-man		.man
