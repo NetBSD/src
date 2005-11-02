@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.40 2005/10/31 11:35:22 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.41 2005/11/02 14:22:36 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 30, 2005
+.Dd November 2, 2005
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -74,13 +74,6 @@
 .Nm VOP_PRINT ,
 .Nm VOP_PATHCONF ,
 .Nm VOP_ADVLOCK ,
-.Nm VOP_BLKATOFF ,
-.Nm VOP_VALLOC ,
-.Nm VOP_BALLOC ,
-.Nm VOP_REALLOCBLKS ,
-.Nm VOP_VFREE ,
-.Nm VOP_TRUNCATE ,
-.Nm VOP_UPDATE ,
 .Nm VOP_LEASE ,
 .Nm VOP_WHITEOUT ,
 .Nm VOP_GETPAGES ,
@@ -199,25 +192,6 @@
 .Fn VOP_ADVLOCK "struct vnode *vp" "void *id" "int op" \
 "struct flock *fl" "int flags"
 .Ft int
-.Fn VOP_BLKATOFF "struct vnode *vp" "off_t offset" "char **res" \
-"struct buf **bpp"
-.Ft int
-.Fn VOP_VALLOC "struct vnode *pvp" "int mode" "struct ucred *cred" \
-"struct vnode **vpp"
-.Ft int
-.Fn VOP_BALLOC "struct vnode *vp" "off_t startoffset" "int size" \
-"struct ucred *cred" "int flags" "struct buf **bpp"
-.Ft int
-.Fn VOP_REALLOCBLKS "struct vnode *vp" "struct cluster_save *buflist"
-.Ft int
-.Fn VOP_VFREE "struct vnode *pvp" "ino_t ino" "int mode"
-.Ft int
-.Fn VOP_TRUNCATE "struct vnode *vp" "off_t length" "int flags" \
-"struct ucred *cred" "struct proc *p"
-.Ft int
-.Fn VOP_UPDATE "struct vnode *vp" "struct timespec *access" \
-"struct timespec *modify" "int flags"
-.Ft int
 .Fn VOP_LEASE "struct vnode *vp" "struct proc *p" "struct ucred *cred" \
 "int flag"
 .Ft int
@@ -262,9 +236,9 @@ The following table lists the elements of the vnode operations vector,
 the corresponding invocation macro, and a description of the element.
 .Pp
 .nf
-.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'Map file into user address space'u
+.ta \w'int (*vop_listextattr)()'u+2n +\w'VOP_LISTEXTATTR'u+2n +\w'Map file into user address space'u
 \fIVector element\fP	\fIMacro\fP	\fIDescription\fP
-.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'Map file into user address space'u+6nC
+.ta \w'int (*vop_listextattr)()'u+2n +\w'VOP_LISTEXTATTR'u+2n +\w'Map file into user address space'u+6nC
 .sp 5p
 int (*vop_lookup)() 	VOP_LOOKUP	Lookup file name in name cache
 int (*vop_create)() 	VOP_CREATE	Create a new file
@@ -301,13 +275,6 @@ int (*vop_bmap)() 	VOP_BMAP	Logical block number conversion
 int (*vop_print)() 	VOP_PRINT	Print debugging information
 int (*vop_pathconf)() 	VOP_PATHCONF	Return POSIX pathconf data
 int (*vop_advlock)() 	VOP_ADVLOCK	Advisory record locking
-int (*vop_blkatoff)() 	VOP_BLKATOFF	Retrieve buffer from offset
-int (*vop_valloc)() 	VOP_VALLOC	Allocate fs-specific data
-int (*vop_balloc)() 	VOP_BALLOC	Allocate physical blocks
-int (*vop_reallocblks)() 	VOP_REALLOCBLKS	Rearrange blocks contiguously
-int (*vop_vfree)() 	VOP_VFREE	Release file resources
-int (*vop_truncate)() 	VOP_TRUNCATE	Truncate file and free blocks
-int (*vop_update)() 	VOP_UPDATE	Update time on a file
 int (*vop_lease)() 	VOP_LEASE	Validate vnode credentials
 int (*vop_whiteout)() 	VOP_WHITEOUT	Whiteout vnode
 int (*vop_getpages)() 	VOP_GETPAGES	Read VM pages from file
@@ -1270,134 +1237,6 @@ use POSIX semantics for lock
 .Pp
 If the operation is successful zero is returned, otherwise an
 appropriate error is returned.
-.It Fn VOP_BLKATOFF "vp" "offset" "res" "bpp"
-Return buffer
-.Fa bpp
-with the contents of block
-.Fa offset
-from the beginning of directory specified by vnode
-.Fa vp .
-If
-.Fa res
-is non-zero, fill it in with a pointer to the remaining space in the
-directory.
-.It Fn VOP_VALLOC "pvp" "mode" "cred" "vpp"
-Allocate file system type specific data a new file in the file
-system.
-The argument
-.Fa pvp
-specifies the vnode of the directory to create the new file.
-The argument
-.Fa mode
-specifies file system type specific flags
-and
-.Fa cred
-are the credentials of the calling process.
-The vnode of the new file is returned in the address specified by
-.Fa vpp .
-.It Fn VOP_BALLOC "vp" "startoffset" "size" "cred" "flags" "bpp"
-Allocate the physical blocks on a device given the vnode
-.Fa vp
-and the offset
-logical block number
-.Fa startoffset
-in a file.
-The argument
-.Fa size
-specifies the size to be allocated.
-The credentials of the calling processing are specified by
-.Fa cred .
-If the argument
-.Fa bpp
-is not
-.Dv NULL ,
-the buffer is written to the allocated blocks.
-The argument
-.Fa flags
-is a set of flags controlling the low-level allocation when the buffer
-is written.
-Valid values defined in
-.Aq Pa sys/buf.h
-are:
-.Pp
-.Bl -tag -offset indent  -width B_CLRBUF -compact
-.It B_CLRBUF
-request allocated buffer be cleared
-.It B_SYNC
-do all allocations synchronously
-.El
-.P
-If the operation is successful zero is returned, otherwise an
-appropriate error is returned.
-.It Fn VOP_REALLOCBLKS "vp" "buflist"
-Rearrange block in a file to be contiguous.
-The argument
-.Fa vp
-is the vnode of the file to manipulate.
-The argument
-.Fa buflist
-is a list of buffers to rearrange.
-If the operation is successful zero is returned, otherwise an
-appropriate error is returned.
-.It Fn VOP_VFREE "pvp" "ino" "mode"
-Release file resources.
-This function is used by the file system to release cached file system
-specific data associated with the file when the vnode is recycled.
-.It Fn VOP_TRUNCATE "vp" "length" "flags" "cred" "p"
-Truncate the file specified by the vnode
-.Fa vp
-to at most
-.Fa length
-size and free the unused disk blocks.
-The arguments
-.Fa p
-and
-.Fa cred
-is the calling process and its credentials respectively.
-The argument
-.Fa flags
-is a set of I/O flags.
-Valid values are:
-.Pp
-.Bl -tag -offset indent -width IO_ALTSEMANTICS -compact
-.It IO_UNIT
-do I/O as atomic unit
-.It IO_APPEND
-append write to end
-.It IO_SYNC
-sync I/O file integrity completion
-.It IO_NODELOCKED
-underlying node already locked
-.It IO_NDELAY
-FNDELAY flag set in file table
-.It IO_DSYNC
-sync I/O data integrity completion
-.It IO_ALTSEMANTICS
-use alternate I/O semantics
-.El
-.Pp
-If the operation is successful zero is returned, otherwise an
-appropriate error is returned.
-.It Fn VOP_UPDATE "vp" "access" "modify" "flags"
-Update times on file with vnode
-.Fa vp .
-The access and modification times are specified by the arguments
-.Fa access
-and
-.Fa modify
-respectively.
-The change time is always taken from the current time.
-The argument
-.Fa flags
-is a set of file system type dependent flags indicating how times
-should be updated:
-.Pp
-.Bl -tag -offset indent -width UPDATE_DIROP -compact
-.It UPDATE_WAIT
-wait for completion
-.It UPDATE_DIROP
-hint to file system to wait or not
-.El
 .It Fn VOP_LEASE "vp" "p" "cred" "flags"
 Validate vnode credentials and operation type.
 The argument
