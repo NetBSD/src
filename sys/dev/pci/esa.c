@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $ */
+/* $NetBSD: esa.c,v 1.29.4.1 2005/11/02 11:57:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.29 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.29.4.1 2005/11/02 11:57:56 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -279,7 +279,7 @@ esa_set_params(void *hdl, int setmode, int usemode,
 		if (p->sample_rate < ESA_MINRATE ||
 		    p->sample_rate > ESA_MAXRATE ||
 		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels < 1 && p->channels > 2))
+		    (p->channels < 1 || p->channels > 2))
 			return EINVAL;
 
 		i = auconv_set_converter(esa_formats, ESA_NFORMATS,

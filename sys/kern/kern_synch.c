@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.151.2.1 2005/11/02 11:58:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151.2.1 2005/11/02 11:58:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -110,6 +110,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.151 2005/10/06 07:02:14 yamt Exp $"
 
 int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
+
+/*
+ * Sleep queues.
+ *
+ * We're only looking at 7 bits of the address; everything is
+ * aligned to 4, lots of things are aligned to greater powers
+ * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
+ */
+#define	SLPQUE_TABLESIZE	128
+#define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
+
+#define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
 
 /*
  * The global scheduler state.
@@ -156,6 +168,13 @@ roundrobin(struct cpu_info *ci)
 	}
 	need_resched(curcpu());
 }
+
+#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
+#define	NICE_WEIGHT 2			/* priorities per nice level */
+
+#define	ESTCPU_SHIFT	11
+#define	ESTCPU_MAX	((NICE_WEIGHT * PRIO_MAX - PPQ) << ESTCPU_SHIFT)
+#define	ESTCPULIM(e)	min((e), ESTCPU_MAX)
 
 /*
  * Constants for digital decay and forget:
@@ -223,7 +242,25 @@ roundrobin(struct cpu_info *ci)
 
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
-#define	decay_cpu(loadfac, cpu)	(((loadfac) * (cpu)) / ((loadfac) + FSCALE))
+
+static fixpt_t
+decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
+{
+
+	if (estcpu == 0) {
+		return 0;
+	}
+
+#if !defined(_LP64)
+	/* avoid 64bit arithmetics. */
+#define	FIXPT_MAX ((fixpt_t)((UINTMAX_C(1) << sizeof(fixpt_t) * CHAR_BIT) - 1))
+	if (__predict_true(loadfac <= FIXPT_MAX / ESTCPU_MAX)) {
+		return estcpu * loadfac / (loadfac + FSCALE);
+	}
+#endif /* !defined(_LP64) */
+
+	return (uint64_t)estcpu * loadfac / (loadfac + FSCALE);
+}
 
 /* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
 fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
@@ -253,7 +290,6 @@ schedcpu(void *arg)
 	struct lwp *l;
 	struct proc *p;
 	int s, minslp;
-	unsigned int newcpu;
 	int clkhz;
 
 	proclist_lock_read();
@@ -295,8 +331,7 @@ schedcpu(void *arg)
 			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
-		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
-		p->p_estcpu = newcpu;
+		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 		splx(s);	/* Done with the process CPU ticks update */
 		SCHED_LOCK(s);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -325,13 +360,14 @@ schedcpu(void *arg)
 /*
  * Recalculate the priority of a process after it has slept for a while.
  * For all load averages >= 1 and max p_estcpu of 255, sleeping for at
- * least six times the loadfactor will decay p_estcpu to zero.
+ * least six times the loadfactor will decay p_estcpu to less than
+ * (1 << ESTCPU_SHIFT).
  */
 void
 updatepri(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-	unsigned int newcpu;
+	fixpt_t newcpu;
 	fixpt_t loadfac;
 
 	SCHED_ASSERT_LOCKED();
@@ -344,7 +380,7 @@ updatepri(struct lwp *l)
 	else {
 		l->l_slptime--;	/* the first time was done in schedcpu */
 		while (newcpu && --l->l_slptime)
-			newcpu = (int) decay_cpu(loadfac, newcpu);
+			newcpu = decay_cpu(loadfac, newcpu);
 		p->p_estcpu = newcpu;
 	}
 	resetpriority(l);
@@ -1103,7 +1139,7 @@ resetpriority(struct lwp *l)
 
 	SCHED_ASSERT_LOCKED();
 
-	newpriority = PUSER + p->p_estcpu +
+	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
 			NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
@@ -1143,7 +1179,7 @@ schedclock(struct lwp *l)
 	struct proc *p = l->l_proc;
 	int s;
 
-	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
+	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	SCHED_LOCK(s);
 	resetpriority(l);
 	SCHED_UNLOCK(s);
@@ -1306,7 +1342,7 @@ setrunqueue(struct lwp *l)
 {
 	struct prochd *rq;
 	struct lwp *prev;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, NULL);
@@ -1331,7 +1367,7 @@ void
 remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	const int whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / PPQ;
 #ifdef RQDEBUG
 	checkrunqueue(whichq, l);
 #endif

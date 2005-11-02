@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9.4.1 2005/11/02 11:57:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.4.1 2005/11/02 11:57:54 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $")
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
+#include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,20 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2005/07/01 18:01:44 christos Exp $")
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-#ifdef COMPAT_LINUX
-#include <compat/linux/common/linux_errno.h>
-#endif
-
-#ifndef EMULNAME
-#include <sys/syscall.h>
- 
-#define EMULNAME(x)     (x)
-#define EMULNAMEU(x)    (x)
-#include <sys/syscall.h>
+void syscall_intern(struct proc *);
+static void syscall_plain(struct trapframe *);
+static void syscall_fancy(struct trapframe *);
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -93,35 +86,28 @@ child_return(arg)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, EMULNAMEU(SYS_fork), 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 }
-#endif /* EMULNAME */
-
-void EMULNAME(syscall_intern) __P((struct proc *));
-void EMULNAME(syscall_plain) __P((struct trapframe *));
-void EMULNAME(syscall_fancy) __P((struct trapframe *));
 
 void
-EMULNAME(syscall_intern)(p) /*
-syscall_intern(p) */
-	struct proc *p;
+syscall_intern(struct proc *p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
+		p->p_md.md_syscall = syscall_fancy;
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
+		p->p_md.md_syscall = syscall_fancy;
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = EMULNAME(syscall_plain);
+	p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -129,10 +115,8 @@ syscall_intern(p) */
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
-void
-EMULNAME(syscall_plain)(frame) /*
-syscall_plain(frame) */
-	struct trapframe *frame;
+static void
+syscall_plain(struct trapframe *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -151,10 +135,9 @@ syscall_plain(frame) */
 	argoff = 0;
 	argp = &args[0];
 
-#ifndef COMPAT_LINUX
 	switch (code) {
-	case EMULNAMEU(SYS_syscall):
-	case EMULNAMEU(SYS___syscall):
+	case SYS_syscall:
+	case SYS___syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -165,9 +148,8 @@ syscall_plain(frame) */
 	default:
 		break;
 	}
-#endif /* !COMPAT_LINUX */
 
-	code &= (EMULNAMEU(SYS_NSYSENT) - 1);
+	code &= (SYS_NSYSENT - 1);
 	callp += code;
 
 	argsize = (callp->sy_argsize >> 3) + argoff;
@@ -228,11 +210,7 @@ syscall_plain(frame) */
 		break;
 	default:
 	bad:
-#ifdef COMPAT_LINUX
-		frame->tf_rax = native_to_linux_errno[error];
-#else
 		frame->tf_rax = error;
-#endif
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -243,10 +221,8 @@ syscall_plain(frame) */
 	userret(l);
 }
 
-void
-EMULNAME(syscall_fancy)(frame) /*
-syscall_fancy(frame) */
-	struct trapframe *frame;
+static void
+syscall_fancy(struct trapframe *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -265,10 +241,9 @@ syscall_fancy(frame) */
 	argp = &args[0];
 	argoff = 0;
 
-#ifndef COMPAT_LINUX
 	switch (code) {
-	case EMULNAMEU(SYS_syscall):
-	case EMULNAMEU(SYS___syscall):
+	case SYS_syscall:
+	case SYS___syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -278,9 +253,9 @@ syscall_fancy(frame) */
 		break;
 	default:
 		break;
+
 	}
-#endif /* !COMPAT_LINUX */
-	code &= (EMULNAMEU(SYS_NSYSENT) - 1);
+	code &= (SYS_NSYSENT - 1);
 	callp += code;
 
 	argsize = (callp->sy_argsize >> 3) + argoff;
@@ -340,11 +315,7 @@ out:
 		break;
 	default:
 	bad:
-#ifdef COMPAT_LINUX
-		frame->tf_rax = native_to_linux_errno[error];
-#else
 		frame->tf_rax = error;
-#endif
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -353,4 +324,3 @@ out:
 
 	userret(l);
 }
-

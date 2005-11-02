@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2005/04/16 22:49:37 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.4.1 2005/11/02 11:57:56 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -156,15 +156,13 @@ spllower(int nlevel)
 #define	splbio()	splraise(IPL_BIO)
 #define	splnet()	splraise(IPL_NET)
 #define	spltty()	splraise(IPL_TTY)
+#define spllpt()	spltty()
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(IPL_SERIAL)
 
-#define spllpt()	spltty()
-
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-#define	spllpt()	spltty()
 
 /*
  * Software interrupt masks
@@ -190,6 +188,7 @@ spllower(int nlevel)
 #ifndef MULTIPROCESSOR
 #define splipi() 	splhigh()
 #endif
+#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
 
 /*
