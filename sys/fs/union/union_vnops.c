@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.12 2005/08/30 19:11:43 xtraeme Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.13 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.12 2005/08/30 19:11:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.13 2005/11/02 12:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,11 +183,6 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_putpages_desc, union_putpages },		/* putpages */
 	{ &vop_kqfilter_desc, union_kqfilter },		/* kqfilter */
 #ifdef notdef
-	{ &vop_blkatoff_desc, union_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, union_valloc },		/* valloc */
-	{ &vop_vfree_desc, union_vfree },		/* vfree */
-	{ &vop_truncate_desc, union_truncate },		/* truncate */
-	{ &vop_update_desc, union_update },		/* update */
 	{ &vop_bwrite_desc, union_bwrite },		/* bwrite */
 #endif
 	{ NULL, NULL }

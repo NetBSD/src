@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.107 2005/10/07 18:19:14 elad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.108 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.107 2005/10/07 18:19:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.108 2005/11/02 12:38:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -86,40 +86,6 @@ genfs_poll(void *v)
 	} */ *ap = v;
 
 	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-}
-
-int
-genfs_fsync(void *v)
-{
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int a_flags;
-		off_t offlo;
-		off_t offhi;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp, *dvp;
-	int wait;
-	int error;
-
-	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
-		error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
-
-	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
-		int l = 0;
-		if (VOP_BMAP(vp, 0, &dvp, NULL, NULL))
-			error = ENXIO;
-		else
-			error = VOP_IOCTL(dvp, DIOCCACHESYNC, &l, FWRITE,
-					  ap->a_p->p_ucred, ap->a_p);
-	}
-
-	return (error);
 }
 
 int

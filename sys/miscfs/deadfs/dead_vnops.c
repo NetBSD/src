@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.36 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.37 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.36 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.37 2005/11/02 12:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,11 +84,6 @@ int	dead_print(void *);
 #define dead_islocked	genfs_nullop
 #define dead_pathconf	genfs_ebadf
 #define dead_advlock	genfs_ebadf
-#define dead_blkatoff	genfs_badop
-#define dead_valloc	genfs_badop
-#define dead_vfree	genfs_badop
-#define dead_truncate	genfs_nullop
-#define dead_update	genfs_nullop
 #define dead_bwrite	genfs_nullop
 #define dead_revoke	genfs_nullop
 #define dead_putpages	genfs_null_putpages
@@ -136,11 +131,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_islocked_desc, dead_islocked },		/* islocked */
 	{ &vop_pathconf_desc, dead_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, dead_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, dead_valloc },		/* valloc */
-	{ &vop_vfree_desc, dead_vfree },		/* vfree */
-	{ &vop_truncate_desc, dead_truncate },		/* truncate */
-	{ &vop_update_desc, dead_update },		/* update */
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, dead_putpages },		/* putpages */
 	{ NULL, NULL }
