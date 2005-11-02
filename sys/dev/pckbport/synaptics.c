@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.6 2005/06/20 02:49:19 atatat Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.6.4.1 2005/11/02 11:58:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -688,7 +688,7 @@ pms_synaptics_input(void *vsc, int data)
 
 	case 3:
 		if ((data & 8) == 8) {
-#ifdef SYNAPTICS_DEBUG
+#ifdef SYNAPTICSDEBUG
 			printf("%s: pms_input: dropped in relative mode, "
 			    "reset\n", psc->sc_dev.dv_xname);
 #endif

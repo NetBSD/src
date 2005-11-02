@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.118 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.118.2.1 2005/11/02 11:57:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118.2.1 2005/11/02 11:57:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -655,7 +655,7 @@ fdcattach(fdc, pri)
 	 */
 	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
 	if (fdconf(fdc) != 0) {
-		printf("%s: no drives attached\n", fdc->sc_dev.dv_xname);
+		printf(": no drives attached\n");
 		return (-1);
 	}
 

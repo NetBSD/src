@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.20.10.1 2005/11/02 11:57:54 yamt Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -154,21 +154,9 @@
 #ifndef _LOCORE
 
 extern int cpuspeed;
-extern void delay(int n);
+void delay(unsigned int n);
 
-#if 0 /* XXX: should use mips_mcclock.c */
-#define	DELAY(n)	do {						\
-	int N = cpuspeed * (n); while (--N > 0);		\
-} while (/*CONSTCOND*/ 0)
-#else
-/*
- *   Delay is based on an assumtion that each time in the loop
- *   takes 3 clocks. Three is for branch and subtract in the delay slot.
- */
-#define	DELAY(n)	do {						\
-	int N = cpuspeed * (n); while ((N -= 3) > 0);		\
-} while (/*CONSTCOND*/ 0)
-#endif
+#define	DELAY(n)	delay(n)
 
 #include <machine/intr.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.736.2.1 2005/10/26 08:32:45 yamt Exp $
+#	$NetBSD: files,v 1.736.2.2 2005/11/02 11:57:56 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1264,7 +1264,9 @@ file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_prop.c
+file	kern/subr_once.c
 file	kern/subr_userconf.c		userconf
+file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			!pipe_socketpair

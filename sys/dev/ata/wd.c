@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.312 2005/10/15 17:29:12 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.312.2.1 2005/11/02 11:57:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.312 2005/10/15 17:29:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.312.2.1 2005/11/02 11:57:56 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1878,7 +1878,8 @@ wdioctlstrategy(struct buf *bp)
 
 	wi = wi_find(bp);
 	if (wi == NULL) {
-		printf("user_strat: No ioctl\n");
+		printf("wdioctlstrategy: "
+		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
 		goto bad;
 	}

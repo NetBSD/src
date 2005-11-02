@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.22.4.1 2005/10/26 08:32:51 yamt Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.22.4.2 2005/11/02 11:58:11 yamt Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ you leave this credit intact on any copies of this file.
 #define SADB_X_SPDDELETE2 22	/* by policy id */
 #define SADB_X_NAT_T_NEW_MAPPING 23
 #if 0
-#define	SADB_X_MIGRATE    23	/* KAME */
+#define	SADB_X_MIGRATE    24	/* KAME */
 #endif
 #define SADB_MAX          23
 

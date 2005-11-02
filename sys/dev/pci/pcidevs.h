@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.735 2005/10/05 00:46:00 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.735.2.1 2005/11/02 11:57:56 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.733 2005/10/05 00:43:58 jonathan Exp
+ *	NetBSD: pcidevs,v 1.734 2005/11/01 22:00:56 abs Exp
  */
 
 /*
@@ -1013,6 +1013,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
 #define	PCI_PRODUCT_ATI_RAGE_IIC	0x4759		/* 3D Rage IIC */
 #define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_P	0x475a		/* 3D Rage IIC (AGP) */
+#define	PCI_PRODUCT_ATI_RADEON_9000_PCI	0x4966		/* Radeon 9000 (PCI) */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP	0x4c42		/* 3D Rage LT Pro (AGP 133MHz) */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP66	0x4c44		/* 3D Rage LT Pro (AGP 66MHz) */
 #define	PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI	0x4c45		/* Rage Mobility M3 */

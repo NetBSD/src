@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.186 2005/08/21 13:14:54 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.186.2.1 2005/11/02 11:58:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.186 2005/08/21 13:14:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.186.2.1 2005/11/02 11:58:11 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -996,7 +996,7 @@ sysctl_create(SYSCTLFN_ARGS)
 					error = sysctl_copyin(l,
 					    nnode.sysctl_data, own, sz);
 					if (error != 0) {
-						FREE(own, M_SYSCTLDATA);
+						free(own, M_SYSCTLDATA);
 						return (error);
 					}
 				}
@@ -1321,13 +1321,13 @@ sysctl_destroy(SYSCTLFN_ARGS)
 	 */
 	if (node->sysctl_flags & CTLFLAG_OWNDATA) {
 		if (node->sysctl_data != NULL)
-			FREE(node->sysctl_data, M_SYSCTLDATA);
+			free(node->sysctl_data, M_SYSCTLDATA);
 		node->sysctl_data = NULL;
 	}
 	if (node->sysctl_flags & CTLFLAG_OWNDESC) {
 		if (node->sysctl_desc != NULL)
 			/*XXXUNCONST*/
-			FREE(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
+			free(__UNCONST(node->sysctl_desc), M_SYSCTLDATA);
 		node->sysctl_desc = NULL;
 	}
 
@@ -1366,7 +1366,7 @@ sysctl_destroy(SYSCTLFN_ARGS)
 	 * if this parent just lost its last child, nuke the creche
 	 */
 	if (pnode->sysctl_clen == 0) {
-		FREE(pnode->sysctl_child, M_SYSCTLNODE);
+		free(pnode->sysctl_child, M_SYSCTLNODE);
 		pnode->sysctl_csize = 0;
 		pnode->sysctl_child = NULL;
 	}
@@ -1529,7 +1529,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 			return (ENOMEM);
 		error = sysctl_copyin(l, newp, newbuf, len);
 		if (error) {
-			FREE(newbuf, M_SYSCTLDATA);
+			free(newbuf, M_SYSCTLDATA);
 			return (error);
 		}
 
@@ -1538,7 +1538,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * left to do it ourselves?
 		 */
 		if (newbuf[len - 1] != '\0' && len == sz) {
-			FREE(newbuf, M_SYSCTLDATA);
+			free(newbuf, M_SYSCTLDATA);
 			return (EINVAL);
 		}
 
@@ -1549,7 +1549,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 			memcpy(rnode->sysctl_data, newbuf, len);
 		if (sz != len)
 			memset((char*)rnode->sysctl_data + len, 0, sz - len);
-		FREE(newbuf, M_SYSCTLDATA);
+		free(newbuf, M_SYSCTLDATA);
 		break;
 	}
 	default:
@@ -2365,7 +2365,7 @@ sysctl_free(struct sysctlnode *rnode)
 				if (SYSCTL_FLAGS(node->sysctl_flags) &
 				    CTLFLAG_OWNDATA) {
 					if (node->sysctl_data != NULL) {
-						FREE(node->sysctl_data,
+						free(node->sysctl_data,
 						     M_SYSCTLDATA);
 						node->sysctl_data = NULL;
 					}
@@ -2374,7 +2374,7 @@ sysctl_free(struct sysctlnode *rnode)
 				    CTLFLAG_OWNDESC) {
 					if (node->sysctl_desc != NULL) {
 						/*XXXUNCONST*/
-						FREE(__UNCONST(node->sysctl_desc),
+						free(__UNCONST(node->sysctl_desc),
 						     M_SYSCTLDATA);
 						node->sysctl_desc = NULL;
 					}
@@ -2389,7 +2389,7 @@ sysctl_free(struct sysctlnode *rnode)
 				break;
 		}
 		if (pnode->sysctl_child != NULL)
-			FREE(pnode->sysctl_child, M_SYSCTLNODE);
+			free(pnode->sysctl_child, M_SYSCTLNODE);
 		pnode->sysctl_clen = 0;
 		pnode->sysctl_csize = 0;
 		pnode->sysctl_child = NULL;
@@ -2412,13 +2412,13 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 		return (0);
 
 	if (*logp == NULL) {
-		MALLOC(log, struct sysctllog *, sizeof(struct sysctllog),
+		log = malloc(sizeof(struct sysctllog),
 		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 		if (log == NULL) {
 			/* XXX print error message? */
 			return (-1);
 		}
-		MALLOC(log->log_num, int *, 16 * sizeof(int),
+		log->log_num = malloc(16 * sizeof(int),
 		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 		if (log->log_num == NULL) {
 			/* XXX print error message? */
@@ -2643,12 +2643,10 @@ sysctl_alloc(struct sysctlnode *p, int x)
 	assert(p->sysctl_child == NULL);
 
 	if (x == 1)
-		MALLOC(n, struct sysctlnode *,
-		       sizeof(struct sysctlnode),
+		n = malloc(sizeof(struct sysctlnode),
 		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
 	else
-		MALLOC(n, struct sysctlnode *,
-		       SYSCTL_DEFSIZE * sizeof(struct sysctlnode),
+		n = malloc(SYSCTL_DEFSIZE * sizeof(struct sysctlnode),
 		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
 	if (n == NULL)
 		return (ENOMEM);
@@ -2710,7 +2708,7 @@ sysctl_realloc(struct sysctlnode *p)
 	/*
 	 * get out with the old and in with the new
 	 */
-	FREE(p->sysctl_child, M_SYSCTLNODE);
+	free(p->sysctl_child, M_SYSCTLNODE);
 	p->sysctl_child = n;
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.22 2005/10/06 07:02:13 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.22.2.1 2005/11/02 11:58:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -101,13 +101,7 @@ struct sched_param {
 
 /*
  * Sleep queues.
- *
- * We're only looking at 7 bits of the address; everything is
- * aligned to 4, lots of things are aligned to greater powers
- * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
  */
-#define	SLPQUE_TABLESIZE	128
-#define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
 struct slpque {
 	struct lwp *sq_head;
 	struct lwp **sq_tailp;
@@ -178,10 +172,6 @@ struct schedstate_percpu {
 
 #ifdef _KERNEL
 
-#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
-#define NICE_WEIGHT 2			/* priorities per nice level */
-#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
-
 extern int schedhz;			/* ideally: 16 */
 extern int rrticks;			/* ticks per roundrobin() */
 
@@ -194,10 +184,7 @@ extern int rrticks;			/* ticks per roundrobin() */
  * in kern/kern_synch.c.
  */
 extern struct prochd sched_qs[];
-extern struct slpque sched_slpque[];
 extern __volatile u_int32_t sched_whichqs;
-
-#define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
 
 struct proc;
 struct cpu_info;

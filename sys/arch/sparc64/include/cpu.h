@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2005/06/16 04:17:50 briggs Exp $ */
+/*	$NetBSD: cpu.h,v 1.47.4.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -188,9 +188,7 @@ extern struct cpu_info *cpus;
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-
-/* This really should be somewhere else. */
-#define	cpu_proc_fork(p1, p2)	/* nothing */
+void cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)
 void	cpu_mp_startup __P((void));

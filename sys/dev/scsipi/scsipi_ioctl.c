@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.52 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.52.8.1 2005/11/02 11:58:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52.8.1 2005/11/02 11:58:10 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -202,7 +202,6 @@ scsipi_user_done(struct scsipi_xfer *xs)
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
-	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
 
 	if (xs->xs_control & XS_CTL_ASYNC) {
 		s = splbio();
@@ -235,11 +234,11 @@ scsistrategy(struct buf *bp)
 	struct scsipi_periph *periph;
 	int error;
 	int flags = 0;
-	int s;
 
 	si = si_find(bp);
 	if (si == NULL) {
-		printf("user_strat: No ioctl\n");
+		printf("scsistrategy: "
+		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
 		goto bad;
 	}
@@ -269,9 +268,9 @@ scsistrategy(struct buf *bp)
 		goto bad;
 	}
 
-	if (screq->flags & SCCMD_READ)
+	if ((screq->flags & SCCMD_READ) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_IN;
-	if (screq->flags & SCCMD_WRITE)
+	if ((screq->flags & SCCMD_WRITE) && screq->datalen > 0)
 		flags |= XS_CTL_DATA_OUT;
 	if (screq->flags & SCCMD_TARGET)
 		flags |= XS_CTL_TARGET;
@@ -281,25 +280,15 @@ scsistrategy(struct buf *bp)
 	error = scsipi_command(periph, (void *)screq->cmd, screq->cmdlen,
 	    (void *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
-	    screq->timeout, bp, flags | XS_CTL_USERCMD | XS_CTL_ASYNC);
-
-	/* because there is a bp, scsi_scsipi_cmd will return immediatly */
-	if (error)
-		goto bad;
-
-	SC_DEBUG(periph, SCSIPI_DB3, ("about to sleep\n"));
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		tsleep(bp, PRIBIO, "scistr", 0);
-	splx(s);
-	SC_DEBUG(periph, SCSIPI_DB3, ("back from sleep\n"));
-
-	return;
+	    screq->timeout, bp, flags | XS_CTL_USERCMD);
 
 bad:
-	bp->b_flags |= B_ERROR;
-	bp->b_error = error;
+	if (error) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = error;
+	}
 	biodone(bp);
+	return;
 }
 
 /*

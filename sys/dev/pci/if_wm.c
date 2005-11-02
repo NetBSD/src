@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.107 2005/08/10 12:59:43 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.107.2.1 2005/11/02 11:57:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.107 2005/08/10 12:59:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.107.2.1 2005/11/02 11:57:56 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2025,9 +2025,9 @@ wm_intr(void *arg)
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t icr;
-	int wantinit, handled = 0;
+	int handled = 0;
 
-	for (wantinit = 0; wantinit == 0;) {
+	while (1 /* CONSTCOND */) {
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
@@ -2066,16 +2066,15 @@ wm_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
+			ifp->if_ierrors++;
+#if defined(WM_DEBUG)
 			log(LOG_WARNING, "%s: Receive overrun\n",
 			    sc->sc_dev.dv_xname);
-			wantinit = 1;
+#endif /* defined(WM_DEBUG) */
 		}
 	}
 
 	if (handled) {
-		if (wantinit)
-			wm_init(ifp);
-
 		/* Try to get more packets going. */
 		wm_start(ifp);
 	}

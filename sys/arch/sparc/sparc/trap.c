@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2005/07/10 17:02:19 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.159.2.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2005/07/10 17:02:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159.2.1 2005/11/02 11:57:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -354,10 +354,12 @@ trap(type, psr, pc, tf)
 badtrap:
 #endif
 #ifdef DIAGNOSTIC
-		/* the following message is gratuitous */
-		/* ... but leave it in until we find anything */
-		uprintf("%s[%d]: unimplemented software trap 0x%x\n",
-			p->p_comm, p->p_pid, type);
+		if (type < 0x90 || type > 0x9f) {
+			/* the following message is gratuitous */
+			/* ... but leave it in until we find anything */
+			uprintf("%s[%d]: unimplemented software trap 0x%x\n",
+				p->p_comm, p->p_pid, type);
+		}
 #endif
 		sig = SIGILL;
 		KSI_INIT_TRAP(&ksi);
@@ -574,7 +576,7 @@ badtrap:
 		break;
 
 	case T_ALIGN:
-		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0) {
+		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
 			KERNEL_PROC_LOCK(l);
 			n = fixalign(l, tf);
 			KERNEL_PROC_UNLOCK(l);
@@ -678,7 +680,7 @@ badtrap:
 		sig = SIGILL;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
-		ksi.ksi_code = ILL_ILLADR;
+		ksi.ksi_code = ILL_ILLOPN;
 		ksi.ksi_addr = (void *)pc;
 		break;
 
@@ -687,7 +689,7 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		l->l_md.md_flags |= MDP_FIXALIGN;
+		p->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 

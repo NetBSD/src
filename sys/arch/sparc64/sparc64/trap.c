@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2005/07/10 00:50:16 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.121.2.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2005/07/10 00:50:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.2.1 2005/11/02 11:57:55 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -739,7 +739,7 @@ badtrap:
 			kdb_trap(type, tf);
 		}
 #endif
-		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0 && 
+		if ((l->l_proc->p_md.md_flags & MDP_FIXALIGN) != 0 && 
 		    fixalign(l, tf) == 0) {
 			ADVANCE;
 			break;
@@ -848,7 +848,7 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		l->l_md.md_flags |= MDP_FIXALIGN;
+		l->l_proc->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 

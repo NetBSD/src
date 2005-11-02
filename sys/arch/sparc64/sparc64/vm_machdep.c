@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.4.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2005/06/11 08:54:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.4.1 2005/11/02 11:57:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,13 @@ vunmapbuf(bp, len)
 	uvm_km_free(kernel_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+}
+
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
 }
 
 

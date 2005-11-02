@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.30.2.1 2005/10/26 08:32:45 yamt Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.30.2.2 2005/11/02 11:57:56 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.30.2.1 2005/10/26 08:32:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.30.2.2 2005/11/02 11:57:56 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -297,14 +297,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
-	ic->ic_myaddr[0] = val >> 8;
-	ic->ic_myaddr[1] = val & 0xff;
+	ic->ic_myaddr[0] = val & 0xff;
+	ic->ic_myaddr[1] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 1);
-	ic->ic_myaddr[2] = val >> 8;
-	ic->ic_myaddr[3] = val & 0xff;
+	ic->ic_myaddr[2] = val & 0xff;
+	ic->ic_myaddr[3] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 2);
-	ic->ic_myaddr[4] = val >> 8;
-	ic->ic_myaddr[5] = val & 0xff;
+	ic->ic_myaddr[4] = val & 0xff;
+	ic->ic_myaddr[5] = val >> 8;
 
 	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
@@ -601,7 +601,7 @@ iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 
 		if (data->m != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
 			data->m = NULL;
@@ -677,9 +677,8 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 			goto fail;
 		}
 
-		error = bus_dmamap_load(sc->sc_dmat, ring->data[i].map,
-		    mtod(ring->data[i].m, void *), MCLBYTES, NULL,
-		    BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, ring->data[i].map,
+		    ring->data[i].m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			aprint_error("%s: could not load rx buffer DMA map\n",
 			    sc->sc_dev.dv_xname);
@@ -946,7 +945,7 @@ iwi_read_prom_word(struct iwi_softc *sc, uint8_t addr)
 	IWI_EEPROM_CTL(sc, 0);
 	IWI_EEPROM_CTL(sc, IWI_EEPROM_C);
 
-	return be16toh(val);
+	return val;
 }
 
 /*
@@ -1006,6 +1005,7 @@ iwi_alloc_rx_buf(struct iwi_softc *sc)
 		return NULL;
 	}
 
+	m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
 	return m;
 }
 
@@ -1022,10 +1022,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	DPRINTFN(5, ("received frame len=%u chan=%u rssi=%u\n",
 	    le16toh(frame->len), frame->chan, frame->rssi_dbm));
-
-	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (struct iwi_hdr),
-	    sizeof (struct iwi_frame) + le16toh(frame->len),
-	    BUS_DMASYNC_POSTREAD);
 
 	if (le16toh(frame->len) < sizeof (struct ieee80211_frame) ||
 	    le16toh(frame->len) > MCLBYTES) {
@@ -1051,15 +1047,15 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
-	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m_new, void *),
-	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m_new,
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not load rx buf DMA map\n",
 		    sc->sc_dev.dv_xname);
 		m_freem(m_new);
 		ifp->if_ierrors++;
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map,
+		    data->m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error)
 			panic("%s: unable to remap rx buf",
 			    sc->sc_dev.dv_xname);
@@ -1211,7 +1207,7 @@ iwi_rx_intr(struct iwi_softc *sc)
 		data = &sc->rxq.data[sc->rxq.cur];
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    MCLBYTES, BUS_DMASYNC_POSTREAD);
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		hdr = mtod(data->m, struct iwi_hdr *);
 
@@ -1255,7 +1251,7 @@ iwi_tx_intr(struct iwi_softc *sc)
 		data = &sc->txq.data[sc->txq.next];
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m_freem(data->m);
 		data->m = NULL;
@@ -1384,7 +1380,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	/* trim IEEE802.11 header */
 	m_adj(m0, sizeof (struct ieee80211_frame));
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		aprint_error("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1401,20 +1398,23 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		}
 
 		M_COPY_PKTHDR(mnew, m0);
-		MCLGET(mnew, M_DONTWAIT);
-		if (!(mnew->m_flags & M_EXT)) {
-			m_freem(m0);
-			m_freem(mnew);
-			return ENOMEM;
-		}
 
+		/* If the data won't fit in the header, get a cluster */
+		if (m0->m_pkthdr.len > MHLEN) {
+			MCLGET(mnew, M_DONTWAIT);
+			if (!(mnew->m_flags & M_EXT)) {
+				m_freem(m0);
+				m_freem(mnew);
+				return ENOMEM;
+			}
+		}
 		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			aprint_error("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -1449,18 +1449,18 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->nseg = htole32(data->map->dm_nsegs);
 	for (i = 0; i < data->map->dm_nsegs; i++) {
 		desc->seg_addr[i] = htole32(data->map->dm_segs[i].ds_addr);
-		desc->seg_len[i]  = htole32(data->map->dm_segs[i].ds_len);
+		desc->seg_len[i]  = htole16(data->map->dm_segs[i].ds_len);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.desc_map,
 	    sc->txq.cur * IWI_TX_DESC_SIZE,
 	    IWI_TX_DESC_SIZE, BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	DPRINTFN(5, ("sending data frame len=%u nseg=%u\n",
-	    desc->len, desc->nseg));
+	    le16toh(desc->len), le32toh(desc->nseg)));
 
 	/* Inform firmware about this new packet */
 	sc->txq.queued++;
@@ -1745,7 +1745,7 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 
 	/* Adapter is buggy, we must set the address for each word */
 	for (w = uc; size > 0; w++, size -= 2)
-		MEM_WRITE_2(sc, 0x200010, *w);
+		MEM_WRITE_2(sc, 0x200010, htole16(*w));
 
 	MEM_WRITE_1(sc, 0x200000, 0x00);
 	MEM_WRITE_1(sc, 0x200000, 0x80);
