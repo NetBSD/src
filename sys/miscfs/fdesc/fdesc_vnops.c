@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.87 2005/09/14 14:53:47 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.88 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.87 2005/09/14 14:53:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.88 2005/11/02 12:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,6 @@ int	fdesc_print(void *);
 int	fdesc_pathconf(void *);
 #define	fdesc_islocked	genfs_islocked
 #define	fdesc_advlock	genfs_einval
-#define	fdesc_blkatoff	genfs_eopnotsupp
-#define	fdesc_valloc	genfs_eopnotsupp
-#define	fdesc_vfree	genfs_nullop
-#define	fdesc_truncate	genfs_eopnotsupp
-#define	fdesc_update	genfs_nullop
 #define	fdesc_bwrite	genfs_eopnotsupp
 #define fdesc_revoke	genfs_revoke
 #define fdesc_putpages	genfs_null_putpages
@@ -171,11 +166,6 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fdesc_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fdesc_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fdesc_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fdesc_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fdesc_valloc },		/* valloc */
-	{ &vop_vfree_desc, fdesc_vfree },		/* vfree */
-	{ &vop_truncate_desc, fdesc_truncate },		/* truncate */
-	{ &vop_update_desc, fdesc_update },		/* update */
 	{ &vop_bwrite_desc, fdesc_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fdesc_putpages },		/* putpages */
 	{ NULL, NULL }

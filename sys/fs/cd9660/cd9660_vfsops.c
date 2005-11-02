@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.28 2005/09/30 08:15:46 dyoung Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.29 2005/11/02 12:38:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.28 2005/09/30 08:15:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.29 2005/11/02 12:38:58 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -817,7 +817,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		ip->iso_start = ino >> imp->im_bshift;
 		if (bp != 0)
 			brelse(bp);
-		if ((error = VOP_BLKATOFF(vp, (off_t)0, NULL, &bp)) != 0) {
+		if ((error = cd9660_blkatoff(vp, (off_t)0, NULL, &bp)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -839,8 +839,8 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		int off;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
 		    && (off = isonum_711(isodir->ext_attr_length)))
-			VOP_BLKATOFF(vp, (off_t)-(off << imp->im_bshift), NULL,
-				     &bp2);
+			cd9660_blkatoff(vp, (off_t)-(off << imp->im_bshift),
+			    NULL, &bp2);
 		else
 			bp2 = NULL;
 		cd9660_defattr(isodir, ip, bp2);
