@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.4 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.4.2.1 2005/11/02 11:58:11 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.4 2005/10/15 17:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.4.2.1 2005/11/02 11:58:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,7 @@ bufq_fcfs_init(struct bufq_state *bufq)
 
 	bufq->bq_get = bufq_fcfs_get;
 	bufq->bq_put = bufq_fcfs_put;
-	MALLOC(bufq->bq_private, struct bufq_fcfs *,
-	    sizeof(struct bufq_fcfs), M_DEVBUF, M_ZERO);
+	bufq->bq_private = malloc(sizeof(struct bufq_fcfs), M_DEVBUF, M_ZERO);
 	fcfs = (struct bufq_fcfs *)bufq->bq_private;
 	TAILQ_INIT(&fcfs->bq_head);
 }

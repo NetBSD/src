@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.192.4.1 2005/10/26 08:32:44 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.192.4.2 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192.4.1 2005/10/26 08:32:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192.4.2 2005/11/02 11:57:55 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -940,6 +940,10 @@ cache_print(sc)
 {
 	struct cacheinfo *ci = &sc->sc_cpuinfo->cacheinfo;
 
+	if (sc->sc_cpuinfo->flags & CPUFLG_SUN4CACHEBUG)
+		printf("%s: cache chip bug; trap page uncached\n",
+		    sc->sc_dv.dv_xname);
+
 	printf("%s: ", sc->sc_dv.dv_xname);
 
 	if (ci->c_totalsize == 0) {
@@ -1269,10 +1273,8 @@ sun4_hotfix(sc)
 	struct cpu_info *sc;
 {
 
-	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
+	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0)
 		kvm_uncache((caddr_t)trapbase, 1);
-		printf(": cache chip bug; trap page uncached");
-	}
 
 	/* Use the hardware-assisted page flush routine, if present */
 	if (sc->cacheinfo.c_hwflush)

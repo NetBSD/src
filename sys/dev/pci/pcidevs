@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.733 2005/10/05 00:43:58 jonathan Exp $
+$NetBSD: pcidevs,v 1.733.2.1 2005/11/02 11:57:56 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1006,6 +1006,7 @@ product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP)
 product ATI MACH64_GX		0x4758	Mach64 GX
 product ATI RAGE_IIC		0x4759	3D Rage IIC
 product ATI RAGE_IIC_AGP_P	0x475a	3D Rage IIC (AGP)
+product ATI RADEON_9000_PCI	0x4966	Radeon 9000 (PCI)
 product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP 133MHz)
 product ATI RAGE_LT_PRO_AGP66	0x4c44	3D Rage LT Pro (AGP 66MHz)
 product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3

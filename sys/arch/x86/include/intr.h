@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.14.1 2005/11/02 11:57:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -171,16 +171,15 @@ spllower(int nlevel)
 #define	splbio()	splraise(IPL_BIO)
 #define	splnet()	splraise(IPL_NET)
 #define	spltty()	splraise(IPL_TTY)
+#define spllpt()	spltty()
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(IPL_SERIAL)
 #define splipi()	splraise(IPL_IPI)
-
-#define spllpt()	spltty()
+#define splraiseipl(x) 	splraise(x)
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-#define	spllpt()	spltty()
 
 /*
  * Software interrupt masks

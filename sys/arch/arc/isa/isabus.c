@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.28.10.1 2005/11/02 11:57:54 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28.10.1 2005/11/02 11:57:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -140,11 +140,15 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#include <mips/locore.h>
+
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <arc/isa/isabrvar.h>
 #include <arc/isa/spkrreg.h>
+
+#include <arc/arc/timervar.h>
 
 static int beeping;
 static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
@@ -430,6 +434,7 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 	}
 	ih = intrhand[isa_vector];
 	if (isa_vector == 0) {	/* Clock */	/*XXX*/
+		last_cp0_count = mips3_cp0_count_read();
 		(*ih->ih_fun)(cf);
 		ih = ih->ih_next;
 	}

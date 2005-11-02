@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.12 2005/05/16 15:56:38 bouyer Exp $ */
+/*	$NetBSD: gemvar.h,v 1.12.4.1 2005/11/02 11:57:56 yamt Exp $ */
 
 /*
  *
@@ -137,6 +137,7 @@ struct gem_softc {
 #define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
 
 	u_int		sc_flags;	/* */
+	short		sc_if_flags;	/* copy of ifp->if_flags */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
 
 	void *sc_sdhook;		/* shutdown hook */

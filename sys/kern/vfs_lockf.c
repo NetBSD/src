@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.45 2005/06/05 23:10:25 thorpej Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.45.4.1 2005/11/02 11:58:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45 2005/06/05 23:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45.4.1 2005/11/02 11:58:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -791,7 +791,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		/*
 		 * XXX for F_UNLCK case, we can re-use lock.
 		 */
-		if ((fl->l_type & F_FLOCK) == 0) {
+		if ((ap->a_flags & F_FLOCK) == 0) {
 			/*
 			 * byte-range lock might need one more lock.
 			 */

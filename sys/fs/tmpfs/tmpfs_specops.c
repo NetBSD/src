@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.3.2.2 2005/10/29 17:28:19 yamt Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.3.2.3 2005/11/02 11:58:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.3.2.2 2005/10/29 17:28:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.3.2.3 2005/11/02 11:58:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>

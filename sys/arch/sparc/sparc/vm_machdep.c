@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 2005/06/10 05:10:12 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.83.4.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.4.1 2005/11/02 11:57:55 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -151,6 +151,14 @@ vunmapbuf(bp, len)
 	if (CACHEINFO.c_vactype != VAC_NONE)
 		cpuinfo.cache_flush(bp->b_data, len);
 #endif
+}
+
+
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
 }
 
 

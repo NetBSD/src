@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.53 2003/01/18 21:21:28 thorpej Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.53.20.1 2005/11/02 11:57:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53 2003/01/18 21:21:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53.20.1 2005/11/02 11:57:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53 2003/01/18 21:21:28 thorpej Exp 
 
 #include <compat/linux/linux_syscallargs.h>
 
-/* Used on: arm, i386, m68k, ppc */
+/* Used on: arm, i386, m68k, ppc, amd64 */
 /* Not used on: alpha, mips, sparc, sparc64 */
 /* Alpha, mips, sparc and sparc64 pass one of the fds in a register */
 
@@ -74,13 +74,25 @@ linux_sys_pipe(l, v, retval)
 		syscallarg(int *) pfds;
 	} */ *uap = v;
 	int error;
+#ifdef __amd64__
+	int pfds[2];
+#endif
 
 	if ((error = sys_pipe(l, 0, retval)))
 		return error;
 
+#ifndef __amd64__
 	/* Assumes register_t is an int */
 	if ((error = copyout(retval, SCARG(uap, pfds), 2 * sizeof (int))))
 		return error;
+#else
+	/* On amd64, sizeof(register_t) != sizeof(int) */
+	pfds[0] = (int)retval[0];
+	pfds[1] = (int)retval[1];
+
+	if ((error = copyout(pfds, SCARG(uap, pfds), sizeof(pfds))))
+		return error;
+#endif
 
 	retval[0] = 0;
 	return 0;

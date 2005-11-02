@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.2 2005/09/13 04:40:42 christos Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.2.2.1 2005/11/02 11:58:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.2 2005/09/13 04:40:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.2.2.1 2005/11/02 11:58:29 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>

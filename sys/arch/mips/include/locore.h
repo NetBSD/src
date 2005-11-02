@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.69 2005/09/08 15:13:23 tsutsui Exp $ */
+/* $NetBSD: locore.h,v 1.69.2.1 2005/11/02 11:57:55 yamt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -22,7 +22,7 @@
  */
 
 #ifndef _MIPS_LOCORE_H
-#define  _MIPS_LOCORE_H
+#define _MIPS_LOCORE_H
 
 #ifndef _LKM
 #include "opt_cputype.h"
@@ -231,10 +231,10 @@ extern long *mips_locoresw[];
 #define proc_trampoline		mips3_proc_trampoline
 #define wbflush()		mips3_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
-#define	MachSetPID		mips32_SetPID
-#define	MIPS_TBIAP()		mips32_TBIAP(mips_num_tlb_entries)
-#define	MIPS_TBIS		mips32_TBIS
-#define	MachTLBUpdate		mips32_TLBUpdate
+#define MachSetPID		mips32_SetPID
+#define MIPS_TBIAP()		mips32_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips32_TBIS
+#define MachTLBUpdate		mips32_TLBUpdate
 #define proc_trampoline		mips32_proc_trampoline
 #define wbflush()		mips32_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
@@ -270,29 +270,29 @@ extern long *mips_locoresw[];
  */
 typedef int mips_prid_t;
 
-#define	MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
-#define	MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
+#define MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
+#define MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
 
 /* pre-MIPS32/64 */
-#define	MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
-#define	MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
-#define	MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
+#define MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
+#define MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
+#define MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
 
 /* MIPS32/64 */
-#define	MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
-#define	    MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32/64 */
-#define	    MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
-#define	    MIPS_PRID_CID_BROADCOM	0x02	/* Broadcom */
-#define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
-#define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
-#define	    MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
-#define	    MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
-#define	    MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
-#define	    MIPS_PRID_CID_LSI		0x08	/* LSI */
+#define MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
+#define     MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32/64 */
+#define     MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
+#define     MIPS_PRID_CID_BROADCOM	0x02	/* Broadcom */
+#define     MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
+#define     MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
+#define     MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
+#define     MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
+#define     MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
+#define     MIPS_PRID_CID_LSI		0x08	/* LSI */
 				/*	0x09	unannounced */
 				/*	0x0a	unannounced */
-#define	    MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
-#define	MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
+#define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
+#define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL
 /*
@@ -315,45 +315,45 @@ void mips_machdep_cache_config(void);
  * trapframe argument passed to trap()
  */
 
-#define	TF_AST		0
-#define	TF_V0		1
-#define	TF_V1		2
-#define	TF_A0		3
-#define	TF_A1		4
-#define	TF_A2		5
-#define	TF_A3		6
-#define	TF_T0		7
-#define	TF_T1		8
-#define	TF_T2		9
-#define	TF_T3		10
+#define TF_AST		0
+#define TF_V0		1
+#define TF_V1		2
+#define TF_A0		3
+#define TF_A1		4
+#define TF_A2		5
+#define TF_A3		6
+#define TF_T0		7
+#define TF_T1		8
+#define TF_T2		9
+#define TF_T3		10
 
 #if defined(__mips_n32) || defined(__mips_n64)
-#define	TF_A4		11
-#define	TF_A5		12
-#define	TF_A6		13
-#define	TF_A7		14
+#define TF_A4		11
+#define TF_A5		12
+#define TF_A6		13
+#define TF_A7		14
 #else
-#define	TF_T4		11
-#define	TF_T5		12
-#define	TF_T6		13
-#define	TF_T7		14
+#define TF_T4		11
+#define TF_T5		12
+#define TF_T6		13
+#define TF_T7		14
 #endif /* __mips_n32 || __mips_n64 */
 
-#define	TF_TA0		11
-#define	TF_TA1		12
-#define	TF_TA2		13
-#define	TF_TA3		14
+#define TF_TA0		11
+#define TF_TA1		12
+#define TF_TA2		13
+#define TF_TA3		14
 
-#define	TF_T8		15
-#define	TF_T9		16
+#define TF_T8		15
+#define TF_T9		16
 
-#define	TF_RA		17
-#define	TF_SR		18
-#define	TF_MULLO	19
-#define	TF_MULHI	20
-#define	TF_EPC		21		/* may be changed by trap() call */
+#define TF_RA		17
+#define TF_SR		18
+#define TF_MULLO	19
+#define TF_MULHI	20
+#define TF_EPC		21		/* may be changed by trap() call */
 
-#define	TF_NREGS	22
+#define TF_NREGS	22
 
 struct trapframe {
 	mips_reg_t tf_regs[TF_NREGS];

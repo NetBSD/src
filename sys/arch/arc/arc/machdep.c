@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2005/09/29 10:39:43 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.1 2005/11/02 11:57:54 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/09/29 10:39:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.1 2005/11/02 11:57:54 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -137,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/09/29 10:39:43 tsutsui Exp $")
 #include <dev/isa/isareg.h>
 
 #include <arc/arc/arcbios.h>
+#include <arc/arc/timervar.h>
 #include <arc/arc/wired_map.h>
 
 #include "ksyms.h"
@@ -362,6 +363,15 @@ mach_init(int argc, char *argv[], char *envv[])
 
 	(*platform->init)();
 	cpuspeed = platform->clock;
+	curcpu()->ci_cpu_freq = platform->clock * 1000000;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		curcpu()->ci_cycles_per_hz /= 2;
+		curcpu()->ci_divisor_delay /= 2;
+	}
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
@@ -646,17 +656,23 @@ arc_sysreset(bus_addr_t addr, bus_size_t cmd_offset)
 void
 microtime(struct timeval *tvp)
 {
-	int s = splclock();
+	int s;
 	static struct timeval lasttime;
+	uint32_t count, res;
 
+	s = splclock();
 	*tvp = time;
-#ifdef notdef
-	tvp->tv_usec += clkread();
+
+	/* 32bit wrap-around during subtraction ok here. */
+	count = mips3_cp0_count_read() - last_cp0_count;
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
+	tvp->tv_usec += res;
+
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-#endif
+
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
 	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
