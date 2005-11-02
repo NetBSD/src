@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.26 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.27 2005/11/02 12:39:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.26 2005/08/30 22:01:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.27 2005/11/02 12:39:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -383,7 +383,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		}
 
 		/*
-		 * increase file size now, VOP_BALLOC() requires that
+		 * increase file size now, ext2fs_balloc() requires that
 		 * EOF be up-to-date before each call.
 		 */
 

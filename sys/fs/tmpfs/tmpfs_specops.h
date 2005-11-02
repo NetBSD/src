@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.h,v 1.3 2005/11/02 05:39:16 dyoung Exp $	*/
+/*	$NetBSD: tmpfs_specops.h,v 1.4 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -92,12 +92,6 @@ int	tmpfs_spec_write	(void *);
 #define	tmpfs_spec_pathconf	spec_pathconf
 #define	tmpfs_spec_islocked	tmpfs_islocked
 #define	tmpfs_spec_advlock	spec_advlock
-#define	tmpfs_spec_blkatoff	spec_blkatoff
-#define	tmpfs_spec_valloc	spec_valloc
-#define	tmpfs_spec_reallocblks	spec_reallocblks
-#define	tmpfs_spec_vfree	spec_vfree
-#define	tmpfs_spec_truncate	spec_truncate
-#define	tmpfs_spec_update	tmpfs_update
 #define	tmpfs_spec_lease	tmpfs_lease
 #define	tmpfs_spec_bwrite	vn_bwrite
 #define	tmpfs_spec_getpages	spec_getpages

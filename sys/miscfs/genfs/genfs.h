@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.18 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: genfs.h,v 1.19 2005/11/02 12:38:59 yamt Exp $	*/
 
 int	genfs_badop(void *);
 int	genfs_nullop(void *);
@@ -14,7 +14,6 @@ int	genfs_nounlock(void *);
 int	genfs_poll(void *);
 int	genfs_kqfilter(void *);
 int	genfs_fcntl(void *);
-int	genfs_fsync(void *);
 int	genfs_seek(void *);
 int	genfs_abortop(void *);
 int	genfs_revoke(void *);
