@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.4 2005/11/02 05:41:50 dyoung Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.5 2005/11/02 12:38:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.4 2005/11/02 05:41:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.5 2005/11/02 12:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -96,12 +96,6 @@ const struct vnodeopv_entry_desc tmpfs_specop_entries[] = {
 	{ &vop_pathconf_desc,		tmpfs_spec_pathconf },
 	{ &vop_islocked_desc,		tmpfs_spec_islocked },
 	{ &vop_advlock_desc,		tmpfs_spec_advlock },
-	{ &vop_blkatoff_desc,		tmpfs_spec_blkatoff },
-	{ &vop_valloc_desc,		tmpfs_spec_valloc },
-	{ &vop_reallocblks_desc,	tmpfs_spec_reallocblks },
-	{ &vop_vfree_desc,		tmpfs_spec_vfree },
-	{ &vop_truncate_desc,		tmpfs_spec_truncate },
-	{ &vop_update_desc,		tmpfs_spec_update },
 	{ &vop_lease_desc,		tmpfs_spec_lease },
 	{ &vop_bwrite_desc,		tmpfs_spec_bwrite },
 	{ &vop_getpages_desc,		tmpfs_spec_getpages },
@@ -120,11 +114,10 @@ tmpfs_spec_close(void *v)
 
 	int error;
 
-	error = VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-	if (error != 0)
-		return error;
+	tmpfs_update(vp, NULL, NULL, UPDATE_CLOSE);
+	error = VOCALL(spec_vnodeop_p, VOFFSET(vop_close), v);
 
-	return VOCALL(spec_vnodeop_p, VOFFSET(vop_close), v);
+	return error;
 }
 
 /* --------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.10 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.11 2005/11/02 12:38:58 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.10 2005/08/29 23:57:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.11 2005/11/02 12:38:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,8 @@ deupdat(dep, waitfor)
 	int waitfor;
 {
 
-	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor ? UPDATE_WAIT : 0));
+	return (msdosfs_update(DETOV(dep), NULL, NULL,
+	    waitfor ? UPDATE_WAIT : 0));
 }
 
 /*

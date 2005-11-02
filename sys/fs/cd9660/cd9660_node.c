@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.11 2005/08/30 18:47:19 xtraeme Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.12 2005/11/02 12:38:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.11 2005/08/30 18:47:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.12 2005/11/02 12:38:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,8 +371,8 @@ cd9660_defattr(isodir, inop, bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -423,8 +423,8 @@ cd9660_deftstamp(isodir,inop,bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
