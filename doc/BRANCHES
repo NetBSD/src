@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.52 2005/11/02 12:12:36 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.53 2005/11/02 12:44:24 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -827,9 +827,9 @@ Notes:
 
 Branch:		yamt-vop
 Description:	remove several VOPs
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	Wed Oct 19 2005
-End Date:	
+End Date:	Wed Nov  2 2005
 Base Tag:	yamt-vop-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
