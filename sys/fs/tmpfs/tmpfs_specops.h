@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.h,v 1.2 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_specops.h,v 1.3 2005/11/02 05:39:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ int	tmpfs_spec_write	(void *);
 #define	tmpfs_spec_truncate	spec_truncate
 #define	tmpfs_spec_update	tmpfs_update
 #define	tmpfs_spec_lease	tmpfs_lease
-#define	tmpfs_spec_bwrite	tmpfs_bwrite
+#define	tmpfs_spec_bwrite	vn_bwrite
 #define	tmpfs_spec_getpages	spec_getpages
 #define	tmpfs_spec_putpages	spec_putpages
 
