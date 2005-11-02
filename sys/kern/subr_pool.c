@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.106 2005/10/16 02:55:18 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.107 2005/11/02 14:32:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.106 2005/10/16 02:55:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.107 2005/11/02 14:32:54 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1583,7 +1583,6 @@ pool_print(struct pool *pp, const char *modif)
 void
 pool_printit(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 {
-	int didlock = 0;
 
 	if (pp == NULL) {
 		(*pr)("Must specify a pool to print.\n");
@@ -1602,12 +1601,9 @@ pool_printit(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	if (simple_lock_try(&pp->pr_slock) == 0)
 		(*pr)("WARNING: pool %s is locked\n", pp->pr_wchan);
 	else
-		didlock = 1;
+		simple_unlock(&pp->pr_slock);
 
 	pool_print1(pp, modif, pr);
-
-	if (didlock)
-		simple_unlock(&pp->pr_slock);
 }
 
 static void
