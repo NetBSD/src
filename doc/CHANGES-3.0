@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.295 2005/11/01 22:38:16 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.296 2005/11/03 10:33:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13805,4 +13805,11 @@ usr.sbin/mdconfig/mdconfig.c			1.4
 
 	Use correct types, allow size to be larger than 1 TB.
 	[chs, ticket #925]
+
+sys/dev/scsipi/scsipi_ioctl.c			1.54
+
+	Don't claim there is a data in or out phase if the datalen is 0
+	(userland shouldn't claim it either, but a buggy software shouldn't be
+	able to crash the kernel anyway). Fixes port-sparc64/31925.
+	[bouyer, ticket #928]
 
