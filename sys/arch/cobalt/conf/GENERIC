@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2005/09/10 19:20:49 jmmv Exp $
+# $NetBSD: GENERIC,v 1.83 2005/11/03 16:48:29 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32
 
@@ -50,7 +50,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	BUFQ_PRIOCSCAN
 
 # Debugging options
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# kernel dynamic debugger

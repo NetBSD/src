@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.44 2005/10/07 17:46:33 tsutsui Exp $
+# $NetBSD: GENERIC.in,v 1.45 2005/11/03 16:48:29 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -254,7 +254,7 @@ options 	NTP		# NTP phase/frequency locked loop
 #
 options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
