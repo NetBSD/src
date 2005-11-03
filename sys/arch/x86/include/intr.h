@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2005/10/29 11:07:45 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2005/11/03 13:06:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -165,20 +165,6 @@ spllower(int nlevel)
 	}
 }
 
-/*
- * Hardware interrupt masks
- */
-#define	splbio()	splraise(IPL_BIO)
-#define	splnet()	splraise(IPL_NET)
-#define	spltty()	splraise(IPL_TTY)
-#define spllpt()	spltty()
-#define	splaudio()	splraise(IPL_AUDIO)
-#define	splclock()	splraise(IPL_CLOCK)
-#define	splstatclock()	splclock()
-#define	splserial()	splraise(IPL_SERIAL)
-#define splipi()	splraise(IPL_IPI)
-#define splraiseipl(x) 	splraise(x)
-
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
 
 /*
@@ -189,19 +175,14 @@ spllower(int nlevel)
  */
 #define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
 
-#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()	splraise(IPL_SOFTNET)
-#define	splsoftserial()	splraise(IPL_SOFTSERIAL)
-
 /*
  * Miscellaneous
  */
-#define	splvm()		splraise(IPL_VM)
-#define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
-#define	splsched()	splraise(IPL_SCHED)
-#define spllock() 	splhigh()
+#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+#include <sys/spl.h>
 
 /*
  * Software interrupt registration
