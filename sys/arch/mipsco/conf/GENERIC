@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52 2005/09/10 19:20:49 jmmv Exp $
+# $NetBSD: GENERIC,v 1.53 2005/11/03 16:48:30 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -54,7 +54,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
-options 	DIAGNOSTIC		# extra kernel sanity checking
+#options 	DIAGNOSTIC		# extra kernel sanity checking
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
 #options 	KGDB			# Remote kernel debug using gdb
