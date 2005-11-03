@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.34 2004/12/29 11:34:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2005/11/03 21:16:41 dillo Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2004/12/29 11:34:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2005/11/03 21:16:41 dillo Exp $");
 #endif
 #endif
 
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: main.c,v 1.34 2004/12/29 11:34:59 agc Exp $");
 #include "add.h"
 #include "verify.h"
 
-static char Options[] = "IK:LMRSVW:fhnp:s:t:uvw:";
+static char Options[] = "AIK:LMRSVW:fhnp:s:t:uvw:";
 
 char   *Prefix = NULL;
 char   *View = NULL;
@@ -45,6 +45,7 @@ char   *Viewbase = NULL;
 Boolean NoView = FALSE;
 Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
+Boolean Automatic = FALSE;
 
 char   *Mode = NULL;
 char   *Owner = NULL;
@@ -59,7 +60,7 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_add [-fhILMnRSuVv] [-p prefix] [-s verification-type]",
+	    "usage: pkg_add [-AfhILMnRSuVv] [-p prefix] [-s verification-type]",
 	    "               [-t template] [-W viewbase] [-w view]",
 	    "               pkg-name [pkg-name ...]");
 	exit(1);
@@ -76,6 +77,10 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1) {
 		switch (ch) {
+		case 'A':
+			Automatic = TRUE;
+			break;
+
 		case 'f':
 			Force = TRUE;
 			break;

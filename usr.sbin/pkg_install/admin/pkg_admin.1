@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.35 2005/02/26 14:09:58 grant Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.36 2005/11/03 21:16:41 dillo Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 13, 2004
+.Dd November 1, 2005
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -37,14 +37,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl bqSV
-.Nb -words
 .Op Fl d Ar lsdir
-.Bk -words
 .Op Fl K Ar pkg_dbdir
-.Ek
-.Bk -words
 .Op Fl s Ar sfx_pattern
-.Ek
 .Ar command Op args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the
@@ -200,7 +195,17 @@ and
 .Xr pkg_create 1 .
 .Pp
 Needs to be run as root.
+.It Cm set Ar variable=value pkg ...
+Set variable with information about the installed package.
+Use
+.Cm unset
+to remove a variable.
 .Pp
+Packages that are not installed directly by the user but pulled in as
+dependencies are marked by setting
+.Dq automatic=YES .
+.It Cm unset Ar variable pkg ...
+Remove an installation variable.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent -compact
