@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.51 2005/10/29 14:38:51 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.52 2005/11/03 13:06:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -121,10 +121,16 @@ struct scbvec {
 #define	IPL_BIO		ALPHA_PSL_IPL_IO   /* block I/O interrupts */
 #define	IPL_NET		ALPHA_PSL_IPL_IO   /* network interrupts */
 #define	IPL_TTY		ALPHA_PSL_IPL_IO   /* terminal interrupts */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		ALPHA_PSL_IPL_IO   /* interrupts that can alloc mem */
 #define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK/* clock interrupts */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH /* all interrupts */
 #define	IPL_SERIAL	ALPHA_PSL_IPL_IO   /* serial interrupts */
+
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
+#define	IPL_IPI		IPL_CLOCK	/* AARM, 5-2, II-B */
 
 #define	SI_SOFTSERIAL	0
 #define	SI_SOFTNET	1
@@ -174,23 +180,7 @@ _splraise(int s)
 
 #define	splraiseipl(ipl)	_splraise((ipl))
 
-#define splsoft()		_splraise(ALPHA_PSL_IPL_SOFT)
-#define splsoftserial()		splsoft()
-#define splsoftclock()		splsoft()
-#define splsoftnet()		splsoft()
-#define splnet()		_splraise(ALPHA_PSL_IPL_IO)
-#define splbio()		_splraise(ALPHA_PSL_IPL_IO)
-#define splvm()			_splraise(ALPHA_PSL_IPL_IO)
-#define spltty()		_splraise(ALPHA_PSL_IPL_IO)
-#define splserial()		_splraise(ALPHA_PSL_IPL_IO)
-#define splclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
-#define splstatclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
-#define splhigh()		_splraise(ALPHA_PSL_IPL_HIGH)
-
-#define	splsched()		splhigh()
-#define	spllock()		splhigh()
-#define	splipi()		splclock()	/* AARM, 5-2, II-B */
-#define spllpt()		spltty()
+#include <sys/spl.h>
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
