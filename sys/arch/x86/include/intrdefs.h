@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.4 2005/04/16 07:45:59 yamt Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.5 2005/11/03 13:06:06 yamt Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -27,11 +27,14 @@
 #define	IPL_NET		0x7	/* network */
 #define	IPL_SOFTSERIAL	0x8	/* serial */
 #define	IPL_TTY		0x9	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		0xa	/* memory allocation */
 #define	IPL_AUDIO	0xb	/* audio */
 #define	IPL_CLOCK	0xc	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	0xd	/* everything */
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0xd	/* serial */
 #define IPL_IPI		0xe	/* inter-processor interrupts */
 #define	NIPL		16
