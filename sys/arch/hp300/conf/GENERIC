@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2005/09/10 19:20:49 jmmv Exp $
+# $NetBSD: GENERIC,v 1.124 2005/11/03 16:48:29 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	32		# estimated number of users
 
@@ -68,7 +68,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	BUFQ_PRIOCSCAN
 
 # Debugging options
-options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
