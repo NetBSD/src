@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.54 2005/05/31 21:03:58 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.55 2005/11/03 21:59:55 dillo Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.54 2005/05/31 21:03:58 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.55 2005/11/03 21:59:55 dillo Exp $");
 #endif
 #endif
 
@@ -33,6 +33,10 @@ __RCSID("$NetBSD: str.c,v 1.54 2005/05/31 21:03:58 wiz Exp $");
 #include <err.h>
 #include <fnmatch.h>
 #include "lib.h"
+#include "dewey.h"
+
+/* pull in definitions and macros for resizing arrays as we go */
+#include "defs.h"
 
 /*
  * Return the suffix portion of a path
@@ -101,209 +105,6 @@ str_lowercase(unsigned char *s)
 	}
 }
 
-/* pull in definitions and macros for resizing arrays as we go */
-#include "defs.h"
-
-/* do not modify these values, or things will NOT work */
-enum {
-        Alpha = -3,
-        Beta = -2,
-        RC = -1,
-        Dot = 0,
-        Patch = 1
-};
-
-/* this struct defines a version number */
-typedef struct arr_t {
-	unsigned	c;              /* # of version numbers */
-	unsigned	size;           /* size of array */
-	int64_t        *v;              /* array of decimal numbers */
-	int64_t		netbsd;         /* any "nb" suffix */
-} arr_t;
-
-/* this struct describes a test */
-typedef struct test_t {
-	const char     *s;              /* string representation */
-	unsigned	len;            /* length of string */
-	int		t;              /* enumerated type of test */
-} test_t;
-
-enum {
-	LT,
-	LE,
-	EQ,
-	GE,
-	GT,
-	NE
-};
-
-/* the tests that are recognised. */
-static const test_t   tests[] = {
-        {	"<=",	2,	LE	},
-        {	"<",	1,	LT	},
-        {	">=",	2,	GE	},
-        {	">",	1,	GT	},
-        {	"==",	2,	EQ	},
-        {	"!=",	2,	NE	},
-        {	NULL,	0,	0	}
-};
-
-static const test_t	modifiers[] = {
-	{	"alpha",	5,	Alpha	},
-	{	"beta",		4,	Beta	},
-	{	"pre",		3,	RC	},
-	{	"rc",		2,	RC	},
-	{	"pl",		2,	Dot	},
-	{	"_",		1,	Dot	},
-	{	".",		1,	Dot	},
-	{	NULL,		0,	0	}
-};
-
-
-
-/* locate the test in the tests array */
-static int
-mktest(int *op, const char *test)
-{
-	const test_t *tp;
-
-	for (tp = tests ; tp->s ; tp++) {
-		if (strncasecmp(test, tp->s, tp->len) == 0) {
-			*op = tp->t;
-			return tp->len;
-		}
-	}
-	warnx("relational test not found `%.10s'", test);
-	return -1;
-}
-
-/*
- * make a component of a version number.
- * '.' encodes as Dot which is '0'
- * '_' encodes as 'patch level', or 'Dot', which is 0.
- * 'pl' encodes as 'patch level', or 'Dot', which is 0.
- * 'alpha' encodes as 'alpha version', or Alpha, which is -3.
- * 'beta' encodes as 'beta version', or Beta, which is -2.
- * 'rc' encodes as 'release candidate', or RC, which is -1.
- * 'nb' encodes as 'netbsd version', which is used after all other tests
- */
-static int
-mkcomponent(arr_t *ap, const char *num)
-{
-	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
-	const test_t	       *modp;
-	int64_t                 n;
-	const char             *cp;
-
-	if (*num == 0) {
-		return 0;
-	}
-	ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
-	if (isdigit((unsigned char)*num)) {
-		for (cp = num, n = 0 ; isdigit((unsigned char)*num) ; num++) {
-			n = (n * 10) + (*num - '0');
-		}
-		ap->v[ap->c++] = n;
-		return (int)(num - cp);
-	}
-	for (modp = modifiers ; modp->s ; modp++) {
-		if (strncasecmp(num, modp->s, modp->len) == 0) {
-			ap->v[ap->c++] = modp->t;
-			return modp->len;
-		}
-	}
-	if (strncasecmp(num, "nb", 2) == 0) {
-		for (cp = num, num += 2, n = 0 ; isdigit((unsigned char)*num) ; num++) {
-			n = (n * 10) + (*num - '0');
-		}
-		ap->netbsd = n;
-		return (int)(num - cp);
-	}
-	if (isalpha((unsigned char)*num)) {
-		ap->v[ap->c++] = Dot;
-		cp = strchr(alphas, tolower((unsigned char)*num));
-		ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
-		ap->v[ap->c++] = (int64_t)(cp - alphas) + 1;
-		return 1;
-	}
-	warnx("`%c' not recognised", *num);
-	return 1;
-}
-
-/* make a version number string into an array of comparable 64bit ints */
-static int
-mkversion(arr_t *ap, const char *num)
-{
-	(void) memset(ap, 0, sizeof(arr_t));
-	while (*num) {
-		num += mkcomponent(ap, num);
-	}
-	return 1;
-}
-
-#define DIGIT(v, c, n) (((n) < (c)) ? v[n] : 0)
-
-/* compare the result against the test we were expecting */
-static int
-result(int64_t cmp, int tst)
-{
-	switch(tst) {
-	case LT:
-		return cmp < 0;
-	case LE:
-		return cmp <= 0;
-	case GT:
-		return cmp > 0;
-	case GE:
-		return cmp >= 0;
-	case EQ:
-		return cmp == 0;
-	case NE:
-		return cmp != 0;
-	default:
-		warnx("result: unknown test %d", tst);
-		return 0;
-	}
-}
-
-/* do the test on the 2 vectors */
-static int
-vtest(arr_t *lhs, int tst, arr_t *rhs)
-{
-	int64_t cmp;
-	int     c;
-	int     i;
-
-	for (i = 0, c = MAX(lhs->c, rhs->c) ; i < c ; i++) {
-		if ((cmp = DIGIT(lhs->v, lhs->c, i) - DIGIT(rhs->v, rhs->c, i)) != 0) {
-			return result(cmp, tst);
-		}
-	}
-	return result(lhs->netbsd - rhs->netbsd, tst);
-}
-
-/*
- * Compare two dewey decimal numbers
- */
-static int
-deweycmp(const char *lhs, int op, const char *rhs)
-{
-	arr_t	right;
-	arr_t	left;
-
-	(void) memset(&left, 0, sizeof(left));
-	if (!mkversion(&left, lhs)) {
-		warnx("Bad lhs version `%s'", lhs);
-		return 0;
-	}
-	(void) memset(&right, 0, sizeof(right));
-	if (!mkversion(&right, rhs)) {
-		warnx("Bad rhs version `%s'", rhs);
-		return 0;
-	}
-        return vtest(&left, op, &right);
-}
-
 /*
  * Perform alternate match on "pkg" against "pattern",
  * calling pmatch (recursively) to resolve any other patterns.
@@ -350,73 +151,6 @@ alternate_match(const char *pattern, const char *pkg)
 		}
 	}
 	return found;
-}
-
-/*
- * Perform dewey match on "pkg" against "pattern".
- * Return 1 on match, 0 otherwise
- */
-static int
-dewey_match(const char *pattern, const char *pkg)
-{
-	const char *version;
-	const char *sep, *sep2;
-	int op, op2;
-	int n;
-
-	/* compare names */
-	if ((version=strrchr(pkg, '-')) == NULL) {
-#if 0
-		/* too noisy, warns about "pkgdb.byfile.db" on
-		 * every invocation */
-		warnx("Invalid package name `%s'", pkg);
-#endif
-		return 0;
-	}
-	if ((sep = strpbrk(pattern, "<>")) == NULL)
-		errx(EXIT_FAILURE, "dewey_match: '<' or '>' expected in `%s'", pattern);
-	/* compare name lengths */
-	if ((sep-pattern != version-pkg) ||
-	    strncmp(pkg, pattern, (size_t)(version-pkg)) != 0)
-		return 0;
-	version++;
-	
-	/* extract comparison operator */
-        if ((n = mktest(&op, sep)) < 0) {
-                warnx("Bad comparison `%s'", sep);
-		return 0;
-        }
-	/* skip operator */
-	sep += n;
-
-	/* if greater than, look for less than */
-	sep2 = NULL;
-	if (op == GT || op == GE) {
-		if ((sep2 = strchr(sep, '<')) != NULL) {
-			if ((n = mktest(&op2, sep2)) < 0) {
-				warnx("Bad comparison `%s'", sep2);
-				return 0;
-			}
-			/* compare upper limit */
-			if (!deweycmp(version, op2, sep2+n))
-				return 0;
-		}
-	}
-
-	/* compare only pattern / lower limit */
-	if (sep2) {
-		char ver[PKG_PATTERN_MAX];
-
-		strlcpy(ver, sep, MIN(sizeof(ver), sep2-sep+1));
-		if (deweycmp(version, op, ver))
-			return 1;
-	}
-	else {
-		if (deweycmp(version, op, sep))
-			return 1;
-	}
-
-	return 0;
 }
 
 /*
@@ -567,7 +301,8 @@ findbestmatchingname_fn(const char *found, void *vp)
 	} else {
 		/* if best_version==NULL only if best==NULL
 		 * (or best[0]='\0') */
-		if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
+		if (best == NULL || best[0] == '\0' ||
+		    dewey_cmp(found_version, DEWEY_GT, best_version)) {
 			/* found pkg(version) is bigger than current "best"
 			 * version - remember! */
 			strcpy(best, found);
