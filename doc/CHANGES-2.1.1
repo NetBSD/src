@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.6 2005/10/31 21:01:09 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.7 2005/11/03 21:04:23 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -69,4 +69,22 @@ dist/ntp/ntpd/ntpd.c				1.8
 	Use group-id from ``gr'' and not ``pw''.
 	Fixes security issue addressed by CAN-2005-2496.
 	[dan, ticket #5958]
+
+sys/dev/scsipi/scsipi_ioctl.c			1.54
+
+	Don't claim there is a data in or out phase if the datalen is 0
+	(userland shouldn't claim it either, but a buggy software shouldn't
+	be able to crash the kernel anyway). Should fix port-sparc64/31925
+	by Johan A.van Zanten (which should really be kern/31925).
+	Analysed and patch tested by Martin Husemann.
+	[bouyer, ticket #5961]
+
+distrib/utils/sysinst/util.c			1.137
+
+	Don't redisplay the title messages before displaying sub-menus
+	during set selection (eg selecting the X sets).
+	libcurses got changed earlier in the year so that the erase (and
+	refresh) of the message window caused all the unchanged spaces
+	to be redrawn overwriting most of the main set selection window.
+	[dsl, ticket #5964]
 
