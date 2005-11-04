@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.136 2005/10/06 10:20:58 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.137 2005/11/04 19:39:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.136 2005/10/06 10:20:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137 2005/11/04 19:39:30 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -190,24 +190,23 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
-		while (uio->uio_offset < np->n_size && uio->uio_resid > 0) {
+		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
-			const u_quad_t nsize = np->n_size;
-			vsize_t bytelen = MIN(nsize - uio->uio_offset,
-					      uio->uio_resid);
+			vsize_t bytelen;
 
+			nfs_delayedtruncate(vp);
+			if (np->n_size <= uio->uio_offset) {
+				break;
+			}
+			bytelen =
+			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
 			if (error) {
-				if (nsize <= np->n_size) {
-					/* report error */
-					break;
-				}
-
 				/*
 				 * XXXkludge
 				 * the file has been truncated on the server.
@@ -216,6 +215,8 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 				if (uio->uio_offset >= np->n_size) {
 					/* end of file */
 					error = 0;
+				} else {
+					break;
 				}
 			}
 		}
