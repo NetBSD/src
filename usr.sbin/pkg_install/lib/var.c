@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1 2005/11/03 21:16:41 dillo Exp $	*/
+/*	$NetBSD: var.c,v 1.2 2005/11/04 09:26:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.1 2005/11/03 21:16:41 dillo Exp $");
+__RCSID("$NetBSD: var.c,v 1.2 2005/11/04 09:26:05 hannken Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -87,7 +87,7 @@ var_get(const char *fname, const char *variable)
 		else {
 			value = malloc(thislen+1);
 		}
-		sprintf(value+valuelen, "%.*s", thislen, p);
+		sprintf(value+valuelen, "%.*s", (int)thislen, p);
 		valuelen += thislen;
 	}
 	(void) fclose(fp);
@@ -146,7 +146,7 @@ var_set(const char *fname, const char *variable, const char *value)
 	if (fp) {
 		while ((line = fgetln(fp, &len)) != (char *) NULL) {
 			if (var_cmp(line, len, variable, varlen) == NULL)
-				fprintf(fout, "%.*s", len, line);
+				fprintf(fout, "%.*s", (int)len, line);
 			else {
 				if (!done && value) {
 					var_print(fout, variable, value);
@@ -230,7 +230,7 @@ var_print(FILE *f, const char *variable, const char *value)
 
 	while ((p=strchr(value, '\n')) != NULL) {
 		if (p != value)
-			fprintf(f, "%s=%.*s\n", variable, p-value, value);
+			fprintf(f, "%s=%.*s\n", variable, (int)(p-value), value);
 		value = p+1;
 	}
 
