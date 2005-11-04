@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.77 2005/06/22 15:10:51 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.78 2005/11/04 16:54:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77 2005/06/22 15:10:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.78 2005/11/04 16:54:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77 2005/06/22 15:10:51 manu Exp $")
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_futex.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
@@ -261,17 +262,24 @@ linux_e_proc_exit(p)
 	if (e->clear_tid != NULL) {
 		int error;
 		int null = 0;
+		struct linux_sys_futex_args cup;
+		register_t retval;
+		struct lwp *l;
 
 		if ((error = copyout(&null, 
 		    e->clear_tid, 
 		    sizeof(null))) != 0)
 			printf("linux_e_proc_exit: cannot clear TID\n");
 
-#ifdef notyet /* Not yet implemented */
-		if ((error = linux_sys_futex(e->clear_tid, 
-		    LINUX_FUTEX_WAKE, 1, NULL, NULL, 0)) != 0)
+		l = proc_representative_lwp(p);
+		SCARG(&cup, uaddr) = e->clear_tid;
+		SCARG(&cup, op) = LINUX_FUTEX_WAKE;
+		SCARG(&cup, val) = 0;
+		SCARG(&cup, timeout) = NULL;
+		SCARG(&cup, uaddr2) = NULL;
+		SCARG(&cup, val3) = 0;
+		if ((error = linux_sys_futex(l, &cup, &retval)) != 0)
 			printf("linux_e_proc_exit: linux_sys_futex failed\n");
-#endif
 	}
 
 	/* free Linux emuldata and set the pointer to null */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.19 2005/06/22 15:10:51 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.20 2005/11/04 16:54:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19 2005/06/22 15:10:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.20 2005/11/04 16:54:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -424,6 +424,17 @@ linux_sys_set_tid_address(l, v, retval)
 
 	*retval = l->l_proc->p_pid;
 
+	return 0;
+}
+
+/* ARGUSED1 */
+int
+linux_sys_gettid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	*retval = l->l_proc->p_pid;
 	return 0;
 }
 #endif /* __amd64__ */
