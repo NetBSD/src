@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.28 2005/06/03 20:48:28 he Exp $	*/
+/*	$NetBSD: cache.c,v 1.29 2005/11/04 16:19:32 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.28 2005/06/03 20:48:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.29 2005/11/04 16:19:32 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -396,6 +396,9 @@ mips_config_cache_prehistoric(void)
 
 #if defined(MIPS3) || defined(MIPS4)
 	case MIPS_R4100:
+		if ((mips3_cp0_config_read() & MIPS3_CONFIG_CS) != 0)
+			csizebase = MIPS3_CONFIG_C_4100BASE;
+
 		/*
 		 * R4100 (NEC VR series) revision number means:
 		 *
