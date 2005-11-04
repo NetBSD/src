@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.65 2005/10/31 14:36:41 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.66 2005/11/04 08:39:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.65 2005/10/31 14:36:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.66 2005/11/04 08:39:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ struct workqueue *physio_workqueue;
 
 /* abuse these members/flags of struct buf */
 #define	b_running	b_freelistindex
-#define	b_eomoffset	b_lblkno
+#define	b_endoffset	b_lblkno
 #define	B_DONTFREE	B_AGE
 
 /*
@@ -145,6 +145,7 @@ physio_done(struct work *wk, void *dummy)
 {
 	struct buf *bp = (void *)wk;
 	size_t todo = bp->b_bufsize;
+	size_t done = bp->b_bcount - bp->b_resid;
 	struct buf *mbp = bp->b_private;
 
 	KASSERT(&bp->b_work == wk);
@@ -157,10 +158,22 @@ physio_done(struct work *wk, void *dummy)
 	uvm_vsunlock(bp->b_proc, bp->b_data, todo);
 
 	simple_lock(&mbp->b_interlock);
-	if ((mbp->b_flags & B_ERROR) != 0) {
-		goto done;
+	if (__predict_false(done != todo)) {
+		off_t endoffset = dbtob(bp->b_blkno) + done;
+
+		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
+			mbp->b_endoffset = endoffset;
+		}
+		mbp->b_flags |= B_ERROR;
 	}
-	if ((bp->b_flags & B_ERROR) != 0) {
+
+	/*
+	 * EINVAL is not very important as it happens for i/o past the end
+	 * of the partition.
+	 */
+
+	if (__predict_false((bp->b_flags & B_ERROR) != 0 &&
+	    ((mbp->b_flags & B_ERROR) == 0 || mbp->b_error == EINVAL))) {
 		if (bp->b_error == 0) {
 			mbp->b_error = EIO; /* XXX */
 		} else {
@@ -169,23 +182,7 @@ physio_done(struct work *wk, void *dummy)
 		mbp->b_flags |= B_ERROR;
 		goto done;
 	}
-	KASSERT(bp->b_resid == 0); /* XXX */
-	if (bp->b_bcount != todo) {
-#if defined(DIAGNOSTIC)
-		off_t eomoffset = dbtob(bp->b_blkno);
-
-		if ((mbp->b_flags & B_ERROR) != 0 &&
-		    mbp->b_eomoffset != eomoffset) {
-			panic("%s: eom mismatch", __func__);
-		}
-		mbp->b_eomoffset = eomoffset;
-#endif /* defined(DIAGNOSTIC) */
-		mbp->b_flags |= B_ERROR;
-		mbp->b_error = 0;
-		goto done;
-	}
 done:
-	mbp->b_resid -= bp->b_bcount - bp->b_resid;
 	mbp->b_running--;
 	if ((mbp->b_flags & B_WANTED) != 0) {
 		mbp->b_flags &= ~B_WANTED;
@@ -204,7 +201,6 @@ physio_biodone(struct buf *bp)
 	size_t todo = bp->b_bufsize;
 
 	KASSERT(mbp->b_running > 0);
-	KASSERT(todo <= mbp->b_resid);
 	KASSERT(bp->b_bcount <= todo);
 	KASSERT(bp->b_resid <= bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
@@ -294,8 +290,8 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	}
 
 	mbp = getphysbuf();
-	mbp->b_resid = uio->uio_resid;
 	mbp->b_running = 0;
+	mbp->b_endoffset = -1;
 
 	PHOLD(l);
 
@@ -398,15 +394,12 @@ done_locked:
 		error = error2;
 	}
 	simple_unlock(&mbp->b_interlock);
-	KASSERT((mbp->b_flags & B_ERROR) != 0 ||
-	    mbp->b_resid == uio->uio_resid);
-#if defined(DIAGNOSTIC)
-	if ((mbp->b_flags & B_ERROR) != 0 && mbp->b_error == 0 &&
-	    uio->uio_offset - mbp->b_resid != mbp->b_eomoffset) {
-		panic("%s: eom", __func__);
+
+	if ((mbp->b_flags & B_ERROR) != 0) {
+		uio->uio_resid = uio->uio_offset - mbp->b_endoffset;
+	} else {
+		KASSERT(mbp->b_endoffset == -1);
 	}
-#endif /* defined(DIAGNOSTIC) */
-	uio->uio_resid = mbp->b_resid;
 	if (bp != NULL) {
 		putphysbuf(bp);
 	}
