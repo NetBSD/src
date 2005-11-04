@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.2 2005/10/31 17:58:07 manu Exp $ */
+/*	$NetBSD: linux_commons.c,v 1.3 2005/11/04 16:51:56 manu Exp $ */
 
 /*
  * This file includes C files from the common
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.2 2005/10/31 17:58:07 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.3 2005/11/04 16:51:56 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -34,3 +34,4 @@ __KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.2 2005/10/31 17:58:07 manu Exp $
 #include "../../common/linux_misc_notalpha.c"
 #include "../../common/linux_sig_notalpha.c"
 #include "../../common/linux_sigaction.c"
+#include "../../common/linux_futex.c"
