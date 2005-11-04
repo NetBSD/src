@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.54 2005/10/31 18:00:30 manu Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.55 2005/11/04 16:52:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.54 2005/10/31 18:00:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.55 2005/11/04 16:52:51 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,21 @@ linux_sys_pipe(l, v, retval)
 		return error;
 
 #ifndef __amd64__
+#ifdef __amd64__
+	{
+		int pfds[2];
+
+		pfds[0] = (int)retval[0];
+		pfds[1] = (int)retval[1];
+
+		if ((error = copyout(pfds, SCARG(uap, pfds), sizeof(pfds))))
+			return error;
+	}
+#else
 	/* Assumes register_t is an int */
 	if ((error = copyout(retval, SCARG(uap, pfds), 2 * sizeof (int))))
 		return error;
+#endif
 #else
 	/* On amd64, sizeof(register_t) != sizeof(int) */
 	pfds[0] = (int)retval[0];
