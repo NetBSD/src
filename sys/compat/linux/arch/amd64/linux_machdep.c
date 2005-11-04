@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 2005/06/24 22:57:05 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.10 2005/11/04 16:49:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2005/06/24 22:57:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.10 2005/11/04 16:49:55 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2005/06/24 22:57:05 manu Exp $
 #include <sys/proc.h>
 #include <sys/ptrace.h> /* for process_read_fpregs() */
 #include <sys/user.h>
+#include <sys/wait.h>
 #include <sys/ucontext.h>
 
 #include <machine/reg.h>
