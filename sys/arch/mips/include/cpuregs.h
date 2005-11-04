@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.65 2003/10/29 23:41:10 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.66 2005/11/04 16:19:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -310,15 +310,12 @@
 #define	MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define	MIPS3_CONFIG_IC_SHIFT	9
 #define	MIPS3_CONFIG_C_DEFBASE	0x1000		/* default base 2^12 */
-#ifdef MIPS3_4100				/* VR4100 core */
-/* XXXCDC: THIS MIPS3_4100 SPECIAL CASE SHOULD GO AWAY */
-#define	MIPS3_CONFIG_CS		0x00001000	/* cache size mode indication*/
-#define	MIPS3_CONFIG_CACHE_SIZE(config, mask, dummy, shift) \
-	((((config)&MIPS3_CONFIG_CS)?0x400:0x1000) << (((config) & (mask)) >> (shift)))
-#else
+
+/* Cache size mode indication: available only on Vr41xx CPUs */
+#define	MIPS3_CONFIG_CS		0x00001000
+#define	MIPS3_CONFIG_C_4100BASE	0x0400		/* base is 2^10 if CS=1 */
 #define	MIPS3_CONFIG_CACHE_SIZE(config, mask, base, shift) \
 	((base) << (((config) & (mask)) >> (shift)))
-#endif
 
 /* External cache enable: Controls L2 for R5000/Rm527x and L3 for Rm7000 */
 #define	MIPS3_CONFIG_SE		0x00001000
