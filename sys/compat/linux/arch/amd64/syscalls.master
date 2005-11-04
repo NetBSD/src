@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2005/10/18 18:37:44 joerg Exp $
+	$NetBSD: syscalls.master,v 1.7 2005/11/04 16:51:56 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -328,7 +328,7 @@
 183	UNIMPL		afs_syscall
 184	UNIMPL		tuxcall
 185	UNIMPL		security
-186	UNIMPL		gettid
+186	STD		{ pid_t linux_sys_gettid(void); }
 187	UNIMPL		readahead
 188	STD		{ int linux_sys_setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
@@ -353,7 +353,9 @@
 199	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 200	UNIMPL		tkill
 201	STD		{ int linux_sys_time(linux_time_t *t); }
-202	UNIMPL		futex
+202	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
+			    const struct timespec *timeout, int *uaddr2, \
+			    int val3); }
 203	UNIMPL		sched_setaffinity
 204	UNIMPL		sched_getaffinity
 205	UNIMPL		set_thread_area
