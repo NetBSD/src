@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.141 2005/10/30 16:25:50 chs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.142 2005/11/04 16:58:14 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.141 2005/10/30 16:25:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.142 2005/11/04 16:58:14 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,11 @@ linux_sys_uname(l, v, retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
+#ifdef LINUX_UNAME_ARCH
+	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+#else
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+#endif
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
