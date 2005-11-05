@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.17 2005/09/08 15:19:58 tsutsui Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.18 2005/11/05 09:46:07 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -118,6 +118,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_mips3_wired.h"
 
 #include <sys/cdefs.h>
 
@@ -1593,6 +1594,68 @@ LEAF(MIPSX(SetPID))
 	nop
 END(MIPSX(SetPID))
 
+#if defined(ENABLE_MIPS3_WIRED_MAP)
+/*--------------------------------------------------------------------------
+ *
+ * mipsN_TLBWriteIndexedVPS --
+ *
+ *      Write the given entry into the TLB at the given index.
+ *      Pass full R4000 style TLB info including variable page size mask.
+ *
+ *      mipsN_TLBWriteIndexed(unsigned int index, struct tlb *tlb)
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MIPSX(TLBWriteIndexedVPS))
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	COP0_SYNC
+	nop
+	lw	a2, 8(a1)			# fetch tlb->tlb_lo0
+	lw	a3, 12(a1)			# fetch tlb->tlb_lo1
+	mfc0	v0, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
+
+	_MTC0	a2, MIPS_COP_0_TLB_LO0		# Set up entry low0.
+	COP0_SYNC
+	_MTC0	a3, MIPS_COP_0_TLB_LO1		# Set up entry low1.
+	COP0_SYNC
+	nop
+	lw	a2, 0(a1)			# fetch tlb->tlb_mask
+	lw	a3, 4(a1)			# fetch tlb->tlb_hi
+	nop
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
+	COP0_SYNC
+	mtc0	a2, MIPS_COP_0_TLB_PG_MASK	# Set up entry pagemask.
+	COP0_SYNC
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# Set up entry high.
+	COP0_SYNC
+	nop
+	nop
+	tlbwi					# Write the TLB
+	COP0_SYNC
+	nop
+	nop
+	nop					# Delay for effect
+	nop
+
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
+	COP0_SYNC
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
+	COP0_SYNC
+	nop
+	nop
+	j       ra
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+END(MIPSX(TLBWriteIndexedVPS))
+#endif /* ENABLE_MIPS3_WIRED_MAP */
+	
 /*--------------------------------------------------------------------------
  *
  * mipsN_TLBUpdate --
