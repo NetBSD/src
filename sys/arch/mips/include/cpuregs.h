@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.66 2005/11/04 16:19:31 tsutsui Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.67 2005/11/05 18:17:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,8 +89,6 @@
 #define	MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define	MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
-#define	MIPS_KSEG2_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG2(x)	((unsigned)(x) | MIPS_KSEG2_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
