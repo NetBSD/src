@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.296 2005/11/03 10:33:31 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.297 2005/11/05 00:51:52 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13812,4 +13812,73 @@ sys/dev/scsipi/scsipi_ioctl.c			1.54
 	(userland shouldn't claim it either, but a buggy software shouldn't be
 	able to crash the kernel anyway). Fixes port-sparc64/31925.
 	[bouyer, ticket #928]
+
+sys/arch/acorn26/conf/GENERIC			1.37
+sys/arch/acorn32/conf/GENERIC			1.62
+sys/arch/alpha/conf/GENERIC			1.277
+sys/arch/amiga/conf/AMIGA			regen
+sys/arch/amiga/conf/DRACO			regen
+sys/arch/amiga/conf/GENERIC			regen
+sys/arch/amiga/conf/GENERIC.in			1.45
+sys/arch/amiga/conf/INSTALL			regen
+sys/arch/amiga/conf/WSCONS			regen
+sys/arch/arc/conf/GENERIC			1.125
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/BOOT			regen
+sys/arch/atari/conf/BOOTX			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/GENERIC.in			1.56
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/bebox/conf/GENERIC			1.89
+sys/arch/cats/conf/GENERIC			1.92
+sys/arch/cesfic/conf/GENERIC			1.38
+sys/arch/cobalt/conf/GENERIC			1.83
+sys/arch/dreamcast/conf/GENERIC			1.62
+sys/arch/hp300/conf/GENERIC			1.124
+sys/arch/iyonix/conf/GENERIC			1.21
+sys/arch/macppc/conf/GENERIC			1.214
+sys/arch/mipsco/conf/GENERIC			1.53
+sys/arch/mvme68k/conf/GENERIC			1.61
+sys/arch/netwinder/conf/GENERIC			1.70
+sys/arch/next68k/conf/GENERIC			1.96
+sys/arch/ofppc/conf/GENERIC			1.85
+sys/arch/pdp10/conf/GENERIC			1.19
+sys/arch/sbmips/conf/GENERIC			1.46
+sys/arch/shark/conf/GENERIC			1.53
+sys/arch/vax/conf/GENERIC			1.143
+
+	Turn off DEBUG and DIAGNOSTIC in GENERIC kernels so that they
+	are compatible with the LKMs that are part of the release.
+	[chs, ticket #929]
+
+lib/libc/sys/semop.2				1.16
+sys/kern/sysv_sem.c				1.57
+sys/sys/sem.h					1.20
+
+	- Fix the SYSV semop number of operations per request to be limited by
+	  seminfo.semopm (which is tunable via the SEMOPM config variable)
+	  rather than an arbitrary constant.
+	- Update errors for EIDRM (which we've returned for a long time now).
+	[chs, ticket #930]
+
+distrib/utils/sysinst/util.c			1.137
+
+	Don't redisplay the title messages before displaying sub-menus during
+	set selection (eg selecting the X sets).
+	libcurses got changed earlier in the year so that the erase (and
+	refresh) of the message window caused all the unchanged spaces to be
+	redrawn overwriting most of the main set selection window.
+	[dsl, ticket #931]
+
+usr.sbin/rpc.statd/stat_proc.c			1.7
+
+	When forking, we keep a reference to the status db file, and if the
+	memory copy of the file is dirty, is will be synced when the child
+	exists. But the parent may have done changes to the database in the
+	meantime, resulting in a db corruption.
+	Fix this by calling sync_file() just before the fork. The child will
+	still have a reference to the db, but won't try to write it on exit.
+	[bouyer, ticket #932]
 
