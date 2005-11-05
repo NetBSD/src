@@ -1,11 +1,17 @@
-/*	$NetBSD: str.c,v 1.55 2005/11/03 21:59:55 dillo Exp $	*/
+/*	$NetBSD: str.c,v 1.56 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.55 2005/11/03 21:59:55 dillo Exp $");
+__RCSID("$NetBSD: str.c,v 1.56 2005/11/05 13:11:02 wiz Exp $");
 #endif
 #endif
 
@@ -29,9 +35,15 @@ __RCSID("$NetBSD: str.c,v 1.55 2005/11/03 21:59:55 dillo Exp $");
  *
  */
 
+#if HAVE_ASSERT_H
 #include <assert.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_FNMATCH_H
 #include <fnmatch.h>
+#endif
 #include "lib.h"
 #include "dewey.h"
 

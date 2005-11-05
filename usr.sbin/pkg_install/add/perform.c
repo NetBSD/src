@@ -1,11 +1,17 @@
-/*	$NetBSD: perform.c,v 1.112 2005/11/03 21:16:41 dillo Exp $	*/
+/*	$NetBSD: perform.c,v 1.113 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.112 2005/11/03 21:16:41 dillo Exp $");
+__RCSID("$NetBSD: perform.c,v 1.113 2005/11/05 13:11:02 wiz Exp $");
 #endif
 #endif
 
@@ -29,24 +35,60 @@ __RCSID("$NetBSD: perform.c,v 1.112 2005/11/03 21:16:41 dillo Exp $");
  *
  */
 
+#if HAVE_ASSERT_H
 #include <assert.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
 #include "lib.h"
 #include "add.h"
 #include "verify.h"
 
+#if HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
+#if HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
+#endif
 
 static char LogDir[MaxPathSize];
 static int zapLogDir;		/* Should we delete LogDir? */
 
 static package_t Plist;
 static char *Home;
+
+/*
+ * Some systems such as OpenBSD-3.6 do not provide PRIu64.
+ * Others such as AIX-4.3.2 have a broken PRIu64 which includes
+ * a leading "%".
+ */
+#ifdef NEED_PRI_MACRO
+#  ifdef PRIu64
+#    undef PRIu64
+#  endif
+#  if SIZEOF_INT == 8
+#    define PRIu64 "u"
+#  elif SIZEOF_LONG == 8
+#    define PRIu64 "lu"
+#  elif SIZEOF_LONG_LONG == 8
+#    define PRIu64 "llu"
+#  else
+#    error "unable to find a suitable PRIu64"
+#  endif
+#endif
 
 /* used in build information */
 enum {

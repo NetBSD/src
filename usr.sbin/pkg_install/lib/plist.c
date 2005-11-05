@@ -1,11 +1,17 @@
-/*	$NetBSD: plist.c,v 1.49 2005/05/31 22:29:41 wiz Exp $	*/
+/*	$NetBSD: plist.c,v 1.50 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.49 2005/05/31 22:29:41 wiz Exp $");
+__RCSID("$NetBSD: plist.c,v 1.50 2005/11/05 13:11:02 wiz Exp $");
 #endif
 #endif
 
@@ -30,9 +36,15 @@ __RCSID("$NetBSD: plist.c,v 1.49 2005/05/31 22:29:41 wiz Exp $");
  */
 
 #include "lib.h"
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_MD5_H
 #include <md5.h>
+#endif
 
 /* This struct defines a plist command type */
 typedef struct cmd_t {
