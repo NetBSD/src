@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.180 2005/11/05 11:08:41 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.181 2005/11/05 11:57:25 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.180 2005/11/05 11:08:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.181 2005/11/05 11:57:25 tsutsui Exp $");
 
 #include "opt_cputype.h"
 
@@ -208,6 +208,7 @@ int mips_cpu_flags;
 int mips_has_llsc;
 int mips_has_r4k_mmu;
 int mips3_pg_cached;
+u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
 struct	lwp  *fpcurlwp;
@@ -847,6 +848,12 @@ mips_vector_init(void)
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
 	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
+#if defined(MIPS3_4100)
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+		mips3_pg_shift = MIPS3_4100_PG_SHIFT;
+	else
+#endif
+		mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
