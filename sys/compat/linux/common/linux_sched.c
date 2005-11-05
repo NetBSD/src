@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.21 2005/11/05 00:47:26 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.22 2005/11/05 08:06:58 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,12 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.21 2005/11/05 00:47:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.22 2005/11/05 08:06:58 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
+#include <sys/malloc.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
@@ -445,3 +447,80 @@ linux_sys_gettid(l, v, retval)
 	return 0;
 }
 #endif /* LINUX_NPTL */
+
+int
+linux_sys_sched_getaffinity(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sched_getaffinity_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(unsigned int) len;
+		syscallarg(unsigned long *) mask;
+	} */ *uap = v;
+	int error;
+	int ret;
+	int ncpu;
+	int name[2];
+	size_t sz;
+	char *data;
+	int *retp;
+
+	if (SCARG(uap, mask) == NULL)
+		return EINVAL;
+
+	if (SCARG(uap, len) < sizeof(int))
+		return EINVAL;
+
+	if (pfind(SCARG(uap, pid)) == NULL)
+		return ESRCH;
+
+	/* 
+	 * return the actual number of CPU, tag all of them as available 
+	 * The result is a mask, the first CPU being in the least significant
+	 * bit.
+	 */
+	name[0] = CTL_HW;
+	name[1] = HW_NCPU;
+	sz = sizeof(ncpu);
+
+	if ((error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL)) != 0)
+		return error;
+
+	ret = (1 << ncpu) - 1;
+
+	data = malloc(SCARG(uap, len), M_TEMP, M_WAITOK|M_ZERO);
+	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
+	*retp = ret;
+
+	if ((error = copyout(data, SCARG(uap, mask), SCARG(uap, len))) != 0)
+		return error;
+
+	free(data, M_TEMP);
+
+	return 0;
+
+}
+
+int
+linux_sys_sched_setaffinity(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sched_setaffinity_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(unsigned int) len;
+		syscallarg(unsigned long *) mask;
+	} */ *uap = v;
+
+	if (pfind(SCARG(uap, pid)) == NULL)
+		return ESRCH;
+
+	/* Let's ignore it */
+#ifdef DEBUG_LINUX
+	printf("linux_sys_sched_setaffinity\n");
+#endif
+	return 0;
+};
