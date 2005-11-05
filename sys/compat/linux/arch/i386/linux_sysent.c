@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.58 2005/10/18 19:08:52 joerg Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.59 2005/11/05 10:56:48 dogcow Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.58 2005/10/18 19:08:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.59 2005/11/05 10:56:48 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -517,10 +517,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 239 = unimplemented sendfile64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 240 = unimplemented futex */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 241 = unimplemented sched_setaffinity */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 242 = unimplemented sched_getaffinity */
+	{ 3, s(struct linux_sys_sched_setaffinity_args), 0,
+	    linux_sys_sched_setaffinity },	/* 241 = sched_setaffinity */
+	{ 3, s(struct linux_sys_sched_getaffinity_args), 0,
+	    linux_sys_sched_getaffinity },	/* 242 = sched_getaffinity */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 243 = unimplemented set_thread_area */
 	{ 0, 0, 0,

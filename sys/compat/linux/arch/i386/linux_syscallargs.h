@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.58 2005/10/18 19:08:52 joerg Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.59 2005/11/05 10:56:48 dogcow Exp $ */
 
 /*
  * System call argument lists.
@@ -696,6 +696,18 @@ struct linux_sys_fremovexattr_args {
 	syscallarg(char *) name;
 };
 
+struct linux_sys_sched_setaffinity_args {
+	syscallarg(pid_t) pid;
+	syscallarg(unsigned int) len;
+	syscallarg(unsigned long *) mask;
+};
+
+struct linux_sys_sched_getaffinity_args {
+	syscallarg(pid_t) pid;
+	syscallarg(unsigned int) len;
+	syscallarg(unsigned long *) mask;
+};
+
 struct linux_sys_exit_group_args {
 	syscallarg(int) error_code;
 };
@@ -1112,6 +1124,10 @@ int	linux_sys_removexattr(struct lwp *, void *, register_t *);
 int	linux_sys_lremovexattr(struct lwp *, void *, register_t *);
 
 int	linux_sys_fremovexattr(struct lwp *, void *, register_t *);
+
+int	linux_sys_sched_setaffinity(struct lwp *, void *, register_t *);
+
+int	linux_sys_sched_getaffinity(struct lwp *, void *, register_t *);
 
 int	linux_sys_exit_group(struct lwp *, void *, register_t *);
 

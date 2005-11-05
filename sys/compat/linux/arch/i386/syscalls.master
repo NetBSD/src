@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2005/10/18 18:37:44 joerg Exp $
+	$NetBSD: syscalls.master,v 1.75 2005/11/05 10:56:48 dogcow Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -403,8 +403,10 @@
 238	UNIMPL		tkill
 239	UNIMPL		sendfile64
 240	UNIMPL		futex
-241	UNIMPL		sched_setaffinity
-242	UNIMPL		sched_getaffinity
+241	STD		{ int linux_sys_sched_setaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+242	STD		{ int linux_sys_sched_getaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
 243	UNIMPL		set_thread_area
 244	UNIMPL		get_thread_area
 245	UNIMPL		io_setup
