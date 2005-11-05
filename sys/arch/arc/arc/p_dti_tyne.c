@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.9 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.10 2005/11/05 09:50:50 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.9 2005/06/03 12:30:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.10 2005/11/05 09:50:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,13 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.9 2005/06/03 12:30:53 tsutsui Exp $
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 #include <mips/pte.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
 
-#include <arc/arc/wired_map.h>
 #include <arc/dti/desktech.h>
 
 void arc_sysreset(bus_addr_t, bus_size_t);
@@ -276,10 +276,13 @@ p_dti_tyne_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
-	arc_enter_wired(TYNE_V_BOUNCE, TYNE_P_BOUNCE, 0, MIPS3_PG_SIZE_256K);
-	arc_enter_wired(TYNE_V_ISA_IO, TYNE_P_ISA_IO, 0, MIPS3_PG_SIZE_1M);
-	arc_enter_wired(TYNE_V_ISA_MEM, TYNE_P_ISA_MEM, 0, MIPS3_PG_SIZE_1M);
-	arc_enter_wired(0xe3000000, 0xfff00000, 0, MIPS3_PG_SIZE_4K);
+	arc_wired_enter_page(TYNE_V_BOUNCE, TYNE_P_BOUNCE, TYNE_S_BOUNCE);
+
+	arc_wired_enter_page(TYNE_V_ISA_IO, TYNE_P_ISA_IO, TYNE_S_ISA_IO);
+	arc_wired_enter_page(TYNE_V_ISA_MEM, TYNE_P_ISA_MEM, TYNE_S_ISA_MEM);
+
+	arc_wired_enter_page(0xe3000000, 0xfff00000,
+	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_4K));
 
 	/*
 	 * Initialize interrupt priority
