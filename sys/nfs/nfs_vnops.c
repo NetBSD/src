@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.228 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.229 2005/11/05 19:21:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.228 2005/11/02 12:38:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.229 2005/11/05 19:21:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1138,7 +1138,7 @@ nfs_read(v)
 	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type != VREG)
-		return (EPERM);
+		return EISDIR;
 	return (nfs_bioread(vp, ap->a_uio, ap->a_ioflag, ap->a_cred, 0));
 }
 
