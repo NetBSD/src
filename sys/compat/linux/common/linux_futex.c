@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.1 2005/11/04 16:54:11 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.2 2005/11/05 08:07:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.1 2005/11/04 16:54:11 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.2 2005/11/05 08:07:44 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -40,9 +40,36 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.1 2005/11/04 16:54:11 manu Exp $")
 #include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/queue.h>
+#include <sys/lock.h>
+#include <sys/malloc.h>
 
 #include <compat/linux/common/linux_futex.h>
 #include <compat/linux/linux_syscallargs.h>
+
+struct futex;
+
+struct waiting_proc {
+	struct lwp *wp_l;
+	struct futex *wp_new_futex;
+	TAILQ_ENTRY(waiting_proc) wp_list;
+};
+struct futex {
+	void *f_uaddr;
+	int f_refcount;
+	LIST_ENTRY(futex) f_list;
+	TAILQ_HEAD(lf_waiting_proc, waiting_proc) f_waiting_proc;
+};
+
+static LIST_HEAD(futex_list, futex) futex_list;
+static struct lock *futex_lock = NULL;
+
+#define FUTEX_LOCK (void)lockmgr(futex_lock, LK_EXCLUSIVE, NULL)
+#define FUTEX_UNLOCK (void)lockmgr(futex_lock, LK_RELEASE, NULL)
+
+static struct futex *futex_get(void *);
+static void futex_put(struct futex *);
+static int futex_sleep(struct futex *, struct lwp *, unsigned long);
+static int futex_wake(struct futex *, int, struct futex *);
 
 int
 linux_sys_futex(l, v, retval)
@@ -62,6 +89,18 @@ linux_sys_futex(l, v, retval)
 	int ret;
 	struct timespec timeout = { 0, 0 };
 	int error = 0;
+	struct futex *f;
+	struct futex *newf;
+
+	/* First time use */
+	if (futex_lock == NULL) {
+		futex_lock = malloc(sizeof(struct lock), 
+		    M_EMULDATA, M_WAITOK);
+		lockinit(futex_lock, PZERO|PCATCH, "lockfutex", 0, 0);
+		FUTEX_LOCK;
+		LIST_INIT(&futex_list);
+		FUTEX_UNLOCK;
+	}
 
 	switch (SCARG(uap, op)) {
 	case LINUX_FUTEX_WAIT:
@@ -84,8 +123,10 @@ linux_sys_futex(l, v, retval)
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
 		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec); 
 #endif
-		ret = tsleep(SCARG(uap, uaddr), PCATCH|PZERO, 
-		    "linuxfutex", timeout.tv_sec * hz);
+		f = futex_get(SCARG(uap, uaddr));
+		ret = futex_sleep(f, l, timeout.tv_sec * hz);
+		futex_put(f);
+
 #ifdef DEBUG_LINUX
 		printf("FUTEX_WAIT %d.%d: uaddr = %p, "
 		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
@@ -116,9 +157,7 @@ linux_sys_futex(l, v, retval)
 		
 	case LINUX_FUTEX_WAKE:
 		/* 
-		 * XXX We should only wake up SCARG(uap, val) processes 
-		 * waiting on the futex, not all of them.
-		 * More XXX: Linux is able cope with different addresses 
+		 * XXX: Linux is able cope with different addresses 
 		 * corresponding to the same mapped memory in the sleeping 
 		 * and the waker process.
 		 */
@@ -127,14 +166,31 @@ linux_sys_futex(l, v, retval)
 		    l->l_proc->p_pid, l->l_lid, 
 		    SCARG(uap, uaddr), SCARG(uap, val)); 
 #endif
-		wakeup(SCARG(uap, uaddr));
+		f = futex_get(SCARG(uap, uaddr));
+		*retval = futex_wake(f, SCARG(uap, val), NULL);
+		futex_put(f);
+		break;
 
-		*retval = 1; /* XXX should be number of processes */
+	case LINUX_FUTEX_CMP_REQUEUE:
+		if ((error = copyin(SCARG(uap, uaddr), 
+		    &val, sizeof(val))) != 0)
+			return error;
+
+		if (val != SCARG(uap, val3))
+			return EAGAIN;
+		/* FALLTHROUGH */
+
+	case LINUX_FUTEX_REQUEUE:
+
+		f = futex_get(SCARG(uap, uaddr));
+		newf = futex_get(SCARG(uap, uaddr2));
+		*retval = futex_wake(f, SCARG(uap, val), newf);
+		futex_put(f);
+		futex_put(newf);
+		
 		break;
 
 	case LINUX_FUTEX_FD:
-	case LINUX_FUTEX_REQUEUE:
-	case LINUX_FUTEX_CMP_REQUEUE:
 		printf("linux_sys_futex: unimplemented op %d\n", 
 		    SCARG(uap, op));
 		break;
@@ -144,4 +200,106 @@ linux_sys_futex(l, v, retval)
 		break;
 	}
 	return 0;
+}
+
+static struct futex *
+futex_get(uaddr)
+	void *uaddr;
+{
+	struct futex *f;
+
+	FUTEX_LOCK;
+	LIST_FOREACH(f, &futex_list, f_list) {
+		if (f->f_uaddr == uaddr) {
+			f->f_refcount++;
+			FUTEX_UNLOCK;
+			return f;
+		}
+	}
+	FUTEX_UNLOCK;
+
+	/* Not found, create it */
+	f = malloc(sizeof(*f), M_EMULDATA, M_WAITOK);
+	f->f_uaddr = uaddr;
+	f->f_refcount = 1;
+	TAILQ_INIT(&f->f_waiting_proc);
+	FUTEX_LOCK;
+	LIST_INSERT_HEAD(&futex_list, f, f_list);
+	FUTEX_UNLOCK;
+
+	return f;
+}
+
+static void 
+futex_put(f)
+	struct futex *f;
+{
+	f->f_refcount--;
+	if (f->f_refcount == 0) {
+		FUTEX_LOCK;
+		LIST_REMOVE(f, f_list);
+		FUTEX_UNLOCK;
+		free(f, M_EMULDATA);
+	}
+
+	return;
+}
+
+static int 
+futex_sleep(f, l, timeout)
+	struct futex *f;
+	struct lwp *l;
+	unsigned long timeout;
+{
+	struct waiting_proc *wp;
+	int ret;
+
+	wp = malloc(sizeof(*wp), M_EMULDATA, M_WAITOK);
+	wp->wp_l = l;
+	wp->wp_new_futex = NULL;
+	FUTEX_LOCK;
+	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
+	FUTEX_UNLOCK;
+
+	ret = tsleep(wp, PCATCH|PZERO, "linuxfutex", timeout);
+
+	FUTEX_LOCK;
+	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
+	FUTEX_UNLOCK;
+
+	if ((ret == 0) && (wp->wp_new_futex != NULL)) {
+		ret = futex_sleep(wp->wp_new_futex, l, timeout);
+		futex_put(wp->wp_new_futex); /* futex_get called in wakeup */
+	}
+
+	free(wp, M_EMULDATA);
+
+	return ret;
+}
+
+static int
+futex_wake(f, n, newf)
+	struct futex *f;
+	int n;
+	struct futex *newf;
+{
+	struct waiting_proc *wp;
+	int count = 0; 
+
+	FUTEX_LOCK;
+	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
+		if (count <= n) {
+			wakeup(wp);
+			count++;
+		} else {
+			if (newf != NULL) {
+				/* futex_put called after tsleep */
+				wp->wp_new_futex = futex_get(newf->f_uaddr);
+				wakeup(wp);
+			}
+		}
+	}
+	FUTEX_UNLOCK;
+
+	return count;
 }
