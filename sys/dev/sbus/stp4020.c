@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.44 2005/06/01 21:17:28 jdc Exp $ */
+/*	$NetBSD: stp4020.c,v 1.45 2005/11/05 13:59:02 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.44 2005/06/01 21:17:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.45 2005/11/05 13:59:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,7 @@ stp4020_event_thread(arg)
 		s = splhigh();
 		if ((e = SIMPLEQ_FIRST(&sc->events)) == NULL) {
 			splx(s);
-			(void)tsleep(&sc->events, PWAIT, "pcicev", 0);
+			(void)tsleep(&sc->events, PWAIT, "nellevt", 0);
 			continue;
 		}
 		SIMPLEQ_REMOVE_HEAD(&sc->events, se_q);
@@ -1127,7 +1127,7 @@ stp4020_delay(ms)
 	if (ticks > 60*hz)
 		panic("stp4020: preposterous delay: %u", ticks);
 #endif
-	tsleep(&ticks, 0, "stp4020_delay", ticks);
+	tsleep(&ticks, 0, "nelldel", ticks);
 }
 
 #ifdef STP4020_DEBUG
