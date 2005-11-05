@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_large.c,v 1.4 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: bus_space_large.c,v 1.5 2005/11/05 09:50:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,11 @@
  * - If requested region size >= ARC_THRESHOLD_TO_USE_WIRED_TLB,
  *   and enough wired TLBs are still free.
  *	In this case, the size of wired TLBs becomes always
- *	ARC_WIRED_PAGE_SIZE (i.e. 16MB). (See wired_map.c for detail.)
+ *	MIPS3_WIRED_SIZE (i.e. 16MB). (See wired_map_machdep.c for detail.)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.4 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.5 2005/11/05 09:50:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.4 2005/01/22 07:35:33 tsutsui 
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <arc/arc/wired_map.h>
+#include <machine/wired_map.h>
 
 static int arc_large_bus_space_compose_handle(bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
