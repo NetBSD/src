@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.58 2005/10/18 19:08:52 joerg Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.59 2005/11/05 10:56:48 dogcow Exp $ */
 
 /*
  * System call numbers.
@@ -607,6 +607,12 @@
 
 /* syscall: "fremovexattr" ret: "int" args: "int" "char *" */
 #define	LINUX_SYS_fremovexattr	237
+
+/* syscall: "sched_setaffinity" ret: "int" args: "pid_t" "unsigned int" "unsigned long *" */
+#define	LINUX_SYS_sched_setaffinity	241
+
+/* syscall: "sched_getaffinity" ret: "int" args: "pid_t" "unsigned int" "unsigned long *" */
+#define	LINUX_SYS_sched_getaffinity	242
 
 /* syscall: "exit_group" ret: "int" args: "int" */
 #define	LINUX_SYS_exit_group	252
