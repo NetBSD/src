@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8.4.4 2005/08/14 21:13:35 riz Exp $
+#	$NetBSD: GENERIC,v 1.8.4.5 2005/11/05 00:39:47 tron Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -138,8 +138,8 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
