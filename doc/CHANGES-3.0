@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.297 2005/11/05 00:51:52 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.298 2005/11/05 06:59:28 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -8355,7 +8355,7 @@ usr.bin/xinstall/xinstall.c			1.88
 
 usr.bin/xinstall/xinstall.c			1.89
 
-	strvis(3) encode the link=3D... argument in the metalog.
+	strvis(3) encode the link=... argument in the metalog.
 	(mtree(8) already requires this.)
 	[lukem, ticket #271]
 
