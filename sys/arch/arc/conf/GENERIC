@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.4.3 2005/08/14 21:14:42 riz Exp $
+# $NetBSD: GENERIC,v 1.113.4.4 2005/11/05 00:39:48 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.113.4.3 $"
+#ident		"GENERIC-$Revision: 1.113.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -68,7 +68,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DIAGNOSTIC		# cheap kernel consistency checks
 #options 	DEBUG			# expensive debugging checks/support
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger

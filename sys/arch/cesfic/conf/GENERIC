@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29.2.1 2005/08/14 21:14:01 riz Exp $
+# $NetBSD: GENERIC,v 1.29.2.2 2005/11/05 00:39:47 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -109,8 +109,8 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 
 # Debugging options
-options 	DIAGNOSTIC	# Extra kernel sanity checks
-options 	DEBUG		# Enable misc. kernel debugging code
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
 options 	DDB		# Kernel Dynamic Debugger
 #options 	KGDB
 makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols

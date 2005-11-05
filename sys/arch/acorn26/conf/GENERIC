@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.4.2 2005/08/14 21:14:01 riz Exp $
+# $NetBSD: GENERIC,v 1.28.4.3 2005/11/05 00:39:47 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -30,8 +30,8 @@ options 	CPU_ARM250
 options 	CPU_ARM3
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC		# Cheap kernel consistency checks
-options 	DEBUG			# More expensive checks and printfs
+#options 	DIAGNOSTIC		# Cheap kernel consistency checks
+#options 	DEBUG			# More expensive checks and printfs
 options 	DDB			# kernel debugger
 #options 	SYSCALL_DEBUG		# trace syscall entry/exit
 #options 	SCSIDEBUG

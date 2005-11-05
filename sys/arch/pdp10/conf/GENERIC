@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.4.2 2005/08/14 21:13:38 riz Exp $
+# $NetBSD: GENERIC,v 1.11.4.3 2005/11/05 00:39:47 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11.4.2 $"
+#ident 		"GENERIC-$Revision: 1.11.4.3 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -35,10 +35,10 @@ maxusers	8
 options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KTRACE
-options 	DIAGNOSTIC
-options 	DEBUG,KMEMSTATS,LOCKDEBUG
+#options 	DIAGNOSTIC
+#options 	DEBUG
+#options 	KMEMSTATS
 options 	NO_KERNEL_RCSIDS
-options 	MALLOC_DEBUG
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
