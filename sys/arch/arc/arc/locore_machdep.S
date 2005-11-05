@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.13 2005/10/01 02:05:19 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.14 2005/11/05 09:50:50 tsutsui Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -332,54 +332,3 @@ LEAF(mdbpanic)
 	nop
 END(mdbpanic)
 #endif /* DEBUG */
-
-	.set	mips3
-
-/*--------------------------------------------------------------------------
- *
- * mips3_TLBWriteIndexedVPS --
- *
- *	Write the given entry into the TLB at the given index.
- *	Pass full r4000 tlb info including variable page size mask.
- *
- *	mips3_TLBWriteIndexed(unsigned int index, struct tlb *tlb)
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	TLB entry set.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_TLBWriteIndexedVPS)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	nop
-	lw	a2, 8(a1)
-	lw	a3, 12(a1)
-	mfc0	v0, MIPS_COP_0_TLB_PG_MASK	# Save current PageMask.
-	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
-
-	dmtc0	a2, MIPS_COP_0_TLB_LO0		# Set up EntryLo0.
-	dmtc0	a3, MIPS_COP_0_TLB_LO1		# Set up EntryLo1.
-	nop
-	lw	a2, 0(a1)
-	lw	a3, 4(a1)
-	nop
-	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the Index.
-	mtc0	a2, MIPS_COP_0_TLB_PG_MASK	# Set up PageMask.
-	dmtc0	a3, MIPS_COP_0_TLB_HI		# Set up EntryHi.
-	nop
-	tlbwi					# Write the TLB
-	nop
-	nop
-	nop					# Delay for effect
-	nop
-
-	dmtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
-	nop
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore PageMask.
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips3_TLBWriteIndexedVPS)

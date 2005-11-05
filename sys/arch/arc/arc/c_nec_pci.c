@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.11 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.12 2005/11/05 09:50:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.11 2005/06/03 12:30:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.12 2005/11/05 09:50:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.11 2005/06/03 12:30:53 tsutsui Exp $
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 #include <mips/pte.h>
 
 #include <dev/clock_subr.h>
@@ -51,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.11 2005/06/03 12:30:53 tsutsui Exp $
 #include <dev/pci/pcivar.h>
 
 #include <arc/arc/arcbios.h>
-#include <arc/arc/wired_map.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
@@ -218,10 +218,14 @@ c_nec_pci_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
-	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
-	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
-	    MIPS3_PG_SIZE_16M);
+	arc_wired_enter_page(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE,
+	    RD94_S_LOCAL_IO_BASE);
+	/*
+	 * allocate only 16M for PCM MEM space for now to save wired TLB entry;
+	 * Other regions will be allocalted by bus_space_large.c later.
+	 */
+	arc_wired_enter_page(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_S_PCI_IO);
+	arc_wired_enter_page(RD94_V_PCI_MEM, RD94_P_PCI_MEM, RD94_S_PCI_IO);
 
 	/*
 	 * By default, reserve 32MB in KSEG2 for PCI memory space.

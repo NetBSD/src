@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2005/11/05 09:50:51 tsutsui Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -19,10 +19,5 @@
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	INT_MASK_REAL_DEV	MIPS3_HARD_INT_MASK	/* XXX */
-
-#ifndef _LOCORE
-struct tlb;
-extern void mips3_TLBWriteIndexedVPS(u_int index, struct tlb *tlb);
-#endif /* ! _LOCORE */
 
 #endif /* _ARC_CPU_H_ */

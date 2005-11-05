@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.11 2005/10/30 05:27:14 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.12 2005/11/05 09:50:50 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.11 2005/10/30 05:27:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.12 2005/11/05 09:50:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,13 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.11 2005/10/30 05:27:14 tsutsui Exp $"
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 
 #include <dev/isa/isavar.h>
 
 #include <arc/arc/timervar.h>
-#include <arc/arc/wired_map.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/timer_jazziovar.h>
@@ -266,10 +266,13 @@ c_magnum_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
-	arc_enter_wired(R4030_V_LOCAL_IO_BASE, R4030_P_LOCAL_IO_BASE,
-	    PICA_P_INT_SOURCE, MIPS3_PG_SIZE_256K);
-	arc_enter_wired(PICA_V_ISA_IO, PICA_P_ISA_IO, PICA_P_ISA_MEM,
-	    MIPS3_PG_SIZE_16M);
+	arc_wired_enter_page(R4030_V_LOCAL_IO_BASE, R4030_P_LOCAL_IO_BASE,
+	    R4030_S_LOCAL_IO_BASE);
+	arc_wired_enter_page(PICA_V_INT_SOURCE, PICA_P_INT_SOURCE,
+	    R4030_S_LOCAL_IO_BASE);
+
+	arc_wired_enter_page(PICA_V_ISA_IO, PICA_P_ISA_IO, PICA_S_ISA_IO);
+	arc_wired_enter_page(PICA_V_ISA_MEM, PICA_P_ISA_MEM, PICA_S_ISA_MEM);
 
 	/*
 	 * Initialize interrupt priority
