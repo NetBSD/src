@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2005/06/01 16:53:51 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.160 2005/11/05 10:57:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2005/06/01 16:53:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2005/11/05 10:57:49 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1224,9 +1224,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pte = kvtopte(va);
 
 		if (MIPS_HAS_R4K_MMU)
-			npte |= mips_paddr_to_tlbpfn(pa) | MIPS3_PG_G;
+			npte |= mips3_paddr_to_tlbpfn(pa) | MIPS3_PG_G;
 		else
-			npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
+			npte |= mips1_paddr_to_tlbpfn(pa) |
+			    MIPS1_PG_V | MIPS1_PG_G;
 
 		if (wired) {
 			pmap->pm_stats.wired_count++;
@@ -1285,9 +1286,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 
 	if (MIPS_HAS_R4K_MMU)
-		npte |= mips_paddr_to_tlbpfn(pa);
+		npte |= mips3_paddr_to_tlbpfn(pa);
 	else
-		npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V;
+		npte |= mips1_paddr_to_tlbpfn(pa) | MIPS1_PG_V;
 
 	if (wired) {
 		pmap->pm_stats.wired_count++;
@@ -1361,8 +1362,8 @@ pmap_kenter_pa(va, pa, prot)
 		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, (u_long)pa, prot);
 #endif
 
-	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
 	if (MIPS_HAS_R4K_MMU) {
+		npte = mips3_paddr_to_tlbpfn(pa) | MIPS3_PG_WIRED;
 		if (prot & VM_PROT_WRITE) {
 			npte |= MIPS3_PG_D;
 		} else {
@@ -1375,6 +1376,7 @@ pmap_kenter_pa(va, pa, prot)
 		}
 		npte |= MIPS3_PG_V | MIPS3_PG_G;
 	} else {
+		npte = mips1_paddr_to_tlbpfn(pa) | MIPS1_PG_WIRED;
 		if (prot & VM_PROT_WRITE) {
 			npte |= MIPS1_PG_D;
 		} else {
