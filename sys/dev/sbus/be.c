@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.45 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: be.c,v 1.46 2005/11/05 16:01:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.46 2005/11/05 16:01:52 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -588,7 +588,7 @@ be_read(sc, idx, len)
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHER_MAX_LEN + ETHERCAP_VLAN_MTU) {
+	    len > ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN) {
 #ifdef BEDEBUG
 		if (sc->sc_debug)
 			printf("%s: invalid packet size %d; dropping\n",
