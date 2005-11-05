@@ -1,11 +1,17 @@
-/*	$NetBSD: pen.c,v 1.34 2005/02/20 09:04:18 grant Exp $	*/
+/*	$NetBSD: pen.c,v 1.35 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.34 2005/02/20 09:04:18 grant Exp $");
+__RCSID("$NetBSD: pen.c,v 1.35 2005/11/05 13:11:02 wiz Exp $");
 #endif
 #endif
 
@@ -29,11 +35,19 @@ __RCSID("$NetBSD: pen.c,v 1.34 2005/02/20 09:04:18 grant Exp $");
  *
  */
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
 #include "lib.h"
+#if HAVE_SYS_SIGNAL_H
 #include <sys/signal.h>
+#endif
+#if HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#if HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
+#endif
 
 /* For keeping track of where we are */
 static char Current[MaxPathSize];

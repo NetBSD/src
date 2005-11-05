@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.77 2005/11/03 21:16:41 dillo Exp $ */
+/* $NetBSD: lib.h,v 1.78 2005/11/05 13:11:02 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -25,18 +25,44 @@
 #ifndef _INST_LIB_LIB_H_
 #define _INST_LIB_LIB_H_
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#if HAVE_SYS_FILE_H
 #include <sys/file.h>
+#endif
+#if HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
+#endif
 
+#if HAVE_CTYPE_H
 #include <ctype.h>
+#endif
+#if HAVE_DIRENT_H
 #include <dirent.h>
+#endif
+#if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "path.h"
 

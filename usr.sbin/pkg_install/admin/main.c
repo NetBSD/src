@@ -1,8 +1,14 @@
-/*	$NetBSD: main.c,v 1.49 2005/11/03 21:16:41 dillo Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.49 2005/11/03 21:16:41 dillo Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2005/11/05 13:11:02 wiz Exp $");
 #endif
 
 /*
@@ -35,16 +41,36 @@ __RCSID("$NetBSD: main.c,v 1.49 2005/11/03 21:16:41 dillo Exp $");
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#if HAVE_DIRENT_H
 #include <dirent.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#if HAVE_MD5_H
 #include <md5.h>
+#endif
+#if HAVE_LIMITS_H
 #include <limits.h>
+#endif
+#if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "lib.h"
 

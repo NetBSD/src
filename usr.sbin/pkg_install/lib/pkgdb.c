@@ -1,8 +1,14 @@
-/*	$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.22 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.22 2005/11/05 13:11:02 wiz Exp $");
 #endif
 
 /*
@@ -35,13 +41,29 @@ __RCSID("$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $");
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_DB1_DB_H
+#include <db1/db.h>
+#elif HAVE_DB_H
 #include <db.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#if HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+#if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "lib.h"
 
@@ -57,10 +79,13 @@ __RCSID("$NetBSD: pkgdb.c,v 1.21 2005/02/04 12:13:18 drochner Exp $");
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
 
+#if HAVE_DBOPEN
 static DB   *pkgdbp;
+#endif
 static char *pkgdb_dir = NULL;
 static char  pkgdb_cache[MaxPathSize];
 
+#if HAVE_DBOPEN
 /*
  *  Open the pkg-database
  *  Return value:
@@ -239,6 +264,18 @@ pkgdb_remove_pkg(const char *pkg)
 	}
 	return ret;
 }
+
+#else /* !HAVE_DBOPEN */
+
+int	pkgdb_open(int mode) { return 1; }
+void	pkgdb_close(void) {}
+int	pkgdb_store(const char *key, const char *val) { return 0; }
+char   *pkgdb_retrieve(const char *key) { return NULL; }
+void	pkgdb_dump(void) {}
+int	pkgdb_remove(const char *key) { return 0; }
+int	pkgdb_remove_pkg(const char *pkg) { return 1; }
+
+#endif /* HAVE_DBOPEN */
 
 /*
  *  Return the location of the package reference counts database directory.

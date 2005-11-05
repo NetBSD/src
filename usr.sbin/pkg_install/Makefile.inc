@@ -1,10 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.25 2003/09/23 05:39:41 grant Exp $
+# $NetBSD: Makefile.inc,v 1.26 2005/11/05 13:11:02 wiz Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
 
 LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
+CPPFLAGS+=-DHAVE_CONFIG_H
 
 # UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
 # DOING SO BREAKS CROSS COMPILING.

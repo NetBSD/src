@@ -1,11 +1,17 @@
-/*	$NetBSD: perform.c,v 1.63 2005/11/03 21:16:41 dillo Exp $	*/
+/*	$NetBSD: perform.c,v 1.64 2005/11/05 13:11:02 wiz Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63 2005/11/03 21:16:41 dillo Exp $");
+__RCSID("$NetBSD: perform.c,v 1.64 2005/11/05 13:11:02 wiz Exp $");
 #endif
 #endif
 
@@ -32,13 +38,25 @@ __RCSID("$NetBSD: perform.c,v 1.63 2005/11/03 21:16:41 dillo Exp $");
 #include "lib.h"
 #include "info.h"
 
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#if HAVE_DIRENT_H
 #include <dirent.h>
+#endif
+#if HAVE_CTYPE_H
 #include <ctype.h>
+#endif
 
 static char *Home;
 
