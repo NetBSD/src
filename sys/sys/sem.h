@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.18 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: sem.h,v 1.18.4.1 2005/11/05 00:47:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,8 +114,6 @@ struct sembuf {
  */
 #define SEMVMX	32767		/* semaphore maximum value */
 #define SEMAEM	16384		/* adjust on exit max value */
-
-#define MAX_SOPS	5	/* maximum # of sembuf's per semop call */
 
 /*
  * Permissions
