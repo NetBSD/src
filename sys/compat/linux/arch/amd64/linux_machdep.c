@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.10 2005/11/04 16:49:55 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.11 2005/11/05 00:47:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.10 2005/11/04 16:49:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2005/11/05 00:47:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -606,4 +606,27 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+}
+
+unsigned long
+linux_get_newtls(l)
+	struct lwp *l;
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	return tf->tf_r8;
+}
+
+int
+linux_set_newtls(l, tls)
+	struct lwp *l;
+	unsigned long tls;
+{
+	struct linux_sys_arch_prctl_args cup;
+	register_t retval;
+
+	SCARG(&cup, code) = LINUX_ARCH_SET_FS;
+	SCARG(&cup, addr) = tls;
+
+	return linux_sys_arch_prctl(l, &cup, &retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.20 2005/11/04 16:54:11 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.21 2005/11/05 00:47:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.20 2005/11/04 16:54:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.21 2005/11/05 00:47:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.20 2005/11/04 16:54:11 manu Exp $"
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
 #include <compat/linux/common/linux_emuldata.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -71,14 +72,14 @@ linux_sys_clone(l, v, retval)
 	struct linux_sys_clone_args /* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
-#ifdef __amd64__
+#ifdef LINUX_NPTL
 		syscallarg(void *) parent_tidptr;
 		syscallarg(void *) child_tidptr;
 #endif
 	} */ *uap = v;
 	int flags, sig;
 	int error;
-#ifdef __amd64__
+#ifdef LINUX_NPTL
 	struct linux_emuldata *led;
 #endif
 
@@ -117,7 +118,7 @@ linux_sys_clone(l, v, retval)
 		return (EINVAL);
 	sig = linux_to_native_signo[sig];
 
-#ifdef __amd64__
+#ifdef LINUX_NPTL
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
 
 	if (SCARG(uap, flags) & LINUX_CLONE_PARENT_SETTID) {
@@ -143,7 +144,13 @@ linux_sys_clone(l, v, retval)
 		led->child_set_tid = SCARG(uap, child_tidptr);
 	else
 		led->child_set_tid = NULL;
-#endif
+
+	/* CLONE_SETTLS: new Thread Local Storage in the child */
+	if (SCARG(uap, flags) & LINUX_CLONE_SETTLS)
+		led->set_tls = linux_get_newtls(l);
+	else
+		led->set_tls = 0;
+#endif /* LINUX_NPTL */
 	/*
 	 * Note that Linux does not provide a portable way of specifying
 	 * the stack area; the caller must know if the stack grows up
@@ -407,7 +414,7 @@ linux_sys_exit_group(l, v, retval)
 }
 #endif /* !__m68k__ */
 
-#ifdef __amd64__
+#ifdef LINUX_NPTL
 int
 linux_sys_set_tid_address(l, v, retval)
 	struct lwp *l;
@@ -437,4 +444,4 @@ linux_sys_gettid(l, v, retval)
 	*retval = l->l_proc->p_pid;
 	return 0;
 }
-#endif /* __amd64__ */
+#endif /* LINUX_NPTL */
