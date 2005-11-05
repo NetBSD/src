@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.7 2004/12/29 11:35:03 agc Exp $	*/
+/*	$NetBSD: path.c,v 1.8 2005/11/05 13:11:02 wiz Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -26,12 +26,20 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.7 2004/12/29 11:35:03 agc Exp $");
+__RCSID("$NetBSD: path.c,v 1.8 2005/11/05 13:11:02 wiz Exp $");
 #endif
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
 
 #include "lib.h"
 
