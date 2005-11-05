@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.70 2005/09/22 15:41:14 chs Exp $ */
+/*	$NetBSD: mbr.c,v 1.71 2005/11/05 09:58:32 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -701,6 +701,7 @@ edit_mbr_size(menudesc *m, void *arg)
 	}
 
 	start = mbri->sector + mbrp->mbrp_start;
+	/* We need to keep both the unrounded and rounded (_r) max and dflt */
 	dflt_r = (start + dflt) / sizemult - start / sizemult;
 	if (max == dflt)
 		max_r = dflt_r;
@@ -716,27 +717,31 @@ edit_mbr_size(menudesc *m, void *arg)
 			errmsg = MSG_Invalid_numeric;
 			continue;
 		}
-		if (new == 0 || new == max_r)
-			new = max;
-		else {
-			if (new == dflt_r)
-				new = dflt;
-			else {
-				/* Round end to cylinder boundary */
-				if (sizemult != 1) {
-					new *= sizemult;
-					new += ROUNDDOWN(start,current_cylsize);
-					new = ROUNDUP(new, current_cylsize);
-					new -= start;
-					while (new <= 0)
-						new += current_cylsize;
-				}
-			}
-		}
-		if (new > max) {
+		if (new > max_r) {
 			errmsg = MSG_Too_large;
 			continue;
 		}
+		if (new == 0)
+			/* Treat zero as a request for the maximum */
+			new = max_r;
+		if (new == dflt_r)
+			/* If unchanged, don't re-round size */
+			new = dflt;
+		else {
+			/* Round end to cylinder boundary */
+			if (sizemult != 1) {
+				new *= sizemult;
+				new += ROUNDDOWN(start,current_cylsize);
+				new = ROUNDUP(new, current_cylsize);
+				new -= start;
+				while (new <= 0)
+					new += current_cylsize;
+			}
+		}
+		if (new > max)
+			/* We rounded the value to above the max */
+			new = max;
+
 		if (new == dflt || opt >= MBR_PART_COUNT
 		    || !MBR_IS_EXTENDED(mbrp->mbrp_type))
 			break;
