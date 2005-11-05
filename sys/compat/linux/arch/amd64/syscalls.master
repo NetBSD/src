@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2005/11/04 16:51:56 manu Exp $
+	$NetBSD: syscalls.master,v 1.8 2005/11/05 08:06:58 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -356,8 +356,10 @@
 202	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
 			    const struct timespec *timeout, int *uaddr2, \
 			    int val3); }
-203	UNIMPL		sched_setaffinity
-204	UNIMPL		sched_getaffinity
+203	STD		{ int linux_sys_sched_setaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+204	STD		{ int linux_sys_sched_getaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
 205	UNIMPL		set_thread_area
 206	UNIMPL		io_setup
 207	UNIMPL		io_destroy
