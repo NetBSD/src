@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.59 2005/10/18 19:08:52 joerg Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.60 2005/11/05 10:56:48 dogcow Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.59 2005/10/18 19:08:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.60 2005/11/05 10:56:48 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -275,8 +275,8 @@ const char *const linux_syscallnames[] = {
 	"#238 (unimplemented tkill)",		/* 238 = unimplemented tkill */
 	"#239 (unimplemented sendfile64)",		/* 239 = unimplemented sendfile64 */
 	"#240 (unimplemented futex)",		/* 240 = unimplemented futex */
-	"#241 (unimplemented sched_setaffinity)",		/* 241 = unimplemented sched_setaffinity */
-	"#242 (unimplemented sched_getaffinity)",		/* 242 = unimplemented sched_getaffinity */
+	"sched_setaffinity",			/* 241 = sched_setaffinity */
+	"sched_getaffinity",			/* 242 = sched_getaffinity */
 	"#243 (unimplemented set_thread_area)",		/* 243 = unimplemented set_thread_area */
 	"#244 (unimplemented get_thread_area)",		/* 244 = unimplemented get_thread_area */
 	"#245 (unimplemented io_setup)",		/* 245 = unimplemented io_setup */
