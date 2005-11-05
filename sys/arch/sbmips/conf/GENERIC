@@ -1,13 +1,13 @@
-# $NetBSD: GENERIC,v 1.36.2.2 2005/08/14 21:14:18 riz Exp $
+# $NetBSD: GENERIC,v 1.36.2.3 2005/11/05 00:39:47 tron Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36.2.2 $"
+#ident 		"GENERIC-$Revision: 1.36.2.3 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 
 # The following three options are required for BCM1250 pass 1 silicon
 #options 	SB1250_PASS1
@@ -28,7 +28,7 @@ options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
 
 # Debugging options
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	USERCONF	# userconf(4) support
