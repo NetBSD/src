@@ -1,13 +1,10 @@
-/*	$NetBSD: mips5900_subr.S,v 1.2 2003/06/09 12:20:38 simonb Exp $	*/
+/*	$NetBSD: mips5900_subr.S,v 1.3 2005/11/05 10:39:26 tsutsui Exp $	*/
 
 #undef MIPS1
 /* #undef MIPS3 */
 #undef MIPS32
 #undef MIPS64
 
-#if 0	/* XXX separate mips3_4100.S?? */
-#undef MIPS3_4100
-#endif
 /* #undef MIPS3_5900 */
 
 #include <mips/mips/mipsX_subr.S>
