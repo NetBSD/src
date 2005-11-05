@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.78 2005/11/04 16:54:11 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.79 2005/11/05 00:47:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.78 2005/11/04 16:54:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.79 2005/11/05 00:47:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,9 @@ static void linux_e_proc_fork __P((struct proc *, struct proc *, int));
 static void linux_e_proc_exit __P((struct proc *));
 static void linux_e_proc_init __P((struct proc *, struct proc *, int));
 
-static void linux_userret_settid __P((struct lwp *, void *));
+#ifdef LINUX_NPTL
+static void linux_userret __P((struct lwp *, void *));
+#endif
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
@@ -216,6 +218,7 @@ linux_e_proc_init(p, parent, forkflags)
 
 	e->s = s;
 
+#ifdef LINUX_NPTL
 	/* 
 	 * initialize TID pointers. ep->child_clear_tid and 
 	 * ep->child_set_tid will not be used beyond this point.
@@ -225,12 +228,16 @@ linux_e_proc_init(p, parent, forkflags)
 	if (ep != NULL) {
 		e->clear_tid = ep->child_clear_tid;
 		e->set_tid = ep->child_set_tid;
+		e->set_tls = ep->set_tls;
 		ep->child_clear_tid = NULL;
 		ep->child_set_tid = NULL;
+		ep->set_tls = 0;
 	} else {
 		e->clear_tid = NULL;
 		e->set_tid = NULL;
+		e->set_tls = 0;
 	}
+#endif /* LINUX_NPTL */
 
 	p->p_emuldata = e;
 }
@@ -258,6 +265,7 @@ linux_e_proc_exit(p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
+#ifdef LINUX_NPTL
 	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
 	if (e->clear_tid != NULL) {
 		int error;
@@ -281,6 +289,7 @@ linux_e_proc_exit(p)
 		if ((error = linux_sys_futex(l, &cup, &retval)) != 0)
 			printf("linux_e_proc_exit: linux_sys_futex failed\n");
 	}
+#endif /* LINUX_NPTL */
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
@@ -309,20 +318,23 @@ linux_e_proc_fork(p, parent, forkflags)
 	p->p_emuldata = NULL;
 	linux_e_proc_init(p, parent, forkflags);
 
+#ifdef LINUX_NPTL
 	/* 
-	 * Emulate LINUX_CLONE_CHILD_SETTID: This cannot be done  
-	 * right now because the child VM is not set up. We will
-	 * do it at userret time.
+	 * Emulate LINUX_CLONE_CHILD_SETTID and LINUX_CLONE_TLS:
+	 * This cannot be done right now because the child VM 
+	 * is not set up. We will do it at userret time.
 	 */
 	e = p->p_emuldata;
-	if (e->set_tid != NULL) 
-		p->p_userret = (*linux_userret_settid);
+	if ((e->set_tid != NULL) || (e->set_tls != 0))
+		p->p_userret = (*linux_userret);
+#endif
 
 	return;
 }
 
+#ifdef LINUX_NPTL
 static void
-linux_userret_settid(l, arg)
+linux_userret(l, arg)
 	struct lwp *l;
 	void *arg;
 {
@@ -336,8 +348,15 @@ linux_userret_settid(l, arg)
 	if (led->set_tid != NULL) {
 		if ((error = copyout(&p->p_pid,
 		    led->set_tid, sizeof(p->p_pid))) != 0)
-			printf("linux_userret_settid: cannot set TID\n");
+			printf("linux_userret: cannot set TID\n");
+	}
+
+	/* Emulate LINUX_CLONE_NEWTLS */
+	if (led->set_tls != 0) {
+		if (linux_set_newtls(l, led->set_tls) != 0)
+			printf("linux_userret: cannot set TLS\n");
 	}
 
 	return;	
 }
+#endif /* LINUX_NPTL */
