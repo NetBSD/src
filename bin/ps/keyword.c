@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.44 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.45 2005/11/05 19:27:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.44 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.45 2005/11/05 19:27:24 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,7 @@ VAR var[] = {
 	{"tsiz", "TSIZ", 0, tsize, POFF(p_vm_tsize), INT32},
 	{"tt", "TTY", LJUST, tname, POFF(p_tdev), INT32},
 	{"tty", "TTY", LJUST, longtname, POFF(p_tdev), INT32},
+	LVAR("uaddr", "UADDR", 0, l_addr, KPTR, PRIx64),
 	{"ucomm", "UCOMM", LJUST, ucomm},
 	UID("uid", "UID", p_uid),
 	LVAR("upr", "UPR", 0, l_usrpri, UCHAR, "u"),
