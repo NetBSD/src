@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.179 2005/09/08 15:17:23 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.180 2005/11/05 11:08:41 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.179 2005/09/08 15:17:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.180 2005/11/05 11:08:41 tsutsui Exp $");
 
 #include "opt_cputype.h"
 
@@ -890,10 +890,11 @@ mips_vector_init(void)
 		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
 #else /* MIPS3_5900 */
 #if defined(MIPS3_4100)
-		mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
-#else
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+		else
 #endif
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
