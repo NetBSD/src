@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.19 2005/11/05 09:46:07 tsutsui Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.20 2005/11/05 11:57:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,10 +147,15 @@ struct tlb {
 #define	MIPS3_PG_IOPAGE(cca) \
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
 #define	MIPS3_PG_FRAME	0x3fffffc0
-#ifdef MIPS3_4100			/* VR4100 core */
-#define MIPS3_PG_SHIFT	4
+
+#define MIPS3_DEFAULT_PG_SHIFT	6
+#define MIPS3_4100_PG_SHIFT	4
+
+/* NEC Vr4100 CPUs have different PFN layout to support 1kbytes/page */
+#if defined(MIPS3_4100)
+#define MIPS3_PG_SHIFT	mips3_pg_shift
 #else
-#define MIPS3_PG_SHIFT	6
+#define MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
 #endif
 
 /* pte accessor macros */
