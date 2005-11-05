@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.8 2005/06/22 15:10:51 manu Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.9 2005/11/05 00:47:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -58,10 +58,13 @@ struct linux_emuldata {
 	int	debugreg[8];	/* GDB information for ptrace - for use, */
 				/* see ../arch/i386/linux_ptrace.c */
 	struct linux_emuldata_shared *s;
+#ifdef LINUX_NPTL
 	int *child_set_tid;	/* in clone(): Child's TID to set on clone */
 	int *child_clear_tid;	/* in clone(): Child's TID to clear on exit */
 	int *set_tid;		/* in clone(): Own TID to set on clone */
 	int *clear_tid;		/* Own TID to clear on exit */
+	unsigned long set_tls;	/* New TLS in child if not 0 */
+#endif
 };
 
 #endif /* !_COMMON_LINUX_EMULDATA_H */
