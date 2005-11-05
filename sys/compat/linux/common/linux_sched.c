@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.22 2005/11/05 08:06:58 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.23 2005/11/05 23:44:25 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.22 2005/11/05 08:06:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.23 2005/11/05 23:44:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -446,7 +446,6 @@ linux_sys_gettid(l, v, retval)
 	*retval = l->l_proc->p_pid;
 	return 0;
 }
-#endif /* LINUX_NPTL */
 
 int
 linux_sys_sched_getaffinity(l, v, retval)
@@ -524,3 +523,4 @@ linux_sys_sched_setaffinity(l, v, retval)
 #endif
 	return 0;
 };
+#endif /* LINUX_NPTL */
