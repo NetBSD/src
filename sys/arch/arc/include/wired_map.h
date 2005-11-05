@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.2 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.1 2005/11/05 09:50:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -26,12 +26,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ARC_THRESHOLD_TO_USE_WIRED_TLB /* tunable */
-#define ARC_THRESHOLD_TO_USE_WIRED_TLB	(256*1024)
+#define MIPS3_NWIRED_ENTRY	8
+#define MIPS3_WIRED_SIZE	MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_16M)
+
+#ifndef ARC_THRESHOLD_TO_USE_WIRED_TLB	/* tunable */
+#define ARC_THRESHOLD_TO_USE_WIRED_TLB	(256 * 1024)
 #endif
 
+#include <mips/wired_map.h>
+
 void	arc_init_wired_map(void);
-void	arc_enter_wired(vaddr_t va, paddr_t pa0, paddr_t pa1, uint32_t pg_size);
-vaddr_t	arc_contiguously_wired_mapped(paddr_t pa, int size);
-vaddr_t	arc_map_wired(paddr_t pa, int size);
-boolean_t arc_wired_map_extract(vaddr_t va, paddr_t *pap);
+void	arc_wired_enter_page(vaddr_t, paddr_t, vsize_t);
+vaddr_t	arc_contiguously_wired_mapped(paddr_t, vsize_t);
+vaddr_t	arc_map_wired(paddr_t, vsize_t);
+boolean_t arc_wired_map_extract(vaddr_t, paddr_t *);

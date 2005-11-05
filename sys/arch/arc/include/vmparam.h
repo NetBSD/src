@@ -1,8 +1,15 @@
-/*	$NetBSD: vmparam.h,v 1.7 2002/12/10 05:14:26 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2005/11/05 09:50:51 tsutsui Exp $	*/
 /*	$OpenBSD: vmparam.h,v 1.3 1997/04/19 17:19:59 pefo Exp $	*/
 /*	NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp 	*/
 
 #include <mips/vmparam.h>
+
+/* VA 0xe0000000-0xffffffff is used for wired_map TLB entries. */
+#undef  VM_MAX_KERNEL_ADDRESS
+#define VM_MAX_KERNEL_ADDRESS		((vaddr_t)0xDFFFF000)
+
+#define VM_MIN_WIRED_MAP_ADDRESS	((vaddr_t)0xE0000000)
+#define VM_MAX_WIRED_MAP_ADDRESS	((vaddr_t)0xFFFFC000)
 
 /*
  * Maximum number of contigous physical memory segment.

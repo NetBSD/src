@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.9 2005/10/10 02:14:43 tsutsui Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.1 2005/11/05 09:50:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,137 +27,125 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.9 2005/10/10 02:14:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.1 2005/11/05 09:50:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>
+
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
+#include <machine/wired_map.h>
+#include <machine/vmparam.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
-#include <arc/arc/wired_map.h>
-
-#define VA_FREE_START	0xe0000000	/* XXX */
-
-#define ARC_TLB_WIRED_ENTRIES	8	/* upper limit */
-#define ARC_WIRED_PG_MASK	MIPS3_PG_SIZE_16M
-#define ARC_WIRED_PAGE_SIZE	MIPS3_PG_SIZE_MASK_TO_SIZE(ARC_WIRED_PG_MASK)
-#define ARC_WIRED_ENTRY_SIZE	(ARC_WIRED_PAGE_SIZE * 2)
-#define ARC_WIRED_ENTRY_OFFMASK	(ARC_WIRED_ENTRY_SIZE - 1)
-
-static struct wired_map_entry {
-	paddr_t	pa0;
-	paddr_t	pa1;
-	vsize_t	size;
-	vaddr_t	va;
-} wired_map[ARC_TLB_WIRED_ENTRIES];
 
 boolean_t arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep);
 boolean_t arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep);
 
-static int	nwired;
-static vaddr_t	va_free;
+static struct extent *arc_wired_map_ex;
+static long wired_map_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
 void
 arc_init_wired_map(void)
 {
 
-	nwired = 0;
-	va_free = VA_FREE_START;
+	mips3_nwired_page = 0;
+	arc_wired_map_ex = extent_create("wired_map",
+	    VM_MIN_WIRED_MAP_ADDRESS, VM_MAX_WIRED_MAP_ADDRESS, M_DEVBUF,
+	    (void *)wired_map_ex_storage, sizeof(wired_map_ex_storage),
+	    EX_NOWAIT);
+	if (arc_wired_map_ex == NULL)
+		panic("arc_init_wired_map: can't create extent");
 }
 
 void
-arc_enter_wired(vaddr_t va, paddr_t pa0, paddr_t pa1, uint32_t pg_size)
+arc_wired_enter_page(vaddr_t va, paddr_t pa, vaddr_t pg_size)
 {
-	struct tlb tlb;
+	int error;
 
-	if (nwired >= ARC_TLB_WIRED_ENTRIES)
-		panic("arc_enter_wired: wired entry exausted");
+	KASSERT((va & (pg_size - 1)) == 0);
 
-	wired_map[nwired].va = va;
-	wired_map[nwired].pa0 = pa0;
-	wired_map[nwired].pa1 = pa1;
-	wired_map[nwired].size = MIPS3_PG_SIZE_MASK_TO_SIZE(pg_size);
-
-	/* Allocate new wired entry */
-	mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES + nwired + 1);
-
-	/* Map to it */
-	tlb.tlb_mask = pg_size;
-	tlb.tlb_hi = mips3_vad_to_vpn(va);
-	if (pa0 == 0)
-		tlb.tlb_lo0 = MIPS3_PG_G;
-	else
-		tlb.tlb_lo0 = mips3_paddr_to_tlbpfn(pa0) | \
-		    MIPS3_PG_IOPAGE(PMAP_CCA_FOR_PA(pa0));
-	if (pa1 == 0)
-		tlb.tlb_lo1 = MIPS3_PG_G;
-	else
-		tlb.tlb_lo1 = mips3_paddr_to_tlbpfn(pa1) | \
-		    MIPS3_PG_IOPAGE(PMAP_CCA_FOR_PA(pa1));
-	mips3_TLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + nwired, &tlb);
-
-	if (va_free < va + wired_map[nwired].size * 2) {
-		va_free = va + wired_map[nwired].size * 2;
+	if (va < VM_MIN_WIRED_MAP_ADDRESS ||
+	    va + pg_size > VM_MAX_WIRED_MAP_ADDRESS) {
+#ifdef DIAGNOSTIC
+		printf("arc_wired_enter_page: invalid va range.\n");
+#endif
+		return;
 	}
 
-	nwired++;
+	error = extent_alloc_region(arc_wired_map_ex, va, pg_size, EX_NOWAIT);
+	if (error) {
+#ifdef DIAGNOSTIC
+		printf("arc_wired_enter_page: cannot allocate region.\n");
+#endif
+		return;
+	}
+
+	mips3_wired_enter_page(va, pa, pg_size);
 }
 
 boolean_t
 arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 {
-	int n = nwired;
-	struct wired_map_entry *entry = wired_map;
+	vsize_t size;
+	int n;
+	struct wired_map_entry *entry;
 
-	for (; --n >= 0; entry++) {
+	n = mips3_nwired_page;
+	for (entry = mips3_wired_map; --n >= 0; entry++) {
+		size = MIPS3_PG_SIZE_MASK_TO_SIZE(entry->pgmask);
 		if (entry->pa0 != 0 &&
-		    pa >= entry->pa0 && pa < entry->pa0 + entry->size) {
+		    pa >= entry->pa0 && pa < entry->pa0 + size) {
 			*vap = entry->va;
-			*sizep = entry->size;
-			return 1;
+			*sizep = size;
+			return TRUE;
 		}
 		if (entry->pa1 != 0 &&
-		    pa >= entry->pa1 && pa < entry->pa1 + entry->size) {
-			*vap = entry->va + entry->size;
-			*sizep = entry->size;
-			return 1;
+		    pa >= entry->pa1 && pa < entry->pa1 + size) {
+			*vap = entry->va + size;
+			*sizep = size;
+			return TRUE;
 		}
 	}
-	return 0;
+	return FALSE;
 }
 
 /* XXX: Using tlbp makes this easier... */
 boolean_t
 arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 {
-	int n = nwired;
-	struct wired_map_entry *entry = wired_map;
+	vsize_t size;
+	int n;
+	struct wired_map_entry *entry;
 
-	for (; --n >= 0; entry++) {
-		if (va >= entry->va && va < entry->va + entry->size * 2) {
-			paddr_t pa = (va < entry->va + entry->size)
-				? entry->pa0 : entry->pa1;
+	n = mips3_nwired_page;
+	for (entry = mips3_wired_map; --n >= 0; entry++) {
+		size = MIPS3_PG_SIZE_MASK_TO_SIZE(entry->pgmask);
+		if (va >= entry->va && va < entry->va + size * 2) {
+			paddr_t pa = (va < entry->va + size)
+			    ? entry->pa0 : entry->pa1;
 
 			if (pa != 0) {
 				*pap = pa;
-				*sizep = entry->size;
-				return 1;
+				*sizep = size;
+				return TRUE;
 			}
 		}
 	}
-	return 0;
+	return FALSE;
 }
 
 vaddr_t
-arc_contiguously_wired_mapped(paddr_t pa, int size)
+arc_contiguously_wired_mapped(paddr_t pa, vsize_t size)
 {
 	paddr_t p;
 	vaddr_t rva, va;
 	vsize_t vsize, offset;
 
 	if (!arc_wired_map_paddr_entry(pa, &rva, &vsize))
-		return (0); /* not wired mapped */
+		return 0;	/* not wired mapped */
 	/* XXX: same physical address may be wired mapped more than once */
 	offset = (vsize_t)pa & (vsize - 1);
 	pa -= offset;
@@ -177,37 +165,40 @@ arc_contiguously_wired_mapped(paddr_t pa, int size)
 
 /* Allocate new wired entries */
 vaddr_t
-arc_map_wired(paddr_t pa, int size)
+arc_map_wired(paddr_t pa, vsize_t size)
 {
-	vaddr_t va, rva;
+	vaddr_t va;
 	vsize_t off;
+	int error;
 
 	/* XXX: may be already partially wired mapped */
 
-	off = pa & ARC_WIRED_ENTRY_OFFMASK;
-	rva = (va_free + ARC_WIRED_ENTRY_OFFMASK) & ~ARC_WIRED_ENTRY_OFFMASK;
-	pa &= ~(paddr_t)ARC_WIRED_ENTRY_OFFMASK;
-	va = rva;
+	off = pa & MIPS3_WIRED_OFFMASK;
+	pa &= ~(paddr_t)MIPS3_WIRED_OFFMASK;
 	size += off;
 
-	if ((size + ARC_WIRED_ENTRY_SIZE - 1) / ARC_WIRED_ENTRY_SIZE >
-	    ARC_TLB_WIRED_ENTRIES - nwired) {
+	if ((size + MIPS3_WIRED_ENTRY_SIZE(MIPS3_WIRED_SIZE) - 1) /
+	    MIPS3_WIRED_ENTRY_SIZE(MIPS3_WIRED_SIZE) >
+	    MIPS3_NWIRED_ENTRY - mips3_nwired_page) {
 #ifdef DIAGNOSTIC
 		printf("arc_map_wired(0x%llx, 0x%lx): %d is not enough\n",
-		       pa + off, size - off, ARC_TLB_WIRED_ENTRIES - nwired);
+		    pa + off, size - off,
+		    MIPS3_NWIRED_ENTRY - mips3_nwired_page);
 #endif
 		return 0; /* free wired TLB is not enough */
 	}
 
-	while (size > 0) {
-		arc_enter_wired(va, pa, pa + ARC_WIRED_PAGE_SIZE,
-		    ARC_WIRED_PG_MASK);
-		pa += ARC_WIRED_ENTRY_SIZE;
-		va += ARC_WIRED_ENTRY_SIZE;
-		size -= ARC_WIRED_ENTRY_SIZE;
+	error = extent_alloc(arc_wired_map_ex, size, MIPS3_WIRED_SIZE,
+	    0, EX_NOWAIT, &va);
+	if (error) {
+#ifdef DIAGNOSTIC
+		printf("arc_map_wired: can't allocate region\n");
+#endif
+		return 0;
 	}
+	mips3_wired_enter_region(va, pa, MIPS3_WIRED_SIZE);
 
-	return rva + off;
+	return va + off;
 }
 
 boolean_t
@@ -218,8 +209,8 @@ arc_wired_map_extract(vaddr_t va, paddr_t *pap)
 
 	if (arc_wired_map_vaddr_entry(va, &pa, &size)) {
 		*pap = pa + (va & (size - 1));
-		return 1;
+		return TRUE;
 	} else {
-		return 0;
+		return FALSE;
 	}
 }
