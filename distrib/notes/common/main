@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.294 2005/10/21 04:06:18 jld Exp $
+.\"	$NetBSD: main,v 1.295 2005/11/06 17:25:55 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,10 +430,10 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 1.6 and 2.0 Releases
+.Ss Changes Between The NetBSD 2.0 and 3.0 Releases
 .Pp
 The
-.Nx 2.0
+.Nx 3.0
 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
@@ -441,366 +441,80 @@ new and updated kernel subsystems, and many user-land enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
-It is impossible to completely summarize over eighteen months of
-development that went into the
+It is impossible to completely summarize a year of development that
+went into the
 .Nx \*V
 release.
 Some highlights include:
-XXX the following is still news in 1.6
-XXX needs updating!
 .
 .Ss2 Kernel
 .
 .(bullet
 Ports to new platforms including:
-algor,
-dreamcast,
-evbarm,
-evbppc,
-hp700,
-hpcarm,
-hpcsh,
-newsmips,
-sandpoint,
-sgimips,
+iyonix
 and
-sun2.
-.It
-Unified Buffer Cache (UBC) removes size restriction of the file system's
-buffer cache to use all available RAM (if not otherwise used!) and
-improves overall system performance.
-.It
-Round-robin page colouring implemented for various ports for better
-cache utilisation, more deterministic run-time behaviour, and faster
-program execution.
-.It
-A rewritten SCSI middle layer to provide a cleaner interface between
-the different kernel layers, including a kernel thread to handle error
-recovery outside of the interrupt context.
-See
-.Xr scsipi 9 .
-.It
-A new pipe implementation with significantly higher performance
-due to lower overheads, which uses the UVM Page Loan facility.
-.if !\n[mac68k] \{\
-.It
-New boot loader flags
-.Fl v
-.Pq Em bootverbose
-and
-.Fl q
-.Pq Em bootquiet ,
-to be used by kernel code to optionally print information during boot.
-.It
-An in-kernel boot time device configuration manager
-.Xr userconf 4 ,
-activated with the
-.Fl c
-boot loader flag.
-.\}
-.It
-A work-in-progress snapshot of ACPI support,
-based on the 20010831 snapshot of the Intel ACPICA reference implementation.
-.It
-USB 2.0 support, in the form of a preliminary driver for the
-.Xr ehci 4
-host controller.
-.It
-Basic kernel support for IrDA in the form of the
-.Xr irframe 4
-IrDA frame level driver.
-Serial dongles and the
-.Xr oboe 4
-driver are currently supported.
-.It
-Kernel configuration files can be embedded into the kernel for later
-retrieval.
-Refer to
-.Dv INCLUDE_CONFIG_FILE
-in
-.Xr options 4
-for more information.
-.It
-Many more kernel tunable variables added to
-.Xr sysctl 8 .
-.It
-Linux binary emulation has been greatly improved,
-and now supports Linux kernel version 2.4.18.
+Xen 2.0.
 .bullet)
 .
 .Ss2 Networking
 .
 .(bullet
-Hardware assisted IPv4 TCP and UDP checksumming and caching of the
-IPv6 TCP pseudo header.
-Support for checksum offloading on the DP83820 Gigabit Ethernet, 3Com 3c90xB,
-3Com 3c90xC, and Alteon Tigon/Tigon2 Gigabit Ethernet cards.
+TCP now supports TCP Selective Acknowledgement Options (RFC 2018) for
+enhanced performance especially on long distance connections and
+TCP MD5 signatures (RFC 2385) for enhanced protection agains attacks.
 .It
-Zero-Copy for TCP and UDP transmit path achieved through page
-loaning code for
-.Fn sosend .
+The OpenBSD Packet Filter has been integrated as alternative packet
+filer solution.
 .It
-In-kernel ISDN support, from the ISDN4BSD project.
+IP Filter has been upgraded to version 4.1.8.
 .It
-802.1Q VLAN (virtual LAN) support.
-See
-.Xr vlan 4 .
+The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
 .It
-IPFilter now supports IPv6 filtering.
-.It
-.Xr ndbootd 8
-added;
-used to netboot
-.Nx Ns /sun2
-machines.
-.It
-.Xr racoon 8
-added;
-IKE key management daemon for IPsec key negotiation, from the KAME project.
-.It
-WEP encryption supported in
-.Xr ifconfig 8
-and
-.Xr awi 4
-driver.
-.It
-.Xr wi 4
-and
-.Xr wiconfig 8
-now support scanning for access points,
-and defaults to BSS instead of ad-hoc mode.
-.It
-Bridging support; currently only for ethernet.
-See
-.Xr bridge 4 .
-.It
-In-kernel PPP over Ethernet (PPPoE) - RFC 2516,
-with much lower overhead than user-land PPPoE clients.
-See
-.Xr pppoe 4 .
-.It
-.Xr ifwatchd 8
-added;
-invokes up-script and down-script when a network interface goes up and down.
-Used by
-.Xr pppoe 4 .
+ipsec-tools 0.6.2 provides IKE support for ESP over NAT connections (RFC 3947),
+user authentification via XAuth and automatic network configurations of VPN
+clients via Mode Config.
 .bullet)
 .
 .Ss2 File system
 .
 .(bullet
-Enhanced stability of LFS version 2, the BSD log-structured file system.
-.It
-.Xr dump 8 ,
-.Xr dumpfs 8 ,
-.Xr fsck_ffs 8 ,
-.Xr fsirand 8 ,
-.Xr newfs 8 ,
-and
-.Xr tunefs 8
-support a
-.Fl F
-option to manipulate file system images in regular files.
-.It
-.Xr makefs 8
-added;
-creates file system images from a directory tree.
-(Currently ffs only.)
-.It
-Enhanced
-.Fn ffs_dirpref
-by Grigoriy Orlov, which noticeably improves performance on FFS file systems
-when creating directories, and subsequently manipulating them.
-.It
-Fixes for free block tracking and directory block allocation in FFS softdeps.
-.It
-Correctly support FFS file systems with a large number of cylinder groups.
-.It
-Fix the endian independent FFS (FFS_EI) support.
-.It
-.Xr newfs 8 
-calculates default block size from the file system size,
-and uses the largest possible cylinders/group (cpg) value if
-.Fl c
-isn't given.
-.It
-.Xr dpti 4
-driver added;
-an implementation of the DPT/Adaptec SCSI/I2O RAID management interface.
-Allows the use of the Linux versions of
-.Ic dptmgr ,
-.Ic raidutil ,
-.Ic dptelog ,
-(etc).
-.It
-Support for
-.Tn "Windows 2000"
-.Sq NTFS
-(NTFS5).
-.It
-Tagged queueing support for SCSI drivers based on the ncr53c9x controller.
+UFS_DIRHASH
 .bullet)
 .
 .Ss2 Security
 .
 .(bullet
-Addition of a
-.Xr chroot 8
-hierarchy for services including
-.Xr named 8 ,
-.Xr ntpd 8 ,
-and
-.Xr sshd 8 .
-.It
-Additional
-.Xr passwd 5
-ciphers:
-MD5, and
-DES with more encryption rounds.
-See
-.Xr passwd.conf 5 .
-.It
-Several more code audits were performed.
-.It
-.Pa /etc/security
-performs many more checks and is far more flexible in how it monitors
-changes.
-See
-.Xr security.conf 5 .
-.
-.\" XXX: list security advisories here?
-.
+TBD
 .bullet)
 .
 .Ss2 System administration and user tools
 .
 .(bullet
-.Xr sushi 8
-added;
-a menu based system administration tool.
-.It
-.Xr pgrep 1
-and
-.Xr pkill 1
-added;
-find or signal processes by name or other attributes.
-.It
-System upgrades are made easier through the
-.Xr etcupdate 8
-script which helps updating the
-.Pa /etc
-config files interactively, and the
-.Pa /usr/sbin/postinstall
-script which is provided to check for or fix configuration changes
-that have occurred in
-.Nx .
-.It
-.Xr stat 1
-added;
-a user interface to the information returned by the
-.Xr stat 2
-system call.
-.It
-BSD
-.Xr sort 1
-replaces
-GNU
-.Xr sort 1 .
-.It
-The
-.Dq stop
-operation for
-.Xr rc.d 8
-scripts waits until the service terminates before returning.
-This improves the reliability of
-.Dq restart
-operations as well.
-.It
-Swap devices can be removed at system shutdown by enabling
-.Li swapoff
-in
-.Xr rc.conf 5 .
-.It
-An optional watchdog timer which will terminate
-.Xr rc.shutdown 8
-after the number of seconds provided in
-.Li rcshutdown_timeout
-from
-.Xr rc.conf 5 .
+TBD
 .bullet)
 .
 .Ss2 Miscellaneous
 .
 .(bullet
-Support for multibyte LC_CTYPE locales has been integrated from the
-Citrus project.
-Many Chinese, Japanese, Korean, and other encodings are now available.
-.It
-Full support for cross-compilation of the base system, even as a
-non-root user!
-.Pa src/build.sh
-is available for doing arbitrary cross-builds; see
-.Pa src/BUILDING
-for more information.
-At least 38 ports for the
-.Nx \*V
-release were cross-built on a
-.Nx Ns /i386
-system using this mechanism.
-.It
-Migrated the following CPU platforms to ELF: arm, and m68k (including
-amiga, hp300, mac68k, mvme68k, sun2, and x68k).
-.It
-Updates of most third party packages that are shipped in the base
-system to the following latest stable releases:
+TBD
 .(bullet -compact -offset indent
-amd 6.0.6
+am-utils 6-1-20050417
 .It
-BIND 8.3.3
+BIND 9.3.0
 .It
-binutils 2.11.2
+cvs 1.11.20
 .It
-bzip2 1.0.2
+OpenSSH 3.9
 .It
-cvs 1.11
+OpenSSL 0.9.7d
 .It
-dhcp 3.0.1rc9
+Postfix 2.1.5
 .It
-file 3.38
+sendmail 8.13.3
 .It
-gcc 2.95.3
+tcpdump 3.8.3
 .It
-groff 1.16.1
-.It
-Heimdal 0.4e
-.It
-IPfilter 3.4.27
-.It
-kerberos4 1.1
-.It
-ksh from pdksh 5.2.14p2
-.It
-less 374
-.It
-nvi 1.79
-.It
-OpenSSH 3.4
-.It
-OpenSSL 0.9.6g
-.It
-Postfix 1.1.11
-.It
-ppp 2.4.0
-.It
-routed 2.24
-.It
-sendmail 8.11.6
-.It
-tcpdump 3.7.1
-.if \n[i386] \{\
-.It
-XFree86 4.2.0 (i386 only)
-\}
+XFree86 4.5.0
 .bullet)
 .It
 Many new packages in the
@@ -809,26 +523,6 @@ system, including the latest open source desktop KDE3, OpenOffice,
 perl, Apache and many more.
 At the time of writing, there are over 5400 third party packages
 available in pkgsrc.
-.It
-Added AGP GART driver
-.Xr agp 4
-for faster access to graphics boards.
-.It
-.Xr init 8
-will create an mfs (memory based file system)
-.Pa /dev
-if
-.Pa /dev/console
-is missing.
-.It
-.Xr vmstat 8
-displays kernel hash statistics with
-.Fl H
-and
-.Fl h Ar hash .
-.It
-.Xr wscons 4
-supports blanking of VGA consoles.
 .bullet)
 .
 .Pp
