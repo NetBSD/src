@@ -1,4 +1,4 @@
-/*	$NetBSD: automatic.c,v 1.1 2005/11/03 21:16:41 dillo Exp $	*/
+/*	$NetBSD: automatic.c,v 1.2 2005/11/06 12:40:02 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -32,17 +32,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
-__RCSID("$NetBSD: automatic.c,v 1.1 2005/11/03 21:16:41 dillo Exp $");
+__RCSID("$NetBSD: automatic.c,v 1.2 2005/11/06 12:40:02 wiz Exp $");
 #endif
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 #include "lib.h"
 
 Boolean
