@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.4.6.1 2005/09/06 16:12:00 riz Exp $	*/
+/*	$NetBSD: denode.h,v 1.4.6.2 2005/11/06 00:46:50 riz Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -202,6 +202,8 @@ struct denode {
 
 #define DE_EXTERNALIZE32(dp, dep)			\
 	 putushort((dp)->deHighClust, (dep)->de_StartCluster >> 16)
+#define DE_EXTERNALIZE16(dp, dep)			\
+	 putushort((dp)->deHighClust, 0)
 #define DE_EXTERNALIZE(dp, dep)				\
 	(memcpy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
@@ -214,7 +216,7 @@ struct denode {
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
 	 putulong((dp)->deFileSize,			\
 	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize), \
-	 (FAT32((dep)->de_pmp) ? DE_EXTERNALIZE32((dp), (dep)) : 0))
+	 (FAT32((dep)->de_pmp) ? DE_EXTERNALIZE32((dp), (dep)) : DE_EXTERNALIZE16((dp), (dep))))
 
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
