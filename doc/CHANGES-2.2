@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.11 2005/11/03 21:04:07 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.12 2005/11/06 00:51:13 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -153,4 +153,50 @@ distrib/utils/sysinst/util.c			1.137
 	refresh) of the message window caused all the unchanged spaces
 	to be redrawn overwriting most of the main set selection window.
 	[dsl, ticket #5964]
+
+sys/uvm/uvm_glue.c				1.90
+
+	Remove the assertion in uvm_swapout_threads() about LSONPROC lwps
+	not running on the same CPU as the swapper.  l_stat is protected by
+	sched_lock, which isn't held here, so we can race with that lwp
+	starting to run and see its l_cpu not updated yet, as in PR 31870.
+	we check l_stat again in uvm_swapout() while holding sched_lock,
+	so the race itself is harmless.
+	[bouyer, ticket #5965]
+
+usr.sbin/rpc.statd/stat_proc.c			1.7
+
+	When forking, we keep a reference to the status db file, and if the
+	memory copy of the file is dirty, is will be synced when the child
+	exists.  But the parent may have done changes to the database in
+	the meantime, resulting in a db corruption.
+	Fix this by calling sync_file() just before the fork. The child
+	will still have a reference to the db, but won't try to write it
+	on exit.
+	[bouyer, ticket #5967]
+
+sys/dev/sbus/be.c				1.46
+
+	ETHERCAP_VLAN_MTU is a flag for ec_capabilities, the size of the 802.1q
+	encaptulation header is ETHER_VLAN_ENCAP_LEN. Pointed out by der Mouse
+	on tech-kern.
+	[bouyer, ticket #5968]
+
+lib/libkvm/kvm_x86_64.c				1.5
+
+	Fix parsing the page tables.
+	[chs, ticket #5969]
+
+sbin/newfs/mkfs.c				1.92
+
+	don't set fs_maxsymlinklen and fs_old_inodefmt twice,
+	we set them correctly the first time.  fixes PR 26995.
+	[chs, ticket #5971]
+
+sys/fs/msdosfs/denode.h				1.10
+sys/fs/msdosfs/msdosfs_vnops.c			1.22
+
+	PR/32003: Brian Buhrow: msdosfs doesn't properly zero out high
+	cluster data on non-FAT32 msdos filesystems.
+	[christos, ticket #5972]
 
