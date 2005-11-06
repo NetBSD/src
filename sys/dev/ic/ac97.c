@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.77 2005/09/27 05:24:40 simonb Exp $ */
+/*      $NetBSD: ac97.c,v 1.78 2005/11/06 10:08:24 rpaulo Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.77 2005/09/27 05:24:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.78 2005/11/06 10:08:24 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,6 +685,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Conexant HSD11246", },
 	{ AC97_CODEC_ID('C', 'X', 'T', 34),
 	  0xffffffff,			"Conexant D480 MDC V.92 Modem", },
+	{ AC97_CODEC_ID('C', 'X', 'T', 48),
+	  0xffffffff,			"Conexant CXT48", },	
 	{ AC97_CODEC_ID('C', 'X', 'T', 0),
 	  AC97_VENDOR_ID_MASK,		"Conexant unknown", },
 
