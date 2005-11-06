@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.66.2.1 2005/03/19 13:16:56 tron Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.66.2.2 2005/11/06 13:39:10 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.66.2.1 2005/03/19 13:16:56 tron Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.66.2.2 2005/11/06 13:39:10 tron Exp $");
 #endif
 
 /*-
@@ -645,7 +645,7 @@ ftp_expand_URL(const char *base, char *pattern)
 				(int)(s-pattern), pattern, tmpname);
 	}
 
-	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
+	rc = ftp_cmd(buf, "\n(550|450|226).*\n"); /* catch errors */
 	if (rc != 226) {
 		if (Verbose)
 			warnx("nlist failed!");
