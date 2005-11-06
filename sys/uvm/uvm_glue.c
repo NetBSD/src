@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.78.6.1 2005/11/06 00:24:20 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.78.6.1 2005/11/06 00:24:20 riz Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -602,7 +602,6 @@ uvm_swapout_threads()
 			continue;
 		switch (l->l_stat) {
 		case LSONPROC:
-			KDASSERT(l->l_cpu != curcpu());
 			continue;
 
 		case LSRUN:
