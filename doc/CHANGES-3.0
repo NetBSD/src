@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.299 2005/11/06 13:34:02 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.300 2005/11/06 13:53:04 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13910,4 +13910,52 @@ sys/fs/msdosfs/msdosfs_vnops.c			1.22
 	PR kern/32003: msdosfs doesn't properly zero out high cluster data
 	on non-FAT32 msdos filesystems.
 	[christos, ticket #937]
+
+usr.sbin/pkg_install/Makefile.inc		1.26
+usr.sbin/pkg_install/add/add.h			1.8
+usr.sbin/pkg_install/add/extract.c		1.36
+usr.sbin/pkg_install/add/futil.c		1.15
+usr.sbin/pkg_install/add/main.c			1.35-1.36
+usr.sbin/pkg_install/add/perform.c		1.112-1.113
+usr.sbin/pkg_install/add/pkg_add.1		1.61
+usr.sbin/pkg_install/add/verify.c		1.7
+usr.sbin/pkg_install/admin/main.c		1.49-1.50
+usr.sbin/pkg_install/admin/pkg_admin.1		1.36
+usr.sbin/pkg_install/create/main.c		1.28
+usr.sbin/pkg_install/create/perform.c		1.41
+usr.sbin/pkg_install/create/pl.c		1.33
+usr.sbin/pkg_install/delete/main.c		1.35
+usr.sbin/pkg_install/delete/perform.c		1.57
+usr.sbin/pkg_install/info/info.h		1.21
+usr.sbin/pkg_install/info/main.c		1.46-1.47
+usr.sbin/pkg_install/info/perform.c		1.63-1.64
+usr.sbin/pkg_install/info/pkg_info.1		1.50
+usr.sbin/pkg_install/info/show.c		1.32-1.33
+usr.sbin/pkg_install/lib/Makefile		1.24-1.25
+usr.sbin/pkg_install/lib/automatic.c		1.1-1.2
+usr.sbin/pkg_install/lib/config.h		1.1
+usr.sbin/pkg_install/lib/defs.h			1.2
+usr.sbin/pkg_install/lib/dewey.c		1.1
+usr.sbin/pkg_install/lib/dewey.h		1.1
+usr.sbin/pkg_install/lib/fexec.c		1.8
+usr.sbin/pkg_install/lib/file.c			1.74
+usr.sbin/pkg_install/lib/ftpio.c		1.68-1.69
+usr.sbin/pkg_install/lib/global.c		1.7
+usr.sbin/pkg_install/lib/lib.h			1.77-1.78
+usr.sbin/pkg_install/lib/lpkg.c			1.6
+usr.sbin/pkg_install/lib/nbcompat.h		1.1
+usr.sbin/pkg_install/lib/path.c			1.8
+usr.sbin/pkg_install/lib/pen.c			1.35
+usr.sbin/pkg_install/lib/pkgdb.c		1.22
+usr.sbin/pkg_install/lib/plist.c		1.50
+usr.sbin/pkg_install/lib/str.c			1.55-1.56
+usr.sbin/pkg_install/lib/var.c			1.1-1.3
+usr.sbin/pkg_install/lib/version.c		1.2
+usr.sbin/pkg_install/lib/version.h		1.69-1.70
+
+	Synchronise with NetBSD-current:
+	- Bug fix for FTP downloads from a proftpd server.
+	- Add framework to store variable=value pairs about an installed
+	  package.
+	[wiz, #ticket 938]
 
