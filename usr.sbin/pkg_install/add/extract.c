@@ -1,11 +1,17 @@
-/*	$NetBSD: extract.c,v 1.34.2.1 2005/07/30 17:35:09 tron Exp $	*/
+/*	$NetBSD: extract.c,v 1.34.2.2 2005/11/06 13:43:18 tron Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.34.2.1 2005/07/30 17:35:09 tron Exp $");
+__RCSID("$NetBSD: extract.c,v 1.34.2.2 2005/11/06 13:43:18 tron Exp $");
 #endif
 #endif
 
@@ -29,7 +35,9 @@ __RCSID("$NetBSD: extract.c,v 1.34.2.1 2005/07/30 17:35:09 tron Exp $");
  *
  */
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
 #include "lib.h"
 #include "add.h"
 
@@ -80,7 +88,9 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
 		if (q->type == PLIST_FILE) {
 			(void) snprintf(try, sizeof(try), "%s/%s", dir, q->name);
 			if (make_preserve_name(bup, sizeof(bup), name, try) && fexists(bup)) {
+#if HAVE_CHFLAGS
 				(void) chflags(try, 0);
+#endif
 				(void) unlink(try);
 				if (rename(bup, try))
 					warnx("rollback: unable to rename %s back to %s", bup, try);
@@ -175,7 +185,9 @@ extract_plist(char *home, package_t *pkg)
 				/* first try to rename it into place */
 				(void) snprintf(try, sizeof(try), "%s/%s", Directory, p->name);
 				if (fexists(try)) {
+#if HAVE_CHFLAGS
 					(void) chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
+#endif
 					if (preserve && PkgName) {
 						char    pf[MaxPathSize];
 

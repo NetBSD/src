@@ -1,11 +1,17 @@
-/*	$NetBSD: pl.c,v 1.32 2004/12/29 11:35:00 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.32.2.1 2005/11/06 13:43:18 tron Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.32 2004/12/29 11:35:00 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.32.2.1 2005/11/06 13:43:18 tron Exp $");
 #endif
 #endif
 
@@ -31,8 +37,12 @@ __RCSID("$NetBSD: pl.c,v 1.32 2004/12/29 11:35:00 agc Exp $");
 
 #include "lib.h"
 #include "create.h"
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_MD5_H
 #include <md5.h>
+#endif
 
 /*
  * Check that any symbolic link is relative to the prefix
