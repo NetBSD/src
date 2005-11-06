@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.24 2005/06/14 13:55:59 peter Exp $
+.\" $NetBSD: traceroute.8,v 1.25 2005/11/06 16:40:55 rpaulo Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -17,7 +17,7 @@
 .\"
 .\"	Header: traceroute.8,v 1.11 97/04/22 13:45:13 leres Exp
 .\"
-.TH TRACEROUTE 8 "22 April 1997"
+.TH TRACEROUTE 8 "06 November 2005"
 .UC 6
 .SH NAME
 traceroute \- print the route packets take to network host
@@ -261,7 +261,7 @@ traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 38 byte packet
 .RE
 
 Note that lines 2 \*[Am] 3 are the same.  This is due to a buggy
-kernel on the 2nd hop system \- lbl-csam.arpa \- that forwards
+kernel on the 2nd hop system \- lilac-dmc.Berkeley.EDU \- that forwards
 packets with a zero ttl (a bug in the distributed version
 of 4.3BSD).  Note that you have to guess what path
 the packets are taking cross-country since the NSFNET (129.140)
@@ -301,7 +301,7 @@ MIT C Gateway code that doesn't send "time exceeded"s.  God
 only knows what's going on with 12.
 .PP
 The silent gateway 12 in the above may be the result of a bug in
-the 4.[23]BSD network code (and its derivatives):  4.x (x \*[Le] 3)
+the 4.[23]BSD network code (and its derivatives):  4.x (x <= 3)
 sends an unreachable message using whatever ttl remains in the
 original datagram.  Since, for gateways, the remaining ttl is
 zero, the ICMP "time exceeded" is guaranteed to not make it back
