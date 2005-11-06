@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.57.2.3 2005/07/30 17:38:53 tron Exp $
+.\" $NetBSD: pkg_add.1,v 1.57.2.4 2005/11/06 13:40:52 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd July 13, 2005
+.Dd November 1, 2005
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -25,25 +25,13 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl fILMnRSuVv
-.Bk -words
+.Op Fl AfILMnRSuVv
 .Op Fl K Ar pkg_dbdir
-.Ek
-.Bk -words
 .Op Fl p Ar prefix
-.Ek
-.Bk -words
 .Op Fl s Ar verification-type
-.Ek
-.Bk -words
 .Op Fl t Ar template
-.Ek
-.Bk -words
 .Op Fl W Ar viewbase
-.Ek
-.Bk -words
 .Op Fl w Ar view
-.Ek
 .Ar \fR[[ftp|http]://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
 .Sh DESCRIPTION
 The
@@ -114,6 +102,20 @@ will search them in each directory named by the
 environment variable.
 Any dependencies required by the installed package will be searched
 in the same location that the original package was installed from.
+.It Fl A
+Mark package as installed automatically, as dependency of another
+package.
+You can use
+.Dl Ic pkg_admin set automatic=YES
+to mark packages this way after installation, and
+.Dl Ic pkg_admin unset automatic
+to remove the mark.
+If you
+.Nm
+a package without specifying
+.Fl A
+after it had already been automatically installed, the mark is
+removed.
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
 installed or the requirements script fails.

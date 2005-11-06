@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.62 2005/02/20 14:41:05 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.62.2.1 2005/11/06 13:40:51 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.62 2005/02/20 14:41:05 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.62.2.1 2005/11/06 13:40:51 tron Exp $");
 #endif
 #endif
 
@@ -104,7 +104,12 @@ pkg_do(char *pkg)
 				strcat(flist, DESC_FNAME); strcat(flist, " ");
 				if (Flags & SHOW_MTREE)		{ strcat(flist, MTREE_FNAME); 		strcat(flist, " "); }
 				if (Flags & SHOW_BUILD_VERSION)	{ strcat(flist, BUILD_VERSION_FNAME);	strcat(flist, " "); }
-				if (Flags & SHOW_BUILD_INFO)	{ strcat(flist, BUILD_INFO_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_BUILD_INFO)	{
+					strcat(flist, BUILD_INFO_FNAME);
+					strcat(flist, " ");
+					strcat(flist, INSTALLED_INFO_FNAME);
+					strcat(flist, " ");
+				}
 				if (Flags & SHOW_PKG_SIZE)	{ strcat(flist, SIZE_PKG_FNAME); 	strcat(flist, " "); }
 				if (Flags & SHOW_ALL_SIZE)	{ strcat(flist, SIZE_ALL_FNAME); 	strcat(flist, " "); }
 #if 0
@@ -170,7 +175,11 @@ pkg_do(char *pkg)
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(pkg, tmp, COMMENT_FNAME);
 	} else if (Flags & SHOW_BI_VAR) {
-		show_var(BUILD_INFO_FNAME, BuildInfoVariable);
+		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+		    == strlen(BuildInfoVariable))
+			show_var(INSTALLED_INFO_FNAME, BuildInfoVariable);
+		else
+			show_var(BUILD_INFO_FNAME, BuildInfoVariable);
 	} else {
 		FILE   *fp;
 		package_t plist;
@@ -195,7 +204,7 @@ pkg_do(char *pkg)
 			}
 		}
 		if (Flags & SHOW_COMMENT) {
-			show_file(pkg, "Comment:\n", COMMENT_FNAME);
+			show_file(pkg, "Comment:\n", COMMENT_FNAME, TRUE);
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
@@ -204,28 +213,33 @@ pkg_do(char *pkg)
 			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
-			show_file(pkg, "Required by:\n", REQUIRED_BY_FNAME);
+			show_file(pkg, "Required by:\n",
+				  REQUIRED_BY_FNAME, TRUE);
 		}
 		if (Flags & SHOW_DESC) {
-			show_file(pkg, "Description:\n", DESC_FNAME);
+			show_file(pkg, "Description:\n", DESC_FNAME, TRUE);
 		}
 		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
-			show_file(pkg, "Install notice:\n", DISPLAY_FNAME);
+			show_file(pkg, "Install notice:\n",
+				  DISPLAY_FNAME, TRUE);
 		}
 		if (Flags & SHOW_PLIST) {
 			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
 		}
 		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
-			show_file(pkg, "Install script:\n", INSTALL_FNAME);
+			show_file(pkg, "Install script:\n",
+				  INSTALL_FNAME, TRUE);
 		}
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
-			show_file(pkg, "De-Install script:\n", DEINSTALL_FNAME);
+			show_file(pkg, "De-Install script:\n",
+				  DEINSTALL_FNAME, TRUE);
 		}
 		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
-			show_file(pkg, "Require script:\n", REQUIRE_FNAME);
+			show_file(pkg, "Require script:\n",
+				  REQUIRE_FNAME, TRUE);
 		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
-			show_file(pkg, "mtree file:\n", MTREE_FNAME);
+			show_file(pkg, "mtree file:\n", MTREE_FNAME, TRUE);
 		}
 		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
@@ -234,16 +248,27 @@ pkg_do(char *pkg)
 			show_files("Files:\n", &plist);
 		}
 		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
-			show_file(pkg, "Build version:\n", BUILD_VERSION_FNAME);
+			show_file(pkg, "Build version:\n",
+				  BUILD_VERSION_FNAME, TRUE);
 		}
-		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
-			show_file(pkg, "Build information:\n", BUILD_INFO_FNAME);
+		if (Flags & SHOW_BUILD_INFO) {
+			if (fexists(BUILD_INFO_FNAME)) {
+				show_file(pkg, "Build information:\n",
+					  BUILD_INFO_FNAME,
+					  !fexists(INSTALLED_INFO_FNAME));
+			}
+			if (fexists(INSTALLED_INFO_FNAME)) {
+				show_file(pkg, "Installed information:\n",
+					  INSTALLED_INFO_FNAME, TRUE);
+			}
 		}
 		if ((Flags & SHOW_PKG_SIZE) && fexists(SIZE_PKG_FNAME)) {
-			show_file(pkg, "Size of this package in bytes: ", SIZE_PKG_FNAME);
+			show_file(pkg, "Size of this package in bytes: ",
+				  SIZE_PKG_FNAME, TRUE);
 		}
 		if ((Flags & SHOW_ALL_SIZE) && fexists(SIZE_ALL_FNAME)) {
-			show_file(pkg, "Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
+			show_file(pkg, "Size in bytes including required pkgs: ",
+				  SIZE_ALL_FNAME, TRUE);
 		}
 		if (!Quiet) {
 			if (fexists(PRESERVE_FNAME)) {
@@ -342,17 +367,15 @@ pkg_perform(lpkg_head_t *pkghead)
 	/* Overriding action? */
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, dbdir);
-	} else if (AllInstalled) {
+	} else if (Which != WHICH_LIST) {
 		if (!(isdir(dbdir) || islinktodir(dbdir)))
 			return 1;
 
 		if (File2Pkg) {
-
 			/* Show all files with the package they belong to */
 			pkgdb_dump();
-
 		} else {
-			/* Show all packges with description */
+			/* Show all packages with description */
 			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
 				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 					char    tmp2[MaxPathSize];
@@ -366,7 +389,9 @@ pkg_perform(lpkg_head_t *pkghead)
 					if (isfile(tmp2))
 						continue;
 
-					err_cnt += pkg_do(dp->d_name);
+					if (Which == WHICH_ALL
+					    || !is_automatic_installed(tmp2))
+						err_cnt += pkg_do(dp->d_name);
 				}
 				(void) closedir(dirp);
 			}

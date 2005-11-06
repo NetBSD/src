@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.74.2.2 2005/06/14 20:35:49 tron Exp $ */
+/* $NetBSD: lib.h,v 1.74.2.3 2005/11/06 13:40:51 tron Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -126,11 +126,15 @@ enum {
 #define MTREE_FNAME		"+MTREE_DIRS"
 #define BUILD_VERSION_FNAME	"+BUILD_VERSION"
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
+#define INSTALLED_INFO_FNAME	"+INSTALLED_INFO"
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
 #define PRESERVE_FNAME		"+PRESERVE"
 #define VIEWS_FNAME		"+VIEWS"
 #define DEPOT_FNAME		"+DEPOT"
+
+/* The names of special variables */
+#define AUTOMATIC_VARNAME	"automatic"
 
 /*
  * files which we expect to be in every package, passed to
@@ -257,6 +261,16 @@ void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
 int	fcexec(const char *, const char *, ...);
+
+/* variables file handling */
+
+char   *var_get(const char *, const char *);
+int	var_set(const char *, const char *, const char *);
+
+/* automatically installed as dependency */
+
+Boolean	is_automatic_installed(const char *);
+int	mark_as_automatic_installed(const char *, int);
 
 /* String */
 char   *get_dash_string(char **);

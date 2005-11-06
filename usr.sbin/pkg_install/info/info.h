@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.20 2005/02/16 08:35:26 agc Exp $ */
+/* $NetBSD: info.h,v 1.20.2.1 2005/11/06 13:40:51 tron Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -53,8 +53,14 @@
 #define SHOW_BLD_DEPENDS	0x20000
 #define SHOW_BI_VAR		0x40000
 
+enum which {
+    WHICH_ALL,
+    WHICH_USER,
+    WHICH_LIST
+};
+
 extern int Flags;
-extern Boolean AllInstalled;
+enum which Which;
 extern Boolean File2Pkg;
 extern Boolean Quiet;
 extern char *InfoPrefix;
@@ -65,7 +71,7 @@ extern char *CheckPkg;
 extern size_t termwidth;
 extern lpkg_head_t pkgs;
 
-extern void show_file(char *, char *, char *);
+extern void show_file(char *, char *, char *, Boolean);
 extern void show_var(const char *, const char *);
 extern void show_plist(char *, package_t *, pl_ent_t);
 extern void show_files(char *, package_t *);

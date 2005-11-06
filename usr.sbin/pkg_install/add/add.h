@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.7 2004/12/10 21:49:31 erh Exp $ */
+/* $NetBSD: add.h,v 1.7.2.1 2005/11/06 13:40:52 tron Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -36,6 +36,7 @@ extern Boolean NoView;
 extern Boolean NoInstall;
 extern Boolean NoRecord;
 extern Boolean Force;
+extern Boolean Automatic;
 extern int Replace;
 extern char *Mode;
 extern char *Owner;
