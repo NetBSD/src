@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.115 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.116 2005/11/06 10:31:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.116 2005/11/06 10:31:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,6 +694,8 @@ ncr53c9x_select(sc, ecb)
 			sc->sc_cmdlen = clen;
 			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
 
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
+			    &dmasize);
 			/* Program the SCSI counter */
 			NCR_SET_COUNT(sc, dmasize);
 
@@ -702,8 +704,6 @@ ncr53c9x_select(sc, ecb)
 
 			/* And get the targets attention */
 			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
-			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
-			    &dmasize);
 			NCRDMA_GO(sc);
 		} else {
 			ncr53c9x_wrfifo(sc, (u_char *)&ecb->cmd.cmd, ecb->clen);
@@ -751,6 +751,7 @@ ncr53c9x_select(sc, ecb)
 		sc->sc_cmdlen = clen;
 		sc->sc_cmdp = cmd;
 
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		/* Program the SCSI counter */
 		NCR_SET_COUNT(sc, dmasize);
 
@@ -765,7 +766,6 @@ ncr53c9x_select(sc, ecb)
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
 		} else
 			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
-		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		NCRDMA_GO(sc);
 		return;
 	}
