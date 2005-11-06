@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.16 2005/11/06 11:09:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 2005/11/06 11:09:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ void asc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(asc, sizeof(struct asc_softc),
     asc_match, asc_attach, NULL, NULL);
+
+static void asc_minphys(struct buf *);
 
 /*
  *  Functions and the switch for the MI code.
@@ -212,18 +214,32 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	jazzio_intr_establish(ja->ja_intr, ncr53c9x_intr, asc);
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_minphys = asc_minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 
+#if 0
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
+#endif
 	return;
 
  out2:
 	bus_space_unmap(iot, asc->sc_dmaioh, R4030_DMA_RANGE);
  out1:
 	bus_space_unmap(iot, asc->sc_ioh, ASC_NPORTS);
+}
+
+
+static void
+asc_minphys(struct buf *bp)
+{
+
+#define ASC_MAX_XFER	(32 * 1024)	/* XXX can't xfer 64kbytes? */
+
+	if (bp->b_bcount > ASC_MAX_XFER)
+		bp->b_bcount = ASC_MAX_XFER;
+	minphys(bp);
 }
 
 /*
@@ -386,18 +402,6 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	    0, asc->sc_dmamap->dm_mapsize,
 	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
-	return 0;
-}
-
-void
-asc_dma_go(struct ncr53c9x_softc *sc)
-{
-	struct asc_softc *asc = (struct asc_softc *)sc;
-
-	/* No DMA transfer in Transfer Pad operation */
-	if (asc->sc_dmasize == 0)
-		return;
-
 	/* load transfer parameters */
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh,
 	    R4030_DMA_ADDR, asc->sc_dmamap->dm_segs[0].ds_addr);
@@ -410,6 +414,18 @@ asc_dma_go(struct ncr53c9x_softc *sc)
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh,
 	    R4030_DMA_ENAB, R4030_DMA_ENAB_RUN |
 	    (asc->sc_datain ? R4030_DMA_ENAB_READ : R4030_DMA_ENAB_WRITE));
+
+	return 0;
+}
+
+void
+asc_dma_go(struct ncr53c9x_softc *sc)
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+
+	/* No DMA transfer in Transfer Pad operation */
+	if (asc->sc_dmasize == 0)
+		return;
 
 	asc->sc_active = 1;
 }
