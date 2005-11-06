@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.166 2005/11/03 20:08:21 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.167 2005/11/06 02:35:18 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2068,4 +2068,15 @@ sys/dev/scsipi/scsipi_ioctl.c			1.54
 	by Johan A.van Zanten (which should really be kern/31925).
 	Analysed and patch tested by Martin Husemann.
 	[bouyer, ticket #5929]
+
+usr.sbin/rpc.statd/stat_proc.c			1.7
+
+	When forking, we keep a reference to the status db file, and if the
+	memory copy of the file is dirty, is will be synced when the child
+	exists.  But the parent may have done changes to the database in
+	the meantime, resulting in a db corruption.
+	Fix this by calling sync_file() just before the fork. The child
+	will still have a reference to the db, but won't try to write it
+	on exit.
+	[bouyer, ticket #5930]
 
