@@ -1,4 +1,4 @@
-.\" $NetBSD: todr.9,v 1.10 2004/12/29 21:15:02 snj Exp $
+.\" $NetBSD: todr.9,v 1.11 2005/11/06 17:50:37 tsutsui Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,7 +120,7 @@ This structure is defined as follows:
 struct clock_ymdhms {
 	u_short dt_year;	/* Year */
 	u_char dt_mon;		/* Month (1-12) */
-	u_char dt_day;		/* Day (0-365) */
+	u_char dt_day;		/* Day (1-31) */
 	u_char dt_wday;		/* Day of week (0-6) */
 	u_char dt_hour;		/* Hour (0-23) */
 	u_char dt_min;		/* Minute (0-59) */
