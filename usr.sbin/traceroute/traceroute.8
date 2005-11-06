@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.25 2005/11/06 16:40:55 rpaulo Exp $
+.\" $NetBSD: traceroute.8,v 1.26 2005/11/06 17:39:45 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,7 +141,7 @@ Set the base UDP port number used in probes (default is 33434).
 Traceroute hopes that nothing is listening on UDP ports
 .I base
 to
-.I base + nhops - 1
+.I base + nhops \- 1
 at the destination host (so an ICMP PORT_UNREACHABLE message will
 be returned to terminate the route tracing).  If something is
 listening on a port in the default range, this option can be used
@@ -301,7 +301,7 @@ MIT C Gateway code that doesn't send "time exceeded"s.  God
 only knows what's going on with 12.
 .PP
 The silent gateway 12 in the above may be the result of a bug in
-the 4.[23]BSD network code (and its derivatives):  4.x (x <= 3)
+the 4.[23]BSD network code (and its derivatives):  4.x (x \(<= 3)
 sends an unreachable message using whatever ttl remains in the
 original datagram.  Since, for gateways, the remaining ttl is
 zero, the ICMP "time exceeded" is guaranteed to not make it back
@@ -335,7 +335,7 @@ ICMP reply.  So, the reply will time out on the return path
 ICMP's) until we probe with a ttl that's at least twice the path
 length.  I.e., rip is really only 7 hops away.  A reply that
 returns with a ttl of 1 is a clue this problem exists.
-Traceroute prints a "!" after the time if the ttl is \*[Le] 1.
+Traceroute prints a "!" after the time if the ttl is \(<= 1.
 Since vendors ship a lot of obsolete (DEC's ULTRIX, Sun 3.x) or
 non-standard (HP-UX) software, expect to see this problem
 frequently and/or take care picking the target host of your
