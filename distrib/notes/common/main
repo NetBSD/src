@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.6 2005/11/06 17:25:35 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.7 2005/11/06 17:54:01 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -479,6 +479,14 @@ clients via Mode Config.
 .
 .(bullet
 UFS_DIRHASH
+.bullet)
+.
+.Ss2 Libraries
+.
+.(bullet
+Added PAM (Pluggable Authentication Modules framework).
+.It
+Support wide strings in C++
 .bullet)
 .
 .Ss2 Security
@@ -1210,6 +1218,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Aidan Cully Ta Mt aidan@NetBSD.org
 .It Ta Johan Danielsson Ta Mt joda@NetBSD.org
 .It Ta John Darrow Ta Mt jdarrow@NetBSD.org
+.It Ta Jed Davis Ta Mt jld@NetBSD.org
 .It Ta Matt DeBergalis Ta Mt deberg@NetBSD.org
 .It Ta Rob Deker Ta Mt deker@NetBSD.org
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.org
@@ -1391,6 +1400,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
 .It Ta SOMEYA Yoshihiko Ta Mt someya@NetBSD.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.org
+.It Ta J\(:org Sonnenberger Ta Mt joerg@NetBSD.org
 .It Ta Ignatios Souvatzis Ta Mt is@NetBSD.org
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
 .It Ta Jonathan Stone Ta Mt jonathan@NetBSD.org
