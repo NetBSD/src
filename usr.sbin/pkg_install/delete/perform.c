@@ -1,11 +1,17 @@
-/*	$NetBSD: perform.c,v 1.54.2.2 2005/06/14 20:25:54 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.54.2.3 2005/11/06 13:43:18 tron Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.54.2.2 2005/06/14 20:25:54 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.54.2.3 2005/11/06 13:43:18 tron Exp $");
 #endif
 #endif
 
@@ -57,8 +63,12 @@ __RCSID("$NetBSD: perform.c,v 1.54.2.2 2005/06/14 20:25:54 tron Exp $");
  * Added the require find and require delete code
  */
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
 #include "lib.h"
 #include "delete.h"
 

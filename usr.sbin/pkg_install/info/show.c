@@ -1,11 +1,17 @@
-/*	$NetBSD: show.c,v 1.31.2.1 2005/11/06 13:40:51 tron Exp $	*/
+/*	$NetBSD: show.c,v 1.31.2.2 2005/11/06 13:43:18 tron Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.31.2.1 2005/11/06 13:40:51 tron Exp $");
+__RCSID("$NetBSD: show.c,v 1.31.2.2 2005/11/06 13:43:18 tron Exp $");
 #endif
 #endif
 
@@ -58,7 +64,9 @@ __RCSID("$NetBSD: show.c,v 1.31.2.1 2005/11/06 13:40:51 tron Exp $");
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_ERR_H
 #include <err.h>
+#endif
 
 #include "lib.h"
 #include "info.h"

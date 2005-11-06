@@ -1,8 +1,14 @@
-/*	$NetBSD: ftpio.c,v 1.66.2.2 2005/11/06 13:39:10 tron Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.66.2.3 2005/11/06 13:43:17 tron Exp $	*/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.66.2.2 2005/11/06 13:39:10 tron Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.66.2.3 2005/11/06 13:43:17 tron Exp $");
 #endif
 
 /*-
@@ -71,24 +77,61 @@ __RCSID("$NetBSD: ftpio.c,v 1.66.2.2 2005/11/06 13:39:10 tron Exp $");
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#if HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#if HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
+#if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+#if HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#if HAVE_ASSERT_H
 #include <assert.h>
+#endif
+#if HAVE_CTYPE_H
 #include <ctype.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#if HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#if HAVE_REGEX_H
 #include <regex.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
+#if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_TERMCAP_H
 #include <termcap.h>
+#endif
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef EXPECT_DEBUG
+#if HAVE_VIS_H
 #include <vis.h>
+#endif
 #endif
 
 #include "../lib/lib.h"
