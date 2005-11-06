@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.6 2000/06/09 14:02:12 fvdl Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.6.4.1 2005/11/06 00:57:54 riz Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.6 2000/06/09 14:02:12 fvdl Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.6.4.1 2005/11/06 00:57:54 riz Exp $");
 #endif
 
 #include <errno.h>
@@ -337,6 +337,7 @@ sm_notify_1_svc(arg, req)
 	if (!lp) /* We know this host, but have no outstanding requests. */
 		return (&dummy);
 
+	sync_file();
 	pid = fork();
 	if (pid == -1) {
 		syslog(LOG_ERR, "Unable to fork notify process - %s",
