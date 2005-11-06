@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.236 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: com.c,v 1.237 2005/11/06 21:34:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.236 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.237 2005/11/06 21:34:37 dsl Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -889,7 +889,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
 		 */
-		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			t.c_ospeed = comconsrate;
 			t.c_cflag = comconscflag;
@@ -897,6 +896,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
 		}
+		t.c_ispeed = t.c_ospeed;
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
 			SET(t.c_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
