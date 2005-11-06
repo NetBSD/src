@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 2005/10/30 07:53:16 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.23 2005/11/06 11:15:40 tsutsui Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -102,8 +102,7 @@
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-/* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
-#define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
