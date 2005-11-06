@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.88 2004/04/14 22:06:33 dbj Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.88.2.1 2005/11/06 13:27:32 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.88 2004/04/14 22:06:33 dbj Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.88.2.1 2005/11/06 13:27:32 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,9 +295,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		sblock.fs_sblockloc = SBLOCK_UFS1;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
-		sblock.fs_maxsymlinklen = ((NDADDR + NIADDR) *
-		    sizeof (int32_t));
-		sblock.fs_old_inodefmt = FS_44INODEFMT;
 		sblock.fs_old_cgoffset = 0;
 		sblock.fs_old_cgmask = 0xffffffff;
 		sblock.fs_old_size = sblock.fs_size;
@@ -315,8 +312,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		sblock.fs_sblockloc = SBLOCK_UFS2;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int64_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
-		sblock.fs_maxsymlinklen = ((NDADDR + NIADDR) *
-		    sizeof (int64_t));
 	}
 
 	sblock.fs_sblkno =
