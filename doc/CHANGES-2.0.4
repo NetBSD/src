@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.6 2005/11/03 21:03:52 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.7 2005/11/06 00:51:47 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -52,4 +52,20 @@ distrib/utils/sysinst/util.c			1.137
 	refresh) of the message window caused all the unchanged spaces
 	to be redrawn overwriting most of the main set selection window.
 	[dsl, ticket #5964]
+
+sys/uvm/uvm_glue.c				1.90
+
+	Remove the assertion in uvm_swapout_threads() about LSONPROC lwps
+	not running on the same CPU as the swapper.  l_stat is protected by
+	sched_lock, which isn't held here, so we can race with that lwp
+	starting to run and see its l_cpu not updated yet, as in PR 31870.
+	we check l_stat again in uvm_swapout() while holding sched_lock,
+	so the race itself is harmless.
+	[bouyer, ticket #5965]
+
+sbin/newfs/mkfs.c				1.92
+
+	don't set fs_maxsymlinklen and fs_old_inodefmt twice,
+	we set them correctly the first time.  fixes PR 26995.
+	[chs, ticket #5971]
 
