@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.15 2005/11/07 03:26:20 erh Exp $	*/
+/*	$NetBSD: sem.c,v 1.16 2005/11/07 18:45:34 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -828,18 +828,6 @@ addconf(struct config *cf0)
 		cf->cf_fstype = NULL;
 
 	TAILQ_INSERT_TAIL(&allcf, cf, cf_next);
-
-	if (!lkmmode)
-	{
-		/*
-		 * Ensure the configuration-specific C source files get included.
-		 * These files should be eliminated someday.
-		 */
-		char swapname[100];
-		(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
-		               cf->cf_name);
-		addfile(intern(swapname), NULL, FIT_FORCESELECT|FIT_NOPROLOGUE, NULL);
-	}
 	return;
  bad:
 	nvfreel(cf0->cf_root);
