@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.2 2005/11/07 03:26:20 erh Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.3 2005/11/07 18:45:34 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -351,6 +351,8 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 	struct files *fi;
 	int lpos, len, sp;
 	const char *fpath;
+ 	struct config *cf;
+ 	char swapname[100];
 
 	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
 		return (1);
@@ -399,7 +401,28 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		lpos += len + 1;
 		sp = ' ';
 	}
-
+ 	/*
+ 	 * The allfiles list does not include the configuration-specific
+ 	 * C source files.  These files should be eliminated someday, but
+ 	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
+ 	 */
+ 	if (suffix == 'c') {
+ 		TAILQ_FOREACH(cf, &allcf, cf_next) {
+ 			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
+ 			    cf->cf_name);
+ 			len = strlen(swapname);
+ 			if (lpos + len > 72) {
+ 				if (fputs(" \\\n", fp) < 0)
+ 					return (1);
+ 				sp = '\t';
+ 				lpos = 7;
+ 			}
+ 			if (fprintf(fp, "%c%s", sp, swapname) < 0)
+ 				return (1);
+ 			lpos += len + 1;
+ 			sp = ' ';
+ 		}
+ 	}
 	if (putc('\n', fp) < 0)
 		return (1);
 	return (0);
@@ -477,13 +500,15 @@ emitload(FILE *fp)
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
 		if (fprintf(fp, "KERNELS+=%s\n", nm) < 0)
 			return (1);
-		if (fprintf(fp, "%s: ${SYSTEM_DEP} vers.o", nm) < 0)
+		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap${.TARGET}.o vers.o", nm) < 0)
 			return (1);
 		if (fprintf(fp, "\n\
 \t${SYSTEM_LD_HEAD}\n\
-\t${SYSTEM_LD}\n\
+\t${SYSTEM_LD} swap${.TARGET}.o\n\
 \t${SYSTEM_LD_TAIL}\n\
-\n") < 0)
+\n\
+swap%s.o: swap%s.c\n\
+\t${NORMAL_C}\n\n", swname, swname) < 0)
 			return (1);
 	}
 	return (0);
