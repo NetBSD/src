@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.214 2005/07/06 07:06:29 dyoung Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.215 2005/11/07 16:39:16 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.212 2005/07/06 07:05:25 dyoung Exp
+ *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -767,7 +767,7 @@
 #define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
 #define	PCMCIA_CIS_TAMARACK_ETHERNET	{ "TAMARACK", "Ethernet", "A", NULL }
 #define	PCMCIA_PRODUCT_TAMARACK_ETHERNET	-1
-#define	PCMCIA_CIS_TEAC_IDECARDII	{ NULL, "NinjaATA-", NULL, NULL }
+#define	PCMCIA_CIS_TEAC_IDECARDII	{ " ", "NinjaATA-", NULL, NULL }
 #define	PCMCIA_PRODUCT_TEAC_IDECARDII	-1
 #define	PCMCIA_CIS_TOSHIBA_CBIDE2	{ "LOOKMEET", "CBIDE2      ", NULL, NULL }
 #define	PCMCIA_PRODUCT_TOSHIBA_CBIDE2	-1
