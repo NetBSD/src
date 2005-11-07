@@ -1,4 +1,4 @@
-.\" $NetBSD: groupadd.8,v 1.12 2005/09/09 22:02:12 wiz Exp $ */
+.\" $NetBSD: groupadd.8,v 1.13 2005/11/07 23:07:45 christos Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 9, 2005
+.Dd November 7, 2005
 .Dt GROUPADD 8
 .Os
 .Sh NAME
@@ -46,6 +46,9 @@
 The
 .Nm
 utility adds a group to the system.
+See
+.Xr group 8
+for more information about EXTENSIONS.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl g Ar gid
@@ -57,8 +60,10 @@ another group.
 Set the low and high bounds of a gid range for new groups.
 A new group can only be created if there are gids which can be
 assigned inside the range.
+This option is included if built with EXTENSIONS.
 .It Fl v
 Enable verbose mode - explain the commands as they are executed.
+This option is included if built with EXTENSIONS.
 .Sh EXIT STATUS
 .Ex -std groupadd
 .Sh SEE ALSO
