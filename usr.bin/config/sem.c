@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.14 2005/10/12 01:17:43 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.15 2005/11/07 03:26:20 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -780,7 +780,6 @@ void
 addconf(struct config *cf0)
 {
 	struct config *cf;
-	struct nvlist *nv;
 	const char *name;
 
 	name = cf0->cf_name;
@@ -795,12 +794,13 @@ addconf(struct config *cf0)
 	/*
 	 * Resolve the root device.
 	 */
-	if (cf->cf_root->nv_str != s_qmark) {
+	if (cf->cf_root == NULL) {
+		error("%s: no root device specified", name);
+		goto bad;
+	}
+	if (cf->cf_root && cf->cf_root->nv_str != s_qmark) {
+		struct nvlist *nv;
 		nv = cf->cf_root;
-		if (nv == NULL) {
-			error("%s: no root device specified", name);
-			goto bad;
-		}
 		if (resolve(&cf->cf_root, name, "root", nv, 'a'))
 			goto bad;
 	}
@@ -828,6 +828,18 @@ addconf(struct config *cf0)
 		cf->cf_fstype = NULL;
 
 	TAILQ_INSERT_TAIL(&allcf, cf, cf_next);
+
+	if (!lkmmode)
+	{
+		/*
+		 * Ensure the configuration-specific C source files get included.
+		 * These files should be eliminated someday.
+		 */
+		char swapname[100];
+		(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
+		               cf->cf_name);
+		addfile(intern(swapname), NULL, FIT_FORCESELECT|FIT_NOPROLOGUE, NULL);
+	}
 	return;
  bad:
 	nvfreel(cf0->cf_root);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.2 2005/11/07 03:26:20 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,8 @@
 static const char *srcpath(struct files *); 
 
 static const char *prefix_prologue(const char *);
+static const char *filetype_prologue(struct filetype *);
+
 
 static int emitdefs(FILE *);
 static int emitfiles(FILE *, int, int);
@@ -197,9 +199,17 @@ srcpath(struct files *fi)
 }
 
 static const char *
+filetype_prologue(struct filetype *fit)
+{
+	if (fit->fit_flags & FIT_NOPROLOGUE || *fit->fit_path == '/')
+		return ("");
+	else
+		return ("$S/");
+}
+
+static const char *
 prefix_prologue(const char *path)
 {
-
 	if (*path == '/')
 		return ("");
 	else
@@ -282,10 +292,14 @@ emitobjs(FILE *fp)
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
 		len = strlen(oi->oi_path);
-		if (*oi->oi_path != '/') {
-			len += 3;	/* "$S/" */
-			if (oi->oi_prefix != NULL)
-				len += strlen(oi->oi_prefix) + 1;
+		if (*oi->oi_path != '/')
+		{
+			/* e.g. "$S/" */
+ 			if (oi->oi_prefix != NULL)
+				len += strlen(prefix_prologue(oi->oi_path)) +
+				       strlen(oi->oi_prefix) + 1;
+			else
+				len += strlen(filetype_prologue(&oi->oi_fit));
 		}
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
@@ -299,11 +313,13 @@ emitobjs(FILE *fp)
 		} else {
 			if (oi->oi_prefix != NULL) {
 				if (fprintf(fp, "%c%s%s/%s", sp,
-				    prefix_prologue(oi->oi_prefix),
+				    prefix_prologue(oi->oi_path),
 				    oi->oi_prefix, oi->oi_path) < 0)
 					return (1);
 			} else {
-				if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
+				if (fprintf(fp, "%c%s%s", sp,
+				            filetype_prologue(&oi->oi_fit),
+				            oi->oi_path) < 0)
 					return (1);
 			}
 		}
@@ -333,10 +349,8 @@ static int
 emitfiles(FILE *fp, int suffix, int upper_suffix)
 {
 	struct files *fi;
-	struct config *cf;
 	int lpos, len, sp;
 	const char *fpath;
-	char swapname[100];
 
 	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
 		return (1);
@@ -346,15 +360,19 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
-                        return (1);
+			return (1);
 		len = strlen(fpath);
 		if (! ((fpath[len - 1] == suffix) ||
 		    (upper_suffix && fpath[len - 1] == toupper(suffix))))
 			continue;
-		if (*fpath != '/') {
-			len += 3;	/* "$S/" */
-			if (fi->fi_prefix != NULL)
-				len += strlen(fi->fi_prefix) + 1;
+		if (*fpath != '/')
+		{
+			/* "$S/" */
+ 			if (fi->fi_prefix != NULL)
+				len += strlen(prefix_prologue(fi->fi_prefix)) +
+				       strlen(fi->fi_prefix) + 1;
+			else
+				len += strlen(filetype_prologue(&fi->fi_fit));
 		}
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
@@ -363,44 +381,25 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 			lpos = 7;
 		}
 		if (*fi->fi_path == '/') {
-			if (fprintf(fp, "%c%s", sp, fi->fi_path) < 0)
+			if (fprintf(fp, "%c%s", sp, fpath) < 0)
 				return (1);
 		} else {
 			if (fi->fi_prefix != NULL) {
 				if (fprintf(fp, "%c%s%s/%s", sp,
 				    prefix_prologue(fi->fi_prefix),
-				    fi->fi_prefix, fi->fi_path) < 0)
+				    fi->fi_prefix, fpath) < 0)
 					return (1);
 			} else {
-				if (fprintf(fp, "%c$S/%s", sp, fi->fi_path) < 0)
+				if (fprintf(fp, "%c%s%s", sp,
+				            filetype_prologue(&fi->fi_fit),
+				            fpath) < 0)
 					return (1);
 			}
 		}
 		lpos += len + 1;
 		sp = ' ';
 	}
-	/*
-	 * The allfiles list does not include the configuration-specific
-	 * C source files.  These files should be eliminated someday, but
-	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
-	 */
-	if (suffix == 'c') {
-		TAILQ_FOREACH(cf, &allcf, cf_next) {
-			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
-			    cf->cf_name);
-			len = strlen(swapname);
-			if (lpos + len > 72) {
-				if (fputs(" \\\n", fp) < 0)
-					return (1);
-				sp = '\t';
-				lpos = 7;
-			}
-			if (fprintf(fp, "%c%s", sp, swapname) < 0)
-				return (1);
-			lpos += len + 1;
-			sp = ' ';
-		}
-	}
+
 	if (putc('\n', fp) < 0)
 		return (1);
 	return (0);
@@ -432,8 +431,10 @@ emitrules(FILE *fp)
 				    fi->fi_prefix, fpath) < 0)
 					return (1);
 			} else {
-				if (fprintf(fp, "%s.o: $S/%s\n", fi->fi_base,
-				    fpath) < 0)
+				if (fprintf(fp, "%s.o: %s%s\n",
+				            fi->fi_base,
+				            filetype_prologue(&fi->fi_fit),
+				            fpath) < 0)
 					return (1);
 			}
 		}
@@ -476,27 +477,13 @@ emitload(FILE *fp)
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
 		if (fprintf(fp, "KERNELS+=%s\n", nm) < 0)
 			return (1);
-		if (fprintf(fp, "SWAP_OBJ%s=swap%s.o\n", nm, swname) < 0)
-			return (1);
-		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o", nm,
-		    swname) < 0)
+		if (fprintf(fp, "%s: ${SYSTEM_DEP} vers.o", nm) < 0)
 			return (1);
 		if (fprintf(fp, "\n\
 \t${SYSTEM_LD_HEAD}\n\
-\t${SYSTEM_LD} swap%s.o\n\
+\t${SYSTEM_LD}\n\
 \t${SYSTEM_LD_TAIL}\n\
-\n\
-swap%s.o: ", swname, swname) < 0)
-			return (1);
-		if (cf->cf_root != NULL) {
-			if (fprintf(fp, "swap%s.c\n", nm) < 0)
-				return (1);
-		} else {
-			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
-			    machine, machine) < 0)
-				return (1);
-		}
-		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
+\n") < 0)
 			return (1);
 	}
 	return (0);
