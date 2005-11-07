@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.7 2005/11/06 17:54:01 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.8 2005/11/07 18:49:41 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -492,7 +492,10 @@ Support wide strings in C++
 .Ss2 Security
 .
 .(bullet
-TBD
+The Veriexec framework is now using hash tables to store per-file data,
+resulting in much faster operation. It supprots four different enforcement
+levels and full control over verbosity. Signature files are easier
+to generate and are more flexible than in the previous version.
 .bullet)
 .
 .Ss2 System administration and user tools
