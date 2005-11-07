@@ -1,10 +1,12 @@
-#	$NetBSD: files.xen,v 1.29 2005/08/21 22:20:28 bouyer Exp $
+#	$NetBSD: files.xen,v 1.30 2005/11/07 11:42:34 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
 maxpartitions 8
 
 maxusers 2 16 128
+
+defparam opt_kernbase.h	KERNBASE
 
 # Processor type options.
 defflag	opt_cputype.h	I686_CPU

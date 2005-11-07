@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.9 2005/06/22 06:14:51 dyoung Exp $
+#	$NetBSD: Makefile.xen,v 1.10 2005/11/07 11:42:34 yamt Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -28,6 +28,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 XEN=		$S/arch/xen
+I386=		$S/arch/i386
 GENASSYM_CONF=	${XEN}/${XEN_BUILD}/genassym.cf
 
 ##
@@ -47,8 +48,17 @@ KERN_AS=	obj
 ##
 MD_OBJS=	locore.o spl.o vector.o
 MD_CFILES=
-MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S ${XEN}/${XEN_BUILD}/spl.S \
+MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S \
+		${XEN}/${XEN_BUILD}/spl.S \
 		${XEN}/${XEN_BUILD}/vector.S
+
+.if ${MACHINE_ARCH} == i386
+MD_OBJS+=	copy.o
+MD_CFILES+=	${I386}/i386/copy.S
+
+copy.o: ${I386}/i386/copy.S assym.h
+	${NORMAL_S}
+.endif
 
 locore.o: ${XEN}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}

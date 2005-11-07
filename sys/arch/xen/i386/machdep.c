@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2005/08/19 16:06:12 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2005/11/07 11:42:34 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2005/08/19 16:06:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/11/07 11:42:34 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1526,9 +1526,8 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail - KERNBASE;
-	avail_end = ptoa(xen_start_info.nr_pages) +
-		(KERNTEXTOFF - KERNBASE_LOCORE);
-	pmap_pa_start = (KERNTEXTOFF - KERNBASE_LOCORE);
+	avail_end = ptoa(xen_start_info.nr_pages) + (KERNTEXTOFF - KERNBASE);
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;

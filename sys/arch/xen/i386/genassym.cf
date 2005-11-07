@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2005/04/16 22:49:37 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.3 2005/11/07 11:42:34 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -126,6 +126,23 @@ define	PAGE_SIZE		PAGE_SIZE
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
+
+define	PTE_BASE		PTE_BASE
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	KERNBASE		KERNBASE
+define	KERNTEXTOFF		KERNTEXTOFF
+
+define	PGSHIFT			PGSHIFT
+define	PGOFSET			PGOFSET
+define	PDSHIFT			PDSHIFT
+define	PDOFSET			PDOFSET
+define	NBPD			NBPD
+
+define	PG_RW			PG_RW
+define	PG_V			PG_V
+define	PG_KW			PG_KW
+define	PG_KR			PG_KR
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
@@ -271,3 +288,19 @@ define	TREC_IBT		offsetof(struct trec, tr_ibt)
 
 define	SIZEOF_TREC		sizeof(struct trec)
 define	SIZEOF_TLOG		sizeof(struct tlog)
+
+define	IPL_NONE		IPL_NONE
+define	IPL_SCHED		IPL_SCHED
+define	IPL_HIGH		IPL_HIGH
+
+define	IPL_SOFTNET		IPL_SOFTNET
+define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
+define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+
+define	IREENT_MAGIC		IREENT_MAGIC
+
+define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
+define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
+define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
+
+define	PSL_MBO			PSL_MBO

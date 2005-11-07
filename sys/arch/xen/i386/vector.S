@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12 2005/11/07 08:52:07 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.13 2005/11/07 11:42:34 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -84,8 +84,6 @@
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
-#include <machine/intr.h>
-#include <machine/psl.h>
 #include <machine/xen.h>
 
 #include <net/netisr.h>

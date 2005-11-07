@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.6 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.7 2005/11/07 11:42:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 
 #include "assym.h"
 
-#include <machine/psl.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
 #include <compat/mach/mach_syscall.h>

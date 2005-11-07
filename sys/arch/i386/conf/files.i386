@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.272 2005/10/07 15:59:49 riz Exp $
+#	$NetBSD: files.i386,v 1.273 2005/11/07 11:42:34 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,6 +7,8 @@
 maxpartitions 8
 
 maxusers 2 16 128
+
+defparam opt_kernbase.h	KERNBASE
 
 # APM options
 defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
