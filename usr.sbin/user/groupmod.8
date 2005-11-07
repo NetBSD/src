@@ -1,4 +1,4 @@
-.\" $NetBSD: groupmod.8,v 1.11 2005/09/09 22:02:12 wiz Exp $ */
+.\" $NetBSD: groupmod.8,v 1.12 2005/11/07 23:07:45 christos Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 9, 2005
+.Dd November 7, 2005
 .Dt GROUPMOD 8
 .Os
 .Sh NAME
@@ -46,6 +46,9 @@
 The
 .Nm
 utility modifies an existing group on the system.
+See
+.Xr group 8
+for more information about EXTENSIONS.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl g Ar gid
@@ -57,6 +60,7 @@ Allow the new group to have a gid which is already in use for
 another group.
 .It Fl v
 Enable verbose mode - explain the commands as they are executed.
+This option is included if built with EXTENSIONS.
 .El
 .Sh EXIT STATUS
 .Ex -std groupmod
