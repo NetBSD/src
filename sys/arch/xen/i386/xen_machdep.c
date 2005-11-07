@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.12 2005/08/21 13:15:43 yamt Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.13 2005/11/07 11:42:34 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.12 2005/08/21 13:15:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.13 2005/11/07 11:42:34 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -354,7 +354,7 @@ xpmap_init(void)
 	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
 		/* mark PTE page read-only in our table */
 		sysptp[((xen_start_info.pt_base +
-			    (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+			    (i << PAGE_SHIFT) - KERNBASE) & 
 			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
 	}
 
@@ -369,7 +369,7 @@ xpmap_init(void)
 			      (unsigned long)ptp - KERNTEXTOFF, *ptp));
 
 		/* mark PTE page read-only in our table */
-		sysptp[((PDPpaddr + (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+		sysptp[((PDPpaddr + (i << PAGE_SHIFT) - KERNBASE) & 
 			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
 
 		/* update our pte's */
@@ -442,7 +442,7 @@ xpmap_init(void)
 	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
 		/* mark PTE page writable in our table */
 		ptp = &sysptp[((xen_start_info.pt_base +
-				   (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+				   (i << PAGE_SHIFT) - KERNBASE) & 
 				  (PD_MASK | PT_MASK)) >> PAGE_SHIFT];
 		xpq_queue_pte_update(
 		    (void *)xpmap_ptom((unsigned long)ptp - KERNBASE), *ptp |

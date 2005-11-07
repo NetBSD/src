@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2005/09/11 14:30:31 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2005/11/07 11:42:34 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2005/09/11 14:30:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2005/11/07 11:42:34 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3936,8 +3936,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) !=
-			    (KERNTEXTOFF - KERNBASE_LOCORE));
+			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
 
 			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
 #ifdef DIAGNOSTIC
@@ -4164,8 +4163,7 @@ pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) !=
-			    (KERNTEXTOFF - KERNBASE_LOCORE));
+			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
 
 			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
 #ifdef DIAGNOSTIC
