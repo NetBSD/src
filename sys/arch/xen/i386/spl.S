@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4 2005/03/16 11:25:03 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.5 2005/11/07 11:42:34 yamt Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -41,7 +41,6 @@
 #include "opt_ddb.h"
 #include "opt_xen.h"
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>

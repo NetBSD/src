@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.20 2005/10/10 21:08:01 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.21 2005/11/07 11:42:34 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -83,8 +83,6 @@
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
-#include <machine/intr.h>
-#include <machine/psl.h>
 
 #include <net/netisr.h>
 

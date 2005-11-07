@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.4 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.5 2005/11/07 11:42:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 
 #include <compat/linux/linux_syscall.h>
 

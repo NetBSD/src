@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.8 2005/08/20 19:20:54 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.9 2005/11/07 11:42:34 yamt Exp $	*/
 
 /*
  *
@@ -211,7 +211,7 @@ paddr_t *xpmap_phys_to_machine_mapping;
 
 #endif
 
-#define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE_LOCORE)
+#define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
