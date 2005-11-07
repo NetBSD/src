@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.18 2005/10/13 23:40:08 rpaulo Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.19 2005/11/07 18:12:33 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.18 2005/10/13 23:40:08 rpaulo Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.19 2005/11/07 18:12:33 christos Exp $");
 #endif
 #endif
 
@@ -443,23 +443,9 @@ send_again:
 			}	       
 		}
 		if (n == -1) {
-#ifdef _REENTRANT
-			if (errno == EINTR) {
-				sigset_t rmask;
-				if (sigpending(&rmask) == -1) {
-					cu->cu_error.re_errno = errno;
-					cu->cu_error.re_status = 
-					    RPC_SYSTEMERROR;
-					goto out;
-				}
-				(void)sigsuspend(&rmask);
-			} else
-#endif
-			{
-				cu->cu_error.re_errno = errno;
-				cu->cu_error.re_status = RPC_CANTRECV;
-				goto out;
-			}
+			cu->cu_error.re_errno = errno;
+			cu->cu_error.re_status = RPC_CANTRECV;
+			goto out;
 		}
 
 		gettimeofday(&tv, NULL);
