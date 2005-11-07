@@ -1,4 +1,9 @@
-/*	$NetBSD: dewey.c,v 1.1 2005/11/03 21:59:55 dillo Exp $	*/
+/*	$NetBSD: dewey.c,v 1.2 2005/11/07 22:53:41 wiz Exp $	*/
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -20,12 +25,24 @@
  *
  */
 
+#if HAVE_ASSERT_H
 #include <assert.h>
+#endif
+#if HAVE_CTYPE_H
 #include <ctype.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_FNMATCH_H
 #include <fnmatch.h>
+#endif
+#if HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "defs.h"
 #include "dewey.h"
