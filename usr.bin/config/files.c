@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: files.c,v 1.2 2005/11/07 03:26:20 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,12 +248,17 @@ fixfiles(void)
 
 	err = 0;
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+
 		/* Skip files that generated counted-device complaints. */
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
 
 		/* Optional: see if it is to be included. */
-		if (fi->fi_optx != NULL) {
+		if (fi->fi_flags & FIT_FORCESELECT)
+		{
+			/* include it */ ;
+		}
+		else if (fi->fi_optx != NULL) {
 			flathead = NULL;
 			flatp = &flathead;
 			sel = expr_eval(fi->fi_optx,
