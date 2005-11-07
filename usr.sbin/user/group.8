@@ -1,4 +1,4 @@
-.\" $NetBSD: group.8,v 1.13 2005/09/09 22:01:20 wiz Exp $ */
+.\" $NetBSD: group.8,v 1.14 2005/11/07 23:07:45 christos Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 9, 2005
+.Dd November 7, 2005
 .Dt GROUP 8
 .Os
 .Sh NAME
@@ -63,8 +63,10 @@ utility acts as a frontend to the
 and
 .Xr groupdel 8
 commands.
+The utilities by default are built with EXTENSIONS.
+This allows for further functionality. 
 .Pp
-For a full explanation of the options, please see the relevant manual page.
+For a full explanation of the options available, please see the relevant manual page.
 .Sh EXIT STATUS
 .Ex -std group
 .Sh SEE ALSO
