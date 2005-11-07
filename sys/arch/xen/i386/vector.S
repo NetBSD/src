@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.11 2005/05/31 00:45:05 chs Exp $	*/
+/*	$NetBSD: vector.S,v 1.12 2005/11/07 08:52:07 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -323,7 +323,6 @@ IDTVEC(softnet)
 #endif
 	addl    $1,EVCNTLO(softnet_evtcnt)
 	adcl    $0,EVCNTHI(softnet_evtcnt)
-	movl	CPUVAR(ISOURCES) + SIR_NET * 4, %edi
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
