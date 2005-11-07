@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2005/10/12 01:17:43 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2005/11/07 03:26:20 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,6 +269,23 @@ struct devi {
 #define	WILD	(-2)		/* unit number for, e.g., "sd?" */
 
 /*
+ * Files or objects.  This structure defines the common fields
+ * between the two.
+ */
+struct filetype
+{
+	const char *fit_srcfile;	/* the name of the "files" file that got us */
+	u_short	fit_srcline;	/* and the line number */
+	u_char	fit_flags;	/* as below */
+	char	fit_lastc;	/* last char from path */
+	const char *fit_path;	/* full file path */
+	const char *fit_prefix;	/* any file prefix */
+};
+/* Anything less than 0x10 is sub-type specific */
+#define FIT_NOPROLOGUE  0x10    /* Don't prepend $S/ */
+#define FIT_FORCESELECT 0x20    /* Always include this file */
+
+/*
  * Files.  Each file is either standard (always included) or optional,
  * depending on whether it has names on which to *be* optional.  The
  * options field (fi_optx) is actually an expression tree, with nodes
@@ -282,19 +299,21 @@ struct devi {
  * contain counts or `need' flags; this is used in mkheaders().
  */
 struct files {
+	struct filetype fi_fit;
 	TAILQ_ENTRY(files) fi_next;
-	const char *fi_srcfile;	/* the name of the "files" file that got us */
-	u_short	fi_srcline;	/* and the line number */
-	u_char	fi_flags;	/* as below */
-	char	fi_lastc;	/* last char from path */
-	const char *fi_path;	/* full file path */
-	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
-	const char *fi_base;	/* tail minus ".c" (or whatever) */
-	const char *fi_prefix;	/* any file prefix */
-	struct  nvlist *fi_optx;/* options expression */
-	struct  nvlist *fi_optf;/* flattened version of above, if needed */
-	const char *fi_mkrule;	/* special make rule, if any */
+	const  char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
+	const  char *fi_base;	/* tail minus ".c" (or whatever) */
+	struct nvlist *fi_optx; /* options expression */
+	struct nvlist *fi_optf; /* flattened version of above, if needed */
+	const  char *fi_mkrule;	/* special make rule, if any */
 };
+#define fi_srcfile fi_fit.fit_srcfile
+#define fi_srcline fi_fit.fit_srcline
+#define fi_flags   fi_fit.fit_flags
+#define fi_lastc   fi_fit.fit_lastc
+#define fi_path    fi_fit.fit_path
+#define fi_prefix  fi_fit.fit_prefix
+
 /* flags */
 #define	FI_SEL		0x01	/* selected */
 #define	FI_NEEDSCOUNT	0x02	/* needs-count */
@@ -306,16 +325,19 @@ struct files {
  * files (e.g. binary-only device drivers) to be linked in.
  */
 struct objects {
+	struct  filetype oi_fit;
 	TAILQ_ENTRY(objects) oi_next;
-	const char *oi_srcfile;	/* the name of the "objects" file that got us */
-	u_short	oi_srcline;	/* and the line number */
-	u_char	oi_flags;	/* as below */
-	char	oi_lastc;	/* last char from path */
-	const char *oi_path;	/* full object path */
-	const char *oi_prefix;	/* any file prefix */
 	struct  nvlist *oi_optx;/* options expression */
 	struct  nvlist *oi_optf;/* flattened version of above, if needed */
 };
+
+#define oi_srcfile oi_fit.fit_srcfile
+#define oi_srcline oi_fit.fit_srcline
+#define oi_flags   oi_fit.fit_flags
+#define oi_lastc   oi_fit.fit_lastc
+#define oi_path    oi_fit.fit_path
+#define oi_prefix  oi_fit.fit_prefix
+
 /* flags */
 #define	OI_SEL		0x01	/* selected */
 #define	OI_NEEDSFLAG	0x02	/* needs-flag */
@@ -356,6 +378,7 @@ struct devm {
  */
 struct hashtab;
 
+int lkmmode;
 const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
 const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
 const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
