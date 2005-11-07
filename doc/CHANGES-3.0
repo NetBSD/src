@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.300 2005/11/06 13:53:04 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.301 2005/11/07 17:34:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13959,3 +13959,10 @@ usr.sbin/pkg_install/lib/version.h		1.69-1.70
 	  package.
 	[wiz, #ticket 938]
 
+sys/uvm/uvm_amap.c				patch
+
+	In amap_cow_now(), handle the case where we have to sleep and some of 
+	the already-copied pages are paged out.  anons that have already been 
+	copied will have refcount == 1, whereas anons that still need to be 
+	copied will have refcount > 1. PR#25392, PR#30257, PR#31924
+	[chs, ticket #939]
