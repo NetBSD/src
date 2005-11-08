@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2005/11/07 11:42:34 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.4 2005/11/08 22:57:30 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -296,6 +296,7 @@ define	IPL_HIGH		IPL_HIGH
 define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
 define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
 
 define	IREENT_MAGIC		IREENT_MAGIC
 
