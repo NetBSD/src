@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.7 2005/10/24 16:31:54 jdolecek Exp $ */
+/* $NetBSD: pms.c,v 1.8 2005/11/08 22:12:16 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.7 2005/10/24 16:31:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.8 2005/11/08 22:12:16 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ const struct pms_protocol pms_protocols[] = {
 	{ { 0, 0, 0 }, 0, "unknown protocol" },
 	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
 	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
-	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" }
+	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" },
+	{ { 0, 0, 0 }, 0, "synaptics" }
 };
 
 
