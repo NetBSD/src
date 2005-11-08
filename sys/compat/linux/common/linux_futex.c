@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.2 2005/11/05 08:07:44 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.3 2005/11/08 21:28:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.2 2005/11/05 08:07:44 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.3 2005/11/08 21:28:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -91,6 +91,7 @@ linux_sys_futex(l, v, retval)
 	int error = 0;
 	struct futex *f;
 	struct futex *newf;
+	int timeout_hz;
 
 	/* First time use */
 	if (futex_lock == NULL) {
@@ -123,8 +124,11 @@ linux_sys_futex(l, v, retval)
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
 		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec); 
 #endif
+		timeout_hz = (timeout.tv_sec * hz)
+			   + ((timeout.tv_nsec * hz) / 1000000000);
+
 		f = futex_get(SCARG(uap, uaddr));
-		ret = futex_sleep(f, l, timeout.tv_sec * hz);
+		ret = futex_sleep(f, l, timeout_hz);
 		futex_put(f);
 
 #ifdef DEBUG_LINUX
