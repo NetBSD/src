@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.74 2005/09/17 14:38:40 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.75 2005/11/08 23:02:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.74 2005/09/17 14:38:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.75 2005/11/08 23:02:22 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -82,9 +82,12 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.74 2005/09/17 14:38:40 yamt Exp $");
 #define UAO_SWHASH_ELT_TAG(PAGEIDX) \
 	((PAGEIDX) >> UAO_SWHASH_CLUSTER_SHIFT)
 
+#define UAO_SWHASH_ELT_PAGESLOT_IDX(PAGEIDX) \
+	((PAGEIDX) & (UAO_SWHASH_CLUSTER_SIZE - 1))
+
 /* given an ELT and a page index, find the swap slot */
 #define UAO_SWHASH_ELT_PAGESLOT(ELT, PAGEIDX) \
-	((ELT)->slots[(PAGEIDX) & (UAO_SWHASH_CLUSTER_SIZE - 1)])
+	((ELT)->slots[UAO_SWHASH_ELT_PAGESLOT_IDX(PAGEIDX)])
 
 /* given an ELT, return its pageidx base */
 #define UAO_SWHASH_ELT_PAGEIDX_BASE(ELT) \
@@ -187,6 +190,7 @@ static struct uao_swhash_elt *uao_find_swhash_elt
 
 static boolean_t uao_pagein(struct uvm_aobj *, int, int);
 static boolean_t uao_pagein_page(struct uvm_aobj *, int);
+static void uao_dropswap_range1(struct uvm_aobj *, voff_t, voff_t);
 #endif /* defined(VMSWAP) */
 
 /*
@@ -400,54 +404,23 @@ uao_free(struct uvm_aobj *aobj)
 	simple_unlock(&aobj->u_obj.vmobjlock);
 
 #if defined(VMSWAP)
+	uao_dropswap_range1(aobj, 0, 0);
+
 	if (UAO_USES_SWHASH(aobj)) {
-		int i, hashbuckets = aobj->u_swhashmask + 1;
 
 		/*
-		 * free the swslots from each hash bucket,
-		 * then the hash bucket, and finally the hash table itself.
+		 * free the hash table itself.
 		 */
 
-		for (i = 0; i < hashbuckets; i++) {
-			struct uao_swhash_elt *elt, *next;
-
-			for (elt = LIST_FIRST(&aobj->u_swhash[i]);
-			     elt != NULL;
-			     elt = next) {
-				int j;
-
-				for (j = 0; j < UAO_SWHASH_CLUSTER_SIZE; j++) {
-					int slot = elt->slots[j];
-
-					if (slot > 0) {
-						uvm_swap_free(slot, 1);
-						swpgonlydelta++;
-					}
-				}
-
-				next = LIST_NEXT(elt, list);
-				pool_put(&uao_swhash_elt_pool, elt);
-			}
-		}
 		free(aobj->u_swhash, M_UVMAOBJ);
 	} else {
-		int i;
 
 		/*
-		 * free the array
+		 * free the array itsself.
 		 */
 
-		for (i = 0; i < aobj->u_pages; i++) {
-			int slot = aobj->u_swslots[i];
-
-			if (slot > 0) {
-				uvm_swap_free(slot, 1);
-				swpgonlydelta++;
-			}
-		}
 		free(aobj->u_swslots, M_UVMAOBJ);
 	}
-
 #endif /* defined(VMSWAP) */
 
 	/*
@@ -895,6 +868,13 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 					curoff -= PAGE_SIZE;
 				continue;
 			}
+
+			/*
+			 * freeing swapslot here is not strictly necessary.
+			 * however, leaving it here doesn't save much
+			 * because we need to update swap accounting anyway.
+			 */
+
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 			uvm_pagefree(pg);
 			continue;
@@ -1461,6 +1441,119 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	UVM_PAGE_OWN(pg, NULL);
 
 	return FALSE;
+}
+
+/*
+ * uao_dropswap_range: drop swapslots in the range.
+ *
+ * => aobj must be locked and is returned locked.
+ * => start is inclusive.  end is exclusive.
+ */
+
+void
+uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
+{
+	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+
+	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+
+	uao_dropswap_range1(aobj, start, end);
+}
+
+static void
+uao_dropswap_range1(struct uvm_aobj *aobj, voff_t start, voff_t end)
+{
+	int swpgonlydelta = 0;
+
+	if (end == 0) {
+		end = INT64_MAX;
+	}
+
+	if (UAO_USES_SWHASH(aobj)) {
+		int i, hashbuckets = aobj->u_swhashmask + 1;
+		voff_t taghi;
+		voff_t taglo;
+
+		taglo = UAO_SWHASH_ELT_TAG(start);
+		taghi = UAO_SWHASH_ELT_TAG(end);
+
+		for (i = 0; i < hashbuckets; i++) {
+			struct uao_swhash_elt *elt, *next;
+
+			for (elt = LIST_FIRST(&aobj->u_swhash[i]);
+			     elt != NULL;
+			     elt = next) {
+				int startidx, endidx;
+				int j;
+
+				next = LIST_NEXT(elt, list);
+
+				if (elt->tag < taglo || taghi < elt->tag) {
+					continue;
+				}
+
+				if (elt->tag == taglo) {
+					startidx =
+					    UAO_SWHASH_ELT_PAGESLOT_IDX(start);
+				} else {
+					startidx = 0;
+				}
+
+				if (elt->tag == taghi) {
+					endidx =
+					    UAO_SWHASH_ELT_PAGESLOT_IDX(end);
+				} else {
+					endidx = UAO_SWHASH_CLUSTER_SIZE;
+				}
+
+				for (j = startidx; j < endidx; j++) {
+					int slot = elt->slots[j];
+
+					KASSERT(uvm_pagelookup(&aobj->u_obj,
+					    (UAO_SWHASH_ELT_PAGEIDX_BASE(elt)
+					    + j) << PAGE_SHIFT) == NULL);
+					if (slot > 0) {
+						uvm_swap_free(slot, 1);
+						swpgonlydelta++;
+						KASSERT(elt->count > 0);
+						elt->slots[j] = 0;
+						elt->count--;
+					}
+				}
+
+				if (elt->count == 0) {
+					LIST_REMOVE(elt, list);
+					pool_put(&uao_swhash_elt_pool, elt);
+				}
+			}
+		}
+	} else {
+		int i;
+
+		if (aobj->u_pages < end) {
+			end = aobj->u_pages;
+		}
+		for (i = start; i < end; i++) {
+			int slot = aobj->u_swslots[i];
+
+			if (slot > 0) {
+				uvm_swap_free(slot, 1);
+				swpgonlydelta++;
+			}
+		}
+	}
+
+	/*
+	 * adjust the counter of pages only in swap for all
+	 * the swap slots we've freed.
+	 */
+
+	if (swpgonlydelta > 0) {
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
+		uvmexp.swpgonly -= swpgonlydelta;
+		simple_unlock(&uvm.swap_data_lock);
+	}
 }
 
 #endif /* defined(VMSWAP) */
