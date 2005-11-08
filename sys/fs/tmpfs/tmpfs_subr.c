@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.12 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.13 2005/11/08 23:04:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.12 2005/11/02 12:38:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13 2005/11/08 23:04:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -850,6 +850,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	size_t newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
+	off_t oldsize;
 
 	KASSERT(vp->v_type == VREG);
 	KASSERT(newsize >= 0);
@@ -861,7 +862,8 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * store them.  It may happen that we do not need to do anything
 	 * because the last allocated page can accommodate the change on
 	 * its own. */
-	oldpages = round_page(node->tn_size) / PAGE_SIZE;
+	oldsize = node->tn_size;
+	oldpages = round_page(oldsize) / PAGE_SIZE;
 	KASSERT(oldpages == node->tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
@@ -876,6 +878,27 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	tmp->tm_pages_used += (newpages - oldpages);
 	node->tn_size = newsize;
 	uvm_vnp_setsize(vp, newsize);
+	if (newsize < oldsize) {
+		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
+
+		/*
+		 * free "backing store"
+		 */
+
+		if (newpages < oldpages) {
+			struct uvm_object *uobj = node->tn_aobj;
+
+			simple_lock(&uobj->vmobjlock);
+			uao_dropswap_range(uobj, newpages, oldpages);
+			simple_unlock(&uobj->vmobjlock);
+		}
+
+		/*
+		 * zero out the truncated part of the last page.
+		 */
+
+		uvm_vnp_zerorange(vp, newsize, zerolen);
+	}
 
 	error = 0;
 
