@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.98 2005/10/15 21:18:54 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.99 2005/11/08 11:35:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.98 2005/10/15 21:18:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99 2005/11/08 11:35:51 hannken Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -247,7 +247,7 @@ restart:
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
-			vput(vp);
+			vrele(vp);
 			return (error);
 		}
 		VOP_LEASE(vp, p, cred, LEASE_WRITE);
