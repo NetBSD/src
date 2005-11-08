@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.16 2002/07/08 14:42:49 lukem Exp $
+.\"	$NetBSD: whatis,v 1.16.4.1 2005/11/08 09:36:01 tron Exp $
 .
-This is the ninth major release of
+This is the eleventh major release of
 .Nx
 for the \*M.
 .Pp
