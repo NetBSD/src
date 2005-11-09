@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.61 2005/02/20 07:35:47 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.61.2.1 2005/11/09 16:16:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.61 2005/02/20 07:35:47 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.61.2.1 2005/11/09 16:16:33 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1318,11 +1318,10 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	char sbuf[MAXPATHLEN * 2 + 1];
 	/* + / + // + .*""/\/ + \/.* */
 	char rabuf[MAXPATHLEN * 2 + 1 + 1 + 2 + 4 + 4];
-	int i, j;
+	int i, j = 0;
 
 	if (line[len - 1] == '\n')
 		len--;
-	strncpy(sbuf, ".*" "\\/", j = 4);
 	for (i = 0; i < len; i++) {
 		/*
 		 * convert glob to regexp, escaping everything
