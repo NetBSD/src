@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.3 2005/11/08 21:28:49 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.4 2005/11/09 14:52:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.3 2005/11/08 21:28:49 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.4 2005/11/09 14:52:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -118,20 +118,20 @@ linux_sys_futex(l, v, retval)
 				return error;
 		}
 
-#ifdef DEBUG_LINUX
+#ifdef DEBUG_LINUX_FUTEX
 		printf("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
 		    "*uaddr = %d, timeout = %d.%09ld\n", 
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
 		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec); 
 #endif
-		timeout_hz = (timeout.tv_sec * hz)
-			   + ((timeout.tv_nsec * hz) / 1000000000);
+		timeout_hz =
+		    mstohz(timeout.tv_sec * 1000 + timeout.tv_nsec / 1000000);
 
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(f, l, timeout_hz);
 		futex_put(f);
 
-#ifdef DEBUG_LINUX
+#ifdef DEBUG_LINUX_FUTEX
 		printf("FUTEX_WAIT %d.%d: uaddr = %p, "
 		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
 		    SCARG(uap, uaddr), ret); 
@@ -145,14 +145,16 @@ linux_sys_futex(l, v, retval)
 			return EINTR;
 			break;
 		case 0:			/* FUTEX_WAKE received */
-#ifdef DEBUG_LINUX
+#ifdef DEBUG_LINUX_FUTEX
 			printf("FUTEX_WAIT %d.%d: uaddr = %p, got FUTEX_WAKE\n",
 			    l->l_proc->p_pid, l->l_lid, SCARG(uap, uaddr)); 
 #endif
 			return 0;
 			break;
 		default:
+#ifdef DEBUG_LINUX_FUTEX
 			printf("FUTEX_WAIT: unexpected ret = %d\n", ret);
+#endif
 			break;
 		}
 
@@ -165,7 +167,7 @@ linux_sys_futex(l, v, retval)
 		 * corresponding to the same mapped memory in the sleeping 
 		 * and the waker process.
 		 */
-#ifdef DEBUG_LINUX
+#ifdef DEBUG_LINUX_FUTEX
 		printf("FUTEX_WAKE %d.%d: uaddr = %p, val = %d\n", 
 		    l->l_proc->p_pid, l->l_lid, 
 		    SCARG(uap, uaddr), SCARG(uap, val)); 
