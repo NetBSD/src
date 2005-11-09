@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.304 2005/11/09 12:26:38 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.305 2005/11/09 14:49:08 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13995,4 +13995,10 @@ sys/kern/vfs_vnops.c				1.99
 
 	vput() -> vrele(). Vnode is already unlocked. Fixes PR kern/32005.
 	[hannken, ticket #944]
+
+sys/dev/pcmcia/pcmciadevs			1.213
+
+	Fix pp_cisinfo[0] of the TEAC IDECARDII entry. If pp_cisinfo[0] is
+	NULL, current pcmcia_product_lookup() never matches the device.
+	[tsutsui, ticket #945]
 
