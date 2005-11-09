@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.51 2005/10/12 20:03:59 reed Exp $	*/
+/*	$NetBSD: function.c,v 1.52 2005/11/09 00:47:16 reed Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.51 2005/10/12 20:03:59 reed Exp $");
+__RCSID("$NetBSD: function.c,v 1.52 2005/11/09 00:47:16 reed Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_empty __P((PLAN *, FTSENT *));
 	int	f_exec __P((PLAN *, FTSENT *));
 	int	f_execdir __P((PLAN *, FTSENT *));
+	int	f_false __P((PLAN *, FTSENT *));
 	int	f_flags __P((PLAN *, FTSENT *));
 	int	f_fprint __P((PLAN *, FTSENT *));
 	int	f_fstype __P((PLAN *, FTSENT *));
@@ -646,6 +647,27 @@ c_execdir(argvp, isok)
 	*argvp = argv + 1;
 	return (new);
 }
+
+/*
+ * -false function
+ */
+int
+f_false(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	return (0);
+}
+ 
+PLAN *
+c_false(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	return (palloc(N_FALSE, f_false));
+}
+
  
 /*
  * -flags [-]flags functions --
