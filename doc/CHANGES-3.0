@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.305 2005/11/09 14:49:08 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.306 2005/11/09 14:51:24 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13997,6 +13997,8 @@ sys/kern/vfs_vnops.c				1.99
 	[hannken, ticket #944]
 
 sys/dev/pcmcia/pcmciadevs			1.213
+sys/dev/pcmcia/pcmciadevs.h			regen
+sys/dev/pcmcia/pcmciadevs_data.h		regen
 
 	Fix pp_cisinfo[0] of the TEAC IDECARDII entry. If pp_cisinfo[0] is
 	NULL, current pcmcia_product_lookup() never matches the device.
