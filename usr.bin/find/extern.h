@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2005/10/12 20:03:59 reed Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2005/11/09 00:47:16 reed Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,7 @@ PLAN	*c_depth __P((char ***, int));
 PLAN	*c_empty __P((char ***, int));
 PLAN	*c_exec __P((char ***, int));
 PLAN	*c_execdir __P((char ***, int));
+PLAN	*c_false __P((char ***, int));
 PLAN	*c_flags __P((char ***, int));
 PLAN	*c_follow __P((char ***, int));
 PLAN	*c_fprint __P((char ***, int));
