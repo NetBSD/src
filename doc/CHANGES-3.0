@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.306 2005/11/09 14:51:24 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.307 2005/11/09 16:19:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14003,4 +14003,10 @@ sys/dev/pcmcia/pcmciadevs_data.h		regen
 	Fix pp_cisinfo[0] of the TEAC IDECARDII entry. If pp_cisinfo[0] is
 	NULL, current pcmcia_product_lookup() never matches the device.
 	[tsutsui, ticket #945]
+
+bin/pax/tar.c					1.62
+
+	PR bin/20071: --extract handling is broken. This patch fixes the
+	example from the PR.
+	[christos, ticket #946]
 
