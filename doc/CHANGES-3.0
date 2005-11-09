@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.303 2005/11/09 11:13:40 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.304 2005/11/09 12:26:38 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13990,4 +13990,9 @@ usr.bin/cap_mkdb/cap_mkdb.c			1.22
 	will end up being used during population as the database file to find
 	entries quickly.
 	[christos, ticket #943]
+
+sys/kern/vfs_vnops.c				1.99
+
+	vput() -> vrele(). Vnode is already unlocked. Fixes PR kern/32005.
+	[hannken, ticket #944]
 
