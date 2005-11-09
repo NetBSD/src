@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.21 2004/04/23 21:39:33 christos Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.21.2.1 2005/11/09 11:12:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.21 2004/04/23 21:39:33 christos Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.21.2.1 2005/11/09 11:12:56 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,7 +124,8 @@ main(int argc, char *argv[])
 	 * The database file is the first argument if no name is specified.
 	 * Make arrangements to unlink it if exit badly.
 	 */
-	(void)snprintf(buf, sizeof(buf), "%s.db", capname ? capname : *argv);
+	(void)snprintf(buf, sizeof(buf), "%s.db.tmp",
+	    capname ? capname : *argv);
 	if ((capname = strdup(buf)) == NULL)
 		err(1, "strdup");
 	if ((capdbp = dbopen(capname, O_CREAT | O_TRUNC | O_RDWR,
@@ -138,6 +139,10 @@ main(int argc, char *argv[])
 
 	if (capdbp->close(capdbp) < 0)
 		err(1, "%s", capname);
+	*strrchr(buf, '.') = '\0';
+	if (rename(capname, buf) == -1)
+		err(1, "rename");
+	free(capname);
 	capname = NULL;
 	return 0;
 }
