@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.35 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.36 2005/11/09 12:47:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.35 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.36 2005/11/09 12:47:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -465,7 +465,7 @@ uvm_total(struct vmtotal *totalp)
 		 */
 #if 0
 		/*
-		 * XXXCDC: BOGUS!  rethink this.   in the mean time
+		 * XXXCDC: BOGUS!  rethink this.  in the mean time
 		 * don't do it.
 		 */
 		paging = 0;
