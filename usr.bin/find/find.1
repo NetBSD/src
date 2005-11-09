@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.54 2005/10/12 20:10:45 wiz Exp $
+.\"	$NetBSD: find.1,v 1.55 2005/11/09 00:47:16 reed Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd October 12, 2005
+.Dd November 8, 2005
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -232,6 +232,15 @@ the current file.
 The filename substituted for the string
 .Dq {}
 is not qualified.
+.It Ic -false
+This primary always evaluates to false.
+This can be used following a primary that caused the
+expression to be true to make the expression to be false.
+This can be useful after using a
+.Ic -fprint
+primary so it can continue to the next expression (using an
+.Cm -or
+operator, for example).
 .It Xo
 .Ic -flags
 .Oo Fl Oc Ns Ar flags
