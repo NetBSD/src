@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.302 2005/11/08 18:20:13 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.303 2005/11/09 11:13:40 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -13982,3 +13982,12 @@ usr.sbin/pkg_install/lib/version.h		1.71
 	Fixes pkg_info -B against binary packages broken when INSTALLED_INFO
 	support was added.  Bump version.
 	[dillo, ticket #941]
+
+usr.bin/cap_mkdb/cap_mkdb.c			1.22
+
+	Write the database file into a temporary file first, because otherwise
+	if we don't specify an output filename, the database file we create
+	will end up being used during population as the database file to find
+	entries quickly.
+	[christos, ticket #943]
+
