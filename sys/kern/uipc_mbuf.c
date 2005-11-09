@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.101 2005/08/18 00:30:58 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.102 2005/11/09 17:54:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.101 2005/08/18 00:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.102 2005/11/09 17:54:12 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -792,7 +792,7 @@ m_adj(struct mbuf *mp, int req_len)
 }
 
 /*
- * Rearange an mbuf chain so that len bytes are contiguous
+ * Rearrange an mbuf chain so that len bytes are contiguous
  * and in the data area of an mbuf (so that mtod and dtom
  * will work for a structure of size len).  Returns the resulting
  * mbuf chain on success, frees it and returns null on failure.
