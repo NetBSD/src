@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.23 2005/09/23 20:30:48 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.24 2005/11/09 20:17:55 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -213,7 +213,7 @@ is the calling process.
 The argument
 .Fa flags
 is a set of flags for controlling the operation of
-.Fn VOP_START .
+.Fn VFS_START .
 This function is invoked after
 .Fn VFS_MOUNT
 and before the first access to the file system.
