@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.24 2005/11/09 14:56:50 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.25 2005/11/09 21:56:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.24 2005/11/09 14:56:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.25 2005/11/09 21:56:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -412,6 +412,8 @@ linux_sys_exit_group(l, v, retval)
 	 * in the same thread group (i.e. all threads created
 	 * via clone(2) with CLONE_THREAD flag set).
 	 */
+	led = l->l_proc->p_emuldata;
+	group_pid = led->s->group_pid;
 	PROCLIST_FOREACH(p, &allproc) {
 		if (p->p_emul != &emul_linux)
 			continue;
@@ -422,7 +424,7 @@ linux_sys_exit_group(l, v, retval)
 		led = p->p_emuldata;
 		if (led->s->group_pid == group_pid) {
 			/* XXX we should exit, not send a SIGKILL */
-			psignal(p, SIGKILL)
+			psignal(p, SIGKILL);
 		}
 	}
 
