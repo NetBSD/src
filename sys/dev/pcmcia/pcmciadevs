@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.208.6.3 2005/05/07 23:06:26 tron Exp $
+$NetBSD: pcmciadevs,v 1.208.6.4 2005/11/09 14:48:25 tron Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -522,7 +522,7 @@ product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", NULL, NULL }
 product SVEC PN650TX		-1 SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", NULL } Synergy 21 S21810+ NE2000 Compatible Card
 product TAMARACK ETHERNET	{ "TAMARACK", "Ethernet", "A", NULL } TAMARACK Ethernet Card
-product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
+product TEAC IDECARDII		{ "&sp", "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product TOSHIBA CBIDE2		{ "LOOKMEET", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", NULL } Xircom CompactCard CFE-10
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
