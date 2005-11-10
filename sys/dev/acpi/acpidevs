@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.5 2005/11/10 13:25:59 rpaulo Exp $
+# $NetBSD: acpidevs,v 1.6 2005/11/10 13:30:46 rpaulo Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -299,6 +299,7 @@ PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
 PNP8389		Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
+NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
 PNPA002	Future Domain 16-700 compatible controller
 PNPA003	Panasonic proprietary CD-ROM adapter (SBPro/SB16)
