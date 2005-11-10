@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.30 2005/11/08 15:31:10 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.31 2005/11/10 15:31:17 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.30 2005/11/08 15:31:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.31 2005/11/10 15:31:17 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -502,8 +502,8 @@ primary_cache_is_2way:
 
 		mips3_get_cache_config(csizebase);
 
-		if (mips_picache_size > PAGE_SIZE ||
-		    mips_pdcache_size > PAGE_SIZE)
+		if ((mips_picache_size / mips_picache_ways) > PAGE_SIZE ||
+		    (mips_pdcache_size / mips_pdcache_ways) > PAGE_SIZE)
 			mips_cache_virtual_alias = 1;
 
 		switch (mips_picache_line_size) {
