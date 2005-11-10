@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3.6.4 2004/11/02 07:50:23 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.6.5 2005/11/10 13:56:04 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.6.4 2004/11/02 07:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.6.5 2005/11/10 13:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ cpu_configure()
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 	(void)spl0();
 }

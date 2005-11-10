@@ -1,7 +1,8 @@
-# $NetBSD: std.next68k,v 1.9 2001/05/12 22:35:29 chs Exp $
+# $NetBSD: std.next68k,v 1.9.24.1 2005/11/10 13:57:57 skrll Exp $
 
 # Standard information for next68k
 machine	next68k m68k
+include		"conf/std"	# MI standard options
 
 # Standard defines
 options 	EXEC_ELF32

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.50.6.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: macrom.c,v 1.50.6.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.50.6.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.50.6.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -111,7 +111,7 @@ u_int32_t mrg_AVInitEgretJT[] = {
 
 caddr_t	mrg_romadbintr = (caddr_t)0;	/* ROM ADB interrupt */
 caddr_t	mrg_rompmintr = 0;		/* ROM PM (?) interrupt */
-char	*mrg_romident = NULL;		/* ident string for ROMs */
+const char *mrg_romident = NULL;		/* ident string for ROMs */
 caddr_t	mrg_ADBAlternateInit = 0;
 caddr_t	mrg_InitEgret = 0;
 caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
@@ -629,10 +629,10 @@ caddr_t mrg_OStraps[256] = {
 		(caddr_t)mrg_DisposPtr,
 		(caddr_t)mrg_SetPtrSize,
 		(caddr_t)mrg_GetPtrSize,
-	[0x2f]	(caddr_t)mrg_PostEvent,
+	[0x2f]	(caddr_t)__UNCONST(mrg_PostEvent),	/* XXXGCC ? */
 	[0x3b]	(caddr_t)mrg_Delay,	
 	[0x47]	(caddr_t)mrg_SetTrapAddress,
-	[0x55]	(caddr_t)mrg_StripAddress,
+	[0x55]	(caddr_t)__UNCONST(mrg_StripAddress),	/* XXXGCC ? */
 	[0x82]	(caddr_t)mrg_DTInstall,
 #else
 #error "Using a GNU C extension."
@@ -803,7 +803,7 @@ extern volatile u_char	*sccA;
 void
 mrg_init(void)
 {
-	char *findername = "MacBSD FakeFinder";
+	const char *findername = "MacBSD FakeFinder";
 	int i;
 #if defined(MRG_TEST)
 	caddr_t ptr;
@@ -851,7 +851,7 @@ mrg_init(void)
 		"	.word   0xa99d		\n"
 		"	movl    %%sp@+,%0"
 			: "=g" (handle));
-		printf("Handle to first DRVR resource is 0x%p\n", handle);
+		printf("Handle to first DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 1),
 		    (long)*Get_Ind_Resource(0x44525652, 1),
@@ -863,7 +863,7 @@ mrg_init(void)
 		"	.word   0xa99d		\n"
 		"	movl    %%sp@+,%0"
 			: "=g" (handle));
-		printf("Handle to second DRVR resource is 0x%p\n", handle);
+		printf("Handle to second DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 2),
 		    (long)*Get_Ind_Resource(0x44525652, 2),
@@ -923,7 +923,7 @@ mrg_init(void)
 	ADBYMM = &mrg_adbstore3[0];
 	MinusOne = 0xffffffff;
 	Lo3Bytes = 0x00ffffff;
-	VIA = (caddr_t)Via1Base;
+	VIA = (caddr_t)__UNVOLATILE(Via1Base);
 	MMU32Bit = 1; /* ?means MMU is in 32 bit mode? */
   	if (TimeDBRA == 0)
 		TimeDBRA = 0xa3b;		/* BARF default is Mac II */
@@ -951,8 +951,9 @@ mrg_init(void)
 	/* probably very dangerous */
 	jADBOp = (void (*)(void))mrg_OStraps[0x7c];
 
-	mrg_VIA2 = (caddr_t)(Via1Base + VIA2 * 0x2000);	/* see via.h */
-	SCCRd = (caddr_t)sccA;		/* ser.c ; we run before serinit */
+	mrg_VIA2 = (caddr_t)((caddr_t)__UNVOLATILE(Via1Base) + 
+	    VIA2 * 0x2000);	/* see via.h */
+	SCCRd = (caddr_t)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
 
 	jDTInstall = (caddr_t)mrg_DTInstall;
 

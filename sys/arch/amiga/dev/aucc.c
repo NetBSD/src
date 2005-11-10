@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.34.2.2 2005/01/17 19:29:12 skrll Exp $ */
+/*	$NetBSD: aucc.c,v 1.34.2.3 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.34.2.2 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.34.2.3 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ aucc_open(void *addr, int flags)
 	aucc = sc;
 	sc->sc_channelmask = 0xf;
 
-	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
+	DPRINTF(("saopen: ok -> sc=%p\n",sc));
 
 	return 0;
 }
@@ -376,7 +376,7 @@ aucc_close(void *addr)
 	struct aucc_softc *sc;
 
 	sc = addr;
-	DPRINTF(("sa_close: sc=0x%p\n", sc));
+	DPRINTF(("sa_close: sc=%p\n", sc));
 	/*
 	 * halt i/o, clear open flag, and done.
 	 */

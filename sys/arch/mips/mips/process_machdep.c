@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.22.2.4 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22.2.5 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22.2.4 2005/01/17 19:29:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22.2.5 2005/11/10 13:57:33 skrll Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -117,7 +117,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct frame *f;
 	mips_reg_t sr;
@@ -140,7 +140,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 
 	/* to load FPA contents next time when FP insn is executed */

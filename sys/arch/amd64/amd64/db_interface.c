@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2.2.3 2004/09/21 13:12:07 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2.2.4 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2.2.3 2004/09/21 13:12:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2.2.4 2005/11/10 13:50:24 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -69,7 +69,7 @@ int	db_active;
 db_regs_t ddb_regs;	/* register state */
 db_regs_t *ddb_regp;
 
-void db_mach_cpu (db_expr_t, int, db_expr_t, char *);
+void db_mach_cpu (db_expr_t, int, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
@@ -274,7 +274,7 @@ db_mach_cpu(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
-	char *		modif;
+	const char *	modif;
 {
 	struct cpu_info *ci;
 	if (!have_addr) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.21.6.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.21.6.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.21.6.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.21.6.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -166,7 +166,7 @@ char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr(char *, int, int, char *);
+void	pm_printerr(const char *, int, int, char *);
 #endif
 
 int	pm_wait_busy(int);
@@ -229,7 +229,7 @@ extern	void	adb_pass_up(struct adbCommand *);
  * This function dumps contents of the PMData
  */
 void
-pm_printerr(char *ttl, int rval, int num, char *data)
+pm_printerr(const char *ttl, int rval, int num, char *data)
 {
 	int i;
 
@@ -294,13 +294,13 @@ pm_check_adb_devices(int id)
  * Wait until PM IC is busy
  */
 int
-pm_wait_busy(int delay)
+pm_wait_busy(int xdelay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
 		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
-		if ((--delay) < 0)
+		if ((--xdelay) < 0)
 			return 1;	/* timeout */
 	}
 	return 0;
@@ -311,13 +311,13 @@ pm_wait_busy(int delay)
  * Wait until PM IC is free
  */
 int
-pm_wait_free(int delay)
+pm_wait_free(int xdelay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
 		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
-		if ((--delay) < 0)
+		if ((--xdelay) < 0)
 			return 0;	/* timeout */
 	}
 	return 1;
@@ -439,13 +439,13 @@ pm_pmgrop_pm1(PMData *pmdata)
 					case MACH_MACPB180:
 					case MACH_MACPB180C:
 						{
-							int delay = ADBDelay * 16;
+							int xdelay = ADBDelay * 16;
 
 							via_reg(VIA2, vDirA) = 0x00;
-							while ((via_reg(VIA2, 0x200) == 0x7f) && (delay >= 0))
-								delay--;
+							while ((via_reg(VIA2, 0x200) == 0x7f) && (xdelay >= 0))
+								xdelay--;
 
-							if (delay < 0) {	/* timeout */
+							if (xdelay < 0) {	/* timeout */
 								via_reg(VIA2, vDirA) = 0x00;
 								/* restore formar value */
 								via_reg(VIA1, vIER) = via1_vIER;
@@ -699,14 +699,14 @@ pm_pmgrop_pm2(PMData *pmdata)
 
 			if (HwCfgFlags3 & 0x00200000) {	
 				/* PB 160, PB 165(c), PB 180(c)? */
-				int delay = ADBDelay * 16;
+				int xdelay = ADBDelay * 16;
 
 				via_reg(VIA2, vDirA) = 0x00;
 				while ((via_reg(VIA2, 0x200) == 0x07) &&
-				    (delay >= 0))
-					delay--;
+				    (xdelay >= 0))
+					xdelay--;
 
-				if (delay < 0) {
+				if (xdelay < 0) {
 					rval = 0xffffcd38;
 					break;		/* timeout */
 				}
@@ -967,7 +967,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	int i;
 	int s;
 	int rval;
-	int delay;
+	int xdelay;
 	PMData pmdata;
 	struct adbCommand packet;
 
@@ -1033,7 +1033,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	PM_VIA_INTR_ENABLE();
 
 	/* wait until the PM interrupt has occurred */
-	delay = 0x80000;
+	xdelay = 0x80000;
 	while (adbWaiting == 1) {
 		switch (mac68k_machine.machineid) {
 		case MACH_MACPB150:
@@ -1055,7 +1055,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 #ifdef PM_GRAB_SI
 		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
-		if ((--delay) < 0) {
+		if ((--xdelay) < 0) {
 			splx(s);
 			return 1;
 		}

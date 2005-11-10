@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.11.2.5 2004/12/18 09:31:01 skrll Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.11.2.6 2005/11/10 13:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.5 2004/12/18 09:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.6 2005/11/10 13:51:36 skrll Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.5 2004/12/18 09:31:01 skrll 
 #include "grfcc.h"
 #include "view.h"
 #include "opt_amigaccgrf.h"
+#include "kbd.h"
 
 #if NAMIDISPLAYCC>0
 
@@ -55,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.5 2004/12/18 09:31:01 skrll 
 #include <sys/conf.h>
 
 #include <amiga/dev/grfabs_reg.h>
+#include <amiga/dev/kbdvar.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/amiga/device.h>
 #include <dev/wscons/wsconsio.h>
@@ -399,6 +401,11 @@ amidisplaycc_cninit(struct consdev  * cd)
 				  &cookie, &x, &y, &attr);
 	wsdisplay_cnattach(&amidisplaycc_screentab[0].wsdescr,
 			   cookie, x, y, attr);
+
+#if NKBD>0
+	/* tell kbd device it is used as console keyboard */
+	kbd_cnattach();
+#endif
 }
 
 static int

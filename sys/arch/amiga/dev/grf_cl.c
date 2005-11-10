@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.34 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.34.2.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.34 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.34.2.1 2005/11/10 13:51:36 skrll Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -797,7 +797,7 @@ cl_writesprpos(ba, x, y)
         volatile unsigned short *wp;
 
 	cwp = ba + 0x3c4;
-        wp = (unsigned short *)cwp;
+        wp = (volatile unsigned short *)cwp;
 
 	/*
 	 * don't ask me why, but apparently you can't do a 16-bit write with
@@ -818,7 +818,7 @@ writeshifted(to, shiftx, shifty)
 	int y;
 	unsigned long long *tptr, *iptr, *mptr, line;
 
-	tptr = (unsigned long long *) to;
+	tptr = (unsigned long long *) __UNVOLATILE(to);
         iptr = (unsigned long long *) cl_cursprite.image;
         mptr = (unsigned long long *) cl_cursprite.mask;
 

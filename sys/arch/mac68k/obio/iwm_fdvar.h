@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.7.6.1 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.7.6.2 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -88,7 +88,7 @@ struct fdInfo {
 	short	stepRate;		/* in ms (is a software delay) */
 	short	interleave;		/* Sector interleave */
 	short	physFormat;		/* GCR, MFM DD, MFM HD */
-	char	*description;
+	const char	*description;
 };
 typedef struct fdInfo fdInfo_t;
 
@@ -132,7 +132,7 @@ typedef struct iwmAttachArgs iwmAttachArgs_t;
 struct fd_softc {
 	struct device devInfo;		/* generic device info */
 	struct disk diskInfo;		/* generic disk info */
-	struct bufq_state bufQueue;	/* queue of buf's */
+	struct bufq_state *bufQueue;	/* queue of buf's */
 	int sc_active;			/* number of active requests */
 	struct callout motor_ch;	/* motor callout */
 

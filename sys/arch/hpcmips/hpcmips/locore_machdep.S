@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.5.6.3 2004/09/21 13:16:05 skrll Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.5.6.4 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,18 +79,3 @@ LEAF_NOPROFILE(vr_hibernate)
 	nop
 END(vr_hibernate)
 XLEAF(evr_hibernate)
-	.set	reorder
-
-	.align	2
-/*
- * Interrupt counters for vmstat.
- */
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):

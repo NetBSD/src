@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.4.6.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.4.6.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.4.6.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.4.6.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -104,7 +104,7 @@ sm_nubus_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t bsh, prom_bsh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	int i, success;
-	char *cardtype;
+	const char *cardtype;
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {

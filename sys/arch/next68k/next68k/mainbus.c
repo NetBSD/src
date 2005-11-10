@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.8.4 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.8.5 2005/11/10 13:57:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.8.4 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.8.5 2005/11/10 13:57:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.8.4 2005/01/24 08:34:18 skrll Exp $"
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_search(struct device *, struct cfdata *, void *);
+static int	mainbus_search(struct device *, struct cfdata *,
+			       const int *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -96,13 +97,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_dmat = &next68k_bus_dma_tag;
 
 	/* Search for and attach children. */
-	config_search(mainbus_search, self, &mba);
+	config_search_ia(mainbus_search, self, "mainbus", &mba);
 
 	mainbus_attached = 1;
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_search(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, NULL);

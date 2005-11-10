@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.9.2.3 2004/09/21 13:13:18 skrll Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.9.2.4 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.9.2.3 2004/09/21 13:13:18 skrll Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.9.2.4 2005/11/10 13:55:16 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -328,7 +328,7 @@ footbridge_intr_init(void)
 }
 
 void *
-footbridge_intr_claim(int irq, int ipl, char *name, int (*func)(void *), void *arg)
+footbridge_intr_claim(int irq, int ipl, const char *name, int (*func)(void *), void *arg)
 {
 	struct intrq *iq;
 	struct intrhand *ih;

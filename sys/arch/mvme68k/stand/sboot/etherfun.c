@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.5 2001/09/16 16:34:33 wiz Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.5.20.1 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  *
@@ -139,7 +139,7 @@ do_send_tftp ( int mesgtype )
     memcpy (&iptmp, myip, sizeof(iptmp));
     memcpy(tftp_r, MSG, (sizeof(MSG)-1));
     for (lcv = 9; lcv >= 2; lcv--) {
-      tftp_r[lcv] = "0123456789ABCDEF"[iptmp & 0xF];
+      tftp_r[lcv] = HEXDIGITS[iptmp & 0xF];
       
       iptmp = iptmp >> 4;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1.4.4 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.1.4.5 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,53 +75,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.4.4 2004/09/21 13:19:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.4.5 2005/11/10 13:58:09 skrll Exp $");
 
-#include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
-#include "opt_ns381.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
 #include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
-#include <sys/core.h>
-#include <sys/kcore.h>
-#include <sys/ucontext.h>
-#include <sys/ksyms.h>
 
-#include <dev/cons.h>
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
-
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/psl.h>
-#include <machine/fpu.h>
-#include <machine/pmap.h>
-#include <machine/icu.h>
-#include <machine/kcore.h>
-
-#ifdef COMPAT_16
 /*
  * Send an interrupt to process.
  *
@@ -230,7 +197,6 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
-int compat_16_sys___sigreturn14(struct lwp *, void *, register_t *);
 
 int
 compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
@@ -285,4 +251,3 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	return(EJUSTRETURN);
 }
-#endif

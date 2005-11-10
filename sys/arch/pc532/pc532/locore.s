@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72.2.5 2005/03/04 16:39:00 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.72.2.6 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -1161,7 +1161,6 @@ ASENTRY_NOPROFILE(interrupt)
 	/*
 	 * Increment interrupt counters.
 	 */
-	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
 	addqd	1,_C_LABEL(uvmexp)+V_INTR(pc)
 	addqd	1,_C_LABEL(ivt)+(IV_EVCNT+EV_COUNT)(r0)
 	addcd	0,_C_LABEL(ivt)+(IV_EVCNT+EV_COUNT+4)(r0)
@@ -1325,14 +1324,3 @@ KENTRY(ram_size, 4)
 2:					/* come here if parity error */
 	addr	1b(pc),0(sp)		/* modify return addr to exit */
 	rett	0
-
-/****************************************************************************/
-
-/*
- * XXX: Some bogus symbols to keep vmstat -i happy, for now.
- */
-	.data
-GLOBAL(intrnames)
-GLOBAL(eintrnames)
-GLOBAL(intrcnt)
-GLOBAL(eintrcnt)

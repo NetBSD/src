@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.5.6.6 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: xafb.c,v 1.5.6.7 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.6 2005/02/06 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.7 2005/11/10 13:57:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -61,7 +61,7 @@ struct xafb_reg {
 };
 
 struct xafb_devconfig {
-	volatile u_char *dc_fbbase;	/* VRAM base address */
+	u_char *dc_fbbase;		/* VRAM base address */
 	paddr_t dc_fbpaddr;		/* VRAM physical address */
 	struct xafb_reg *dc_reg;	/* register address */
 	struct rasops_info dc_ri;

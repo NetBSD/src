@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.14.2.3 2004/09/21 13:16:13 skrll Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.14.2.4 2005/11/10 13:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.14.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.14.2.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.14.2.3 2004/09/21 13:16:13 skrll Exp $
 
 /* TX39 CS mapping. (nonconfigurationable) */
 const struct csmap {
-	char	*cs_name;
+	const char *cs_name;
 	paddr_t	cs_addr;
 	psize_t	cs_size;
 } __csmap[] = {
@@ -89,18 +89,28 @@ const struct csmap {
 			   TX39_SYSADDR_CARD_SIZE},
 	[TX39_CARD2MEM]	= {"CARD2(mem)"	, TX39_SYSADDR_CARD2MEM	,
 			   TX39_SYSADDR_CARD_SIZE},
+	[TX39_KUCS0]	= {"KUCS0"	, TX39_SYSADDR_KUSEG_CS0,
+			   TX39_SYSADDR_KUCS_SIZE},
+	[TX39_KUCS1]	= {"KUCS1"	, TX39_SYSADDR_KUSEG_CS1,
+			   TX39_SYSADDR_KUCS_SIZE},
+	[TX39_KUCS2]	= {"KUCS2"	, TX39_SYSADDR_KUSEG_CS2,
+			   TX39_SYSADDR_KUCS_SIZE},
+	[TX39_KUCS3]	= {"KUCS3"	, TX39_SYSADDR_KUSEG_CS3,
+			   TX39_SYSADDR_KUCS_SIZE},
 };
 
 int	txcsbus_match(struct device *, struct cfdata *, void *);
 void	txcsbus_attach(struct device *, struct device *, void *);
 int	txcsbus_print(void *, const char *);
-int	txcsbus_search(struct device *, struct cfdata *, void *);
+int	txcsbus_search(struct device *, struct cfdata *,
+		       const int *, void *);
 
 struct txcsbus_softc {
 	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	/* chip select space tag */
 	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
+	int sc_pri;
 };
 
 CFATTACH_DECL(txcsbus, sizeof(struct txcsbus_softc),
@@ -140,7 +150,12 @@ txcsbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *	Attach external chip.
 	 */
-	config_search(txcsbus_search, self, txcsbus_print);
+	/* higher priority devices attach first */
+	sc->sc_pri = 2;
+	config_search_ia(txcsbus_search, self, "txcsbus", txcsbus_print);
+	/* then, normal priority devices */
+	sc->sc_pri = 1;
+	config_search_ia(txcsbus_search, self, "txcsbus", txcsbus_print);
 }
 
 int
@@ -189,7 +204,8 @@ txcsbus_print(void *aux, const char *pnp)
 }
 
 int
-txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
+txcsbus_search(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	struct txcsbus_softc *sc = (void*)parent;
 	struct cs_attach_args ca;
@@ -227,7 +243,7 @@ txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
 	ca.ca_irq2		= cf->cf_loc[TXCSBUSCF_IRQ2];
 	ca.ca_irq3		= cf->cf_loc[TXCSBUSCF_IRQ3];
 	
-	if (config_match(parent, cf, &ca)) {
+	if (config_match(parent, cf, &ca) == sc->sc_pri) {
 		config_attach(parent, cf, &ca, txcsbus_print);
 	}
 
@@ -244,7 +260,8 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	struct bus_space_tag_hpcmips *iot;
 	txreg_t reg;
 
- 	if (!TX39_ISCS(cs) && !TX39_ISMCS(cs) && !TX39_ISCARD(cs)) {
+ 	if (!TX39_ISCS(cs) && !TX39_ISMCS(cs) && !TX39_ISCARD(cs) &&
+	    !TX39_ISKUCS(cs)) {
 		panic("txcsbus_alloc_tag: bogus chip select %d", cs);
 	}
 
@@ -296,7 +313,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 			    TX39_MEMCONFIG1_MCS1_32);
 			tx_conf_write(tc, TX39_MEMCONFIG1_REG, reg);
 #endif /* TX392X */
-		} else {
+		} else if (TX39_ISCARD(cs)) {
 			/* CARD io/attr or mem */
 			reg = tx_conf_read(tc, TX39_MEMCONFIG3_REG);
 

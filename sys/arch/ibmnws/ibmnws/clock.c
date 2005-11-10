@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.4.4 2004/09/21 13:17:18 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.4.5 2005/11/10 13:57:09 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ decr_intr(frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long count;
 	int nticks;
 	extern long intrcnt[];
 
@@ -275,16 +275,16 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(count));
+	for (nticks = 0; count < 0; nticks++)
+		count += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(count));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + count - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 

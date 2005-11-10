@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18.2.6 2004/11/02 07:50:22 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.18.2.7 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.6 2004/11/02 07:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.7 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -211,7 +211,6 @@ swi_handler(trapframe_t *frame)
 
 #define MAXARGS 8
 
-void syscall_intern(struct proc *);
 void syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
 void syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
 
@@ -479,12 +478,12 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		frame->tf_r0 = rval[0];

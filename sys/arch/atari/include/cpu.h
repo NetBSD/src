@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.5 2004/10/19 15:56:35 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.6 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -229,7 +229,7 @@ long	clkread __P((void));
 /*
  * Prototypes from fpu.c
  */
-char	*fpu_describe __P((int));
+const char *fpu_describe __P((int));
 int	fpu_probe __P((void));
 
 /*

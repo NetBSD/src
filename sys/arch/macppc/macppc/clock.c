@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21.2.3 2004/09/21 13:18:29 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.21.2.4 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21.2.3 2004/09/21 13:18:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21.2.4 2005/11/10 13:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
 	u_long tb;
-	long tick;
+	long ticks;
 	int nticks;
 	int pri, msr;
 
@@ -141,10 +141,10 @@ decr_intr(struct clockframe *frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	tick = mfspr(SPR_DEC);
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	mtspr(SPR_DEC, tick);
+	ticks = mfspr(SPR_DEC);
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	mtspr(SPR_DEC, ticks);
 
 	uvmexp.intrs++;
 	ci->ci_ev_clock.ev_count++;
@@ -161,7 +161,7 @@ decr_intr(struct clockframe *frame)
 		 * start of this tick interval.
 		 */
 		tb = mftbl();
-		ci->ci_lasttb = tb + tick - ticks_per_intr;
+		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts

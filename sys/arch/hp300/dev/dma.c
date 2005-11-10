@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.29.2.4 2004/09/21 13:15:13 skrll Exp $	*/
+/*	$NetBSD: dma.c,v 1.29.2.5 2005/11/10 13:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.29.2.4 2004/09/21 13:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.29.2.5 2005/11/10 13:56:08 skrll Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -211,7 +211,7 @@ dmaattach(struct device *parent, struct device *self, void *aux)
 	 * so we just hope nobody has an A card (A cards will work if
 	 * splbio works out to ipl 3).
 	 */
-	if (badbaddr((char *)&dma->dma_id[2])) {
+	if (hp300_bus_space_probe(sc->sc_bst, sc->sc_bsh, DMA_ID2, 1) == 0) {
 		rev = 'B';
 #if !defined(HP320)
 		panic("dmainit: DMA card requires hp320 support");

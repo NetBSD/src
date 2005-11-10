@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.1.2.2 2005/03/04 16:38:14 skrll Exp $
+#	$NetBSD: TWINTAIL,v 1.1.2.3 2005/11/10 13:55:51 skrll Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -22,10 +22,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_XSCALE_PXA2X0	# Support the XScale core
+options 	CPU_XSCALE_PXA250	# Support the XScale core
+#options 	CPU_XSCALE_PXA270	# You can enable this, but useless for this board.
 #options 	XSCALE_CACHE_WRITE_THROUGH
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
-makeoptions	COPTS="-O2 -mcpu=xscale"
+makeoptions	CPUFLAGS="-mcpu=xscale"
 
 # Architecture options
 
@@ -46,6 +47,7 @@ file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -61,6 +63,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
@@ -82,6 +85,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_15	# NetBSD 1.5 compatibility.
@@ -136,7 +140,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	IPKDB_NE
 #options 	IPKDBKEY="\"Debug_it_over_network\""
 #options  	DEBUG_KGDB
-makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g -O2"	# compile full symbol table
 options 	SYMTAB_SPACE=200000
 #options 	AUDIO_DEBUG=2
 
@@ -216,6 +220,9 @@ opio0 	at obio?  intr 2
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 # uhid*	at uhidev? reportid ?
 
@@ -277,6 +284,10 @@ opio0 	at obio?  intr 2
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?

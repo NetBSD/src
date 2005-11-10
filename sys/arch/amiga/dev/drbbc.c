@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.11 2003/04/01 21:26:31 thorpej Exp $ */
+/*	$NetBSD: drbbc.c,v 1.11.2.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.11 2003/04/01 21:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.11.2.1 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,42 +129,42 @@ drbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 int
 draco_ds_read_bit(void *p)
 {
-	struct drioct *draco_ioct;
+	struct drioct *draco_ioctl;
 
-	draco_ioct = p;
+	draco_ioctl = p;
 
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
+	while (draco_ioctl->io_status & DRSTAT_CLKBUSY);
 
-	draco_ioct->io_clockw1 = 0;
+	draco_ioctl->io_clockw1 = 0;
 
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
+	while (draco_ioctl->io_status & DRSTAT_CLKBUSY);
 
-	return (draco_ioct->io_status & DRSTAT_CLKDAT);
+	return (draco_ioctl->io_status & DRSTAT_CLKDAT);
 }
 
 void
 draco_ds_write_bit(void *p, int b)
 {
-	struct drioct *draco_ioct;
+	struct drioct *draco_ioctl;
 
-	draco_ioct = p;
+	draco_ioctl = p;
 
-	while (draco_ioct->io_status & DRSTAT_CLKBUSY);
+	while (draco_ioctl->io_status & DRSTAT_CLKBUSY);
 
 	if (b)
-		draco_ioct->io_clockw1 = 0;
+		draco_ioctl->io_clockw1 = 0;
 	else
-		draco_ioct->io_clockw0 = 0;
+		draco_ioctl->io_clockw0 = 0;
 }
 
 void
 draco_ds_reset(void *p)
 {
-	struct drioct *draco_ioct;
+	struct drioct *draco_ioctl;
 
-	draco_ioct = p;
+	draco_ioctl = p;
 
-	draco_ioct->io_clockrst = 0;
+	draco_ioctl->io_clockrst = 0;
 }
 
 int

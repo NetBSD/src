@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8.2.8 2005/04/01 14:27:54 skrll Exp $
+#	$NetBSD: GENERIC,v 1.8.2.9 2005/11/10 13:57:09 skrll Exp $
 #
 #
 
@@ -36,6 +36,8 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls

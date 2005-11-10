@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.4 1996/10/13 04:11:10 christos Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.4.62.1 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -56,7 +56,7 @@
 #endif
 #ifdef DBG_PID
 	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
-	static char *last_hit[DBG_PID];
+	static const char *last_hit[DBG_PID];
 #	define	PID(a)	\
 	{ int i; \
 	  for (i=0; i< DBG_PID-1; i++) \

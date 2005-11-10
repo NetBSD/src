@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.4.2.3 2004/09/21 13:11:35 skrll Exp $
+#	$NetBSD: majors.algor,v 1.4.2.4 2005/11/10 13:48:21 skrll Exp $
 #
 # Device majors for algor
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 1
+device-major	swap		char 3   block 1	vmswap
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6
@@ -68,6 +68,7 @@ device-major	systrace	char 67			systrace
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
 device-major	wsfont		char 70			wsfont
+device-major	nsmb		char 71			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

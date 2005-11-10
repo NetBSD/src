@@ -1,8 +1,9 @@
-#	$NetBSD: std.iq31244,v 1.2.2.1 2005/02/15 21:32:32 skrll Exp $
+#	$NetBSD: std.iq31244,v 1.2.2.2 2005/11/10 13:55:51 skrll Exp $
 #
 # standard NetBSD/evbarm for IQ31244 options
 
 machine	evbarm arm
+include		"conf/std"	# MI standard options
 
 # Pull in IQ31244 config definitions.
 include "arch/evbarm/conf/files.iq31244"

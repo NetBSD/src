@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.13.16.1 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: macrom.h,v 1.13.16.2 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -165,7 +165,7 @@ typedef struct rsrc_s {
 } rsrc_t;
 
 typedef struct romvec_s {
-	char *romident; 	/* just to print it out */
+	const char *romident; 	/* just to print it out */
 	caddr_t adbintr;	/* where is ADB interrupt */
 	caddr_t pmintr; 	/* where is ADB/PM interrupt, on machines */
 				/*  that have it */

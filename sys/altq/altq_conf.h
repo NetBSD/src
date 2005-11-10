@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.h,v 1.6.2.3 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: altq_conf.h,v 1.6.2.4 2005/11/10 13:48:20 skrll Exp $	*/
 /*	$KAME: altq_conf.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ int altqioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
  * altq queueing discipline switch structure
  */
 struct altqsw {
-        char		*d_name;
+        const char	*d_name;
 	d_open_t	*d_open;
 	d_close_t	*d_close;
 	d_ioctl_t	*d_ioctl;

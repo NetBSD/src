@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.2.3 2004/09/21 13:16:46 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.2.4 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include "opt_vm86.h"
 #include "opt_ddb.h"
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.27.6.4 2004/09/21 13:16:12 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.27.6.5 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27.6.4 2004/09/21 13:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27.6.5 2005/11/10 13:56:27 skrll Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -231,7 +231,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level,
 		HPCIO_INTR_EDGE_HOLD,
 	};
 #ifdef VRISADEBUG
-	static char* intr_mode_names[8] = {
+	static const char* intr_mode_names[8] = {
 		"level high through",
 		"level high hold",
 		"level low through",

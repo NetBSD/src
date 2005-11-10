@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25.6.3 2004/09/21 13:19:15 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.25.6.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,10 +85,12 @@
 #define	_MACHINE 	mvme68k
 #define	MACHINE		"mvme68k"
 
+#ifdef _KERNEL
 /*
  * Grab the interrupt definitions
  */
 #include <machine/intr.h>
+#endif /* _KERNEL */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */

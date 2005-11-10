@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.1 2002/08/12 01:03:14 thorpej Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.1.14.1 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,6 +96,8 @@
 #define	MMCR_PIOSET31_16	0x0c36	/* PIO31-PIO16 set */
 #define	MMCR_PIOCLR15_0		0x0c38	/* PIO15-PIO0 clear */
 #define	MMCR_PIOCLR31_16	0x0c3a	/* PIO31-PIO16 clear */
+
+#define	ELANSC_PIO_NPINS	32	/* total number of PIO pins */
 
 /*
  * Watchdog Timer Registers.

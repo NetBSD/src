@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.42 2003/05/31 03:05:45 kristerw Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.42.2.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.42 2003/05/31 03:05:45 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.42.2.1 2005/11/10 13:51:36 skrll Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -157,7 +157,8 @@ RZ3SetupHWC(struct grf_softc *gp, unsigned char col1, unsigned col2,
 	    unsigned char hsx, unsigned char hsy, const unsigned long *data)
 {
 	volatile unsigned char *ba = gp->g_regkva;
-	unsigned long *c = (unsigned long *)(ba + LM_OFFSET + HWC_MEM_OFF);
+	unsigned long *c = (unsigned long *)__UNVOLATILE(ba);
+	c += LM_OFFSET + HWC_MEM_OFF;
 	const unsigned long *s = data;
 	struct MonDef *MonitorDef = (struct MonDef *) gp->g_data;
 #ifdef RH_64BIT_SPRITE
@@ -226,7 +227,8 @@ RZ3AlphaCopy(struct grf_softc *gp, unsigned short xs, unsigned short ys,
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	const struct MonDef *md = (struct MonDef *) gp->g_data;
-	volatile unsigned long *acm = (unsigned long *) (ba + ACM_OFFSET);
+	volatile unsigned long *acm = (volatile unsigned long *) (ba + 
+	    ACM_OFFSET);
 	unsigned short mod;
 
 	xs *= 4;
@@ -295,12 +297,14 @@ RZ3BitBlit(struct grf_softc *gp, struct grf_bitblt *gbb)
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	volatile unsigned char *lm = ba + LM_OFFSET;
-	volatile unsigned long *acm = (unsigned long *) (ba + ACM_OFFSET);
+	volatile unsigned long *acm = (volatile unsigned long *) (ba + 
+	    ACM_OFFSET);
 	const struct MonDef *md = (struct MonDef *) gp->g_data;
 	unsigned short mod;
 
 	{
-		unsigned long * pt = (unsigned long *) (lm + PAT_MEM_OFF);
+		volatile unsigned long * pt = 
+		    (volatile unsigned long *) (lm + PAT_MEM_OFF);
 		unsigned long tmp  =
 			gbb->mask | ((unsigned long) gbb->mask << 16);
 		*pt++ = tmp;
@@ -369,12 +373,14 @@ RZ3BitBlit16(struct grf_softc *gp, struct grf_bitblt *gbb)
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	volatile unsigned char *lm = ba + LM_OFFSET;
-	volatile unsigned long * acm = (unsigned long *) (ba + ACM_OFFSET);
+	volatile unsigned long * acm = (volatile unsigned long *) (ba + 
+	    ACM_OFFSET);
 	const struct MonDef * md = (struct MonDef *) gp->g_data;
 	unsigned short mod;
 
 	{
-		unsigned long * pt = (unsigned long *) (lm + PAT_MEM_OFF);
+		volatile unsigned long * pt = 
+		    (volatile unsigned long *) (lm + PAT_MEM_OFF);
 		unsigned long tmp  =
 			gbb->mask | ((unsigned long) gbb->mask << 16);
 		*pt++ = tmp;
@@ -446,13 +452,15 @@ RZ3BitBlit24(struct grf_softc *gp, struct grf_bitblt *gbb)
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	volatile unsigned char *lm = ba + LM_OFFSET;
-	volatile unsigned long * acm = (unsigned long *) (ba + ACM_OFFSET);
+	volatile unsigned long * acm = (volatile unsigned long *) (ba + 
+	    ACM_OFFSET);
 	const struct MonDef * md = (struct MonDef *) gp->g_data;
 	unsigned short mod;
 
 
 	{
-		unsigned long * pt = (unsigned long *) (lm + PAT_MEM_OFF);
+		volatile unsigned long * pt = 
+		    (volatile unsigned long *) (lm + PAT_MEM_OFF);
 		unsigned long tmp  =
 			gbb->mask | ((unsigned long) gbb->mask << 16);
 		*pt++ = tmp;
@@ -1938,7 +1946,8 @@ rh_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 #ifdef RH_64BIT_SPRITE
 		info->size.x = 64;
 		info->size.y = 64;
-		for (row = 0, hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
+		for (row = 0, 
+		    hwp = (volatile u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
 		    mp = mask, imp = image;
 		    row < 64;
 		    row++) {
@@ -1959,7 +1968,8 @@ rh_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 #else
 		info->size.x = 32;
 		info->size.y = 32;
-		for (row = 0, hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
+		for (row = 0, 
+		    hwp = (volatile u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
 		    mp = mask, imp = image;
 		    row < 32;
 		    row++) {
@@ -2022,7 +2032,7 @@ rh_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		copyin(info->image, image, info->size.y * info->size.x / 8);
 		copyin(info->mask, mask, info->size.y * info->size.x / 8);
 
-		hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF);
+		hwp = (volatile u_long *)(ba + LM_OFFSET + HWC_MEM_OFF);
 
 		/*
 		 * setting it is slightly more difficult, because we can't

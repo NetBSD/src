@@ -1,4 +1,4 @@
-/*	$NetBSD: iopreg.h,v 1.4.24.1 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: iopreg.h,v 1.4.24.2 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -153,11 +153,41 @@ int	iop_send_msg(int, int, u_char *, int, iop_msg_handler, void *);
 int	iop_queue_receipt(int, int, iop_msg_handler, void *);
 int	iop_register_listener(int, int, iop_msg_handler, void *);
 
+/* SWIM support */
+#define IOP_CHAN_SWIM	1
+
+#define IOP_SWIM_INITIALIZE		0x01
+#define IOP_SWIM_SHUTDOWN		0x02
+#define IOP_SWIM_START_POLLING		0x03
+#define IOP_SWIM_STOP_POLLING		0x04
+#define IOP_SWIM_SET_HFS_TAG_ADDR	0x05
+#define IOP_SWIM_DRIVE_STATUS		0x06
+#define IOP_SWIM_EJECT			0x07
+#define IOP_SWIM_FORMAT			0x08
+#define IOP_SWIM_FORMAT_VERIFY		0x09
+#define IOP_SWIM_WRITE			0x0a
+#define IOP_SWIM_READ			0x0b
+#define IOP_SWIM_READ_VERIFY		0x0c
+#define IOP_SWIM_CACHE_CONTROL		0x0d
+#define IOP_SWIM_TAG_BUFFER_CONTROL	0x0e
+#define IOP_SWIM_GET_ICON		0x0f
+#define IOP_SWIM_DISK_DUP_INFO		0x10
+#define IOP_SWIM_GET_RAW_DATA		0x11
+
+/*
+ * The structure of a SWIM packet to/from the IOP is:
+ *	Request kind
+ *	Drive Number (if needed)
+ *	Error Code
+ *	Data (optional)
+ */
+
 /* ADB support */
 #define IOP_CHAN_ADB	2
 
 #define IOP_ADB_FL_EXPLICIT	0x80	/* Non-zero if explicit command */
 #define IOP_ADB_FL_AUTOPOLL	0x40	/* Auto/SRQ polling enabled     */
+#define IOP_ADB_FL_POLL_UPDATE	0x20	/* Update polling bit mask	*/
 #define IOP_ADB_FL_SRQ		0x04	/* SRQ detected                 */
 #define IOP_ADB_FL_TIMEOUT	0x02	/* Non-zero if timeout          */
 

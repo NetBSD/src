@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.60.2.5 2005/03/04 16:39:00 skrll Exp $ */
+/*	$NetBSD: scn.c,v 1.60.2.6 2005/11/10 13:58:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.60.2.5 2005/03/04 16:39:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.60.2.6 2005/11/10 13:58:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,7 +186,7 @@ static int scn_config __P((int, int, int, int, u_char, u_char));
 static void scn_rxenable __P((struct scn_softc *));
 static void scn_rxdisable __P((struct scn_softc *));
 static void dcd_int __P((struct scn_softc *, struct tty *, u_char));
-static void scnoverrun __P((int, long *, char *));
+static void scnoverrun __P((int, long *, const char *));
 static unsigned char opbits __P((struct scn_softc *, int));
 
 static int scnsir = -1;		/* s/w intr number */
@@ -817,7 +817,7 @@ scnattach(parent, self, aux)
 	u_char delim = ':';
 	u_char mr1, mr2;
 	enum scntype scntype = SCNUNK;
-	char *duart_type = "Unknown";
+	const char *duart_type = "Unknown";
 	char *intrname;
 	boolean_t console, first;
 
@@ -1143,7 +1143,8 @@ scnopen(dev, flag, mode, l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
-		if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
+		if (tp->t_state & TS_XCLUDE &&
+		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {
@@ -1341,7 +1342,7 @@ static void
 scnoverrun(unit, ptime, what)
 	int unit;
 	long *ptime;
-	char *what;
+	const char *what;
 {
 	if (*ptime != time.tv_sec) {
 		*ptime = time.tv_sec;

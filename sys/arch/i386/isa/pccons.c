@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.166.2.5 2005/02/04 11:44:31 skrll Exp $	*/
+/*	$NetBSD: pccons.c,v 1.166.2.6 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.166.2.5 2005/02/04 11:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.166.2.6 2005/11/10 13:56:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -270,7 +270,7 @@ static unsigned int addr_6845 = MONO_BASE;
 char *sget(void);
 #endif
 char *strans(u_char);
-void sput(u_char *, int);
+void sput(const u_char *, int);
 #ifdef XSERVER
 void pc_xmode_on(void);
 void pc_xmode_off(void);
@@ -396,7 +396,7 @@ kbc_put8042cmd(u_char val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(u_char val, u_char polling)
+kbd_cmd(u_char val, u_char dopoll)
 {
 	u_int retries = 3;
 	register u_int i;
@@ -406,7 +406,7 @@ kbd_cmd(u_char val, u_char polling)
 			return (0);
 		ack = nak = 0;
 		outb(IO_KBD + KBOUTP, val);
-		if (polling)
+		if (dopoll)
 			for (i = 100000; i; i--) {
 				if (inb(IO_KBD + KBSTATP) & KBS_DIB) {
 					register u_char c;
@@ -846,7 +846,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
@@ -1218,19 +1219,20 @@ pcparam(struct tty *tp, struct termios *t)
 void
 pcinit(void)
 {
-	u_short volatile *cp;
+	u_short volatile *cptest;
+	u_short *cp;
 	u_short was;
 	unsigned cursorat;
 
-	cp = ISA_HOLE_VADDR(CGA_BUF);
-	was = *cp;
-	*cp = (u_short) 0xA55A;
-	if (*cp != 0xA55A) {
-		cp = ISA_HOLE_VADDR(MONO_BUF);
+	cptest = cp = ISA_HOLE_VADDR(CGA_BUF);
+	was = *cptest;
+	*cptest = (u_short) 0xA55A;
+	if (*cptest != 0xA55A) {
+		cptest = cp = ISA_HOLE_VADDR(MONO_BUF);
 		addr_6845 = MONO_BASE;
 		vs.color = 0;
 	} else {
-		*cp = was;
+		*cptest = was;
 		addr_6845 = CGA_BASE;
 		vs.color = 1;
 	}
@@ -1264,23 +1266,28 @@ pcinit(void)
 	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
 
-#define	wrtchar(c, at) do {\
-	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
-} while (0)
+#define	wrtchar(c, at) \
+    do { \
+	    char *_cp = (char *)crtat; \
+	    *_cp++ = (c); \
+	    *_cp = (at); \
+	    crtat++; \
+	    vs.col++; \
+    } while (/*CONSTCOND*/0)
 
 /* translate ANSI color codes to standard pc ones */
-static char fgansitopc[] = {
+static const char fgansitopc[] = {
 	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
 	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY
 };
 
-static char bgansitopc[] = {
+static const char bgansitopc[] = {
 	BG_BLACK, BG_RED, BG_GREEN, BG_BROWN, BG_BLUE,
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
 };
 
 #ifdef DISPLAY_ISO8859
-static u_char iso2ibm437[] =
+static const u_char iso2ibm437[] =
 {
            0,     0,     0,     0,     0,     0,     0,     0,
            0,     0,     0,     0,     0,     0,     0,     0,
@@ -1305,7 +1312,7 @@ static u_char iso2ibm437[] =
  * `pc3' termcap emulation.
  */
 void
-sput(u_char *cp, int n)
+sput(const u_char *cp, int n)
 {
 	u_char c, scroll = 0;
 

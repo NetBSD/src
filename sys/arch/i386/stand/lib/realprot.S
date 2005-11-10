@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.2.2.3 2004/09/21 13:17:11 skrll Exp $	*/
+/*	$NetBSD: realprot.S,v 1.2.2.4 2005/11/10 13:56:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,34 @@ ENTRY(real_to_prot)
  * Based on the descripton in section 14.5 of the 80386 Programmer's
  * reference book.
  */
+/*
+ * EPIA_HACK
+ *
+ * VIA C3 processors don't seem to correctly switch back to executing
+ * 16 bit code after the switch to real mode and subsequent jump.
+ *
+ * It is speculated that the CPU is prefetching and decoding branch
+ * targets and not invalidating this buffer on the long jump.
+ *
+ * The precise reason for this hack working is still unknown, but
+ * it was determined experimentally on two theories:
+ * 1) Flush the pipeline with NOPs
+ * 2) call/ret after the return from prot_to_real seems to improve matters,
+ *    perhaps by making more work for the branch prediction/prefetch logic.
+ *
+ * Neither of these individually are effective, but this combination is
+ * determined experimentally to be sufficient.
+ */
 ENTRY(prot_to_real)
+#ifdef EPIA_HACK
+	.code32
+	call prot_to_real_main
+	.code16
+	call epia_nops
+	retl
+
+prot_to_real_main:
+#endif
 	.code32
 	pushl	%eax
 
@@ -197,7 +224,7 @@ ENTRY(prot_to_real)
 	 * Otherwise the control bits don't get changed.
 	 * The correct base addresses are loaded later.
 	 */
-	movw    $bootrealdata, %ax  
+	movw    $bootrealdata, %ax
 	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
@@ -240,6 +267,10 @@ xreal:
 	jne	1f
 	pop	%bp
 
+#ifdef EPIA_HACK
+	call epia_nops
+#endif
+
 	sti
 	popl	%eax
 	retl
@@ -257,6 +288,18 @@ xreal:
 	.global	dump_eax_buff
 dump_eax_buff:
 	. = . + 16
+
+#ifdef EPIA_HACK
+epia_nops:
+	.code16
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	ret
+#endif
 
 /* vtophys(void *)
  * convert boot time 'linear' address to a physical one

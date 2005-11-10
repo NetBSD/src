@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37.2.3 2004/09/21 13:16:42 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.37.2.4 2005/11/10 13:56:46 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ if defined(_KERNEL_OPT)
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
+include "opt_compat_netbsd.h"
 include "opt_multiprocessor.h"
 endif
 
@@ -109,6 +110,8 @@ if NAPM > 0
 include <machine/bioscall.h>
 include <machine/apmvar.h>
 endif
+
+include <compat/sys/signal.h>
 
 ifdef COMPAT_SVR4
 include <compat/svr4/svr4_ucontext.h>
@@ -145,6 +148,23 @@ define	PAGE_SIZE		PAGE_SIZE
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
+
+define	PTE_BASE		PTE_BASE
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	KERNBASE		KERNBASE
+define	KERNTEXTOFF		KERNTEXTOFF
+
+define	PGSHIFT			PGSHIFT
+define	PGOFSET			PGOFSET
+define	PDSHIFT			PDSHIFT
+define	PDOFSET			PDOFSET
+define	NBPD			NBPD
+
+define	PG_RW			PG_RW
+define	PG_V			PG_V
+define	PG_KW			PG_KW
+define	PG_KR			PG_KR
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
@@ -317,3 +337,31 @@ define	TREC_IBT		offsetof(struct trec, tr_ibt)
 
 define	SIZEOF_TREC		sizeof(struct trec)
 define	SIZEOF_TLOG		sizeof(struct tlog)
+
+define	IPL_NONE		IPL_NONE
+define	IPL_SCHED		IPL_SCHED
+define	IPL_CLOCK		IPL_CLOCK
+define	IPL_HIGH		IPL_HIGH
+define	IPL_IPI			IPL_IPI
+
+define	IPL_SOFTNET		IPL_SOFTNET
+define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
+define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+
+define	LIR_IPI			LIR_IPI
+define	LIR_TIMER		LIR_TIMER
+
+define	SIR_NET			SIR_NET
+define	SIR_CLOCK		SIR_CLOCK
+define	SIR_SERIAL		SIR_SERIAL
+
+define	IREENT_MAGIC		IREENT_MAGIC
+
+define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
+define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
+define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
+
+define	PSL_AC			PSL_AC
+define	PSL_MBO			PSL_MBO
+define	PSL_ID			PSL_ID
+define	PSL_VM			PSL_VM

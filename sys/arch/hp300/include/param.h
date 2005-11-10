@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43.2.4 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.43.2.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,10 +85,12 @@
 #define	_MACHINE	hp300
 #define	MACHINE		"hp300"
 
+#ifdef _KERNEL
 /*
  * Interrupt glue.
  */
 #include <machine/intr.h>
+#endif /* _KERNEL */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */

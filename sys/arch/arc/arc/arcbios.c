@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.11.2.4 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.11.2.5 2005/11/10 13:55:00 skrll Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.11.2.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.11.2.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ int
 bios_configure_memory(int *mem_reserved, phys_ram_seg_t *mem_clusters,
     int *mem_cluster_cnt_return)
 {
-	int physmem = 0;		/* Total physical memory size */
+	int bios_physmem = 0;		/* Total physical memory size */
 	int mem_cluster_cnt = 0;
 
 	arc_mem_t *descr = NULL;
@@ -215,7 +215,7 @@ bios_configure_memory(int *mem_reserved, phys_ram_seg_t *mem_clusters,
 		case FreeContigous:
 			reserved = 0;
 account_it:
-			physmem += descr->PageCount * 4096;
+			bios_physmem += descr->PageCount * 4096;
 
 			for (i = 0; i < mem_cluster_cnt; ) {
 				if (mem_reserved[i] == reserved &&
@@ -256,11 +256,11 @@ account_it:
 		    mem_reserved[i],
 		    (long)mem_clusters[i].start,
 		    (long)mem_clusters[i].size);
-	printf("physmem = %d\n", physmem);
+	printf("physmem = %d\n", bios_physmem);
 #endif
 
 	*mem_cluster_cnt_return = mem_cluster_cnt;
-	return physmem;
+	return bios_physmem;
 }
 
 /*

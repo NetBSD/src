@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.38.2.7 2005/03/04 16:38:48 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.38.2.8 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.38.2.7 2005/03/04 16:38:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.38.2.8 2005/11/10 13:57:27 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -440,7 +440,7 @@ fakeintr(arg)
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NIRQ)
 
-char *
+const char *
 intr_typename(type)
 	int type;
 {
@@ -627,7 +627,7 @@ ext_intr()
 		if (int_state == oint_state) {
 			if (spincount++ > 0x80) {
 				uint32_t	stuck;
-				char		*comma="";
+				const char	*comma="";
 
 				stuck = int_state;
 				printf("Disabling stuck interrupt(s): ");

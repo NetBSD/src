@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.4.2.3 2004/09/21 13:17:56 skrll Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.4.2.4 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4.2.3 2004/09/21 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4.2.4 2005/11/10 13:57:09 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -288,12 +288,12 @@ linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		/*
@@ -316,7 +316,6 @@ linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		/* nothing to do */
 		break;
 	default:
-	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;

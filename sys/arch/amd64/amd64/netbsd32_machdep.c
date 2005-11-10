@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.2.2.4 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.2.2.5 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.2.2.4 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.2.2.5 2005/11/10 13:50:24 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -68,7 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.2.2.4 2005/04/01 14:26:50 skr
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* Provide a the name of the architecture we're emulating */
-char	machine_arch32[] = "i386";	
+const char	machine32[] = "i386";
+const char	machine_arch32[] = "i386";	
 
 int process_read_fpregs32(struct lwp *, struct fpreg32 *);
 int process_read_regs32(struct lwp *, struct reg32 *);
@@ -301,7 +302,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_signum = sig;
 	frame.sf_sip = (uint32_t)(uintptr_t)&fp->sf_si;
 	frame.sf_ucp = (uint32_t)(uintptr_t)&fp->sf_uc;
-	netbsd32_si_to_si32(&frame.sf_si, (siginfo_t *)&ksi->ksi_info);
+	netbsd32_si_to_si32(&frame.sf_si, (const siginfo_t *)&ksi->ksi_info);
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = 0;
@@ -419,17 +420,20 @@ struct md_core32 {
 };
 
 int
-cpu_coredump32(struct lwp *l, struct vnode *vp, struct ucred *cred,
-	     struct core32 *chdr)
+cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 {
 	struct md_core32 md_core;
 	struct coreseg cseg;
 	int error;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_I386, 0);
-	chdr->c_hdrsize = ALIGN32(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN32(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_I386, 0);
+		chdr->c_hdrsize = ALIGN32(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN32(sizeof(cseg));
+		chdr->c_cpusize = sizeof(md_core);
+		chdr->c_nseg++;
+		return 0;
+	}
 
 	/* Save integer registers. */
 	error = process_read_regs32(l, &md_core.intreg);
@@ -445,20 +449,13 @@ cpu_coredump32(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, NULL);
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 

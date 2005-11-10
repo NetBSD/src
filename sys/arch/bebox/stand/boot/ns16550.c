@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.5 1999/06/28 01:20:45 sakamoto Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.5.36.1 2005/11/10 13:55:46 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -35,7 +35,7 @@
  * NS16550 support
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include "boot.h"
 #include "ns16550.h"
 

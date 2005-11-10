@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.19.2.5 2005/01/17 19:29:23 skrll Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.19.2.6 2005/11/10 13:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.19.2.5 2005/01/17 19:29:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.19.2.6 2005/11/10 13:56:08 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -417,7 +417,8 @@ hyper_deinit(struct ite_data *ip)
 static void
 hyper_ite_fontinit(struct ite_data *ip)
 {
-	u_char *fbmem, *dp;
+	volatile u_char *fbmem;
+	u_char *dp;
 	int c, l, b;
 	int stride, width;
 
@@ -427,7 +428,7 @@ hyper_ite_fontinit(struct ite_data *ip)
 	width = (ip->ftwidth + 7) / 8;
 
 	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *) FBBASE +
+		fbmem = FBBASE +
 			(ip->fonty + (c / ip->cpl) * ip->ftheight) *
 			stride;
 		fbmem += (ip->fontx >> 3) + (c % ip->cpl) * width;

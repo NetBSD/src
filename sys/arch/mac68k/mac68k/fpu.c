@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.29.2.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.29.2.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -75,7 +75,7 @@ fpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-static char *fpu_descr[] = {
+static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	"emulator", 		/* 0 */
 #else
@@ -90,7 +90,7 @@ static char *fpu_descr[] = {
 static void
 fpu_attach(struct device *parent, struct device *self, void *args)
 {
-	char *descr;
+	const char *descr;
 
 	fputype = fpu_probe();
 

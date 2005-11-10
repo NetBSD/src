@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.28.2.3 2004/09/21 13:16:13 skrll Exp $	*/
+/*	$NetBSD: vrip.c,v 1.28.2.4 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.28.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.28.2.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -79,7 +79,8 @@ int	vripmatch(struct device *, struct cfdata *, void *);
 void	vripattach(struct device *, struct device *, void *);
 #endif
 int	vrip_print(void *, const char *);
-int	vrip_search(struct device *, struct cfdata *, void *);
+int	vrip_search(struct device *, struct cfdata *,
+		    const int *, void *);
 int	vrip_intr(void *, u_int32_t, u_int32_t);
 
 int __vrip_power(vrip_chipset_tag_t, int, int);
@@ -245,10 +246,10 @@ vripattach_common(struct device *parent, struct device *self, void *aux)
 	 *	device. so attach first
 	 */
 	sc->sc_pri = 2;
-	config_search(vrip_search, self, vrip_print);
+	config_search_ia(vrip_search, self, "vripif", vrip_print);
 	/* Other system devices. */
 	sc->sc_pri = 1;
-	config_search(vrip_search, self, vrip_print);
+	config_search_ia(vrip_search, self, "vripif", vrip_print);
 }
 
 int
@@ -274,7 +275,8 @@ vrip_print(void *aux, const char *hoge)
 }
 
 int
-vrip_search(struct device *parent, struct cfdata *cf, void *aux)
+vrip_search(struct device *parent, struct cfdata *cf,
+	    const int *ldesc, void *aux)
 {
 	struct vrip_softc *sc = (struct vrip_softc *)parent;
 	struct vrip_attach_args va;

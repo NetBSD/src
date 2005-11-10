@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.70.6.3 2004/09/21 13:19:47 skrll Exp $
+#	$NetBSD: Makefile.pc532,v 1.70.6.4 2005/11/10 13:58:09 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 PC532=		$S/arch/pc532
-GENASSYM=	${PC532}/pc532/genassym.cf
+GENASSYM_CONF=	${PC532}/pc532/genassym.cf
 
 ##
 ## (2) compile settings

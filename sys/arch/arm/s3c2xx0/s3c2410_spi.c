@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.1.4.5 2005/11/10 13:55:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.1.4.5 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ struct ssspi_softc {
 /* prototypes */
 static int	ssspi_match(struct device *, struct cfdata *, void *);
 static void	ssspi_attach(struct device *, struct device *, void *);
-static int 	ssspi_search(struct device *, struct cfdata *, void *);
+static int 	ssspi_search(struct device *, struct cfdata *,
+			     const int *, void *);
 static int	ssspi_print(void *, const char *);
 
 /* attach structures */
@@ -130,13 +131,14 @@ ssspi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach child devices
 	 */
-	config_search(ssspi_search, self, NULL);
+	config_search_ia(ssspi_search, self, "ssspi", NULL);
 }
 
 int
-ssspi_search(parent, cf, aux)
+ssspi_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	struct ssspi_softc *sc = (struct ssspi_softc *)parent;

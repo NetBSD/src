@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.8.2.4 2005/01/17 19:29:12 skrll Exp $ */
+/*	$NetBSD: repulse.c,v 1.8.2.5 2005/11/10 13:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8.2.4 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8.2.5 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,7 +257,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux)
 	struct repulse_softc *sc;
 	struct zbus_args *zap;
 	struct repulse_hw *bp;
-	uint8_t *fwp;
+	const uint8_t *fwp;
 	int needs_firmware;
 	uint16_t a;
 
@@ -282,9 +282,9 @@ repulse_attach(struct device *parent, struct device *self, void *aux)
 
 		delay(1 * USECPERTICK);
 
-		for (fwp = (uint8_t *)repulse_firmware;
+		for (fwp = (const uint8_t *)repulse_firmware;
 		    fwp < (repulse_firmware_size +
-		    (uint8_t *)repulse_firmware); fwp++)
+		    (const uint8_t *)repulse_firmware); fwp++)
 			bp->rhw_firmwareload = *fwp;
 
 		delay(1 * USECPERTICK);

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65.6.12 2005/03/04 16:38:48 skrll Exp $
+#	$NetBSD: INSTALL,v 1.65.6.13 2005/11/10 13:57:27 skrll Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -29,6 +29,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -38,6 +39,7 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
@@ -103,7 +105,6 @@ cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
@@ -137,8 +138,8 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
+ex*	at cardbus? function ?	# 3Com 3C575TX
+tlp*	at cardbus? function ?	# DECchip 21143
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
@@ -156,14 +157,7 @@ wdc*	at mediabay? flags 0
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
 
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at ahc?
-scsibus* at esp?
-scsibus* at iha?
-scsibus* at mesh?
-scsibus* at pcscp?
-scsibus* at siop?
+scsibus* at scsi?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
@@ -191,3 +185,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	wsmux			# mouse and keyboard multiplexor
+
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

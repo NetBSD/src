@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.10.2.7 2005/03/04 16:38:36 skrll Exp $
+# 	$NetBSD: LROUTER,v 1.10.2.8 2005/11/10 13:56:14 skrll Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -73,6 +73,7 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
@@ -86,6 +87,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast

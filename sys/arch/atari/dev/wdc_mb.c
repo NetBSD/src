@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.11.6.4 2004/09/21 13:14:00 skrll Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.11.6.5 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.11.6.4 2004/09/21 13:14:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.11.6.5 2005/11/10 13:55:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,23 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.11.6.4 2004/09/21 13:14:00 skrll Exp $"
 
 #include <atari/dev/ym2149reg.h>
 #include <atari/atari/device.h>
+
+/* Falcon IDE register locations (base and offsets). */
+#define FALCON_WD_BASE	0xfff00000
+#define FALCON_WD_LEN	0x40
+
+static int falcon_wd_reg[WDC_NREG + WDC_NSHADOWREG] = {
+    0x00,	/* wd_data	*/
+    0x05,	/* wd_error	*/
+    0x09,	/* wd_seccnt	*/
+    0x0d,	/* wd_sector	*/
+    0x11,	/* wd_cyl_lo	*/
+    0x15,	/* wd_cyl_hi	*/
+    0x19,	/* wd_sdh	*/
+    0x1d,	/* wd_command	*/
+    0x39,	/* wd_status	*/
+    0x01	/* wd_features  */
+    };
 
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
@@ -95,7 +112,7 @@ wdc_mb_probe(parent, cfp, aux)
 	struct ata_channel ch;
 	struct wdc_softc wdc;
 	struct wdc_regs wdr;
-	int	result = 0;
+	int	result = 0, i;
 	u_char	sv_ierb;
 
 	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || wdc_matched)
@@ -114,11 +131,16 @@ wdc_mb_probe(parent, cfp, aux)
 	wdr.cmd_iot->stride = 2;
 	wdr.cmd_iot->wo_1   = 1;
 
-	if (bus_space_map(wdr.cmd_iot, 0xfff00000, 0x40, 0, &wdr.cmd_baseioh))
+	if (bus_space_map(wdr.cmd_iot, FALCON_WD_BASE, FALCON_WD_LEN, 0,
+	    &wdr.cmd_baseioh))
 		return 0;
-	if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, 0x38, 1,
-	    &wdr.ctl_ioh))
-		return 0;
+	for (i = 0; i < (WDC_NREG + WDC_NSHADOWREG); i++)
+		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh,
+		    falcon_wd_reg[i], i == 0 ? 2 : 1, &wdr.cmd_iohs[i]) != 0) {
+			bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh,
+			    FALCON_WD_LEN);
+			return 0;
+		}
 
 	/*
 	 * Make sure IDE interrupts are disabled during probing.
@@ -136,7 +158,7 @@ wdc_mb_probe(parent, cfp, aux)
 
 	MFP->mf_ierb = sv_ierb;
 
-	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, 0x40);
+	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, FALCON_WD_LEN);
 	mb_free_bus_space_tag(wdr.cmd_iot);
 
 	if (result)
@@ -151,6 +173,7 @@ wdc_mb_attach(parent, self, aux)
 {
 	struct wdc_mb_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
+	int i;
 
 	printf("\n");
 
@@ -161,15 +184,21 @@ wdc_mb_attach(parent, self, aux)
 	wdr->cmd_iot->wo_1   = 1;
 	wdr->cmd_iot->abs_rms_2 = read_multi_2_swap;
 	wdr->cmd_iot->abs_wms_2 = write_multi_2_swap;
-	if (bus_space_map(wdr->cmd_iot, 0xfff00000, 0x40, 0,
+	if (bus_space_map(wdr->cmd_iot, FALCON_WD_BASE, FALCON_WD_LEN, 0,
 			  &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
-	if (bus_space_subregion(wdr->cmd_iot,
-	    wdr->cmd_baseioh, 0x38, 1, &wdr->ctl_ioh))
-		return;
+	for (i = 0; i < (WDC_NREG + WDC_NSHADOWREG); i++)
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+		    falcon_wd_reg[i], i == 0 ? 2 : 1, &wdr->cmd_iohs[i]) != 0) {
+			printf("%s: couldn't subregion cmd reg %i\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
+			    FALCON_WD_LEN);
+			return;
+		}
 
 	/*
 	 * Play a nasty trick here. Normally we only manipulate the

@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.33.2.3 2004/09/21 13:12:25 skrll Exp $ */
+/*	$NetBSD: bzsc.c,v 1.33.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.33.2.3 2004/09/21 13:12:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.33.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -143,7 +143,7 @@ bzscmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (!is_a1200())
 		return(0);			/* And not A1200 */
 	regs = &((volatile u_char *)zap->va)[0x10000];
-	if (badaddr((caddr_t)regs))
+	if (badaddr((caddr_t)__UNVOLATILE(regs)))
 		return(0);
 	regs[NCR_CFG1 * 2] = 0;
 	regs[NCR_CFG1 * 2] = NCRCFG1_PARENB | 7;

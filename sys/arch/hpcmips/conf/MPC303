@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.22.2.8 2005/03/04 16:38:36 skrll Exp $
+# 	$NetBSD: MPC303,v 1.22.2.9 2005/11/10 13:56:14 skrll Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22.2.8 $"
+#ident 		"GENERIC-$Revision: 1.22.2.9 $"
 
 maxusers	16
 
@@ -70,6 +70,7 @@ file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
@@ -83,6 +84,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
@@ -180,6 +182,9 @@ uhub*	at uhub? port ? configuration ? interface ?
 # USB Keyboards
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?

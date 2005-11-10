@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.9.2.4 2004/11/02 07:50:46 skrll Exp $
+# 	$NetBSD: DEBUG,v 1.9.2.5 2005/11/10 13:58:14 skrll Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -95,6 +95,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

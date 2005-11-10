@@ -1,0 +1,7 @@
+$NetBSD: version,v 1.1.10.2 2005/11/10 13:55:09 skrll Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.0:	Initial arc booter, based on sgimips one

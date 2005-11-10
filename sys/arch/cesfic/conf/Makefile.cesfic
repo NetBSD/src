@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.9.6.3 2004/09/21 13:14:33 skrll Exp $
+#	$NetBSD: Makefile.cesfic,v 1.9.6.4 2005/11/10 13:55:47 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 CESFIC=		$S/arch/cesfic
-GENASSYM=	${CESFIC}/cesfic/genassym.cf
+GENASSYM_CONF=	${CESFIC}/cesfic/genassym.cf
 
 ##
 ## (2) compile settings

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.43.2.11 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: SWINGER,v 1.43.2.12 2005/11/10 13:56:32 skrll Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.43.2.11 $"
+#ident 		"SWINGER-$Revision: 1.43.2.12 $"
 
 maxusers	64		# estimated number of users
 
@@ -82,6 +82,7 @@ options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -110,6 +111,8 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -126,6 +129,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -217,9 +221,9 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 options 	PCIBIOS			# PCI BIOS support
 options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -344,7 +348,7 @@ sysbeep0	at pcppi?
 #lpt2	at isa? port 0x3bc
 
 # LM7[89] and compatible hardware monitors
-lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
 # SCSI Controllers and Devices
 
@@ -392,8 +396,8 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at scsi?
@@ -563,10 +567,10 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? function ?	# Intel i8255x
+#tlp*	at cardbus? function ?	# DECchip 21143
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -590,7 +594,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 
 # CardBus USB controllers
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at uhci?
@@ -610,6 +614,9 @@ wsmouse*	at ums? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -648,6 +655,10 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
@@ -696,8 +707,6 @@ sb*	at isapnp?			# SoundBlaster-compatible audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 

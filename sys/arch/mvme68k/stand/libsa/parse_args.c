@@ -1,8 +1,8 @@
-/*	$NetBSD: parse_args.c,v 1.7.24.3 2004/09/21 13:19:17 skrll Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.7.24.4 2005/11/10 13:57:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,16 +32,13 @@
 #include <machine/prom.h>
 #include <sys/boot_flag.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 #define KERNEL_NAME "netbsd"
 
 void
-parse_args(filep, flagp, partp)
-char **filep;
-int *flagp;
-int *partp;
+parse_args(char **filep, int *flagp, int *partp)
 {
 	char *name = KERNEL_NAME, *ptr;
 	int howto = 0, part = 0;

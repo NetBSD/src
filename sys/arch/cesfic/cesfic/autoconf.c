@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8.2.5 2005/04/01 14:27:08 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.6 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.5 2005/04/01 14:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.6 2005/11/10 13:55:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ struct evcnt evcnt_fpsp_unimp, evcnt_fpsp_unsupp;
 int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
 int	mainbussearch __P((struct device *, struct cfdata *,
-			   const locdesc_t *, void *));
+			   const int *, void *));
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
@@ -103,7 +103,7 @@ int
 mainbussearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 
@@ -156,7 +156,7 @@ cpu_configure()
 	isrinit();
 
 	(void)splhigh();
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	(void)spl0();

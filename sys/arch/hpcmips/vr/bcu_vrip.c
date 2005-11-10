@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.19.6.3 2004/09/21 13:16:13 skrll Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.19.6.4 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.19.6.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.19.6.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static unsigned short vrbcu_read(struct vrbcu_softc *, int);
 
 static void vrbcu_dump_regs(void);
 
-char	*vr_cpuname=NULL;
+const char *vr_cpuname=NULL;
 int	vr_major=-1;
 int	vr_minor=-1;
 int	vr_cpuid=-1;
@@ -309,7 +309,7 @@ vrbcu_dump_regs()
 
 }
 
-static char *cpuname[] = {
+static const char *cpuname[] = {
 	"VR4101",	/* 0 */
 	"VR4102",	/* 1 */
 	"VR4111",	/* 2 */
@@ -354,7 +354,7 @@ vrbcu_vrip_getcpuid(void)
 	return (vr_cpuid);
 }	
 
-char *
+const char *
 vrbcu_vrip_getcpuname(void)
 {
 	int cpuid;	

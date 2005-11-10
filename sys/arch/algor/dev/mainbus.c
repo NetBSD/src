@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13.2.3 2004/09/21 13:11:35 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13.2.4 2005/11/10 13:48:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.2.3 2004/09/21 13:11:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.2.4 2005/11/10 13:48:21 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -77,7 +77,8 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print(void *, const char *);
-int	mainbus_submatch(struct device *, struct cfdata *, void *);
+int	mainbus_submatch(struct device *, struct cfdata *,
+			 const int *, void *);
 
 /* There can be only one. */
 int	mainbus_found;
@@ -234,8 +235,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ma.ma_st = st;
 		ma.ma_addr = md->md_addr;
 		ma.ma_irq = md->md_irq;
-		(void) config_found_sm(self, &ma, mainbus_print,
-		    mainbus_submatch);
+		(void) config_found_sm_loc(self, "mainbus", NULL, &ma,
+		    mainbus_print, mainbus_submatch);
 	}
 }
 
@@ -247,14 +248,14 @@ mainbus_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ma->ma_name, pnp);
 	if (ma->ma_addr != (bus_addr_t) -1)
-		aprint_normal(" %s 0x%lx", mainbuscf_locnames[MAINBUSCF_ADDR],
-		    ma->ma_addr);
+		aprint_normal(" addr 0x%lx", ma->ma_addr);
 
 	return (UNCONF);
 }
 
 int
-mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_submatch(struct device *parent, struct cfdata *cf,
+		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

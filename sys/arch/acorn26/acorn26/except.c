@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.4.2.3 2004/09/21 13:11:19 skrll Exp $ */
+/* $NetBSD: except.c,v 1.4.2.4 2005/11/10 13:48:20 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4.2.3 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4.2.4 2005/11/10 13:48:20 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -199,7 +199,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
     struct vm_map *map, vaddr_t va, vm_prot_t atype)
 {
 	int error;
-	struct pcb *curpcb;
+	struct pcb *cur_pcb;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
@@ -218,11 +218,11 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	if (error != 0) {
 		ksiginfo_t ksi;
 
-		curpcb = &l->l_addr->u_pcb;
-		if (curpcb->pcb_onfault != NULL) {
+		cur_pcb = &l->l_addr->u_pcb;
+		if (cur_pcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
 			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
-			    (register_t)curpcb->pcb_onfault;
+			    (register_t)cur_pcb->pcb_onfault;
 			return;
 		}
 		KSI_INIT_TRAP(&ksi);

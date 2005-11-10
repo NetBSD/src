@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2.6.3 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.6.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,8 +102,6 @@ char *names[] = {
 };
 #define NUMNAMES	(sizeof(names) / sizeof(char *))
 
-static int bdev, badapt, bctlr, bunit, bpart;
-
 void boot(dev_t boot_dev);
 int main(void);
 void getbootdev(int *);
@@ -139,12 +137,6 @@ main(void)
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Enter \"reset\" to reset system.\n");
 
-	bdev   = B_TYPE(bootdev);
-	badapt = B_ADAPTOR(bootdev);
-	bctlr  = B_CONTROLLER(bootdev);
-	bunit  = B_UNIT(bootdev);
-	bpart  = B_PARTITION(bootdev);
-
 	for (;;) {
 		name = names[currname++];
 		if (currname == NUMNAMES)
@@ -172,9 +164,17 @@ void
 getbootdev(int *boot_howto)
 {
 	char c, *ptr = line;
+	int bdev, badapt, bctlr, bunit, bpart;
+
+	bdev   = B_TYPE(bootdev);
+	badapt = B_ADAPTOR(bootdev);
+	bctlr  = B_CONTROLLER(bootdev);
+	bunit  = B_UNIT(bootdev);
+	bpart  = B_PARTITION(bootdev);
 
 	printf("Boot: [[[%s%d%c:]%s][-a][-c][-d][-s][-v][-q]] :- ",
-	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
+	    devsw[bdev].dv_name, badapt << 8 | bctlr << 4 | bunit,
+	    'a' + bpart, name);
 
 	if (tgets(line)) {
 		if (strcmp(line, "reset") == 0) {

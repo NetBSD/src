@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.1 2002/02/01 18:16:04 uch Exp $	*/
+/*	$NetBSD: platid.h,v 1.1.20.1 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -86,7 +86,7 @@ typedef char tchar;
 
 struct platid_name {
 	platid_mask_t *mask;
-	tchar *name;
+	const tchar *name;
 };
 
 struct platid_data {
@@ -142,7 +142,7 @@ void platid_hton(platid_t *);
 void platid_dump(char *, void *);
 int platid_match(platid_t *, platid_mask_t *);
 int platid_match_sub(platid_t *, platid_mask_t *, int);
-tchar* platid_name(platid_t *);
+const tchar *platid_name(platid_t *);
 struct platid_data *platid_search_data(platid_t *, struct platid_data *);
 void *platid_search(platid_t *, void *, int, int);
 __END_DECLS

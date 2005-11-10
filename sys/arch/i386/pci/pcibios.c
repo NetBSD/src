@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.11.2.6 2005/02/04 11:44:31 skrll Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.11.2.7 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.6 2005/02/04 11:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.7 2005/11/10 13:56:53 skrll Exp $");
 
 #include "opt_pcibios.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,14 +85,14 @@ __KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.6 2005/02/04 11:44:31 skrll Exp $
 #include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
-#ifdef PCIBIOS_INTR_FIXUP
+
+#if 	defined(PCIBIOS_INTR_FIXUP) || defined(PCIBIOS_ADDR_FIXUP) || \
+	defined(PCIBIOS_BUS_FIXUP)
+#error The options PCIBIOS_INTR_FIXUP, PCIBIOS_ADDR_FIXUP, and PCIBIOS_BUS_FIXUP have been obsoleted by PCI_INTR_FIXUP, PCI_ADDR_FIXUP, and PCI_BUS_FIXUP.  Please adjust your kernel configuration file.
+#endif
+
+#ifdef PCI_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
-#endif
-#ifdef PCIBIOS_BUS_FIXUP
-#include <i386/pci/pci_bus_fixup.h>
-#endif
-#ifdef PCIBIOS_ADDR_FIXUP
-#include <i386/pci/pci_addr_fixup.h>
 #endif
 
 #include <machine/bios32.h> 
@@ -143,12 +144,6 @@ void	pcibios_print_pir_table(void);
 
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
-
-static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
-struct pci_bridge_hook_arg {
-	void (*func)(pci_chipset_tag_t, pcitag_t, void *);
-	void *arg;
-};
 
 void
 pcibios_init(void)
@@ -204,7 +199,7 @@ pcibios_init(void)
 	 */
 	pcibios_pir_init();
 
-#ifdef PCIBIOS_INTR_FIXUP
+#ifdef PCI_INTR_FIXUP
 	if (pcibios_pir_table != NULL) {
 		int rv;
 		u_int16_t pciirq;
@@ -231,17 +226,6 @@ pcibios_init(void)
 		 * XXX mask.
 		 */
 	}
-#endif
-
-#ifdef PCIBIOS_BUS_FIXUP
-	pcibios_max_bus = pci_bus_fixup(NULL, 0);
-#ifdef PCIBIOSVERBOSE
-	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
-#endif
-#endif
-
-#ifdef PCIBIOS_ADDR_FIXUP
-	pci_addr_fixup(NULL, pcibios_max_bus);
 #endif
 }
 
@@ -559,92 +543,6 @@ pcibios_print_pir_table(void)
 	}
 }
 #endif
-
-void 
-pci_device_foreach(pci_chipset_tag_t pc, int maxbus,
-    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
-{
-	pci_device_foreach_min(pc, 0, maxbus, func, context);
-}
-
-void
-pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
-    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
-{
-	const struct pci_quirkdata *qd;
-	int bus, device, function, maxdevs, nfuncs;
-	pcireg_t id, bhlcr;
-	pcitag_t tag;
-
-	for (bus = minbus; bus <= maxbus; bus++) {
-		maxdevs = pci_bus_maxdevs(pc, bus);
-		for (device = 0; device < maxdevs; device++) {
-			tag = pci_make_tag(pc, bus, device, 0);
-			id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-			/* Invalid vendor ID value? */
-			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-				continue;
-			/* XXX Not invalid, but we've done this ~forever. */
-			if (PCI_VENDOR(id) == 0)
-				continue;
-
-			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
-			    PCI_PRODUCT(id));
-
-			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
-			    (qd != NULL &&
-			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
-				nfuncs = 8;
-			else
-				nfuncs = 1;
-
-			for (function = 0; function < nfuncs; function++) {
-				tag = pci_make_tag(pc, bus, device, function);
-				id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-				/* Invalid vendor ID value? */
-				if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-					continue;
-				/*
-				 * XXX Not invalid, but we've done this
-				 * ~forever.
-				 */
-				if (PCI_VENDOR(id) == 0)
-					continue;
-				(*func)(pc, tag, context);
-			}
-		}
-	}
-}
-
-void
-pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
-    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *ctx)
-{
-	struct pci_bridge_hook_arg bridge_hook;
-
-	bridge_hook.func = func;
-	bridge_hook.arg = ctx;
-	
-	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
-	    &bridge_hook);
-}
-
-void
-pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
-{
-	struct pci_bridge_hook_arg *bridge_hook = (void *)ctx;
-	pcireg_t reg;
-
-	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
-	    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
-		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
-		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
-	}
-}
 
 #ifdef PCIBIOS_SHARP_MM20_FIXUP
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.14.2.5 2005/01/17 19:29:23 skrll Exp $	*/
+/*	$NetBSD: frodo.c,v 1.14.2.6 2005/11/10 13:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.14.2.5 2005/01/17 19:29:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.14.2.6 2005/11/10 13:56:08 skrll Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -110,7 +110,7 @@ static int	frodomatch(struct device *, struct cfdata *, void *);
 static void	frodoattach(struct device *, struct device *, void *);
 
 static int	frodoprint(void *, const char *);
-static int	frodosubmatch(struct device *, struct cfdata *, void *);
+static int	frodosubmatch(struct device *, struct cfdata *, const int *, void *);
 
 static int	frodointr(void *);
 
@@ -207,12 +207,14 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 		fa.fa_base = FRODO_BASE;
 		fa.fa_offset = fd->fd_offset;
 		fa.fa_line = fd->fd_line;
-		config_found_sm(self, &fa, frodoprint, frodosubmatch);
+		config_found_sm_loc(self, "frodo", NULL, &fa, frodoprint,
+				    frodosubmatch);
 	}
 }
 
 static int
-frodosubmatch(struct device *parent, struct cfdata *cf, void *aux)
+frodosubmatch(struct device *parent, struct cfdata *cf,
+	      const int *ldesc, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
 

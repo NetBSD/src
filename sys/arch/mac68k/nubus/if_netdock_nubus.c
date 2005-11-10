@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.6 2005/02/04 11:44:32 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.7 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.6 2005/02/04 11:44:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.7 2005/11/10 13:57:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -232,7 +232,7 @@ netdock_nubus_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	char *cardtype;
+	const char *cardtype;
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27.2.10 2005/04/01 14:27:08 skrll Exp $
+#	$NetBSD: INSTALL,v 1.27.2.11 2005/11/10 13:55:47 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -47,6 +47,7 @@ file-system	KERNFS		# /kern
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -63,6 +64,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -85,6 +87,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
@@ -121,7 +124,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
-options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -227,7 +229,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
@@ -316,6 +317,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Keyboards
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
+
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?

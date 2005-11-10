@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.6.2.9 2005/03/04 16:38:25 skrll Exp $
+#	$NetBSD: PB1000,v 1.6.2.10 2005/11/10 13:55:54 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PD1000-$Revision: 1.6.2.9 $"
+#ident 		"PD1000-$Revision: 1.6.2.10 $"
 
 maxusers	32
 
@@ -51,6 +51,7 @@ options 	SYMTAB_SPACE=180000	# size for embedded symbol table
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -72,6 +73,7 @@ file-system	FDESC		# user file descriptor filesystem
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -88,6 +90,7 @@ options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -162,6 +165,9 @@ wsmouse* at ums? mux 0
 ukbd*   at uhidev? reportid ? 
 wskbd*  at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*   at uhidev? reportid ?
 
@@ -187,6 +193,10 @@ sd*	at scsibus? target ? lun ?
 # USB-IrDA bridge spec
 #uirda* at uhub? port ? configuration ? interface ?
 #irframe* at uirda?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 ugen*		at uhub? port ?

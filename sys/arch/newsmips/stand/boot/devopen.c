@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5.6.4 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5.6.5 2005/11/10 13:57:57 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -55,17 +55,10 @@ struct devsw devsw[] = {
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
-struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
-struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+struct fs_ops file_system_ufs = FS_OPS(ufs);
+struct fs_ops file_system_nfs = FS_OPS(nfs);
 #ifdef SUPPORT_USTARFS
-struct fs_ops file_system_ustarfs = {
-	ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
-	    ustarfs_seek, ustarfs_stat
-};
+struct fs_ops file_system_ustarfs = FS_OPS(ustarfs);
 struct fs_ops file_system[2];
 #else
 struct fs_ops file_system[1];

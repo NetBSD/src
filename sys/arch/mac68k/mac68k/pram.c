@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.18.36.3 2004/09/21 13:18:08 skrll Exp $	*/
+/*	$NetBSD: pram.c,v 1.18.36.4 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.3 2004/09/21 13:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.4 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -52,11 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.3 2004/09/21 13:18:08 skrll Exp $")
 #endif
 
 #if DEBUG
-static char *convtime(unsigned long t)
+static const char *convtime(unsigned long t)
 {
   static long daypmon[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
-  static char *monstr[] = {"January","February","March","April","May","June",
-    "July","August","September","October","November","December" };
+  static const char *monstr[] = {"January","February","March","April","May",
+    "June","July","August","September","October","November","December" };
   static char s[200];
   long year,month,day,hour,minute,seconds,i,dayperyear;
 

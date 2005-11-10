@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.8.2.3 2004/09/21 13:18:30 skrll Exp $ */
+/* $NetBSD: aubus.c,v 1.8.2.4 2005/11/10 13:57:33 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.8.2.3 2004/09/21 13:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.8.2.4 2005/11/10 13:57:33 skrll Exp $");
 
 #include "locators.h"
 
@@ -158,8 +158,6 @@ const struct au1x00_dev au1100_devs [] = {
 
 static int	aubus_match(struct device *, struct cfdata *, void *);
 static void	aubus_attach(struct device *, struct device *, void *);
-static int	aubus_submatch(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
 static int	aubus_print(void *, const char *);
 static void  aubus_alloc_dma_tag(struct device *, bus_dma_tag_t);
 
@@ -179,18 +177,6 @@ aubus_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-static int
-aubus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[AUBUSCF_ADDR] != AUBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[AUBUSCF_ADDR] != ldesc->locs[AUBUSCF_ADDR])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
 /*
  * Attach the aubus.
  */
@@ -200,8 +186,7 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 	struct aubus_attach_args aa;
 	struct device *sc = (struct device *)self;
 	const struct au1x00_dev *ad;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[AUBUSCF_NLOCS];
 
 	printf("\n");
 
@@ -231,11 +216,10 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq[0] = ad->irq[0];
 		aa.aa_irq[1] = ad->irq[1];
 
-		ldesc->len = 1;
-		ldesc->locs[AUBUSCF_ADDR] = ad->addr[0];
+		locs[AUBUSCF_ADDR] = ad->addr[0];
 
-		(void) config_found_sm_loc(self, "aubus", ldesc, &aa,
-					   aubus_print, aubus_submatch);
+		(void) config_found_sm_loc(self, "aubus", locs, &aa,
+					   aubus_print, config_stdsubmatch);
 	}
 }
 
@@ -248,8 +232,7 @@ aubus_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		aprint_normal(" %s 0x%lx", aubuscf_locnames[AUBUSCF_ADDR],
-		    aa->aa_addr);
+		aprint_normal(" addr 0x%lx", aa->aa_addr);
 	if (aa->aa_irq[0] >= 0)
 		aprint_normal(" irq %d", aa->aa_irq[0]);
 	if (aa->aa_irq[1] >= 0)

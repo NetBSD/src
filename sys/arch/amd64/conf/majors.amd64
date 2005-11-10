@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.1.2.3 2004/09/21 13:12:07 skrll Exp $
+#	$NetBSD: majors.amd64,v 1.1.2.4 2005/11/10 13:50:24 skrll Exp $
 #
 # Device majors for amd64
 #
@@ -7,7 +7,7 @@ device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
 device-major	wd		char 3   block 0	wd
-device-major	swap		char 4   block 1
+device-major	swap		char 4   block 1	vmswap
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7

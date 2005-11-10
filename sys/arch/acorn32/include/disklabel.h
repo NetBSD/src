@@ -1,3 +1,7 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/10/05 22:27:49 reinoud Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.24.1 2005/11/10 13:48:21 skrll Exp $	*/
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/arm/disklabel.h>
+#else
 #include <arm/disklabel.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */

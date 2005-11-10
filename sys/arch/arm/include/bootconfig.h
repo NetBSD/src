@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1 2001/05/13 13:46:23 bjh21 Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.1.28.1 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -44,7 +44,7 @@
 #define BOOTOPT_TYPE_HEXINT		4
 #define BOOTOPT_TYPE_MASK		7
 
-int get_bootconf_option __P((char *, char *, int, void *));
+int get_bootconf_option __P((char *, const char *, int, void *));
 
 extern char *boot_args;
 extern char *boot_file;

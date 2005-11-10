@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5.6.3 2004/09/21 13:18:29 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.6.4 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -35,7 +35,7 @@
 #define _MACHINE_AUTOCONF_H_
 
 struct confargs {
-	char *ca_name;
+	const char *ca_name;
 	u_int ca_node;
 	int ca_nreg;
 	u_int *ca_reg;
@@ -47,12 +47,12 @@ struct confargs {
 };
 
 /* there are in locore.S */
-void ofbcopy __P((void *, void *, size_t));
+void ofbcopy __P((const void *, void *, size_t));
 int badaddr __P((void *, int));
 
 /* these are in autoconf.c */
 int getnodebyname __P((int, const char *));
-int OF_interpret __P((char *cmd, int nreturns, ...));
+int OF_interpret __P((const char *cmd, int nreturns, ...));
 
 /* these are in clock.c */
 void calc_delayconst __P((void));
@@ -72,7 +72,7 @@ void ext_intr __P((void));
 void init_interrupt __P((void));
 void *intr_establish __P((int, int, int, int (*)(void *), void *));
 void intr_disestablish __P((void *));
-char *intr_typename __P((int));
+const char *intr_typename __P((int));
 
 /* these are in dev/akbd.c */
 int kbd_intr __P((void *));

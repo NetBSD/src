@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.15.2.3 2004/09/21 13:16:41 skrll Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.15.2.4 2005/11/10 13:56:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15.2.3 2004/09/21 13:16:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15.2.4 2005/11/10 13:56:46 skrll Exp $");
 
 #include "opt_largepages.h"
 
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15.2.3 2004/09/21 13:16:41 skrll Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
+#if defined(XEN)
+#include <machine/xenpmap.h>
+#endif
 
 #include <ddb/db_access.h>
 
@@ -99,7 +102,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * pages writable temporarily.
  */
 static void
-db_write_text(vaddr_t addr, size_t size, char *data)
+db_write_text(vaddr_t addr, size_t size, const char *data)
 {
 	pt_entry_t *pte, oldpte, tmppte;
 	vaddr_t pgva;
@@ -116,7 +119,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 * Get the PTE for the page.
 		 */
 		pte = kvtopte(addr);
+#if defined(XEN)
+		oldpte = PTE_GET_MA(pte);
+#else
 		oldpte = *pte;
+#endif
 
 		if ((oldpte & PG_V) == 0) {
 			printf(" address %p not a valid page\n", dst);
@@ -149,7 +156,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		size -= limit;
 
 		tmppte = (oldpte & ~PG_KR) | PG_KW;
+#if defined(XEN)
+		PTE_SET_MA(pte, (pt_entry_t *)vtomach((vaddr_t)pte), tmppte);
+#else
 		*pte = tmppte;
+#endif
 		pmap_update_pg(pgva);
 		/*
 		 * MULTIPROCESSOR: no shootdown required as the PTE continues to
@@ -166,7 +177,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Restore the old PTE.
 		 */
+#if defined(XEN)
+		PTE_SET_MA(pte, (pt_entry_t *)vtomach((vaddr_t)pte), oldpte);
+#else
 		*pte = oldpte;
+#endif
 
 #if 0 
 		/*
@@ -191,7 +206,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	extern char etext;
 	char *dst;
@@ -207,12 +222,12 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	dst = (char *)addr;
 
 	if (size == 4) {
-		*((int *)dst) = *((int *)data);
+		*((int *)dst) = *((const int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short *)dst) = *((short *)data);
+		*((short *)dst) = *((const short *)data);
 		return;
 	}
 

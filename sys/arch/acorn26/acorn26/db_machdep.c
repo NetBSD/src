@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1.14.3 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.1.14.4 2005/11/10 13:48:20 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.14.3 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.14.4 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
 {
 	int s;
 	
@@ -67,7 +67,7 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
 {
 	struct trapframe *frame;
 
@@ -95,7 +95,7 @@ db_bus_write_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
 {
 	db_expr_t datum;
 	bus_space_tag_t iot = 2; /* XXX */
@@ -128,7 +128,7 @@ db_irqstat_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
 {
 
 	irq_stat(db_printf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.5.2.4 2004/09/21 13:16:24 skrll Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.5.2.5 2005/11/10 13:56:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.5.2.4 2004/09/21 13:16:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.5.2.5 2005/11/10 13:56:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -131,7 +131,7 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 
 /*
  * Triggered when the On/Off button is pressed or the lid is closed.
- * The state of the lid is reflected in the bit PGDR[2].
+ * The state of the lid is reflected in the bit PGDR[0].
  * Closing the lid can trigger several consecutive interrupts.
  *
  * XXX: Since we don't put the machine to sleep, I have no idea how

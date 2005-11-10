@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.9.2.3 2004/09/21 13:16:13 skrll Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.9.2.4 2005/11/10 13:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.9.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.9.2.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.9.2.3 2004/09/21 13:16:13 skrll Exp $
 int	tx39uart_match(struct device *, struct cfdata *, void *);
 void	tx39uart_attach(struct device *, struct device *, void *);
 int	tx39uart_print(void *, const char *);
-int	tx39uart_search(struct device *, struct cfdata *, void *);
+int	tx39uart_search(struct device *, struct cfdata *,
+			const int *, void *);
 
 struct tx39uart_softc {
 	struct	device sc_dev;
@@ -83,11 +84,12 @@ tx39uart_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	sc->sc_tc = tc = ta->ta_tc;
 
-	config_search(tx39uart_search, self, tx39uart_print);
+	config_search_ia(tx39uart_search, self, "txcomif", tx39uart_print);
 }
 
 int
-tx39uart_search(struct device *parent, struct cfdata *cf, void *aux)
+tx39uart_search(struct device *parent, struct cfdata *cf,
+		const int *ldesc, void *aux)
 {
 	struct tx39uart_softc *sc = (void *)parent;
 	struct tx39uart_attach_args ua;

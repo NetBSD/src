@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.5.2.6 2005/04/01 14:27:54 skrll Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.5.2.7 2005/11/10 13:57:10 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.6 2005/04/01 14:27:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.7 2005/11/10 13:57:10 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -318,7 +318,7 @@ void	pmap_release __P((pmap_t));
 
 #ifdef DEBUG
 void pmap_pvdump	__P((paddr_t));
-void pmap_check_wiring	__P((char *, vaddr_t));
+void pmap_check_wiring	__P((const char *, vaddr_t));
 #endif
 
 /* pmap_remove_mapping flags */
@@ -2253,30 +2253,31 @@ pmap_remove_mapping(pmap, va, pte, flags)
 
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
-			struct pv_entry *pv;
+			struct pv_entry *ptppv;
 #endif
-			paddr_t pa;
+			paddr_t ptppa;
 
-			pa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
+			ptppa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
 #ifdef DIAGNOSTIC
-			if (PAGE_IS_MANAGED(pa) == 0)
+			if (PAGE_IS_MANAGED(ptppa) == 0)
 				panic("pmap_remove_mapping: unmanaged PT page");
-			pv = pa_to_pvh(pa);
-			if (pv->pv_ptste == NULL)
+			ptppv = pa_to_pvh(ptppa);
+			if (ptppv->pv_ptste == NULL)
 				panic("pmap_remove_mapping: ptste == NULL");
-			if (pv->pv_pmap != pmap_kernel() ||
-			    pv->pv_va != ptpva ||
-			    pv->pv_next != NULL)
+			if (ptppv->pv_pmap != pmap_kernel() ||
+			    ptppv->pv_va != ptpva ||
+			    ptppv->pv_next != NULL)
 				panic("pmap_remove_mapping: "
 				    "bad PT page pmap %p, va 0x%lx, next %p",
-				    pv->pv_pmap, pv->pv_va, pv->pv_next);
+				    ptppv->pv_pmap, ptppv->pv_va,
+				    ptppv->pv_next);
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
-			uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+			uvm_pagefree(PHYS_TO_VM_PAGE(ptppa));
 			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
 			    ("remove: PT page 0x%lx (0x%lx) freed\n",
-			    ptpva, pa));
+			    ptpva, ptppa));
 		}
 	}
 
@@ -2986,7 +2987,7 @@ pmap_pvdump(pa)
  */
 void
 pmap_check_wiring(str, va)
-	char *str;
+	const char *str;
 	vaddr_t va;
 {
 	pt_entry_t *pte;

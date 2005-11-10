@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2002/11/02 20:26:39 chs Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4.6.1 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2002/11/02 20:26:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4.6.1 2005/11/10 13:57:09 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -113,7 +113,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 }
 
 static void
-db_write_text(db_addr_t addr, size_t size, char *data)
+db_write_text(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst, *odst;
 	pt_entry_t *pte, oldpte, tmppte;
@@ -188,7 +188,7 @@ db_write_text(db_addr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(db_addr_t addr, size_t size, char *data)
+db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;
 	extern char kernel_text[], etext[];
@@ -200,12 +200,12 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 	}
 
 	if (size == 4) {
-		*((uint32_t *)dst) = *((uint32_t *)data);
+		*((uint32_t *)dst) = *((const uint32_t *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((uint16_t *)dst) = *((uint16_t *)data);
+		*((uint16_t *)dst) = *((const uint16_t *)data);
 		return;
 	}
 

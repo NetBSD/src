@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.2.5 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.2.6 2005/11/10 13:55:00 skrll Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.5 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.6 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,13 +106,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.5 2005/01/24 08:33:58 skrll Exp 
 #include <dev/scsipi/scsiconf.h>
 
 struct bootdev_data {
-	char	*dev_type;
+	const char *dev_type;
 	int	bus;
 	int	unit;
 	int	partition;
 };
 
-int getpno(char **, int *);
+int getpno(const char **, int *);
 
 /*
  * The following several variables are related to
@@ -132,7 +132,7 @@ cpu_configure(void)
 	softintr_init();
 
 	(void)splhigh();	/* To be really sure.. */
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
@@ -154,8 +154,8 @@ cpu_rootconf(void)
 }
 
 struct devmap {
-	char *attachment;
-	char *dev;
+	const char *attachment;
+	const char *dev;
 };
 
 /*
@@ -164,7 +164,7 @@ struct devmap {
  * (beware for empty scsi id's...)
  */
 void
-makebootdev(char *cp)
+makebootdev(const char *cp)
 {
 	int ok, junk;
 	static struct devmap devmap[] = {
@@ -218,10 +218,10 @@ makebootdev(char *cp)
 }
 
 int
-getpno(char **cp, int *np)
+getpno(const char **cp, int *np)
 {
 	int val = 0;
-	char *s = *cp;
+	const char *s = *cp;
 	int got = 0;
 
 	*np = 0;

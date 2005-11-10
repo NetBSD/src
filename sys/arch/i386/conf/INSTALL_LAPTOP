@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.14 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.15 2005/11/10 13:56:32 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -92,6 +92,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -118,6 +119,8 @@ file-system 	KERNFS		# /kern
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -211,12 +214,14 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# PCI fixups, for both PCIBIOS and ACPI
+options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -304,7 +309,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-com* 	at cardbus? dev ? function ?	# Modems and serial cards
+com* 	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -337,8 +342,8 @@ com2	at isa? port 0x3e8 irq 5
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # CardBus SCSI cards
-ahc* 	at cardbus? dev ? function ?	# Adaptec ADP-1480
-adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc* 	at cardbus? function ?	# Adaptec ADP-1480
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at scsi?
@@ -459,12 +464,13 @@ com*	at mhzc?
 sm*	at mhzc?
 
 # CardBus network cards
-ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-ex* 	at cardbus? dev ? function ?	# 3Com 3C575TX
-fxp* 	at cardbus? dev ? function ? 	# Intel i8255x
-rtk* 	at cardbus? dev ? function ? 	# Realtek 8129/8139
-tlp* 	at cardbus? dev ? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex* 	at cardbus? function ?	# 3Com 3C575TX
+fxp* 	at cardbus? function ? 	# Intel i8255x
+rtk* 	at cardbus? function ? 	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp* 	at cardbus? function ?	# DECchip 21143
 
 # MII/PHY support
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
@@ -510,6 +516,9 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?

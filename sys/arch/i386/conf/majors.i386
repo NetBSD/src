@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.14.2.4 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: majors.i386,v 1.14.2.5 2005/11/10 13:56:32 skrll Exp $
 #
 # Device majors for i386
 #
@@ -7,7 +7,7 @@ device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
 device-major	wd		char 3   block 0	wd
-device-major	swap		char 4   block 1
+device-major	swap		char 4   block 1	vmswap
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7
@@ -93,8 +93,7 @@ device-major	systrace	char 90			systrace
 device-major	kttcp		char 91			kttcp
 device-major	dmoverio	char 92			dmoverio
 device-major	cgd		char 93  block 21	cgd
-device-major	verifiedexec	char 94			verifiedexec
-device-major	fwiso		char 95			fwiso
+# major 94 free (ex veriexec which is now a MI major)
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		

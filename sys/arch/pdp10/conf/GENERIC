@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.7 2005/03/04 16:39:00 skrll Exp $
+# $NetBSD: GENERIC,v 1.6.2.8 2005/11/10 13:58:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.7 $"
+#ident 		"GENERIC-$Revision: 1.6.2.8 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -35,10 +35,10 @@ maxusers	8
 options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KTRACE
-options 	DIAGNOSTIC
-options 	DEBUG,KMEMSTATS,LOCKDEBUG
+#options 	DIAGNOSTIC
+#options 	DEBUG
+#options 	KMEMSTATS
 options 	NO_KERNEL_RCSIDS
-options 	MALLOC_DEBUG
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -47,6 +47,7 @@ options 	MALLOC_DEBUG
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -88,6 +89,8 @@ file-system 	NULLFS
 #file-system 	UMAPFS
 #file-system 	UNION
 #file-system 	CD9660
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 #options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
@@ -155,6 +158,7 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	tb	1
 #pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	4
 #pseudo-device	raid	8		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

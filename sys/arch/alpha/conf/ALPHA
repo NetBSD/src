@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.183.2.9 2005/04/01 14:26:50 skrll Exp $
+# $NetBSD: ALPHA,v 1.183.2.10 2005/11/10 13:48:22 skrll Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.183.2.9 $"
+ident		"ALPHA-$Revision: 1.183.2.10 $"
 
 maxusers 32
 
@@ -38,7 +38,8 @@ options 	NTP			# kernel PLL for NTP
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
@@ -73,6 +74,7 @@ file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 file-system	CODA		# CODA distributed file system
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# User and group quotas for the FFS
@@ -86,6 +88,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite
@@ -114,6 +117,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
@@ -311,7 +315,6 @@ cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 cypide* at pci? dev ? function ?		# Cypress IDE controllers
 hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?		# Opti IDE controllers
-piixide* at pci? dev ? function ?		# Intel IDE controllers
 pdcide* at pci? dev ? function ?		# Promise IDE controllers
 pdcsata* at pci? dev ? function ?		# Promise SATA150 controllers
 satalink* at pci? dev ? function ?		# SiI SATALink controllers
@@ -509,6 +512,9 @@ wsmouse*	at ums?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
@@ -539,6 +545,10 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # FTDI FT8U100AX serial adapter
 uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

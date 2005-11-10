@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12.2.4 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12.2.5 2005/11/10 13:57:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.2.4 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.2.5 2005/11/10 13:57:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.2.4 2005/01/24 08:34:18 skrll Exp 
 #define	b_cylinder	b_resid
 
 static unsigned short nextstep_checksum(unsigned char *, unsigned char *);
-static char *parse_nextstep_label(struct next68k_disklabel *,
+static const char *parse_nextstep_label(struct next68k_disklabel *,
 	struct disklabel *, struct cpu_disklabel *);
 static int build_nextstep_label(struct next68k_disklabel *, struct disklabel *);
 
@@ -73,7 +73,7 @@ nextstep_checksum(buf, limit)
 	return (sum & 0xffff);
 }
 
-static char *
+static const char *
 parse_nextstep_label(ondisk, lp, osdep)
 	struct next68k_disklabel *ondisk;
 	struct disklabel *lp;
@@ -325,7 +325,7 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int i;
 
 	/* minimal requirements for archtypal disk label */

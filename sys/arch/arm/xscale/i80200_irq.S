@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.10.2.3 2004/09/21 13:13:42 skrll Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.10.2.4 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -142,17 +142,3 @@ _C_LABEL(astpending):
 	.global	_C_LABEL(current_intr_depth)
 _C_LABEL(current_intr_depth):
 	.word	0
-
-	/*
-	 * XXX Provide intrnames/intrcnt for legacy code, but
-	 * don't actually use them.
-	 */
-
-	.global _C_LABEL(intrnames), _C_LABEL(eintrnames)
-	.global _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames): 
-_C_LABEL(eintrnames):
-
-	.global _C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):

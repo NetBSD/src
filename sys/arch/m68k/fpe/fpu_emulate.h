@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.9.24.3 2004/09/21 13:17:35 skrll Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.9.24.4 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/time.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 

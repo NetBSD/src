@@ -1,3 +1,4 @@
+/*	$NetBSD: pmap.c,v 1.83.2.6 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.5 2005/04/01 14:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.6 2005/11/10 13:55:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1291,6 +1292,12 @@ validate:
 	         (kernel_copyback || pmap != pmap_kernel()))
 		npte |= PG_CCB;		/* cache copyback */
 #endif
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
+
 	/*
 	 * Remember if this was a wiring-only change.
 	 * If so, we need not flush the TLB and caches.
@@ -2031,31 +2038,31 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 */
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
-			struct pv_entry *pv;
+			struct pv_entry *pve;
 #endif
-			paddr_t pa;
+			paddr_t paddr;
 
-			pa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
+			paddr = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
 #ifdef DIAGNOSTIC
-			if (PAGE_IS_MANAGED(pa) == 0)
+			if (PAGE_IS_MANAGED(paddr) == 0)
 				panic("pmap_remove_mapping: unmanaged PT page");
-			pv = pa_to_pvh(pa);
-			if (pv->pv_ptste == NULL)
+			pve = pa_to_pvh(paddr);
+			if (pve->pv_ptste == NULL)
 				panic("pmap_remove_mapping: ptste == NULL");
-			if (pv->pv_pmap != pmap_kernel() ||
-			    pv->pv_va != ptpva ||
-			    pv->pv_next != NULL)
+			if (pve->pv_pmap != pmap_kernel() ||
+			    pve->pv_va != ptpva ||
+			    pve->pv_next != NULL)
 				panic("pmap_remove_mapping: "
 				    "bad PT page pmap %p, va 0x%lx, next %p",
-				    pv->pv_pmap, pv->pv_va, pv->pv_next);
+				    pve->pv_pmap, pve->pv_va, pve->pv_next);
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
-			uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+			uvm_pagefree(PHYS_TO_VM_PAGE(paddr));
 #ifdef DEBUG
 			if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			    printf("remove: PT page 0x%lx (0x%lx) freed\n",
-				    ptpva, pa);
+				    ptpva, paddr);
 #endif
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.3.2.3 2004/09/21 13:13:43 skrll Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.3.2.4 2005/11/10 13:55:27 skrll Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -122,7 +122,8 @@ pxa2x0_spllower(int ipl)
 static __inline void
 pxa2x0_setsoftintr(int si)
 {
-	atomic_set_bit( (u_int *)&softint_pending, SI_TO_IRQBIT(si) );
+	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
+		SI_TO_IRQBIT(si) );
 
 	/* Process unmasked pending soft interrupts. */
 	if ( softint_pending & intr_mask )

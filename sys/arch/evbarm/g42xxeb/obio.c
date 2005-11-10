@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1.2.2 2005/03/04 16:38:25 skrll Exp $ */
+/*	$NetBSD: obio.c,v 1.1.2.3 2005/11/10 13:55:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -54,7 +54,8 @@
 /* prototypes */
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
-static int 	obio_search(struct device *, struct cfdata *, void *);
+static int 	obio_search(struct device *, struct cfdata *,
+			    const int *, void *);
 static int	obio_print(void *, const char *);
 
 /* attach structures */
@@ -258,7 +259,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(obio_search, self, NULL);
+	config_search_ia(obio_search, self, "obio", NULL);
 	return;
 
  fail:
@@ -266,7 +267,8 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-obio_search(struct device *parent, struct cfdata *cf, void *aux)
+obio_search(struct device *parent, struct cfdata *cf,
+	    const int *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)parent;
 	struct obio_attach_args oba;

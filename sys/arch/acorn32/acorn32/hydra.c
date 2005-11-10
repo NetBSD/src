@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.16.2.1 2005/04/01 14:26:49 skrll Exp $	*/
+/*	$NetBSD: hydra.c,v 1.16.2.2 2005/11/10 13:48:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.16.2.1 2005/04/01 14:26:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.16.2.2 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ static int hydra_match(struct device *, struct cfdata *, void *);
 static void hydra_attach(struct device *, struct device *, void *);
 static int hydra_probe_slave(struct hydra_softc *, int);
 static int hydra_print(void *, char const *);
-static int hydra_submatch(struct device *, struct cfdata *, void *);
+static int hydra_submatch(struct device *, struct cfdata *,
+			  const int *, void *);
 static void hydra_shutdown(void *);
 
 static void hydra_reset(struct hydra_softc *);
@@ -203,8 +204,8 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < HYDRA_NSLAVES; i++) {
 		if (hydra_probe_slave(sc, i)) {
 			ha.ha_slave = i;
-			config_found_sm(self, &ha, hydra_print,
-			    hydra_submatch);
+			config_found_sm_loc(self, "hydra", NULL, &ha,
+			    hydra_print, hydra_submatch);
 		}
 	}
 }
@@ -248,7 +249,8 @@ hydra_print(void *aux, char const *pnp)
 }
 
 static int
-hydra_submatch(struct device *parent, struct cfdata *cf, void *aux)
+hydra_submatch(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	struct hydra_attach_args *ha = aux;
 

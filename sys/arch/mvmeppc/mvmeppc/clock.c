@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3.2.3 2004/09/21 13:19:18 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.4 2005/11/10 13:57:54 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.2.3 2004/09/21 13:19:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.2.4 2005/11/10 13:57:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,7 +62,7 @@ decr_intr(frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long decrtick;
 	int nticks;
 	extern long intrcnt[];
 
@@ -76,16 +76,16 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(decrtick));
+	for (nticks = 0; decrtick < 0; nticks++)
+		decrtick += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(decrtick));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + decrtick - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 
@@ -212,7 +212,7 @@ inittodr(base)
                 badbase = 1;
         }
 
-        if (todr_gettime(clock_handle, (struct timeval *)&time) != 0 ||
+        if (todr_gettime(clock_handle, &time) != 0 ||
             time.tv_sec == 0) {
                 printf("WARNING: bad date in battery clock");
                 /*
@@ -249,6 +249,6 @@ resettodr()
         if (!time.tv_sec)
                 return;
 
-        if (todr_settime(clock_handle, (struct timeval *)&time) != 0)
+        if (todr_settime(clock_handle, &time) != 0)
                 printf("resettodr: failed to set time\n");
 }

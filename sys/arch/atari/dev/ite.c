@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39.6.6 2005/03/04 16:38:04 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.39.6.7 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.6 2005/03/04 16:38:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.7 2005/11/10 13:55:32 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -158,7 +158,7 @@ static __inline__ void ite_inline __P((struct ite_softc *, int));
 static __inline__ void ite_lf __P((struct ite_softc *));
 static __inline__ void ite_dnline __P((struct ite_softc *, int));
 static __inline__ void ite_rlf __P((struct ite_softc *));
-static __inline__ void ite_sendstr __P((char *));
+static __inline__ void ite_sendstr __P((const char *));
 static __inline__ void snap_cury __P((struct ite_softc *));
 
 static void	alignment_display __P((struct ite_softc *));
@@ -442,7 +442,7 @@ iteopen(dev, mode, devtype, l)
 	else tp = ip->tp;
 
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && l->l_proc->p_ucred->cr_uid != 0)
+	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);
@@ -1144,7 +1144,7 @@ enum caller	caller;
 /* helper functions, makes the code below more readable */
 static __inline__ void
 ite_sendstr(str)
-	char *str;
+	const char *str;
 {
 	struct tty *kbd_tty;
 
@@ -2052,72 +2052,72 @@ iteputchar(c, ip)
 		  case 'm':
 		    /* big attribute setter/resetter */
 		    {
-		      char *cp;
+		      char *chp;
 		      *ip->ap = 0;
 		      /* kludge to make CSIm work (== CSI0m) */
 		      if (ip->ap == ip->argbuf)
 		        ip->ap++;
-		      for (cp = ip->argbuf; cp < ip->ap; )
+		      for (chp = ip->argbuf; chp < ip->ap; )
 		        {
-			  switch (*cp)
+			  switch (*chp)
 			    {
 			    case 0:
 			    case '0':
 			      clr_attr (ip, ATTR_ALL);
-			      cp++;
+			      chp++;
 			      break;
 			      
 			    case '1':
 			      set_attr (ip, ATTR_BOLD);
-			      cp++;
+			      chp++;
 			      break;
 			      
 			    case '2':
-			      switch (cp[1])
+			      switch (chp[1])
 			        {
 			        case '2':
 			          clr_attr (ip, ATTR_BOLD);
-			          cp += 2;
+			          chp += 2;
 			          break;
 			        
 			        case '4':
 			          clr_attr (ip, ATTR_UL);
-			          cp += 2;
+			          chp += 2;
 			          break;
 			          
 			        case '5':
 			          clr_attr (ip, ATTR_BLINK);
-			          cp += 2;
+			          chp += 2;
 			          break;
 			          
 			        case '7':
 			          clr_attr (ip, ATTR_INV);
-			          cp += 2;
+			          chp += 2;
 			          break;
 		        	
 		        	default:
-		        	  cp++;
+		        	  chp++;
 		        	  break;
 		        	}
 			      break;
 			      
 			    case '4':
 			      set_attr (ip, ATTR_UL);
-			      cp++;
+			      chp++;
 			      break;
 			      
 			    case '5':
 			      set_attr (ip, ATTR_BLINK);
-			      cp++;
+			      chp++;
 			      break;
 			      
 			    case '7':
 			      set_attr (ip, ATTR_INV);
-			      cp++;
+			      chp++;
 			      break;
 			    
 			    default:
-			      cp++;
+			      chp++;
 			      break;
 			    }
 		        }

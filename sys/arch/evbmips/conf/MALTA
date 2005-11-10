@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.13.2.9 2005/03/04 16:38:25 skrll Exp $
+#	$NetBSD: MALTA,v 1.13.2.10 2005/11/10 13:55:54 skrll Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.13.2.9 $"
+#ident 		"MALTA-$Revision: 1.13.2.10 $"
 
 maxusers	32
 
@@ -38,7 +38,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=140000	# size for embedded symbol table
+options 	SYMTAB_SPACE=150000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -50,6 +50,7 @@ options 	SYMTAB_SPACE=140000	# size for embedded symbol table
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -71,6 +72,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -87,6 +89,7 @@ options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -197,7 +200,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5.2.12 2005/04/01 14:26:50 skrll Exp $
+# $NetBSD: GENERIC,v 1.5.2.13 2005/11/10 13:50:24 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5.2.12 $"
+#ident 		"GENERIC-$Revision: 1.5.2.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -72,7 +72,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -94,6 +95,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	COMPAT_15	# compatibility with NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -119,6 +121,8 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -136,6 +140,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -168,7 +173,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options		ACPIVERBOSE	# verboase ACPI configuration messages
+options		ACPIVERBOSE	# verbose ACPI configuration messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
@@ -207,6 +212,8 @@ options 	PCDISPLAY_SOFTCURSOR
 # if you want a really secure system, it may be better not to enable them,
 # see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
 #options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# console scrolling support.
+options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
 
@@ -221,12 +228,13 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#acpi0 at mainbus0
-
 #acpi0 		at mainbus0
-#options 	MPACPI
-#options 	MPACPI_SCANPCI		# MPBIOS configures PCI roots
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+#options 	MPACPI			# configure CPUs and APICs using ACPI
+					# (acpi at mainbus must also be enabled)
+#options 	MPACPI_SCANPCI		# find PCI roots using MPACPI
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
+options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
+#options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
@@ -250,8 +258,6 @@ mainbus0 at root
 #pcppi*         at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
-options 	MPBIOS
-options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 cpu* 		at mainbus?
 ioapic* 	at mainbus? apid ?
 
@@ -336,7 +342,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 #com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards
+#com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -389,8 +395,8 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 #esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480
 
 # SCSI bus support
 scsibus* at scsi?
@@ -407,11 +413,13 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
 #aac*	at pci? dev ? function ?	# Broken -- 32bit assumptions.
+amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
+ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
@@ -431,6 +439,7 @@ artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+ixpide* at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
@@ -494,8 +503,10 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -526,6 +537,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # PCMCIA network interfaces
 #an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -546,10 +558,12 @@ wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 #sm*	at mhzc?
 
 # CardBus network cards
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? function ?	# Intel i8255x
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
+#rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+#tlp*	at cardbus? function ?	# DECchip 21143
 
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
@@ -581,20 +595,19 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-# The EHCI is not ready for prime time.
-#ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
-#usb*	at ehci?
+usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
 #usb*	at slhci?
@@ -613,6 +626,9 @@ wsmouse* at ums? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -677,6 +693,10 @@ urio*	at uhub? port ?
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
 
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
+
 # USB scanners
 uscanner* at uhub? port ?
 
@@ -700,13 +720,24 @@ ugen*	at uhub? port ?
 #oboe* 	at pci? dev ? function ?	# broken -- vtophys
 #irframe* at oboe?
 
+# PCI IEEE1394 controllers
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+ 
+# CardBus IEEE1394 controllers 
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
 
 # Audio Devices
 
 # PCI audio devices
 auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
+auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA AC'97 audio
+azalia*	at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
@@ -793,6 +824,7 @@ pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

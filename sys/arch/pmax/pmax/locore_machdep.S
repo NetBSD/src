@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.19.2.4 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.19.2.5 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,15 +162,3 @@ ALEAF(kn210_wbflush)
         nop
 END(dec_mips1_wbflush)
 #endif	/* defined(DEC_5100) || defined(DEC_5400) */
-
-/*
- * Place holders for old interrupt counter code.
- * Still needed by vmstat for now...
- */
-	.data
-EXPORT(intrnames)
-EXPORT(eintrnames)
-
-	.align	2
-EXPORT(intrcnt)
-EXPORT(eintrcnt)

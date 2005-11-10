@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158.2.11 2005/03/04 16:38:48 skrll Exp $
+# $NetBSD: GENERIC,v 1.158.2.12 2005/11/10 13:57:27 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158.2.11 $"
+#ident 		"GENERIC-$Revision: 1.158.2.12 $"
 
 maxusers	32
 
@@ -54,10 +54,11 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	ZS_CONSOLE_ABORT# allow break to get into DDB on serial
 options 	DDB		# in-kernel debugger
@@ -76,6 +77,7 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_LINUX	# Linux binary compatibility
@@ -104,6 +106,8 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	SMBFS		# CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -124,6 +128,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -196,6 +201,7 @@ cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
 uninorth* at mainbus?
+uni_n*	at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
@@ -210,6 +216,7 @@ lpt*	at puc? port ?			# || ports on > "universal" comm boards
 
 # PCI Network devices
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -263,7 +270,6 @@ cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
@@ -326,9 +332,17 @@ wdc*	at mediabay? flags 0
 # up. ONLY enable this if your machine is never under heavy load, or
 # you'd rather have audio than worry about occasional lockups.
 #awacs*	at obio?			# Apple audio device
-#ki2c*	at obio?			# Keywest I2C
+ki2c*	at obio?			# Keywest I2C
+ki2c*	at uni_n?			# Keywest I2C
+iic*	at ki2c?
+adt7467c*	at ki2c? 		# Analog Devices ADT7467 thermal 
+					# monitor, iBook G4
+adm1030c*	at ki2c? 		# Analog Devices ADM1030 thermal 
+					# monitor, iBook G3
+
+deq*	at ki2c?			# mixer/equalizer, needed by snapper
 wi*	at obio?			# AirMac
-#snapper* at obio?			# Snapper audio device
+snapper* at obio?			# Snapper audio device
 
 cardslot* at cbb?
 cardbus* at cardslot?
@@ -341,10 +355,11 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
-rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex*	at cardbus? function ?	# 3Com 3C575TX
+tlp*	at cardbus? function ?	# DECchip 21143
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
@@ -358,18 +373,7 @@ wsmouse* at ams?
 #ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at ahc?
-scsibus* at bha?
-scsibus* at iha?
-scsibus* at isp?
-scsibus* at esp?
-scsibus* at mesh?
-scsibus* at pcscp?
-scsibus* at siop?
-scsibus* at esiop?
-scsibus* at trm?
+scsibus* at scsi?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -392,8 +396,8 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
 ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
 
-ohci*	at cardbus? dev ? function ?	# USB Open Host Controller
-ehci*	at cardbus? dev ? function ?	# USB Enhanced Host Controller
+ohci*	at cardbus? function ?	# USB Open Host Controller
+ehci*	at cardbus? function ?	# USB Enhanced Host Controller
 
 usb*	at ohci?					# USB bus support
 usb*	at ehci?					# USB bus support
@@ -407,6 +411,8 @@ wsmouse* at ums?
 
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
+
+ucycom*	at uhidev? reportid ?				# USB serial adpater
 
 uhid*	at uhidev? reportid ?				# USB Generic HID
 
@@ -433,19 +439,23 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
+ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
+ucom*	at ukyopon? portno ?
+
 uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
-fw*	at fwbus?			# IP over 1394
 
-# IEEE1394 nodes
-fwnode* at fwbus? idhi ? idlo ?
-sbpscsi* at fwnode?
-scsibus* at sbpscsi?
+# CardBus IEEE1394 controllers 
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
+scsibus* at sbp?
 
 # Audio Devices
 
@@ -485,10 +495,11 @@ midi*	at eap?			# 137[01] MIDI port
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
 # options 	RF_INCLUDE_RAID5_RS=1

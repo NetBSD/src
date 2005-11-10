@@ -1,4 +1,4 @@
-/* $NetBSD: todclock.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $ */
+/* $NetBSD: todclock.c,v 1.3.6.5 2005/11/10 13:55:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,7 +89,7 @@ inittodr(time_t base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	if (todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
@@ -125,6 +125,6 @@ resettodr(void)
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }

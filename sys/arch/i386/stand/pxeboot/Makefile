@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.3 2004/09/21 13:17:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.2.4 2005/11/10 13:57:09 skrll Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -18,6 +18,17 @@ SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 # use our own nfs implementation
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
+
+.if ${MACHINE} == "amd64"
+LD+=  -m elf_i386
+AFLAGS+=   -m32
+CPUFLAGS=  -m32
+LIBKERN_ARCH=i386
+KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+CPPFLAGS+= -DBOOT_ELF64
+.else
+CPUFLAGS=  -mcpu=i386
+.endif
 
 CPPFLAGS+= -DSLOW	# for libz
 

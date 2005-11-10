@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.8.2.3 2004/09/21 13:11:20 skrll Exp $ */
+/* $NetBSD: iobus.c,v 1.8.2.4 2005/11/10 13:48:20 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.8.2.3 2004/09/21 13:11:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.8.2.4 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,8 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.8.2.3 2004/09/21 13:11:20 skrll Exp $");
 
 static int iobus_match(struct device *parent, struct cfdata *cf, void *aux);
 static void iobus_attach(struct device *parent, struct device *self, void *aux);
-static int iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux);
-static int iobus_search(struct device *parent, struct cfdata *cf, void *aux);
+static int iobus_search_ioc(struct device *parent, struct cfdata *cf,
+			    const int *ldesc, void *aux);
+static int iobus_search(struct device *parent, struct cfdata *cf,
+			const int *ldesc, void *aux);
 static int iobus_print(void *aux, const char *pnp);
 
 struct iobus_softc {
@@ -79,14 +81,15 @@ iobus_attach(struct device *parent, struct device *self, void *aux)
 	 * Always look for the IOC first, since stuff under there determines
 	 * what else is present.
 	 */
-	config_search(iobus_search_ioc, self, NULL);
-	config_search(iobus_search, self, NULL);
+	config_search_ia(iobus_search_ioc, self, "iobus", NULL);
+	config_search_ia(iobus_search, self, "iobus", NULL);
 }
 
 extern struct bus_space iobus_bs_tag;
 
 static int
-iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
+iobus_search_ioc(struct device *parent, struct cfdata *cf,
+		 const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 
@@ -100,7 +103,8 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-iobus_search(struct device *parent, struct cfdata *cf, void *aux)
+iobus_search(struct device *parent, struct cfdata *cf,
+	     const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 	

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.11.6.4 2004/11/29 07:24:02 skrll Exp $
+#	$NetBSD: MILAN.in,v 1.11.6.5 2005/11/10 13:55:28 skrll Exp $
 #
 # Milan
 #
@@ -84,7 +84,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers

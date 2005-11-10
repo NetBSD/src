@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.48.2.4 2004/12/18 09:31:01 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.48.2.5 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.48.2.4 2004/12/18 09:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.48.2.5 2005/11/10 13:55:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -134,11 +134,6 @@ u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
 
-/*int debug_flags;*/
-#ifndef PMAP_STATIC_L1S
-int max_processes = 64;			/* Default number */
-#endif	/* !PMAP_STATIC_L1S */
-
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
 pv_addr_t irqstack;
@@ -172,13 +167,13 @@ struct user *proc0paddr;
 
 /* Prototypes */
 
-void consinit		__P((void));
+void consinit(void);
 
-int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
-int fcomcndetach __P((void));
+int fcomcnattach(u_int iobase, int rate, tcflag_t cflag);
+int fcomcndetach(void);
 
-static void process_kernel_args	__P((char *));
-extern void configure		__P((void));
+static void process_kernel_args(const char *);
+extern void configure(void);
 
 /* A load of console goo. */
 #include "vga.h"
@@ -230,9 +225,7 @@ int comcnmode = CONMODE;
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
@@ -353,10 +346,9 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(bootargs)
-	void *bootargs;
+initarm(void *arm_bootargs)
 {
-	struct ebsaboot *bootinfo = bootargs;
+	struct ebsaboot *bootinfo = arm_bootargs;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
@@ -399,6 +391,23 @@ initarm(bootargs)
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
 		panic("Incompatible magic number passed in boot args");
 
+#ifdef VERBOSE_INIT_ARM
+	/* output the incoming bootinfo */
+	printf("bootinfo @ %p\n", arm_bootargs);
+	printf("bt_magic    = 0x%08x\n", ebsabootinfo.bt_magic);
+	printf("bt_vargp    = 0x%08x\n", ebsabootinfo.bt_vargp);
+	printf("bt_pargp    = 0x%08x\n", ebsabootinfo.bt_pargp);
+	printf("bt_args @ %p, contents = \"%s\"\n", ebsabootinfo.bt_args, ebsabootinfo.bt_args);
+	printf("bt_l1       = %p\n", ebsabootinfo.bt_l1);
+
+	printf("bt_memstart = 0x%08x\n", ebsabootinfo.bt_memstart);
+	printf("bt_memend   = 0x%08x\n", ebsabootinfo.bt_memend);
+	printf("bt_memavail = 0x%08x\n", ebsabootinfo.bt_memavail);
+	printf("bt_fclk     = 0x%08x\n", ebsabootinfo.bt_fclk);
+	printf("bt_pciclk   = 0x%08x\n", ebsabootinfo.bt_pciclk);
+	printf("bt_vers     = 0x%08x\n", ebsabootinfo.bt_vers);
+	printf("bt_features = 0x%08x\n", ebsabootinfo.bt_features);
+#endif
 /*	{
 	int loop;
 	for (loop = 0; loop < 8; ++loop) {
@@ -435,7 +444,7 @@ initarm(bootargs)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	process_kernel_args((char *)ebsabootinfo.bt_args);
+	process_kernel_args(ebsabootinfo.bt_args);
 
 	printf("initarm: Configuring system ...\n");
 
@@ -912,14 +921,13 @@ initarm(bootargs)
 }
 
 static void
-process_kernel_args(args)
-	char *args;
+process_kernel_args(const char *loader_args)
 {
-
+	char *args;
 	boothowto = 0;
 
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING);
+	strncpy(bootargs, loader_args, MAX_BOOT_STRING);
 
 	args = bootargs;
 	boot_file = bootargs;
@@ -944,13 +952,13 @@ process_kernel_args(args)
 
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;
-void footbridge_pci_bs_tag_init __P((void));
+void footbridge_pci_bs_tag_init(void);
 
 void
 consinit(void)
 {
 	static int consinit_called = 0;
-	char *console = CONSDEVNAME;
+	const char *console = CONSDEVNAME;
 
 	if (consinit_called != 0)
 		return;
@@ -991,4 +999,4 @@ consinit(void)
 		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 }
 
-/* End of ebsa285_machdep.c */
+/* End of cats_machdep.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.32.2.3 2004/09/21 13:20:19 skrll Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.32.2.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.32.2.3 2004/09/21 13:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.32.2.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,8 +327,6 @@ fbMouseEvent(newRepPtr, fi)
 	i = PM_EVROUND(fbu->scrInfo.qe.eTail - 1);
 	if ((fbu->scrInfo.qe.eTail != fbu->scrInfo.qe.eHead) &&
 	    (i != fbu->scrInfo.qe.eHead)) {
-		pmEvent *eventPtr;
-
 		eventPtr = &fbu->events[i];
 		if (eventPtr->type == MOTION_TYPE) {
 			eventPtr->x = fbu->scrInfo.mouse.x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.13.2.5 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.13.2.6 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.13.2.5 2005/02/06 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.13.2.6 2005/11/10 13:57:54 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1063,7 +1063,7 @@ sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 
 #ifdef SNDEBUG
 	{
-		printf("%s: rcvd 0x%p len=%d type=0x%x from %s",
+		printf("%s: rcvd %p len=%d type=0x%x from %s",
 		    sc->sc_dev.dv_xname, et, len, htons(et->ether_type),
 		    ether_sprintf(et->ether_shost));
 		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));

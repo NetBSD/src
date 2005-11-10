@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.6.2.3 2004/09/21 13:11:28 skrll Exp $ */
+/* $NetBSD: sbic.c,v 1.6.2.4 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.6.2.3 2004/09/21 13:11:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.6.2.4 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -158,7 +158,7 @@ static int  sbicpoll		(struct sbic_softc *);
 static int  sbicnextstate	(struct sbic_softc *, u_char, u_char);
 static int  sbicmsgin		(struct sbic_softc *);
 static int  sbicxfin		(sbic_regmap_p regs, int, void *);
-static int  sbicabort		(struct sbic_softc *, sbic_regmap_p, char *);
+static int  sbicabort		(struct sbic_softc *, sbic_regmap_p, const char *);
 static void sbicxfdone		(struct sbic_softc *, sbic_regmap_p, int);
 static void sbicerror		(struct sbic_softc *, sbic_regmap_p, u_char);
 static void sbicreset		(struct sbic_softc *);
@@ -208,11 +208,11 @@ void sbic_dump_acb	(struct sbic_acb *);
 #define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
 #define CSR_TRACE(w,c,a,x) do { \
-	int s = splbio(); \
+	int _s = splbio(); \
 	csr_trace[csr_traceptr].whr = (w); csr_trace[csr_traceptr].csr = (c); \
 	csr_trace[csr_traceptr].asr = (a); csr_trace[csr_traceptr].xtn = (x); \
 	csr_traceptr = (csr_traceptr + 1) & (CSR_TRACE_SIZE - 1); \
-	splx(s); \
+	splx(_s); \
 } while (0)
 int csr_traceptr;
 int csr_tracesize = CSR_TRACE_SIZE;
@@ -635,7 +635,7 @@ sbicwait(sbic_regmap_p regs, char until, int timeo, int line)
 }
 
 static int
-sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, char *where)
+sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, const char *where)
 {
 	u_char csr, asr;
 
