@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.2.8 2005/03/04 16:39:02 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.9 2005/11/10 13:58:26 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.8 2005/03/04 16:39:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.9 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -243,7 +243,9 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 STATIC int pmap_pte_insert(int, struct pte *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, register_t, int);
-STATIC void pmap_pvo_remove(struct pvo_entry *, int, boolean_t);
+STATIC void pmap_pvo_remove(struct pvo_entry *, int, struct pvo_head *);
+STATIC void pmap_pvo_free(struct pvo_entry *);
+STATIC void pmap_pvo_free_list(struct pvo_head *);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile struct pte *pmap_pvo_to_pte(const struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_reclaim(struct pmap *);
@@ -1520,7 +1522,7 @@ pmap_pvo_reclaim(struct pmap *pm)
 		pvoh = &pmap_pvo_table[idx];
 		TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
 			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
-				pmap_pvo_remove(pvo, -1, FALSE);
+				pmap_pvo_remove(pvo, -1, NULL);
 				pmap_pvo_reclaim_nextidx = idx;
 				PMAPCOUNT(pvos_reclaimed);
 				return pvo;
@@ -1582,7 +1584,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			}
 #endif
 			PMAPCOUNT(mappings_replaced);
-			pmap_pvo_remove(pvo, -1, TRUE);
+			pmap_pvo_remove(pvo, -1, NULL);
 			break;
 		}
 	}
@@ -1594,6 +1596,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	--pmap_pvo_enter_depth;
 #endif
 	pmap_interrupts_restore(msr);
+	if (pvo) {
+		pmap_pvo_free(pvo);
+	}
 	pvo = pool_get(pl, poolflags);
 
 #ifdef DEBUG
@@ -1690,7 +1695,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 }
 
 void
-pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t free)
+pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 {
 	volatile struct pte *pt;
 	int ptegidx;
@@ -1761,13 +1766,32 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, boolean_t free)
 	 */
 	LIST_REMOVE(pvo, pvo_vlink);
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-	if (free) {
-		pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
-			 &pmap_upvo_pool, pvo);
+	if (pvol) {
+		LIST_INSERT_HEAD(pvol, pvo, pvo_vlink);
 	}
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
+}
+
+void
+pmap_pvo_free(struct pvo_entry *pvo)
+{
+
+	pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
+		 &pmap_upvo_pool, pvo);
+}
+
+void
+pmap_pvo_free_list(struct pvo_head *pvol)
+{
+	struct pvo_entry *pvo, *npvo;
+
+	for (pvo = LIST_FIRST(pvol); pvo != NULL; pvo = npvo) {
+		npvo = LIST_NEXT(pvo, pvo_vlink);
+		LIST_REMOVE(pvo, pvo_vlink);
+		pmap_pvo_free(pvo);
+	}
 }
 
 /*
@@ -1884,7 +1908,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (flags & VM_PROT_WRITE)
 		pte_lo |= PTE_CHG;
-	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
+	if (flags & VM_PROT_ALL)
 		pte_lo |= PTE_REF;
 
 	/*
@@ -1991,18 +2015,21 @@ pmap_kremove(vaddr_t va, vsize_t len)
 void
 pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 {
+	struct pvo_head pvol;
 	struct pvo_entry *pvo;
 	register_t msr;
 	int pteidx;
 
+	LIST_INIT(&pvol);
 	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
-			pmap_pvo_remove(pvo, pteidx, TRUE);
+			pmap_pvo_remove(pvo, pteidx, &pvol);
 		}
 	}
 	pmap_interrupts_restore(msr);
+	pmap_pvo_free_list(&pvol);
 }
 
 /*
@@ -2165,12 +2192,13 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct pvo_head *pvo_head;
+	struct pvo_head *pvo_head, pvol;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile struct pte *pt;
 	register_t msr;
 
 	KASSERT(prot != VM_PROT_ALL);
+	LIST_INIT(&pvol);
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2196,7 +2224,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * Downgrading to no mapping at all, we just remove the entry.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
-			pmap_pvo_remove(pvo, -1, TRUE);
+			pmap_pvo_remove(pvo, -1, &pvol);
 			continue;
 		} 
 
@@ -2232,6 +2260,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
+	pmap_pvo_free_list(&pvol);
 }
 
 /*
@@ -3092,7 +3121,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		    pmap_pteg_table, size);
 #endif
 
-	memset((void *)pmap_pteg_table, 0, pmap_pteg_cnt * sizeof(struct pteg));
+	memset(__UNVOLATILE(pmap_pteg_table), 0,
+		pmap_pteg_cnt * sizeof(struct pteg));
 	pmap_pteg_mask = pmap_pteg_cnt - 1;
 
 	/*

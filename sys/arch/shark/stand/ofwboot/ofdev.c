@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.2.8.3 2004/09/21 13:22:00 skrll Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.2.8.4 2005/11/10 13:58:51 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,9 +56,9 @@ extern char bootdev[];
 
 #ifdef DEBUG
 # define DPRINTF printf
-#else 
+#else
 # define DPRINTF while (0) printf
-#endif  
+#endif
 
 static char *
 filename(char *str, char *ppart)
@@ -67,7 +67,7 @@ filename(char *str, char *ppart)
 	char savec;
 	int dhandle;
 	char devtype[16];
-	
+
 	lp = str;
 	devtype[0] = 0;
 	*ppart = 0;
@@ -108,14 +108,14 @@ strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
 	int n;
-	
+
 	if (rw != F_READ)
 		return EPERM;
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
-	
+
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
-	
+
 	for (;;) {
 		if (OF_seek(dev->handle, pos) < 0)
 			break;
@@ -134,7 +134,7 @@ static int
 devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
-	
+
 	if (op->type == OFDEV_NET)
 		net_close(op);
 	OF_close(op->handle);
@@ -155,20 +155,10 @@ static struct devsw devsw[1] = {
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
-static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
-static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
-};
-static struct fs_ops file_system_dosfs = {
-	dosfs_open, dosfs_close, dosfs_read, dosfs_write, dosfs_seek,
-	    dosfs_stat
-};
-static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+static struct fs_ops file_system_ufs = FS_OPS(ufs);
+static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
+static struct fs_ops file_system_dosfs = FS_OPS(dosfs);
+static struct fs_ops file_system_nfs = FS_OPS(nfs);
 
 struct fs_ops file_system[3];
 int nfsys;
@@ -184,7 +174,7 @@ static u_long
 get_long(const void *p)
 {
 	const unsigned char *cp = p;
-	
+
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
@@ -200,11 +190,11 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	int i;
 	u_long poff;
 	static int recursion;
-	
+
 	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &nread)
 	    || nread != DEV_BSIZE)
 		return ERDLAB;
-	
+
 	if (*(u_int16_t *)&buf[MBR_MAGIC_OFFSET] != sa_htole16(MBR_MAGIC))
 		return ERDLAB;
 
@@ -329,7 +319,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
 		}
-		
+
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_ufs;

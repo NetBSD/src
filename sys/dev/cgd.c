@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.12.2.9 2005/04/01 14:29:37 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.12.2.10 2005/11/10 14:03:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.9 2005/04/01 14:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.10 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
 static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct lwp *);
-static int	cgdinit(struct cgd_softc *, char *, struct vnode *,
+static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
 static void	cgd_cipher(struct cgd_softc *, caddr_t, caddr_t,
 			   size_t, daddr_t, size_t, int);
@@ -106,6 +106,11 @@ static struct dk_intf the_dkintf = {
 	cgdstart,
 };
 static struct dk_intf *di = &the_dkintf;
+
+static struct dkdriver cgddkdriver = {
+	.d_strategy = cgdstrategy,
+	.d_minphys = minphys,
+};
 
 /* DIAGNOSTIC and DEBUG definitions */
 
@@ -124,7 +129,7 @@ int cgddebug = 0;
 #define DPRINTF(x,y)		IFDEBUG(x, printf y)
 #define DPRINTF_FOLLOW(y)	DPRINTF(CGDB_FOLLOW, y)
 
-static void	hexprint(char *, void *, int);
+static void	hexprint(const char *, void *, int);
 
 #else
 #define IFDEBUG(x,y)
@@ -166,12 +171,14 @@ getcgd_softc(dev_t dev)
 static void
 cgdsoftc_init(struct cgd_softc *cs, int num)
 {
-	char	buf[DK_XNAME_SIZE];
+	char	sbuf[DK_XNAME_SIZE];
 
 	memset(cs, 0x0, sizeof(*cs));
-	snprintf(buf, DK_XNAME_SIZE, "cgd%d", num);
+	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
 	simple_lock_init(&cs->sc_slock);
-	dk_sc_init(&cs->sc_dksc, cs, buf);
+	dk_sc_init(&cs->sc_dksc, cs, sbuf);
+	cs->sc_dksc.sc_dkdev.dk_driver = &cgddkdriver;
+	pseudo_disk_init(&cs->sc_dksc.sc_dkdev);
 }
 
 void
@@ -286,7 +293,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	cgd_softc *cs = dksc->sc_osc;
 	struct	buf *nbp;
-	struct	partition *pp;
 	caddr_t	addr;
 	caddr_t	newaddr;
 	daddr_t	bn;
@@ -295,17 +301,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
 
-	/* XXXrcd:
-	 * Translate partition relative blocks to absolute blocks,
-	 * this probably belongs (somehow) in dksubr.c, since it
-	 * is independant of the underlying code...  This will require
-	 * that the interface be expanded slightly, though.
-	 */
-	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &cs->sc_dksc.sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
-	}
+	bn = bp->b_rawblkno;
 
 	/*
 	 * We attempt to allocate all of our resources up front, so that
@@ -442,6 +438,7 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
+	struct	disk *dk;
 	int	ret;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -450,15 +447,13 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	    dev, cmd, data, flag, l));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
+	dk = &dksc->sc_dkdev;
 	switch (cmd) {
 	case CGDIOCSET:
 	case CGDIOCCLR:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 	}
-
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
 
 	switch (cmd) {
 	case CGDIOCSET:
@@ -483,7 +478,6 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
 	return ret;
 }
 
@@ -512,7 +506,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	struct	 vnode *vp;
 	int	 ret;
 	int	 keybytes;			/* key length in bytes */
-	char	*cp;
+	const char *cp;
 	char	 inbuf[MAX_KEYSIZE];
 
 	cp = ci->ci_disk;
@@ -563,7 +557,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		goto bail;
 	}
 
-	bufq_alloc(&cs->sc_dksc.sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&cs->sc_dksc.sc_bufq, "fcfs", 0);
 
 	cs->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
 	cs->sc_data_used = 0;
@@ -571,10 +565,13 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_dksc.sc_flags |= DKF_INITED;
 
 	/* Attach the disk. */
-	disk_attach(&cs->sc_dksc.sc_dkdev);
+	pseudo_disk_attach(&cs->sc_dksc.sc_dkdev);
 
 	/* Try and read the disklabel. */
 	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&cs->sc_dksc.sc_dkdev);
 
 	return 0;
 
@@ -589,11 +586,14 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 {
 	int	s;
 
+	/* Delete all of our wedges. */
+	dkwedge_delall(&cs->sc_dksc.sc_dkdev);
+
 	/* Kill off any queued buffers. */
 	s = splbio();
-	bufq_drain(&cs->sc_dksc.sc_bufq);
+	bufq_drain(cs->sc_dksc.sc_bufq);
 	splx(s);
-	bufq_free(&cs->sc_dksc.sc_bufq);
+	bufq_free(cs->sc_dksc.sc_bufq);
 
 	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_proc->p_ucred, l);
 	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);
@@ -601,13 +601,13 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 	free(cs->sc_data, M_DEVBUF);
 	cs->sc_data_used = 0;
 	cs->sc_dksc.sc_flags &= ~DKF_INITED;
-	disk_detach(&cs->sc_dksc.sc_dkdev);
+	pseudo_disk_detach(&cs->sc_dksc.sc_dkdev);
 
 	return 0;
 }
 
 static int
-cgdinit(struct cgd_softc *cs, char *cpath, struct vnode *vp,
+cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct lwp *l)
 {
 	struct	dk_geom *pdg;
@@ -692,7 +692,7 @@ bail:
  */
 
 static void
-blkno2blkno_buf(char *buf, daddr_t blkno)
+blkno2blkno_buf(char *sbuf, daddr_t blkno)
 {
 	int	i;
 
@@ -712,7 +712,7 @@ blkno2blkno_buf(char *buf, daddr_t blkno)
 	 * greater than or equal to sizeof(daddr_t).
 	 */
 	for (i=0; i < sizeof(daddr_t); i++) {
-		*buf++ = blkno & 0xff;
+		*sbuf++ = blkno & 0xff;
 		blkno >>= 8;
 	}
 }
@@ -787,7 +787,7 @@ cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
 
 #ifdef DEBUG
 static void
-hexprint(char *start, void *buf, int len)
+hexprint(const char *start, void *buf, int len)
 {
 	char	*c = buf;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2.2.5 2004/11/29 07:24:06 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.2.6 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
  * Machine-dependent spin lock operations.
  */
 
-#ifndef _I386_LOCK_H_
-#define	_I386_LOCK_H_
+#ifndef _X86_LOCK_H_
+#define	_X86_LOCK_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -115,4 +115,4 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 #define	SPINLOCK_SPIN_HOOK	x86_pause()
 #endif
 
-#endif /* _I386_LOCK_H_ */
+#endif /* _X86_LOCK_H_ */

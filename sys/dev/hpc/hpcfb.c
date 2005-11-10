@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.30.2.3 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.30.2.3 2005/11/10 14:04:00 skrll Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $";
+    "$NetBSD: hpcfb.c,v 1.30.2.3 2005/11/10 14:04:00 skrll Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,6 +469,15 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 		break;
 	}
 
+	if (fbconf->hf_class == HPCFB_CLASS_RGBCOLOR) {
+		ri->ri_rnum = fbconf->hf_u.hf_rgb.hf_red_width;
+		ri->ri_rpos = fbconf->hf_u.hf_rgb.hf_red_shift;
+		ri->ri_gnum = fbconf->hf_u.hf_rgb.hf_green_width;
+		ri->ri_gpos = fbconf->hf_u.hf_rgb.hf_green_shift;
+		ri->ri_bnum = fbconf->hf_u.hf_rgb.hf_blue_width;
+		ri->ri_bpos = fbconf->hf_u.hf_rgb.hf_blue_shift;
+	}
+
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
@@ -746,7 +755,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curyp = 0;
 	*cookiep = dc;
 	hpcfb_allocattr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
-	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
+	DPRINTF(("%s(%d): hpcfb_alloc_screen(): %p\n",
 	    __FILE__, __LINE__, dc));
 
 	return (0);
@@ -757,7 +766,7 @@ hpcfb_free_screen(void *v, void *cookie)
 {
 	struct hpcfb_devconfig *dc = cookie;
 
-	DPRINTF(("%s(%d): hpcfb_free_screen(0x%p)\n",
+	DPRINTF(("%s(%d): hpcfb_free_screen(%p)\n",
 	    __FILE__, __LINE__, cookie));
 #ifdef DIAGNOSTIC
 	if (dc == &hpcfb_console_dc)
@@ -775,7 +784,7 @@ hpcfb_show_screen(void *v, void *cookie, int waitok,
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct hpcfb_devconfig *odc;
 
-	DPRINTF(("%s(%d): hpcfb_show_screen(0x%p)\n",
+	DPRINTF(("%s(%d): hpcfb_show_screen(%p)\n",
 	    __FILE__, __LINE__, dc));
 
 	odc = sc->sc_dc;

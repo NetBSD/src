@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81.2.6 2005/03/04 16:43:13 skrll Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.7 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.6 2005/03/04 16:43:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.7 2005/11/10 14:05:37 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1136,7 +1136,7 @@ gusmaxopen(void *addr, int flags)
 }
 
 STATIC void
-gus_deinterleave(struct gus_softc *sc, void *buf, int size)
+gus_deinterleave(struct gus_softc *sc, void *tbuf, int size)
 {
 	/* deinterleave the stereo data.  We can use sc->sc_deintr_buf
 	   for scratch space. */
@@ -1154,7 +1154,7 @@ gus_deinterleave(struct gus_softc *sc, void *buf, int size)
 	 */
 	if (sc->sc_precision == 16) {
 		u_short *dei = sc->sc_deintr_buf;
-		u_short *sbuf = buf;
+		u_short *sbuf = tbuf;
 		size >>= 1;		/* bytecnt to shortcnt */
 		/* copy 2nd of each pair of samples to the staging area, while
 		   compacting the 1st of each pair into the original area. */
@@ -1175,7 +1175,7 @@ gus_deinterleave(struct gus_softc *sc, void *buf, int size)
 		memcpy(&sbuf[size/2], dei, i * sizeof(short));
 	} else {
 		u_char *dei = sc->sc_deintr_buf;
-		u_char *sbuf = buf;
+		u_char *sbuf = tbuf;
 		for (i = 0; i < size/2-1; i++)  {
 			dei[i] = sbuf[i*2+1];
 			sbuf[i+1] = sbuf[i*2+2];
@@ -1189,13 +1189,13 @@ gus_deinterleave(struct gus_softc *sc, void *buf, int size)
  */
 
 int
-gusmax_dma_output(void *addr, void *buf, int size,
+gusmax_dma_output(void *addr, void *tbuf, int size,
 		  void (*intr)(void *), void *arg)
 {
 	struct ad1848_isa_softc *ac;
 
 	ac = addr;
-	return gus_dma_output(ac->sc_ad1848.parent, buf, size, intr, arg);
+	return gus_dma_output(ac->sc_ad1848.parent, tbuf, size, intr, arg);
 }
 
 /*
@@ -1246,7 +1246,7 @@ stereo_dmaintr(void *arg)
  * generic audio code.
  */
 int
-gus_dma_output(void *addr, void *buf, int size,
+gus_dma_output(void *addr, void *tbuf, int size,
 	       void (*intr)(void *), void *arg)
 {
 	struct gus_softc *sc;
@@ -1254,9 +1254,9 @@ gus_dma_output(void *addr, void *buf, int size,
 	u_long boarddma;
 	int flags;
 
-	DMAPRINTF(("gus_dma_output %d @ %p\n", size, buf));
+	DMAPRINTF(("gus_dma_output %d @ %p\n", size, tbuf));
 	sc = addr;
-	buffer = buf;
+	buffer = tbuf;
 
 	if (size != sc->sc_blocksize) {
 		DPRINTF(("gus_dma_output reqsize %d not sc_blocksize %d\n",
@@ -1604,13 +1604,13 @@ gus_dmaout_dointr(struct gus_softc *sc)
 			 */
 			if (sc->sc_dmabuf == 0 &&
 			    sc->sc_playbuf == sc->sc_nbufs - 1) {
-				/* player is just at the last buf, we're at the
+				/* player is just at the last tbuf, we're at the
 				   first.  Turn on looping, turn off rolling. */
 				sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_LOOP_ENABLE;
 				sc->sc_voc[GUS_VOICE_LEFT].volcntl &= ~GUSMASK_VOICE_ROLL;
 				playstats[playcntr].vaction = 3;
 			} else {
-				/* player is at previous buf:
+				/* player is at previous tbuf:
 				   turn on rolling, turn off looping */
 				sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_LOOP_ENABLE;
 				sc->sc_voc[GUS_VOICE_LEFT].volcntl |= GUSMASK_VOICE_ROLL;
@@ -3016,13 +3016,13 @@ gus_get_in_gain(caddr_t addr)
 }
 
 int
-gusmax_dma_input(void *addr, void *buf, int size,
+gusmax_dma_input(void *addr, void *tbuf, int size,
 		 void (*callback)(void *), void *arg)
 {
 	struct ad1848_isa_softc *sc;
 
 	sc = addr;
-	return gus_dma_input(sc->sc_ad1848.parent, buf, size, callback, arg);
+	return gus_dma_input(sc->sc_ad1848.parent, tbuf, size, callback, arg);
 }
 
 /*
@@ -3030,7 +3030,7 @@ gusmax_dma_input(void *addr, void *buf, int size,
  * Called at splgus(), either from top-half or from interrupt handler.
  */
 int
-gus_dma_input(void *addr, void *buf, int size,
+gus_dma_input(void *addr, void *tbuf, int size,
 	      void (*callback)(void *), void *arg)
 {
 	struct gus_softc *sc;
@@ -3061,7 +3061,7 @@ gus_dma_input(void *addr, void *buf, int size,
 		dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 		dmac |= GUSMASK_SAMPLE_STEREO;
-	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf, size,
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, tbuf, size,
 	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
@@ -3069,7 +3069,7 @@ gus_dma_input(void *addr, void *buf, int size,
 	sc->sc_dmainintr = callback;
 	sc->sc_inarg = arg;
 	sc->sc_dmaincnt = size;
-	sc->sc_dmainaddr = buf;
+	sc->sc_dmainaddr = tbuf;
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, dmac);	/* Go! */

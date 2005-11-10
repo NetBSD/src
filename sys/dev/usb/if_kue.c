@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.50.6.4 2004/11/02 07:53:02 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.50.6.5 2005/11/10 14:08:05 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.50.6.4 2004/11/02 07:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.50.6.5 2005/11/10 14:08:05 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -281,8 +281,9 @@ kue_load_fw(struct kue_softc *sc)
 	/* Load code segment */
 	DPRINTFN(1,("%s: kue_load_fw: download code_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
+	/*XXXUNCONST*/
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_code_seg, sizeof(kue_code_seg));
+	    0, __UNCONST(kue_code_seg), sizeof(kue_code_seg));
 	if (err) {
 		printf("%s: failed to load code segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -292,8 +293,9 @@ kue_load_fw(struct kue_softc *sc)
 	/* Load fixup segment */
 	DPRINTFN(1,("%s: kue_load_fw: download fix_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
+	/*XXXUNCONST*/
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_fix_seg, sizeof(kue_fix_seg));
+	    0, __UNCONST(kue_fix_seg), sizeof(kue_fix_seg));
 	if (err) {
 		printf("%s: failed to load fixup segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -303,8 +305,9 @@ kue_load_fw(struct kue_softc *sc)
 	/* Send trigger command. */
 	DPRINTFN(1,("%s: kue_load_fw: download trig_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
+	/*XXXUNCONST*/
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_trig_seg, sizeof(kue_trig_seg));
+	    0, __UNCONST(kue_trig_seg), sizeof(kue_trig_seg));
 	if (err) {
 		printf("%s: failed to load trigger segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -420,7 +423,7 @@ USB_MATCH(kue)
 USB_ATTACH(kue)
 {
 	USB_ATTACH_START(kue, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	struct ifnet		*ifp;
 	usbd_device_handle	dev = uaa->device;
@@ -432,9 +435,10 @@ USB_ATTACH(kue)
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {

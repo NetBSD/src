@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.27.2.4 2005/03/04 16:39:22 skrll Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.27.2.5 2005/11/10 14:00:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.27.2.4 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.27.2.5 2005/11/10 14:00:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,18 +86,18 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 	struct vattr		 vat;
 	struct vattr		 vatroot;
 	int			 error;
-	char			*ptr, *buf, *cp;
+	char			*ptr, *tbuf, *cp;
 	const char		*pr;
 	size_t			 sz, len;
 
 	p = l->l_proc;
-	buf = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	tbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	*pbuf = path;
 
-	for (ptr = buf, pr = prefix; (*ptr = *pr) != '\0'; ptr++, pr++)
+	for (ptr = tbuf, pr = prefix; (*ptr = *pr) != '\0'; ptr++, pr++)
 		continue;
 
-	sz = MAXPATHLEN - (ptr - buf);
+	sz = MAXPATHLEN - (ptr - tbuf);
 
 	/*
 	 * If sgp is not given then the path is already in kernel space
@@ -122,8 +122,8 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 	 */
 	if (ptr[1] == '.' && ptr[2] == '.' && ptr[3] == '/') {
 		len -= 3;
-		(void)memcpy(buf, &ptr[3], len);
-		ptr = buf;
+		(void)memcpy(tbuf, &ptr[3], len);
+		ptr = tbuf;
 		goto good;
 	}
 
@@ -141,7 +141,7 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 			;
 		*cp = '\0';
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, tbuf, l);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -152,7 +152,7 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 	case CHECK_ALT_FL_SYMLINK:
 		NDINIT(&nd, LOOKUP,
 			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
-			UIO_SYSSPACE, buf, l);
+			UIO_SYSSPACE, tbuf, l);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -192,19 +192,20 @@ emul_find(l, sgp, prefix, path, pbuf, sflag)
 
 good:
 	if (sgp == NULL)
-		*pbuf = buf;
+		*pbuf = tbuf;
 	else {
-		sz = &ptr[len] - buf;
+		sz = &ptr[len] - tbuf;
 		*pbuf = stackgap_alloc(p, sgp, sz + 1);
 		if (*pbuf == NULL) {
 			error = ENAMETOOLONG;
 			goto bad;
 		}
-		if ((error = copyout(buf, (void *)*pbuf, sz)) != 0) {
+		/*XXXUNCONST*/
+		if ((error = copyout(tbuf, __UNCONST(*pbuf), sz)) != 0) {
 			*pbuf = path;
 			goto bad;
 		}
-		free(buf, M_TEMP);
+		free(tbuf, M_TEMP);
 	}
 	return 0;
 
@@ -213,7 +214,7 @@ bad3:
 bad2:
 	vrele(nd.ni_vp);
 bad:
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 	return error;
 }
 
@@ -232,7 +233,8 @@ emul_find_interp(struct lwp *l, const char *prefix, char *itp)
 
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
-		free((void *)bp, M_TEMP);
+		/*XXXUNCONST*/
+		free(__UNCONST(bp), M_TEMP);
 	} else {
 		/* check filename without the emul prefix */
 		struct nameidata nd;
@@ -308,7 +310,7 @@ stackgap_alloc(p, sgp, sz)
 void
 compat_offseterr(vp, msg)
 	struct vnode *vp;
-	char *msg;
+	const char *msg;
 {
 	struct mount *mp;
 

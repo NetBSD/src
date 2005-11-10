@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.19 2002/11/04 06:24:41 itohy Exp $	*/
+/*	$NetBSD: db_input.c,v 1.19.6.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.19 2002/11/04 06:24:41 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.19.6.1 2005/11/10 14:03:00 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -78,14 +78,14 @@ static char    *db_history_prev = (char *) 0;	/* start of previous line */
 #define	BACKUP		'\b'
 
 static int	cnmaygetc(void);
-static void	db_putstring(char *, int);
+static void	db_putstring(const char *, int);
 static void	db_putnchars(int, int);
 static void	db_delete(int, int);
 static void	db_delete_line(void);
 static int	db_inputchar(int);
 
 static void
-db_putstring(char *s, int count)
+db_putstring(const char *s, int count)
 {
 
 	while (--count >= 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11.2.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11.2.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -159,8 +159,8 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 /*
  * SH5-specific commands
  */
-static void db_sh5_tlb(db_expr_t, int, db_expr_t, char *);
-static void db_sh5_fpr(db_expr_t, int, db_expr_t, char *);
+static void db_sh5_tlb(db_expr_t, int, db_expr_t, const char *);
+static void db_sh5_fpr(db_expr_t, int, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 	{"tlb",		db_sh5_tlb,	0,	0},
@@ -378,7 +378,7 @@ inst_store(int inst)
 #define	DTLB_REG(r)	(0x800000 + ((r) * 16))
 
 static void
-db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	register_t tlbreg;
 	ptel_t ptel;
@@ -430,7 +430,7 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 static void
-db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct switchframe sw, *swp;
 	struct lwp *l;

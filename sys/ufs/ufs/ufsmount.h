@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.13.2.4 2004/09/21 13:39:23 skrll Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.13.2.5 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,6 @@
  */
 struct ufs_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
 };
 
 /*
@@ -47,7 +46,7 @@ struct ufs_args {
  */
 struct mfs_args {
 	char	*fspec;			/* name to export for statfs */
-	struct	export_args export;	/* if exported MFSes are supported */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	caddr_t	base;			/* base of file system in memory */
 	u_long	size;			/* size of file system */
 };
@@ -58,6 +57,8 @@ struct mfs_args {
 #include "opt_ffs.h"
 #endif
 
+#include <ufs/ufs/extattr.h>
+
 struct buf;
 struct inode;
 struct nameidata;
@@ -65,7 +66,6 @@ struct timeval;
 struct ucred;
 struct uio;
 struct vnode;
-struct netexport;
 
 /* This structure describes the UFS specific mount structure data. */
 struct ufsmount {
@@ -84,6 +84,9 @@ struct ufsmount {
 #define um_e2fs	ufsmount_u.e2fs
 #define um_e2fsb ufsmount_u.e2fs->s_es
 
+	/* Extended attribute information. */
+	struct ufs_extattr_per_mount um_extattr;
+
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
 	struct	ucred *um_cred[MAXQUOTAS];	/* quota file access cred */
 	u_long	um_nindir;			/* indirect ptrs per block */
@@ -93,15 +96,46 @@ struct ufsmount {
 	time_t	um_btime[MAXQUOTAS];		/* block quota time limit */
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
-	struct	netexport um_export;		/* export information */
 	void	*um_oldfscompat;		/* save 4.2 rotbl */
-	TAILQ_HEAD(, inode) um_snapshots;	/* list of active snapshots */
-	daddr_t	um_snaplistsize;		/* size of block hints list */
+	TAILQ_HEAD(inodelst, inode) um_snapshots; /* list of active snapshots */
 	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
-	off_t	um_maxfilesize;
+	u_int64_t um_maxfilesize;
+
+	const struct ufs_ops *um_ops;
 };
+
+struct ufs_ops {
+	void (*uo_itimes)(struct inode *ip, const struct timespec *,
+	    const struct timespec *, const struct timespec *);
+	int (*uo_update)(struct vnode *, const struct timespec *,
+	    const struct timespec *, int);
+	int (*uo_truncate)(struct vnode *, off_t, int, struct ucred *,
+	    struct lwp *);
+	int (*uo_valloc)(struct vnode *, int, struct ucred *, struct vnode **);
+	int (*uo_vfree)(struct vnode *, ino_t, int);
+	int (*uo_balloc)(struct vnode *, off_t, int, struct ucred *, int,
+	    struct buf **);
+	int (*uo_blkatoff)(struct vnode *, off_t, char **, struct buf **);
+};
+
+#define	UFS_OPS(vp)	(VFSTOUFS((vp)->v_mount)->um_ops)
+
+#define	UFS_ITIMES(vp, acc, mod, cre) \
+	(*UFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
+#define	UFS_UPDATE(vp, acc, mod, flags) \
+	(*UFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
+#define	UFS_TRUNCATE(vp, off, flags, cr, p) \
+	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr), (p))
+#define	UFS_VALLOC(vp, mode, cr, vpp) \
+	(*UFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
+#define	UFS_VFREE(vp, ino, mode) \
+	(*UFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
+#define	UFS_BALLOC(vp, off, size, cr, flags, bpp) \
+	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
+#define	UFS_BLKATOFF(vp, off, res, bpp) \
+	(*UFS_OPS(vp)->uo_blkatoff)((vp), (off), (res), (bpp))
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */

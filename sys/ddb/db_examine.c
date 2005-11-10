@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.25.2.3 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.25.2.4 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.25.2.3 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.25.2.4 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ static void	db_search(db_addr_t, int, db_expr_t, db_expr_t, unsigned int);
  */
 /*ARGSUSED*/
 void
-db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	if (modif[0] != '\0')
 		strlcpy(db_examine_format, modif, sizeof(db_examine_format));
@@ -229,7 +229,7 @@ static char	db_print_format = 'x';
 
 /*ARGSUSED*/
 void
-db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	db_expr_t	value;
 
@@ -294,7 +294,7 @@ db_print_loc_and_inst(db_addr_t loc)
  */
 /*ARGSUSED*/
 void
-db_search_cmd(db_expr_t daddr, int have_addr, db_expr_t dcount, char *modif)
+db_search_cmd(db_expr_t daddr, int have_addr, db_expr_t dcount, const char *modif)
 {
 	int		t;
 	db_addr_t	addr;

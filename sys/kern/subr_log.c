@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.28.2.4 2004/09/21 13:35:12 skrll Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.28.2.5 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.4 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.5 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,22 +67,8 @@ int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
 struct	kern_msgbuf *msgbufp;		/* the mapped buffer, itself. */
 
-dev_type_open(logopen);
-dev_type_close(logclose);
-dev_type_read(logread);
-dev_type_ioctl(logioctl);
-dev_type_poll(logpoll);
-dev_type_kqfilter(logkqfilter);
-
-const struct cdevsw log_cdevsw = {
-	logopen, logclose, logread, nowrite, logioctl,
-	nostop, notty, logpoll, nommap, logkqfilter,
-};
-
 void
-initmsgbuf(buf, bufsize)
-	caddr_t buf;
-	size_t bufsize;
+initmsgbuf(void *bf, size_t bufsize)
 {
 	struct kern_msgbuf *mbp;
 	long new_bufs;
@@ -91,7 +77,7 @@ initmsgbuf(buf, bufsize)
 	if (bufsize < sizeof(struct kern_msgbuf))
 		return;
 
-	mbp = msgbufp = (struct kern_msgbuf *)buf;
+	mbp = msgbufp = (struct kern_msgbuf *)bf;
 
 	new_bufs = bufsize - offsetof(struct kern_msgbuf, msg_bufc);
 	if ((mbp->msg_magic != MSG_MAGIC) || (mbp->msg_bufs != new_bufs) ||
@@ -103,7 +89,7 @@ initmsgbuf(buf, bufsize)
 		 * internally inconsistent, initialize it.
 		 */
 
-		memset(buf, 0, bufsize);
+		memset(bf, 0, bufsize);
 		mbp->msg_magic = MSG_MAGIC;
 		mbp->msg_bufs = new_bufs;
 	}
@@ -113,11 +99,8 @@ initmsgbuf(buf, bufsize)
 }
 
 /*ARGSUSED*/
-int
-logopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+static int
+logopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kern_msgbuf *mbp = msgbufp;
 
@@ -140,11 +123,8 @@ logopen(dev, flags, mode, l)
 }
 
 /*ARGSUSED*/
-int
-logclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+static int
+logclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	log_open = 0;
@@ -153,11 +133,8 @@ logclose(dev, flag, mode, l)
 }
 
 /*ARGSUSED*/
-int
-logread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+static int
+logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kern_msgbuf *mbp = msgbufp;
 	long l;
@@ -200,11 +177,8 @@ logread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-int
-logpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+static int
+logpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
 	int s = splhigh();
@@ -249,7 +223,7 @@ filt_logread(struct knote *kn, long hint)
 static const struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread };
 
-int
+static int
 logkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
@@ -275,7 +249,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 }
 
 void
-logwakeup()
+logwakeup(void)
 {
 	if (!log_open)
 		return;
@@ -289,13 +263,8 @@ logwakeup()
 }
 
 /*ARGSUSED*/
-int
-logioctl(dev, com, data, flag, lwp)
-	dev_t dev;
-	u_long com;
-	caddr_t data;
-	int flag;
-	struct lwp *lwp;
+static int
+logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct lwp *lwp)
 {
 	struct proc *p = lwp->l_proc;
 	long l;
@@ -336,3 +305,8 @@ logioctl(dev, com, data, flag, lwp)
 	}
 	return (0);
 }
+
+const struct cdevsw log_cdevsw = {
+	logopen, logclose, logread, nowrite, logioctl,
+	    nostop, notty, logpoll, nommap, logkqfilter,
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.1.64.3 2004/09/21 13:23:57 skrll Exp $ */
+/*	$NetBSD: db_disasm.h,v 1.1.64.4 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,8 +53,8 @@
  */
 
 struct {
-	char *mnemonic;
-	char *argdesc;
+	const char *mnemonic;
+	const char *argdesc;
 } vax_inst[256] = {
 
 /*

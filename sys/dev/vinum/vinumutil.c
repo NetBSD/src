@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumutil.c,v 1.1.1.1.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumutil.c,v 1.1.1.1.4.5 2005/11/10 14:08:43 skrll Exp $
  * $FreeBSD$
  */
 
@@ -45,13 +45,14 @@
 #include <dev/vinum/statetexts.h>
 #ifndef _KERNEL
 #include <stdio.h>
+#include <string.h>
 extern jmp_buf command_fail;				    /* return on a failed command */
 #endif
 
 static char numeric_state[32];				    /* temporary buffer for ASCII conversions */
 #define STATECOUNT(x) (sizeof (x##statetext) / sizeof (char *))
 /* Return drive state as a string */
-char *
+const char *
 drive_state(enum drivestate state)
 {
     if (((unsigned) state) >= STATECOUNT(drive)) {
@@ -62,7 +63,7 @@ drive_state(enum drivestate state)
 }
 
 /* Return volume state as a string */
-char *
+const char *
 volume_state(enum volumestate state)
 {
     if (((unsigned) state) >= STATECOUNT(vol)) {
@@ -73,7 +74,7 @@ volume_state(enum volumestate state)
 }
 
 /* Return plex state as a string */
-char *
+const char *
 plex_state(enum plexstate state)
 {
     if (((unsigned) state) >= STATECOUNT(plex)) {
@@ -84,7 +85,7 @@ plex_state(enum plexstate state)
 }
 
 /* Return plex organization as a string */
-char *
+const char *
 plex_org(enum plexorg org)
 {
     switch (org) {
@@ -114,7 +115,7 @@ plex_org(enum plexorg org)
 }
 
 /* Return sd state as a string */
-char *
+const char *
 sd_state(enum sdstate state)
 {
     if (((unsigned) state) >= STATECOUNT(sd)) {

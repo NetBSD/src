@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.20.2.4 2005/03/04 16:50:56 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.20.2.5 2005/11/10 14:08:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.20.2.4 2005/03/04 16:50:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.20.2.5 2005/11/10 14:08:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_35 }, 0 },
 /*	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_25 }, PALM4 },*/
 };
-#define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
+#define uvisor_lookup(v, p) ((const struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 
 USB_DECLARE_DRIVER(uvisor);
 
@@ -222,7 +222,7 @@ USB_ATTACH(uvisor)
 	struct uvisor_connection_info coninfo;
 	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	int i, j, hasin, hasout, port;
 	usbd_status err;
@@ -245,9 +245,10 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 

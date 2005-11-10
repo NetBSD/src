@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.12 2002/11/26 18:42:38 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.12.6.1 2005/11/10 14:00:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
 #define LINUX_SA_ALLBITS	0xfc000007
+
+#define LINUX_MINSIGSTKSZ	2048
 
 typedef void	(*linux_handler_t) __P((int));
 

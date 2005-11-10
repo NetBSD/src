@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.49.6.3 2004/09/21 13:22:40 skrll Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.49.6.4 2005/11/10 13:59:17 skrll Exp $
 
 #=========================================================================
 #
@@ -47,7 +47,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SPARC64=	$S/arch/sparc64
-GENASSYM=	${SPARC64}/sparc64/genassym.cf
+GENASSYM_CONF=	${SPARC64}/sparc64/genassym.cf
 
 ##
 ## (2) compile settings

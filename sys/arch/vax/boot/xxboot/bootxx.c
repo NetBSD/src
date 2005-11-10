@@ -1,4 +1,5 @@
-/* $NetBSD: bootxx.c,v 1.16.10.3 2004/09/21 13:23:40 skrll Exp $ */
+/* $NetBSD: bootxx.c,v 1.16.10.4 2005/11/10 13:59:59 skrll Exp $ */
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -30,24 +31,24 @@
  *	@(#)boot.c	7.15 (Berkeley) 5/4/91
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "sys/disklabel.h"
-#include "sys/exec.h"
-#include "sys/exec_elf.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
-#include "lib/libsa/cd9660.h"
-#include "lib/libsa/ustarfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/ustarfs.h>
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/mtpr.h"
-#include "machine/reg.h"
-#include "machine/rpb.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/mtpr.h>
+#include <machine/reg.h>
+#include <machine/rpb.h>
 #include "../vax/gencons.h"
 
 #include "../mba/mbareg.h"
@@ -56,8 +57,8 @@
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 
-#include "dev/mscp/mscp.h"
-#include "dev/mscp/mscpreg.h"
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
 
 #include "../boot/data.h"
 
@@ -103,7 +104,7 @@ Xmain()
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 	moved = 0;
 	/*
-	 */ 
+	 */
 	rpb = (void *)0xf0000; /* Safe address right now */
 	bqo = (void *)0xf1000;
         if (from == FROMMV) {
@@ -152,7 +153,7 @@ Xmain()
 			goto die;
 		vax_load_failure++;
 		entry = hdr.elf.e_entry;
-		if (hdr.elf.e_phoff != sizeof(hdr.elf)) 
+		if (hdr.elf.e_phoff != sizeof(hdr.elf))
 			goto die;
 		vax_load_failure++;
 		read(io, &ph, sizeof(ph));
@@ -247,7 +248,7 @@ devopen(f, fname, file)
 		initfn = rpb->iovec + bqo->unit_init;
 		if (rpb->devtyp == BDEV_UDA || rpb->devtyp == BDEV_TK) {
 			/*
-			 * This reset do not seem to be done in the 
+			 * This reset do not seem to be done in the
 			 * ROM routines, so we have to do it manually.
 			 */
 			csr = (struct udadevice *)rpb->csrphy;

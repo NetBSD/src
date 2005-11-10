@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.38.6.4 2004/12/18 09:33:16 skrll Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.38.6.5 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.38.6.4 2004/12/18 09:33:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.38.6.5 2005/11/10 14:11:36 skrll Exp $");
 
 #include "opt_eon.h"
 
@@ -211,8 +211,8 @@ eonioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 
 void
-eoniphdr(struct eon_iphdr *hdr, caddr_t loc, struct route *ro,
-	int class, int zero)
+eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
+    int class, int zero)
 {
 	struct mbuf     mhead;
 	struct sockaddr_in *sin = satosin(&ro->ro_dst);
@@ -222,7 +222,7 @@ eoniphdr(struct eon_iphdr *hdr, caddr_t loc, struct route *ro,
 	}
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
-	bcopy(loc, (caddr_t) & sin->sin_addr, sizeof(struct in_addr));
+	(void)memcpy(&sin->sin_addr, loc, sizeof(struct in_addr));
 	/*
 	 * If there is a cached route,
 	 * check that it is to the same destination
@@ -270,7 +270,7 @@ void
 eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	unsigned long   zerodst = 0;
-	caddr_t         ipaddrloc = (caddr_t) & zerodst;
+	const void *ipaddrloc = &zerodst;
 	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
 	const struct sockaddr *gate;
 
@@ -303,14 +303,15 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	if (info && (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
-#define SDL(x) ((struct sockaddr_dl *)x)
+#define SDL(x) ((const struct sockaddr_dl *)x)
+#define SIN(x) ((const struct sockaddr_in *)x)
 			if (SDL(gate)->sdl_alen == 1)
-				el->el_snpaoffset = *(u_char *) LLADDR(SDL(gate));
+				el->el_snpaoffset = *(const u_char *)CLLADDR(SDL(gate));
 			else
-				ipaddrloc = LLADDR(SDL(gate));
+				ipaddrloc = CLLADDR(SDL(gate));
 			break;
 		case AF_INET:
-			ipaddrloc = (caddr_t) & satosin(gate)->sin_addr;
+			ipaddrloc = &SIN(gate)->sin_addr;
 			break;
 		default:
 			return;

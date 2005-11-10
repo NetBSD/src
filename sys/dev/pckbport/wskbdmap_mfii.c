@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.10 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.10 2005/11/10 14:07:24 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -392,15 +392,15 @@ static const keysym_t pckbd_keydesc_pt[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,		KS_quotedbl,	KS_at,
     KC(4),   KS_3,		KS_numbersign,	KS_sterling,
-    KC(5),   KS_4,		KS_dollar,
+    KC(5),   KS_4,		KS_dollar,	KS_section,
     KC(7),   KS_6,		KS_ampersand,
     KC(8),   KS_7,		KS_slash,	KS_braceleft,
     KC(9),   KS_8,		KS_parenleft,	KS_bracketleft,
     KC(10),  KS_9,		KS_parenright,	KS_bracketright,
     KC(11),  KS_0,		KS_equal,	KS_braceright,
     KC(12),  KS_apostrophe,	KS_question,
-    KC(13),  KS_less,		KS_greater,
-    KC(26),  KS_plus,		KS_asterisk,
+    KC(13),  KS_guillemotleft,	KS_guillemotright,
+    KC(26),  KS_plus,		KS_asterisk,	KS_dead_diaeresis,
     KC(27),  KS_dead_acute,	KS_dead_grave,
     KC(39),  KS_ccedilla,	KS_Ccedilla,
     KC(40),  KS_masculine,	KS_ordfeminine,

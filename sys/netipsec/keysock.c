@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5.2.7 2005/03/04 16:53:44 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5.2.8 2005/11/10 14:11:35 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.7 2005/03/04 16:53:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.8 2005/11/10 14:11:35 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -105,7 +105,7 @@ key_output(struct mbuf *m, ...)
 	va_end(ap);
 
 	if (m == 0)
-		panic("key_output: NULL pointer was passed.\n");
+		panic("key_output: NULL pointer was passed");
 
 	pfkeystat.out_total++;
 	pfkeystat.out_bytes += m->m_pkthdr.len;
@@ -214,7 +214,7 @@ key_sendup(so, msg, len, target)
 
 	/* sanity check */
 	if (so == 0 || msg == 0)
-		panic("key_sendup: NULL pointer was passed.\n");
+		panic("key_sendup: NULL pointer was passed");
 
 	KEYDEBUG(KEYDEBUG_KEY_DUMP,
 		printf("key_sendup: \n");
@@ -301,9 +301,9 @@ key_sendup_mbuf(so, m, target /*, sbprio */)
 	int sbprio = 0; /* XXX should be a parameter */
 
 	if (m == NULL)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed");
 	if (so == NULL && target == KEY_SENDUP_ONE)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed");
 
 	/*
 	 * RFC 2367 says ACQUIRE and other kernel-generated messages

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.22.2.6 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.22.2.7 2005/11/10 14:12:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22.2.6 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22.2.7 2005/11/10 14:12:32 skrll Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -87,29 +87,41 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22.2.6 2005/04/01 14:32:11 skrll Exp
 int lfs_lognum;
 struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 
-int lfs_bwrite_log(struct buf *bp, char *file, int line)
+int lfs_bwrite_log(struct buf *bp, const char *file, int line)
 {
 	struct vop_bwrite_args a;
 	a.a_desc = VDESC(vop_bwrite);
 	a.a_bp = bp;
 
-	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
-		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
+	if (!(bp->b_flags & (B_DELWRI | B_GATHERED))) {
+		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags,
+			curproc->p_pid);
+	}
 	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
 }
 
 void lfs_dumplog(void)
 {
 	int i;
+	const char *cp;
 
-	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
+	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH;
+	     i = (i + 1) % LFS_LOGLENGTH)
 		if (lfs_log[i].file) {
-			printf("lbn %" PRId64 " %s %lx %d %s\n",
+			/* Only print out basename, for readability */
+			cp = lfs_log[i].file;
+			while(*cp)
+				++cp;
+			while(*cp != '/' && cp > lfs_log[i].file)
+				--cp;
+
+			printf("lbn %" PRId64 " %s %lx %d, %d %s\n",
 				lfs_log[i].block,
 				lfs_log[i].op,
 				lfs_log[i].flags,
+				lfs_log[i].pid,
 				lfs_log[i].line,
-				lfs_log[i].file + 56);
+				cp);
 		}
 }
 
@@ -280,11 +292,13 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 				       (*bpp)->b_blkno,
 				       blkno);
 			} else {
-				printf("%s:%d: misplace ino %d lbn %" PRId64
+				printf("%s:%d: misplace ino %llu lbn %" PRId64
 				       " at 0x%" PRIx64 " instead of "
 				       "0x%" PRIx64 "\n",
 				       file, line,
-				       VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
+				       (unsigned long long)
+				       VTOI((*bpp)->b_vp)->i_number,
+				       (*bpp)->b_lblkno,
 				       blkno,
 				       (*bpp)->b_blkno);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.47.2.6 2005/03/04 16:53:32 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.47.2.7 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.6 2005/03/04 16:53:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.7 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1053,9 +1053,9 @@ nd6_dad_stoptimer(dp)
  * Start Duplicated Address Detection (DAD) for specified interface address.
  */
 void
-nd6_dad_start(ifa, tick)
+nd6_dad_start(ifa, xtick)
 	struct ifaddr *ifa;
-	int *tick;	/* minimum delay ticks for IFF_UP event */
+	int *xtick;	/* minimum delay ticks for IFF_UP event */
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
@@ -1122,18 +1122,18 @@ nd6_dad_start(ifa, tick)
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
-	if (tick == NULL) {
+	if (xtick == NULL) {
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp,
 		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 	} else {
 		int ntick;
 
-		if (*tick == 0)
+		if (*xtick == 0)
 			ntick = arc4random() % (MAX_RTR_SOLICITATION_DELAY * hz);
 		else
-			ntick = *tick + arc4random() % (hz / 2);
-		*tick = ntick;
+			ntick = *xtick + arc4random() % (hz / 2);
+		*xtick = ntick;
 		nd6_dad_starttimer(dp, ntick);
 	}
 }

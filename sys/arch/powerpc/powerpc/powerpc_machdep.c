@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.20.2.4 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.20.2.5 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.20.2.4 2004/09/21 13:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.20.2.5 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_altivec.h"
 
@@ -54,8 +54,6 @@ int cpu_printfataltraps;
 #ifdef PPC_OEA
 extern int powersave;
 #endif
-
-extern struct pool siginfo_pool;
 
 /*
  * Set set up registers on exec.

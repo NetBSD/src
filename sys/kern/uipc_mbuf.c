@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.69.2.8 2005/04/01 14:30:57 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.69.2.9 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.8 2005/04/01 14:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.9 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -489,9 +489,7 @@ m_prepend(struct mbuf *m, int len, int how)
 		return ((struct mbuf *)NULL);
 	}
 	if (m->m_flags & M_PKTHDR) {
-		M_COPY_PKTHDR(mn, m);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
+		M_MOVE_PKTHDR(mn, m);
 	} else {
 		MCLAIM(mn, m->m_owner);
 	}
@@ -670,22 +668,22 @@ nospace:
 void
 m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
-	unsigned count;
-	char *cp = vp;
+	unsigned	count;
+	caddr_t		cp = vp;
 
 	if (off < 0 || len < 0)
 		panic("m_copydata: off %d, len %d", off, len);
 	while (off > 0) {
-		if (m == 0)
-			panic("m_copydata: m == 0, off %d", off);
+		if (m == NULL)
+			panic("m_copydata: m == NULL, off %d", off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
 		m = m->m_next;
 	}
 	while (len > 0) {
-		if (m == 0)
-			panic("m_copydata: m == 0, len %d", len);
+		if (m == NULL)
+			panic("m_copydata: m == NULL, len %d", len);
 		count = min(m->m_len - off, len);
 		memcpy(cp, mtod(m, caddr_t) + off, count);
 		len -= count;
@@ -794,7 +792,7 @@ m_adj(struct mbuf *mp, int req_len)
 }
 
 /*
- * Rearange an mbuf chain so that len bytes are contiguous
+ * Rearrange an mbuf chain so that len bytes are contiguous
  * and in the data area of an mbuf (so that mtod and dtom
  * will work for a structure of size len).  Returns the resulting
  * mbuf chain on success, frees it and returns null on failure.
@@ -831,9 +829,7 @@ m_pullup(struct mbuf *n, int len)
 		MCLAIM(m, n->m_owner);
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
-			M_COPY_PKTHDR(m, n);
-			m_tag_delete_chain(n, NULL);
-			n->m_flags &= ~M_PKTHDR;
+			M_MOVE_PKTHDR(m, n);
 		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -883,9 +879,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	MCLAIM(m, n->m_owner);
 	m->m_len = 0;
 	if (n->m_flags & M_PKTHDR) {
-		M_COPY_PKTHDR(m, n);
-		m_tag_delete_chain(n, NULL);
-		n->m_flags &= ~M_PKTHDR;
+		M_MOVE_PKTHDR(m, n);
 	}
 	m->m_data += dstoff;
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -1218,8 +1212,7 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 				goto enobufs;
 			MCLAIM(n, m->m_owner);
 			if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
-				/* XXX M_MOVE_PKTHDR */
-				M_COPY_PKTHDR(n, m);
+				M_MOVE_PKTHDR(n, m);
 				n->m_len = MHLEN;
 			} else {
 				if (len >= MINCLSIZE)
@@ -1301,6 +1294,21 @@ out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 
 enobufs:
 	return ENOBUFS;
+}
+
+void
+m_move_pkthdr(struct mbuf *to, struct mbuf *from)
+{
+
+	KASSERT((to->m_flags & M_EXT) == 0);
+	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
+	KASSERT((from->m_flags & M_PKTHDR) != 0);
+
+	to->m_pkthdr = from->m_pkthdr;
+	to->m_flags = from->m_flags & M_COPYFLAGS;
+	to->m_data = to->m_pktdat;
+
+	from->m_flags &= ~M_PKTHDR;
 }
 
 /*

@@ -1,10 +1,11 @@
-#	$NetBSD: std.x68k,v 1.10 2001/12/06 04:13:12 minoura Exp $
+#	$NetBSD: std.x68k,v 1.10.16.1 2005/11/10 14:00:15 skrll Exp $
 
 #
 # Mandatory NetBSD/x68k kernel options.
 #
 
 machine		x68k m68k	# Machine architecture; required by config(8)
+include		"conf/std"	# MI standard options
 
 options 	EXEC_ELF32	# execve(2) support for ELF binaries
 options 	EXEC_AOUT	# execve(2) support for a.out binaries

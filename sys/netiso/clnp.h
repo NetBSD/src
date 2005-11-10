@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.15.2.4 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: clnp.h,v 1.15.2.5 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -531,7 +531,7 @@ int clnp_srcroute (struct mbuf *, struct clnp_optidx *, struct route_iso *,
 		       struct iso_addr *);
 int clnp_echoreply (struct mbuf *, int, struct sockaddr_iso *,
 		        struct sockaddr_iso *, struct clnp_optidx *);
-int clnp_badmtu (struct ifnet *, struct rtentry *, int, char *);
+int clnp_badmtu (struct ifnet *, struct rtentry *, int, const char *);
 void clnp_ypocb  (caddr_t, caddr_t, u_int);
 
 /* clnp_timer.c */

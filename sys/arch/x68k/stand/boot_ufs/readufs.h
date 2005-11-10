@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.4.2.3 2004/09/21 13:24:20 skrll Exp $	*/
+/*	$NetBSD: readufs.h,v 1.4.2.4 2005/11/10 14:00:15 skrll Exp $	*/
 /*	from Id: readufs.h,v 1.9 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -22,6 +22,9 @@ union ufs_dinode {
 	struct ufs2_dinode di2;
 #endif
 };
+
+/* For more compact code and independence on 64-bit types and ops */
+typedef uint32_t	ino32_t;
 
 /* short-cut for common fields (di_mode, di_nlink) */
 #ifdef USE_UFS1
@@ -68,7 +71,7 @@ struct ufs_info {
 		UFSTYPE_UFS1, UFSTYPE_UFS2
 	} ufstype;
 #endif
-	int (*get_inode) __P((ino_t ino, union ufs_dinode *dibuf));
+	int (*get_inode) __P((ino32_t ino, union ufs_dinode *dibuf));
 
 	/* superblock information */
 	u_int32_t bsize;	/* fs block size */
@@ -109,9 +112,9 @@ void RAW_READ __P((void *buf, daddr_t blkpos, size_t bytelen));
 
 size_t ufs_read __P((union ufs_dinode *di, void *buf, unsigned off,
     size_t count));
-ino_t ufs_lookup __P((ino_t dirino, const char *fn));
-ino_t ufs_lookup_path __P((const char *path));
-size_t ufs_load_file __P((void *buf, ino_t dirino, const char *fn));
+ino32_t ufs_lookup __P((ino32_t dirino, const char *fn));
+ino32_t ufs_lookup_path __P((const char *path));
+size_t ufs_load_file __P((void *buf, ino32_t dirino, const char *fn));
 int ufs_init __P((void));
 
 #ifdef USE_FFS

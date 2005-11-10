@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.24.6.4 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.24.6.5 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.24.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.24.6.5 2005/11/10 13:59:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ eeprom_attach(struct device *parent, struct device *self, void *args)
 	 * Reduce ee_size and clear the last part of the
 	 * soft copy.  Note: ee_update obeys ee_size.
 	 */
-	if (cpu_machine_id == SUN3X_MACH_80)
+	if (cpu_machine_id == ID_SUN3X_80)
 		ee_size -= 40;
 
 	/* Do only byte access in the EEPROM. */

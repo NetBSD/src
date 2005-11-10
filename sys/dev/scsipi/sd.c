@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.202.2.11 2005/04/01 14:30:33 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.202.2.12 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.11 2005/04/01 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.12 2005/11/10 14:07:47 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -200,7 +200,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
+	    sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
 	    sizeof(sd_patterns[0]), &priority);
 
 	return (priority);
@@ -229,8 +229,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	    periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-	bufq_alloc(&sd->buf_queue,
-	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&sd->sc_callout);
 
@@ -369,9 +368,9 @@ sddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&sd->buf_queue);
+	bufq_drain(sd->buf_queue);
 
-	bufq_free(&sd->buf_queue);
+	bufq_free(sd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
@@ -725,7 +724,7 @@ sdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(&sd->buf_queue, bp);
+	BUFQ_PUT(sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -798,7 +797,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
@@ -812,7 +811,7 @@ sdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&sd->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(sd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -900,10 +899,10 @@ sdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&sd->buf_queue) != bp)
+		if (BUFQ_GET(sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&sd->buf_queue);
+		BUFQ_GET(sd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -950,7 +949,7 @@ static void
 sdminphys(struct buf *bp)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
-	long max;
+	long xmax;
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -966,10 +965,10 @@ sdminphys(struct buf *bp)
 	if ((sd->flags & SDF_ANCIENT) &&
 	    ((sd->sc_periph->periph_flags &
 	    (PERIPH_REMOVABLE | PERIPH_MEDIA_LOADED)) != PERIPH_REMOVABLE)) {
-		max = sd->sc_dk.dk_label->d_secsize * 0xff;
+		xmax = sd->sc_dk.dk_label->d_secsize * 0xff;
 
-		if (bp->b_bcount > max)
-			bp->b_bcount = max;
+		if (bp->b_bcount > xmax)
+			bp->b_bcount = xmax;
 	}
 
 	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);
@@ -1363,9 +1362,8 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
-	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
-	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
+	if (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	    SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED)
 		return (retval);
 
 	if (SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY &&

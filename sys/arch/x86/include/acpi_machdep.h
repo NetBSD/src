@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.1 2003/05/11 18:20:38 fvdl Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.1.2.1 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -54,8 +54,8 @@ ACPI_STATUS	acpi_md_OsGetRootPointer(UINT32, ACPI_POINTER *);
 #define	acpi_md_OsOut16(x, v)	outw((x), (v))
 #define	acpi_md_OsOut32(x, v)	outl((x), (v))
 
-ACPI_STATUS	acpi_md_OsInstallInterruptHandler(UINT32, OSD_HANDLER, void *,
-		    void **);
+ACPI_STATUS	acpi_md_OsInstallInterruptHandler(UINT32,
+		    ACPI_OSD_HANDLER, void *, void **);
 void		acpi_md_OsRemoveInterruptHandler(void *);
 
 ACPI_STATUS	acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS, UINT32, void **);

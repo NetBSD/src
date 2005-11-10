@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.13 2001/12/04 00:05:05 darrenr Exp $ */
+/*	$NetBSD: oldmon.h,v 1.13.16.1 2005/11/10 13:58:56 skrll Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -193,11 +193,11 @@ struct om_vector {
 	int	(*fbWriteChar) __P((void));/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
-	void	(*fbWriteStr) __P((char *, int));
+	void	(*fbWriteStr) __P((const char *, int));
 					/* Quickly write string to FB */
 
 	/* Reboot interface routine -- resets and reboots system. */
-	void	(*reBoot) __P((char *))	/* e.g. reBoot("xy()vmunix") */
+	void	(*reBoot) __P((const char *))	/* e.g. reBoot("xy()vmunix") */
 					__attribute__((__noreturn__));
 
 	/* Line input and parsing */

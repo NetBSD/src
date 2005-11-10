@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228.2.6 2005/04/01 14:28:21 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.228.2.7 2005/11/10 13:59:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228.2.6 2005/04/01 14:28:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228.2.7 2005/11/10 13:59:08 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -111,6 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228.2.6 2005/04/01 14:28:21 skrll Exp 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
 #include <sys/sysctl.h>
+
+#ifdef COMPAT_13
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#endif
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -258,7 +263,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -358,8 +363,8 @@ setregs(l, pack, stack)
 	struct fpstate *fs;
 	int psr;
 
-	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	/* Don't allow unaligned data references by default */
+	l->l_proc->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -420,7 +425,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct btinfo_kernelfile *bi_file;
-	char *cp;
+	const char *cp;
 
 
 	switch (node.sysctl_num) {
@@ -445,7 +450,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	if (cp == NULL || cp[0] == '\0')
 		return (ENOENT);
 
-	node.sysctl_data = cp;
+	node.sysctl_data = __UNCONST(cp);
 	node.sysctl_size = strlen(cp) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -1080,7 +1085,7 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	/* Disable interrupts. But still allow IPI on MP systems */
-	if (ncpu > 1)
+	if (sparc_ncpus > 1)
 		(void)splsched();
 	else
 		(void)splhigh();
@@ -1469,7 +1474,7 @@ wcopy(vb1, vb2, l)
 {
 	const u_char *b1e, *b1 = vb1;
 	u_char *b2 = vb2;
-	u_short *sp;
+	const u_short *sp;
 	int bstore = 0;
 
 	if (l == 0)
@@ -1482,13 +1487,13 @@ wcopy(vb1, vb2, l)
 	}
 
 	/* middle, */
-	sp = (u_short *)b1;
+	sp = (const u_short *)b1;
 	b1e = b1 + l;
 	if (l & 1)
 		b1e--;
 	bstore = (u_long)b2 & 1;
 
-	while (sp < (u_short *)b1e) {
+	while (sp < (const u_short *)b1e) {
 		if (bstore) {
 			b2[1] = *sp & 0xff;
 			b2[0] = *sp >> 8;

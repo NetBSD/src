@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2.2.5 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.2.6 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -51,7 +51,7 @@ struct btinfo_bootdisk {
 	struct btinfo_common common;
 	int labelsector; /* label valid if != -1 */
 	struct {
-		u_int16_t type, checksum;
+		uint16_t type, checksum;
 		char packname[16];
 	} label;
 	int biosdev;
@@ -95,9 +95,9 @@ struct btinfo_symtab {
 };
 
 struct bi_memmap_entry {
-	u_int64_t addr;		/* beginning of block */	/* 8 */
-	u_int64_t size;		/* size of block */		/* 8 */
-	u_int32_t type;		/* type of block */		/* 4 */
+	uint64_t addr;		/* beginning of block */	/* 8 */
+	uint64_t size;		/* size of block */		/* 8 */
+	uint32_t type;		/* type of block */		/* 4 */
 } __attribute__((packed));				/*	== 20 */
 
 #define	BIM_Memory	1	/* available RAM usable by OS */
@@ -111,18 +111,22 @@ struct btinfo_memmap {
 	struct bi_memmap_entry entry[1]; /* var len */
 };
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 /*
  * Structure describing disk info as seen by the BIOS.
  */
 struct bi_biosgeom_entry {
 	int		sec, head, cyl;		/* geometry */
-	u_int64_t	totsec;			/* LBA sectors from ext int13 */
+	uint64_t	totsec;			/* LBA sectors from ext int13 */
 	int		flags, dev;		/* flags, BIOS device # */
 #define BI_GEOM_INVALID		0x000001
 #define BI_GEOM_EXTINT13	0x000002
-#ifdef BIOSDISK_EXT13INFO_V3
+#ifdef BIOSDISK_EXTINFO_V3
 #define BI_GEOM_BADCKSUM	0x000004	/* v3.x checksum invalid */
 #define BI_GEOM_BUS_MASK	0x00ff00	/* connecting bus type */
 #define BI_GEOM_BUS_ISA		0x000100
@@ -135,10 +139,10 @@ struct bi_biosgeom_entry {
 #define BI_GEOM_IFACE_USB	0x040000
 #define BI_GEOM_IFACE_1394	0x050000	/* Firewire */
 #define BI_GEOM_IFACE_FIBRE	0x060000	/* Fibre channel */
-#define BI_GEOM_IFACE_OTHER	0xff0000	
+#define BI_GEOM_IFACE_OTHER	0xff0000
 	unsigned int	cksum;			/* MBR checksum */
-	u_int		interface_path;		/* ISA iobase PCI bus/dev/fun */
-	u_int64_t	device_path;
+	unsigned int	interface_path;		/* ISA iobase PCI bus/dev/fun */
+	uint64_t	device_path;
 	int		res0;			/* future expansion; 0 now */
 #else
 	unsigned int	cksum;			/* MBR checksum */

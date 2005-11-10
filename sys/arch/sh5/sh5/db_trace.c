@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10.2.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10.2.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -150,14 +150,14 @@ static	int	prologue_movi[64];
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
-    char *modif, void (*pr)(const char *, ...))
+    const char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t pc, fp;
 	db_addr_t nextpc, nextfp;
 	db_addr_t lastpc = 0, lastfp = 0;
 	db_sym_t sym;
 	db_expr_t diff, pc_adj;
-	char *symp;
+	const char *symp;
 	int trace_thread, dump_eframe;
 
 	/* trace_thread is non-zero if tracing a specific process */
@@ -371,7 +371,7 @@ find_prologue(db_addr_t addr)
 {
 	db_sym_t sym;
 	db_expr_t diff;
-	char *symp;
+	const char *symp;
 
 	addr &= ~3;
 #if 0

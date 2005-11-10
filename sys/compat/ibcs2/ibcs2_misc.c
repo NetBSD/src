@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.66.2.7 2005/03/08 13:53:10 skrll Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.66.2.8 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.7 2005/03/08 13:53:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.8 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ibcs2_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
@@ -432,11 +432,11 @@ ibcs2_sys_getdents(l, v, retval)
 		goto out1;
 	}
 	buflen = min(MAXBSIZE, (size_t)SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -453,7 +453,7 @@ again:
 	    &ncookies);
 	if (error)
 		goto out;
-	inp = buf;
+	inp = tbuf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -463,14 +463,17 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_getdents: bad reclen");
-		if ((*cookie >> 32) != 0) {
+		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "ibcs2_getdents");
 			error = EINVAL;
 			goto out;
 		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		ibcs2_reclen = IBCS2_RECLEN(&idb, bdp->d_namlen);
@@ -479,7 +482,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a iBCS2-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -510,7 +516,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -530,7 +536,7 @@ ibcs2_sys_read(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
@@ -565,11 +571,11 @@ ibcs2_sys_read(l, v, retval)
 		return sys_read(l, uap, retval);
 	}
 	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -586,7 +592,7 @@ again:
 	    &ncookies);
 	if (error)
 		goto out;
-	inp = buf;
+	inp = tbuf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -596,7 +602,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_sys_read");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			error = EINVAL;
 			goto out;
@@ -641,7 +650,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, l);
 	return (error);

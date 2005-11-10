@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.10.6.1 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.10.6.2 2005/11/10 14:04:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct ad1848_softc {
 	char	mic_gain_on;		/* CS4231 only */
 	char    mute[AD1848_NUM_CHANNELS];
 
-	char	*chip_name;
+	const char	*chip_name;
 	int	mode;
 	int	is_ad1845;
 

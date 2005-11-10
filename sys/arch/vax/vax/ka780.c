@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.21.6.3 2004/09/21 13:23:58 skrll Exp $ */
+/*	$NetBSD: ka780.c,v 1.21.6.4 2005/11/10 13:59:59 skrll Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.21.6.3 2004/09/21 13:23:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.21.6.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -298,7 +298,7 @@ memlog(int m, struct mcr780 *mcr)
 }
 #endif /* TRENDATA */
 
-char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
+const char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
 	"14","15"};
 
 struct mc780frame {

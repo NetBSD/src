@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.14.2.5 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.14.2.6 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.14.2.5 2004/09/21 13:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.14.2.6 2005/11/10 14:10:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.14.2.5 2004/09/21 13:36:30 skrll Ex
 #include <miscfs/genfs/layer_extern.h>
 
 #define	NLAYERNODECACHE 16
+
+#ifdef LAYERFS_DIAGNOSTIC
+int layerfs_debug = 1;
+#endif
 
 /*
  * layer cache:
@@ -99,7 +103,8 @@ void
 layerfs_init()
 {
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_init\n");		/* printed during system boot */
+	if (layerfs_debug)
+		printf("layerfs_init\n");		/* printed during system boot */
 #endif
 }
 
@@ -110,7 +115,8 @@ void
 layerfs_done()
 {
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_done\n");		/* printed on layerfs detach */
+	if (layerfs_debug)
+		printf("layerfs_done\n");		/* printed on layerfs detach */
 #endif
 }
 
@@ -186,7 +192,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	struct layer_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p) __P((void *));
+	extern int (**dead_vnodeop_p)(void *);
 
 	if ((error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
 			&vp)) != 0)
@@ -300,7 +306,8 @@ layer_node_create(mp, lowervp, newvpp)
 		 * aliasvp
 		 */
 #ifdef LAYERFS_DIAGNOSTIC
-		vprint("layer_node_create: exists", aliasvp);
+		if (layerfs_debug)
+			vprint("layer_node_create: exists", aliasvp);
 #endif
 	} else {
 		int error;
@@ -309,7 +316,8 @@ layer_node_create(mp, lowervp, newvpp)
 		 * Get new vnode.
 		 */
 #ifdef LAYERFS_DIAGNOSTIC
-		printf("layer_node_create: create new alias vnode\n");
+		if (layerfs_debug)
+			printf("layer_node_create: create new alias vnode\n");
 #endif
 
 		/*
@@ -340,16 +348,18 @@ layer_node_create(mp, lowervp, newvpp)
 #endif
 
 #ifdef LAYERFS_DIAGNOSTIC
-	vprint("layer_node_create: alias", aliasvp);
+	if (layerfs_debug)
+		vprint("layer_node_create: alias", aliasvp);
 #endif
 	*newvpp = aliasvp;
 	return (0);
 }
 
+#ifdef LAYERFS_DIAGNOSTIC
 struct vnode *
 layer_checkvp(vp, fil, lno)
 	struct vnode *vp;
-	char *fil;
+	const char *fil;
 	int lno;
 {
 	struct layer_node *a = VTOLAYER(vp);
@@ -395,3 +405,4 @@ layer_checkvp(vp, fil, lno)
 #endif
 	return a->layer_lowervp;
 }
+#endif

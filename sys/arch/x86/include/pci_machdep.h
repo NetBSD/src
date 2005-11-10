@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2.2.4 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.2.5 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_PCI_MACHDEP_H
-#define _X86_PCI_MACHDEP_H
+#ifndef _X86_PCI_MACHDEP_H_
+#define _X86_PCI_MACHDEP_H_
 
 /*
  * Machine-specific definitions for PCI autoconfiguration.
@@ -119,4 +119,16 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  */
 #define	X86_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
 
-#endif /* _X86_PCI_MACHDEP_H */
+void pci_device_foreach(pci_chipset_tag_t, int,
+			void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			void *);
+        
+void pci_device_foreach_min(pci_chipset_tag_t, int, int,
+			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			    void *);
+        
+void pci_bridge_foreach(pci_chipset_tag_t, int, int,
+	void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
+
+
+#endif /* _X86_PCI_MACHDEP_H_ */

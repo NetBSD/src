@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.2.4.4 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.2.4.5 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.2.4.4 2004/09/21 13:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.2.4.5 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,7 @@ static void iavc_pci_attach(struct device *, struct device *, void *);
 
 int iavc_pci_intr(void *);
 
-CFATTACH_DECL(iavc_pci, sizeof(struct iavc_softc),
+CFATTACH_DECL(iavc_pci, sizeof(struct iavc_pci_softc),
     iavc_pci_probe, iavc_pci_attach, NULL, NULL);
 
 static const struct iavc_pci_product {

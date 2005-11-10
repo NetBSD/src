@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.29.2.5 2005/03/04 16:40:02 skrll Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.29.2.6 2005/11/10 14:01:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <compat/linux/arch/mips/linux_exec.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_exec.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_exec.h>
 #endif
 
 
@@ -92,6 +94,7 @@
 #define LINUX_AT_PLATFORM	15	/* CPU string for optimizations */
 #define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
 #define LINUX_AT_CLKTCK		17	/* frequency times() increments */
+#define LINUX_AT_SECURE		23	/* secure mode boolean */
 
 /*
  * Emulation specific sysctls.
@@ -127,6 +130,7 @@ int exec_linux_aout_makecmds __P((struct lwp *, struct exec_package *));
 int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void linux_trapsignal __P((struct lwp *, const ksiginfo_t *));
+int linux_usertrap __P((struct lwp *, vaddr_t, void *));
 
 #ifdef EXEC_ELF32
 int linux_elf32_probe __P((struct lwp *, struct exec_package *, void *,

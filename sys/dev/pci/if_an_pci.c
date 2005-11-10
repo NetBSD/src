@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.10.2.6 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.10.2.7 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10.2.6 2005/03/04 16:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10.2.7 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10.2.6 2005/03/04 16:45:17 skrll Exp
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

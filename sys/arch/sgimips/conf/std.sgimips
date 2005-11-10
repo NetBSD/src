@@ -1,6 +1,7 @@
-#	$NetBSD: std.sgimips,v 1.13.6.3 2004/09/21 13:21:13 skrll Exp $
+#	$NetBSD: std.sgimips,v 1.13.6.4 2005/11/10 13:58:33 skrll Exp $
 
 machine sgimips mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipseb"
 
 options 	EXEC_ELF32	# exec ELF32 binaries

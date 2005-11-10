@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.h,v 1.1 2001/10/18 09:12:14 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.h,v 1.1.22.1 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -46,6 +46,17 @@ struct rip6stat {
 
 	u_quad_t rip6s_opackets;	/* total output packets */
 };
+
+/*
+ * Names for Raw IPv6 sysctl objects
+ */
+#define RAW6CTL_STATS	1
+#define RAW6CTL_MAXID	2
+
+#define RAW6CTL_NAMES { \
+	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
+}
 
 #ifdef _KERNEL
 extern struct rip6stat rip6stat;

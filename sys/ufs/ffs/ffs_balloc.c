@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.33.2.5 2004/12/18 09:33:18 skrll Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.33.2.6 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.33.2.5 2004/12/18 09:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.33.2.6 2005/11/10 14:12:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -66,8 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.33.2.5 2004/12/18 09:33:18 skrll Ex
 
 #include <uvm/uvm.h>
 
-static int ffs_balloc_ufs1(void *);
-static int ffs_balloc_ufs2(void *);
+static int ffs_balloc_ufs1(struct vnode *, off_t, int, struct ucred *, int,
+    struct buf **);
+static int ffs_balloc_ufs2(struct vnode *, off_t, int, struct ucred *, int,
+    struct buf **);
 
 /*
  * Balloc defines the structure of file system storage
@@ -76,35 +78,22 @@ static int ffs_balloc_ufs2(void *);
  */
 
 int
-ffs_balloc(v)
-	void *v;
+ffs_balloc(struct vnode *vp, off_t off, int size, struct ucred *cred, int flags,
+    struct buf **bpp)
 {
-	struct vop_balloc_args *ap = v;
 
-	if (VTOI(ap->a_vp)->i_fs->fs_magic == FS_UFS2_MAGIC)
-		return ffs_balloc_ufs2(v);
+	if (VTOI(vp)->i_fs->fs_magic == FS_UFS2_MAGIC)
+		return ffs_balloc_ufs2(vp, off, size, cred, flags, bpp);
 	else
-		return ffs_balloc_ufs1(v);
+		return ffs_balloc_ufs1(vp, off, size, cred, flags, bpp);
 }
 
 static int
-ffs_balloc_ufs1(v)
-	void *v;
+ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, struct ucred *cred,
+    int flags, struct buf **bpp)
 {
-	struct vop_balloc_args /* {
-		struct vnode *a_vp;
-		off_t a_startoffset;
-		int a_size;
-		struct ucred *a_cred;
-		int a_flags;
-		struct buf **a_bpp;
-	} */ *ap = v;
 	daddr_t lbn, lastlbn;
-	int size;
-	struct ucred *cred;
-	int flags;
 	struct buf *bp, *nbp;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
@@ -114,14 +103,13 @@ ffs_balloc_ufs1(v)
 	int32_t *blkp, *allocblk, allociblk[NIADDR + 1];
 	int32_t *allocib;
 	int unwindidx = -1;
-	struct buf **bpp = ap->a_bpp;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
-	lbn = lblkno(fs, ap->a_startoffset);
-	size = blkoff(fs, ap->a_startoffset) + ap->a_size;
+	lbn = lblkno(fs, off);
+	size = blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
 	if (bpp != NULL) {
@@ -132,8 +120,6 @@ ffs_balloc_ufs1(v)
 	KASSERT(size <= fs->fs_bsize);
 	if (lbn < 0)
 		return (EFBIG);
-	cred = ap->a_cred;
-	flags = ap->a_flags;
 
 	/*
 	 * If the next write will extend the file into a new block,
@@ -487,7 +473,7 @@ fail:
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
 		/*
@@ -499,7 +485,7 @@ fail:
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (DOINGSOFTDEP(vp))
-				VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
@@ -539,23 +525,11 @@ fail:
 }
 
 static int
-ffs_balloc_ufs2(v)
-	void *v;
+ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, struct ucred *cred,
+    int flags, struct buf **bpp)
 {
-	struct vop_balloc_args /* {
-		struct vnode *a_vp;
-		off_t a_startoffset;
-		int a_size;
-		struct ucred *a_cred;
-		int a_flags;
-		struct buf **a_bpp;
-	} */ *ap = v;
 	daddr_t lbn, lastlbn;
-	int size;
-	struct ucred *cred;
-	int flags;
 	struct buf *bp, *nbp;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
@@ -565,14 +539,13 @@ ffs_balloc_ufs2(v)
 	daddr_t *blkp, *allocblk, allociblk[NIADDR + 1];
 	int64_t *allocib;
 	int unwindidx = -1;
-	struct buf **bpp = ap->a_bpp;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
-	lbn = lblkno(fs, ap->a_startoffset);
-	size = blkoff(fs, ap->a_startoffset) + ap->a_size;
+	lbn = lblkno(fs, off);
+	size = blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
 	if (bpp != NULL) {
@@ -583,8 +556,6 @@ ffs_balloc_ufs2(v)
 	KASSERT(size <= fs->fs_bsize);
 	if (lbn < 0)
 		return (EFBIG);
-	cred = ap->a_cred;
-	flags = ap->a_flags;
 
 #ifdef notyet
 	/*
@@ -1045,7 +1016,7 @@ fail:
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
 		/*
@@ -1057,7 +1028,7 @@ fail:
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (DOINGSOFTDEP(vp))
-				VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 

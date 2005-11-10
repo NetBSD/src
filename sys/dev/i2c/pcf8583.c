@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.1.4.5 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.1.4.6 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -86,8 +86,8 @@ static int pcfrtc_clock_read(struct pcfrtc_softc *, struct clock_ymdhms *,
 			     uint8_t *);
 static int pcfrtc_clock_write(struct pcfrtc_softc *, struct clock_ymdhms *,
 			      uint8_t);
-static int pcfrtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int pcfrtc_settime(struct todr_chip_handle *, struct timeval *);
+static int pcfrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int pcfrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int pcfrtc_getcal(struct todr_chip_handle *, int *);
 static int pcfrtc_setcal(struct todr_chip_handle *, int);
 
@@ -265,7 +265,7 @@ pcfrtc_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-pcfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+pcfrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct pcfrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -281,7 +281,7 @@ pcfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 }
 
 static int
-pcfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+pcfrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct pcfrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

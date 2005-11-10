@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.70.2.6 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.70.2.7 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70.2.6 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70.2.7 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,7 +98,7 @@ int ipsec_debug = 0;
 struct ipsecstat ipsecstat;
 int ip4_ah_cleartos = 1;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
-int ip4_ipsec_dfbit = 0;	/* DF bit on encap. 0: clear 1: set 2: copy */
+int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
 int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
@@ -1211,7 +1211,7 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 	}
 	bzero(new, sizeof(*new));
 
-	if (so->so_uid == 0)	/* XXX */
+	if (so->so_uidinfo->ui_uid == 0)	/* XXX */
 		new->priv = 1;
 	else
 		new->priv = 0;
@@ -3233,10 +3233,8 @@ ipsec4_splithdr(m)
 			m_freem(m);
 			return NULL;
 		}
-		M_COPY_PKTHDR(mh, m);
+		M_MOVE_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
 		mh->m_next = m;
@@ -3271,10 +3269,8 @@ ipsec6_splithdr(m)
 			m_freem(m);
 			return NULL;
 		}
-		M_COPY_PKTHDR(mh, m);
+		M_MOVE_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
 		mh->m_next = m;
@@ -3400,7 +3396,7 @@ ipsec_copypkt(m)
 						    0, M_COPYALL, M_DONTWAIT);
 					}
 #endif
-					M_COPY_PKTHDR(mnew, n);
+					M_MOVE_PKTHDR(mnew, n);
 				}
 				else {
 					MGET(mnew, M_DONTWAIT, MT_DATA);

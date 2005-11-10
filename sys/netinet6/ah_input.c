@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.38.2.3 2004/09/21 13:37:31 skrll Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.38.2.4 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.3 2004/09/21 13:37:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.4 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.3 2004/09/21 13:37:31 skrll Exp 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/in_proto.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ecn.h>
@@ -108,11 +110,24 @@ ah4_input(m, va_alist)
 	int off, proto;
 	va_list ap;
 	size_t stripsiz = 0;
+	u_int16_t sport = 0;
+	u_int16_t dport = 0;
+#ifdef IPSEC_NAT_T
+	struct m_tag *tag = NULL;
+#endif
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
 	proto = va_arg(ap, int);
 	va_end(ap);
+
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT-T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL)) != NULL) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
 
 	ip = mtod(m, struct ip *);
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
@@ -130,7 +145,7 @@ ah4_input(m, va_alist)
 
 	if ((sav = key_allocsa(AF_INET,
 	                      (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst,
-	                      IPPROTO_AH, spi)) == 0) {
+	                      IPPROTO_AH, spi, sport, dport)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv4 AH input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -517,7 +532,7 @@ ah4_ctlinput(cmd, sa, v)
 		if ((sav = key_allocsa(AF_INET,
 				       (caddr_t) &ip->ip_src,
 				       (caddr_t) &ip->ip_dst,
-				       IPPROTO_AH, ah->ah_spi)) == NULL)
+				       IPPROTO_AH, ah->ah_spi, 0, 0)) == NULL)
 			return NULL;
 		if (sav->state != SADB_SASTATE_MATURE &&
 		    sav->state != SADB_SASTATE_DYING) {
@@ -587,7 +602,7 @@ ah6_input(mp, offp, proto)
 
 	if ((sav = key_allocsa(AF_INET6,
 	                      (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst,
-	                      IPPROTO_AH, spi)) == 0) {
+	                      IPPROTO_AH, spi, 0, 0)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv6 AH input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -962,7 +977,7 @@ ah6_ctlinput(cmd, sa, d)
 			sav = key_allocsa(AF_INET6,
 					  (caddr_t)&sa6_src->sin6_addr,
 					  (caddr_t)&sa6_dst->sin6_addr,
-					  IPPROTO_AH, ahp->ah_spi);
+					  IPPROTO_AH, ahp->ah_spi, 0, 0);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)

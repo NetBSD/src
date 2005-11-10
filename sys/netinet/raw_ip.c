@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.70.2.6 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.70.2.7 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.6 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.7 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.6 2005/04/01 14:31:50 skrll Exp $"
 #include <netinet/ip_mroute.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_proto.h>
 #include <netinet/in_var.h>
 
 #include <machine/stdarg.h>

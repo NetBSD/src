@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.6 2005/03/04 16:39:37 skrll Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.7 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.6 2005/03/04 16:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.7 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,35 +445,35 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 	if (!error) {
 		size_t resid;
 		struct coff_slhdr *slhdr;
-		char *buf, *bufp;
+		char *tbuf, *bufp;
 		size_t len = sh.s_size, path_index, entry_len;
 
 		if (len > 64 * 1024)
 			return ENOEXEC;
 
-		buf = (char *) malloc(len, M_TEMP, M_WAITOK);
-		if (buf == NULL)
+		tbuf = malloc(len, M_TEMP, M_WAITOK);
+		if (tbuf == NULL)
 			return ENOEXEC;
 
 		/* DPRINTF(("COFF shlib size %d offset %d\n",
 			 sh.s_size, sh.s_scnptr)); */
 
-		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
+		error = vn_rdwr(UIO_READ, epp->ep_vp, tbuf,
 				len, sh.s_scnptr,
 				UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
 				&resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
-			free(buf, M_TEMP);
+			free(tbuf, M_TEMP);
 			return ENOEXEC;
 		}
-		bufp = buf;
+		bufp = tbuf;
 		while (len) {
 			slhdr = (struct coff_slhdr *)bufp;
 
 			if (slhdr->path_index > LONG_MAX / sizeof(long) ||
 			    slhdr->entry_len > LONG_MAX / sizeof(long)) {
-				free(buf, M_TEMP);
+				free(tbuf, M_TEMP);
 				return ENOEXEC;
 			}
 
@@ -481,7 +481,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 			entry_len = slhdr->entry_len * sizeof(long);
 
 			if (entry_len > len) {
-				free(buf, M_TEMP);
+				free(tbuf, M_TEMP);
 				return ENOEXEC;
 			}
 
@@ -490,13 +490,13 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 
 			error = coff_load_shlib(l, slhdr->sl_name, epp);
 			if (error) {
-				free(buf, M_TEMP);
+				free(tbuf, M_TEMP);
 				return ENOEXEC;
 			}
 			bufp += entry_len;
 			len -= entry_len;
 		}
-		free(buf, M_TEMP);
+		free(tbuf, M_TEMP);
 	}
 
 	/* set up entry point */

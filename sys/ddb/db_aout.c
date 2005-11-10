@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.35 2003/05/17 00:28:44 kristerw Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.35.2.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.35 2003/05/17 00:28:44 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.35.2.1 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.35 2003/05/17 00:28:44 kristerw Exp $"
 #include <ddb/db_aout.h>
 
 static boolean_t db_aout_sym_init(int, void *, void *, const char *);
-static db_sym_t	db_aout_lookup(db_symtab_t *, char *);
+static db_sym_t	db_aout_lookup(db_symtab_t *, const char *);
 static db_sym_t	db_aout_search_symbol(db_symtab_t *, db_addr_t, db_strategy_t,
 		    db_expr_t *);
-static void	db_aout_symbol_values(db_symtab_t *, db_sym_t, char **,
+static void	db_aout_symbol_values(db_symtab_t *, db_sym_t, const char **,
 		    db_expr_t *);
 static boolean_t db_aout_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
 		    db_expr_t);
@@ -164,7 +164,7 @@ db_aout_sym_init(
 }
 
 static db_sym_t
-db_aout_lookup(db_symtab_t *stab, char *symstr)
+db_aout_lookup(db_symtab_t *stab, const char *symstr)
 {
 	struct nlist *sp, *ep;
 
@@ -234,7 +234,7 @@ db_aout_search_symbol(db_symtab_t *symtab, db_addr_t off,
  * Return the name and value for a symbol.
  */
 static void
-db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
+db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym, const char **namep,
     db_expr_t *valuep)
 {
 	struct nlist *sp;
@@ -316,6 +316,7 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	struct nlist		*sp, *ep;
 	u_long			addr;
 	int			maxnarg = *nargp, nargs = 0;
+	static char question[] = "???";
 
 	if ((struct nlist *)cursym == NULL)
 		return FALSE;
@@ -333,7 +334,7 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 					break;
 				nargs++;
 				*argnamep++ = sp->n_un.n_name ?
-				    sp->n_un.n_name : "???";
+				    sp->n_un.n_name : question;
 				{
 				/* XXX - remove trailers */
 				char *cp = *(argnamep-1);

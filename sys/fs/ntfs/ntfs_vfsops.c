@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.10 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.10 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.9 2005/04/01 14:30:56 skrll E
 
 #include <miscfs/specfs/specdev.h>
 
-/*#define NTFS_DEBUG 1*/
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_subr.h>
@@ -67,80 +66,51 @@ MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
 MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
 #if defined(__FreeBSD__)
-static int	ntfs_mount __P((struct mount *, char *, caddr_t,
-				struct nameidata *, struct proc *));
+static int	ntfs_mount(struct mount *, char *, caddr_t,
+				struct nameidata *, struct proc *);
 #else
-static int	ntfs_mount __P((struct mount *, const char *, void *,
-				struct nameidata *, struct lwp *));
+static int	ntfs_mount(struct mount *, const char *, void *,
+				struct nameidata *, struct lwp *);
 #endif
-static int	ntfs_quotactl __P((struct mount *, int, uid_t, void *,
-				   struct lwp *));
-static int	ntfs_root __P((struct mount *, struct vnode **));
-static int	ntfs_start __P((struct mount *, int, struct lwp *));
-static int	ntfs_statvfs __P((struct mount *, struct statvfs *,
-				 struct lwp *));
-static int	ntfs_sync __P((struct mount *, int, struct ucred *,
-			       struct lwp *));
-static int	ntfs_unmount __P((struct mount *, int, struct lwp *));
-static int	ntfs_vget __P((struct mount *mp, ino_t ino,
-			       struct vnode **vpp));
-static int	ntfs_mountfs __P((struct vnode *, struct mount *,
-				  struct ntfs_args *, struct lwp *));
-static int	ntfs_vptofh __P((struct vnode *, struct fid *));
+static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
+				   struct lwp *);
+static int	ntfs_root(struct mount *, struct vnode **);
+static int	ntfs_start(struct mount *, int, struct lwp *);
+static int	ntfs_statvfs(struct mount *, struct statvfs *,
+				 struct lwp *);
+static int	ntfs_sync(struct mount *, int, struct ucred *,
+			       struct lwp *);
+static int	ntfs_unmount(struct mount *, int, struct lwp *);
+static int	ntfs_vget(struct mount *mp, ino_t ino,
+			       struct vnode **vpp);
+static int	ntfs_mountfs(struct vnode *, struct mount *,
+				  struct ntfs_args *, struct lwp *);
+static int	ntfs_vptofh(struct vnode *, struct fid *);
 
 #if defined(__FreeBSD__)
-static int	ntfs_init __P((struct vfsconf *));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(struct vfsconf *);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct sockaddr *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #elif defined(__NetBSD__)
-static void	ntfs_init __P((void));
-static void	ntfs_reinit __P((void));
-static void	ntfs_done __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
-				 struct vnode **));
-static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
-				   int *, struct ucred **));
-static int	ntfs_mountroot __P((void));
+static void	ntfs_init(void);
+static void	ntfs_reinit(void);
+static void	ntfs_done(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
+				 struct vnode **);
+static int	ntfs_mountroot(void);
 #else
-static int	ntfs_init __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #endif
 
-struct genfs_ops ntfs_genfsops = {
-	NULL,
-	NULL,
-	genfs_compat_gop_write,
+static const struct genfs_ops ntfs_genfsops = {
+	.gop_write = genfs_compat_gop_write,
 };
 
 #ifdef __NetBSD__
-/*
- * Verify a remote client has export rights and return these rights via.
- * exflagsp and credanonp.
- */
-static int
-ntfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct ntfsmount *ntm = VFSTONTFS(mp);
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ntm->ntm_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}
 
 SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 {
@@ -283,7 +253,6 @@ ntfs_mount (
 		args.gid = ntmp->ntm_gid;
 		args.mode = ntmp->ntm_mode;
 		args.flag = ntmp->ntm_flag;
-		vfs_showexport(mp, &args.export, &ntmp->ntm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	/*
@@ -302,16 +271,6 @@ ntfs_mount (
 	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
-		/* if not updating name...*/
-		if (args.fspec == 0) {
-			/*
-			 * Process export requests.  Jumping to "success"
-			 * will return the vfs_export() error code.
-			 */
-			struct ntfsmount *ntm = VFSTONTFS(mp);
-			return (vfs_export(mp, &ntm->ntm_export, &args.export));
-		}
-
 		printf("ntfs_mount(): MNT_UPDATE not supported\n");
 		return (EINVAL);
 	}
@@ -828,8 +787,8 @@ ntfs_fhtovp(
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
-	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat.f_mntonname,
-		ntfhp->ntfid_ino));
+	ddprintf(("ntfs_fhtovp(): %s: %llu\n", mp->mnt_stat.f_mntonname,
+	    (unsigned long long)ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
@@ -884,9 +843,9 @@ ntfs_vgetex(
 	struct vnode *vp;
 	enum vtype f_type = VBAD;
 
-	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
-		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
-		(u_long)flags ));
+	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx, f:"
+	    " 0x%lx\n", (unsigned long long)ino, attrtype,
+	    attrname ? attrname : "", (u_long)lkflags, (u_long)flags));
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -902,8 +861,8 @@ ntfs_vgetex(
 	if (!(flags & VG_DONTLOADIN) && !(ip->i_flag & IN_LOADED)) {
 		error = ntfs_loadntnode(ntmp, ip);
 		if(error) {
-			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO: %d\n",
-			       ip->i_number);
+			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO:"
+			    " %llu\n", (unsigned long long)ip->i_number);
 			ntfs_ntput(ip);
 			return (error);
 		}
@@ -960,7 +919,8 @@ ntfs_vgetex(
 		ntfs_ntput(ip);
 		return (error);
 	}
-	dprintf(("ntfs_vget: vnode: %p for ntnode: %d\n", vp,ino));
+	dprintf(("ntfs_vget: vnode: %p for ntnode: %llu\n", vp,
+	    (unsigned long long)ino));
 
 #ifdef __FreeBSD__
 	lockinit(&fp->f_lock, PINOD, "fnode", 0, 0);
@@ -1036,9 +996,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_init,
 	ntfs_reinit,
 	ntfs_done,
-	NULL,
 	ntfs_mountroot,
-	ntfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,

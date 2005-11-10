@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.19.6.3 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: fifo.h,v 1.19.6.4 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,20 +34,20 @@
 /*
  * Prototypes for fifo operations on vnodes.
  */
-int	fifo_lookup	__P((void *));
+int	fifo_lookup(void *);
 #define fifo_create	genfs_badop
 #define fifo_mknod	genfs_badop
-int	fifo_open	__P((void *));
-int	fifo_close	__P((void *));
+int	fifo_open(void *);
+int	fifo_close(void *);
 #define fifo_access	genfs_ebadf
 #define fifo_getattr	genfs_ebadf
 #define fifo_setattr	genfs_ebadf
-int	fifo_read	__P((void *));
-int	fifo_write	__P((void *));
+int	fifo_read(void *);
+int	fifo_write(void *);
 #define fifo_lease_check genfs_nullop
-int	fifo_ioctl	__P((void *));
-int	fifo_poll	__P((void *));
-int	fifo_kqfilter	__P((void *));
+int	fifo_ioctl(void *);
+int	fifo_poll(void *);
+int	fifo_kqfilter(void *);
 #define fifo_revoke	genfs_revoke
 #define fifo_mmap	genfs_badop
 #define fifo_fsync	genfs_nullop
@@ -64,22 +64,16 @@ int	fifo_kqfilter	__P((void *));
 #define fifo_reclaim	genfs_nullop
 #define	fifo_lock	genfs_lock
 #define	fifo_unlock	genfs_unlock
-int	fifo_inactive	__P((void *));
-int	fifo_bmap	__P((void *));
+int	fifo_inactive(void *);
+int	fifo_bmap(void *);
 #define fifo_strategy	genfs_badop
-int	fifo_print	__P((void *));
+int	fifo_print(void *);
 #define fifo_islocked	genfs_islocked
-int	fifo_pathconf	__P((void *));
+int	fifo_pathconf(void *);
 #define	fifo_advlock	genfs_einval
-#define fifo_blkatoff	genfs_badop
-#define fifo_valloc	genfs_badop
-#define fifo_reallocblks genfs_badop
-#define fifo_vfree	genfs_badop
-#define fifo_truncate	genfs_nullop
-#define fifo_update	genfs_nullop
 #define fifo_bwrite	genfs_nullop
 #define	fifo_putpages	genfs_null_putpages
 
-void 	fifo_printinfo __P((struct vnode *));
+void 	fifo_printinfo(struct vnode *);
 
-extern int (**fifo_vnodeop_p) __P((void *));
+extern int (**fifo_vnodeop_p)(void *);

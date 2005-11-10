@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.11.6.4 2005/03/04 16:50:39 skrll Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.11.6.5 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,10 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 
+#if NWSKBD > 0
+#include "opt_wsdisplay_compat.h"
+#endif
+
 struct kbd_softc {
 	struct device k_dev;	/* required first: base device */
 
@@ -57,6 +61,9 @@ struct kbd_softc {
 #if NWSKBD > 0
 	struct device * k_wskbd;/* handle for wskbd, if it is attached */
 	int k_wsenabled;	/* set if we are using wskbd */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int k_wsraw;		/* send raw events to wscons */
+#endif
 	struct callout k_wsbell;/* to shut the bell off */
 #endif
 
@@ -73,6 +80,7 @@ struct kbd_softc {
 	int k_repeatsym;	/* repeating symbol */
 	int k_repeating;	/* callout is active (use callout_active?) */
 	struct callout k_repeat_ch;
+	int k_leds;
 };
 
 

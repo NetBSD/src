@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.41.2.9 2005/02/04 11:48:04 skrll Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.41.2.10 2005/11/10 14:11:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct lwp *,
 int nfs_flushstalebuf __P((struct vnode *, struct ucred *, struct lwp *, int));
 #define	NFS_FLUSHSTALEBUF_MYWRITE	1	/* assume writes are ours */
 int nfs_asyncio __P((struct buf *));
-int nfs_doio __P((struct buf *, struct lwp *));
+int nfs_doio __P((struct buf *));
 
 /* nfs_boot.c */
 /* see nfsdiskless.h */
@@ -102,9 +102,9 @@ void nfs_kqinit __P((void));
 void nfs_nhinit __P((void));
 void nfs_nhreinit __P((void));
 void nfs_nhdone __P((void));
-int nfs_nget1 __P((struct mount *, nfsfh_t *, int, struct nfsnode **, int, struct lwp *));
-#define	nfs_nget(mp, fhp, fhsize, npp, l) \
-	nfs_nget1((mp), (fhp), (fhsize), (npp), 0, l)
+int nfs_nget1 __P((struct mount *, nfsfh_t *, int, struct nfsnode **, int));
+#define	nfs_nget(mp, fhp, fhsize, npp) \
+	nfs_nget1((mp), (fhp), (fhsize), (npp), 0)
 
 /* nfs_vnops.c */
 int nfs_null __P((struct vnode *, struct ucred *, struct lwp *));
@@ -234,7 +234,7 @@ void nfs_sndunlock __P((int *));
 int nfs_rcvlock __P((struct nfsreq *));
 void nfs_rcvunlock __P((struct nfsmount *));
 int nfs_getreq __P((struct nfsrv_descript *, struct nfsd *, int));
-int nfs_msg __P((struct lwp *, char *, char *));
+int nfs_msg __P((struct lwp *, const char *, const char *));
 void nfsrv_rcv __P((struct socket *, caddr_t, int));
 int nfsrv_getstream __P((struct nfssvc_sock *, int));
 int nfsrv_dorec __P((struct nfssvc_sock *, struct nfsd *,
@@ -287,10 +287,7 @@ void nfsm_srvpostopattr __P((struct nfsrv_descript *, int, struct vattr *,
 void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *));
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
-		      struct nfssvc_sock *, struct mbuf *, int *, int,
-		      int));
-int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
-			   struct export_args *));
+		      struct nfssvc_sock *, struct mbuf *, int *, int, int));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
 
@@ -333,4 +330,12 @@ int nfs_getnickauth __P((struct nfsmount *, struct ucred *, char **, int *,
 			 char *, int));
 int nfs_savenickauth __P((struct nfsmount *, struct ucred *, int, NFSKERBKEY_T,
 			  struct mbuf **, char **, struct mbuf *));
+
+/* nfs_export.c */
+extern struct nfs_public nfs_pub;
+int mountd_set_exports_list(const struct mountd_exports_list *, struct lwp *);
+int nfs_check_export(struct mount *, struct mbuf *, int *, struct ucred **);
+#ifdef COMPAT_30
+int nfs_update_exports_30(struct mount *, const char *, void *, struct lwp *);
+#endif
 #endif /* _KERNEL */

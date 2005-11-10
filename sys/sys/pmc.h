@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.2.12.1 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: pmc.h,v 1.2.12.2 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -51,9 +51,11 @@ struct pmc_counter_cfg {
  * functions or macros.
  *
  * int	pmc_get_num_counters(void);
+ * int	pmc_get_counter_type(int ctr);
  *
  * void	pmc_save_context(struct proc *p);
  * void	pmc_restore_context(struct proc *p);
+ * void	pmc_process_exit(struct proc *p);
  *
  * int	pmc_enable_counter(struct proc *p, int ctr);
  * int	pmc_disable_counter(struct proc *p, int ctr);

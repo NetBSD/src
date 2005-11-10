@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.19 2002/10/05 17:01:52 chs Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.19.6.1 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,24 +82,24 @@ int	OF_peer(int);
 int	OF_child(int);
 int	OF_parent(int);
 int	OF_instance_to_package(int);
-int	OF_getproplen(int, char *);
-int	OF_getprop(int, char *, void *, int);
-int	OF_nextprop(int, char *, void *);
-int	OF_setprop(int, char *, const void *, int);
-int	OF_finddevice(char *);
+int	OF_getproplen(int, const char *);
+int	OF_getprop(int, const char *, void *, int);
+int	OF_nextprop(int, const char *, void *);
+int	OF_setprop(int, const char *, const void *, int);
+int	OF_finddevice(const char *);
 int	OF_instance_to_path(int, char *, int);
 int	OF_package_to_path(int, char *, int);
-int	OF_call_method_1(char *, int, int, ...);
-int	OF_call_method(char *, int, int, int, ...);
-int	OF_open(char *);
+int	OF_call_method_1(const char *, int, int, ...);
+int	OF_call_method(const char *, int, int, int, ...);
+int	OF_open(const char *);
 void	OF_close(int);
 int	OF_read(int, void *, int);
-int	OF_write(int, void *, int);
+int	OF_write(int, const void *, int);
 int	OF_seek(int, u_quad_t);
 void	*OF_claim(void *, u_int, u_int);
 void	OF_release(void *, u_int);
 int	OF_milliseconds(void);
-void	OF_boot(char *) __attribute__((__noreturn__));
+void	OF_boot(const char *) __attribute__((__noreturn__));
 void	OF_enter(void);
 void	OF_exit(void) __attribute__((__noreturn__));
 void	(*OF_set_callback(void(*)(void *)))(void *);
@@ -109,7 +109,7 @@ int	openfirmware(void *);
  * Functions and variables provided by machine-independent code.
  */
 int	of_compatible(int, const char * const *);
-int	of_decode_int(const unsigned char *buf);
+int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 
 int	*of_network_decode_media(int, int *, int *);

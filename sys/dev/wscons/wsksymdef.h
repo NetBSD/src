@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.47.6.5 2005/03/08 13:53:11 skrll Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47.6.6 2005/11/10 14:08:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -390,6 +390,8 @@
 #define KS_F19			0xf352
 #define KS_F20			0xf353
 
+#define KS_Power		0xf36d
+
 #define KS_Home			0xf381
 #define KS_Prior		0xf382
 #define KS_Next			0xf383
@@ -506,7 +508,7 @@ action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
 action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
 action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
 action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
-action(KB_FI,	0,	0x0900,	"fi",	,	"Finish")	\
+action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
 action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
 action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
 action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")	\
@@ -521,6 +523,7 @@ action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")	\
 action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")	\
 action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")	\
 action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
+#define KB_NONE 0x0000
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,

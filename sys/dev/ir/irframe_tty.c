@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.26.2.5 2005/03/04 16:43:12 skrll Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.26.2.6 2005/11/10 14:05:22 skrll Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.26.2.5 2005/03/04 16:43:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.26.2.6 2005/11/10 14:05:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,11 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.26.2.5 2005/03/04 16:43:12 skrll E
 
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x
-#define Static
 int irframetdebug = 0;
 #else
 #define DPRINTF(x)
-#define Static static
 #endif
 
 /*****/
@@ -130,55 +128,55 @@ struct irframet_softc {
 };
 
 /* line discipline methods */
-int	irframetopen(dev_t dev, struct tty *tp);
-int	irframetclose(struct tty *tp, int flag);
-int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
-		      struct lwp *);
-int	irframetinput(int c, struct tty *tp);
-int	irframetstart(struct tty *tp);
+int	irframetopen(dev_t, struct tty *);
+int	irframetclose(struct tty *, int);
+int	irframetioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+int	irframetinput(int, struct tty *);
+int	irframetstart(struct tty *);
 
 /* pseudo device init */
 void	irframettyattach(int);
 
 /* irframe methods */
-Static int	irframet_open(void *h, int flag, int mode, struct lwp *l);
-Static int	irframet_close(void *h, int flag, int mode, struct lwp *l);
-Static int	irframet_read(void *h, struct uio *uio, int flag);
-Static int	irframet_write(void *h, struct uio *uio, int flag);
-Static int	irframet_poll(void *h, int events, struct lwp *l);
-Static int	irframet_kqfilter(void *h, struct knote *kn);
-Static int	irframet_set_params(void *h, struct irda_params *params);
-Static int	irframet_get_speeds(void *h, int *speeds);
-Static int	irframet_get_turnarounds(void *h, int *times);
+static int	irframet_open(void *, int, int, struct lwp *);
+static int	irframet_close(void *, int, int, struct lwp *);
+static int	irframet_read(void *, struct uio *, int);
+static int	irframet_write(void *, struct uio *, int);
+static int	irframet_poll(void *, int, struct lwp *);
+static int	irframet_kqfilter(void *, struct knote *);
+
+static int	irframet_set_params(void *, struct irda_params *);
+static int	irframet_get_speeds(void *, int *);
+static int	irframet_get_turnarounds(void *, int *);
 
 /* internal */
-Static int	irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len);
-Static int	irt_putc(struct tty *tp, int c);
-Static void	irt_frame(struct irframet_softc *sc, u_char *buf, u_int len);
-Static void	irt_timeout(void *v);
-Static void	irt_ioctl(struct tty *tp, u_long cmd, void *arg);
-Static void	irt_setspeed(struct tty *tp, u_int speed);
-Static void	irt_setline(struct tty *tp, u_int line);
-Static void	irt_delay(struct tty *tp, u_int delay);
+static int	irt_write_frame(struct tty *, u_int8_t *, size_t);
+static int	irt_putc(struct tty *, int);
+static void	irt_frame(struct irframet_softc *, u_char *, u_int);
+static void	irt_timeout(void *);
+static void	irt_ioctl(struct tty *, u_long, void *);
+static void	irt_setspeed(struct tty *, u_int);
+static void	irt_setline(struct tty *, u_int);
+static void	irt_delay(struct tty *, u_int);
 
-Static const struct irframe_methods irframet_methods = {
+static const struct irframe_methods irframet_methods = {
 	irframet_open, irframet_close, irframet_read, irframet_write,
 	irframet_poll, irframet_kqfilter, irframet_set_params,
 	irframet_get_speeds, irframet_get_turnarounds
 };
 
-Static void irts_none(struct tty *tp, u_int speed);
-Static void irts_tekram(struct tty *tp, u_int speed);
-Static void irts_jeteye(struct tty *tp, u_int speed);
-Static void irts_actisys(struct tty *tp, u_int speed);
-Static void irts_litelink(struct tty *tp, u_int speed);
-Static void irts_girbil(struct tty *tp, u_int speed);
+static void irts_none(struct tty *, u_int);
+static void irts_tekram(struct tty *, u_int);
+static void irts_jeteye(struct tty *, u_int);
+static void irts_actisys(struct tty *, u_int);
+static void irts_litelink(struct tty *, u_int);
+static void irts_girbil(struct tty *, u_int);
 
 #define NORMAL_SPEEDS (IRDA_SPEEDS_SIR & ~IRDA_SPEED_2400)
 #define TURNT_POS (IRDA_TURNT_10000 | IRDA_TURNT_5000 | IRDA_TURNT_1000 | \
 	IRDA_TURNT_500 | IRDA_TURNT_100 | IRDA_TURNT_50 | IRDA_TURNT_10)
-Static const struct dongle {
-	void (*setspeed)(struct tty *tp, u_int speed);
+static const struct dongle {
+	void (*setspeed)(struct tty *, u_int);
 	u_int speedmask;
 	u_int turnmask;
 } irt_dongles[DONGLE_MAX] = {
@@ -340,7 +338,7 @@ irframetstart(struct tty *tp)
 }
 
 void
-irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
+irt_frame(struct irframet_softc *sc, u_char *tbuf, u_int len)
 {
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
 		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
@@ -355,7 +353,7 @@ irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
 	}
 	if (sc->sc_frames[sc->sc_framei].buf == NULL)
 		return;
-	memcpy(sc->sc_frames[sc->sc_framei].buf, buf, len);
+	memcpy(sc->sc_frames[sc->sc_framei].buf, tbuf, len);
 	sc->sc_frames[sc->sc_framei].len = len;
 	sc->sc_framei = (sc->sc_framei+1) % MAXFRAMES;
 	sc->sc_nframes++;
@@ -601,25 +599,25 @@ irframet_write(void *h, struct uio *uio, int flag)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-	u_int8_t buf[MAX_IRDA_FRAME];
+	u_int8_t tbuf[MAX_IRDA_FRAME];
 	int n;
 
 	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
-	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_params.ebofs);
+	n = irda_sir_frame(tbuf, MAX_IRDA_FRAME, uio, sc->sc_params.ebofs);
 	if (n < 0) {
 #ifdef IRFRAMET_DEBUG
 		printf("%s: irda_sir_frame() error=%d\n", __FUNCTION__, -n);
 #endif
 		return (-n);
 	}
-	return (irt_write_frame(tp, buf, n));
+	return (irt_write_frame(tp, tbuf, n));
 }
 
 int
-irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len)
+irt_write_frame(struct tty *tp, u_int8_t *tbuf, size_t len)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error, i;
@@ -629,7 +627,7 @@ irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len)
 	lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
 	error = 0;
 	for (i = 0; !error && i < len; i++)
-		error = irt_putc(tp, buf[i]);
+		error = irt_putc(tp, tbuf[i]);
 	lockmgr(&sc->sc_wr_lk, LK_RELEASE, NULL);
 
 	irframetstart(tp);

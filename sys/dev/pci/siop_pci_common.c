@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.19.2.5 2005/03/04 16:45:26 skrll Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.19.2.6 2005/11/10 14:06:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.19.2.5 2005/03/04 16:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.19.2.6 2005/11/10 14:06:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.19.2.5 2005/03/04 16:45:26 skr
 #include <dev/pci/siop_pci_common.h>
 
 /* List (array, really :) of chips we know how to handle */
-const struct siop_product_desc siop_products[] = {
+static const struct siop_product_desc siop_products[] = {
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x00,
 	"Symbios Logic 53c810 (fast scsi)",
@@ -214,9 +214,7 @@ const struct siop_product_desc siop_products[] = {
 };
 
 const struct siop_product_desc *
-siop_lookup_product(id, rev)
-	u_int32_t id;
-	int rev;
+siop_lookup_product(u_int32_t id, int rev)
 {
 	const struct siop_product_desc *pp;
 	const struct siop_product_desc *rp = NULL;
@@ -233,12 +231,9 @@ siop_lookup_product(id, rev)
 }
 
 int
-siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
-	struct siop_pci_common_softc *pci_sc;
-	struct siop_common_softc *siop_sc;
-	struct pci_attach_args *pa;
-	int (*intr)(void*);
-
+siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
+    struct siop_common_softc *siop_sc, struct pci_attach_args *pa,
+    int (*intr)(void *))
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
@@ -353,8 +348,7 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 }
 
 void
-siop_pci_reset(sc)
-	struct siop_common_softc *sc;
+siop_pci_reset(struct siop_common_softc *sc)
 {
 	int dmode;
 

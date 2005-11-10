@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.71.2.6 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.71.2.7 2005/11/10 14:07:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.71.2.6 2005/03/04 16:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.71.2.7 2005/11/10 14:07:40 skrll Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -865,7 +865,7 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 }
 
 void
-rf_print_panic_message(int line, char *file)
+rf_print_panic_message(int line, const char *file)
 {
 	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
 	    "raidframe error at line %d file %s", line, file);
@@ -873,7 +873,7 @@ rf_print_panic_message(int line, char *file)
 
 #ifdef RAID_DIAGNOSTIC
 void
-rf_print_assert_panic_message(int line,	char *file, char *condition)
+rf_print_assert_panic_message(int line,	const char *file, const char *condition)
 {
 	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
 		"raidframe error at line %d file %s (failed asserting %s)\n",
@@ -882,14 +882,14 @@ rf_print_assert_panic_message(int line,	char *file, char *condition)
 #endif
 
 void
-rf_print_unable_to_init_mutex(char *file, int line, int rc)
+rf_print_unable_to_init_mutex(const char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
 		     file, line, rc);
 }
 
 void
-rf_print_unable_to_add_shutdown(char *file, int line, int rc)
+rf_print_unable_to_add_shutdown(const char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
 		     file, line, rc);

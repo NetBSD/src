@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.6 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.6.2.1 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.6 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.6.2.1 2005/11/10 14:11:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -81,7 +81,8 @@ smb_E(const u_char *key, const u_char *data, u_char *dest)
 	kk[7] = key[6] << 1;
 	ksp = malloc(sizeof(des_key_schedule), M_SMBTEMP, M_WAITOK);
 	des_set_key((des_cblock *)kk, *ksp);
-	des_ecb_encrypt((des_cblock *)data, (des_cblock *)dest, *ksp, 1);
+	/* XXXUNCONST */
+	des_ecb_encrypt(__UNCONST(data), (des_cblock *)dest, *ksp, 1);
 	free(ksp, M_SMBTEMP);
 }
 #endif

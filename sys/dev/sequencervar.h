@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.6.28.4 2005/02/04 11:45:09 skrll Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.6.28.5 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct sequencer_softc;
 
 #define MAXCHAN 16
 struct midi_dev {
-	char	*name;
+	const char *name;
 	int	subtype;
 	int	capabilities;
 	int	nr_voices;

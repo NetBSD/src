@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2.6.2 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2.6.3 2005/11/10 14:00:34 skrll Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.2.6.2 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.2.6.3 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.2.6.2 2005/04/01 14:29:11 skrll Ex
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
@@ -126,79 +126,7 @@ extern vector *IDTVEC(intr)[];
 int
 isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
-	int i, tmp, bestirq, count;
-	struct intrhand **p, *q;
-	struct intrsource *isp;
-	struct cpu_info *ci;
-
-	if (type == IST_NONE)
-		panic("intr_alloc: bogus type");
-
-	ci = &cpu_info_primary;
-
-	bestirq = -1;
-	count = -1;
-
-	/* some interrupts should never be dynamically allocated */
-	mask &= 0xdef8;
-
-	/*
-	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
-	 * the right answer is to do "breadth-first" searching of devices.
-	 */
-	mask &= 0xefbf;
-
-	simple_lock(&ci->ci_slock);
-
-	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
-		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
-			continue;
-		isp = ci->ci_isources[i];
-		if (isp == NULL) {
-			/*
-			 * if nothing's using the irq, just return it
-			 */
-			*irq = i;
-			simple_unlock(&ci->ci_slock);
-			return (0);
-		}
-
-		switch(isp->is_type) {
-		case IST_EDGE:
-		case IST_LEVEL:
-			if (type != isp->is_type)
-				continue;
-			/*
-			 * if the irq is shareable, count the number of other
-			 * handlers, and if it's smaller than the last irq like
-			 * this, remember it
-			 *
-			 * XXX We should probably also consider the
-			 * interrupt level and stick IPL_TTY with other
-			 * IPL_TTY, etc.
-			 */
-			for (p = &isp->is_handlers, tmp = 0; (q = *p) != NULL;
-			     p = &q->ih_next, tmp++)
-				;
-			if ((bestirq == -1) || (count > tmp)) {
-				bestirq = i;
-				count = tmp;
-			}
-			break;
-
-		case IST_PULSE:
-			/* this just isn't shareable */
-			continue;
-		}
-	}
-
-	simple_unlock(&ci->ci_slock);
-
-	if (bestirq == -1)
-		return (1);
-
-	*irq = bestirq;
-
+	panic("isa_intr_alloc: notyet");
 	return (0);
 }
 
@@ -219,13 +147,13 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	int virq;
+	int evtch;
 
-	virq = bind_pirq_to_irq(irq);
-	if (virq == -1)
+	evtch = bind_pirq_to_evtch(irq);
+	if (evtch == -1)
 		return NULL;
 
-	return (void *)pirq_establish(irq, virq, ih_fun, ih_arg, level);
+	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level);
 }
 
 /*
@@ -236,11 +164,6 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct intrhand *ih = arg;
-
-	if (!LEGAL_IRQ(ih->ih_pin))
-		panic("intr_disestablish: bogus irq");
-
 	//XXX intr_disestablish(ih);
 }
 

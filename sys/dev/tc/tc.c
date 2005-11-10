@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.35.2.5 2005/02/04 11:47:34 skrll Exp $	*/
+/*	$NetBSD: tc.c,v 1.35.2.6 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35.2.5 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35.2.6 2005/11/10 14:08:05 skrll Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -51,8 +51,6 @@ CFATTACH_DECL(tc, sizeof(struct tc_softc),
 extern struct cfdriver tc_cd;
 
 int	tcprint(void *, const char *);
-int	tcsubmatch(struct device *, struct cfdata *,
-			const locdesc_t *, void *);
 void	tc_devinfo(const char *, char *, size_t);
 
 int
@@ -82,8 +80,7 @@ tcattach(parent, self, aux)
 	struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
 	int i;
-	int help[3];
-	locdesc_t *ldesc = (void *)&help; /* XXX */
+	int locs[TCCF_NLOCS];
 
 	printf(": %s MHz clock\n",
 	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
@@ -136,14 +133,13 @@ tcattach(parent, self, aux)
 		 */
 		sc->sc_slots[builtin->tcb_slot].tcs_used = 1;
 
-		ldesc->len = 2;
-		ldesc->locs[TCCF_SLOT] = builtin->tcb_slot;
-		ldesc->locs[TCCF_OFFSET] = builtin->tcb_offset;
+		locs[TCCF_SLOT] = builtin->tcb_slot;
+		locs[TCCF_OFFSET] = builtin->tcb_offset;
 		/*
 		 * Attach the device.
 		 */
-		config_found_sm_loc(self, "tc", ldesc, &ta,
-				    tcprint, tcsubmatch);
+		config_found_sm_loc(self, "tc", locs, &ta,
+				    tcprint, config_stdsubmatch);
 	}
 
 	/*
@@ -180,14 +176,13 @@ tcattach(parent, self, aux)
 		 */
 		slot->tcs_used = 1;
 
-		ldesc->len = 2;
-		ldesc->locs[TCCF_SLOT] = i;
-		ldesc->locs[TCCF_OFFSET] = 0;
+		locs[TCCF_SLOT] = i;
+		locs[TCCF_OFFSET] = 0;
 		/*
 		 * Attach the device.
 		 */
-		config_found_sm_loc(self, "tc", ldesc, &ta,
-				    tcprint, tcsubmatch);
+		config_found_sm_loc(self, "tc", locs, &ta,
+				    tcprint, config_stdsubmatch);
 	}
 }
 
@@ -205,24 +200,6 @@ tcprint(aux, pnp)
 	}
 	aprint_normal(" slot %d offset 0x%x", ta->ta_slot, ta->ta_offset);
 	return (UNCONF);
-}
-
-int
-tcsubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if ((cf->cf_loc[TCCF_SLOT] != TCCF_SLOT_DEFAULT) &&
-	    (cf->cf_loc[TCCF_SLOT] != ldesc->locs[TCCF_SLOT]))
-		return 0;
-	if ((cf->cf_loc[TCCF_OFFSET] != TCCF_OFFSET_DEFAULT) &&
-	    (cf->cf_loc[TCCF_OFFSET] != ldesc->locs[TCCF_OFFSET]))
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 

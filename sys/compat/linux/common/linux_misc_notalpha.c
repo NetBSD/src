@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.6 2005/03/04 16:40:02 skrll Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.7 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.6 2005/03/04 16:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.7 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.6 2005/03/04 16:40:02
 #define DPRINTF(a)
 #endif
 
-#ifndef __m68k__
+#if !defined(__m68k__)
 static void bsd_to_linux_statfs64(const struct statvfs *,
 	struct linux_statfs64  *);
 #endif
@@ -179,6 +179,7 @@ linux_sys_alarm(l, v, retval)
 	return 0;
 }
 
+#ifndef __amd64__
 int
 linux_sys_nice(l, v, retval)
 	struct lwp *l;
@@ -195,7 +196,9 @@ linux_sys_nice(l, v, retval)
 	SCARG(&bsa, prio) = SCARG(uap, incr);
         return sys_setpriority(l, &bsa, retval);
 }
+#endif
 
+#ifndef __amd64__
 /*
  * The old Linux readdir was only able to read one entry at a time,
  * even though it had a 'count' argument. In fact, the emulation
@@ -220,6 +223,7 @@ linux_sys_readdir(l, v, retval)
 	SCARG(uap, count) = 1;
 	return linux_sys_getdents(l, uap, retval);
 }
+#endif /* !amd64 */
 
 /*
  * I wonder why Linux has gettimeofday() _and_ time().. Still, we
@@ -291,6 +295,7 @@ linux_sys_utime(l, v, retval)
 	return sys_utimes(l, &ua, retval);
 }
 
+#ifndef __amd64__
 /*
  * waitpid(2).  Just forward on to linux_sys_wait4 with a NULL rusage.
  */
@@ -314,6 +319,7 @@ linux_sys_waitpid(l, v, retval)
 
 	return linux_sys_wait4(l, &linux_w4a, retval);
 }
+#endif /* !amd64 */
 
 int
 linux_sys_setresgid(l, v, retval)
@@ -372,6 +378,7 @@ linux_sys_getresgid(l, v, retval)
 	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
 }
 
+#ifndef __amd64__
 /*
  * I wonder why Linux has settimeofday() _and_ stime().. Still, we
  * need to deal with it.
@@ -404,8 +411,9 @@ linux_sys_stime(l, v, retval)
 
 	return 0;
 }
+#endif /* !amd64 */
 
-#ifndef __m68k__
+#if !defined(__m68k__) 
 /*
  * Convert NetBSD statvfs structure to Linux statfs64 structure.
  * See comments in bsd_to_linux_statfs() for further background.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.45.2.7 2005/03/04 16:41:33 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45.2.8 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.7 2005/03/04 16:41:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.8 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -737,8 +737,7 @@ smc91cxx_start(ifp)
 	 * and the status word (set to zeros).
 	 */
 	bus_space_write_2(bst, bsh, DATA_REG_W, 0);
-	bus_space_write_1(bst, bsh, DATA_REG_B, (length + 6) & 0xff);
-	bus_space_write_1(bst, bsh, DATA_REG_B, ((length + 6) >> 8) & 0xff);
+	bus_space_write_2(bst, bsh, DATA_REG_W, (length + 6) & 0x7ff);
 
 	/*
 	 * Get the packet from the kernel.  This will include the Ethernet

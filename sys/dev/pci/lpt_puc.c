@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.6.6.2 2005/03/04 16:45:21 skrll Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.6.6.3 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.6.2 2005/03/04 16:45:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.6.3 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,17 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.6.2 2005/03/04 16:45:21 skrll Exp $"
 #include <dev/pci/pucvar.h>
 #include <dev/ic/lptvar.h>
 
-int	lpt_puc_probe(struct device *, struct cfdata *, void *);
-void	lpt_puc_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
-    lpt_puc_probe, lpt_puc_attach, NULL, NULL);
-
-int
-lpt_puc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+lpt_puc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct puc_attach_args *aa = aux;
 
@@ -73,10 +64,8 @@ lpt_puc_probe(parent, match, aux)
 	return (1);
 }
 
-void
-lpt_puc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+lpt_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct puc_attach_args *aa = aux;
@@ -99,3 +88,6 @@ lpt_puc_attach(parent, self, aux)
 
 	lpt_attach_subr(sc);
 }
+
+CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
+    lpt_puc_probe, lpt_puc_attach, NULL, NULL);

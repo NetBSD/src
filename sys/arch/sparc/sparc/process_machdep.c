@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8.2.3 2004/09/21 13:22:38 skrll Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.8.2.4 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8.2.3 2004/09/21 13:22:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8.2.4 2005/11/10 13:59:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,10 +122,10 @@ process_read_regs(p, regs)
 int
 process_write_regs(p, regs)
 	struct lwp *p;
-	struct reg *regs;
+	const struct reg *regs;
 {
 	int	psr = p->l_md.md_tf->tf_psr & ~PSR_ICC;
-	bcopy((caddr_t)regs, p->l_md.md_tf, sizeof(struct reg));
+	bcopy(regs, p->l_md.md_tf, sizeof(struct reg));
 	p->l_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return (0);
 }
@@ -168,7 +168,7 @@ process_read_fpregs(p, regs)
 int
 process_write_fpregs(p, regs)
 	struct lwp	*p;
-	struct fpreg	*regs;
+	const struct fpreg	*regs;
 {
 	if (p->l_md.md_fpstate == NULL)
 		return (EINVAL);

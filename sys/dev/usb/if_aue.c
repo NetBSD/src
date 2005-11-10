@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.82.2.5 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.82.2.6 2005/11/10 14:08:05 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.5 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.6 2005/11/10 14:08:05 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -230,7 +230,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2206USB},	  PII },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
 };
-#define aue_lookup(v, p) ((struct aue_type *)usb_lookup(aue_devs, v, p))
+#define aue_lookup(v, p) ((const struct aue_type *)usb_lookup(aue_devs, v, p))
 
 USB_DECLARE_DRIVER(aue);
 
@@ -722,7 +722,7 @@ USB_MATCH(aue)
 USB_ATTACH(aue)
 {
 	USB_ATTACH_START(aue, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
@@ -736,9 +736,10 @@ USB_ATTACH(aue)
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {

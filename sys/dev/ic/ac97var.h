@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.7.6.7 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.7.6.8 2005/11/10 14:04:13 skrll Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -39,7 +39,9 @@ struct ac97_codec_if;
  */
 enum ac97_host_flags {
 	AC97_HOST_DONT_READ = 0x1,
-	AC97_HOST_SWAPPED_CHANNELS = 0x2	/* l/r is reversed */
+	AC97_HOST_SWAPPED_CHANNELS = 0x2,	/* l/r is reversed */
+	AC97_HOST_SKIP_AUDIO = 0x4,
+	AC97_HOST_SKIP_MODEM = 0x8
 };
 
 struct ac97_host_if {
@@ -80,6 +82,7 @@ struct ac97_codec_if {
 };
 
 struct device;
+int ac97_attach_type(struct ac97_host_if *, struct device *, int);
 int ac97_attach(struct ac97_host_if *, struct device *);
 
 #define AC97_IS_FIXED_RATE(codec)	\
@@ -92,4 +95,8 @@ int ac97_attach(struct ac97_host_if *, struct device *);
 	== (AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC))
 #define AC97_HAS_SPDIF(codec)		\
 	 ((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_SPDIF)
+
+#define AC97_CODEC_TYPE_AUDIO 1
+#define AC97_CODEC_TYPE_MODEM 2
+
 #endif /* _DEV_IC_AC97VAR_H_ */

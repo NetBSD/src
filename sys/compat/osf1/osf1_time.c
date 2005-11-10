@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.6.2.4 2005/03/04 16:40:23 skrll Exp $ */
+/* $NetBSD: osf1_time.c,v 1.6.2.5 2005/11/10 14:01:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6.2.4 2005/03/04 16:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6.2.5 2005/11/10 14:01:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ osf1_sys_setitimer(l, v, retval)
 		b_itv.it_value.tv_usec = o_itv.it_value.tv_usec;
 
 		error = copyout((caddr_t)&b_itv,
-		    (caddr_t)SCARG(&a, itv), sizeof b_itv);
+		    __UNCONST(SCARG(&a, itv)), sizeof b_itv);
 	}
 
 	if (SCARG(uap, oitv) == NULL)
@@ -262,7 +262,7 @@ osf1_sys_settimeofday(l, v, retval)
 			tv.tv_usec = otv.tv_usec;
 
 			error = copyout((caddr_t)&tv,
-			    (caddr_t)SCARG(&a, tv), sizeof tv);
+			    __UNCONST(SCARG(&a, tv)), sizeof tv);
 		}
 	}
 
@@ -282,7 +282,7 @@ osf1_sys_settimeofday(l, v, retval)
 			tz.tz_dsttime = otz.tz_dsttime;
 
 			error = copyout((caddr_t)&tz,
-			    (caddr_t)SCARG(&a, tzp), sizeof tz);
+			    __UNCONST(SCARG(&a, tzp)), sizeof tz);
 		}
 	}
 

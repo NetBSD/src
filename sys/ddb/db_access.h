@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.h,v 1.9 2002/02/15 07:33:49 simonb Exp $	*/
+/*	$NetBSD: db_access.h,v 1.9.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,4 +36,4 @@ db_expr_t	db_get_value(db_addr_t, size_t, boolean_t);
 void		db_put_value(db_addr_t, size_t, db_expr_t);
 
 void		db_read_bytes(db_addr_t, size_t, char *);
-void		db_write_bytes(db_addr_t, size_t, char *);
+void		db_write_bytes(db_addr_t, size_t, const char *);

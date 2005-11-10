@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.29.2.5 2004/11/02 07:50:57 skrll Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.29.2.6 2005/11/10 14:00:14 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.29.2.5 2004/11/02 07:50:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.29.2.6 2005/11/10 14:00:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ struct	hdcsoftc {
 	struct evcnt sc_intrcnt;
 	struct vsbus_dma sc_vd;
 	vaddr_t sc_regs;		/* register addresses */
-	struct bufq_state sc_q;
+	struct bufq_state *sc_q;
 	struct buf *sc_active;
 	struct hdc9224_UDCreg sc_creg;	/* (command) registers to be written */
 	struct hdc9224_UDCreg sc_sreg;	/* (status) registers being read */
@@ -302,7 +302,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 			sc->sc_dev.dv_xname, status);
 		return;
 	}
-	bufq_alloc(&sc->sc_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_CYLINDER);
 
 	/*
 	 * now probe for all possible hard drives
@@ -459,7 +459,7 @@ rdstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_q, bp);
+	BUFQ_PUT(sc->sc_q, bp);
 	if (inq == 0) {
 		inq = 1;
 		vsbus_dma_start(&sc->sc_vd);
@@ -478,7 +478,7 @@ hdc_qstart(void *arg)
 	inq = 0;
 
 	hdcstart(sc, 0);
-	if (BUFQ_PEEK(&sc->sc_q)) {
+	if (BUFQ_PEEK(sc->sc_q)) {
 		vsbus_dma_start(&sc->sc_vd); /* More to go */
 		inq = 1;
 	}
@@ -499,7 +499,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 
 
 	if (ob == 0) {
-		bp = BUFQ_GET(&sc->sc_q);
+		bp = BUFQ_GET(sc->sc_q);
 		if (bp == NULL)
 			return; /* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;

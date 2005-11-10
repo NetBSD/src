@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.10.2.6 2005/03/04 16:52:55 skrll Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.10.2.7 2005/11/10 14:10:32 skrll Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.6 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.7 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,10 @@ int
 procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512];
+	char bf[512];
 	int len;
 
-	len = snprintf(buf, sizeof buf,
+	len = snprintf(bf, sizeof bf,
 		"        total:    used:    free:  shared: buffers: cached:\n"
 		"Mem:  %8lu %8lu %8lu %8lu %8lu %8lu\n"
 		"Swap: %8lu %8lu %8lu\n"
@@ -104,7 +104,7 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	return (uiomove_frombuf(buf, len, uio));
+	return (uiomove_frombuf(bf, len, uio));
 }
 
 /*
@@ -115,7 +115,7 @@ int
 procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512];
+	char bf[512];
 	struct proc *p = curl->l_proc;
 	int len;
 	struct tty *tty = p->p_session->s_ttyp;
@@ -149,7 +149,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
 
-	len = snprintf(buf, sizeof(buf),
+	len = snprintf(bf, sizeof(bf),
 	    "%d (%s) %c %d %d %d %d %d "
 	    "%u "
 	    "%lu %lu %lu %lu %lu %lu %lu %lu "
@@ -210,7 +210,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	return (uiomove_frombuf(buf, len, uio));
+	return (uiomove_frombuf(bf, len, uio));
 }
 
 int
@@ -218,10 +218,10 @@ procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	int len = 4096;
-	char *buf = malloc(len, M_TEMP, M_WAITOK);
+	char *bf = malloc(len, M_TEMP, M_WAITOK);
 	int error;
 
-	if (procfs_getcpuinfstr(buf, &len) < 0) {
+	if (procfs_getcpuinfstr(bf, &len) < 0) {
 		error = ENOSPC;
 		goto done;
 	}
@@ -231,9 +231,9 @@ procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		goto done;
 	}
 
-	error = uiomove_frombuf(buf, len, uio);
+	error = uiomove_frombuf(bf, len, uio);
 done:
-	free(buf, M_TEMP);
+	free(bf, M_TEMP);
 	return error;
 }
 
@@ -241,14 +241,14 @@ int
 procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512];
+	char bf[512];
 	int len;
 	struct timeval runtime;
 	u_int64_t idle;
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
-	len = snprintf(buf, sizeof(buf),
+	len = snprintf(bf, sizeof(bf),
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
 	    runtime.tv_sec, runtime.tv_usec / 10000,
 	    idle / hz, (((idle % hz) * 100) / hz) % 100);
@@ -256,14 +256,14 @@ procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	return (uiomove_frombuf(buf, len, uio));
+	return (uiomove_frombuf(bf, len, uio));
 }
 
 int
 procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512], *mtab = NULL;
+	char bf[512], *mtab = NULL;
 	const char *fsname;
 	size_t len, mtabsz = 0;
 	struct mount *mp, *nmp;
@@ -287,7 +287,7 @@ procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		else if (strcmp(fsname, "ext2fs") == 0)
 			fsname = "ext2";
 
-		len = snprintf(buf, sizeof(buf), "%s %s %s %s%s%s%s%s%s 0 0\n",
+		len = snprintf(bf, sizeof(bf), "%s %s %s %s%s%s%s%s%s 0 0\n",
 			sfs->f_mntfromname,
 			sfs->f_mntonname,
 			fsname,
@@ -300,7 +300,7 @@ procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			);
 
 		mtab = realloc(mtab, mtabsz + len, M_TEMP, M_WAITOK);
-		memcpy(mtab + mtabsz, buf, len);
+		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
 		simple_lock(&mountlist_slock);

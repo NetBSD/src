@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.8.2.5 2005/03/04 16:50:32 skrll Exp $	*/
+/*	$NetBSD: zx.c,v 1.8.2.6 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.5 2005/03/04 16:50:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.6 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,14 +750,14 @@ paddr_t
 zxmmap(dev_t dev, off_t off, int prot)
 {
 	struct zx_softc *sc;
-	const struct zx_mmo *mm, *max;
+	const struct zx_mmo *mm, *mmmax;
 
 	sc = device_lookup(&zx_cd, minor(dev));
 	off = trunc_page(off);
 	mm = zx_mmo;
-	max = mm + sizeof(zx_mmo) / sizeof(zx_mmo[0]);
+	mmmax = mm + sizeof(zx_mmo) / sizeof(zx_mmo[0]);
 
-	for (; mm < max; mm++)
+	for (; mm < mmmax; mm++)
 		if (off >= mm->mo_va && off < mm->mo_va + mm->mo_size) {
 			off = off - mm->mo_va + mm->mo_pa;
 			return (bus_space_mmap(sc->sc_bt, sc->sc_paddr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.3.4.4 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.3.4.5 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -322,7 +322,7 @@ static void
 pms_sysctl_synaptics(struct sysctllog **clog)
 {
 	int rc, root_num;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
@@ -688,7 +688,7 @@ pms_synaptics_input(void *vsc, int data)
 
 	case 3:
 		if ((data & 8) == 8) {
-#ifdef SYNAPTICS_DEBUG
+#ifdef SYNAPTICSDEBUG
 			printf("%s: pms_input: dropped in relative mode, "
 			    "reset\n", psc->sc_dev.dv_xname);
 #endif

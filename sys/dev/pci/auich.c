@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.39.2.14 2005/04/01 14:30:10 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.39.2.15 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.14 2005/04/01 14:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.15 2005/11/10 14:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ struct auich_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
+	int sc_codecnum;
+	int sc_codectype;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -222,8 +224,12 @@ struct auich_softc {
 	uint32_t sc_ac97_clock;
 	int sc_ac97_clock_mib;
 
-#define AUICH_NFORMATS	3
-	struct audio_format sc_formats[AUICH_NFORMATS];
+	int	sc_modem_offset;
+
+#define AUICH_AUDIO_NFORMATS	3
+#define AUICH_MODEM_NFORMATS	1
+	struct audio_format sc_audio_formats[AUICH_AUDIO_NFORMATS];
+	struct audio_format sc_modem_formats[AUICH_MODEM_NFORMATS];
 	struct audio_encoding_set *sc_encodings;
 };
 
@@ -282,13 +288,14 @@ static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(struct device *);
 static void	auich_calibrate(struct auich_softc *);
+static void	auich_clear_cas(struct auich_softc *);
 
 static int	auich_attach_codec(void *, struct ac97_codec_if *);
 static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
 
-const struct audio_hw_if auich_hw_if = {
+static const struct audio_hw_if auich_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,			/* drain */
@@ -318,15 +325,21 @@ const struct audio_hw_if auich_hw_if = {
 	NULL,			/* dev_ioctl */
 };
 
+#define AUICH_FORMATS_1CH	0
 #define AUICH_FORMATS_4CH	1
 #define AUICH_FORMATS_6CH	2
-static const struct audio_format auich_formats[AUICH_NFORMATS] = {
+static const struct audio_format auich_audio_formats[AUICH_AUDIO_NFORMATS] = {
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 2, AUFMT_STEREO, 0, {8000, 48000}},
 	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
 	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+};
+
+static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {8000, 16000}},
 };
 
 #define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
@@ -348,11 +361,16 @@ static const struct audio_format auich_formats[AUICH_NFORMATS] = {
 #define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
 #define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
 
-static const struct auich_devtype {
+#define	PCIID_ICH3MODEM		PCI_ID_CODE0(INTEL, 82801CA_MOD)
+#define PCIID_ICH4MODEM		PCI_ID_CODE0(INTEL, 82801DB_MOD)
+
+struct auich_devtype {
 	pcireg_t	id;
 	const char	*name;
 	const char	*shortname;	/* must be less than 11 characters */
-} auich_devices[] = {
+};
+
+static const struct auich_devtype auich_audio_devices[] = {
 	{ PCIID_ICH,	"i82801AA (ICH) AC-97 Audio",	"ICH" },
 	{ PCIID_ICH0,	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
 	{ PCIID_ICH2,	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
@@ -373,8 +391,16 @@ static const struct auich_devtype {
 	{ 0,		NULL,				NULL },
 };
 
+static const struct auich_devtype auich_modem_devices[] = {
+#ifdef AUICH_ATTACH_MODEM
+	{ PCIID_ICH3MODEM, "i82801CA (ICH3) AC-97 Modem", "ICH3MODEM" },
+	{ PCIID_ICH4MODEM, "i82801DB (ICH4) AC-97 Modem", "ICH4MODEM" },
+#endif
+	{ 0,		NULL,				NULL },
+};
+
 static const struct auich_devtype *
-auich_lookup(struct pci_attach_args *pa)
+auich_lookup(struct pci_attach_args *pa, const struct auich_devtype *auich_devices)
 {
 	const struct auich_devtype *d;
 
@@ -392,7 +418,9 @@ auich_match(struct device *parent, struct cfdata *match, void *aux)
 	struct pci_attach_args *pa;
 
 	pa = aux;
-	if (auich_lookup(pa) != NULL)
+	if (auich_lookup(pa, auich_audio_devices) != NULL)
+		return 1;
+	if (auich_lookup(pa, auich_modem_devices) != NULL)
 		return 1;
 
 	return 0;
@@ -407,23 +435,33 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
-	struct sysctlnode *node;
+	const struct sysctlnode *node, *node_ac97clock;
 	int err, node_mib, i;
 
 	sc = (struct auich_softc *)self;
 	pa = aux;
-	aprint_naive(": Audio controller\n");
 
-	d = auich_lookup(pa);
-	if (d == NULL)
+	if ((d = auich_lookup(pa, auich_modem_devices)) != NULL) {
+		sc->sc_modem_offset = 0x10;
+		sc->sc_codectype = AC97_CODEC_TYPE_MODEM;
+	} else if ((d = auich_lookup(pa, auich_audio_devices)) != NULL) {
+		sc->sc_modem_offset = 0;
+		sc->sc_codectype = AC97_CODEC_TYPE_AUDIO;
+	} else
 		panic("auich_attach: impossible");
+
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
+		aprint_naive(": Audio controller\n");
+	else
+		aprint_naive(": Modem controller\n");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
 
 	aprint_normal(": %s\n", d->name);
 
-	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6) {
+	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6
+	    || d->id == PCIID_ICH4MODEM) {
 		/*
 		 * Use native mode for ICH4/ICH5/ICH6
 		 */
@@ -524,32 +562,41 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->pcmo.dmalist, sc->pcmi.dmalist, sc->mici.dmalist));
 
+	/* Modem codecs are always the secondary codec on ICH */
+	sc->sc_codecnum = sc->sc_codectype == AC97_CODEC_TYPE_MODEM ? 1 : 0;
+
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
 	sc->host_if.read = auich_read_codec;
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
 		return;
 
 	/* setup audio_format */
-	memcpy(sc->sc_formats, auich_formats, sizeof(auich_formats));
-	if (!AC97_IS_4CH(sc->codec_if))
-		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_4CH]);
-	if (!AC97_IS_6CH(sc->codec_if))
-		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_6CH]);
-	if (AC97_IS_FIXED_RATE(sc->codec_if)) {
-		for (i = 0; i < AUICH_NFORMATS; i++) {
-			sc->sc_formats[i].frequency_type = 1;
-			sc->sc_formats[i].frequency[0] = 48000;
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
+		memcpy(sc->sc_audio_formats, auich_audio_formats, sizeof(auich_audio_formats));
+		if (!AC97_IS_4CH(sc->codec_if))
+			AUFMT_INVALIDATE(&sc->sc_audio_formats[AUICH_FORMATS_4CH]);
+		if (!AC97_IS_6CH(sc->codec_if))
+			AUFMT_INVALIDATE(&sc->sc_audio_formats[AUICH_FORMATS_6CH]);
+		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
+			for (i = 0; i < AUICH_AUDIO_NFORMATS; i++) {
+				sc->sc_audio_formats[i].frequency_type = 1;
+				sc->sc_audio_formats[i].frequency[0] = 48000;
+			}
 		}
+		if (0 != auconv_create_encodings(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
+						 &sc->sc_encodings))
+			return;
+	} else {
+		memcpy(sc->sc_modem_formats, auich_modem_formats, sizeof(auich_modem_formats));
+		if (0 != auconv_create_encodings(sc->sc_modem_formats, AUICH_MODEM_NFORMATS,
+						 &sc->sc_encodings))
+			return;
 	}
 
-	if (0 != auconv_create_encodings(sc->sc_formats, AUICH_NFORMATS,
-					 &sc->sc_encodings)) {
-		return;
-	}
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
@@ -558,8 +605,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	config_interrupts(self, auich_finish_attach);
 
 	/* sysctl setup */
-	if (AC97_IS_FIXED_RATE(sc->codec_if))
+	if (AC97_IS_FIXED_RATE(sc->codec_if) &&
+	    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		return;
+
 	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
 			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
 			     CTL_HW, CTL_EOL);
@@ -571,15 +620,19 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (err != 0)
 		goto sysctl_err;
 	node_mib = node->sysctl_num;
-	/* passing the sc address instead of &sc->sc_ac97_clock */
-	err = sysctl_createv(&sc->sc_log, 0, NULL, &node, CTLFLAG_READWRITE,
-			     CTLTYPE_INT, "ac97rate",
-			     SYSCTL_DESCR("AC'97 codec link rate"),
-			     auich_sysctl_verify, 0, sc, 0,
-			     CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
-	if (err != 0)
-		goto sysctl_err;
-	sc->sc_ac97_clock_mib = node->sysctl_num;
+
+	if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
+		/* passing the sc address instead of &sc->sc_ac97_clock */
+		err = sysctl_createv(&sc->sc_log, 0, NULL, &node_ac97clock,
+				     CTLFLAG_READWRITE,
+				     CTLTYPE_INT, "ac97rate",
+				     SYSCTL_DESCR("AC'97 codec link rate"),
+				     auich_sysctl_verify, 0, sc, 0,
+				     CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
+		if (err != 0)
+			goto sysctl_err;
+		sc->sc_ac97_clock_mib = node_ac97clock->sysctl_num;
+	}
 
 	return;
 
@@ -648,13 +701,13 @@ auich_sysctl_verify(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = rnode->sysctl_data;
-	tmp = sc->sc_ac97_clock;
-	node.sysctl_data = &tmp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
-
 	if (node.sysctl_num == sc->sc_ac97_clock_mib) {
+		tmp = sc->sc_ac97_clock;
+		node.sysctl_data = &tmp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
 		if (tmp < 48000 || tmp > 96000)
 			return EINVAL;
 		sc->sc_ac97_clock = tmp;
@@ -686,26 +739,35 @@ auich_read_codec(void *v, uint8_t reg, uint16_t *val)
 	sc = v;
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    bus_space_read_1(sc->iot, sc->aud_ioh,
+		ICH_CAS + sc->sc_modem_offset) & 1;
 	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
-		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
+		*val = bus_space_read_2(sc->iot, sc->mix_ioh,
+		    reg + (sc->sc_codecnum * ICH_CODEC_OFFSET));
 		DPRINTF(ICH_DEBUG_CODECIO,
 		    ("auich_read_codec(%x, %x)\n", reg, *val));
-		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+		status = bus_space_read_4(sc->iot, sc->aud_ioh,
+		    ICH_GSTS + sc->sc_modem_offset);
 		if (status & ICH_RCS) {
-			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS,
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+					  ICH_GSTS + sc->sc_modem_offset,
 					  status & ~(ICH_SRI|ICH_PRI|ICH_GSCI));
 			*val = 0xffff;
 			DPRINTF(ICH_DEBUG_CODECIO,
 			    ("%s: read_codec error\n", sc->sc_dev.dv_xname));
+			if (reg == AC97_REG_GPIO_STATUS)
+				auich_clear_cas(sc);
 			return -1;
 		}
+		if (reg == AC97_REG_GPIO_STATUS)
+			auich_clear_cas(sc);
 		return 0;
 	} else {
-		DPRINTF(ICH_DEBUG_CODECIO,
-		    ("%s: read_codec timeout\n", sc->sc_dev.dv_xname));
+		aprint_normal("%s: read_codec timeout\n", sc->sc_dev.dv_xname);
+		if (reg == AC97_REG_GPIO_STATUS)
+			auich_clear_cas(sc);
 		return -1;
 	}
 }
@@ -720,15 +782,16 @@ auich_write_codec(void *v, uint8_t reg, uint16_t val)
 	sc = v;
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    bus_space_read_1(sc->iot, sc->aud_ioh,
+		ICH_CAS + sc->sc_modem_offset) & 1;
 	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
-		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
+		bus_space_write_2(sc->iot, sc->mix_ioh,
+		    reg + (sc->sc_codecnum * ICH_CODEC_OFFSET), val);
 		return 0;
 	} else {
-		DPRINTF(ICH_DEBUG_CODECIO,
-		    ("%s: write_codec timeout\n", sc->sc_dev.dv_xname));
+		aprint_normal("%s: write_codec timeout\n", sc->sc_dev.dv_xname);
 		return -1;
 	}
 }
@@ -740,6 +803,7 @@ auich_attach_codec(void *v, struct ac97_codec_if *cif)
 
 	sc = v;
 	sc->codec_if = cif;
+
 	return 0;
 }
 
@@ -751,13 +815,21 @@ auich_reset_codec(void *v)
 	uint32_t control, status;
 
 	sc = v;
-	control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
-	control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
+	control = bus_space_read_4(sc->iot, sc->aud_ioh,
+	    ICH_GCTRL + sc->sc_modem_offset);
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
+		control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
+	} else {
+		control &= ~ICH_ACLSO;
+		control |= ICH_GIE;
+	}
 	control |= (control & ICH_CRESET) ? ICH_WRESET : ICH_CRESET;
-	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
+	bus_space_write_4(sc->iot, sc->aud_ioh,
+	    ICH_GCTRL + sc->sc_modem_offset, control);
 
 	for (i = 500000; i >= 0; i--) {
-		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+		status = bus_space_read_4(sc->iot, sc->aud_ioh,
+		    ICH_GSTS + sc->sc_modem_offset);
 		if (status & (ICH_PCR | ICH_SCR | ICH_S2CR))
 			break;
 		DELAY(1);
@@ -833,29 +905,48 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 		if (p == NULL)
 			continue;
 
-		if (p->sample_rate <  8000 ||
-		    p->sample_rate > 48000)
-			return EINVAL;
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
+			if (p->sample_rate <  8000 ||
+			    p->sample_rate > 48000)
+				return EINVAL;
 
-		index = auconv_set_converter(sc->sc_formats, AUICH_NFORMATS,
-					     mode, p, TRUE, fil);
+			index = auconv_set_converter(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
+						     mode, p, TRUE, fil);
+		} else {
+			if (p->sample_rate != 8000 && p->sample_rate != 16000)
+				return EINVAL;
+			index = auconv_set_converter(sc->sc_modem_formats, AUICH_MODEM_NFORMATS,
+						     mode, p, TRUE, fil);
+		}
 		if (index < 0)
 			return EINVAL;
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
 		/* p represents HW encoding */
-		if (sc->sc_formats[index].frequency_type != 1
-		    && auich_set_rate(sc, mode, p->sample_rate))
-			return EINVAL;
-		if (mode == AUMODE_PLAY) {
-			control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
-			control &= ~ICH_PCM246_MASK;
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
+			if (sc->sc_audio_formats[index].frequency_type != 1
+			    && auich_set_rate(sc, mode, p->sample_rate))
+				return EINVAL;
+		} else {
+			if (sc->sc_modem_formats[index].frequency_type != 1
+			    && auich_set_rate(sc, mode, p->sample_rate))
+				return EINVAL;
+			auich_write_codec(sc, AC97_REG_LINE1_RATE,
+					  p->sample_rate);
+			auich_write_codec(sc, AC97_REG_LINE1_LEVEL, 0);
+		}
+		if (mode == AUMODE_PLAY &&
+		    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
+			control = bus_space_read_4(sc->iot, sc->aud_ioh,
+			    ICH_GCTRL + sc->sc_modem_offset);
+				control &= ~ICH_PCM246_MASK;
 			if (p->channels == 4) {
 				control |= ICH_PCM4;
 			} else if (p->channels == 6) {
 				control |= ICH_PCM6;
 			}
-			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+			    ICH_GCTRL + sc->sc_modem_offset, control);
 		}
 	}
 
@@ -884,7 +975,7 @@ auich_halt_pipe(struct auich_softc *sc, int pipe)
 	}
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + ICH_CTRL, ICH_RR);
 
-#if 1
+#if AUICH_DEBUG
 	if (i > 0)
 		printf("auich_halt_pipe: halt took %d cycles\n", i);
 #endif
@@ -1040,7 +1131,8 @@ auich_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!AC97_IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if) ||
+	    sc->sc_codectype == AC97_CODEC_TYPE_MODEM)
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
@@ -1063,10 +1155,12 @@ auich_intr(void *v)
 	}
 #endif
 
-	gsts = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+	gsts = bus_space_read_4(sc->iot, sc->aud_ioh,
+	    ICH_GSTS + sc->sc_modem_offset);
 	DPRINTF(ICH_DEBUG_INTR, ("auich_intr: gsts=0x%x\n", gsts));
 
-	if (gsts & ICH_POINT) {
+	if ((sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_POINT) ||
+	    (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_MOINT)) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
@@ -1083,11 +1177,17 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO +
 		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
-		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+			    ICH_GSTS + sc->sc_modem_offset, ICH_POINT);
+		else
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+			    ICH_GSTS + sc->sc_modem_offset, ICH_MOINT);
 		ret++;
 	}
 
-	if (gsts & ICH_PIINT) {
+	if ((sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_PIINT) ||
+	    (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_MIINT)) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
@@ -1104,11 +1204,16 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI +
 		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
-		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
+		if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+			    ICH_GSTS + sc->sc_modem_offset, ICH_PIINT);
+		else
+			bus_space_write_4(sc->iot, sc->aud_ioh,
+			    ICH_GSTS + sc->sc_modem_offset, ICH_MIINT);
 		ret++;
 	}
 
-	if (gsts & ICH_MINT) {
+	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO && gsts & ICH_MINT) {
 		int sts;
 
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
@@ -1125,9 +1230,20 @@ auich_intr(void *v)
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_MICI +
 		    sc->sc_sts_reg, sts & (ICH_BCIS | ICH_FIFOE));
-		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_MINT);
+		bus_space_write_4(sc->iot, sc->aud_ioh,
+		    ICH_GSTS + sc->sc_modem_offset, ICH_MINT);
 		ret++;
 	}
+
+#ifdef AUICH_MODEM_DEBUG
+	if (sc->sc_codectype == AC97_CODEC_TYPE_MODEM && gsts & ICH_GSCI) {
+		printf("%s: gsts=0x%x\n", sc->sc_dev.dv_xname, gsts);
+		/* int ack */
+		bus_space_write_4(sc->iot, sc->aud_ioh,
+		    ICH_GSTS + sc->sc_modem_offset, ICH_GSCI);
+		ret++;
+	}
+#endif
 
 	return ret;
 }
@@ -1515,4 +1631,14 @@ auich_calibrate(struct auich_softc *sc)
 	printf("\n");
 
 	sc->sc_ac97_clock = ac97rate;
+}
+
+static void
+auich_clear_cas(struct auich_softc *sc)
+{
+	/* Clear the codec access semaphore */
+	(void)bus_space_read_2(sc->iot, sc->mix_ioh,
+	    AC97_REG_RESET * (sc->sc_codecnum * ICH_CODEC_OFFSET));
+
+	return;
 }

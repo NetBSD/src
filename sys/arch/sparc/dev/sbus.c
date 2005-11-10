@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.56.2.4 2004/12/18 09:31:35 skrll Exp $ */
+/*	$NetBSD: sbus.c,v 1.56.2.5 2005/11/10 13:58:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.56.2.4 2004/12/18 09:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.56.2.5 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -366,7 +366,7 @@ sbus_attach_xbox(parent, self, aux)
 void
 sbus_attach_common(sc, busname, busnode, specials)
 	struct sbus_softc *sc;
-	char *busname;
+	const char *busname;
 	int busnode;
 	const char * const *specials;
 {

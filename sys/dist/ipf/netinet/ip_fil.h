@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1.2.3 2005/02/09 08:26:13 skrll Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.1.2.4 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.15 2005/01/08 14:26:18 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.18 2005/03/28 10:47:52 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -120,6 +120,7 @@ typedef	union	i6addr	{
 	lookupfunc_t	lptr[2];
 } i6addr_t;
 #endif
+
 #define in4_addr	in4.s_addr
 #define	iplookupnum	i6[0]
 #define	iplookuptype	i6[1]
@@ -579,7 +580,7 @@ typedef	struct	frentry {
 #define	offsetof(t,m)	(int)((&((t *)0L)->m))
 #endif
 #define	FR_CMPSIZ	(sizeof(struct frentry) - \
-			 offsetof(struct frentry, fr_dsize))
+			 offsetof(struct frentry, fr_func))
 
 /*
  * fr_type
@@ -911,26 +912,23 @@ typedef	struct tcpinfo {
 	tcpdata_t ts_data[2];
 } tcpinfo_t;
 
-typedef	struct	greinfo	{
-	u_short	gs_flags;
-	u_short	gs_ptype;
-	u_short	gs_call;
-} greinfo_t;
+
+struct	grebits	{
+	u_32_t	grb_C:1;
+	u_32_t	grb_R:1;
+	u_32_t	grb_K:1;
+	u_32_t	grb_S:1;
+	u_32_t	grb_s:1;
+	u_32_t	grb_recur:1;
+	u_32_t	grb_A:1;
+	u_32_t	grb_flags:3;
+	u_32_t	grb_ver:3;
+	u_short	grb_ptype;
+};
 
 typedef	struct	grehdr	{
 	union	{
-		struct	grebits	{
-			u_32_t	grub_C:1;
-			u_32_t	grub_R:1;
-			u_32_t	grub_K:1;
-			u_32_t	grub_S:1;
-			u_32_t	grub_s:1;
-			u_32_t	grub_recur:1;
-			u_32_t	grub_A:1;
-			u_32_t	grub_flags:3;
-			u_32_t	grub_ver:3;
-			u_short	grub_ptype;
-		} gru_bits;
+		struct	grebits	gru_bits;
 		u_short	gru_flags;
 	} gr_un;
 	u_short	gr_len;
@@ -939,15 +937,24 @@ typedef	struct	grehdr	{
 
 #define	gr_flags	gr_un.gru_flags
 #define	gr_bits		gr_un.gru_bits
-#define	gr_ptype	gr_bits.grub_ptype
-#define	gr_C		gr_bits.grub_C
-#define	gr_R		gr_bits.grub_R
-#define	gr_K		gr_bits.grub_K
-#define	gr_S		gr_bits.grub_S
-#define	gr_s		gr_bits.grub_s
-#define	gr_recur	gr_bits.grub_recur
-#define	gr_A		gr_bits.grub_A
-#define	gr_ver		gr_bits.grub_ver
+#define	gr_ptype	gr_bits.grb_ptype
+#define	gr_C		gr_bits.grb_C
+#define	gr_R		gr_bits.grb_R
+#define	gr_K		gr_bits.grb_K
+#define	gr_S		gr_bits.grb_S
+#define	gr_s		gr_bits.grb_s
+#define	gr_recur	gr_bits.grb_recur
+#define	gr_A		gr_bits.grb_A
+#define	gr_ver		gr_bits.grb_ver
+
+
+typedef	struct	greinfo	{
+	u_short	gs_call[2];
+	u_short	gs_flags;
+	u_short	gs_ptype;
+} greinfo_t;
+
+#define	GRE_REV(x)	((ntohs(x) >> 13) & 7)
 
 
 /*
@@ -982,6 +989,8 @@ typedef struct  ipftq   {
 } ipftq_t;
 
 #define	IFQF_USER	0x01		/* User defined aging */
+#define	IFQF_DELETE	0x02		/* Marked for deletion */
+#define	IFQF_PROXY	0x04		/* Timeout queue in use by a proxy */
 
 #define	IPF_HZ_MULT	1
 #define	IPF_HZ_DIVIDE	2		/* How many times a second ipfilter */
@@ -1035,7 +1044,7 @@ typedef	union	ipftunevalptr	{
 
 typedef	struct	ipftuneable	{
 	ipftunevalptr_t	ipft_una;
-	char		*ipft_name;
+	const char	*ipft_name;
 	u_long		ipft_min;
 	u_long		ipft_max;
 	int		ipft_sz;
@@ -1229,7 +1238,7 @@ extern	ipfmutex_t	ipf_timeoutlock, ipf_stinsert, ipf_natio, ipf_nat_new;
 extern	ipfrwlock_t	ipf_mutex, ipf_global, ip_poolrw, ipf_ipidfrag;
 extern	ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 
-extern	char	*memstr __P((char *, char *, int, int));
+extern	char	*memstr __P((const char *, char *, size_t, size_t));
 extern	int	count4bits __P((u_32_t));
 extern	int	frrequest __P((int, ioctlcmd_t, caddr_t, int, int));
 extern	char	*getifname __P((struct ifnet *));
@@ -1255,7 +1264,9 @@ extern	int	fr_send_reset __P((fr_info_t *));
 extern	int	ppsratecheck __P((struct timeval *, int *, int));
 #endif
 extern	ipftq_t	*fr_addtimeoutqueue __P((ipftq_t **, u_int));
-extern	void	fr_deletetimeoutqueue __P((ipftq_t *));
+extern	void	fr_deletequeueentry __P((ipftqent_t *));
+extern	int	fr_deletetimeoutqueue __P((ipftq_t *));
+extern	void	fr_freetimeoutqueue __P((ipftq_t *));
 extern	void	fr_movequeue __P((ipftqent_t *, ipftq_t *, ipftq_t *));
 extern	void	fr_queueappend __P((ipftqent_t *, ipftq_t *, void *));
 extern	void	fr_queueback __P((ipftqent_t *));

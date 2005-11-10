@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exsystem - Interface to OS services
- *              xRevision: 80 $
+ *              xRevision: 84 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __EXSYSTEM_C__
 
@@ -132,8 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $
  *
  * FUNCTION:    AcpiExSystemWaitSemaphore
  *
- * PARAMETERS:  Semaphore           - OSD semaphore to wait on
- *              Timeout             - Max time to wait
+ * PARAMETERS:  Semaphore       - Semaphore to wait on
+ *              Timeout         - Max time to wait
  *
  * RETURN:      Status
  *
@@ -169,7 +169,8 @@ AcpiExSystemWaitSemaphore (
 
         Status = AcpiOsWaitSemaphore (Semaphore, 1, Timeout);
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "*** Thread awake after blocking, %s\n",
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "*** Thread awake after blocking, %s\n",
             AcpiFormatException (Status)));
 
         /* Reacquire the interpreter */
@@ -191,8 +192,8 @@ AcpiExSystemWaitSemaphore (
  *
  * FUNCTION:    AcpiExSystemDoStall
  *
- * PARAMETERS:  HowLong             - The amount of time to stall,
- *                                    in microseconds
+ * PARAMETERS:  HowLong         - The amount of time to stall,
+ *                                in microseconds
  *
  * RETURN:      Status
  *
@@ -222,7 +223,8 @@ AcpiExSystemDoStall (
          * (ACPI specifies 100 usec as max, but this gives some slack in
          * order to support existing BIOSs)
          */
-        ACPI_REPORT_ERROR (("Stall: Time parameter is too large (%d)\n", HowLong));
+        ACPI_REPORT_ERROR (("Stall: Time parameter is too large (%d)\n",
+            HowLong));
         Status = AE_AML_OPERAND_VALUE;
     }
     else
@@ -238,8 +240,8 @@ AcpiExSystemDoStall (
  *
  * FUNCTION:    AcpiExSystemDoSuspend
  *
- * PARAMETERS:  HowLong             - The amount of time to suspend,
- *                                    in milliseconds
+ * PARAMETERS:  HowLong         - The amount of time to suspend,
+ *                                in milliseconds
  *
  * RETURN:      None
  *
@@ -249,7 +251,7 @@ AcpiExSystemDoStall (
 
 ACPI_STATUS
 AcpiExSystemDoSuspend (
-    UINT32                  HowLong)
+    ACPI_INTEGER            HowLong)
 {
     ACPI_STATUS             Status;
 
@@ -261,8 +263,7 @@ AcpiExSystemDoSuspend (
 
     AcpiExExitInterpreter ();
 
-    AcpiOsSleep ((UINT16) (HowLong / (UINT32) 1000),
-                 (UINT16) (HowLong % (UINT32) 1000));
+    AcpiOsSleep (HowLong);
 
     /* And now we must get the interpreter again */
 
@@ -275,8 +276,8 @@ AcpiExSystemDoSuspend (
  *
  * FUNCTION:    AcpiExSystemAcquireMutex
  *
- * PARAMETERS:  *TimeDesc           - The 'time to delay' object descriptor
- *              *ObjDesc            - The object descriptor for this op
+ * PARAMETERS:  TimeDesc        - The 'time to delay' object descriptor
+ *              ObjDesc         - The object descriptor for this op
  *
  * RETURN:      Status
  *
@@ -302,9 +303,8 @@ AcpiExSystemAcquireMutex (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    /*
-     * Support for the _GL_ Mutex object -- go get the global lock
-     */
+    /* Support for the _GL_ Mutex object -- go get the global lock */
+
     if (ObjDesc->Mutex.Semaphore == AcpiGbl_GlobalLockSemaphore)
     {
         Status = AcpiEvAcquireGlobalLock ((UINT16) TimeDesc->Integer.Value);
@@ -312,7 +312,7 @@ AcpiExSystemAcquireMutex (
     }
 
     Status = AcpiExSystemWaitSemaphore (ObjDesc->Mutex.Semaphore,
-                                         (UINT16) TimeDesc->Integer.Value);
+                (UINT16) TimeDesc->Integer.Value);
     return_ACPI_STATUS (Status);
 }
 
@@ -321,7 +321,7 @@ AcpiExSystemAcquireMutex (
  *
  * FUNCTION:    AcpiExSystemReleaseMutex
  *
- * PARAMETERS:  *ObjDesc            - The object descriptor for this op
+ * PARAMETERS:  ObjDesc         - The object descriptor for this op
  *
  * RETURN:      Status
  *
@@ -347,9 +347,8 @@ AcpiExSystemReleaseMutex (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    /*
-     * Support for the _GL_ Mutex object -- release the global lock
-     */
+    /* Support for the _GL_ Mutex object -- release the global lock */
+
     if (ObjDesc->Mutex.Semaphore == AcpiGbl_GlobalLockSemaphore)
     {
         Status = AcpiEvReleaseGlobalLock ();
@@ -365,9 +364,9 @@ AcpiExSystemReleaseMutex (
  *
  * FUNCTION:    AcpiExSystemSignalEvent
  *
- * PARAMETERS:  *ObjDesc            - The object descriptor for this op
+ * PARAMETERS:  ObjDesc         - The object descriptor for this op
  *
- * RETURN:      AE_OK
+ * RETURN:      Status
  *
  * DESCRIPTION: Provides an access point to perform synchronization operations
  *              within the AML.
@@ -397,8 +396,8 @@ AcpiExSystemSignalEvent (
  *
  * FUNCTION:    AcpiExSystemWaitEvent
  *
- * PARAMETERS:  *TimeDesc           - The 'time to delay' object descriptor
- *              *ObjDesc            - The object descriptor for this op
+ * PARAMETERS:  TimeDesc        - The 'time to delay' object descriptor
+ *              ObjDesc         - The object descriptor for this op
  *
  * RETURN:      Status
  *
@@ -422,7 +421,7 @@ AcpiExSystemWaitEvent (
     if (ObjDesc)
     {
         Status = AcpiExSystemWaitSemaphore (ObjDesc->Event.Semaphore,
-                                             (UINT16) TimeDesc->Integer.Value);
+                    (UINT16) TimeDesc->Integer.Value);
     }
 
     return_ACPI_STATUS (Status);
@@ -433,7 +432,7 @@ AcpiExSystemWaitEvent (
  *
  * FUNCTION:    AcpiExSystemResetEvent
  *
- * PARAMETERS:  *ObjDesc            - The object descriptor for this op
+ * PARAMETERS:  ObjDesc         - The object descriptor for this op
  *
  * RETURN:      Status
  *

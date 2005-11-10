@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.30.2.7 2005/03/04 16:54:21 skrll Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.30.2.8 2005/11/10 14:11:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -149,7 +149,7 @@
  * f: (OUT) true if we got valid filehandle.  always true for nfsv2.
  */
 
-#define nfsm_mtofh(d, v, v3, f, l) \
+#define nfsm_mtofh(d, v, v3, f) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
 		int hasattr = 0; \
 		if (v3) { \
@@ -162,7 +162,7 @@
 		if (f) { \
 			nfsm_getfh(ttfhp, ttfhsize, (v3)); \
 			if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, \
-				&ttnp, l)) != 0) { \
+				&ttnp)) != 0) { \
 				error = t1; \
 				m_freem(mrep); \
 				goto nfsmout; \
@@ -257,7 +257,7 @@
 #define	nfsm_wcc_data(v, f, flags, docheck) \
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		struct timespec ctime, mtime; \
-		struct nfsnode *np = VTONFS(v); \
+		struct nfsnode *nfsp = VTONFS(v); \
 		boolean_t haspreopattr = FALSE; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
@@ -265,26 +265,26 @@
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
 			fxdr_nfsv3time(tl + 2, &mtime); \
 			fxdr_nfsv3time(tl + 4, &ctime); \
-			if (np->n_ctime == ctime.tv_sec) \
+			if (nfsp->n_ctime == ctime.tv_sec) \
 				renewctime = 1; \
 			if ((v)->v_type == VDIR) { \
-				if (timespeccmp(&np->n_nctime, &ctime, ==)) \
+				if (timespeccmp(&nfsp->n_nctime, &ctime, ==)) \
 					renewnctime = 1; \
 			} \
 			if (f) { \
-				ttretf = timespeccmp(&np->n_mtime, &mtime, ==);\
+				ttretf = timespeccmp(&nfsp->n_mtime, &mtime, ==);\
 			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
-		np = VTONFS(v); \
+		nfsp = VTONFS(v); \
 		if (ttattrf) { \
 			if (haspreopattr && \
-			    nfs_check_wccdata(np, &ctime, &mtime, (docheck))) \
+			    nfs_check_wccdata(nfsp, &ctime, &mtime, (docheck))) \
 				renewctime = renewnctime = ttretf = 0; \
 			if (renewctime) \
-				np->n_ctime = np->n_vattr->va_ctime.tv_sec; \
+				nfsp->n_ctime = nfsp->n_vattr->va_ctime.tv_sec; \
 			if (renewnctime) \
-				np->n_nctime = np->n_vattr->va_ctime; \
+				nfsp->n_nctime = nfsp->n_vattr->va_ctime; \
 		} \
 		if (f) { \
 			(f) = ttretf; \
@@ -513,7 +513,10 @@
 		nfsm_srvpostopattr(nfsd, (r), (a), &mb, &bpos)
 
 #define nfsm_srvsattr(a) \
-		{ nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
+		{ \
+		const struct timespec *ts = NULL; \
+		struct timespec tsb; \
+		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			(a)->va_mode = nfstov_mode(*tl); \
@@ -540,8 +543,8 @@
 			fxdr_nfsv3time(tl, &(a)->va_atime); \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_atime.tv_sec = time.tv_sec; \
-			(a)->va_atime.tv_nsec = time.tv_usec * 1000; \
+			ts = nanotime(&tsb); \
+			(a)->va_atime = *ts; \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; \
@@ -553,8 +556,8 @@
 			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_mtime.tv_sec = time.tv_sec; \
-			(a)->va_mtime.tv_nsec = time.tv_usec * 1000; \
+			ts = ts ? ts : nanotime(&tsb); \
+			(a)->va_mtime = *ts; \
 			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.13 2005/04/01 14:30:10 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.14 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.13 2005/04/01 14:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.14 2005/11/10 14:06:02 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -152,7 +152,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 
 /*
  * Control structures are DMA'd to the i82542 chip.  We allocate them in
- * a single clump that maps to a single DMA segment to make serveral things
+ * a single clump that maps to a single DMA segment to make several things
  * easier.
  */
 struct wm_control_data_82544 {
@@ -276,6 +276,7 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
+	struct evcnt sc_ev_txtusum6;	/* TCP/UDP v6 cksums comp. out-bound */
 	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound */
 	struct evcnt sc_ev_txtsopain;	/* painful header manip. for TSO */
 
@@ -1218,7 +1219,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->sc_type >= WM_T_82543)
 		ifp->if_capabilities |=
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+		    IFCAP_CSUM_TCPv6_Tx |
+		    IFCAP_CSUM_UDPv6_Tx;
 
 	/* 
 	 * If we're a i82544 or greater (except i82547), we can do
@@ -1262,6 +1267,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
+	evcnt_attach_dynamic(&sc->sc_ev_txtusum6, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtusum6");
 
 	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtso");
@@ -1367,6 +1374,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
 		offset = ETHER_HDR_LEN;
 		break;
 
@@ -1383,7 +1391,12 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) != 0) {
+		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	} else {
+		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+	}
 
 	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
 	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
@@ -1465,8 +1478,17 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
-		   WTX_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
-		   WTX_TCPIP_TUCSE(0) /* rest of packet */;
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+	} else if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) != 0) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
+		fields |= WTX_TXSM;
+		tucs = WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv6_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1725,7 +1747,7 @@ wm_start(struct ifnet *ifp)
 			 * layer that there are no more slots left.
 			 */
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: need %d (%) descriptors, have %d\n",
+			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed,
 			    sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
@@ -1777,7 +1799,8 @@ wm_start(struct ifnet *ifp)
 
 		/* Set up offload parameters for this packet. */
 		if (m0->m_pkthdr.csum_flags &
-		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
+		    M_CSUM_TCPv6|M_CSUM_UDPv6)) {
 			if (wm_tx_offload(sc, txs, &cksumcmd,
 					  &cksumfields) != 0) {
 				/* Error message already displayed. */
@@ -1831,10 +1854,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08x, "
+				    ("%s: TX: desc %d: low 0x%08lx, "
 				     "len 0x%04x\n",
 				    sc->sc_dev.dv_xname, nexttx,
-				    curaddr & 0xffffffffU, curlen, curlen));
+				    curaddr & 0xffffffffUL, (unsigned)curlen));
 			}
 		}
 
@@ -2002,9 +2025,9 @@ wm_intr(void *arg)
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t icr;
-	int wantinit, handled = 0;
+	int handled = 0;
 
-	for (wantinit = 0; wantinit == 0;) {
+	while (1 /* CONSTCOND */) {
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
@@ -2043,16 +2066,15 @@ wm_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
+			ifp->if_ierrors++;
+#if defined(WM_DEBUG)
 			log(LOG_WARNING, "%s: Receive overrun\n",
 			    sc->sc_dev.dv_xname);
-			wantinit = 1;
+#endif /* defined(WM_DEBUG) */
 		}
 	}
 
 	if (handled) {
-		if (wantinit)
-			wm_init(ifp);
-
 		/* Try to get more packets going. */
 		wm_start(ifp);
 	}
@@ -2303,22 +2325,27 @@ wm_rxintr(struct wm_softc *sc)
 		/*
 		 * Set up checksum info for this packet.
 		 */
-		if (status & WRX_ST_IPCS) {
-			WM_EVCNT_INCR(&sc->sc_ev_rxipsum);
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (errors & WRX_ER_IPE)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
-		if (status & WRX_ST_TCPCS) {
-			/*
-			 * Note: we don't know if this was TCP or UDP,
-			 * so we just set both bits, and expect the
-			 * upper layers to deal.
-			 */
-			WM_EVCNT_INCR(&sc->sc_ev_rxtusum);
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4|M_CSUM_UDPv4;
-			if (errors & WRX_ER_TCPE)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+		if ((status & WRX_ST_IXSM) == 0) {
+			if (status & WRX_ST_IPCS) {
+				WM_EVCNT_INCR(&sc->sc_ev_rxipsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (errors & WRX_ER_IPE)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
+			}
+			if (status & WRX_ST_TCPCS) {
+				/*
+				 * Note: we don't know if this was TCP or UDP,
+				 * so we just set both bits, and expect the
+				 * upper layers to deal.
+				 */
+				WM_EVCNT_INCR(&sc->sc_ev_rxtusum);
+				m->m_pkthdr.csum_flags |=
+				    M_CSUM_TCPv4|M_CSUM_UDPv4;
+				if (errors & WRX_ER_TCPE)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
 		}
 
 		ifp->if_ipackets++;
@@ -2691,15 +2718,15 @@ wm_init(struct ifnet *ifp)
 	 * Set up checksum offload parameters.
 	 */
 	reg = CSR_READ(sc, WMREG_RXCSUM);
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		reg |= RXCSUM_IPOFL;
 	else
 		reg &= ~RXCSUM_IPOFL;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		reg |= RXCSUM_IPOFL | RXCSUM_TUOFL;
 	else {
 		reg &= ~RXCSUM_TUOFL;
-		if ((ifp->if_capenable & IFCAP_CSUM_IPv4) == 0)
+		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) == 0)
 			reg &= ~RXCSUM_IPOFL;
 	}
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
@@ -2839,6 +2866,15 @@ wm_stop(struct ifnet *ifp, int disable)
 	/* Stop the transmit and receive processes. */
 	CSR_WRITE(sc, WMREG_TCTL, 0);
 	CSR_WRITE(sc, WMREG_RCTL, 0);
+
+	/*
+	 * Clear the interrupt mask to ensure the device cannot assert its
+	 * interrupt line.
+	 * Clear sc->sc_icr to ensure wm_intr() makes no attempt to service
+	 * any currently pending or shared interrupt.
+	 */
+	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
+	sc->sc_icr = 0;
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {

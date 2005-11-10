@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.36.2.4 2004/09/21 13:24:07 skrll Exp $ */
+/*	$NetBSD: smg.c,v 1.36.2.5 2005/11/10 14:00:14 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.36.2.4 2004/09/21 13:24:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.36.2.5 2005/11/10 14:00:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,14 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.36.2.4 2004/09/21 13:24:07 skrll Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_callbacks.h>
+#include <dev/wsfont/wsfont.h>
 
 #include "dzkbd.h"
 #include "opt_wsfont.h"
-
-/* Safety guard */
-#ifndef FONT_QVSS8x15
-#include <dev/wsfont/qvss8x15.h>
-#endif
 
 /* Screen hardware defs */
 #define SM_COLS		128	/* char width of screen */
@@ -160,7 +156,6 @@ const struct wsscreen_list smg_screenlist = {
 
 static	caddr_t	sm_addr;
 
-extern struct wsdisplay_font qvss8x15;
 static  u_char *qf;
 
 #define QCHAR(c) (c < 32 ? 32 : (c > 127 ? c - 66 : c - 32))
@@ -203,23 +198,23 @@ int
 smg_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
-	volatile short *curcmd;
+	volatile short *ccmd;
 	volatile short *cfgtst;
 	short tmp, tmp2;
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 
-	curcmd = (short *)va->va_addr;
+	ccmd = (short *)va->va_addr;
 	cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
 	/*
 	 * Try to find the cursor chip by testing the flip-flop.
 	 * If nonexistent, no glass tty.
 	 */
-	curcmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
+	ccmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
 	DELAY(300000);
 	tmp = cfgtst[0];
-	curcmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
+	ccmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
 	DELAY(300000);
 	tmp2 = cfgtst[0];
 	vax_unmap_physmem((vaddr_t)cfgtst, 1);
@@ -234,6 +229,8 @@ void
 smg_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wsemuldisplaydev_attach_args aa;
+	struct wsdisplay_font *console_font;
+	int fcookie;
 
 	printf("\n");
 	sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
@@ -250,7 +247,17 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	callout_reset(&smg_cursor_ch, hz / 2, smg_crsr_blink, NULL);
 	curcmd = CUR_CMD_HSHI;
 	WRITECUR(CUR_CMD, curcmd);
-	qf = qvss8x15.data;
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0,
+		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0)
+	{
+		printf("%s: could not find 8x15 font\n", self->dv_xname);
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		printf("%s: could not lock 8x15 font\n", self->dv_xname);
+		return;
+	}
+	qf = console_font->data;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
@@ -578,6 +585,8 @@ void
 smgcninit(cndev)
 	struct	consdev *cndev;
 {
+	int fcookie;
+	struct wsdisplay_font *console_font;
 	extern void lkccninit(struct consdev *);
 	extern int lkccngetc(dev_t);
 	extern int dz_vsbus_lk201_cnattach __P((int));
@@ -587,7 +596,17 @@ smgcninit(cndev)
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
 	cn_tab->cn_pri = CN_INTERNAL;
-	qf = qvss8x15.data;
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0,
+		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0)
+	{
+		printf("smg: could not find 8x15 font\n");
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		printf("smg: could not lock 8x15 font\n");
+		return;
+	}
+	qf = console_font->data;
 
 #if NDZKBD > 0
 	dzkbd_cnattach(0); /* Connect keyboard and screen together */

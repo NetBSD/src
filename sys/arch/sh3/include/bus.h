@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9.12.1 2005/04/01 14:28:20 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.12.2 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,10 +72,6 @@
 #define	_SH3_BUS_H_
 
 #include <machine/bswap.h>
-
-#ifndef __BUS_SPACE_COMPAT_OLDDEFS
-#define	__BUS_SPACE_COMPAT_OLDDEFS
-#endif
 
 #define	__BUS_SPACE_HAS_STREAM_METHODS
 
@@ -823,18 +819,6 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 	}
 }
 
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_2((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_4((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_8((t), (h1), (o1), (h2), (o2), (c))
-#endif
-
 /*
  * Bus read/write barrier methods.
  *
@@ -849,11 +833,5 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
-#endif
 
 #endif /* _SH3_BUS_H_ */

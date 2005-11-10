@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.117.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.117.2.10 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.10 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -202,8 +202,6 @@ exit1(struct lwp *l, int rv)
 
 	p->p_flag |= P_WEXIT;
 	if (p->p_flag & P_STOPEXIT) {
-		int s;
-
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
 		p->p_stat = SSTOP;
@@ -275,7 +273,6 @@ exit1(struct lwp *l, int rv)
 		struct tty *tp;
 
 		if (sp->s_ttyvp) {
-			int s;
 			/*
 			 * Controlling process.
 			 * Signal foreground pgrp,
@@ -427,7 +424,7 @@ exit1(struct lwp *l, int rv)
 			} else
 				proc_reparent(q, initproc);
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-			psignal(q, SIGKILL);
+			killproc(q, "orphaned traced process");
 		} else {
 			proc_reparent(q, initproc);
 		}
@@ -446,9 +443,11 @@ exit1(struct lwp *l, int rv)
 
 	LIST_REMOVE(l, l_list);
 	LIST_REMOVE(l, l_sibling);
-	l->l_flag |= L_DETACHED|L_PROCEXIT;	/* detached from proc too */
+	l->l_flag |= L_DETACHED;	/* detached from proc too */
 	l->l_stat = LSDEAD;
 
+	KASSERT(p->p_nrlwps == 1);
+	KASSERT(p->p_nlwps == 1);
 	p->p_nrlwps--;
 	p->p_nlwps--;
 
@@ -590,6 +589,7 @@ exit_lwps(struct lwp *l)
 		}
 	}
 
+retry:
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs, make detached LWPs undetached (so we can wait for
@@ -598,14 +598,14 @@ exit_lwps(struct lwp *l)
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
 
+		SCHED_LOCK(s);
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
-			SCHED_LOCK(s);
 			setrunnable(l2);
-			SCHED_UNLOCK(s);
 			DPRINTF(("exit_lwps: Made %d.%d runnable\n",
 			    p->p_pid, l2->l_lid));
 		}
+		SCHED_UNLOCK(s);
 	}
 
 
@@ -613,8 +613,16 @@ exit_lwps(struct lwp *l)
 		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n",
 		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
+		if (error == EDEADLK) {
+			/*
+			 * LWPs can get suspended/slept behind us.
+			 * (eg. sa_setwoken)
+			 * kick them again and retry.
+			 */
+			goto retry;
+		}
 		if (error)
-			panic("exit_lwps: lwp_wait1 failed with error %d\n",
+			panic("exit_lwps: lwp_wait1 failed with error %d",
 			    error);
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.10.2.8 2005/03/04 16:39:22 skrll Exp $ */
+/*	$NetBSD: compat_file.c,v 1.10.2.9 2005/11/10 14:00:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.8 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.9 2005/11/10 14:00:40 skrll Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -492,7 +492,8 @@ bsd_sys_bind(l, v, retval)
 	if (strlen(name) >= sizeof(sun.sun_path))
 		error = ENAMETOOLONG;
 	(void)strncpy(sun.sun_path, name, sizeof(sun.sun_path));
-	free((void *)name, M_TEMP);
+	/*XXXUNCONST*/
+	free(__UNCONST(name), M_TEMP);
 	if (error)
 		return error;
 
@@ -561,7 +562,8 @@ bsd_sys_connect(l, v, retval)
 		error = ENAMETOOLONG;
 	(void)strncpy(sun.sun_path, name, sizeof(sun.sun_path));
 	if (name != namebuf)
-		free((void *)name, M_TEMP);
+		/*XXXUNCONST*/
+		free(__UNCONST(name), M_TEMP);
 	if (error)
 		return sys_connect(l, uap, retval);
 
@@ -876,12 +878,12 @@ bsd_sys_lutimes(l, v, retval)
 }
 
 int
-bsd_sys___stat13(l, v, retval)
+bsd_sys___stat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys___stat13_args /* {
+	struct sys___stat30_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -889,16 +891,16 @@ bsd_sys___stat13(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	return sys___stat13(l, uap, retval);
+	return sys___stat30(l, uap, retval);
 }
 
 int
-bsd_sys___lstat13(l, v, retval)
+bsd_sys___lstat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys___lstat13_args /* {
+	struct sys___lstat30_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -906,7 +908,7 @@ bsd_sys___lstat13(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	return sys___lstat13(l, uap, retval);
+	return sys___lstat30(l, uap, retval);
 }
 
 int

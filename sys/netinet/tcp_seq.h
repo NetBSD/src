@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.12.46.4 2005/02/17 07:10:37 skrll Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.12.46.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -43,6 +43,8 @@
 #define	SEQ_LEQ(a,b)	((int)((a)-(b)) <= 0)
 #define	SEQ_GT(a,b)	((int)((a)-(b)) > 0)
 #define	SEQ_GEQ(a,b)	((int)((a)-(b)) >= 0)
+#define SEQ_MIN(a, b)	((SEQ_LT(a, b)) ? (a) : (b))
+#define SEQ_MAX(a, b)	((SEQ_GT(a, b)) ? (a) : (b))
 
 #define	SEQ_SUB(a,b)	((long)((a)-(b)))
 

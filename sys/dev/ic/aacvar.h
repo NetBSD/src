@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.1.14.5 2005/03/04 16:41:23 skrll Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.1.14.6 2005/11/10 14:04:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ extern int aac_debug;
 #endif
 
 struct aac_code_lookup {
-	char	*string;
+	const char	*string;
 	u_int32_t code;
 };
 

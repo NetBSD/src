@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.8.2.4 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.8.2.5 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.8.2.4 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.8.2.5 2005/11/10 14:11:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,8 +252,8 @@ int
 mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 {
 	struct mbuf *m;
-	caddr_t dst;
-	caddr_t src;
+	char *dst;
+	const char *src;
 	int cplen, error, mleft, count;
 
 	m = mbp->mb_cur;
@@ -274,12 +274,12 @@ mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 		dst = mtod(m, caddr_t) + m->m_len;
 		switch (type) {
 		    case MB_MCUSTOM:
-			error = mbp->mb_copy(mbp, (caddr_t)source, dst, cplen);
+			error = mbp->mb_copy(mbp, source, dst, cplen);
 			if (error)
 				return error;
 			break;
 		    case MB_MINLINE:
-			for (src = (caddr_t)source, count = cplen; count; count--)
+			for (src = source, count = cplen; count; count--)
 				*dst++ = *src++;
 			break;
 		    case MB_MSYSTEM:

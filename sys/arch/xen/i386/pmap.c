@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.6.2.6 2005/04/01 14:28:58 skrll Exp $	*/
-/*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
+/*	$NetBSD: pmap.c,v 1.6.2.7 2005/11/10 14:00:21 skrll Exp $	*/
+/*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
  *
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.2.6 2005/04/01 14:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.2.7 2005/11/10 14:00:21 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -852,6 +852,7 @@ __inline static pt_entry_t
 pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 {
 	pt_entry_t opte;
+	int s = splvm();
 
 	XENPRINTK(("pte_atomic_update_ma pte %p mapte %p npte %08x\n",
 		   pte, mapte, npte));
@@ -877,6 +878,7 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 			xpq_queue_pte_update(mapte, npte);
 	}
 	xpq_flush_queue();
+	splx(s);
 
 	return opte;
 }
@@ -1830,6 +1832,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	int s;
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
@@ -1859,8 +1862,10 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pmap_update(pmap_kernel());
 
 	/* pin page type */
+	s = splvm();
 	xpq_queue_pin_table(xpmap_ptom(pdirpa), XPQ_PIN_L2_TABLE);
 	xpq_flush_queue();
+	splx(s);
 
 	return (0);
 }
@@ -1870,6 +1875,7 @@ pmap_pdp_dtor(void *arg, void *object)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	int s;
 
 	/* fetch the physical address of the page directory. */
 	pdirpa = PDE_GET(&pdir[PDSLOT_PTE]) & PG_FRAME;
@@ -1877,8 +1883,10 @@ pmap_pdp_dtor(void *arg, void *object)
 	XENPRINTF(("pmap_pdp_dtor %p %p\n", pdir, (void *)pdirpa));
 
 	/* unpin page type */
+	s = splvm();
 	xpq_queue_unpin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
+	splx(s);
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 }
@@ -3591,6 +3599,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -3639,22 +3652,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/* zap! */
 		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
 		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
-
-		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			XENPRINTK(("pmap update opte == pa, prot change"));
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
-			    opte & (PG_M | PG_U));
-			goto out_ok;
-		}
 
 		/*
 		 * Might be cached in the TLB as being writable
@@ -3789,7 +3786,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:
@@ -3853,6 +3849,11 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -3904,22 +3905,6 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
 
 		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			XENPRINTK(("pmap update opte == pa, prot change"));
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
-			    opte & (PG_M | PG_U));
-			goto out_ok;
-		}
-
-		/*
 		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
@@ -3951,8 +3936,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) !=
-			    (KERNTEXTOFF - KERNBASE_LOCORE));
+			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
 
 			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
 #ifdef DIAGNOSTIC
@@ -4013,7 +3997,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:
@@ -4032,11 +4015,12 @@ out:
  */
 
 int
-pmap_remap_pages(pmap, va, pa, npages, flags, dom)
+pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	int npages;
+	vm_prot_t prot;
 	int flags;
 	int dom;
 {
@@ -4046,7 +4030,9 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh;
 	struct pv_entry *pve = NULL; /* XXX gcc */
-	int error;
+	int error, dptpwire;
+
+	dptpwire = 0;
 
 	XENPRINTK(("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n",
 	    pmap, (void *)va, (void *)pa, npages, flags, dom));
@@ -4082,6 +4068,11 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -4113,11 +4104,11 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	    pmap->pm_stats.wired_count));
 	//printf("npte %p opte %p ptes %p idx %03x\n", (void *)npte, (void *)opte, ptes, x86_btop(va));
 	//printf("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x count %ld\n", pa, va, opte, npte, pmap->pm_stats.wired_count);
-#if 0
-	npte |= (opte & (PG_M | PG_RW));
-#else
-	npte |= (PG_M | PG_RW);
-#endif
+
+	if (prot & VM_PROT_WRITE)
+		npte |= (PG_M | PG_RW);
+	else 
+		npte |= PG_RO;
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
@@ -4134,7 +4125,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 		//printf("pmap_remap_pages opte == pa");
 		/* zap! */
 		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-		error = xpq_update_foreing(maptp, npte, dom);
+		error = xpq_update_foreign(maptp, npte, dom);
 
 		/*
 		 * The protection bits should not have changed
@@ -4172,8 +4163,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
-			KDASSERT((opte & PG_FRAME) !=
-			    (KERNTEXTOFF - KERNBASE_LOCORE));
+			KDASSERT((opte & PG_FRAME) != (KERNTEXTOFF - KERNBASE));
 
 			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
 #ifdef DIAGNOSTIC
@@ -4193,7 +4183,7 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 			opte = pte_get_ma(&ptes[x86_btop(va)]);
 			maptp = (pt_entry_t *)vtomach(
 				(vaddr_t)&ptes[x86_btop(va)]);
-			error = xpq_update_foreing(maptp, npte, dom);
+			error = xpq_update_foreign(maptp, npte, dom);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -4207,14 +4197,24 @@ pmap_remap_pages(pmap, va, pa, npages, flags, dom)
 	} else {
 		pmap->pm_stats.resident_count++;
 		pmap->pm_stats.wired_count++;
-		if (ptp)
+		if (ptp) {
+			dptpwire = 1;
 			ptp->wire_count++;
+		}
 	}
 
 	//printf("pmap initial setup");
 	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
-	error = xpq_update_foreing(maptp, npte, dom);
-
+	error = xpq_update_foreign(maptp, npte, dom);
+	if (error) {
+		printf("pmap_remap_pages: xpq_update_foreign failed va=%lx"
+		    " npte=%lx error=%d dptpwire=%d\n",
+		    va, (unsigned long)npte, error, dptpwire);
+		ptp->wire_count -= dptpwire;
+		/* XXX fix other stats? */
+		goto out;
+	}
+	
 shootdown_test:
 	/* Update page attributes if needed */
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {

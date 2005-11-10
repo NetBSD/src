@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.17.6.4 2004/09/21 13:34:29 skrll Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.17.6.5 2005/11/10 14:08:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.17.6.4 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.17.6.5 2005/11/10 14:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ void	*wsemul_sun_attach(int console, const struct wsscreen_descr *,
 				void *, int, int, void *, long);
 void	wsemul_sun_output(void *cookie, const u_char *data, u_int count,
 			       int);
-int	wsemul_sun_translate(void *cookie, keysym_t, char **);
+int	wsemul_sun_translate(void *cookie, keysym_t, const char **);
 void	wsemul_sun_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
 
@@ -197,15 +197,14 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type,
 
 	edp->cbcookie = cbcookie;
 
-	/* XXX This assumes that the default attribute is wob. */
-	if ((!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
+	if ((!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
+		(*edp->emulops->allocattr)(edp->emulcookie, 0, 0,
+					   WSATTR_REVERSE,
+					   &edp->bowattr)) &&
+	    (!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
 		(*edp->emulops->allocattr)(edp->emulcookie,
 					   WSCOL_BLACK, WSCOL_WHITE,
 					   WSATTR_WSCOLORS,
-					   &edp->bowattr)) &&
-	    (!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
-		(*edp->emulops->allocattr)(edp->emulcookie, 0, 0,
-					   WSATTR_REVERSE,
 					   &edp->bowattr)))
 		edp->bowattr = edp->defattr;
 
@@ -526,7 +525,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
 }
 
-static char *sun_fkeys[] = {
+static const char *sun_fkeys[] = {
 	"\033[224z",	/* F1 */
 	"\033[225z",
 	"\033[226z",
@@ -540,7 +539,7 @@ static char *sun_fkeys[] = {
 };
 
 int
-wsemul_sun_translate(void *cookie, keysym_t in, char **out)
+wsemul_sun_translate(void *cookie, keysym_t in, const char **out)
 {
 	static char c;
 

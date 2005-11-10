@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.2.2.2 2005/03/04 16:39:35 skrll Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.2.2.3 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2.2.2 2005/03/04 16:39:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2.2.3 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2.2.2 2005/03/04 16:39:35 skrll
 
 static int freebsd_sysctl_name2oid(char *, int *, int *);
 
+SYSCTL_SETUP_PROTO(freebsd_sysctl_setup);
 SYSCTL_SETUP(freebsd_sysctl_setup, "freebsd emulated sysctl setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,

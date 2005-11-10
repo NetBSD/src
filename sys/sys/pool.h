@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.39.2.4 2005/01/17 19:33:10 skrll Exp $	*/
+/*	$NetBSD: pool.h,v 1.39.2.5 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #ifdef __POOL_EXPOSE
 /* The pool cache group. */
 struct pool_cache_group {
-	TAILQ_ENTRY(pool_cache_group)
+	LIST_ENTRY(pool_cache_group)
 		pcg_list;	/* link in the pool cache's group list */
 	u_int	pcg_avail;	/* # available objects */
 				/* pointers to the objects */
@@ -72,15 +72,16 @@ struct pool_cache_group {
 	} pcg_objects[PCG_NOBJECTS];
 };
 
+LIST_HEAD(pool_cache_grouplist,pool_cache_group);
 struct pool_cache {
-	TAILQ_ENTRY(pool_cache)
+	LIST_ENTRY(pool_cache)
 			pc_poollist;	/* entry on pool's group list */
-	TAILQ_HEAD(, pool_cache_group)
-			pc_grouplist;	/* Cache group list */
-	struct pool_cache_group
-			*pc_allocfrom;	/* group to allocate from */
-	struct pool_cache_group
-			*pc_freeto;	/* grop to free to */
+	struct pool_cache_grouplist
+			pc_emptygroups;	/* list of empty cache groups */
+	struct pool_cache_grouplist
+			pc_fullgroups;	/* list of full cache groups */
+	struct pool_cache_grouplist
+			pc_partgroups;	/* list of partial cache groups */
 	struct pool	*pc_pool;	/* parent pool */
 	struct simplelock pc_slock;	/* mutex */
 
@@ -115,7 +116,7 @@ struct pool_allocator {
 LIST_HEAD(pool_pagelist,pool_item_header);
 
 struct pool {
-	TAILQ_ENTRY(pool)
+	LIST_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
 			pr_emptypages;	/* Empty pages */
@@ -125,7 +126,7 @@ struct pool {
 			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	struct pool	*pr_phpool;	/* Pool item header pool */
-	TAILQ_HEAD(,pool_cache)
+	LIST_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */

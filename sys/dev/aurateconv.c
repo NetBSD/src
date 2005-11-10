@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.8.6.5 2005/04/01 14:29:37 skrll Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.8.6.6 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.8.6.5 2005/04/01 14:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.8.6.6 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -225,12 +225,12 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 }
 
 
-#define READ_S8LE(P)		*(int8_t*)(P)
+#define READ_S8LE(P)		*(const int8_t*)(P)
 #define WRITE_S8LE(P, V)	*(int8_t*)(P) = V
-#define READ_S8BE(P)		*(int8_t*)(P)
+#define READ_S8BE(P)		*(const int8_t*)(P)
 #define WRITE_S8BE(P, V)	*(int8_t*)(P) = V
 #if BYTE_ORDER == LITTLE_ENDIAN
-# define READ_S16LE(P)		*(int16_t*)(P)
+# define READ_S16LE(P)		*(const int16_t*)(P)
 # define WRITE_S16LE(P, V)	*(int16_t*)(P) = V
 # define READ_S16BE(P)		(int16_t)((P)[0] | ((P)[1]<<8))
 # define WRITE_S16BE(P, V)	\
@@ -239,7 +239,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
 	} while (/*CONSTCOND*/ 0)
-# define READ_S32LE(P)		*(int32_t*)(P)
+# define READ_S32LE(P)		*(const int32_t*)(P)
 # define WRITE_S32LE(P, V)	*(int32_t*)(P) = V
 # define READ_S32BE(P)		(int32_t)((P)[3] | ((P)[2]<<8) | ((P)[1]<<16) | (((int8_t)((P)[0]))<<24))
 # define WRITE_S32BE(P, V)	\
@@ -258,7 +258,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
 	} while (/*CONSTCOND*/ 0)
-# define READ_S16BE(P)		*(int16_t*)(P)
+# define READ_S16BE(P)		*(const int16_t*)(P)
 # define WRITE_S16BE(P, V)	*(int16_t*)(P) = V
 # define READ_S32LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | ((P)[2]<<16) | (((int8_t)((P)[3]))<<24))
 # define WRITE_S32LE(P, V)	\
@@ -269,7 +269,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		(P)[2] = vvv >> 16; \
 		(P)[3] = vvv >> 24; \
 	} while (/*CONSTCOND*/ 0)
-# define READ_S32BE(P)		*(int32_t*)(P)
+# define READ_S32BE(P)		*(const int32_t*)(P)
 # define WRITE_S32BE(P, V)	*(int32_t*)(P) = V
 #endif /* !LITTLE_ENDIAN */
 #define READ_S24LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | (((int8_t)((P)[2]))<<16))

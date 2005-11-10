@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.7 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.8 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.7 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.8 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.7 2005/04/01 14:32:11 skrll E
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
-								struct indir *, int *, int *));
+static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *,
+				struct indir *, int *, int *);
 
 #define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 
@@ -100,8 +100,7 @@ static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
  * number to index into the array of block pointers described by the dinode.
  */
 int
-ext2fs_bmap(v)
-	void *v;
+ext2fs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -138,13 +137,8 @@ ext2fs_bmap(v)
  */
 
 int
-ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
-	struct vnode *vp;
-	daddr_t bn;
-	daddr_t *bnp;
-	struct indir *ap;
-	int *nump;
-	int *runp;
+ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
+		int *nump, int *runp)
 {
 	struct inode *ip;
 	struct buf *bp;

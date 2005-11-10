@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8.2.7 2005/02/04 11:44:48 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8.2.8 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.7 2005/02/04 11:44:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.8 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -370,7 +370,8 @@ cpu_setup(self, ci)
 	struct cpu_info *ci;
 {
 	u_int hid0, pvr, vers;
-	char *bitmask, hidbuf[128];
+	const char *bitmask;
+	char hidbuf[128];
 	char model[80];
 
 	pvr = mfpvr();
@@ -574,7 +575,7 @@ cpu_setup(self, ci)
 void
 cpu_identify(char *str, size_t len)
 {
-	u_int pvr, maj, min;
+	u_int pvr, major, minor;
 	uint16_t vers, rev, revfmt;
 	const struct cputab *cp;
 	const char *name;
@@ -585,12 +586,12 @@ cpu_identify(char *str, size_t len)
 	rev = pvr;
 	switch (vers) {
 	case MPC7410:
-		min = (pvr >> 0) & 0xff;
-		maj = min <= 4 ? 1 : 2;
+		minor = (pvr >> 0) & 0xff;
+		major = minor <= 4 ? 1 : 2;
 		break;
 	default:
-		maj = (pvr >>  8) & 0xf;
-		min = (pvr >>  0) & 0xf;
+		major = (pvr >>  8) & 0xf;
+		minor = (pvr >>  0) & 0xf;
 	}
 
 	for (cp = models; cp->name[0] != '\0'; cp++) {
@@ -619,7 +620,7 @@ cpu_identify(char *str, size_t len)
 	if (len > n) {
 		switch (revfmt) {
 		case REVFMT_MAJMIN:
-			snprintf(str + n, len - n, "%u.%u)", maj, min);
+			snprintf(str + n, len - n, "%u.%u)", major, minor);
 			break;
 		case REVFMT_HEX:
 			snprintf(str + n, len - n, "0x%04x)", rev);

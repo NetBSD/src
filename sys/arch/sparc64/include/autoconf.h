@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13.6.3 2004/09/21 13:22:55 skrll Exp $ */
+/*	$NetBSD: autoconf.h,v 1.13.6.4 2005/11/10 13:59:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 /* This is used to map device classes to IPLs */
 struct intrmap {
-	char	*in_class;
+	const char *in_class;
 	int	in_lev;
 };
 extern struct intrmap intrmap[];
@@ -113,7 +113,7 @@ struct upa_reg {
 struct mainbus_attach_args {
 	bus_space_tag_t	ma_bustag;	/* parent bus tag */
 	bus_dma_tag_t	ma_dmatag;
-	char		*ma_name;	/* PROM node name */
+	const char	*ma_name;	/* PROM node name */
 	struct upa_reg	*ma_reg;	/* "reg" properties */
 	u_int		*ma_address;	/* "address" properties -- 32 bits */
 	u_int		*ma_interrupts;	/* "interrupts" properties */
@@ -158,5 +158,5 @@ void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 				      struct device *));
 
 void	bootstrap __P((int));
-struct device *getdevunit __P((char *, int));
+struct device *getdevunit __P((const char *, int));
 int	romgetcursoraddr __P((int **, int **));

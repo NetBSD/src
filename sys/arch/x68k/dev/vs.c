@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.21.2.6 2005/01/17 19:30:28 skrll Exp $	*/
+/*	$NetBSD: vs.c,v 1.21.2.7 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.21.2.6 2005/01/17 19:30:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.21.2.7 2005/11/10 14:00:15 skrll Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -160,7 +160,7 @@ struct {
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
 
 struct {
-	char	*name;
+	const char *name;
 	int	encoding;
 	int	precision;
 } vs_encodings[] = {

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.15.2.5 2005/02/04 07:09:16 skrll Exp $       */
+/*      $NetBSD: pccons.c,v 1.15.2.6 2005/11/10 13:58:51 skrll Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.15.2.5 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.15.2.6 2005/11/10 13:58:51 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -311,7 +311,7 @@ void                   pcattach            __P((struct device *,
 int                    pcintr              __P((void *));
 char                   *sget               __P((struct pc_softc *));
 void                   sput                __P((struct pc_softc *,
-                                                u_char *, 
+                                                const u_char *, 
                                                 int,
                                                 u_char));
 void                   pcstart             __P((struct tty *));
@@ -1207,7 +1207,7 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0 )
+    else if ( tp->t_state & TS_XCLUDE && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 )
     {
         /*
         ** Don't allow the open if the tty has been set up 
@@ -2378,10 +2378,10 @@ pcparam(struct tty     *tp,
 */
 #define wrtchar(sc, c, at) \
 do { \
-    char *cp = (char *)crtat; \
+    char *__cp = (char *)crtat; \
 \
-    *cp++    = (c); \
-    *cp      = (at); \
+    *__cp++    = (c); \
+    *__cp      = (at); \
     crtat++; sc->vs.col++; \
 } while (0)
 
@@ -2427,7 +2427,7 @@ static char bgansitopc[] = {
 */
 void
 sput(struct pc_softc   *sc,
-     u_char            *cp, 
+     const u_char      *cp, 
      int               n,
      u_char            nowait)
 {
@@ -2439,7 +2439,7 @@ sput(struct pc_softc   *sc,
     /* Initialise the display if not done already */
     if (crtat == 0) 
     {
-        u_short volatile *cp;
+        u_short volatile *cp2;
 #ifdef DOESNT_ALWAYS_DO_THE_RIGHT_THING
         u_short was;
 #endif
@@ -2453,19 +2453,19 @@ sput(struct pc_softc   *sc,
         ** we operate in color mode otherwise
         ** mono.
         */
-        cp = (void *)((u_long)(CGA_BUF) + vam_mem_data);
+        cp2 = (void *)((u_long)(CGA_BUF) + vam_mem_data);
 #ifdef DOESNT_ALWAYS_DO_THE_RIGHT_THING
-        was = *cp;              /* save whatever is at CGA_BUF */
-        *cp = (u_short) 0xA55A;
-        if (*cp != 0xA55A) 
+        was = *cp2;              /* save whatever is at CGA_BUF */
+        *cp2 = (u_short) 0xA55A;
+        if (*cp2 != 0xA55A) 
         {
-            cp = (void *)((u_long)(MONO_BUF) + vam_mem_data);
+            cp2 = (void *)((u_long)(MONO_BUF) + vam_mem_data);
             addr_6845 = MONO_BASE;
             sc->vs.color = 0;
         } 
         else 
         {
-            *cp = was;          /* restore previous contents of CGA_BUF */
+            *cp2 = was;          /* restore previous contents of CGA_BUF */
             addr_6845 = CGA_BASE;
             sc->vs.color = 1;
         }
@@ -2484,8 +2484,8 @@ sput(struct pc_softc   *sc,
         cursor_shape = 0x0012;
 #endif
         /* Save cursor locations */
-        Crtat = (u_short *)cp;
-        crtat = (u_short *)(cp + cursorat);
+        Crtat = __UNVOLATILE(cp2);
+        crtat = __UNVOLATILE(cp2 + cursorat);
         
         /* Set up screen size and colours */
         sc->vs.ncol = COL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.38.2.5 2005/01/24 08:34:47 skrll Exp $ */
+/*	$NetBSD: if_ie.c,v 1.38.2.6 2005/11/10 13:59:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.38.2.5 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.38.2.6 2005/11/10 13:59:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -382,18 +382,18 @@ ie_setupram(struct ie_softc *sc)
 
 	/* SCP (address already chosen). */
 	scp = sc->scp;
-	(sc->sc_memset)((char *) scp, 0, sizeof(*scp));
+	(sc->sc_memset)(__UNVOLATILE(scp), 0, sizeof(*scp));
 
 	/* ISCP */
 	off -= sizeof(*iscp);
 	iscp = (volatile void *) (sc->buf_area + off);
-	(sc->sc_memset)((char *) iscp, 0, sizeof(*iscp));
+	(sc->sc_memset)(__UNVOLATILE(iscp), 0, sizeof(*iscp));
 	sc->iscp = iscp;
 
 	/* SCB */
 	off -= sizeof(*scb);
 	scb  = (volatile void *) (sc->buf_area + off);
-	(sc->sc_memset)((char *) scb, 0, sizeof(*scb));
+	(sc->sc_memset)(__UNVOLATILE(scb), 0, sizeof(*scb));
 	sc->scb = scb;
 
 	/* Remainder is for buffers, etc. */
@@ -405,11 +405,11 @@ ie_setupram(struct ie_softc *sc)
 
 	/* SCP: main thing is 24-bit ptr to ISCP */
 	scp->ie_bus_use = 0;	/* 16-bit */
-	scp->ie_iscp_ptr = Swap32(vtop24(sc, (void*)iscp));
+	scp->ie_iscp_ptr = Swap32(vtop24(sc, __UNVOLATILE(iscp)));
 
 	/* ISCP */
 	iscp->ie_busy = 1;	/* ie_busy == char */
-	iscp->ie_scb_offset = vtop16sw(sc, (void*)scb);
+	iscp->ie_scb_offset = vtop16sw(sc, __UNVOLATILE(scb));
 	iscp->ie_base = Swap32(vtop24(sc, sc->sc_maddr));
 
 	/* SCB */
@@ -566,10 +566,10 @@ ierint(struct ie_softc *sc)
 		} else {
 			if ((status & IE_FD_RNR) != 0 &&
 			    (scb->ie_status & IE_RU_READY) == 0) {
-				sc->rframes[0]->ie_fd_buf_desc =
-					vtop16sw(sc, (void*) sc->rbuffs[0]);
-				scb->ie_recv_list =
-					vtop16sw(sc, (void*) sc->rframes[0]);
+				sc->rframes[0]->ie_fd_buf_desc = vtop16sw(sc,
+				    __UNVOLATILE(sc->rbuffs[0]));
+				scb->ie_recv_list = vtop16sw(sc,
+				    __UNVOLATILE(sc->rframes[0]));
 				cmd_and_wait(sc, IE_RU_START, 0, 0);
 			}
 			break;
@@ -685,14 +685,11 @@ ether_cmp(u_char *one, u_char *two)
 static inline int 
 check_eh(struct ie_softc *sc, struct ether_header *eh, int *to_bpf)
 {
+#if NBPFILTER > 0
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_if;
-
-#if NBPFILTER > 0
 	*to_bpf = (ifp->if_bpf != 0);
-#else
-	*to_bpf = 0;
 #endif
 
 	/*
@@ -783,10 +780,10 @@ iexmit(struct ie_softc *sc)
 
 	sc->xmit_cmds[sc->xctail]->ie_xmit_status = SWAP(0);
 	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
-	    vtop16sw(sc, (void*) sc->xmit_buffs[sc->xctail]);
+	    vtop16sw(sc, __UNVOLATILE(sc->xmit_buffs[sc->xctail]));
 
 	sc->scb->ie_command_list = 
-	    vtop16sw(sc, (void*) sc->xmit_cmds[sc->xctail]);
+	    vtop16sw(sc, __UNVOLATILE(sc->xmit_cmds[sc->xctail]));
 	cmd_and_wait(sc, IE_CU_START, 0, 0);
 
 	ifp->if_timer = 5;
@@ -960,7 +957,7 @@ ie_readframe(struct ie_softc *sc, int num)
 #if NBPFILTER > 0
 		m = ieget(sc, &bpf_gets_it);
 #else
-		m = ieget(sc, 0);
+		m = ieget(sc, NULL);
 #endif
 		ie_drop_packet_buffer(sc);
 	}
@@ -1305,10 +1302,10 @@ iememinit(struct ie_softc *sc)
 	/* link together recv bufs and set EOL on last */
 	i = sc->nrxbuf - 1;
 	sc->rbuffs[i]->ie_rbd_length |= IE_RBD_LAST;
-	nxt = vtop16sw(sc, (void*) sc->rbuffs[0]);
+	nxt = vtop16sw(sc, __UNVOLATILE(sc->rbuffs[0]));
 	do {
 		sc->rbuffs[i]->ie_rbd_next = nxt;
-		nxt = vtop16sw(sc, (void*) sc->rbuffs[i]);
+		nxt = vtop16sw(sc, __UNVOLATILE(sc->rbuffs[i]));
 	} while (--i >= 0);
 
 	/* Allocate transmit commands. */
@@ -1327,10 +1324,10 @@ iememinit(struct ie_softc *sc)
 	/* Link together recv frames and set EOL on last */
 	i = sc->nframes - 1;
 	sc->rframes[i]->ie_fd_last |= IE_FD_LAST;
-	nxt = vtop16sw(sc, (void*) sc->rframes[0]);
+	nxt = vtop16sw(sc, __UNVOLATILE(sc->rframes[0]));
 	do {
 		sc->rframes[i]->ie_fd_next = nxt;
-		nxt = vtop16sw(sc, (void*) sc->rframes[i]);
+		nxt = vtop16sw(sc, __UNVOLATILE(sc->rframes[i]));
 	} while (--i >= 0);
 
 
@@ -1351,9 +1348,9 @@ iememinit(struct ie_softc *sc)
 	sc->rbtail = sc->nrxbuf - 1;
 
 	sc->scb->ie_recv_list =
-	    vtop16sw(sc, (void*) sc->rframes[0]);
+	    vtop16sw(sc, __UNVOLATILE(sc->rframes[0]));
 	sc->rframes[0]->ie_fd_buf_desc =
-	    vtop16sw(sc, (void*) sc->rbuffs[0]);
+	    vtop16sw(sc, __UNVOLATILE(sc->rbuffs[0]));
 
 	i = (ptr - sc->buf_area);
 #ifdef IEDEBUG
@@ -1495,7 +1492,7 @@ ieinit(struct ie_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	sc->scb->ie_recv_list =
-	    vtop16sw(sc, (void*) sc->rframes[0]);
+	    vtop16sw(sc, __UNVOLATILE(sc->rframes[0]));
 	cmd_and_wait(sc, IE_RU_START, 0, 0);
 
 	ie_ack(sc, IE_ST_WHENCE);

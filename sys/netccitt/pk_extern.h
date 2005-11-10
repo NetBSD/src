@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.12.2.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.12.2.4 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ int pk_accton __P((char *));
 void pk_acct __P((struct pklcd *));
 
 /* pk_debug.c */
-void pk_trace __P((struct x25config *, struct mbuf *, char *));
+void pk_trace __P((struct x25config *, struct mbuf *, const char *));
 void mbuf_cache __P((struct mbuf_cache *, struct mbuf *));
 
 /* pk_input.c */
@@ -107,14 +107,14 @@ int pk_getlcn __P((struct pkcb *));
 void pk_clear __P((struct pklcd *, int, int));
 void pk_flowcontrol __P((struct pklcd *, int, int));
 void pk_flush __P((struct pklcd *));
-void pk_procerror __P((int, struct pklcd *, char *, int));
+void pk_procerror __P((int, struct pklcd *, const char *, int));
 int pk_ack __P((struct pklcd *, unsigned));
 int pk_decode __P((struct x25_packet *));
 void pk_restartcause __P((struct pkcb *, struct x25_packet *));
 void pk_resetcause __P((struct pkcb *, struct x25_packet *));
 void pk_clearcause __P((struct pkcb *, struct x25_packet *));
 char *format_ntn __P((struct x25config *));
-void pk_message __P((int, struct x25config *, char *, ...))
+void pk_message __P((int, struct x25config *, const char *, ...))
      __attribute__((__format__(__printf__, 3, 4)));
 
 int pk_fragment __P((struct pklcd *, struct mbuf *, int, int, int));

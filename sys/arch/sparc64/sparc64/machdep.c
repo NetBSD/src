@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.11 2005/04/01 14:28:41 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.145.2.12 2005/11/10 13:59:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.11 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.12 2005/11/10 13:59:33 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -198,7 +198,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int64_t)physmem));
 	printf("total memory = %s\n", pbuf);
@@ -259,7 +259,7 @@ setregs(l, pack, stack)
 	l->l_proc->p_flag &= ~P_32;
 
 	/* Don't allow misaligned code by default */
-	l->l_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_proc->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -385,7 +385,7 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	u_int chosen;
 	char bootargs[256];
-	char *cp;
+	const char *cp;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return (ENOENT);
@@ -414,7 +414,8 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	if (cp == NULL || cp[0] == '\0')
 		return (ENOENT);
 
-	node.sysctl_data = cp;
+	/*XXXUNCONST*/
+	node.sysctl_data = __UNCONST(cp);
 	node.sysctl_size = strlen(cp) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -1022,16 +1023,16 @@ _bus_dmamap_destroy(t, map)
  * bypass DVMA.
  */
 int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
+_bus_dmamap_load(t, map, sbuf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	void *buf;
+	void *sbuf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
 	bus_size_t sgsize;
-	vaddr_t vaddr = (vaddr_t)buf;
+	vaddr_t vaddr = (vaddr_t)sbuf;
 	long incr;
 	int i;
 

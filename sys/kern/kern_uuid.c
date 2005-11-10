@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.1.4.6 2005/02/04 11:47:42 skrll Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.1.4.7 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1.4.6 2005/02/04 11:47:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1.4.7 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -138,12 +138,12 @@ static uint64_t
 uuid_time(void)
 {
 	struct timeval tv;
-	uint64_t time = 0x01B21DD213814000LL;
+	uint64_t xtime = 0x01B21DD213814000LL;
 
 	microtime(&tv);
-	time += (uint64_t)tv.tv_sec * 10000000LL;
-	time += (uint64_t)(10 * tv.tv_usec);
-	return (time & ((1LL << 60) - 1LL));
+	xtime += (uint64_t)tv.tv_sec * 10000000LL;
+	xtime += (uint64_t)(10 * tv.tv_usec);
+	return (xtime & ((1LL << 60) - 1LL));
 }
 
 /*
@@ -152,25 +152,25 @@ uuid_time(void)
 static void
 uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
 {
-	uint64_t time;
+	uint64_t xtime;
 
 	simple_lock(&uuid_mutex);
 
 	uuid_node(uuid->node);
-	time = uuid_time();
-	*timep = time;
+	xtime = uuid_time();
+	*timep = xtime;
 
 	if (uuid_last.time.ll == 0LL || uuid_last.node[0] != uuid->node[0] ||
 	    uuid_last.node[1] != uuid->node[1] ||
 	    uuid_last.node[2] != uuid->node[2])
 		uuid->seq = (uint16_t)arc4random() & 0x3fff;
-	else if (uuid_last.time.ll >= time)
+	else if (uuid_last.time.ll >= xtime)
 		uuid->seq = (uuid_last.seq + 1) & 0x3fff;
 	else
 		uuid->seq = uuid_last.seq;
 
 	uuid_last = *uuid;
-	uuid_last.time.ll = (time + count - 1) & ((1LL << 60) - 1LL);
+	uuid_last.time.ll = (xtime + count - 1) & ((1LL << 60) - 1LL);
 
 	simple_unlock(&uuid_mutex);
 }
@@ -180,7 +180,7 @@ sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_uuidgen_args *uap = v;
 	struct uuid_private uuid;
-	uint64_t time;
+	uint64_t xtime;
 	int error;
 
 	/*
@@ -195,7 +195,7 @@ sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 	/* XXX: pre-validate accessibility to the whole of the UUID store? */
 
 	/* Generate the base UUID. */
-	uuid_generate(&uuid, &time, SCARG(uap, count));
+	uuid_generate(&uuid, &xtime, SCARG(uap, count));
 
 	/* Set sequence and variant and deal with byte order. */
 	uuid.seq = htobe16(uuid.seq | 0x8000);
@@ -203,13 +203,13 @@ sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 	/* XXX: this should copyout larger chunks at a time. */
 	do {
 		/* Set time and version (=1) and deal with byte order. */
-		uuid.time.x.low = (uint32_t)time;
-		uuid.time.x.mid = (uint16_t)(time >> 32);
-		uuid.time.x.hi = ((uint16_t)(time >> 48) & 0xfff) | (1 << 12);
+		uuid.time.x.low = (uint32_t)xtime;
+		uuid.time.x.mid = (uint16_t)(xtime >> 32);
+		uuid.time.x.hi = ((uint16_t)(xtime >> 48) & 0xfff) | (1 << 12);
 		error = copyout(&uuid, SCARG(uap,store), sizeof(uuid));
 		SCARG(uap, store)++;
 		SCARG(uap, count)--;
-		time++;
+		xtime++;
 	} while (SCARG(uap, count) > 0 && error == 0);
 
 	return (error);

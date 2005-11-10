@@ -1,10 +1,10 @@
-/*	$NetBSD: wsmux.c,v 1.33.2.5 2005/03/04 16:51:15 skrll Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.33.2.6 2005/11/10 14:08:44 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
+ * Author: Lennart Augustsson <lennart@augustsson.net>
  *         Carlstedt Research & Technology
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.5 2005/03/04 16:51:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.6 2005/11/10 14:08:44 skrll Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.5 2005/03/04 16:51:15 skrll Exp $")
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -68,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.5 2005/03/04 16:51:15 skrll Exp $")
 #include "opt_wsdisplay_compat.h"
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsmuxvar.h>
@@ -554,8 +556,13 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		if (!error)
 			ok = 1;
 	}
-	if (ok)
+	if (ok) {
 		error = 0;
+		if (cmd == WSKBDIO_SETENCODING) {
+			sc->sc_kbd_layout = *((kbd_t *)data);
+		}
+
+	}
 
 	return (error);
 }
@@ -571,14 +578,14 @@ wsmuxpoll(dev_t dev, int events, struct lwp *l)
 
 	if (WSMUXCTL(minr)) {
 		/* control device */
-		return (EINVAL);
+		return (0);
 	}
 
 	if (sc->sc_base.me_evp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("wsmuxpoll: not open\n");
 #endif
-		return (EACCES);
+		return (POLLHUP);
 	}
 
 	return (wsevent_poll(sc->sc_base.me_evp, events, l));
@@ -650,6 +657,7 @@ wsmux_create(const char *name, int unit)
 		 "%s%d", name, unit);
 	sc->sc_base.me_dv.dv_unit = unit;
 	sc->sc_base.me_ops = &wsmux_srcops;
+	sc->sc_kbd_layout = KB_NONE;
 	return (sc);
 }
 
@@ -692,6 +700,10 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE,
 						    &sc->sc_rawkbd, 0, 0);
 #endif
+				if (sc->sc_kbd_layout != KB_NONE)
+					(void)wsevsrc_ioctl(me,
+					    WSKBDIO_SETENCODING,
+					    &sc->sc_kbd_layout, FWRITE, 0);
 			}
 		}
 	}

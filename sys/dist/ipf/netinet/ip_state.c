@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.2.2.6 2005/04/01 14:30:55 skrll Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.2.2.7 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,10 +110,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.2.2.6 2005/04/01 14:30:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.2.2.7 2005/11/10 14:09:07 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.25 2005/02/17 05:56:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.29 2005/03/28 10:47:54 darrenr Exp";
 #endif
 #endif
 
@@ -157,7 +157,8 @@ u_long	fr_tcpidletimeout = FIVE_DAYS,
 	fr_udptimeout = IPF_TTLVAL(120),
 	fr_udpacktimeout = IPF_TTLVAL(12),
 	fr_icmptimeout = IPF_TTLVAL(60),
-	fr_icmpacktimeout = IPF_TTLVAL(6);
+	fr_icmpacktimeout = IPF_TTLVAL(6),
+	fr_iptimeout = IPF_TTLVAL(60);
 int	fr_statemax = IPSTATE_MAX,
 	fr_statesize = IPSTATE_SIZE;
 int	fr_state_doflush = 0,
@@ -168,6 +169,7 @@ int	fr_state_doflush = 0,
 ipftq_t	ips_tqtqb[IPF_TCP_NSTATES],
 	ips_udptq,
 	ips_udpacktq,
+	ips_iptq,
 	ips_icmptq,
 	ips_icmpacktq,
 	*ips_utqe = NULL;
@@ -247,25 +249,35 @@ int fr_stateinit()
 	fr_sttab_init(ips_tqtqb);
 	ips_tqtqb[IPF_TCP_NSTATES - 1].ifq_next = &ips_udptq;
 	ips_udptq.ifq_ttl = (u_long)fr_udptimeout;
+	ips_udptq.ifq_ref = 1;
 	ips_udptq.ifq_head = NULL;
 	ips_udptq.ifq_tail = &ips_udptq.ifq_head;
 	MUTEX_INIT(&ips_udptq.ifq_lock, "ipftq udp tab");
 	ips_udptq.ifq_next = &ips_udpacktq;
 	ips_udpacktq.ifq_ttl = (u_long)fr_udpacktimeout;
+	ips_udpacktq.ifq_ref = 1;
 	ips_udpacktq.ifq_head = NULL;
 	ips_udpacktq.ifq_tail = &ips_udpacktq.ifq_head;
 	MUTEX_INIT(&ips_udpacktq.ifq_lock, "ipftq udpack tab");
 	ips_udpacktq.ifq_next = &ips_icmptq;
 	ips_icmptq.ifq_ttl = (u_long)fr_icmptimeout;
+	ips_icmptq.ifq_ref = 1;
 	ips_icmptq.ifq_head = NULL;
 	ips_icmptq.ifq_tail = &ips_icmptq.ifq_head;
 	MUTEX_INIT(&ips_icmptq.ifq_lock, "ipftq icmp tab");
 	ips_icmptq.ifq_next = &ips_icmpacktq;
 	ips_icmpacktq.ifq_ttl = (u_long)fr_icmpacktimeout;
+	ips_icmpacktq.ifq_ref = 1;
 	ips_icmpacktq.ifq_head = NULL;
 	ips_icmpacktq.ifq_tail = &ips_icmpacktq.ifq_head;
 	MUTEX_INIT(&ips_icmpacktq.ifq_lock, "ipftq icmpack tab");
-	ips_icmpacktq.ifq_next = NULL;
+	ips_icmpacktq.ifq_next = &ips_iptq;
+	ips_iptq.ifq_ttl = (u_long)fr_iptimeout;
+	ips_iptq.ifq_ref = 1;
+	ips_iptq.ifq_head = NULL;
+	ips_iptq.ifq_tail = &ips_iptq.ifq_head;
+	MUTEX_INIT(&ips_iptq.ifq_lock, "ipftq ip tab");
+	ips_iptq.ifq_next = NULL;
 
 	RWLOCK_INIT(&ipf_state, "ipf IP state rwlock");
 	MUTEX_INIT(&ipf_stinsert, "ipf state insert mutex");
@@ -286,10 +298,26 @@ int fr_stateinit()
 /* ------------------------------------------------------------------------ */
 void fr_stateunload()
 {
+	ipftq_t *ifq, *ifqnext;
 	ipstate_t *is;
 
 	while ((is = ips_list) != NULL)
 		fr_delstate(is, 0);
+
+	/*
+	 * Proxy timeout queues are not cleaned here because although they
+	 * exist on the state list, appr_unload is called after fr_stateunload
+	 * and the proxies actually are responsible for them being created.
+	 * Should the proxy timeouts have their own list?  There's no real
+	 * justification as this is the only complicationA
+	 */
+	for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+		ifqnext = ifq->ifq_next;
+		if (((ifq->ifq_flags & IFQF_PROXY) == 0) &&
+		    (fr_deletetimeoutqueue(ifq) == 0))
+			fr_freetimeoutqueue(ifq);
+	}
+
 	ips_stats.iss_inuse = 0;
 	ips_num = 0;
 
@@ -299,6 +327,7 @@ void fr_stateunload()
 		MUTEX_DESTROY(&ips_icmptq.ifq_lock);
 		MUTEX_DESTROY(&ips_udpacktq.ifq_lock);
 		MUTEX_DESTROY(&ips_icmpacktq.ifq_lock);
+		MUTEX_DESTROY(&ips_iptq.ifq_lock);
 	}
 
 	if (ips_table != NULL) {
@@ -601,6 +630,10 @@ caddr_t data;
 	isn->is_sti.tqe_next = NULL;
 	isn->is_sti.tqe_ifq = NULL;
 	isn->is_sti.tqe_parent = isn;
+	isn->is_ifp[0] = NULL;
+	isn->is_ifp[1] = NULL;
+	isn->is_ifp[2] = NULL;
+	isn->is_ifp[3] = NULL;
 	isn->is_sync = NULL;
 	fr = ips.ips_rule;
 
@@ -710,8 +743,11 @@ int rev;
 	/*
 	 * Look up all the interface names in the state entry.
 	 */
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++) {
+		if (is->is_ifp[i] != NULL)
+			continue;
 		is->is_ifp[i] = fr_resolvenic(is->is_ifname[i], is->is_v);
+	}
 
 	/*
 	 * If we could trust is_hv, then the modulous would not be needed, but
@@ -815,7 +851,6 @@ u_int flags;
 	is = &ips;
 	bzero((char *)is, sizeof(*is));
 	is->is_die = 1 + fr_ticks;
-	is->is_flags = flags & IS_INHERITED;
 
 	/*
 	 * Copy and calculate...
@@ -842,7 +877,7 @@ u_int flags;
 			 * solicit message to put in the state structure and
 			 * we could use that without a wildcard flag too...
 			 */
-			is->is_flags |= SI_W_DADDR;
+			flags |= SI_W_DADDR;
 			hv -= is->is_daddr;
 		} else {
 			hv += is->is_dst.i6[1];
@@ -902,8 +937,10 @@ u_int flags;
 
 		is->is_gre.gs_flags = gre->gr_flags;
 		is->is_gre.gs_ptype = gre->gr_ptype;
-		is->is_gre.gs_call = gre->gr_call;
-		hv += is->is_gre.gs_call;
+		if (GRE_REV(is->is_gre.gs_flags) == 1) {
+			is->is_call[0] = fin->fin_data[0];
+			is->is_call[1] = fin->fin_data[1];
+		}
 		break;
 
 	case IPPROTO_TCP :
@@ -958,7 +995,7 @@ u_int flags;
 			}
 
 			if ((tcp->th_flags & TH_OPENING) == TH_SYN)
-				is->is_flags |= IS_TCPFSM;
+				flags |= IS_TCPFSM;
 			else {
 				is->is_maxdwin = is->is_maxswin * 2;
 				is->is_dend = ntohl(tcp->th_ack);
@@ -993,6 +1030,7 @@ u_int flags;
 	hv = DOUBLE_HASH(hv);
 	is->is_hv = hv;
 	is->is_rule = fr;
+	is->is_flags = flags & IS_INHERITED;
 
 	/*
 	 * Look for identical state.
@@ -1025,12 +1063,14 @@ u_int flags;
 		if (fr->fr_age[0] != 0) {
 			is->is_tqehead[0] = fr_addtimeoutqueue(&ips_utqe,
 							       fr->fr_age[0]);
-			is->is_tqehead[1] = is->is_tqehead[0];
 			is->is_sti.tqe_flags |= TQE_RULEBASED;
 		}
-		if (fr->fr_age[0] != 0 && fr->fr_age[1] != fr->fr_age[0])
+		if (fr->fr_age[1] != 0) {
 			is->is_tqehead[1] = fr_addtimeoutqueue(&ips_utqe,
 							       fr->fr_age[1]);
+			is->is_sti.tqe_flags |= TQE_RULEBASED;
+		}
+
 		is->is_tag = fr->fr_logtag;
 
 		is->is_ifp[(out << 1) + 1] = fr->fr_ifas[1];
@@ -1072,7 +1112,7 @@ u_int flags;
 	is->is_pkts[3] = 0, is->is_bytes[3] = 0;
 	if ((fin->fin_flx & FI_IGNORE) == 0) {
 		is->is_pkts[out] = 1;
-		is->is_bytes[out] = fin->fin_dlen + fin->fin_hlen;
+		is->is_bytes[out] = fin->fin_plen;
 		is->is_flx[out][0] = fin->fin_flx & FI_CMP;
 		is->is_flx[out][0] &= ~FI_OOW;
 	}
@@ -1599,15 +1639,16 @@ u_32_t cmask;
 	rev = IP6_NEQ(&is->is_dst, dst);
 	ifp = fin->fin_ifp;
 	out = fin->fin_out;
-	flags = is->is_flags & (SI_WILDA);
+	flags = is->is_flags;
 	sp = 0;
 	dp = 0;
 
 	if (tcp != NULL) {
-		flags = is->is_flags;
-		sp = tcp->th_sport;
-		dp = tcp->th_dport;
-		if (!rev) {
+		sp = htons(fin->fin_sport);
+		dp = ntohs(fin->fin_dport);
+	}
+	if (!rev) {
+		if (tcp != NULL) {
 			if (!(flags & SI_W_SPORT) && (sp != is->is_sport))
 				rev = 1;
 			else if (!(flags & SI_W_DPORT) && (dp != is->is_dport))
@@ -1635,19 +1676,28 @@ u_32_t cmask;
 	 */
 	if (rev == 0) {
 		if ((IP6_EQ(&is->is_dst, dst) || (flags & SI_W_DADDR)) &&
-		    (IP6_EQ(&is->is_src, src) || (flags & SI_W_SADDR)) &&
-		    (!tcp || ((sp == is->is_sport || flags & SI_W_SPORT) &&
-		     (dp == is->is_dport || flags & SI_W_DPORT)))) {
-			ret = 1;
+		    (IP6_EQ(&is->is_src, src) || (flags & SI_W_SADDR))) {
+			if (tcp) {
+				if ((sp == is->is_sport || flags & SI_W_SPORT)&&
+				    (dp == is->is_dport || flags & SI_W_DPORT))
+					ret = 1;
+			} else {
+				ret = 1;
+			}
 		}
 	} else {
 		if ((IP6_EQ(&is->is_dst, src) || (flags & SI_W_DADDR)) &&
-		    (IP6_EQ(&is->is_src, dst) || (flags & SI_W_SADDR)) &&
-		    (!tcp || ((sp == is->is_dport || flags & SI_W_DPORT) &&
-		     (dp == is->is_sport || flags & SI_W_SPORT)))) {
-			ret = 1;
+		    (IP6_EQ(&is->is_src, dst) || (flags & SI_W_SADDR))) {
+			if (tcp) {
+				if ((dp == is->is_sport || flags & SI_W_SPORT)&&
+				    (sp == is->is_dport || flags & SI_W_DPORT))
+					ret = 1;
+			} else {
+				ret = 1;
+			}
 		}
 	}
+
 	if (ret == 0)
 		return NULL;
 
@@ -1981,13 +2031,13 @@ fr_info_t *fin;
 				 *      compared to the state
 				 */
 				backward = IP6_NEQ(&is->is_src, &src);
+				fin->fin_rev = !backward;
 				i = (!backward << 1) + fin->fin_out;
 				oi = (backward << 1) + ofin.fin_out;
 				if (is->is_icmppkts[i] > is->is_pkts[oi])
 					continue;
 				ips_stats.iss_hits++;
 				is->is_icmppkts[i]++;
-				is->is_bytes[i] += fin->fin_plen;
 				return is;
 			}
 		}
@@ -2036,6 +2086,7 @@ fr_info_t *fin;
 			 *            the state
 			 */
 			backward = IP6_NEQ(&is->is_src, &src);
+			fin->fin_rev = !backward;
 			i = (!backward << 1) + fin->fin_out;
 			oi = (backward << 1) + ofin.fin_out;
 
@@ -2044,7 +2095,6 @@ fr_info_t *fin;
 				break;
 			ips_stats.iss_hits++;
 			is->is_icmppkts[i]++;
-			is->is_bytes[i] += fin->fin_plen;
 			/*
 			 * we deliberately do not touch the timeouts
 			 * for the accompanying state table entry.
@@ -2128,7 +2178,6 @@ ipftq_t **ifqp;
 	u_short dport, sport;
 	i6addr_t src, dst;
 	struct icmp *ic;
-	grehdr_t *gre;
 	ipftq_t *ifq;
 	int oow;
 
@@ -2167,7 +2216,6 @@ ipftq_t **ifqp;
 	{
 #ifdef	USE_INET6
 	case IPPROTO_ICMPV6 :
-		tcp = NULL;
 		tryagain = 0;
 		if (v == 6) {
 			if ((ic->icmp_type == ICMP6_ECHO_REQUEST) ||
@@ -2186,12 +2234,10 @@ icmp6again:
 			if (is != NULL &&
 			    fr_matchicmpqueryreply(v, &is->is_icmp,
 						   ic, fin->fin_rev)) {
-				if (!(is->is_sti.tqe_flags & TQE_RULEBASED)) {
-					if (fin->fin_rev)
-						ifq = &ips_icmpacktq;
-					else
-						ifq = &ips_icmptq;
-				}
+				if (fin->fin_rev)
+					ifq = &ips_icmpacktq;
+				else
+					ifq = &ips_icmptq;
 				break;
 			}
 		}
@@ -2250,35 +2296,12 @@ icmp6again:
 			if (is != NULL &&
 			    fr_matchicmpqueryreply(v, &is->is_icmp,
 						   ic, fin->fin_rev)) {
-				if (!(is->is_sti.tqe_flags & TQE_RULEBASED)) {
-					if (fin->fin_rev)
-						ifq = &ips_icmpacktq;
-					else
-						ifq = &ips_icmptq;
-				}
+				if (fin->fin_rev)
+					ifq = &ips_icmpacktq;
+				else
+					ifq = &ips_icmptq;
 				break;
 			}
-		}
-		if (is == NULL) {
-			RWLOCK_EXIT(&ipf_state);
-		}
-		break;
-
-	case IPPROTO_GRE :
-		gre = fin->fin_dp;
-		hv += gre->gr_call;
-		tcp = NULL;
-		ifqp = NULL;
-		hv = DOUBLE_HASH(hv);
-		READ_ENTER(&ipf_state);
-		for (isp = &ips_table[hv]; ((is = *isp) != NULL); ) {
-			isp = &is->is_hnext;
-			if ((is->is_p != IPPROTO_GRE) || (is->is_v != v) ||
-			    (is->is_gre.gs_call != gre->gr_call))
-				continue;
-			is = fr_matchsrcdst(fin, is, &src, &dst, NULL, FI_CMP);
-			if (is != NULL)
-				break;
 		}
 		if (is == NULL) {
 			RWLOCK_EXIT(&ipf_state);
@@ -2335,8 +2358,15 @@ retry_tcpudp:
 		fin->fin_flx |= oow;
 		break;
 
+#if 0
+	case IPPROTO_GRE :
+		gre = fin->fin_dp;
+		if (GRE_REV(gre->gr_flags) == 1) {
+			hv += gre->gr_call;
+		}
+		/* FALLTHROUGH */
+#endif
 	default :
-		tcp = NULL;
 		ifqp = NULL;
 		hvm = DOUBLE_HASH(hv);
 		READ_ENTER(&ipf_state);
@@ -2345,8 +2375,10 @@ retry_tcpudp:
 			if ((is->is_p != pr) || (is->is_v != v))
 				continue;
 			is = fr_matchsrcdst(fin, is, &src, &dst, NULL, FI_CMP);
-			if (is != NULL)
+			if (is != NULL) {
+				ifq = &ips_iptq;
 				break;
+			}
 		}
 		if (is == NULL) {
 			RWLOCK_EXIT(&ipf_state);
@@ -2354,6 +2386,9 @@ retry_tcpudp:
 		break;
 	}
 
+	if ((is != NULL) && ((is->is_sti.tqe_flags & TQE_RULEBASED) != 0) &&
+	    (is->is_tqehead[fin->fin_rev] != NULL))
+		ifq = is->is_tqehead[fin->fin_rev];
 	if (ifq != NULL && ifqp != NULL)
 		*ifqp = ifq;
 	return is;
@@ -2669,8 +2704,6 @@ static void fr_delstate(is, why)
 ipstate_t *is;
 int why;
 {
-	ipftqent_t *tqe;
-	ipftq_t *ifq;
 
 	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
 
@@ -2715,21 +2748,11 @@ int why;
 	/*
 	 * Next, remove it from the timeout queue it is in.
 	 */
-	tqe = &is->is_sti;
-	ifq = tqe->tqe_ifq;
-	if (ifq != NULL) {
-		if (tqe->tqe_pnext != NULL) {
-			*tqe->tqe_pnext = tqe->tqe_next;
-			if (tqe->tqe_next != NULL)
-				tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
-			else	/* we must be the tail anyway */
-				ifq->ifq_tail = tqe->tqe_pnext;
-			tqe->tqe_pnext = NULL;
-			tqe->tqe_ifq = NULL;
-		}
+	fr_deletequeueentry(&is->is_sti);
 
-		if ((ifq->ifq_flags & IFQF_USER) != 0)
-			fr_deletetimeoutqueue(ifq);
+	if (is->is_me != NULL) {
+		*is->is_me = NULL;
+		is->is_me = NULL;
 	}
 
 	/*
@@ -2739,6 +2762,15 @@ int why;
 	is->is_ref--;
 	if (is->is_ref > 0)
 		return;
+
+	if (is->is_tqehead[0] != NULL) {
+		if (fr_deletetimeoutqueue(is->is_tqehead[0]) == 0)
+			fr_freetimeoutqueue(is->is_tqehead[0]);
+	}
+	if (is->is_tqehead[1] != NULL) {
+		if (fr_deletetimeoutqueue(is->is_tqehead[1]) == 0)
+			fr_freetimeoutqueue(is->is_tqehead[1]);
+	}
 
 #ifdef	IPFILTER_SYNC
 	if (is->is_sync)
@@ -2803,10 +2835,21 @@ void fr_timeoutstate()
 			fr_delstate(is, ISL_EXPIRE);
 		}
 	}
+
+	for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+		ifqnext = ifq->ifq_next;
+
+		if (((ifq->ifq_flags & IFQF_DELETE) != 0) &&
+		    (ifq->ifq_ref == 0)) {
+			fr_freetimeoutqueue(ifq);
+		}
+	}
+
 	if (fr_state_doflush) {
 		(void) fr_state_flush(2, 0);
 		fr_state_doflush = 0;
 	}
+
 	RWLOCK_EXIT(&ipf_state);
 	SPL_X(s);
 }
@@ -3497,9 +3540,9 @@ fr_info_t *fin;
 				     (ic->ici_type - 1 == oic->icmp6_type )) {
 				    	ips_stats.iss_hits++;
 					backward = IP6_NEQ(&is->is_dst, &src);
+					fin->fin_rev = !backward;
 					i = (backward << 1) + fin->fin_out;
-    					is->is_pkts[i]++;
-					is->is_bytes[i] += fin->fin_plen;
+    					is->is_icmppkts[i]++;
 					return is;
 				}
 			}
@@ -3547,9 +3590,9 @@ fr_info_t *fin;
 		if (is != NULL) {
 			ips_stats.iss_hits++;
 			backward = IP6_NEQ(&is->is_dst, &src);
+			fin->fin_rev = !backward;
 			i = (backward << 1) + fin->fin_out;
-			is->is_pkts[i]++;
-			is->is_bytes[i] += fin->fin_plen;
+			is->is_icmppkts[i]++;
 			/*
 			 * we deliberately do not touch the timeouts
 			 * for the accompanying state table entry.
@@ -3578,6 +3621,7 @@ ipftq_t *tqp;
 
 	for (i = IPF_TCP_NSTATES - 1; i >= 0; i--) {
 		tqp[i].ifq_ttl = 0;
+		tqp[i].ifq_ref = 1;
 		tqp[i].ifq_head = NULL;
 		tqp[i].ifq_tail = &tqp[i].ifq_head;
 		tqp[i].ifq_next = tqp + i + 1;
@@ -3740,11 +3784,16 @@ int rev;
 		case IPPROTO_TCP :
 			nifq = ips_tqtqb + is->is_state[rev];
 			break;
-		default :
+
+		case IPPROTO_UDP :
 			if (rev == 1)
 				nifq = &ips_udpacktq;
 			else
 				nifq = &ips_udptq;
+			break;
+
+		default :
+			nifq = &ips_iptq;
 			break;
 		}
 	}

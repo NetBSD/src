@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3.2.4 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.2.3 2004/09/21 13:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.2.4 2005/11/10 14:00:20 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -157,6 +157,8 @@ consinit()
 
 #if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
+		int error;
+
 #if (NVGA > 0)
 		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 				  -1, 1))
@@ -175,13 +177,18 @@ consinit()
 #endif
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
+		error = ENODEV;
 #if (NPCKBC > 0)
-		pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		error = pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
-#if NPCKBC == 0 && NUKBD > 0
-		ukbd_cnattach();
+#if (NUKBD > 0)
+		if (error)
+			error = ukbd_cnattach();
 #endif
+		if (error)
+			printf("WARNING: no console keyboard, error=%d\n",
+			       error);
 		return;
 	}
 #endif /* PC | VT | VGA | PCDISPLAY */

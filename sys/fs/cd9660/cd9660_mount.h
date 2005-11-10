@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.1.4.3 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.1.4.4 2005/11/10 14:09:26 skrll Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 struct iso_args {
 	const char	*fspec;		/* block special device to mount */
-	struct	export_args export;	/* network export info */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	int	flags;			/* mounting flags, see below */
 };
 #define	ISOFSMNT_NORRIP		0x00000001 /* disable Rock Ridge Ext.*/

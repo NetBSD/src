@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.41.2.5 2005/03/04 16:43:40 skrll Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.41.2.6 2005/11/10 14:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41.2.5 2005/03/04 16:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41.2.6 2005/11/10 14:05:42 skrll Exp $");
 
 #include "isadma.h"
 
@@ -82,7 +82,7 @@ static void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
 static int isapnp_print(void *, const char *);
 #ifdef _KERNEL
 static int isapnp_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 #endif
 static int isapnp_find(struct isapnp_softc *, int);
 static int isapnp_match(struct device *, struct cfdata *, void *);
@@ -508,16 +508,15 @@ isapnp_id_to_vendor(v, id)
 	char   *v;
 	const u_char *id;
 {
-	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
 
 	*p++ = 'A' + (id[0] >> 2) - 1;
 	*p++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*p++ = 'A' + (id[1] & 0x1f) - 1;
-	*p++ = hex[id[2] >> 4];
-	*p++ = hex[id[2] & 0x0f];
-	*p++ = hex[id[3] >> 4];
-	*p++ = hex[id[3] & 0x0f];
+	*p++ = HEXDIGITS[id[2] >> 4];
+	*p++ = HEXDIGITS[id[2] & 0x0f];
+	*p++ = HEXDIGITS[id[3] >> 4];
+	*p++ = HEXDIGITS[id[3] & 0x0f];
 	*p = '\0';
 
 	return v;
@@ -605,7 +604,7 @@ static int
 isapnp_submatch(parent, match, ldesc, aux)
 	struct device *parent;
 	struct cfdata *match;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 

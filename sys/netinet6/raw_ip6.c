@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.54.2.5 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.54.2.6 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.5 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.6 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -318,7 +318,7 @@ rip6_ctlinput(cmd, sa, d)
 		 */
 		in6p = NULL;
 		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
-		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
+		    (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
 #if 0
 		if (!in6p) {
 			/*
@@ -356,7 +356,7 @@ rip6_ctlinput(cmd, sa, d)
 	}
 
 	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
-	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 }
 
 /*
@@ -893,4 +893,11 @@ SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
 		       sysctl_inpcblist, 0, &raw6cbtable, 0,
 		       CTL_NET, PF_INET6, IPPROTO_RAW,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Raw IPv6 statistics"),
+		       NULL, 0, &rip6stat, sizeof(rip6stat),
+		       CTL_NET, PF_INET6, IPPROTO_RAW, RAW6CTL_STATS,
+		       CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2.4.2 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2.4.3 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.2.4.2 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.2.4.3 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,11 +73,11 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
 
 	ih = pirq_establish(PCIIDE_COMPAT_IRQ(chan),
-	    bind_pirq_to_irq(PCIIDE_COMPAT_IRQ(chan)), func, arg, IPL_BIO);
+	    bind_pirq_to_evtch(PCIIDE_COMPAT_IRQ(chan)), func, arg, IPL_BIO);
 	if (ih == NULL)
 		return NULL;
 
-	printf("%s: %s channel interrupting at physical irq %d, irq %d\n",
-	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan), ih->pirq, ih->irq);
+	printf("%s: %s channel using event channel %d for irq %d\n",
+	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan), ih->evtch, ih->pirq);
 	return (void *)ih;
 }

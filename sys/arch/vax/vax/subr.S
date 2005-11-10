@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.7.2.3 2004/09/21 13:23:59 skrll Exp $	   */
+/*	$NetBSD: subr.S,v 1.7.2.4 2005/11/10 13:59:59 skrll Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -162,7 +162,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
  */
 
 	.align	2
-	.globl	_C_LABEL(sigcode),_C_LABEL(upcallcode),_C_LABEL(esigcode)
+	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 	pushr	$0x3f
 	subl2	$0xc,%sp
@@ -172,14 +172,6 @@ _C_LABEL(sigcode):
 	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
-
-/*
- * Trampoline for SA upcalls.  This would be totally unnecessary if we
- * didn't need to account for the saved registers in the callee.
- */
-_C_LABEL(upcallcode):
-	callg	(%sp),(%r0)
-	halt
 _C_LABEL(esigcode):
 
 #ifdef COMPAT_IBCS2
@@ -411,8 +403,8 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 
 #if defined(MULTIPROCESSOR)
 	.align 2
-	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
-_C_LABEL(tramp):
+	.globl	_C_LABEL(vax_mp_tramp)	# used to kick off multiprocessor systems.
+_C_LABEL(vax_mp_tramp):
 	ldpctx
 	rei
 #endif

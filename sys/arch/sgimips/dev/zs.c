@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18.2.4 2004/10/19 15:56:38 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.2.5 2005/11/10 13:58:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.2.4 2004/10/19 15:56:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.2.5 2005/11/10 13:58:33 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct zs_chanstate *cs;
 	struct zs_channel *ch;
 	int    zs_unit, channel, err, s;
-	char  *promconsdev;
+	const char  *promconsdev;
 
 	promconsdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 
@@ -628,10 +628,10 @@ zs_get_chan_addr(int zs_unit, int channel)
 			addr = (struct zsdevice *)
 						MIPS_PHYS_TO_KSEG1(0x1fb80d10);
 		} else {
-			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit); 
+			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit);
 		}
 		break;
- 
+
 	case MACH_SGI_IP22:
 		if (zs_unit != 0)
 			panic("zs_get_chan_addr zs_unit != 0 on IP%d",
@@ -646,13 +646,13 @@ zs_get_chan_addr(int zs_unit, int channel)
 
 	/*
 	 * We need to swap serial ports to match reality on
-	 * non-keyboard channels. 
+	 * non-keyboard channels.
 	 */
 	if (mach_type == MACH_SGI_IP22) {
 		if (channel == 0)
 			zc = &addr->zs_chan_b;
 		else
-			zc = &addr->zs_chan_a; 
+			zc = &addr->zs_chan_a;
 	} else {
 		if (zs_unit == 0) {
 			if (channel == 0)
@@ -728,7 +728,7 @@ void
 zscninit(struct consdev *cn)
 {
 	extern const struct cdevsw zstty_cdevsw;
-	char* consdev;
+	const char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
 		panic("zscninit without valid ARCS ConsoleOut setting!");

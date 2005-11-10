@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97.2.8 2005/02/04 11:48:05 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.9 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,6 +131,8 @@ struct ps_strings {
  * in creating the new process's vmspace.
  */
 
+#include <sys/uio.h>
+
 struct lwp;
 struct proc;
 struct exec_package;
@@ -146,7 +148,7 @@ struct execsw {
 		int (*elf_probe_func)(struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *);
 		int (*ecoff_probe_func)(struct lwp *, struct exec_package *);
-		int (*mach_probe_func)(char **);
+		int (*mach_probe_func)(const char **);
 	} u;
 	const struct  emul *es_emul;	/* os emulation */
 	int	es_prio;		/* entry priority */
@@ -157,7 +159,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs)(struct lwp *, struct exec_package *, u_long);
 					/* Dump core */
-	int	(*es_coredump)(struct lwp *, struct vnode *, struct ucred *);
+	int	(*es_coredump)(struct lwp *, void *);
 	int	(*es_setup_stack)(struct lwp *, struct exec_package *);
 };
 
@@ -243,17 +245,22 @@ int	vmcmd_map_zero		(struct lwp *, struct exec_vmcmd *);
 int	copyargs		(struct lwp *, struct exec_package *,
 				    struct ps_strings *, char **, void *);
 void	setregs			(struct lwp *, struct exec_package *, u_long);
-#ifdef VERIFIED_EXEC
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
 int	check_exec		(struct lwp *, struct exec_package *, int);
-#else
-int	check_exec		(struct lwp *, struct exec_package *);
-#endif
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
+
+int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+/*
+ * Machine dependent functions
+ */
+struct core;
+struct core32;
+int	cpu_coredump(struct lwp *, void *, struct core *);
+int	cpu_coredump32(struct lwp *, void *, struct core32 *);
 
 
 #ifdef LKM
@@ -272,6 +279,10 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 	new_vmcmd(evsp,lwp,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,lwp,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,lwp,len,addr,vp,offset,prot,flags)
+
+typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
+int	execve1(struct lwp *, const char *, char * const *, char * const *,
+    execve_fetch_element_t);
 
 #endif /* _KERNEL */
 

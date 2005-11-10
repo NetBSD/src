@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.20.2.6 2005/03/04 16:40:03 skrll Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.20.2.7 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.20.2.6 2005/03/04 16:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.20.2.7 2005/11/10 14:01:07 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -711,6 +711,12 @@ linux_ioctl_termios(l, uap, retval)
 		break;
 	case LINUX_TIOCMSET:
 		SCARG(&ia, com) = TIOCMSET;
+		break;
+	case LINUX_TIOCMBIC:
+		SCARG(&ia, com) = TIOCMBIC;
+		break;
+	case LINUX_TIOCMBIS:
+		SCARG(&ia, com) = TIOCMBIS;
 		break;
 #ifdef LINUX_TIOCGPTN
 	case LINUX_TIOCGPTN:

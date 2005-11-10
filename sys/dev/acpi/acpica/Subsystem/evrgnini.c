@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evrgnini- ACPI AddressSpace (OpRegion) init
- *              xRevision: 73 $
+ *              xRevision: 76 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.6.2.3 2004/09/21 13:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __EVRGNINI_C__
 
@@ -132,14 +132,14 @@ __KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.6.2.3 2004/09/21 13:26:43 skrll Exp $
  *
  * FUNCTION:    AcpiEvSystemMemoryRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling, a nop for now
+ * DESCRIPTION: Setup a SystemMemory operation region
  *
  ******************************************************************************/
 
@@ -189,14 +189,14 @@ AcpiEvSystemMemoryRegionSetup (
  *
  * FUNCTION:    AcpiEvIoSpaceRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling
+ * DESCRIPTION: Setup a IO operation region
  *
  ******************************************************************************/
 
@@ -227,14 +227,14 @@ AcpiEvIoSpaceRegionSetup (
  *
  * FUNCTION:    AcpiEvPciConfigRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling
+ * DESCRIPTION: Setup a PCI_Config operation region
  *
  * MUTEX:       Assumes namespace is not locked
  *
@@ -416,14 +416,14 @@ AcpiEvPciConfigRegionSetup (
  *
  * FUNCTION:    AcpiEvPciBarRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling
+ * DESCRIPTION: Setup a PciBAR operation region
  *
  * MUTEX:       Assumes namespace is not locked
  *
@@ -447,14 +447,14 @@ AcpiEvPciBarRegionSetup (
  *
  * FUNCTION:    AcpiEvCmosRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling
+ * DESCRIPTION: Setup a CMOS operation region
  *
  * MUTEX:       Assumes namespace is not locked
  *
@@ -478,14 +478,14 @@ AcpiEvCmosRegionSetup (
  *
  * FUNCTION:    AcpiEvDefaultRegionSetup
  *
- * PARAMETERS:  RegionObj           - Region we are interested in
+ * PARAMETERS:  Handle              - Region we are interested in
  *              Function            - Start or stop
  *              HandlerContext      - Address space handler context
  *              RegionContext       - Region specific context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Do any prep work for region handling
+ * DESCRIPTION: Default region initialization
  *
  ******************************************************************************/
 
@@ -545,7 +545,7 @@ AcpiEvInitializeRegion (
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *MethodNode;
-    ACPI_NAME               *RegNamePtr = (ACPI_NAME *) METHOD_NAME__REG;
+    const ACPI_NAME         *RegNamePtr = (const ACPI_NAME *) METHOD_NAME__REG;
     ACPI_OPERAND_OBJECT     *RegionObj2;
 
 

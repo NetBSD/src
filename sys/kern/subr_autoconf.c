@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.85.2.7 2005/03/04 16:52:00 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.85.2.8 2005/11/10 14:09:45 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85.2.7 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85.2.8 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,10 +134,9 @@ propdb_t dev_propdb;
 #define	ROOT ((struct device *)NULL)
 
 struct matchinfo {
-	cfmatch_t fn;
-	cfmatch_loc_t fn_loc;
+	cfsubmatch_t fn;
 	struct	device *parent;
-	const locdesc_t *ldesc;
+	const int *locs;
 	void	*aux;
 	struct	cfdata *match;
 	int	pri;
@@ -441,23 +440,9 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	int pri;
 
 	if (m->fn != NULL) {
-		KASSERT(m->fn_loc == NULL);
-		pri = (*m->fn)(m->parent, cf, m->aux);
-	} else if (m->fn_loc != NULL) {
-		pri = (*m->fn_loc)(m->parent, cf, m->ldesc, m->aux);
+		pri = (*m->fn)(m->parent, cf, m->locs, m->aux);
 	} else {
-		struct cfattach *ca;
-
-		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
-		if (ca == NULL) {
-			/* No attachment for this entry, oh well. */
-			return;
-		}
-	        if (ca->ca_match == NULL) {
-			panic("mapply: no match function for '%s' attachment "
-			    "of '%s'", cf->cf_atname, cf->cf_name);
-		}
-		pri = (*ca->ca_match)(m->parent, cf, m->aux);
+		pri = config_match(m->parent, cf, m->aux);
 	}
 	if (pri > m->pri) {
 		m->match = cf;
@@ -465,22 +450,67 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	}
 }
 
-/*
- * Helper function: check whether the driver supports the interface attribute.
- */
-static int
-cfdriver_has_iattr(const struct cfdriver *cd, const char *ia)
+int
+config_stdsubmatch(struct device *parent, struct cfdata *cf,
+		   const int *locs, void *aux)
 {
-	const char * const *cpp;
+	const struct cfiattrdata *ci;
+	const struct cflocdesc *cl;
+	int nlocs, i;
+
+	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	KASSERT(ci);
+	nlocs = ci->ci_loclen;
+	for (i = 0; i < nlocs; i++) {
+		cl = &ci->ci_locdesc[i];
+		/* !cld_defaultstr means no default value */
+		if ((!(cl->cld_defaultstr)
+		     || (cf->cf_loc[i] != cl->cld_default))
+		    && cf->cf_loc[i] != locs[i])
+			return (0);
+	}
+
+	return (config_match(parent, cf, aux));
+}
+
+/*
+ * Helper function: check whether the driver supports the interface attribute
+ * and return its descriptor structure.
+ */
+static const struct cfiattrdata *
+cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
+{
+	const struct cfiattrdata * const *cpp;
 
 	if (cd->cd_attrs == NULL)
 		return (0);
 
 	for (cpp = cd->cd_attrs; *cpp; cpp++) {
-		if (STREQ(*cpp, ia)) {
+		if (STREQ((*cpp)->ci_name, ia)) {
 			/* Match. */
-			return (1);
+			return (*cpp);
 		}
+	}
+	return (0);
+}
+
+/*
+ * Lookup an interface attribute description by name.
+ * If the driver is given, consider only its supported attributes.
+ */
+const struct cfiattrdata *
+cfiattr_lookup(const char *name, const struct cfdriver *cd)
+{
+	const struct cfdriver *d;
+	const struct cfiattrdata *ia;
+
+	if (cd)
+		return (cfdriver_get_iattr(cd, name));
+
+	LIST_FOREACH(d, &allcfdrivers, cd_list) {
+		ia = cfdriver_get_iattr(d, name);
+		if (ia)
+			return (ia);
 	}
 	return (0);
 }
@@ -505,7 +535,7 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 	 * First, ensure this parent has the correct interface
 	 * attribute.
 	 */
-	if (!cfdriver_has_iattr(pcd, cfp->cfp_iattr))
+	if (!cfdriver_get_iattr(pcd, cfp->cfp_iattr))
 		return (0);
 
 	/*
@@ -663,56 +693,19 @@ config_match(struct device *parent, struct cfdata *cf, void *aux)
  * can be ignored).
  */
 struct cfdata *
-config_search(cfmatch_t fn, struct device *parent, void *aux)
+config_search_loc(cfsubmatch_t fn, struct device *parent,
+		  const char *ifattr, const int *locs, void *aux)
 {
 	struct cftable *ct;
 	struct cfdata *cf;
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
+	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
 
 	m.fn = fn;
-	m.fn_loc = NULL;
 	m.parent = parent;
-	m.aux = aux;
-	m.match = NULL;
-	m.pri = 0;
-
-	TAILQ_FOREACH(ct, &allcftables, ct_list) {
-		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
-			/*
-			 * Skip cf if no longer eligible, otherwise scan
-			 * through parents for one matching `parent', and
-			 * try match function.
-			 */
-			if (cf->cf_fstate == FSTATE_FOUND)
-				continue;
-			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-			    cf->cf_fstate == FSTATE_DSTAR)
-				continue;
-			if (cfparent_match(parent, cf->cf_pspec))
-				mapply(&m, cf);
-		}
-	}
-	return (m.match);
-}
-
-/* same as above, with real locators passed */
-struct cfdata *
-config_search_loc(cfmatch_loc_t fn, struct device *parent,
-		  const char *ifattr, const locdesc_t *ldesc, void *aux)
-{
-	struct cftable *ct;
-	struct cfdata *cf;
-	struct matchinfo m;
-
-	KASSERT(config_initialized);
-	KASSERT(!ifattr || cfdriver_has_iattr(parent->dv_cfdriver, ifattr));
-
-	m.fn = NULL;
-	m.fn_loc = fn;
-	m.parent = parent;
-	m.ldesc = ldesc;
+	m.locs = locs;
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
@@ -757,14 +750,13 @@ config_search_loc(cfmatch_loc_t fn, struct device *parent,
  * must always be in the initial table.
  */
 struct cfdata *
-config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
+config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 	const short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
-	m.fn_loc = NULL;
 	m.parent = ROOT;
 	m.aux = aux;
 	m.match = NULL;
@@ -793,31 +785,14 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(struct device *parent, void *aux, cfprint_t print,
-    cfmatch_t submatch)
-{
-	struct cfdata *cf;
-
-	if ((cf = config_search(submatch, parent, aux)) != NULL)
-		return (config_attach(parent, cf, aux, print));
-	if (print) {
-		if (config_do_twiddle)
-			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
-	}
-	return (NULL);
-}
-
-/* same as above, with real locators passed */
-struct device *
 config_found_sm_loc(struct device *parent,
-		const char *ifattr, const locdesc_t *ldesc, void *aux,
-		cfprint_t print, cfmatch_loc_t submatch)
+		const char *ifattr, const int *locs, void *aux,
+		cfprint_t print, cfsubmatch_t submatch)
 {
 	struct cfdata *cf;
 
-	if ((cf = config_search_loc(submatch, parent, ifattr, ldesc, aux)))
-		return(config_attach_loc(parent, cf, ldesc, aux, print));
+	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
+		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
 		if (config_do_twiddle)
 			twiddle();
@@ -834,7 +809,7 @@ config_rootfound(const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 
-	if ((cf = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
+	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
 	aprint_error("root device %s not configured\n", rootname);
 	return (NULL);
@@ -895,7 +870,7 @@ config_makeroom(int n, struct cfdriver *cd)
  */
 struct device *
 config_attach_loc(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux, cfprint_t print)
+	const int *locs, void *aux, cfprint_t print)
 {
 	struct device *dev;
 	struct cftable *ct;
@@ -905,6 +880,7 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	const char *xunit;
 	int myunit;
 	char num[10];
+	const struct cfiattrdata *ia;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -962,10 +938,13 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	if (ldesc) {
-		dev->dv_locators = malloc(ldesc->len * sizeof(int),
+	if (locs) {
+		KASSERT(parent); /* no locators at root */
+		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
+				    parent->dv_cfdriver);
+		dev->dv_locators = malloc(ia->ci_loclen * sizeof(int),
 					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-		memcpy(dev->dv_locators, ldesc->locs, ldesc->len * sizeof(int));
+		memcpy(dev->dv_locators, locs, ia->ci_loclen * sizeof(int));
 	}
 
 	if (config_do_twiddle)
@@ -1401,7 +1380,7 @@ config_pending_decr(void)
 #endif
 	config_pending--;
 	if (config_pending == 0)
-		wakeup((void *)&config_pending);
+		wakeup(&config_pending);
 }
 
 /*

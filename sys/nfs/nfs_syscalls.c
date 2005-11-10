@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.69.2.5 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.69.2.6 2005/11/10 14:11:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.5 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.6 2005/11/10 14:11:56 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -248,6 +248,31 @@ sys_nfssvc(l, v, retval)
 		}
 		error = nfssvc_addsock(fp, nam);
 		FILE_UNUSE(fp, NULL);
+#endif /* !NFSSERVER */
+	} else if (SCARG(uap, flag) & NFSSVC_SETEXPORTSLIST) {
+#ifndef NFSSERVER
+		error = ENOSYS;
+#else
+		struct export_args *args;
+		struct mountd_exports_list mel;
+
+		error = copyin(SCARG(uap, argp), &mel, sizeof(mel));
+		if (error != 0)
+			return error;
+
+		args = (struct export_args *)malloc(mel.mel_nexports *
+		    sizeof(struct export_args), M_TEMP, M_WAITOK);
+		error = copyin(mel.mel_exports, args, mel.mel_nexports *
+		    sizeof(struct export_args));
+		if (error != 0) {
+			free(args, M_TEMP);
+			return error;
+		}
+		mel.mel_exports = args;
+
+		error = mountd_set_exports_list(&mel, l);
+
+		free(args, M_TEMP);
 #endif /* !NFSSERVER */
 	} else {
 #ifndef NFSSERVER
@@ -693,6 +718,7 @@ nfssvc_nfsd(nsd, argp, l)
 				 */
 				lockcount = l->l_locks;
 #endif
+				mreq = NULL;
 				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
@@ -721,8 +747,15 @@ nfssvc_nfsd(nsd, argp, l)
 					    lockcount, l->l_locks);
 				}
 #endif
-				if (mreq == NULL)
+				if (mreq == NULL) {
+					if (nd != NULL) {
+						if (nd->nd_nam2)
+							m_free(nd->nd_nam2);
+						if (nd->nd_mrep)
+							m_freem(nd->nd_mrep);
+					}
 					break;
+				}
 				if (error) {
 					if (nd->nd_procnum != NQNFSPROC_VACATED)
 						nfsstats.srv_errs++;
@@ -1086,11 +1119,12 @@ nfssvc_iod(l)
 				wakeup(&nmp->nm_bufq);
 			}
 			simple_unlock(&nmp->nm_slock);
-			(void) nfs_doio(bp, NULL);
+			(void)nfs_doio(bp);
 			simple_lock(&nmp->nm_slock);
 			/*
-			 * If there are more than one iod on this mount, then defect
-			 * so that the iods can be shared out fairly between the mounts
+			 * If there are more than one iod on this mount, 
+			 * then defect so that the iods can be shared out
+			 * fairly between the mounts
 			 */
 			if (nfs_defect && nmp->nm_bufqiods > 1) {
 				myiod->nid_mount = NULL;

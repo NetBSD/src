@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.28.2.7 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.28.2.8 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.7 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.8 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ int smbfs_print(void *);
 int smbfs_pathconf(void *ap);
 int smbfs_advlock(void *);
 
-int (**smbfs_vnodeop_p) __P((void *));
+int (**smbfs_vnodeop_p)(void *);
 static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
 	{ &vop_access_desc,		smbfs_access },

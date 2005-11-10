@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.10.2.4 2004/09/21 13:35:04 skrll Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.10.2.5 2005/11/10 14:09:44 skrll Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.10.2.4 2004/09/21 13:35:04 skrll Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.10.2.5 2005/11/10 14:09:44 skrll Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,20 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.10.2.4 2004/09/21 13:35:04 skrll Ex
 				/* XXX: schedsofnet() should die. */
 
 #include <sys/kcont.h>
-
-
-/* Accessors for struct kc_queue */
-static __inline struct kc *kc_set(struct kc *,
-	void (*func)(void *, void *, int),
-	void *env_arg, int ipl);
-
-static __inline void kcont_enqueue_atomic(kcq_t *kcq, struct kc *kc);
-static __inline struct kc *kcont_dequeue_atomic(kcq_t *kcq);
-
-
-static void	kcont_worker(void * /*arg*/);
-static void	kcont_create_worker(void *);
-
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 /*
@@ -92,7 +78,6 @@ POOL_INIT(kc_pool, sizeof(struct kc), 0, 0, 0, "kcpl", NULL);
  * Process-context continuation queue.
  */
 static kcq_t kcq_process_ctxt;
-
 
 /*
  * Insert/Remove a fully-formed struct kc * into the kc_queue *
@@ -343,14 +328,6 @@ kcont_run_softserial(void *arg)
 }
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
-
-static void
-kcont_create_worker(void *arg)
-{
-	if (kthread_create1(kcont_worker, NULL, NULL, "kcont"))
-		panic("fork kcont");
-}
-
 /*
  * Main entrypoint for kcont worker kthreads to execute
  * a continuation which requested deferral to process context.
@@ -371,6 +348,12 @@ kcont_worker(void *arg)
 	kthread_exit(0);
 }
 
+static void
+kcont_create_worker(void *arg)
+{
+	if (kthread_create1(kcont_worker, NULL, NULL, "kcont"))
+		panic("fork kcont");
+}
 
 /*
  * Initialize kcont subsystem.

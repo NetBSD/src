@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.1.2.6 2005/03/04 16:41:33 skrll Exp $ */
+/* $NetBSD: rtwvar.h,v 1.1.2.7 2005/11/10 14:04:15 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -60,13 +60,14 @@
 #define	RTW_DEBUG_BUGS		0x100000
 #define	RTW_DEBUG_BEACON	0x200000
 #define	RTW_DEBUG_LED		0x400000
-#define	RTW_DEBUG_MAX		0x7fffff
+#define	RTW_DEBUG_KEY		0x800000
+#define	RTW_DEBUG_MAX		0xffffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
 	if ((rtw_debug & (__flags)) != 0) printf __x
 #define	DPRINTF(__sc, __flags, __x)				\
-	if (((__sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) != 0)	\
+	if (((__sc)->sc_if.if_flags & IFF_DEBUG) != 0)	\
 		RTW_DPRINTF(__flags, __x)
 #define	RTW_PRINT_REGS(__regs, __dvname, __where)	\
 	rtw_print_regs((__regs), (__dvname), (__where))
@@ -100,9 +101,9 @@ enum rtw_rfchipid {
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
 #define RTW_F_SLEEP		0x00000040	/* chip is asleep */
 #define RTW_F_INVALID		0x00000080	/* chip is absent */
+#define	RTW_F_DK_VALID		0x00000100	/* keys in DK0-DK3 are valid */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
-
 enum rtw_access {RTW_ACCESS_NONE = 0,
 		 RTW_ACCESS_CONFIG = 1,
 		 RTW_ACCESS_ANAPARM = 2};
@@ -271,9 +272,8 @@ struct rtw_mtbl {
 	void			(*mt_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, uint32_t);
-	struct ieee80211_node	*(*mt_node_alloc)(struct ieee80211com *);
-	void			(*mt_node_free)(struct ieee80211com *,
-					struct ieee80211_node *);
+	struct ieee80211_node	*(*mt_node_alloc)(struct ieee80211_node_table*);
+	void			(*mt_node_free)(struct ieee80211_node *);
 };
 
 enum rtw_pwrstate { RTW_OFF = 0, RTW_SLEEP, RTW_ON };
@@ -401,6 +401,7 @@ struct rtw_led_state {
 
 struct rtw_softc {
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;
 	bus_dma_tag_t		sc_dmat;
@@ -469,13 +470,12 @@ struct rtw_softc {
 		uint8_t			pad[64];
 	} sc_txtapu;
 	union rtw_keys		sc_keys;
-	int			sc_txkey;
 	struct ifqueue		sc_beaconq;
 	struct rtw_led_state	sc_led_state;
 	int			sc_hwverid;
 };
 
-#define	sc_if		sc_ic.ic_if
+#define	sc_if		sc_ec.ec_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
 

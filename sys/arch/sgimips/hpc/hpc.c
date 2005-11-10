@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.12.6.5 2005/01/17 19:30:19 skrll Exp $	*/
+/*	$NetBSD: hpc.c,v 1.12.6.6 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.12.6.5 2005/01/17 19:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.12.6.6 2005/11/10 13:58:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,8 @@ int	hpc_print(void *, const char *);
 
 int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
-int	hpc_submatch(struct device *, struct cfdata *, void *);
+int	hpc_submatch(struct device *, struct cfdata *,
+		     const int *, void *);
 
 int	hpc_power_intr(void *);
 
@@ -420,7 +421,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			ha.hpc_regs = &hpc1_values;
 		ha.hpc_regs->revision = hpctype;
 
-		(void) config_found_sm(self, &ha, hpc_print, hpc_submatch);
+		(void) config_found_sm_loc(self, "hpc", NULL, &ha, hpc_print,
+					   hpc_submatch);
 	}
 
 	/*
@@ -504,7 +506,8 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 }
 
 int
-hpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
+hpc_submatch(struct device *parent, struct cfdata *cf,
+	     const int *ldesc, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.12.2.6 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.12.2.7 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ struct exec_macho_thread_command {
 };
 
 struct exec_macho_emul_arg {
-	char *path;
+	const char *path;
 	char filename[MAXPATHLEN];
 	struct exec_macho_object_header *macho_hdr;
 	int dynamic;

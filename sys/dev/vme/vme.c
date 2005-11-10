@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.10.2.4 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: vme.c,v 1.10.2.5 2005/11/10 14:08:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.4 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.5 2005/11/10 14:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,9 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.4 2005/02/04 11:47:34 skrll Exp $");
 static void vme_extractlocators(int*, struct vme_attach_args*);
 static int vmeprint(struct vme_attach_args*, char*);
 static int vmesubmatch1(struct device*, struct cfdata*,
-			     const locdesc_t *, void*);
+			     const int *, void*);
 static int vmesubmatch(struct device*, struct cfdata*,
-			    const locdesc_t *, void*);
+			    const int *, void*);
 int vmematch(struct device *, struct cfdata *, void *);
 void vmeattach(struct device*, struct device*,void*);
 static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
@@ -130,7 +130,7 @@ static int
 vmesubmatch1(bus, dev, ldesc, aux)
 	struct device *bus;
 	struct cfdata *dev;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
@@ -151,7 +151,7 @@ static int
 vmesubmatch(bus, dev, ldesc, aux)
 	struct device *bus;
 	struct cfdata *dev;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.14.2.4 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: esis.h,v 1.14.2.5 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -137,7 +137,7 @@ void esis_eshinput (struct mbuf *, struct snpa_hdr *);
 void esis_ishinput (struct mbuf *, struct snpa_hdr *);
 void esis_rdinput (struct mbuf *, struct snpa_hdr *);
 void esis_config (void *);
-void esis_shoutput (struct ifnet *, int, int, caddr_t, int,
+void esis_shoutput (struct ifnet *, int, int, const void *, int,
 	               struct iso_addr *);
 void isis_input (struct mbuf *, ...);
 int isis_output (struct mbuf *, ...);

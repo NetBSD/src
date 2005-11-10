@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.10.10.4 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.10.10.5 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.10.10.4 2005/01/17 19:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.10.10.5 2005/11/10 14:04:15 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -166,10 +166,10 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 			uint8_t f;
 			int16_t ss;
 #if BYTE_ORDER == LITTLE_ENDIAN
-			ss = *(int16_t*)s;
+			ss = *(const int16_t*)s;
 			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = *(int16_t*)s;
+			ss = *(const int16_t*)s;
 #else
 			ss = (s[1] << 8) | s[0];
 			s = audio_stream_add_outp(this->src, s, 2);
@@ -186,10 +186,10 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 			uint8_t f;
 			int16_t ss;
 #if BYTE_ORDER == BIG_ENDIAN
-			ss = *(int16_t*)s;
+			ss = *(const int16_t*)s;
 			s = audio_stream_add_outp(this->src, s, 2);
 			f  = pcm2adpcm_step(mc, ss);
-			ss = *(int16_t*)s;
+			ss = *(const int16_t*)s;
 #else
 			ss = (s[0] << 8) | s[1];
 			s = audio_stream_add_outp(this->src, s, 2);

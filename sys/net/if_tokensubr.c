@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.22.2.7 2005/04/01 14:31:35 skrll Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.22.2.8 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.7 2005/04/01 14:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.8 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -271,8 +271,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
-			    sizeof(edst));
+			memcpy(edst, tokenbroadcastaddr, sizeof(edst));
 		}
 /*
  * XXX m->m_flags & M_MCAST   IEEE802_MAP_IP_MULTICAST ??
@@ -316,8 +315,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
-			    sizeof(edst));
+			memcpy(edst, tokenbroadcastaddr, sizeof(edst));
 		}
 		else {
 			bcopy((caddr_t)ar_tha(ah), (caddr_t)edst, sizeof(edst));
@@ -548,7 +546,7 @@ token_input(ifp, m)
 	trh = mtod(m, struct token_header *);
 
 	ifp->if_ibytes += m->m_pkthdr.len;
-	if (bcmp((caddr_t)tokenbroadcastaddr, (caddr_t)trh->token_dhost,
+	if (memcmp(tokenbroadcastaddr, trh->token_dhost,
 	    sizeof(tokenbroadcastaddr)) == 0)
 		m->m_flags |= M_BCAST;
 	else if (trh->token_dhost[0] & 1)

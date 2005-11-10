@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.49.2.5 2005/03/04 16:40:30 skrll Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.49.2.6 2005/11/10 14:01:31 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.49.2.5 2005/03/04 16:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.49.2.6 2005/11/10 14:01:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ svr4_sys_stat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys___stat13_args	cup;
+	struct sys___stat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -196,7 +196,7 @@ svr4_sys_stat(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -233,7 +233,7 @@ svr4_sys_lstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys___lstat13_args	cup;
+	struct sys___lstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -241,7 +241,7 @@ svr4_sys_lstat(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -278,7 +278,7 @@ svr4_sys_fstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys___fstat13_args	cup;
+	struct sys___fstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -286,7 +286,7 @@ svr4_sys_fstat(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -312,7 +312,7 @@ svr4_sys_xstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys___stat13_args	cup;
+	struct sys___stat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -321,7 +321,7 @@ svr4_sys_xstat(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -349,7 +349,7 @@ svr4_sys_lxstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys___lstat13_args	cup;
+	struct sys___lstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -358,7 +358,7 @@ svr4_sys_lxstat(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -386,7 +386,7 @@ svr4_sys_fxstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys___fstat13_args	cup;
+	struct sys___fstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -394,7 +394,7 @@ svr4_sys_fxstat(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -419,7 +419,7 @@ svr4_sys_stat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys___stat13_args	cup;
+	struct sys___stat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -428,7 +428,7 @@ svr4_sys_stat64(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -456,7 +456,7 @@ svr4_sys_lstat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys___lstat13_args	cup;
+	struct sys___lstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -465,7 +465,7 @@ svr4_sys_lstat64(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -493,7 +493,7 @@ svr4_sys_fstat64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys___fstat13_args	cup;
+	struct sys___fstat30_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -501,7 +501,7 @@ svr4_sys_fstat64(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -619,6 +619,16 @@ svr4_sys_systeminfo(l, v, retval)
 		str = machine_arch;
 		break;
 
+	case SVR4_SI_ISALIST:
+#if defined(__sparc__)
+		str = "sparcv9 sparcv9-fsmuld sparcv8 sparcv8-fsmuld sparcv7 sparc";
+#elif defined(__i386__)
+		str = "i386";
+#else
+		str = "unknown";
+#endif
+		break;
+
 	case SVR4_SI_HW_SERIAL:
 		snprintf(buf, sizeof(buf), "%lu", hostid);
 		str = buf;
@@ -633,10 +643,15 @@ svr4_sys_systeminfo(l, v, retval)
 		break;
 
 	case SVR4_SI_PLATFORM:
-#ifdef __i386__
+#if defined(__i386__)
 		str = "i86pc";
-#elif __sparc__
-		str = "SUNW,SPARCstation-10";	/* XXX */
+#elif defined(__sparc__)
+#elif defined(__sparc__)
+		{
+			extern char machine_model[];
+
+			str = machine_model;
+		}
 #else
 		str = "unknown";
 #endif
@@ -664,16 +679,19 @@ svr4_sys_systeminfo(l, v, retval)
 
 	if (str) {
 		len = strlen(str) + 1;
-		if (len > rlen)
-			len = rlen;
+		if (len < rlen)
+			rlen = len;
 
 		if (SCARG(uap, buf)) {
-			error = copyout(str, SCARG(uap, buf), len);
+			error = copyout(str, SCARG(uap, buf), rlen);
 			if (error)
 				return error;
-			/* make sure we are NULL terminated */
-			buf[0] = '\0';
-			error = copyout(buf, &(SCARG(uap, buf)[len - 1]), 1);
+			if (rlen > 0) {
+				/* make sure we are NULL terminated */
+				buf[0] = '\0';
+				error = copyout(buf, 
+				    &(SCARG(uap, buf)[rlen - 1]), 1);
+			}
 		}
 		else
 			error = 0;

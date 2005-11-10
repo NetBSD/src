@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.30.2.6 2005/03/04 16:50:31 skrll Exp $	*/
+/*	$NetBSD: qe.c,v 1.30.2.7 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.6 2005/03/04 16:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.7 2005/11/10 14:07:47 skrll Exp $");
 
 #define QEDEBUG
 
@@ -620,7 +620,7 @@ qeintr(arg)
 #ifdef QEDEBUG
 	if (sc->sc_debug) {
 		char bits[64]; int i;
-		bus_space_tag_t t = sc->sc_bustag;
+		bus_space_tag_t t1 = sc->sc_bustag;
 		bus_space_handle_t mr = sc->sc_mr;
 
 		printf("qe%d: intr: qestat=%s\n", sc->sc_channel,
@@ -628,7 +628,7 @@ qeintr(arg)
 
 		printf("MACE registers:\n");
 		for (i = 0 ; i < 32; i++) {
-			printf("  m[%d]=%x,", i, bus_space_read_1(t, mr, i));
+			printf("  m[%d]=%x,", i, bus_space_read_1(t1, mr, i));
 			if (((i+1) & 7) == 0)
 				printf("\n");
 		}

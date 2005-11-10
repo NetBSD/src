@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.3.2.4 2004/09/21 13:26:25 skrll Exp $ */
+/* $NetBSD: dkvar.h,v 1.3.2.5 2005/11/10 14:03:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,8 +59,7 @@ struct dk_softc {
 #define DK_XNAME_SIZE 8
 	char			 sc_xname[DK_XNAME_SIZE]; /* external name */
 	struct disk		 sc_dkdev;	/* generic disk info */
-	struct lock		 sc_lock;	/* the lock */
-	struct bufq_state	 sc_bufq;	/* buffer queue */
+	struct bufq_state	*sc_bufq;	/* buffer queue */
 };
 
 /* sc_flags:
@@ -85,7 +84,7 @@ struct dk_softc {
  */
 struct dk_intf {
 	int	  di_dtype;			/* disk type */
-	char	 *di_dkname;			/* disk type name */
+	const char *di_dkname;			/* disk type name */
 	int	(*di_open)(dev_t, int, int, struct lwp *);
 	int	(*di_close)(dev_t, int, int, struct lwp *);
 	void	(*di_strategy)(struct buf *);
@@ -119,4 +118,4 @@ void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
 
-int	dk_lookup(char *, struct lwp *, struct vnode **);
+int	dk_lookup(const char *, struct lwp *, struct vnode **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.27.2.7 2005/03/04 16:40:12 skrll Exp $ */
+/*	$NetBSD: mach_message.c,v 1.27.2.8 2005/11/10 14:01:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.7 2005/03/04 16:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.8 2005/11/10 14:01:20 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -867,7 +867,7 @@ mach_trade_rights_complex(l, mm)
 			void *rumnp;		/* remote user address */
 			int disp;		/* disposition*/
 			size_t size;		/* data size */
-			int count;		/* descriptor count */
+			int mcount;		/* descriptor count */
 			mach_port_t *kmnp;
 			void *kaddr;
 			int error;
@@ -876,8 +876,8 @@ mach_trade_rights_complex(l, mm)
 			rl = mm->mm_l;
 			disp = mcm->mcm_desc.ool_ports[i].disposition;
 			rumnp = mcm->mcm_desc.ool_ports[i].address;
-			count = mcm->mcm_desc.ool_ports[i].count;
-			size = count * sizeof(*kmnp);
+			mcount = mcm->mcm_desc.ool_ports[i].count;
+			size = mcount * sizeof(*kmnp);
 			kaddr = NULL;
 			lumnp = NULL;
 
@@ -887,7 +887,7 @@ mach_trade_rights_complex(l, mm)
 				return MACH_SEND_INVALID_DATA;
 
 			kmnp = (mach_port_t *)kaddr;
-			for (j = 0; j < count; j++)
+			for (j = 0; j < mcount; j++)
 				mach_trade_rights(l, mm->mm_l, &kmnp[j], disp);
 
 			/* This frees kmnp */
@@ -975,7 +975,7 @@ mach_ool_copyin(l, uaddr, kaddr, size, flags)
 	else
 		kbuf = *kaddr;
 
-	if ((error = copyin_proc(p, (void *)uaddr, kbuf, size)) != 0) {
+	if ((error = copyin_proc(p, uaddr, kbuf, size)) != 0) {
 		if (*kaddr == NULL)
 			free(kbuf, M_EMULDATA);
 		return error;
@@ -995,7 +995,7 @@ mach_ool_copyin(l, uaddr, kaddr, size, flags)
 inline int
 mach_ool_copyout(l, kaddr, uaddr, size, flags)
 	struct lwp *l;
-	void *kaddr;
+	const void *kaddr;
 	void **uaddr;
 	size_t size;
 	int flags;
@@ -1043,7 +1043,7 @@ mach_ool_copyout(l, kaddr, uaddr, size, flags)
 
 out:
 	if (flags & MACH_OOL_FREE)
-		free(kaddr, M_EMULDATA);
+		free(__UNCONST(kaddr), M_EMULDATA); /*XXXUNCONST*/
 
 	if (error == 0)
 		*uaddr = (void *)ubuf;

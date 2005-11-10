@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.7.22.5 2005/03/04 16:41:26 skrll Exp $	*/
+/*	$NetBSD: anvar.h,v 1.7.22.6 2005/11/10 14:04:13 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -75,6 +75,7 @@ struct an_wepkey {
 
 struct an_softc	{
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -116,6 +117,8 @@ struct an_softc	{
 		struct an_rid_encap	sc_encap;
 	}			sc_buf;
 };
+
+#define	sc_if	sc_ec.ec_if
 
 int	an_attach(struct an_softc *);
 int	an_detach(struct an_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.8.6.4 2005/01/24 08:34:34 skrll Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.8.6.5 2005/11/10 13:59:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.8.6.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.8.6.5 2005/11/10 13:59:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ bwtwoattach_any(struct device *parent, struct device *self, void *aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int isconsole;
-	char *name;
+	const char *name;
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = ma->ma_bustag;

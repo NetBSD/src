@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.4.2.3 2004/09/21 13:36:40 skrll Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.4.2.4 2005/11/10 14:10:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 struct pppoediscparms {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
 	char	eth_ifname[IFNAMSIZ];	/* external ethernet interface name */
-	char	*ac_name;		/* access concentrator name (or NULL) */
+	const char *ac_name;		/* access concentrator name (or NULL) */
 	size_t	ac_name_len;		/* on write: length of buffer for ac_name */
-	char	*service_name;		/* service name (or NULL) */
+	const char *service_name;	/* service name (or NULL) */
 	size_t	service_name_len;	/* on write: length of buffer for service name */
 };
 
@@ -65,14 +65,6 @@ struct pppoeconnectionstate {
 };
 
 #define PPPOEGETSESSION	_IOWR('i', 112, struct pppoeconnectionstate)
-
-struct pppoeidletimeoutcfg {
-	char	ifname[IFNAMSIZ];	/* pppoe interface name */
-	u_long	idle_timeout;		/* idle timeout in seconds */
-};
-
-#define	PPPOEGETIDLETIMEOUT	_IOWR('i', 113, struct pppoeidletimeoutcfg)
-#define	PPPOESETIDLETIMEOUT	_IOW('i', 114, struct pppoeidletimeoutcfg)
 
 #ifdef _KERNEL
 

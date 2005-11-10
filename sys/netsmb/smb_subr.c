@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.19.2.5 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.19.2.6 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.19.2.5 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.19.2.6 2005/11/10 14:11:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,8 @@ smb_maperror(int eclass, int eno)
 		    case ERRquota:
 			return EDQUOT;
 		    case ERRnotlocked:
-			return EBUSY;
+			/* it's okay to try to unlock already unlocked file */
+			return 0;
 		    case NT_STATUS_NOTIFY_ENUM_DIR:
 			return EMSGSIZE;
 		}
@@ -305,11 +306,11 @@ smb_maperror(int eclass, int eno)
 }
 
 static int
-smb_copy_iconv(struct mbchain *mbp, const caddr_t src, caddr_t dst, size_t len)
+smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
 {
 	size_t outlen = len;
 
-	return iconv_conv((struct iconv_drv*)mbp->mb_udata, (const char **)(&src), &len, &dst, &outlen);
+	return iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &len, &dst, &outlen);
 }
 
 int
@@ -321,11 +322,11 @@ smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
 	if (size == 0)
 		return 0;
 	if (dp == NULL) {
-		return mb_put_mem(mbp, (caddr_t)src, size, MB_MSYSTEM);
+		return mb_put_mem(mbp, (const void *)src, size, MB_MSYSTEM);
 	}
 	mbp->mb_copy = smb_copy_iconv;
 	mbp->mb_udata = dp;
-	return mb_put_mem(mbp, (caddr_t)src, size, MB_MCUSTOM);
+	return mb_put_mem(mbp, (const void *)src, size, MB_MCUSTOM);
 }
 
 int

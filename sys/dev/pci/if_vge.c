@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.2.2.3 2005/03/08 13:53:10 skrll Exp $ */
+/* $NetBSD: if_vge.c,v 1.2.2.4 2005/11/10 14:06:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.2.2.3 2005/03/08 13:53:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.2.2.4 2005/11/10 14:06:02 skrll Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -549,15 +549,17 @@ vge_setmulti(sc)
 	vge_cam_clear(sc);
 	CSR_WRITE_4(sc, VGE_MAR0, 0);
 	CSR_WRITE_4(sc, VGE_MAR1, 0);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * If the user wants allmulti or promisc mode, enable reception
 	 * of all multicast frames.
 	 */
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
     allmulti:
 		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
+		ifp->if_flags |= IFF_ALLMULTI;
 		return;
 	}
 
@@ -571,8 +573,7 @@ vge_setmulti(sc)
 				ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
-		error = vge_cam_set(sc,
-		    LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+		error = vge_cam_set(sc, enm->enm_addrlo);
 		if (error)
 			break;
 
@@ -585,12 +586,18 @@ vge_setmulti(sc)
 
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 		while(enm != NULL) {
-			h = ether_crc32_be(LLADDR((struct sockaddr_dl *)
-			    enm->enm_addrlo), ETHER_ADDR_LEN) >> 26;
-			if (h < 32)
-				hashes[0] |= (1 << h);
-			else
-				hashes[1] |= (1 << (h - 32));
+			/*
+			 * If multicast range, fall back to ALLMULTI.
+			 */
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+					ETHER_ADDR_LEN) != 0)
+				goto allmulti;
+
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			hashes[h >> 5] |= 1 << (h & 0x1f);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
 
 		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
@@ -958,8 +965,10 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
 	 */
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 #ifdef DEVICE_POLLING
 #ifdef IFCAP_POLLING
@@ -2058,7 +2067,9 @@ vge_ioctl(ifp, command, data)
 	struct vge_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii;
-	int			error = 0;
+	int			s, error = 0;
+
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFMTU:
@@ -2090,7 +2101,19 @@ vge_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		vge_setmulti(sc);
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING)
+				vge_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
@@ -2102,6 +2125,7 @@ vge_ioctl(ifp, command, data)
 		break;
 	}
 
+	splx(s);
 	return (error);
 }
 

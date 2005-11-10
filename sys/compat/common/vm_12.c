@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.12 2003/01/20 05:30:04 simonb Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.12.2.1 2005/11/10 14:00:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.12 2003/01/20 05:30:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.12.2.1 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ compat_12_sys_swapon(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 
 	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	/*XXXUNCONST*/
+	SCARG(&ua, arg) = __UNCONST(SCARG(uap, name));
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(l, &ua, retval));
 }

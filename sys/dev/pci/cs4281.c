@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16.2.8 2005/03/04 16:45:15 skrll Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16.2.9 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.8 2005/03/04 16:45:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.9 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,32 +80,35 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.8 2005/03/04 16:45:15 skrll Exp $"
 #endif
 
 /* IF functions for audio driver */
-int	cs4281_match(struct device *, struct cfdata *, void *);
-void	cs4281_attach(struct device *, struct device *, void *);
-int	cs4281_intr(void *);
-int	cs4281_query_encoding(void *, struct audio_encoding *);
-int	cs4281_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-			  stream_filter_list_t *, stream_filter_list_t *);
-int	cs4281_halt_output(void *);
-int	cs4281_halt_input(void *);
-int	cs4281_getdev(void *, struct audio_device *);
-int	cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
-			      void *, const audio_params_t *);
-int	cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
-			     void *, const audio_params_t *);
+static int	cs4281_match(struct device *, struct cfdata *, void *);
+static void	cs4281_attach(struct device *, struct device *, void *);
+static int	cs4281_intr(void *);
+static int	cs4281_query_encoding(void *, struct audio_encoding *);
+static int	cs4281_set_params(void *, int, int, audio_params_t *,
+				  audio_params_t *, stream_filter_list_t *,
+				  stream_filter_list_t *);
+static int	cs4281_halt_output(void *);
+static int	cs4281_halt_input(void *);
+static int	cs4281_getdev(void *, struct audio_device *);
+static int	cs4281_trigger_output(void *, void *, void *, int,
+				      void (*)(void *), void *,
+				      const audio_params_t *);
+static int	cs4281_trigger_input(void *, void *, void *, int,
+				     void (*)(void *), void *,
+				     const audio_params_t *);
 
-int     cs4281_reset_codec(void *);
+static int     cs4281_reset_codec(void *);
 
 /* Internal functions */
-uint8_t cs4281_sr2regval(int);
-void	 cs4281_set_dac_rate(struct cs428x_softc *, int);
-void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
-int      cs4281_init(struct cs428x_softc *, int);
+static uint8_t cs4281_sr2regval(int);
+static void	 cs4281_set_dac_rate(struct cs428x_softc *, int);
+static void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
+static int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
-void cs4281_power(int, void *);
+static void cs4281_power(int, void *);
 
-const struct audio_hw_if cs4281_hw_if = {
+static const struct audio_hw_if cs4281_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
 	NULL,
@@ -137,13 +140,13 @@ const struct audio_hw_if cs4281_hw_if = {
 
 #if NMIDI > 0 && 0
 /* Midi Interface */
-void	cs4281_midi_close(void*);
-void	cs4281_midi_getinfo(void *, struct midi_info *);
-int	cs4281_midi_open(void *, int, void (*)(void *, int),
+static void	cs4281_midi_close(void*);
+static void	cs4281_midi_getinfo(void *, struct midi_info *);
+static int	cs4281_midi_open(void *, int, void (*)(void *, int),
 			 void (*)(void *), void *);
-int	cs4281_midi_output(void *, int);
+static int	cs4281_midi_output(void *, int);
 
-const struct midi_hw_if cs4281_midi_hw_if = {
+static const struct midi_hw_if cs4281_midi_hw_if = {
 	cs4281_midi_open,
 	cs4281_midi_close,
 	cs4281_midi_output,
@@ -155,14 +158,14 @@ const struct midi_hw_if cs4281_midi_hw_if = {
 CFATTACH_DECL(clct, sizeof(struct cs428x_softc),
     cs4281_match, cs4281_attach, NULL, NULL);
 
-struct audio_device cs4281_device = {
+static struct audio_device cs4281_device = {
 	"CS4281",
 	"",
 	"cs4281"
 };
 
 
-int
+static int
 cs4281_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
@@ -175,7 +178,7 @@ cs4281_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 cs4281_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs428x_softc *sc;
@@ -299,7 +302,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerhook = powerhook_establish(cs4281_power, sc);
 }
 
-int
+static int
 cs4281_intr(void *p)
 {
 	struct cs428x_softc *sc;
@@ -379,7 +382,7 @@ cs4281_intr(void *p)
 	return handled;
 }
 
-int
+static int
 cs4281_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
@@ -438,7 +441,7 @@ cs4281_query_encoding(void *addr, struct audio_encoding *fp)
 	return 0;
 }
 
-int
+static int
 cs4281_set_params(void *addr, int setmode, int usemode,
 		  audio_params_t *play, audio_params_t *rec,
 		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
@@ -458,16 +461,18 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 		p = mode == AUMODE_PLAY ? play : rec;
 
 		if (p == play) {
-			DPRINTFN(5, ("play: sample=%ld precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
+			DPRINTFN(5,
+			    ("play: sample=%u precision=%u channels=%u\n",
+			    p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1  && p->channels != 2)) {
 				return EINVAL;
 			}
 		} else {
-			DPRINTFN(5, ("rec: sample=%ld precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
+			DPRINTFN(5,
+			    ("rec: sample=%u precision=%u channels=%u\n",
+			    p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1 && p->channels != 2)) {
@@ -507,7 +512,7 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 cs4281_halt_output(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -518,7 +523,7 @@ cs4281_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 cs4281_halt_input(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -529,7 +534,7 @@ cs4281_halt_input(void *addr)
 	return 0;
 }
 
-int
+static int
 cs4281_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -537,7 +542,7 @@ cs4281_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-int
+static int
 cs4281_trigger_output(void *addr, void *start, void *end, int blksize,
 		      void (*intr)(void *), void *arg,
 		      const audio_params_t *param)
@@ -636,7 +641,7 @@ cs4281_trigger_output(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
 		     const audio_params_t *param)
@@ -719,7 +724,7 @@ cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 }
 
 /* Power Hook */
-void
+static void
 cs4281_power(int why, void *v)
 {
 	static uint32_t dba0 = 0, dbc0 = 0, dmr0 = 0, dcr0 = 0;
@@ -792,7 +797,7 @@ cs4281_power(int why, void *v)
 }
 
 /* control AC97 codec */
-int
+static int
 cs4281_reset_codec(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -894,7 +899,7 @@ cs4281_reset_codec(void *addr)
 /* Internal functions */
 
 /* convert sample rate to register value */
-uint8_t
+static uint8_t
 cs4281_sr2regval(int rate)
 {
 	uint8_t retval;
@@ -930,21 +935,21 @@ cs4281_sr2regval(int rate)
 	return retval;
 }
 
-void
+static void
 cs4281_set_adc_rate(struct cs428x_softc *sc, int rate)
 {
 
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
 }
 
-void
+static void
 cs4281_set_dac_rate(struct cs428x_softc *sc, int rate)
 {
 
 	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
-int
+static int
 cs4281_init(struct cs428x_softc *sc, int init)
 {
 	int n;

@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.39.2.4 2005/03/04 16:41:26 skrll Exp $
+ * $Id: aic7xxxvar.h,v 1.39.2.5 2005/11/10 14:04:13 skrll Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -854,7 +854,7 @@ struct ahc_syncrate {
 #define		ST_SXFR	   0x010	/* Rate Single Transition Only */
 #define		DT_SXFR	   0x040	/* Rate Double Transition Only */
 	uint8_t period; /* Period to send to SCSI target */
-	char *rate;
+	const char *rate;
 };
 
 /* Safe and valid period for async negotiations. */
@@ -879,7 +879,7 @@ struct ahc_syncrate {
 struct ahc_phase_table_entry {
         uint8_t phase;
         uint8_t mesg_out; /* Message response to parity errors */
-	char *phasemsg;
+	const char *phasemsg;
 };
 
 /************************** Serial EEPROM Format ******************************/
@@ -1229,7 +1229,7 @@ typedef int (ahc_device_setup_t)(struct ahc_softc *);
 struct ahc_pci_identity {
 	uint64_t		 full_id;
 	uint64_t		 id_mask;
-	char			*name;
+	const char		*name;
 	ahc_device_setup_t	*setup;
 };
 extern struct ahc_pci_identity ahc_pci_ident_table [];
@@ -1253,12 +1253,6 @@ extern const int ahc_num_aic7770_devs;
 u_int			ahc_index_busy_tcl(struct ahc_softc *, u_int);
 void			ahc_unbusy_tcl(struct ahc_softc *, u_int);
 void			ahc_busy_tcl(struct ahc_softc *, u_int, u_int);
-
-/***************************** PCI Front End *********************************/
-const struct ahc_pci_identity	*ahc_find_pci_device(pcireg_t, pcireg_t, u_int);
-int			 ahc_pci_config(struct ahc_softc *,
-			    struct ahc_pci_identity *);
-int			 ahc_pci_test_register_access(struct ahc_softc *);
 
 /*************************** EISA/VL Front End ********************************/
 struct aic7770_identity *aic7770_find_device(uint32_t);
@@ -1291,7 +1285,6 @@ int			 ahc_reset(struct ahc_softc *);
 void			 ahc_shutdown(void *);
 
 /*************************** Interrupt Services *******************************/
-void			ahc_pci_intr(struct ahc_softc *);
 void			ahc_clear_intstat(struct ahc_softc *);
 void			ahc_run_qoutfifo(struct ahc_softc *);
 #ifdef AHC_TARGET_MODE

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.3.2.4 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.3.2.5 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,10 +39,6 @@
 #ifndef	_SYS_SIGTYPES_H_
 #define	_SYS_SIGTYPES_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd32.h"
-#endif
-
 /*
  * This header file defines various signal-related types.  We also keep
  * the macros to manipulate sigset_t here, to encapsulate knowledge of
@@ -60,19 +56,6 @@ typedef	_BSD_SIZE_T_	size_t;
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-typedef unsigned int sigset13_t;
-
-/*
- * Macro for manipulating signal masks.
- */
-#define __sigmask13(n)		(1 << ((n) - 1))
-#define	__sigaddset13(s, n)	(*(s) |= __sigmask13(n))
-#define	__sigdelset13(s, n)	(*(s) &= ~__sigmask13(n))
-#define	__sigismember13(s, n)	(*(s) & __sigmask13(n))
-#define	__sigemptyset13(s)	(*(s) = 0)
-#define	__sigfillset13(s)	(*(s) = ~(sigset13_t)0)
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 typedef struct {
 	__uint32_t	__bits[4];
@@ -120,15 +103,6 @@ typedef struct {
 		(t)->__bits[3] &= (s)->__bits[3];	\
 	} while (/* CONSTCOND */ 0)
 
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-/* Not strictly a defined type, but is logically associated with stack_t. */
-struct sigaltstack13 {
-	char	*ss_sp;			/* signal stack base */
-	int	ss_size;		/* signal stack length */
-	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
-};
-#endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
-
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 typedef struct
@@ -144,18 +118,5 @@ typedef struct
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
-
-#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
-
-struct __sigaltstack32 {
-	uint32_t	ss_sp;
-	uint32_t	ss_size;
-	int32_t		ss_flags;
-};
-
-typedef struct __sigaltstack32 stack32_t;
-
-#endif /* COMPAT_NETBSD32 && _KERNEL */
-
 
 #endif	/* !_SYS_SIGTYPES_H_ */

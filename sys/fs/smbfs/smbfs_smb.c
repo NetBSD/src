@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.17.2.4 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.17.2.5 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17.2.4 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17.2.5 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
-	u_long time;
+	u_long xtime;
 	int error, svtz;
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_SET_INFORMATION, scred, &rqp);
@@ -321,10 +321,10 @@ smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 	smb_rq_wstart(rqp);
 	mb_put_uint16le(mbp, attr);
 	if (mtime) {
-		smb_time_local2server(mtime, svtz, &time);
+		smb_time_local2server(mtime, svtz, &xtime);
 	} else
-		time = 0;
-	mb_put_uint32le(mbp, time);		/* mtime */
+		xtime = 0;
+	mb_put_uint32le(mbp, xtime);		/* mtime */
 	mb_put_mem(mbp, NULL, 5 * 2, MB_MZERO);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
@@ -355,7 +355,7 @@ smbfs_smb_setptime2(struct smbnode *np, struct timespec *mtime,
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct smb_vc *vcp = SSTOVC(ssp);
 	struct mbchain *mbp;
-	u_int16_t date, time;
+	u_int16_t xdate, xtime;
 	int error, tzoff;
 
 	error = smb_t2_alloc(SSTOCP(ssp), SMB_TRANS2_SET_PATH_INFORMATION,
@@ -376,17 +376,17 @@ smbfs_smb_setptime2(struct smbnode *np, struct timespec *mtime,
 	mb_init(mbp);
 	mb_put_uint32le(mbp, 0);		/* creation time */
 	if (atime)
-		smb_time_unix2dos(atime, tzoff, &date, &time, NULL);
+		smb_time_unix2dos(atime, tzoff, &xdate, &xtime, NULL);
 	else
-		time = date = 0;
-	mb_put_uint16le(mbp, date);
-	mb_put_uint16le(mbp, time);
+		xtime = xdate = 0;
+	mb_put_uint16le(mbp, xdate);
+	mb_put_uint16le(mbp, xtime);
 	if (mtime)
-		smb_time_unix2dos(mtime, tzoff, &date, &time, NULL);
+		smb_time_unix2dos(mtime, tzoff, &xdate, &xtime, NULL);
 	else
-		time = date = 0;
-	mb_put_uint16le(mbp, date);
-	mb_put_uint16le(mbp, time);
+		xtime = xdate = 0;
+	mb_put_uint16le(mbp, xdate);
+	mb_put_uint16le(mbp, xtime);
 	mb_put_uint32le(mbp, 0);		/* file size */
 	mb_put_uint32le(mbp, 0);		/* allocation unit size */
 	mb_put_uint16le(mbp, attr);	/* DOS attr */
@@ -460,7 +460,7 @@ smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct mbchain *mbp;
-	u_int16_t date, time;
+	u_int16_t xdate, xtime;
 	int error, tzoff;
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_SET_INFORMATION2, scred, &rqp);
@@ -473,17 +473,17 @@ smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	mb_put_uint32le(mbp, 0);		/* creation time */
 
 	if (atime)
-		smb_time_unix2dos(atime, tzoff, &date, &time, NULL);
+		smb_time_unix2dos(atime, tzoff, &xdate, &xtime, NULL);
 	else
-		time = date = 0;
-	mb_put_uint16le(mbp, date);
-	mb_put_uint16le(mbp, time);
+		xtime = xdate = 0;
+	mb_put_uint16le(mbp, xdate);
+	mb_put_uint16le(mbp, xtime);
 	if (mtime)
-		smb_time_unix2dos(mtime, tzoff, &date, &time, NULL);
+		smb_time_unix2dos(mtime, tzoff, &xdate, &xtime, NULL);
 	else
-		time = date = 0;
-	mb_put_uint16le(mbp, date);
-	mb_put_uint16le(mbp, time);
+		xtime = xdate = 0;
+	mb_put_uint16le(mbp, xdate);
+	mb_put_uint16le(mbp, xtime);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
@@ -600,7 +600,7 @@ smbfs_smb_close(struct smb_share *ssp, u_int16_t fid, struct timespec *mtime,
 {
 	struct smb_rq *rqp;
 	struct mbchain *mbp;
-	u_long time;
+	u_long xtime;
 	int error;
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_CLOSE, scred, &rqp);
@@ -610,10 +610,10 @@ smbfs_smb_close(struct smb_share *ssp, u_int16_t fid, struct timespec *mtime,
 	smb_rq_wstart(rqp);
 	mb_put_mem(mbp, (caddr_t)&fid, sizeof(fid), MB_MSYSTEM);
 	if (mtime) {
-		smb_time_local2server(mtime, SSTOVC(ssp)->vc_sopt.sv_tz, &time);
+		smb_time_local2server(mtime, SSTOVC(ssp)->vc_sopt.sv_tz, &xtime);
 	} else
-		time = 0;
-	mb_put_uint32le(mbp, time);
+		xtime = 0;
+	mb_put_uint32le(mbp, xtime);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
@@ -631,7 +631,6 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	struct mbchain *mbp;
 	struct mdchain *mdp;
 	struct timespec ctime;
-	struct timeval tv;
 	u_int8_t wc;
 	u_int16_t fid;
 	u_long tm;
@@ -643,8 +642,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	smb_rq_getrequest(rqp, &mbp);
 
 	/* get current time */
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &ctime);
+	(void)nanotime(&ctime);
 	smb_time_local2server(&ctime, SSTOVC(ssp)->vc_sopt.sv_tz, &tm);
 
 	smb_rq_wstart(rqp);
@@ -919,7 +917,7 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	struct smb_rq *rqp;
 	char *cp;
 	u_int8_t battr;
-	u_int16_t date, time;
+	u_int16_t xdate, xtime;
 	u_int32_t size;
 	int error;
 
@@ -935,8 +933,8 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	smb_rq_getreply(rqp, &mbp);
 	md_get_mem(mbp, ctx->f_skey, SMB_SKEYLEN, MB_MSYSTEM);
 	md_get_uint8(mbp, &battr);
-	md_get_uint16le(mbp, &time);
-	md_get_uint16le(mbp, &date);
+	md_get_uint16le(mbp, &xtime);
+	md_get_uint16le(mbp, &xdate);
 	md_get_uint32le(mbp, &size);
 	KASSERT(ctx->f_name == ctx->f_fname);
 	cp = ctx->f_name;
@@ -946,7 +944,7 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	while(*cp == ' ' && cp > ctx->f_name)
 		*cp-- = '\0';
 	ctx->f_attr.fa_attr = battr;
-	smb_dos2unixtime(date, time, 0, rqp->sr_vc->vc_sopt.sv_tz,
+	smb_dos2unixtime(xdate, xtime, 0, rqp->sr_vc->vc_sopt.sv_tz,
 	    &ctx->f_attr.fa_mtime);
 	ctx->f_attr.fa_size = size;
 	ctx->f_nmlen = strlen(ctx->f_name);
@@ -1111,7 +1109,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 	struct smb_t2rq *t2p;
 	char *cp;
 	u_int8_t tb;
-	u_int16_t date, time, wattr;
+	u_int16_t xdate, xtime, wattr;
 	u_int32_t size, next, dattr;
 	int64_t tmp;
 	int error, svtz, cnt, fxsz, nmlen, recsz;
@@ -1131,14 +1129,14 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 	case SMB_INFO_STANDARD:
 		next = 0;
 		fxsz = 0;
-		md_get_uint16le(mbp, &date);
-		md_get_uint16le(mbp, &time);	/* creation time */
-		md_get_uint16le(mbp, &date);
-		md_get_uint16le(mbp, &time);	/* access time */
-		smb_dos2unixtime(date, time, 0, svtz, &ctx->f_attr.fa_atime);
-		md_get_uint16le(mbp, &date);
-		md_get_uint16le(mbp, &time);	/* access time */
-		smb_dos2unixtime(date, time, 0, svtz, &ctx->f_attr.fa_mtime);
+		md_get_uint16le(mbp, &xdate);
+		md_get_uint16le(mbp, &xtime);	/* creation time */
+		md_get_uint16le(mbp, &xdate);
+		md_get_uint16le(mbp, &xtime);	/* access time */
+		smb_dos2unixtime(xdate, xtime, 0, svtz, &ctx->f_attr.fa_atime);
+		md_get_uint16le(mbp, &xdate);
+		md_get_uint16le(mbp, &xtime);	/* access time */
+		smb_dos2unixtime(xdate, xtime, 0, svtz, &ctx->f_attr.fa_mtime);
 		md_get_uint32le(mbp, &size);
 		ctx->f_attr.fa_size = size;
 		md_get_uint32(mbp, NULL);	/* allocation size */

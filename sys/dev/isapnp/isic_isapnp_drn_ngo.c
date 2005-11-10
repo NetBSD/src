@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.4.10.2 2005/03/04 16:43:40 skrll Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.4.10.3 2005/11/10 14:05:42 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.4.10.2 2005/03/04 16:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.4.10.3 2005/11/10 14:05:42 skrll Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -489,7 +489,7 @@ drnngo_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t hd = sc->sc_maps[0].h, ha = sc->sc_maps[1].h;
 	bus_space_write_1(t, ha, offset[what].oa, offset[what].or);
-	bus_space_write_multi_1(t, hd, offset[what].od, (u_int8_t*)buf, size);
+	bus_space_write_multi_1(t, hd, offset[what].od, buf, size);
 }
 
 static void

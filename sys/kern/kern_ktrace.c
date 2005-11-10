@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.14 2005/02/16 07:42:16 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.15 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.14 2005/02/16 07:42:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.15 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -381,12 +381,9 @@ void
 ktrinitheader(struct ktr_header *kth, struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
-	struct timeval tv;
 
 	(void)memset(kth, 0, sizeof(*kth));
 	kth->ktr_type = type;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 
@@ -395,9 +392,11 @@ ktrinitheader(struct ktr_header *kth, struct lwp *l, int type)
 	switch (KTRFAC_VERSION(p->p_traceflag)) {
 	case 0:
 		/* This is the original format */
+		microtime(&kth->ktr_tv);
 		break;
 	case 1:
 		kth->ktr_lid = l->l_lid;
+		nanotime(&kth->ktr_time);
 		break;
 	default:
 		break;
@@ -491,9 +490,9 @@ ktremul(struct lwp *l)
 }
 
 void
-ktrkmem(struct lwp *l, int type, const void *buf, size_t len)
+ktrkmem(struct lwp *l, int type, const void *bf, size_t len)
 {
-	struct proc *p = l->l_proc;
+ 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
 
@@ -504,7 +503,7 @@ ktrkmem(struct lwp *l, int type, const void *buf, size_t len)
 
 	kth->ktr_len = len;
 	kte->kte_buf = malloc(len, M_KTRACE, M_WAITOK);
-	memcpy(kte->kte_buf, buf, len);
+	memcpy(kte->kte_buf, bf, len);
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -708,7 +707,7 @@ ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
 	struct ktr_mool *kp;
-	struct ktr_mool *buf;
+	struct ktr_mool *bf;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kte = pool_get(&kte_pool, PR_WAITOK);
@@ -718,8 +717,8 @@ ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
 	kp = malloc(size + sizeof(*kp), M_KTRACE, M_WAITOK);
 	kp->uaddr = uaddr;
 	kp->size = size;
-	buf = kp + 1; /* Skip uaddr and size */
-	(void)memcpy(buf, kaddr, size);
+	bf = kp + 1; /* Skip uaddr and size */
+	(void)memcpy(bf, kaddr, size);
 
 	kth->ktr_len = size + sizeof(*kp);
 	kte->kte_buf = kp;
@@ -1031,8 +1030,19 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs,
     struct ktr_desc *ktd)
 {
 
+	int vers = ops & KTRFAC_VER_MASK;
+
 	if (!ktrcanset(curp, p))
 		return (0);
+
+	switch (vers) {
+	case KTRFACv0:
+	case KTRFACv1:
+		break;
+	default:
+		return EINVAL;
+	}
+
 	if (KTROP(ops) == KTROP_SET) {
 		if (p->p_tracep != ktd) {
 			/*
@@ -1053,6 +1063,8 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs,
 		}
 	}
 
+	if (p->p_traceflag)
+		p->p_traceflag |= vers;
 	/*
 	 * Emit an emulation record, every time there is a ktrace
 	 * change/attach request.

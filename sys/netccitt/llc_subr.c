@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.16.6.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.16.6.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.16.6.4 2005/03/04 16:53:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.16.6.5 2005/11/10 14:11:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.16.6.4 2005/03/04 16:53:18 skrll Exp 
 /*
  * Frame names for diagnostic messages
  */
-char *frame_names[] = {
+const char *frame_names[] = {
 	"INFO", "RR", "RNR", "REJ", "DM", "SABME", "DISC",
 	"UA", "FRMR", "UI", "XID", "TEST", "ILLEGAL", "TIMER", "N2xT1"
 };
@@ -2499,9 +2499,9 @@ llc_anytimersup(linkp)
 #define SAL(s) ((struct sockaddr_dl *)&(s)->llcl_addr)
 #define CHECK(l,s) if (LLC_STATEEQ(l,s)) return __STRING(s)
 
-char *timer_names[] = {"ACK", "P", "BUSY", "REJ", "AGE"};
+const char *timer_names[] = {"ACK", "P", "BUSY", "REJ", "AGE"};
 
-char *
+const char *
 llc_getstatename(linkp)
 	struct llc_linkcb *linkp;
 {

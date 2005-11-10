@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.2.5 2004/09/24 10:53:17 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.6 2005/11/10 14:00:34 skrll Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -106,11 +106,13 @@ struct cpu_info {
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 
-	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+	struct iplsource *ci_isources[NIPL];
 	u_int32_t	ci_ipending;
 	int		ci_ilevel;
 	int		ci_idepth;
+#if 0
 	u_int32_t	ci_imask[NIPL];
+#endif
 	u_int32_t	ci_iunmask[NIPL];
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
@@ -147,7 +149,6 @@ struct cpu_info {
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
-	struct evcnt ci_ipi_events[X86_NIPI];
 };
 
 /*
@@ -263,11 +264,13 @@ extern u_int32_t cpus_attached;
  * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
  * we could stall hardclock ticks if another interrupt takes too long.
  */
-#define clockframe intrframe
+struct clockframe {
+	struct intrframe cf_if;
+};
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
-#define	CLKF_PC(frame)		((frame)->if_eip)
+#define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
 /*

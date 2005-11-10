@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.1.4.6 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: xencons.c,v 1.1.4.7 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.4.6 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.4.7 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -155,14 +155,14 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
-			int irq = bind_virq_to_irq(VIRQ_CONSOLE);
-			aprint_verbose("%s: using irq %d\n",
-			    sc->sc_dev.dv_xname, irq);
-			if (event_set_handler(irq, xencons_intr, sc,
-			    IPL_TTY) != 0)
+			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
+			aprint_verbose("%s: using event channel %d\n",
+			    sc->sc_dev.dv_xname, evtch);
+			if (event_set_handler(evtch, xencons_intr, sc,
+			    IPL_TTY, "xencons") != 0)
 				printf("console: "
 				    "can't register xencons_intr\n");
-			hypervisor_enable_irq(irq);
+			hypervisor_enable_event(evtch);
 		} else {
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
@@ -197,7 +197,8 @@ xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		xencons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
@@ -316,9 +317,11 @@ xencons_start(struct tty *tp)
 		msg.type = CMSG_CONSOLE;
 		msg.subtype = CMSG_CONSOLE_DATA;
 		msg.length = len;
-		ctrl_if_send_message_noblock(&msg, NULL, 0);
-		/* XXX check return value and queue wait for space
-		 * thread/softint */
+		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
+			HYPERVISOR_yield();
+			/* XXX check return value and queue wait for space
+			 * thread/softint */
+		}
 	}
 
 	s = spltty();
@@ -459,7 +462,7 @@ xenconscn_getc(dev_t dev)
 		
 	while (xencons_console_device->buf_write ==
 	    xencons_console_device->buf_read) {
-		HYPERVISOR_yield();
+		ctrl_if_console_poll();
 	}
 
 	ret = xencons_console_device->buf[xencons_console_device->buf_read];
@@ -488,9 +491,7 @@ xenconscn_putc(dev_t dev, int c)
 		msg.length = 1;
 		msg.msg[0] = c;
 		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
-			HYPERVISOR_yield();
-			/* XXX check return value and queue wait for space
-			 * thread/softint */
+			ctrl_if_console_poll();
 		}
 	}
 }

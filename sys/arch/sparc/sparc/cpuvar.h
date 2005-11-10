@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.58.2.4 2004/09/24 10:53:17 skrll Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.58.2.5 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ struct cpu_info {
 	int		mid;		/* Module ID for MP systems */
 	int		mbus;		/* 1 if CPU is on MBus */
 	int		mxcc;		/* 1 if a MBus-level MXCC is present */
-	char		*cpu_name;	/* CPU model */
+	const char	*cpu_name;	/* CPU model */
 	int		cpu_impl;	/* CPU implementation code */
 	int		cpu_vers;	/* CPU version code */
 	int		mmu_impl;	/* MMU implementation code */
@@ -299,7 +299,7 @@ struct cpu_info {
 	/* FPU information */
 	int		fpupresent;	/* true if FPU is present */
 	int		fpuvers;	/* FPU revision */
-	char		*fpu_name;	/* FPU model */
+	const char	*fpu_name;	/* FPU model */
 	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* XXX */
@@ -332,7 +332,7 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
-
+	void		(*idlespin)(struct cpu_info *);
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
 	/*bus_space_handle_t*/ long ci_mxccregs;
@@ -419,7 +419,7 @@ struct cpu_info {
 
 
 #define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < ncpu; cii++
+#define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < sparc_ncpus; cii++
 
 /*
  * Useful macros.

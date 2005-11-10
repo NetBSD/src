@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.3.2.4 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.3.2.5 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.3.2.4 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.3.2.5 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,11 +397,20 @@ notfound:
 		return (EJUSTRETURN);
 	}
 
+#if 0
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
+	 *
+	 * XXX Negative caching is broken for msdosfs because the name
+	 * cache doesn't understand peculiarities such as case insensitivity
+	 * and 8.3 filenames.  Hence, it may not invalidate all negative
+	 * entries if a file with this name is later created.
+	 * e.g. creating a file 'foo' won't invalidate a negative entry 
+	 * for 'FOO'.
 	 */
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
+#endif
 
 	return (ENOENT);
 
@@ -662,12 +671,12 @@ createde(dep, ddep, depp, cnp)
 		u_int8_t chksum = winChksum(ndep->deName);
 		const u_char *un = (const u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
-		u_long havecnt;
+		u_long xhavecnt;
 
 		fndoffset = ddep->de_fndoffset;
-		havecnt = ddep->de_fndcnt + 1;
+		xhavecnt = ddep->de_fndcnt + 1;
 
-		for(; wcnt < havecnt; wcnt++) {
+		for(; wcnt < xhavecnt; wcnt++) {
 			if ((fndoffset & pmp->pm_crbomask) == 0) {
 				/* we should never get here if ddep is root
 				 * directory */

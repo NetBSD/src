@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20.2.9 2005/03/04 16:39:10 skrll Exp $
+#	$NetBSD: GENERIC,v 1.20.2.10 2005/11/10 13:58:50 skrll Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20.2.9 $"
+#ident		"GENERIC-$Revision: 1.20.2.10 $"
 
 # estimated number of users
 maxusers	32
@@ -58,6 +58,8 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda file system (needs vcoda below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -74,6 +76,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -116,6 +119,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_LINUX	# Linux compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -158,7 +162,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
@@ -295,6 +299,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	fss	4		# file system snapshot device
 #pseudo-device	cgd	4		# cryptographic disk devices

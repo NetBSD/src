@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.1.4.4 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.1.4.5 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,8 +76,8 @@ const struct cdevsw dsrtc_cdevsw = {
 
 static int dsrtc_clock_read(struct dsrtc_softc *, struct clock_ymdhms *);
 static int dsrtc_clock_write(struct dsrtc_softc *, struct clock_ymdhms *);
-static int dsrtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int dsrtc_settime(struct todr_chip_handle *, struct timeval *);
+static int dsrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int dsrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int dsrtc_getcal(struct todr_chip_handle *, int *);
 static int dsrtc_setcal(struct todr_chip_handle *, int);
 
@@ -222,7 +222,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-dsrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+dsrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct dsrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt, check;
@@ -248,7 +248,7 @@ dsrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 }
 
 static int
-dsrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+dsrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct dsrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

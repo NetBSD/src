@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.9 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.10 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.9 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.10 2005/11/10 14:12:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,7 +69,7 @@ u_long	mfs_rootsize;	/* size of mini-root in bytes */
 
 static	int mfs_minor;	/* used for building internal dev_t */
 
-extern int (**mfs_vnodeop_p) __P((void *));
+extern int (**mfs_vnodeop_p)(void *);
 
 MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
 
@@ -100,8 +100,6 @@ struct vfsops mfs_vfsops = {
 	mfs_reinit,
 	mfs_done,
 	NULL,
-	NULL,
-	ufs_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	mfs_vnodeopv_descs,
@@ -134,7 +132,7 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
  * Memory based filesystem initialization.
  */
 void
-mfs_init()
+mfs_init(void)
 {
 #ifdef _LKM
 	malloc_type_attach(M_MFSNODE);
@@ -147,13 +145,13 @@ mfs_init()
 }
 
 void
-mfs_reinit()
+mfs_reinit(void)
 {
 	ffs_reinit();
 }
 
 void
-mfs_done()
+mfs_done(void)
 {
 	/*
 	 * ffs_done() ensures to free necessary resources
@@ -170,7 +168,7 @@ mfs_done()
  */
 
 int
-mfs_mountroot()
+mfs_mountroot(void)
 {
 	struct fs *fs;
 	struct mount *mp;
@@ -193,11 +191,11 @@ mfs_mountroot()
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	mfsp->mfs_shutdown = 0;
-	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		bufq_free(&mfsp->mfs_buflist);
+		bufq_free(mfsp->mfs_buflist);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
@@ -219,8 +217,7 @@ mfs_mountroot()
  * of the mini-root.
  */
 int
-mfs_initminiroot(base)
-	caddr_t base;
+mfs_initminiroot(caddr_t base)
 {
 	struct fs *fs = (struct fs *)(base + SBLOCK_UFS1);
 
@@ -243,12 +240,8 @@ mfs_initminiroot(base)
  */
 /* ARGSUSED */
 int
-mfs_mount(mp, path, data, ndp, l)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct lwp *l;
+mfs_mount(struct mount *mp, const char *path, void *data,
+	struct nameidata *ndp, struct lwp *l)
 {
 	struct vnode *devvp;
 	struct mfs_args args;
@@ -261,7 +254,6 @@ mfs_mount(mp, path, data, ndp, l)
 	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct vnode *vp;
-		struct mfsnode *mfsp;
 
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
@@ -276,7 +268,6 @@ mfs_mount(mp, path, data, ndp, l)
 			return EIO;
 
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &ump->um_export);
 		args.base = mfsp->mfs_baseoff;
 		args.size = mfsp->mfs_size;
 		return copyout(&args, data, sizeof(args));
@@ -313,8 +304,8 @@ mfs_mount(mp, path, data, ndp, l)
 		}
 		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR))
 			fs->fs_ronly = 0;
-		if (args.fspec == 0)
-			return (vfs_export(mp, &ump->um_export, &args.export));
+		if (args.fspec == NULL)
+			return EINVAL;
 		return (0);
 	}
 	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);
@@ -331,7 +322,7 @@ mfs_mount(mp, path, data, ndp, l)
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
-	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(devvp, mp, l)) != 0) {
 		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
@@ -362,10 +353,7 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+mfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
@@ -375,7 +363,7 @@ mfs_start(mp, flags, l)
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
-		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
+		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}
@@ -402,8 +390,8 @@ mfs_start(mp, flags, l)
 
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
-	KASSERT(BUFQ_PEEK(&mfsp->mfs_buflist) == NULL);
-	bufq_free(&mfsp->mfs_buflist);
+	KASSERT(BUFQ_PEEK(mfsp->mfs_buflist) == NULL);
+	bufq_free(mfsp->mfs_buflist);
 	return (sleepreturn);
 }
 
@@ -411,10 +399,7 @@ mfs_start(mp, flags, l)
  * Get file system statistics.
  */
 int
-mfs_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+mfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	int error;
 

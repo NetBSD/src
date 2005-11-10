@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.5 2005/02/04 11:48:28 skrll Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.6 2005/11/10 14:12:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.5 2005/02/04 11:48:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.6 2005/11/10 14:12:40 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -99,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.5 2005/02/04 11:48:28 skrll E
  * local prototypes
  */
 
-void		uvmpd_scan(void);
-void		uvmpd_scan_inactive(struct pglist *);
-void		uvmpd_tune(void);
+static void	uvmpd_scan(void);
+static void	uvmpd_scan_inactive(struct pglist *);
+static void	uvmpd_tune(void);
 
 /*
  * XXX hack to avoid hangs when large processes fork.
@@ -116,8 +116,7 @@ int uvm_extrapages;
  */
 
 void
-uvm_wait(wmsg)
-	const char *wmsg;
+uvm_wait(const char *wmsg)
 {
 	int timo = 0;
 	int s = splbio();
@@ -168,7 +167,7 @@ uvm_wait(wmsg)
  * => caller must call with page queues locked
  */
 
-void
+static void
 uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
@@ -380,19 +379,21 @@ uvm_aiodone_daemon(void *arg)
  * => we return TRUE if we are exiting because we met our target
  */
 
-void
-uvmpd_scan_inactive(pglst)
-	struct pglist *pglst;
+static void
+uvmpd_scan_inactive(struct pglist *pglst)
 {
-	int error;
 	struct vm_page *p, *nextpg = NULL; /* Quell compiler warning */
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
+#if defined(VMSWAP)
 	struct vm_page *swpps[round_page(MAXPHYS) >> PAGE_SHIFT];
+	int error;
+	int result;
+#endif /* defined(VMSWAP) */
 	struct simplelock *slock;
 	int swnpages, swcpages;
 	int swslot;
-	int dirtyreacts, t, result;
+	int dirtyreacts, t;
 	boolean_t anonunder, fileunder, execunder;
 	boolean_t anonover, fileover, execover;
 	boolean_t anonreact, filereact, execreact;
@@ -423,6 +424,16 @@ uvmpd_scan_inactive(pglst)
 	anonreact = anonunder || (!anonover && (fileover || execover));
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));
+	if (filereact && execreact && (anonreact || uvm_swapisfull())) {
+		anonreact = filereact = execreact = FALSE;
+	}
+#if !defined(VMSWAP)
+	/*
+	 * XXX no point to put swap-backed pages on the page queue.
+	 */
+
+	anonreact = TRUE;
+#endif /* !defined(VMSWAP) */
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 		uobj = NULL;
 		anon = NULL;
@@ -524,6 +535,7 @@ uvmpd_scan_inactive(pglst)
 				}
 				uvmexp.pdobscan++;
 			} else {
+#if defined(VMSWAP)
 				KASSERT(anon != NULL);
 				slock = &anon->an_lock;
 				if (!simple_lock_try(slock)) {
@@ -546,6 +558,9 @@ uvmpd_scan_inactive(pglst)
 					continue;
 				}
 				uvmexp.pdanscan++;
+#else /* defined(VMSWAP) */
+				panic("%s: anon", __func__);
+#endif /* defined(VMSWAP) */
 			}
 
 
@@ -568,6 +583,7 @@ uvmpd_scan_inactive(pglst)
 				continue;
 			}
 
+#if defined(VMSWAP)
 			/*
 			 * the page is swap-backed.  remove all the permissions
 			 * from the page so we can sync the modified info
@@ -595,7 +611,7 @@ uvmpd_scan_inactive(pglst)
 
 				if (anon) {
 					KASSERT(anon->an_swslot != 0);
-					anon->u.an_page = NULL;
+					anon->an_page = NULL;
 					slot = anon->an_swslot;
 				} else {
 					slot = uao_find_swslot(uobj, pageidx);
@@ -715,8 +731,13 @@ uvmpd_scan_inactive(pglst)
 			if (swcpages < swnpages) {
 				continue;
 			}
+#else /* defined(VMSWAP) */
+			panic("%s: swap-backed", __func__);
+#endif /* defined(VMSWAP) */
+
 		}
 
+#if defined(VMSWAP)
 		/*
 		 * if this is the final pageout we could have a few
 		 * unused swap blocks.  if so, free them now.
@@ -752,6 +773,7 @@ uvmpd_scan_inactive(pglst)
 		if (nextpg && (nextpg->pqflags & PQ_INACTIVE) == 0) {
 			nextpg = TAILQ_FIRST(pglst);
 		}
+#endif /* defined(VMSWAP) */
 	}
 }
 
@@ -761,7 +783,7 @@ uvmpd_scan_inactive(pglst)
  * => called with pageq's locked
  */
 
-void
+static void
 uvmpd_scan(void)
 {
 	int inactive_shortage, swap_shortage, pages_freed;
@@ -871,6 +893,7 @@ uvmpd_scan(void)
 			continue;
 		}
 
+#if defined(VMSWAP)
 		/*
 		 * if there's a shortage of swap, free any swap allocated
 		 * to this page so that other pages can be paged out.
@@ -892,6 +915,7 @@ uvmpd_scan(void)
 				}
 			}
 		}
+#endif /* defined(VMSWAP) */
 
 		/*
 		 * if there's a shortage of inactive pages, deactivate.
@@ -910,4 +934,49 @@ uvmpd_scan(void)
 
 		simple_unlock(slock);
 	}
+}
+
+/*
+ * uvm_reclaimable: decide whether to wait for pagedaemon.
+ *
+ * => return TRUE if it seems to be worth to do uvm_wait.
+ *
+ * XXX should be tunable.
+ * XXX should consider pools, etc?
+ */
+
+boolean_t
+uvm_reclaimable(void)
+{
+	int filepages;
+
+	/*
+	 * if swap is not full, no problem.
+	 */
+
+	if (!uvm_swapisfull()) {
+		return TRUE;
+	}
+
+	/*
+	 * file-backed pages can be reclaimed even when swap is full.
+	 * if we have more than 1/16 of pageable memory or 5MB, try to reclaim.
+	 *
+	 * XXX assume the worst case, ie. all wired pages are file-backed.
+	 *
+	 * XXX should consider about other reclaimable memory.
+	 * XXX ie. pools, traditional buffer cache.
+	 */
+
+	filepages = uvmexp.filepages + uvmexp.execpages - uvmexp.wired;
+	if (filepages >= MIN((uvmexp.active + uvmexp.inactive) >> 4,
+	    5 * 1024 * 1024 >> PAGE_SHIFT)) {
+		return TRUE;
+	}
+
+	/*
+	 * kill the process, fail allocation, etc..
+	 */
+
+	return FALSE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.42.2.4 2004/11/29 07:25:05 skrll Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.42.2.5 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42.2.4 2004/11/29 07:25:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42.2.5 2005/11/10 14:12:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42.2.4 2004/11/29 07:25:05 skrll Exp 
 
 static int	uvm_loananon(struct uvm_faultinfo *, void ***,
 			     int, struct vm_anon *);
-static int	uvm_loanentry(struct uvm_faultinfo *, void ***, int);
 static int	uvm_loanuobj(struct uvm_faultinfo *, void ***,
 			     int, vaddr_t);
 static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
@@ -134,13 +133,13 @@ static int	uvm_loanpage(struct vm_page **, int);
  *	-1 == error, map is unlocked
  *	 0 == map relock error (try again!), map is unlocked
  *	>0 == number of pages we loaned, map is unlocked
+ *
+ * NOTE: We can live with this being an inline, because it is only called
+ * from one place.
  */
 
 static __inline int
-uvm_loanentry(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	vaddr_t curaddr = ufi->orig_rvaddr;
 	vsize_t togo = ufi->size;
@@ -243,12 +242,7 @@ uvm_loanentry(ufi, output, flags)
  */
 
 int
-uvm_loan(map, start, len, v, flags)
-	struct vm_map *map;
-	vaddr_t start;
-	vsize_t len;
-	void *v;
-	int flags;
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 {
 	struct uvm_faultinfo ufi;
 	void **result, **output;
@@ -354,11 +348,8 @@ fail:
  */
 
 int
-uvm_loananon(ufi, output, flags, anon)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	struct vm_anon *anon;
+uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
+    struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	int error;
@@ -373,7 +364,7 @@ uvm_loananon(ufi, output, flags, anon)
 
 	if (flags & UVM_LOAN_TOANON) {
 		simple_lock(&anon->an_lock);
-		pg = anon->u.an_page;
+		pg = anon->an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1) {
 			if (pg->wire_count > 0) {
 				UVMHIST_LOG(loanhist, "->A wired %p", pg,0,0,0);
@@ -428,7 +419,7 @@ uvm_loananon(ufi, output, flags, anon)
 	 * we have the page and its owner locked: do the loan now.
 	 */
 
-	pg = anon->u.an_page;
+	pg = anon->an_page;
 	uvm_lock_pageq();
 	if (pg->wire_count > 0) {
 		uvm_unlock_pageq();
@@ -465,9 +456,7 @@ uvm_loananon(ufi, output, flags, anon)
  * => fail with EBUSY if meet a wired page.
  */
 static int
-uvm_loanpage(pgpp, npages)
-	struct vm_page **pgpp;
-	int npages;
+uvm_loanpage(struct vm_page **pgpp, int npages)
 {
 	int i;
 	int error = 0;
@@ -529,11 +518,8 @@ uvm_loanpage(pgpp, npages)
  * => fail with EBUSY if we meet a wired page.
  */
 int
-uvm_loanuobjpages(uobj, pgoff, orignpages, origpgpp)
-	struct uvm_object *uobj;
-	voff_t pgoff;
-	int orignpages;
-	struct vm_page **origpgpp;
+uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
+    struct vm_page **origpgpp)
 {
 	int ndone; /* # of pages loaned out */
 	struct vm_page **pgpp;
@@ -639,11 +625,7 @@ fail:
  */
 
 static int
-uvm_loanuobj(ufi, output, flags, va)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	vaddr_t va;
+uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
@@ -795,14 +777,14 @@ uvm_loanuobj(ufi, output, flags, va)
 	if (anon == NULL) {
 		goto fail;
 	}
-	anon->u.an_page = pg;
+	anon->an_page = pg;
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	if (pg->wire_count > 0) {
 		uvm_unlock_pageq();
 		UVMHIST_LOG(loanhist, "wired %p", pg,0,0,0);
 		pg->uanon = NULL;
-		anon->u.an_page = NULL;
+		anon->an_page = NULL;
 		anon->an_ref--;
 		simple_unlock(&anon->an_lock);
 		uvm_anfree(anon);
@@ -852,10 +834,7 @@ fail:
 static struct uvm_object uvm_loanzero_object;
 
 static int
-uvm_loanzero(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	struct vm_anon *anon;
 	struct vm_page *pg;
@@ -937,7 +916,7 @@ again:
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return (-1);
 	}
-	anon->u.an_page = pg;
+	anon->an_page = pg;
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	pg->loan_count++;
@@ -957,9 +936,7 @@ again:
  */
 
 static void
-uvm_unloananon(aloans, nanons)
-	struct vm_anon **aloans;
-	int nanons;
+uvm_unloananon(struct vm_anon **aloans, int nanons)
 {
 	struct vm_anon *anon;
 
@@ -984,9 +961,7 @@ uvm_unloananon(aloans, nanons)
  */
 
 static void
-uvm_unloanpage(ploans, npages)
-	struct vm_page **ploans;
-	int npages;
+uvm_unloanpage(struct vm_page **ploans, int npages)
 {
 	struct vm_page *pg;
 	struct simplelock *slock;

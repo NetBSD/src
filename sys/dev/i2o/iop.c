@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.38.2.5 2005/03/04 16:41:15 skrll Exp $	*/
+/*	$NetBSD: iop.c,v 1.38.2.6 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.5 2005/03/04 16:41:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.6 2005/11/10 14:04:00 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.5 2005/03/04 16:41:15 skrll Exp $");
 
 #define POLL(ms, cond)				\
 do {						\
-	int i;					\
-	for (i = (ms) * 10; i; i--) {		\
+	int xi;					\
+	for (xi = (ms) * 10; xi; xi--) {	\
 		if (cond)			\
 			break;			\
 		DELAY(100);			\
@@ -228,8 +228,6 @@ static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
-static int	iop_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -486,8 +484,7 @@ iop_config_interrupts(struct device *self)
 	struct iop_softc *sc, *iop;
 	struct i2o_systab_entry *ste;
 	int rv, i, niop;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
 	sc = (struct iop_softc *)self;
 	LIST_INIT(&sc->sc_iilist);
@@ -591,9 +588,9 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	ldesc->len = 1;
-	ldesc->locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", ldesc, &ia, iop_print, iop_submatch);
+	locs[IOPCF_TID] = I2O_TID_IOP;
+	config_found_sm_loc(self, "iop", locs, &ia, iop_print,
+		config_stdsubmatch);
 
 	/*
 	 * Start device configuration.
@@ -803,8 +800,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	struct device *dv;
 	int i, j, nent;
 	u_int usertid;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[IOPCF_NLOCS];
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
@@ -841,11 +837,10 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		if (ii != NULL)
 			continue;
 
-		ldesc->len = 1;
-		ldesc->locs[IOPCF_TID] = ia.ia_tid;
+		locs[IOPCF_TID] = ia.ia_tid;
 
-		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
-					 iop_print, iop_submatch);
+		dv = config_found_sm_loc(&sc->sc_dv, "iop", locs, &ia,
+					 iop_print, config_stdsubmatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
 			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
@@ -900,18 +895,6 @@ iop_print(void *aux, const char *pnp)
 	}
 	aprint_normal(" tid %d", ia->ia_tid);
 	return (UNCONF);
-}
-
-static int
-iop_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[IOPCF_TID] != IOPCF_TID_DEFAULT &&
-	    cf->cf_loc[IOPCF_TID] != ldesc->locs[IOPCF_TID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

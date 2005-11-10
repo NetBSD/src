@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188.2.4 2005/02/04 11:44:56 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.188.2.5 2005/11/10 13:59:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -52,6 +52,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_multiprocessor.h"
@@ -2433,7 +2434,12 @@ _C_LABEL(_syscall):
 	std	%i2, [%sp + CCFSZ + 56]
 	mov	%l1, %o2		! (pc)
 	std	%i4, [%sp + CCFSZ + 64]
-	call	_C_LABEL(syscall)	! syscall(code, &tf, pc, suncompat)
+
+	sethi	%hi(curlwp), %l1
+	ld	[%l1 + %lo(curlwp)], %l1
+	ld	[%l1 + L_PROC], %l1
+	ld	[%l1 + P_MD_SYSCALL], %l1
+	call	%l1			! syscall(code, &tf, pc, suncompat)
 	 std	%i6, [%sp + CCFSZ + 72]
 	! now load em all up again, sigh
 	ldd	[%sp + CCFSZ + 0], %l0	! new %psr, new pc
@@ -2623,19 +2629,20 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 #else /* MSIIEP */
 	sethi	%hi(MSIIEP_PCIC_VA), %l6
 	mov	1, %l4
+	xor	%l3, 0x18, %l7	! change endianness of the resulting bit mask
 	ld	[%l6 + PCIC_PROC_IPR_REG], %l5 ! get pending interrupts
-	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
-
+	sll	%l4, %l7, %l4	! hw intr bits are in the upper halfword 
+				! because the register is little-endian
 	btst	%l4, %l5	! has pending hw intr at this level?
 	bnz	sparc_interrupt_common
 	 nop
 
+	srl	%l4, 16, %l4	! move the mask bit into the lower 16 bit
+				! so we can use it to clear a sw interrupt
+
 #ifdef DIAGNOSTIC
-	! softint pending bits are in the upper halfword, but softint
-	! clear bits are in the lower halfword so we want the bit in %l4
-	! kept in the lower half and instead shift pending bits right
-	srl	%l5, 16, %l7
-	btst	%l4, %l7	! make sure softint pending bit is set
+	! check if there's really a sw interrupt pending
+	btst	%l4, %l5	! make sure softint pending bit is set
 	bnz	softintr_common
 	 sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
 	/* FALLTHROUGH to sparc_interrupt4m_bogus */
@@ -3098,6 +3105,8 @@ nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 
+#if !defined(MSIIEP) /* normal sun4m */
+
 	/* Read the Pending Interrupts register */
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
@@ -3189,7 +3198,69 @@ nmi_sun4m:
 4:
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
+
+#else /* MSIIEP*/
+	sethi	%hi(MSIIEP_PCIC_VA), %l6
+
+	/* Read the Processor Interrupt Pending register */
+	ld	[%l6 + PCIC_PROC_IPR_REG], %l5
+
+	/*
+	 * Level 15 interrupts are nonmaskable, so with traps off,
+	 * disable all interrupts to prevent recursion.
+	 */
+	mov	0x80, %l4	! htole32(MSIIEP_SYS_ITMR_ALL)
+	st	%l4, [%l6 + PCIC_SYS_ITMR_SET_REG]
+
+	set	(1 << 23), %l4	! htole32(1 << 15)
+	btst	%l4, %l5	! has pending level 15 hw intr?
+	bz	1f
+	 nop
+
+	/* hard level 15 interrupt */
+	sethi	%hi(_C_LABEL(nmi_hard_msiiep)), %o3
+	b	2f
+	 or	%o3, %lo(_C_LABEL(nmi_hard_msiiep)), %o3
+
+1:	/* soft level 15 interrupt */
+	set	(1 << 7), %l4	! htole16(1 << 15)
+	sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+	set	_C_LABEL(nmi_soft_msiiep), %o3
+2:
+
+	/* XXX:	call sequence is identical to sun4m case above. merge? */
+	or	%l0, PSR_PIL, %o4	! splhigh()
+	wr	%o4, 0, %psr		!
+	wr	%o4, PSR_ET, %psr	! turn traps on again
+
+	std	%g2, [%sp + CCFSZ + 80]	! save g2, g3
+	rd	%y, %l4			! save y
+	std	%g4, [%sp + CCFSZ + 88]	! save g4, g5
+
+	/* Finish stackframe, call C trap handler */
+	mov	%g1, %l5		! save g1, g6, g7
+	mov	%g6, %l6
+
+	call	%o3			! nmi_hard(0) or nmi_soft(&tf)
+	 mov	%g7, %l7
+
+	mov	%l5, %g1		! restore g1 through g7
+	ldd	[%sp + CCFSZ + 80], %g2
+	ldd	[%sp + CCFSZ + 88], %g4
+	wr	%l0, 0, %psr		! re-disable traps
+	mov	%l6, %g6
+	mov	%l7, %g7
+
+	! enable interrupts again (safe, we disabled traps again above)
+	sethi	%hi(MSIIEP_PCIC_VA), %o0
+	mov	0x80, %o1	! htole32(MSIIEP_SYS_ITMR_ALL)
+	st	%o1, [%o0 + PCIC_SYS_ITMR_CLR_REG]
+
+	b	return_from_trap
+	 wr	%l4, 0, %y		! restore y
+#endif /* MSIIEP */
 #endif /* SUN4M */
+
 
 #ifdef GPROF
 	.globl	window_of, winof_user
@@ -4562,6 +4633,7 @@ _C_LABEL(cpu_hatch):
 
 #endif /* MULTIPROCESSOR */
 
+#ifdef COMPAT_16
 #include "sigcode_state.s"
 
 	.globl	_C_LABEL(sigcode)
@@ -4586,6 +4658,8 @@ _C_LABEL(sigcode):
 	t	ST_SYSCALL
 	/* NOTREACHED */
 _C_LABEL(esigcode):
+#endif /* COMPAT_16 */
+
 
 /*
  * Primitives
@@ -4951,12 +5025,29 @@ idle_enter:
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
 	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	tst	%o3
-	bz	1b
+	bz	ispin2
 	 nop
 
 	call	_C_LABEL(uvm_pageidlezero)
 	 nop
-	b,a	1b
+	
+ispin:
+	! check if we're still idle, if so we'll spin in cpu_idlespin()
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	tst	%o3
+	bnz,a	idle_leave
+	 wr	%l1, (IPL_SCHED << 8), %psr	! (void) splsched();
+	 
+ispin2:
+	sethi	%hi(CPUINFO_VA), %o0
+	ld	[%o0 + CPUINFO_IDLESPIN], %o3
+	tst	%o3
+	bz	1b
+	 nop
+	
+	call	%o3
+	 nop	! CPUINFO_VA is already in %o0
+	b,a	ispin
 
 idle_leave:
 	! just wrote to %psr; observe psr delay before doing a `save'
@@ -6338,6 +6429,7 @@ ENTRY(raise)
 	 st	%o2, [%o1]
 #else /* MSIIEP - ignore %o0, only one CPU ever */
 	mov	1, %o2
+	xor	%o1, 8, %o1	! change 'endianness' of the shift distance
 	sethi	%hi(MSIIEP_PCIC_VA), %o0
 	sll	%o2, %o1, %o2
 	retl
@@ -6532,26 +6624,40 @@ ENTRY(microtime)
 
 2:
 	ldd	[%g2+%lo(_C_LABEL(time))], %o2	! time.tv_sec & time.tv_usec
-	ld	[%g3], %o4			! system (timer) counter
+	ld	[%g3], %o4		! system (timer) counter, little endian
 	ldd	[%g2+%lo(_C_LABEL(time))], %g4	! see if time values changed
 	cmp	%g4, %o2
 	bne	2b				! if time.tv_sec changed
 	 cmp	%g5, %o3
 	bne	2b				! if time.tv_usec changed
-	 tst	%o4
+	 btst	0x80, %o4			! test overflow flag, LE
 	!! %o2 - time.tv_sec;  %o3 - time.tv_usec;  %o4 - timer counter
 
 !!! BEGIN ms-IIep specific code
-	bpos	3f				! if limit not reached yet
+	bz	3f				! if limit not reached yet
 	 clr	%g4				!  then use timer as is
 
-	set	0x80000000, %g5
 	sethi	%hi(_C_LABEL(tick)), %g4
-	bclr	%g5, %o4			! cleat limit reached flag
+	bclr	0x80, %o4			! clear limit reached flag
 	ld	[%g4+%lo(_C_LABEL(tick))], %g4
 
 	!! %g4 - either 0 or tick (if timer has hit the limit)
 3:
+	! now we're sure we need the timer value so let's endian-swap it
+	! %o4 = le32toh(%o4)
+	! since we're going to overwrite %g5 and don't need %g3 we can use them
+	! for intermediate values here
+	mov	%o4, %g3
+	set	0xff00ff, %g5
+	sll	%o4, 16, %o4	! first swap the upper and lower 16 bit
+	srl	%g3, 16, %g3
+	or	%g3, %o4, %o4	! result in %o4
+	and	%o4, %g5, %g3	! now grab byte 0 and 2
+	andn	%o4, %g5, %o4	! %o4 now contains byte 1 and 3
+	srl	%o4, 8, %o4	! shift them so they swap positions
+	sll	%g3, 8, %g3
+	or	%g3, %o4, %o4	! put them back together. 
+
 	inc	-1, %o4				! timer is 1-based, adjust
 	!! divide by 25 magic stolen from a gcc output
 	set	1374389535, %g5
@@ -6559,6 +6665,7 @@ ENTRY(microtime)
 	rd	%y, %o4
 	srl	%o4, 3, %o4
 	add	%o4, %g4, %o4			! may be bump usec by tick
+	
 !!! END ms-IIep specific code
 
 	add	%o3, %o4, %o3			! add timer to time.tv_usec

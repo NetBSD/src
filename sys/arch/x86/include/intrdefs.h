@@ -1,7 +1,7 @@
-/*	$NetBSD: intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.3.2.1 2005/11/10 14:00:20 skrll Exp $	*/
 
-#ifndef _i386_INTRDEFS_H
-#define _i386_INTRDEFS_H
+#ifndef _X86_INTRDEFS_H_
+#define _X86_INTRDEFS_H_
 
 /*
  * Interrupt priority levels.
@@ -27,11 +27,14 @@
 #define	IPL_NET		0x7	/* network */
 #define	IPL_SOFTSERIAL	0x8	/* serial */
 #define	IPL_TTY		0x9	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		0xa	/* memory allocation */
 #define	IPL_AUDIO	0xb	/* audio */
 #define	IPL_CLOCK	0xc	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	0xd	/* everything */
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0xd	/* serial */
 #define IPL_IPI		0xe	/* inter-processor interrupts */
 #define	NIPL		16
@@ -87,4 +90,4 @@
 
 #define IREENT_MAGIC	0x18041969
 
-#endif /* _X86_INTRDEFS_H */
+#endif /* _X86_INTRDEFS_H_ */

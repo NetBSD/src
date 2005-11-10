@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.36.2.6 2005/01/31 08:19:33 skrll Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.36.2.7 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,11 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.36.2.6 2005/01/31 08:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.36.2.7 2005/11/10 14:09:44 skrll Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
 #endif
+
+#include "opt_verified_exec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.36.2.6 2005/01/31 08:19:33 skrll E
 
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
+
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
+#endif /* VERIFIED_EXEC */
+
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif /* SYSTRACE */
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.
@@ -224,8 +234,26 @@ check_shell:
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
 		/* normally can't fail, but check for it if diagnostic */
+#ifdef SYSTRACE
+		error = 1;
+		if (ISSET(p->p_flag, P_SYSTRACE)) {
+			error = systrace_scriptname(p, *tmpsap);
+			if (error == 0)
+				tmpsap++;
+		}
+		if (error) {
+			/*
+			 * Since systrace_scriptname() provides a
+			 * convenience, not a security issue, we are
+			 * safe to do this.
+			 */
+			error = copystr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+					NULL);
+		}
+#else
 		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
 		    (size_t *)0);
+#endif /* SYSTRACE */
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			panic("exec_script: copyinstr couldn't fail");
@@ -250,9 +278,9 @@ check_shell:
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
 #ifdef VERIFIED_EXEC
-	if ((error = check_exec(l, epp, 0)) == 0) {
+	if ((error = check_exec(l, epp, VERIEXEC_INDIRECT)) == 0) {
 #else
-	if ((error = check_exec(l, epp)) == 0) {
+	if ((error = check_exec(l, epp, 0)) == 0) {
 #endif
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.13.2.6 2005/03/04 16:41:32 skrll Exp $	*/
+/*	$NetBSD: osiop.c,v 1.13.2.7 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.13.2.6 2005/03/04 16:41:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.13.2.7 2005/11/10 14:04:15 skrll Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1130,6 +1130,12 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_ok) {
 		/* Normal completion status, or check condition */
 		struct osiop_tinfo *ti;
+
+		if (acb == NULL) {
+			printf("%s: COMPLETE with no active command?\n",
+			    sc->sc_dev.dv_xname);
+			goto bad_phase;
+		}
 #ifdef OSIOP_DEBUG
 		if (osiop_read_4(sc, OSIOP_DSA) !=
 		    dsdma->dm_segs[0].ds_addr + acb->dsoffset) {
@@ -1175,6 +1181,11 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 		return (1);
 	}
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_int_syncmsg) {
+		if (acb == NULL) {
+			printf("%s: sync message with no active command?\n",
+			    sc->sc_dev.dv_xname);
+			goto bad_phase;
+		}
 		target = acb->xs->xs_periph->periph_target;
 		if (ds->msgbuf[1] == MSG_EXTENDED &&
 		    ds->msgbuf[2] == MSG_EXT_SDTR_LEN &&
@@ -1218,10 +1229,12 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 		/* Phase mismatch */
 #ifdef OSIOP_DEBUG
 		osiopphmm++;
-		if (acb == NULL)
+#endif
+		if (acb == NULL) {
 			printf("%s: Phase mismatch with no active command?\n",
 			    sc->sc_dev.dv_xname);
-#endif
+			goto bad_phase;
+		}
 		if (acb->datalen > 0) {
 			int adjust = (dfifo - (dbc & 0x7f)) & 0x7f;
 			if (sstat1 & OSIOP_SSTAT1_ORF)
@@ -1290,10 +1303,12 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	}
 	if (sstat0 & OSIOP_SSTAT0_STO) {
 		/* Select timed out */
-#ifdef OSIOP_DEBUG
-		if (acb == NULL)
+		if (acb == NULL) {
 			printf("%s: Select timeout with no active command?\n",
 			    sc->sc_dev.dv_xname);
+			goto bad_phase;
+		}
+#ifdef OSIOP_DEBUG
 		if (osiop_read_1(sc, OSIOP_SBCL) & OSIOP_BSY) {
 			printf("ACK! osiop was busy at timeout: "
 			    "script %p dsa %lx\n", sc->sc_script,
@@ -1336,13 +1351,11 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	else
 		target = sc->sc_id;
 	if (sstat0 & OSIOP_SSTAT0_UDC) {
-#ifdef OSIOP_DEBUG
-		if (acb == NULL)
-			printf("%s: Unexpected disconnect "
-			    "with no active command?\n", sc->sc_dev.dv_xname);
-		printf("%s: target %d disconnected unexpectedly\n",
+		printf("%s: target %d disconnected unexpectedly",
 		    sc->sc_dev.dv_xname, target);
-#endif
+		if (acb == NULL)
+			printf("with no active command?");
+		printf("\n");
 #if 0
 		osiop_abort(sc, "osiop_chkintr");
 #endif
@@ -1603,9 +1616,11 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	}
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_int_msgin) {
 		/* Unrecognized message in byte */
-		if (acb == NULL)
+		if (acb == NULL) {
 			printf("%s: Bad message-in with no active command?\n",
 			    sc->sc_dev.dv_xname);
+			goto bad_phase;
+		}
 		printf("%s: Unrecognized message in data "
 		    "sfbr %x msg %x sbcl %x\n", sc->sc_dev.dv_xname,
 		    osiop_read_1(sc, OSIOP_SFBR), ds->msgbuf[1],

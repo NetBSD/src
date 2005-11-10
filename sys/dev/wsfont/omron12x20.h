@@ -1,4 +1,4 @@
-/*	$NetBSD: omron12x20.h,v 1.3.2.3 2004/09/21 13:34:30 skrll Exp $	*/
+/*	$NetBSD: omron12x20.h,v 1.3.2.4 2005/11/10 14:08:44 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,9 +76,9 @@
  *	This file is generated from sys/luna68k/font/font.c in 4.4BSD-Lite2.
  */
 
-extern u_char omron12x20_data[];
+static u_char omron12x20_data[];
 
-struct wsdisplay_font omron12x20 = {
+static struct wsdisplay_font omron12x20 = {
 	"omron12x20",			/* typeface name */
 	' ',				/* firstchar */
 	'~' - ' ' + 1,			/* numchars */

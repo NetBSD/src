@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.22.2.3 2004/09/21 13:39:23 skrll Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.22.2.4 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -125,6 +125,8 @@ void		amap_unref	/* drop reference to an amap */
 			(struct vm_amap *, vaddr_t, vsize_t, int);
 void		amap_wipeout	/* remove all anons from amap */
 			(struct vm_amap *);
+boolean_t	amap_swap_off
+			(int, int);
 
 /*
  * amap flag values
@@ -132,6 +134,7 @@ void		amap_wipeout	/* remove all anons from amap */
 
 #define AMAP_SHARED	0x1	/* amap is shared */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
+#define AMAP_SWAPOFF	0x4	/* amap_swap_off() is in progress */
 
 /*
  * amap_extend flags
@@ -174,6 +177,7 @@ struct vm_amap {
 #ifdef UVM_AMAP_PPREF
 	int *am_ppref;		/* per page reference count (if !NULL) */
 #endif
+	LIST_ENTRY(vm_amap) am_list;
 };
 
 /*
@@ -264,6 +268,7 @@ MALLOC_DECLARE(M_UVMAMAP);
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)
 #define amap_lock(AMAP)		simple_lock(&(AMAP)->am_l)
+#define amap_lock_try(AMAP)	simple_lock_try(&(AMAP)->am_l)
 #define amap_refs(AMAP)		((AMAP)->am_ref)
 #define amap_unlock(AMAP)	simple_unlock(&(AMAP)->am_l)
 

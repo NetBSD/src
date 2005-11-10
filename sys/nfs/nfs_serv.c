@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.79.2.7 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.79.2.8 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.7 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.8 2005/11/10 14:11:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.7 2005/03/04 16:54:20 skrll Exp 
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/kernel.h>
-#include <ufs/ufs/dir.h>
 
 #include <uvm/uvm.h>
 
@@ -1645,23 +1644,23 @@ nfsrv_mknod(nfsd, slp, lwp, mrq)
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
 		error = NFSERR_BADTYPE;
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		if (nd.ni_vp)
-			vput(nd.ni_vp);
-		goto out;
+		goto abort;
 	}
 	VATTR_NULL(&va);
 	va.va_mode = 0;
 	nfsm_srvsattr(&va);
 	if (vtyp == VCHR || vtyp == VBLK) {
+		dev_t rdev;
+
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		major = fxdr_unsigned(u_int32_t, *tl++);
 		minor = fxdr_unsigned(u_int32_t, *tl);
-		va.va_rdev = makedev(major, minor);
+		rdev = makedev(major, minor);
+		if (major(rdev) != major || minor(rdev) != minor) {
+			error = EINVAL;
+			goto abort;
+		}
+		va.va_rdev = rdev;
 	}
 
 	/*
@@ -1669,12 +1668,14 @@ nfsrv_mknod(nfsd, slp, lwp, mrq)
 	 */
 	if (nd.ni_vp) {
 		error = EEXIST;
+abort:
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		vput(nd.ni_vp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
 		goto out;
 	}
 	va.va_type = vtyp;
@@ -2203,6 +2204,7 @@ nfsrv_symlink(nfsd, slp, lwp, mrq)
 	if (error)
 		goto out;
 	VATTR_NULL(&va);
+	va.va_type = VLNK;
 	if (v3) {
 		va.va_mode = 0;
 		nfsm_srvsattr(&va);
@@ -2518,7 +2520,7 @@ out:
 /*
  * nfs readdir service
  * - mallocs what it thinks is enough to read
- *	count rounded up to a multiple of NFS_DIRBLKSIZ <= NFS_MAXREADDIR
+ *	count rounded up to a multiple of NFS_SRVDIRBLKSIZ <= NFS_MAXREADDIR
  * - calls VOP_READDIR()
  * - loops around building the reply
  *	if the output generated exceeds count break out of loop
@@ -2546,6 +2548,9 @@ out:
  *	to including the status longwords that are not a part of the dir.
  *	"entry" structures, but are in the rpc.
  */
+
+#define	NFS_SRVDIRBLKSIZ	1024
+
 struct flrep {
 	nfsuint64 fl_off;
 	u_int32_t fl_postopok;
@@ -2602,7 +2607,7 @@ nfsrv_readdir(nfsd, slp, lwp, mrq)
 	}
 	off = toff;
 	cnt = fxdr_unsigned(int, *tl);
-	siz = ((cnt + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	siz = ((cnt + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
@@ -2753,7 +2758,7 @@ again:
 			bp += NFSX_UNSIGNED;
 			if (v3) {
 				nfsm_clget;
-				*tl = 0;
+				*tl = txdr_unsigned(dp->d_fileno >> 32);
 				bp += NFSX_UNSIGNED;
 			}
 			nfsm_clget;
@@ -2861,7 +2866,7 @@ nfsrv_readdirplus(nfsd, slp, lwp, mrq)
 	siz = fxdr_unsigned(int, *tl++);
 	cnt = fxdr_unsigned(int, *tl);
 	off = toff;
-	siz = ((siz + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	siz = ((siz + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
@@ -3055,7 +3060,7 @@ again:
 			*tl = nfs_true;
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
-			*tl = 0;
+			*tl = txdr_unsigned(dp->d_fileno >> 32);
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
 			*tl = txdr_unsigned(dp->d_fileno);

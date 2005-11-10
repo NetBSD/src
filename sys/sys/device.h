@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.8 2005/03/04 16:54:22 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.9 2005/11/10 14:12:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -172,6 +172,29 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
 
 /*
+ * Description of a locator, as part of interface attribute definitions.
+ */
+struct cflocdesc {
+	const char *cld_name;
+	const char *cld_defaultstr; /* NULL if no default */
+	int cld_default;
+};
+
+/*
+ * Description of an interface attribute, provided by potential
+ * parent device drivers, referred to by child device configuration data.
+ */
+struct cfiattrdata {
+	const char *ci_name;
+	int ci_loclen;
+	const struct cflocdesc ci_locdesc[
+#if defined(__GNUC__) && __GNUC__ <= 2
+		0
+#endif
+	];
+};
+
+/*
  * Description of a configuration parent.  Each device attachment attaches
  * to an "interface attribute", which is given in this structure.  The parent
  * *must* carry this attribute.  Optionally, an individual device instance
@@ -195,7 +218,6 @@ struct cfdata {
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	const struct cfparent *cf_pspec;/* parent specification */
-	const char * const *cf_locnames;/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND		0	/* has not been found */
 #define	FSTATE_FOUND		1	/* has been found */
@@ -213,19 +235,8 @@ struct cftable {
 };
 TAILQ_HEAD(cftablelist, cftable);
 
-typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
-
-/*
- * XXX the "locdesc_t" is unnecessary; the len is known to "config" and
- * should be made available through cfdata->cf_pspec->cfp_iattr.
- * So just an "int *" should do it.
- */
-typedef struct {
-	int len;
-	int locs[1];
-} locdesc_t;
-typedef int (*cfmatch_loc_t)(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
+typedef int (*cfsubmatch_t)(struct device *, struct cfdata *,
+			    const int *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -246,7 +257,7 @@ struct cfattach {
 	const char *ca_name;		/* name of attachment */
 	LIST_ENTRY(cfattach) ca_list;	/* link on cfdriver's list */
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
-	cfmatch_t ca_match;		/* returns a match level */
+	int	(*ca_match)(struct device *, struct cfdata *, void *);
 	void	(*ca_attach)(struct device *, struct device *, void *);
 	int	(*ca_detach)(struct device *, int);
 	int	(*ca_activate)(struct device *, enum devact);
@@ -280,7 +291,7 @@ struct cfdriver {
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
-	const char * const *cd_attrs;	/* attributes for this device */
+	const struct cfiattrdata * const *cd_attrs; /* attributes provided */
 };
 LIST_HEAD(cfdriverlist, cfdriver);
 
@@ -356,24 +367,24 @@ int	config_cfdata_detach(struct cfdata *);
 
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
+const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 
-struct cfdata *config_search(cfmatch_t, struct device *, void *);
-struct cfdata *config_search_loc(cfmatch_loc_t, struct device *,
-				 const char *, const locdesc_t *, void *);
+int config_stdsubmatch(struct device *, struct cfdata *, const int *, void *);
+struct cfdata *config_search_loc(cfsubmatch_t, struct device *,
+				 const char *, const int *, void *);
 #define config_search_ia(sm, d, ia, a) \
 	config_search_loc((sm), (d), (ia), NULL, (a))
-struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
-struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
+struct cfdata *config_rootsearch(cfsubmatch_t, const char *, void *);
 struct device *config_found_sm_loc(struct device *,
-				   const char *, const locdesc_t *, void *,
-				   cfprint_t, cfmatch_loc_t);
+				   const char *, const int *, void *,
+				   cfprint_t, cfsubmatch_t);
 #define config_found_ia(d, ia, a, p) \
 	config_found_sm_loc((d), (ia), NULL, (a), (p), NULL)
 #define config_found(d, a, p) \
 	config_found_sm_loc((d), NULL, NULL, (a), (p), NULL)
 struct device *config_rootfound(const char *, void *);
 struct device *config_attach_loc(struct device *, struct cfdata *,
-    const locdesc_t *, void *, cfprint_t);
+    const int *, void *, cfprint_t);
 #define config_attach(p, cf, aux, pr) \
 	config_attach_loc((p), (cf), 0, (aux), (pr))
 int config_match(struct device *, struct cfdata *, void *);
@@ -401,9 +412,6 @@ void	evcnt_attach_static(struct evcnt *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);
 void	evcnt_detach(struct evcnt *);
-
-/* compatibility definitions */
-struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\

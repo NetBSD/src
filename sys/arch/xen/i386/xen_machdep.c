@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.2.5 2005/04/01 14:28:58 skrll Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.2.6 2005/11/10 14:00:21 skrll Exp $	*/
 
 /*
  *
@@ -33,13 +33,15 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.2.5 2005/04/01 14:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.2.6 2005/11/10 14:00:21 skrll Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/boot_flag.h>
 #include <sys/mount.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm.h>
 
@@ -60,7 +62,6 @@ static char XBUF[256];
 #define	XENPRINTK(x)
 #define	XENPRINTK2(x)
 #endif
-void printk(char *, ...);
 #define	PRINTF(x) printf x
 #define	PRINTK(x) printk x
 
@@ -94,6 +95,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 {
 	vaddr_t va;
 	pt_entry_t *ptp, *maptp;
+	int s;
 
 	for (va = base; va < base + entries * sizeof(union descriptor);
 	     va += PAGE_SIZE) {
@@ -104,10 +106,12 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 			      entries, ptp, maptp));
 		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
+	s = splvm();
 	PTE_UPDATES_FLUSH();
 
 	xpq_queue_set_ldt(base, entries);
 	xpq_flush_queue();
+	splx(s);
 }
 
 void
@@ -123,7 +127,6 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 	char _cmd_line[128], *cmd_line, *opt, *s;
 	int b, i, ipidx = 0;
 	uint32_t xi_ip[5];
-
 
 	cmd_line = strncpy(_cmd_line, xen_start_info.cmd_line, 128);
 	cmd_line[127] = '\0';
@@ -214,6 +217,15 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 				    sizeof(xcp->xcp_console));
 			break;
 
+		case XEN_PARSE_BOOTFLAGS:
+			if (*opt == '-') {
+				opt++;
+				while(*opt != '\0') {
+					BOOT_FLAG(*opt, boothowto);
+					opt++;
+				}
+			}
+			break;
 		}
 
 		if (cmd_line)
@@ -342,7 +354,7 @@ xpmap_init(void)
 	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
 		/* mark PTE page read-only in our table */
 		sysptp[((xen_start_info.pt_base +
-			    (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+			    (i << PAGE_SHIFT) - KERNBASE) & 
 			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
 	}
 
@@ -357,7 +369,7 @@ xpmap_init(void)
 			      (unsigned long)ptp - KERNTEXTOFF, *ptp));
 
 		/* mark PTE page read-only in our table */
-		sysptp[((PDPpaddr + (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+		sysptp[((PDPpaddr + (i << PAGE_SHIFT) - KERNBASE) & 
 			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
 
 		/* update our pte's */
@@ -430,7 +442,7 @@ xpmap_init(void)
 	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
 		/* mark PTE page writable in our table */
 		ptp = &sysptp[((xen_start_info.pt_base +
-				   (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+				   (i << PAGE_SHIFT) - KERNBASE) & 
 				  (PD_MASK | PT_MASK)) >> PAGE_SHIFT];
 		xpq_queue_pte_update(
 		    (void *)xpmap_ptom((unsigned long)ptp - KERNBASE), *ptp |
@@ -564,6 +576,15 @@ xpq_increment_idx(void)
 }
 
 void
+xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
+{
+	XENPRINTK2(("xpq_queue_machphys_update ma=%p pa=%p\n", (void *)ma, (void *)pa));
+	xpq_queue[xpq_idx].pa.ptr = ma | MMU_MACHPHYS_UPDATE;
+	xpq_queue[xpq_idx].pa.val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+	xpq_increment_idx();
+}
+
+void
 xpq_queue_invlpg(vaddr_t va)
 {
 
@@ -592,7 +613,7 @@ xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
 }
 
 int
-xpq_update_foreing(pt_entry_t *ptr, pt_entry_t val, int dom)
+xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
 {
 	xpq_queue_t xpq_up[3];
 
@@ -684,12 +705,14 @@ xpq_queue_tlb_flush()
 void
 xpq_flush_cache()
 {
+	int s = splvm();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
 	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
 	xpq_queue[xpq_idx].pa.val = MMUEXT_FLUSH_CACHE;
 	xpq_increment_idx();
 	xpq_flush_queue();
+	splx(s);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.2.2.3 2004/09/21 13:38:49 skrll Exp $	*/
+/*	$NetBSD: sa.h,v 1.2.2.4 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct sa_t {
 
 /* kernel known per upcall stack data */
 struct sa_stackinfo_t {
-	__volatile unsigned int sasi_stackgen; /* stack generation counter */
+	unsigned int sasi_stackgen; /* stack generation counter */
 };
 
 typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);

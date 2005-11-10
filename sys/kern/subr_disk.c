@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.52.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.52.2.10 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.52.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.52.2.10 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.52.2.9 2005/04/01 14:30:56 skrll Exp
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/bufq.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -96,10 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.52.2.9 2005/04/01 14:30:56 skrll Exp
 struct	disklist_head disklist = TAILQ_HEAD_INITIALIZER(disklist);
 int	disk_count;		/* number of drives in global disklist */
 struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
-
-int bufq_disk_default_strat = _BUFQ_DEFAULT;
-
-BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
 /*
  * Compute checksum for disk label.
@@ -200,11 +195,21 @@ disk_find(char *name)
 	return (NULL);
 }
 
-/*
- * Attach a disk.
- */
-void
-disk_attach(struct disk *diskp)
+static void
+disk_init0(struct disk *diskp)
+{
+
+	/*
+	 * Initialize the wedge-related locks and other fields.
+	 */
+	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
+	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	LIST_INIT(&diskp->dk_wedges);
+	diskp->dk_nwedges = 0;
+}
+
+static void
+disk_attach0(struct disk *diskp)
 {
 	int s;
 
@@ -223,14 +228,6 @@ disk_attach(struct disk *diskp)
 	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
-	 * Initialize the wedge-related locks and other fields.
-	 */
-	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
-	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
-	LIST_INIT(&diskp->dk_wedges);
-	diskp->dk_nwedges = 0;
-
-	/*
 	 * Set the attached timestamp.
 	 */
 	s = splclock();
@@ -246,14 +243,9 @@ disk_attach(struct disk *diskp)
 	simple_unlock(&disklist_slock);
 }
 
-/*
- * Detach a disk.
- */
-void
-disk_detach(struct disk *diskp)
+static void
+disk_detach0(struct disk *diskp)
 {
-
-	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
 
 	/*
 	 * Remove from the disklist.
@@ -271,6 +263,59 @@ disk_detach(struct disk *diskp)
 	free(diskp->dk_label, M_DEVBUF);
 	free(diskp->dk_cpulabel, M_DEVBUF);
 }
+
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+	disk_attach0(diskp);
+}
+
+/*
+ * Detach a disk.
+ */
+void
+disk_detach(struct disk *diskp)
+{
+
+	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
+	disk_detach0(diskp);
+}
+
+/*
+ * Initialize a pseudo disk.
+ */
+void
+pseudo_disk_init(struct disk *diskp)
+{
+
+	disk_init0(diskp);
+}
+
+/*
+ * Attach a pseudo disk.
+ */
+void
+pseudo_disk_attach(struct disk *diskp)
+{
+
+	disk_attach0(diskp);
+}
+
+/*
+ * Detach a pseudo disk.
+ */
+void
+pseudo_disk_detach(struct disk *diskp)
+{
+
+	disk_detach0(diskp);
+}
+
 
 /*
  * Increment a disk's busy counter.  If the counter is going from
@@ -354,7 +399,7 @@ disk_resetstat(struct disk *diskp)
 int
 sysctl_hw_disknames(SYSCTLFN_ARGS)
 {
-	char buf[DK_DISKNAMELEN + 1];
+	char bf[DK_DISKNAMELEN + 1];
 	char *where = oldp;
 	struct disk *diskp;
 	size_t needed, left, slen;
@@ -376,21 +421,21 @@ sysctl_hw_disknames(SYSCTLFN_ARGS)
 		if (where == NULL)
 			needed += strlen(diskp->dk_name) + 1;
 		else {
-			memset(buf, 0, sizeof(buf));
+			memset(bf, 0, sizeof(bf));
 			if (first) {
-				strncpy(buf, diskp->dk_name, sizeof(buf));
+				strncpy(bf, diskp->dk_name, sizeof(bf));
 				first = 0;
 			} else {
-				buf[0] = ' ';
-				strncpy(buf + 1, diskp->dk_name,
-				    sizeof(buf) - 1);
+				bf[0] = ' ';
+				strncpy(bf + 1, diskp->dk_name,
+				    sizeof(bf) - 1);
 			}
-			buf[DK_DISKNAMELEN] = '\0';
-			slen = strlen(buf);
+			bf[DK_DISKNAMELEN] = '\0';
+			slen = strlen(bf);
 			if (left < slen + 1)
 				break;
 			/* +1 to copy out the trailing NUL byte */
-			error = copyout(buf, where, slen + 1);
+			error = copyout(bf, where, slen + 1);
 			if (error)
 				break;
 			where += slen;
@@ -470,93 +515,6 @@ sysctl_hw_diskstats(SYSCTLFN_ARGS)
 	}
 	simple_unlock(&disklist_slock);
 	return (error);
-}
-
-/*
- * Create a device buffer queue.
- */
-void
-bufq_alloc(struct bufq_state *bufq, int flags)
-{
-	__link_set_decl(bufq_strats, const struct bufq_strat);
-	int methodid;
-	const struct bufq_strat *bsp;
-	const struct bufq_strat * const *it;
-
-	bufq->bq_flags = flags;
-	methodid = flags & BUFQ_METHOD_MASK;
-
-	switch (flags & BUFQ_SORT_MASK) {
-	case BUFQ_SORT_RAWBLOCK:
-	case BUFQ_SORT_CYLINDER:
-		break;
-	case 0:
-		if (methodid == BUFQ_FCFS)
-			break;
-		/* FALLTHROUGH */
-	default:
-		panic("bufq_alloc: sort out of range");
-	}
-
-	/*
-	 * select strategy.
-	 * if a strategy specified by flags is found, use it.
-	 * otherwise, select one with the largest id number. XXX
-	 */
-	bsp = NULL;
-	__link_set_foreach(it, bufq_strats) {
-		if ((*it) == &bufq_strat_dummy)
-			continue;
-		if (methodid == (*it)->bs_id) {
-			bsp = *it;
-			break;
-		}
-		if (bsp == NULL || (*it)->bs_id > bsp->bs_id)
-			bsp = *it;
-	}
-
-	KASSERT(bsp != NULL);
-#ifdef DEBUG
-	if (bsp->bs_id != methodid && methodid != _BUFQ_DEFAULT)
-		printf("bufq_alloc: method 0x%04x is not available.\n",
-		    methodid);
-#endif
-#ifdef BUFQ_DEBUG
-	/* XXX aprint? */
-	printf("bufq_alloc: using %s\n", bsp->bs_name);
-#endif
-	(*bsp->bs_initfn)(bufq);
-}
-
-/*
- * Drain a device buffer queue.
- */
-void
-bufq_drain(struct bufq_state *bufq)
-{
-	struct buf *bp;
-
-	while ((bp = BUFQ_GET(bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
-}
-
-/*
- * Destroy a device buffer queue.
- */
-void
-bufq_free(struct bufq_state *bufq)
-{
-
-	KASSERT(bufq->bq_private != NULL);
-	KASSERT(BUFQ_PEEK(bufq) == NULL);
-
-	FREE(bufq->bq_private, M_DEVBUF);
-	bufq->bq_get = NULL;
-	bufq->bq_put = NULL;
 }
 
 /*

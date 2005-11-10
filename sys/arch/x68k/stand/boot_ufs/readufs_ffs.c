@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.3.2.3 2004/09/21 13:24:20 skrll Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.3.2.4 2005/11/10 14:00:15 skrll Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -15,7 +15,7 @@
 
 #include <ufs/ffs/fs.h>
 
-static int get_ffs_inode __P((ino_t ino, union ufs_dinode *dibuf));
+static int get_ffs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
 
 #define fsi	(*ufsinfo)
 #define fsi_ffs	fsi.fs_u.u_ffs
@@ -123,7 +123,7 @@ try_ffs()
  */
 static int
 get_ffs_inode(ino, dibuf)
-	ino_t ino;
+	ino32_t ino;
 	union ufs_dinode *dibuf;
 {
 	struct ufs_info *ufsinfo = &ufs_info;

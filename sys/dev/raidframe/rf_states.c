@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.20.6.6 2005/03/04 16:50:08 skrll Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.20.6.7 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.20.6.6 2005/03/04 16:50:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.20.6.7 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/errno.h>
 
@@ -235,8 +235,7 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	((RF_Raid_t *) desc->raidPtr)->openings++;
 	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 
-	/* wake up any pending IO */
-	raidstart(((RF_Raid_t *) desc->raidPtr));
+	wakeup(&(desc->raidPtr->iodone));
 
 	/* printf("Calling biodone on 0x%x\n",desc->bp); */
 	biodone(desc->bp);	/* access came through ioctl */

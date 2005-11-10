@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.23.2.5 2005/04/01 14:30:57 skrll Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.23.2.6 2005/11/10 14:09:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23.2.5 2005/04/01 14:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23.2.6 2005/11/10 14:09:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -128,20 +128,13 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
  */
 typedef int (*PFI)(void *);
 
-static void vfs_opv_init_explicit(const struct vnodeopv_desc *);
-static void vfs_opv_init_default(const struct vnodeopv_desc *);
-#ifdef DEBUG
-static void vfs_op_check(void);
-#endif
-
 /*
  * A miscellaneous routine.
  * A generic "default" routine that just returns an error.
  */
 /*ARGSUSED*/
 int
-vn_default_error(v)
-	void *v;
+vn_default_error(void *v)
 {
 
 	return (EOPNOTSUPP);
@@ -169,8 +162,7 @@ vn_default_error(v)
  * Also handle backwards compatibility.
  */
 static void
-vfs_opv_init_explicit(vfs_opv_desc)
-	const struct vnodeopv_desc *vfs_opv_desc;
+vfs_opv_init_explicit(const struct vnodeopv_desc *vfs_opv_desc)
 {
 	int (**opv_desc_vector)(void *);
 	const struct vnodeopv_entry_desc *opve_descp;
@@ -213,8 +205,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 }
 
 static void
-vfs_opv_init_default(vfs_opv_desc)
-	const struct vnodeopv_desc *vfs_opv_desc;
+vfs_opv_init_default(const struct vnodeopv_desc *vfs_opv_desc)
 {
 	int j;
 	int (**opv_desc_vector)(void *);
@@ -234,8 +225,7 @@ vfs_opv_init_default(vfs_opv_desc)
 }
 
 void
-vfs_opv_init(vopvdpp)
-	const struct vnodeopv_desc * const *vopvdpp;
+vfs_opv_init(const struct vnodeopv_desc * const *vopvdpp)
 {
 	int (**opv_desc_vector)(void *);
 	int i;
@@ -268,8 +258,7 @@ vfs_opv_init(vopvdpp)
 }
 
 void
-vfs_opv_free(vopvdpp)
-	const struct vnodeopv_desc * const *vopvdpp;
+vfs_opv_free(const struct vnodeopv_desc * const *vopvdpp)
 {
 	int i;
 
@@ -285,7 +274,7 @@ vfs_opv_free(vopvdpp)
 
 #ifdef DEBUG
 static void
-vfs_op_check()
+vfs_op_check(void)
 {
 	int i;
 
@@ -317,7 +306,7 @@ struct vattr va_null;
  * Initialize the vnode structures and initialize each file system type.
  */
 void
-vfsinit()
+vfsinit(void)
 {
 	__link_set_decl(vfsops, struct vfsops);
 	struct vfsops * const *vfsp;

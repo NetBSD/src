@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.14.6.4 2005/04/01 14:29:36 skrll Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.14.6.5 2005/11/10 14:01:31 skrll Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.14.6.4 2005/04/01 14:29:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.14.6.5 2005/11/10 14:01:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -45,13 +45,18 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.14.6.4 2005/04/01 14:29:36 skrll 
 #include <compat/sunos32/sunos32_syscall.h>
 #include <compat/sunos32/sunos32_exec.h>
 
+#include <machine/sunos_machdep.h>
+
 extern int nsunos32_sysent;
 extern struct sysent sunos32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const sunos32_syscallnames[];
 #endif
 extern char sunos_sigcode[], sunos_esigcode[];
-void syscall __P((void));
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
+#endif
 
 struct uvm_object *emul_sunos32_object;
 
@@ -82,7 +87,11 @@ const struct emul emul_sunos = {
 	NULL,
 	NULL,
 	NULL,
+#ifdef __HAVE_SYSCALL_INTERN
+	sunos_syscall_intern,
+#else
 	syscall,
+#endif
 	NULL,
 	NULL,
 	uvm_default_mapaddr,

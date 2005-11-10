@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.19.2.6 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.19.2.7 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.6 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.7 2005/11/10 14:06:01 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -318,7 +318,6 @@ struct pcn_softc {
 
 	uint32_t sc_csr5;		/* prototype CSR5 register */
 	uint32_t sc_mode;		/* prototype MODE register */
-	int sc_phyaddr;			/* PHY address */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
@@ -2093,12 +2092,13 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 	/*
 	 * The built-in 10BASE-T interface is mapped to the MII
 	 * on the PCNet-FAST.  Unfortunately, there's no EEPROM
-	 * word that tells us which PHY to use.  Since the 10BASE-T
-	 * interface is always at PHY 31, we make a note of the
-	 * first PHY that responds, and disallow any PHYs after
-	 * it.  This is all handled in the MII read routine.
+	 * word that tells us which PHY to use. 
+	 * This driver used to ignore all but the first PHY to 
+	 * answer, but this code was removed to support multiple 
+	 * external PHYs. As the default instance will be the first
+	 * one to answer, no harm is done by letting the possibly
+	 * non-connected internal PHY show up.
 	 */
-	sc->sc_phyaddr = -1;
 
 	/* Initialize our media structures and probe the MII. */
 	sc->sc_mii.mii_ifp = ifp;
@@ -2158,16 +2158,10 @@ pcn_mii_readreg(struct device *self, int phy, int reg)
 	struct pcn_softc *sc = (void *) self;
 	uint32_t rv;
 
-	if (sc->sc_phyaddr != -1 && phy != sc->sc_phyaddr)
-		return (0);
-
 	pcn_bcr_write(sc, LE_BCR33, reg | (phy << PHYAD_SHIFT));
 	rv = pcn_bcr_read(sc, LE_BCR34) & LE_B34_MIIMD;
 	if (rv == 0xffff)
 		return (0);
-
-	if (sc->sc_phyaddr == -1)
-		sc->sc_phyaddr = phy;
 
 	return (rv);
 }

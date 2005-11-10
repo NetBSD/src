@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.6.4.5 2005/04/01 14:29:52 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.6.4.6 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -493,7 +493,7 @@ re_diag(struct rtk_softc *sc)
 	    dmamap, 0, dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	dmamap = sc->rtk_ldata.rtk_rx_dmamap[0];
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat,
 	    sc->rtk_ldata.rtk_rx_dmamap[0]);
 
@@ -749,8 +749,15 @@ re_attach(struct rtk_softc *sc)
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 	ifp->if_start = re_start;
 	ifp->if_stop = re_stop;
+
+	/*
+	 * IFCAP_CSUM_IPv4_Tx seems broken for small packets.
+	 */
+
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    /* IFCAP_CSUM_IPv4_Tx | */ IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
@@ -1030,7 +1037,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	m_adj(m, RTK_ETHER_ALIGN);
 
 	map = sc->rtk_ldata.rtk_rx_dmamap[idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 
 	if (error)
 		goto out;
@@ -1146,7 +1154,7 @@ re_rxeof(struct rtk_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat,
 		    sc->rtk_ldata.rtk_rx_dmamap[i],
 		    0, sc->rtk_ldata.rtk_rx_dmamap[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat,
 		    sc->rtk_ldata.rtk_rx_dmamap[i]);
 
@@ -1245,7 +1253,7 @@ re_rxeof(struct rtk_softc *sc)
 
 		/* Do RX checksumming if enabled */
 
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 
 			/* Check IP header checksum */
 			if (rxstat & RTK_RDESC_STAT_PROTOID)
@@ -1256,13 +1264,13 @@ re_rxeof(struct rtk_softc *sc)
 
 		/* Check TCP/UDP checksum */
 		if (RTK_TCPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_TCPv4)) {
+		    (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
 			if (rxstat & RTK_RDESC_STAT_TCPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 		if (RTK_UDPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_UDPv4)) {
+		    (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
 			if (rxstat & RTK_RDESC_STAT_UDPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
@@ -1553,7 +1561,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 
 	txq = &sc->rtk_ldata.rtk_txq[*idx];
 	map = txq->txq_dmamap;
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
 	if (error) {
 		/* XXX try to defrag if EFBIG? */
@@ -1568,6 +1577,14 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		error = EFBIG;
 		goto fail_unload;
 	}
+
+	/*
+	 * Make sure that the caches are synchronized before we
+	 * ask the chip to start DMA for the packet data.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		BUS_DMASYNC_PREWRITE);
+
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
@@ -1781,7 +1798,8 @@ re_init(struct ifnet *ifp)
 	if (1)  {/* not for 8169S ? */
 		reg |= RTK_CPLUSCMD_VLANSTRIP |
 		    (ifp->if_capenable &
-		    (IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4) ?
+		    (IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx |
+		     IFCAP_CSUM_UDPv4_Rx) ?
 		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
 	}
 

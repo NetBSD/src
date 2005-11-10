@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.83.2.9 2005/04/01 14:30:57 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.83.2.10 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.9 2005/04/01 14:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.10 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -132,7 +132,7 @@ soinit(void)
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
-		panic("bad initial sb_max value: %lu\n", sb_max);
+		panic("bad initial sb_max value: %lu", sb_max);
 
 }
 
@@ -482,9 +482,9 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (p != 0)
-		so->so_uid = p->p_ucred->cr_uid;
+		so->so_uidinfo = uid_find(p->p_ucred->cr_uid);
 	else
-		so->so_uid = UID_MAX;
+		so->so_uidinfo = uid_find(0);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, l);
 	if (error) {
@@ -547,10 +547,10 @@ sofree(struct socket *so)
 			return;
 	}
 	if (so->so_rcv.sb_hiwat)
-		(void)chgsbsize(so->so_uid, &so->so_rcv.sb_hiwat, 0,
+		(void)chgsbsize(so->so_uidinfo, &so->so_rcv.sb_hiwat, 0,
 		    RLIM_INFINITY);
 	if (so->so_snd.sb_hiwat)
-		(void)chgsbsize(so->so_uid, &so->so_snd.sb_hiwat, 0,
+		(void)chgsbsize(so->so_uidinfo, &so->so_snd.sb_hiwat, 0,
 		    RLIM_INFINITY);
 	sbrelease(&so->so_snd, so);
 	sorflush(so);
@@ -1407,6 +1407,11 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_LINGER:
 			if (m == NULL || m->m_len != sizeof(struct linger)) {
 				error = EINVAL;
+				goto bad;
+			}
+			if (mtod(m, struct linger *)->l_linger < 0 ||
+			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+				error = EDOM;
 				goto bad;
 			}
 			so->so_linger = mtod(m, struct linger *)->l_linger;

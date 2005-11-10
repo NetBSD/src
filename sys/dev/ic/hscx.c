@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.9.6.1 2005/03/04 16:41:28 skrll Exp $
+ *	$Id: hscx.c,v 1.9.6.2 2005/11/10 14:04:14 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.9.6.1 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.9.6.2 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -344,7 +344,6 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 		 * a look at isic_bchannel_start() in i4b_bchan.c !
 		 */
 
-		int activity = -1;
 		int len;
 		int nextlen;
 

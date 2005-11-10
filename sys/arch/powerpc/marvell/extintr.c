@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10.2.3 2004/09/21 13:20:42 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10.2.4 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10.2.3 2004/09/21 13:20:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10.2.4 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -499,13 +499,11 @@ intr_calculatemasks(void)
 	 * if the IRQ is shared, level cannot vary
 	 */
 	for (irq = 0, is = intr_sources; irq < NIRQ; irq++, is++) {
-		const int level = is->is_level;
-
 		for (q = is->is_hand; q; q = q->ih_next)
-			if (q->ih_level != level)
+			if (q->ih_level != is->is_level)
 				panic("intr_calculatemasks: irq %d "
 					"conflicting levels %d, %d\n",
-						irq, q->ih_level, level);
+						irq, q->ih_level, is->is_level);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.10.2.3 2004/09/21 13:24:56 skrll Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.10.2.4 2005/11/10 14:00:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.2.3 2004/09/21 13:24:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.2.4 2005/11/10 14:00:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.2.3 2004/09/21 13:24:56 skrll
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
 
 #include <compat/aoutm68k/aoutm68k_util.h>
 #include <compat/aoutm68k/aoutm68k_stat.h>
@@ -249,7 +251,7 @@ aoutm68k_sys___stat13(l, v, retval)
 	struct aoutm68k_sys___stat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___stat13_args cup;
+	struct sys___stat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -260,7 +262,7 @@ aoutm68k_sys___stat13(l, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___stat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -278,7 +280,7 @@ aoutm68k_sys___fstat13(l, v, retval)
 	struct aoutm68k_sys___fstat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___fstat13_args cup;
+	struct sys___fstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -286,7 +288,7 @@ aoutm68k_sys___fstat13(l, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys___fstat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___fstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -305,7 +307,7 @@ aoutm68k_sys___lstat13(l, v, retval)
 	struct aoutm68k_sys___lstat13_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys___lstat13_args cup;
+	struct sys___lstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -316,7 +318,7 @@ aoutm68k_sys___lstat13(l, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0 ||
+	if ((error = sys___lstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 

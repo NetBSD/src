@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.8.2.3 2004/09/21 13:36:56 skrll Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.8.2.4 2005/11/10 14:11:07 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.8.2.3 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.8.2.4 2005/11/10 14:11:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,6 @@ ddp_input(m, ifp, elh, phase)
 #define BPXLEN	48
 #define BPALEN	16
 #include <ctype.h>
-char            hexdig[] = "0123456789ABCDEF";
 
 static void
 bprint(data, len)
@@ -364,8 +363,8 @@ bprint(data, len)
 			printf("%s\n", "(end)");
 			break;
 		}
-		xout[(i * 3)] = hexdig[(*data & 0xf0) >> 4];
-		xout[(i * 3) + 1] = hexdig[*data & 0x0f];
+		xout[(i * 3)] = hexdigits[(*data & 0xf0) >> 4];
+		xout[(i * 3) + 1] = hexdigits[*data & 0x0f];
 
 		if ((u_char) * data < 0x7f && (u_char) * data > 0x20) {
 			aout[i] = *data;

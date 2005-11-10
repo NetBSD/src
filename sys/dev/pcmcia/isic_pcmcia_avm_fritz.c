@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.5.10.5 2005/03/04 16:49:38 skrll Exp $
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.5.10.6 2005/11/10 14:07:24 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.5 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.6 2005/11/10 14:07:24 skrll Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -188,7 +188,7 @@ avma1_pcmcia_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
 	bus_space_write_1(t, h, ADDR_REG_OFFSET, what_map[what]);
-	bus_space_write_multi_1(t, h, DATA_REG_OFFSET, (u_int8_t*)buf, size);
+	bus_space_write_multi_1(t, h, DATA_REG_OFFSET, buf, size);
 }
 #endif
 

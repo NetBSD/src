@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.2.4 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.2.5 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.4 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.5 2005/11/10 13:58:50 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -158,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.4 2004/09/21 13:21:38 skrll Exp $
 
 #include <uvm/uvm_extern.h>
 
-void	syscall_intern(struct proc *);
 static void syscall_plain(struct lwp *, struct trapframe *);
 static void syscall_fancy(struct lwp *, struct trapframe *);
 
@@ -349,11 +348,12 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 	args += hidden;
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
 	error = (*callp->sy_call)(l, args, rval);
+out:
 	switch (error) {
 	case 0:
 		tf->tf_caller.r2 = rval[0];

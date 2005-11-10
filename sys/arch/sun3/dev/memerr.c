@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.14.6.4 2005/01/24 08:34:47 skrll Exp $ */
+/*	$NetBSD: memerr.c,v 1.14.6.5 2005/11/10 13:59:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.14.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.14.6.5 2005/11/10 13:59:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ struct memerr_softc {
 	struct device sc_dev;
 	struct memerr *sc_reg;
 	enum memerr_type sc_type;
-	char *sc_typename;	/* "Parity" or "ECC" */
-	char *sc_csrbits;	/* how to print csr bits */
+	const char *sc_typename;	/* "Parity" or "ECC" */
+	const char *sc_csrbits;		/* how to print csr bits */
 	/* XXX: counters? */
 };
 
@@ -112,9 +112,9 @@ memerr_attach(struct device *parent, struct device *self, void *args)
 	 * Which type of memory subsystem do we have?
 	 */
 	switch (cpu_machine_id) {
-	case SUN3_MACH_160:		/* XXX: correct? */
-	case SUN3_MACH_260:
-	case SUN3X_MACH_470:
+	case ID_SUN3_160:		/* XXX: correct? */
+	case ID_SUN3_260:
+	case ID_SUN3X_470:
 		sc->sc_type = ME_ECC;
 		sc->sc_typename = "ECC";
 		sc->sc_csrbits = ME_ECC_STR;

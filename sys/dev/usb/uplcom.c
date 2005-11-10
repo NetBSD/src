@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.29.6.4 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.29.6.5 2005/11/10 14:08:06 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.29.6.4 2004/11/02 07:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.29.6.5 2005/11/10 14:08:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,18 +80,15 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SECOND_IFACE_INDEX	1
 
 #define	UPLCOM_SET_REQUEST	0x01
-#define	UPLCOM_SET_CRTSCTS	0x41
+#define	UPLCOM_SET_CRTSCTS_0	0x41
+#define	UPLCOM_SET_CRTSCTS_HX	0x61
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
 
-#define	UPLCOM_FLOW_OUT_CTS	0x0001
-#define	UPLCOM_FLOW_OUT_DSR	0x0002
-#define	UPLCOM_FLOW_IN_DSR	0x0004
-#define	UPLCOM_FLOW_IN_DTR	0x0008
-#define	UPLCOM_FLOW_IN_RTS	0x0010
-#define	UPLCOM_FLOW_OUT_RTS	0x0020
-#define	UPLCOM_FLOW_OUT_XON	0x0080
-#define	UPLCOM_FLOW_IN_XON	0x0100
+enum  pl2303_type {
+	UPLCOM_TYPE_0,
+	UPLCOM_TYPE_HX,
+};
 
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -115,6 +112,8 @@ struct	uplcom_softc {
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* uplcom status register */
+
+	enum pl2303_type	sc_type;	/* PL2303 chip type */
 };
 
 /*
@@ -142,6 +141,7 @@ Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr );
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
 Static	void uplcom_close(void *, int);
+Static usbd_status uplcom_vendor_control_write(usbd_device_handle, u_int16_t, u_int16_t);
 
 struct	ucom_methods uplcom_methods = {
 	uplcom_get_status,
@@ -167,6 +167,10 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
+	/* ELECOM UC-SGT0 */
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
+	/* Panasonic 50" Touch Panel */
+	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
 	/* RATOC REX-USB60 */
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
 	/* TDK USB-PHS Adapter UHA6400 */
@@ -206,19 +210,20 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+	usb_device_descriptor_t *ddesc;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 
@@ -237,6 +242,28 @@ USB_ATTACH(uplcom)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	/* get the device descriptor */
+	ddesc = usbd_get_device_descriptor(sc->sc_udev);
+	if (ddesc == NULL) {
+		printf("%s: failed to get device descriptor\n",
+		    USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
+	
+	/*
+	 * NOTE: The Linux driver distinguishes between UPLCOM_TYPE_0
+	 * and UPLCOM_TYPE_1 type chips by testing other fields in the
+	 * device descriptor.  As far as the uplcom driver is
+	 * concerned, both types are identical.
+	 * The bcdDevice field should also distinguish these versions,
+	 * but who knows.
+	 */
+	if (UGETW(ddesc->bcdDevice) == 0x0300)
+		sc->sc_type = UPLCOM_TYPE_HX;
+	else
+		sc->sc_type = UPLCOM_TYPE_0;
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
@@ -458,8 +485,8 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	if (sc->sc_rts == -1)
 		sc->sc_rts = 0;
 
-	ls = (sc->sc_dtr ? UPLCOM_FLOW_OUT_DSR : 0) |
-		(sc->sc_rts ? UPLCOM_FLOW_OUT_CTS : 0);
+	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
+		(sc->sc_rts ? UCDC_LINE_RTS : 0);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
@@ -468,7 +495,6 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	USETW(req.wLength, 0);
 
 	(void)usbd_do_request(sc->sc_udev, &req, 0);
-
 }
 
 void
@@ -545,7 +571,10 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = UPLCOM_SET_REQUEST;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, UPLCOM_SET_CRTSCTS);
+	if (sc->sc_type == UPLCOM_TYPE_HX)
+		USETW(req.wIndex, UPLCOM_SET_CRTSCTS_HX);
+	else
+		USETW(req.wIndex, UPLCOM_SET_CRTSCTS_0);
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
@@ -647,17 +676,45 @@ uplcom_param(void *addr, int portno, struct termios *t)
 	return (0);
 }
 
+Static usbd_status
+uplcom_vendor_control_write(usbd_device_handle dev, u_int16_t value, u_int16_t index)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = UPLCOM_SET_REQUEST;
+	USETW(req.wValue, value);
+	USETW(req.wIndex, index);
+	USETW(req.wLength, 0);
+
+	err = usbd_do_request(dev, &req, NULL);
+
+	if (err) {
+		DPRINTF(("uplcom_open: vendor write failed, err=%s (%d)\n",
+			    usbd_errstr(err), err));
+	}
+
+	return err;
+}
+
 int
 uplcom_open(void *addr, int portno)
 {
 	struct uplcom_softc *sc = addr;
-	int err;
+	usbd_status err;
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	DPRINTF(("uplcom_open: sc=%p\n", sc));
 
+	/* Some unknown device frobbing. */
+	if (sc->sc_type == UPLCOM_TYPE_HX)
+		uplcom_vendor_control_write(sc->sc_udev, 2, 0x44);
+	else
+		uplcom_vendor_control_write(sc->sc_udev, 2, 0x24);
+	
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 		err = usbd_open_pipe_intr(sc->sc_intr_iface, sc->sc_intr_number,

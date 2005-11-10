@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.56.2.8 2005/03/04 16:52:55 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.56.2.9 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.8 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.9 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.8 2005/03/04 16:52:55 skrll E
 
 #include <miscfs/procfs/procfs.h>
 
-void procfs_hashins __P((struct pfsnode *));
-void procfs_hashrem __P((struct pfsnode *));
-struct vnode *procfs_hashget __P((pid_t, pfstype, int, struct mount *, struct lwp *));
+void procfs_hashins(struct pfsnode *);
+void procfs_hashrem(struct pfsnode *);
+struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *);
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
@@ -140,7 +140,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	int error;
 
 	do {
-		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp, curlwp)) != NULL)
+		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
 			return (0);
 	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
@@ -169,6 +169,8 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 
 	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
 	case PFSself:	/* /proc/self    = lr-xr-xr-x */
+	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
+	case PFSchroot:	/* /proc/N/chroot = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
@@ -379,7 +381,7 @@ procfs_rw(v)
 }
 
 /*
- * Get a string from userland into (buf).  Strip a trailing
+ * Get a string from userland into (bf).  Strip a trailing
  * nl character (to allow easy access from the shell).
  * The buffer should be *buflenp + 1 chars long.  vfs_getuserstr
  * will automatically add a nul char at the end.
@@ -391,9 +393,9 @@ procfs_rw(v)
  * EFAULT:    user i/o buffer is not addressable
  */
 int
-vfs_getuserstr(uio, buf, buflenp)
+vfs_getuserstr(uio, bf, buflenp)
 	struct uio *uio;
-	char *buf;
+	char *bf;
 	int *buflenp;
 {
 	int xlen;
@@ -409,31 +411,31 @@ vfs_getuserstr(uio, buf, buflenp)
 		return (EMSGSIZE);
 	xlen = uio->uio_resid;
 
-	if ((error = uiomove(buf, xlen, uio)) != 0)
+	if ((error = uiomove(bf, xlen, uio)) != 0)
 		return (error);
 
 	/* allow multiple writes without seeks */
 	uio->uio_offset = 0;
 
 	/* cleanup string and remove trailing newline */
-	buf[xlen] = '\0';
-	xlen = strlen(buf);
-	if (xlen > 0 && buf[xlen-1] == '\n')
-		buf[--xlen] = '\0';
+	bf[xlen] = '\0';
+	xlen = strlen(bf);
+	if (xlen > 0 && bf[xlen-1] == '\n')
+		bf[--xlen] = '\0';
 	*buflenp = xlen;
 
 	return (0);
 }
 
 const vfs_namemap_t *
-vfs_findname(nm, buf, buflen)
+vfs_findname(nm, bf, buflen)
 	const vfs_namemap_t *nm;
-	const char *buf;
+	const char *bf;
 	int buflen;
 {
 
 	for (; nm->nm_name; nm++)
-		if (memcmp(buf, nm->nm_name, buflen+1) == 0)
+		if (memcmp(bf, nm->nm_name, buflen+1) == 0)
 			return (nm);
 
 	return (0);
@@ -487,12 +489,11 @@ procfs_hashdone()
 }
 
 struct vnode *
-procfs_hashget(pid, type, fd, mp, l)
+procfs_hashget(pid, type, fd, mp)
 	pid_t pid;
 	pfstype type;
 	int fd;
 	struct mount *mp;
-	struct lwp *l;
 {
 	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.66.2.4 2004/09/24 10:53:17 skrll Exp $      */
+/*      $NetBSD: cpu.h,v 1.66.2.5 2005/11/10 13:59:59 skrll Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -183,7 +183,7 @@ struct cpu_mp_softc {
 					ci = SIMPLEQ_NEXT(ci, ci_next)
 
 extern SIMPLEQ_HEAD(cpu_info_qh, cpu_info) cpus;
-extern char tramp;
+extern char vax_mp_tramp;
 #endif
 
 /*

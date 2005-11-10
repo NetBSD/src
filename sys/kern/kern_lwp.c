@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.8.2.5 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.8.2.6 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.5 2005/02/15 21:33:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.6 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,10 +107,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		SCHED_LOCK(s);
 		l2->l_stat = LSRUN;
 		setrunqueue(l2);
-		SCHED_UNLOCK(s);
-		simple_lock(&p->p_lock);
 		p->p_nrlwps++;
-		simple_unlock(&p->p_lock);
+		SCHED_UNLOCK(s);
 	} else {
 		l2->l_stat = LSSUSPENDED;
 	}
@@ -226,10 +224,8 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 			SCHED_LOCK(s);
 			remrunqueue(t);
 			t->l_stat = LSSUSPENDED;
-			SCHED_UNLOCK(s);
-			simple_lock(&p->p_lock);
 			p->p_nrlwps--;
-			simple_unlock(&p->p_lock);
+			SCHED_UNLOCK(s);
 			break;
 		case LSSLEEP:
 			t->l_stat = LSSUSPENDED;
@@ -561,16 +557,25 @@ lwp_exit(struct lwp *l)
 	cpu_lwp_free(l, 0);
 #endif
 
-	simple_lock(&p->p_lock);
-	p->p_nrlwps--;
-	simple_unlock(&p->p_lock);
+	pmap_deactivate(l);
 
+	if (l->l_flag & L_DETACHED) {
+		simple_lock(&p->p_lock);
+		LIST_REMOVE(l, l_sibling);
+		p->p_nlwps--;
+		simple_unlock(&p->p_lock);
+
+		curlwp = NULL;
+		l->l_proc = NULL;
+	}
+
+	SCHED_LOCK(s);
+	p->p_nrlwps--;
 	l->l_stat = LSDEAD;
+	SCHED_UNLOCK(s);
 
 	/* This LWP no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
-
-	pmap_deactivate(l);
 
 	/* cpu_exit() will not return */
 	cpu_exit(l);
@@ -598,13 +603,6 @@ lwp_exit2(struct lwp *l)
 
 	if (l->l_flag & L_DETACHED) {
 		/* Nobody waits for detached LWPs. */
-
-		if ((l->l_flag & L_PROCEXIT) == 0) {
-			LIST_REMOVE(l, l_sibling);
-			p = l->l_proc;
-			p->p_nlwps--;
-		}
-
 		pool_put(&lwp_pool, l);
 		KERNEL_UNLOCK();
 	} else {

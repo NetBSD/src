@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.184.2.7 2005/04/01 14:30:33 skrll Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.184.2.8 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
+ *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -181,6 +181,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Allied Telesis K.K.",
 	    "Allied Telesis LA-PCM",	}
+	,
+	{
+	    PCMCIA_VENDOR_ALVARION, PCMCIA_PRODUCT_ALVARION_BREEZENET,
+	    PCMCIA_CIS_ALVARION_BREEZENET,
+	    0,
+	    "Alvarion Ltd.",
+	    "Alvarion Ltd. BreezeNET PC-DS.11b",	}
 	,
 	{
 	    PCMCIA_VENDOR_ANYCOM, PCMCIA_PRODUCT_ANYCOM_LSE041,
@@ -398,6 +405,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Elsa",
 	    "XI325 Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_SMC2531WB,
+	    PCMCIA_CIS_ELSA_SMC2531WB,
+	    0,
+	    "Elsa",
+	    "SMC2531W-B EliteConnect Wireless Adapter",	}
 	,
 	{
 	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
@@ -2053,6 +2067,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Anycom",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ALVARION,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Alvarion Ltd.",
 	    NULL,
 	},
 	{

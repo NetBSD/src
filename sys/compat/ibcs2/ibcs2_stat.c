@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.26.2.5 2005/03/04 16:39:37 skrll Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.26.2.6 2005/11/10 14:00:52 skrll Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.26.2.5 2005/03/04 16:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.26.2.6 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,9 @@ bsd_stat2ibcs_stat(st, st4)
 }
 
 static int
-cvt_statfs(sp, buf, len)
+cvt_statfs(sp, tbuf, len)
 	struct statvfs *sp;
-	caddr_t buf;
+	caddr_t tbuf;
 	int len;
 {
 	struct ibcs2_statfs ssfs;
@@ -102,13 +102,13 @@ cvt_statfs(sp, buf, len)
 	ssfs.f_ffree = sp->f_ffree;
 	ssfs.f_fname[0] = 0;
 	ssfs.f_fpack[0] = 0;
-	return copyout((caddr_t)&ssfs, buf, len);
+	return copyout((caddr_t)&ssfs, tbuf, len);
 }
 
 static int
-cvt_statvfs(sp, buf, len)
+cvt_statvfs(sp, tbuf, len)
 	struct statvfs *sp;
-	caddr_t buf;
+	caddr_t tbuf;
 	int len;
 {
 	struct ibcs2_statvfs ssvfs;
@@ -132,7 +132,7 @@ cvt_statvfs(sp, buf, len)
 	ssvfs.f_flag = 0;
 	ssvfs.f_namemax = PATH_MAX;
 	ssvfs.f_fstr[0] = 0;
-	return copyout((caddr_t)&ssvfs, buf, len);
+	return copyout((caddr_t)&ssvfs, tbuf, len);
 }
 
 int
@@ -274,14 +274,14 @@ ibcs2_sys_stat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___stat13_args cup;
+	struct sys___stat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(l, &cup, retval)) != 0)
+	if ((error = sys___stat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -303,7 +303,7 @@ ibcs2_sys_lstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___lstat13_args cup;
+	struct sys___lstat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 
@@ -311,7 +311,7 @@ ibcs2_sys_lstat(l, v, retval)
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(l, &cup, retval)) != 0)
+	if ((error = sys___lstat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -333,13 +333,13 @@ ibcs2_sys_fstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___fstat13_args cup;
+	struct sys___fstat30_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
-	if ((error = sys___fstat13(l, &cup, retval)) != 0)
+	if ((error = sys___fstat30(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.6.6.4 2004/09/21 13:33:26 skrll Exp $ */
+/*	$NetBSD: stvar.h,v 1.6.6.5 2005/11/10 14:07:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ struct st_softc {
 /*--------------------parameters reported by the device ---------------------*/
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
-	struct quirkdata *quirkdata;	/* if we have a rogue entry          */
+	const struct quirkdata *quirkdata;	/* if we have a rogue entry  */
 /*--------------------parameters reported by the device for this media-------*/
 	u_long numblks;		/* nominal blocks capacity            */
 	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
@@ -146,10 +146,13 @@ struct st_softc {
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */
-	struct bufq_state buf_queue;	/* the queue of pending IO */
+	struct bufq_state *buf_queue;	/* the queue of pending IO */
 					/* operations */
 	struct callout sc_callout;	/* restarting the queue after */
 					/* transient error */
+	
+	struct tape *stats;		/* statistics for the drive */
+	
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif

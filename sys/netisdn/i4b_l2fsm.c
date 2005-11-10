@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.6.6.1 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l2fsm.c,v 1.6.6.2 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6.6.1 2005/03/04 16:53:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6.6.2 2005/11/10 14:11:36 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6.6.1 2005/03/04 16:53:45 skrll Exp 
 
 
 #if DO_I4B_DEBUG
-static char *l2state_text[N_STATES] = {
+static const char *l2state_text[N_STATES] = {
 	"ST_TEI_UNAS",
 	"ST_ASG_AW_TEI",
 	"ST_EST_AW_TEI",
@@ -90,7 +90,7 @@ static char *l2state_text[N_STATES] = {
 	"Illegal State"
 };
 
-static char *l2event_text[N_EVENTS] = {
+static const char *l2event_text[N_EVENTS] = {
 	"EV_DLESTRQ",
 	"EV_DLUDTRQ",
 	"EV_MDASGRQ",
@@ -309,9 +309,9 @@ void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/
-char *i4b_print_l2state(l2_softc_t *l2sc)
+const char *i4b_print_l2state(l2_softc_t *l2sc)
 {
-	return((char *) l2state_text[l2sc->Q921_state]);
+	return(l2state_text[l2sc->Q921_state]);
 }
 #endif
 

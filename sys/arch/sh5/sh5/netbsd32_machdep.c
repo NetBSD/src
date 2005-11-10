@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3.2.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3.2.4 2005/11/10 13:58:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3.2.3 2004/09/21 13:21:38 skr
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_param.h>
+
 #include <net/if.h>
 #include <net/route.h>
 
@@ -69,10 +71,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3.2.3 2004/09/21 13:21:38 skr
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/vmparam.h>
+
+#include <machine/netbsd32_machdep.h>
 
 #include <sh5/fpu.h>
 
-char	machine_arch32[] = "sh5";
+const char	machine32[] = "sh5";
+const char	machine_arch32[] = "sh5";
 
 #ifdef COMPAT_16
 int
@@ -94,11 +100,10 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 /*ARGSUSED*/
 int
-cpu_coredump32(struct lwp *l, struct vnode *vp,
-    struct ucred *cred, struct core32 *chdr)
+cpu_coredump32(struct lwp *l, void *cookie, struct core32 *chdr)
 {
 
-	return (0);
+	return (EFAULT);
 }
 
 int
@@ -175,4 +180,11 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &l->l_addr->u_pcb);
+}
+
+vaddr_t
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

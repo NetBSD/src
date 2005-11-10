@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.33.2.5 2005/03/04 16:39:13 skrll Exp $	*/
+/*	$NetBSD: mha.c,v 1.33.2.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.5 2005/03/04 16:39:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -298,7 +298,7 @@ mhamatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh) < 0)
 		return 0;
-	if (!badaddr ((caddr_t)INTIO_ADDR(ia->ia_addr + 0)))
+	if (!badaddr(INTIO_ADDR(ia->ia_addr + 0)))
 		return 0;
 	bus_space_unmap(iot, ioh, 0x20);
 
@@ -1588,7 +1588,8 @@ mha_dataio_dma(int dw, int cw, struct mha_softc *sc, u_char *p, int n)
 
 	paddr = (char *)sc->sc_dmaseg[0].ds_addr;
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
-	if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
+	if ((*(volatile int *)&IODEVbase->io_sram[0xac]) &
+	    (1 << ((paddr_t)paddr >> 19)))
 		dw &= ~(1 << 3);
 #endif
 	sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;

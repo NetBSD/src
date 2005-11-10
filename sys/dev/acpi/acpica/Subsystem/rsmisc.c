@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              xRevision: 27 $
+ *              xRevision: 29 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __RSMISC_C__
 
@@ -161,24 +161,20 @@ AcpiRsEndTagResource (
     ACPI_FUNCTION_TRACE ("RsEndTagResource");
 
 
-    /*
-     * The number of bytes consumed is static
-     */
+    /* The number of bytes consumed is static */
+
     *BytesConsumed = 2;
 
-    /*
-     *  Fill out the structure
-     */
+    /*  Fill out the structure */
+
     OutputStruct->Id = ACPI_RSTYPE_END_TAG;
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = 0;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -213,9 +209,8 @@ AcpiRsEndTagStream (
     ACPI_FUNCTION_TRACE ("RsEndTagStream");
 
 
-    /*
-     * The descriptor field is static
-     */
+    /* The descriptor field is static */
+
     *Buffer = 0x79;
     Buffer += 1;
 
@@ -228,9 +223,8 @@ AcpiRsEndTagStream (
     *Buffer = Temp8;
     Buffer += 1;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }
@@ -269,22 +263,21 @@ AcpiRsVendorResource (
     UINT16                  Temp16 = 0;
     UINT8                   Temp8 = 0;
     UINT8                   Index;
-    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (ACPI_RESOURCE_VENDOR);
+    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (
+                                            ACPI_RESOURCE_VENDOR);
 
 
     ACPI_FUNCTION_TRACE ("RsVendorResource");
 
 
-    /*
-     * Dereference the Descriptor to find if this is a large or small item.
-     */
+    /* Dereference the Descriptor to find if this is a large or small item. */
+
     Temp8 = *Buffer;
 
     if (Temp8 & 0x80)
     {
-        /*
-         * Large Item, point to the length field
-         */
+        /* Large Item, point to the length field */
+
         Buffer += 1;
 
         /* Dereference */
@@ -301,9 +294,8 @@ AcpiRsVendorResource (
     }
     else
     {
-        /*
-         * Small Item, dereference the size
-         */
+        /* Small Item, dereference the size */
+
         Temp16 = (UINT8)(*Buffer & 0x07);
 
         /* Calculate bytes consumed */
@@ -331,14 +323,12 @@ AcpiRsVendorResource (
      */
     StructSize += ACPI_ROUND_UP_TO_32BITS (Temp16);
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -375,14 +365,12 @@ AcpiRsVendorStream (
     ACPI_FUNCTION_TRACE ("RsVendorStream");
 
 
-    /*
-     * Dereference the length to find if this is a large or small item.
-     */
+    /* Dereference the length to find if this is a large or small item. */
+
     if(LinkedList->Data.VendorSpecific.Length > 7)
     {
-        /*
-         * Large Item, Set the descriptor field and length bytes
-         */
+        /* Large Item, Set the descriptor field and length bytes */
+
         *Buffer = 0x84;
         Buffer += 1;
 
@@ -393,9 +381,8 @@ AcpiRsVendorStream (
     }
     else
     {
-        /*
-         * Small Item, Set the descriptor field
-         */
+        /* Small Item, Set the descriptor field */
+
         Temp8 = 0x70;
         Temp8 |= (UINT8) LinkedList->Data.VendorSpecific.Length;
 
@@ -403,9 +390,8 @@ AcpiRsVendorStream (
         Buffer += 1;
     }
 
-    /*
-     * Loop through all of the Vendor Specific fields
-     */
+    /* Loop through all of the Vendor Specific fields */
+
     for (Index = 0; Index < LinkedList->Data.VendorSpecific.Length; Index++)
     {
         Temp8 = LinkedList->Data.VendorSpecific.Reserved[Index];
@@ -414,9 +400,8 @@ AcpiRsVendorStream (
         Buffer += 1;
     }
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }
@@ -453,32 +438,30 @@ AcpiRsStartDependFnsResource (
     UINT8                   *Buffer = ByteStreamBuffer;
     ACPI_RESOURCE           *OutputStruct = (void *) *OutputBuffer;
     UINT8                   Temp8 = 0;
-    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (ACPI_RESOURCE_START_DPF);
+    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (
+                                ACPI_RESOURCE_START_DPF);
 
 
     ACPI_FUNCTION_TRACE ("RsStartDependFnsResource");
 
 
-    /*
-     * The number of bytes consumed are contained in the descriptor (Bits:0-1)
-     */
+    /* The number of bytes consumed are found in the descriptor (Bits:0-1) */
+
     Temp8 = *Buffer;
 
     *BytesConsumed = (Temp8 & 0x01) + 1;
 
     OutputStruct->Id = ACPI_RSTYPE_START_DPF;
 
-    /*
-     * Point to Byte 1 if it is used
-     */
+    /* Point to Byte 1 if it is used */
+
     if (2 == *BytesConsumed)
     {
         Buffer += 1;
         Temp8 = *Buffer;
 
-        /*
-         * Check Compatibility priority
-         */
+        /* Check Compatibility priority */
+
         OutputStruct->Data.StartDpf.CompatibilityPriority = Temp8 & 0x03;
 
         if (3 == OutputStruct->Data.StartDpf.CompatibilityPriority)
@@ -486,9 +469,8 @@ AcpiRsStartDependFnsResource (
             return_ACPI_STATUS (AE_AML_BAD_RESOURCE_VALUE);
         }
 
-        /*
-         * Check Performance/Robustness preference
-         */
+        /* Check Performance/Robustness preference */
+
         OutputStruct->Data.StartDpf.PerformanceRobustness = (Temp8 >> 2) & 0x03;
 
         if (3 == OutputStruct->Data.StartDpf.PerformanceRobustness)
@@ -499,20 +481,18 @@ AcpiRsStartDependFnsResource (
     else
     {
         OutputStruct->Data.StartDpf.CompatibilityPriority =
-                ACPI_ACCEPTABLE_CONFIGURATION;
+            ACPI_ACCEPTABLE_CONFIGURATION;
 
         OutputStruct->Data.StartDpf.PerformanceRobustness =
-                ACPI_ACCEPTABLE_CONFIGURATION;
+            ACPI_ACCEPTABLE_CONFIGURATION;
     }
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -553,24 +533,20 @@ AcpiRsEndDependFnsResource (
     ACPI_FUNCTION_TRACE ("RsEndDependFnsResource");
 
 
-    /*
-     * The number of bytes consumed is static
-     */
+    /* The number of bytes consumed is static */
+
     *BytesConsumed = 1;
 
-    /*
-     *  Fill out the structure
-     */
+    /*  Fill out the structure */
+
     OutputStruct->Id = ACPI_RSTYPE_END_DPF;
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -622,9 +598,8 @@ AcpiRsStartDependFnsStream (
         *Buffer = 0x31;
         Buffer += 1;
 
-        /*
-         * Set the Priority Byte Definition
-         */
+        /* Set the Priority Byte Definition */
+
         Temp8 = 0;
         Temp8 = (UINT8) ((LinkedList->Data.StartDpf.PerformanceRobustness &
                             0x03) << 2);
@@ -635,9 +610,8 @@ AcpiRsStartDependFnsStream (
 
     Buffer += 1;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }
@@ -671,15 +645,13 @@ AcpiRsEndDependFnsStream (
     ACPI_FUNCTION_TRACE ("RsEndDependFnsStream");
 
 
-    /*
-     * The descriptor field is static
-     */
+    /* The descriptor field is static */
+
     *Buffer = 0x38;
     Buffer += 1;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }

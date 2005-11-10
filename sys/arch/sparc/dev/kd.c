@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.25.2.4 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: kd.c,v 1.25.2.5 2005/11/10 13:58:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.25.2.4 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.25.2.5 2005/11/10 13:58:55 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -210,7 +210,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (l->l_proc->p_ucred->cr_uid != 0) )
+	    && (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) )
 	{
 		return (EBUSY);
 	}
@@ -553,7 +553,7 @@ char prom_stdout_args[16];
 
 extern void prom_cnprobe(struct consdev *);
 static void prom_cninit(struct consdev *);
-static int  prom_cngetc(dev_t);
+int  prom_cngetc(dev_t);
 static void prom_cnputc(dev_t, int);
 extern void prom_cnpollc(dev_t, int);
 
@@ -609,7 +609,7 @@ prom_cnpollc(dev, on)
 /*
  * PROM console input putchar.
  */
-static int
+int
 prom_cngetc(dev)
 	dev_t dev;
 {
@@ -644,9 +644,10 @@ prom_get_device_args(prop, args, sz)
 	char *args;
 	unsigned int sz;
 {
-	char *cp, buffer[128];
+	const char *cp;
+	char buffer[128];
 
-	cp = prom_getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
+	cp = prom_getpropstringA(findroot(), prop, buffer, sizeof buffer);
 
 	/*
 	 * Extract device-specific arguments from a PROM device path (if any)

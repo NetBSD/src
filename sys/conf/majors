@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.10.2.9 2005/01/17 19:30:38 skrll Exp $
+# $NetBSD: majors,v 1.10.2.10 2005/11/10 14:01:40 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -19,3 +19,7 @@ device-major	atabus		char 166		atabus
 device-major	drvctl		char 167		drvctl
 device-major	dk		char 168 block 168
 device-major	tap		char 169		tap
+device-major	veriexec	char 170		veriexec
+device-major	fw		char 171		ieee1394if
+device-major	ucycom		char 172		ucycom
+device-major	gpio		char 173		gpio

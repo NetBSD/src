@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbport.c,v 1.1.4.4 2004/09/21 13:22:02 skrll Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.1.4.5 2005/11/10 13:58:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -97,7 +97,7 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.1.4.4 2004/09/21 13:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.1.4.5 2005/11/10 13:58:55 skrll Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
@@ -292,7 +292,7 @@ kbd_pckbport_set_xtscancode(kbctag, kbcslot)
 		cmd[1] = 2;
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
-			u_char cmd[1];
+			u_char resetcmd[1];
 #ifdef DEBUG
 			printf("pckbd: error setting scanset 2\n");
 #endif
@@ -302,8 +302,9 @@ kbd_pckbport_set_xtscancode(kbctag, kbcslot)
 			 * XXX ignore errors, scanset 2 should be
 			 * default anyway.
 			 */
-			cmd[0] = KBC_RESET;
-			(void)pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
+			resetcmd[0] = KBC_RESET;
+			(void)pckbport_poll_cmd(kbctag, kbcslot, resetcmd, 
+			    1, 1, 0, 1);
 			pckbport_flush(kbctag, kbcslot);
 			res = 0;
 		}

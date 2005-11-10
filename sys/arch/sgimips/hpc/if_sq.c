@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.16.2.5 2005/01/17 19:30:19 skrll Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.16.2.6 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.16.2.5 2005/01/17 19:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.16.2.6 2005/11/10 13:58:37 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -152,7 +152,7 @@ static void
 sq_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i, err;
-	char* macaddr;
+	const char* macaddr;
 	struct sq_softc *sc = (void *)self;
 	struct hpc_attach_args *haa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -818,7 +818,7 @@ static void
 sq_trace_dump(struct sq_softc *sc)
 {
 	int i;
-	char *act;
+	const char *act;
 
 	for (i = 0; i < sc->sq_trace_idx; i++) {
 		switch (sc->sq_trace[i].action) {

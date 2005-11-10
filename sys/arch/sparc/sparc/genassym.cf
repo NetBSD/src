@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41.2.3 2004/09/21 13:22:31 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.41.2.4 2005/11/10 13:59:08 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@ define	L_WCHAN		offsetof(struct lwp, l_wchan)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 define	LSRUN		LSRUN
 define	LSONPROC	LSONPROC
 
@@ -167,6 +168,7 @@ define	CPUINFO_XMSG_ARG0	offsetof(struct cpu_info, msg.u.xpmsg_func.arg0)
 define	CPUINFO_XMSG_ARG1	offsetof(struct cpu_info, msg.u.xpmsg_func.arg1)
 define	CPUINFO_XMSG_ARG2	offsetof(struct cpu_info, msg.u.xpmsg_func.arg2)
 define	CPUINFO_XMSG_CMPLT	offsetof(struct cpu_info, msg.complete)
+define	CPUINFO_IDLESPIN	offsetof(struct cpu_info, idlespin)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -196,6 +198,9 @@ define PCIC_PROC_IPR_REG	offsetof(struct msiiep_pcic_reg, pcic_proc_ipr)
 define PCIC_SOFT_INTR_CLEAR_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_clear)
 define PCIC_SOFT_INTR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_set)
 define PCIC_SCCR_REG		offsetof(struct msiiep_pcic_reg, pcic_sccr)
+define PCIC_SYS_ITMR_CLR_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_clr)
+define PCIC_SYS_ITMR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_sys_itmr_set)
+define MSIIEP_SYS_ITMR_ALL	MSIIEP_SYS_ITMR_ALL
 
 # errno
 define	EFAULT		EFAULT

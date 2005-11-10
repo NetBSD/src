@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rslist - Linked list utilities
- *              xRevision: 34 $
+ *              xRevision: 39 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __RSLIST_C__
 
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $")
  *
  * PARAMETERS:  ResourceStartByte       - Byte 0 of a resource descriptor
  *
- * RETURN:      The Resource Type (Name) with no extraneous bits
+ * RETURN:      The Resource Type with no extraneous bits
  *
  * DESCRIPTION: Extract the Resource Type/Name from the first byte of
  *              a resource descriptor.
@@ -147,29 +147,26 @@ AcpiRsGetResourceType (
     ACPI_FUNCTION_ENTRY ();
 
 
-    /*
-     * Determine if this is a small or large resource
-     */
+    /* Determine if this is a small or large resource */
+
     switch (ResourceStartByte & ACPI_RDESC_TYPE_MASK)
     {
     case ACPI_RDESC_TYPE_SMALL:
 
-        /*
-         * Small Resource Type -- Only bits 6:3 are valid
-         */
+        /* Small Resource Type -- Only bits 6:3 are valid */
+
         return ((UINT8) (ResourceStartByte & ACPI_RDESC_SMALL_MASK));
 
 
     case ACPI_RDESC_TYPE_LARGE:
 
-        /*
-         * Large Resource Type -- All bits are valid
-         */
+        /* Large Resource Type -- All bits are valid */
+
         return (ResourceStartByte);
 
 
     default:
-        /* No other types of resource descriptor */
+        /* Invalid type */
         break;
     }
 
@@ -214,9 +211,8 @@ AcpiRsByteStreamToList (
     while (BytesParsed < ByteStreamBufferLength &&
             !EndTagProcessed)
     {
-        /*
-         * The next byte in the stream is the resource type
-         */
+        /* The next byte in the stream is the resource type */
+
         ResourceType = AcpiRsGetResourceType (*ByteStreamBuffer);
 
         switch (ResourceType)
@@ -258,6 +254,7 @@ AcpiRsByteStreamToList (
 
 
         case ACPI_RDESC_TYPE_QWORD_ADDRESS_SPACE:
+        case ACPI_RDESC_TYPE_EXTENDED_ADDRESS_SPACE:
             /*
              * 64-Bit Address Resource
              */
@@ -379,28 +376,23 @@ AcpiRsByteStreamToList (
             return_ACPI_STATUS (Status);
         }
 
-        /*
-         * Update the return value and counter
-         */
+        /* Update the return value and counter */
+
         BytesParsed += BytesConsumed;
 
-        /*
-         * Set the byte stream to point to the next resource
-         */
+        /* Set the byte stream to point to the next resource */
+
         ByteStreamBuffer += BytesConsumed;
 
-        /*
-         * Set the Buffer to the next structure
-         */
+        /* Set the Buffer to the next structure */
+
         Resource = ACPI_CAST_PTR (ACPI_RESOURCE, Buffer);
         Resource->Length = (UINT32) ACPI_ALIGN_RESOURCE_SIZE (Resource->Length);
         Buffer += ACPI_ALIGN_RESOURCE_SIZE (StructureSize);
+    }
 
-    } /*  end while */
+    /* Check the reason for exiting the while loop */
 
-    /*
-     * Check the reason for exiting the while loop
-     */
     if (!EndTagProcessed)
     {
         return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
@@ -507,9 +499,8 @@ AcpiRsListToByteStream (
              */
             Status = AcpiRsEndTagStream (LinkedList, &Buffer, &BytesConsumed);
 
-            /*
-             * An End Tag indicates the end of the Resource Template
-             */
+            /* An End Tag indicates the end of the Resource Template */
+
             Done = TRUE;
             break;
 
@@ -571,28 +562,26 @@ AcpiRsListToByteStream (
         default:
             /*
              * If we get here, everything is out of sync,
-             *  so exit with an error
+             * so exit with an error
              */
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Invalid descriptor type (%X) in resource list\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Invalid descriptor type (%X) in resource list\n",
                 LinkedList->Id));
             Status = AE_BAD_DATA;
             break;
-
-        } /* switch (LinkedList->Id) */
+        }
 
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
-        /*
-         * Set the Buffer to point to the open byte
-         */
+        /* Set the Buffer to point to the open byte */
+
         Buffer += BytesConsumed;
 
-        /*
-         * Point to the next object
-         */
+        /* Point to the next object */
+
         LinkedList = ACPI_PTR_ADD (ACPI_RESOURCE,
                         LinkedList, LinkedList->Length);
     }

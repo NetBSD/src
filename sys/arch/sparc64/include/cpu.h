@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35.2.4 2004/09/24 10:53:17 skrll Exp $ */
+/*	$NetBSD: cpu.h,v 1.35.2.5 2005/11/10 13:59:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,7 +163,7 @@ struct cpu_bootargs {
 
 extern struct cpu_bootargs *cpu_args;
 
-extern int ncpus;
+extern int sparc_ncpus;
 extern struct cpu_info *cpus;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
@@ -188,9 +188,7 @@ extern struct cpu_info *cpus;
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-
-/* This really should be somewhere else. */
-#define	cpu_proc_fork(p1, p2)	/* nothing */
+void cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)
 void	cpu_mp_startup __P((void));

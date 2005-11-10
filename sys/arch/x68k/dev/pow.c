@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.10.6.5 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: pow.c,v 1.10.6.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.10.6.5 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.10.6.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ powclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-#define SRAMINT(offset)	(*((int *) (&sramtop[offset])))
+#define SRAMINT(offset)	(*((volatile int *) (&sramtop[offset])))
 #define RTCWAIT DELAY(100)
 
 static int 

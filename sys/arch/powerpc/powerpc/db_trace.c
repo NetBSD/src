@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28.2.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.2.4 2005/11/10 13:58:26 skrll Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.28.2.3 2004/09/21 13:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.28.2.4 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -101,13 +101,13 @@ const struct db_variable * const db_eregs = db_regs + sizeof (db_regs)/sizeof (d
  */
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
-	char *modif, void (*pr)(const char *, ...))
+	const char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t frame, lr, *args;
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
-	char *cp = modif;
+	const char *symname;
+	const char *cp = modif;
 	char c;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;

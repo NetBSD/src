@@ -1,12 +1,12 @@
-/*	$NetBSD: mpconfig.h,v 1.3.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.3.2.4 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
  * MP config as well.
  */
 
-#ifndef _X86_MPCONFIG_H
-#define _X86_MPCONFIG_H
+#ifndef _X86_MPCONFIG_H_
+#define _X86_MPCONFIG_H_
 
 /*
  * XXX
@@ -37,7 +37,7 @@ struct mpbios_int;
 
 struct mp_bus
 {
-	char *mb_name;		/* XXX bus name */
+	const char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */
 	void (*mb_intr_print)(int);
 	void (*mb_intr_cfg)(const struct mpbios_int *, u_int32_t *);
@@ -76,4 +76,4 @@ extern int mp_nbus;
 #endif
 #endif
 
-#endif /* _X86_MPCONFIG_H */
+#endif /* _X86_MPCONFIG_H_ */

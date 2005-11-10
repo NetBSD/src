@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11.2.7 2005/03/04 16:39:10 skrll Exp $
+#	$NetBSD: INSTALL,v 1.11.2.8 2005/11/10 13:58:50 skrll Exp $
 #
 #	Shark installation kernel
 #
@@ -55,6 +55,7 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -88,6 +89,7 @@ options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_14	# NetBSD 1.4 compatibility.

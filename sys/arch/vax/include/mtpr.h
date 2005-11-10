@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.14.2.3 2004/09/21 13:23:43 skrll Exp $     */
+/*      $NetBSD: mtpr.h,v 1.14.2.4 2005/11/10 13:59:59 skrll Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -175,11 +175,11 @@
 
 #define mfpr(reg)					\
 ({							\
-	register int val;				\
+	register int __val;				\
 	__asm__ __volatile ("mfpr %1,%0"		\
-			: "=g" (val)			\
+			: "=g" (__val)			\
 			: "g" (reg));			\
-	val;						\
+	__val;						\
 })
 #endif	/* _LOCORE */
 

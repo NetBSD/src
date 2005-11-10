@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.25.24.3 2004/09/21 13:23:57 skrll Exp $	*/
+/*	$NetBSD: ka650.c,v 1.25.24.4 2005/11/10 13:59:59 skrll Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.25.24.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.25.24.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -159,7 +159,7 @@ uvaxIII_memerr()
 }
 
 #define NMC650	15
-char *mc650[] = {
+const char *mc650[] = {
 	0,			"FPA proto err",	"FPA resv inst",
 	"FPA Ill Stat 2",	"FPA Ill Stat 1",	"PTE in P0, TB miss",
 	"PTE in P1, TB miss",	"PTE in P0, Mod",	"PTE in P1, Mod",

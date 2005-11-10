@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.10.2.3 2004/09/21 13:21:37 skrll Exp $
+#	$NetBSD: Makefile.sh5,v 1.10.2.4 2005/11/10 13:58:50 skrll Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISSH5=	$S/arch/${MACHINE}
 SH5=		$S/arch/sh5
-GENASSYM=	${SH5}/sh5/genassym.cf
+GENASSYM_CONF=	${SH5}/sh5/genassym.cf
 .-include "${THISSH5}/conf/Makefile.${MACHINE}.inc"
 
 ##

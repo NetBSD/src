@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.11 2005/04/01 14:29:52 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.12 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.11 2005/04/01 14:29:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.12 2005/11/10 14:04:15 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -83,71 +83,74 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.11 2005/04/01 14:29:52 skrll Exp $
 
 const char * const tlp_chip_names[] = TULIP_CHIP_NAMES;
 
-const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
+static const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10;
 
-const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
+static const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10_100;
 
-const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
+static const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
     TLP_TXTHRESH_TAB_WINB;
 
-const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
+static const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
     TLP_TXTHRESH_TAB_DM9102;
 
-void	tlp_start(struct ifnet *);
-void	tlp_watchdog(struct ifnet *);
-int	tlp_ioctl(struct ifnet *, u_long, caddr_t);
-int	tlp_init(struct ifnet *);
-void	tlp_stop(struct ifnet *, int);
+static void	tlp_start(struct ifnet *);
+static void	tlp_watchdog(struct ifnet *);
+static int	tlp_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tlp_init(struct ifnet *);
+static void	tlp_stop(struct ifnet *, int);
 
-void	tlp_shutdown(void *);
+static void	tlp_shutdown(void *);
 
-void	tlp_rxdrain(struct tulip_softc *);
-int	tlp_add_rxbuf(struct tulip_softc *, int);
-void	tlp_idle(struct tulip_softc *, u_int32_t);
-void	tlp_srom_idle(struct tulip_softc *);
-int	tlp_srom_size(struct tulip_softc *);
+static void	tlp_rxdrain(struct tulip_softc *);
+static int	tlp_add_rxbuf(struct tulip_softc *, int);
+static void	tlp_srom_idle(struct tulip_softc *);
+static int	tlp_srom_size(struct tulip_softc *);
 
-int	tlp_enable(struct tulip_softc *);
-void	tlp_disable(struct tulip_softc *);
-void	tlp_power(int, void *);
+static int	tlp_enable(struct tulip_softc *);
+static void	tlp_disable(struct tulip_softc *);
+static void	tlp_power(int, void *);
 
-void	tlp_filter_setup(struct tulip_softc *);
-void	tlp_winb_filter_setup(struct tulip_softc *);
-void	tlp_al981_filter_setup(struct tulip_softc *);
+static void	tlp_filter_setup(struct tulip_softc *);
+static void	tlp_winb_filter_setup(struct tulip_softc *);
+static void	tlp_al981_filter_setup(struct tulip_softc *);
+static void	tlp_asix_filter_setup(struct tulip_softc *);
 
-void	tlp_rxintr(struct tulip_softc *);
-void	tlp_txintr(struct tulip_softc *);
+static void	tlp_rxintr(struct tulip_softc *);
+static void	tlp_txintr(struct tulip_softc *);
 
-void	tlp_mii_tick(void *);
-void	tlp_mii_statchg(struct device *);
-void	tlp_winb_mii_statchg(struct device *);
-void	tlp_dm9102_mii_statchg(struct device *);
+static void	tlp_mii_tick(void *);
+static void	tlp_mii_statchg(struct device *);
+static void	tlp_winb_mii_statchg(struct device *);
+static void	tlp_dm9102_mii_statchg(struct device *);
 
-void	tlp_mii_getmedia(struct tulip_softc *, struct ifmediareq *);
-int	tlp_mii_setmedia(struct tulip_softc *);
+static void	tlp_mii_getmedia(struct tulip_softc *, struct ifmediareq *);
+static int	tlp_mii_setmedia(struct tulip_softc *);
 
-int	tlp_bitbang_mii_readreg(struct device *, int, int);
-void	tlp_bitbang_mii_writereg(struct device *, int, int, int);
+static int	tlp_bitbang_mii_readreg(struct device *, int, int);
+static void	tlp_bitbang_mii_writereg(struct device *, int, int, int);
 
-int	tlp_pnic_mii_readreg(struct device *, int, int);
-void	tlp_pnic_mii_writereg(struct device *, int, int, int);
+static int	tlp_pnic_mii_readreg(struct device *, int, int);
+static void	tlp_pnic_mii_writereg(struct device *, int, int, int);
 
-int	tlp_al981_mii_readreg(struct device *, int, int);
-void	tlp_al981_mii_writereg(struct device *, int, int, int);
+static int	tlp_al981_mii_readreg(struct device *, int, int);
+static void	tlp_al981_mii_writereg(struct device *, int, int, int);
 
-void	tlp_2114x_preinit(struct tulip_softc *);
-void	tlp_2114x_mii_preinit(struct tulip_softc *);
-void	tlp_pnic_preinit(struct tulip_softc *);
-void	tlp_dm9102_preinit(struct tulip_softc *);
+static void	tlp_2114x_preinit(struct tulip_softc *);
+static void	tlp_2114x_mii_preinit(struct tulip_softc *);
+static void	tlp_pnic_preinit(struct tulip_softc *);
+static void	tlp_dm9102_preinit(struct tulip_softc *);
+static void	tlp_asix_preinit(struct tulip_softc *);
 
-void	tlp_21140_reset(struct tulip_softc *);
-void	tlp_21142_reset(struct tulip_softc *);
-void	tlp_pmac_reset(struct tulip_softc *);
-void	tlp_dm9102_reset(struct tulip_softc *);
+static void	tlp_21140_reset(struct tulip_softc *);
+static void	tlp_21142_reset(struct tulip_softc *);
+static void	tlp_pmac_reset(struct tulip_softc *);
+#if 0
+static void	tlp_dm9102_reset(struct tulip_softc *);
+#endif
 
-void	tlp_2114x_nway_tick(void *);
+static void	tlp_2114x_nway_tick(void *);
 
 #define	tlp_mchash(addr, sz)						\
 	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((sz) - 1))
@@ -155,10 +158,10 @@ void	tlp_2114x_nway_tick(void *);
 /*
  * MII bit-bang glue.
  */
-u_int32_t tlp_sio_mii_bitbang_read(struct device *);
-void	tlp_sio_mii_bitbang_write(struct device *, u_int32_t);
+static u_int32_t tlp_sio_mii_bitbang_read(struct device *);
+static void	tlp_sio_mii_bitbang_write(struct device *, u_int32_t);
 
-const struct mii_bitbang_ops tlp_sio_mii_bitbang_ops = {
+static const struct mii_bitbang_ops tlp_sio_mii_bitbang_ops = {
 	tlp_sio_mii_bitbang_read,
 	tlp_sio_mii_bitbang_write,
 	{
@@ -178,7 +181,7 @@ const struct mii_bitbang_ops tlp_sio_mii_bitbang_ops = {
 #endif
 
 #ifdef TLP_STATS
-void	tlp_print_stats(struct tulip_softc *);
+static void	tlp_print_stats(struct tulip_softc *);
 #endif
 
 /*
@@ -193,9 +196,7 @@ int	tlp_srom_debug = 0;
  *	Attach a Tulip interface to the system.
  */
 void
-tlp_attach(sc, enaddr)
-	struct tulip_softc *sc;
-	const u_int8_t *enaddr;
+tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
@@ -239,6 +240,11 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_AN983:
 	case TULIP_CHIP_AN985:
 		sc->sc_filter_setup = tlp_al981_filter_setup;
+		break;
+
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		sc->sc_filter_setup = tlp_asix_filter_setup;
 		break;
 
 	default:
@@ -360,6 +366,16 @@ tlp_attach(sc, enaddr)
 		sc->sc_txthresh = TXTH_DM9102_SF;
 		break;
 
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		/*
+		 * Run these chips in ring mode.
+		 */
+		sc->sc_tdctl_ch = 0;
+		sc->sc_tdctl_er = TDCTL_ER;
+		sc->sc_preinit = tlp_asix_preinit;
+		break;
+
 	default:
 		/*
 		 * Default to running in ring mode.
@@ -434,6 +450,8 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_X3201_3:
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
 		sc->sc_ntxsegs = 1;
 		break;
 
@@ -572,9 +590,7 @@ tlp_attach(sc, enaddr)
  *	Handle device activation/deactivation requests.
  */
 int
-tlp_activate(self, act)
-	struct device *self;
-	enum devact act;
+tlp_activate(struct device *self, enum devact act)
 {
 	struct tulip_softc *sc = (void *) self;
 	int s, error = 0;
@@ -603,8 +619,7 @@ tlp_activate(self, act)
  *	Detach a Tulip interface.
  */
 int
-tlp_detach(sc)
-	struct tulip_softc *sc;
+tlp_detach(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct tulip_rxsoft *rxs;
@@ -673,9 +688,8 @@ tlp_detach(sc)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-void
-tlp_shutdown(arg)
-	void *arg;
+static void
+tlp_shutdown(void *arg)
 {
 	struct tulip_softc *sc = arg;
 
@@ -687,9 +701,8 @@ tlp_shutdown(arg)
  *
  *	Start packet transmission on the interface.
  */
-void
-tlp_start(ifp)
-	struct ifnet *ifp;
+static void
+tlp_start(struct ifnet *ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -952,9 +965,8 @@ tlp_start(ifp)
  *
  *	Watchdog timer handler.
  */
-void
-tlp_watchdog(ifp)
-	struct ifnet *ifp;
+static void
+tlp_watchdog(struct ifnet *ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	int doing_setup, doing_transmit;
@@ -985,11 +997,8 @@ tlp_watchdog(ifp)
  *
  *	Handle control requests from the operator.
  */
-int
-tlp_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+static int
+tlp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1049,8 +1058,7 @@ tlp_ioctl(ifp, cmd, data)
  *	Interrupt service routine.
  */
 int
-tlp_intr(arg)
-	void *arg;
+tlp_intr(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1241,9 +1249,8 @@ tlp_intr(arg)
  *
  *	Helper; handle receive interrupts.
  */
-void
-tlp_rxintr(sc)
-	struct tulip_softc *sc;
+static void
+tlp_rxintr(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_header *eh;
@@ -1437,9 +1444,8 @@ tlp_rxintr(sc)
  *
  *	Helper; handle transmit interrupts.
  */
-void
-tlp_txintr(sc)
-	struct tulip_softc *sc;
+static void
+tlp_txintr(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct tulip_txsoft *txs;
@@ -1554,8 +1560,7 @@ tlp_txintr(sc)
 
 #ifdef TLP_STATS
 void
-tlp_print_stats(sc)
-	struct tulip_softc *sc;
+tlp_print_stats(struct tulip_softc *sc)
 {
 
 	printf("%s: tx_uf %lu, tx_to %lu, tx_ec %lu, tx_lc %lu\n",
@@ -1571,19 +1576,21 @@ tlp_print_stats(sc)
  *	Perform a soft reset on the Tulip.
  */
 void
-tlp_reset(sc)
-	struct tulip_softc *sc;
+tlp_reset(struct tulip_softc *sc)
 {
 	int i;
 
 	TULIP_WRITE(sc, CSR_BUSMODE, BUSMODE_SWR);
 
 	/*
-	 * Xircom clone doesn't bring itself out of reset automatically.
+	 * Xircom and ASIX clones don't bring themselves out of 
+	 * reset automatically.
 	 * Instead, we have to wait at least 50 PCI cycles, and then
 	 * clear SWR.
 	 */
-	if (sc->sc_chip == TULIP_CHIP_X3201_3) {
+	if (sc->sc_chip == TULIP_CHIP_X3201_3 ||
+	    sc->sc_chip == TULIP_CHIP_AX88140 ||
+	    sc->sc_chip == TULIP_CHIP_AX88141) {
 		delay(10);
 		TULIP_WRITE(sc, CSR_BUSMODE, 0);
 	}
@@ -1618,9 +1625,8 @@ tlp_reset(sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
-tlp_init(ifp)
-	struct ifnet *ifp;
+static int
+tlp_init(struct ifnet *ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct tulip_txsoft *txs;
@@ -1681,6 +1687,12 @@ tlp_init(ifp)
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 		sc->sc_busmode |= BUSMODE_PNIC_MBO;
+		if (sc->sc_maxburst == 0)
+			sc->sc_maxburst = 16;
+		break;
+	
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
 		if (sc->sc_maxburst == 0)
 			sc->sc_maxburst = 16;
 		break;
@@ -1915,6 +1927,26 @@ tlp_init(ifp)
 		reg = enaddr[4] |
 		      (enaddr[5] << 8);
 		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR1, reg);
+		break;
+	    }
+
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+	    {
+		u_int32_t reg;
+		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		    
+		reg = enaddr[0] |
+		      (enaddr[1] << 8) |
+		      (enaddr[2] << 16) |
+		      (enaddr[3] << 24);
+		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR0);
+		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
+
+		reg = enaddr[4] | (enaddr[5] << 8);
+		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR1);
+		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
+		break;
 	    }
 
 	default:
@@ -1964,9 +1996,8 @@ tlp_init(ifp)
  *
  *	Enable the Tulip chip.
  */
-int
-tlp_enable(sc)
-	struct tulip_softc *sc;
+static int
+tlp_enable(struct tulip_softc *sc)
 {
 
 	if (TULIP_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
@@ -1985,9 +2016,8 @@ tlp_enable(sc)
  *
  *	Disable the Tulip chip.
  */
-void
-tlp_disable(sc)
-	struct tulip_softc *sc;
+static void
+tlp_disable(struct tulip_softc *sc)
 {
 
 	if (TULIP_IS_ENABLED(sc) && sc->sc_disable != NULL) {
@@ -2001,10 +2031,8 @@ tlp_disable(sc)
  *
  *	Power management (suspend/resume) hook.
  */
-void
-tlp_power(why, arg)
-	int why;
-	void *arg;
+static void
+tlp_power(int why, void *arg)
 {
 	struct tulip_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2040,9 +2068,8 @@ tlp_power(why, arg)
  *
  *	Drain the receive queue.
  */
-void
-tlp_rxdrain(sc)
-	struct tulip_softc *sc;
+static void
+tlp_rxdrain(struct tulip_softc *sc)
 {
 	struct tulip_rxsoft *rxs;
 	int i;
@@ -2062,10 +2089,8 @@ tlp_rxdrain(sc)
  *
  *	Stop transmission on the interface.
  */
-void
-tlp_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+static void
+tlp_stop(struct ifnet *ifp, int disable)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct tulip_txsoft *txs;
@@ -2133,9 +2158,8 @@ do {									\
  *
  *	Put the SROM in idle state.
  */
-void
-tlp_srom_idle(sc)
-	struct tulip_softc *sc;
+static void
+tlp_srom_idle(struct tulip_softc *sc)
 {
 	u_int32_t miirom;
 	int i;
@@ -2170,9 +2194,8 @@ tlp_srom_idle(sc)
  *
  *	Determine the number of address bits in the SROM.
  */
-int
-tlp_srom_size(sc)
-	struct tulip_softc *sc;
+static int
+tlp_srom_size(struct tulip_softc *sc)
 {
 	u_int32_t miirom;
 	int x;
@@ -2234,8 +2257,7 @@ tlp_srom_size(sc)
  *	Read the Tulip SROM.
  */
 int
-tlp_read_srom(sc)
-	struct tulip_softc *sc;
+tlp_read_srom(struct tulip_softc *sc)
 {
 	int size;
 	u_int32_t miirom;
@@ -2327,10 +2349,8 @@ tlp_read_srom(sc)
  *
  *	Add a receive buffer to the indicated descriptor.
  */
-int
-tlp_add_rxbuf(sc, idx)
-	struct tulip_softc *sc;
-	int idx;
+static int
+tlp_add_rxbuf(struct tulip_softc *sc, int idx)
 {
 	struct tulip_rxsoft *rxs = &sc->sc_rxsoft[idx];
 	struct mbuf *m;
@@ -2375,8 +2395,7 @@ tlp_add_rxbuf(sc, idx)
  *	Check the CRC of the Tulip SROM.
  */
 int
-tlp_srom_crcok(romdata)
-	const u_int8_t *romdata;
+tlp_srom_crcok(const u_int8_t *romdata)
 {
 	u_int32_t crc;
 
@@ -2402,8 +2421,7 @@ tlp_srom_crcok(romdata)
  *	Check to see if the SROM is in the new standardized format.
  */
 int
-tlp_isv_srom(romdata)
-	const u_int8_t *romdata;
+tlp_isv_srom(const u_int8_t *romdata)
 {
 	int i;
 	u_int16_t cksum;
@@ -2442,9 +2460,7 @@ tlp_isv_srom(romdata)
  *	Get the Ethernet address from an ISV SROM.
  */
 int
-tlp_isv_srom_enaddr(sc, enaddr)
-	struct tulip_softc *sc;
-	u_int8_t *enaddr;
+tlp_isv_srom_enaddr(struct tulip_softc *sc, u_int8_t *enaddr)
 {
 	int i, devcnt;
 
@@ -2478,9 +2494,7 @@ tlp_isv_srom_enaddr(sc, enaddr)
  *	This routine is largely lifted from Matt Thomas's `de' driver.
  */
 int
-tlp_parse_old_srom(sc, enaddr)
-	struct tulip_softc *sc;
-	u_int8_t *enaddr;
+tlp_parse_old_srom(struct tulip_softc *sc, u_int8_t *enaddr)
 {
 	static const u_int8_t testpat[] =
 	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };
@@ -2572,9 +2586,8 @@ tlp_parse_old_srom(sc, enaddr)
  *
  *	Set the Tulip's receive filter.
  */
-void
-tlp_filter_setup(sc)
-	struct tulip_softc *sc;
+static void
+tlp_filter_setup(struct tulip_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2841,9 +2854,8 @@ tlp_filter_setup(sc)
  *
  *	Set the Winbond 89C840F's receive filter.
  */
-void
-tlp_winb_filter_setup(sc)
-	struct tulip_softc *sc;
+static void
+tlp_winb_filter_setup(struct tulip_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2913,9 +2925,8 @@ tlp_winb_filter_setup(sc)
  *
  *	Set the ADMtek AL981's receive filter.
  */
-void
-tlp_al981_filter_setup(sc)
-	struct tulip_softc *sc;
+static void
+tlp_al981_filter_setup(struct tulip_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2980,14 +2991,83 @@ tlp_al981_filter_setup(sc)
 }
 
 /*
+ * tlp_asix_filter_setup:
+ * 
+ * 	Set the ASIX AX8814x recieve filter.
+ */
+static void
+tlp_asix_filter_setup(struct tulip_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	u_int32_t hash, mchash[2];
+
+	DPRINTF(sc, ("%s: tlp_asix_filter_setup: sc_flags 0x%08x\n",
+		sc->sc_dev.dv_xname, sc->sc_flags));
+
+	sc->sc_opmode &= ~(OPMODE_PM|OPMODE_AX_RB|OPMODE_PR);
+
+	if (ifp->if_flags & IFF_MULTICAST)
+		sc->sc_opmode |= OPMODE_PM;
+
+	if (ifp->if_flags & IFF_BROADCAST)
+		sc->sc_opmode |= OPMODE_AX_RB;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_opmode |= OPMODE_PR;
+		goto allmulti;
+	}
+
+	mchash[0] = mchash[1] = 0;
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
+		}
+		hash = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) 
+		       & 0x3f;
+		if (hash < 32)
+			mchash[0] |= (1 << hash);
+		else
+			mchash[1] |= (1 << (hash - 32));
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	goto setit;
+
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	mchash[0] = mchash[1] = 0xffffffff;
+
+setit:
+	TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_MAR0);
+	TULIP_WRITE(sc, CSR_AX_FILTDATA, mchash[0]);
+	TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_MAR1);
+	TULIP_WRITE(sc, CSR_AX_FILTDATA, mchash[1]);
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	DPRINTF(sc, ("%s: tlp_asix_filter_setup: returning\n",
+		sc->sc_dev.dv_xname));
+}
+
+
+/*
  * tlp_idle:
  *
  *	Cause the transmit and/or receive processes to go idle.
  */
 void
-tlp_idle(sc, bits)
-	struct tulip_softc *sc;
-	u_int32_t bits;
+tlp_idle(struct tulip_softc *sc, u_int32_t bits)
 {
 	static const char * const tlp_tx_state_names[] = {
 		"STOPPED",
@@ -3065,9 +3145,18 @@ tlp_idle(sc, bits)
 	if ((csr & ackmask) != ackmask) {
 		if ((bits & OPMODE_ST) != 0 && (csr & STATUS_TPS) == 0 &&
 		    (csr & STATUS_TS) != STATUS_TS_STOPPED) {
-			printf("%s: transmit process failed to idle: "
-			    "state %s\n", sc->sc_dev.dv_xname,
-			    tx_state_names[(csr & STATUS_TS) >> 20]);
+			switch (sc->sc_chip) {
+			case TULIP_CHIP_AX88140:
+			case TULIP_CHIP_AX88141:
+				/*
+				 * Filter the message out on noisy chips.
+				 */
+				break;
+			default:
+				printf("%s: transmit process failed to idle: "
+				    "state %s\n", sc->sc_dev.dv_xname,
+				    tx_state_names[(csr & STATUS_TS) >> 20]);
+			}
 		}
 		if ((bits & OPMODE_SR) != 0 && (csr & STATUS_RPS) == 0 &&
 		    (csr & STATUS_RS) != STATUS_RS_STOPPED) {
@@ -3099,9 +3188,7 @@ tlp_idle(sc, bits)
  *	Query the current media.
  */
 void
-tlp_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+tlp_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 
@@ -3120,8 +3207,7 @@ tlp_mediastatus(ifp, ifmr)
  *	Update the current media.
  */
 int
-tlp_mediachange(ifp)
-	struct ifnet *ifp;
+tlp_mediachange(struct ifnet *ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 
@@ -3139,9 +3225,8 @@ tlp_mediachange(ifp)
  *
  *	One second timer, used to tick the MII.
  */
-void
-tlp_mii_tick(arg)
-	void *arg;
+static void
+tlp_mii_tick(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	int s;
@@ -3161,9 +3246,8 @@ tlp_mii_tick(arg)
  *
  *	Callback from PHY when media changes.
  */
-void
-tlp_mii_statchg(self)
-	struct device *self;
+static void
+tlp_mii_statchg(struct device *self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -3193,9 +3277,8 @@ tlp_mii_statchg(self)
  *	Callback from PHY when media changes.  This version is
  *	for the Winbond 89C840F, which has different OPMODE bits.
  */
-void
-tlp_winb_mii_statchg(self)
-	struct device *self;
+static void
+tlp_winb_mii_statchg(struct device *self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -3223,9 +3306,8 @@ tlp_winb_mii_statchg(self)
  *	Callback from PHY when media changes.  This version is
  *	for the DM9102.
  */
-void
-tlp_dm9102_mii_statchg(self)
-	struct device *self;
+static void
+tlp_dm9102_mii_statchg(struct device *self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -3252,10 +3334,8 @@ tlp_dm9102_mii_statchg(self)
  *
  *	Callback from ifmedia to request current media status.
  */
-void
-tlp_mii_getmedia(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_mii_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 
 	mii_pollstat(&sc->sc_mii);
@@ -3268,9 +3348,8 @@ tlp_mii_getmedia(sc, ifmr)
  *
  *	Callback from ifmedia to request new media setting.
  */
-int
-tlp_mii_setmedia(sc)
-	struct tulip_softc *sc;
+static int
+tlp_mii_setmedia(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -3296,10 +3375,8 @@ tlp_mii_setmedia(sc)
  *
  *	Read a PHY register via bit-bang'ing the MII.
  */
-int
-tlp_bitbang_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+static int
+tlp_bitbang_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct tulip_softc *sc = (void *) self;
 
@@ -3311,10 +3388,8 @@ tlp_bitbang_mii_readreg(self, phy, reg)
  *
  *	Write a PHY register via bit-bang'ing the MII.
  */
-void
-tlp_bitbang_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+static void
+tlp_bitbang_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct tulip_softc *sc = (void *) self;
 
@@ -3326,9 +3401,8 @@ tlp_bitbang_mii_writereg(self, phy, reg, val)
  *
  *	Read the MII serial port for the MII bit-bang module.
  */
-u_int32_t
-tlp_sio_mii_bitbang_read(self)
-	struct device *self;
+static u_int32_t
+tlp_sio_mii_bitbang_read(struct device *self)
 {
 	struct tulip_softc *sc = (void *) self;
 
@@ -3340,10 +3414,8 @@ tlp_sio_mii_bitbang_read(self)
  *
  *	Write the MII serial port for the MII bit-bang module.
  */
-void
-tlp_sio_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+static void
+tlp_sio_mii_bitbang_write(struct device *self, u_int32_t val)
 {
 	struct tulip_softc *sc = (void *) self;
 
@@ -3355,10 +3427,8 @@ tlp_sio_mii_bitbang_write(self, val)
  *
  *	Read a PHY register on the Lite-On PNIC.
  */
-int
-tlp_pnic_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+static int
+tlp_pnic_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct tulip_softc *sc = (void *) self;
 	u_int32_t val;
@@ -3388,10 +3458,8 @@ tlp_pnic_mii_readreg(self, phy, reg)
  *
  *	Write a PHY register on the Lite-On PNIC.
  */
-void
-tlp_pnic_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+static void
+tlp_pnic_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct tulip_softc *sc = (void *) self;
 	int i;
@@ -3409,7 +3477,7 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
 	printf("%s: MII write timed out\n", sc->sc_dev.dv_xname);
 }
 
-const bus_addr_t tlp_al981_phy_regmap[] = {
+static const bus_addr_t tlp_al981_phy_regmap[] = {
 	CSR_ADM_BMCR,
 	CSR_ADM_BMSR,
 	CSR_ADM_PHYIDR1,
@@ -3423,7 +3491,7 @@ const bus_addr_t tlp_al981_phy_regmap[] = {
 	CSR_ADM_XIE,
 	CSR_ADM_100CTR,
 };
-const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
+static const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
     sizeof(tlp_al981_phy_regmap[0]);
 
 /*
@@ -3431,10 +3499,8 @@ const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
  *
  *	Read a PHY register on the ADMtek AL981.
  */
-int
-tlp_al981_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+static int
+tlp_al981_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -3454,10 +3520,8 @@ tlp_al981_mii_readreg(self, phy, reg)
  *
  *	Write a PHY register on the ADMtek AL981.
  */
-void
-tlp_al981_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+static void
+tlp_al981_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -3481,9 +3545,8 @@ tlp_al981_mii_writereg(self, phy, reg, val)
  *
  *	Pre-init function shared by DECchip 21140, 21140A, 21142, and 21143.
  */
-void
-tlp_2114x_preinit(sc)
-	struct tulip_softc *sc;
+static void
+tlp_2114x_preinit(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
@@ -3506,9 +3569,8 @@ tlp_2114x_preinit(sc)
  *	This version is used by boards which only have MII and don't have
  *	an ISV SROM.
  */
-void
-tlp_2114x_mii_preinit(sc)
-	struct tulip_softc *sc;
+static void
+tlp_2114x_mii_preinit(struct tulip_softc *sc)
 {
 
 	/*
@@ -3524,9 +3586,8 @@ tlp_2114x_mii_preinit(sc)
  *
  *	Pre-init function for the Lite-On 82c168 and 82c169.
  */
-void
-tlp_pnic_preinit(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pnic_preinit(struct tulip_softc *sc)
 {
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
@@ -3544,13 +3605,35 @@ tlp_pnic_preinit(sc)
 }
 
 /*
+ * tlp_asix_preinit:
+ * 
+ * 	Pre-init function for the ASIX chipsets.
+ */
+static void
+tlp_asix_preinit(struct tulip_softc *sc)
+{
+
+	switch (sc->sc_chip) {
+		case TULIP_CHIP_AX88140:
+		case TULIP_CHIP_AX88141:
+			/* XXX Handle PHY. */
+			sc->sc_opmode |= OPMODE_HBD|OPMODE_PS; 
+			break;
+		default:
+			/* Nothing */
+			break;
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+/*
  * tlp_dm9102_preinit:
  *
  *	Pre-init function for the Davicom DM9102.
  */
-void
-tlp_dm9102_preinit(sc)
-	struct tulip_softc *sc;
+static void
+tlp_dm9102_preinit(struct tulip_softc *sc)
 {
 
 	switch (sc->sc_chip) {
@@ -3579,9 +3662,8 @@ tlp_dm9102_preinit(sc)
  *
  *	Issue a reset sequence on the 21140 via the GPIO facility.
  */
-void
-tlp_21140_reset(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21140_reset(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
@@ -3614,9 +3696,8 @@ tlp_21140_reset(sc)
  *
  *	Issue a reset sequence on the 21142 via the GPIO facility.
  */
-void
-tlp_21142_reset(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21142_reset(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
@@ -3647,9 +3728,8 @@ tlp_21142_reset(sc)
  *
  *	Reset routine for Macronix chips.
  */
-void
-tlp_pmac_reset(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pmac_reset(struct tulip_softc *sc)
 {
 
 	switch (sc->sc_chip) {
@@ -3680,20 +3760,21 @@ tlp_pmac_reset(sc)
 	}
 }
 
+#if 0
 /*
  * tlp_dm9102_reset:
  *
  *	Reset routine for the Davicom DM9102.
  */
-void
-tlp_dm9102_reset(sc)
-	struct tulip_softc *sc;
+static void
+tlp_dm9102_reset(struct tulip_softc *sc)
 {
 
 	TULIP_WRITE(sc, CSR_DM_PHYSTAT, DM_PHYSTAT_GEPC|DM_PHYSTAT_GPED);
 	delay(100);
 	TULIP_WRITE(sc, CSR_DM_PHYSTAT, 0);
 }
+#endif
 
 /*****************************************************************************
  * Chip/board-specific media switches.  The ones here are ones that
@@ -3708,7 +3789,7 @@ tlp_dm9102_reset(sc)
  * NWay capabilities when using the UTP port.
  * XXX Actually, we don't yet.
  */
-const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
+static const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_TP,	IFM_10_T,	0,
 	  "10baseT",
 	  OPMODE_TTM,
@@ -3870,19 +3951,19 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	    0 } },
 };
 
-const struct tulip_srom_to_ifmedia *tlp_srom_to_ifmedia(u_int8_t);
-void	tlp_srom_media_info(struct tulip_softc *,
-	    const struct tulip_srom_to_ifmedia *, struct tulip_21x4x_media *);
-void	tlp_add_srom_media(struct tulip_softc *, int,
-	    void (*)(struct tulip_softc *, struct ifmediareq *),
-	    int (*)(struct tulip_softc *), const u_int8_t *, int);
-void	tlp_print_media(struct tulip_softc *);
-void	tlp_nway_activate(struct tulip_softc *, int);
-void	tlp_get_minst(struct tulip_softc *);
+static const struct tulip_srom_to_ifmedia *tlp_srom_to_ifmedia(u_int8_t);
+static void	tlp_srom_media_info(struct tulip_softc *,
+		    const struct tulip_srom_to_ifmedia *,
+		    struct tulip_21x4x_media *);
+static void	tlp_add_srom_media(struct tulip_softc *, int,
+		    void (*)(struct tulip_softc *, struct ifmediareq *),
+		    int (*)(struct tulip_softc *), const u_int8_t *, int);
+static void	tlp_print_media(struct tulip_softc *);
+static void	tlp_nway_activate(struct tulip_softc *, int);
+static void	tlp_get_minst(struct tulip_softc *);
 
-const struct tulip_srom_to_ifmedia *
-tlp_srom_to_ifmedia(sm)
-	u_int8_t sm;
+static const struct tulip_srom_to_ifmedia *
+tlp_srom_to_ifmedia(u_int8_t sm)
 {
 	const struct tulip_srom_to_ifmedia *tsti;
 
@@ -3895,11 +3976,9 @@ tlp_srom_to_ifmedia(sm)
 	return (NULL);
 }
 
-void
-tlp_srom_media_info(sc, tsti, tm)
-	struct tulip_softc *sc;
-	const struct tulip_srom_to_ifmedia *tsti;
-	struct tulip_21x4x_media *tm;
+static void
+tlp_srom_media_info(struct tulip_softc *sc,
+    const struct tulip_srom_to_ifmedia *tsti, struct tulip_21x4x_media *tm)
 {
 
 	tm->tm_name = tsti->tsti_name;
@@ -3933,14 +4012,11 @@ tlp_srom_media_info(sc, tsti, tm)
 	}
 }
 
-void
-tlp_add_srom_media(sc, type, get, set, list, cnt)
-	struct tulip_softc *sc;
-	int type;
-	void (*get)(struct tulip_softc *, struct ifmediareq *);
-	int (*set)(struct tulip_softc *);
-	const u_int8_t *list;
-	int cnt;
+static void
+tlp_add_srom_media(struct tulip_softc *sc, int type,
+    void (*get)(struct tulip_softc *, struct ifmediareq *),
+    int (*set)(struct tulip_softc *), const u_int8_t *list,
+    int cnt)
 {
 	struct tulip_21x4x_media *tm;
 	const struct tulip_srom_to_ifmedia *tsti;
@@ -3960,9 +4036,8 @@ tlp_add_srom_media(sc, type, get, set, list, cnt)
 	}
 }
 
-void
-tlp_print_media(sc)
-	struct tulip_softc *sc;
+static void
+tlp_print_media(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife;
 	struct tulip_21x4x_media *tm;
@@ -3990,10 +4065,8 @@ tlp_print_media(sc)
 #undef PRINT
 }
 
-void
-tlp_nway_activate(sc, media)
-	struct tulip_softc *sc;
-	int media;
+static void
+tlp_nway_activate(struct tulip_softc *sc, int media)
 {
 	struct ifmedia_entry *ife;
 
@@ -4005,9 +4078,8 @@ tlp_nway_activate(sc, media)
 	sc->sc_nway_active = ife;
 }
 
-void
-tlp_get_minst(sc)
-	struct tulip_softc *sc;
+static void
+tlp_get_minst(struct tulip_softc *sc)
 {
 
 	if ((sc->sc_media_seen &
@@ -4027,15 +4099,14 @@ tlp_get_minst(sc)
 /*
  * SIA Utility functions.
  */
-void	tlp_sia_update_link(struct tulip_softc *);
-void	tlp_sia_get(struct tulip_softc *, struct ifmediareq *);
-int	tlp_sia_set(struct tulip_softc *);
-int	tlp_sia_media(struct tulip_softc *, struct ifmedia_entry *);
-void	tlp_sia_fixup(struct tulip_softc *);
+static void	tlp_sia_update_link(struct tulip_softc *);
+static void	tlp_sia_get(struct tulip_softc *, struct ifmediareq *);
+static int	tlp_sia_set(struct tulip_softc *);
+static int	tlp_sia_media(struct tulip_softc *, struct ifmedia_entry *);
+static void	tlp_sia_fixup(struct tulip_softc *);
 
-void
-tlp_sia_update_link(sc)
-	struct tulip_softc *sc;
+static void
+tlp_sia_update_link(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife;
 	struct tulip_21x4x_media *tm;
@@ -4111,10 +4182,8 @@ tlp_sia_update_link(sc)
 	}
 }
 
-void
-tlp_sia_get(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_sia_get(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia_entry *ife;
 
@@ -4131,9 +4200,8 @@ tlp_sia_get(sc, ifmr)
 	ifmr->ifm_active = ife->ifm_media;
 }
 
-void
-tlp_sia_fixup(sc)
-	struct tulip_softc *sc;
+static void
+tlp_sia_fixup(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife;
 	struct tulip_21x4x_media *tm;
@@ -4168,18 +4236,15 @@ tlp_sia_fixup(sc)
 	}
 }
 
-int
-tlp_sia_set(sc)
-	struct tulip_softc *sc;
+static int
+tlp_sia_set(struct tulip_softc *sc)
 {
 
 	return (tlp_sia_media(sc, TULIP_CURRENT_MEDIA(sc)));
 }
 
-int
-tlp_sia_media(sc, ife)
-	struct tulip_softc *sc;
-	struct ifmedia_entry *ife;
+static int
+tlp_sia_media(struct tulip_softc *sc, struct ifmedia_entry *ife)
 {
 	struct tulip_21x4x_media *tm;
 
@@ -4229,11 +4294,10 @@ tlp_sia_media(sc, ife)
 /*
  * 21140 GPIO utility functions.
  */
-void	tlp_21140_gpio_update_link(struct tulip_softc *);
+static void	tlp_21140_gpio_update_link(struct tulip_softc *);
 
-void
-tlp_21140_gpio_update_link(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21140_gpio_update_link(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife;
 	struct tulip_21x4x_media *tm;
@@ -4252,9 +4316,7 @@ tlp_21140_gpio_update_link(sc)
 }
 
 void
-tlp_21140_gpio_get(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+tlp_21140_gpio_get(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia_entry *ife;
 
@@ -4272,8 +4334,7 @@ tlp_21140_gpio_get(sc, ifmr)
 }
 
 int
-tlp_21140_gpio_set(sc)
-	struct tulip_softc *sc;
+tlp_21140_gpio_set(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife;
 	struct tulip_21x4x_media *tm;
@@ -4307,10 +4368,10 @@ tlp_21140_gpio_set(sc)
 /*
  * 21040 and 21041 media switches.
  */
-void	tlp_21040_tmsw_init(struct tulip_softc *);
-void	tlp_21040_tp_tmsw_init(struct tulip_softc *);
-void	tlp_21040_auibnc_tmsw_init(struct tulip_softc *);
-void	tlp_21041_tmsw_init(struct tulip_softc *);
+static void	tlp_21040_tmsw_init(struct tulip_softc *);
+static void	tlp_21040_tp_tmsw_init(struct tulip_softc *);
+static void	tlp_21040_auibnc_tmsw_init(struct tulip_softc *);
+static void	tlp_21041_tmsw_init(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_21040_mediasw = {
 	tlp_21040_tmsw_init, tlp_sia_get, tlp_sia_set
@@ -4328,10 +4389,8 @@ const struct tulip_mediasw tlp_21041_mediasw = {
 	tlp_21041_tmsw_init, tlp_sia_get, tlp_sia_set
 };
 
-
-void
-tlp_21040_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21040_tmsw_init(struct tulip_softc *sc)
 {
 	static const u_int8_t media[] = {
 		TULIP_ROM_MB_MEDIA_TP,
@@ -4367,9 +4426,8 @@ tlp_21040_tmsw_init(sc)
 	tlp_print_media(sc);
 }
 
-void
-tlp_21040_tp_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21040_tp_tmsw_init(struct tulip_softc *sc)
 {
 	static const u_int8_t media[] = {
 		TULIP_ROM_MB_MEDIA_TP,
@@ -4386,9 +4444,8 @@ tlp_21040_tp_tmsw_init(sc)
 	tlp_print_media(sc);
 }
 
-void
-tlp_21040_auibnc_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21040_auibnc_tmsw_init(struct tulip_softc *sc)
 {
 	static const u_int8_t media[] = {
 		TULIP_ROM_MB_MEDIA_AUI,
@@ -4404,9 +4461,8 @@ tlp_21040_auibnc_tmsw_init(sc)
 	tlp_print_media(sc);
 }
 
-void
-tlp_21041_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_21041_tmsw_init(struct tulip_softc *sc)
 {
 	static const u_int8_t media[] = {
 		TULIP_ROM_MB_MEDIA_TP,
@@ -4549,25 +4605,25 @@ tlp_21041_tmsw_init(sc)
 /*
  * DECchip 2114x ISV media switch.
  */
-void	tlp_2114x_isv_tmsw_init(struct tulip_softc *);
-void	tlp_2114x_isv_tmsw_get(struct tulip_softc *, struct ifmediareq *);
-int	tlp_2114x_isv_tmsw_set(struct tulip_softc *);
+static void	tlp_2114x_isv_tmsw_init(struct tulip_softc *);
+static void	tlp_2114x_isv_tmsw_get(struct tulip_softc *,
+		    struct ifmediareq *);
+static int	tlp_2114x_isv_tmsw_set(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_2114x_isv_mediasw = {
 	tlp_2114x_isv_tmsw_init, tlp_2114x_isv_tmsw_get, tlp_2114x_isv_tmsw_set
 };
 
-void	tlp_2114x_nway_get(struct tulip_softc *, struct ifmediareq *);
-int	tlp_2114x_nway_set(struct tulip_softc *);
+static void	tlp_2114x_nway_get(struct tulip_softc *, struct ifmediareq *);
+static int	tlp_2114x_nway_set(struct tulip_softc *);
 
-void	tlp_2114x_nway_statchg(struct device *);
-int	tlp_2114x_nway_service(struct tulip_softc *, int);
-void	tlp_2114x_nway_auto(struct tulip_softc *);
-void	tlp_2114x_nway_status(struct tulip_softc *);
+static void	tlp_2114x_nway_statchg(struct device *);
+static int	tlp_2114x_nway_service(struct tulip_softc *, int);
+static void	tlp_2114x_nway_auto(struct tulip_softc *);
+static void	tlp_2114x_nway_status(struct tulip_softc *);
 
-void
-tlp_2114x_isv_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ifmedia_entry *ife;
@@ -5110,10 +5166,8 @@ tlp_2114x_isv_tmsw_init(sc)
 	tlp_sia_fixup(sc);
 }
 
-void
-tlp_2114x_nway_get(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_2114x_nway_get(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 
 	(void) tlp_2114x_nway_service(sc, MII_POLLSTAT);
@@ -5121,17 +5175,15 @@ tlp_2114x_nway_get(sc, ifmr)
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
-int
-tlp_2114x_nway_set(sc)
-	struct tulip_softc *sc;
+static int
+tlp_2114x_nway_set(struct tulip_softc *sc)
 {
 
 	return (tlp_2114x_nway_service(sc, MII_MEDIACHG));
 }
 
-void
-tlp_2114x_nway_statchg(self)
-	struct device *self;
+static void
+tlp_2114x_nway_statchg(struct device *self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 	struct mii_data *mii = &sc->sc_mii;
@@ -5150,9 +5202,8 @@ tlp_2114x_nway_statchg(self)
 	tlp_sia_media(sc, ife);
 }
 
-void
-tlp_2114x_nway_tick(arg)
-	void *arg;
+static void
+tlp_2114x_nway_tick(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	struct mii_data *mii = &sc->sc_mii;
@@ -5186,10 +5237,8 @@ tlp_2114x_nway_tick(arg)
  * somewhat like a PHY driver for simplicity.
  */
 
-int
-tlp_2114x_nway_service(sc, cmd)
-	struct tulip_softc *sc;
-	int cmd;
+static int
+tlp_2114x_nway_service(struct tulip_softc *sc, int cmd)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -5259,9 +5308,8 @@ tlp_2114x_nway_service(sc, cmd)
 	return (0);
 }
 
-void
-tlp_2114x_nway_auto(sc)
-	struct tulip_softc *sc;
+static void
+tlp_2114x_nway_auto(struct tulip_softc *sc)
 {
 	uint32_t siastat, siatxrx;
 
@@ -5297,9 +5345,8 @@ tlp_2114x_nway_auto(sc)
 	TULIP_WRITE(sc, CSR_SIASTAT, siastat);
 }
 
-void
-tlp_2114x_nway_status(sc)
-	struct tulip_softc *sc;
+static void
+tlp_2114x_nway_status(struct tulip_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t siatxrx, siastat, anlpar;
@@ -5371,10 +5418,8 @@ tlp_2114x_nway_status(sc)
 	}
 }
 
-void
-tlp_2114x_isv_tmsw_get(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_2114x_isv_tmsw_get(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
@@ -5382,9 +5427,8 @@ tlp_2114x_isv_tmsw_get(sc, ifmr)
 	(*tm->tm_get)(sc, ifmr);
 }
 
-int
-tlp_2114x_isv_tmsw_set(sc)
-	struct tulip_softc *sc;
+static int
+tlp_2114x_isv_tmsw_set(struct tulip_softc *sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
@@ -5403,15 +5447,14 @@ tlp_2114x_isv_tmsw_set(sc)
 /*
  * MII-on-SIO media switch.  Handles only MII attached to the SIO.
  */
-void	tlp_sio_mii_tmsw_init(struct tulip_softc *);
+static void	tlp_sio_mii_tmsw_init(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_sio_mii_mediasw = {
 	tlp_sio_mii_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
 };
 
-void
-tlp_sio_mii_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_sio_mii_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -5444,26 +5487,25 @@ tlp_sio_mii_tmsw_init(sc)
 /*
  * Lite-On PNIC media switch.  Must handle MII or internal NWAY.
  */
-void	tlp_pnic_tmsw_init(struct tulip_softc *);
-void	tlp_pnic_tmsw_get(struct tulip_softc *, struct ifmediareq *);
-int	tlp_pnic_tmsw_set(struct tulip_softc *);
+static void	tlp_pnic_tmsw_init(struct tulip_softc *);
+static void	tlp_pnic_tmsw_get(struct tulip_softc *, struct ifmediareq *);
+static int	tlp_pnic_tmsw_set(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_pnic_mediasw = {
 	tlp_pnic_tmsw_init, tlp_pnic_tmsw_get, tlp_pnic_tmsw_set
 };
 
-void	tlp_pnic_nway_statchg(struct device *);
-void	tlp_pnic_nway_tick(void *);
-int	tlp_pnic_nway_service(struct tulip_softc *, int);
-void	tlp_pnic_nway_reset(struct tulip_softc *);
-int	tlp_pnic_nway_auto(struct tulip_softc *, int);
-void	tlp_pnic_nway_auto_timeout(void *);
-void	tlp_pnic_nway_status(struct tulip_softc *);
-void	tlp_pnic_nway_acomp(struct tulip_softc *);
+static void	tlp_pnic_nway_statchg(struct device *);
+static void	tlp_pnic_nway_tick(void *);
+static int	tlp_pnic_nway_service(struct tulip_softc *, int);
+static void	tlp_pnic_nway_reset(struct tulip_softc *);
+static int	tlp_pnic_nway_auto(struct tulip_softc *, int);
+static void	tlp_pnic_nway_auto_timeout(void *);
+static void	tlp_pnic_nway_status(struct tulip_softc *);
+static void	tlp_pnic_nway_acomp(struct tulip_softc *);
 
-void
-tlp_pnic_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pnic_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *sep = "";
@@ -5523,10 +5565,8 @@ tlp_pnic_tmsw_init(sc)
 #undef PRINT
 }
 
-void
-tlp_pnic_tmsw_get(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_pnic_tmsw_get(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 	struct mii_data *mii = &sc->sc_mii;
 
@@ -5541,9 +5581,8 @@ tlp_pnic_tmsw_get(sc, ifmr)
 	}
 }
 
-int
-tlp_pnic_tmsw_set(sc)
-	struct tulip_softc *sc;
+static int
+tlp_pnic_tmsw_set(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -5566,9 +5605,8 @@ tlp_pnic_tmsw_set(sc)
 	return (0);
 }
 
-void
-tlp_pnic_nway_statchg(self)
-	struct device *self;
+static void
+tlp_pnic_nway_statchg(struct device *self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 
@@ -5600,9 +5638,8 @@ tlp_pnic_nway_statchg(self)
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 }
 
-void
-tlp_pnic_nway_tick(arg)
-	void *arg;
+static void
+tlp_pnic_nway_tick(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	int s;
@@ -5622,10 +5659,8 @@ tlp_pnic_nway_tick(arg)
  * somewhat like a PHY driver for simplicity.
  */
 
-int
-tlp_pnic_nway_service(sc, cmd)
-	struct tulip_softc *sc;
-	int cmd;
+static int
+tlp_pnic_nway_service(struct tulip_softc *sc, int cmd)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -5696,9 +5731,8 @@ tlp_pnic_nway_service(sc, cmd)
 	return (0);
 }
 
-void
-tlp_pnic_nway_reset(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pnic_nway_reset(struct tulip_softc *sc)
 {
 
 	TULIP_WRITE(sc, CSR_PNIC_NWAY, PNIC_NWAY_RS);
@@ -5706,10 +5740,8 @@ tlp_pnic_nway_reset(sc)
 	TULIP_WRITE(sc, CSR_PNIC_NWAY, 0);
 }
 
-int
-tlp_pnic_nway_auto(sc, waitfor)
-	struct tulip_softc *sc;
-	int waitfor;
+static int
+tlp_pnic_nway_auto(struct tulip_softc *sc, int waitfor)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -5756,9 +5788,8 @@ tlp_pnic_nway_auto(sc, waitfor)
 	return (EJUSTRETURN);
 }
 
-void
-tlp_pnic_nway_auto_timeout(arg)
-	void *arg;
+static void
+tlp_pnic_nway_auto_timeout(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	u_int32_t reg;
@@ -5780,9 +5811,8 @@ tlp_pnic_nway_auto_timeout(arg)
 	splx(s);
 }
 
-void
-tlp_pnic_nway_status(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pnic_nway_status(struct tulip_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	u_int32_t reg;
@@ -5827,9 +5857,8 @@ tlp_pnic_nway_status(sc)
 	}
 }
 
-void
-tlp_pnic_nway_acomp(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pnic_nway_acomp(struct tulip_softc *sc)
 {
 	u_int32_t reg;
 
@@ -5858,7 +5887,7 @@ tlp_pnic_nway_acomp(sc)
  * use the ISV media switch get/set functions to handle the rest.
  */
 
-void	tlp_pmac_tmsw_init(struct tulip_softc *);
+static void	tlp_pmac_tmsw_init(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_pmac_mediasw = {
 	tlp_pmac_tmsw_init, tlp_2114x_isv_tmsw_get, tlp_2114x_isv_tmsw_set
@@ -5868,9 +5897,8 @@ const struct tulip_mediasw tlp_pmac_mii_mediasw = {
 	tlp_pmac_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
 };
 
-void
-tlp_pmac_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_pmac_tmsw_init(struct tulip_softc *sc)
 {
 	static const u_int8_t media[] = {
 		TULIP_ROM_MB_MEDIA_TP,
@@ -5945,15 +5973,14 @@ tlp_pmac_tmsw_init(sc)
 /*
  * ADMtek AL981 media switch.  Only has internal PHY.
  */
-void	tlp_al981_tmsw_init(struct tulip_softc *);
+static void	tlp_al981_tmsw_init(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_al981_mediasw = {
 	tlp_al981_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
 };
 
-void
-tlp_al981_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_al981_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -5981,15 +6008,14 @@ tlp_al981_tmsw_init(sc)
  * standard SIO media switch, because the AN985 "ghosts" the
  * singly PHY at every address.
  */
-void	tlp_an985_tmsw_init(struct tulip_softc *);
+static void	tlp_an985_tmsw_init(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_an985_mediasw = {
 	tlp_an985_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
 };
 
-void
-tlp_an985_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_an985_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -6014,18 +6040,18 @@ tlp_an985_tmsw_init(sc)
 /*
  * Davicom DM9102 media switch.  Internal PHY and possibly HomePNA.
  */
-void	tlp_dm9102_tmsw_init(struct tulip_softc *);
-void	tlp_dm9102_tmsw_getmedia(struct tulip_softc *, struct ifmediareq *);
-int	tlp_dm9102_tmsw_setmedia(struct tulip_softc *);
+static void	tlp_dm9102_tmsw_init(struct tulip_softc *);
+static void	tlp_dm9102_tmsw_getmedia(struct tulip_softc *,
+		    struct ifmediareq *);
+static int	tlp_dm9102_tmsw_setmedia(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_dm9102_mediasw = {
 	tlp_dm9102_tmsw_init, tlp_dm9102_tmsw_getmedia,
 	    tlp_dm9102_tmsw_setmedia
 };
 
-void
-tlp_dm9102_tmsw_init(sc)
-	struct tulip_softc *sc;
+static void
+tlp_dm9102_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int32_t opmode;
@@ -6077,21 +6103,94 @@ tlp_dm9102_tmsw_init(sc)
 	}
 }
 
-void
-tlp_dm9102_tmsw_getmedia(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+static void
+tlp_dm9102_tmsw_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 
 	/* XXX HomePNA on DM9102A. */
 	tlp_mii_getmedia(sc, ifmr);
 }
 
-int
-tlp_dm9102_tmsw_setmedia(sc)
-	struct tulip_softc *sc;
+static int
+tlp_dm9102_tmsw_setmedia(struct tulip_softc *sc)
 {
 
 	/* XXX HomePNA on DM9102A. */
+	return (tlp_mii_setmedia(sc));
+}
+
+/*
+ * ASIX AX88140A/AX88141 media switch. Internal PHY or MII.
+ */
+
+static void	tlp_asix_tmsw_init(struct tulip_softc *);
+static void	tlp_asix_tmsw_getmedia(struct tulip_softc *,
+		    struct ifmediareq *);
+static int	tlp_asix_tmsw_setmedia(struct tulip_softc *);
+
+const struct tulip_mediasw tlp_asix_mediasw = {
+	tlp_asix_tmsw_init, tlp_asix_tmsw_getmedia,
+	tlp_asix_tmsw_setmedia
+};
+
+static void
+tlp_asix_tmsw_init(struct tulip_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int32_t opmode;
+
+	sc->sc_mii.mii_ifp = ifp;
+        sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+        sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+            tlp_mediastatus);
+
+	/*
+	 * Configure OPMODE properly for the internal MII interface.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		opmode = OPMODE_HBD|OPMODE_PS;
+		break;
+        default:
+                opmode = 0;
+                break;
+        }
+
+	TULIP_WRITE(sc, CSR_OPMODE, opmode);
+
+	/* Now, probe the internal MII for the internal PHY. */
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+
+	/* XXX Figure how to handle the PHY. */
+	
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
+
+	
+}
+
+static void
+tlp_asix_tmsw_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
+{
+	
+	/* XXX PHY handling. */
+	tlp_mii_getmedia(sc, ifmr);
+}
+
+static int
+tlp_asix_tmsw_setmedia(struct tulip_softc *sc)
+{
+	
+	/* XXX PHY handling. */
 	return (tlp_mii_setmedia(sc));
 }

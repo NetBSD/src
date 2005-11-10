@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.48.2.5 2005/03/04 16:40:53 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.48.2.6 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.5 2005/03/04 16:40:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.6 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.5 2005/03/04 16:40:53 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/conf.h>
@@ -268,7 +269,7 @@ cnpoll(dev_t dev, int events, struct lwp *l)
 	 */
 	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return error;
+		return POLLHUP;
 	return ((*cdev->d_poll)(dev, events, l));
 }
 
@@ -415,7 +416,7 @@ cn_redirect(dev_t *devp, int is_read, int *error)
 	 */
 	*error = ENXIO;
 	if (constty != NULL && minor(dev) == 0 &&
-	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE ))) {
+	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {
 		if (is_read) {
 			*error = 0;
 			return NULL;

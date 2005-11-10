@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.9.6.5 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: mfp.c,v 1.9.6.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.5 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,9 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 			panic ("IO map for MFP corruption??");
 #endif
 		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-		config_found (self, "kbd", NULL);
-		config_found (self, "clock", NULL);
-		config_found (self, "pow", NULL);
+		config_found (self, __UNCONST("kbd"), NULL);
+		config_found (self, __UNCONST("clock"), NULL);
+		config_found (self, __UNCONST("pow"), NULL);
 	} else {
 		/*
 		 * Called from config_console;

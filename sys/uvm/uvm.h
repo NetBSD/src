@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.35.6.5 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: uvm.h,v 1.35.6.6 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -106,10 +106,6 @@ struct uvm {
 	int page_hashmask;		/* hash mask */
 	struct simplelock hashlock;	/* lock on page_hash array */
 
-	/* anon stuff */
-	struct vm_anon *afree;		/* anon free list */
-	struct simplelock afreelock; 	/* lock on anon free list */
-
 	struct simplelock kentry_lock;
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
@@ -201,11 +197,23 @@ do {									\
 
 #ifdef _KERNEL
 
+#if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C)
 #include <uvm/uvm_amap_i.h>
+#endif
+
 #include <uvm/uvm_fault_i.h>
+
+#if defined(UVM_MAP_INLINE) || defined(UVM_MAP_C)
 #include <uvm/uvm_map_i.h>
+#endif
+
+#if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE_C)
 #include <uvm/uvm_page_i.h>
+#endif
+
+#if defined(UVM_PAGER_INLINE) || defined(UVM_PAGER_C)
 #include <uvm/uvm_pager_i.h>
+#endif
 
 #endif /* _KERNEL */
 

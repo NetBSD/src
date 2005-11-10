@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.28.2.3 2004/09/21 13:22:28 skrll Exp $ */
+/*	$NetBSD: cache.h,v 1.28.2.4 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -243,8 +243,9 @@ struct cacheinfo {
 	int	c_enabled;		/* true => cache is enabled */
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
+					/* if split, MIN(icache,dcache) */
 	int	c_l2linesize;		/* log2(linesize) */
-	int	c_nlines;		/* number of cache lines */
+	int	c_nlines;		/* precomputed # of lines to flush */
 	int	c_physical;		/* true => cache has physical
 						   address tags */
 	int 	c_associativity;	/* # of "buckets" in cache line */

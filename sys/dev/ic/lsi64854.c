@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.23.2.2 2005/03/04 16:41:30 skrll Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.23.2.3 2005/11/10 14:04:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23.2.2 2005/03/04 16:41:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23.2.3 2005/11/10 14:04:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ lsi64854_attach(sc)
 } while (0)
 
 #define DMA_DRAIN(sc, dontpanic) do {					\
-	u_int32_t csr;							\
+	u_int32_t _csr;							\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
@@ -181,13 +181,13 @@ lsi64854_attach(sc)
 	         * Select drain bit based on revision			\
 	         * also clears errors and D_TC flag			\
 	         */							\
-	        csr = L64854_GCSR(sc);					\
+	        _csr = L64854_GCSR(sc);					\
 	        if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)	\
-		        csr |= D_ESC_DRAIN;				\
+		        _csr |= D_ESC_DRAIN;				\
 	        else							\
-		        csr |= L64854_INVALIDATE;			\
+		        _csr |= L64854_INVALIDATE;			\
 									\
-	        L64854_SCSR(sc,csr);					\
+	        L64854_SCSR(sc,_csr);					\
 	}								\
 	/*								\
 	 * Wait for draining to finish					\
@@ -197,7 +197,7 @@ lsi64854_attach(sc)
 } while(0)
 
 #define DMA_FLUSH(sc, dontpanic) do {					\
-	u_int32_t csr;							\
+	u_int32_t _csr;							\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
@@ -205,10 +205,10 @@ lsi64854_attach(sc)
 	 * other revs: D_ESC_R_PEND bit reads as 0			\
 	 */								\
 	DMAWAIT(sc, L64854_GCSR(sc) & D_ESC_R_PEND, "R_PEND", dontpanic);\
-	csr = L64854_GCSR(sc);					\
-	csr &= ~(L64854_WRITE|L64854_EN_DMA); /* no-ops on ENET */	\
-	csr |= L64854_INVALIDATE;	 	/* XXX FAS ? */		\
-	L64854_SCSR(sc,csr);						\
+	_csr = L64854_GCSR(sc);					\
+	_csr &= ~(L64854_WRITE|L64854_EN_DMA); /* no-ops on ENET */	\
+	_csr |= L64854_INVALIDATE;	 	/* XXX FAS ? */		\
+	L64854_SCSR(sc,_csr);						\
 } while(0)
 
 void

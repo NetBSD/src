@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28.2.3 2004/09/21 13:22:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.28.2.4 2005/11/10 13:59:17 skrll Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -8,7 +8,7 @@ FILES=		boot.net bootjs.net ${RELOCS:S/^/boot./g}
 CLEANFILES:=	vers.c ${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
-CPPFLAGS+=	-DBOOT_AOUT -DBOOT_ELF32
+CPPFLAGS+=	-DBOOT_AOUT -DBOOT_ELF32 -DSUPPORT_DHCP
 CFLAGS+=	-freestanding
 
 INCLUDE_LIBZ=	yes

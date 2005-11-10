@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.47.2.6 2005/03/04 16:41:02 skrll Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.47.2.7 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.2.6 2005/03/04 16:41:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.2.7 2005/11/10 14:03:54 skrll Exp $");
 
 #include "opt_cardbus.h"
 
@@ -73,8 +73,6 @@ STATIC void cardbusattach(struct device *, struct device *, void *);
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
-static int cardbussubmatch(struct device *, struct cfdata *,
-    const locdesc_t *, void *);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -122,12 +120,11 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	struct cbslot_attach_args *cba = aux;
 
 	sc->sc_bus = cba->cba_bus;
-	sc->sc_device = 0;
 	sc->sc_intrline = cba->cba_intrline;
 	sc->sc_cacheline = cba->cba_cacheline;
 	sc->sc_lattimer = cba->cba_lattimer;
 
-	printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
+	printf(": bus %d", sc->sc_bus);
 	if (bootverbose)
 		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
 		    sc->sc_lattimer);
@@ -293,7 +290,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 
 	switch (tuple[0]) {
 	case PCMCIA_CISTPL_MANFID:
-		if (tuple[1] != 5) {
+		if (tuple[1] != 4) {
 			DPRINTF(("%s: wrong length manufacturer id (%d)\n",
 			    __func__, tuple[1]));
 			break;
@@ -308,12 +305,13 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 		p = cis->cis1_info_buf + 2;
 		while (i <
 		    sizeof(cis->cis1_info) / sizeof(cis->cis1_info[0])) {
+			if (p >= cis->cis1_info_buf + tuple[1] || *p == '\xff')
+				break;
 			cis->cis1_info[i++] = p;
 			while (*p != '\0' && *p != '\xff')
 				p++;
-			if (*p == '\xff')
-				break;
-			p++;
+			if (*p == '\0')
+				p++;
 		}
 		break;
 
@@ -387,8 +385,8 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
 	int cdstatus;
-	static int wildcard[] = {
-		CARDBUSCF_DEV_DEFAULT, CARDBUSCF_FUNCTION_DEFAULT
+	static int wildcard[CARDBUSCF_NLOCS] = {
+		CARDBUSCF_FUNCTION_DEFAULT
 	};
 
 	cc = sc->sc_cc;
@@ -425,11 +423,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	cc = sc->sc_cc;
 	cf = sc->sc_cf;
 
-	/* XXX what a nonsense */
-	if (locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
-	    locators[CARDBUSCF_DEV] != sc->sc_device)
-		return (0);
-
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
@@ -444,7 +437,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	enable_function(sc, cdstatus, 8);
 	function = 0;
 
-	tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
+	tag = cardbus_make_tag(cc, cf, sc->sc_bus, function);
 
 	/*
 	 * Wait until power comes up.  Maxmum 500 ms.
@@ -477,8 +470,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 
 	for (function = 0; function < nfunction; function++) {
 		struct cardbus_attach_args ca;
-		int help[3];
-		locdesc_t *ldesc = (void *)&help; /* XXX */
+		int locs[CARDBUSCF_NLOCS];
 
 		if (locators[CARDBUSCF_FUNCTION] !=
 		    CARDBUSCF_FUNCTION_DEFAULT &&
@@ -488,8 +480,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		if (sc->sc_funcs[function])
 			continue;
 
-		tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device,
-		    function);
+		tag = cardbus_make_tag(cc, cf, sc->sc_bus, function);
 
 		id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
 		class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
@@ -550,7 +541,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ct->ct_cc = sc->sc_cc;
 		ct->ct_cf = sc->sc_cf;
 		ct->ct_bus = sc->sc_bus;
-		ct->ct_dev = sc->sc_device;
 		ct->ct_func = function;
 		ct->ct_sc = sc;
 		sc->sc_funcs[function] = ct;
@@ -570,7 +560,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 
 		ca.ca_tag = tag;
 		ca.ca_bus = sc->sc_bus;
-		ca.ca_device = sc->sc_device; /* always 0 */
 		ca.ca_function = function;
 		ca.ca_id = id;
 		ca.ca_class = class;
@@ -592,12 +581,10 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 			}
 		}
 
-		ldesc->len = 2;
-		ldesc->locs[CARDBUSCF_DEV] = sc->sc_device; /* always 0 */
-		ldesc->locs[CARDBUSCF_FUNCTION] = function;
+		locs[CARDBUSCF_FUNCTION] = function;
 
-		if ((csc = config_found_sm_loc((void *)sc, "cardbus", ldesc,
-		    &ca, cardbusprint, cardbussubmatch)) == NULL) {
+		if ((csc = config_found_sm_loc((void *)sc, "cardbus", locs,
+		    &ca, cardbusprint, config_stdsubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;
@@ -614,24 +601,6 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	disable_function(sc, 8);
 
 	return (0);
-}
-
-static int
-cardbussubmatch(struct device *parent, struct cfdata *cf,
-		const locdesc_t *ldesc, void *aux)
-{
-
-	/* ldesc->locs[CARDBUSCF_DEV] is always 0 */
-	if (cf->cf_loc[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_DEV] != ldesc->locs[CARDBUSCF_DEV]) {
-		return (0);
-	}
-	if (cf->cf_loc[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[CARDBUSCF_FUNCTION] != ldesc->locs[CARDBUSCF_FUNCTION]) {
-		return (0);
-	}
-
-	return (config_match(parent, cf, aux));
 }
 
 static int
@@ -656,7 +625,7 @@ cardbusprint(void *aux, const char *pnp)
 		    ca->ca_cis.manufacturer, ca->ca_cis.product);
 		aprint_normal(" %s at %s", devinfo, pnp);
 	}
-	aprint_normal(" dev %d function %d", ca->ca_device, ca->ca_function);
+	aprint_normal(" function %d", ca->ca_function);
 
 	return (UNCONF);
 }
@@ -802,7 +771,7 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 
 	/* exiting critical area */
 
-	tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
+	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
 	command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
 	command |= (CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_IO_ENABLE |

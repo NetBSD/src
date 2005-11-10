@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.90.2.9 2005/04/01 14:29:37 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.90.2.10 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.9 2005/04/01 14:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.10 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,7 @@ ccdattach(int num)
 		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
 		cs->sc_dkdev.dk_name = cs->sc_xname;	/* XXX */
 		lockinit(&cs->sc_lock, PRIBIO, "ccdlk", 0, 0);
+		pseudo_disk_init(&cs->sc_dkdev);
 	}
 }
 
@@ -691,7 +692,7 @@ ccdstrategy(struct buf *bp)
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
-	BUFQ_PUT(&cs->sc_bufq, bp);
+	BUFQ_PUT(cs->sc_bufq, bp);
 	ccdstart(cs);
 	splx(s);
 	return;
@@ -717,7 +718,7 @@ ccdstart(struct ccd_softc *cs)
 #endif
 
 	/* See if there is work for us to do. */
-	while ((bp = BUFQ_PEEK(&cs->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_PEEK(cs->sc_bufq)) != NULL) {
 		/* Instrumentation. */
 		disk_busy(&cs->sc_dkdev);
 
@@ -753,7 +754,7 @@ ccdstart(struct ccd_softc *cs)
 		}
 
 		/* Transfer all set up, remove job from the queue. */
-		(void) BUFQ_GET(&cs->sc_bufq);
+		(void) BUFQ_GET(cs->sc_bufq);
 
 		/* Now fire off the requests. */
 		while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
@@ -1083,7 +1084,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef DEBUG
 		if (ccddebug & CCDB_INIT)
 			for (i = 0; i < ccio->ccio_ndisks; ++i)
-				printf("ccdioctl: component %d: 0x%p\n",
+				printf("ccdioctl: component %d: %p\n",
 				    i, cpp[i]);
 #endif
 
@@ -1129,10 +1130,10 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		ccio->ccio_unit = unit;
 		ccio->ccio_size = cs->sc_size;
 
-		bufq_alloc(&cs->sc_bufq, BUFQ_FCFS);
+		bufq_alloc(&cs->sc_bufq, "fcfs", 0);
 
 		/* Attach the disk. */
-		disk_attach(&cs->sc_dkdev);
+		pseudo_disk_attach(&cs->sc_dkdev);
 
 		/* Try and read the disklabel. */
 		ccdgetdisklabel(dev);
@@ -1155,10 +1156,10 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* Kill off any queued buffers. */
 		s = splbio();
-		bufq_drain(&cs->sc_bufq);
+		bufq_drain(cs->sc_bufq);
 		splx(s);
 
-		bufq_free(&cs->sc_bufq);
+		bufq_free(cs->sc_bufq);
 
 		/*
 		 * Free ccd_softc information and clear entry.
@@ -1191,7 +1192,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		cs->sc_flags &= ~(CCDF_INITED|CCDF_VLABEL);
 
 		/* Detatch the disk. */
-		disk_detach(&cs->sc_dkdev);
+		pseudo_disk_detach(&cs->sc_dkdev);
 		break;
 
 	case DIOCGDINFO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.8.8.1 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: llscan.c,v 1.8.8.2 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.8.8.1 2005/03/04 16:54:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.8.8.2 2005/11/10 14:11:55 skrll Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -162,7 +162,7 @@ char o,c;
 	IFDEBUG(S)
 		fprintf(stdout,"getstr: ch=%c, delimiters %c %c\n",
 			ch,o, c);
-		fprintf(stdout,"getstr: buffptr 0x%p, currentbuf 0x%x\n",
+		fprintf(stdout,"getstr: buffptr %p, currentbuf 0x%x\n",
 			buffptr, currentbuf);
 	ENDDEBUG
 
@@ -245,7 +245,7 @@ char o,c;
 			fprintf(stderr,
 			"%s too long.\n", (o=='{')?"Action":"Predicate"); /*}*/
 			fprintf(stderr,
-			"buffptr, currentbuf 0x%p, 0x%x\n",buffptr,currentbuf );
+			"buffptr, currentbuf %p, 0x%x\n",buffptr,currentbuf );
 			Exit(-1);
 		}
 		IFDEBUG(S)
@@ -258,7 +258,7 @@ char o,c;
 
 	IFDEBUG(S)
 		fprintf(stdout,"exit getstr: got %s\n", buffer[currentbuf]);
-		fprintf(stdout,"exit getstr: buffptr 0x%p, currentbuf 0x%x\n",
+		fprintf(stdout,"exit getstr: buffptr %p, currentbuf 0x%x\n",
 			buffptr, currentbuf);
 	ENDDEBUG
 }
@@ -431,7 +431,7 @@ again:
 			TVAL.ID.address = buffer[currentbuf];
 		}
 		IFDEBUG(S)
-			fprintf(stdout, "llscan: id or keyword 0x%p, %s\n",
+			fprintf(stdout, "llscan: id or keyword %p, %s\n",
 			TVAL.ID.address, TVAL.ID.address);
 		ENDDEBUG
 		break;

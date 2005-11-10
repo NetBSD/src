@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.39.2.8 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.39.2.9 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.8 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.9 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.8 2005/04/01 14:31:34 skrll E
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *));
-int	umapfs_unmount __P((struct mount *, int, struct lwp *));
+int	umapfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct lwp *);
+int	umapfs_unmount(struct mount *, int, struct lwp *);
 
 /*
  * Mount umap layer
@@ -84,7 +84,6 @@ umapfs_mount(mp, path, data, ndp, l)
 		if (amp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &amp->umapm_export);
 		args.nentries = amp->info_nentries;
 		args.gnentries = amp->info_gnentries;
 		return copyout(&args, data, sizeof(args));
@@ -106,16 +105,10 @@ umapfs_mount(mp, path, data, ndp, l)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		amp = MOUNTTOUMAPMOUNT(mp);
-		if (args.umap_target == 0)
-			return (vfs_export(mp, &amp->umapm_export,
-					&args.umap_export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
@@ -248,7 +241,7 @@ umapfs_unmount(mp, mntflags, l)
 	int mntflags;
 	struct lwp *l;
 {
-	struct vnode *rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
+	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
 	int flags = 0;
 
@@ -269,22 +262,22 @@ umapfs_unmount(mp, mntflags, l)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (rootvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1)
 		return (EBUSY);
-	if ((error = vflush(mp, rootvp, flags)) != 0)
+	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);
 
 #ifdef UMAPFS_DIAGNOSTIC
-	vprint("alias root of lower", rootvp);
+	vprint("alias root of lower", rtvp);
 #endif
 	/*
 	 * Release reference on underlying root vnode
 	 */
-	vrele(rootvp);
+	vrele(rtvp);
 	/*
 	 * And blow it away for future re-use
 	 */
-	vgone(rootvp);
+	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
@@ -336,9 +329,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,

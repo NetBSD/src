@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.1.4.7 2005/04/01 14:31:35 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.1.4.8 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.4.7 2005/04/01 14:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.4.8 2005/11/10 14:10:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -257,7 +257,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	char enaddrstr[18];
 	uint32_t ui;
 	int error;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	aprint_normal("%s: faking Ethernet device\n",
 	    self->dv_xname);
@@ -919,6 +919,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
+	int s;
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -959,7 +960,9 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
+	s =splnet();
 	(*ifp->if_input)(ifp, m);
+	splx(s);
 
 	return (0);
 }
@@ -1185,7 +1188,7 @@ tap_kqread(struct knote *kn, long hint)
  */
 SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 {
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 	int error = 0;
 
 	if ((error = sysctl_createv(clog, 0, NULL, NULL,
@@ -1359,7 +1362,6 @@ tap_ether_aton(u_char *dest, char *str)
  *      @(#)if_ethersubr.c      8.2 (Berkeley) 4/4/96
  */
 
-static char digits[] = "0123456789abcdef";
 static char *
 tap_ether_sprintf(char *dest, const u_char *ap)
 {
@@ -1367,8 +1369,8 @@ tap_ether_sprintf(char *dest, const u_char *ap)
 	int i;
 
 	for (i = 0; i < 6; i++) {
-		*cp++ = digits[*ap >> 4];
-		*cp++ = digits[*ap++ & 0xf];
+		*cp++ = hexdigits[*ap >> 4];
+		*cp++ = hexdigits[*ap++ & 0xf];
 		*cp++ = ':';
 	}
 	*--cp = 0;

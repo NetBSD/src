@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.11.2.6 2005/03/04 16:53:44 skrll Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.11.2.7 2005/11/10 14:11:35 skrll Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.11.2.6 2005/03/04 16:53:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.11.2.7 2005/11/10 14:11:35 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -362,7 +362,7 @@ sysctl_fast_ipsec(SYSCTLFN_ARGS)
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
-	struct sysctlnode *_ipsec;
+	const struct sysctlnode *_ipsec;
 	int ipproto_ipsec;
 
 	sysctl_createv(clog, 0, NULL, NULL,

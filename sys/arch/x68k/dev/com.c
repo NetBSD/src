@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.30.6.5 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: com.c,v 1.30.6.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.5 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,7 @@ static int
 comprobe1(int iobase)
 {
 
-	if (badbaddr((caddr_t)pio(iobase, com_lcr)))
+	if (badbaddr((void*)pio(iobase, com_lcr)))
 		return 0;
 	/* force access to id reg */
 	outb(pio(iobase , com_lcr), 0);
@@ -419,7 +419,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

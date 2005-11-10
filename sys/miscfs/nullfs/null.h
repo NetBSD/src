@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.13.16.3 2004/09/21 13:36:31 skrll Exp $	*/
+/*	$NetBSD: null.h,v 1.13.16.4 2005/11/10 14:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -104,23 +104,23 @@ struct null_node {
 #define	null_vnode	ln.layer_vnode
 #define	null_flags	ln.layer_flags
 
-int	null_node_create __P((struct mount *, struct vnode *,
-	    struct vnode **));
+int	null_node_create(struct mount *, struct vnode *,
+	    struct vnode **);
 
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
 #define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
 #define	NULLTOV(xp) ((xp)->null_vnode)
 #ifdef NULLFS_DIAGNOSTIC
-struct vnode *layer_checkvp __P((struct vnode *, char *, int));
+struct vnode *layer_checkvp(struct vnode *, char *, int);
 #define	NULLVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
 #endif
 
-extern int (**null_vnodeop_p) __P((void *));
+extern int (**null_vnodeop_p)(void *);
 extern struct vfsops nullfs_vfsops;
 
-void nullfs_init __P((void));
+void nullfs_init(void);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_null_setup);

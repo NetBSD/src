@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.8.2.4 2005/04/01 14:28:04 skrll Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.8.2.5 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.4 2005/04/01 14:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.5 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -589,33 +589,33 @@ oea_batinit(paddr_t pa, ...)
 	mem_regions(&allmem, &availmem);
 	if (cpuvers == MPC601) {
 		for (mp = allmem; mp->size; mp++) {
-			paddr_t pa = mp->start & 0xff800000;
+			paddr_t paddr = mp->start & 0xff800000;
 			paddr_t end = mp->start + mp->size;
 
 			do {
-				u_int i = pa >> 23;
+				u_int ix = paddr >> 23;
 
-				battable[i].batl =
-				    BATL601(pa, BAT601_BSM_8M, BAT601_V);
-				battable[i].batu =
-				    BATU601(pa, BAT601_M, BAT601_Ku, BAT601_PP_NONE);
-				pa += (1 << 23);
-			} while (pa < end);
+				battable[ix].batl =
+				    BATL601(paddr, BAT601_BSM_8M, BAT601_V);
+				battable[ix].batu =
+				    BATU601(paddr, BAT601_M, BAT601_Ku, BAT601_PP_NONE);
+				paddr += (1 << 23);
+			} while (paddr < end);
 		}
 	} else {
 		for (mp = allmem; mp->size; mp++) {
-			paddr_t pa = mp->start & 0xf0000000;
+			paddr_t paddr = mp->start & 0xf0000000;
 			paddr_t end = mp->start + mp->size;
 
 			do {
-				u_int i = pa >> 28;
+				u_int ix = paddr >> 28;
 
-				battable[i].batl =
-				    BATL(pa, BAT_M, BAT_PP_RW);
-				battable[i].batu =
-				    BATU(pa, BAT_BL_256M, BAT_Vs);
-				pa += SEGMENT_LENGTH;
-			} while (pa < end);
+				battable[ix].batl =
+				    BATL(paddr, BAT_M, BAT_PP_RW);
+				battable[ix].batu =
+				    BATU(paddr, BAT_BL_256M, BAT_Vs);
+				paddr += SEGMENT_LENGTH;
+			} while (paddr < end);
 		}
 	}
 }
@@ -682,7 +682,7 @@ oea_startup(const char *model)
 	}
 	initmsgbuf(v, sz);
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
 	cpu_identify(NULL, 0);

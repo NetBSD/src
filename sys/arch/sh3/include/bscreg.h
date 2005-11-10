@@ -1,4 +1,4 @@
-/*	$NetBSD: bscreg.h,v 1.4 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: bscreg.h,v 1.4.12.1 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -58,5 +58,12 @@
 #define	SH4_RTCNT		0xff800020	/* 16bit */
 #define	SH4_RTCOR		0xff800024	/* 16bit */
 #define	SH4_RFCR		0xff800028	/* 16bit */
+#define	SH4_BCR3		0xff800050	/* 16bit: SH7751R */
+#define	SH4_BCR4		0xfe0a00f0	/* 32bit: SH7751R */
+
+#define	BCR1_MASTER		(1 << 30)
+#define	BCR1_BREQEN		(1 << 19)
+
+#define	BCR2_PORTEN		(1 << 0)
 
 #endif	/* !_SH3_BSCREG_H_ */

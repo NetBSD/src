@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicvar.h,v 1.1.10.3 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: iwicvar.h,v 1.1.10.4 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -181,17 +181,17 @@ enum I430commands {
 	CMD_ILL			/* Illegal command		 */
 };
 
-extern void iwic_init(struct iwic_softc *);
-extern void iwic_next_state(struct iwic_softc *, int);
+void iwic_init(struct iwic_softc *);
+void iwic_next_state(struct iwic_softc *, int);
 
-extern void iwic_dchan_init(struct iwic_softc *);
-extern void iwic_dchan_xirq(struct iwic_softc *);
-extern void iwic_dchan_xfer_irq(struct iwic_softc *, int);
-extern void iwic_dchan_disable(struct iwic_softc *);
-extern int iwic_dchan_data_req(struct iwic_softc *, struct mbuf *, int);
-extern void iwic_dchan_transmit(struct iwic_softc *);
+void iwic_dchan_init(struct iwic_softc *);
+void iwic_dchan_xirq(struct iwic_softc *);
+void iwic_dchan_xfer_irq(struct iwic_softc *, int);
+void iwic_dchan_disable(struct iwic_softc *);
+int iwic_dchan_data_req(struct iwic_softc *, struct mbuf *, int);
+void iwic_dchan_transmit(struct iwic_softc *);
 
-char *iwic_printstate(struct iwic_softc *);
+const char *iwic_printstate(struct iwic_softc *);
 
 void iwic_init_linktab(struct iwic_softc *);
 void iwic_bchan_xirq(struct iwic_softc *, int);

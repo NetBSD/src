@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.90.2.7 2005/04/01 14:30:10 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.90.2.8 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90.2.7 2005/04/01 14:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90.2.8 2005/11/10 14:06:02 skrll Exp $");
 
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-/* #define CBB_DEBUG */
 
 /*
 #define CB_PCMCIA_POLL
@@ -79,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90.2.7 2005/04/01 14:30:10 skrll Exp $")
 
 #include "locators.h"
 
+#if defined(__i386__)
+#include "ioapic.h"
+#endif
+
 #ifndef __NetBSD_Version__
 struct cfdriver cbb_cd = {
 	NULL, "cbb", DV_DULL
@@ -100,16 +103,16 @@ struct cfdriver cbb_cd = {
 #define DELAY_MS(time, param)						\
     do {								\
 	if (cold == 0) {						\
-	    int tick = (hz*(time))/1000;				\
+	    int xtick = (hz*(time))/1000;				\
 									\
-	    if (tick <= 1) {						\
-		tick = 2;						\
+	    if (xtick <= 1) {						\
+		xtick = 2;						\
 	    }								\
-	    tsleep((void *)(param), PWAIT, "pccbb", tick);		\
+	    tsleep((void *)(param), PWAIT, "pccbb", xtick);		\
 	} else {							\
 	    delay((time)*1000);						\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 int pcicbbmatch(struct device *, struct cfdata *, void *);
 void pccbbattach(struct device *, struct device *, void *);
@@ -154,7 +157,7 @@ static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq,
     int level, int (*ih) (void *), void *sc);
 static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
-static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
+static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
 static void pccbb_free_tag(cardbus_chipset_tag_t, cardbustag_t);
 static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t, cardbustag_t, int);
 static void pccbb_conf_write(cardbus_chipset_tag_t, cardbustag_t, int,
@@ -517,12 +520,20 @@ pccbbattach(parent, self, aux)
 	/*
 	 * When interrupt isn't routed correctly, give up probing cbb and do
 	 * not kill pcic-compatible port.
+	 *
+	 * However, if we are using an ioapic, avoid this check -- pa_intrline
+	 * may well be zero, with the interrupt routed through the apic.
 	 */
+
+#if NIOAPIC > 0
+	printf("%s: using ioapic for interrupt\n", sc->sc_dev.dv_xname);
+#else
 	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
     		printf("%s: NOT USED because of unconfigured interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+#endif
 
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 
@@ -530,7 +541,7 @@ pccbbattach(parent, self, aux)
 
 #if defined CBB_DEBUG
 	{
-		static char *intrname[5] = { "NON", "A", "B", "C", "D" };
+		static const char *intrname[] = { "NON", "A", "B", "C", "D" };
 		printf("%s: intrpin %s, intrtag %d\n", sc->sc_dev.dv_xname,
 		    intrname[pa->pa_intrpin], pa->pa_intrline);
 	}
@@ -617,7 +628,7 @@ pccbb_pci_callback(self)
 		}
 		sc->sc_base_memt = sc->sc_memt;
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%lx\n",
 		    sc->sc_dev.dv_xname, (unsigned long)sockbase,
 		    (unsigned long)pci_conf_read(pc, sc->sc_tag,
 		    PCI_SOCKBASE)));
@@ -632,7 +643,7 @@ pccbb_pci_callback(self)
 			return;
 		}
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%lx\n",
 		    sc->sc_dev.dv_xname, (unsigned long)sock_base,
 		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
@@ -724,7 +735,7 @@ pccbb_pci_callback(self)
 	pccbb_pcmcia_attach_setup(sc, &paa);
 	caa.caa_cb_attach = NULL;
 	if (cba.cba_bus == 0)
-		printf("%s: secondary bus number uninitialized; try PCIBIOS_BUS_FIXUP\n", sc->sc_dev.dv_xname);
+		printf("%s: secondary bus number uninitialized; try PCI_BUS_FIXUP\n", sc->sc_dev.dv_xname);
 	else
 		caa.caa_cb_attach = &cba;
 	caa.caa_16_attach = &paa;
@@ -1973,18 +1984,18 @@ cb_show_regs(pc, tag, memt, memh)
 
 /*
  * static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
- *                                    int busno, int devno, int function)
+ *                                    int busno, int function)
  *   This is the function to make a tag to access config space of
  *  a CardBus Card.  It works same as pci_conf_read.
  */
 static cardbustag_t
-pccbb_make_tag(cc, busno, devno, function)
+pccbb_make_tag(cc, busno, function)
 	cardbus_chipset_tag_t cc;
-	int busno, devno, function;
+	int busno, function;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
-	return pci_make_tag(sc->sc_pc, busno, devno, function);
+	return pci_make_tag(sc->sc_pc, busno, 0, function);
 }
 
 static void
@@ -2198,7 +2209,7 @@ pccbb_pcmcia_io_map(pch, width, offset, size, pcihp, windowp)
 	bus_addr_t ioaddr = pcihp->addr + offset;
 	int i, win;
 #if defined CBB_DEBUG
-	static char *width_names[] = { "dynamic", "io8", "io16" };
+	static const char *width_names[] = { "dynamic", "io8", "io16" };
 #endif
 
 	/* Sanity check I/O handle. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.78.2.9 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.78.2.10 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.9 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.10 2005/11/10 14:06:01 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1006,8 +1006,10 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * The DP83820 can do IPv4, TCPv4, and UDPv4 checksums
 	 * in hardware.
 	 */
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif /* DP83820 */
 
 	/*
@@ -1372,16 +1374,16 @@ SIP_DECL(start)(struct ifnet *ifp)
 		 */
 		extsts = 0;
 		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
-			KDASSERT(ifp->if_capenable & IFCAP_CSUM_IPv4);
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_IPv4_Tx);
 			SIP_EVCNT_INCR(&sc->sc_ev_txipsum);
 			extsts |= htole32(EXTSTS_IPPKT);
 		}
 		if (m0->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-			KDASSERT(ifp->if_capenable & IFCAP_CSUM_TCPv4);
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx);
 			SIP_EVCNT_INCR(&sc->sc_ev_txtcpsum);
 			extsts |= htole32(EXTSTS_TCPPKT);
 		} else if (m0->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
-			KDASSERT(ifp->if_capenable & IFCAP_CSUM_UDPv4);
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx);
 			SIP_EVCNT_INCR(&sc->sc_ev_txudpsum);
 			extsts |= htole32(EXTSTS_UDPPKT);
 		}
@@ -2434,11 +2436,15 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	if (ifp->if_mtu > 8109 &&
 	    (ifp->if_capenable &
-	     (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))) {
+	     (IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
+	      IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
+	      IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx))) {
 		printf("%s: Checksum offloading does not work if MTU > 8109 - "
 		       "disabled.\n", sc->sc_dev.dv_xname);
-		ifp->if_capenable &= ~(IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-				       IFCAP_CSUM_UDPv4);
+		ifp->if_capenable &=
+		    ~(IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
+		     IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
+		     IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx);
 		ifp->if_csum_flags_tx = 0;
 		ifp->if_csum_flags_rx = 0;
 	}
@@ -2460,7 +2466,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	reg = 0;
 	if (ifp->if_capenable &
-	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	    (IFCAP_CSUM_IPv4_Rx|IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx))
 		reg |= VRCR_IPEN;
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VRCR_VTDEN|VRCR_VTREN;
@@ -2473,7 +2479,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	reg = 0;
 	if (ifp->if_capenable &
-	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+	    (IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_UDPv4_Tx))
 		reg |= VTCR_PPCHK;
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VTCR_VPPTI;

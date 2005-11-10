@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.51.2.4 2004/09/21 13:33:44 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.51.2.5 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.51.2.4 2004/09/21 13:33:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.51.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,10 +178,8 @@ USB_ATTACH(ucom)
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
 
-	if (uca->portno != UCOM_UNK_PORTNO)
-		printf(": portno %d", uca->portno);
 	if (uca->info != NULL)
-		printf(", %s", uca->info);
+		printf(": %s", uca->info);
 	printf("\n");
 
 	sc->sc_udev = uca->device;
@@ -330,7 +328,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -569,16 +567,16 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
-	int error;
+	int revents;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	sc->sc_refcnt++;
-	error = ((*tp->t_linesw->l_poll)(tp, events, l));
+	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
-	return (error);
+	return (revents);
 }
 
 struct tty *
@@ -795,7 +793,8 @@ ucom_status_change(struct ucom_softc *sc)
 			    ISSET(sc->sc_msr, UMSR_DCD));
 	} else {
 		sc->sc_lsr = 0;
-		sc->sc_msr = 0;
+		/* Assume DCD is present, if we have no chance to check it. */
+		sc->sc_msr = UMSR_DCD;
 	}
 }
 
@@ -852,7 +851,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	 * explicit request.
 	 */
 	DPRINTF(("ucomparam: l_modem\n"));
-	(void) (*tp->t_linesw->l_modem)(tp, 1 /* XXX carrier */ );
+	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, UMSR_DCD));
 
 #if 0
 XXX what if the hardware is not open
@@ -1046,7 +1045,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	usbd_status err;
 	u_int32_t cc;
 	u_char *cp;
@@ -1142,7 +1141,7 @@ ucomprint(void *aux, const char *pnp)
 
 int
 ucomsubmatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 

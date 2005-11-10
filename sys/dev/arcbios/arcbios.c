@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.7.2.2 2005/03/04 16:41:02 skrll Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.7.2.3 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7.2.2 2005/03/04 16:41:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7.2.3 2005/11/10 14:03:54 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -196,7 +196,7 @@ arcbios_component_id_copy(struct arcbios_component *node,
 int
 arcbios_cngetc(dev_t dev)
 {
-	unsigned long count;
+	u_long count;
 	char c;
 
 	(*ARCBIOS->Read)(ARCBIOS_STDIN, &c, 1, &count);
@@ -206,7 +206,7 @@ arcbios_cngetc(dev_t dev)
 void
 arcbios_cnputc(dev_t dev, int c)
 {
-	unsigned long count;
+	u_long count;
 	char ch = c;
 
 	(*ARCBIOS->Write)(ARCBIOS_STDOUT, &ch, 1, &count);

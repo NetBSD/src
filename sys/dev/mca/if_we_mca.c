@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.8.6.4 2005/02/04 11:46:29 skrll Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.8.6.5 2005/11/10 14:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.8.6.4 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.8.6.5 2005/11/10 14:05:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,8 @@ we_mca_attach(parent, self, aux)
 	}
 
 	wsc->sc_type = wep->we_type;
-	wsc->sc_16bitp = 1;		/* all cards we support are 16bit */
+	/* all cards we support are 16bit native (no need for reset) */
+	wsc->sc_flags = WE_16BIT_ENABLE|WE_16BIT_NOTOGGLE;
 	sc->is790 = 0;
 	typestr = wep->we_typestr;
 

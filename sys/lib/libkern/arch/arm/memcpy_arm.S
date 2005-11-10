@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.1.4.5 2005/03/04 16:52:29 skrll Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.1.4.6 2005/11/10 14:10:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -174,8 +174,21 @@ ENTRY(memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_srcul1loop16:
+#ifdef __ARMEB__
+	mov	r3, lr, lsl #8
+#else
 	mov	r3, lr, lsr #8
+#endif
 	ldmia	r1!, {r4, r5, r12, lr}
+#ifdef __ARMEB__
+	orr	r3, r3, r4, lsr #24
+	mov	r4, r4, lsl #8
+	orr	r4, r4, r5, lsr #24
+	mov	r5, r5, lsl #8
+	orr	r5, r5, r12, lsr #24
+	mov	r12, r12, lsl #8
+	orr	r12, r12, lr, lsr #24
+#else
 	orr	r3, r3, r4, lsl #24
 	mov	r4, r4, lsr #8
 	orr	r4, r4, r5, lsl #24
@@ -183,6 +196,7 @@ ENTRY(memcpy)
 	orr	r5, r5, r12, lsl #24
 	mov	r12, r12, lsr #8
 	orr	r12, r12, lr, lsl #24
+#endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul1loop16
@@ -191,9 +205,17 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul1l4
 
 .Lmemcpy_srcul1loop4:
+#ifdef __ARMEB__
+	mov	r12, lr, lsl #8
+#else
 	mov	r12, lr, lsr #8
+#endif
 	ldr	lr, [r1], #4
+#ifdef __ARMEB__
+	orr	r12, r12, lr, lsr #24
+#else
 	orr	r12, r12, lr, lsl #24
+#endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
 	bge	.Lmemcpy_srcul1loop4
@@ -209,8 +231,21 @@ ENTRY(memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_srcul2loop16:
+#ifdef __ARMEB__
+	mov	r3, lr, lsl #16
+#else
 	mov	r3, lr, lsr #16
+#endif
 	ldmia	r1!, {r4, r5, r12, lr}
+#ifdef __ARMEB__
+	orr	r3, r3, r4, lsr #16
+	mov	r4, r4, lsl #16
+	orr	r4, r4, r5, lsr #16
+	mov	r5, r5, lsl #16
+	orr	r5, r5, r12, lsr #16
+	mov	r12, r12, lsl #16
+	orr	r12, r12, lr, lsr #16
+#else
 	orr	r3, r3, r4, lsl #16
 	mov	r4, r4, lsr #16
 	orr	r4, r4, r5, lsl #16
@@ -218,6 +253,7 @@ ENTRY(memcpy)
 	orr	r5, r5, r12, lsl #16
 	mov	r12, r12, lsr #16
 	orr	r12, r12, lr, lsl #16
+#endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul2loop16
@@ -226,9 +262,17 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul2l4
 
 .Lmemcpy_srcul2loop4:
+#ifdef __ARMEB__
+	mov	r12, lr, lsl #16
+#else
 	mov	r12, lr, lsr #16
+#endif
 	ldr	lr, [r1], #4
+#ifdef __ARMEB__
+	orr	r12, r12, lr, lsr #16
+#else
 	orr	r12, r12, lr, lsl #16
+#endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
 	bge	.Lmemcpy_srcul2loop4
@@ -244,8 +288,21 @@ ENTRY(memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_srcul3loop16:
+#ifdef __ARMEB__
+	mov	r3, lr, lsl #24
+#else
 	mov	r3, lr, lsr #24
+#endif
 	ldmia	r1!, {r4, r5, r12, lr}
+#ifdef __ARMEB__
+	orr	r3, r3, r4, lsr #8
+	mov	r4, r4, lsl #24
+	orr	r4, r4, r5, lsr #8
+	mov	r5, r5, lsl #24
+	orr	r5, r5, r12, lsr #8
+	mov	r12, r12, lsl #24
+	orr	r12, r12, lr, lsr #8
+#else
 	orr	r3, r3, r4, lsl #8
 	mov	r4, r4, lsr #24
 	orr	r4, r4, r5, lsl #8
@@ -253,6 +310,7 @@ ENTRY(memcpy)
 	orr	r5, r5, r12, lsl #8
 	mov	r12, r12, lsr #24
 	orr	r12, r12, lr, lsl #8
+#endif
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul3loop16
@@ -261,9 +319,17 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul3l4
 
 .Lmemcpy_srcul3loop4:
+#ifdef __ARMEB__
+	mov	r12, lr, lsl #24
+#else
 	mov	r12, lr, lsr #24
+#endif
 	ldr	lr, [r1], #4
+#ifdef __ARMEB__
+	orr	r12, r12, lr, lsr #8
+#else
 	orr	r12, r12, lr, lsl #8
+#endif
 	str	r12, [r0], #4
 	subs	r2, r2, #4
 	bge	.Lmemcpy_srcul3loop4

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.11.16.1 2005/03/04 16:40:03 skrll Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.11.16.2 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <compat/linux/arch/mips/linux_termios.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_termios.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_termios.h>
 #else
 #error Undefined linux_termios.h machine type.
 #endif

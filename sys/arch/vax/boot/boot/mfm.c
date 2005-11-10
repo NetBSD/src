@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.4 2001/07/26 22:55:13 wiz Exp $	*/
+/*	$NetBSD: mfm.c,v 1.4.22.1 2005/11/10 13:59:59 skrll Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,14 +42,14 @@
  * - ???
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "sys/disklabel.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
 #include "../include/pte.h"
 #include "../include/sid.h"

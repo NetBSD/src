@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.62.2.6 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.62.2.7 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.62.2.6 2005/04/01 14:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.62.2.7 2005/11/10 14:12:39 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -258,13 +258,12 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
  * KVM already allocated for text, data, bss, and static data structures).
  *
  * => KVM is defined by VM_MIN_KERNEL_ADDRESS/VM_MAX_KERNEL_ADDRESS.
- *    we assume that [min -> start] has already been allocated and that
+ *    we assume that [vmin -> start] has already been allocated and that
  *    "end" is the end.
  */
 
 void
-uvm_km_init(start, end)
-	vaddr_t start, end;
+uvm_km_init(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
@@ -318,20 +317,16 @@ uvm_km_init(start, end)
  * is allocated all references to that area of VM must go through it.  this
  * allows the locking of VAs in kernel_map to be broken up into regions.
  *
- * => if `fixed' is true, *min specifies where the region described
+ * => if `fixed' is true, *vmin specifies where the region described
  *      by the submap must start
  * => if submap is non NULL we use that as the submap, otherwise we
  *	alloc a new map
  */
 
 struct vm_map *
-uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
-	struct vm_map *map;
-	vaddr_t *min, *max;		/* IN/OUT, OUT */
-	vsize_t size;
-	int flags;
-	boolean_t fixed;
-	struct vm_map_kernel *submap;
+uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
+    vaddr_t *vmax /* OUT */, vsize_t size, int flags, boolean_t fixed,
+    struct vm_map_kernel *submap)
 {
 	int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
 
@@ -343,17 +338,17 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	 * first allocate a blank spot in the parent map
 	 */
 
-	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+	if (uvm_map(map, vmin, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, mapflags)) != 0) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
 	}
 
 	/*
-	 * set VM bounds (min is filled in by uvm_map)
+	 * set VM bounds (vmin is filled in by uvm_map)
 	 */
 
-	*max = *min + size;
+	*vmax = *vmin + size;
 
 	/*
 	 * add references to pmap and create or init the submap
@@ -365,14 +360,14 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 		if (submap == NULL)
 			panic("uvm_km_suballoc: unable to create submap");
 	}
-	uvm_map_setup_kernel(submap, *min, *max, flags);
+	uvm_map_setup_kernel(submap, *vmin, *vmax, flags);
 	submap->vmk_map.pmap = vm_map_pmap(map);
 
 	/*
 	 * now let uvm_map_submap plug in it...
 	 */
 
-	if (uvm_map_submap(map, *min, *max, &submap->vmk_map) != 0)
+	if (uvm_map_submap(map, *vmin, *vmax, &submap->vmk_map) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
 	return(&submap->vmk_map);
@@ -386,8 +381,7 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
  */
 
 void
-uvm_km_pgremove(startva, endva)
-	vaddr_t startva, endva;
+uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 {
 	struct uvm_object * const uobj = uvm.kernel_object;
 	const voff_t start = startva - vm_map_min(kernel_map);
@@ -452,8 +446,7 @@ uvm_km_pgremove(startva, endva)
  */
 
 void
-uvm_km_pgremove_intrsafe(start, end)
-	vaddr_t start, end;
+uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pg;
 	paddr_t pa;
@@ -487,8 +480,8 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap_kernel(), va, &pa)) {
-			panic("uvm_km_check_empty: va %p has pa %p",
-			    (void *)va, (void *)pa);
+			panic("uvm_km_check_empty: va %p has pa 0x%llx",
+			    (void *)va, (long long)pa);
 		}
 		if (!intrsafe) {
 			const struct vm_page *pg;
@@ -516,11 +509,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
  */
 
 vaddr_t
-uvm_km_alloc(map, size, align, flags)
-	struct vm_map *map;
-	vsize_t size;
-	vsize_t align;
-	uvm_flag_t flags;
+uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
 	vaddr_t kva, loopva;
 	vaddr_t offset;
@@ -596,7 +585,7 @@ uvm_km_alloc(map, size, align, flags)
 
 		if (__predict_false(pg == NULL)) {
 			if ((flags & UVM_KMF_NOWAIT) ||
-			    ((flags & UVM_KMF_CANFAIL) && uvm_swapisfull())) {
+			    ((flags & UVM_KMF_CANFAIL) && !uvm_reclaimable())) {
 				/* free everything! */
 				uvm_km_free(map, kva, size,
 				    flags & UVM_KMF_TYPEMASK);
@@ -632,11 +621,7 @@ uvm_km_alloc(map, size, align, flags)
  */
 
 void
-uvm_km_free(map, addr, size, flags)
-	struct vm_map *map;
-	vaddr_t addr;
-	vsize_t size;
-	uvm_flag_t flags;
+uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 {
 
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
@@ -672,9 +657,7 @@ uvm_km_free(map, addr, size, flags)
 
 /* ARGSUSED */
 vaddr_t
-uvm_km_alloc_poolpage_cache(map, waitok)
-	struct vm_map *map;
-	boolean_t waitok;
+uvm_km_alloc_poolpage_cache(struct vm_map *map, boolean_t waitok)
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	return uvm_km_alloc_poolpage(map, waitok);
@@ -719,9 +702,7 @@ again:
 }
 
 vaddr_t
-uvm_km_alloc_poolpage(map, waitok)
-	struct vm_map *map;
-	boolean_t waitok;
+uvm_km_alloc_poolpage(struct vm_map *map, boolean_t waitok)
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	struct vm_page *pg;
@@ -763,9 +744,7 @@ uvm_km_alloc_poolpage(map, waitok)
 
 /* ARGSUSED */
 void
-uvm_km_free_poolpage_cache(map, addr)
-	struct vm_map *map;
-	vaddr_t addr;
+uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t addr)
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
 	uvm_km_free_poolpage(map, addr);
@@ -797,9 +776,7 @@ uvm_km_free_poolpage_cache(map, addr)
 
 /* ARGSUSED */
 void
-uvm_km_free_poolpage(map, addr)
-	struct vm_map *map;
-	vaddr_t addr;
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
 	paddr_t pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.6.16.6 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.6.16.7 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -140,7 +140,7 @@ struct pcmcia_chip_functions {
 	((*(tag)->socket_settype)((handle), (type)))
 
 struct pcmciabus_attach_args {
-	char *paa_busname;	/* Bus name */
+	const char *paa_busname;	/* Bus name */
 	pcmcia_chipset_tag_t pct;
 	pcmcia_chipset_handle_t pch;
 	bus_addr_t iobase;		/* start i/o space allocation here */

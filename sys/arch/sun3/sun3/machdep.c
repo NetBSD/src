@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.6 2005/04/01 14:28:41 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.7 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.6 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.7 2005/11/10 13:59:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -240,7 +240,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	initfpu();	/* also prints FPU type */
 

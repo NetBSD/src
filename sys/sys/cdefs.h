@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.48.2.5 2004/12/18 09:33:17 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.48.2.6 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -145,6 +145,15 @@
  * dependencies.
  */
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+
+/*
+ * The following macro is used to remove the volatile cast-away warnings
+ * from gcc -Wcast-qual; as above it should be used with caution
+ * because it can hide valid errors or warnings.  Valid uses include
+ * making it possible to pass a volatile pointer to memset().
+ * For the same reasons as above, we use unsigned long and not intptr_t.
+ */
+#define __UNVOLATILE(a)	((void *)(unsigned long)(volatile void *)(a))
 
 /*
  * GCC2 provides __extension__ to suppress warnings for various GNU C

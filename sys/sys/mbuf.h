@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84.2.8 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84.2.9 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -189,6 +189,19 @@ struct	pkthdr {
 #define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
 
 /*
+ * Macros for M_CSUM_TCPv6 and M_CSUM_UDPv6
+ *
+ * M_CSUM_DATA_IPv6_HL: length of ip6_hdr + ext header.
+ * ie. offset of UDP/TCP header in the packet.
+ *
+ * M_CSUM_DATA_IPv6_OFFSET: offset of the checksum field in UDP/TCP header. 
+ */
+
+#define	M_CSUM_DATA_IPv6_HL(x)		((x) >> 16)
+#define	M_CSUM_DATA_IPv6_HL_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
+#define	M_CSUM_DATA_IPv6_OFFSET(x)	((x) & 0xffff)
+
+/*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
  * to be able to handle SOSEND_LOAN_CHUNK with our minimum sized page.
  */
@@ -298,6 +311,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
+#define	M_LINK3		0x8000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
@@ -338,9 +352,9 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
  */
 #define	MBUFLOCK(code)							\
 do {									\
-	int ms = splvm();						\
+	int _ms = splvm();						\
 	{ code }							\
-	splx(ms);							\
+	splx(_ms);							\
 } while (/* CONSTCOND */ 0)
 
 #ifdef MBUFTRACE
@@ -419,27 +433,27 @@ do {									\
  * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type)						\
-do {									\
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+MBUFLOCK(								\
+	(m) = pool_cache_get(&mbpool_cache,				\
+		(how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;			\
-		    _MOWNERINIT((m), (type)); );			\
+		mbstat.m_mtypes[type]++;				\
+		_MOWNERINIT((m), (type));				\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
 		(m)->m_data = (m)->m_dat;				\
 		(m)->m_flags = 0;					\
 	}								\
-} while (/* CONSTCOND */ 0)
+)
 
 #define	MGETHDR(m, how, type)						\
-do {									\
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+MBUFLOCK(								\
+	(m) = pool_cache_get(&mbpool_cache,				\
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;			\
-		    _MOWNERINIT((m), (type)); );			\
+		mbstat.m_mtypes[type]++;				\
+		_MOWNERINIT((m), (type));				\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -450,7 +464,7 @@ do {									\
 		(m)->m_pkthdr.csum_data = 0;				\
 		SLIST_INIT(&(m)->m_pkthdr.tags);			\
 	}								\
-} while (/* CONSTCOND */ 0)
+)
 
 #if defined(_KERNEL)
 #define	_M_
@@ -629,6 +643,12 @@ do {									\
 	m_tag_copy_chain((to), (from));					\
 	(to)->m_data = (to)->m_pktdat;					\
 } while (/* CONSTCOND */ 0)
+
+/*
+ * Move mbuf pkthdr from `from' to `to'.
+ * `from' must have M_PKTHDR set, and `to' must be empty.
+ */
+#define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
@@ -837,6 +857,7 @@ void	m_copydata(struct mbuf *, int, int, void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
+void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
@@ -879,6 +900,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
 #define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
+#define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two u_int16_t */
 
 /*
  * Return the number of bytes in the mbuf chain, m.

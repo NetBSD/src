@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.5.2.7 2005/03/04 16:45:18 skrll Exp $ */
+/*	$NetBSD: if_dge.c,v 1.5.2.8 2005/11/10 14:06:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5.2.7 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5.2.8 2005/11/10 14:06:01 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -899,7 +899,9 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.
 	 */
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/*
 	 * Attach the interface.
@@ -1964,15 +1966,15 @@ dge_init(struct ifnet *ifp)
 	 * Set up checksum offload parameters.
 	 */
 	reg = CSR_READ(sc, DGE_RXCSUM);
-	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		reg |= RXCSUM_IPOFL;
 	else
 		reg &= ~RXCSUM_IPOFL;
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		reg |= RXCSUM_IPOFL | RXCSUM_TUOFL;
 	else {
 		reg &= ~RXCSUM_TUOFL;
-		if ((ifp->if_capenable & IFCAP_CSUM_IPv4) == 0)
+		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) == 0)
 			reg &= ~RXCSUM_IPOFL;
 	}
 	CSR_WRITE(sc, DGE_RXCSUM, reg);

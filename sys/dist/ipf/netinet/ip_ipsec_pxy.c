@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.2.3 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.2.4 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -8,11 +8,11 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.4 2005/02/04 10:22:55 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.20.2.6 2005/03/28 10:47:53 darrenr Exp
  *
  */
 
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.1.2.3 2005/03/04 16:51:28 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.1.2.4 2005/11/10 14:09:07 skrll Exp $");
 
 #define	IPF_IPSEC_PROXY
 
@@ -30,6 +30,7 @@ static	ipftq_t		*ipsecstatetqe;
 static	char	ipsec_buffer[1500];
 
 int	ipsec_proxy_init = 0;
+int	ipsec_proxy_ttl = 60;
 
 /*
  * IPSec application proxy initialization.
@@ -42,28 +43,37 @@ int ippr_ipsec_init()
 	MUTEX_INIT(&ipsecfr.fr_lock, "IPsec proxy rule lock");
 	ipsec_proxy_init = 1;
 
-	ipsecnattqe = fr_addtimeoutqueue(&nat_utqe, 60);
+	ipsecnattqe = fr_addtimeoutqueue(&nat_utqe, ipsec_proxy_ttl);
 	if (ipsecnattqe == NULL)
 		return -1;
-	ipsecstatetqe = fr_addtimeoutqueue(&ips_utqe, 60);
+	ipsecstatetqe = fr_addtimeoutqueue(&ips_utqe, ipsec_proxy_ttl);
 	if (ipsecstatetqe == NULL) {
-		fr_deletetimeoutqueue(ipsecnattqe);
+		if (fr_deletetimeoutqueue(ipsecnattqe) == 0)
+			fr_freetimeoutqueue(ipsecnattqe);
 		ipsecnattqe = NULL;
 		return -1;
 	}
-	ipsecfr.fr_age[0] = 60;
-	ipsecfr.fr_age[1] = 60;
+
+	ipsecnattqe->ifq_flags |= IFQF_PROXY;
+	ipsecstatetqe->ifq_flags |= IFQF_PROXY;
+
+	ipsecfr.fr_age[0] = ipsec_proxy_ttl;
+	ipsecfr.fr_age[1] = ipsec_proxy_ttl;
 	return 0;
 }
 
 
 void ippr_ipsec_fini()
 {
-	if (ipsecnattqe != NULL)
-		fr_deletetimeoutqueue(ipsecnattqe);
+	if (ipsecnattqe != NULL) {
+		if (fr_deletetimeoutqueue(ipsecnattqe) == 0)
+			fr_freetimeoutqueue(ipsecnattqe);
+	}
 	ipsecnattqe = NULL;
-	if (ipsecstatetqe != NULL)
-		fr_deletetimeoutqueue(ipsecstatetqe);
+	if (ipsecstatetqe != NULL) {
+		if (fr_deletetimeoutqueue(ipsecstatetqe) == 0)
+			fr_freetimeoutqueue(ipsecstatetqe);
+	}
 	ipsecstatetqe = NULL;
 
 	if (ipsec_proxy_init == 1) {
@@ -146,7 +156,7 @@ nat_t *nat;
 	fi.fin_data[1] = 0;
 	p = ip->ip_p;
 	ip->ip_p = IPPROTO_ESP;
-	fi.fin_flx &= ~FI_TCPUDP;
+	fi.fin_flx &= ~(FI_TCPUDP|FI_STATE|FI_FRAG);
 	fi.fin_flx |= FI_IGNORE;
 
 	ptr = ipsec_buffer;
@@ -214,7 +224,7 @@ nat_t *nat;
 			fi.fin_data[0] = 0;
 			fi.fin_data[1] = 0;
 			ip->ip_p = IPPROTO_ESP;
-			fi.fin_flx &= ~FI_TCPUDP;
+			fi.fin_flx &= ~(FI_TCPUDP|FI_STATE|FI_FRAG);
 			fi.fin_flx |= FI_IGNORE;
 		}
 

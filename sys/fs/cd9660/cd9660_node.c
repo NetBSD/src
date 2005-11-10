@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.4.2.7 2005/03/04 16:51:29 skrll Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.4.2.8 2005/11/10 14:09:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.7 2005/03/04 16:51:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.8 2005/11/10 14:09:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 POOL_INIT(cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0, "cd9660nopl",
     &pool_allocator_nointr);
 
-static u_int cd9660_chars2ui __P((u_char *, int));
+static u_int cd9660_chars2ui(u_char *, int);
 
 /*
  * Initialize hash links for inodes and dnodes.
@@ -371,8 +371,8 @@ cd9660_defattr(isodir, inop, bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -423,8 +423,8 @@ cd9660_deftstamp(isodir,inop,bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
-			     &bp2);
+		cd9660_blkatoff(ITOV(inop), (off_t)-(off << imp->im_bshift),
+		    NULL, &bp2);
 		bp = bp2;
 	}
 	if (bp) {
@@ -511,30 +511,30 @@ cd9660_tstamp_conv17(pi,pu)
 	u_char *pi;
 	struct timespec *pu;
 {
-	u_char buf[7];
+	u_char tbuf[7];
 
 	/* year:"0001"-"9999" -> -1900  */
-	buf[0] = cd9660_chars2ui(pi,4) - 1900;
+	tbuf[0] = cd9660_chars2ui(pi,4) - 1900;
 
 	/* month: " 1"-"12"      -> 1 - 12 */
-	buf[1] = cd9660_chars2ui(pi + 4,2);
+	tbuf[1] = cd9660_chars2ui(pi + 4,2);
 
 	/* day:   " 1"-"31"      -> 1 - 31 */
-	buf[2] = cd9660_chars2ui(pi + 6,2);
+	tbuf[2] = cd9660_chars2ui(pi + 6,2);
 
 	/* hour:  " 0"-"23"      -> 0 - 23 */
-	buf[3] = cd9660_chars2ui(pi + 8,2);
+	tbuf[3] = cd9660_chars2ui(pi + 8,2);
 
 	/* minute:" 0"-"59"      -> 0 - 59 */
-	buf[4] = cd9660_chars2ui(pi + 10,2);
+	tbuf[4] = cd9660_chars2ui(pi + 10,2);
 
 	/* second:" 0"-"59"      -> 0 - 59 */
-	buf[5] = cd9660_chars2ui(pi + 12,2);
+	tbuf[5] = cd9660_chars2ui(pi + 12,2);
 
 	/* difference of GMT */
-	buf[6] = pi[16];
+	tbuf[6] = pi[16];
 
-	return cd9660_tstamp_conv7(buf,pu);
+	return cd9660_tstamp_conv7(tbuf,pu);
 }
 
 ino_t

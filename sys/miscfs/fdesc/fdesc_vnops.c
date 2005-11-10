@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.77.2.7 2005/03/04 16:52:49 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77.2.8 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.7 2005/03/04 16:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.8 2005/11/10 14:10:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,54 +84,49 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
-int	fdesc_lookup	__P((void *));
+int	fdesc_lookup(void *);
 #define	fdesc_create	genfs_eopnotsupp
 #define	fdesc_mknod	genfs_eopnotsupp
-int	fdesc_open	__P((void *));
+int	fdesc_open(void *);
 #define	fdesc_close	genfs_nullop
 #define	fdesc_access	genfs_nullop
-int	fdesc_getattr	__P((void *));
-int	fdesc_setattr	__P((void *));
-int	fdesc_read	__P((void *));
-int	fdesc_write	__P((void *));
-int	fdesc_ioctl	__P((void *));
-int	fdesc_poll	__P((void *));
-int	fdesc_kqfilter	__P((void *));
+int	fdesc_getattr(void *);
+int	fdesc_setattr(void *);
+int	fdesc_read(void *);
+int	fdesc_write(void *);
+int	fdesc_ioctl(void *);
+int	fdesc_poll(void *);
+int	fdesc_kqfilter(void *);
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_seek
 #define	fdesc_remove	genfs_eopnotsupp
-int	fdesc_link	__P((void *));
+int	fdesc_link(void *);
 #define	fdesc_rename	genfs_eopnotsupp
 #define	fdesc_mkdir	genfs_eopnotsupp
 #define	fdesc_rmdir	genfs_eopnotsupp
-int	fdesc_symlink	__P((void *));
-int	fdesc_readdir	__P((void *));
-int	fdesc_readlink	__P((void *));
+int	fdesc_symlink(void *);
+int	fdesc_readdir(void *);
+int	fdesc_readlink(void *);
 #define	fdesc_abortop	genfs_abortop
-int	fdesc_inactive	__P((void *));
-int	fdesc_reclaim	__P((void *));
+int	fdesc_inactive(void *);
+int	fdesc_reclaim(void *);
 #define	fdesc_lock	genfs_lock
 #define	fdesc_unlock	genfs_unlock
 #define	fdesc_bmap	genfs_badop
 #define	fdesc_strategy	genfs_badop
-int	fdesc_print	__P((void *));
-int	fdesc_pathconf	__P((void *));
+int	fdesc_print(void *);
+int	fdesc_pathconf(void *);
 #define	fdesc_islocked	genfs_islocked
 #define	fdesc_advlock	genfs_einval
-#define	fdesc_blkatoff	genfs_eopnotsupp
-#define	fdesc_valloc	genfs_eopnotsupp
-#define	fdesc_vfree	genfs_nullop
-#define	fdesc_truncate	genfs_eopnotsupp
-#define	fdesc_update	genfs_nullop
 #define	fdesc_bwrite	genfs_eopnotsupp
 #define fdesc_revoke	genfs_revoke
 #define fdesc_putpages	genfs_null_putpages
 
-static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct lwp *));
+static int fdesc_attr(int, struct vattr *, struct ucred *, struct lwp *);
 
-int (**fdesc_vnodeop_p) __P((void *));
+int (**fdesc_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fdesc_lookup },		/* lookup */
@@ -171,11 +166,6 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fdesc_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fdesc_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fdesc_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fdesc_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fdesc_valloc },		/* valloc */
-	{ &vop_vfree_desc, fdesc_vfree },		/* vfree */
-	{ &vop_truncate_desc, fdesc_truncate },		/* truncate */
-	{ &vop_update_desc, fdesc_update },		/* update */
 	{ &vop_bwrite_desc, fdesc_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fdesc_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -287,21 +277,18 @@ fdesc_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct lwp *l = cnp->cn_lwp;
 	const char *pname = cnp->cn_nameptr;
-	struct proc *p;
-	int nfiles;
+	struct proc *p = l->l_proc;
+	int numfiles = p->p_fd->fd_nfiles;
 	unsigned fd = 0;
 	int error;
 	struct vnode *fvp;
-	char *ln;
+	const char *ln;
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
 		return (0);
 	}
-
-	p = l->l_proc;
-	nfiles = p->p_fd->fd_nfiles;
 
 	switch (VTOFDESC(dvp)->fd_type) {
 	default:
@@ -359,7 +346,8 @@ fdesc_lookup(v)
 			error = fdesc_allocvp(Flink, fd, dvp->v_mount, &fvp);
 			if (error)
 				goto bad;
-			VTOFDESC(fvp)->fd_link = ln;
+			/* XXXUNCONST */
+			VTOFDESC(fvp)->fd_link = __UNCONST(ln);
 			*vpp = fvp;
 			fvp->v_type = VLNK;
 			goto good;
@@ -390,7 +378,7 @@ fdesc_lookup(v)
 		fd = 0;
 		while (*pname >= '0' && *pname <= '9') {
 			fd = 10 * fd + *pname++ - '0';
-			if (fd >= nfiles)
+			if (fd >= numfiles)
 				break;
 		}
 
@@ -399,7 +387,7 @@ fdesc_lookup(v)
 			goto bad;
 		}
 
-		if (fd >= nfiles || p->p_fd->fd_ofiles[fd] == NULL ||
+		if (fd >= numfiles || p->p_fd->fd_ofiles[fd] == NULL ||
 		    FILE_IS_USABLE(p->p_fd->fd_ofiles[fd]) == 0) {
 			error = EBADF;
 			goto bad;
@@ -660,15 +648,13 @@ fdesc_setattr(v)
 	return (0);
 }
 
-#define UIO_MX 32
 
 struct fdesc_target {
 	ino_t ft_fileno;
 	u_char ft_type;
 	u_char ft_namlen;
-	char *ft_name;
+	const char *ft_name;
 } fdesc_targets[] = {
-/* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
 	{ FD_DEVFD,  DT_DIR,     N("fd")     },
 	{ FD_STDIN,  DT_LNK,     N("stdin")  },
@@ -676,6 +662,7 @@ struct fdesc_target {
 	{ FD_STDERR, DT_LNK,     N("stderr") },
 	{ FD_CTTY,   DT_UNKNOWN, N("tty")    },
 #undef N
+#define UIO_MX _DIRENT_RECLEN((struct dirent *)NULL, sizeof("stderr") - 1)
 };
 static int nfdesc_targets = sizeof(fdesc_targets) / sizeof(fdesc_targets[0]);
 
@@ -695,34 +682,37 @@ fdesc_readdir(v)
 	struct dirent d;
 	struct filedesc *fdp;
 	off_t i;
+	int j;
 	int error;
 	off_t *cookies = NULL;
-	int ncookies = 0;
+	int ncookies;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		return (0);
+		return 0;
 
 	case Fdesc:
-		return (ENOTDIR);
+		return ENOTDIR;
 
 	default:
 		break;
 	}
 
-	fdp = uio->uio_lwp->l_proc->p_fd;
+	fdp = uio->uio_lwp ? uio->uio_lwp->l_proc->p_fd : NULL;
 
 	if (uio->uio_resid < UIO_MX)
-		return (EINVAL);
+		return EINVAL;
 	if (uio->uio_offset < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	error = 0;
 	i = uio->uio_offset;
-	memset(&d, 0, UIO_MX);
+	(void)memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	if (ap->a_ncookies)
-		ncookies = (uio->uio_resid / UIO_MX);
+		ncookies = uio->uio_resid / UIO_MX;
+	else
+		ncookies = 0;
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
 		struct fdesc_target *ft;
@@ -738,28 +728,35 @@ fdesc_readdir(v)
 			*ap->a_ncookies = ncookies;
 		}
 
-		for (ft = &fdesc_targets[i];
-		     uio->uio_resid >= UIO_MX && i < nfdesc_targets; ft++, i++) {
+		for (ft = &fdesc_targets[i]; uio->uio_resid >= UIO_MX &&
+		    i < nfdesc_targets; ft++, i++) {
 			switch (ft->ft_fileno) {
 			case FD_CTTY:
-				if (cttyvp(uio->uio_lwp->l_proc) == NULL)
+				if (uio->uio_lwp == NULL ||
+				    cttyvp(uio->uio_lwp->l_proc) == NULL)
 					continue;
 				break;
 
 			case FD_STDIN:
 			case FD_STDOUT:
 			case FD_STDERR:
-				if ((ft->ft_fileno - FD_STDIN) >= fdp->fd_nfiles)
+				if (fdp == NULL)
 					continue;
-				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL
-				    || FILE_IS_USABLE(fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]) == 0)
+				if ((ft->ft_fileno - FD_STDIN) >=
+				    fdp->fd_nfiles)
+					continue;
+				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]
+				    == NULL
+				    || FILE_IS_USABLE(
+				    fdp->fd_ofiles[ft->ft_fileno - FD_STDIN])
+				    == 0)
 					continue;
 				break;
 			}
 
 			d.d_fileno = ft->ft_fileno;
 			d.d_namlen = ft->ft_namlen;
-			memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
+			(void)memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
 			d.d_type = ft->ft_type;
 
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -768,31 +765,33 @@ fdesc_readdir(v)
 				*cookies++ = i + 1;
 		}
 	} else {
+		int nfdp = fdp ? fdp->fd_nfiles : 0;
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (fdp->fd_nfiles + 2));
+			ncookies = min(ncookies, nfdp + 2);
 			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
 		}
-		for (; i - 2 < fdp->fd_nfiles && uio->uio_resid >= UIO_MX;
-		     i++) {
+		for (; i - 2 < nfdp && uio->uio_resid >= UIO_MX; i++) {
 			switch (i) {
 			case 0:
 			case 1:
 				d.d_fileno = FD_ROOT;		/* XXX */
 				d.d_namlen = i + 1;
-				memcpy(d.d_name, "..", d.d_namlen);
+				(void)memcpy(d.d_name, "..", d.d_namlen);
 				d.d_name[i + 1] = '\0';
 				d.d_type = DT_DIR;
 				break;
 
 			default:
-				if (fdp->fd_ofiles[i - 2] == NULL ||
-				    FILE_IS_USABLE(fdp->fd_ofiles[i - 2]) == 0)
+				KASSERT(fdp != NULL);
+				j = (int)i - 2;
+				if (fdp->fd_ofiles[j] == NULL ||
+				    FILE_IS_USABLE(fdp->fd_ofiles[j]) == 0)
 					continue;
-				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", (int) i - 2);
+				d.d_fileno = j + FD_STDIN;
+				d.d_namlen = sprintf(d.d_name, "%d", j);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
@@ -811,7 +810,7 @@ fdesc_readdir(v)
 	}
 
 	uio->uio_offset = i;
-	return (error);
+	return error;
 }
 
 int

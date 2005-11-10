@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.25.2.5 2005/03/04 16:41:27 skrll Exp $	*/
+/*	$NetBSD: cac.c,v 1.25.2.6 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.25.2.5 2005/03/04 16:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.25.2.6 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,6 @@ static int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
 static int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 static int	cac_print(void *, const char *);
 static void	cac_shutdown(void *);
-static int	cac_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 static struct	cac_ccb *cac_l0_completed(struct cac_softc *);
 static int	cac_l0_fifo_full(struct cac_softc *);
@@ -101,8 +99,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	int error, rseg, size, i;
 	bus_dma_segment_t seg;
 	struct cac_ccb *ccb;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[CACCF_NLOCS];
 
 	if (intrstr != NULL)
 		aprint_normal("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
@@ -185,11 +182,10 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	for (i = 0; i < cinfo.num_drvs; i++) {
 		caca.caca_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[CACCF_UNIT] = i;
+		locs[CACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "cac", ldesc, &caca,
-				    cac_print, cac_submatch);
+		config_found_sm_loc(&sc->sc_dv, "cac", locs, &caca,
+				    cac_print, config_stdsubmatch);
 	}
 
 	/* Set our `shutdownhook' before we start any device activity. */
@@ -208,15 +204,15 @@ cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
-	u_int8_t buf[512];
+	u_int8_t tbuf[512];
 	int i;
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup(&cac_cd, i)) == NULL)
 			continue;
-		memset(buf, 0, sizeof(buf));
-		buf[0] = 1;
-		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0,
+		memset(tbuf, 0, sizeof(tbuf));
+		tbuf[0] = 1;
+		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, tbuf, sizeof(tbuf), 0, 0,
 		    CAC_CCB_DATA_OUT, NULL);
 	}
 }
@@ -235,21 +231,6 @@ cac_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", caca->caca_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-cac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[CACCF_UNIT] != CACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[CACCF_UNIT] != ldesc->locs[CACCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*

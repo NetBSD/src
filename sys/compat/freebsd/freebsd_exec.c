@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.19.6.4 2005/04/01 14:29:35 skrll Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.19.6.5 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19.6.4 2005/04/01 14:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19.6.5 2005/11/10 14:00:52 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -40,24 +40,27 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.19.6.4 2005/04/01 14:29:35 skrll 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <machine/freebsd_machdep.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_signal.h>
 #include <compat/common/compat_util.h>
 
+#include <machine/freebsd_machdep.h>
+
 extern struct sysent freebsd_sysent[];
 extern const char * const freebsd_syscallnames[];
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern __P((struct proc *));
-#else
-void syscall __P((void));
-#endif
 
 struct uvm_object *emul_freebsd_object;
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
+#endif
 
 const struct emul emul_freebsd = {
 	"freebsd",

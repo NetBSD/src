@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_pci_lkm.c,v 1.1.2.4 2004/09/21 13:36:24 skrll Exp $ */
+/* $NetBSD: dummy_pci_lkm.c,v 1.1.2.5 2005/11/10 14:10:25 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -14,7 +14,7 @@ static struct cfparent pciparent = {
 	"pci", "pci", DVUNIT_ANY
 };
 static struct cfdata mist_cfdata[] = {
-	{"mist", "mist", 0, FSTATE_STAR, pciloc, 0, &pciparent, 0},
+	{"mist", "mist", 0, FSTATE_STAR, pciloc, 0, &pciparent},
 	{ 0 }
 };
 

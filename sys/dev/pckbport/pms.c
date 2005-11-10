@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $ */
+/* $NetBSD: pms.c,v 1.2.4.10 2005/11/10 14:07:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.10 2005/11/10 14:07:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,16 @@ int pmsdebug = 1;
 #define DPRINTF(x)
 #endif
 
-enum pms_type tries[] = {
+const enum pms_type tries[] = {
 	PMS_SCROLL5, PMS_SCROLL3, PMS_STANDARD, PMS_UNKNOWN
 };
 
-struct pms_protocol pms_protocols[] = {
+const struct pms_protocol pms_protocols[] = {
 	{ { 0, 0, 0 }, 0, "unknown protocol" },
 	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
 	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
-	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" }
+	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" },
+	{ { 0, 0, 0 }, 0, "synaptics" }
 };
 
 
@@ -100,7 +101,7 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 {
 	u_char cmd[2], resp[1];
 	int i, j, res;
-	struct pms_protocol *p;
+	const struct pms_protocol *p;
 
 	for (j = 0; j < sizeof(tries) / sizeof(tries[0]); ++j) {
 		p = &pms_protocols[tries[j]];

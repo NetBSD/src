@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.9.2.4 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: neptune.c,v 1.9.2.5 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.9.2.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.9.2.5 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,8 @@ static struct x68k_bus_space neptune_bus = {
 
 static int neptune_match(struct device *, struct cfdata *, void *);
 static void neptune_attach(struct device *, struct device *, void *);
-static int neptune_search(struct device *, struct cfdata *cf, void *);
+static int neptune_search(struct device *, struct cfdata *cf,
+			  const int *, void *);
 static int neptune_print(void *, const char *);
 
 CFATTACH_DECL(neptune, sizeof(struct neptune_softc),
@@ -125,7 +126,7 @@ neptune_attach(struct device *parent, struct device *self, void *aux)
 	na.na_bst = sc->sc_bst;
 	na.na_intr = ia->ia_intr;
 
-	cf = config_search (neptune_search, self, &na);
+	cf = config_search_ia(neptune_search, self, "neptune", &na);
 	if (cf) {
 		printf (": Neptune-X ISA bridge\n");
 		config_attach(self, cf, &na, neptune_print);
@@ -136,7 +137,8 @@ neptune_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int 
-neptune_search(struct device *parent, struct cfdata *cf, void *aux)
+neptune_search(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	struct neptune_attach_args *na = aux;
 
@@ -172,7 +174,7 @@ neptune_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 */
 	*bshp = (bus_space_handle_t) ((u_int)start + ((u_int)bpa - 0x200) * 2);
 
-	if (badaddr((caddr_t)*bshp)) {
+	if (badaddr((void*)*bshp)) {
 		return 1;
 	}
 

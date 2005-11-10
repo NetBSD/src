@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.84.2.6 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.84.2.7 2005/11/10 14:10:32 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.84.2.6 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.84.2.7 2005/11/10 14:10:32 skrll Exp $");
 
 #include "ppp.h"
 
@@ -521,13 +521,13 @@ pppioctl(sc, cmd, data, flag, p)
     case PPPIOCGRAWIN:
 	{
 	    struct ppp_rawin *rwin = (struct ppp_rawin *)data;
-	    u_char p, q = 0;
+	    u_char c, q = 0;
 
-	    for (p = sc->sc_rawin_start; p < sizeof(sc->sc_rawin.buf);)
-		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+	    for (c = sc->sc_rawin_start; c < sizeof(sc->sc_rawin.buf);)
+		rwin->buf[q++] = sc->sc_rawin.buf[c++];
 
-	    for (p = 0; p < sc->sc_rawin_start;)
-		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+	    for (c = 0; c < sc->sc_rawin_start;)
+		rwin->buf[q++] = sc->sc_rawin.buf[c++];
 
 	    rwin->count = sc->sc_rawin.count;
 	}
@@ -1756,7 +1756,6 @@ pppdumpm(m0)
     char buf[3*MAX_DUMP_BYTES+4];
     char *bp = buf;
     struct mbuf *m;
-    static char digits[] = "0123456789abcdef";
 
     for (m = m0; m; m = m->m_next) {
 	int l = m->m_len;
@@ -1765,8 +1764,8 @@ pppdumpm(m0)
 	while (l--) {
 	    if (bp > buf + sizeof(buf) - 4)
 		goto done;
-	    *bp++ = digits[*rptr >> 4]; /* convert byte to ascii hex */
-	    *bp++ = digits[*rptr++ & 0xf];
+	    *bp++ = hexdigits[*rptr >> 4]; /* convert byte to ascii hex */
+	    *bp++ = hexdigits[*rptr++ & 0xf];
 	}
 
 	if (m->m_next) {

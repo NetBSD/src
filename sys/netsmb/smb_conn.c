@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.14.2.3 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.14.2.4 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.14.2.3 2004/09/21 13:38:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.14.2.4 2005/11/10 14:11:55 skrll Exp $");
 
 /*
  * Connection engine.
@@ -102,7 +102,7 @@ smb_sm_done(void)
 	/* XXX: hold the mutex */
 #ifdef DIAGNOSTIC
 	if (smb_vclist.co_usecount > 1)
-		panic("%d connections still active\n", smb_vclist.co_usecount - 1);
+		panic("%d connections still active", smb_vclist.co_usecount - 1);
 #endif
 	smb_co_done(&smb_vclist);
 	return 0;

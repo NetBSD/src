@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.18.2.4 2005/03/04 16:44:57 skrll Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.18.2.5 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18.2.4 2005/03/04 16:44:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18.2.5 2005/11/10 14:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,9 @@ static const struct mii_phy_funcs dmphy_funcs = {
 static const struct mii_phydesc dmphys[] = {
 	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
 	  MII_STR_xxDAVICOM_DM9101 },
+
+	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9102,
+	  MII_STR_xxDAVICOM_DM9102 },
 
 	{ MII_OUI_DAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
 	  MII_STR_xxDAVICOM_DM9101 },

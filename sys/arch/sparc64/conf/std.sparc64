@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.10 2001/10/24 18:49:40 thorpej Exp $
+#	$NetBSD: std.sparc64,v 1.10.18.1 2005/11/10 13:59:17 skrll Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
@@ -7,5 +7,6 @@
 #
 
 machine		sparc64		# Machine architecture; required by config(8)
+include		"conf/std"	# MI standard options
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts

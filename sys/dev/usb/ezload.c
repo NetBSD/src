@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.5.6.3 2004/09/21 13:33:43 skrll Exp $	*/
+/*	$NetBSD: ezload.c,v 1.5.6.4 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.5.6.3 2004/09/21 13:33:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.5.6.4 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,9 @@ ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 			USETW(req.wLength, len);
 			DPRINTFN(2,("ezload_download: addr=0x%x len=%d\n",
 				    ptr->address + offs, len));
-			err = usbd_do_request(dev, &req, ptr->data + offs);
+			/*XXXUNCONST*/
+			err = usbd_do_request(dev, &req,
+			    __UNCONST(ptr->data + offs));
 			if (err)
 				return (err);
 		}

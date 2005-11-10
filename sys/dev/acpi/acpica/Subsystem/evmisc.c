@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              xRevision: 70 $
+ *              xRevision: 83 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.6.2.3 2004/09/21 13:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -124,6 +124,35 @@ __KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.6.2.3 2004/09/21 13:26:42 skrll Exp $")
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evmisc")
+
+
+#ifdef ACPI_DEBUG_OUTPUT
+static const char        *AcpiNotifyValueNames[] =
+{
+    "Bus Check",
+    "Device Check",
+    "Device Wake",
+    "Eject request",
+    "Device Check Light",
+    "Frequency Mismatch",
+    "Bus Mode Mismatch",
+    "Power Fault"
+};
+#endif
+
+/* Local prototypes */
+
+static void ACPI_SYSTEM_XFACE
+AcpiEvNotifyDispatch (
+    void                    *Context);
+
+static void ACPI_SYSTEM_XFACE
+AcpiEvGlobalLockThread (
+    void                    *Context);
+
+static UINT32
+AcpiEvGlobalLockHandler (
+    void                    *Context);
 
 
 /*******************************************************************************
@@ -165,9 +194,10 @@ AcpiEvIsNotifyObject (
  *
  * FUNCTION:    AcpiEvQueueNotifyRequest
  *
- * PARAMETERS:
+ * PARAMETERS:  Node            - NS node for the notified object
+ *              NotifyValue     - Value from the Notify() request
  *
- * RETURN:      None.
+ * RETURN:      Status
  *
  * DESCRIPTION: Dispatch a device notification event to a previously
  *              installed handler.
@@ -189,40 +219,29 @@ AcpiEvQueueNotifyRequest (
 
 
     /*
-     * For value 1 (Ejection Request), some device method may need to be run.
-     * For value 2 (Device Wake) if _PRW exists, the _PS0 method may need to be run.
+     * For value 3 (Ejection Request), some device method may need to be run.
+     * For value 2 (Device Wake) if _PRW exists, the _PS0 method may need
+     *   to be run.
      * For value 0x80 (Status Change) on the power button or sleep button,
-     * initiate soft-off or sleep operation?
+     *   initiate soft-off or sleep operation?
      */
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "Dispatching Notify(%X) on node %p\n", NotifyValue, Node));
 
-    switch (NotifyValue)
+    if (NotifyValue <= 7)
     {
-    case 0:
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: Re-enumerate Devices\n"));
-        break;
-
-    case 1:
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: Ejection Request\n"));
-        break;
-
-    case 2:
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: Device Wake\n"));
-        break;
-
-    case 0x80:
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: Status Change\n"));
-        break;
-
-    default:
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Unknown Notify Value: %X \n", NotifyValue));
-        break;
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: %s\n",
+                AcpiNotifyValueNames[NotifyValue]));
+    }
+    else
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+            "Notify value: 0x%2.2X **Device Specific**\n",
+            NotifyValue));
     }
 
-    /*
-     * Get the notify object attached to the NS Node
-     */
+    /* Get the notify object attached to the NS Node */
+
     ObjDesc = AcpiNsGetAttachedObject (Node);
     if (ObjDesc)
     {
@@ -278,11 +297,13 @@ AcpiEvQueueNotifyRequest (
 
     if (!HandlerObj)
     {
-        /* There is no per-device notify handler for this device */
-
+        /*
+         * There is no per-device notify handler for this device.
+         * This may or may not be a problem.
+         */
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "No notify handler for [%4.4s] node %p\n",
-            AcpiUtGetNodeName (Node), Node));
+            "No notify handler for Notify(%4.4s, %X) node %p\n",
+            AcpiUtGetNodeName (Node), NotifyValue, Node));
     }
 
     return (Status);
@@ -293,7 +314,7 @@ AcpiEvQueueNotifyRequest (
  *
  * FUNCTION:    AcpiEvNotifyDispatch
  *
- * PARAMETERS:
+ * PARAMETERS:  Context         - To be passed to the notify handler
  *
  * RETURN:      None.
  *
@@ -302,7 +323,7 @@ AcpiEvQueueNotifyRequest (
  *
  ******************************************************************************/
 
-void ACPI_SYSTEM_XFACE
+static void ACPI_SYSTEM_XFACE
 AcpiEvNotifyDispatch (
     void                    *Context)
 {
@@ -317,7 +338,8 @@ AcpiEvNotifyDispatch (
 
     /*
      * We will invoke a global notify handler if installed.
-     * This is done _before_ we invoke the per-device handler attached to the device.
+     * This is done _before_ we invoke the per-device handler attached
+     * to the device.
      */
     if (NotifyInfo->Notify.Value <= ACPI_MAX_SYS_NOTIFY)
     {
@@ -344,7 +366,8 @@ AcpiEvNotifyDispatch (
 
     if (GlobalHandler)
     {
-        GlobalHandler (NotifyInfo->Notify.Node, NotifyInfo->Notify.Value, GlobalContext);
+        GlobalHandler (NotifyInfo->Notify.Node, NotifyInfo->Notify.Value,
+            GlobalContext);
     }
 
     /* Now invoke the per-device handler, if present */
@@ -352,8 +375,9 @@ AcpiEvNotifyDispatch (
     HandlerObj = NotifyInfo->Notify.HandlerObj;
     if (HandlerObj)
     {
-        HandlerObj->Notify.Handler (NotifyInfo->Notify.Node, NotifyInfo->Notify.Value,
-                        HandlerObj->Notify.Context);
+        HandlerObj->Notify.Handler (NotifyInfo->Notify.Node,
+            NotifyInfo->Notify.Value,
+            HandlerObj->Notify.Context);
     }
 
     /* All done with the info object */
@@ -365,6 +389,8 @@ AcpiEvNotifyDispatch (
 /*******************************************************************************
  *
  * FUNCTION:    AcpiEvGlobalLockThread
+ *
+ * PARAMETERS:  Context         - From thread interface, not used
  *
  * RETURN:      None
  *
@@ -401,7 +427,9 @@ AcpiEvGlobalLockThread (
  *
  * FUNCTION:    AcpiEvGlobalLockHandler
  *
- * RETURN:      Status
+ * PARAMETERS:  Context         - From thread interface, not used
+ *
+ * RETURN:      ACPI_INTERRUPT_HANDLED or ACPI_INTERRUPT_NOT_HANDLED
  *
  * DESCRIPTION: Invoked directly from the SCI handler when a global lock
  *              release interrupt occurs.  Grab the global lock and queue
@@ -450,6 +478,8 @@ AcpiEvGlobalLockHandler (
  *
  * FUNCTION:    AcpiEvInitGlobalLockHandler
  *
+ * PARAMETERS:  None
+ *
  * RETURN:      Status
  *
  * DESCRIPTION: Install a handler for the global lock release event
@@ -457,7 +487,8 @@ AcpiEvGlobalLockHandler (
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiEvInitGlobalLockHandler (void)
+AcpiEvInitGlobalLockHandler (
+    void)
 {
     ACPI_STATUS             Status;
 
@@ -467,7 +498,7 @@ AcpiEvInitGlobalLockHandler (void)
 
     AcpiGbl_GlobalLockPresent = TRUE;
     Status = AcpiInstallFixedEventHandler (ACPI_EVENT_GLOBAL,
-                                            AcpiEvGlobalLockHandler, NULL);
+                AcpiEvGlobalLockHandler, NULL);
 
     /*
      * If the global lock does not exist on this platform, the attempt
@@ -489,6 +520,8 @@ AcpiEvInitGlobalLockHandler (void)
 /******************************************************************************
  *
  * FUNCTION:    AcpiEvAcquireGlobalLock
+ *
+ * PARAMETERS:  Timeout         - Max time to wait for the lock, in millisec.
  *
  * RETURN:      Status
  *
@@ -520,8 +553,10 @@ AcpiEvAcquireGlobalLock (
 
     AcpiGbl_GlobalLockThreadCount++;
 
-    /* If we (OS side vs. BIOS side) have the hardware lock already, we are done */
-
+    /*
+     * If we (OS side vs. BIOS side) have the hardware lock already,
+     * we are done
+     */
     if (AcpiGbl_GlobalLockAcquired)
     {
         return_ACPI_STATUS (AE_OK);
@@ -560,12 +595,17 @@ AcpiEvAcquireGlobalLock (
  *
  * FUNCTION:    AcpiEvReleaseGlobalLock
  *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
  * DESCRIPTION: Releases ownership of the Global Lock.
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiEvReleaseGlobalLock (void)
+AcpiEvReleaseGlobalLock (
+    void)
 {
     BOOLEAN                 Pending = FALSE;
     ACPI_STATUS             Status = AE_OK;
@@ -576,7 +616,8 @@ AcpiEvReleaseGlobalLock (void)
 
     if (!AcpiGbl_GlobalLockThreadCount)
     {
-        ACPI_REPORT_WARNING(("Cannot release HW Global Lock, it has not been acquired\n"));
+        ACPI_REPORT_WARNING((
+            "Cannot release HW Global Lock, it has not been acquired\n"));
         return_ACPI_STATUS (AE_NOT_ACQUIRED);
     }
 
@@ -603,7 +644,8 @@ AcpiEvReleaseGlobalLock (void)
      */
     if (Pending)
     {
-        Status = AcpiSetRegister (ACPI_BITREG_GLOBAL_LOCK_RELEASE, 1, ACPI_MTX_LOCK);
+        Status = AcpiSetRegister (ACPI_BITREG_GLOBAL_LOCK_RELEASE,
+                    1, ACPI_MTX_LOCK);
     }
 
     return_ACPI_STATUS (Status);
@@ -623,7 +665,8 @@ AcpiEvReleaseGlobalLock (void)
  ******************************************************************************/
 
 void
-AcpiEvTerminate (void)
+AcpiEvTerminate (
+    void)
 {
     ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
@@ -646,22 +689,28 @@ AcpiEvTerminate (void)
             Status = AcpiDisableEvent ((UINT32) i, 0);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable fixed event %d\n", (UINT32) i));
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                    "Could not disable fixed event %d\n", (UINT32) i));
             }
         }
 
         /* Disable all GPEs in all GPE blocks */
 
-        Status = AcpiEvWalkGpeList (AcpiHwDisableGpeBlock);
+        Status = AcpiEvWalkGpeList (AcpiHwDisableGpeBlock, ACPI_NOT_ISR);
 
         /* Remove SCI handler */
 
         Status = AcpiEvRemoveSciHandler ();
         if (ACPI_FAILURE(Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not remove SCI handler\n"));
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Could not remove SCI handler\n"));
         }
     }
+
+    /* Deallocate all handler objects installed within GPE info structs */
+
+    Status = AcpiEvWalkGpeList (AcpiEvDeleteGpeHandlers, ACPI_NOT_ISR);
 
     /* Return to original mode if necessary */
 

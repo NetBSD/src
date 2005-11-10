@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.12.2.6 2005/03/04 16:39:23 skrll Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.12.2.7 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.12.2.6 2005/03/04 16:39:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.12.2.7 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.12.2.6 2005/03/04 16:39:23 skrll
 
 #include <miscfs/specfs/specdev.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
@@ -73,7 +76,7 @@ pid_t darwin_init_pid = 0;
 int darwin_ioframebuffer_unit = 0;
 int darwin_ioframebuffer_screen = 0;
 int darwin_iohidsystem_mux = 0;
-static char *darwin_sysctl_hw_machine = "Power Macintosh";
+static const char *darwin_sysctl_hw_machine = "Power Macintosh";
 
 static int darwin_sysctl_dokproc(SYSCTLFN_PROTO);
 static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
@@ -110,7 +113,7 @@ darwin_sysctl_redispatch(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 {
-	struct sysctlnode *_root = &darwin_sysctl_root;
+	const struct sysctlnode *_root = &darwin_sysctl_root;
 
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
@@ -254,7 +257,8 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, darwin_sysctl_hw_machine, 0,
+		       /*XXXUNCONST*/
+		       NULL, 0, __UNCONST(darwin_sysctl_hw_machine), 0,
 		       DARWIN_CTL_HW, DARWIN_HW_MACHINE, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,

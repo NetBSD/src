@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.14.2.5 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.14.2.6 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.14.2.5 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.14.2.6 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ esh_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	char *model;
+	const char *model;
 	const char *intrstr = NULL;
 
 	aprint_naive(": HIPPI controller\n");

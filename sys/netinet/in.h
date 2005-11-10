@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.61.2.5 2005/02/04 11:47:47 skrll Exp $	*/
+/*	$NetBSD: in.h,v 1.61.2.6 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -439,7 +439,8 @@ struct ip_mreq {
 #define	IPCTL_IFQ	       21	/* ipintrq node */
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
-#define	IPCTL_MAXID	       24
+#define	IPCTL_STATS		24	/* IP statistics */
+#define	IPCTL_MAXID	       25
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -466,6 +467,7 @@ struct ip_mreq {
 	{ "ifq", CTLTYPE_NODE }, \
 	{ "random_id", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 #endif /* _NETBSD_SOURCE */
 

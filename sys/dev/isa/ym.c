@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.21.12.5 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: ym.c,v 1.21.12.6 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.21.12.5 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.21.12.6 2005/11/10 14:05:37 skrll Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -795,7 +795,7 @@ ym_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	return error;
 }
 
-static char *mixer_classes[] = {
+static const char *mixer_classes[] = {
 	AudioCinputs, AudioCrecord, AudioCoutputs, AudioCmonitor,
 #ifndef AUDIO_NO_POWER_CTL
 	AudioCpower,
@@ -806,7 +806,7 @@ static char *mixer_classes[] = {
 int
 ym_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
-	static char *mixer_port_names[] = {
+	static const char *mixer_port_names[] = {
 		AudioNdac, AudioNmidi, AudioNcd, AudioNline, AudioNspeaker,
 		AudioNmicrophone, AudioNmonitor
 	};
@@ -1114,7 +1114,7 @@ void
 ym_power_hook(int why, void *v)
 {
 	struct ym_softc *sc;
-	int i, max;
+	int i, xmax;
 	int s;
 
 	sc = v;
@@ -1158,8 +1158,8 @@ ym_power_hook(int why, void *v)
 		ym_init(sc);		/* power-on CODEC */
 
 		/* Restore control registers. */
-		max = YM_IS_SA3(sc)? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
-		for (i = SA3_PWR_MNG + 1; i <= max; i++) {
+		xmax = YM_IS_SA3(sc)? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
+		for (i = SA3_PWR_MNG + 1; i <= xmax; i++) {
 			if (i == SA3_SB_SCAN || i == SA3_SB_SCAN_DATA ||
 			    i == SA3_DPWRDWN)
 				continue;
@@ -1220,14 +1220,14 @@ ym_codec_power_ctl(void *arg, int flags)
 static void
 ym_chip_powerdown(struct ym_softc *sc)
 {
-	int i, max;
+	int i, xmax;
 
 	DPRINTF(("%s: ym_chip_powerdown\n", DVNAME(sc)));
 
-	max = YM_IS_SA3(sc) ? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
+	xmax = YM_IS_SA3(sc) ? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
 
 	/* Save control registers. */
-	for (i = SA3_PWR_MNG + 1; i <= max; i++) {
+	for (i = SA3_PWR_MNG + 1; i <= xmax; i++) {
 		if (i == SA3_SB_SCAN || i == SA3_SB_SCAN_DATA)
 			continue;
 		sc->sc_sa3_scan[i] = ym_read(sc, i);

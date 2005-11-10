@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.18 2003/06/29 14:48:21 jdolecek Exp $
+$NetBSD: mcadevs,v 1.18.2.1 2005/11/10 14:05:42 skrll Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,8 +116,10 @@ product 0x5962 "Alert Technology Serial Adapter"			[5]
 product 0x5EEE "Hitachi CD-ROM Adapter"					[5]
 product 0x5F77 "Future Domain SCSI Adapter"				[5]
 product 0x5FF8 "Plus Passport MC Adapter"				[5]
-product 0x6001 "Tiara LANcard/E Ethernet Adapter"			[1]
+product 0x6000 TIARA "Tiara LANCard/E Ethernet Adapter"		
+product 0x6001 TIARA_TP "Tiara LANcard/E Ethernet Adapter"		[1]
 product 0x6014 "Standard Microsystems ARCNET-PS110 Adapter"		[6]
+product 0x6016 SMC3016 "Standard MicroSystems 3016/MC Ethernet"
 product 0x6018 "Gateway Comms. G/Ethernet Adapter"			[6]
 product 0x601F "HP Scanner Interface Adapter"				[5]
 product 0x602F "Arcmaster ARCnet Adapter"				[6]

@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.4.4.5 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: x1226.c,v 1.4.4.6 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4.4.5 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4.4.6 2005/11/10 14:04:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ const struct cdevsw xrtc_cdevsw = {
 
 static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_clock_write(struct xrtc_softc *, struct clock_ymdhms *);
-static int xrtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int xrtc_settime(struct todr_chip_handle *, struct timeval *);
+static int xrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int xrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int xrtc_getcal(struct todr_chip_handle *, int *);
 static int xrtc_setcal(struct todr_chip_handle *, int);
 
@@ -238,7 +238,7 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 
 
 static int
-xrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+xrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct xrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt, check;
@@ -260,7 +260,7 @@ xrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 }
 
 static int
-xrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+xrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct xrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -405,7 +405,7 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* Write each RTC register in reverse order */
 	for (i = (X1226_REG_RTC_SIZE - 1) ; i >= 0; i--) {
-		int addr = i + X1226_REG_RTC_BASE;
+		addr = i + X1226_REG_RTC_BASE;
 		cmdbuf[0] = ((addr >> 8) & 0xff);
 		cmdbuf[1] = (addr & 0xff);
 		if (iic_exec(sc->sc_tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.74.2.9 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.74.2.10 2005/11/10 14:12:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.9 2005/04/01 14:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.10 2005/11/10 14:12:40 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -228,7 +228,7 @@ sys_mincore(l, v, retval)
 				anon = amap_lookup(&entry->aref,
 				    start - entry->start);
 				/* Don't need to lock anon here. */
-				if (anon != NULL && anon->u.an_page != NULL) {
+				if (anon != NULL && anon->an_page != NULL) {
 
 					/*
 					 * Anon has the page for this entry
@@ -604,8 +604,6 @@ sys___msync13(l, v, retval)
 		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
-	else
-		uvmflags |= PGO_SYNCIO;	 /* XXXCDC: force sync for now! */
 
 	error = uvm_map_clean(map, addr, addr+size, uvmflags);
 	return error;
@@ -1152,8 +1150,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		}
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
-		if ((flags & MAP_SHARED) == 0)
+		if ((flags & MAP_SHARED) == 0) {
 			uvmflag |= UVM_FLAG_COPYONW;
+		} else if ((maxprot & VM_PROT_WRITE) != 0) {
+			simple_lock(&vp->v_interlock);
+			vp->v_flag |= VWRITEMAP;
+			simple_unlock(&vp->v_interlock);
+		}
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

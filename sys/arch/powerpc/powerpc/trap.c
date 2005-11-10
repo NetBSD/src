@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80.2.6 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.80.2.7 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.6 2005/01/17 19:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.7 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -911,7 +911,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 
  out:
 	if (done != NULL)
-		*done = kp - (char *) kaddr;
+		*done = kp - (const char*)kaddr;
  out2:
 	curpcb->pcb_onfault = 0;
 	return rv;

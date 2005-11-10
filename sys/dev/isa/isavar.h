@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.40.2.6 2005/03/04 16:43:14 skrll Exp $	*/
+/*	$NetBSD: isavar.h,v 1.40.2.7 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct isabus_attach_args;
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	char	*_iba_busname;		/* XXX placeholder */
+	const char *_iba_busname;		/* XXX placeholder */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	bus_dma_tag_t iba_dmat;		/* isa DMA tag */
@@ -264,7 +264,7 @@ int	isabusprint(void *, const char *);
  */
 
 /* ISA interrupt sharing types */
-char	*isa_intr_typename(int);
+const char	*isa_intr_typename(int);
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This

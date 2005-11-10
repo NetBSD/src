@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5.2.3 2004/09/21 13:21:08 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5.2.4 2005/11/10 13:58:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.5.2.3 2004/09/21 13:21:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.5.2.4 2005/11/10 13:58:32 skrll Exp $");
 
 #include "opt_openpic.h"
 
@@ -107,7 +107,7 @@ struct intrhand *intrhand[ICU_LEN];
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
 void ext_intr __P((void));
-char *intr_typename __P((int));
+const char *intr_typename __P((int));
 
 int
 fakeintr(arg)
@@ -162,7 +162,7 @@ out:
 	splx(pcpl);/* Will also process pendings if necessary */
 }
 
-char *
+const char *
 intr_typename(type)
 	int	type;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.5.16.4 2005/03/04 16:43:14 skrll Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.5.16.5 2005/11/10 14:05:37 skrll Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5.16.4 2005/03/04 16:43:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5.16.5 2005/11/10 14:05:37 skrll Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -115,9 +115,9 @@ static struct tcmcard {
 static int ntcmcards = 0;
 
 static void
-tcmaddcard(bus, iobase, irq, maddr, msize, model, pnpmode)
+tcmaddcard(bus, iobase, irq, maddr, msiz, model, pnpmode)
 	int bus, iobase, irq, maddr;
-	u_int msize;
+	u_int msiz;
 	int model, pnpmode;
 {
 
@@ -127,7 +127,7 @@ tcmaddcard(bus, iobase, irq, maddr, msize, model, pnpmode)
 	tcmcards[ntcmcards].iobase = iobase;
 	tcmcards[ntcmcards].irq = irq;
 	tcmcards[ntcmcards].maddr = maddr;
-	tcmcards[ntcmcards].msize = msize;
+	tcmcards[ntcmcards].msize = msiz;
 	tcmcards[ntcmcards].model = model;
 	tcmcards[ntcmcards].available = 1;
 	tcmcards[ntcmcards].pnpmode = pnpmode;
@@ -217,7 +217,7 @@ trtcm_isa_probe(parent, match, aux)
 	int	bus = parent->dv_unit;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_int	msize;
+	u_int	msiz;
 	int slot, iobase, irq, i, maddr, rsrccfg, pnpmode;
 	u_int16_t vendor, model;
 	struct tcm_isa_done_probe *tcm;
@@ -296,7 +296,7 @@ trtcm_isa_probe(parent, match, aux)
 
 		maddr = ((tcmreadeeprom(iot, ioh, EEPROM_OEM_ADDR0) & 0xfc00)
 		    << 3) + 0x80000;
-		msize = 65536 >> ((tcmreadeeprom(iot, ioh, 8) & 0x0c) >> 2);
+		msiz = 65536 >> ((tcmreadeeprom(iot, ioh, 8) & 0x0c) >> 2);
 
 		irq = tcmreadeeprom(iot, ioh, EEPROM_ADDR_CFG) & 0x180;
 		irq |= (tcmreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG) & 0x40);
@@ -328,7 +328,7 @@ trtcm_isa_probe(parent, match, aux)
 			bus_space_write_1(iot, ioh, 0,
 			    ACTIVATE_ADAPTER_TO_CONFIG);
 		}
-		tcmaddcard(bus, iobase, irq, maddr, msize, model, pnpmode);
+		tcmaddcard(bus, iobase, irq, maddr, msiz, model, pnpmode);
 	}
 	bus_space_unmap(iot, ioh, 1);
 

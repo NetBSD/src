@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.2.4.2 2005/01/17 19:31:24 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.2.4.3 2005/11/10 14:06:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -38,13 +38,12 @@ struct iwi_firmware {
 
 struct iwi_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	u_int8_t	wr_flags;
-	u_int8_t	wr_rate;
-	u_int16_t	wr_chan_freq;
-	u_int16_t	wr_chan_flags;
-	u_int8_t	wr_antsignal;
-	u_int8_t	wr_antnoise;
-	u_int8_t	wr_antenna;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_antsignal;
+	uint8_t		wr_antenna;
 };
 
 #define IWI_RX_RADIOTAP_PRESENT						\
@@ -52,59 +51,76 @@ struct iwi_rx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL) |			\
-	 (1 << IEEE80211_RADIOTAP_DB_ANTNOISE) |			\
 	 (1 << IEEE80211_RADIOTAP_ANTENNA))
 
 struct iwi_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;
-	u_int16_t	wt_chan_freq;
-	u_int16_t	wt_chan_flags;
+	uint8_t		wt_flags;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 };
 
 #define IWI_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
+struct iwi_cmd_ring {
+	bus_dmamap_t		desc_map;
+	bus_dma_segment_t	desc_seg;
+	struct iwi_cmd_desc	*desc;
+	int			count;
+	int			queued;
+	int			cur;
+	int			next;
+};
+
+struct iwi_tx_data {
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+	struct ieee80211_node	*ni;
+};
+
+struct iwi_tx_ring {
+	bus_dmamap_t		desc_map;
+	bus_dma_segment_t	desc_seg;
+	struct iwi_tx_desc	*desc;
+	struct iwi_tx_data	*data;
+	int			count;
+	int			queued;
+	int			cur;
+	int			next;
+};
+
+struct iwi_rx_data {
+	bus_dmamap_t	map;
+	struct mbuf	*m;
+};
+
+struct iwi_rx_ring {
+	struct iwi_rx_data	*data;
+	int			count;
+	int			cur;
+};
+
 struct iwi_softc {
 	struct device		sc_dev;
-
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
 	struct iwi_firmware	fw;
-	u_int32_t		flags;
+	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
+#define IWI_FLAG_FW_WARNED	(1 << 2)
+#define IWI_FLAG_SCANNING	(1 << 3)
 
 	bus_dma_tag_t		sc_dmat;
 
-	struct iwi_tx_desc	*tx_desc;
-	bus_dmamap_t		tx_ring_map;
-	bus_dma_segment_t	tx_ring_seg;
-
-	struct iwi_tx_buf {
-		bus_dmamap_t		map;
-		struct mbuf		*m;
-		struct ieee80211_node	*ni;
-	} tx_buf[IWI_TX_RING_SIZE];
-
-	int			tx_cur;
-	int			tx_old;
-	int			tx_queued;
-
-	struct iwi_cmd_desc	*cmd_desc;
-	bus_dmamap_t		cmd_ring_map;
-	bus_dma_segment_t	cmd_ring_seg;
-	int			cmd_cur;
-
-	struct iwi_rx_buf {
-		bus_dmamap_t	map;
-		struct mbuf	*m;
-	} rx_buf[IWI_RX_RING_SIZE];
-
-	int			rx_cur;
+	struct iwi_cmd_ring	cmdq;
+	struct iwi_tx_ring	txq;
+	struct iwi_rx_ring	rxq;
 
 	struct resource		*irq;
 	struct resource		*mem;
@@ -115,7 +131,12 @@ struct iwi_softc {
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
 
-	int			authmode;
+	void			*sc_sdhook;	/* shutdown hook */
+	void			*sc_powerhook;	/* power management hook */
+
+	int			antenna;
+	int			dwelltime;
+	int			bluetooth;
 
 	int			sc_tx_timer;
 
@@ -124,19 +145,21 @@ struct iwi_softc {
 
 	union {
 		struct iwi_rx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_rxtapu;
 #define sc_rxtap	sc_rxtapu.th
 	int			sc_rxtap_len;
 
 	union {
 		struct iwi_tx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 #endif
 };
+
+#define	sc_if	sc_ec.ec_if
 
 #define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
 #define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)

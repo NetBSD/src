@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.17.2.7 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: select.h,v 1.17.2.8 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-#include <sys/types.h>
+#include <sys/fd_set.h>
 
 #ifdef _KERNEL
 #include <sys/selinfo.h>		/* for struct selinfo */

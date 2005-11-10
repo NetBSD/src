@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.60.2.4 2005/03/04 16:41:30 skrll Exp $ */
+/* $NetBSD: ispvar.h,v 1.60.2.5 2005/11/10 14:04:15 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -103,7 +103,7 @@ struct ispmdvec {
 	void		(*dv_reset0) (struct ispsoftc *);
 	void		(*dv_reset1) (struct ispsoftc *);
 	void		(*dv_dregs) (struct ispsoftc *, const char *);
-	u_int16_t	*dv_ispfw;	/* ptr to f/w */
+	const u_int16_t	*dv_ispfw;	/* ptr to f/w */
 	u_int16_t	dv_conf1;
 	u_int16_t	dv_clock;	/* clock frequency */
 };
@@ -449,7 +449,7 @@ typedef struct ispsoftc {
 	volatile u_int16_t	isp_mbxwrk0;
 	volatile u_int16_t	isp_mbxwrk1;
 	volatile u_int16_t	isp_mbxwrk2;
-	void *			isp_mbxworkp;
+	void *	 		isp_mbxworkp;
 
 	/*
 	 * Active commands are stored here, indexed by handle functions.

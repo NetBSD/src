@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciovar.h,v 1.4 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: hpciovar.h,v 1.4.24.1 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin.
@@ -38,7 +38,7 @@ typedef struct hpcio_chip *hpcio_chip_t;
 typedef void *hpcio_intr_handle_t;
 struct hpcio_chip {
 	int hc_chipid;
-	char *hc_name;
+	const char *hc_name;
 	void *hc_sc;
 	int (*hc_portread)(hpcio_chip_t, int);
 	void (*hc_portwrite)(hpcio_chip_t, int, int);
@@ -52,7 +52,7 @@ struct hpcio_chip {
 };
 
 struct hpcio_attach_args {
-	char *haa_busname;
+	const char *haa_busname;
 	void *haa_sc;
 	hpcio_chip_t (*haa_getchip)(void*, int);
 	bus_space_tag_t haa_iot;	/* I/O space tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.2.2.5 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.2.2.6 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -49,15 +49,6 @@ union xennet_bufarray {
 	int xb_next;
 };
 
-struct xennet_txbuf {
-	SLIST_ENTRY(xennet_txbuf)	xt_next;
-	struct xennet_softc		*xt_sc;
-	paddr_t				xt_pa;
-	u_char				xt_buf[0];
-};
-#define	TXBUF_PER_PAGE 2
-#define	TXBUF_BUFSIZE	(PAGE_SIZE / TXBUF_PER_PAGE) - sizeof(struct xennet_txbuf)
-
 struct xennet_softc {
 	struct device		sc_dev;		/* base device glue */
 	struct ethercom		sc_ethercom;	/* Ethernet common part */
@@ -77,7 +68,8 @@ struct xennet_softc {
 	unsigned int		sc_backend_state;
 
 	unsigned int		sc_evtchn;
-	unsigned int		sc_irq;
+
+	void			*sc_softintr;
 
 	netif_tx_interface_t	*sc_tx;
 	netif_rx_interface_t	*sc_rx;
@@ -91,9 +83,7 @@ struct xennet_softc {
 	uint32_t		sc_rx_bufs_to_notify;
 
 	union xennet_bufarray	sc_tx_bufa[NETIF_TX_RING_SIZE];
-	union xennet_bufarray	sc_rx_bufa[NETIF_TX_RING_SIZE];
-
-	SLIST_HEAD(, xennet_txbuf)	sc_tx_bufs;
+	union xennet_bufarray	sc_rx_bufa[NETIF_RX_RING_SIZE];
 
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
@@ -108,7 +98,6 @@ struct xennet_attach_args {
 struct nfs_diskless;
 
 int xennet_scan(struct device *, struct xennet_attach_args *, cfprint_t);
-void xennet_scan_finish(struct device *);
 void xennet_start(struct ifnet *);
 int xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void xennet_watchdog(struct ifnet *ifp);

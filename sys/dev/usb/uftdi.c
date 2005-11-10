@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.14.2.4 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.14.2.5 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.14.2.4 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.14.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ USB_ATTACH(uftdi)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	int i;
 	usbd_status err;
@@ -182,9 +182,10 @@ USB_ATTACH(uftdi)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

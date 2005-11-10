@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.12.2.6 2005/03/04 16:41:33 skrll Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.12.2.7 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.6 2005/03/04 16:41:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.7 2005/11/10 14:04:15 skrll Exp $");
 
 #undef	TCICDEBUG
 
@@ -70,8 +70,6 @@ int	tcic_debug = 1;
 void	tcic_attach_socket(struct tcic_handle *);
 void	tcic_init_socket(struct tcic_handle *);
 
-int	tcic_submatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
 int	tcic_print(void *arg, const char *pnp);
 int	tcic_intr_socket(struct tcic_handle *);
 
@@ -264,7 +262,7 @@ tcic_chipid_known(id)
 	return 0;
 }
 
-char *
+const char *
 tcic_chipid_to_string(id)
 	int id;
 {
@@ -412,8 +410,7 @@ tcic_attach_socket(h)
 	struct tcic_handle *h;
 {
 	struct pcmciabus_attach_args paa;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
 
@@ -430,12 +427,11 @@ tcic_attach_socket(h)
 	paa.iobase = h->sc->iobase;
 	paa.iosize = h->sc->iosize;
 
-	ldesc->len = 2;
-	ldesc->locs[PCMCIABUSCF_CONTROLLER] = 0;
-	ldesc->locs[PCMCIABUSCF_SOCKET] = h->sock;
+	locs[PCMCIABUSCF_CONTROLLER] = 0;
+	locs[PCMCIABUSCF_SOCKET] = h->sock;
 
-	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", ldesc, &paa,
-					tcic_print, tcic_submatch);
+	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", locs, &paa,
+					tcic_print, config_stdsubmatch);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 
@@ -535,24 +531,6 @@ tcic_init_socket(h)
 	h->sstat = reg = tcic_read_1(h, TCIC_R_SSTAT) & TCIC_SSTAT_STAT_MASK;
 	if (reg & TCIC_SSTAT_CD)
 		tcic_attach_card(h);
-}
-
-int
-tcic_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
-		return 0;
-	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
-		return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 int

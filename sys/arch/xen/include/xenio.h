@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.1.4.5 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: xenio.h,v 1.1.4.6 2005/11/10 14:00:34 skrll Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -72,6 +72,19 @@ typedef struct privcmd_blkmsg
 #define IOCTL_PRIVCMD_HYPERCALL         \
     _IOWR('P', 0, privcmd_hypercall_t)
 
+#if defined(_KERNEL)
+/* compat */
+#define IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD \
+    _IO('P', 1)
+#endif /* defined(_KERNEL) */
+    
+#define IOCTL_PRIVCMD_MMAP             \
+    _IOW('P', 2, privcmd_mmap_t)
+#define IOCTL_PRIVCMD_MMAPBATCH        \
+    _IOW('P', 3, privcmd_mmapbatch_t)
+#define IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN \
+    _IOR('P', 4, unsigned long)
+
 /*
  * @cmd: IOCTL_PRIVCMD_INITDOMAIN_EVTCHN
  * @arg: n/a
@@ -79,14 +92,7 @@ typedef struct privcmd_blkmsg
  *         for the initial domain.
  */
 #define IOCTL_PRIVCMD_INITDOMAIN_EVTCHN \
-    _IO('P', 1)
-    
-#define IOCTL_PRIVCMD_MMAP             \
-    _IOW('P', 2, privcmd_mmap_t)
-#define IOCTL_PRIVCMD_MMAPBATCH        \
-    _IOW('P', 3, privcmd_mmapbatch_t)
-#define IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN \
-    _IOW('P', 4, unsigned long)
+    _IOR('P', 5, int)
 
 /* Interface to /dev/xenevt */
 /* EVTCHN_RESET: Clear and reinit the event buffer. Clear error condition. */

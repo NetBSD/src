@@ -2,7 +2,7 @@
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              xRevision: 94 $
+ *              xRevision: 97 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.6.2.3 2004/09/21 13:26:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -125,6 +125,12 @@ __KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.6.2.3 2004/09/21 13:26:44 skrll Exp $");
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evsci")
+
+/* Local prototypes */
+
+static UINT32 ACPI_SYSTEM_XFACE
+AcpiEvSciXruptHandler (
+    void                    *Context);
 
 
 /*******************************************************************************
@@ -223,7 +229,8 @@ AcpiEvGpeXruptHandler (
  ******************************************************************************/
 
 UINT32
-AcpiEvInstallSciHandler (void)
+AcpiEvInstallSciHandler (
+    void)
 {
     UINT32                  Status = AE_OK;
 
@@ -257,7 +264,8 @@ AcpiEvInstallSciHandler (void)
  ******************************************************************************/
 
 ACPI_STATUS
-AcpiEvRemoveSciHandler (void)
+AcpiEvRemoveSciHandler (
+    void)
 {
     ACPI_STATUS             Status;
 

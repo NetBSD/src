@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.9.6.1 2005/03/04 16:45:26 skrll Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.9.6.2 2005/11/10 14:06:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.9.6.1 2005/03/04 16:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.9.6.2 2005/11/10 14:06:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct viaenv_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-const struct envsys_range viaenv_ranges[] = {
+static const struct envsys_range viaenv_ranges[] = {
 	{ 0, 2,		ENVSYS_STEMP },
 	{ 3, 4,		ENVSYS_SFANRPM },
 	{ 0, 1,		ENVSYS_SVOLTS_AC },	/* none */
@@ -88,16 +88,10 @@ const struct envsys_range viaenv_ranges[] = {
 	{ 1, 0,		ENVSYS_SAMPS },		/* none */
 };
 
-int	viaenv_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-int	viaenv_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-
-static int
-        viaenv_match(struct device * parent, struct cfdata * match, void *aux);
-static void
-        viaenv_attach(struct device * parent, struct device * self, void *aux);
-
-CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
-    viaenv_match, viaenv_attach, NULL, NULL);
+static int	viaenv_gtredata(struct sysmon_envsys *,
+				struct envsys_tre_data *);
+static int 	viaenv_streinfo(struct sysmon_envsys *,
+				struct envsys_basic_info *);
 
 static int
 viaenv_match(struct device * parent, struct cfdata * match, void *aux)
@@ -279,11 +273,16 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	int i;
 
 	iobase = pci_conf_read(va->va_pc, va->va_tag, va->va_offset);
-	control = pci_conf_read(va->va_pc, va->va_tag, va->va_offset + 4);
-	if ((iobase & 0xff80) == 0 || (control & 1) == 0) {
+	if ((iobase & 0xff80) == 0) {
 		printf(": disabled\n");
 		return;
 	}
+	control = pci_conf_read(va->va_pc, va->va_tag, va->va_offset + 4);
+	/* If the device is disabled, turn it on */
+	if ((control & 1) == 0)
+		pci_conf_write(va->va_pc, va->va_tag, va->va_offset + 4,
+		    control | 1);
+
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80, 128, 0, &sc->sc_ioh)) {
 		printf(": failed to map i/o\n");
@@ -347,7 +346,10 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 		    sc->sc_dev.dv_xname);
 }
 
-int
+CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
+    viaenv_match, viaenv_attach, NULL, NULL);
+
+static int
 viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct viaenv_softc *sc = sme->sme_cookie;
@@ -362,7 +364,7 @@ viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	return (0);
 }
 
-int
+static int
 viaenv_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 

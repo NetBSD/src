@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.25.2.5 2005/03/04 16:41:24 skrll Exp $        */
+/* $NetBSD: adwlib.c,v 1.25.2.6 2005/11/10 14:04:13 skrll Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25.2.5 2005/03/04 16:41:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25.2.6 2005/11/10 14:04:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1035,7 +1035,7 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 	u_int16_t *bios_mem;
 	u_int8_t chip_type;
 {
-	u_int8_t	*mcode_data;
+	const u_int8_t	*mcode_data;
 	u_int32_t	 mcode_chksum;
 	u_int16_t	 mcode_size;
 	u_int32_t	sum;
@@ -1050,21 +1050,21 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 
 	switch(chip_type) {
 	case ADW_CHIP_ASC3550:
-		mcode_data = (u_int8_t *)adw_asc3550_mcode_data.mcode_data;
+		mcode_data = (const u_int8_t *)adw_asc3550_mcode_data.mcode_data;
 		mcode_chksum = (u_int32_t)adw_asc3550_mcode_data.mcode_chksum;
 		mcode_size = (u_int16_t)adw_asc3550_mcode_data.mcode_size;
 		adw_memsize = ADW_3550_MEMSIZE;
 		break;
 
 	case ADW_CHIP_ASC38C0800:
-		mcode_data = (u_int8_t *)adw_asc38C0800_mcode_data.mcode_data;
+		mcode_data = (const u_int8_t *)adw_asc38C0800_mcode_data.mcode_data;
 		mcode_chksum =(u_int32_t)adw_asc38C0800_mcode_data.mcode_chksum;
 		mcode_size = (u_int16_t)adw_asc38C0800_mcode_data.mcode_size;
 		adw_memsize = ADW_38C0800_MEMSIZE;
 		break;
 
 	case ADW_CHIP_ASC38C1600:
-		mcode_data = (u_int8_t *)adw_asc38C1600_mcode_data.mcode_data;
+		mcode_data = (const u_int8_t *)adw_asc38C1600_mcode_data.mcode_data;
 		mcode_chksum =(u_int32_t)adw_asc38C1600_mcode_data.mcode_chksum;
 		mcode_size = (u_int16_t)adw_asc38C1600_mcode_data.mcode_size;
 		adw_memsize = ADW_38C1600_MEMSIZE;

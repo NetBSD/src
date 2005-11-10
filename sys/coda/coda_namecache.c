@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.12.2.4 2005/03/04 16:39:21 skrll Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.12.2.5 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.12.2.4 2005/03/04 16:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.12.2.5 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -171,12 +171,8 @@ coda_nc_init(void)
  */
 
 static struct coda_cache *
-coda_nc_find(dcp, name, namelen, cred, hash)
-	struct cnode *dcp;
-	const char *name;
-	int namelen;
-	struct ucred *cred;
-	int hash;
+coda_nc_find(struct cnode *dcp, const char *name, int namelen,
+	struct ucred *cred, int hash)
 {
 	/*
 	 * hash to find the appropriate bucket, look through the chain
@@ -222,12 +218,8 @@ coda_nc_find(dcp, name, namelen, cred, hash)
  * LRU and Hash as needed.
  */
 void
-coda_nc_enter(dcp, name, namelen, cred, cp)
-    struct cnode *dcp;
-    const char *name;
-    int namelen;
-    struct ucred *cred;
-    struct cnode *cp;
+coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
+	struct ucred *cred, struct cnode *cp)
 {
     struct coda_cache *cncp;
     int hash;
@@ -300,11 +292,8 @@ coda_nc_enter(dcp, name, namelen, cred, cp)
  * matches the input, return it, otherwise return 0
  */
 struct cnode *
-coda_nc_lookup(dcp, name, namelen, cred)
-	struct cnode *dcp;
-	const char *name;
-	int namelen;
-	struct ucred *cred;
+coda_nc_lookup(struct cnode *dcp, const char *name, int namelen,
+	struct ucred *cred)
 {
 	int hash;
 	struct coda_cache *cncp;
@@ -350,9 +339,7 @@ coda_nc_lookup(dcp, name, namelen, cred)
 }
 
 static void
-coda_nc_remove(cncp, dcstat)
-	struct coda_cache *cncp;
-	enum dc_status dcstat;
+coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat)
 {
 	/*
 	 * remove an entry -- vrele(cncp->dcp, cp), crfree(cred),
@@ -390,9 +377,7 @@ coda_nc_remove(cncp, dcstat)
  * Remove all entries with a parent which has the input fid.
  */
 void
-coda_nc_zapParentfid(fid, dcstat)
-	CodaFid *fid;
-	enum dc_status dcstat;
+coda_nc_zapParentfid(CodaFid *fid, enum dc_status dcstat)
 {
 	/* To get to a specific fid, we might either have another hashing
 	   function or do a sequential search through the cache for the
@@ -433,9 +418,7 @@ coda_nc_zapParentfid(fid, dcstat)
  * Remove all entries which have the same fid as the input
  */
 void
-coda_nc_zapfid(fid, dcstat)
-	CodaFid *fid;
-	enum dc_status dcstat;
+coda_nc_zapfid(CodaFid *fid, enum dc_status dcstat)
 {
 	/* See comment for zapParentfid. This routine will be used
 	   if attributes are being cached.
@@ -468,10 +451,7 @@ coda_nc_zapfid(fid, dcstat)
  * Remove all entries which match the fid and the cred
  */
 void
-coda_nc_zapvnode(fid, cred, dcstat)
-	CodaFid *fid;
-	struct ucred *cred;
-	enum dc_status dcstat;
+coda_nc_zapvnode(CodaFid *fid, struct ucred *cred, enum dc_status dcstat)
 {
 	/* See comment for zapfid. I don't think that one would ever
 	   want to zap a file with a specific cred from the kernel.
@@ -489,10 +469,7 @@ coda_nc_zapvnode(fid, cred, dcstat)
  * Remove all entries which have the (dir vnode, name) pair
  */
 void
-coda_nc_zapfile(dcp, name, namelen)
-	struct cnode *dcp;
-	const char *name;
-	int namelen;
+coda_nc_zapfile(struct cnode *dcp, const char *name, int namelen)
 {
 	/* use the hash function to locate the file, then zap all
  	   entries of it regardless of the cred.
@@ -530,9 +507,7 @@ coda_nc_zapfile(dcp, name, namelen)
  * A user is determined by his/her effective user id (id_uid).
  */
 void
-coda_nc_purge_user(uid, dcstat)
-	uid_t	uid;
-	enum dc_status  dcstat;
+coda_nc_purge_user(uid_t uid, enum dc_status dcstat)
 {
 	/*
 	 * I think the best approach is to go through the entire cache
@@ -574,8 +549,7 @@ coda_nc_purge_user(uid, dcstat)
  * Flush the entire name cache. In response to a flush of the Venus cache.
  */
 void
-coda_nc_flush(dcstat)
-	enum dc_status dcstat;
+coda_nc_flush(enum dc_status dcstat)
 {
 	/* One option is to deallocate the current name cache and
 	   call init to start again. Or just deallocate, then rebuild.
@@ -662,7 +636,7 @@ print_coda_nc(void)
 void
 coda_nc_gather_stats(void)
 {
-    int i, max = 0, sum = 0, temp, zeros = 0, ave, n;
+    int i, xmax = 0, sum = 0, temp, zeros = 0, ave, n;
 
 	for (i = 0; i < coda_nc_hashsize; i++) {
 	  if (coda_nc_hash[i].length) {
@@ -671,8 +645,8 @@ coda_nc_gather_stats(void)
 	    zeros++;
 	  }
 
-	  if (coda_nc_hash[i].length > max)
-	    max = coda_nc_hash[i].length;
+	  if (coda_nc_hash[i].length > xmax)
+	    xmax = coda_nc_hash[i].length;
 	}
 
 	/*
@@ -681,7 +655,7 @@ coda_nc_gather_stats(void)
 	 */
         coda_nc_stat.Sum_bucket_len = sum;
         coda_nc_stat.Num_zero_len = zeros;
-        coda_nc_stat.Max_bucket_len = max;
+        coda_nc_stat.Max_bucket_len = xmax;
 
 	if ((n = coda_nc_hashsize - zeros) > 0)
 	  ave = sum / n;
@@ -705,9 +679,7 @@ coda_nc_gather_stats(void)
  * is in an improper state (except by turning the cache off).
  */
 int
-coda_nc_resize(hashsize, heapsize, dcstat)
-     int hashsize, heapsize;
-     enum dc_status dcstat;
+coda_nc_resize(int hashsize, int heapsize, enum dc_status dcstat)
 {
     if ((hashsize % 2) || (heapsize % 2)) { /* Illegal hash or cache sizes */
 	return(EINVAL);

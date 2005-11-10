@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.18.6.5 2004/11/02 07:50:57 skrll Exp $ */
+/*	$NetBSD: ctu.c,v 1.18.6.6 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.18.6.5 2004/11/02 07:50:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.18.6.6 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct tu_softc {
 	int 	sc_wto;		/* Timeout counter */
 	int	sc_xbytes;	/* Number of xfer'd bytes */
 	int	sc_op;		/* Read/write */
-	struct	bufq_state sc_bufq;	/* pending I/O requests */
+	struct	bufq_state *sc_bufq;	/* pending I/O requests */
 } tu_sc;
 
 struct	ivec_dsp tu_recv, tu_xmit;
@@ -115,7 +115,7 @@ static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 void
 ctuattach()
 {
-	bufq_alloc(&tu_sc.sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&tu_sc.sc_bufq, "fcfs", 0);
 
 	tu_recv = idsptch;
 	tu_recv.hoppaddr = cturintr;
@@ -178,7 +178,7 @@ ctuclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	struct buf *bp;
 	int s = spl7();
-	while ((bp = BUFQ_GET(&tu_sc.sc_bufq)))
+	while ((bp = BUFQ_GET(tu_sc.sc_bufq)))
 		;
 	splx(s);
 
@@ -206,8 +206,8 @@ ctustrategy(struct buf *bp)
 		return;
 	}
 
-	empty = (BUFQ_PEEK(&tu_sc.sc_bufq) == NULL);
-	BUFQ_PUT(&tu_sc.sc_bufq, bp);
+	empty = (BUFQ_PEEK(tu_sc.sc_bufq) == NULL);
+	BUFQ_PUT(tu_sc.sc_bufq, bp);
 	if (empty)
 		ctustart();
 	splx(s);
@@ -219,7 +219,7 @@ ctustart()
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&tu_sc.sc_bufq);
+	bp = BUFQ_PEEK(tu_sc.sc_bufq);
 	if (bp == NULL)
 		return;
 #ifdef TUDEBUG
@@ -270,7 +270,7 @@ cturintr(void *arg)
 	int i, c, tck;
 	unsigned short ck = 0;
 
-	bp = BUFQ_PEEK(&tu_sc.sc_bufq);
+	bp = BUFQ_PEEK(tu_sc.sc_bufq);
 	switch (tu_sc.sc_state) {
 	case TU_RESET:
 		if (status != RSP_TYP_CONTINUE)
@@ -389,7 +389,7 @@ cturintr(void *arg)
 		return;
 	}
 	if ((bp->b_flags & B_ERROR) == 0) {
-		(void)BUFQ_GET(&tu_sc.sc_bufq);
+		(void)BUFQ_GET(tu_sc.sc_bufq);
 		biodone(bp);
 #ifdef TUDEBUG
 		printf("biodone %p\n", bp);

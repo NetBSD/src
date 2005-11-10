@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/03/16 08:26:46 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2005/11/10 14:09:26 skrll Exp $
 
 SUBDIR=	adosfs cd9660 filecorefs msdosfs ntfs smbfs union
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19.2.6 2005/03/04 16:50:52 skrll Exp $	*/
+/* 	$NetBSD: px.c,v 1.19.2.7 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.6 2005/03/04 16:50:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.7 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,8 @@ px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 		}
 
 		sxc = si->si_sxc;
-	 	memset((void *)sxc->sxc_done, 0, sizeof(sxc->sxc_done));
+	 	memset((void *)__UNVOLATILE(sxc->sxc_done), 0,
+			sizeof(sxc->sxc_done));
 		sxc->sxc_head = 0;
 		sxc->sxc_tail = 0;
 		sxc->sxc_nreject = 0;

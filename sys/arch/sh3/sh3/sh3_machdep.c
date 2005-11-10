@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.48.2.3 2004/09/21 13:21:36 skrll Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.48.2.4 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.48.2.3 2004/09/21 13:21:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.48.2.4 2005/11/10 13:58:38 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -252,7 +252,7 @@ sh_startup()
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
-	printf(version);
+	printf("%s%s", copyright, version);
 	if (*cpu_model != '\0')
 		printf("%s", cpu_model);
 #ifdef DEBUG

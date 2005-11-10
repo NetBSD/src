@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.26.2.5 2005/03/04 16:52:55 skrll Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.26.2.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.26.2.5 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.26.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ static const vfs_namemap_t signames[] = {
 	{ 0 },
 };
 
-int procfs_control __P((struct lwp *, struct lwp *, int, int));
+int procfs_control(struct lwp *, struct lwp *, int, int);
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)

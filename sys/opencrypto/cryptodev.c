@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.10.4.6 2005/03/08 13:53:12 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10.4.7 2005/11/10 14:12:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.6 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.7 2005/11/10 14:12:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,8 +333,10 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	if (cop->len > 256*1024-4)
 		return (E2BIG);
 
-	if (cse->txform && (cop->len % cse->txform->blocksize) != 0)
-		return (EINVAL);
+	if (cse->txform) {
+		if (cop->len == 0 || (cop->len % cse->txform->blocksize) != 0)
+			return (EINVAL);
+	}
 
 	bzero(&cse->uio, sizeof(cse->uio));
 	cse->uio.uio_iovcnt = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $	*/
+/*	$NetBSD: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $
+ * $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -104,7 +104,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
 
 #define ERR_RETURN(strm,err) \
-  return (strm->msg = (char*)ERR_MSG(err), (err))
+  return (strm->msg = ERR_MSG(err), (err))
 /* To be used only when the state is known to be valid */
 
         /* common constants */
@@ -293,7 +293,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -655,7 +655,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $ */
 
 /* #include "deflate.h" */
 
@@ -812,14 +812,14 @@ int ZEXPORT deflateInit_(strm, level, version, stream_size)
 
 /* ========================================================================= */
 int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
-		  version, stream_size)
+		  vers, stream_size)
     z_streamp strm;
     int  level;
     int  method;
     int  windowBits;
     int  memLevel;
     int  strategy;
-    const char *version;
+    const char *vers;
     int stream_size;
 {
     deflate_state *s;
@@ -831,7 +831,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
      * output size for (length,distance) codes is <= 24 bits.
      */
 
-    if (version == Z_NULL || version[0] != my_version[0] ||
+    if (vers == Z_NULL || vers[0] != my_version[0] ||
         stream_size != sizeof(z_stream)) {
 	return Z_VERSION_ERROR;
     }
@@ -887,7 +887,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
 
     if (s->window == Z_NULL || s->prev == Z_NULL || s->head == Z_NULL ||
         s->pending_buf == Z_NULL) {
-        strm->msg = (char*)ERR_MSG(Z_MEM_ERROR);
+        strm->msg = ERR_MSG(Z_MEM_ERROR);
 	s->status = INIT_STATE;
         deflateEnd (strm);
         return Z_MEM_ERROR;
@@ -2029,7 +2029,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -2280,8 +2280,8 @@ local void send_tree      __P((deflate_state *s, ct_data *tree, int max_code));
 local int  build_bl_tree  __P((deflate_state *s));
 local void send_all_trees __P((deflate_state *s, int lcodes, int dcodes,
                               int blcodes));
-local void compress_block __P((deflate_state *s, ct_data *ltree,
-                              ct_data *dtree));
+local void compress_block __P((deflate_state *s, const ct_data *ltree,
+                              const ct_data *dtree));
 local void set_data_type  __P((deflate_state *s));
 local unsigned bi_reverse __P((unsigned value, int length));
 local void bi_windup      __P((deflate_state *s));
@@ -3124,7 +3124,7 @@ void _tr_flush_block(s, buf, stored_len, eof)
     } else if (static_lenb == opt_lenb) {
 #endif
         send_bits(s, (STATIC_TREES<<1)+eof, 3);
-        compress_block(s, (ct_data *)static_ltree, (ct_data *)static_dtree);
+        compress_block(s, (const ct_data *)static_ltree, (const ct_data *)static_dtree);
 #ifdef DEBUG_ZLIB
         s->compressed_len += 3 + s->static_len;
 #endif
@@ -3132,7 +3132,7 @@ void _tr_flush_block(s, buf, stored_len, eof)
         send_bits(s, (DYN_TREES<<1)+eof, 3);
         send_all_trees(s, s->l_desc.max_code+1, s->d_desc.max_code+1,
                        max_blindex+1);
-        compress_block(s, (ct_data *)s->dyn_ltree, (ct_data *)s->dyn_dtree);
+        compress_block(s, (const ct_data *)s->dyn_ltree, (const ct_data *)s->dyn_dtree);
 #ifdef DEBUG_ZLIB
         s->compressed_len += 3 + s->opt_len;
 #endif
@@ -3211,8 +3211,8 @@ int _tr_tally (s, dist, lc)
  */
 local void compress_block(s, ltree, dtree)
     deflate_state *s;
-    ct_data *ltree; /* literal tree */
-    ct_data *dtree; /* distance tree */
+    const ct_data *ltree; /* literal tree */
+    const ct_data *dtree; /* distance tree */
 {
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */
@@ -3488,13 +3488,13 @@ z_streamp z;
 }
 
 
-int ZEXPORT inflateInit2_(z, w, version, stream_size)
+int ZEXPORT inflateInit2_(z, w, vers, stream_size)
 z_streamp z;
 int w;
-const char *version;
+const char *vers;
 int stream_size;
 {
-  if (version == Z_NULL || version[0] != ZLIB_VERSION[0] ||
+  if (vers == Z_NULL || vers[0] != ZLIB_VERSION[0] ||
       stream_size != sizeof(z_stream))
       return Z_VERSION_ERROR;
 
@@ -3548,12 +3548,12 @@ int stream_size;
 
 
 #if 0
-int ZEXPORT inflateInit_(z, version, stream_size)
+int ZEXPORT inflateInit_(z, vers, stream_size)
 z_streamp z;
-const char *version;
+const char *vers;
 int stream_size;
 {
-  return inflateInit2_(z, DEF_WBITS, version, stream_size);
+  return inflateInit2_(z, DEF_WBITS, vers, stream_size);
 }
 #endif
 
@@ -3579,14 +3579,14 @@ int f;
       if (((z->state->sub.method = NEXTBYTE) & 0xf) != Z_DEFLATED)
       {
         z->state->mode = BAD;
-        z->msg = (char*)"unknown compression method";
+        z->msg = "unknown compression method";
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
       if ((z->state->sub.method >> 4) + 8 > z->state->wbits)
       {
         z->state->mode = BAD;
-        z->msg = (char*)"invalid window size";
+        z->msg = "invalid window size";
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
@@ -3597,7 +3597,7 @@ int f;
       if (((z->state->sub.method << 8) + b) % 31)
       {
         z->state->mode = BAD;
-        z->msg = (char*)"incorrect header check";
+        z->msg = "incorrect header check";
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
@@ -3628,7 +3628,7 @@ int f;
       return Z_NEED_DICT;
     case DICT0:
       z->state->mode = BAD;
-      z->msg = (char*)"need dictionary";
+      z->msg = "need dictionary";
       z->state->sub.marker = 0;       /* can try inflateSync */
       return Z_STREAM_ERROR;
     case BLOCKS:
@@ -3672,7 +3672,7 @@ int f;
       if (z->state->sub.check.was != z->state->sub.check.need)
       {
         z->state->mode = BAD;
-        z->msg = (char*)"incorrect data check";
+        z->msg = "incorrect data check";
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
@@ -3689,7 +3689,7 @@ int f;
   if (f != Z_PACKET_FLUSH)
     return r;
   z->state->mode = BAD;
-  z->msg = (char *)"need more for packet flush";
+  z->msg = "need more for packet flush";
   z->state->sub.marker = 0;
   return Z_DATA_ERROR;
 }
@@ -4187,7 +4187,7 @@ int r;
         case 3:                         /* illegal */
           DUMPBITS(3)
           s->mode = BADB;
-          z->msg = (char*)"invalid block type";
+          z->msg = "invalid block type";
           r = Z_DATA_ERROR;
           LEAVE
       }
@@ -4197,7 +4197,7 @@ int r;
       if ((((~b) >> 16) & 0xffff) != (b & 0xffff))
       {
         s->mode = BADB;
-        z->msg = (char*)"invalid stored block lengths";
+        z->msg = "invalid stored block lengths";
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -4230,7 +4230,7 @@ int r;
       if ((t & 0x1f) > 29 || ((t >> 5) & 0x1f) > 29)
       {
         s->mode = BADB;
-        z->msg = (char*)"too many length or distance symbols";
+        z->msg = "too many length or distance symbols";
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -4302,7 +4302,7 @@ int r;
           {
             ZFREE(z, s->sub.trees.blens);
             s->mode = BADB;
-            z->msg = (char*)"invalid bit length repeat";
+            z->msg = "invalid bit length repeat";
             r = Z_DATA_ERROR;
             LEAVE
           }
@@ -4797,10 +4797,10 @@ z_streamp z;            /* for messages */
   r = huft_build(c, 19, 19, (uIntf*)Z_NULL, (uIntf*)Z_NULL,
                  tb, bb, hp, &hn, v);
   if (r == Z_DATA_ERROR)
-    z->msg = (char*)"oversubscribed dynamic bit lengths tree";
+    z->msg = "oversubscribed dynamic bit lengths tree";
   else if (r == Z_BUF_ERROR || *bb == 0)
   {
-    z->msg = (char*)"incomplete dynamic bit lengths tree";
+    z->msg = "incomplete dynamic bit lengths tree";
     r = Z_DATA_ERROR;
   }
   ZFREE(z, v);
@@ -4832,10 +4832,10 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || *bl == 0)
   {
     if (r == Z_DATA_ERROR)
-      z->msg = (char*)"oversubscribed literal/length tree";
+      z->msg = "oversubscribed literal/length tree";
     else if (r != Z_MEM_ERROR)
     {
-      z->msg = (char*)"incomplete literal/length tree";
+      z->msg = "incomplete literal/length tree";
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);
@@ -4847,18 +4847,18 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || (*bd == 0 && nl > 257))
   {
     if (r == Z_DATA_ERROR)
-      z->msg = (char*)"oversubscribed distance tree";
+      z->msg = "oversubscribed distance tree";
     else if (r == Z_BUF_ERROR) {
 #ifdef PKZIP_BUG_WORKAROUND
       r = Z_OK;
     }
 #else
-      z->msg = (char*)"incomplete distance tree";
+      z->msg = "incomplete distance tree";
       r = Z_DATA_ERROR;
     }
     else if (r != Z_MEM_ERROR)
     {
-      z->msg = (char*)"empty distance tree with lengths";
+      z->msg = "empty distance tree with lengths";
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);
@@ -5276,7 +5276,7 @@ int r;
         break;
       }
       c->mode = BADCODE;        /* invalid code */
-      z->msg = (char*)"invalid literal/length code";
+      z->msg = "invalid literal/length code";
       r = Z_DATA_ERROR;
       LEAVE
     case LENEXT:        /* i: getting length extra (have base) */
@@ -5308,7 +5308,7 @@ int r;
         break;
       }
       c->mode = BADCODE;        /* invalid code */
-      z->msg = (char*)"invalid distance code";
+      z->msg = "invalid distance code";
       r = Z_DATA_ERROR;
       LEAVE
     case DISTEXT:       /* i: getting distance extra */
@@ -5614,7 +5614,7 @@ z_streamp z;
           }
           else
           {
-            z->msg = (char*)"invalid distance code";
+            z->msg = "invalid distance code";
             UNGRAB
             UPDATE
             return Z_DATA_ERROR;
@@ -5645,7 +5645,7 @@ z_streamp z;
       }
       else
       {
-        z->msg = (char*)"invalid literal/length code";
+        z->msg = "invalid literal/length code";
         UNGRAB
         UPDATE
         return Z_DATA_ERROR;
@@ -5905,7 +5905,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.2 2005/11/10 14:10:33 skrll Exp $ */
 
 /* #include "zlib.h" */
 

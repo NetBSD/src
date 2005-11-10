@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.19.2.6 2005/03/04 16:45:19 skrll Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.19.2.7 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19.2.6 2005/03/04 16:45:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19.2.7 2005/11/10 14:06:02 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -207,7 +207,8 @@ struct stge_softc {
 	struct mbuf **sc_rxtailp;
 
 	int	sc_txthresh;		/* Tx threshold */
-	int	sc_usefiber;		/* if we're fiber */
+	uint32_t sc_usefiber:1;		/* if we're fiber */
+	uint32_t sc_stge1023:1;		/* are we a 1023 */
 	uint32_t sc_DMACtrl;		/* prototype DMACtrl register */
 	uint32_t sc_MACCtrl;		/* prototype MacCtrl register */
 	uint16_t sc_IntEnable;		/* prototype IntEnable register */
@@ -277,9 +278,7 @@ static void	stge_shutdown(void *);
 static void	stge_reset(struct stge_softc *);
 static void	stge_rxdrain(struct stge_softc *);
 static int	stge_add_rxbuf(struct stge_softc *, int);
-#if 0
 static void	stge_read_eeprom(struct stge_softc *, int, uint16_t *);
-#endif
 static void	stge_tick(void *);
 
 static void	stge_stats_update(struct stge_softc *);
@@ -328,6 +327,9 @@ static const struct stge_product {
 	pci_product_id_t	stge_product;
 	const char		*stge_name;
 } stge_products[] = {
+	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_ST1023,
+	  "Sundance ST-1023 Gigabit Ethernet" },
+
 	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_ST2021,
 	  "Sundance ST-2021 Gigabit Ethernet" },
 
@@ -563,22 +565,35 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Reading the station address from the EEPROM doesn't seem
-	 * to work, at least on my sample boards.  Instread, since
+	 * to work, at least on my sample boards.  Instead, since
 	 * the reset sequence does AutoInit, read it from the station
-	 * address registers.
+	 * address registers. For Sundance 1023 you can only read it
+	 * from EEPROM.
 	 */
-	enaddr[0] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress0) & 0xff;
-	enaddr[1] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress0) >> 8;
-	enaddr[2] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress1) & 0xff;
-	enaddr[3] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress1) >> 8;
-	enaddr[4] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress2) & 0xff;
-	enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress2) >> 8;
+	if (sp->stge_product != PCI_PRODUCT_SUNDANCETI_ST1023) {
+		enaddr[0] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress0) & 0xff;
+		enaddr[1] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress0) >> 8;
+		enaddr[2] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress1) & 0xff;
+		enaddr[3] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress1) >> 8;
+		enaddr[4] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress2) & 0xff;
+		enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
+		    STGE_StationAddress2) >> 8;
+		sc->sc_stge1023 = 0;
+	} else {
+		uint16_t myaddr[ETHER_ADDR_LEN / 2];
+		for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
+			stge_read_eeprom(sc, STGE_EEPROM_StationAddress0 + i, 
+			    &myaddr[i]);
+			myaddr[i] = le16toh(myaddr[i]);
+		}
+		(void)memcpy(enaddr, myaddr, sizeof(enaddr));
+		sc->sc_stge1023 = 1;
+	}
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -646,8 +661,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
 	 */
-	sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	sc->sc_ethercom.ec_if.if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/*
 	 * Attach the interface.
@@ -901,15 +918,15 @@ stge_start(struct ifnet *ifp)
 		csum_flags = 0;
 		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txipsum);
-			csum_flags |= htole64(TFD_IPChecksumEnable);
+			csum_flags |= TFD_IPChecksumEnable;
 		}
 
 		if (m0->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txtcpsum);
-			csum_flags |= htole64(TFD_TCPChecksumEnable);
+			csum_flags |= TFD_TCPChecksumEnable;
 		} else if (m0->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txudpsum);
-			csum_flags |= htole64(TFD_UDPChecksumEnable);
+			csum_flags |= TFD_UDPChecksumEnable;
 		}
 
 		/*
@@ -1505,8 +1522,8 @@ stge_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		sc->sc_txdescs[i].tfd_next =
-		    (uint64_t) STGE_CDTXADDR(sc, STGE_NEXTTX(i));
+		sc->sc_txdescs[i].tfd_next = htole64(
+		    STGE_CDTXADDR(sc, STGE_NEXTTX(i)));
 		sc->sc_txdescs[i].tfd_control = htole64(TFD_TFDDone);
 	}
 	sc->sc_txpending = 0;
@@ -1539,12 +1556,9 @@ stge_init(struct ifnet *ifp)
 	STGE_RXCHAIN_RESET(sc);
 
 	/* Set the station address. */
-	bus_space_write_2(st, sh, STGE_StationAddress0,
-	    LLADDR(ifp->if_sadl)[0] | (LLADDR(ifp->if_sadl)[1] << 8));
-	bus_space_write_2(st, sh, STGE_StationAddress1,
-	    LLADDR(ifp->if_sadl)[2] | (LLADDR(ifp->if_sadl)[3] << 8));
-	bus_space_write_2(st, sh, STGE_StationAddress2,
-	    LLADDR(ifp->if_sadl)[4] | (LLADDR(ifp->if_sadl)[5] << 8));
+	for (i = 0; i < 6; i++)
+		bus_space_write_1(st, sh, STGE_StationAddress0 + i,
+		    LLADDR(ifp->if_sadl)[i]);
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,
@@ -1583,6 +1597,10 @@ stge_init(struct ifnet *ifp)
 
 	/* Initialize the Tx start threshold. */
 	bus_space_write_2(st, sh, STGE_TxStartThresh, sc->sc_txthresh);
+
+	/* RX DMA thresholds, from linux */
+	bus_space_write_1(st, sh, STGE_RxDMABurstThresh, 0x30);
+	bus_space_write_1(st, sh, STGE_RxDMAUrgentThresh, 0x30);
 
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
@@ -1647,6 +1665,9 @@ stge_init(struct ifnet *ifp)
 		/* Tx Poll Now bug work-around. */
 		bus_space_write_2(st, sh, STGE_DebugCtrl,
 		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0010);
+		/* XXX ? from linux */
+		bus_space_write_2(st, sh, STGE_DebugCtrl,
+		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0020);
 	}
 
 	/*
@@ -1755,7 +1776,6 @@ stge_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
-#if 0
 static int
 stge_eeprom_wait(struct stge_softc *sc)
 {
@@ -1790,7 +1810,6 @@ stge_read_eeprom(struct stge_softc *sc, int offset, uint16_t *data)
 		    sc->sc_dev.dv_xname);
 	*data = bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_EepromData);
 }
-#endif /* 0 */
 
 /*
  * stge_add_rxbuf:
@@ -1857,15 +1876,9 @@ stge_set_filter(struct stge_softc *sc)
 	if (ifp->if_flags & IFF_BROADCAST)
 		sc->sc_ReceiveMode |= RM_ReceiveBroadcast;
 
-#ifdef	STGE_CU_BUG
-	/*
-	 * Some cards (Sundance TI, copper) only seem to work
-	 * right now if we put them into promiscuous mode. It
-	 * probably is the Marvell PHY stuff that isn't quite
-	 * right.
-	 */
-	ifp->if_flags |= IFF_PROMISC;
-#endif
+	/* XXX: ST1023 only works in promiscuous mode */
+	if (sc->sc_stge1023)
+		ifp->if_flags |= IFF_PROMISC;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		sc->sc_ReceiveMode |= RM_ReceiveAllFrames;

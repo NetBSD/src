@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.8.2.10 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.8.2.11 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.8.2.10 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.8.2.11 2005/11/10 14:09:27 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -99,17 +99,15 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_reinit,
 	cd9660_done,
-	NULL,
 	cd9660_mountroot,
-	cd9660_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	cd9660_vnodeopv_descs,
 };
 VFS_ATTACH(cd9660_vfsops);
 
-struct genfs_ops cd9660_genfsops = {
-	genfs_size,
+static const struct genfs_ops cd9660_genfsops = {
+	.gop_size = genfs_size,
 };
 
 /*
@@ -119,9 +117,9 @@ struct genfs_ops cd9660_genfsops = {
  */
 #define ROOTNAME	"root_device"
 
-static int iso_makemp __P((struct iso_mnt *isomp, struct buf *bp, int *ea_len));
-static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct lwp *l, struct iso_args *argp));
+static int iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len);
+static int iso_mountfs(struct vnode *devvp, struct mount *mp,
+		struct lwp *l, struct iso_args *argp);
 
 int
 cd9660_mountroot()
@@ -172,16 +170,14 @@ cd9660_mount(mp, path, data, ndp, l)
 	struct iso_args args;
 	struct proc *p;
 	int error;
-	struct iso_mnt *imp = NULL;
+	struct iso_mnt *imp = VFSTOISOFS(mp);
 
 	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
-		imp = VFSTOISOFS(mp);
 		if (imp == NULL)
 			return EIO;
 		args.fspec = NULL;
 		args.flags = imp->im_flags;
-		vfs_showexport(mp, &args.export, &imp->im_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof (struct iso_args));
@@ -191,15 +187,9 @@ cd9660_mount(mp, path, data, ndp, l)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		imp = VFSTOISOFS(mp);
-		if (args.fspec == 0)
-			return (vfs_export(mp, &imp->im_export, &args.export));
-	}
+	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+		return EINVAL;
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -259,7 +249,6 @@ cd9660_mount(mp, path, data, ndp, l)
 		if (devvp != imp->im_devvp)
 			return (EINVAL);	/* needs translation */
 	}
-	imp = VFSTOISOFS(mp);
 	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, l);
 
@@ -632,7 +621,7 @@ cd9660_statvfs(mp, sbp, l)
 	sbp->f_bresvd = 0; /* total reserved blocks */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	sbp->f_favail = 0; /* free file nodes */
+	sbp->f_favail = 0; /* free file nodes for non superuser */
 	sbp->f_fresvd = 0; /* reserved file nodes */
 	copy_statvfs_info(sbp, mp);
 	/* Use the first spare for flags: */
@@ -696,34 +685,6 @@ cd9660_fhtovp(mp, fhp, vpp)
 		return (ESTALE);
 	}
 	*vpp = nvp;
-	return (0);
-}
-
-/* ARGSUSED */
-int
-cd9660_check_export(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct iso_mnt *imp = VFSTOISOFS(mp);
-
-#ifdef	ISOFS_DBG
-	printf("check_export: ino %d, start %ld\n",
-	    ifhp->ifid_ino, ifhp->ifid_start);
-#endif
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &imp->im_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }
 
@@ -858,7 +819,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		ip->iso_start = ino >> imp->im_bshift;
 		if (bp != 0)
 			brelse(bp);
-		if ((error = VOP_BLKATOFF(vp, (off_t)0, NULL, &bp)) != 0) {
+		if ((error = cd9660_blkatoff(vp, (off_t)0, NULL, &bp)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -880,8 +841,8 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		int off;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
 		    && (off = isonum_711(isodir->ext_attr_length)))
-			VOP_BLKATOFF(vp, (off_t)-(off << imp->im_bshift), NULL,
-				     &bp2);
+			cd9660_blkatoff(vp, (off_t)-(off << imp->im_bshift),
+			    NULL, &bp2);
 		else
 			bp2 = NULL;
 		cd9660_defattr(isodir, ip, bp2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.35.2.7 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.35.2.8 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.7 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.8 2005/11/10 14:07:24 skrll Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -79,8 +79,6 @@ int	pcmcia_verbose = 0;
 #endif
 
 int	pcmcia_match(struct device *, struct cfdata *, void *);
-int	pcmcia_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
@@ -153,7 +151,7 @@ pcmcia_card_attach(dev)
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
 	int error;
-	static const int wildcard[2] = {
+	static const int wildcard[PCMCIACF_NLOCS] = {
 		PCMCIACF_FUNCTION_DEFAULT, PCMCIACF_IRQ_DEFAULT
 	};
 
@@ -214,8 +212,7 @@ pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
 	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
 	struct pcmcia_function *pf;
 	struct pcmcia_attach_args paa;
-	int help[3];
-	locdesc_t *ldesc = (void *)&help; /* XXX */
+	int locs[PCMCIACF_NLOCS];
 
 	if (sc->card.error ||
 	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
@@ -234,17 +231,17 @@ pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
 		if (pf->child)
 			continue;
 
-		ldesc->len = 2;
-		ldesc->locs[PCMCIACF_FUNCTION] = pf->number;
-		ldesc->locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
+		locs[PCMCIACF_FUNCTION] = pf->number;
+		locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
 
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		pf->child = config_found_sm_loc(self, "pcmcia", ldesc, &paa,
-						pcmcia_print, pcmcia_submatch);
+		pf->child = config_found_sm_loc(self, "pcmcia", locs, &paa,
+						pcmcia_print,
+						config_stdsubmatch);
 	}
 
 	return (0);
@@ -329,21 +326,6 @@ pcmcia_card_deactivate(dev)
 		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
 		config_deactivate(pf->child);
 	}
-}
-
-int
-pcmcia_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	const locdesc_t *ldesc;
-	struct cfdata *cf;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCMCIACF_FUNCTION] != ldesc->locs[PCMCIACF_FUNCTION])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
@@ -516,6 +498,7 @@ pcmcia_function_enable(pf)
 	 * necessary.
 	 */
 	pcmcia_socket_enable(&sc->dev);
+	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
@@ -618,8 +601,6 @@ pcmcia_function_enable(pf)
 		}
 	}
 #endif
-
-	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
 
 #ifdef IT8368E_LEGACY_MODE
 	/* return to I/O mode */

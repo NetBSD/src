@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.81.2.9 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.81.2.10 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.9 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.10 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.9 2005/04/01 14:31:50 skrll Ex
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/in_offload.h>
 
 #ifdef INET6
 #ifndef INET
@@ -1110,7 +1111,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 					   laddr, lport);
 		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
 			return (ESRCH);
-		uid = sockp->so_uid;
+		uid = sockp->so_uidinfo->ui_uid;
 		if (oldp) {
 			sz = MIN(sizeof(uid), *oldlenp);
 			error = copyout(&uid, oldp, sz);
@@ -1170,7 +1171,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	}
 	*oldlenp = sizeof(uid);
 
-	uid = sockp->so_uid;
+	uid = sockp->so_uidinfo->ui_uid;
 	if (oldp) {
 		sz = MIN(sizeof(uid), *oldlenp);
 		error = copyout(&uid, oldp, sz);
@@ -1193,14 +1194,18 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 {
 #ifdef INET
 	struct sockaddr_in *in;
-	struct inpcb *inp;
+	const struct inpcb *inp;
 #endif
 #ifdef INET6
 	struct sockaddr_in6 *in6;
-	struct in6pcb *in6p;
+	const struct in6pcb *in6p;
 #endif
-	const struct inpcbtable *pcbtbl = rnode->sysctl_data;
-	struct inpcb_hdr *inph;
+	/*
+	 * sysctl_data is const, but CIRCLEQ_FOREACH can't use a const
+	 * struct inpcbtable pointer, so we have to discard const.  :-/
+	 */
+	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
+	const struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -1236,13 +1241,17 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
-		inp = (struct inpcb *)inph;
+		inp = (const struct inpcb *)inph;
 #endif
 #ifdef INET6
-		in6p = (struct in6pcb *)inph;
+		in6p = (const struct in6pcb *)inph;
 #endif
 
 		if (inph->inph_af != pf)
+			continue;
+
+		if (CURTAIN(l->l_proc->p_ucred->cr_uid,
+			    inph->inph_socket->so_uidinfo->ui_uid))
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
@@ -1367,6 +1376,11 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
+	const struct sysctlnode *sack_node;
+#ifdef TCP_DEBUG
+	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
+	extern int tcp_debx;
+#endif
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1447,11 +1461,11 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Use interface MTU for calculating MSS"),
 		       NULL, 0, &tcp_mss_ifmtu, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSS_IFMTU, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sack",
-		       SYSCTL_DESCR("Enable RFC2018 Selective ACKnowledgement"),
-		       NULL, 0, &tcp_do_sack, 0,
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "sack",
+		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
+		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1577,6 +1591,57 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+
+	/* SACK gets it's own little subtree. */
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable RFC2018 Selective ACKnowledgement"),
+		       NULL, 0, &tcp_do_sack, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxholes",
+		       SYSCTL_DESCR("Maximum number of TCP SACK holes allowed per connection"),
+		       NULL, 0, &tcp_sack_tp_maxholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "globalmaxholes",
+		       SYSCTL_DESCR("Global maximum number of TCP SACK holes"),
+		       NULL, 0, &tcp_sack_globalmaxholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &sack_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "globalholes",
+		       SYSCTL_DESCR("Global number of TCP SACK holes"),
+		       NULL, 0, &tcp_sack_globalholes, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("TCP statistics"),
+		       NULL, 0, &tcpstat, sizeof(tcpstat),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
+		       CTL_EOL);
+#ifdef TCP_DEBUG
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "debug",
+		       SYSCTL_DESCR("TCP sockets debug information"),
+		       NULL, 0, &tcp_debug, sizeof(tcp_debug),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBUG,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "debx",
+		       SYSCTL_DESCR("Number of TCP debug sockets messages"),
+		       NULL, 0, &tcp_debx, sizeof(tcp_debx),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
+		       CTL_EOL);
+#endif
+
 }
 
 /*

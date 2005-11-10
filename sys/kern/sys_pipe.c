@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.40.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.40.2.10 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.10 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,7 @@ static void pipe_free_kmem(struct pipe *pipe);
 static int pipe_create(struct pipe **pipep, int allockva);
 static int pipelock(struct pipe *pipe, int catch);
 static __inline void pipeunlock(struct pipe *pipe);
-static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, void *data,
-    int code);
+static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, int code);
 #ifndef PIPE_NODIRECT
 static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
     struct uio *uio);
@@ -325,7 +324,6 @@ pipe_create(pipep, allockva)
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
-	lockinit(&pipe->pipe_lock, PSOCK | PCATCH, "pipelk", 0, 0);
 
 	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
 		return (error);
@@ -344,40 +342,24 @@ pipelock(pipe, catch)
 	struct pipe *pipe;
 	int catch;
 {
-	int error;
 
 	LOCK_ASSERT(simple_lock_held(&pipe->pipe_slock));
 
-	while (1) {
-		error = lockmgr(&pipe->pipe_lock, LK_EXCLUSIVE | LK_INTERLOCK,
-				&pipe->pipe_slock);
-		if (error == 0)
-			break;
+	while (pipe->pipe_state & PIPE_LOCKFL) {
+		int error;
+		const int pcatch = catch ? PCATCH : 0;
 
-		simple_lock(&pipe->pipe_slock);
-		if (catch || (error != EINTR && error != ERESTART))
-			break;
-		/*
-		 * XXX XXX XXX
-		 * The pipe lock is initialised with PCATCH on and we cannot
-		 * override this in a lockmgr() call. Thus a pending signal
-		 * will cause lockmgr() to return with EINTR or ERESTART.
-		 * We cannot simply re-enter lockmgr() at this point since
-		 * the pending signals have not yet been posted and would
-		 * cause an immediate EINTR/ERESTART return again.
-		 * As a workaround we pause for a while here, giving the lock
-		 * a chance to drain, before trying again.
-		 * XXX XXX XXX
-		 *
-		 * NOTE: Consider dropping PCATCH from this lock; in practice
-		 * it is never held for long enough periods for having it
-		 * interruptable at the start of pipe_read/pipe_write to be
-		 * beneficial.
-		 */
-		(void) ltsleep(&lbolt, PSOCK, "rstrtpipelock", hz,
+		pipe->pipe_state |= PIPE_LWANT;
+		error = ltsleep(pipe, PSOCK | pcatch, "pipelk", 0,
 		    &pipe->pipe_slock);
+		if (error != 0)
+			return error;
 	}
-	return (error);
+
+	pipe->pipe_state |= PIPE_LOCKFL;
+	simple_unlock(&pipe->pipe_slock);
+
+	return 0;
 }
 
 /*
@@ -388,7 +370,13 @@ pipeunlock(pipe)
 	struct pipe *pipe;
 {
 
-	lockmgr(&pipe->pipe_lock, LK_RELEASE, NULL);
+	KASSERT(pipe->pipe_state & PIPE_LOCKFL);
+
+	pipe->pipe_state &= ~PIPE_LOCKFL;
+	if (pipe->pipe_state & PIPE_LWANT) {
+		pipe->pipe_state &= ~PIPE_LWANT;
+		wakeup(pipe);
+	}
 }
 
 /*
@@ -396,9 +384,8 @@ pipeunlock(pipe)
  * 'sigpipe' side of pipe.
  */
 static void
-pipeselwakeup(selp, sigp, data, code)
+pipeselwakeup(selp, sigp, code)
 	struct pipe *selp, *sigp;
-	void *data;
 	int code;
 {
 	int band;
@@ -563,8 +550,7 @@ again:
 			/*
 			 * We want to read more, wake up select/poll.
 			 */
-			pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data,
-			    POLL_IN);
+			pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
 
 			/*
 			 * If the "write-side" is blocked, wake it up now.
@@ -616,7 +602,7 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data, POLL_OUT);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
@@ -774,7 +760,7 @@ pipe_direct_write(fp, wpipe, uio)
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_IN);
+		pipeselwakeup(wpipe, wpipe, POLL_IN);
 		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwt", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
@@ -794,7 +780,7 @@ pipe_direct_write(fp, wpipe, uio)
 		pipe_loan_free(wpipe);
 
 	if (error) {
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_ERR);
+		pipeselwakeup(wpipe, wpipe, POLL_ERR);
 
 		/*
 		 * If nothing was read from what we offered, return error
@@ -1038,8 +1024,7 @@ retry:
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe, fp->f_data,
-				    POLL_OUT);
+				pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 			PIPE_LOCK(wpipe);
 			pipeunlock(wpipe);
@@ -1091,7 +1076,7 @@ retry:
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_OUT);
+		pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1327,16 +1312,16 @@ pipeclose(fp, pipe)
 retry:
 	PIPE_LOCK(pipe);
 
-	if (fp)
-		pipeselwakeup(pipe, pipe, fp->f_data, POLL_HUP);
+	pipeselwakeup(pipe, pipe, POLL_HUP);
 
 	/*
 	 * If the other side is blocked, wake it up saying that
 	 * we want to close it down.
 	 */
+	pipe->pipe_state |= PIPE_EOF;
 	while (pipe->pipe_busy) {
 		wakeup(pipe);
-		pipe->pipe_state |= PIPE_WANTCLOSE | PIPE_EOF;
+		pipe->pipe_state |= PIPE_WANTCLOSE;
 		ltsleep(pipe, PSOCK, "pipecl", 0, &pipe->pipe_slock);
 	}
 
@@ -1349,8 +1334,7 @@ retry:
 			PIPE_UNLOCK(pipe);
 			goto retry;
 		}
-		if (fp)
-			pipeselwakeup(ppipe, ppipe, fp->f_data, POLL_HUP);
+		pipeselwakeup(ppipe, ppipe, POLL_HUP);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
@@ -1358,8 +1342,9 @@ retry:
 		PIPE_UNLOCK(ppipe);
 	}
 
-	(void)lockmgr(&pipe->pipe_lock, LK_DRAIN | LK_INTERLOCK,
-			&pipe->pipe_slock);
+	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
+
+	PIPE_UNLOCK(pipe);
 
 	/*
 	 * free resources

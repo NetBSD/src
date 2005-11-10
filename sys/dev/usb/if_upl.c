@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.19.6.4 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.19.6.5 2005/11/10 14:08:05 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.19.6.4 2004/12/18 09:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.19.6.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -233,7 +233,7 @@ USB_MATCH(upl)
 USB_ATTACH(upl)
 {
 	USB_ATTACH_START(upl, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -245,9 +245,10 @@ USB_ATTACH(upl)
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {

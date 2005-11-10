@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.81.2.7 2005/03/04 16:52:03 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.81.2.8 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.7 2005/03/04 16:52:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.8 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.7 2005/03/04 16:52:03 skrll
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+static void adjust_rights(struct mbuf *m, int len, struct lwp *l);
 
 /*
  * System call interface to the socket abstraction.
@@ -407,13 +409,13 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	struct msghdr	msg;
 	struct iovec	aiov;
 
-	msg.msg_name = (caddr_t)SCARG(uap, to);		/* XXX kills const */
+	msg.msg_name = __UNCONST(SCARG(uap, to)); /* XXXUNCONST kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
 	msg.msg_flags = 0;
-	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
+	aiov.iov_base = __UNCONST(SCARG(uap, buf)); /* XXXUNCONST kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
@@ -635,6 +637,29 @@ done:
 	return (error);
 }
 
+/*
+ * Adjust for a truncated SCM_RIGHTS control message.  This means
+ *  closing any file descriptors that aren't entirely present in the
+ *  returned buffer.  m is the mbuf holding the (already externalized)
+ *  SCM_RIGHTS message; len is the length it is being truncated to.  p
+ *  is the affected process.
+ */
+static void
+adjust_rights(struct mbuf *m, int len, struct lwp *l)
+{
+	int nfd;
+	int i;
+	int nok;
+	int *fdv;
+
+	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
+	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
+	nok = (len < CMSG_LEN(0)) ? 0 : ((len - CMSG_LEN(0)) / sizeof(int));
+	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
+	for (i = nok; i < nfd; i++)
+		fdrelease(l,fdv[i]);
+}
+
 int
 recvit(struct lwp *l, int s, struct msghdr *mp, caddr_t namelenp,
 	register_t *retsize)
@@ -739,24 +764,34 @@ recvit(struct lwp *l, int s, struct msghdr *mp, caddr_t namelenp,
 			len = 0;
 		else {
 			struct mbuf *m = control;
-			caddr_t p = (caddr_t)mp->msg_control;
+			caddr_t q = (caddr_t)mp->msg_control;
 
 			do {
 				i = m->m_len;
 				if (len < i) {
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
+					if (mtod(m, struct cmsghdr *)->
+					    cmsg_type == SCM_RIGHTS)
+						adjust_rights(m, len, l);
 				}
-				error = copyout(mtod(m, caddr_t), p,
+				error = copyout(mtod(m, caddr_t), q,
 				    (unsigned)i);
-				if (m->m_next)
+				m = m->m_next;
+				if (m)
 					i = ALIGN(i);
-				p += i;
+				q += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
-			} while ((m = m->m_next) != NULL);
-			len = p - (caddr_t)mp->msg_control;
+			} while (m != NULL);
+			while (m) {
+				if (mtod(m, struct cmsghdr *)->
+				    cmsg_type == SCM_RIGHTS)
+					adjust_rights(m, 0, l);
+				m = m->m_next;
+			}
+			len = q - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
 	}
@@ -1049,7 +1084,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
  * XXX arguments in mbufs, and this could go away.
  */
 int
-sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
+sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 {
 	struct sockaddr	*sa;
 	struct mbuf	*m;
@@ -1074,7 +1109,7 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 		MEXTMALLOC(m, buflen, M_WAITOK);
 	}
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), buflen);
+	error = copyin(bf, mtod(m, caddr_t), buflen);
 	if (error) {
 		(void) m_free(m);
 		return (error);

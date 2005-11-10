@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.9.2.1 2005/03/04 16:40:22 skrll Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.9.2.2 2005/11/10 14:01:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.9.2.1 2005/03/04 16:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.9.2.2 2005/11/10 14:01:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.9.2.1 2005/03/04 16:40:22 skrll Ex
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/exec.h>
 
@@ -131,7 +132,7 @@ printf("sendmsg space\n");
 	bsd_msghdr.msg_iov = stackgap_alloc(p, &sg,
 	    bsd_msghdr.msg_iovlen * sizeof (struct iovec));
 
-	if ((error = copyout(&bsd_msghdr, (caddr_t)SCARG(&a, msg),
+	if ((error = copyout(&bsd_msghdr, __UNCONST(SCARG(&a, msg)),
 	    sizeof bsd_msghdr)) != 0)
 		return (error);
 

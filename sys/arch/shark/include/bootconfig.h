@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1 2002/02/10 01:57:08 thorpej Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.1.20.1 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -76,16 +76,4 @@ typedef struct _BootConfig {
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && OFW */
 
-#ifdef _KERNEL
-#define BOOTOPT_TYPE_BOOLEAN		0
-#define BOOTOPT_TYPE_STRING		1
-#define BOOTOPT_TYPE_INT		2
-#define BOOTOPT_TYPE_BININT		3
-#define BOOTOPT_TYPE_HEXINT		4
-#define BOOTOPT_TYPE_MASK		7
-
-int get_bootconf_option __P((char *string, char *option, int type, void *result));
-
-extern char *boot_args;
-extern char *boot_file;
-#endif	/* _KERNEL */
+#include <arm/bootconfig.h>

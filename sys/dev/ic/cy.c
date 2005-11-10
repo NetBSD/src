@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.32.2.5 2005/03/04 16:41:27 skrll Exp $	*/
+/*	$NetBSD: cy.c,v 1.32.2.6 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.5 2005/03/04 16:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.6 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -370,7 +370,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0) {
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 		return EBUSY;
 	} else {
 		s = spltty();

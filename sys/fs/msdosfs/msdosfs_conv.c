@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $");
 
 /*
  * System include files.
@@ -97,7 +97,7 @@ u_short lastdtime;
  */
 void
 unix2dostime(tsp, gmtoff, ddp, dtp, dhp)
-	struct timespec *tsp;
+	const struct timespec *tsp;
 	int gmtoff;
 	u_int16_t *ddp;
 	u_int16_t *dtp;

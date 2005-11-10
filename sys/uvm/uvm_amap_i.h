@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.20.2.1 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.20.2.2 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -52,9 +52,7 @@
  * => amap should be locked by caller.
  */
 AMAP_INLINE struct vm_anon *
-amap_lookup(aref, offset)
-	struct vm_aref *aref;
-	vaddr_t offset;
+amap_lookup(struct vm_aref *aref, vaddr_t offset)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -79,11 +77,8 @@ amap_lookup(aref, offset)
  * => XXXCDC: this interface is biased toward array-based amaps.  fix.
  */
 AMAP_INLINE void
-amap_lookups(aref, offset, anons, npages)
-	struct vm_aref *aref;
-	vaddr_t offset;
-	struct vm_anon **anons;
-	int npages;
+amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
+    int npages)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -113,11 +108,8 @@ amap_lookups(aref, offset, anons, npages)
  *	pmap_page_protect on the anon's page.
  */
 AMAP_INLINE void
-amap_add(aref, offset, anon, replace)
-	struct vm_aref *aref;
-	vaddr_t offset;
-	struct vm_anon *anon;
-	boolean_t replace;
+amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
+    boolean_t replace)
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -134,9 +126,9 @@ amap_add(aref, offset, anon, replace)
 
 		if (amap->am_anon[slot] == NULL)
 			panic("amap_add: replacing null anon");
-		if (amap->am_anon[slot]->u.an_page != NULL &&
+		if (amap->am_anon[slot]->an_page != NULL &&
 		    (amap->am_flags & AMAP_SHARED) != 0) {
-			pmap_page_protect(amap->am_anon[slot]->u.an_page,
+			pmap_page_protect(amap->am_anon[slot]->an_page,
 			    VM_PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?
@@ -162,9 +154,7 @@ amap_add(aref, offset, anon, replace)
  * => caller must lock amap
  */
 AMAP_INLINE void
-amap_unadd(aref, offset)
-	struct vm_aref *aref;
-	vaddr_t offset;
+amap_unadd(struct vm_aref *aref, vaddr_t offset)
 {
 	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -199,11 +189,7 @@ amap_unadd(aref, offset)
  * => called at fork time to gain the child's reference
  */
 AMAP_INLINE void
-amap_ref(amap, offset, len, flags)
-	struct vm_amap *amap;
-	vaddr_t offset;
-	vsize_t len;
-	int flags;
+amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 {
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
@@ -238,11 +224,7 @@ amap_ref(amap, offset, len, flags)
  * => amap must be unlocked (we will lock it).
  */
 AMAP_INLINE void
-amap_unref(amap, offset, len, all)
-	struct vm_amap *amap;
-	vaddr_t offset;
-	vsize_t len;
-	boolean_t all;
+amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, boolean_t all)
 {
 	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
 
@@ -253,11 +235,15 @@ amap_unref(amap, offset, len, all)
 	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
 	    amap, amap->am_ref, amap->am_nused, 0);
 
+	KASSERT(amap_refs(amap) > 0);
+
 	/*
 	 * if we are the last reference, free the amap and return.
 	 */
 
-	if (amap->am_ref == 1) {
+	amap->am_ref--;
+
+	if (amap_refs(amap) == 0) {
 		amap_wipeout(amap);	/* drops final ref and frees */
 		UVMHIST_LOG(maphist,"<- done (was last ref)!", 0, 0, 0, 0);
 		return;			/* no need to unlock */
@@ -267,8 +253,7 @@ amap_unref(amap, offset, len, all)
 	 * otherwise just drop the reference count(s)
 	 */
 
-	amap->am_ref--;
-	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0)
+	if (amap_refs(amap) == 1 && (amap->am_flags & AMAP_SHARED) != 0)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)

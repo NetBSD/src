@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6.2.6 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.2.7 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.2.6 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.2.7 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ void
 inittodr(time_t base)
 {
 	int s;
+	struct cpu_info *ci = curcpu();
 
 	/*
 	 * if the file system time is more than a year older than the
@@ -116,6 +117,9 @@ inittodr(time_t base)
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
+	/* reset microset, so that the next call to microset() will init */
+	ci->ci_cc.cc_denom = 0;
+
 	if (base != 0 && base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
 	else if (base > time.tv_sec + 5*SECYR) {
@@ -220,59 +224,54 @@ xen_delay(int n)
 void
 xen_microtime(struct timeval *tv)
 {
-
-	*tv = time;
+	int s = splclock();
+	get_time_values_from_xen();
+	*tv = shadow_tv;
+	splx(s);
 }
 
 void
 xen_initclocks()
 {
-	int irq = bind_virq_to_irq(VIRQ_TIMER);
+	int evtch = bind_virq_to_evtch(VIRQ_TIMER);
 
-	aprint_verbose("Xen clock: using irq %d\n", irq);
+	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
 	get_time_values_from_xen();
 	processed_system_time = shadow_system_time;
 
-	event_set_handler(irq, (int (*)(void *))xen_timer_handler,
-	    NULL, IPL_CLOCK);
-	hypervisor_enable_irq(irq);
+	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
+	    NULL, IPL_CLOCK, "clock");
+	hypervisor_enable_event(evtch);
 }
 
 static int
 xen_timer_handler(void *arg, struct intrframe *regs)
 {
 	int64_t delta;
-
-#if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call cc_microset once/sec */
+	static int microset_iter = 0; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 	
-	/*
-	 * If we have a cycle counter, do the microset thing.
-	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
-			microset_iter = hz - 1;
-#if defined(MULTIPROCESSOR)
-			x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-			cc_microset_time = time;
-			cc_microset(ci);
-		}
-	}
-#endif
-
 	get_time_values_from_xen();
 
 	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns() -
 			  processed_system_time);
 	while (delta >= NS_PER_TICK) {
-		hardclock(regs);
+		if (ci->ci_feature_flags & CPUID_TSC) {
+			if (
+#if defined(MULTIPROCESSOR)
+		 	   CPU_IS_PRIMARY(ci) &&
+#endif
+			    (microset_iter--) == 0) {
+				microset_iter = hz - 1;
+#if defined(MULTIPROCESSOR)
+				x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+				cc_microset_time = time;
+				cc_microset(ci);
+			}
+		}
+		hardclock((struct clockframe *)regs);
 		delta -= NS_PER_TICK;
 		processed_system_time += NS_PER_TICK;
 	}

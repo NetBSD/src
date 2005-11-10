@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.34.2.8 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.34.2.9 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.8 2005/03/04 16:54:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.9 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.8 2005/03/04 16:54:45 skrll 
 
 extern int prtactive;
 
-static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
-				  daddr_t, int, long *));
+static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
+				  daddr_t, int, long *);
 
 /*
  * Get the size of an inode.
@@ -136,8 +136,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ext2fs_inactive(v)
-	void *v;
+ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -160,17 +159,17 @@ ext2fs_inactive(v)
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		if (ext2fs_size(ip) != 0) {
-			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
+			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
 		}
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		nanotime(&ts);
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
+		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 		vn_finished_write(mp, V_LOWER);
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		VOP_UPDATE(vp, NULL, NULL, 0);
+		ext2fs_update(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);
 	}
 out:
@@ -195,31 +194,21 @@ out:
  * write of the inode to complete.
  */
 int
-ext2fs_update(v)
-	void *v;
+ext2fs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int updflags)
 {
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_flags;
-	} */ *ap = v;
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct inode *ip;
 	int error;
-	struct timespec ts;
 	caddr_t cp;
 	int flags;
 
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	ip = VTOI(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip,
-	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if (ap->a_flags & UPDATE_CLOSE)
+	ip = VTOI(vp);
+	EXT2FS_ITIMES(ip, acc, mod, NULL);
+	if (updflags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 	else
 		flags = ip->i_flag & IN_MODIFIED;
@@ -238,9 +227,9 @@ ext2fs_update(v)
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
-	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
+	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
-	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+	    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);
@@ -256,27 +245,18 @@ ext2fs_update(v)
  * disk blocks.
  */
 int
-ext2fs_truncate(v)
-	void *v;
+ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
+    struct ucred *cred, struct proc *p)
 {
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct vnode *ovp = ap->a_vp;
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	/* XXX ondisk32 */
 	int32_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
-	off_t length = ap->a_length;
 	struct m_ext2fs *fs;
 	int offset, size, level;
 	long count, blocksreleased = 0;
-	int i, ioflag, nblocks;
+	int i, nblocks;
 	int error, allerror = 0;
 	off_t osize;
 	int sync;
@@ -293,18 +273,17 @@ ext2fs_truncate(v)
 			(u_int)ext2fs_size(oip));
 		(void)ext2fs_setsize(oip, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (ext2fs_update(ovp, NULL, NULL, 0));
 	}
 	if (ext2fs_size(oip) == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (ext2fs_update(ovp, NULL, NULL, 0));
 	}
 	fs = oip->i_e2fs;
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);
 
 	osize = ext2fs_size(oip);
-	ioflag = ap->a_flags;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -312,17 +291,17 @@ ext2fs_truncate(v)
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
-		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		error = ufs_balloc_range(ovp, length - 1, 1, cred,
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {
-			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
-			    ap->a_cred, ap->a_l);
+			(void) ext2fs_truncate(ovp, osize, ioflag & IO_SYNC,
+			    cred, p);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		KASSERT(error || ovp->v_size == oip->i_size);
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		KASSERT(error  || ovp->v_size == ext2fs_size(oip));
+		return (ext2fs_update(ovp, NULL, NULL, 0));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -374,7 +353,7 @@ ext2fs_truncate(v)
 	}
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (sync) {
-		error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+		error = ext2fs_update(ovp, NULL, NULL, UPDATE_WAIT);
 		if (error && !allerror)
 			allerror = error;
 	}
@@ -451,7 +430,7 @@ done:
 	(void)ext2fs_setsize(oip, length);
 	oip->i_e2fs_nblock -= blocksreleased;
 	oip->i_flag |= IN_CHANGE;
-	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_size);
+	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
 	return (allerror);
 }
 
@@ -465,12 +444,8 @@ done:
  * NB: triple indirect blocks are untested.
  */
 static int
-ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	struct inode *ip;
-	daddr_t lbn, lastbn;
-	daddr_t dbn;
-	int level;
-	long *countp;
+ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
+		int level, long *countp)
 {
 	int i;
 	struct buf *bp;

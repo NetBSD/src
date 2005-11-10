@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.6.4.6 2004/11/14 08:15:24 skrll Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.6.4.7 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6.4.6 2004/11/14 08:15:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6.4.7 2005/11/10 13:58:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,43 +65,42 @@ static struct consdev arcemu_ip12_cn = {
  * Emulate various ARCBIOS functions on pre-ARCS sgimips
  * machines (<= IP17).
  */
-
 static struct arcbios_fv arcemu_v = {
-	.Load =				arcemu_unimpl_Load,
-	.Invoke =			arcemu_unimpl_Invoke,
-	.Execute = 			arcemu_unimpl_Execute,
-	.Halt =				arcemu_unimpl_void_void_noret,
-	.PowerDown =			arcemu_unimpl_void_void_noret,
-	.Restart = 			arcemu_unimpl_void_void_noret,
-	.Reboot =			arcemu_unimpl_void_void_noret,
-	.EnterInteractiveMode =		arcemu_unimpl_void_void_noret,
+	.Load =				ARCEMU_UNIMPL,
+	.Invoke =			ARCEMU_UNIMPL,
+	.Execute = 			ARCEMU_UNIMPL,
+	.Halt =				ARCEMU_UNIMPL,
+	.PowerDown =			ARCEMU_UNIMPL,
+	.Restart = 			ARCEMU_UNIMPL,
+	.Reboot =			ARCEMU_UNIMPL,
+	.EnterInteractiveMode =		ARCEMU_UNIMPL,
 	.reserved0 =			NULL,
-	.GetPeer =			arcemu_unimpl_voidptr_voidptr,
-	.GetChild =			arcemu_unimpl_voidptr_voidptr,
-	.GetParent =			arcemu_unimpl_voidptr_voidptr,
-	.GetConfigurationData =		arcemu_unimpl_GetConfigurationData,
-	.AddChild =			arcemu_unimpl_AddChild,
-	.DeleteComponent =		arcemu_unimpl_DeleteComponent,
-	.GetComponent =			arcemu_unimpl_GetComponent,
-	.SaveConfiguration =		arcemu_unimpl_SaveConfiguration,
-	.GetSystemId =			arcemu_unimpl_voidptr_void,
-	.GetMemoryDescriptor =		arcemu_unimpl_GetMemoryDescriptor,
+	.GetPeer =			ARCEMU_UNIMPL,
+	.GetChild =			ARCEMU_UNIMPL,
+	.GetParent =			ARCEMU_UNIMPL,
+	.GetConfigurationData =		ARCEMU_UNIMPL,
+	.AddChild =			ARCEMU_UNIMPL,
+	.DeleteComponent =		ARCEMU_UNIMPL,
+	.GetComponent =			ARCEMU_UNIMPL,
+	.SaveConfiguration =		ARCEMU_UNIMPL,
+	.GetSystemId =			ARCEMU_UNIMPL,
+	.GetMemoryDescriptor =		ARCEMU_UNIMPL,
 	.reserved1 =			NULL,
-	.GetTime =			arcemu_unimpl_voidptr_void,
-	.GetRelativeTime =		arcemu_unimpl_GetRelativeTime,
-	.GetDirectoryEntry =		arcemu_unimpl_GetDirectoryEntry,
-	.Open =				arcemu_unimpl_Open,
-	.Close =			arcemu_unimpl_Close,
-	.Read =				arcemu_unimpl_GetDirectoryEntry,
-	.GetReadStatus =		arcemu_unimpl_GetReadStatus,
-	.Write =			arcemu_unimpl_GetDirectoryEntry,
-	.Seek =				arcemu_unimpl_Seek,
-	.Mount =			arcemu_unimpl_Mount,
-	.GetEnvironmentVariable =	arcemu_unimpl_GetEnvironmentVariable,
-	.SetEnvironmentVariable =	arcemu_unimpl_SetEnvironmentVariable,
-	.GetFileInformation =		arcemu_unimpl_GetFileInformation,
-	.SetFileInformation =		arcemu_unimpl_SetFileInformation,
-	.FlushAllCaches =		arcemu_unimpl_void_void
+	.GetTime =			ARCEMU_UNIMPL,
+	.GetRelativeTime =		ARCEMU_UNIMPL,
+	.GetDirectoryEntry =		ARCEMU_UNIMPL,
+	.Open =				ARCEMU_UNIMPL,
+	.Close =			ARCEMU_UNIMPL,
+	.Read =				ARCEMU_UNIMPL,
+	.GetReadStatus =		ARCEMU_UNIMPL,
+	.Write =			ARCEMU_UNIMPL,
+	.Seek =				ARCEMU_UNIMPL,
+	.Mount =			ARCEMU_UNIMPL,
+	.GetEnvironmentVariable =	ARCEMU_UNIMPL,
+	.SetEnvironmentVariable =	ARCEMU_UNIMPL,
+	.GetFileInformation =		ARCEMU_UNIMPL,
+	.SetFileInformation =		ARCEMU_UNIMPL,
+	.FlushAllCaches =		ARCEMU_UNIMPL
 };
 
 /*
@@ -177,7 +176,7 @@ arcemu_ip12_eeprom_read()
 	struct seeprom_descriptor sd;
 	bus_space_handle_t bsh;
 	bus_space_tag_t tag;
-	paddr_t reg;
+	u_int32_t reg;
 
 	tag = SGIMIPS_BUS_SPACE_NORMAL;
 	bus_space_map(tag, 0x1fa00000 + 0x1801bf, 1, 0, &bsh);
@@ -283,8 +282,8 @@ arcemu_ip12_GetChild(void *node)
 	return (NULL);
 }
 
-static char *
-arcemu_ip12_GetEnvironmentVariable(char *var)
+static const char *
+arcemu_ip12_GetEnvironmentVariable(const char *var)
 {
 
 	/* 'd'ebug (serial), 'g'raphics, 'G'raphics w/ logo */
@@ -409,200 +408,10 @@ arcemu_ip12_putc(dev_t dummy, int c)
 	ip12_prom_printf("%c", c);
 }
 
-/*
- * Unimplemented Vectors 
- */
-
+/* Unimplemented Vector */
 static void
 arcemu_unimpl()
 {
-	panic("arcemu vector not established on IP%d.\n", mach_type);
-}
 
-static void
-arcemu_unimpl_void_void_noret()
-{
-	panic("arcemu vector not established on IP%d.\n", mach_type);
-}
-
-static void
-arcemu_unimpl_void_void()
-{
-	arcemu_unimpl();
-}
-
-static void *
-arcemu_unimpl_voidptr_void()
-{
-	arcemu_unimpl();	
-
-	return (NULL);
-}
-
-static void *
-arcemu_unimpl_voidptr_voidptr(void *a)
-{
-	arcemu_unimpl();	
-
-	return (NULL);
-}
-
-static paddr_t
-arcemu_unimpl_Load(char *a, paddr_t b, paddr_t c, paddr_t *d)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Invoke(paddr_t a, paddr_t b, paddr_t c, char **d, char **e)
-{
-	arcemu_unimpl();	
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Execute(char *a, paddr_t b, char **c, char **d)
-{
-	arcemu_unimpl();	
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_GetConfigurationData(void *a, void *b)
-{
-	arcemu_unimpl();	
-
-	return (0);
-}
-
-static void *
-arcemu_unimpl_AddChild(void *a, void *b)
-{
-	arcemu_unimpl();
-
-	return (NULL);
-}
-
-static paddr_t
-arcemu_unimpl_DeleteComponent(void *a)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_GetComponent(char *a)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_SaveConfiguration()
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static void *
-arcemu_unimpl_GetMemoryDescriptor(void *a)
-{
-	arcemu_unimpl();
-
-	return (NULL);
-}
-
-static paddr_t
-arcemu_unimpl_GetRelativeTime()
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_GetDirectoryEntry(paddr_t a, void *b, paddr_t c, paddr_t *d)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Open(char *a, paddr_t b, paddr_t *c)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Close(paddr_t a)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_GetReadStatus(paddr_t a)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Seek(paddr_t a, int64_t *b, paddr_t c)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_Mount(char *a, paddr_t b)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static char *
-arcemu_unimpl_GetEnvironmentVariable(char *a)
-{
-	arcemu_unimpl();
-
-	return (NULL);
-}
-
-static paddr_t
-arcemu_unimpl_SetEnvironmentVariable(char *a, char *b)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_GetFileInformation(paddr_t a, void *b)
-{
-	arcemu_unimpl();
-
-	return (0);
-}
-
-static paddr_t
-arcemu_unimpl_SetFileInformation(paddr_t a, paddr_t b, paddr_t c)
-{
-	arcemu_unimpl();
-
-	return (0);
+	panic("arcemu vector not established on IP%d", mach_type);
 }

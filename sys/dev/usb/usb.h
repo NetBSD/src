@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.69.6.3 2004/09/21 13:33:49 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.69.6.4 2005/11/10 14:08:06 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -270,6 +270,7 @@ typedef struct {
 } UPACKED usb_string_descriptor_t;
 #define USB_MAX_STRING_LEN 128
 #define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
+#define USB_MAX_ENCODED_STRING_LEN (USB_MAX_STRING_LEN * 3) /* UTF8 */
 
 /* Hub specific request */
 #define UR_GET_BUS_STATE	0x02
@@ -595,9 +596,10 @@ struct usb_device_info {
 	u_int8_t	udi_bus;
 	u_int8_t	udi_addr;	/* device address */
 	usb_event_cookie_t udi_cookie;
-	char		udi_product[USB_MAX_STRING_LEN];
-	char		udi_vendor[USB_MAX_STRING_LEN];
+	char		udi_product[USB_MAX_ENCODED_STRING_LEN];
+	char		udi_vendor[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_release[8];
+	char		udi_serial[USB_MAX_ENCODED_STRING_LEN];
 	u_int16_t	udi_productNo;
 	u_int16_t	udi_vendorNo;
 	u_int16_t	udi_releaseNo;

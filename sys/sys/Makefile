@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57.2.8 2005/04/01 14:32:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.57.2.9 2005/11/10 14:12:12 skrll Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -10,8 +10,8 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
-	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
-	float_ieee754.h fstypes.h gmon.h hash.h \
+	fcntl.h fd_set.h fdio.h featuretest.h file.h filedesc.h filio.h \
+	float_ieee754.h fstypes.h gmon.h gpio.h hash.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
 	joystick.h \
 	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
@@ -25,9 +25,9 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
 	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
 	socketvar.h sockio.h stat.h statvfs.h syscall.h syscallargs.h \
-	sysctl.h stdint.h swap.h syslimits.h syslog.h systm.h \
-	tablet.h termios.h time.h timeb.h timepps.h times.h \
-	timex.h tprintf.h trace.h tree.h tty.h ttychars.h ttycom.h \
+	sysctl.h stdint.h swap.h syslimits.h syslog.h \
+	tablet.h tape.h termios.h time.h timeb.h timepps.h times.h \
+	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \

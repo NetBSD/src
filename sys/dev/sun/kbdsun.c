@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.2.6.4 2005/03/04 16:50:39 skrll Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.2.6.5 2005/11/10 14:08:05 skrll Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.2.6.4 2005/03/04 16:50:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.2.6.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,11 @@ kbd_sun_open(kbd)
 	kbd_sun_drain_tx(k);
 
 	/* the wakeup for this is in kbd_sun_was_reset(). */
-	for (ntries = 200; ntries; ntries--) {
+	for (ntries = 30; ntries; ntries--) {
 		error = tsleep((caddr_t)&ks->kbd_id, PZERO | PCATCH, devopn,
-				hz);
+				hz/10);
 		if (ks->kbd_id)
 			break;
-		DELAY(10000);
 	}
 
 	if (error == EWOULDBLOCK || ks->kbd_id == 0) { /* no response */
@@ -348,14 +347,15 @@ static int
 kbd_sun_drain_tx(k)
 	struct kbd_sun_softc *k;
 {
-	int error = 0;
+	int error = 0, bail = 0;
 
-	while (k->k_txflags & K_TXBUSY && !error) {
+	while ((k->k_txflags & K_TXBUSY) && (!error) && (bail<1000)) {
 		k->k_txflags |= K_TXWANT;
-		error = tsleep((caddr_t)&k->k_txflags,
-			       PZERO | PCATCH, "kbdout", 0);
+		error = tsleep(&k->k_txflags, PZERO | PCATCH, "kbdout", 1);
+		bail++;
 	}
-
+	if (bail==1000)
+		error=EIO;
 	return (error);
 }
 
@@ -379,7 +379,7 @@ kbd_sun_start_tx(k)
 		/* Nothing to send.  Wake drain waiters. */
 		if (k->k_txflags & K_TXWANT) {
 			k->k_txflags &= ~K_TXWANT;
-			wakeup((caddr_t)&k->k_txflags);
+			wakeup(&k->k_txflags);
 		}
 		return;
 	}

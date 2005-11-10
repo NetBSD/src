@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.44.2.7 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.44.2.8 2005/11/10 14:07:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.44.2.7 2005/03/04 16:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.44.2.8 2005/11/10 14:07:40 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -570,7 +570,7 @@ fail:
 
 /* configure a single disk in the array */
 int
-rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
+rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		 RF_RowCol_t col)
 {
 	char   *p;
@@ -580,7 +580,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 	struct lwp *l;
 	int     error;
 
-	p = rf_find_non_white(buf);
+	p = rf_find_non_white(bf);
 	if (p[strlen(p) - 1] == '\n') {
 		/* strip off the newline */
 		p[strlen(p) - 1] = '\0';

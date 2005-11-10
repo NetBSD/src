@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29.6.7 2005/03/04 16:39:13 skrll Exp $
+#	$NetBSD: INSTALL,v 1.29.6.8 2005/11/10 13:59:59 skrll Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -60,6 +60,7 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 file-system 	CD9660
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	QUOTA
@@ -95,6 +96,7 @@ options 	WSEMUL_VT100
 options 	COMPAT_14
 options 	COMPAT_15
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

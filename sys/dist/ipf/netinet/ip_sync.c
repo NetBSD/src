@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.2.3 2005/02/09 08:26:14 skrll Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.1.2.4 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -98,7 +98,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.2 2004/10/31 18:45:58 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.3 2005/02/18 13:06:29 darrenr Exp";
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -319,7 +319,7 @@ struct uio *uio;
 
 			if (sh.sm_magic != SYNHDRMAGIC) {
 				if (ipf_sync_debug > 2)
-					printf("uiomove(header) invalud %x\n",
+					printf("uiomove(header) invalud %s\n",
 						"magic");
 				return EINVAL;
 			}

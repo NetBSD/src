@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.10.2.8 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.10.2.9 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1339,7 +1339,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	int s;
 	u_int32_t command;
-	char *revstr;
+	const char *revstr;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
 
@@ -1353,10 +1353,10 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	if (command == 0x01) {
 		command = pci_conf_read(pc, pa->pa_tag, SK_PCI_PWRMGMTCTRL);
 		if (command & SK_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			u_int32_t		xiobase, membase, irq;
 
 			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOIO);
+			xiobase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOIO);
 			membase = pci_conf_read(pc, pa->pa_tag, SK_PCI_LOMEM);
 			irq = pci_conf_read(pc, pa->pa_tag, SK_PCI_INTLINE);
 
@@ -1369,7 +1369,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			    SK_PCI_PWRMGMTCTRL, command);
 
 			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOIO, iobase);
+			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOIO, xiobase);
 			pci_conf_write(pc, pa->pa_tag, SK_PCI_LOMEM, membase);
 			pci_conf_write(pc, pa->pa_tag, SK_PCI_INTLINE, irq);
 		}
@@ -2331,10 +2331,20 @@ void sk_init_yukon(sc_if)
 {
 	u_int32_t		/*mac, */phy;
 	u_int16_t		reg;
+	struct sk_softc		*sc;
 	int			i;
 
 	DPRINTFN(1, ("sk_init_yukon: start: sk_csr=%#x\n",
 		     CSR_READ_4(sc_if->sk_softc, SK_CSR)));
+
+	sc = sc_if->sk_softc;
+	if (sc->sk_type == SK_YUKON_LITE &&
+	    sc->sk_rev >= SK_YUKON_LITE_REV_A3) {
+		/* Take PHY out of reset. */
+		sk_win_write_4(sc, SK_GPIO,
+			(sk_win_read_4(sc, SK_GPIO) | SK_GPIO_DIR9) & ~SK_GPIO_DAT9);
+	}
+
 
 	/* GMAC and GPHY Reset */
 	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
@@ -2463,6 +2473,11 @@ sk_init(struct ifnet *ifp)
 	DPRINTFN(1, ("sk_init\n"));
 
 	s = splnet();
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		splx(s);
+		return 0;
+	}
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
 	sk_stop(ifp,0);

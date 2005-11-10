@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.16.3 2004/09/21 13:21:07 skrll Exp $
+#	$NetBSD: Makefile,v 1.8.16.4 2005/11/10 13:58:32 skrll Exp $
 
 NOMAN= # defined
 
@@ -53,7 +53,6 @@ LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
 .BEGIN: machine powerpc
 .NOPATH: machine powerpc
-realdepend realall: machine powerpc
 
 machine::
 	-rm -f $@
@@ -66,7 +65,7 @@ powerpc::
 vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
-${PROG}: ${OBJS} machine powerpc
+${PROG}: ${OBJS} ${LIBS}
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 

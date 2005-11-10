@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10.26.3 2004/09/21 13:23:40 skrll Exp $ */
+/*	$NetBSD: conf.c,v 1.10.26.4 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,19 +31,19 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "sys/param.h"
+#include <sys/param.h>
 
 #include <netinet/in.h>
 
 #include "../../include/rpb.h"
 
-#include "lib/libkern/libkern.h"
+#include <lib/libkern/libkern.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
-#include "lib/libsa/nfs.h"
-#include "lib/libsa/cd9660.h"
-#include "lib/libsa/ustarfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/ustarfs.h>
 
 #include "vaxstand.h"
 
@@ -88,12 +88,10 @@ int	cnvtab[] = {
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
-	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write,
-	    cd9660_seek, cd9660_stat },
-	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
-	    ustarfs_seek, ustarfs_stat },
+	FS_OPS(ufs),
+	FS_OPS(nfs),
+	FS_OPS(cd9660),
+	FS_OPS(ustarfs),
 };
 
 int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));

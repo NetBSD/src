@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.7.6.4 2005/03/04 16:50:05 skrll Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.7.6.5 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -125,7 +125,7 @@ struct RF_DagNode_s {
 				 * walks */
 	/* ANY CODE THAT USES THIS FIELD MUST MAINTAIN THE PROPERTY THAT AFTER
 	 * IT FINISHES, ALL VISITED FLAGS IN THE DAG ARE IDENTICAL */
-	char   *name;		/* debug only */
+	const char   *name;	/* debug only */
 	RF_DagNodeFlags_t flags;/* see below */
 	RF_DagNode_t *big_dag_ptrs;  /* used in cases where the cache below isn't big enough */
 	RF_DagParam_t *big_dag_params; /* used when the cache below isn't big enough */
@@ -171,7 +171,7 @@ struct RF_DagHeader_s {
 	void    (*cbFunc) (void *);	/* function to call when the dag
 					 * completes */
 	void   *cbArg;		/* argument for cbFunc */
-	char   *creator;	/* name of function used to create this dag */
+	const char   *creator;	/* name of function used to create this dag */
 	RF_DagNode_t *nodes;    /* linked list of nodes used in this DAG */
 	RF_PhysDiskAddr_t *pda_cleanup_list; /* for PDAs that can't get
 						cleaned up any other way... */

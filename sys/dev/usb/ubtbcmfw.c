@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.6.2.4 2004/09/21 13:33:44 skrll Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.6.2.5 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.4 2004/09/21 13:33:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,16 +107,17 @@ USB_ATTACH(ubtbcmfw)
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usbd_status err;
-	char devinfo[1024];
+	char *devinfop;
 	char name[256];
 	char buf[16];
 	usbd_pipe_handle intr_in_pipe;
 	usbd_pipe_handle bulk_out_pipe;
 	uint n;
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, CONFIG_NO, 1);
 	if (err) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.35.2.6 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: inode.h,v 1.35.2.7 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -266,58 +266,6 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-#define	FFS_ITIMES(ip, acc, mod, cre) {					\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
-		if ((ip)->i_flag & IN_ACCESS) {				\
-			DIP_ASSIGN(ip, atime, (acc)->tv_sec);		\
-			DIP_ASSIGN(ip, atimensec, (acc)->tv_nsec);	\
-		}							\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			if (((ip)->i_flags & SF_SNAPSHOT) == 0) {	\
-				DIP_ASSIGN(ip, mtime, (mod)->tv_sec);	\
-				DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec); \
-			}						\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			DIP_ASSIGN(ip, ctime, (cre)->tv_sec);		\
-			DIP_ASSIGN(ip, ctimensec, (cre)->tv_nsec);	\
-		}							\
-		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
-			ip->i_flag |= IN_ACCESSED;			\
-		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
-			ip->i_flag |= IN_MODIFIED;			\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
-	}								\
-}
-
-#define	EXT2FS_ITIMES(ip, acc, mod, cre) {				\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
-		if ((ip)->i_flag & IN_ACCESS) {				\
-			(ip)->i_e2fs_atime = (acc)->tv_sec;		\
-		}							\
-		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
-			(ip)->i_e2fs_mtime = (mod)->tv_sec;		\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
-			(ip)->i_e2fs_ctime = (cre)->tv_sec;		\
-		}							\
-		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
-			(ip)->i_flag |= IN_ACCESSED;			\
-		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
-			(ip)->i_flag |= IN_MODIFIED;			\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
-	}								\
-}
-
-#define	ITIMES(ip, acc, mod, cre) {			\
-	if (IS_EXT2_VNODE((ip)->i_vnode))		\
-		EXT2FS_ITIMES(ip, acc, mod, cre)	\
-	else						\
-		FFS_ITIMES(ip, acc, mod, cre)		\
-}
-
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)
 
@@ -325,7 +273,7 @@ struct indir {
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	ino_t	  ufid_ino;	/* File number (ino). */
+	u_int32_t ufid_ino;	/* File number (ino). */
 	int32_t	  ufid_gen;	/* Generation number. */
 };
 #endif /* _KERNEL */

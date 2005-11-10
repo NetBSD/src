@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.11.6.6 2005/03/04 16:50:38 skrll Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.11.6.7 2005/11/10 14:07:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.11.6.6 2005/03/04 16:50:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.11.6.7 2005/11/10 14:07:47 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -71,7 +71,7 @@ st_atapibus_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)st_atapibus_patterns,
+	    st_atapibus_patterns,
 	    sizeof(st_atapibus_patterns)/sizeof(st_atapibus_patterns[0]),
 	    sizeof(st_atapibus_patterns[0]), &priority);
 	return (priority);

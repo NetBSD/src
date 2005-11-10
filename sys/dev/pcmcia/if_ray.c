@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.37.2.7 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.37.2.8 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37.2.7 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37.2.8 2005/11/10 14:07:24 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -353,10 +353,10 @@ static int ray_debug_dump_rx = 0;
 static int ray_debug_dump_tx = 0;
 static struct timeval rtv, tv1, tv2, *ttp, *ltp;
 #define	RAY_DPRINTF(x)	do { if (ray_debug) {	\
-	struct timeval *tmp;			\
+	struct timeval *ttmp;			\
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
-	tmp = ttp; ttp = ltp; ltp = tmp;	\
+	ttmp = ttp; ttp = ltp; ltp = ttmp;	\
 	printf("%ld:%ld %ld:%06ld: ",		\
 	    (long int)ttp->tv_sec,		\
 	    (long int)ttp->tv_usec,		\
@@ -365,10 +365,10 @@ static struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	printf x ;				\
 	} } while (0)
 #define	RAY_DPRINTF_XMIT(x)	do { if (ray_debug_xmit_sum) {	\
-	struct timeval *tmp;			\
+	struct timeval *ttmp;			\
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
-	tmp = ttp; ttp = ltp; ltp = tmp;	\
+	ttmp = ttp; ttp = ltp; ltp = ttmp;	\
 	printf("%ld:%ld %ld:%06ld: ",		\
 	    (long int)ttp->tv_sec,		\
 	    (long int)ttp->tv_usec,		\
@@ -1739,8 +1739,8 @@ ray_fill_in_tx_ccs(sc, pktlen, i, pi)
 	if (pi != RAY_CCS_LINK_NULL)
 		SRAM_WRITE_FIELD_1(sc, RAY_GET_CCS(pi), ray_cmd_tx, c_link, i);
 
-	RAY_DPRINTF(("%s: ray_alloc_tx_ccs bufp 0x%lx idx %d pidx %d \n",
-	    sc->sc_xname, bufp, i, pi));
+	RAY_DPRINTF(("%s: ray_alloc_tx_ccs bufp 0x%llx idx %u pidx %u\n",
+	    sc->sc_xname, (unsigned long long)bufp, i, pi));
 
 	return (bufp + RAY_TX_PHY_SIZE);
 }
@@ -1866,9 +1866,9 @@ ray_check_ccs(arg)
 		case RAY_CMD_UPDATE_MCAST:
 		case RAY_CMD_UPDATE_PARAMS:
 			stat = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_status);
-			RAY_DPRINTF(("%s: check ccs idx %d ccs 0x%lx "
-			    "cmd 0x%x stat %d\n", sc->sc_xname, i,
-			    ccs, cmd, stat));
+			RAY_DPRINTF(("%s: check ccs idx %u ccs 0x%llx "
+			    "cmd 0x%x stat %u\n", sc->sc_xname, i,
+			    (unsigned long long)ccs, cmd, stat));
 			goto breakout;
 		}
 	}
@@ -1947,8 +1947,8 @@ ray_ccs_done(sc, ccs)
 	cmd = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_cmd);
 	stat = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_status);
 
-	RAY_DPRINTF(("%s: ray_ccs_done idx %ld cmd 0x%x stat %d\n",
-	    sc->sc_xname, RAY_GET_INDEX(ccs), cmd, stat));
+	RAY_DPRINTF(("%s: ray_ccs_done idx %llu cmd 0x%x stat %u\n",
+	    sc->sc_xname, (unsigned long long)RAY_GET_INDEX(ccs), cmd, stat));
 
 	rcmd = 0;
 	switch (cmd) {
@@ -2048,8 +2048,8 @@ ray_rccs_intr(sc, ccs)
 	cmd = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_cmd);
 	stat = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_status);
 
-	RAY_DPRINTF(("%s: ray_rccs_intr idx %ld cmd 0x%x stat %d\n",
-	    sc->sc_xname, RAY_GET_INDEX(ccs), cmd, stat));
+	RAY_DPRINTF(("%s: ray_rccs_intr idx %llu cmd 0x%x stat %u\n",
+	    sc->sc_xname, (unsigned long long)RAY_GET_INDEX(ccs), cmd, stat));
 
 	rcmd = 0;
 	switch (cmd) {
@@ -2168,8 +2168,8 @@ ray_free_ccs(sc, ccs)
 {
 	u_int8_t stat;
 
-	RAY_DPRINTF(("%s: free_ccs idx %ld\n", sc->sc_xname,
-	    RAY_GET_INDEX(ccs)));
+	RAY_DPRINTF(("%s: free_ccs idx %llu\n", sc->sc_xname,
+	    (unsigned long long)RAY_GET_INDEX(ccs)));
 
 	stat = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_status);
 	SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd, c_status, RAY_CCS_STATUS_FREE);

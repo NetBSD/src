@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.4.2.3 2004/09/21 13:23:07 skrll Exp $
+#	$NetBSD: majors.sun2,v 1.4.2.4 2005/11/10 13:59:38 skrll Exp $
 #
 # Device majors for sun2
 #
@@ -8,7 +8,7 @@ device-major	kd		char 1			kbd | sunkbd
 device-major	ctty		char 2
 device-major	mem		char 3
 
-device-major	swap		char 7   block 4
+device-major	swap		char 7   block 4	vmswap
 
 device-major	xy		char 9   block 3	xy
 
@@ -56,6 +56,8 @@ device-major	clockctl	char 89			clockctl
 device-major	systrace	char 90			systrace
 device-major	cgd		char 91  block 26	cgd
 device-major	ksyms		char 92			ksyms
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

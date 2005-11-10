@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.17.6.2 2005/03/04 16:50:31 skrll Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.17.6.3 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.17.6.2 2005/03/04 16:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.17.6.3 2005/11/10 14:07:47 skrll Exp $");
 
 #include "opt_rasops.h"
 
@@ -523,7 +523,7 @@ rasops24_eraserows(cookie, row, num, attr)
 	long attr;
 {
 	int n9, n3, n1, cnt, stride, delta;
-	u_int32_t *dp, clr, stamp[3];
+	u_int32_t *dp, clr, xstamp[3];
 	struct rasops_info *ri;
 
 	/*
@@ -551,18 +551,18 @@ rasops24_eraserows(cookie, row, num, attr)
 #endif
 
 	clr = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xffffff;
-	stamp[0] = (clr <<  8) | (clr >> 16);
-	stamp[1] = (clr << 16) | (clr >>  8);
-	stamp[2] = (clr << 24) | clr;
+	xstamp[0] = (clr <<  8) | (clr >> 16);
+	xstamp[1] = (clr << 16) | (clr >>  8);
+	xstamp[2] = (clr << 24) | clr;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
 	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
+		xstamp[0] = bswap32(xstamp[0]);
+		xstamp[1] = bswap32(xstamp[1]);
+		xstamp[2] = bswap32(xstamp[2]);
 	}
 
 	/*
@@ -591,27 +591,27 @@ rasops24_eraserows(cookie, row, num, attr)
 
 	while (num--) {
 		for (cnt = n9; cnt; cnt--) {
-			dp[0] = stamp[0];
-			dp[1] = stamp[1];
-			dp[2] = stamp[2];
-			dp[3] = stamp[0];
-			dp[4] = stamp[1];
-			dp[5] = stamp[2];
-			dp[6] = stamp[0];
-			dp[7] = stamp[1];
-			dp[8] = stamp[2];
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
+			dp[3] = xstamp[0];
+			dp[4] = xstamp[1];
+			dp[5] = xstamp[2];
+			dp[6] = xstamp[0];
+			dp[7] = xstamp[1];
+			dp[8] = xstamp[2];
 			dp += 9;
 		}
 
 		for (cnt = n3; cnt; cnt--) {
-			dp[0] = stamp[0];
-			dp[1] = stamp[1];
-			dp[2] = stamp[2];
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
 			dp += 3;
 		}
 
 		for (cnt = 0; cnt < n1; cnt++)
-			*dp++ = stamp[cnt];
+			*dp++ = xstamp[cnt];
 
 		DELTA(dp, delta, int32_t *);
 	}
@@ -626,7 +626,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	int row, col, num;
 	long attr;
 {
-	int n12, n4, height, cnt, slop, clr, stamp[3];
+	int n12, n4, height, cnt, slop, clr, xstamp[3];
 	struct rasops_info *ri;
 	int32_t *dp, *rp;
 	u_char *dbp;
@@ -664,18 +664,18 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	height = ri->ri_font->fontheight;
 
 	clr = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xffffff;
-	stamp[0] = (clr <<  8) | (clr >> 16);
-	stamp[1] = (clr << 16) | (clr >>  8);
-	stamp[2] = (clr << 24) | clr;
+	xstamp[0] = (clr <<  8) | (clr >> 16);
+	xstamp[1] = (clr << 16) | (clr >>  8);
+	xstamp[2] = (clr << 24) | clr;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
 	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
+		xstamp[0] = bswap32(xstamp[0]);
+		xstamp[1] = bswap32(xstamp[1]);
+		xstamp[2] = bswap32(xstamp[2]);
 	}
 
 	/*
@@ -707,23 +707,23 @@ rasops24_erasecols(cookie, row, col, num, attr)
 
 		/* 12 pels per loop */
 		for (cnt = n12; cnt; cnt--) {
-			dp[0] = stamp[0];
-			dp[1] = stamp[1];
-			dp[2] = stamp[2];
-			dp[3] = stamp[0];
-			dp[4] = stamp[1];
-			dp[5] = stamp[2];
-			dp[6] = stamp[0];
-			dp[7] = stamp[1];
-			dp[8] = stamp[2];
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
+			dp[3] = xstamp[0];
+			dp[4] = xstamp[1];
+			dp[5] = xstamp[2];
+			dp[6] = xstamp[0];
+			dp[7] = xstamp[1];
+			dp[8] = xstamp[2];
 			dp += 9;
 		}
 
 		/* 4 pels per loop */
 		for (cnt = n4; cnt; cnt--) {
-			dp[0] = stamp[0];
-			dp[1] = stamp[1];
-			dp[2] = stamp[2];
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
 			dp += 3;
 		}
 

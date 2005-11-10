@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.2.2.7 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.2.2.8 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2.2.7 2005/03/04 16:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2.2.8 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2.2.7 2005/03/04 16:45:17 skrll Exp $
 static void geodeide_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
 static void geodeide_setup_channel(struct ata_channel *);
+static int geodeide_dma_init(void *, int, int, void *, size_t, int);
 
 static int  geodeide_match(struct device *, struct cfdata *, void *);
 static void geodeide_attach(struct device *, struct device *, void *);
@@ -120,10 +121,23 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		/*
+		 * XXXJRT What chip revisions actually need the DMA
+		 * alignment work-around?
+		 */
+		sc->sc_wdcdev.dma_init = geodeide_dma_init;
 	}
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+	/*
+	 * The 5530 is utterly swamped by UDMA mode 2, so limit to mode 1
+	 * so that the chip is able to perform the other functions it has
+	 * while IDE UDMA is going on.
+	 */
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_CYRIX_CX5530_IDE) {
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 1;
+	}
 	sc->sc_wdcdev.sc_atac.atac_set_modes = geodeide_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
@@ -251,4 +265,19 @@ geodeide_setup_channel(struct ata_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
+}
+
+static int
+geodeide_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
+{
+
+	/*
+	 * If the buffer is not properly aligned, we can't allow DMA
+	 * and need to fall back to PIO.
+	 */
+	if (((uintptr_t)databuf) & 0xf)
+		return (EINVAL);
+
+	return (pciide_dma_init(v, channel, drive, databuf, datalen, flags));
 }

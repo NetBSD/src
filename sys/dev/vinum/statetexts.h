@@ -37,7 +37,7 @@
  */
 
 /* Drive state texts */
-char *drivestatetext[] =
+const char *drivestatetext[] =
 {
     "unallocated",
     "referenced",
@@ -46,7 +46,7 @@ char *drivestatetext[] =
 };
 
 /* Subdisk state texts */
-char *sdstatetext[] =
+const char *sdstatetext[] =
 {
     "unallocated",
     "uninit",
@@ -65,7 +65,7 @@ char *sdstatetext[] =
 };
 
 /* Plex state texts */
-char *plexstatetext[] =
+const char *plexstatetext[] =
 {
     "unallocated",
     "referenced",
@@ -80,7 +80,7 @@ char *plexstatetext[] =
 };
 
 /* Volume state texts */
-char *volstatetext[] =
+const char *volstatetext[] =
 {
     "unallocated",
     "uninit",

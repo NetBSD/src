@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nswalk - Functions for walking the ACPI namespace
- *              xRevision: 36 $
+ *              xRevision: 39 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __NSWALK_C__
 
@@ -134,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $")
  *
  * PARAMETERS:  Type                - Type of node to be searched for
  *              ParentNode          - Parent node whose children we are
- *                                     getting
+ *                                    getting
  *              ChildNode           - Previous child that was found.
  *                                    The NEXT child will be returned
  *
@@ -268,7 +268,7 @@ AcpiNsWalkNamespace (
     /* Null child means "get first node" */
 
     ParentNode  = StartNode;
-    ChildNode   = 0;
+    ChildNode   = NULL;
     ChildType   = ACPI_TYPE_ANY;
     Level       = 1;
 
@@ -353,15 +353,15 @@ AcpiNsWalkNamespace (
              */
             if ((Level < MaxDepth) && (Status != AE_CTRL_DEPTH))
             {
-                if (AcpiNsGetNextNode (ACPI_TYPE_ANY, ChildNode, 0))
+                if (AcpiNsGetNextNode (ACPI_TYPE_ANY, ChildNode, NULL))
                 {
                     /*
                      * There is at least one child of this
                      * node, visit the onde
                      */
                     Level++;
-                    ParentNode    = ChildNode;
-                    ChildNode     = 0;
+                    ParentNode = ChildNode;
+                    ChildNode  = NULL;
                 }
             }
         }

@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.9.2.4 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.9.2.5 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.9.2.4 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.9.2.5 2005/11/10 14:04:00 skrll Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -181,7 +181,8 @@ biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);

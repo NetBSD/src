@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11.24.3 2004/09/21 13:23:57 skrll Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.11.24.4 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.24.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.24.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,7 +105,7 @@ typedef struct {
 	char	       *curp;	/* pointer into result */
 	char	       *ppc;	/* pseudo PC */
 	int		opc;	/* op-code */
-	char	       *argp;	/* pointer into argument-list */
+	const char	*argp;	/* pointer into argument-list */
 	int		itype;	/* instruction-type, eg. branch, call, unspec */
 	int		atype;	/* argument-type, eg. byte, long, address */
 	int		off;	/* offset specified by last argument */
@@ -126,7 +126,7 @@ int get_operands __P((inst_buffer * ib));
 int get_operand __P((inst_buffer * ib, int size));
 
 void add_char	__P((inst_buffer * ib, int c));
-void add_str	__P((inst_buffer * ib, char *s));
+void add_str	__P((inst_buffer * ib, const char *s));
 void add_int	__P((inst_buffer * ib, int i));
 void add_xint	__P((inst_buffer * ib, int i));
 void add_sym	__P((inst_buffer * ib, int i));
@@ -150,7 +150,7 @@ db_disasm(loc, altfmt)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
 	inst_buffer	ib;
 
@@ -331,19 +331,19 @@ get_operand(ib, size)
 		break;
 
 	case 5:		/* register */
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		break;
 
 	case 6:		/* register deferred */
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
 	case 7:		/* autodecrement */
 		add_char(ib, '-');
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		if (reg == 0x0F) {	/* pc is not allowed in this mode */
 			err_print("autodecrement not allowd for PC.\n");
@@ -383,7 +383,7 @@ get_operand(ib, size)
 			break;
 		}
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		add_char(ib, '+');
 		break;
@@ -399,7 +399,7 @@ get_operand(ib, size)
 		/* add_str (ib, "b^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -414,7 +414,7 @@ get_operand(ib, size)
 		/* add_str (ib, "w^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -429,7 +429,7 @@ get_operand(ib, size)
 		/* add_str (ib, "l^"); */
 		add_int(ib, tmp);
 		add_char(ib, '(');
-		add_str(ib, (char *)my_db_regs[reg].name);
+		add_str(ib, my_db_regs[reg].name);
 		add_char(ib, ')');
 		break;
 
@@ -483,7 +483,7 @@ add_char(ib, c)
 void
 add_str(ib, s)
 	inst_buffer    *ib;
-	char	       *s;
+	const char	*s;
 {
 	while ((*ib->curp++ = *s++));
 	*--ib->curp = '\0';
@@ -519,9 +519,9 @@ add_sym(ib, loc)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
-	if (! loc)
+	if (!loc)
 		return;
 
 	diff = INT_MAX;
@@ -545,7 +545,7 @@ add_off(ib, loc)
 {
 	db_expr_t	diff;
 	db_sym_t	sym;
-	char	       *symname;
+	const char	*symname;
 
 	if (!loc)
 		return;

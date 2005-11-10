@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.7.16.1 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: sets.c,v 1.7.16.2 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.7.16.1 2005/03/04 16:54:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.7.16.2 2005/11/10 14:11:55 skrll Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -81,7 +81,7 @@ char *name;
 
 	while( p && val ) {
 		IFDEBUG(o)
-		fprintf(OUT, "lookup strcmp 0x%p,%s, 0x%p,%s\n",
+		fprintf(OUT, "lookup strcmp %p,%s, %p,%s\n",
 			name, name, OBJ_NAME(p), OBJ_NAME(p));
 		ENDDEBUG
 		if( p->obj_name == (char *)0 ) {
@@ -103,7 +103,7 @@ char *name;
 		p = NULL;
 	}
 	IFDEBUG(o)
-		fprintf(stdout,"lookup 0x%x,%s returning 0x%p\n",type, name, p);
+		fprintf(stdout,"lookup 0x%x,%s returning %p\n",type, name, p);
 	ENDDEBUG
 	return(p);
 }
@@ -238,7 +238,7 @@ delete(o)
 	register struct Object **np_childlink;
 
 	IFDEBUG(T)
-		fprintf(stdout, "delete(0x%p)\n", o);
+		fprintf(stdout, "delete(%p)\n", o);
 		dumptree(Objtree,0);
 	ENDDEBUG
 
@@ -259,7 +259,7 @@ delete(o)
 		np_childlink = &(o->obj_parent->obj_right);
 	}
 	IFDEBUG(T)
-		fprintf(OUT, "newparent=0x%p\n", newparent);
+		fprintf(OUT, "newparent=%p\n", newparent);
 	ENDDEBUG
 
 	if (q) { /* q gets the left, parent gets the right */
@@ -280,7 +280,7 @@ delete(o)
 		p->obj_parent = newparent;
 
 	IFDEBUG(T)
-		fprintf(OUT, "After deleting 0x%p\n",o);
+		fprintf(OUT, "After deleting %p\n",o);
 		dumptree(Objtree,0);
 	ENDDEBUG
 }
@@ -305,7 +305,7 @@ int keep;
 		insert( onew );
 		/* address already stashed before calling defineset */
 	IFDEBUG(o)
-		printf("defineset(0x%x,%s) returning 0x%p\n", type , adr, onew);
+		printf("defineset(0x%x,%s) returning %p\n", type , adr, onew);
 		dumptree(Objtree,0);
 	ENDDEBUG
 	return(onew);
@@ -319,7 +319,7 @@ dumpit(o, s)
 	register int i;
 
 IFDEBUG(o)
-	fprintf(OUT, "object 0x%p, %s\n",o, s);
+	fprintf(OUT, "object %p, %s\n",o, s);
 	for(i=0; i< sizeof(struct Object); i+=4) {
 		fprintf(OUT, "0x%x: 0x%x 0x%x 0x%x 0x%x\n",
 		*((int *)o), *o, *(o+1), *(o+2), *(o+3) );
@@ -335,7 +335,7 @@ defineitem(type, adr, struc)
 {
 	struct Object *onew;
 	IFDEBUG(o)
-		printf("defineitem(0x%x, %s at 0x%p, %s)\n", type, adr, adr, struc);
+		printf("defineitem(0x%x, %s at %p, %s)\n", type, adr, adr, struc);
 	ENDDEBUG
 
 	if((onew = lookup( type, adr ))) {
@@ -353,7 +353,7 @@ defineitem(type, adr, struc)
 		insert( onew );
 	}
 	IFDEBUG(o)
-		fprintf(OUT, "defineitem(0x%x, %s) returning 0x%p\n", type, adr, onew);
+		fprintf(OUT, "defineitem(0x%x, %s) returning %p\n", type, adr, onew);
 	ENDDEBUG
 }
 
@@ -364,7 +364,7 @@ member(o, adr)
 {
 	struct Object *onew, *oold;
 	IFDEBUG(o)
-		printf("member(0x%p, %s)\n", o, adr);
+		printf("member(%p, %s)\n", o, adr);
 	ENDDEBUG
 
 	oold = lookup(  o->obj_type, adr );
@@ -450,7 +450,7 @@ dumptree(o,i)
 		dumptree(o->obj_left, i+1);
 		for(j=0; j<i; j++)
 			fputc(' ', stdout);
-		fprintf(stdout, "%3d 0x%p: %s\n", i,o, OBJ_NAME(o));
+		fprintf(stdout, "%3d %p: %s\n", i,o, OBJ_NAME(o));
 		dumptree(o->obj_right, i+1);
 	}
 }

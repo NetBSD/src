@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.4.2.3 2004/09/21 13:26:40 skrll Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.4.2.4 2005/11/10 14:03:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.4.2.3 2004/09/21 13:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.4.2.4 2005/11/10 14:03:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,7 +68,7 @@ MALLOC_DEFINE(M_ACPI, "acpi", "Advanced Configuration and Power Interface");
 struct acpi_interrupt_handler {
 	LIST_ENTRY(acpi_interrupt_handler) aih_list;
 	UINT32 aih_intrnum;
-	OSD_HANDLER aih_func;
+	ACPI_OSD_HANDLER aih_func;
 	void *aih_ih;
 };
 
@@ -95,7 +95,7 @@ do {									\
  */
 ACPI_STATUS
 AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
-    OSD_HANDLER ServiceRoutine, void *Context)
+    ACPI_OSD_HANDLER ServiceRoutine, void *Context)
 {
 	struct acpi_interrupt_handler *aih;
 	ACPI_STATUS rv;
@@ -133,7 +133,8 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
  *	Remove an interrupt handler.
  */
 ACPI_STATUS
-AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber, OSD_HANDLER ServiceRoutine)
+AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
+    ACPI_OSD_HANDLER ServiceRoutine)
 {
 	struct acpi_interrupt_handler *aih;
 	int s;

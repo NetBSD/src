@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28.2.6 2005/01/24 08:35:18 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28.2.7 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -211,8 +211,8 @@ void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 
 /* machdep.c functions */
-int	badaddr(caddr_t);
-int	badbaddr(caddr_t);
+int	badaddr(volatile void*);
+int	badbaddr(volatile void*);
 
 /* sys_machdep.c functions */
 int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);

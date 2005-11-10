@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.8 2005/04/01 14:29:35 skrll Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.9 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.8 2005/04/01 14:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.9 2005/11/10 14:00:41 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.8 2005/04/01 14:29:35 skrll E
 
 #include <dev/wscons/wsconsio.h>
 
-#include <machine/darwin_machdep.h>
+#include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
 
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.8 2005/04/01 14:29:35 skrll E
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_iohidsystem.h>
+
+#include <machine/darwin_machdep.h>
 
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
@@ -222,9 +224,9 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 
 int
 exec_darwin_probe(path)
-	char **path;
+	const char **path;
 {
-	*path = (char *)emul_darwin.e_path;
+	*path = emul_darwin.e_path;
 	return 0;
 }
 

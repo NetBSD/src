@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1.2.3 2004/09/21 13:20:42 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.2.4 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,9 +54,15 @@ struct pci_attach_args;
 /*
  * Types provided to machine-independent PCI code
  */
-typedef void *pci_chipset_tag_t;
+typedef struct ibm4xx_pci_chipset *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
+
+struct ibm4xx_pci_chipset {
+	int rootnode;		/* PCI controller */
+	struct extent *ioext;	/* PCI I/O extent */
+	struct extent *memext;	/* PCI memory extent */
+};
 
 /*
  * Functions provided to machine-independent PCI code.

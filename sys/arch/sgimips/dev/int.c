@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.9.2.4 2004/09/21 13:21:13 skrll Exp $	*/
+/*	$NetBSD: int.c,v 1.9.2.5 2005/11/10 13:58:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.9.2.4 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.9.2.5 2005/11/10 13:58:33 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -103,7 +103,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 		panic("\nint0: passed match, but failed attach?");
 
 	printf(" addr 0x%x", address);
-	
+
 	bus_space_map(iot, address, 0, 0, &ioh);
 	iot = SGIMIPS_BUS_SPACE_NORMAL;
 
@@ -295,7 +295,7 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 							 M_DEVBUF, M_NOWAIT);
 
 		if (ih == NULL) {
-			printf("int_intr_establish: can't allocate handler\n"); 
+			printf("int_intr_establish: can't allocate handler\n");
 			return (void *)NULL;
 		}
 
@@ -304,8 +304,8 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 		ih->ih_next = NULL;
 
 		for (n = &intrtab[level]; n->ih_next != NULL; n = n->ih_next)
-			;	
-		
+			;
+
 		n->ih_next = ih;
 
 		return (void *)NULL;	/* vector already set */
@@ -398,14 +398,14 @@ int_8254_cal(void)
 	s = splhigh();
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
-                                TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT); 
+	    TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) % 256);
 	wbflush();
 	delay(4);
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) / 256);
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
-                                TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT); 
+	    TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 50);
 	wbflush();
 	delay(4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.1.4.3 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.1.4.4 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.3 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.4 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.3 2005/03/04 16:51:46 skrll Exp 
 
 #include <miscfs/specfs/specdev.h>
 
-/* #define NTFS_DEBUG 1 */
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfsmount.h>
 #include <fs/ntfs/ntfs_inode.h>

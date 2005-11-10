@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.17.6.6 2005/02/04 11:45:25 skrll Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.17.6.7 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -161,7 +161,7 @@ struct pcic_softc {
 
 int	pcic_ident_ok(int);
 int	pcic_vendor(struct pcic_handle *);
-char	*pcic_vendor_to_string(int);
+const char *pcic_vendor_to_string(int);
 
 void	pcic_attach(struct pcic_softc *);
 void	pcic_attach_sockets(struct pcic_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.12.2.4 2005/02/04 11:46:38 skrll Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.12.2.5 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.12.2.4 2005/02/04 11:46:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.12.2.5 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ CFATTACH_DECL(ntwoc_pci, sizeof(struct ntwoc_pci_softc),
 /*
  * Names for daughter card types.  These match the NTWOC_DB_* defines.
  */
-char *ntwoc_pci_db_names[] = {
+const char *ntwoc_pci_db_names[] = {
 	"V.35", "Unknown 0x01", "Test", "Unknown 0x03",
 	"RS232", "Unknown 0x05", "RS422", "None"
 };

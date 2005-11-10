@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.47.2.8 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.47.2.9 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.8 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.9 2005/11/10 14:09:45 skrll Exp $");
 
 #define SYSVSEM
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.8 2005/04/01 14:30:56 skrll Exp 
 #include <sys/kernel.h>
 #include <sys/sem.h>
 #include <sys/sysctl.h>
+#include <sys/malloc.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -565,6 +566,8 @@ found:
 	return (0);
 }
 
+#define SMALL_SOPS 8
+
 int
 sys_semop(l, v, retval)
 	struct lwp *l;
@@ -579,7 +582,8 @@ sys_semop(l, v, retval)
 	struct proc *p = l->l_proc;
 	int semid = SCARG(uap, semid), seq;
 	size_t nsops = SCARG(uap, nsops);
-	struct sembuf sops[MAX_SOPS];
+	struct sembuf small_sops[SMALL_SOPS];
+	struct sembuf *sops;
 	struct semid_ds *semaptr;
 	struct sembuf *sopptr = NULL;
 	struct __sem *semptr = NULL;
@@ -588,8 +592,7 @@ sys_semop(l, v, retval)
 	int i, eval;
 	int do_wakeup, do_undos;
 
-	SEM_PRINTF(("call to semop(%d, %p, %lld)\n", semid, sops,
-	    (long long)nsops));
+	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, sops, nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 	if (semid < 0 || semid >= seminfo.semmni)
@@ -606,23 +609,28 @@ sys_semop(l, v, retval)
 		return (eval);
 	}
 
-	if (nsops > MAX_SOPS) {
-		SEM_PRINTF(("too many sops (max=%d, nsops=%lld)\n", MAX_SOPS,
-		    (long long)nsops));
+	if (nsops <= SMALL_SOPS) {
+		sops = small_sops;
+	} else if (nsops <= seminfo.semopm) {
+		sops = malloc(nsops * sizeof(*sops), M_TEMP, M_WAITOK);
+	} else {
+		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
+		    seminfo.semopm, nsops));
 		return (E2BIG);
 	}
 
 	if ((eval = copyin(SCARG(uap, sops),
 	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("eval = %d from copyin(%p, %p, %lld)\n", eval,
-		    SCARG(uap, sops), &sops,
-		    (long long)(nsops * sizeof(sops[0]))));
-		return (eval);
+		SEM_PRINTF(("eval = %d from copyin(%p, %p, %zd)\n", eval,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		goto out;
 	}
 
 	for (i = 0; i < nsops; i++)
-		if (sops[i].sem_num >= semaptr->sem_nsems)
-			return (EFBIG);
+		if (sops[i].sem_num >= semaptr->sem_nsems) {
+			eval = EFBIG;
+			goto out;
+		}
 
 	/*
 	 * Loop trying to satisfy the vector of requests.
@@ -695,8 +703,10 @@ sys_semop(l, v, retval)
 		 * If the request that we couldn't satisfy has the
 		 * NOWAIT flag set then return with EAGAIN.
 		 */
-		if (sopptr->sem_flg & IPC_NOWAIT)
-			return (EAGAIN);
+		if (sopptr->sem_flg & IPC_NOWAIT) {
+			eval = EAGAIN;
+			goto out;
+		}
 
 		if (sopptr->sem_op == 0)
 			semptr->semzcnt++;
@@ -713,13 +723,8 @@ sys_semop(l, v, retval)
 		 */
 		if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
 		    semaptr->sem_perm._seq != seq) {
-			/* The man page says to return EIDRM. */
-			/* Unfortunately, BSD doesn't define that code! */
-#ifdef EIDRM
-			return (EIDRM);
-#else
-			return (EINVAL);
-#endif
+			eval = EIDRM;
+			goto out;
 		}
 
 		/*
@@ -736,8 +741,10 @@ sys_semop(l, v, retval)
 		 * (Delayed check of tsleep() return code because we
 		 * need to decrement sem[nz]cnt either way.)
 		 */
-		if (eval != 0)
-			return (EINTR);
+		if (eval != 0) {
+			eval = EINTR;
+			goto out;
+		}
 		SEM_PRINTF(("semop:  good morning!\n"));
 	}
 
@@ -788,7 +795,7 @@ done:
 				    sops[i].sem_op;
 
 			SEM_PRINTF(("eval = %d from semundo_adjust\n", eval));
-			return (eval);
+			goto out;
 		} /* loop through the sops */
 	} /* if (do_undos) */
 
@@ -814,7 +821,12 @@ done:
 	}
 	SEM_PRINTF(("semop:  done\n"));
 	*retval = 0;
-	return (0);
+
+out:
+	if (sops != small_sops) {
+		free(sops, M_TEMP);
+	}
+	return eval;
 }
 
 /*

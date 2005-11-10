@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.9.6.1 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l3fsm.c,v 1.9.6.2 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.9.6.1 2005/03/04 16:53:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.9.6.2 2005/11/10 14:11:36 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -116,7 +116,7 @@ static void F_DECF1(call_desc_t *cd), F_DECF2(call_desc_t *cd), F_DECF3(call_des
 static void F_DLRI(call_desc_t *cd), F_DLRIA(call_desc_t *cd), F_DECF4(call_desc_t *cd);
 
 #if DO_I4B_DEBUG
-static char *l3state_text[N_STATES] = {
+static const char *l3state_text[N_STATES] = {
 	 "ST_U0 - Null",
 	 "ST_U1 - Out Init",
 	 "ST_U3 - Out Proc",
@@ -140,7 +140,7 @@ static char *l3state_text[N_STATES] = {
 	"Illegal State"
 };
 
-static char *l3event_text[N_EVENTS] = {
+static const char *l3event_text[N_EVENTS] = {
 	"EV_SETUPRQ - L4 SETUP REQ",	/* setup request from L4		*/
 	"EV_DISCRQ - L4 DISC REQ",	/* disconnect request from L4		*/
 	"EV_RELRQ - L4 REL REQ",	/* release request from L4		*/
@@ -275,9 +275,9 @@ void next_l3state(call_desc_t *cd, int event)
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/
-char *print_l3state(call_desc_t *cd)
+const char *print_l3state(call_desc_t *cd)
 {
-	return((char *) l3state_text[cd->Q931state]);
+	return(l3state_text[cd->Q931state]);
 }
 #endif
 

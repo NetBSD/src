@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 84 $
+ *              xRevision: 90 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __NSNAMES_C__
 
@@ -126,6 +126,14 @@ __KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $"
 
 #define _COMPONENT          ACPI_NAMESPACE
         ACPI_MODULE_NAME    ("nsnames")
+
+/* Local prototypes */
+
+static void
+AcpiNsBuildExternalPath (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_SIZE               Size,
+    char                    *NameBuffer);
 
 
 /*******************************************************************************
@@ -143,7 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $"
  *
  ******************************************************************************/
 
-void
+static void
 AcpiNsBuildExternalPath (
     ACPI_NAMESPACE_NODE     *Node,
     ACPI_SIZE               Size,
@@ -206,7 +214,7 @@ AcpiNsBuildExternalPath (
  *
  * FUNCTION:    AcpiNsGetExternalPathname
  *
- * PARAMETERS:  Node            - NS node whose pathname is needed
+ * PARAMETERS:  Node            - Namespace node whose pathname is needed
  *
  * RETURN:      Pointer to storage containing the fully qualified name of
  *              the node, In external format (name segments separated by path
@@ -284,7 +292,12 @@ AcpiNsGetPathnameLength (
         NextNode = AcpiNsGetParentNode (NextNode);
     }
 
-    return (Size + 1);
+    if (!Size)
+    {
+        Size = 1;       /* Root node case */
+    }
+
+    return (Size + 1);  /* +1 for null string terminator */
 }
 
 
@@ -337,7 +350,8 @@ AcpiNsHandleToPathname (
 
     AcpiNsBuildExternalPath (Node, RequiredSize, Buffer->Pointer);
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%s [%X] \n", (char *) Buffer->Pointer, (UINT32) RequiredSize));
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%s [%X] \n",
+        (char *) Buffer->Pointer, (UINT32) RequiredSize));
     return_ACPI_STATUS (AE_OK);
 }
 

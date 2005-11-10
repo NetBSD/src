@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.33.2.4 2005/03/04 16:51:15 skrll Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.33.2.5 2005/11/10 14:08:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.33.2.4 2005/03/04 16:51:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.33.2.5 2005/11/10 14:08:44 skrll Exp $");
 
 #include "opt_wsfont.h"
 
@@ -241,10 +241,10 @@ static void	wsfont_revbyte(struct wsdisplay_font *);
 static int __inline__ wsfont_make_cookie(int, int, int);
 
 static int __inline__
-wsfont_make_cookie(int ident, int bito, int byteo)
+wsfont_make_cookie(int cident, int bito, int byteo)
 {
 
-	return ((ident & WSFONT_IDENT_MASK) |
+	return ((cident & WSFONT_IDENT_MASK) |
 	    (bito << WSFONT_BITO_SHIFT) |
 	    (byteo << WSFONT_BYTEO_SHIFT));
 }
@@ -433,8 +433,8 @@ wsfont_remove(int cookie)
 		return (EBUSY);
 
 	if ((ent->flags & WSFONT_STATIC) == 0) {
-		free((void *)ent->font->data, M_DEVBUF);
-		free((void *)ent->font->name, M_DEVBUF);
+		free(ent->font->data, M_DEVBUF);
+		free(__UNCONST(ent->font->name), M_DEVBUF); /*XXXUNCONST*/
 		free(ent->font, M_DEVBUF);
 	}
 

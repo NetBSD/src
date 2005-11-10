@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.13.2.5 2005/02/04 11:46:29 skrll Exp $	*/
+/*	$NetBSD: mca.c,v 1.13.2.6 2005/11/10 14:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.13.2.5 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.13.2.6 2005/11/10 14:05:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ void	mca_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(mca, sizeof(struct device),
     mca_match, mca_attach, NULL, NULL);
 
-int	mca_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 int	mca_print(void *, const char *);
 
 int
@@ -117,20 +115,6 @@ mca_print(aux, pnp)
 	}
 }
 
-int
-mca_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[MCACF_SLOT] != MCACF_SLOT_DEFAULT &&
-	    cf->cf_loc[MCACF_SLOT] != ldesc->locs[MCACF_SLOT])
-		return 0;
-	return (config_match(parent, cf, aux));
-}
-
 void
 mca_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -162,8 +146,7 @@ mca_attach(parent, self, aux)
 	for (slot = 0; slot < MCA_MAX_SLOTS; slot++) {
 		struct mca_attach_args ma;
 		int reg;
-		int help[2];
-		locdesc_t *ldesc = (void *)help; /* XXX */
+		int locs[MCACF_NLOCS];
 
 		ma.ma_iot = iot;
 		ma.ma_memt = memt;
@@ -178,13 +161,12 @@ mca_attach(parent, self, aux)
 		if (ma.ma_id == 0xffff)	/* no adapter here */
 			continue;
 
-		ldesc->len = 1;
-		ldesc->locs[MCACF_SLOT] = slot;
+		locs[MCACF_SLOT] = slot;
 
 		if (ma.ma_pos[2] & MCA_POS2_ENABLE
 		    || mca_match_disabled(ma.ma_id))
-			config_found_sm_loc(self, "mca", ldesc, &ma,
-					    mca_print, mca_submatch);
+			config_found_sm_loc(self, "mca", locs, &ma,
+					    mca_print, config_stdsubmatch);
 		else {
 			mca_print(&ma, self->dv_xname);
 			printf(" disabled\n");

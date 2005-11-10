@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.154.2.6 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.154.2.7 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.6 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.7 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -957,7 +957,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(struct winsize *)data = tp->t_winsize;
 		break;
 	case FIOGETOWN:
-		if (!isctty(p, tp))
+		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? -tp->t_pgrp->pg_id : 0;
 		break;
@@ -1164,7 +1164,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		pid_t pgid = *(int *)data;
 		struct pgrp *pgrp;
 
-		if (!isctty(p, tp))
+		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 
 		if (pgid < 0)
@@ -1260,7 +1260,9 @@ filt_ttyrdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	s = spltty();
+	TTY_LOCK(tp);
 	SLIST_REMOVE(&tp->t_rsel.sel_klist, kn, knote, kn_selnext);
+	TTY_UNLOCK(tp);
 	splx(s);
 }
 
@@ -1341,7 +1343,7 @@ ttykqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ttywrite_filtops;
 		break;
 	default:
-		return (1);
+		return EINVAL;
 	}
 
 	kn->kn_hook = tp;
@@ -1977,7 +1979,6 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	 */
 	while (uio->uio_resid > 0 || cc > 0) {
 		if (ISSET(tp->t_lflag, FLUSHO)) {
-			TTY_UNLOCK(tp);
 			uio->uio_resid = 0;
 			return (0);
 		}
@@ -2174,11 +2175,8 @@ ttyrub(int c, struct tty *tp)
 					(void)ttyoutput('\b', tp);
 				break;
 			default:			/* XXX */
-#define	PANICSTR	"ttyrub: would panic c = %d, val = %d\n"
-				(void)printf(PANICSTR, c, CCLASS(c));
-#ifdef notdef
-				panic(PANICSTR, c, CCLASS(c));
-#endif
+				(void)printf("ttyrub: would panic c = %d, "
+				    "val = %d\n", c, CCLASS(c));
 			}
 		}
 	} else if (ISSET(tp->t_lflag, ECHOPRT)) {
@@ -2275,7 +2273,7 @@ ttwakeup(struct tty *tp)
 
 	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
-		pgsignal(tp->t_pgrp, SIGIO, 1);
+		pgsignal(tp->t_pgrp, SIGIO, tp->t_session != NULL);
 	wakeup((caddr_t)&tp->t_rawq);
 }
 

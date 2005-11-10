@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.20.16.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.20.16.4 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.20.16.3 2004/09/21 13:38:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.20.16.4 2005/11/10 14:11:36 skrll Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -866,11 +866,11 @@ dump_addr(struct sockaddr *addr)
  *		character representations (if printable).
  */
 void
-Dump_buf(caddr_t buf, int len)
+Dump_buf(const void *buf, size_t len)
 {
 	int             i, j;
-#define Buf ((u_char *)buf)
-	printf("Dump buf %p len 0x%x\n", buf, len);
+#define Buf ((const u_char *)buf)
+	printf("Dump buf %p len 0x%lx\n", buf, (unsigned long)len);
 	for (i = 0; i < len; i += MAX_COLUMNS) {
 		printf("+%d:\t", i);
 		for (j = 0; j < MAX_COLUMNS; j++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4.2.7 2005/01/17 19:32:12 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4.2.8 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.7 2005/01/17 19:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.8 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,13 +343,14 @@ filecore_readdir(v)
 			else
 				de.d_type = DT_REG;
 			if (filecore_fn2unix(dep->name, de.d_name,
+/*###346 [cc] warning: passing arg 3 of `filecore_fn2unix' from incompatible pointer type%%%*/
 			    &de.d_namlen)) {
 				*ap->a_eofflag = 1;
 				goto out;
 			}
 			break;
 		}
-		de.d_reclen = DIRENT_SIZE(&de);
+		de.d_reclen = _DIRENT_SIZE(&de);
 		if (uio->uio_resid < de.d_reclen)
 			goto out;
 		error = uiomove(&de, de.d_reclen, uio);
@@ -541,13 +542,8 @@ filecore_pathconf(v)
 #define	filecore_mkdir	genfs_eopnotsupp
 #define	filecore_rmdir	genfs_eopnotsupp
 #define	filecore_advlock	genfs_eopnotsupp
-#define	filecore_valloc	genfs_eopnotsupp
-#define	filecore_vfree	genfs_nullop
-#define	filecore_truncate	genfs_eopnotsupp
-#define	filecore_update	genfs_nullop
 #define	filecore_bwrite	genfs_eopnotsupp
 #define filecore_revoke	genfs_revoke
-#define filecore_blkatoff	genfs_eopnotsupp
 
 /*
  * Global vfs data structures for filecore
@@ -593,11 +589,6 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, filecore_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, filecore_advlock },       	/* advlock */
-	{ &vop_blkatoff_desc, filecore_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, filecore_valloc },		/* valloc */
-	{ &vop_vfree_desc, filecore_vfree },		/* vfree */
-	{ &vop_truncate_desc, filecore_truncate },	/* truncate */
-	{ &vop_update_desc, filecore_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */

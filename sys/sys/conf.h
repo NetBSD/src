@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.110.2.6 2005/02/04 11:48:05 skrll Exp $	*/
+/*	$NetBSD: conf.h,v 1.110.2.7 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -154,7 +154,7 @@ extern	const char devioc[], devcls[];
  * Line discipline switch table
  */
 struct linesw {
-	char	*l_name;	/* Linesw name */
+	const char *l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
 	int	(*l_open)	(dev_t, struct tty *);
@@ -174,8 +174,8 @@ extern struct linesw **linesw;
 extern int nlinesw;
 extern void ttyldisc_init(void);
 int ttyldisc_add(struct linesw *, int);
-struct linesw *ttyldisc_remove(char *);
-struct linesw *ttyldisc_lookup(char *);
+struct linesw *ttyldisc_remove(const char *);
+struct linesw *ttyldisc_lookup(const char *);
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
@@ -183,8 +183,8 @@ struct linesw *ttyldisc_lookup(char *);
 #define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
 #define	ttyerrinput ((int (*)(int, struct tty *))enodev)
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
-#define	ttyerrpoll ((int (*)(struct tty *, int, struct lwp *))enodev)
 
+int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 #endif
 

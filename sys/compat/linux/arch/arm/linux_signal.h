@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.4 2002/11/26 18:43:21 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.4.6.1 2005/11/10 14:00:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -90,12 +90,15 @@
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_NOCLDWAIT	0x00000002
 #define LINUX_SA_SIGINFO	0x00000004
+#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
-#define LINUX_SA_ALLBITS	0xf8000001
+#define LINUX_SA_ALLBITS	0xfc000007
+
+#define LINUX_MINSIGSTKSZ	2048
 
 typedef void	(*linux_handler_t) __P((int));
 

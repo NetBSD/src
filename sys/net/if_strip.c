@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.48.2.7 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.48.2.8 2005/11/10 14:10:32 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48.2.7 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48.2.8 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -261,9 +261,9 @@ static u_char* UnStuffData __P((u_char *src, u_char *end, u_char
 static u_char* StuffData __P((u_char *src, u_long length, u_char *dest,
 			      u_char **code_ptr_ptr));
 
-static void RecvErr __P((char *msg, struct strip_softc *sc));
+static void RecvErr __P((const char *msg, struct strip_softc *sc));
 static void RecvErr_Message __P((struct strip_softc *strip_info,
-				u_char *sendername, u_char *msg));
+				u_char *sendername, const u_char *msg));
 void	strip_resetradio __P((struct strip_softc *sc, struct tty *tp));
 void	strip_proberadio __P((struct strip_softc *sc, struct tty *tp));
 void	strip_watchdog __P((struct ifnet *ifp));
@@ -850,11 +850,9 @@ stripoutput(ifp, m, dst, rt)
 	dldst = dl_addrbuf;
 
 	shp = mtod(m, struct st_header *);
-	bcopy((caddr_t)"SIP0", (caddr_t)&shp->starmode_type,
-		sizeof(shp->starmode_type));
+	memcpy(&shp->starmode_type, "SIP0", sizeof(shp->starmode_type));
 
- 	bcopy((const char *)dldst, (caddr_t)shp->starmode_addr,
-		sizeof (shp->starmode_addr));
+ 	memcpy(shp->starmode_addr, dldst, sizeof(shp->starmode_addr));
 
 	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
@@ -1273,11 +1271,12 @@ stripintr(void *arg)
 		 */
 		if (m->m_pkthdr.len < MHLEN) {
 			struct mbuf *n;
+			int pktlen;
 
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			M_COPY_PKTHDR(n, m);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
-			    m->m_pkthdr.len);
+			pktlen = m->m_pkthdr.len;
+			M_MOVE_PKTHDR(n, m);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
 			m = n;
@@ -1445,7 +1444,7 @@ strip_proberadio(sc, tp)
 
 
 #ifdef DEBUG
-static char *strip_statenames[] = {
+static const char *strip_statenames[] = {
 	"Alive",
 	"Probe sent, awaiting answer",
 	"Probe not answered, resetting"
@@ -1936,7 +1935,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
  */
 static void
 RecvErr(msg, sc)
-	char *msg;
+	const char *msg;
 	struct strip_softc *sc;
 {
 #define MAX_RecErr	80
@@ -1973,7 +1972,7 @@ static void
 RecvErr_Message(strip_info, sendername, msg)
 	struct strip_softc *strip_info;
 	u_char *sendername;
-	/*const*/ u_char *msg;
+	const u_char *msg;
 {
 	static const char ERR_001[] = "001"; /* Not in StarMode! */
 	static const char ERR_002[] = "002"; /* Remap handle */

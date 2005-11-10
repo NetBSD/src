@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.33.6.6 2005/01/17 08:25:44 skrll Exp $ */
+/*	$NetBSD: scif.c,v 1.33.6.7 2005/11/10 13:58:37 skrll Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.33.6.6 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.33.6.7 2005/11/10 13:58:37 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -358,10 +358,10 @@ InitializeScif(unsigned int bps)
 	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * bps) - 1);
 
 	/*
-	 * wait 1mSec, because Send/Recv must begin 1 bit period after
+	 * wait 2m Sec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
 	 */
-	delay(1000);
+	delay(2000);
 
 #if 0
 	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE);
@@ -575,13 +575,14 @@ scifstart(struct tty *tp)
 	/* Output the first chunk of the contiguous buffer. */
 	{
 		int n;
-		int max;
+		int maxchars;
 		int i;
 
 		n = sc->sc_tbc;
-		max = sc->sc_fifolen - ((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
-		if (n > max)
-			n = max;
+		maxchars = sc->sc_fifolen
+			- ((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
+		if (n > maxchars)
+			n = maxchars;
 
 		for (i = 0; i < n; i++) {
 			scif_putc(*(sc->sc_tba));
@@ -768,7 +769,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1052,7 +1053,7 @@ scifdiag(void *arg)
 integrate void
 scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr2;
@@ -1445,14 +1446,14 @@ scifintr(void *arg)
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
 			int n;
-			int max;
+			int maxchars;
 			int i;
 
 			n = sc->sc_tbc;
-			max = sc->sc_fifolen -
+			maxchars = sc->sc_fifolen -
 				((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
-			if (n > max)
-				n = max;
+			if (n > maxchars)
+				n = maxchars;
 
 			for (i = 0; i < n; i++) {
 				scif_putc(*(sc->sc_tba));

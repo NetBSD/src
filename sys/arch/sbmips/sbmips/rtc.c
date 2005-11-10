@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.7.2.3 2004/09/21 13:21:13 skrll Exp $ */
+/* $NetBSD: rtc.c,v 1.7.2.4 2005/11/10 13:58:33 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7.2.3 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7.2.4 2005/11/10 13:58:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,13 +68,13 @@ struct rtc_softc {
 
 static int xirtc_match(struct device *, struct cfdata *, void *);
 static void xirtc_attach(struct device *, struct device *, void *);
-static int xirtc_gettime(todr_chip_handle_t, struct timeval *);
-static int xirtc_settime(todr_chip_handle_t, struct timeval *);
+static int xirtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int xirtc_settime(todr_chip_handle_t, volatile struct timeval *);
 
 static int strtc_match(struct device *, struct cfdata *, void *);
 static void strtc_attach(struct device *, struct device *, void *);
-static int strtc_gettime(todr_chip_handle_t, struct timeval *);
-static int strtc_settime(todr_chip_handle_t, struct timeval *);
+static int strtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int strtc_settime(todr_chip_handle_t, volatile struct timeval *);
 
 static int rtc_getcal(todr_chip_handle_t, int *);
 static int rtc_setcal(todr_chip_handle_t, int);
@@ -152,7 +152,7 @@ xirtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-xirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+xirtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -187,7 +187,7 @@ xirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 }
 
 static int
-xirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+xirtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -270,7 +270,7 @@ strtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-strtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+strtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -298,7 +298,7 @@ strtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 }
 
 static int
-strtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+strtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -385,7 +385,7 @@ rtc_resettodr(void *cookie)
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(&sc->sc_ct, (struct timeval *)&time) != 0)
+	if (todr_settime(&sc->sc_ct, &time) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 

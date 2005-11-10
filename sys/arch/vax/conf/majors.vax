@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.6.2.3 2004/09/21 13:23:42 skrll Exp $
+#	$NetBSD: majors.vax,v 1.6.2.4 2005/11/10 13:59:59 skrll Exp $
 #
 # Device majors for vax
 #
@@ -10,7 +10,7 @@ device-major	mem		char 3
 device-major	hp		char 4   block 0	hp
 
 device-major	vp		char 6			vp
-device-major	swap		char 7   block 4
+device-major	swap		char 7   block 4	vmswap
 device-major	cfl		char 8			vax780 | vaxany
 device-major	ra		char 9   block 9	ra
 device-major	va		char 10			va
@@ -83,6 +83,8 @@ device-major	rf		char 78  block 27	rf
 device-major	ksyms		char 79			ksyms
 device-major	wsfont		char 80			wsfont
 device-major	ses		char 81			ses
+
+device-major	nsmb		char 98			nsmb
 
 #
 # block-device-only devices

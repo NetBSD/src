@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $");
 
 /*
  * kernel include files.
@@ -85,15 +85,15 @@ int fc_lmdistance[LMMAX];	/* counters for how far off the last
 				 * cluster mapped entry was. */
 int fc_largedistance;		/* off by more than LMMAX		 */
 
-static void fatblock __P((struct msdosfsmount *, u_long, u_long *, u_long *,
-			  u_long *));
-void updatefats __P((struct msdosfsmount *, struct buf *, u_long));
-static __inline void usemap_free __P((struct msdosfsmount *, u_long));
-static __inline void usemap_alloc __P((struct msdosfsmount *, u_long));
-static int fatchain __P((struct msdosfsmount *, u_long, u_long, u_long));
-int chainlength __P((struct msdosfsmount *, u_long, u_long));
-int chainalloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *,
-		    u_long *));
+static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
+			  u_long *);
+void updatefats(struct msdosfsmount *, struct buf *, u_long);
+static __inline void usemap_free(struct msdosfsmount *, u_long);
+static __inline void usemap_alloc(struct msdosfsmount *, u_long);
+static int fatchain(struct msdosfsmount *, u_long, u_long, u_long);
+int chainlength(struct msdosfsmount *, u_long, u_long);
+int chainalloc(struct msdosfsmount *, u_long, u_long, u_long, u_long *,
+		    u_long *);
 
 static void
 fatblock(pmp, ofs, bnp, sizep, bop)

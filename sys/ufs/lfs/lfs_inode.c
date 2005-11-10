@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77.2.7 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.77.2.8 2005/11/10 14:12:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.7 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.8 2005/11/10 14:12:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.7 2005/03/08 13:53:12 skrll Exp
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 
@@ -107,6 +106,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	struct ufs1_dinode *dip = (struct ufs1_dinode *)bp->b_data;
 	struct ufs1_dinode *ldip, *fin;
 
+	ASSERT_NO_SEGLOCK(fs);
 	/*
 	 * Read the inode block backwards, since later versions of the
 	 * inode will supercede earlier ones.  Though it is unlikely, it is
@@ -128,21 +128,15 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 }
 
 int
-lfs_update(void *v)
+lfs_update(struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, int updflags)
 {
-	struct vop_update_args /* {
-				  struct vnode *a_vp;
-				  struct timespec *a_access;
-				  struct timespec *a_modify;
-				  int a_flags;
-				  } */ *ap = v;
 	struct inode *ip;
-	struct vnode *vp = ap->a_vp;
-	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	int s;
 	int flags;
 
+	ASSERT_NO_SEGLOCK(fs);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(vp);
@@ -155,18 +149,17 @@ lfs_update(void *v)
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
 	s = splbio();
-	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
+	simple_lock(&vp->v_interlock);
+	while ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
 		      " (in progress)\n", ip->i_number));
-		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
+		ltsleep(vp, (PRIBIO+1), "lfs_update", 0, &vp->v_interlock);
 	}
+	simple_unlock(&vp->v_interlock);
 	splx(s);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	LFS_ITIMES(ip,
-		   ap->a_access ? ap->a_access : &ts,
-		   ap->a_modify ? ap->a_modify : &ts, &ts);
-	if (ap->a_flags & UPDATE_CLOSE)
+	LFS_ITIMES(ip, acc, mod, NULL);
+	if (updflags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
 	else
 		flags = ip->i_flag & (IN_MODIFIED | IN_CLEANING);
@@ -174,8 +167,9 @@ lfs_update(void *v)
 		return (0);
 
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
+	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
+		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_diropwait;
 		while (vp->v_flag & VDIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
@@ -185,12 +179,13 @@ lfs_update(void *v)
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
-				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
-				       0);
+				ltsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
+					0, &fs->lfs_interlock);
 			/* XXX KS - by falling out here, are we writing the vn
 			twice? */
 		}
 		--fs->lfs_diropwait;
+		simple_unlock(&fs->lfs_interlock);
 		return lfs_vflush(vp);
 	}
 	return 0;
@@ -203,31 +198,23 @@ lfs_update(void *v)
  * Truncate the inode oip to at most length size, freeing the
  * disk blocks.
  */
-/* VOP_BWRITE 1 + NIADDR + VOP_BALLOC == 2 + 2*NIADDR times */
+/* VOP_BWRITE 1 + NIADDR + lfs_balloc == 2 + 2*NIADDR times */
 
 int
-lfs_truncate(void *v)
+lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
+    struct ucred *cred, struct lwp *l)
 {
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	/* XXX ondisk32 */
 	int32_t newblks[NDADDR + NIADDR];
-	off_t length = ap->a_length;
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
 	long count, rcount, blocksreleased = 0, real_released = 0;
-	int i, ioflag, nblocks;
+	int i, nblocks;
 	int aflags, error, allerror = 0;
 	off_t osize;
 	long lastseg;
@@ -256,11 +243,11 @@ lfs_truncate(void *v)
 		memset((char *)SHORTLINK(oip), 0, (u_int)oip->i_size);
 		oip->i_size = oip->i_ffs1_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -269,9 +256,9 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;
-	ioflag = ap->a_flags;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 
+	ASSERT_NO_SEGLOCK(fs);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -291,7 +278,7 @@ lfs_truncate(void *v)
 
 				eob = blkroundup(fs, osize);
 				error = ufs_balloc_range(ovp, osize,
-				    eob - osize, ap->a_cred, aflags);
+				    eob - osize, cred, aflags);
 				if (error)
 					return error;
 				if (ioflag & IO_SYNC) {
@@ -303,24 +290,24 @@ lfs_truncate(void *v)
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
 			}
-			error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+			error = ufs_balloc_range(ovp, length - 1, 1, cred,
 						 aflags);
 			if (error) {
-				(void) VOP_TRUNCATE(ovp, osize,
-						    ioflag & IO_SYNC,
-				    		    ap->a_cred, ap->a_l);
+				(void) lfs_truncate(ovp, osize,
+						    ioflag & IO_SYNC, cred, l);
 				return error;
 			}
 			uvm_vnp_setsize(ovp, length);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			KASSERT(ovp->v_size == oip->i_size);
-			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+			oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			return (lfs_update(ovp, NULL, NULL, 0));
 		} else {
 			error = lfs_reserve(fs, ovp, NULL,
 			    btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
 			if (error)
 				return (error);
-			error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred,
+			error = lfs_balloc(ovp, length - 1, 1, cred,
 					   aflags, &bp);
 			lfs_reserve(fs, ovp, NULL,
 			    -btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
@@ -330,7 +317,8 @@ lfs_truncate(void *v)
 			uvm_vnp_setsize(ovp, length);
 			(void) VOP_BWRITE(bp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+			oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			return (lfs_update(ovp, NULL, NULL, 0));
 		}
 	}
 
@@ -350,7 +338,8 @@ lfs_truncate(void *v)
 	lastseg = -1;
 	bc = 0;
 
-	lfs_seglock(fs, SEGM_PROT);
+	if (ovp != fs->lfs_ivnode)
+		lfs_seglock(fs, SEGM_PROT);
 	if (offset == 0) {
 		oip->i_size = oip->i_ffs1_size = length;
 	} else if (!usepc) {
@@ -358,7 +347,7 @@ lfs_truncate(void *v)
 		aflags = B_CLRBUF;
 		if (ioflag & IO_SYNC)
 			aflags |= B_SYNC;
-		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
+		error = lfs_balloc(ovp, length - 1, 1, cred, aflags, &bp);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
 			    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
@@ -372,8 +361,11 @@ lfs_truncate(void *v)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
-		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
+			simple_lock(&lfs_subsys_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
+			simple_unlock(&lfs_subsys_lock);
+		}
 		if (bp->b_flags & B_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
 		(void) VOP_BWRITE(bp);
@@ -389,20 +381,19 @@ lfs_truncate(void *v)
 		 * So there is a window where another thread could see a whole
 		 * zeroed page past EOF, but that's life.
 		 */
-		daddr_t lbn;
+		daddr_t xlbn;
 		voff_t eoz;
 
 		aflags = ioflag & IO_SYNC ? B_SYNC : 0;
-		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-		    aflags);
+		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflags);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
 				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
-		lbn = lblkno(fs, length);
-		size = blksize(fs, oip, lbn);
-		eoz = MIN(lblktosize(fs, lbn) + size, osize);
+		xlbn = lblkno(fs, length);
+		size = blksize(fs, oip, xlbn);
+		eoz = MIN(lblktosize(fs, xlbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
 			simple_lock(&ovp->v_interlock);
@@ -464,7 +455,7 @@ lfs_truncate(void *v)
 			error = lfs_indirtrunc(oip, indir_lbn[level],
 					       bn, lastiblock[level],
 					       level, &count, &rcount,
-					       &lastseg, &bc, ap->a_l);
+					       &lastseg, &bc, l);
 			if (error)
 				allerror = error;
 			real_released += rcount;
@@ -475,6 +466,7 @@ lfs_truncate(void *v)
 				blocksreleased += nblocks;
 				oip->i_ffs1_ib[level] = 0;
 				lfs_blkfree(fs, bn, fs->lfs_bsize, &lastseg, &bc);
+        			lfs_deregister_block(ovp, bn);
 			}
 		}
 		if (lastiblock[level] >= 0)
@@ -501,6 +493,7 @@ lfs_truncate(void *v)
 		blocksreleased += btofsb(fs, bsize);
 		oip->i_ffs1_db[i] = 0;
 		lfs_blkfree(fs, bn, obsize, &lastseg, &bc);
+        	lfs_deregister_block(ovp, bn);
 	}
 	if (lastblock < 0)
 		goto done;
@@ -563,7 +556,9 @@ done:
 	oip->i_size = oip->i_ffs1_size = length;
 	oip->i_lfs_effnblks -= blocksreleased;
 	oip->i_ffs1_blocks -= real_released;
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree += blocksreleased;
+	simple_unlock(&fs->lfs_interlock);
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
 	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
@@ -580,11 +575,13 @@ done:
 	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
   errout:
-	lfs_segunlock(fs);
+	oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+	if (ovp != fs->lfs_ivnode)
+		lfs_segunlock(fs);
 	return (allerror ? allerror : error);
 }
 
-/* Update segment usage information when removing a block. */
+/* Update segment and avail usage information when removing a block. */
 static int
 lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 	    size_t *num)
@@ -592,6 +589,7 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 	long seg;
 	int error = 0;
 
+	ASSERT_SEGLOCK(fs);
 	bsize = fragroundup(fs, bsize);
 	if (daddr > 0) {
 		if (*lastseg != (seg = dtosn(fs, daddr))) {
@@ -601,6 +599,7 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 		} else
 			*num += bsize;
 	}
+
 	return error;
 }
 
@@ -611,6 +610,7 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 	SEGUSE *sup;
 	struct buf *bp;
 
+	ASSERT_SEGLOCK(fs);
 	if (lastseg < 0 || num == 0)
 		return 0;
 
@@ -652,6 +652,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	int nblocks, blocksreleased = 0, real_released = 0;
 	int error = 0, allerror = 0;
 
+	ASSERT_SEGLOCK(fs);
 	/*
 	 * Calculate index in current block of last
 	 * block to be kept.  -1 indicates the entire
@@ -695,7 +696,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		MALLOC(copy, int32_t *, fs->lfs_bsize, M_TEMP, M_WAITOK);
+		copy = (int32_t *)lfs_malloc(fs, fs->lfs_bsize, LFS_NB_IBLOCK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->lfs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 		/* XXX ondisk32 */
@@ -748,7 +749,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	}
 
 	if (copy != NULL) {
-		FREE(copy, M_TEMP);
+		lfs_free(fs, copy, LFS_NB_IBLOCK);
 	} else {
 		if (bp->b_flags & B_DELWRI) {
 			LFS_UNLOCK_BUF(bp);
@@ -787,6 +788,7 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	fs = VTOI(vp)->i_lfs;
 	s = splbio();
 
+	ASSERT_SEGLOCK(fs);
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);

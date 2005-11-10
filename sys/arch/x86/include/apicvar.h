@@ -1,4 +1,4 @@
-/* 	$NetBSD: apicvar.h,v 1.1.2.3 2004/09/21 13:24:30 skrll Exp $ */
+/* 	$NetBSD: apicvar.h,v 1.1.2.4 2005/11/10 14:00:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,6 @@ struct apic_attach_args {
 	int apic_vecbase;
 };
 
-void apic_format_redir(char *, char *, int, u_int32_t, u_int32_t);
+void apic_format_redir(const char *, const char *, int, u_int32_t, u_int32_t);
 
 #endif /* !_X86_APICVAR_H_ */

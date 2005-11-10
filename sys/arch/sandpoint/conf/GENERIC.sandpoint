@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.6.2.7 2005/03/04 16:39:09 skrll Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.6.2.8 2005/11/10 13:58:32 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.7 $"
+#ident 		"GENERIC-$Revision: 1.6.2.8 $"
 
 maxusers	32
 
@@ -54,6 +54,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -73,6 +74,7 @@ file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
 
 options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
@@ -111,6 +113,7 @@ pseudo-device	loop
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vnd		4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem
@@ -147,7 +150,6 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 #cypide* at pci? dev ? function ?	# Cypress IDE controllers
 #hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #optiide* at pci? dev ? function ?	# Opti IDE controllers
-#piixide* at pci? dev ? function ?	# Intel IDE controllers
 #pdcide* at pci? dev ? function ?	# Promise IDE controllers
 #pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 #satalink* at pci? dev ? function ?	# SiI SATALink controllers

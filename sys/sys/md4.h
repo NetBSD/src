@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.1.26.5 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: md4.h,v 1.1.26.6 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -35,6 +35,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#define MD4_DIGEST_LENGTH 16
+
 /* MD4 context. */
 typedef struct MD4Context {
 	u_int32_t state[4];	/* state (ABCD) */
@@ -45,7 +47,7 @@ typedef struct MD4Context {
 __BEGIN_DECLS
 void	MD4Init(MD4_CTX *);
 void	MD4Update(MD4_CTX *, const unsigned char *, unsigned int);
-void	MD4Final(unsigned char[16], MD4_CTX *);
+void	MD4Final(unsigned char[MD4_DIGEST_LENGTH], MD4_CTX *);
 #ifndef _KERNEL
 char	*MD4End(MD4_CTX *, char *);
 char	*MD4File(const char *, char *);

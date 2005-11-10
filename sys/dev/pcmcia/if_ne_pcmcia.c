@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.8 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.9 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.8 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.9 2005/11/10 14:07:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
 static const struct ne2000dev {
     int32_t manufacturer;
     int32_t product;
-    char *cis_info[4];
+    const char *cis_info[4];
     int function;
     int enet_maddr;
     unsigned char enet_vendor[3];

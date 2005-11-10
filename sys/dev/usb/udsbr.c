@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.7.6.4 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.7.6.5 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.7.6.4 2004/11/02 07:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.7.6.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,14 +124,15 @@ USB_ATTACH(udsbr)
 {
 	USB_ATTACH_START(udsbr, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
-	char			devinfo[1024];
+	char			*devinfop;
 	usbd_status		err;
 
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {

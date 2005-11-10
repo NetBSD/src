@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.28 2002/10/02 16:33:47 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.28.6.1 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.28 2002/10/02 16:33:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.28.6.1 2005/11/10 14:03:54 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -144,14 +144,14 @@ pdq_eisa_subprobe(
     pdq_bus_t bc,
     pdq_bus_ioport_t iobase,
     pdq_uint32_t *maddr,
-    pdq_uint32_t *msize,
+    pdq_uint32_t *msiz,
     pdq_uint32_t *irq)
 {
     if (irq != NULL)
 	*irq = DEFEA_DECODE_IRQ(PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_IO_CONFIG_STAT_0) & 3);
     *maddr = (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_CMP_0) << 8)
 	| (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_CMP_1) << 16);
-    *msize = (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_MASK_0) + 4) << 8;
+    *msiz = (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_MASK_0) + 4) << 8;
 }
 
 static void
@@ -222,11 +222,11 @@ pdq_eisa_probe(
 
     for (count = 0; (ed = eisa_match_dev(ed, pdq_eisa_match)) != NULL; count++) {
 	pdq_bus_ioport_t iobase = ed->ioconf.slot * EISA_SLOT_SIZE;
-	pdq_uint32_t irq, maddr, msize;
+	pdq_uint32_t irq, maddr, msiz;
 
 	eisa_add_iospace(ed, iobase, 0x200, RESVADDR_NONE);
-	pdq_eisa_subprobe(PDQ_BUS_EISA, iobase, &maddr, &msize, &irq);
-	eisa_add_mspace(ed, maddr, msize, RESVADDR_NONE);
+	pdq_eisa_subprobe(PDQ_BUS_EISA, iobase, &maddr, &msiz, &irq);
+	eisa_add_mspace(ed, maddr, msiz, RESVADDR_NONE);
 	eisa_add_intr(ed, irq);
 	eisa_registerdev(ed, &pdq_eisa_driver, &kdc_pdq_eisa);
     }
@@ -338,7 +338,7 @@ pdq_eisa_probe(
 {
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
     int slot;
-    pdq_uint32_t irq, maddr, msize;
+    pdq_uint32_t irq, maddr, msiz;
 
     if (isa_bustype != BUS_EISA)
 	return 0;
@@ -349,7 +349,7 @@ pdq_eisa_probe(
     ia->ia_iosize = EISA_NPORT;
     eisa_slotalloc(slot);
 
-    pdq_eisa_subprobe(PDQ_BUS_EISA, ia->ia_iobase, &maddr, &msize, &irq);
+    pdq_eisa_subprobe(PDQ_BUS_EISA, ia->ia_iobase, &maddr, &msiz, &irq);
     if (ia->ia_irq != IRQUNK && irq != ia->ia_irq) {
 	printf("fea%d: error: desired IRQ of %d does not match device's actual IRQ (%d),\n",
 	       cf->cf_unit,
@@ -383,7 +383,7 @@ pdq_eisa_probe(
     ia->ia_drq = DRQNONE;
 
     ia->ia_maddr = (caddr_t) maddr;
-    ia->ia_msize = msize;
+    ia->ia_msize = msiz;
     return 1;
 }
 
@@ -464,7 +464,7 @@ pdq_eisa_attach(
 {
     pdq_softc_t * const sc = (pdq_softc_t *) self;
     struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
-    pdq_uint32_t irq, maddr, msize;
+    pdq_uint32_t irq, maddr, msiz;
     eisa_intr_handle_t ih;
     const char *intrstr;
 
@@ -479,14 +479,14 @@ pdq_eisa_attach(
 	return;
     }
 
-    pdq_eisa_subprobe(sc->sc_iotag, sc->sc_iobase, &maddr, &msize, &irq);
+    pdq_eisa_subprobe(sc->sc_iotag, sc->sc_iobase, &maddr, &msiz, &irq);
 
-    if (maddr != 0 && msize != 0) {
+    if (maddr != 0 && msiz != 0) {
 	sc->sc_csrtag = ea->ea_memt;
-	if (bus_space_map(sc->sc_csrtag, maddr, msize, 0, &sc->sc_membase)) {
+	if (bus_space_map(sc->sc_csrtag, maddr, msiz, 0, &sc->sc_membase)) {
 	    bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
 	    printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
-		   sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
+		   sc->sc_dev.dv_xname, maddr, maddr + msiz - 1);
 	    return;
 	}
     } else {
@@ -523,7 +523,7 @@ pdq_eisa_attach(
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
     if (sc->sc_csrtag != sc->sc_iotag)
-	printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
+	printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr, maddr + msiz - 1);
     if (intrstr != NULL)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }

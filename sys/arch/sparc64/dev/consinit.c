@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.12.6.3 2004/09/21 13:22:41 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.12.6.4 2005/11/10 13:59:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12.6.3 2004/09/21 13:22:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12.6.4 2005/11/10 13:59:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -184,7 +184,7 @@ consinit()
 {
 	int chosen;
 	char buffer[128];
-	char *consname = "unknown";
+	const char *consname = "unknown";
 
 	DBPRINT(("consinit()\r\n"));
 

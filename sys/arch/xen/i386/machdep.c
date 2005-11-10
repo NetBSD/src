@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.8.2.8 2005/04/01 14:28:58 skrll Exp $	*/
-/*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
+/*	$NetBSD: machdep.c,v 1.8.2.9 2005/11/10 14:00:21 skrll Exp $	*/
+/*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.8 2005/04/01 14:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.9 2005/11/10 14:00:21 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.8 2005/04/01 14:28:58 skrll Exp $"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +344,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 
 #ifdef TRAPLOG
 	/*
@@ -378,8 +380,10 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
+#if defined(XEN) && defined(DOM0OPS)
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+#endif /* defined(XEN) && defined(DOM0OPS) */
 }
 
 /*
@@ -1303,7 +1307,7 @@ void cpu_init_idt()
         lidt(&region);
 }
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+#if !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
 add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 {
@@ -1383,7 +1387,7 @@ add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 	physmem += atop(mem_clusters[mem_cluster_cnt].size);
 	mem_cluster_cnt++;
 }
-#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
+#endif /* !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
 initgdt()
@@ -1484,8 +1488,11 @@ init386(paddr_t first_avail)
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
+#if defined(XEN) && (NISA > 0 || NPCI > 0)
 	x86_bus_space_init();
+#endif
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
@@ -1519,9 +1526,8 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail - KERNBASE;
-	avail_end = ptoa(xen_start_info.nr_pages) +
-		(KERNTEXTOFF - KERNBASE_LOCORE);
-	pmap_pa_start = (KERNTEXTOFF - KERNBASE_LOCORE);
+	avail_end = ptoa(xen_start_info.nr_pages) + (KERNTEXTOFF - KERNBASE);
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;

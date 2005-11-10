@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.22.16.4 2004/11/29 07:25:05 skrll Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.22.16.5 2005/11/10 14:12:40 skrll Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22.16.4 2004/11/29 07:25:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22.16.5 2005/11/10 14:12:40 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -79,8 +79,7 @@ void uvmcnt_dump(void);
 #ifdef UVMHIST
 /* call this from ddb */
 void
-uvmhist_dump(l)
-	struct uvm_history *l;
+uvmhist_dump(struct uvm_history *l)
 {
 	int lcv, s;
 
@@ -98,8 +97,7 @@ uvmhist_dump(l)
  * print a merged list of uvm_history structures
  */
 static void
-uvmhist_dump_histories(hists)
-	struct uvm_history *hists[];
+uvmhist_dump_histories(struct uvm_history *hists[])
 {
 	struct timeval  tv;
 	int	cur[MAXHISTS];
@@ -169,8 +167,7 @@ restart:
  * merges the named histories.
  */
 void
-uvm_hist(bitmask)
-	u_int32_t	bitmask;	/* XXX only support 32 hists */
+uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
 {
 	struct uvm_history *hists[MAXHISTS + 1];
 	int i = 0;
@@ -244,10 +241,9 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
 	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
 	    uvmexp.pdpending, uvmexp.nswget);
-	(*pr)("    nswapdev=%d, nanon=%d, nanonneeded=%d nfreeanon=%d\n",
-	    uvmexp.nswapdev, uvmexp.nanon, uvmexp.nanonneeded,
-	    uvmexp.nfreeanon);
-	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
+	(*pr)("    nswapdev=%d, swpgavail=%d\n",
+	    uvmexp.nswapdev, uvmexp.swpgavail);
+	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d, paging=%d\n",
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 }
 #endif

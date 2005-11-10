@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.89.2.7 2005/03/04 16:39:51 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.89.2.8 2005/11/10 14:00:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.7 2005/03/04 16:39:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.8 2005/11/10 14:00:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.7 2005/03/04 16:39:51 skrll
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -320,9 +321,13 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	case LINUX_SIGCHLD:
 		lsi->lsi_uid = ksi->ksi_uid;
 		lsi->lsi_pid = ksi->ksi_pid;
-		lsi->lsi_status = ksi->ksi_status;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
+
+		/* We use the same codes */
+		lsi->lsi_code = ksi->ksi_code;
+		/* XXX is that right? */
+		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
 		break;
 	case LINUX_SIGIO:
 		lsi->lsi_band = ksi->ksi_band;
@@ -1093,12 +1098,10 @@ linux_machdepioctl(l, v, retval)
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
 		 */
-		FILE_USE(fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
-		FILE_UNUSE(fp, l);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;
@@ -1166,5 +1169,11 @@ linux_sys_ioperm(l, v, retval)
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
+	return 0;
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
 	return 0;
 }

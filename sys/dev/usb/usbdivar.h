@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.70.6.5 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.70.6.6 2005/11/10 14:08:06 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ struct usbd_xfer {
 	struct usbd_device     *device;
 	usb_dma_t		dmabuf;
 
-	int			rqflags;
+	u_int8_t		rqflags;
 #define URQ_REQUEST	0x01
 #define URQ_AUTO_DMABUF	0x10
 #define URQ_DEV_DMABUF	0x20
@@ -225,6 +225,9 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
+	u_int8_t		hcflags; /* private use by the HC driver */
+#define UXFER_ABORTING	0x01	/* xfer is aborting. */
+#define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 
 	usb_callout_t		timeout_handle;
 };

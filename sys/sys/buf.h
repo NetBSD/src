@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.61.2.9 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: buf.h,v 1.61.2.10 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,9 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#if defined(_KERNEL)
+#include <sys/workqueue.h>
+#endif /* defined(_KERNEL) */
 
 struct buf;
 struct mount;
@@ -113,7 +116,14 @@ struct bio_ops {
  * The buffer header describes an I/O operation in the kernel.
  */
 struct buf {
-	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
+	union {
+		TAILQ_ENTRY(buf) u_actq; /* Device driver queue when active. */
+#if defined(_KERNEL) /* u_work is smaller than u_actq. XXX */
+		struct work u_work;
+#endif /* defined(_KERNEL) */
+	} b_u;
+#define	b_actq	b_u.u_actq
+#define	b_work	b_u.u_work
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
 	volatile int b_flags;		/* B_* flags. */
 	int	b_error;		/* Errno value. */
@@ -252,9 +262,6 @@ do {									\
 
 extern	struct bio_ops bioops;
 extern	u_int nbuf;		/* The number of buffer headers */
-extern	struct buf *buf;	/* The buffer headers. */
-extern	char *buffers;		/* The buffer contents. */
-extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
 
 /*
  * Pool of I/O buffers.  Access to this pool must be protected with

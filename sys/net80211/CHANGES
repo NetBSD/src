@@ -1,0 +1,227 @@
+***
+*** Summary of changes between 2005-05-18 and 2005-07-11.
+***
+*** % cvs -d freebsdanoncvs@anoncvs.freebsd.org:/home/ncvs co src
+*** % cd src/sys/net80211/
+*** % cvs2cl --hide-filenames --no-indent --no-wrap -f CHANGES \
+***      -l '-d 2005-05-18<=2005-07-11'
+***
+
+2005-07-10 22:06  sam
+
+Handle encrypt of arbitarily fragmented mbuf chains: previously
+we bailed if we couldn't collect the 16-bytes of data required
+for an aes block cipher in 2 mbufs; now we deal with it.  While
+here make space accounting signed so a sanity check does the
+right thing for malformed mbuf chains.
+
+2005-07-10 22:00  sam
+
+nuke assert that duplicates real check
+
+2005-07-09 18:15  sam
+
+Change default key allocation method to do the right thing for
+legacy parts (i.e. those that have 4 global key slots).  We
+blindly assign unicast keys to key slot 0.  Devices that need
+alternate allocation logic must override this method.
+
+2005-07-08 17:49  sam
+
+correct check for high priority wme traffic
+
+Noticed by:	Ralf Assmann
+
+2005-07-08 11:36  sam
+
+fix another instance of the MORE_DATA bit handling for frames on the
+power save queue (missed in previous commit)
+
+Submitted by:	Bruno Randolf
+
+2005-07-06 10:38  sam
+
+add "pureg" mode for ap operation: reject association requests from
+11b-only stations when operating in 11g
+
+2005-07-05 20:55  sam
+
+Fix handling of data frames queued for a station in power save mode:
+don't mark the MORE_DATA bit when taking it off the ps queue, there's
+no 802.11 header then; we must wait to do this at encap time so
+mark the mbuf instead.
+
+Obtained from:	Atheros
+
+2005-07-05 20:51  sam
+
+Fix race condition in handling node reference counts for authenticating
+stations in ap mode.  Track when a node's first auth frame is
+received and use this to decide whether or not to bump the refcnt.
+This insures we only ever bump the refcnt once.
+
+2005-07-05 20:31  avatar
+
+Only update the scan entry state based on newly received frames.
+This fixes duplicative BSS entries(memory leaks as well) listed in
+"ifconfig dev list scan" when a station fails to associate with an AP.
+
+2005-07-05 13:05  sam
+
+remove auto-add of IEEE80211_KEY_GROUP; all the apps that need to
+set it have been fixed
+
+2005-07-05 12:35  sam
+
+o when setting a wpa key, hold a ref on the bss node;
+  fixes a ref cnt leak
+o make unicast key handling on delete identical to set
+o change legacy wep key api to reset the 802.11 state
+  machine for backwards compatibility
+
+2005-07-03 20:29  sam
+
+when operating in ap mode, explicitly drop associated/authenticated
+stations when transitioning to INIT state (e.g. as a result of
+changing state at the 802.11 level)
+
+2005-06-13 16:01  sam
+
+revert 1.53; it breaks ibss merge
+
+Noticed by:	Bruno Randolf
+
+2005-06-10 16:30  sam
+
+don't look at the wme ie in a beacon unless we negotiated use
+
+2005-06-10 11:49  brooks
+
+Stop embedding struct ifnet at the top of driver softcs. Instead the
+struct ifnet or the layer 2 common structure it was embedded in have
+been replaced with a struct ifnet pointer to be filled by a call to the
+new function, if_alloc(). The layer 2 common structure is also allocated
+via if_alloc() based on the interface type. It is hung off the new
+struct ifnet member, if_l2com.
+
+This change removes the size of these structures from the kernel ABI and
+will allow us to better manage them as interfaces come and go.
+
+Other changes of note:
+ - Struct arpcom is no longer referenced in normal interface code.
+   Instead the Ethernet address is accessed via the IFP2ENADDR() macro.
+   To enforce this ac_enaddr has been renamed to _ac_enaddr.
+ - The second argument to ether_ifattach is now always the mac address
+   from driver private storage rather than sometimes being ac_enaddr.
+
+2005-06-10 11:14  sam
+
+validate the bssid for non-data frames too when operating in
+adhoc/ahdemo/hostap modes
+
+2005-06-10 11:11  sam
+
+o fix wpa w/ wme: don't strip the QoS header on recv as tkip requires
+  it; instead pass the space occupied by the header down into the
+  crypto modules (except in the demic case which needs it only when
+  doing int in s/w)
+o while here fix defrag to strip the header from 2nd and later frames
+o teach decap code how to handle 4-address frames
+
+2005-06-10 00:04  sam
+
+mark stations authorized during recv processing instead of doing it
+as a side effect of sending an auth success frame; sending mgmt
+frames should not have side effects
+
+2005-06-09 23:42  sam
+
+move AID implementation defines from the protocol definitions to
+where they are used
+
+2005-06-09 23:37  sam
+
+accept diassoc frame in ASSOC state
+
+2005-06-09 20:48  sam
+
+pull some debug msgs up so they're seen more often
+
+2005-06-09 20:47  sam
+
+kick the state machine when we receive failure notice from an ap (when
+operating in sta mode); this speeds up the state machine, previously
+we were acting on a timeout
+
+2005-06-09 20:43  sam
+
+discard open auth requests in adhoc mode
+
+2005-06-09 20:41  sam
+
+reject open auth requests when shared key auth is configured
+
+Obtained from:	Atheros
+
+2005-06-09 20:40  sam
+
+add ieee80211_send_error to encapsulate an idiom
+
+2005-06-09 20:38  sam
+
+o always check if ic_set_tim is !NULL before using it
+o add missing call to clear tim after flushing ps q
+
+2005-06-09 20:35  sam
+
+mark state for protection only when operating in 11g
+
+2005-06-09 20:33  sam
+
+don't reject station based on the PRIVACY bit in the capabilities;
+the 802.11 spec says not to
+
+Obtained from:	Atheros
+
+2005-06-09 20:31  sam
+
+correct checks for rate set compatibility
+
+2005-06-09 20:29  sam
+
+record tstamp from beacons received in station mode when associated;
+this is needed by drivers that want to resync their timers based on
+the tsf of the last recv'd beacon frame
+
+2005-06-08 23:05  sam
+
+o collect dtim period+count from beacons in station mode so drivers
+  can better program beacon timers
+o leave placeholder in com structure for future ap/adhoc mode tim support
+
+2005-06-07 18:37  sam
+
+Change the MLME ASSOCIATE ioctl to accept either a ssid, a bssid,
+or a bssid+ssid. This is needed for later versions of wpa_supplicant
+and for forthcoming addons to wpa_supplicant.
+
+Note this is an api change and applications must be rebuilt.
+
+2005-06-07 18:31  sam
+
+Don't clock the state machine in various cases when roaming is set
+to manual; this helps keep wpa_supplicant in sync.
+
+2005-06-06 19:08  sam
+
+WPA/802.11i interoperability fixes:
+o only include capabilities word in the WPA ie when non-zero and
+  not preauth
+o always include the capabilities in the RSN ie
+
+Obtained from:	Atheros
+
+2005-06-05 23:04  sam
+
+add force flag to enmic/demic crypto api for use in xmit fragmentation
+and h/w mic verification

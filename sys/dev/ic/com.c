@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.216.2.6 2005/03/04 16:41:27 skrll Exp $	*/
+/*	$NetBSD: com.c,v 1.216.2.7 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.6 2005/03/04 16:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.7 2005/11/10 14:04:14 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.6 2005/03/04 16:41:27 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -296,9 +297,9 @@ comspeed(long speed, long frequency, int type)
 #ifdef COM_DEBUG
 int	com_debug = 0;
 
-void comstatus(struct com_softc *, char *);
+void comstatus(struct com_softc *, const char *);
 void
-comstatus(struct com_softc *sc, char *str)
+comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -837,7 +838,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -888,7 +889,6 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
 		 */
-		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			t.c_ospeed = comconsrate;
 			t.c_cflag = comconscflag;
@@ -896,6 +896,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
 		}
+		t.c_ispeed = t.c_ospeed;
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
 			SET(t.c_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
@@ -1022,7 +1023,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
-		return (EIO);
+		return (POLLHUP);
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
@@ -1752,7 +1753,6 @@ comstart(struct tty *tp)
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
 
-#if 0
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		u_int n;
@@ -1764,7 +1764,7 @@ comstart(struct tty *tp)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
-#endif
+
 	COM_UNLOCK(sc);
 out:
 	splx(s);

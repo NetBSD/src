@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $ */
+/*	$NetBSD: cgthree.c,v 1.8.2.5 2005/11/10 14:08:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.8.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct cg3_videoctrl {
 void
 cgthreeattach(sc, name, isconsole)
 	struct cgthree_softc *sc;
-	char *name;
+	const char *name;
 	int isconsole;
 {
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1.10.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.10.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.10.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.10.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -116,7 +116,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(db_addr_t addr, size_t size, char *data)
+db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)(intptr_t)addr;
 	extern char etext[];
@@ -131,21 +131,21 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 	}
 
 	if (size == 8) {
-		*((register_t*)dst) = *((register_t*)data);
+		*((register_t*)dst) = *((const register_t*)data);
 		if (in_text)
 			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;
 	}
 
 	if (size == 4) {
-		*((int*)dst) = *((int*)data);
+		*((int*)dst) = *((const int*)data);
 		if (in_text)
 			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)dst) = *((short*)data);
+		*((short*)dst) = *((const short*)data);
 		if (in_text)
 			asm volatile("ocbp %0, 0; synci" :: "r"(dst));
 		return;

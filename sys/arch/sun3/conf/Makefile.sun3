@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.96.6.3 2004/09/21 13:23:19 skrll Exp $
+# $NetBSD: Makefile.sun3,v 1.96.6.4 2005/11/10 13:59:38 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SUN3=		$S/arch/sun3
-GENASSYM=	${SUN3}/${MACHTYPE}/genassym.cf
+GENASSYM_CONF=	${SUN3}/${MACHTYPE}/genassym.cf
 
 ##
 ## (2) compile settings

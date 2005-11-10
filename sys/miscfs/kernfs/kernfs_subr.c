@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.6.2.6 2005/03/04 16:52:54 skrll Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.6.2.7 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.6 2005/03/04 16:52:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.7 2005/11/10 14:10:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -102,10 +102,10 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.6 2005/03/04 16:52:54 skrll Ex
 #include <netkey/key.h>
 #endif
 
-void kernfs_hashins __P((struct kernfs_node *));
-void kernfs_hashrem __P((struct kernfs_node *));
-struct vnode *kernfs_hashget __P((kfstype, struct mount *,
-    const struct kern_target *, u_int32_t));
+void kernfs_hashins(struct kernfs_node *);
+void kernfs_hashrem(struct kernfs_node *);
+struct vnode *kernfs_hashget(kfstype, struct mount *,
+    const struct kern_target *, u_int32_t);
 
 static LIST_HEAD(kfs_hashhead, kernfs_node) *kfs_hashtbl;
 static u_long	kfs_ihash;	/* size of hash table - 1 */

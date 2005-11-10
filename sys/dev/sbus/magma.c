@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.27.2.5 2005/03/04 16:50:31 skrll Exp $	*/
+/*	$NetBSD: magma.c,v 1.27.2.6 2005/11/10 14:07:47 skrll Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.27.2.5 2005/03/04 16:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.27.2.6 2005/11/10 14:07:47 skrll Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -926,7 +926,7 @@ mttyopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

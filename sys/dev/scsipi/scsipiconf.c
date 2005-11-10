@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.20.2.4 2005/03/04 16:50:34 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.20.2.5 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.2.4 2005/03/04 16:50:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.2.5 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,18 +119,19 @@ scsipi_alloc_periph(int malloc_flag)
  * Return a priority based on how much of the inquiry data matches
  * the patterns for the particular driver.
  */
-caddr_t
-scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, caddr_t base,
-    int nmatches, int matchsize, int *bestpriority)
+const void *
+scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, const void *base,
+    size_t nmatches, size_t matchsize, int *bestpriority)
 {
 	u_int8_t type;
-	caddr_t bestmatch;
+	const struct scsipi_inquiry_pattern *bestmatch;
 
 	/* Include the qualifier to catch vendor-unique types. */
 	type = inqbuf->type;
 
-	for (*bestpriority = 0, bestmatch = 0; nmatches--; base += matchsize) {
-		struct scsipi_inquiry_pattern *match = (void *)base;
+	for (*bestpriority = 0, bestmatch = 0; nmatches--;
+	    base = (const char *)base + matchsize) {
+		const struct scsipi_inquiry_pattern *match = base;
 		int priority, len;
 
 		if (type != match->type)
@@ -230,7 +231,7 @@ scsipi_dtype(int type)
 }
 
 void
-scsipi_strvis(u_char *dst, int dlen, u_char *src, int slen)
+scsipi_strvis(u_char *dst, int dlen, const u_char *src, int slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */

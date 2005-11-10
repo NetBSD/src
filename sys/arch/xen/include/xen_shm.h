@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.2.6.2 2005/04/01 14:29:10 skrll Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.2.6.3 2005/11/10 14:00:34 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -30,9 +30,13 @@
  *
  */
 
+#include <machine/param.h>
+
+#define XENSHM_MAX_PAGES_PER_REQUEST (MAXPHYS >> PAGE_SHIFT)
+
 /*
  * Helper routines for the backend drivers. This implement the necessary
- * functions to map a bunch of pages from foreing domains in our kernel VM
+ * functions to map a bunch of pages from foreign domains in our kernel VM
  * space, do I/O to it, and unmap it.
  */
 

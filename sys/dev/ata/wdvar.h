@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.17.2.6 2005/03/04 16:41:02 skrll Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.17.2.7 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -40,7 +40,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct bufq_state sc_q;
+	struct bufq_state *sc_q;
 	struct callout sc_restart_ch;
 	int sc_quirks;			/* any quirks drive might have */
 	/* IDE disk soft states */
@@ -63,9 +63,7 @@ struct wd_softc {
 #define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
 	u_int64_t sc_capacity;
-	int cyl; /* actual drive parameters */
-	int heads;
-	int sectors;
+
 	int retries; /* number of xfer retry */
 
 	void *sc_sdhook;		/* our shutdown hook */

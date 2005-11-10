@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.62.2.5 2005/03/04 16:53:30 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.62.2.6 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.5 2005/03/04 16:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.6 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.5 2005/03/04 16:53:30 skrll Exp
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
 
 #ifdef INET6
 #ifndef INET
@@ -294,6 +295,30 @@ tcp_timer_rexmt(void *arg)
 		return;
 	}
 
+	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
+	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
+	    SEQ_LT(tp->t_pmtud_th_seq, (int)(tp->snd_una + tp->t_ourmss))) {
+		extern struct sockaddr_in icmpsrc;
+		struct icmp icmp;
+
+		tp->t_flags &= ~TF_PMTUD_PEND;
+
+		/* XXX create fake icmp message with relevant entries */
+		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
+		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
+		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
+		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
+		icmp_mtudisc(&icmp, icmpsrc.sin_addr);
+
+		/*
+		 * Notify all connections to the same peer about
+		 * new mss and trigger retransmit.
+		 */
+		in_pcbnotifyall(&tcbtable, icmpsrc.sin_addr, EMSGSIZE,
+		    tcp_mtudisc);
+ 		splx(s);
+ 		return;
+ 	}
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)

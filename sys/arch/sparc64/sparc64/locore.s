@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177.2.7 2005/02/15 21:33:01 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.177.2.8 2005/11/10 13:59:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3915,7 +3915,11 @@ syscall_setup:
 	clr	%g4
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
-	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
+	set	CURLWP, %l1
+	LDPTR	[%l1], %l1
+	LDPTR	[%l1 + L_PROC], %l1		! now %l1 points to p
+	LDPTR	[%l1 + P_MD_SYSCALL], %l1
+	call	%l1
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
 	/* see `proc_trampoline' for the reason for this label */
@@ -11830,20 +11834,6 @@ _C_LABEL(ssym):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
-
-/*
- * Symbols that vmstat -i wants, even though they're not used.
- */
-.globl	_C_LABEL(intrnames)
-_C_LABEL(intrnames):
-.globl	_C_LABEL(eintrnames)
-_C_LABEL(eintrnames):
-
-.globl	_C_LABEL(intrcnt)
-_C_LABEL(intrcnt):
-.globl	_C_LABEL(eintrcnt)
-_C_LABEL(eintrcnt):
-
 
 #if !defined(MULTIPROCESSOR)
 	.comm	_C_LABEL(curlwp), PTRSZ

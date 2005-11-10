@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.63.2.4 2004/09/21 13:22:41 skrll Exp $	*/
+/*	$NetBSD: psycho.c,v 1.63.2.5 2005/11/10 13:59:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.4 2004/09/21 13:22:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.5 2005/11/10 13:59:18 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,7 +80,7 @@ int psycho_debug = 0x0;
 static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
 						   pci_chipset_tag_t));
 static struct extent *psycho_alloc_extent __P((struct psycho_pbm *, int, int,
-					       char *));
+					       const char *));
 static void psycho_get_bus_range __P((int, int *));
 static void psycho_get_ranges __P((int, struct psycho_ranges **, int *));
 static void psycho_set_intr __P((struct psycho_softc *, int, void *, 
@@ -184,7 +184,7 @@ CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
 #define	ROM_PCI_NAME		"pci"
 
 struct psycho_names {
-	char *p_name;
+	const char *p_name;
 	int p_type;
 } psycho_names[] = {
 	{ "SUNW,psycho",        PSYCHO_MODE_PSYCHO      },
@@ -743,7 +743,7 @@ psycho_alloc_extent(pp, node, ss, name)
 	struct psycho_pbm *pp;
 	int node;
 	int ss;
-	char *name;
+	const char *name;
 {
 	struct psycho_registers *pa = NULL;
 	struct psycho_ranges *pr;
@@ -1256,7 +1256,7 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	struct psycho_softc *sc = pp->pp_sc;
 	struct intrhand *ih;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
-	int64_t intrmap = 0;
+	int64_t imap = 0;
 	int ino;
 	long vec = INTVEC(ihandle); 
 
@@ -1350,18 +1350,18 @@ found:
 	 * XXXX --- we really should use bus_space for this.
 	 */
 	if (intrmapptr) {
-		intrmap = *intrmapptr;
+		imap = *intrmapptr;
 		DPRINTF(PDB_INTR, ("; read intrmap = %016qx",
-			(unsigned long long)intrmap));
+			(unsigned long long)imap));
 
 		/* Enable the interrupt */
-		intrmap |= INTMAP_V;
+		imap |= INTMAP_V;
 		DPRINTF(PDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
 		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n",
-			(unsigned long long)intrmap));
-		*intrmapptr = intrmap;
+			(unsigned long long)imap));
+		*intrmapptr = imap;
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
-			(unsigned long long)(intrmap = *intrmapptr)));
+			(unsigned long long)(imap = *intrmapptr)));
 	}
 	return (ih);
 }

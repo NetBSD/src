@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.33.22.3 2004/09/21 13:28:07 skrll Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.33.22.4 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -161,13 +161,13 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 #ifdef PDQ_BUS_DMA
 #define	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event) \
 	pdq_os_unsolicited_event_sync((pdq)->pdq_os_ctx, \
-			(u_int8_t *) (event) - \
-				(u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
+			(const u_int8_t *) (event) - \
+				(const u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
 			sizeof(*event), BUS_DMASYNC_PREREAD)
 #define	PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, event) \
 	pdq_os_unsolicited_event_sync((pdq)->pdq_os_ctx, \
-			(u_int8_t *) (event) - \
-				(u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
+			(const u_int8_t *) (event) - \
+				(const u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
 			sizeof(*event), BUS_DMASYNC_POSTREAD)
 #define	PDQ_OS_DESCBLOCK_SYNC(pdq, what, length, why) \
 	pdq_os_descriptor_block_sync((pdq)->pdq_os_ctx, \

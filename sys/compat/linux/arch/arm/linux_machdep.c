@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11.2.5 2005/03/04 16:39:51 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.11.2.6 2005/11/10 14:00:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.5 2005/03/04 16:39:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.6 2005/11/10 14:00:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.5 2005/03/04 16:39:51 skrll
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
-
 #include <compat/linux/linux_syscallargs.h>
 
 void
@@ -84,13 +83,6 @@ linux_setregs(l, epp, stack)
 {
 
 	setregs(l, epp, stack);
-}
-
-static __inline struct trapframe *
-process_frame(struct lwp *l)
-{
-
-	return l->l_addr->u_pcb.pcb_tf;
 }
 
 void
@@ -317,4 +309,10 @@ linux_machdepioctl(l, v, retval)
 	SCARG(&bia, com) = com;
 
 	return sys_ioctl(l, &bia, retval);
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	return 0;
 }

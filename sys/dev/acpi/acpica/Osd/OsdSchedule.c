@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.8.2.4 2004/09/21 13:26:40 skrll Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.8.2.5 2005/11/10 14:03:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.4 2004/09/21 13:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.5 2005/11/10 14:03:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -114,7 +114,7 @@ AcpiOsGetThreadId(void)
  *	Schedule a procedure for deferred execution.
  */
 ACPI_STATUS
-AcpiOsQueueForExecution(UINT32 Priority, OSD_EXECUTION_CALLBACK Function,
+AcpiOsQueueForExecution(UINT32 Priority, ACPI_OSD_EXEC_CALLBACK Function,
     void *Context)
 {
 	int pri;
@@ -160,13 +160,13 @@ AcpiOsQueueForExecution(UINT32 Priority, OSD_EXECUTION_CALLBACK Function,
  *	Suspend the running task (coarse granularity).
  */
 void
-AcpiOsSleep(UINT32 Seconds, UINT32 Milliseconds)
+AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
 	int timo;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	timo = Seconds * hz + Milliseconds * hz / 1000;
+	timo = Milliseconds * hz / 1000;
 	if (timo == 0)
 		timo = 1;
 
@@ -200,4 +200,27 @@ AcpiOsStall(UINT32 Microseconds)
 	delay(Microseconds);
 
 	return_VOID;
+
+}
+
+/*
+ * AcpiOsStall:
+ *
+ *	Get the current system time in 100 nanosecond units
+ */
+UINT64
+AcpiOsGetTimer(void)
+{
+	struct timeval tv;
+	UINT64 t;
+
+	/* XXX During early boot there is no (decent) timer available yet. */
+	if (cold)
+		panic("acpi: timer op not yet supported during boot");
+
+	microtime(&tv);
+	t = (UINT64)10 * tv.tv_usec;
+	t += (UINT64)10000000 * tv.tv_sec;
+
+	return (t);
 }

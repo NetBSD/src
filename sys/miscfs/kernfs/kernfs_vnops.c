@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.88.2.8 2005/03/04 16:52:54 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88.2.9 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.88.2.8 2005/03/04 16:52:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.88.2.9 2005/11/10 14:10:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -90,8 +90,8 @@ const struct kern_target kern_targets[] = {
      { DT_DIR, N("."),         0,            KFSkern,        VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSroot,        VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KFSint,     VREG, READ_MODE  },
-			/* XXX cast away const */
-     { DT_REG, N("copyright"), (void *)copyright,
+			/* XXXUNCONST */
+     { DT_REG, N("copyright"), __UNCONST(copyright),
      					     KFSstring,      VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KFShostname,    VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KFSint,         VREG, READ_MODE  },
@@ -109,8 +109,8 @@ const struct kern_target kern_targets[] = {
      { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, READ_MODE  },
      { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KFStime,        VREG, READ_MODE  },
-			/* XXX cast away const */
-     { DT_REG, N("version"),   (void *)version,
+			/* XXXUNCONST */
+     { DT_REG, N("version"),   __UNCONST(version),
      					     KFSstring,      VREG, READ_MODE  },
 };
 const struct kern_target subdir_targets[] = {
@@ -164,59 +164,53 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
     .kf_genop = {kernfs_default_fileop_getattr} },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
-  { .kf_fileop = KERNFS_FILEOP_MMAP },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
   { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
 
-int	kernfs_lookup	__P((void *));
+int	kernfs_lookup(void *);
 #define	kernfs_create	genfs_eopnotsupp
 #define	kernfs_mknod	genfs_eopnotsupp
-int	kernfs_open	__P((void *));
-int	kernfs_close	__P((void *));
-int	kernfs_access	__P((void *));
-int	kernfs_getattr	__P((void *));
-int	kernfs_setattr	__P((void *));
-int	kernfs_read	__P((void *));
-int	kernfs_write	__P((void *));
+int	kernfs_open(void *);
+int	kernfs_close(void *);
+int	kernfs_access(void *);
+int	kernfs_getattr(void *);
+int	kernfs_setattr(void *);
+int	kernfs_read(void *);
+int	kernfs_write(void *);
 #define	kernfs_fcntl	genfs_fcntl
-int	kernfs_ioctl	__P((void *));
+int	kernfs_ioctl(void *);
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
-int	kernfs_mmap	__P((void *));
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
 #define	kernfs_remove	genfs_eopnotsupp
-int	kernfs_link	__P((void *));
+int	kernfs_link(void *);
 #define	kernfs_rename	genfs_eopnotsupp
 #define	kernfs_mkdir	genfs_eopnotsupp
 #define	kernfs_rmdir	genfs_eopnotsupp
-int	kernfs_symlink	__P((void *));
-int	kernfs_readdir	__P((void *));
+int	kernfs_symlink(void *);
+int	kernfs_readdir(void *);
 #define	kernfs_readlink	genfs_eopnotsupp
 #define	kernfs_abortop	genfs_abortop
-int	kernfs_inactive	__P((void *));
-int	kernfs_reclaim	__P((void *));
+int	kernfs_inactive(void *);
+int	kernfs_reclaim(void *);
 #define	kernfs_lock	genfs_lock
 #define	kernfs_unlock	genfs_unlock
 #define	kernfs_bmap	genfs_badop
 #define	kernfs_strategy	genfs_badop
-int	kernfs_print	__P((void *));
+int	kernfs_print(void *);
 #define	kernfs_islocked	genfs_islocked
-int	kernfs_pathconf	__P((void *));
+int	kernfs_pathconf(void *);
 #define	kernfs_advlock	genfs_einval
-#define	kernfs_blkatoff	genfs_eopnotsupp
-#define	kernfs_valloc	genfs_eopnotsupp
-#define	kernfs_vfree	genfs_nullop
-#define	kernfs_truncate	genfs_eopnotsupp
-#define	kernfs_update	genfs_nullop
 #define	kernfs_bwrite	genfs_eopnotsupp
 #define	kernfs_putpages	genfs_putpages
 
-static int	kernfs_xread __P((struct kernfs_node *, int, char **, size_t, size_t *));
-static int	kernfs_xwrite __P((const struct kernfs_node *, char *, size_t));
+static int	kernfs_xread(struct kernfs_node *, int, char **,
+				size_t, size_t *);
+static int	kernfs_xwrite(const struct kernfs_node *, char *, size_t);
 
-int (**kernfs_vnodeop_p) __P((void *));
+int (**kernfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, kernfs_lookup },		/* lookup */
@@ -233,7 +227,6 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
 	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */
 	{ &vop_remove_desc, kernfs_remove },		/* remove */
@@ -255,11 +248,6 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, kernfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, kernfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, kernfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, kernfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, kernfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, kernfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, kernfs_truncate },	/* truncate */
-	{ &vop_update_desc, kernfs_update },		/* update */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, kernfs_putpages },	/* putpages */
 	{ NULL, NULL }
@@ -328,7 +316,7 @@ kernfs_try_fileop(kfstype type, kfsfileop fileop, void *v, int error)
 }
 
 int
-kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *buf,
+kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *bf,
     size_t len, int error)
 {
 	struct kernfs_fileop *kf, skf;
@@ -337,7 +325,7 @@ kernfs_try_xwrite(kfstype type, const struct kernfs_node *kfs, char *buf,
 	skf.kf_fileop = KERNFS_XWRITE;
 	if ((kf = SPLAY_FIND(kfsfileoptree, &kfsfileoptree, &skf)))
 		if (kf->kf_xwrite)
-			return kf->kf_xwrite(kfs, buf, len);
+			return kf->kf_xwrite(kfs, bf, len);
 	return error;
 }
 
@@ -531,23 +519,23 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 }
 
 static int
-kernfs_xwrite(kfs, buf, len)
+kernfs_xwrite(kfs, bf, len)
 	const struct kernfs_node *kfs;
-	char *buf;
+	char *bf;
 	size_t len;
 {
 
 	switch (kfs->kfs_type) {
 	case KFShostname:
-		if (buf[len-1] == '\n')
+		if (bf[len-1] == '\n')
 			--len;
-		memcpy(hostname, buf, len);
+		memcpy(hostname, bf, len);
 		hostname[len] = '\0';
 		hostnamelen = (size_t) len;
 		return (0);
 
 	default:
-		return kernfs_try_xwrite(kfs->kfs_type, kfs, buf, len, EIO);
+		return kernfs_try_xwrite(kfs->kfs_type, kfs, bf, len, EIO);
 	}
 }
 
@@ -819,7 +807,7 @@ kernfs_getattr(v)
 	struct kernfs_subdir *ks;
 	struct vattr *vap = ap->a_vap;
 	int error = 0;
-	char strbuf[KSTRING], *buf;
+	char strbuf[KSTRING], *bf;
 	size_t nread, total;
 
 	VATTR_NULL(vap);
@@ -881,8 +869,8 @@ kernfs_getattr(v)
 		vap->va_nlink = 1;
 		total = 0;
 		do {
-			buf = strbuf;
-			error = kernfs_xread(kfs, total, &buf,
+			bf = strbuf;
+			error = kernfs_xread(kfs, total, &bf,
 			    sizeof(strbuf), &nread);
 			total += nread;
 		} while (error == 0 && nread != 0);
@@ -933,7 +921,7 @@ kernfs_read(v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-	char strbuf[KSTRING], *buf;
+	char strbuf[KSTRING], *bf;
 	off_t off;
 	size_t len;
 	int error;
@@ -941,10 +929,14 @@ kernfs_read(v)
 	if (ap->a_vp->v_type == VDIR)
 		return (EOPNOTSUPP);
 
+	/* Don't allow negative offsets */
+	if (uio->uio_offset < 0)
+		return EINVAL;
+
 	off = uio->uio_offset;
-	buf = strbuf;
-	if ((error = kernfs_xread(kfs, off, &buf, sizeof(strbuf), &len)) == 0)
-		error = uiomove(buf, len, uio);
+	bf = strbuf;
+	if ((error = kernfs_xread(kfs, off, &bf, sizeof(strbuf), &len)) == 0)
+		error = uiomove(bf, len, uio);
 	return (error);
 }
 
@@ -1010,22 +1002,6 @@ kernfs_ioctl(v)
 
 	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_IOCTL, v,
 	    EPASSTHROUGH);
-}
-
-int
-kernfs_mmap(v)
-	void *v;
-{
-	struct vop_mmap_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-
-	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_MMAP, v, 0);
 }
 
 static int

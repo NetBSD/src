@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.14.2.5 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.14.2.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.14.2.5 2005/03/04 16:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.14.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -113,9 +114,9 @@ vn_initialize_syncerd()
  * Add an item to the syncer work queue.
  */
 void
-vn_syncer_add_to_worklist(vp, delay)
+vn_syncer_add_to_worklist(vp, delayx)
 	struct vnode *vp;
-	int delay;
+	int delayx;
 {
 	int s, slot;
 
@@ -125,9 +126,9 @@ vn_syncer_add_to_worklist(vp, delay)
 		LIST_REMOVE(vp, v_synclist);
 	}
 
-	if (delay > syncer_maxdelay - 2)
-		delay = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delay) % syncer_last;
+	if (delayx > syncer_maxdelay - 2)
+		delayx = syncer_maxdelay - 2;
+	slot = (syncer_delayno + delayx) % syncer_last;
 
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	vp->v_flag |= VONWORKLST;
@@ -261,4 +262,50 @@ speedup_syncer()
 	wakeup(&rushjob);
 	stat_rush_requests += 1;
 	return (1);
+}
+
+SYSCTL_SETUP(sysctl_vfs_syncfs_setup, "sysctl vfs.sync subtree setup")
+{
+	const struct sysctlnode *rnode, *cnode;
+        
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "vfs", NULL,
+			NULL, 0, NULL, 0,
+			CTL_VFS, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "sync",
+			SYSCTL_DESCR("syncer options"),
+			NULL, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "delay",
+			SYSCTL_DESCR("max time to delay syncing data"),
+			NULL, 0, &syncdelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "filedelay",
+			SYSCTL_DESCR("time to delay syncing files"),
+			NULL, 0, &filedelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "dirdelay",
+			SYSCTL_DESCR("time to delay syncing directories"),
+			NULL, 0, &dirdelay, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "metadelay",
+			SYSCTL_DESCR("time to delay syncing metadata"),
+			NULL, 0, &metadelay, 0,
+			CTL_CREATE, CTL_EOL);
 }

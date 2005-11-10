@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.1.2.3 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.1.2.4 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -47,7 +47,7 @@
 #define DIRHASH_DEL	(-2)	/* deleted entry; may be part of chain */
 
 #define DIRALIGN	4
-#define DH_NFSTATS	(DIRECTSIZ(MAXNAMLEN + 1) / DIRALIGN)
+#define DH_NFSTATS	(DIRECTSIZ(FFS_MAXNAMLEN + 1) / DIRALIGN)
 				 /* max DIRALIGN words in a directory entry */
 
 /*

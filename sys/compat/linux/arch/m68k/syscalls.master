@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42.2.3 2004/09/21 13:25:27 skrll Exp $
+	$NetBSD: syscalls.master,v 1.42.2.4 2005/11/10 14:01:06 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -177,7 +177,11 @@
 #endif
 85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
+#ifdef EXEC_AOUT
 86	STD		{ int linux_sys_uselib(const char *path); }
+#else
+86	UNIMPL		sys_uselib
+#endif
 87	STD		{ int linux_sys_swapon(char *name); }
 88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
@@ -384,16 +388,57 @@
 			    struct linux_dirent64 *dent, unsigned int count); }
 221	UNIMPL		gettid
 222	UNIMPL		tkill
-223	UNIMPL		setxattr
-224	UNIMPL		lsetxattr
-225	UNIMPL		fsetxattr
-226	UNIMPL		getxattr
-227	UNIMPL		lgetxattr
-228	UNIMPL		fgetxattr
-229	UNIMPL		listxattr
-230	UNIMPL		llistxattr
-231	UNIMPL		flistxattr
-232	UNIMPL		removexattr
-233	UNIMPL		lremovexattr
-234	UNIMPL		fremovexattr
+223	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+224	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+225	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+226	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+227	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+228	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+229	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+230	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+231	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+232	STD		{ int linux_sys_removexattr(char *path, char *name); }
+233	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+234	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 235	UNIMPL		futex
+236	UNIMPL		sendfile64
+237	UNIMPL		mincore
+238	UNIMPL		madvise
+239	UNIMPL		fcntl64
+240	UNIMPL		readahead
+241	UNIMPL		io_setup
+242	UNIMPL		io_destroy
+243	UNIMPL		io_getevents
+244	UNIMPL		io_submit
+245	UNIMPL		io_cancel
+246	UNIMPL		fadvise64
+247	UNIMPL		exit_group
+248	UNIMPL		lookup_dcookie
+249	UNIMPL		epoll_create
+250	UNIMPL		epoll_ctl
+251	UNIMPL		epoll_wait
+252	UNIMPL		remap_file_pages
+253	UNIMPL		set_tid_address
+254	UNIMPL		timer_create
+255	UNIMPL		timer_settime
+256	UNIMPL		timer_gettime
+257	UNIMPL		timer_getoverrun
+258	UNIMPL		timer_delete
+259	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+260	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+261	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+262	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }

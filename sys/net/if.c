@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.123.2.12 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.12 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -143,6 +144,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $");
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#endif
+
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
+#define COMPAT_OSOCK
+#include <compat/sys/socket.h>
 #endif
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
@@ -617,6 +623,13 @@ if_detach(ifp)
 			panic("if_detach: no domain for AF %d",
 			    family);
 #endif
+		/*
+		 * XXX These PURGEIF calls are redundant with the
+		 * purge-all-families calls below, but are left in for
+		 * now both to make a smaller change, and to avoid
+		 * unplanned interactions with clearing of
+		 * ifp->if_addrlist.
+		 */
 		purged = 0;
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++) {
@@ -651,6 +664,29 @@ if_detach(ifp)
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
+
+		/*
+		 * One would expect multicast memberships (INET and
+		 * INET6) on UDP sockets to be purged by the PURGEIF
+		 * calls above, but if all addresses were removed from
+		 * the interface prior to destruction, the calls will
+		 * not be made (e.g. ppp, for which pppd(8) generally
+		 * removes addresses before destroying the interface).
+		 * Because there is no invariant that multicast
+		 * memberships only exist for interfaces with IPv4
+		 * addresses, we must call PURGEIF regardless of
+		 * addresses.  (Protocols which might store ifnet
+		 * pointers are marked with PR_PURGEIF.)
+		 */
+		for (pr = dp->dom_protosw;
+		     pr < dp->dom_protoswNPROTOSW; pr++) {
+			so.so_proto = pr;
+			if (pr->pr_usrreq != NULL &&
+			    pr->pr_flags & PR_PURGEIF)
+				(void) (*pr->pr_usrreq)(&so,
+				    PRU_PURGEIF, NULL, NULL,
+				    (struct mbuf *) ifp, curlwp);
+		}
 	}
 
 	/* Announce that the interface is gone. */
@@ -925,7 +961,7 @@ ifa_ifwithaddr(addr)
 	struct ifaddr *ifa;
 
 #define	equal(a1, a2) \
-  (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
+  (bcmp((a1), (a2), ((const struct sockaddr *)(a1))->sa_len) == 0)
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -994,7 +1030,7 @@ ifa_ifwithnet(addr)
 	char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-		sdl = (struct sockaddr_dl *)addr;
+		sdl = (const struct sockaddr_dl *)addr;
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index] &&
 		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput)
@@ -1003,12 +1039,12 @@ ifa_ifwithnet(addr)
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
 		const struct sockaddr_at *sat, *sat2;
-		sat = (struct sockaddr_at *)addr;
+		sat = (const struct sockaddr_at *)addr;
 		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 		     ifp = TAILQ_NEXT(ifp, if_list)) {
 			if (ifp->if_output == if_nulloutput)
 				continue;
-			ifa = at_ifawithnet((struct sockaddr_at *)addr, ifp);
+			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
 			if (ifa == NULL)
 				continue;
 			sat2 = (struct sockaddr_at *)ifa->ifa_addr;
@@ -1162,6 +1198,21 @@ link_rtrequest(cmd, rt, info)
 		IFAREF(ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
+	}
+}
+
+/*
+ * Handle a change in the interface link state.
+ */
+void
+if_link_state_change(struct ifnet *ifp, int link_state)
+{
+	/* Notify that the link state has changed. */
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		rt_ifmsg(ifp);
+		log(LOG_NOTICE, "%s: link state changed to %s\n", ifp->if_xname,
+		    (link_state == LINK_STATE_UP) ? "UP" : "DOWN" );
 	}
 }
 
@@ -1463,30 +1514,38 @@ ifioctl(so, cmd, data, l)
 			/* Pre-compute the checksum flags mask. */
 			ifp->if_csum_flags_tx = 0;
 			ifp->if_csum_flags_rx = 0;
-			if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_IPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_IPv4;
 			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
-			} else if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
-				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv4) {
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
-			} else if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
-				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv6) {
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
 			}
 
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv6) {
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx) {
 				ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
+			}
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
 				ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
 			}
 
@@ -1565,61 +1624,13 @@ ifioctl(so, cmd, data, l)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(COMPAT_ULTRIX) && !defined(LKM)
-		error = ((*so->so_proto->pr_usrreq))(so, PRU_CONTROL,
-		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l);
+#ifdef COMPAT_OSOCK
+		error = compat_ifioctl(so, cmd, data, l);
 #else
-	    {
-		int ocmd = cmd;
-
-		switch (cmd) {
-
-		case SIOCSIFADDR:
-		case SIOCSIFDSTADDR:
-		case SIOCSIFBRDADDR:
-		case SIOCSIFNETMASK:
-#if BYTE_ORDER != BIG_ENDIAN
-			if (ifr->ifr_addr.sa_family == 0 &&
-			    ifr->ifr_addr.sa_len < 16) {
-				ifr->ifr_addr.sa_family = ifr->ifr_addr.sa_len;
-				ifr->ifr_addr.sa_len = 16;
-			}
-#else
-			if (ifr->ifr_addr.sa_len == 0)
-				ifr->ifr_addr.sa_len = 16;
-#endif
-			break;
-
-		case OSIOCGIFADDR:
-			cmd = SIOCGIFADDR;
-			break;
-
-		case OSIOCGIFDSTADDR:
-			cmd = SIOCGIFDSTADDR;
-			break;
-
-		case OSIOCGIFBRDADDR:
-			cmd = SIOCGIFBRDADDR;
-			break;
-
-		case OSIOCGIFNETMASK:
-			cmd = SIOCGIFNETMASK;
-		}
-
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, l));
-
-		switch (ocmd) {
-		case OSIOCGIFADDR:
-		case OSIOCGIFDSTADDR:
-		case OSIOCGIFBRDADDR:
-		case OSIOCGIFNETMASK:
-			*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
-		}
-	    }
-#endif /* COMPAT_43 */
+#endif
 		break;
 	}
 
@@ -1678,7 +1689,7 @@ ifconf(cmd, data)
 
 		for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			struct sockaddr *sa = ifa->ifa_addr;
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX)
+#ifdef COMPAT_OSOCK
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =
 					 (struct osockaddr *)&ifr.ifr_addr;

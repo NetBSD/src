@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.38.6.6 2005/03/04 16:41:05 skrll Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.38.6.7 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38.6.6 2005/03/04 16:41:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38.6.7 2005/11/10 14:03:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -166,6 +166,9 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,
 	  TULIP_CHIP_AN985 },
 
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200,
+	  TULIP_CHIP_AN985 },
+
 	{ 0,				0,
 	  TULIP_CHIP_INVALID },
 };
@@ -258,7 +261,7 @@ tlp_cardbus_attach(parent, self, aux)
 	bus_addr_t adr;
 	pcireg_t reg;
 
-	sc->sc_devno = ca->ca_device;
+	sc->sc_devno = 0;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 119 $
+ *              xRevision: 123 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __DSOBJECT_C__
 
@@ -129,9 +129,15 @@ __KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsobject")
 
+static ACPI_STATUS
+AcpiDsBuildInternalObject (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_OPERAND_OBJECT     **ObjDescPtr);
+
 
 #ifndef ACPI_NO_METHOD_EXECUTION
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiDsBuildInternalObject
  *
@@ -144,9 +150,9 @@ __KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $
  * DESCRIPTION: Translate a parser Op object to the equivalent namespace object
  *              Simple objects are any objects other than a package object!
  *
- ****************************************************************************/
+ ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDsBuildInternalObject (
     ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op,
@@ -169,9 +175,11 @@ AcpiDsBuildInternalObject (
          */
         if (!Op->Common.Node)
         {
-            Status = AcpiNsLookup (WalkState->ScopeInfo, Op->Common.Value.String,
+            Status = AcpiNsLookup (WalkState->ScopeInfo,
+                            Op->Common.Value.String,
                             ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
-                            ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL,
+                            ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE,
+                            NULL,
                             (ACPI_NAMESPACE_NODE **) &(Op->Common.Node));
 
             if (ACPI_FAILURE (Status))
@@ -184,13 +192,15 @@ AcpiDsBuildInternalObject (
 
     /* Create and init the internal ACPI object */
 
-    ObjDesc = AcpiUtCreateInternalObject ((AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode))->ObjectType);
+    ObjDesc = AcpiUtCreateInternalObject (
+                (AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode))->ObjectType);
     if (!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
-    Status = AcpiDsInitObjectFromOp (WalkState, Op, Op->Common.AmlOpcode, &ObjDesc);
+    Status = AcpiDsInitObjectFromOp (WalkState, Op, Op->Common.AmlOpcode,
+                &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ObjDesc);
@@ -202,7 +212,7 @@ AcpiDsBuildInternalObject (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiDsBuildInternalBufferObj
  *
@@ -216,7 +226,7 @@ AcpiDsBuildInternalObject (
  * DESCRIPTION: Translate a parser Op package object to the equivalent
  *              namespace object
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 ACPI_STATUS
 AcpiDsBuildInternalBufferObj (
@@ -321,7 +331,7 @@ AcpiDsBuildInternalBufferObj (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiDsBuildInternalPackageObj
  *
@@ -335,7 +345,7 @@ AcpiDsBuildInternalBufferObj (
  * DESCRIPTION: Translate a parser Op package object to the equivalent
  *              namespace object
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 ACPI_STATUS
 AcpiDsBuildInternalPackageObj (
@@ -432,12 +442,13 @@ AcpiDsBuildInternalPackageObj (
         {
             /* Object (package or buffer) is already built */
 
-            ObjDesc->Package.Elements[i] = ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, Arg->Common.Node);
+            ObjDesc->Package.Elements[i] =
+                ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, Arg->Common.Node);
         }
         else
         {
             Status = AcpiDsBuildInternalObject (WalkState, Arg,
-                                        &ObjDesc->Package.Elements[i]);
+                        &ObjDesc->Package.Elements[i]);
         }
 
         i++;
@@ -450,7 +461,7 @@ AcpiDsBuildInternalPackageObj (
 }
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiDsCreateNode
  *
@@ -462,7 +473,7 @@ AcpiDsBuildInternalPackageObj (
  *
  * DESCRIPTION: Create the object to be associated with a namespace node
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 ACPI_STATUS
 AcpiDsCreateNode (
@@ -496,7 +507,8 @@ AcpiDsCreateNode (
 
     /* Build an internal object for the argument(s) */
 
-    Status = AcpiDsBuildInternalObject (WalkState, Op->Common.Value.Arg, &ObjDesc);
+    Status = AcpiDsBuildInternalObject (WalkState, Op->Common.Value.Arg,
+                &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -519,7 +531,7 @@ AcpiDsCreateNode (
 #endif /* ACPI_NO_METHOD_EXECUTION */
 
 
-/*****************************************************************************
+/*******************************************************************************
  *
  * FUNCTION:    AcpiDsInitObjectFromOp
  *
@@ -534,7 +546,7 @@ AcpiDsCreateNode (
  *              associated arguments.  The namespace object is a more compact
  *              representation of the Op and its arguments.
  *
- ****************************************************************************/
+ ******************************************************************************/
 
 ACPI_STATUS
 AcpiDsInitObjectFromOp (
@@ -569,7 +581,8 @@ AcpiDsInitObjectFromOp (
         /*
          * Defer evaluation of Buffer TermArg operand
          */
-        ObjDesc->Buffer.Node      = (ACPI_NAMESPACE_NODE *) WalkState->Operands[0];
+        ObjDesc->Buffer.Node      = (ACPI_NAMESPACE_NODE *)
+                                        WalkState->Operands[0];
         ObjDesc->Buffer.AmlStart  = Op->Named.Data;
         ObjDesc->Buffer.AmlLength = Op->Named.Length;
         break;
@@ -580,7 +593,8 @@ AcpiDsInitObjectFromOp (
         /*
          * Defer evaluation of Package TermArg operand
          */
-        ObjDesc->Package.Node      = (ACPI_NAMESPACE_NODE *) WalkState->Operands[0];
+        ObjDesc->Package.Node      = (ACPI_NAMESPACE_NODE *)
+                                        WalkState->Operands[0];
         ObjDesc->Package.AmlStart  = Op->Named.Data;
         ObjDesc->Package.AmlLength = Op->Named.Length;
         break;
@@ -594,9 +608,10 @@ AcpiDsInitObjectFromOp (
             /*
              * Resolve AML Constants here - AND ONLY HERE!
              * All constants are integers.
-             * We mark the integer with a flag that indicates that it started life
-             * as a constant -- so that stores to constants will perform as expected (noop).
-             * (ZeroOp is used as a placeholder for optional target operands.)
+             * We mark the integer with a flag that indicates that it started
+             * life as a constant -- so that stores to constants will perform
+             * as expected (noop). ZeroOp is used as a placeholder for optional
+             * target operands.
              */
             ObjDesc->Common.Flags = AOPOBJ_AML_CONSTANT;
 
@@ -625,12 +640,13 @@ AcpiDsInitObjectFromOp (
 
             case AML_REVISION_OP:
 
-                ObjDesc->Integer.Value = ACPI_CA_SUPPORT_LEVEL;
+                ObjDesc->Integer.Value = ACPI_CA_VERSION;
                 break;
 
             default:
 
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown constant opcode %X\n", Opcode));
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                    "Unknown constant opcode %X\n", Opcode));
                 Status = AE_AML_OPERAND_TYPE;
                 break;
             }
@@ -644,7 +660,8 @@ AcpiDsInitObjectFromOp (
 
 
         default:
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Integer type %X\n", OpInfo->Type));
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Integer type %X\n",
+                OpInfo->Type));
             Status = AE_AML_OPERAND_TYPE;
             break;
         }
@@ -680,8 +697,10 @@ AcpiDsInitObjectFromOp (
             ObjDesc->Reference.Offset = Opcode - AML_LOCAL_OP;
 
 #ifndef ACPI_NO_METHOD_EXECUTION
-            Status = AcpiDsMethodDataGetNode (AML_LOCAL_OP, ObjDesc->Reference.Offset,
-                        WalkState, (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
+            Status = AcpiDsMethodDataGetNode (AML_LOCAL_OP,
+                        ObjDesc->Reference.Offset,
+                        WalkState,
+                        (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
 #endif
             break;
 
@@ -694,8 +713,10 @@ AcpiDsInitObjectFromOp (
             ObjDesc->Reference.Offset = Opcode - AML_ARG_OP;
 
 #ifndef ACPI_NO_METHOD_EXECUTION
-            Status = AcpiDsMethodDataGetNode (AML_ARG_OP, ObjDesc->Reference.Offset,
-                        WalkState, (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
+            Status = AcpiDsMethodDataGetNode (AML_ARG_OP,
+                        ObjDesc->Reference.Offset,
+                        WalkState,
+                        (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
 #endif
             break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.14.2.6 2005/03/04 16:49:38 skrll Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.14.2.7 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14.2.6 2005/03/04 16:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14.2.7 2005/11/10 14:07:24 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -269,8 +269,10 @@ mhzc_attach(parent, self, aux)
 	if (error)
 		goto fail;
 
-	sc->sc_modem = config_found(self, "com", mhzc_print);
-	sc->sc_ethernet = config_found(self, "sm", mhzc_print);
+	/*XXXUNCONST*/
+	sc->sc_modem = config_found(self, __UNCONST("com"), mhzc_print);
+	/*XXXUNCONST*/
+	sc->sc_ethernet = config_found(self, __UNCONST("sm"), mhzc_print);
 
 	mhzc_disable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED);
 	return;
@@ -543,7 +545,7 @@ mhzc_em3336_enable(sc)
 	struct mhzc_softc *sc;
 {
 	struct pcmcia_mem_handle memh;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 	int memwin, reg;
 
 	/*

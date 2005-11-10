@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.28.12.4 2005/03/04 16:52:02 skrll Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.28.12.5 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.4 2005/03/04 16:52:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.5 2005/11/10 14:09:45 skrll Exp $");
 
 #include "tb.h"
 
@@ -64,10 +64,10 @@ struct	tbconf {
 	int	tbc_sync;	/* mask for finding sync byte/bit */
 				/* decoding routine */
     	void    (*tbc_decode)(const struct tbconf *, char *, union tbpos *);
-	u_char	*tbc_run;	/* enter run mode sequence */
-	u_char	*tbc_point;	/* enter point mode sequence */
-	u_char	*tbc_stop;	/* stop sequence */
-	u_char	*tbc_start;	/* start/restart sequence */
+	const u_char	*tbc_run;	/* enter run mode sequence */
+	const u_char	*tbc_point;	/* enter point mode sequence */
+	const u_char	*tbc_stop;	/* stop sequence */
+	const u_char	*tbc_start;	/* start/restart sequence */
 	int	tbc_flags;
 #define	TBF_POL		0x1	/* polhemus hack */
 #define	TBF_INPROX	0x2	/* tablet has proximity info */
@@ -354,7 +354,7 @@ tbtioctl(tp, cmd, data, flag, p)
 
 	case BIOSMODE: {
 		const struct tbconf *tc;
-		u_char *c;
+		const u_char *c;
 
 		tbp->tbflags &= ~TBMODE;
 		tbp->tbflags |= *(int *)data & TBMODE;

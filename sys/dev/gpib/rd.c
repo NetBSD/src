@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.1.2.6 2005/03/04 16:41:14 skrll Exp $ */
+/*	$NetBSD: rd.c,v 1.1.2.7 2005/11/10 14:04:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.1.2.6 2005/03/04 16:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.1.2.7 2005/11/10 14:04:00 skrll Exp $");
 
 #include "rnd.h"
 
@@ -182,7 +182,7 @@ struct	rd_softc {
 	u_int8_t *sc_addr;
 	int	sc_resid;
 	struct	rd_iocmd sc_ioc;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	int	sc_errcnt;
 
@@ -442,7 +442,7 @@ rdattach(parent, self, aux)
 	    rdidentinfo[type].ri_ntpc, rdidentinfo[type].ri_nblocks,
 	    DEV_BSIZE);
 
-	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_tab, "fcfs", 0);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -662,7 +662,7 @@ rdstrategy(bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(&sc->sc_tab, bp);
+	BUFQ_PUT(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rdustart(sc);
@@ -698,7 +698,7 @@ rdustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -712,11 +712,11 @@ rdfinish(sc, bp)
 {
 
 	sc->sc_errcnt = 0;
-	(void)BUFQ_GET(&sc->sc_tab);
+	(void)BUFQ_GET(sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(&sc->sc_tab)) != NULL)
+	if ((bp = BUFQ_PEEK(sc->sc_tab)) != NULL)
 		return (bp);
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
@@ -758,7 +758,7 @@ void
 rdstart(sc)
 	struct rd_softc *sc;
 {
-	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
 	int part, slave, punit;
 
 	slave = sc->sc_slave;
@@ -828,7 +828,7 @@ rdintr(sc)
 	int rv, dir, restart, slave;
 
 	slave = sc->sc_slave;
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 
 	DPRINTF(RDB_FOLLOW, ("rdintr(%s): bp %p, %c, flags %x\n",
 	    sc->sc_dev.dv_xname, bp, (bp->b_flags & B_READ) ? 'R' : 'W',
@@ -944,7 +944,7 @@ rderror(sc)
 	/*
 	 * First conjure up the block number at which the error occurred.
  	 */
-	bp = BUFQ_PEEK(&sc->sc_tab);
+	bp = BUFQ_PEEK(sc->sc_tab);
 	pbn = sc->sc_dk.dk_label->d_partitions[RDPART(bp->b_dev)].p_offset;
 	if ((css.c_fef & FEF_CU) || (css.c_fef & FEF_DR) ||
 	    (css.c_ief & IEF_RRMASK)) {

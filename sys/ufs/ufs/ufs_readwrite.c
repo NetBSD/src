@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.54.2.8 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.54.2.9 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.8 2005/03/04 16:55:00 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.9 2005/11/10 14:12:39 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -175,7 +175,7 @@ READ(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -280,14 +280,6 @@ WRITE(void *v)
 	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
 	async = TRUE;
-
-	/* Account writes.  This overcounts if pages are already dirty. */
-	if (usepc) {
-		simple_lock(&lfs_subsys_lock);
-		lfs_subsys_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
-		fs->lfs_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
-		simple_unlock(&lfs_subsys_lock);
-	}
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
@@ -431,7 +423,7 @@ WRITE(void *v)
 			break;
 		need_unreserve = TRUE;
 #endif
-		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
+		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
 
 		if (error)
@@ -495,12 +487,12 @@ out:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
 		    uio->uio_lwp);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ip->i_size);
 	return (error);
 }

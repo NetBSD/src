@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.22.2.3 2004/09/21 13:23:58 skrll Exp $	*/
+/*	$NetBSD: ka860.c,v 1.22.2.4 2005/11/10 13:59:59 skrll Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,10 +33,13 @@
 /*
  * VAX 8600 specific routines.
  * Also contains abus spec's and memory init routines.
+ *
+ * Todo: Set up all four console lines in a VAX8600.
+ * This is: local, remote, EMM and logical.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.22.2.3 2004/09/21 13:23:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.22.2.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,7 +173,7 @@ ka86_memerr()
 }
 
 #define NMC8600 7
-char *mc8600[] = {
+const char *mc8600[] = {
 	"unkn type",	"fbox error",	"ebox error",	"ibox error",
 	"mbox error",	"tbuf error",	"mbox 1D error"
 };
@@ -269,6 +272,22 @@ struct ka86 {
 		 type:8;
 };
 
+/* The manufacturing plant information comes from EK-86XV1-MG-003
+ * VAX 86XX System Maintenance Guide
+ * /bqt
+ */
+
+static const char *manuf[] = {"Unknown",
+			      "Galway, Ireland",
+			      "Franklin, MA",
+			      "Burlington, VT",
+			      "Marlboro, MA"};
+
+int mindex[] = {0,1,1,1,
+		0,2,2,2,
+		0,0,3,3,
+		3,4,4,4};
+
 void
 ka860_init(void)
 {
@@ -278,9 +297,9 @@ ka860_init(void)
 	/* Enable cache */
 	mtpr(3, PR_CSWP);
 
-	printf("cpu0: ka86%d, serial number %d, mfg plant %d, "
-	    "hardware ECO level %d\n", ka86->v8650 ? 5 : 0, ka86->snr,
-	    ka86->plant, ka86->eco);
+	printf("cpu0: ka86%d, serial number %d, rev. %c\n",
+	       ka86->v8650 ? 5 : 0, ka86->snr, ka86->eco+64);
+	printf("cpu0: manufactured in %s.\n", manuf[mindex[ka86->plant]]);
 	printf("cpu0: ");
 	fpa = mfpr(PR_ACCS);
 	if (fpa & 255) {
@@ -377,7 +396,7 @@ abus_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < NIOA8600; i++) {
 		sbiar = (struct sbia_regs *)vax_map_physmem((paddr_t)IOA8600(i),
                     (IOAMAPSIZ / VAX_NBPG));
-                if (badaddr((caddr_t)sbiar, 4)) {
+                if (badaddr(__UNVOLATILE(sbiar), 4)) {
                         vax_unmap_physmem((vaddr_t)sbiar, (IOAMAPSIZ / VAX_NBPG));
                         continue;
                 }

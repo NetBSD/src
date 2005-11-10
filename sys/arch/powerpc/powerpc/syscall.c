@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21.2.4 2004/09/21 13:20:50 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21.2.5 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.4 2004/09/21 13:20:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.5 2005/11/10 13:58:26 skrll Exp $");
 
 void
 child_return(void *arg)
@@ -159,7 +159,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		       argsize - n * sizeof(register_t));
 		KERNEL_PROC_UNLOCK(l);
 		if (error)
-			goto syscall_bad;
+			goto bad;
 		params = args;
 	}
 
@@ -175,7 +175,6 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
 		KERNEL_PROC_UNLOCK(l);
 	}
-
 	switch (error) {
 	case 0:
 		frame->fixreg[FIRSTARG] = rval[0];
@@ -201,7 +200,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		/* nothing to do */
 		break;
 	default:
-syscall_bad:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->fixreg[FIRSTARG] = error;
@@ -273,17 +272,18 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		       args + n,
 		       argsize - n * sizeof(register_t));
 		if (error)
-			goto syscall_bad;
+			goto bad;
 		params = args;
 	}
 
 	if ((error = trace_enter(l, code, realcode, callp - code, params)) != 0)
-		goto syscall_bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 
 	error = (*callp->sy_call)(l, params, rval);
+out:
 	switch (error) {
 	case 0:
 		frame->fixreg[FIRSTARG] = rval[0];
@@ -309,7 +309,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		/* nothing to do */
 		break;
 	default:
-syscall_bad:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->fixreg[FIRSTARG] = error;

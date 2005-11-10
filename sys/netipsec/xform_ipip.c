@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.9.4.5 2005/03/04 16:53:44 skrll Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.9.4.6 2005/11/10 14:11:35 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.9.4.5 2005/03/04 16:53:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.9.4.6 2005/11/10 14:11:35 skrll Exp $");
 
 /*
  * IP-inside-IP processing
@@ -700,7 +700,7 @@ static struct ipprotosw ipe4_protosw[] = {
  * Check the encapsulated packet to see if we want it
  */
 static int
-ipe4_encapcheck(const struct mbuf *m, int off, int proto, void *arg)
+ipe4_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	/*
 	 * Only take packets coming from IPSEC tunnels; the rest

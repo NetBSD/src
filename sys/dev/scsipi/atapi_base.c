@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.18.16.6 2005/03/04 16:50:32 skrll Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.18.16.7 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.18.16.6 2005/03/04 16:50:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.18.16.7 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ atapi_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int key, error;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	/*
 	 * If the device has it's own error handler, call it first.

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2.6.4 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.6.5 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matthew Fredette
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.6.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.6.5 2005/11/10 13:59:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -208,7 +208,7 @@ consinit(void)
 #ifdef	notyet /* PROM_OBP_V2 */
 	char buffer[128];
 #endif	/* PROM_OBP_V2 */
-	char *consname = "unknown";
+	const char *consname = "unknown";
 #if KGDB
 #if NZS > 0
 	extern const struct cdevsw zstty_cdevsw;

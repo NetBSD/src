@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.7 2005/03/04 16:39:22 skrll Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.8 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.7 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.8 2005/11/10 14:00:41 skrll Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -177,7 +177,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	switch (req->req_selector) {
 	case DARWIN_IOHIDCREATESHMEM: {
 		/* Create the shared memory for HID events */
-		int version;
+		int vers;
 		int error;
 		size_t memsize;
 		vaddr_t kvaddr;
@@ -185,9 +185,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 		struct darwin_iohidsystem_thread_args *dita;
 		struct darwin_emuldata *ded;
 
-		version = req->req_in[0]; /* 1 */
+		vers = req->req_in[0]; /* 1 */
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOHIDCREATESHMEM: version = %d\n", version);
+		printf("DARWIN_IOHIDCREATESHMEM: version = %d\n", vers);
 #endif
 		memsize = round_page(sizeof(struct darwin_iohidsystem_shmem));
 
@@ -490,7 +490,7 @@ darwin_iohidsystem_thread(args)
 
 		diei = &evg->evg_evqueue[evg->evg_event_last];
 		while (diei->diei_sem != 0)
-			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
+			tsleep(&diei->diei_sem, PZERO, "iohid_lock", 1);
 
 		/*
 		 * No need to take the lock since we will not
@@ -527,7 +527,7 @@ darwin_iohidsystem_thread(args)
 		diei = &evg->evg_evqueue[evg->evg_event_tail];
 		die = (darwin_iohidsystem_event *)&diei->diei_event;
 		while (die->die_type != 0)
-			tsleep((void *)&die->die_type, PZERO, "iohid_full", 1);
+			tsleep(&die->die_type, PZERO, "iohid_full", 1);
 
 	}
 
@@ -598,7 +598,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 	static int pf = 0; /* previous kbd flags */
 
 	microtime(&tv);
-	(void)memset((void *)hidevt, 0, sizeof(*hidevt));
+	(void)memset(hidevt, 0, sizeof(*hidevt));
 	hidevt->die_time_hi = tv.tv_sec;
 	hidevt->die_time_lo = tv.tv_usec;
 	hidevt->die_location_x = px;

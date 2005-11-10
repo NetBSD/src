@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.42.2.5 2004/09/21 13:35:16 skrll Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.42.2.6 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.5 2004/09/21 13:35:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.6 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.5 2004/09/21 13:35:16 skrll Exp 
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/ioctl.h>
@@ -143,9 +144,9 @@ struct  linesw strip_disc =
 #endif
 #if NIRFRAMETTY > 0
 struct  linesw irframet_disc =
-	{ "irframe", IRFRAMEDISC, irframetopen, irframetclose, ttyerrio,
+	{ "irframe", -1, irframetopen, irframetclose, ttyerrio,
 	  ttyerrio, irframetioctl, irframetinput, irframetstart,
-	  ttymodem, ttyerrpoll };			/* 10- IRFRAMEDISC */
+	  ttymodem, ttyerrpoll };			/* irframe */
 #endif
 
 /*
@@ -175,6 +176,24 @@ ttynullioctl(tp, cmd, data, flags, l)
 	tp = tp; data = data; flags = flags; l = l;
 #endif
 	return (EPASSTHROUGH);
+}
+
+/*
+ * Return error to line discipline
+ * specific poll call.
+ */
+/*ARGSUSED*/
+int
+ttyerrpoll(tp, events, l)
+	struct tty *tp;
+	int events;
+	struct lwp *l;
+{
+
+#ifdef lint
+	tp = tp; events = events; l = l;
+#endif
+	return (POLLERR);
 }
 
 /*
@@ -242,7 +261,7 @@ ttyldisc_add(disc, no)
  */
 struct linesw *
 ttyldisc_remove(name)
-	char *name;
+	const char *name;
 {
 	struct linesw *disc;
 	int i;
@@ -272,7 +291,7 @@ ttyldisc_remove(name)
  */
 struct linesw *
 ttyldisc_lookup(name)
-	char *name;
+	const char *name;
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.39.6.4 2004/09/21 13:23:57 skrll Exp $	*/
+/*	$NetBSD: gencons.c,v 1.39.6.5 2005/11/10 13:59:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.39.6.4 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.39.6.5 2005/11/10 13:59:59 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -122,7 +122,8 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

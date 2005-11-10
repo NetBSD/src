@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.14.16.5 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14.16.5 2005/11/10 14:11:36 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -432,7 +432,7 @@ tp_input(struct mbuf *m, ...)
 	unsigned        dutype;
 	u_short         dref, sref, acktime, subseq;
 	u_char          preferred_class, class_to_use, pdusize;
-	u_char          opt, dusize, addlopt, version = 0;
+	u_char          opt, dusize, addlopt, myversion = 0;
 #ifdef TP_PERF_MEAS
 	u_char          perf_meas;
 #endif				/* TP_PERF_MEAS */
@@ -662,7 +662,7 @@ again:
 			      E_TP_INV_PVAL, ts_inv_pval, setversion,
 			(1 + (caddr_t) & vbptr(P)->tpv_val - (caddr_t) hdr));
 	setversion:
-			version = vbval(P, u_char);
+			myversion = vbval(P, u_char);
 			break;
 		case TPP_acktime:
 			vb_getval(P, u_short, acktime);
@@ -833,7 +833,7 @@ again:
 			tpp.p_xpd_service = (addlopt & TPAO_USE_TXPD) == TPAO_USE_TXPD;
 			tpp.p_use_checksum = (tpp.p_class == TP_CLASS_0) ? 0 :
 				(addlopt & TPAO_NO_CSUM) == 0;
-			tpp.p_version = version;
+			tpp.p_version = myversion;
 #ifdef notdef
 			tpp.p_use_efc = (opt & TPO_USE_EFC) == TPO_USE_EFC;
 			tpp.p_use_nxpd = (addlopt & TPAO_USE_NXPD) == TPAO_USE_NXPD;
@@ -1508,7 +1508,7 @@ again:
 	m->m_data += ((int) hdr->tpdu_li + 1);
 
 	if (takes_data) {
-		int             max = tpdu_info[hdr->tpdu_type][TP_MAX_DATA_INDEX];
+		int             xmax = tpdu_info[hdr->tpdu_type][TP_MAX_DATA_INDEX];
 		int             datalen = tpdu_len - hdr->tpdu_li - 1, mbtype = MT_DATA;
 		struct {
 			struct tp_disc_reason dr;
@@ -1517,8 +1517,8 @@ again:
 #define c_hdr x.x_hdr
 		struct mbuf *n;
 
-		CHECK((max && datalen > max), E_TP_LENGTH_INVAL,
-		      ts_inv_length, respond, (max + hdr->tpdu_li + 1));
+		CHECK((xmax && datalen > xmax), E_TP_LENGTH_INVAL,
+		      ts_inv_length, respond, (xmax + hdr->tpdu_li + 1));
 		switch (hdr->tpdu_type) {
 
 		case CR_TPDU_type:

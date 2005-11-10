@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.76.2.5 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.76.2.6 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.5 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.6 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -335,7 +335,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 
 	p = l->l_proc;
 	error = 0;
-	aiov.iov_base = (caddr_t)buf;		/* XXX kills const */
+	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;

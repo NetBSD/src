@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.18.2.4 2005/01/24 08:36:05 skrll Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.18.2.5 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.4 2005/01/24 08:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.5 2005/11/10 14:12:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct uvmexp uvmexp;	/* decl */
  */
 
 void
-uvm_init()
+uvm_init(void)
 {
 	vaddr_t kvm_start, kvm_end;
 
@@ -136,13 +136,7 @@ uvm_init()
 	uvm_pager_init();
 
 	/*
-	 * step 8: init anonymous memory systems
-	 */
-
-	uvm_anon_init();	/* allocate initial anons */
-
-	/*
-	 * step 9: init the uvm_loan() facility.
+	 * step 8: init the uvm_loan() facility.
 	 */
 
 	uvm_loan_init();
@@ -163,4 +157,10 @@ uvm_init()
 	 */
 
 	link_pool_init();
+
+	/*
+	 * init anonymous memory systems
+	 */
+
+	uvm_anon_init();
 }

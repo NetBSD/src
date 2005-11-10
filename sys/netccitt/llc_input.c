@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.11.16.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.11.16.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.11.16.4 2005/03/04 16:53:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.11.16.5 2005/11/10 14:11:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,9 +452,9 @@ llc_ctlinput(prc, addr, info)
 		return 0;
 
 	case PRC_IFDOWN: {
-		struct llc_linkcb *linkp;
+		struct llc_linkcb *xlinkp;
 		struct llc_linkcb *nlinkp;
-		int i;
+		int xi;
 
 		/*
 		 * All links are accessible over the doubly linked list llccb_q
@@ -464,17 +464,17 @@ llc_ctlinput(prc, addr, info)
 			 * A for-loop is not that great an idea as the linkp
 			 * will get deleted by llc_timer()
 			 */
-			linkp = LQFIRST;
-			while (LQVALID(linkp)) {
-				nlinkp = LQNEXT(linkp);
-				if ((linkp->llcl_if = ifp) != NULL) {
-					i = splnet();
-					(void)llc_statehandler(linkp, (struct llc *)0,
+			xlinkp = LQFIRST;
+			while (LQVALID(xlinkp)) {
+				nlinkp = LQNEXT(xlinkp);
+				if ((xlinkp->llcl_if = ifp) != NULL) {
+					xi = splnet();
+					(void)llc_statehandler(xlinkp, NULL,
 							       NL_DISCONNECT_REQUEST,
 							       0, 1);
-					splx(i);
+					splx(xi);
 				}
-				linkp = nlinkp;
+				xlinkp = nlinkp;
 			}
 		}
 	}

@@ -1,16 +1,3 @@
-/* $NetBSD: locore_machdep.S,v 1.1.18.3 2004/09/21 13:21:13 skrll Exp $ */
+/* $NetBSD: locore_machdep.S,v 1.1.18.4 2005/11/10 13:58:33 skrll Exp $ */
 
-#include <mips/asm.h>
-
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-
-	.align	2
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
+/* This file intentionally left blank. */

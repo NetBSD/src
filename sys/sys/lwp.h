@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.6.2.3 2005/03/04 16:54:22 skrll Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.6.2.4 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,13 +66,16 @@ struct	lwp {
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
 
-	const void *l_wchan;	/* Sleep address. */
+	__volatile const void *l_wchan;	/* Sleep address. */
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
 	struct sadata_vp *l_savp; /* SA "virtual processor" */
+
+	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
+	void	*l_private;	/* svr4-style lwp-private data */
 
 #define l_endzero l_priority
 
@@ -81,33 +84,30 @@ struct	lwp {
 	u_char	l_priority;	/* Process priority. */
 	u_char	l_usrpri;	/* User-priority based on p_cpu and p_nice. */
 
-#define l_endcopy l_private
+#define l_endcopy l_emuldata
 
-	void	*l_private;	/* svr4-style lwp-private data */
 	void	*l_emuldata;	/* kernel lwp-private data */
-
-	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
 
 	struct	user *l_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
-
 };
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
+#ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
+#endif
 
 /* These flags are kept in l_flag. */
 #define	L_INMEM		0x00004	/* Loaded into memory. */
 #define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
 #define	L_SA		0x100000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
 #define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.11.2.6 2005/03/04 16:49:39 skrll Exp $	*/
+/*	$NetBSD: xirc.c,v 1.11.2.7 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.6 2005/03/04 16:49:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.7 2005/11/10 14:07:24 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -282,9 +282,12 @@ xirc_attach(parent, self, aux)
 	sc->sc_mako_intmask = 0xee;
 
 	if (sc->sc_id & (XIMEDIA_MODEM << 8))
-		sc->sc_modem = config_found(self, "com", xirc_print);
+		/*XXXUNCONST*/
+		sc->sc_modem = config_found(self, __UNCONST("com"), xirc_print);
 	if (sc->sc_id & (XIMEDIA_ETHER << 8))
-		sc->sc_ethernet = config_found(self, "xi", xirc_print);
+		/*XXXUNCONST*/
+		sc->sc_ethernet = config_found(self, __UNCONST("xi"),
+		    xirc_print);
 
 	xirc_disable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
 	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER));

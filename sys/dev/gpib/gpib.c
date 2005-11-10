@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.1.2.4 2005/03/04 16:41:14 skrll Exp $	*/
+/*	$NetBSD: gpib.c,v 1.1.2.5 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.1.2.4 2005/03/04 16:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.1.2.5 2005/11/10 14:04:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);
 
 static int	gpibsubmatch1(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	gpibsubmatch2(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	gpibprint(void *, const char *);
 
 dev_type_open(gpibopen);
@@ -153,7 +153,7 @@ int
 gpibsubmatch1(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct gpib_softc *sc = (struct gpib_softc *)parent;
@@ -178,7 +178,7 @@ int
 gpibsubmatch2(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct gpib_attach_args *ga = aux;

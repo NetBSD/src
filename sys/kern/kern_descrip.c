@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.110.2.9 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.110.2.10 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.9 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.10 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,20 +83,6 @@ MALLOC_DEFINE(M_FILE, "file", "Open file structure");
 MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
 MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
-static __inline void	fd_used(struct filedesc *, int);
-static __inline void	fd_unused(struct filedesc *, int);
-static __inline int	find_next_zero(uint32_t *, int, u_int);
-int			finishdup(struct lwp *, int, int, register_t *);
-int			find_last_set(struct filedesc *, int);
-int			fcntl_forfs(int, struct lwp *, int, void *);
-
-dev_type_open(filedescopen);
-
-const struct cdevsw filedesc_cdevsw = {
-	filedescopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
-
 static __inline int
 find_next_zero(uint32_t *bitmap, int want, u_int bits)
 {
@@ -128,7 +114,7 @@ find_next_zero(uint32_t *bitmap, int want, u_int bits)
 	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
 }
 
-int
+static int
 find_last_set(struct filedesc *fd, int last)
 {
 	int off, i;
@@ -221,6 +207,50 @@ fd_getfile(struct filedesc *fdp, int fd)
 	}
 
 	return (fp);
+}
+
+/*
+ * Common code for dup, dup2, and fcntl(F_DUPFD).
+ */
+static int
+finishdup(struct lwp *l, int old, int new, register_t *retval)
+{
+	struct filedesc	*fdp;
+	struct file	*fp, *delfp;
+
+	fdp = l->l_proc->p_fd;
+
+	/*
+	 * If there is a file in the new slot, remember it so we
+	 * can close it after we've finished the dup.  We need
+	 * to do it after the dup is finished, since closing
+	 * the file may block.
+	 *
+	 * Note: `old' is already used for us.
+	 * Note: Caller already marked `new' slot "used".
+	 */
+	simple_lock(&fdp->fd_slock);
+	delfp = fdp->fd_ofiles[new];
+
+	fp = fdp->fd_ofiles[old];
+	KDASSERT(fp != NULL);
+	fdp->fd_ofiles[new] = fp;
+	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
+	simple_unlock(&fdp->fd_slock);
+
+	*retval = new;
+	simple_lock(&fp->f_slock);
+	fp->f_count++;
+	FILE_UNUSE_HAVELOCK(fp, l);
+
+	if (delfp != NULL) {
+		simple_lock(&delfp->f_slock);
+		FILE_USE(delfp);
+		if (new < fdp->fd_knlistsize)
+			knote_fdclose(l, new);
+		(void) closef(delfp, l);
+	}
+	return (0);
 }
 
 /*
@@ -337,6 +367,73 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 }
 
 /*
+ * fcntl call which is being passed to the file's fs.
+ */
+static int
+fcntl_forfs(int fd, struct lwp *l, int cmd, void *arg)
+{
+	struct file	*fp;
+	struct filedesc	*fdp;
+	int		error;
+	u_int		size;
+	void		*data, *memp;
+#define STK_PARAMS	128
+	char		stkbuf[STK_PARAMS];
+
+	/* fd's value was validated in sys_fcntl before calling this routine */
+	fdp = l->l_proc->p_fd;
+	fp = fdp->fd_ofiles[fd];
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+		return (EBADF);
+
+	/*
+	 * Interpret high order word to find amount of data to be
+	 * copied to/from the user's address space.
+	 */
+	size = (size_t)F_PARAM_LEN(cmd);
+	if (size > F_PARAM_MAX)
+		return (EINVAL);
+	memp = NULL;
+	if (size > sizeof(stkbuf)) {
+		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		data = memp;
+	} else
+		data = stkbuf;
+	if (cmd & F_FSIN) {
+		if (size) {
+			error = copyin(arg, data, size);
+			if (error) {
+				if (memp)
+					free(memp, M_IOCTLOPS);
+				return (error);
+			}
+		} else
+			*(void **)data = arg;
+	} else if ((cmd & F_FSOUT) && size)
+		/*
+		 * Zero the buffer so the user always
+		 * gets back something deterministic.
+		 */
+		memset(data, 0, size);
+	else if (cmd & F_FSVOID)
+		*(void **)data = arg;
+
+
+	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, l);
+
+	/*
+	 * Copy any data to user, size was
+	 * already set and checked above.
+	 */
+	if (error == 0 && (cmd & F_FSOUT) && size)
+		error = copyout(data, arg, size);
+	if (memp)
+		free(memp, M_IOCTLOPS);
+	return (error);
+}
+
+/*
  * The file control system call.
  */
 /* ARGSUSED */
@@ -433,14 +530,14 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			break;
 		i = tmp ^ fp->f_flag;
 		if (i & FNONBLOCK) {
-			int fl = tmp & FNONBLOCK;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &fl, l);
+			int flgs = tmp & FNONBLOCK;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &flgs, l);
 			if (error)
 				goto reset_fcntl;
 		}
 		if (i & FASYNC) {
-			int fl = tmp & FASYNC;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &fl, l);
+			int flgs = tmp & FASYNC;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &flgs, l);
 			if (error) {
 				if (i & FNONBLOCK) {
 					tmp = fp->f_flag & FNONBLOCK;
@@ -457,7 +554,8 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case F_GETOWN:
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, retval, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, &tmp, l);
+		*retval = tmp;
 		break;
 
 	case F_SETOWN:
@@ -542,51 +640,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	return (error);
 }
 
-/*
- * Common code for dup, dup2, and fcntl(F_DUPFD).
- */
-int
-finishdup(struct lwp *l, int old, int new, register_t *retval)
-{
-	struct proc *p = l->l_proc;
-	struct filedesc	*fdp;
-	struct file	*fp, *delfp;
-
-	fdp = p->p_fd;
-
-	/*
-	 * If there is a file in the new slot, remember it so we
-	 * can close it after we've finished the dup.  We need
-	 * to do it after the dup is finished, since closing
-	 * the file may block.
-	 *
-	 * Note: `old' is already used for us.
-	 * Note: Caller already marked `new' slot "used".
-	 */
-	simple_lock(&fdp->fd_slock);
-	delfp = fdp->fd_ofiles[new];
-
-	fp = fdp->fd_ofiles[old];
-	KDASSERT(fp != NULL);
-	fdp->fd_ofiles[new] = fp;
-	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
-	simple_unlock(&fdp->fd_slock);
-
-	*retval = new;
-	simple_lock(&fp->f_slock);
-	fp->f_count++;
-	FILE_UNUSE_HAVELOCK(fp, l);
-
-	if (delfp != NULL) {
-		simple_lock(&delfp->f_slock);
-		FILE_USE(delfp);
-		if (new < fdp->fd_knlistsize)
-			knote_fdclose(l, new);
-		(void) closef(delfp, l);
-	}
-	return (0);
-}
-
 void
 fdremove(struct filedesc *fdp, int fd)
 {
@@ -665,9 +718,9 @@ sys_close(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___fstat13(struct lwp *l, void *v, register_t *retval)
+sys___fstat30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___fstat13_args /* {
+	struct sys___fstat30_args /* {
 		syscallarg(int)			fd;
 		syscallarg(struct stat *)	sb;
 	} */ *uap = v;
@@ -815,7 +868,7 @@ void
 fdexpand(struct proc *p)
 {
 	struct filedesc	*fdp;
-	int		i, nfiles, oldnfiles;
+	int		i, numfiles, oldnfiles;
 	struct file	**newofile;
 	char		*newofileflags;
 	uint32_t	*newhimap = NULL, *newlomap = NULL;
@@ -826,15 +879,15 @@ restart:
 	oldnfiles = fdp->fd_nfiles;
 
 	if (oldnfiles < NDEXTENT)
-		nfiles = NDEXTENT;
+		numfiles = NDEXTENT;
 	else
-		nfiles = 2 * oldnfiles;
+		numfiles = 2 * oldnfiles;
 
-	newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
-	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
-		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(uint32_t),
+	newofile = malloc(numfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
+	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
+		newhimap = malloc(NDHISLOTS(numfiles) * sizeof(uint32_t),
 		    M_FILEDESC, M_WAITOK);
-		newlomap = malloc(NDLOSLOTS(nfiles) * sizeof(uint32_t),
+		newlomap = malloc(NDLOSLOTS(numfiles) * sizeof(uint32_t),
 		    M_FILEDESC, M_WAITOK);
 	}
 
@@ -849,7 +902,7 @@ restart:
 		goto restart;
 	}
 
-	newofileflags = (char *) &newofile[nfiles];
+	newofileflags = (char *) &newofile[numfiles];
 	/*
 	 * Copy the existing ofile and ofileflags arrays
 	 * and zero the new portion of each array.
@@ -857,23 +910,23 @@ restart:
 	memcpy(newofile, fdp->fd_ofiles,
 	    (i = sizeof(struct file *) * fdp->fd_nfiles));
 	memset((char *)newofile + i, 0,
-	    nfiles * sizeof(struct file *) - i);
+	    numfiles * sizeof(struct file *) - i);
 	memcpy(newofileflags, fdp->fd_ofileflags,
 	    (i = sizeof(char) * fdp->fd_nfiles));
-	memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
+	memset(newofileflags + i, 0, numfiles * sizeof(char) - i);
 	if (oldnfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
 
-	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
+	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
 		memcpy(newhimap, fdp->fd_himap,
 		    (i = NDHISLOTS(oldnfiles) * sizeof(uint32_t)));
 		memset((char *)newhimap + i, 0,
-		    NDHISLOTS(nfiles) * sizeof(uint32_t) - i);
+		    NDHISLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		memcpy(newlomap, fdp->fd_lomap,
 		    (i = NDLOSLOTS(oldnfiles) * sizeof(uint32_t)));
 		memset((char *)newlomap + i, 0,
-		    NDLOSLOTS(nfiles) * sizeof(uint32_t) - i);
+		    NDLOSLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		if (NDHISLOTS(oldnfiles) > NDHISLOTS(NDFILE)) {
 			free(fdp->fd_himap, M_FILEDESC);
@@ -885,7 +938,7 @@ restart:
 
 	fdp->fd_ofiles = newofile;
 	fdp->fd_ofileflags = newofileflags;
-	fdp->fd_nfiles = nfiles;
+	fdp->fd_nfiles = numfiles;
 
 	simple_unlock(&fdp->fd_slock);
 
@@ -1160,7 +1213,7 @@ fdcopy(struct proc *p)
 {
 	struct filedesc	*newfdp, *fdp;
 	struct file	**fpp, **nfpp;
-	int		i, nfiles, lastfile;
+	int		i, numfiles, lastfile;
 
 	fdp = p->p_fd;
 	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
@@ -1168,7 +1221,7 @@ fdcopy(struct proc *p)
 	simple_lock_init(&newfdp->fd_slock);
 
 restart:
-	nfiles = fdp->fd_nfiles;
+	numfiles = fdp->fd_nfiles;
 	lastfile = fdp->fd_lastfile;
 
 	/*
@@ -1185,7 +1238,7 @@ restart:
 		 * for the file descriptors currently in use,
 		 * allowing the table to shrink.
 		 */
-		i = nfiles;
+		i = numfiles;
 		while (i >= 2 * NDEXTENT && i > lastfile * 2)
 			i /= 2;
 		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
@@ -1198,7 +1251,7 @@ restart:
 	}
 
 	simple_lock(&fdp->fd_slock);
-	if (nfiles != fdp->fd_nfiles || lastfile != fdp->fd_lastfile) {
+	if (numfiles != fdp->fd_nfiles || lastfile != fdp->fd_lastfile) {
 		simple_unlock(&fdp->fd_slock);
 		if (i > NDFILE)
 			free(newfdp->fd_ofiles, M_FILEDESC);
@@ -1290,7 +1343,7 @@ fdfree(struct lwp *l)
 			*fpp = NULL;
 			simple_lock(&fp->f_slock);
 			FILE_USE(fp);
-			if (i < fdp->fd_knlistsize)
+			if ((fdp->fd_lastfile - i) < fdp->fd_knlistsize)
 				knote_fdclose(l, fdp->fd_lastfile - i);
 			(void) closef(fp, l);
 		}
@@ -1513,7 +1566,7 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
  * references to this file will be direct to the other driver.
  */
 /* ARGSUSED */
-int
+static int
 filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 {
 
@@ -1528,6 +1581,11 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 	l->l_dupfd = minor(dev);	/* XXX */
 	return EDUPFD;
 }
+
+const struct cdevsw filedesc_cdevsw = {
+	filedescopen, noclose, noread, nowrite, noioctl,
+	    nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * Duplicate the specified descriptor to a free descriptor.
@@ -1616,74 +1674,6 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 		return (error);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * fcntl call which is being passed to the file's fs.
- */
-int
-fcntl_forfs(int fd, struct lwp *l, int cmd, void *arg)
-{
-	struct proc	*p = l->l_proc;
-	struct file	*fp;
-	struct filedesc	*fdp;
-	int		error;
-	u_int		size;
-	void		*data, *memp;
-#define STK_PARAMS	128
-	char		stkbuf[STK_PARAMS];
-
-	/* fd's value was validated in sys_fcntl before calling this routine */
-	fdp = p->p_fd;
-	fp = fdp->fd_ofiles[fd];
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return (EBADF);
-
-	/*
-	 * Interpret high order word to find amount of data to be
-	 * copied to/from the user's address space.
-	 */
-	size = (size_t)F_PARAM_LEN(cmd);
-	if (size > F_PARAM_MAX)
-		return (EINVAL);
-	memp = NULL;
-	if (size > sizeof(stkbuf)) {
-		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
-		data = memp;
-	} else
-		data = stkbuf;
-	if (cmd & F_FSIN) {
-		if (size) {
-			error = copyin(arg, data, size);
-			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
-			}
-		} else
-			*(void **)data = arg;
-	} else if ((cmd & F_FSOUT) && size)
-		/*
-		 * Zero the buffer so the user always
-		 * gets back something deterministic.
-		 */
-		memset(data, 0, size);
-	else if (cmd & F_FSVOID)
-		*(void **)data = arg;
-
-
-	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, l);
-
-	/*
-	 * Copy any data to user, size was
-	 * already set and checked above.
-	 */
-	if (error == 0 && (cmd & F_FSOUT) && size)
-		error = copyout(data, arg, size);
-	if (memp)
-		free(memp, M_IOCTLOPS);
-	return (error);
 }
 
 /*
@@ -1794,7 +1784,7 @@ restart:
 int
 fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
 {
-	int id = *(int *)data;
+	int id = *(const int *)data;
 	int error;
 
 	switch (cmd) {

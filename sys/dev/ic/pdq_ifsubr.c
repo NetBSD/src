@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.40.2.1 2005/03/04 16:41:32 skrll Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.40.2.2 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.40.2.1 2005/03/04 16:41:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.40.2.2 2005/11/10 14:04:15 skrll Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -647,7 +647,8 @@ pdq_os_memalloc_contig(
 	cb_segs[0].ds_addr += offsetof(pdq_descriptor_block_t, pdqdb_consumer);
 	cb_segs[0].ds_len = sizeof(pdq_consumer_block_t);
 	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
-				sizeof(*pdq->pdq_cbp), (caddr_t *) &pdq->pdq_cbp,
+				sizeof(*pdq->pdq_cbp),
+				(caddr_t *)&pdq->pdq_cbp,
 				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
     }
     if (!not_ok) {
@@ -658,7 +659,7 @@ pdq_os_memalloc_contig(
     if (!not_ok) {
 	steps = 10;
 	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_cbmap,
-				 (caddr_t) pdq->pdq_cbp, sizeof(*pdq->pdq_cbp),
+				 pdq->pdq_cbp, sizeof(*pdq->pdq_cbp),
 				 NULL, BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
@@ -677,7 +678,7 @@ pdq_os_memalloc_contig(
 	}
 	case 9: {
 	    bus_dmamem_unmap(sc->sc_dmatag,
-			     (caddr_t) pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
+			     (caddr_t)pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
 	    /* FALL THROUGH */
 	}
 	case 8: {

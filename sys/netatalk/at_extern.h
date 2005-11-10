@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.8.2.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.8.2.4 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -57,7 +57,7 @@ int	ddp_usrreq	__P((struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *));
 void	ddp_init	__P((void ));
 struct ifaddr *
-	at_ifawithnet	__P((struct sockaddr_at *, struct ifnet *));
+	at_ifawithnet	__P((const struct sockaddr_at *, struct ifnet *));
 int	ddp_output	__P((struct mbuf *, ...));
 struct ddpcb  *
 	ddp_search	__P((struct sockaddr_at *, struct sockaddr_at *,

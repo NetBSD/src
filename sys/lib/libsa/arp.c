@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.23.6.4 2005/03/04 16:52:41 skrll Exp $	*/
+/*	$NetBSD: arp.c,v 1.23.6.5 2005/11/10 14:10:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -257,7 +257,7 @@ arprecv(d, pkt, len, tleft)
 	}
 
 	/* Is the reply from the source we want? */
-	if (bcmp(&arp_list[arp_num].addr,
+	if (memcmp(&arp_list[arp_num].addr,
 			 ah->arp_spa, sizeof(ah->arp_spa)))
 	{
 #ifdef ARP_DEBUG
@@ -308,7 +308,7 @@ arp_reply(d, pkt)
 	}
 
 	/* If we are not the target, ignore the request. */
-	if (bcmp(arp->arp_tpa, &d->myip, sizeof(arp->arp_tpa)))
+	if (memcmp(arp->arp_tpa, &d->myip, sizeof(arp->arp_tpa)))
 		return;
 
 #ifdef ARP_DEBUG

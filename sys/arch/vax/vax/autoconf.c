@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77.2.5 2004/12/18 09:31:44 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77.2.6 2005/11/10 13:59:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.5 2004/12/18 09:31:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.6 2005/11/10 13:59:59 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -181,7 +181,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 #include "ry.h"
 
 static int ubtest(void *);
-static int jmfr(char *, struct device *, int);
+static int jmfr(const char *, struct device *, int);
 static int booted_qe(struct device *, void *);
 static int booted_qt(struct device *, void *);
 static int booted_le(struct device *, void *);
@@ -253,7 +253,7 @@ device_register(struct device *dev, void *aux)
  * Simple checks. Return 1 on fail.
  */
 int
-jmfr(char *n, struct device *dev, int nr)
+jmfr(const char *n, struct device *dev, int nr)
 {
 	if (rpb.devtyp != nr)
 		return 1;

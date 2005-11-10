@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.13.6.4 2004/11/14 08:16:13 skrll Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.13.6.5 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ struct mfsnode {
 	struct	proc *mfs_proc;		/* supporting process */
 	int	mfs_shutdown;		/* shutdown this mfsnode */
 #if defined(_KERNEL)
-	struct	bufq_state mfs_buflist;	/* list of I/O requests */
+	struct	bufq_state *mfs_buflist;/* list of I/O requests */
 #endif /* defined(_KERNEL) */
 };
 
@@ -82,11 +82,6 @@ struct mfsnode {
 #define	mfs_islocked	genfs_noislocked
 #define	mfs_pathconf	genfs_badop
 #define	mfs_advlock	genfs_badop
-#define	mfs_blkatoff	genfs_badop
-#define	mfs_valloc	genfs_badop
-#define	mfs_vfree	genfs_badop
-#define	mfs_truncate	genfs_badop
-#define	mfs_update	genfs_badop
 #define	mfs_bwrite	vn_bwrite
 #define	mfs_revoke	genfs_revoke
 #define	mfs_putpages	genfs_null_putpages

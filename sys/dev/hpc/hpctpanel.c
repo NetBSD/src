@@ -1,4 +1,4 @@
-/*	$NetBSD: hpctpanel.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $	*/
+/*	$NetBSD: hpctpanel.c,v 1.1.2.7 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.1.2.7 2005/11/10 14:04:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ hpc_tpanel_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
 	struct wsmouse_id *id;
-	char *idstr;
+	const char *idstr;
 	int s;
 
 	switch (cmd) {

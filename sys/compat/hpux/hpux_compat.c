@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.65.2.7 2005/03/04 16:39:35 skrll Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.65.2.8 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.7 2005/03/04 16:39:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.8 2005/11/10 14:00:52 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1354,7 +1354,7 @@ hpux_sys_times_6x(l, v, retval)
 		syscallarg(struct tms *) tms;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct timeval ru, rs;
+	struct timeval ru, rs, tv;
 	struct tms atms;
 	int error;
 
@@ -1365,9 +1365,11 @@ hpux_sys_times_6x(l, v, retval)
 	atms.tms_cstime = hpux_scale(&p->p_stats->p_cru.ru_stime);
 	error = copyout((caddr_t)&atms, (caddr_t)SCARG(uap, tms),
 	    sizeof (atms));
-	if (error == 0)
-		*(time_t *)retval = hpux_scale((struct timeval *)&time) -
+	if (error == 0) {
+		tv = time;
+		*(time_t *)retval = hpux_scale(&tv) -
 		    hpux_scale(&boottime);
+	}
 	return (error);
 }
 

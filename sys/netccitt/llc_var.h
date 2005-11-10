@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.12.18.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.12.18.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -651,7 +651,7 @@ extern int af_link_rts_init_done;
 extern struct ifqueue llcintrq;
 
 extern struct llccb_q llccb_q;
-extern char *frame_names[];
+extern const char *frame_names[];
 
 /*
  * Function prototypes
@@ -711,7 +711,7 @@ struct llc_linkcb *llc_newlink __P((struct sockaddr_dl *, struct ifnet *,
 void llc_dellink __P((struct llc_linkcb *));
 int llc_decode __P((struct llc *, struct llc_linkcb *));
 int llc_anytimersup __P((struct llc_linkcb *));
-char *llc_getstatename __P((struct llc_linkcb *));
+const char *llc_getstatename __P((struct llc_linkcb *));
 void llc_link_dump __P((struct llc_linkcb *, const char *));
 void llc_trace __P((struct llc_linkcb *, int, const char *));
 

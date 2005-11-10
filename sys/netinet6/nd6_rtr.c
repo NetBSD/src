@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.44.2.5 2004/11/29 07:25:04 skrll Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.44.2.6 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44.2.5 2004/11/29 07:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44.2.6 2005/11/10 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,15 +239,15 @@ nd6_ra_input(m, off, icmp6len)
 	}
 
     {
-	struct nd_defrouter dr0;
+	struct nd_defrouter drtr;
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
 
-	Bzero(&dr0, sizeof(dr0));
-	dr0.rtaddr = saddr6;
-	dr0.flags  = nd_ra->nd_ra_flags_reserved;
-	dr0.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
-	dr0.expire = time.tv_sec + dr0.rtlifetime;
-	dr0.ifp = ifp;
+	Bzero(&drtr, sizeof(drtr));
+	drtr.rtaddr = saddr6;
+	drtr.flags  = nd_ra->nd_ra_flags_reserved;
+	drtr.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
+	drtr.expire = time.tv_sec + drtr.rtlifetime;
+	drtr.ifp = ifp;
 	/* unspecified or not? (RFC 2461 6.3.4) */
 	if (advreachable) {
 		NTOHL(advreachable);
@@ -262,7 +262,7 @@ nd6_ra_input(m, off, icmp6len)
 		ndi->retrans = ntohl(nd_ra->nd_ra_retransmit);
 	if (nd_ra->nd_ra_curhoplimit)
 		ndi->chlim = nd_ra->nd_ra_curhoplimit;
-	dr = defrtrlist_update(&dr0);
+	dr = defrtrlist_update(&drtr);
     }
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.37.2.6 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.37.2.7 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.6 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.7 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,13 +42,21 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.6 2005/03/04 16:51:58 skrll Exp
 #include <sys/exec.h>
 #include <sys/mman.h>
 #include <sys/resourcevar.h>
+#include <sys/device.h>
 
 #include <uvm/uvm.h>
 
-/*
- * XXX cgd 960926: this module should collect simple statistics
- * (calls, extends, kills).
- */
+#define	VMCMD_EVCNT_DECL(name)					\
+static struct evcnt vmcmd_ev_##name =				\
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "vmcmd", #name);	\
+EVCNT_ATTACH_STATIC(vmcmd_ev_##name)
+
+#define	VMCMD_EVCNT_INCR(name)					\
+    vmcmd_ev_##name.ev_count++
+
+VMCMD_EVCNT_DECL(calls);
+VMCMD_EVCNT_DECL(extends);
+VMCMD_EVCNT_DECL(kills);
 
 /*
  * new_vmcmd():
@@ -64,6 +72,8 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
     u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
+
+	VMCMD_EVCNT_INCR(calls);
 
 	if (evsp->evs_used >= evsp->evs_cnt)
 		vmcmdset_extend(evsp);
@@ -90,8 +100,11 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 #endif
 
 	/* figure out number of entries in new set */
-	ocnt = evsp->evs_cnt;
-	evsp->evs_cnt += ocnt ? ocnt : EXEC_DEFAULT_VMCMD_SETSIZE;
+	if ((ocnt = evsp->evs_cnt) != 0) {
+		evsp->evs_cnt += ocnt;
+		VMCMD_EVCNT_INCR(extends);
+	} else
+		evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
 	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
@@ -111,6 +124,8 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
 	u_int i;
+
+	VMCMD_EVCNT_INCR(kills);
 
 	if (evsp->evs_cnt == 0)
 		return;
@@ -277,13 +292,13 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
  *	Read from vnode into buffer at offset.
  */
 int
-exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *buf,
+exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *bf,
     size_t size)
 {
 	int error;
 	size_t resid;
 
-	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
+	if ((error = vn_rdwr(UIO_READ, vp, bf, size, off, UIO_SYSSPACE,
 	    0, l->l_proc->p_ucred, &resid, NULL)) != 0)
 		return error;
 	/*

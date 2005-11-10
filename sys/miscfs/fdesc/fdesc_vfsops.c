@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.43.2.8 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.43.2.9 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43.2.8 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43.2.9 2005/11/10 14:10:25 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,19 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43.2.8 2005/04/01 14:31:34 skrll 
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount __P((struct mount *, const char *, void *,
-			 struct nameidata *, struct lwp *));
-int	fdesc_start __P((struct mount *, int, struct lwp *));
-int	fdesc_unmount __P((struct mount *, int, struct lwp *));
-int	fdesc_quotactl __P((struct mount *, int, uid_t, void *,
-			    struct lwp *));
-int	fdesc_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int	fdesc_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	fdesc_checkexp __P((struct mount *, struct mbuf *, int *,
-			    struct ucred **));
-int	fdesc_vptofh __P((struct vnode *, struct fid *));
+int	fdesc_mount(struct mount *, const char *, void *,
+			 struct nameidata *, struct lwp *);
+int	fdesc_start(struct mount *, int, struct lwp *);
+int	fdesc_unmount(struct mount *, int, struct lwp *);
+int	fdesc_quotactl(struct mount *, int, uid_t, void *,
+			    struct lwp *);
+int	fdesc_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int	fdesc_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	fdesc_vget(struct mount *, ino_t, struct vnode **);
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -135,7 +131,7 @@ fdesc_unmount(mp, mntflags, l)
 {
 	int error;
 	int flags = 0;
-	struct vnode *rootvp = VFSTOFDESC(mp)->f_root;
+	struct vnode *rtvp = VFSTOFDESC(mp)->f_root;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -145,19 +141,19 @@ fdesc_unmount(mp, mntflags, l)
 	 * ever get anything cached at this level at the
 	 * moment, but who knows...
 	 */
-	if (rootvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1)
 		return (EBUSY);
-	if ((error = vflush(mp, rootvp, flags)) != 0)
+	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);
 
 	/*
 	 * Release reference on underlying root vnode
 	 */
-	vrele(rootvp);
+	vrele(rtvp);
 	/*
 	 * And blow it away for future re-use
 	 */
-	vgone(rootvp);
+	vgone(rtvp);
 	/*
 	 * Finally, throw away the fdescmount structure
 	 */
@@ -273,38 +269,6 @@ fdesc_vget(mp, ino, vpp)
 }
 
 
-/*ARGSUSED*/
-int
-fdesc_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-fdesc_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-fdesc_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_fdesc_setup, "sysctl vfs.fdesc subtree setup")
 {
 
@@ -343,14 +307,12 @@ struct vfsops fdesc_vfsops = {
 	fdesc_statvfs,
 	fdesc_sync,
 	fdesc_vget,
-	fdesc_fhtovp,
-	fdesc_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	fdesc_init,
 	NULL,
 	fdesc_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	fdesc_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	fdesc_vnodeopv_descs,

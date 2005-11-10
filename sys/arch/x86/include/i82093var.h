@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.1.2.3 2004/09/21 13:24:30 skrll Exp $ */
+/* $NetBSD: i82093var.h,v 1.1.2.4 2005/11/10 14:00:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ struct ioapic_softc {
 void *apic_intr_establish(int, int, int, int (*)(void *), void *); 
 void apic_intr_disestablish(void *);
 
-void ioapic_print_redir(struct ioapic_softc *, char *, int);
-void ioapic_format_redir(char *, char *, int, u_int32_t, u_int32_t);
+void ioapic_print_redir(struct ioapic_softc *, const char *, int);
+void ioapic_format_redir(char *, const char *, int, u_int32_t, u_int32_t);
 struct ioapic_softc *ioapic_find(int);
 struct ioapic_softc *ioapic_find_bybase(int);
 

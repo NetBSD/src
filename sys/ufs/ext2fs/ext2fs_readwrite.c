@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.8 2005/02/15 21:33:41 skrll Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.9 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.8 2005/02/15 21:33:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.9 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.8 2005/02/15 21:33:41 sk
  */
 /* ARGSUSED */
 int
-ext2fs_read(v)
-	void *v;
+ext2fs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -209,7 +208,7 @@ out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -218,8 +217,7 @@ out:
  * Vnode op for writing.
  */
 int
-ext2fs_write(v)
-	void *v;
+ext2fs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -398,12 +396,12 @@ out:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_lwp);
+		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		    uio->uio_lwp == NULL ? NULL : uio->uio_lwp->l_proc);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ext2fs_size(ip));
 	return (error);
 }

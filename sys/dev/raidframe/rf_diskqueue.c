@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.22.2.7 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.22.2.8 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22.2.7 2005/03/04 16:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22.2.8 2005/11/10 14:07:40 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -440,7 +440,7 @@ rf_DiskIOPromote(RF_DiskQueue_t *queue, RF_StripeNum_t parityStripeID,
 
 RF_DiskQueueData_t *
 rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
-		       RF_SectorCount_t nsect, caddr_t buf,
+		       RF_SectorCount_t nsect, caddr_t bf,
 		       RF_StripeNum_t parityStripeID,
 		       RF_ReconUnitNum_t which_ru,
 		       int (*wakeF) (void *, int), void *arg,
@@ -470,7 +470,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
 	p->type = typ;
-	p->buf = buf;
+	p->buf = bf;
 	p->parityStripeID = parityStripeID;
 	p->which_ru = which_ru;
 	p->CompleteFunc = wakeF;

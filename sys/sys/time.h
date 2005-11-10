@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38.2.7 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.38.2.8 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -212,7 +212,8 @@ struct	ptimers {
 int	itimerfix(struct timeval *tv);
 int	itimerdecr(struct ptimer *, int);
 void	itimerfire(struct ptimer *);
-void	microtime(struct timeval *tv);
+void	microtime(struct timeval *);
+struct timespec	*nanotime(struct timespec *);
 int	settime(struct timeval *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
@@ -225,6 +226,7 @@ void	timer_gettime(struct ptimer *, struct itimerval *);
 void	timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 void	realtimerexpire(void *);
+
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE

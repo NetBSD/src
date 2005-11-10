@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.180.2.9 2005/02/15 21:33:12 skrll Exp $	*/
+/*	$NetBSD: audio.c,v 1.180.2.10 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.180.2.9 2005/02/15 21:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.180.2.10 2005/11/10 14:03:00 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1045,29 +1045,29 @@ int
 audiopoll(dev_t dev, int events, struct lwp *l)
 {
 	struct audio_softc *sc;
-	int error;
+	int revents;
 
 	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
 	if (sc->sc_dying)
-		return EIO;
+		return POLLHUP;
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_poll(sc, events, l);
+		revents = audio_poll(sc, events, l);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		error = ENODEV;
+		revents = 0;
 		break;
 	default:
-		error = ENXIO;
+		revents = POLLERR;
 		break;
 	}
 	if (--sc->sc_refcnt < 0)
 		wakeup(&sc->sc_refcnt);
-	return error;
+	return revents;
 }
 
 int
@@ -1288,9 +1288,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
+	if (((flags & FREAD) && (sc->sc_open & AUOPEN_READ)) ||
+	    ((flags & FWRITE) && (sc->sc_open & AUOPEN_WRITE)))
 		return EBUSY;
-
+	
 	if (hw->open != NULL) {
 		error = hw->open(sc->hw_hdl, flags);
 		if (error)
@@ -1306,11 +1307,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
-	sc->sc_full_duplex = 0;
-/* doesn't always work right on SB.
+	sc->sc_full_duplex = 
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX);
-*/
 
 	mode = 0;
 	if (flags & FREAD) {
@@ -1507,15 +1506,8 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct lwp *l)
 	if (hw->close != NULL)
 		hw->close(sc->hw_hdl);
 
-	if (flags & FREAD) {
-		sc->sc_open &= ~AUOPEN_READ;
-		sc->sc_mode &= ~AUMODE_RECORD;
-	}
-	if (flags & FWRITE) {
-		sc->sc_open &= ~AUOPEN_WRITE;
-		sc->sc_mode &= ~(AUMODE_PLAY|AUMODE_PLAY_ALL);
-	}
-
+	sc->sc_open = 0;
+	sc->sc_mode = 0;
 	sc->sc_async_audio = 0;
 	sc->sc_full_duplex = 0;
 	splx(s);
@@ -3090,7 +3082,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	int oldpblksize, oldrblksize;
 	u_int gain;
 	boolean_t rbus, pbus;
-	boolean_t cleared, modechange;
+	boolean_t cleared, modechange, pausechange;
 	u_char balance;
 
 	hw = sc->hw_if;
@@ -3105,6 +3097,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	error = 0;
 	cleared = FALSE;
 	modechange = FALSE;
+	pausechange = FALSE;
 
 	pp = sc->sc_pparams;	/* Temporary encoding storage in */
 	rp = sc->sc_rparams;	/* case setting the modes fails. */
@@ -3327,24 +3320,13 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	if (SPECIFIED_CH(p->pause)) {
 		sc->sc_pr.pause = p->pause;
-		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
-			s = splaudio();
-			error = audiostartp(sc);
-			splx(s);
-			if (error)
-				return error;
-		}
+		pbus = !p->pause;
+		pausechange = TRUE;
 	}
 	if (SPECIFIED_CH(r->pause)) {
 		sc->sc_rr.pause = r->pause;
-		if (!r->pause && !sc->sc_rbus &&
-		    (sc->sc_mode & AUMODE_RECORD)) {
-			s = splaudio();
-			error = audiostartr(sc);
-			splx(s);
-			if (error)
-				return error;
-		}
+		rbus = !r->pause;
+		pausechange = TRUE;
 	}
 
 	if (SPECIFIED(ai->blocksize)) {
@@ -3400,7 +3382,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			return error;
 	}
 
-	if (cleared) {
+	if (cleared || pausechange) {
 		s = splaudio();
 		error = audio_initbufs(sc);
 		if (error) goto err;

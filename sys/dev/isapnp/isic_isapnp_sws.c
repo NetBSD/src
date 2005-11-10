@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.4.10.5 2005/03/04 16:43:40 skrll Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.4.10.6 2005/11/10 14:05:42 skrll Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4.10.5 2005/03/04 16:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4.10.6 2005/11/10 14:05:42 skrll Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
@@ -191,15 +191,15 @@ sws_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, SWS_RW, 0);
-			bus_space_write_multi_1(t, h, SWS_ISAC, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SWS_ISAC, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, SWS_RW, 0);
-			bus_space_write_multi_1(t, h, SWS_HSCX0, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SWS_HSCX0, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, SWS_RW, 0x40);
-			bus_space_write_multi_1(t, h, SWS_HSCX0, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, SWS_HSCX0, buf, size);
 			break;
 	}
 }

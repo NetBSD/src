@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143.2.5 2005/04/01 14:28:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.143.2.6 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143.2.5 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143.2.6 2005/11/10 13:59:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1556,7 +1556,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * On the Sun3/50, the video frame buffer is located at
 	 * physical addres 1MB so we must step over it.
 	 */
-	if (cpu_machine_id == SUN3_MACH_50) {
+	if (cpu_machine_id == ID_SUN3_50) {
 		hole_start = m68k_trunc_page(OBMEM_BW50_ADDR);
 		hole_size  = m68k_round_page(OBMEM_BW2_SIZE);
 		if (avail_start > hole_start) {
@@ -1997,6 +1997,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	new_pte |= PG_VALID;
 	if (prot & VM_PROT_WRITE)
 		new_pte |= PG_WRITE;
+	if (flags & VM_PROT_ALL) {
+		new_pte |= PG_REF;
+		if (flags & VM_PROT_WRITE) {
+			new_pte |= PG_MOD;
+		}
+	}
 
 	/* ...and finally the page-frame number. */
 	new_pte |= PA_PGNUM(pa);

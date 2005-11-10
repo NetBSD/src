@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.31.2.6 2005/03/04 16:41:14 skrll Exp $	*/
+/*	$NetBSD: eisa.c,v 1.31.2.7 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.31.2.6 2005/03/04 16:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.31.2.7 2005/11/10 14:03:54 skrll Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -61,8 +61,6 @@ static void	eisaattach(struct device *, struct device *, void *);
 CFATTACH_DECL(eisa, sizeof(struct device),
     eisamatch, eisaattach, NULL, NULL);
 
-static int	eisasubmatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	eisaprint(void *, const char *);
 static void	eisa_devinfo(const char *, char *, size_t);
 
@@ -86,17 +84,6 @@ eisaprint(void *aux, const char *pnp)
 	}
 	aprint_normal(" slot %d", ea->ea_slot);
 	return (UNCONF);
-}
-
-static int
-eisasubmatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t * ldesc, void *aux)
-{
-
-	if (cf->cf_loc[EISACF_SLOT] != EISACF_SLOT_DEFAULT &&
-	    cf->cf_loc[EISACF_SLOT] != ldesc->locs[EISACF_SLOT])
-		return (0);
-	return (config_match(parent, cf, aux));
 }
 
 static void
@@ -128,8 +115,7 @@ eisaattach(struct device *parent, struct device *self, void *aux)
 		u_int slotaddr;
 		bus_space_handle_t slotioh;
 		int i;
-		int help[2];
-		locdesc_t *ldesc = (void *)help; /* XXX */
+		int locs[EISACF_NLOCS];
 
 		ea.ea_iot = iot;
 		ea.ea_memt = memt;
@@ -192,12 +178,11 @@ eisaattach(struct device *parent, struct device *self, void *aux)
 		/* We no longer need the I/O handle; free it. */
 		bus_space_unmap(iot, slotioh, EISA_SLOT_SIZE);
 
-		ldesc->len = 1;
-		ldesc->locs[EISACF_SLOT] = slot;
+		locs[EISACF_SLOT] = slot;
 
 		/* Attach matching device. */
-		config_found_sm_loc(self, "eisa", ldesc, &ea,
-				    eisaprint, eisasubmatch);
+		config_found_sm_loc(self, "eisa", locs, &ea,
+				    eisaprint, config_stdsubmatch);
 	}
 }
 

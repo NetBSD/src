@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.9.16.3 2004/09/21 13:36:31 skrll Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.9.16.4 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.9.16.3 2004/09/21 13:36:31 skrll Exp $
+ *	$Id: overlay_vnops.c,v 1.9.16.4 2005/11/10 14:10:32 skrll Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.9.16.3 2004/09/21 13:36:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.9.16.4 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.9.16.3 2004/09/21 13:36:31 skrll
 /*
  * Global vfs data structures
  */
-int (**overlay_vnodeop_p) __P((void *));
+int (**overlay_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 	{ &vop_default_desc,  layer_bypass },
 

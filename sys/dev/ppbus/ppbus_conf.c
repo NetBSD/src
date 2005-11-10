@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.4.4.5 2005/03/04 16:49:52 skrll Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.4.4.6 2005/11/10 14:07:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.4.4.5 2005/03/04 16:49:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.4.4.6 2005/11/10 14:07:40 skrll Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -54,7 +54,7 @@ static int ppbus_detach(struct device *, int);
 
 /* Utility function prototypes */
 static int ppbus_search_children(struct device *, struct cfdata *,
-				 const locdesc_t *, void *);
+				 const int *, void *);
 
 
 CFATTACH_DECL(ppbus, sizeof(struct ppbus_softc), ppbus_probe, ppbus_attach,
@@ -228,7 +228,7 @@ ppbus_detach(struct device *self, int flag)
 /* Search for children device and add to list */
 static int
 ppbus_search_children(struct device *parent, struct cfdata *cf,
-		      const locdesc_t *ldesc, void *aux)
+		      const int *ldesc, void *aux)
 {
 	struct ppbus_softc *ppbus = (struct ppbus_softc *)parent;
 	struct ppbus_device_softc *child;

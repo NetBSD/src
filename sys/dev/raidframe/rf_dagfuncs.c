@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.11.6.5 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.11.6.6 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11.6.5 2005/03/04 16:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11.6.6 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -172,7 +172,7 @@ int
 rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t buf = (caddr_t) node->params[1].p;
+	caddr_t bf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -183,7 +183,7 @@ rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 #if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
 #endif
-		logData = rf_CreateParityLogData(RF_UPDATE, pda, buf,
+		logData = rf_CreateParityLogData(RF_UPDATE, pda, bf,
 		    (RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node,
 		    node->dagHdr->tracerec, timer);
@@ -209,7 +209,7 @@ int
 rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t buf = (caddr_t) node->params[1].p;
+	caddr_t bf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -220,7 +220,7 @@ rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 #if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
 #endif
-		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf,
+		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, bf,
 (RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node, node->dagHdr->tracerec, timer);
 		if (logData)
@@ -276,7 +276,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t buf = (caddr_t) node->params[1].p;
+	caddr_t bf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
@@ -288,7 +288,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
-	    buf, parityStripeID, which_ru,
+	    bf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    node,
 #if RF_ACC_TRACE > 0
@@ -315,7 +315,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t buf = (caddr_t) node->params[1].p;
+	caddr_t bf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
@@ -328,7 +328,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 
 	/* normal processing (rollaway or forward recovery) begins here */
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
-	    buf, parityStripeID, which_ru,
+	    bf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
 #if RF_ACC_TRACE > 0

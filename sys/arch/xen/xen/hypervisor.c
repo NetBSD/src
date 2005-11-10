@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.7.4.6 2005/04/01 14:29:11 skrll Exp $ */
+/* $NetBSD: hypervisor.c,v 1.7.4.7 2005/11/10 14:00:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,12 +63,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.6 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.7 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <dev/sysmon/sysmonvar.h>
 
 #include "xencons.h"
 #include "xennet.h"
@@ -82,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.6 2005/04/01 14:29:11 skrll Exp
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#include <machine/ctrl_if.h>
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -91,8 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.6 2005/04/01 14:29:11 skrll Exp
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 #include <machine/kernfs_machdep.h>
-#include <dev/pci/pcivar.h>
 #include <dev/isa/isavar.h>
+#endif
+#if NPCI > 0
+#include <dev/pci/pcivar.h>
 #endif
 
 #if NXENNET > 0
@@ -145,6 +149,17 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
 
+/* shutdown/reboot message stuff */
+static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
+static struct sysmon_pswitch hysw_shutdown = {
+	.smpsw_type = PSWITCH_TYPE_POWER,
+	.smpsw_name = "hypervisor",
+};
+static struct sysmon_pswitch hysw_reboot = {
+	.smpsw_type = PSWITCH_TYPE_RESET,
+	.smpsw_name = "hypervisor",
+};
+
 /*
  * Probe for the hypervisor; always succeeds.
  */
@@ -161,15 +176,6 @@ hypervisor_match(parent, match, aux)
 	return 0;
 }
 
-#if NXENNET > 0
-static void
-scan_finish(struct device *parent)
-{
-
-	xennet_scan_finish(parent);
-}
-#endif /* NXENNET > 0 */
-
 /*
  * Attach the hypervisor.
  */
@@ -178,9 +184,13 @@ hypervisor_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#ifdef DOM0OPS
+#if NPCI > 0
 	struct pcibus_attach_args pba;
+#if defined(DOM0OPS) && NISA > 0
 	struct isabus_attach_args iba;
+#endif
+	physdev_op_t physdev_op;
+	int i, j, busnum;
 #endif
 	union hypervisor_attach_cookie hac;
 
@@ -190,7 +200,7 @@ hypervisor_attach(parent, self, aux)
 
 #if NXENCONS > 0
 	hac.hac_xencons.xa_device = "xencons";
-	config_found(self, &hac.hac_xencons, hypervisor_print);
+	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
 #if NXENNET > 0
 	hac.hac_xennet.xa_device = "xennet";
@@ -202,17 +212,14 @@ hypervisor_attach(parent, self, aux)
 #endif
 #if NNPX > 0
 	hac.hac_xennpx.xa_device = "npx";
-	config_found(self, &hac.hac_xennpx, hypervisor_print);
+	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
-#ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		physdev_op_t physdev_op;
-		int i, j, busnum;
+#if NPCI > 0
 
-		physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
-		if (HYPERVISOR_physdev_op(&physdev_op) < 0) {
-			printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed\n");
-		}
+	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
+	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
+		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);
+	} else {
 #ifdef DEBUG
 		printf("PCI_PROBE_ROOT_BUSES: ");
 		for (i = 0; i < 256/32; i++)
@@ -242,16 +249,22 @@ hypervisor_attach(parent, self, aux)
 				config_found_ia(self, "pcibus", &pba,
 				    pcibusprint);
 			}
-		}
-		if (isa_has_been_seen == 0) {
-			iba._iba_busname = "isa";
-			iba.iba_iot = X86_BUS_SPACE_IO;
-			iba.iba_memt = X86_BUS_SPACE_MEM;
-			iba.iba_dmat = &isa_bus_dma_tag;
-			iba.iba_ic = NULL; /* No isa DMA yet */
-			config_found_ia(self, "isabus", &iba, isabusprint);
-		}
+		} 
+	}
+#if defined(DOM0OPS) && NISA > 0
+	if (isa_has_been_seen == 0) {
+		iba._iba_busname = "isa";
+		iba.iba_iot = X86_BUS_SPACE_IO;
+		iba.iba_memt = X86_BUS_SPACE_MEM;
+		iba.iba_dmat = &isa_bus_dma_tag;
+		iba.iba_ic = NULL; /* No isa DMA yet */
+		config_found_ia(self, "isabus", &iba, isabusprint);
+	}
+#endif
+#endif
 
+#ifdef DOM0OPS
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
@@ -259,9 +272,13 @@ hypervisor_attach(parent, self, aux)
 		xennetback_init();
 	}
 #endif
-#if NXENNET > 0
-	config_interrupts(self, scan_finish);
-#endif
+	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
+	    sysmon_pswitch_register(&hysw_shutdown) != 0)
+		printf("%s: unable to register with sysmon\n",
+		    self->dv_xname);
+	else 
+		ctrl_if_register_receiver(CMSG_SHUTDOWN,
+		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 }
 
 static int
@@ -274,16 +291,6 @@ hypervisor_print(aux, parent)
 	if (parent)
 		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
-}
-
-void
-hypervisor_notify_via_evtchn(unsigned int port)
-{
-	evtchn_op_t op;
-
-	op.cmd = EVTCHNOP_send;
-	op.u.send.local_port = port;
-	(void)HYPERVISOR_event_channel_op(&op);
 }
 
 #ifdef DOM0OPS
@@ -303,3 +310,20 @@ xenkernfs_init()
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
 #endif
+
+/* handler for the shutdown messages */
+static void
+hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
+{
+	switch(msg->subtype) {
+	case CMSG_SHUTDOWN_POWEROFF:	
+		sysmon_pswitch_event(&hysw_shutdown, PSWITCH_EVENT_PRESSED);
+		break;
+	case CMSG_SHUTDOWN_REBOOT:	
+		sysmon_pswitch_event(&hysw_reboot, PSWITCH_EVENT_PRESSED);
+		break;
+	default:
+		printf("shutdown_handler: unknwon message %d\n",
+		    msg->type);
+	}
+}

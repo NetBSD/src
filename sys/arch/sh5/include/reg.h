@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 2003/01/20 20:07:53 scw Exp $	*/
+/*	$NetBSD: reg.h,v 1.4.2.1 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -66,8 +66,8 @@ struct fpreg {
 
 struct lwp;
 int process_read_regs(struct lwp *, struct reg *);
-int process_write_regs(struct lwp *, struct reg *);
+int process_write_regs(struct lwp *, const struct reg *);
 int process_read_fpregs(struct lwp *, struct fpreg *);
-int process_write_fpregs(struct lwp *, struct fpreg *);
+int process_write_fpregs(struct lwp *, const struct fpreg *);
 
 #endif /* _SH5_REG_H */

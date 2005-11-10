@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6.2.6 2005/01/17 19:30:28 skrll Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6.2.7 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.6 2005/01/17 19:30:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.7 2005/11/10 14:00:20 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -94,7 +94,7 @@ static TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
 
 static int mpacpi_print(void *, const char *);
 static int mpacpi_submatch(struct device *, struct cfdata *,
-	const locdesc_t *, void *);
+	const int *, void *);
 
 /* acpi_madt_walk callbacks */
 static ACPI_STATUS mpacpi_count(APIC_HEADER *, void *);
@@ -143,7 +143,7 @@ mpacpi_print(void *aux, const char *pnp)
 
 static int
 mpacpi_submatch(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux)
+	const int *ldesc, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -804,7 +804,7 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 	char buf[256];
 	int pin;
 	struct ioapic_softc *sc;
-	char *busname;
+	const char *busname;
 
 	sc = mpi->ioapic;
 	pin = mpi->ioapic_pin;

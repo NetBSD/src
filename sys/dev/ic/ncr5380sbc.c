@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.49.2.6 2005/03/04 16:41:31 skrll Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.49.2.7 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49.2.6 2005/03/04 16:41:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49.2.7 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -157,7 +157,7 @@ void	ncr5380_show_state(void);
 
 #endif	/* NCR5380_DEBUG */
 
-static char *
+static const char *
 phase_names[8] = {
 	"DATA_OUT",
 	"DATA_IN",

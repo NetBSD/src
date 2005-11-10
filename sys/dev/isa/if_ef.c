@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.15.6.4 2005/02/04 11:46:08 skrll Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.15.6.5 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.15.6.4 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.15.6.5 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,19 +149,19 @@ ef_card_add(
     struct ef_isabus *bus,
     bus_addr_t iobase,
     bus_addr_t maddr,
-    bus_size_t msize,
+    bus_size_t msiz,
     int irq)
 {
 	int idx;
 
 	DPRINTF(("Adding 3c507 at 0x%x, IRQ %d, Mem 0x%lx/%ld\n",
-		 (u_int) iobase, irq, (u_long) maddr, msize));
+		 (u_int) iobase, irq, (u_long) maddr, msiz));
 
 	for (idx = 0; idx < MAXCARDS_PER_ISABUS; idx++) {
 		if (bus->isa_cards[idx].available == 0) {
 			bus->isa_cards[idx].iobase = iobase;
 			bus->isa_cards[idx].maddr = maddr;
-			bus->isa_cards[idx].msize = msize;
+			bus->isa_cards[idx].msize = msiz;
 			bus->isa_cards[idx].irq = irq;
 			bus->isa_cards[idx].available = 1;
 			break;
@@ -305,8 +305,8 @@ ef_copyout (sc, src, offset, size)
 	}
 
 	dribble = size % 2;
-	bus_space_write_region_2(sc->bt, sc->bh, offset, (u_int16_t *)bptr,
-				 size >> 1);
+	bus_space_write_region_2(sc->bt, sc->bh, offset,
+	    (const u_int16_t *)bptr, size >> 1);
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;
@@ -432,7 +432,7 @@ ef_match(parent, cf, aux)
 				int irq;
 				u_int8_t v;
 				bus_addr_t maddr;
-				bus_addr_t msize;
+				bus_addr_t msiz1;
 				bus_space_handle_t memh;
 
 				irq = bus_space_read_1(iot, ioh, EF_IRQ) &
@@ -441,15 +441,15 @@ ef_match(parent, cf, aux)
 				v = bus_space_read_1(iot, ioh, EF_MADDR);
 				maddr = EF_MADDR_BASE +
 				      ((v & EF_MADDR_MASK) << EF_MADDR_SHIFT);
-				msize = ((v & EF_MSIZE_MASK) + 1) *
+				msiz1 = ((v & EF_MSIZE_MASK) + 1) *
 					EF_MSIZE_STEP;
 
 				if (bus_space_map(ia->ia_memt, maddr,
-						  msize, 0, &memh) == 0) {
+						  msiz1, 0, &memh) == 0) {
 					    ef_card_add(bus, iobase, maddr,
-							msize, irq);
+							msiz1, irq);
 					    bus_space_unmap(ia->ia_memt,
-							    memh, msize);
+							    memh, msiz1);
 				}
 			}
 			bus_space_unmap(iot, ioh, EF_IOSIZE);
@@ -515,7 +515,7 @@ ef_attach(parent, self, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 
 	int i;
-	char version[20];
+	char vers[20];
 	struct ef_isabus *bus;
 	u_int8_t partno[EF_TYPE_LEN];
 	bus_space_handle_t ioh, memh;
@@ -658,19 +658,19 @@ ef_attach(parent, self, aux)
 		ethaddr[i] = bus_space_read_1(esc->sc_regt, esc->sc_regh,
 					      EF_ADDR + i);
 
-	snprintf(version, sizeof(version), "%s, rev. %d",
+	snprintf(vers, sizeof(vers), "%s, rev. %d",
 		(esc->card_type == EF_CARD_TP) ? "3C507-TP" : "3C507",
 		esc->card_rev);
 
 	if (esc->card_type == EF_CARD_TP)
-		i82586_attach(sc, version, ethaddr, eftp_media, NEFTP_MEDIA,
+		i82586_attach(sc, vers, ethaddr, eftp_media, NEFTP_MEDIA,
 			      eftp_media[0]);
 	else {
 		u_int8_t media = bus_space_read_1(esc->sc_regt, esc->sc_regh,
 						  EF_MEDIA);
 		media = (media & EF_MEDIA_MASK) >> EF_MEDIA_SHIFT;
 
-		i82586_attach(sc, version, ethaddr, ef_media, NEF_MEDIA,
+		i82586_attach(sc, vers, ethaddr, ef_media, NEF_MEDIA,
 			      ef_media[media]);
 	}
 
@@ -692,7 +692,7 @@ ef_port_check(iot, ioh)
 {
 	int i;
         u_char ch;
-	u_char* signature = EF_SIGNATURE;
+	const u_char* signature = EF_SIGNATURE;
 
 	for (i = 0; i < strlen(signature); i++) {
 		ch = bus_space_read_1(iot, ioh, i);

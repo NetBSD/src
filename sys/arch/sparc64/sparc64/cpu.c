@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29.2.4 2005/04/01 14:28:41 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.29.2.5 2005/11/10 13:59:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.4 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.5 2005/11/10 13:59:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.4 2005/04/01 14:28:41 skrll Exp $");
 struct cacheinfo cacheinfo;
 
 /* Linked list of all CPUs in system. */
-int ncpus = 0;
+int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
 __volatile cpuset_t cpus_active;/* set of active cpus */
@@ -198,7 +198,7 @@ cpu_attach(parent, dev, aux)
 	struct mainbus_attach_args *ma = aux;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
-	char *sep;
+	const char *sep;
 	register int i, l;
 	uint64_t ver;
 	int bigcache, cachesize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisareg.h,v 1.5 2000/08/11 00:44:37 thorpej Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.5.24.1 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -87,14 +87,13 @@
  *
  * EISA_PRIDID_n returns the "n"th hex digit of the product ID.
  */
-#define	__EISA_HEX_MAP	"0123456789ABCDEF"
 #define	EISA_PRODID_0(pid)						\
-	    (__EISA_HEX_MAP[(((pid)[0] >> 4) & 0xf)])
+	    (HEXDIGITS[(((pid)[0] >> 4) & 0xf)])
 #define	EISA_PRODID_1(pid)						\
-	    (__EISA_HEX_MAP[(((pid)[0] >> 0) & 0xf)])
+	    (HEXDIGITS[(((pid)[0] >> 0) & 0xf)])
 #define	EISA_PRODID_2(pid)						\
-	    (__EISA_HEX_MAP[(((pid)[1] >> 4) & 0xf)])
+	    (HEXDIGITS[(((pid)[1] >> 4) & 0xf)])
 #define	EISA_PRODID_3(pid)						\
-	    (__EISA_HEX_MAP[(((pid)[1] >> 0) & 0xf)])
+	    (HEXDIGITS[(((pid)[1] >> 0) & 0xf)])
 
 #endif /* !__DEV_EISA_EISAREG_H__ */

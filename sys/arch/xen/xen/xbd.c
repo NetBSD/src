@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.9.4.8 2005/04/01 14:29:11 skrll Exp $ */
+/* $NetBSD: xbd.c,v 1.9.4.9 2005/11/10 14:00:34 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.4.8 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.4.9 2005/11/10 14:00:34 skrll Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -57,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.4.8 2005/04/01 14:29:11 skrll Exp $");
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 
 #include <uvm/uvm.h>
 
@@ -184,14 +182,13 @@ static dev_t xbd_cd_major;
 static dev_t xbd_cd_cdev_major;
 #endif
 
+static struct dkdriver xbddkdriver = {
+	.d_strategy = xbdstrategy,
+	.d_minphys = minphys,
+};
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
-#if 0
-static void	xbd_update_create_kthread(void *);
-static void	xbd_update_kthread(void *);
-static int	xbd_update_handler(void *);
-#endif
 
 static int	xbdinit(struct xbd_softc *, vdisk_t *, struct dk_intf *);
 
@@ -243,16 +240,11 @@ static struct xbd_attach_args cd_ata = {
 };
 #endif
 
-static struct sysctlnode *diskcookies;
-
-
 #if defined(XBDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
 
 #ifdef DEBUG
-int xbddebug = 0;
-
 #define XBDB_FOLLOW	0x1
 #define XBDB_IO		0x2
 #define XBDB_SETUP	0x4
@@ -261,6 +253,9 @@ int xbddebug = 0;
 #define IFDEBUG(x,y)		if (xbddebug & (x)) y
 #define DPRINTF(x,y)		IFDEBUG(x, printf y)
 #define DPRINTF_FOLLOW(y)	DPRINTF(XBDB_FOLLOW, y)
+
+int xbddebug = 0;
+
 #define	DEBUG_MARK_UNUSED(_xr)	(_xr)->xr_sc = (void *)0xdeadbeef
 
 struct xbdreq *xbd_allxr;
@@ -317,7 +312,7 @@ static SIMPLEQ_HEAD(, xbdreq) xbdr_suspended =
 	SLIST_INSERT_HEAD(&xbdreqs, _xr, xr_unused);	\
 } while (/*CONSTCOND*/0)
 
-static struct bufq_state bufq;
+static struct bufq_state *bufq;
 static int bufq_users = 0;
 
 #define XEN_MAJOR(_dev)	((_dev) >> 8)
@@ -371,7 +366,6 @@ static unsigned int state = STATE_CLOSED;
 
 static int in_autoconf; /* are we still in autoconf ? */
 static unsigned int blkif_evtchn = 0;
-static unsigned int blkif_irq = 0;
 static unsigned int blkif_handle = 0;
 
 static int blkif_control_rsp_valid = 0;
@@ -382,17 +376,9 @@ struct xbd_ctrl {
 
 	cfprint_t xc_cfprint;
 	struct device *xc_parent;
-#define BLK_CTRL_NMSGS 8
-	ctrl_msg_t *msgs[BLK_CTRL_NMSGS]; /* ring of pending messages */
-	volatile int msg_producer, msg_consumer;
-	struct proc *sc_thread;
-
 };
 
 static struct xbd_ctrl blkctrl;
-
-static void xbdc_create_thread(void *);
-static void xbdc_thread(void *);
 
 #define XBDUNIT(x)		DISKUNIT(x)
 #define GETXBD_SOFTC(_xs, x)	if (!((_xs) = getxbd_softc(x))) return ENXIO
@@ -524,17 +510,8 @@ free_interface(void)
 		blk_ring = NULL;
 	}
 
-	if (blkif_irq) {
-#if 0
-		free_irq(blkif_irq, NULL);
-#endif
-		blkif_irq = 0;
-	}
-
 	if (blkif_evtchn) {
-#if 0
-		unbind_evtchn_from_irq(blkif_evtchn);
-#endif
+		event_remove_handler(blkif_evtchn, &xbd_response_handler, NULL);
 		blkif_evtchn = 0;
 	}
 }
@@ -575,12 +552,12 @@ connect_interface(blkif_fe_interface_status_t *status)
 	int i;
 
 	blkif_evtchn = status->evtchn;
-	blkif_irq = bind_evtchn_to_irq(blkif_evtchn);
 
-	aprint_verbose("xbd: using irq %d\n", blkif_irq);
+	aprint_verbose("xbd: using event channel %d\n", blkif_evtchn);
 
-	event_set_handler(blkif_irq, &xbd_response_handler, NULL, IPL_BIO);
-	hypervisor_enable_irq(blkif_irq);
+	event_set_handler(blkif_evtchn, &xbd_response_handler, NULL, IPL_BIO,
+	    "xbd");
+	hypervisor_enable_event(blkif_evtchn);
 
 	/* Transition to connected in case we need to do 
 	 *  a partition probe on a whole disk. */
@@ -600,7 +577,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 		xbda = get_xbda(xd);
 		if (xbda) {
 			xbda->xa_xd = xd;
-			config_found(blkctrl.xc_parent, xbda,
+			config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
 			    blkctrl.xc_cfprint);
 		}
 	}
@@ -629,15 +606,6 @@ connect_interface(blkif_fe_interface_status_t *status)
 	return;
 }
 
-static void
-unexpected(blkif_fe_interface_status_t *status)
-{
-
-	printf("Unexpected blkif status %d in state %d\n", 
-	    status->status, state);
-}
-
-#if 0
 static struct device *
 find_device(vdisk_t *xd)
 {
@@ -654,7 +622,99 @@ find_device(vdisk_t *xd)
 	}
 	return dv;
 }
-#endif
+
+static void
+vbd_update(void)
+{
+	struct xbd_attach_args *xbda;
+	struct device *dev;
+	vdisk_t *xd;
+	vdisk_t *vbd_info_update, *vbd_info_old;
+	int i, j, new_nr_vbds;
+	extern int hypervisor_print(void *, const char *);
+
+	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
+	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK | M_ZERO);
+
+	new_nr_vbds  = get_vbd_info(vbd_info_update);
+
+	if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
+	    sizeof(vdisk_t)) == 0) {
+		FREE(vbd_info_update, M_DEVBUF);
+		return;
+	}
+
+	for (i = 0, j = 0; i < nr_vbds && j < new_nr_vbds;)  {
+		if (vbd_info[i].device > vbd_info_update[j].device) {
+			DPRINTF(XBDB_HOTPLUG,
+			    ("delete device %x size %lx\n",
+				vbd_info[i].device,
+				(u_long)vbd_info[i].capacity));
+			xd = &vbd_info[i];
+			dev = find_device(xd);
+			if (dev)
+				config_detach(dev, DETACH_FORCE);
+			i++;
+		} else if (vbd_info_update[j].device > vbd_info[i].device) {
+			DPRINTF(XBDB_HOTPLUG,
+			    ("add device %x size %lx\n",
+				vbd_info_update[j].device,
+				(u_long)vbd_info_update[j].capacity));
+			xd = &vbd_info_update[j];
+			xbda = get_xbda(xd);
+			if (xbda) {
+				xbda->xa_xd = xd;
+				config_found_ia(blkctrl.xc_parent, "xendevbus",
+				    xbda, blkctrl.xc_cfprint);
+			}
+			j++;
+		} else {
+			i++; j++;
+			DPRINTF(XBDB_HOTPLUG,
+			    ("update device %x size %lx size %lx\n",
+				vbd_info_update[i].device,
+				(u_long)vbd_info[j].capacity,
+				(u_long)vbd_info_update[i].capacity));
+		}
+	}
+	for (; i < nr_vbds; i++) {
+		DPRINTF(XBDB_HOTPLUG,
+		    ("delete device %x size %lx\n",
+			vbd_info[i].device,
+			(u_long)vbd_info[i].capacity));
+		xd = &vbd_info[i];
+		dev = find_device(xd);
+		if (dev)
+			config_detach(dev, DETACH_FORCE);
+	}
+	for (; j < new_nr_vbds; j++) {
+		DPRINTF(XBDB_HOTPLUG,
+		    ("add device %x size %lx\n",
+			vbd_info_update[j].device,
+			(u_long)vbd_info_update[j].capacity));
+		xd = &vbd_info_update[j];
+		xbda = get_xbda(xd);
+		if (xbda) {
+			xbda->xa_xd = xd;
+			config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
+			    blkctrl.xc_cfprint);
+		}
+	}
+
+	nr_vbds = new_nr_vbds;
+
+	vbd_info_old = vbd_info;
+	vbd_info = vbd_info_update;
+	FREE(vbd_info_old, M_DEVBUF);
+}
+
+static void
+unexpected(blkif_fe_interface_status_t *status)
+{
+
+	printf("Unexpected blkif status %d in state %d\n", 
+	    status->status, state);
+}
 
 static void
 blkif_status(blkif_fe_interface_status_t *status)
@@ -716,9 +776,7 @@ blkif_status(blkif_fe_interface_status_t *status)
 			unexpected(status);
 			break;
 		case STATE_CONNECTED:
-#if 0
 			vbd_update();
-#endif
 			break;
 		}
 		break;
@@ -726,29 +784,6 @@ blkif_status(blkif_fe_interface_status_t *status)
 	default:
 		printf(" Invalid blkif status: %d\n", status->status);
 		break;
-	}
-}
-
-static void
-xbdc_thread(void *arg)
-{
-	struct xbd_ctrl *xbdc_sc = arg;
-	int s;
-
-	for (;;) {
-		s = splbio();
-		/* get messages from ring */
-		while(xbdc_sc->msg_consumer != xbdc_sc->msg_producer) {
-			blkif_status((blkif_fe_interface_status_t *)
-			    &(xbdc_sc->msgs[xbdc_sc->msg_consumer]->msg[0]));
-			ctrl_if_send_response(
-			    xbdc_sc->msgs[xbdc_sc->msg_consumer]);
-			xbdc_sc->msg_consumer++;
-			if (xbdc_sc->msg_consumer == BLK_CTRL_NMSGS)
-				xbdc_sc->msg_consumer = 0;
-		}
-		(void) tsleep(&xbdc_sc->msgs, PRIBIO, "xbdc", 0);
-		splx(s);
 	}
 }
 
@@ -760,19 +795,14 @@ xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	case CMSG_BLKIF_FE_INTERFACE_STATUS:
 		if (msg->length != sizeof(blkif_fe_interface_status_t))
 			goto parse_error;
-		/* store messages in ring, and wakeup thread */
-		blkctrl.msgs[blkctrl.msg_producer] = msg;
-		blkctrl.msg_producer++;
-		if (blkctrl.msg_producer == BLK_CTRL_NMSGS)
-			blkctrl.msg_producer = 0;
-		if (blkctrl.msg_producer == blkctrl.msg_consumer)
-			panic("xbdc: ring too small");
-		wakeup(&blkctrl.msgs);
+		blkif_status((blkif_fe_interface_status_t *)
+		    &msg->msg[0]);
 		break;        
 	default:
 		goto parse_error;
 	}
 
+	ctrl_if_send_response(msg);
 	return;
 
  parse_error:
@@ -786,7 +816,8 @@ enable_update_events(struct device *self)
 {
 
 	kthread_create(xbd_update_create_kthread, self);
-	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO);
+	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO,
+	    "xbdup");
 	hypervisor_enable_event(_EVENT_VBD_UPD);
 }
 #endif
@@ -885,35 +916,6 @@ send_interface_connect(void)
 	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
 }
 
-static void
-setup_sysctl(void)
-{
-	struct sysctlnode *pnode;
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       0,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
-
-	sysctl_createv(NULL, 0, NULL, &pnode,
-		       0,
-		       CTLTYPE_NODE, "domain0", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	if (pnode == NULL)
-		return;
-
-	sysctl_createv(NULL, 0, &pnode, &pnode,
-		       0,
-		       CTLTYPE_NODE, "diskcookie", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	if (pnode)
-		diskcookies = pnode;
-}
 
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
@@ -924,9 +926,6 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 	blkctrl.xc_parent = self;
 	blkctrl.xc_cfprint = print;
-
-	if (xen_start_info.flags & SIF_PRIVILEGED)
-		setup_sysctl();
 
 #if NXBD > 0
 	xbd_major = devsw_name2blk("xbd", NULL, 0);
@@ -961,24 +960,11 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 	in_autoconf = 1;
 	config_pending_incr();
-	blkctrl.msg_producer = blkctrl.msg_consumer = 0;
-	kthread_create(xbdc_create_thread, &blkctrl);
 
 	send_driver_status(1);
 
 	return 0;
 }
-
-static void
-xbdc_create_thread(void *arg)
-{
-	struct xbd_ctrl *xbdc_sc = arg;
-	int error;
-	if ((error = kthread_create1(xbdc_thread, xbdc_sc, &xbdc_sc->sc_thread,
-	    "%s", "xbdc")) != 0)
-		aprint_error("xbdc: unable to create kernel thread: error %d\n",
-		    error);
-}	
 
 #if NXBD > 0
 int
@@ -1038,15 +1024,8 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
+	xs->sc_dksc.sc_dkdev.dk_driver = &xbddkdriver;
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
-	if (diskcookies) {
-		/* XXX beware that xs->sc_xd_device is a long */
-		sysctl_createv(NULL, 0, &diskcookies, NULL,
-		    0,
-		    CTLTYPE_INT, xs->sc_dev.dv_xname, NULL,
-		    NULL, 0, &xs->sc_xd_device, 0,
-		    CTL_CREATE, CTL_EOL);
-	}
 
 #if NRND > 0
 	rnd_attach_source(&xs->sc_rnd_source, xs->sc_dev.dv_xname,
@@ -1058,6 +1037,7 @@ static int
 xbd_detach(struct device *dv, int flags)
 {
 	struct	xbd_softc *xs = (struct	xbd_softc *)dv;
+	int bmaj, cmaj, mn, i;
 
 	/* 
 	 * Mark disk about to be removed (between now and when the xs
@@ -1069,15 +1049,35 @@ xbd_detach(struct device *dv, int flags)
 	if (xs->sc_dksc.sc_dkdev.dk_busy > 0)
 		tsleep(&xs, PWAIT, "xbdetach", hz);
 
+	/* locate the major number */
+	bmaj = bdevsw_lookup_major(&xbd_bdevsw);
+	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
+
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = DISKMINOR(dv->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
+	/* Delete all of our wedges. */
+	dkwedge_delall(&xs->sc_dksc.sc_dkdev);
+
+#if 0
+	s = splbio();
+	/* Kill off any queued buffers. */
+	bufq_drain(&sd->buf_queue);
+	bufq_free(&sd->buf_queue);
+
+	splx(s);
+#endif
+
 	/* Detach the disk. */
 	disk_detach(&xs->sc_dksc.sc_dkdev);
 
-	/* XXX decrement bufq_users and free? */
-
-	/* XXX no need to remove sysctl nodes since they only exist
-	 * in domain0 and domain0's devices are never removed.
-	 */
-
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&xs->sc_rnd_source);
+#endif
 	return 0;
 }
 
@@ -1315,7 +1315,6 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	xbd_softc *xs;
 	struct xbdreq *pxr, *xr;
-	struct	partition *pp;
 	daddr_t	bn;
 	int ret, runqueue;
 
@@ -1333,18 +1332,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 	dksc = &xs->sc_dksc;
 
-	/* XXXrcd:
-	 * Translate partition relative blocks to absolute blocks,
-	 * this probably belongs (somehow) in dksubr.c, since it
-	 * is independant of the underlying code...  This will require
-	 * that the interface be expanded slightly, though.
-	 */
-	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &xs->sc_dksc.sc_dkdev.dk_label->
-			d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
-	}
+	bn = bp->b_rawblkno;
 
 	DPRINTF(XBDB_IO, ("xbdstart: addr %p, sector %llu, "
 	    "count %d [%s]\n", bp->b_data, (unsigned long long)bn,
@@ -1387,7 +1375,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		    xr_suspended);
 		DPRINTF(XBDB_IO, ("xbdstart: suspended xbdreq %p "
 		    "for bp %p\n", pxr, bp));
-	} else if (CANGET_XBDREQ() && BUFQ_PEEK(&bufq) != NULL) {
+	} else if (CANGET_XBDREQ() && BUFQ_PEEK(bufq) != NULL) {
 		/* 
 		 * We have enough resources to start another bp and
 		 * there are additional bps on the queue, dk_start
@@ -1497,105 +1485,6 @@ xbd_response_handler(void *arg)
 	return 0;
 }
 
-#if 0
-static void
-xbd_update_create_kthread(void *arg)
-{
-
-	kthread_create1(xbd_update_kthread, arg, NULL, "xbdupdate");
-}
-
-static void
-xbd_update_kthread(void *arg)
-{
-	struct device *parent = arg;
-	struct xbd_attach_args *xbda;
-	struct device *dev;
-	vdisk_t *xd;
-	vdisk_t *vbd_info_update, *vbd_info_old;
-	int i, j, new_nr_vbds;
-	extern int hypervisor_print(void *, const char *);
-
-	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
-	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
-
-	for (;;) {
-		memset(vbd_info_update, 0, MAX_VBDS * sizeof(vdisk_t));
-		new_nr_vbds  = get_vbd_info(vbd_info_update);
-
-		if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
-		    sizeof(vdisk_t)) == 0) {
-			FREE(vbd_info_update, M_DEVBUF);
-			tsleep(parent, PWAIT, "xbdupd", 0);
-			MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
-			    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
-			continue;
-		}
-
-		j = 0;
-		for (i = 0; i < new_nr_vbds; i++) {
-			while (j < nr_vbds &&
-			    vbd_info[j].device < vbd_info_update[i].device) {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("delete device %x size %lx\n",
-					vbd_info[j].device,
-					vbd_info[j].capacity));
-				xd = &vbd_info[j];
-				dev = find_device(xd);
-				if (dev)
-					config_detach(dev, DETACH_FORCE);
-				j++;
-			}
-			if (j < nr_vbds &&
-			    vbd_info[j].device == vbd_info_update[i].device) {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("update device %x size %lx size %lx\n",
-					vbd_info_update[i].device,
-					vbd_info[j].capacity,
-					vbd_info_update[i].capacity));
-				j++;
-			} else {
-				DPRINTF(XBDB_HOTPLUG,
-				    ("add device %x size %lx\n",
-					vbd_info_update[i].device,
-					vbd_info_update[i].capacity));
-				xd = &vbd_info_update[i];
-				xbda = get_xbda(xd);
-				if (xbda) {
-					xbda->xa_xd = xd;
-					config_found(parent, xbda, hypervisor_print);
-				}
-			}
-		}
-
-		while (j < nr_vbds) {
-			DPRINTF(XBDB_HOTPLUG, ("delete device %x\n",
-			    vbd_info[j].device));
-			xd = &vbd_info[j];
-			dev = find_device(xd);
-			if (dev)
-				config_detach(dev, DETACH_FORCE);
-			j++;
-		}
-
-		nr_vbds = new_nr_vbds;
-
-		vbd_info_old = vbd_info;
-		vbd_info = vbd_info_update;
-		vbd_info_update = vbd_info_old;
-	}
-}
-
-static int
-xbd_update_handler(void *arg)
-{
-
-	wakeup(arg);
-
-	return 0;
-}
-#endif
-
 /* XXX: we should probably put these into dksubr.c, mostly */
 int
 xbdread(dev_t dev, struct uio *uio, int flags)
@@ -1634,14 +1523,13 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
 	int	ret;
+	struct	disk *dk;
 
 	DPRINTF_FOLLOW(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, p));
 	GETXBD_SOFTC(xs, dev);
 	dksc = &xs->sc_dksc;
-
-	if ((ret = lockmgr(&dksc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
+	dk = &dksc->sc_dkdev;
 
 	switch (cmd) {
 	default:
@@ -1649,7 +1537,6 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 
-	lockmgr(&dksc->sc_lock, LK_RELEASE, NULL);
 	return ret;
 }
 
@@ -1707,16 +1594,14 @@ xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 	 * available in xbdstart and this device had no requests
 	 * in-flight which would trigger a dk_start from the interrupt
 	 * handler.
-	 * XXX this assumes that we can just memcpy struct bufq_state
-	 *     to share it between devices.
 	 * XXX we reference count the usage in case so we can de-alloc
 	 *     the bufq if all devices are deconfigured.
 	 */
 	if (bufq_users == 0) {
-		bufq_alloc(&bufq, BUFQ_FCFS);
+		bufq_alloc(&bufq, "fcfs", 0);
 		bufq_users = 1;
 	}
-	memcpy(&xs->sc_dksc.sc_bufq, &bufq, sizeof(struct bufq_state));
+	xs->sc_dksc.sc_bufq = bufq;
 
 	xs->sc_dksc.sc_flags |= DKF_INITED;
 
@@ -1729,6 +1614,9 @@ xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 	format_bytes(buf, sizeof(buf), (uint64_t)xs->sc_dksc.sc_size *
 	    pdg->pdg_secsize);
 	printf(" %s\n", buf);
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&xs->sc_dksc.sc_dkdev);
 
 /*   out: */
 	return ret;

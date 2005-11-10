@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.14.2.2 2005/03/04 16:52:02 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.14.2.3 2005/11/10 14:09:45 skrll Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.14.2.2 2005/03/04 16:52:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.14.2.3 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		goto ok;
 	}
 	if ((off == 0 || offp) && M_LEADINGSPACE(n->m_next) >= hlen &&
-	    !sharedcluster) {
+	    !sharedcluster && n->m_next->m_len >= tlen) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
 		memcpy(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);

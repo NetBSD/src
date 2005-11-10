@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscreate - Create resource lists/tables
- *              xRevision: 66 $
+ *              xRevision: 70 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rscreate.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rscreate.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __RSCREATE_C__
 
@@ -165,9 +165,8 @@ AcpiRsCreateResourceList (
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "ByteStreamBuffer = %p\n",
         ByteStreamBuffer));
 
-    /*
-     * Params already validated, so we don't re-validate here
-     */
+    /* Params already validated, so we don't re-validate here */
+
     ByteStreamBufferLength = ByteStreamBuffer->Buffer.Length;
     ByteStreamStart = ByteStreamBuffer->Buffer.Pointer;
 
@@ -252,9 +251,8 @@ AcpiRsCreatePciRoutingTable (
 
     /* Params already validated, so we don't re-validate here */
 
-    /*
-     * Get the required buffer length
-     */
+    /* Get the required buffer length */
+
     Status = AcpiRsGetPciRoutingTableLength (PackageObject,
                 &BufferSizeNeeded);
     if (ACPI_FAILURE (Status))
@@ -301,9 +299,8 @@ AcpiRsCreatePciRoutingTable (
          */
         UserPrt->Length = (sizeof (ACPI_PCI_ROUTING_TABLE) - 4);
 
-        /*
-         * Each element of the top-level package must also be a package
-         */
+        /* Each element of the top-level package must also be a package */
+
         if (ACPI_GET_OBJECT_TYPE (*TopObjectList) != ACPI_TYPE_PACKAGE)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
@@ -329,9 +326,8 @@ AcpiRsCreatePciRoutingTable (
          */
         SubObjectList = (*TopObjectList)->Package.Elements;
 
-        /*
-         * 1) First subobject: Dereference the PRT.Address
-         */
+        /* 1) First subobject: Dereference the PRT.Address */
+
         ObjDesc = SubObjectList[0];
         if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_INTEGER)
         {
@@ -345,9 +341,8 @@ AcpiRsCreatePciRoutingTable (
             return_ACPI_STATUS (AE_BAD_DATA);
         }
 
-        /*
-         * 2) Second subobject: Dereference the PRT.Pin
-         */
+        /* 2) Second subobject: Dereference the PRT.Pin */
+
         ObjDesc = SubObjectList[1];
         if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_INTEGER)
         {
@@ -361,9 +356,8 @@ AcpiRsCreatePciRoutingTable (
             return_ACPI_STATUS (AE_BAD_DATA);
         }
 
-        /*
-         * 3) Third subobject: Dereference the PRT.SourceName
-         */
+        /* 3) Third subobject: Dereference the PRT.SourceName */
+
         ObjDesc = SubObjectList[2];
         switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
         {
@@ -388,7 +382,9 @@ AcpiRsCreatePciRoutingTable (
 
             Status = AcpiNsHandleToPathname ((ACPI_HANDLE) Node, &PathBuffer);
 
-            UserPrt->Length += (UINT32) ACPI_STRLEN (UserPrt->Source) + 1; /* include null terminator */
+            /* +1 to include null terminator */
+
+            UserPrt->Length += (UINT32) ACPI_STRLEN (UserPrt->Source) + 1;
             break;
 
 
@@ -396,8 +392,10 @@ AcpiRsCreatePciRoutingTable (
 
             ACPI_STRCPY (UserPrt->Source, ObjDesc->String.Pointer);
 
-            /* Add to the Length field the length of the string (add 1 for terminator) */
-
+            /*
+             * Add to the Length field the length of the string
+             * (add 1 for terminator)
+             */
             UserPrt->Length += ObjDesc->String.Length + 1;
             break;
 
@@ -425,9 +423,8 @@ AcpiRsCreatePciRoutingTable (
 
         UserPrt->Length = (UINT32) ACPI_ROUND_UP_TO_64BITS (UserPrt->Length);
 
-        /*
-         * 4) Fourth subobject: Dereference the PRT.SourceIndex
-         */
+        /* 4) Fourth subobject: Dereference the PRT.SourceIndex */
+
         ObjDesc = SubObjectList[3];
         if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_INTEGER)
         {

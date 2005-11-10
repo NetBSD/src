@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrll Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.6.2.6 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.6 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrl
 #include <sys/lwp.h>
 #include <sys/proc.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+
 #include <machine/cpu.h>
+#include <machine/darwin_machdep.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -53,8 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrl
 
 #include <compat/darwin/darwin_commpage.h>
 
+/* XXX: this does not belong here! */
 #ifdef __powerpc__
 #include "opt_altivec.h"
+#endif
+
+#ifdef DEBUG_DARWIN
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a) 
 #endif
 
 static struct uvm_object *darwin_commpage_uao = NULL;
@@ -85,6 +96,8 @@ darwin_commpage_map(p)
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 		if (error != 0) {
+			DPRINTF(("kernel uvm_map darwin_compage failed "
+			    "(error %d)\n", error));
 			uao_detach(darwin_commpage_uao);
 			darwin_commpage_uao = NULL;
 			return -1;
@@ -93,6 +106,8 @@ darwin_commpage_map(p)
 		error = uvm_map_pageable(kernel_map, kvaddr,
 		    kvaddr + memsize, FALSE, 0);
 		if (error != 0) {
+			DPRINTF(("kernel uvm_map_pageable darwin_compage "
+			    "failed (error %d)\n", error));
 			uao_detach(darwin_commpage_uao);
 			darwin_commpage_uao = NULL;
 			return -1;
@@ -108,15 +123,12 @@ darwin_commpage_map(p)
 	    memsize, darwin_commpage_uao, 0, 0,
 	    UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
 	    UVM_INH_SHARE, UVM_ADV_NORMAL, UVM_FLAG_FIXED))) != 0) {
-#ifdef DEBUG_DARWIN
-		printf("uvm_map darwin_commpage failed (error %d)\n", error);
-#endif
+		DPRINTF(("user uvm_map darwin_commpage failed at "
+		    "0x%08lx/memsize (error %d)\n", (long)pvaddr, error));
 		return -1;
 	}
 
-#ifdef DEBUG_DARWIN
-	printf("mapped darwin_commpage at 0x%08lx\n", (long)pvaddr);
-#endif
+	DPRINTF(("mapped darwin_commpage at 0x%08lx\n", (long)pvaddr));
 
 	return 0;
 }
@@ -145,7 +157,7 @@ darwin_commpage_init(dcp)
 	/*
 	 * XXX Only one page is mapped yet (see higher in the file)
 	 */
-	bzero(dcp, sizeof(*dcp));
+	(void)memset(dcp, 0, sizeof(*dcp));
 
 	dcp->dcp_version = DARWIN_COMMPAGE_VERSION;
 
@@ -160,12 +172,18 @@ darwin_commpage_init(dcp)
 	dcp->dcp_ncpu = ncpu;
 	dcp->dcp_cap |= (ncpu << DARWIN_CAP_NCPUSHIFT);
 
+#ifdef DARWIN_CAP_UP
+	if (ncpu == 1)
+		dcp->dcp_cap |= DARWIN_CAP_UP;
+#endif
+
+	/* XXX: This needs to be processor specific */
 #ifdef ALTIVEC
-	dcp->dcp_altivec = 1;
+	dcp->dcp_vector = 1;
 	dcp->dcp_cap |= DARWIN_CAP_ALTIVEC;
 #endif
 
-#ifdef _LP64
+#if defined(_LP64) && defined(DARWIN_CAP_64BIT)
 	dcp->dcp_64bit = 1;
 	dcp->dcp_cap |= DARWIN_CAP_64BIT;
 #endif
@@ -206,7 +224,4 @@ darwin_commpage_init(dcp)
 	DCP_MEMCPY(bcopy);
 	DCP_MEMCPY(memcpy);
 	DCP_MEMCPY(bigcopy);
-
-	return;
 }
-

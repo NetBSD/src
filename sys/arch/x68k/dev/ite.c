@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.33.6.5 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.33.6.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.33.6.5 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.33.6.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -149,7 +149,7 @@ static void iteprecheckwrap(struct ite_softc *);
 static void itecheckwrap(struct ite_softc *);
 static int ite_argnum(struct ite_softc *);
 static int ite_zargnum(struct ite_softc *);
-static void ite_sendstr(struct ite_softc *, char *);
+static void ite_sendstr(struct ite_softc *, const char *);
 __inline static int atoi(const char *);
 void ite_reset(struct ite_softc *);
 struct ite_softc *getitesp(dev_t);
@@ -393,7 +393,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ite_tty[unit];
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && l->l_proc->p_ucred->cr_uid != 0)
+	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(dev, 0);
@@ -941,7 +941,7 @@ ite_filter(c)
 
 /* helper functions, makes the code below more readable */
 __inline static void 
-ite_sendstr(struct ite_softc *ip, char *str)
+ite_sendstr(struct ite_softc *ip, const char *str)
 {
 	while (*str)
 		itesendch (*str++);
@@ -1909,95 +1909,95 @@ iteputchar(int c, struct ite_softc *ip)
 			case 'm':
 				/* big attribute setter/resetter */
 			{
-				char *cp;
+				char *c_p;
 				*ip->ap = 0;
 				/* kludge to make CSIm work (== CSI0m) */
 				if (ip->ap == ip->argbuf)
 					ip->ap++;
-				for (cp = ip->argbuf; cp < ip->ap; ) {
-					switch (*cp) {
+				for (c_p = ip->argbuf; c_p < ip->ap; ) {
+					switch (*c_p) {
 					case 0:
 					case '0':
 						clr_attr (ip, ATTR_ALL);
 						ip->fgcolor = 7;
 						ip->bgcolor = 0;
-						cp++;
+						c_p++;
 						break;
 
 					case '1':
 						set_attr (ip, ATTR_BOLD);
-						cp++;
+						c_p++;
 						break;
 
 					case '2':
-						switch (cp[1]) {
+						switch (c_p[1]) {
 						case '2':
 							clr_attr (ip, ATTR_BOLD);
-							cp += 2;
+							c_p += 2;
 							break;
 
 						case '4':
 							clr_attr (ip, ATTR_UL);
-							cp += 2;
+							c_p += 2;
 							break;
 
 						case '5':
 							clr_attr (ip, ATTR_BLINK);
-							cp += 2;
+							c_p += 2;
 							break;
 
 						case '7':
 							clr_attr (ip, ATTR_INV);
-							cp += 2;
+							c_p += 2;
 							break;
 
 						default:
-							cp++;
+							c_p++;
 							break;
 						}
 						break;
 
 					case '3':
-						switch (cp[1]) {
+						switch (c_p[1]) {
 						case '0': case '1': case '2': case '3':
 						case '4': case '5': case '6': case '7':
 							/* foreground colors */
-							ip->fgcolor = cp[1] - '0';
-							cp += 2;
+							ip->fgcolor = c_p[1] - '0';
+							c_p += 2;
 							break;
 						default:
-							cp++;
+							c_p++;
 							break;
 						}
 						break;
 
 					case '4':
-						switch (cp[1]) {
+						switch (c_p[1]) {
 						case '0': case '1': case '2': case '3':
 						case '4': case '5': case '6': case '7':
 							/* background colors */
-							ip->bgcolor = cp[1] - '0';
-							cp += 2;
+							ip->bgcolor = c_p[1] - '0';
+							c_p += 2;
 							break;
 						default:
 							set_attr (ip, ATTR_UL);
-							cp++;
+							c_p++;
 							break;
 						}
 						break;
 
 					case '5':
 						set_attr (ip, ATTR_BLINK);
-						cp++;
+						c_p++;
 						break;
 
 					case '7':
 						set_attr (ip, ATTR_INV);
-						cp++;
+						c_p++;
 						break;
 
 					default:
-						cp++;
+						c_p++;
 						break;
 					}
 				}

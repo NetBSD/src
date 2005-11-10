@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.6.2.3 2005/03/04 16:50:54 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.6.2.4 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.3 2005/03/04 16:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.4 2005/11/10 14:08:05 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -167,7 +167,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 };
-#define axe_lookup(v, p) ((struct axe_type *)usb_lookup(axe_devs, v, p))
+#define axe_lookup(v, p) ((const struct axe_type *)usb_lookup(axe_devs, v, p))
 
 USB_DECLARE_DRIVER(axe);
 
@@ -450,12 +450,12 @@ USB_ATTACH(axe)
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->axe_dev);
 	struct ifnet *ifp;
 	int i, s;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
@@ -482,7 +482,8 @@ USB_ATTACH(axe)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s\n", USBDEVNAME(sc->axe_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->axe_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {

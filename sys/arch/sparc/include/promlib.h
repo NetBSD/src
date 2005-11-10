@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.10.2.3 2004/09/21 13:22:15 skrll Exp $ */
+/*	$NetBSD: promlib.h,v 1.10.2.4 2005/11/10 13:58:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,28 +70,28 @@ struct promops {
 	void	*po_bootcookie;
 
 	/* Access to boot arguments */
-	char	*(*po_bootpath)(void);
-	char	*(*po_bootfile)(void);
-	char	*(*po_bootargs)(void);
+	const char *(*po_bootpath)(void);
+	const char *(*po_bootfile)(void);
+	const char *(*po_bootargs)(void);
 
 	/* I/O functions */
 	int	(*po_getchar)(void);
 	int	(*po_peekchar)(void);
 	void	(*po_putchar)(int);
-	void	(*po_putstr)(char *, int);
-	int	(*po_open)(char *);
+	void	(*po_putstr)(const char *, int);
+	int	(*po_open)(const char *);
 	void	(*po_close)(int);
 	int	(*po_read)(int, void *, int);
-	int	(*po_write)(int, void *, int);
+	int	(*po_write)(int, const void *, int);
 	int	(*po_seek)(int, u_quad_t);
 
 	int	(*po_instance_to_package)(int);
 
 	/* Misc functions (common in OBP 0,2,3) */
 	void	(*po_halt)(void)	__attribute__((__noreturn__));
-	void	(*po_reboot)(char *)	__attribute__((__noreturn__));
+	void	(*po_reboot)(const char *)	__attribute__((__noreturn__));
 	void	(*po_abort)(void);
-	void	(*po_interpret)(char *);
+	void	(*po_interpret)(const char *);
 	void	(*po_setcallback)(void (*)(void));
 	int	(*po_ticks)(void);
 	void	*po_tickdata;
@@ -110,12 +110,12 @@ struct promops {
 	int	(*po_nextsibling)(int);
 
 	/* Device node properties */
-	int	(*po_getproplen)(int node, char *name);
-	int	(*po_getprop)(int node, char *name, void *, int);
-	int	(*po_setprop)(int node, char *name, const void *, int);
-	char	*(*po_nextprop)(int node, char *name);
+	int	(*po_getproplen)(int, const char *);
+	int	(*po_getprop)(int, const char *, void *, int);
+	int	(*po_setprop)(int, const char *, const void *, int);
+	char	*(*po_nextprop)(int, const char *);
 
-	int	(*po_finddevice)(char *name);
+	int	(*po_finddevice)(const char *);
 
 };
 
@@ -130,30 +130,30 @@ struct memarr {
 	u_long	addr;
 	u_long	len;
 };
-int	prom_makememarr(struct memarr *, int max, int which);
+int	prom_makememarr(struct memarr *, int, int);
 #define	MEMARR_AVAILPHYS	0
 #define	MEMARR_TOTALPHYS	1
 
 struct idprom	*prom_getidprom(void);
 void		prom_getether(int, u_char *);
-char		*prom_pa_location(u_int, u_int);
+const char	*prom_pa_location(u_int, u_int);
 
 void	prom_init(void);	/* To setup promops */
 
 /* Utility routines */
-int	prom_getprop(int, char *, size_t, int *, void *);
-int	prom_getpropint(int node, char *name, int deflt);
-char	*prom_getpropstring(int node, char *name);
-char	*prom_getpropstringA(int node, char *name, char *, size_t);
+int	prom_getprop(int, const char *, size_t, int *, void *);
+int	prom_getpropint(int, const char *, int);
+char	*prom_getpropstring(int, const char *);
+char	*prom_getpropstringA(int, const char *, char *, size_t);
 void	prom_printf(const char *, ...);
 
 int	prom_findroot(void);
 int	prom_findnode(int, const char *);
 int	prom_search(int, const char *);
-int	prom_opennode(char *);
+int	prom_opennode(const char *);
 int	prom_node_has_property(int, const char *);
 int	prom_getoptionsnode(void);
-int	prom_getoption(const char *name, char *buf, int buflen);
+int	prom_getoption(const char *, char *, int);
 
 #define	findroot()		prom_findroot()
 #define	findnode(node,name)	prom_findnode(node,name)

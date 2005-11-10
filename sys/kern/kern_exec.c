@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.10 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.10 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
+#include "opt_verified_exec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.9 2005/04/01 14:30:56 skrll Ex
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
+#ifdef VERIFIED_EXEC
+#include <sys/verified_exec.h>
+#endif
+
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif /* SYSTRACE */
 
 #include <uvm/uvm_extern.h>
 
@@ -124,15 +132,14 @@ struct execsw_entry {
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
-#endif
 
 #ifdef COMPAT_16
 extern char	sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
+#endif
+
+#ifndef __HAVE_SYSCALL_INTERN
+void	syscall(void);
 #endif
 
 /* NetBSD emul struct */
@@ -198,7 +205,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  * ON ENTRY:
  *	exec package with appropriate namei info
  *	lwp pointer of exec'ing lwp
- *      iff verified exec enabled then flag indicating a direct exec or
+ *      if verified exec enabled then flag indicating a direct exec or
  *        an indirect exec (i.e. for a shell script interpreter)
  *	NO SELF-LOCKED VNODES
  *
@@ -218,11 +225,8 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  *			exec header unmodified.
  */
 int
-#ifdef VERIFIED_EXEC
-check_exec(struct lwp *l, struct exec_package *epp, int direct_exec)
-#else
-check_exec(struct lwp *l, struct exec_package *epp)
-#endif
+/*ARGSUSED*/
+check_exec(struct lwp *l, struct exec_package *epp, int flag)
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -268,8 +272,8 @@ check_exec(struct lwp *l, struct exec_package *epp)
 
 
 #ifdef VERIFIED_EXEC
-        /* Evaluate signature for file... */
-        if ((error = check_veriexec(l->l_proc, vp, epp, direct_exec)) != 0)
+        if ((error = veriexec_verify(l, vp, epp->ep_vap, epp->ep_ndp->ni_dirp,
+				     flag, NULL)) != 0)
                 goto bad2;
 #endif
 
@@ -358,6 +362,12 @@ bad1:
 #define STACK_PTHREADSPACE 0
 #endif
 
+static int
+execve_fetch_element(char * const *array, size_t index, char **value)
+{
+	return copyin(array + index, value, sizeof(*value));
+}
+
 /*
  * exec system call
  */
@@ -370,6 +380,15 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
 	} */ *uap = v;
+
+	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
+	    SCARG(uap, envp), execve_fetch_element);
+}
+
+int
+execve1(struct lwp *l, const char *path, char * const *args,
+    char * const *envs, execve_fetch_element_t fetch_element)
+{
 	int			error;
 	u_int			i;
 	struct exec_package	pack;
@@ -378,7 +397,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	struct proc		*p;
 	struct ucred		*cred;
 	char			*argp;
-	char * const		*cpp;
 	char			*dp, *sp;
 	long			argc, envc;
 	size_t			len;
@@ -389,6 +407,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	int			oldlwpflags;
+#ifdef SYSTRACE
+	int			wassugid = ISSET(p->p_flag, P_SUGID);
+	char			pathbuf[MAXPATHLEN];
+	size_t			pathbuflen;
+#endif /* SYSTRACE */
 
 	/* Disable scheduler activation upcalls. */
 	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
@@ -414,12 +437,28 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_execve0(p);
+
+	error = copyinstr(path, pathbuf, sizeof(pathbuf),
+			  &pathbuflen);
+	if (error)
+		goto clrflg;
+
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, l);
+#else
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, path, l);
+#endif /* SYSTRACE */
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	pack.ep_name = SCARG(uap, path);
+#ifdef SYSTRACE
+	pack.ep_name = pathbuf;
+#else
+	pack.ep_name = path;
+#endif /* SYSTRACE */
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -436,10 +475,9 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	/* see if we can run it. */
 #ifdef VERIFIED_EXEC
-        if ((error = check_exec(l, &pack, 1)) != 0)
-        /* if ((error = check_exec(l, &pack, 0)) != 0) */
+        if ((error = check_exec(l, &pack, VERIEXEC_DIRECT)) != 0)
 #else
-        if ((error = check_exec(l, &pack)) != 0)
+        if ((error = check_exec(l, &pack, 0)) != 0)
 #endif
 		goto freehdr;
 
@@ -449,7 +487,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
 	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
 #ifdef DIAGNOSTIC
-	if (argp == (vaddr_t) 0)
+	if (argp == NULL)
 		panic("execve: argp == NULL");
 #endif
 	dp = argp;
@@ -474,17 +512,18 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	}
 
 	/* Now get argv & environment */
-	if (!(cpp = SCARG(uap, argp))) {
+	if (args == NULL) {
 		error = EINVAL;
 		goto bad;
 	}
-
+	/* 'i' will index the argp/envp element to be retrieved */
+	i = 0;
 	if (pack.ep_flags & EXEC_SKIPARG)
-		cpp++;
+		i++;
 
 	while (1) {
 		len = argp + ARG_MAX - dp;
-		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+		if ((error = (*fetch_element)(args, i, &sp)) != 0)
 			goto bad;
 		if (!sp)
 			break;
@@ -498,16 +537,17 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 			ktrkmem(l, KTR_EXEC_ARG, dp, len - 1);
 #endif
 		dp += len;
-		cpp++;
+		i++;
 		argc++;
 	}
 
 	envc = 0;
 	/* environment need not be there */
-	if ((cpp = SCARG(uap, envp)) != NULL ) {
+	if (envs != NULL) {
+		i = 0;
 		while (1) {
 			len = argp + ARG_MAX - dp;
-			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+			if ((error = (*fetch_element)(envs, i, &sp)) != 0)
 				goto bad;
 			if (!sp)
 				break;
@@ -521,7 +561,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 				ktrkmem(l, KTR_EXEC_ENV, dp, len - 1);
 #endif
 			dp += len;
-			cpp++;
+			i++;
 			envc++;
 		}
 	}
@@ -737,8 +777,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		p_sugid(p);
 
 		/* Make sure file descriptors 0..2 are in use. */
-		if ((error = fdcheckstd(l)) != 0)
+		if ((error = fdcheckstd(l)) != 0) {
+			DPRINTF(("execve: fdcheckstd failed %d\n", error));
 			goto exec_abort;
+		}
 
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
@@ -753,8 +795,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-	} else
-		p->p_flag &= ~P_SUGID;
+	} else {
+		if (p->p_ucred->cr_uid == p->p_cred->p_ruid &&
+		    p->p_ucred->cr_gid == p->p_cred->p_rgid)
+			p->p_flag &= ~P_SUGID;
+	}
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
@@ -780,8 +825,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_es->es_emul))
+	if (exec_sigcode_map(p, pack.ep_es->es_emul)) {
+		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
+	}
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -842,6 +889,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		splx(s);
 	}
 
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE) &&
+	    wassugid && !ISSET(p->p_flag, P_SUGID))
+		systrace_execve1(pathbuf, p);
+#endif /* SYSTRACE */
+
 	return (EJUSTRETURN);
 
  bad:
@@ -861,13 +914,17 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
+	free(pack.ep_hdr, M_EXEC);
+
+#ifdef SYSTRACE
+ clrflg:
+#endif /* SYSTRACE */
 	l->l_flag |= oldlwpflags;
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
 
-	free(pack.ep_hdr, M_EXEC);
 	return error;
 
  exec_abort:
@@ -1238,7 +1295,8 @@ exec_init(int init_boot)
 	execsw = new_es;
 	nexecs = es_sz;
 	if (old_es)
-		free((void *)old_es, M_EXEC);
+		/*XXXUNCONST*/
+		free(__UNCONST(old_es), M_EXEC);
 
 	/*
 	 * Figure out the maximum size of an exec header.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.2.22.3 2004/09/21 13:21:08 skrll Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.2.22.4 2005/11/10 13:58:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.2.22.3 2004/09/21 13:21:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.2.22.4 2005/11/10 13:58:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ inittodr(base)
 {
 	mc_todregs rtclk;
 	time_t n;
-	int sec, min, hr, dom, mon, yr;
+	int sec, mins, hr, dom, mon, yr;
 	int i, days = 0;
 	int s;
 
@@ -322,14 +322,14 @@ inittodr(base)
 	splx(s);
 
 	sec = hexdectodec(rtclk[MC_SEC]);
-	min = hexdectodec(rtclk[MC_MIN]);
+	mins = hexdectodec(rtclk[MC_MIN]);
 	hr = hexdectodec(rtclk[MC_HOUR]);
 	dom = hexdectodec(rtclk[MC_DOM]);
 	mon = hexdectodec(rtclk[MC_MONTH]);
 	yr = hexdectodec(rtclk[MC_YEAR]);
 	yr = (yr < 70) ? yr+100 : yr;
 
-	n = sec + 60 * min + 3600 * hr;
+	n = sec + 60 * mins + 3600 * hr;
 	n += (dom - 1) * 3600 * 24;
 
 	if (yeartoday(yr) == 366)

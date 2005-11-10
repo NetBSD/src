@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.13.2.5 2005/04/01 14:32:11 skrll Exp $ */
+/* $NetBSD: pipe.h,v 1.13.2.6 2005/11/10 14:12:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -94,6 +94,10 @@ struct pipemapping {
 #define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
 #define PIPE_DIRECTW	0x040	/* Pipe in direct write mode setup */
 #define PIPE_DIRECTR	0x080	/* Pipe direct read request (setup complete) */
+#define	PIPE_LOCKFL	0x100	/* Process has exclusive access to
+				   pointers/data. */
+#define	PIPE_LWANT	0x200	/* Process wants exclusive access to
+				   pointers/data. */
 
 /*
  * Per-pipe data structure.
@@ -101,7 +105,6 @@ struct pipemapping {
  */
 struct pipe {
 	struct	simplelock pipe_slock;	/* pipe mutex */
-	struct	lock pipe_lock;		/* long-term pipe lock */
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */

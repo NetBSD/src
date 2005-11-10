@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.20.2.1 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.20.2.2 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.20.2.1 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.20.2.2 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -599,7 +599,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 	for (;;) {
 		lmc_desc_t *eop = ri->ri_nextin;
 		int total_len = 0, last_offset = 0;
-		struct mbuf *ms = NULL, *me = NULL;
+		struct mbuf *mms = NULL, *me = NULL;
 		int accept = 0;
 #if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
 		bus_dmamap_t map;
@@ -625,8 +625,8 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		if ((status &
 			(TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) ==
 			(TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) {
-			IF_DEQUEUE(&sc->lmc_rxq, ms);
-			me = ms;
+			IF_DEQUEUE(&sc->lmc_rxq, mms);
+			me = mms;
 		} else {
 			/*
 			 * If still owned by the TULIP, don't touch it.
@@ -666,8 +666,8 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			 * saving a ourselves from doing a multiplication
 			 * by 0 in the normal case).
 			 */
-			IF_DEQUEUE(&sc->lmc_rxq, ms);
-			for (me = ms; total_len > 0; total_len--) {
+			IF_DEQUEUE(&sc->lmc_rxq, mms);
+			for (me = mms; total_len > 0; total_len--) {
 #if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
 				map = M_GETCTX(me, bus_dmamap_t);
 				LMC_RXMAP_POSTSYNC(sc, map);
@@ -715,10 +715,10 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			me->m_len = total_len - last_offset;
 #if NBPFILTER > 0
 			if (sc->lmc_bpf != NULL) {
-				if (me == ms)
-					LMC_BPF_TAP(sc, mtod(ms, caddr_t), total_len);
+				if (me == mms)
+					LMC_BPF_TAP(sc, mtod(mms, caddr_t), total_len);
 				else
-					LMC_BPF_MTAP(sc, ms);
+					LMC_BPF_MTAP(sc, mms);
 			}
 #endif
 			sc->lmc_flags |= LMC_RXACT;
@@ -757,7 +757,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		 * Instead we rely on the test of the beginning of
 		 * the loop to refill for the extra consumed mbufs.
 		 */
-		if (accept || ms == NULL) {
+		if (accept || mms == NULL) {
 			struct mbuf *m0;
 			MGETHDR(m0, M_DONTWAIT, MT_DATA);
 			if (m0 != NULL) {
@@ -768,18 +768,18 @@ lmc_rx_intr(lmc_softc_t * const sc)
 				}
 			}
 			if (accept) {
-				ms->m_pkthdr.len = total_len;
-				ms->m_pkthdr.rcvif = ifp;
+				mms->m_pkthdr.len = total_len;
+				mms->m_pkthdr.rcvif = ifp;
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-				sppp_input(ifp, ms);
+				sppp_input(ifp, mms);
 #endif
 #if defined(__bsdi__)
-				sc->lmc_p2pcom.p2p_input(&sc->lmc_p2pcom, ms);
+				sc->lmc_p2pcom.p2p_input(&sc->lmc_p2pcom, mms);
 #endif
 			}
-			ms = m0;
+			mms = m0;
 		}
-		if (ms == NULL) {
+		if (mms == NULL) {
 			/*
 			 * Couldn't allocate a new buffer.  Don't bother
 			 * trying to replenish the receive queue.
@@ -800,16 +800,16 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			if (sc->lmc_rxmaps_free > 0) {
 				map = sc->lmc_rxmaps[--sc->lmc_rxmaps_free];
 			} else {
-				m_freem(ms);
+				m_freem(mms);
 				sc->lmc_flags |= LMC_RXBUFSLOW;
 #if defined(LMC_DEBUG)
 				sc->lmc_dbg.dbg_rxlowbufs++;
 #endif
 				break;
 			}
-			M_SETCTX(ms, map);
+			M_SETCTX(mms, map);
 			error = bus_dmamap_load(sc->lmc_dmatag, map,
-				mtod(ms, void *), LMC_RX_BUFLEN,
+				mtod(mms, void *), LMC_RX_BUFLEN,
 				NULL, BUS_DMA_NOWAIT);
 			if (error) {
 				printf(LMC_PRINTF_FMT
@@ -841,7 +841,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 #else /* LMC_BUS_DMA */
 			ctl = le32toh(ri->ri_nextout->d_ctl);
 			ri->ri_nextout->d_addr1 = htole32(LMC_KVATOPHYS(sc,
-				mtod(ms, caddr_t)));
+				mtod(mms, caddr_t)));
 			ri->ri_nextout->d_ctl = htole32(LMC_CTL(LMC_CTL_FLGS(ctl),
 				LMC_RX_BUFLEN, 0));
 #endif /* LMC_BUS_DMA */
@@ -849,10 +849,10 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			LMC_RXDESC_POSTSYNC(sc, nextout, sizeof(u_int32_t));
 			if (++ri->ri_nextout == ri->ri_last)
 				ri->ri_nextout = ri->ri_first;
-			me = ms->m_next;
-			ms->m_next = NULL;
-			IF_ENQUEUE(&sc->lmc_rxq, ms);
-		} while ((ms = me) != NULL);
+			me = mms->m_next;
+			mms->m_next = NULL;
+			IF_ENQUEUE(&sc->lmc_rxq, mms);
+		} while ((mms = me) != NULL);
 
 		if (sc->lmc_rxq.ifq_len >= LMC_RXQ_TARGET)
 			sc->lmc_flags &= ~LMC_RXBUFSLOW;
@@ -1097,7 +1097,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 {
 	lmc_ringinfo_t * const ri = &sc->lmc_txinfo;
 	lmc_desc_t *eop, *nextout;
-	int segcnt, free;
+	int segcnt, xfree;
 	u_int32_t d_status, ctl;
 #if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
 	bus_dmamap_t map;
@@ -1139,7 +1139,7 @@ again:
 	d_status = 0;
 	eop = nextout = ri->ri_nextout;
 	segcnt = 0;
-	free = ri->ri_free;
+	xfree = ri->ri_free;
 #if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
 	/*
 	 * Reclaim some DMA maps from if we are out.
@@ -1148,7 +1148,7 @@ again:
 #if defined(LMC_DEBUG)
 		sc->lmc_dbg.dbg_no_txmaps++;
 #endif
-		free += lmc_tx_intr(sc);
+		xfree += lmc_tx_intr(sc);
 	}
 	if (sc->lmc_txmaps_free > 0) {
 		map = sc->lmc_txmaps[sc->lmc_txmaps_free-1];
@@ -1186,11 +1186,11 @@ again:
 			goto finish;
 		}
 	}
-	if ((free -= (map->dm_nsegs + 1) / 2) <= 0
+	if ((xfree -= (map->dm_nsegs + 1) / 2) <= 0
 		/*
 		 * See if there's any unclaimed space in the transmit ring.
 		 */
-		&& (free += lmc_tx_intr(sc)) <= 0) {
+		&& (xfree += lmc_tx_intr(sc)) <= 0) {
 		/*
 		 * There's no more room but since nothing
 		 * has been committed at this point, just
@@ -1273,12 +1273,12 @@ again:
 				goto again;
 			}
 			if (segcnt & 1) {
-				if (--free == 0) {
+				if (--xfree == 0) {
 					/*
 					 * See if there's any unclaimed space
 					 * in the transmit ring.
 					 */
-					if ((free += lmc_tx_intr(sc)) == 0) {
+					if ((xfree += lmc_tx_intr(sc)) == 0) {
 						/*
 						 * There's no more room but
 						 * since nothing has been
@@ -1387,7 +1387,7 @@ again:
 	 * This advances the ring for us.
 	 */
 	ri->ri_nextout = nextout;
-	ri->ri_free = free;
+	ri->ri_free = xfree;
 
 	/*
 	 * switch back to the single queueing ifstart.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.19.2.11 2005/03/04 16:39:09 skrll Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.19.2.12 2005/11/10 13:58:33 skrll Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.19.2.11 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.19.2.12 $"
 
 maxusers	32
 
@@ -70,7 +70,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -87,6 +88,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	COMPAT_15	# NetBSD 1.5
 options		COMPAT_16	# NetBSD 1.6
 options		COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_IRIX	# binary compatibility with IRIX
@@ -112,6 +114,8 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -129,6 +133,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -269,6 +274,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

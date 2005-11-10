@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.9 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.10 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.9 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.10 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -551,7 +551,13 @@ execsigs(struct proc *p)
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 	p->p_sigctx.ps_sigwaited = NULL;
-	p->p_flag &= ~P_NOCLDSTOP;
+
+	/*
+	 * Reset no zombies if child dies flag as Solaris does.
+	 */
+	p->p_flag &= ~(P_NOCLDWAIT | P_CLDSIGIGN);
+	if (SIGACTION_PS(ps, SIGCHLD).sa_handler == SIG_IGN)
+		SIGACTION_PS(ps, SIGCHLD).sa_handler = SIG_DFL;
 
 	/*
 	 * Reset stack state to the user stack.
@@ -1382,6 +1388,20 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		SCHED_UNLOCK(s);
 }
 
+siginfo_t *
+siginfo_alloc(int flags)
+{
+
+	return pool_get(&siginfo_pool, flags);
+}
+
+void
+siginfo_free(void *arg)
+{
+
+	pool_put(&siginfo_pool, arg);
+}
+
 void
 kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
@@ -1396,7 +1416,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
-		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si = siginfo_alloc(PR_WAITOK);
 		si->_info = ksi->ksi_info;
 		le = li = NULL;
 		if (KSI_TRAP_P(ksi))
@@ -1404,8 +1424,8 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		else
 			li = l;
 		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
-		    sizeof(*si), si) != 0) {
-			pool_put(&siginfo_pool, si);
+		    sizeof(*si), si, siginfo_free) != 0) {
+			siginfo_free(si);
 			if (KSI_TRAP_P(ksi))
 				/* XXX What do we do here?? */;
 		}
@@ -1651,7 +1671,7 @@ issignal(struct lwp *l)
  * on the run queue.
  */
 void
-proc_stop(struct proc *p, int wakeup)
+proc_stop(struct proc *p, int dowakeup)
 {
 	struct lwp *l;
 	struct proc *parent;
@@ -1745,7 +1765,7 @@ proc_stop(struct proc *p, int wakeup)
  out:
 	/* XXX unlock process LWP state */
 
-	if (wakeup)
+	if (dowakeup)
 		sched_wakeup((caddr_t)p->p_pptr);
 }
 
@@ -2045,6 +2065,30 @@ sigexit(struct lwp *l, int signum)
 	/* NOTREACHED */
 }
 
+struct coredump_iostate {
+	struct lwp *io_lwp;
+	struct vnode *io_vp;
+	struct ucred *io_cred;
+	off_t io_offset;
+};
+
+int
+coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
+{
+	struct coredump_iostate *io = cookie;
+	int error;
+
+	error = vn_rdwr(UIO_WRITE, io->io_vp, __UNCONST(data), len,
+	    io->io_offset, segflg,
+	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL,
+	    segflg == UIO_USERSPACE ? io->io_lwp : NULL);
+	if (error)
+		return (error);
+
+	io->io_offset += len;
+	return (0);
+}
+
 /*
  * Dump core, into a file named "progname.core" or "core" (depending on the
  * value of shortcorename), unless the process was setuid/setgid.
@@ -2059,6 +2103,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct nameidata	nd;
 	struct vattr		vattr;
 	struct mount		*mp;
+	struct coredump_iostate	io;
 	int			error, error1;
 	char			name[MAXPATHLEN];
 
@@ -2125,8 +2170,13 @@ restart:
 	VOP_SETATTR(vp, &vattr, cred, l);
 	p->p_acflag |= ACORE;
 
+	io.io_lwp = l;
+	io.io_vp = vp;
+	io.io_cred = cred;
+	io.io_offset = 0;
+
 	/* Now dump the actual core file. */
-	error = (*p->p_execsw->es_coredump)(l, vp, cred);
+	error = (*p->p_execsw->es_coredump)(l, &io);
  out:
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
@@ -2294,6 +2344,13 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 int
 sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 {
+	return __sigtimedwait1(l, v, retval, copyout, copyin, copyout);
+}
+
+int
+__sigtimedwait1(struct lwp *l, void *v, register_t *retval,
+    copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
+{
 	struct sys___sigtimedwait_args /* {
 		syscallarg(const sigset_t *) set;
 		syscallarg(siginfo_t *) info;
@@ -2348,7 +2405,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, timeout)) {
 		uint64_t ms;
 
-		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))))
+		if ((error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts))))
 			return (error);
 
 		ms = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
@@ -2433,7 +2490,8 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 			TIMEVAL_TO_TIMESPEC(&tvtimo, &ts);
 
 			/* copy updated timeout to userland */
-			if ((err = copyout(&ts, SCARG(uap, timeout), sizeof(ts)))) {
+			if ((err = (*put_timeout)(&ts, SCARG(uap, timeout),
+			    sizeof(ts)))) {
 				error = err;
 				goto fail;
 			}
@@ -2448,7 +2506,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
  sig:
-	error = copyout(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
+	return (*put_info)(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
 
  fail:
 	FREE(waitset, M_TEMP);

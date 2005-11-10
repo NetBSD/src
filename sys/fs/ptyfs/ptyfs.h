@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.1.2.4 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.1.2.5 2005/11/10 14:09:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -133,6 +133,9 @@ struct ptyfs_args {
 #define PTYFS_MAKEDEV(ptyfs) \
     pty_makedev((ptyfs)->ptyfs_type == PTYFSpts ? 't' : 'p', (ptyfs)->ptyfs_pty)
 
+#define PTYFS_ITIMES(ptyfs, acc, mod, cre) \
+   while ((ptyfs)->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY)) \
+	ptyfs_itimes(ptyfs, acc, mod, cre)
 /*
  * Convert between ptyfsnode vnode
  */
@@ -145,6 +148,8 @@ int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int,
 void ptyfs_hashinit(void);
 void ptyfs_hashreinit(void);
 void ptyfs_hashdone(void);
+void ptyfs_itimes(struct ptyfsnode *, const struct timespec *,
+    const struct timespec *, const struct timespec *);
 
 extern int (**ptyfs_vnodeop_p)(void *);
 extern struct vfsops ptyfs_vfsops;

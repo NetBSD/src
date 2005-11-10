@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.10 2005/04/01 14:28:04 skrll Exp $
+# $NetBSD: GENERIC,v 1.66.2.11 2005/11/10 13:58:26 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.66.2.10 $"
+#ident		"GENERIC-$Revision: 1.66.2.11 $"
 
 maxusers	32
 
@@ -64,7 +64,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -80,6 +81,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -103,6 +105,8 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -120,6 +124,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -410,6 +415,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
 
@@ -458,6 +466,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Handspring Visor
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?
@@ -515,6 +527,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

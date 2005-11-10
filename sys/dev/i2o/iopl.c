@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.11.6.6 2005/03/04 16:41:15 skrll Exp $	*/
+/*	$NetBSD: iopl.c,v 1.11.6.7 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.6 2005/03/04 16:41:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.7 2005/11/10 14:04:00 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -356,11 +356,11 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	if (((le32toh(iop->sc_status.segnumber) >> 12) & 15) ==
 	    I2O_VERSION_20) {
 		if ((tmp & I2O_LAN_MODES_IPV4_CHECKSUM) != 0)
-			ifcap |= IFCAP_CSUM_IPv4;
+			ifcap |= IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx;
 		if ((tmp & I2O_LAN_MODES_TCP_CHECKSUM) != 0)
-			ifcap |= IFCAP_CSUM_TCPv4;
+			ifcap |= IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx;
 		if ((tmp & I2O_LAN_MODES_UDP_CHECKSUM) != 0)
-			ifcap |= IFCAP_CSUM_UDPv4;
+			ifcap |= IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx;
 #ifdef notyet
 		if ((tmp & I2O_LAN_MODES_ICMP_CHECKSUM) != 0)
 			ifcap |= IFCAP_CSUM_ICMP;
@@ -1360,6 +1360,7 @@ iopl_init(struct ifnet *ifp)
 	int rv, s, flg;
 	u_int8_t hwaddr[8];
 	u_int32_t txmode, rxmode;
+	uint64_t ifcap;
 
 	sc = ifp->if_softc;
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
@@ -1413,24 +1414,31 @@ iopl_init(struct ifnet *ifp)
 	rxmode = 0;
 	txmode = 0;
 
-	if ((ifp->if_capenable & IFCAP_CSUM_IPv4) != 0) {
+	ifcap = ifp->if_capenable;
+	if ((ifcap & IFCAP_CSUM_IPv4_Tx) != 0) {
 		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_NETWORK;
-		sc->sc_rx_csumflgs |= M_CSUM_IPv4;
 		txmode |= I2O_LAN_MODES_IPV4_CHECKSUM;
+	}
+	if ((ifcap & IFCAP_CSUM_IPv4_Rx) != 0) {
+		sc->sc_rx_csumflgs |= M_CSUM_IPv4;
 		rxmode |= I2O_LAN_MODES_IPV4_CHECKSUM;
 	}
 
-	if ((ifp->if_capenable & IFCAP_CSUM_TCPv4) != 0) {
+	if ((ifcap & IFCAP_CSUM_TCPv4_Tx) != 0) {
 		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_TRANSPORT;
-		sc->sc_rx_csumflgs |= M_CSUM_TCPv4;
 		txmode |= I2O_LAN_MODES_TCP_CHECKSUM;
+	}
+	if ((ifcap & IFCAP_CSUM_TCPv4_Rx) != 0) {
+		sc->sc_rx_csumflgs |= M_CSUM_TCPv4;
 		rxmode |= I2O_LAN_MODES_TCP_CHECKSUM;
 	}
 
-	if ((ifp->if_capenable & IFCAP_CSUM_UDPv4) != 0) {
+	if ((ifcap & IFCAP_CSUM_UDPv4_Tx) != 0) {
 		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_TRANSPORT;
-		sc->sc_rx_csumflgs |= M_CSUM_UDPv4;
 		txmode |= I2O_LAN_MODES_UDP_CHECKSUM;
+	}
+	if ((ifcap & IFCAP_CSUM_UDPv4_Rx) != 0) {
+		sc->sc_rx_csumflgs |= M_CSUM_UDPv4;
 		rxmode |= I2O_LAN_MODES_TCP_CHECKSUM;
 	}
 

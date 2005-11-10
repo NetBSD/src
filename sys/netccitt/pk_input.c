@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.19.16.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.19.16.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.19.16.4 2005/03/04 16:53:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.19.16.5 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -973,7 +973,7 @@ pk_incoming_call(pkp, m0)
 	struct x25config *xcp = pkp->pk_xcp;
 	int             len = m0->m_pkthdr.len;
 	unsigned        udlen;
-	char           *errstr = "server unavailable";
+	const char *errstr = "server unavailable";
 	octet          *u, *facp;
 	int             lcn = LCN(xp);
 

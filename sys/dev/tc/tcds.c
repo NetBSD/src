@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.10.2.4 2005/03/04 16:50:52 skrll Exp $ */
+/* $NetBSD: tcds.c,v 1.10.2.5 2005/11/10 14:08:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.10.2.4 2005/03/04 16:50:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.10.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,8 +109,6 @@ struct tcds_softc {
 int	tcdsmatch(struct device *, struct cfdata *, void *);
 void	tcdsattach(struct device *, struct device *, void *);
 int     tcdsprint(void *, const char *);
-int	tcdssubmatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 
 CFATTACH_DECL(tcds, sizeof(struct tcds_softc),
     tcdsmatch, tcdsattach, NULL, NULL);
@@ -171,8 +169,7 @@ tcdsattach(parent, self, aux)
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
 	const struct evcnt *pevcnt;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TCDSCF_NLOCS];
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -308,11 +305,10 @@ tcdsattach(parent, self, aux)
 
 		tcds_scsi_reset(tcdsdev.tcdsda_sc);
 
-		ldesc->len = 1;
-		ldesc->locs[TCDSCF_CHIP] = i;
+		locs[TCDSCF_CHIP] = i;
 
-		config_found_sm_loc(self, "tcds", ldesc, &tcdsdev,
-				    tcdsprint, tcdssubmatch);
+		config_found_sm_loc(self, "tcds", locs, &tcdsdev,
+				    tcdsprint, config_stdsubmatch);
 #ifdef __alpha__
 		/*
 		 * The second SCSI chip isn't present on the baseboard TCDS
@@ -323,21 +319,6 @@ tcdsattach(parent, self, aux)
 			break;
 #endif /* __alpha__ */
 	}
-}
-
-int
-tcdssubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
-	    cf->cf_loc[TCDSCF_CHIP] != ldesc->locs[TCDSCF_CHIP])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.9.6.6 2005/03/04 16:50:08 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.9.6.7 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -127,8 +127,8 @@ struct RF_ReconCtrl_s {
 	RF_StripeNum_t lastPSID;/* the ID of the last parity stripe we want
 				 * reconstructed */
 	int     percentComplete;/* percentage completion of reconstruction */
-	int     numRUsComplete; /* number of Reconstruction Units done */
-	int     numRUsTotal;    /* total number of Reconstruction Units */
+	RF_ReconUnitCount_t  numRUsComplete; /* number of Reconstruction Units done */
+	RF_ReconUnitCount_t  numRUsTotal;    /* total number of Reconstruction Units */
 	int error;              /* non-0 indicates that an error has
 				   occured during reconstruction, and
 				   the reconstruction is in the process of

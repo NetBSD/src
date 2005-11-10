@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.72.2.7 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: i82365.c,v 1.72.2.8 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72.2.7 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72.2.8 2005/11/10 14:04:14 skrll Exp $");
 
 #define	PCICDEBUG
 
@@ -89,8 +89,6 @@ int	pcic_debug = 0;
 void	pcic_attach_socket(struct pcic_handle *);
 void	pcic_attach_socket_finish(struct pcic_handle *);
 
-int	pcic_submatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
 int	pcic_print (void *arg, const char *pnp);
 int	pcic_intr_socket(struct pcic_handle *);
 void	pcic_poll_intr(void *);
@@ -205,7 +203,7 @@ pcic_vendor(h)
 	return (vendor);
 }
 
-char *
+const char *
 pcic_vendor_to_string(vendor)
 	int vendor;
 {
@@ -396,8 +394,7 @@ pcic_attach_socket(h)
 {
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
 
@@ -414,12 +411,11 @@ pcic_attach_socket(h)
 	paa.iobase = sc->iobase;
 	paa.iosize = sc->iosize;
 
-	ldesc->len = 2;
-	ldesc->locs[PCMCIABUSCF_CONTROLLER] = h->chip;
-	ldesc->locs[PCMCIABUSCF_SOCKET] = h->socket;
+	locs[PCMCIABUSCF_CONTROLLER] = h->chip;
+	locs[PCMCIABUSCF_SOCKET] = h->socket;
 
-	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", ldesc, &paa,
-					pcic_print, pcic_submatch);
+	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", locs, &paa,
+					pcic_print, config_stdsubmatch);
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;
@@ -639,24 +635,6 @@ pcic_event_thread(arg)
 	wakeup(sc);
 
 	kthread_exit(0);
-}
-
-int
-pcic_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
-			return 0;
-	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
-	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
-			return 0;
-
-	return (config_match(parent, cf, aux));
 }
 
 int
@@ -1249,7 +1227,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	bus_addr_t ioaddr = pcihp->addr + offset;
 	int i, win;
 #ifdef PCICDEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 

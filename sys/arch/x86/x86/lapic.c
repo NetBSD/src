@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $ */
+/* $NetBSD: lapic.c,v 1.2.2.5 2005/11/10 14:00:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.2.2.5 2005/11/10 14:00:20 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -410,7 +410,7 @@ lapic_calibrate_timer(ci)
 void lapic_delay(usec)
 	int usec;
 {
-	int32_t tick, otick;
+	int32_t xtick, otick;
 	int64_t deltat;		/* XXX may want to be 64bit */
 
 	otick = lapic_gettick();
@@ -423,12 +423,12 @@ void lapic_delay(usec)
 		deltat = (lapic_frac_cycle_per_usec * usec) >> 32;
 
 	while (deltat > 0) {
-		tick = lapic_gettick();
-		if (tick > otick)
-			deltat -= lapic_tval - (tick - otick);
+		xtick = lapic_gettick();
+		if (xtick > otick)
+			deltat -= lapic_tval - (xtick - otick);
 		else
-			deltat -= otick - tick;
-		otick = tick;
+			deltat -= otick - xtick;
+		otick = xtick;
 
 		x86_pause();
 	}

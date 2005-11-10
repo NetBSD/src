@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.40.16.1 2005/11/10 14:00:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* XXX XXX This exists to keep kdump and friends happy. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.40 2002/01/14 23:14:34 bjh21 Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.40.16.1 2005/11/10 14:00:52 skrll Exp $");
 
 #if defined(__i386__)
 #include "../../sys/compat/linux/arch/i386/linux_syscalls.c"
@@ -53,6 +53,8 @@ __KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.40 2002/01/14 23:14:34 bjh21 Ex
 #include "../../sys/compat/linux/arch/mips/linux_syscalls.c"
 #elif defined(__arm__)
 #include "../../sys/compat/linux/arch/arm/linux_syscalls.c"
+#elif defined(__amd64__)
+#include "../../sys/compat/linux/arch/amd64/linux_syscalls.c"
 #else
 const char * const linux_syscallnames[] = { 0 };
 #endif

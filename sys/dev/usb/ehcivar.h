@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.12.16.2 2005/01/17 19:31:52 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.12.16.3 2005/11/10 14:08:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct ehci_soft_islot {
 #define EHCI_FRAMELIST_MAXCOUNT	1024
 #define EHCI_IPOLLRATES		8 /* Poll rates (1ms, 2, 4, 8 .. 128) */
 #define EHCI_INTRQHS		((1 << EHCI_IPOLLRATES) - 1)
+#define EHCI_MAX_POLLRATE	(1 << (EHCI_IPOLLRATES - 1))
 #define EHCI_IQHIDX(lev, pos) \
 	((((pos) & ((1 << (lev)) - 1)) | (1 << (lev))) - 1)
 #define EHCI_ILEV_IVAL(lev)	(1 << (lev))
@@ -92,7 +93,7 @@ typedef struct ehci_softc {
 	bus_size_t sc_size;
 	u_int sc_offs;			/* offset to operational regs */
 
-	char sc_vendor[16];		/* vendor string for root hub */
+	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
@@ -137,7 +138,7 @@ typedef struct ehci_softc {
 	device_ptr_t sc_child;		/* /dev/usb# device */
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
 	struct usb_dma_reserve sc_dma_reserve;
 #endif
 } ehci_softc_t;

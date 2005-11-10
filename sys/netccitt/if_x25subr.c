@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.31.6.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.31.6.4 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31.6.3 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31.6.4 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -451,7 +451,8 @@ x25_rtrequest(cmd, rt, info)
 	 */
 	if (x25_dgram_sockmask == 0) {
 		x25_dgram_sockmask =
-			SA(rn_addmask((caddr_t) & x25_dgmask, 0, 4)->rn_key);
+			/*XXXUNCONST*/
+			SA(__UNCONST(rn_addmask(&x25_dgmask, 0, 4)->rn_key));
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		if (rt->rt_llinfo)

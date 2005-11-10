@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.6.2.6 2005/03/04 16:54:22 skrll Exp $ */
+/*      $NetBSD: clockctl.h,v 1.6.2.7 2005/11/10 14:12:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.13.2.3 2004/09/21 13:21:19 skrll Exp $	*/
+/*	$NetBSD: sbic.c,v 1.13.2.4 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13.2.3 2004/09/21 13:21:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13.2.4 2005/11/10 13:58:37 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,7 +128,8 @@ int	wd33c93_xfin (struct wd33c93_softc *, int, void *);
 int	wd33c93_poll (struct wd33c93_softc *, struct wd33c93_acb *);
 int	wd33c93_nextstate (struct wd33c93_softc *, struct wd33c93_acb *,
 				u_char, u_char);
-int	wd33c93_abort (struct wd33c93_softc *, struct wd33c93_acb *, char *);
+int	wd33c93_abort (struct wd33c93_softc *, struct wd33c93_acb *,
+     const char *);
 void	wd33c93_xferdone (struct wd33c93_softc *);
 void	wd33c93_error (struct wd33c93_softc *, struct wd33c93_acb *);
 void	wd33c93_scsidone (struct wd33c93_softc *, struct wd33c93_acb *, int);
@@ -825,7 +826,8 @@ wd33c93_wait(struct wd33c93_softc *dev, u_char until, int timeo, int line)
 }
 
 int
-wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb, char *where)
+wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
+     const char *where)
 {
 	u_char csr, asr;
 

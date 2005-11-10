@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.12.6.4 2004/12/18 09:31:35 skrll Exp $
+#	$NetBSD: files.sun2,v 1.12.6.5 2005/11/10 13:59:38 skrll Exp $
 
 #
 # sun2-specific configuration info
@@ -73,8 +73,7 @@ file arch/sun2/dev/zs.c			zs needs-count
 file dev/ic/z8530sc.c			zs
 file arch/sun2/dev/zs_kgdb.c		kgdb
 
-define zstty {}
-device zstty: tty
+device zstty {}: tty
 attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 

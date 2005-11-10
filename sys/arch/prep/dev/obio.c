@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7.2.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: obio.c,v 1.7.2.4 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.2.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.2.4 2005/11/10 13:58:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ static int obio_found = 0;
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(struct device *, struct cfdata *, void *);
+static int	obio_search(struct device *, struct cfdata *,
+			    const int *, void *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
@@ -84,11 +85,12 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	(void)config_search(obio_search, self, aux);
+	(void)config_search_ia(obio_search, self, "obio", aux);
 }
 
 static int
-obio_search(struct device *parent, struct cfdata *cf, void *aux)
+obio_search(struct device *parent, struct cfdata *cf,
+	    const int *ldesc, void *aux)
 {
 	struct obio_attach_args oa;
 	const char **p;

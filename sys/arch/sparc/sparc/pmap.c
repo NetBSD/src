@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.262.2.6 2005/04/01 14:28:21 skrll Exp $ */
+/*	$NetBSD: pmap.c,v 1.262.2.7 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262.2.6 2005/04/01 14:28:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262.2.7 2005/11/10 13:59:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2044,7 +2044,7 @@ mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
 	else {
 		/* Map kernel address into all contexts */
 		int ctx = getcontext4();
-		int i = ncontext - 1;
+		i = ncontext - 1;
 		do {
 			setcontext4(i);
 			setsegmap(va, pmeg);
@@ -2282,7 +2282,7 @@ ctx_alloc(pm)
 		 */
 		simple_lock(&pm->pm_lock);
 #if defined(MULTIPROCESSOR)
-		for (i = 0; i < ncpu; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif
@@ -2336,7 +2336,7 @@ ctx_free(pm)
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
 #if defined(MULTIPROCESSOR)
-		for (i = 0; i < ncpu; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif
@@ -3652,11 +3652,11 @@ pmap_bootstrap4m(top)
 
 	/* Allocate kernel region pointer tables */
 	pmap_kernel()->pm_reg_ptps = (int **)(q = p);
-	p += ncpu * sizeof(int **);
+	p += sparc_ncpus * sizeof(int **);
 	bzero((void *)q, (u_int)p - (u_int)q);
 
 	pmap_kernel()->pm_reg_ptps_pa = (int *)(q = p);
-	p += ncpu * sizeof(int *);
+	p += sparc_ncpus * sizeof(int *);
 	bzero((void *)q, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
@@ -4084,8 +4084,6 @@ pmap_alloc_cpu(sc)
 
 	/* Pre-compute this CPU's vpage[] PTEs */
 	for (i = 0; i < 2; i++) {
-		struct regmap *rp;
-		struct segmap *sp;
 		rp = &pmap_kernel()->pm_regmap[VA_VREG(sc->vpage[i])];
 		sp = &rp->rg_segmap[VA_VSEG(sc->vpage[i])];
 		sc->vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(sc->vpage[i])];
@@ -4115,8 +4113,8 @@ pmap_init()
 	 */
 	sz = ALIGN(sizeof(struct pmap)) +
 	     ALIGN(NUREG * sizeof(struct regmap)) +
-	     ncpu * sizeof(int *) +		/* pm_reg_ptps */
-	     ncpu * sizeof(int);		/* pm_reg_ptps_pa */
+	     sparc_ncpus * sizeof(int *) +	/* pm_reg_ptps */
+	     sparc_ncpus * sizeof(int);		/* pm_reg_ptps_pa */
 	pool_init(&pmap_pmap_pool, sz, 0, 0, 0, "pmappl",
 		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
@@ -4199,7 +4197,7 @@ pmap_quiet_check(struct pmap *pm)
 		if (CPU_HAS_SRMMU) {
 			int n;
 #if defined(MULTIPROCESSOR)
-			for (n = 0; n < ncpu; n++)
+			for (n = 0; n < sparc_ncpus; n++)
 #else
 			n = 0;
 #endif
@@ -4281,7 +4279,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	pm->pm_regmap = (void *)addr;
 	addr += ALIGN(NUREG * sizeof(struct regmap));
 	pm->pm_reg_ptps = (int **)addr;
-	addr += ncpu * sizeof(int *);
+	addr += sparc_ncpus * sizeof(int *);
 	pm->pm_reg_ptps_pa = (int *)addr;
 
 	qzero((caddr_t)pm->pm_regmap, NUREG * sizeof(struct regmap));
@@ -4311,7 +4309,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		 * this user context.
 		 */
 #if defined(MULTIPROCESSOR)
-		for (n = 0; n < ncpu; n++)
+		for (n = 0; n < sparc_ncpus; n++)
 #else
 		n = 0;
 #endif
@@ -4363,7 +4361,7 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		int n;
 
 #if defined(MULTIPROCESSOR)
-		for (n = 0; n < ncpu; n++)
+		for (n = 0; n < sparc_ncpus; n++)
 #else
 		n = 0;
 #endif
@@ -4550,7 +4548,7 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 					 PMAP_CPUSET(pm));
 #ifdef MULTIPROCESSOR
 		/* Invalidate level 1 PTP entries on all CPUs */
-		for (; n < ncpu; n++)
+		for (; n < sparc_ncpus; n++)
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
 
@@ -5628,9 +5626,9 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 #endif
 
 	pg = PHYS_TO_VM_PAGE(pa);
-
 	pteproto = PG_V | PMAP_T2PTE_4(pa);
 	pa &= ~PMAP_TNC_4;
+
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -5639,9 +5637,14 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	pteproto |= atop(pa) & PG_PFNUM;
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
-
 	if ((flags & PMAP_WIRED) != 0)
 		pteproto |= PG_WIRED;
+	if (flags & VM_PROT_ALL) {
+		pteproto |= PG_U;
+		if (flags & VM_PROT_WRITE) {
+			pteproto |= PG_M;
+		}
+	}
 
 	write_user_windows();
 	ctx = getcontext4();
@@ -6265,6 +6268,12 @@ pmap_enter4m(pm, va, pa, prot, flags)
 
 	/* Make sure we get a pte with appropriate perms! */
 	pteproto |= pte_prot4m(pm, prot);
+	if (flags & VM_PROT_ALL) {
+		pteproto |= SRMMU_PG_R;
+		if (flags & VM_PROT_WRITE) {
+			pteproto |= SRMMU_PG_M;
+		}
+	}
 
 	if (pm == pmap_kernel())
 		error = pmap_enk4m(pm, va, prot, flags, pg, pteproto | PPROT_S);
@@ -6441,7 +6450,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 
 		/* Replicate segment allocation in each CPU's region table */
 #ifdef MULTIPROCESSOR
-		for (i = 0; i < ncpu; i++)
+		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
 #endif

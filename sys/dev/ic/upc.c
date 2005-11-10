@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.6.2.4 2005/03/04 16:41:34 skrll Exp $ */
+/* $NetBSD: upc.c,v 1.6.2.5 2005/11/10 14:04:15 skrll Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6.2.4 2005/03/04 16:41:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6.2.5 2005/11/10 14:04:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,8 +70,6 @@ static void upc_found(struct upc_softc *, char const *, int, int,
 static void upc_found2(struct upc_softc *, char const *, int, int, int, int,
 		       struct upc_irqhandle *);
 static int upc_print(void *, char const *);
-static int upc_submatch(struct device *, struct cfdata *,
-			const locdesc_t *, void *);
 static int upc2_com3_addr(int);
 static int upc2_com4_addr(int);
 
@@ -211,8 +209,7 @@ upc_found(struct upc_softc *sc, char const *devtype, int offset, int size,
 	  struct upc_irqhandle *uih)
 {
 	struct upc_attach_args ua;
-	int help[2];
-	locdesc_t *ldesc = (void *)help;
+	int locs[UPCCF_NLOCS];
 
 	ua.ua_devtype = devtype;
 	ua.ua_offset = offset;
@@ -220,11 +217,10 @@ upc_found(struct upc_softc *sc, char const *devtype, int offset, int size,
 	bus_space_subregion(sc->sc_iot, sc->sc_ioh, offset, size, &ua.ua_ioh);
 	ua.ua_irqhandle = uih;
 
-	ldesc->len = 1;
-	ldesc->locs[UPCCF_OFFSET] = offset;
+	locs[UPCCF_OFFSET] = offset;
 
-	config_found_sm_loc(&sc->sc_dev, "upc", ldesc, &ua,
-			    upc_print, upc_submatch);
+	config_found_sm_loc(&sc->sc_dev, "upc", locs, &ua,
+			    upc_print, config_stdsubmatch);
 }
 
 static void
@@ -232,8 +228,7 @@ upc_found2(struct upc_softc *sc, char const *devtype, int offset, int size,
 	   int offset2, int size2, struct upc_irqhandle *uih)
 {
 	struct upc_attach_args ua;
-	int help[2];
-	locdesc_t *ldesc = (void *)help;
+	int locs[UPCCF_NLOCS];
 
 	ua.ua_devtype = devtype;
 	ua.ua_offset = offset;
@@ -243,11 +238,10 @@ upc_found2(struct upc_softc *sc, char const *devtype, int offset, int size,
 			    &ua.ua_ioh2);
 	ua.ua_irqhandle = uih;
 
-	ldesc->len = 1;
-	ldesc->locs[UPCCF_OFFSET] = offset;
+	locs[UPCCF_OFFSET] = offset;
 
-	config_found_sm_loc(&sc->sc_dev, "upc", ldesc, &ua,
-			    upc_print, upc_submatch);
+	config_found_sm_loc(&sc->sc_dev, "upc", locs, &ua,
+			    upc_print, config_stdsubmatch);
 }
 
 void
@@ -303,19 +297,6 @@ upc_print(void *aux, char const *pnp)
 		aprint_normal("%s at %s", ua->ua_devtype, pnp);
 	aprint_normal(" offset 0x%x", ua->ua_offset);
 	return UNCONF;
-}
-
-static int
-upc_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-	struct upc_attach_args *ua = aux;
-
-	if (strcmp(cf->cf_name, ua->ua_devtype) == 0 &&
-	    (cf->cf_loc[UPCCF_OFFSET] == UPCCF_OFFSET_DEFAULT ||
-	     cf->cf_loc[UPCCF_OFFSET] == ldesc->locs[UPCCF_OFFSET]))
-		return config_match(parent, cf, aux);
-	return 0;
 }
 
 int

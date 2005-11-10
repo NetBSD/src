@@ -1,257 +1,339 @@
-/*	$NetBSD: verified_exec.c,v 1.3.2.6 2005/03/04 16:40:54 skrll Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.3.2.7 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn
- *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
- * All rights reserved.
+ * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
- * This code has been donated to The NetBSD Foundation by the Author.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Brett Lymn and Elad Efrat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.3.2.6 2005/03/04 16:40:54 skrll Exp $");
+#if defined(__NetBSD__)
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.3.2.7 2005/11/10 14:03:00 skrll Exp $");
+#else
+__RCSID("$Id: verified_exec.c,v 1.3.2.7 2005/11/10 14:03:00 skrll Exp $\n$NetBSD: verified_exec.c,v 1.3.2.7 2005/11/10 14:03:00 skrll Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
-#include <sys/verified_exec.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#ifdef __FreeBSD__
+#include <sys/kernel.h>
+#include <sys/device_port.h>
+#include <sys/ioccom.h>
+#else
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#define DEVPORT_DEVICE struct device
+#endif
+
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>
+#include <sys/sysctl.h>
+#define VERIEXEC_NEED_NODE
+#include <sys/verified_exec.h>
 
-struct verified_exec_softc {
-	struct device	veriexec_dev;
+/* count of number of times device is open (we really only allow one open) */
+static unsigned int veriexec_dev_usage;
+
+struct veriexec_softc {
+        DEVPORT_DEVICE veriexec_dev;
 };
 
-const struct cdevsw verifiedexec_cdevsw = {
-        verifiedexecopen, verifiedexecclose, noread, nowrite,
-	verifiedexecioctl, nostop, notty, nopoll, nommap, nokqfilter,
-};
+#if defined(__FreeBSD__)
+# define CDEV_MAJOR 216
+# define BDEV_MAJOR -1
+#endif
 
-/* internal structures */
-LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
-/*LIST_HEAD(veriexec_file_devhead, veriexec_dev_list) veriexec_file_dev_head;*/
-struct veriexec_devhead veriexec_file_dev_head;
+const struct cdevsw veriexec_cdevsw = {
+        veriexecopen,
+	veriexecclose,
+	noread,
+	nowrite,
+        veriexecioctl,
+#ifdef __NetBSD__
+	nostop,
+	notty,
+#endif
+	nopoll,
+	nommap,
+#if defined(__NetBSD__)
+       nokqfilter,
+#elif defined(__FreeBSD__)
+       nostrategy,
+       "veriexec",
+       CDEV_MAJOR,
+       nodump,
+       nopsize,
+       0,                              /* flags */
+       BDEV_MAJOR
+#endif
+};
 
 /* Autoconfiguration glue */
-void	verifiedexecattach(struct device *parent, struct device *self,
-			 void *aux);
-int     verifiedexecopen(dev_t dev, int flags, int fmt, struct lwp *l);
-int     verifiedexecclose(dev_t dev, int flags, int fmt, struct lwp *l);
-int     verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-			struct lwp *l);
-void    add_veriexec_inode(struct veriexec_dev_list *list, unsigned long inode,
-			unsigned char fingerprint[MAXFINGERPRINTLEN],
-			unsigned char type, unsigned char fp_type);
-struct veriexec_dev_list *find_veriexec_dev(unsigned long dev,
-				      struct veriexec_devhead *head);
+void    veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
+			void *aux);
+int     veriexecopen(dev_t dev, int flags, int fmt, struct lwp *l);
+int     veriexecclose(dev_t dev, int flags, int fmt, struct lwp *l);
+int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+		       struct lwp *l);
 
-/*
- * Attach for autoconfig to find.  Initialise the lists and return...
- */
 void
-verifiedexecattach(struct device *parent, struct device *self, void *aux)
+veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
+		   void *aux)
 {
-	LIST_INIT(&veriexec_dev_head);
-	LIST_INIT(&veriexec_file_dev_head);
+	veriexec_dev_usage = 0;
+
+	if (veriexec_verbose >= 2)
+		printf("Veriexec: veriexecattach: Veriexec pseudo-device"
+		       "attached.\n");
 }
 
 int
-verifiedexecopen(dev_t dev, int flags, int fmt, struct lwp *l)
+veriexecopen(dev_t dev __unused, int flags __unused,
+		 int fmt __unused, struct lwp *l __unused)
 {
-	return 0;
+	if (veriexec_verbose >= 2) {
+		printf("Veriexec: veriexecopen: Veriexec load device "
+		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
+		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid, dev);
+	}
+
+	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		return (EPERM);
+
+	if (veriexec_dev_usage > 0) {
+		if (veriexec_verbose >= 2)
+			printf("Veriexec: load device already in use.\n");
+
+		return(EBUSY);
+	}
+
+	veriexec_dev_usage++;
+	return (0);
 }
 
 int
-verifiedexecclose(dev_t dev, int flags, int fmt, struct lwp *l)
+veriexecclose(dev_t dev __unused, int flags __unused,
+		  int fmt __unused, struct proc *p __unused)
 {
-#ifdef VERIFIED_EXEC_DEBUG_VERBOSE
-	struct veriexec_dev_list *lp;
-	struct veriexec_inode_list *ip;
-
-	printf("Loaded exec fingerprint list is:\n");
-	for (lp = LIST_FIRST(&veriexec_dev_head); lp != NULL;
-	     lp = LIST_NEXT(lp, entries)) {
-		for (ip = LIST_FIRST(&(lp->inode_head)); ip != NULL;
-		     ip = LIST_NEXT(ip, entries)) {
-			printf("Got loaded fingerprint for dev %lu, inode %lu\n",
-			       lp->id, ip->inode);
-		}
-	}
-
-	printf("\n\nLoaded file fingerprint list is:\n");
-	for (lp = LIST_FIRST(&veriexec_file_dev_head); lp != NULL;
-	     lp = LIST_NEXT(lp, entries)) {
-		for (ip = LIST_FIRST(&(lp->inode_head)); ip != NULL;
-		     ip = LIST_NEXT(ip, entries)) {
-			printf("Got loaded fingerprint for dev %lu, inode %lu\n",
-			       lp->id, ip->inode);
-		}
-	}
-#endif
-	return 0;
+	if (veriexec_dev_usage > 0)
+		veriexec_dev_usage--;
+	return (0);
 }
 
-/*
- * Search the list of devices looking for the one given.  If it is not
- * in the list then add it.
- */
-struct veriexec_dev_list *
-find_veriexec_dev(unsigned long dev, struct veriexec_devhead *head)
-{
-	struct veriexec_dev_list *lp;
-
-	for (lp = LIST_FIRST(head); lp != NULL;
-	     lp = LIST_NEXT(lp, entries))
-		if (lp->id == dev) break;
-
-	if (lp == NULL) {
-		  /* if pointer is null then entry not there, add a new one */
-		MALLOC(lp, struct veriexec_dev_list *,
-                       sizeof(struct veriexec_dev_list), M_TEMP, M_WAITOK);
-		LIST_INIT(&(lp->inode_head));
-		lp->id = dev;
-		LIST_INSERT_HEAD(head, lp, entries);
-	}
-
-	return lp;
-}
-
-/*
- * Add a file's inode and fingerprint to the list of inodes attached
- * to the device id.  Only add the entry if it is not already on the
- * list.
- */
-void
-add_veriexec_inode(struct veriexec_dev_list *list, unsigned long inode,
-		unsigned char fingerprint[MAXFINGERPRINTLEN],
-		unsigned char type, unsigned char fp_type)
-{
-	struct veriexec_inode_list *ip;
-
-	for (ip = LIST_FIRST(&(list->inode_head)); ip != NULL;
-	     ip = LIST_NEXT(ip, entries))
-		  /* check for a dupe inode in the list, skip if an entry
-		   * exists for this inode except for when the type is
-		   * VERIEXEC_INDIRECT, always set the type when it is so
-		   * we don't get a hole caused by conflicting types on
-		   * hardlinked files.  XXX maybe we should validate
-		   * fingerprint is same and complain if it is not...
-		   */
-		if (ip->inode == inode) {
-			if (type == VERIEXEC_INDIRECT)
-				ip->type = type;
-			return;
-		}
-
-
-	MALLOC(ip, struct veriexec_inode_list *, sizeof(struct veriexec_inode_list),
-	       M_TEMP, M_WAITOK);
-	ip->type = type;
-	ip->fp_type = fp_type;
-	ip->inode = inode;
-	memcpy(ip->fingerprint, fingerprint, sizeof(ip->fingerprint));
-	LIST_INSERT_HEAD(&(list->inode_head), ip, entries);
-}
-
-/*
- * Handle the ioctl for the device
- */
 int
-verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-		struct lwp *l)
+veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
+		  int flags __unused, struct lwp *l)
 {
-	int error = 0;
-	struct verified_exec_params *params;
+	struct veriexec_hashtbl *tbl;
 	struct nameidata nid;
-	struct vattr vattr;
-	struct veriexec_dev_list *dlp;
+	struct vattr va;
+	int error = 0;
+	u_long hashmask;
 
-	params = (struct verified_exec_params *)data;
-#ifdef VERIFIED_EXEC_DEBUG
-	printf("veriexec_ioctl: got cmd 0x%lx for file %s\n", cmd, params->file);
-#endif
+	if (veriexec_strict > 0) {
+		printf("Veriexec: veriexecioctl: Strict mode, modifying "
+		       "veriexec tables is not permitted.\n"); 
 
+		return (EPERM);
+	}
+	
 	switch (cmd) {
-	  case VERIEXECLOAD:
-		if (securelevel > 0) {
-			  /* don't allow updates when secure */
-			error = EPERM;
-		} else {
-			  /*
-			   * Get the attributes for the file name passed
-			   * stash the file's device id and inode number
-			   * along with it's fingerprint in a list for
-			   * exec to use later.
-			   */
-                        NDINIT(&nid, LOOKUP, FOLLOW, UIO_USERSPACE,
-                               params->file, l);
-			if ((error = vn_open(&nid, FREAD, 0)) != 0) {
-				return(error);
-			}
-			error = VOP_GETATTR(nid.ni_vp, &vattr, l->l_proc->p_ucred, l);
-			if (error) {
-				nid.ni_vp->fp_status = FINGERPRINT_INVALID;
-				VOP_UNLOCK(nid.ni_vp, 0);
-				(void) vn_close(nid.ni_vp, FREAD,
-						l->l_proc->p_ucred, l);
-				return(error);
-			}
-			/* invalidate the node fingerprint status
-			 * which will have been set in the vn_open
-			 * and would always be FINGERPRINT_NOTFOUND
-			 */
-			nid.ni_vp->fp_status = FINGERPRINT_INVALID;
-			VOP_UNLOCK(nid.ni_vp, 0);
-			(void) vn_close(nid.ni_vp, FREAD, l->l_proc->p_ucred, l);
-			  /* vattr.va_fsid = dev, vattr.va_fileid = inode */
-			if (params->type == VERIEXEC_FILE) {
-				dlp = find_veriexec_dev(vattr.va_fsid,
-						     &veriexec_file_dev_head);
-			} else {
-				dlp = find_veriexec_dev(vattr.va_fsid,
-						     &veriexec_dev_head);
-			}
+	case VERIEXEC_TABLESIZE: {
+		struct veriexec_sizing_params *params =
+			(struct veriexec_sizing_params *) data;
+		u_char node_name[16];
 
-			add_veriexec_inode(dlp, vattr.va_fileid,
-					params->fingerprint, params->type,
-					params->fp_type);
-		}
+		/* Check for existing table for device. */
+		if (veriexec_tblfind(params->dev) != NULL)
+			return (EEXIST);
+
+		/* Allocate and initialize a Veriexec hash table. */
+		tbl = malloc(sizeof(struct veriexec_hashtbl), M_TEMP,
+			     M_WAITOK);
+		tbl->hash_size = params->hash_size;
+		tbl->hash_dev = params->dev;
+		tbl->hash_tbl = hashinit(params->hash_size, HASH_LIST, M_TEMP,
+					 M_WAITOK, &hashmask);
+		tbl->hash_count = 0;
+
+		LIST_INSERT_HEAD(&veriexec_tables, tbl, hash_list);
+
+		snprintf(node_name, sizeof(node_name), "dev_%u",
+			 tbl->hash_dev);
+
+		sysctl_createv(NULL, 0, &veriexec_count_node, NULL,
+			       CTLFLAG_READONLY, CTLTYPE_QUAD, node_name,
+			       NULL, NULL, 0, &tbl->hash_count, 0,
+			       tbl->hash_dev, CTL_EOL);
+
 		break;
+		}
+
+	case VERIEXEC_LOAD: {
+		struct veriexec_params *params =
+			(struct veriexec_params *) data;
+		struct veriexec_hash_entry *hh;
+		struct veriexec_hash_entry *e;
+
+		NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
+		error = namei(&nid);
+		if (error)
+			return (error);
+
+		/* Add only regular files. */
+		if (nid.ni_vp->v_type != VREG) {
+			printf("Veriexec: veriexecioctl: Not adding \"%s\": "
+			    "Not a regular file.\n", params->file);
+			vrele(nid.ni_vp);
+			return (EINVAL);
+		}
+
+		/* Get attributes for device and inode. */
+		error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_ucred, l);
+		if (error)
+			return (error);
+
+		/* Release our reference to the vnode. (namei) */
+		vrele(nid.ni_vp);
+
+		/* Get table for the device. */
+		/*
+		 * XXX: va_fsid is long (32/64 bits) and veriexec_tblfind()
+		 * XXX: is passed a dev_t - uint32_t.
+		 */
+		tbl = veriexec_tblfind((dev_t)va.va_fsid);
+		if (tbl == NULL) {
+			return (EINVAL);
+		}
+
+		/*
+		 * XXX: Both va_fsid and va_fileid are long (32/64 bits), while
+		 * XXX: veriexec_lookup() is passed dev_t and ino_t - uint32_t.
+		 */
+		hh = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
+		if (hh != NULL) {
+			/*
+			 * Duplicate entry means something is wrong in
+			 * the signature file. Just give collision info
+			 * and return.
+			 */
+			printf("veriexec: Duplicate entry. [%s, %ld:%llu] "
+			       "old[type=0x%02x, algorithm=%s], "
+			       "new[type=0x%02x, algorithm=%s] "
+			       "(%s fingerprint)\n",
+			       params->file, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
+			       hh->type, hh->ops->type,
+			       params->type, params->fp_type,
+			       (((hh->ops->hash_len != params->size) ||
+				(memcmp(hh->fp, params->fingerprint,
+					min(hh->ops->hash_len, params->size))
+					!= 0)) ? "different" : "same"));
+
+			return (0);
+		}
+
+		e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
+		/* XXX: va_fileid is long (32/64 bits), ino_t is uint32_t. */
+		e->inode = (ino_t)va.va_fileid;
+		e->type = params->type;
+		e->status = FINGERPRINT_NOTEVAL;
+		e->page_fp = NULL;
+		e->page_fp_status = PAGE_FP_NONE;
+		e->npages = 0;
+		e->last_page_size = 0;
+		if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
+			free(e, M_TEMP);
+			printf("Veriexec: veriexecioctl: Invalid or unknown "
+			       "fingerprint type \"%s\" for file \"%s\" "
+			       "(dev=%ld, inode=%llu)\n", params->fp_type,
+			       params->file, va.va_fsid, 
+			       (unsigned long long)va.va_fileid);
+			return(EINVAL);
+		}
+
+		/*
+		 * Just a bit of a sanity check - require the size of
+		 * the fp to be passed in, check this against the expected
+		 * size.  Of course userland could lie deliberately, this
+		 * really only protects against the obvious fumble of
+		 * changing the fp type but not updating the fingerprint
+		 * string.
+		 */
+		if (e->ops->hash_len != params->size) {
+			printf("Veriexec: veriexecioctl: Inconsistent "
+			       "fingerprint size for type \"%s\" for file "
+			       "\"%s\" (dev=%ld, inode=%llu), size was %u "
+			       "was expecting %zu\n", params->fp_type,
+			       params->file, va.va_fsid,
+			       (unsigned long long)va.va_fileid,
+			       params->size, e->ops->hash_len);
+			free(e, M_TEMP);
+			return(EINVAL);
+		}
+			
+		e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
+		memcpy(e->fp, params->fingerprint, e->ops->hash_len);
+
+		veriexec_report("New entry.", params->file, &va, NULL,
+				REPORT_VERBOSE_HIGH, REPORT_NOALARM,
+				REPORT_NOPANIC);
+
+		error = veriexec_hashadd(tbl, e);
+
+		break;
+		}
 
 	default:
+		/* Invalid operation. */
 		error = ENODEV;
+
+		break;
 	}
 
 	return (error);
 }
 
+#if defined(__FreeBSD__)
+static void
+veriexec_drvinit(void *unused __unused)
+{
+	make_dev(&verifiedexec_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
+		 "veriexec");
+	verifiedexecattach(0, 0, 0);
+}
+
+SYSINIT(veriexec, SI_SUB_PSEUDO, SI_ORDER_ANY, veriexec_drvinit, NULL);
+#endif

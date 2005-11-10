@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.15.6.5 2005/02/04 11:48:04 skrll Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.15.6.6 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.15.6.5 2005/02/04 11:48:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.15.6.6 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -339,7 +339,7 @@ in6_pcbsetport(laddr, in6p, p)
 	struct socket *so = in6p->in6p_socket;
 	struct inpcbtable *table = in6p->in6p_table;
 	int cnt;
-	u_int16_t min, max;
+	u_int16_t xmin, xmax;
 	u_int16_t lport, *lastport;
 	int wild = 0;
 	void *t;
@@ -358,26 +358,26 @@ in6_pcbsetport(laddr, in6p, p)
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
-		min = ip6_lowportmin;
-		max = ip6_lowportmax;
+		xmin = ip6_lowportmin;
+		xmax = ip6_lowportmax;
 		lastport = &table->inpt_lastlow;
 	} else {
-		min = ip6_anonportmin;
-		max = ip6_anonportmax;
+		xmin = ip6_anonportmin;
+		xmax = ip6_anonportmax;
 		lastport = &table->inpt_lastport;
 	}
-	if (min > max) {	/* sanity check */
+	if (xmin > xmax) {	/* sanity check */
 		u_int16_t swp;
 
-		swp = min;
-		min = max;
-		max = swp;
+		swp = xmin;
+		xmin = xmax;
+		xmax = swp;
 	}
 
 	lport = *lastport - 1;
-	for (cnt = max - min + 1; cnt; cnt--, lport--) {
-		if (lport < min || lport > max)
-			lport = max;
+	for (cnt = xmax - xmin + 1; cnt; cnt--, lport--) {
+		if (lport < xmin || lport > xmax)
+			lport = xmax;
 #ifdef INET
 		if (IN6_IS_ADDR_V4MAPPED(laddr)) {
 			t = in_pcblookup_port(table,

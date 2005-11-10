@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.13.6.3 2004/09/21 13:22:01 skrll Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.13.6.4 2005/11/10 13:58:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.13.6.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.13.6.4 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ cgsixattach(parent, self, aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int constype, isconsole;
-	char *name;
+	const char *name;
 
 	oba = &uoba->uoba_oba4;
 
@@ -198,7 +198,7 @@ cgsixattach(parent, self, aux)
 	sc->sc_fbc = (struct cg6_fbc *)bh;
 
 
-	if (fb_pfour_id((void *)sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
+	if (fb_pfour_id(sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
 		fb->fb_flags |= FB_PFOUR;
 		name = "cgsix/p4";
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6.2.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.6.2.4 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.3 2004/09/21 13:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.4 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.3 2004/09/21 13:20:49 sk
 #include <sys/mount.h>  
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 int
 compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)

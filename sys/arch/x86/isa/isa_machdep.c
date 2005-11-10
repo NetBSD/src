@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.7.2.4 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7.2.3 2004/09/21 13:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7.2.4 2005/11/10 14:00:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7.2.3 2004/09/21 13:24:30 skrll Ex
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_private.h>
 
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
