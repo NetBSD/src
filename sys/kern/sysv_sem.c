@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.57 2005/11/03 16:57:03 chs Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.58 2005/11/10 18:45:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.57 2005/11/03 16:57:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.58 2005/11/10 18:45:36 christos Exp $");
 
 #define SYSVSEM
 
@@ -592,7 +592,7 @@ sys_semop(l, v, retval)
 	int i, eval;
 	int do_wakeup, do_undos;
 
-	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, sops, nsops));
+	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 	if (semid < 0 || semid >= seminfo.semmni)
