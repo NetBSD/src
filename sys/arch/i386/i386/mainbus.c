@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.52.2.4 2004/09/21 13:16:44 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.52.2.5 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.4 2004/09/21 13:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.5 2005/11/10 13:56:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.4 2004/09/21 13:16:44 skrll Exp $
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -85,6 +86,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.4 2004/09/21 13:16:44 skrll Exp $
 #include <arch/i386/bios/vesabios.h>
 #endif
 
+#if NPCI > 0
+#if defined(PCI_BUS_FIXUP)
+#include <arch/i386/pci/pci_bus_fixup.h>
+#if defined(PCI_ADDR_FIXUP)
+#include <arch/i386/pci/pci_addr_fixup.h>
+#endif
+#endif
+#endif
+
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -101,9 +111,6 @@ union mainbus_attach_args {
 #if NMCA > 0
 	struct mcabus_attach_args mba_mba;
 #endif
-#if NAPM > 0
-	struct apm_attach_args mba_aaa;
-#endif
 #if NPNPBIOS > 0
 	struct pnpbios_attach_args mba_paa;
 #endif
@@ -111,9 +118,6 @@ union mainbus_attach_args {
 	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
-#endif
-#if NVESABIOS > 0
-	struct vesabios_attach_args mba_vba;
 #endif
 };
 
@@ -182,6 +186,9 @@ mainbus_attach(parent, self, aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
+#if defined(PCI_BUS_FIXUP)
+	int pci_maxbus = 0;
+#endif
 	int mpacpi_active = 0;
 
 	printf("\n");
@@ -195,6 +202,15 @@ mainbus_attach(parent, self, aux)
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
 	pci_mode = pci_mode_detect();
+#if defined(PCI_BUS_FIXUP)
+	pci_maxbus = pci_bus_fixup(NULL, 0);
+	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+#if defined(PCI_ADDR_FIXUP)
+	pciaddr.extent_port = NULL;
+	pciaddr.extent_mem = NULL;
+	pci_addr_fixup(NULL, pci_maxbus);
+#endif
+#endif
 #endif
 
 #if NACPI > 0
@@ -230,10 +246,8 @@ mainbus_attach(parent, self, aux)
 	}
 
 #if NVESABIOS > 0
-	if (vbeprobe()) {
-		mba.mba_vba.vaa_busname = "vesabios";
-		config_found_ia(self, "vesabiosbus", &mba.mba_vba, mainbus_print);
-	}
+	if (vbeprobe())
+		config_found_ia(self, "vesabiosbus", 0, 0);
 #endif
 
 #if NISADMA > 0 && (NACPI > 0 || NPNPBIOS > 0)
@@ -246,7 +260,6 @@ mainbus_attach(parent, self, aux)
 
 #if NACPI > 0
 	if (acpi_present) {
-		mba.mba_acpi.aa_busname = "acpi";
 		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
 		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
 		mba.mba_acpi.aa_pc = NULL;
@@ -255,7 +268,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		config_found_ia(self, "acpibus", &mba.mba_acpi, mainbus_print);
+		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
 			/*
@@ -273,9 +286,8 @@ mainbus_attach(parent, self, aux)
 	if (acpi_active == 0)
 #endif
 	if (pnpbios_probe()) {
-		mba.mba_paa.paa_busname = "pnpbios";
 		mba.mba_paa.paa_ic = &x86_isa_chipset;
-		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, mainbus_print);
+		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, 0);
 	}
 #endif
 
@@ -340,10 +352,8 @@ mainbus_attach(parent, self, aux)
 #if NACPI > 0
 	if (acpi_active == 0)
 #endif
-	if (apm_busprobe()) {
-		mba.mba_aaa.aaa_busname = "apm";
-		config_found_ia(self, "apmbus", &mba.mba_aaa, mainbus_print);
-	}
+	if (apm_busprobe())
+		config_found_ia(self, "apmbus", 0, 0);
 #endif
 }
 

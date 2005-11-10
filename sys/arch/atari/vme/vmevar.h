@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.3 1997/10/09 07:41:06 jtc Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.3.50.1 2005/11/10 13:55:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct vmebus_attach_args;
  * VME bus attach arguments
  */
 struct vmebus_attach_args {
-	char	*vba_busname;		/* XXX should be common */
+	const char *vba_busname;	/* XXX should be common */
 	bus_space_tag_t vba_iot;	/* vme i/o space tag */
 	bus_space_tag_t vba_memt;	/* vme mem space tag */
 	vme_chipset_tag_t vba_vc;

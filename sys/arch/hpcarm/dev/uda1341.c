@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.4.6.3 2004/09/21 13:16:00 skrll Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.4.6.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.4.6.3 2004/09/21 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.4.6.4 2005/11/10 13:56:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ struct uda1341_softc {
 static	int	uda1341_match(struct device *, struct cfdata *, void *);
 static	void	uda1341_attach(struct device *, struct device *, void *);
 static	int	uda1341_print(void *, const char *);
-static	int	uda1341_search(struct device *, struct cfdata *, void *);
+static	int	uda1341_search(struct device *, struct cfdata *,
+			       const int *, void *);
 
 static	void	uda1341_output_high(struct uda1341_softc *);
 static	void	uda1341_output_low(struct uda1341_softc *);
@@ -152,13 +153,14 @@ uda1341_attach(parent, self, aux)
 	 *  Attach each devices
 	 */
 
-	config_search(uda1341_search, self, NULL);
+	config_search_ia(uda1341_search, self, "udaif", NULL);
 }
 
 static int
-uda1341_search(parent, cf, aux)
+uda1341_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)

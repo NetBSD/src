@@ -1,8 +1,9 @@
-#	$NetBSD: std.iq80321,v 1.9 2003/05/22 05:52:19 thorpej Exp $
+#	$NetBSD: std.iq80321,v 1.9.2.1 2005/11/10 13:55:51 skrll Exp $
 #
 # standard NetBSD/evbarm for IQ80321 options
 
 machine	evbarm arm
+include		"conf/std"	# MI standard options
 
 # Pull in IQ80321 config definitions.
 include "arch/evbarm/conf/files.iq80321"

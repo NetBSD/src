@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27.2.4 2004/09/21 13:19:30 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.2.5 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.2.4 2004/09/21 13:19:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.2.5 2005/11/10 13:57:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -127,7 +127,7 @@ static inline void userret(struct lwp *l, struct frame *fp,
 
 int	astpending;
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",

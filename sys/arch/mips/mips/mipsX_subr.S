@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.12.2.5 2005/03/04 16:38:48 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.12.2.6 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -118,6 +118,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_mips3_wired.h"
 
 #include <sys/cdefs.h>
 
@@ -134,7 +135,6 @@
 
 /*
  * XXX MIPS3_5900 is still "special" for much of this code.
- * XXX MIPS3_4100 is still "special" in tlb update code
  */
 
 #if MIPS1
@@ -1594,17 +1594,79 @@ LEAF(MIPSX(SetPID))
 	nop
 END(MIPSX(SetPID))
 
+#if defined(ENABLE_MIPS3_WIRED_MAP)
+/*--------------------------------------------------------------------------
+ *
+ * mipsN_TLBWriteIndexedVPS --
+ *
+ *      Write the given entry into the TLB at the given index.
+ *      Pass full R4000 style TLB info including variable page size mask.
+ *
+ *      mipsN_TLBWriteIndexed(unsigned int index, struct tlb *tlb)
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MIPSX(TLBWriteIndexedVPS))
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	COP0_SYNC
+	nop
+	lw	a2, 8(a1)			# fetch tlb->tlb_lo0
+	lw	a3, 12(a1)			# fetch tlb->tlb_lo1
+	mfc0	v0, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
+
+	_MTC0	a2, MIPS_COP_0_TLB_LO0		# Set up entry low0.
+	COP0_SYNC
+	_MTC0	a3, MIPS_COP_0_TLB_LO1		# Set up entry low1.
+	COP0_SYNC
+	nop
+	lw	a2, 0(a1)			# fetch tlb->tlb_mask
+	lw	a3, 4(a1)			# fetch tlb->tlb_hi
+	nop
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
+	COP0_SYNC
+	mtc0	a2, MIPS_COP_0_TLB_PG_MASK	# Set up entry pagemask.
+	COP0_SYNC
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# Set up entry high.
+	COP0_SYNC
+	nop
+	nop
+	tlbwi					# Write the TLB
+	COP0_SYNC
+	nop
+	nop
+	nop					# Delay for effect
+	nop
+
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
+	COP0_SYNC
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
+	COP0_SYNC
+	nop
+	nop
+	j       ra
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+END(MIPSX(TLBWriteIndexedVPS))
+#endif /* ENABLE_MIPS3_WIRED_MAP */
+	
 /*--------------------------------------------------------------------------
  *
  * mipsN_TLBUpdate --
  *
- *	Update the TLB if highreg is found; otherwise, enter the data.
+ *	Update the TLB if highreg is found; otherwise do nothing.
  *
  *	mips3_TLBUpdate(virpageadr, lowregx)
  *		unsigned virpageadr, lowregx;
  *
  * Results:
- *	< 0 if loaded >= 0 if updated.
+ *	< 0 if skipped, >= 0 if updated.
  *
  * Side effects:
  *	None.
@@ -1628,7 +1690,7 @@ LEAF(MIPSX(TLBUpdate))
 	COP0_SYNC
 	_SLL	a1, a1, WIRED_SHIFT		# Clear top 34 bits of EntryLo
 	_SRL	a1, a1, WIRED_SHIFT
-	bne	t1, zero, 2f			# Decide even odd
+	bne	t1, zero, 1f			# Decide even odd
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 # EVEN
 	nop
@@ -1652,31 +1714,9 @@ LEAF(MIPSX(TLBUpdate))
 	b	4f
 	nop
 1:
-#if defined(MIPS3) && defined(MIPS3_4100)		/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
-#else
-	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif
-	COP0_SYNC
-	_MTC0	a0, MIPS_COP_0_TLB_HI		# init high reg.
-	COP0_SYNC
-	_MTC0	a1, MIPS_COP_0_TLB_LO0		# init low reg0.
-	COP0_SYNC
-	_MTC0	a2, MIPS_COP_0_TLB_LO1		# init low reg1.
-	COP0_SYNC
-	nop
-	nop					# required for QED5230
-	tlbwr					# enter into a random slot
-	COP0_SYNC
-	nop					# required for QED5230
-	nop					# required for QED5230
-	b	4f
-	nop
 # ODD
-2:
 	nop
-	bltz	v0, 3f				# index < 0 => !found
+	bltz	v0, 4f				# index < 0 => !found
 	nop
 	nop					# required for QED5230
 
@@ -1693,30 +1733,11 @@ LEAF(MIPSX(TLBUpdate))
 	COP0_SYNC
 	nop					# required for QED5230
 	nop					# required for QED5230
-	b	4f
 	nop
-3:
-#if defined(MIPS3) && defined(MIPS3_4100)		/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
-#else
-	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif
-	COP0_SYNC
-	_MTC0	a0, MIPS_COP_0_TLB_HI		# init high reg.
-	COP0_SYNC
-	_MTC0	a2, MIPS_COP_0_TLB_LO0		# init low reg0.
-	COP0_SYNC
-	_MTC0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
-	COP0_SYNC
-	nop
-	nop					# required for QED5230
-	tlbwr					# enter into a random slot
-	COP0_SYNC
-4:						# Make shure pipeline
+4:
+	nop					# Make sure pipeline
 	nop					# advances before we
-	nop					# uses the tlb.
-	nop
+	nop					# use the TLB.
 	nop
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	COP0_SYNC

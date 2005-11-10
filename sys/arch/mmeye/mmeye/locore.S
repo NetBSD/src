@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5.12.3 2004/09/21 13:19:04 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.5.12.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -231,12 +231,3 @@ XL_load_and_reset:
 	.long	load_and_reset
 XL_load_and_reset_end:
 	.long	load_and_reset_end
-
-	.data
-	.align	2
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):

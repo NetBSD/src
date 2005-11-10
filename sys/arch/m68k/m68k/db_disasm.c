@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.28.6.4 2004/09/21 13:17:56 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.28.6.5 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.28.6.4 2004/09/21 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.28.6.5 2005/11/10 13:57:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static void	iprintu(dis_buffer_t *, u_int, int);
 static void	iprints_wb(dis_buffer_t *, int, int, int);
 #endif
 static void	iprintu_wb(dis_buffer_t *, u_int, int, int);
-static void	make_cond(dis_buffer_t *, int , char *);
+static void	make_cond(dis_buffer_t *, int , const char *);
 static void	print_fcond(dis_buffer_t *, char);
 static void	print_mcond(dis_buffer_t *, char);
 static void	print_disp(dis_buffer_t *, int, int, int);
@@ -212,7 +212,7 @@ db_disasm(db_addr_t loc, boolean_t moto_syntax)
 static void
 opcode_bitmanip(dis_buffer_t *dbuf, u_short opc)
 {
-	char *tmp;
+	const char *tmp;
 	u_short ext;
 	int sz;
 
@@ -555,7 +555,7 @@ opcode_move(dis_buffer_t *dbuf, u_short opc)
 static void
 opcode_misc(dis_buffer_t *dbuf, u_short opc)
 {
-	char *tmp;
+	const char *tmp;
 	int sz;
 
 	tmp = NULL;
@@ -733,7 +733,7 @@ opcode_misc(dis_buffer_t *dbuf, u_short opc)
 		break;
 	}
 	if (tmp) {
-		int sz, msz;
+		int msz;
 		
 		addstr(dbuf, tmp);
 
@@ -964,7 +964,7 @@ opcode_addsub(dis_buffer_t *dbuf, u_short opc)
 static void
 opcode_1110(dis_buffer_t *dbuf, u_short opc)
 {
-	char *tmp;
+	const char *tmp;
 	u_short ext;
 	int type, sz;
 
@@ -2153,7 +2153,7 @@ opcode_movem(dis_buffer_t *dbuf, u_short opc)
 static void
 opcode_movec(dis_buffer_t *dbuf, u_short opc)
 {
-	char *tmp;
+	const char *tmp;
 	u_short ext;
 
 	ext = *(dbuf->val + 1);
@@ -2435,7 +2435,7 @@ get_modregstr_moto(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 				disp = *nval++;
 			} else {
 				dbuf->used += 2;
-				disp = *(long *)nval;
+				disp = *(const long *)nval;
 				nval += 2;
 			}
 
@@ -2446,7 +2446,7 @@ get_modregstr_moto(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 				odisp = *nval++;
 			} else if (od == 3) {
 				dbuf->used += 2;
-				odisp = *(long *)nval;
+				odisp = *(const long *)nval;
 				nval += 2;
 			}
 		} else {
@@ -2639,7 +2639,7 @@ get_modregstr_mit(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 				disp = *nval++;
 			} else {
 				dbuf->used += 2;
-				disp = *(long *)nval;
+				disp = *(const long *)nval;
 				nval += 2;
 			}
 
@@ -2650,7 +2650,7 @@ get_modregstr_mit(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 				odisp = *nval++;
 			} else if (od == 3) {
 				dbuf->used += 2;
-				odisp = *(long *)nval;
+				odisp = *(const long *)nval;
 				nval += 2;
 			}
 		} else {
@@ -2769,7 +2769,7 @@ get_modregstr(dis_buffer_t *dbuf, int bit, int mod, int sz, int dispdisp)
  * opcode name including condition found at ``bit''.
  */
 static void
-make_cond(dis_buffer_t *dbuf, int bit, char *base)
+make_cond(dis_buffer_t *dbuf, int bit, const char *base)
 {
 	int cc;
 	const char *ccs;
@@ -2917,7 +2917,7 @@ print_disp(dis_buffer_t *dbuf, int disp, int sz, int rel)
 {
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
+	const char *symname;
 	u_long nv;
 		
 	prints(dbuf, disp, sz);
@@ -2948,7 +2948,7 @@ print_addr(dis_buffer_t *dbuf, u_long addr)
 {
 	db_expr_t diff;
 	db_sym_t sym;
-	char *symname;
+	const char *symname;
 				
 	diff = INT_MAX;
 	symname = NULL;
@@ -3063,7 +3063,7 @@ printu_wb(dis_buffer_t *dbuf, u_int val, int sz, int base)
 
 	p = buf;
 	do {
-		*++p = "0123456789abcdef"[val % base];
+		*++p = hexdigits[val % base];
 	} while (val /= base);
 
 	while ((ch = *p--))
@@ -3098,7 +3098,7 @@ iprintu_wb(dis_buffer_t *dbuf, u_int val, int sz, int base)
 
 	p = buf;
 	do {
-		*++p = "0123456789abcdef"[val % base];
+		*++p = hexdigits[val % base];
 	} while (val /= base);
 
 	while ((ch = *p--))

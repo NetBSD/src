@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.220.2.12 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: INSTALL,v 1.220.2.13 2005/11/10 13:56:32 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -21,7 +21,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 
-maxusers	32		# estimated number of users
+maxusers	2		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
 options 	I386_CPU
@@ -69,6 +69,7 @@ options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+no options	EXEC_AOUT
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -76,7 +77,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
-options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -92,6 +93,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -118,11 +120,13 @@ file-system 	KERNFS		# /kern
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -279,7 +283,7 @@ wskbd*		at pckbd? console ?
 
 attimer0	at isa?
 pcppi0		at isa?
-sysbeep0	at pcppi?
+#sysbeep0	at pcppi?
 
 # Serial Devices
 
@@ -383,7 +387,7 @@ scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
@@ -475,7 +479,7 @@ atapibus* at atapi?
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 #uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
@@ -515,6 +519,8 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+#ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+#iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -532,6 +538,8 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+#txp*	at pci? dev ? function ?	# 3com 3cr990
+#vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
@@ -647,6 +655,9 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
 
@@ -686,8 +697,6 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
@@ -760,6 +769,7 @@ pseudo-device	sl		2	# Serial Line IP
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+options NO_DEV_PTM
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

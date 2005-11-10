@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.35.2.3 2004/09/21 13:12:26 skrll Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.35.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.35.2.3 2004/09/21 13:12:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.35.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -287,7 +287,7 @@ int
 cvintr(void *arg)
 {
 #ifndef CV_NO_HARDWARE_CURSOR
-	register unsigned long *csrc, *cdest;
+	volatile unsigned long *csrc, *cdest;
 	int i;
 #endif
 	struct grf_softc *gp = arg;
@@ -318,8 +318,8 @@ cvintr(void *arg)
 		/* update the hardware cursor, if necessary */
 		if (curs_update_flag) {
 			csrc = (unsigned long *)cv_cursor_storage;
-			cdest = (unsigned long *)((volatile char *)gp->g_fbkva
-				 + HWC_OFF);
+			cdest = (volatile unsigned long *)(gp->g_fbkva + 
+			    HWC_OFF);
 			for (i = 0; i < HWC_SIZE / sizeof(long); i++)
 				*cdest++ = *csrc++;
 			curs_update_flag = 0;

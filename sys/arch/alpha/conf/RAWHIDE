@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.18.2.7 2005/03/04 16:38:01 skrll Exp $
+# $NetBSD: RAWHIDE,v 1.18.2.8 2005/11/10 13:48:22 skrll Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -28,6 +28,7 @@ file-system	PORTAL		# Portal file system
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
@@ -39,6 +40,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SYSVMSG

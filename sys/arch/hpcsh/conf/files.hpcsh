@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.29.6.3 2004/09/21 13:16:24 skrll Exp $
+#	$NetBSD: files.hpcsh,v 1.29.6.4 2005/11/10 13:56:27 skrll Exp $
 #
 maxpartitions 8
 
@@ -90,6 +90,15 @@ defparam opt_j6x0tp.h		J6X0TP_SETTINGS_ICON_KEYSYM
 				J6X0TP_PGUP_ICON_KEYSYM
 				J6X0TP_PGDN_ICON_KEYSYM
 				J6X0TP_SWITCH_ICON_KEYSYM
+
+device	psh3lcd
+attach	psh3lcd at shb
+file	arch/hpcsh/dev/psh3lcd.c		psh3lcd
+
+device	psh3tp: hpctpanel, wsmousedev
+attach	psh3tp at adc
+file	arch/hpcsh/dev/psh3tp.c			psh3tp
+defflag	opt_psh3tp.h		PSH3TP_DEBUG
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus

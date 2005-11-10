@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.9.2.3 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.9.2.4 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.2.3 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.2.4 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -200,12 +200,12 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	nargs = callp->sy_argsize / sizeof(register_t);
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		frame->tf_r0 = rval[0];
@@ -221,7 +221,6 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 		break;
 
 	default:
-	bad:
 		error = native_to_linux_errno[error];
 		frame->tf_r0 = error;
 		break;

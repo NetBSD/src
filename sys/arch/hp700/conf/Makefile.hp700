@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.3.6.3 2004/09/21 13:15:40 skrll Exp $
+# $NetBSD: Makefile.hp700,v 1.3.6.4 2005/11/10 13:56:09 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 HP700=		$S/arch/hp700
 HPPA=		$S/arch/hppa
-GENASSYM=	${HP700}/hp700/genassym.cf
+GENASSYM_CONF=	${HP700}/hp700/genassym.cf
 
 ##
 ## (2) compile settings

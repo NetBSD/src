@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45.2.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45.2.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.2.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.2.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static int getNamedType(struct part_map_entry *, int, struct disklabel *, int,
 	    int, int *);
 static char *read_mac_label(char *, struct disklabel *, int *);
 static char *read_mbr_label(char *, struct disklabel *, int *);
-static char *read_bsd_label(char *, struct disklabel *, int *);
+static const char *read_bsd_label(char *, struct disklabel *, int *);
 
 
 /*
@@ -369,11 +369,11 @@ read_mbr_label(char *dlbuf, struct disklabel *lp, int *match)
  * Scan the disk buffer in four byte steps for a native BSD disklabel
  * (different ports have variable-sized bootcode before the label)
  */
-static char *
+static const char *
 read_bsd_label(char *dlbuf, struct disklabel *lp, int *match)
 {
 	struct disklabel *dlp;
-	char *msg;
+	const char *msg;
 	struct disklabel *blk_start, *blk_end;
 	
 	*match = 0;
@@ -411,7 +411,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
-	char *msg;
+	const char *msg;
 	int size;
 
 	if (lp->d_secperunit == 0)

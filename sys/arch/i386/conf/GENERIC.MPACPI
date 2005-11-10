@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.3.2.16 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.3.2.17 2005/11/10 13:56:32 skrll Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3.2.16 $"
+#ident 		"GENERIC-$Revision: 1.3.2.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -91,7 +91,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Likely stable but not yet the default.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -115,6 +116,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -149,7 +151,8 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	PTYFS		# experimental - /dev/ptm support
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -166,6 +169,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -228,7 +232,8 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
@@ -242,7 +247,7 @@ options 	PCDISPLAY_SOFTCURSOR
 # see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
 #options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
-#options 	WSDISPLAY_SCROLLSUPPORT
+options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
 
@@ -287,7 +292,7 @@ options 	MPACPI		# configure CPUs and APICs using ACPI
 #options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
 
 acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 #options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
@@ -356,9 +361,6 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
@@ -366,8 +368,14 @@ pci*	at ppb? bus ?
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
+# PCI fixups, for both PCIBIOS and ACPI
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
+
 # System Controllers
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
+gpio* 	at elansc?
 
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
@@ -477,7 +485,7 @@ pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards
+#com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -519,7 +527,7 @@ lpt*	at puc? port ?			# || ports on "universal" comm boards
 # Hardware monitors
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
@@ -589,8 +597,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 #aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -728,6 +736,7 @@ ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -736,7 +745,9 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -754,9 +765,12 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
+vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -821,12 +835,12 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-#atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+#atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+#ex*	at cardbus? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? function ?	# Intel i8255x
+#rtk*	at cardbus? function ?	# Realtek 8129/8139
+#tlp*	at cardbus? function ?	# DECchip 21143
 
 # MCA network cards
 #elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
@@ -872,8 +886,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -903,6 +917,9 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
@@ -915,7 +932,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
 wd*	at umass?
 
 # USB audio
@@ -967,6 +983,10 @@ urio*	at uhub? port ?
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
 
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
+
 # USB scanners
 uscanner* at uhub? port ?
 
@@ -991,17 +1011,14 @@ oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
 # PCI IEEE1394 controllers
-#fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
-#fw*	at fwbus?			# IP over 1394
-
-# IEEE1394 nodes
-#fwnode* at fwbus? idhi ? idlo ?
-#sbpscsi* at fwnode?
-#scsibus* at sbpscsi?
+#ieee1394if* at fwohci?
+#fwip*	at ieee1394if?			# IP over IEEE1394 
+#sbp*	at ieee1394if? euihi ? euilo ?
 
 # Audio Devices
 
@@ -1011,6 +1028,7 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+azalia*	at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
@@ -1037,8 +1055,6 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
@@ -1181,6 +1197,7 @@ pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

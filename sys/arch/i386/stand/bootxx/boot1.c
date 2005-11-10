@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.1.2.3 2004/09/21 13:17:10 skrll Exp $	*/
+/*	$NetBSD: boot1.c,v 1.1.2.4 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.1.2.3 2004/09/21 13:17:10 skrll Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.1.2.4 2005/11/10 13:56:53 skrll Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -134,14 +134,15 @@ blkdevstrategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf, si
 	if (flag != F_READ)
 		return EROFS;
 
-	if (size & (BIOSDISK_SECSIZE - 1))
+	if (size & (BIOSDISK_DEFAULT_SECSIZE - 1))
 		return EINVAL;
 
 	if (rsize)
 		*rsize = size;
 
 	if (size != 0 && readsects(&d, bios_sector + dblk,
-				   size / BIOSDISK_SECSIZE, buf, 1) != 0)
+				   size / BIOSDISK_DEFAULT_SECSIZE,
+				   buf, 1) != 0)
 		return EIO;
 
 	return 0;

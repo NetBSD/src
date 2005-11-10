@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.34.2.4 2004/11/21 13:54:34 skrll Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.34.2.5 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.34.2.4 2004/11/21 13:54:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.34.2.5 2005/11/10 13:51:36 skrll Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -418,15 +418,15 @@ cursor32(struct ite_softc *ip, int flag)
 		/*
 		 * erase the cursor
 		 */
-		int h;
+		int hh;
 
 		if (dr_plane) {
-			for (h = cend; h >= 0; h--) {
+			for (hh = cend; hh >= 0; hh--) {
 				BFCLR(pl, ofs, ip->ftwidth);
 				pl += cci->row_offset;
 			}
 		} else {
-			for (h = cend; h >= 0; h--) {
+			for (hh = cend; hh >= 0; hh--) {
 				BFCHG(pl, ofs, ip->ftwidth);
 				pl += cci->row_offset;
 			}

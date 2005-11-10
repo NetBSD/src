@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.6.4 2004/11/02 07:50:23 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.6.5 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.6.4 2004/11/02 07:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.6.5 2005/11/10 13:55:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ cpu_configure()
 
 	(void)splhigh();
 
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	_splnone();

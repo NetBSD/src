@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.3.4.2 2005/01/17 19:29:12 skrll Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.3.4.3 2005/11/10 13:55:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.3.4.2 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.3.4.3 2005/11/10 13:55:16 skrll Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -467,7 +467,7 @@ ep93xx_intr_disestablish(void *cookie)
 }
 
 void
-ep93xx_intr_dispatch(struct clockframe *frame)
+ep93xx_intr_dispatch(struct irqframe *frame)
 {
 	struct intrq*		iq;
 	struct intrhand*	ih;

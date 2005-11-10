@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5.12.3 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.5.12.4 2005/11/10 13:55:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,11 +91,3 @@ _L.sh4_icache_sync_all:	.long	_C_LABEL(sh4_icache_sync_all)
 _L.CCR:			.long	SH4_CCR	
 _L.CCRconfig:		.long	0x00000909	
 _L.MMUCR:		.long	SH4_MMUCR
-	.data
-	.align	2
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):

@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.1.4.4 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.1.4.5 2005/11/10 13:56:10 skrll Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
@@ -76,5 +76,5 @@ static void
 phantomas_callback(struct device *self, struct confargs *ca)
 {
 
-	config_found_sm(self, ca, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "phantomas", NULL, ca, mbprint, mbsubmatch);
 }

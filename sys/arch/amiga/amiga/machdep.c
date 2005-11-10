@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184.2.5 2005/02/19 13:18:14 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184.2.6 2005/11/10 13:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.5 2005/02/19 13:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.6 2005/11/10 13:51:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ extern  int   freebufspace;
 extern	u_int lowram;
 
 /* used in init_main.c */
-char	*cpu_type = "m68k";
+const char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
@@ -293,7 +293,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -403,7 +403,7 @@ void
 identifycpu()
 {
         /* there's alot of XXX in here... */
-	char *mach, *mmu, *fpu;
+	const char *mach, *mmu, *fpu;
 
 #ifdef M68060
 	char cpubuf[16];
@@ -550,6 +550,9 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 void
 cpu_dumpconf()
 {
@@ -660,7 +663,7 @@ dumpsys()
 	int     error = 0;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
-	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+	char	dump_hdr[MDHDRSIZE];
 	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
@@ -696,7 +699,7 @@ dumpsys()
 	 * Generate a segment header
 	 */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
 
 	/*
 	 * Add the md header
@@ -709,7 +712,8 @@ dumpsys()
 	seg = 0;
 	blkno = dumplo;
 	dump = bdev->d_dump;
-	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	error = (*dump) (dumpdev, blkno, (caddr_t)dump_hdr, sizeof(dump_hdr));
+	blkno += btodb(sizeof(dump_hdr));
 	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;

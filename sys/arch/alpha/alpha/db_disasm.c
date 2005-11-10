@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.10 2000/08/09 20:00:30 tv Exp $ */
+/* $NetBSD: db_disasm.c,v 1.10.24.1 2005/11/10 13:48:21 skrll Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2000/08/09 20:00:30 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10.24.1 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ typedef union {
 /*
  * Major opcodes
  */
-static char *op_name[64] = {
+static const char *op_name[64] = {
 /* 0 */	"call_pal", "op1", "op2", "op3", "op4",	"op5",	"op6",	"op7",
 /* 8 */	"lda",	"ldah",	"ldbu",	"ldq_u","ldwu",	"stw",	"stb",	"stq_u",
 /*16 */	"arit",	"logical","bit","mul",	"op20",	"vaxf",	"ieeef","anyf",

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.5.26.1 2005/02/04 11:44:32 skrll Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.5.26.2 2005/11/10 13:56:53 skrll Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,6 @@
  */
 
 struct pnpbios_attach_args {
-	char *paa_busname;
 	isa_chipset_tag_t paa_ic;
 };
 

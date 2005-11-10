@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.1.2.4 2004/11/29 07:24:04 skrll Exp $	*/
+/*	$NetBSD: boot2.c,v 1.1.2.5 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -56,22 +56,20 @@
 #include <biosmca.h>
 #endif
 
-int errno;
-extern int boot_biosdev;
-extern int boot_biossector;	/* may be wrong... */
-
 extern struct x86_boot_params boot_params;
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
 
+int errno;
+
+int boot_biosdev;
+u_int boot_biossector;
+
 static const char * const names[][2] = {
-    { "netbsd", "netbsd.gz" },
-    { "netbsd.old", "netbsd.old.gz" },
-    { "onetbsd", "onetbsd.gz" },
-#ifdef notyet
-    { "netbsd.el", "netbsd.el.gz" },
-#endif /*notyet*/
+	{ "netbsd", "netbsd.gz" },
+	{ "onetbsd", "onetbsd.gz" },
+	{ "netbsd.old", "netbsd.old.gz" },
 };
 
 #define NUMNAMES (sizeof(names)/sizeof(names[0]))
@@ -86,7 +84,7 @@ static const char *default_filename;
 char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
-void boot2(uint32_t, uint32_t);
+void boot2(int, u_int);
 
 void	command_help(char *);
 void	command_ls(char *);
@@ -108,7 +106,7 @@ const struct bootblk_command commands[] = {
 
 int
 parsebootfile(const char *fname, char **fsname, char **devname,
-	u_int *unit, u_int *partition, const char **file)
+	      int *unit, int *partition, const char **file)
 {
 	const char *col;
 
@@ -119,21 +117,21 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 	*file = default_filename;
 
 	if (fname == NULL)
-		return(0);
+		return 0;
 
-	if((col = strchr(fname, ':'))) {	/* device given */
+	if ((col = strchr(fname, ':')) != NULL) {	/* device given */
 		static char savedevname[MAXDEVNAME+1];
 		int devlen;
-		unsigned int u = 0, p = 0;
+		int u = 0, p = 0;
 		int i = 0;
 
 		devlen = col - fname;
 		if (devlen > MAXDEVNAME)
-			return(EINVAL);
+			return EINVAL;
 
 #define isvalidname(c) ((c) >= 'a' && (c) <= 'z')
 		if (!isvalidname(fname[i]))
-			return(EINVAL);
+			return EINVAL;
 		do {
 			savedevname[i] = fname[i];
 			i++;
@@ -143,7 +141,7 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 #define isnum(c) ((c) >= '0' && (c) <= '9')
 		if (i < devlen) {
 			if (!isnum(fname[i]))
-				return(EUNIT);
+				return EUNIT;
 			do {
 				u *= 10;
 				u += fname[i++] - '0';
@@ -153,12 +151,12 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 #define isvalidpart(c) ((c) >= 'a' && (c) <= 'z')
 		if (i < devlen) {
 			if (!isvalidpart(fname[i]))
-				return(EPART);
+				return EPART;
 			p = fname[i++] - 'a';
 		}
 
 		if (i != devlen)
-			return(ENXIO);
+			return ENXIO;
 
 		*devname = savedevname;
 		*unit = u;
@@ -169,7 +167,7 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 	if (*fname)
 		*file = fname;
 
-	return(0);
+	return 0;
 }
 
 char *
@@ -183,9 +181,9 @@ sprint_bootsel(const char *filename)
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
 		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
-		return(buf);
+		return buf;
 	}
-	return("(invalid)");
+	return "(invalid)";
 }
 
 void
@@ -216,9 +214,14 @@ print_banner(void)
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 }
 
-
+/*
+ * Called from the initial entry point boot_start in biosboot.S
+ *
+ * biosdev: BIOS drive number the system booted from
+ * biossector: Sector number of the NetBSD partition
+ */
 void
-boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
+boot2(int biosdev, u_int biossector)
 {
 	int currname;
 	char c;
@@ -235,23 +238,26 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 
 	print_banner();
 
+	/* need to remember these */
+	boot_biosdev = biosdev;
+	boot_biossector = biossector;
+
 	/* try to set default device to what BIOS tells us */
-	bios2dev(boot_biosdev, &default_devname, &default_unit,
-		boot_biossector, &default_partition);
+	bios2dev(biosdev, biossector, &default_devname, &default_unit,
+		 &default_partition);
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
 
 	printf("Press return to boot now, any other key for boot menu\n");
-	currname = 0;
-	for (;;) {
+	for (currname = 0; currname < NUMNAMES; currname++) {
 		printf("booting %s - starting in ",
 		       sprint_bootsel(names[currname][0]));
 
 		c = awaitkey(boot_params.bp_timeout, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0') &&
 		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
-		    || check_password(boot_params.bp_password))) {
+		     || check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		}
@@ -263,9 +269,9 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 		bootit(names[currname][0], 0, 0);
 		/* since it failed, try compressed bootfile. */
 		bootit(names[currname][1], 0, 1);
-		/* since it failed, try switching bootfile. */
-		currname = (currname + 1) % NUMNAMES;
 	}
+
+	bootmenu();	/* does not return */
 }
 
 /* ARGSUSED */
@@ -274,13 +280,13 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	    "boot [xdNx:][filename] [-acdqsv]\n"
-	    "     (ex. \"hd0a:netbsd.old -s\"\n"
-	    "ls [path]\n"
-	    "dev xd[N[x]]:\n"
-	    "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	    "help|?\n"
-	    "quit\n");
+	       "boot [xdNx:][filename] [-acdqsv]\n"
+	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+	       "ls [path]\n"
+	       "dev xd[N[x]]:\n"
+	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "help|?\n"
+	       "quit\n");
 }
 
 void
@@ -329,7 +335,7 @@ command_dev(char *arg)
 		return;
 	}
 
-	if (!strchr(arg, ':') ||
+	if (strchr(arg, ':') != NULL ||
 	    parsebootfile(arg, &fsname, &devname, &default_unit,
 			  &default_partition, &file)) {
 		command_help(NULL);
@@ -342,8 +348,8 @@ command_dev(char *arg)
 }
 
 static const struct cons_devs {
-    const char	*name;
-    u_int	tag;
+	const char	*name;
+	u_int		tag;
 } cons_devs[] = {
 	{ "pc",		CONSDEV_PC },
 	{ "com0",	CONSDEV_COM0 },
@@ -355,7 +361,8 @@ static const struct cons_devs {
 	{ "com2kbd",	CONSDEV_COM2KBD },
 	{ "com3kbd",	CONSDEV_COM3KBD },
 	{ "auto",	CONSDEV_AUTO },
-	{ 0, 0 } };
+	{ NULL,		0 }
+};
 
 void
 command_consdev(char *arg)
@@ -363,7 +370,7 @@ command_consdev(char *arg)
 	const struct cons_devs *cdp;
 
 	for (cdp = cons_devs; cdp->name; cdp++) {
-		if (!strcmp(arg, cdp->name)) {
+		if (strcmp(arg, cdp->name) == 0) {
 			initio(cdp->tag);
 			print_banner();
 			return;

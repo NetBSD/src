@@ -1,8 +1,9 @@
-#	$NetBSD: std.acorn32,v 1.1.24.3 2004/09/21 13:11:21 skrll Exp $
+#	$NetBSD: std.acorn32,v 1.1.24.4 2005/11/10 13:48:21 skrll Exp $
 #
 # standard NetBSD/arm32 options
 
 machine	acorn32 arm
+include		"conf/std"	# MI standard options
 
 options 	EXEC_AOUT
 options 	EXEC_ELF32

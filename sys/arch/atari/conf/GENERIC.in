@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.32.2.8 2005/03/04 16:38:04 skrll Exp $
+#	$NetBSD: GENERIC.in,v 1.32.2.9 2005/11/10 13:55:28 skrll Exp $
 #
 # Generic atari
 #
@@ -28,7 +28,8 @@ options 	INSECURE	# disable kernel security levels
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #
 # (Co)processors this kernel should support
@@ -56,6 +57,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
@@ -101,6 +103,7 @@ file-system 	MFS		# Memory based filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
+#file-system	PTYFS		# experimental - /dev/ptm support
 
 #ifndef INSTALL_KERNEL
 file-system 	NFS		# Network File System client side code
@@ -113,6 +116,7 @@ file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
 file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
+file-system	PTYFS		# /dev/pts/N support
 #endif
 
 #ifndef INSTALL_KERNEL
@@ -148,6 +152,7 @@ options 	COMPAT_14	# Compatibility with NetBSD 1.4
 options 	COMPAT_15	# Compatibility with NetBSD 1.5
 options 	COMPAT_16	# Compatibility with NetBSD 1.6
 options 	COMPAT_20	# Compatibility with NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #ifndef INSTALL_KERNEL
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
@@ -178,7 +183,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	SYSTRACE		# system call vetting via systrace(1)
-options 	DIAGNOSTIC		# Add additional error checking code
+#options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -239,6 +244,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
 
 #ifndef INSTALL_KERNEL

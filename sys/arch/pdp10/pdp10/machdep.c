@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.4.4 2004/09/21 13:20:13 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.4.5 2005/11/10 13:58:13 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -68,6 +68,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), avail_end);
 	pbuf[strlen(pbuf)-1] = 0; /* Remove 'B' */
 	printf("total memory = %sW\n", pbuf);
@@ -170,7 +171,7 @@ process_sstep(struct lwp *p, int sstep)
 }
 
 int
-process_write_regs(struct lwp *p, struct reg *regs)
+process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	panic("process_write_regs");
 }

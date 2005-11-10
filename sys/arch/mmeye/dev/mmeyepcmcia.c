@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.6.2.3 2004/09/21 13:19:04 skrll Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.6.2.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.6.2.3 2004/09/21 13:19:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.6.2.4 2005/11/10 13:57:47 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,7 +227,6 @@ void	mmeyepcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t,
 
 void	mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *);
 void	mmeyepcmcia_init_socket(struct mmeyepcmcia_handle *);
-int	mmeyepcmcia_submatch(struct device *, struct cfdata *, void *);
 int	mmeyepcmcia_print (void *, const char *);
 int	mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *);
 void	mmeyepcmcia_attach_card(struct mmeyepcmcia_handle *);
@@ -360,8 +359,8 @@ mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *h)
 	paa.iobase = h->sc->iobase;
 	paa.iosize = h->sc->iosize;
 
-	h->pcmcia = config_found_sm(&h->sc->dev, &paa, mmeyepcmcia_print,
-	    mmeyepcmcia_submatch);
+	h->pcmcia = config_found_ia(&h->sc->dev, "pcmciabus", &paa,
+				    mmeyepcmcia_print);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 
@@ -505,13 +504,6 @@ mmeyepcmcia_init_socket(struct mmeyepcmcia_handle *h)
 	} else {
 		h->laststate = MMEYEPCMCIA_LASTSTATE_EMPTY;
 	}
-}
-
-int
-mmeyepcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (config_match(parent, cf, aux));
 }
 
 int

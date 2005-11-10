@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.5.6.3 2004/09/21 13:14:47 skrll Exp $ */
+/*	$NetBSD: intmmu.S,v 1.5.6.4 2005/11/10 13:55:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,8 +38,30 @@
 
 ASENTRY_NP(integrator_start)
 	mov	r6, #0x16000000		/* UART0 Physical base*/
+#ifdef VERBOSE_INIT_ARM
 	mov	r3, #'A'
 	str	r3, [r6]		/* Let the world know we are alive */
+#endif
+/* 
+ * Check that the processor has a CP15.  Some core modules do not.
+ * We can tell by reading CM_PROC.  If it is zero, then we're OK, otherwise
+ * let the user know why we've died.
+ */
+	mov	r7, #0x10000000
+	ldr	r3, [r7, #4]
+	cmp	r3, #0
+	bne	Lno_cp15
+/*
+ * Now read CP15 and check what sort of core we have.  We need to know
+ * if it has an MMU.  There's no simple test for this, but the following
+ * hack should be sufficient for all currently supported CM boards:
+ *  - Check that the product code has a '2' or '3' in bits 8-11
+ */
+	mrc	p15, 0, r3, c0, c0, 0
+	and	r0, r3, #0x00000f00
+	teq	r0, #0x00000200		/* ARM 920, 1020, 1026, etc */
+	teqne	r0, #0x00000300		/* ARM 1136 */
+	bne	Lno_mmu
 
 /*
  * At this time the MMU is off.
@@ -108,8 +130,14 @@ Lperiph:
 
 	/* Flush the old TLBs (just in case) */
 	mcr	p15, 0, r1, c8, c7, 0
+	/* And the caches */
+	mov	r0, #0
+	mcr	p15, 0, r1, c7, c6, 0
+
+#ifdef VERBOSE_INIT_ARM
 	mov	r2, #'B'
 	strb	r2, [r6]
+#endif
 
 	/* Set the Domain Access register.  Very important! */
 	mov	r1, #1
@@ -136,11 +164,13 @@ Lperiph:
 	mov	r0, r0
 	mov	r0, r0
 
+#ifdef VERBOSE_INIT_ARM
 	/* emit a char.  Uart is now at 0xfd600000 */
 	mov	r6, #0xfd000000
 	add	r6, r6, #0x00600000
 	mov	r2, #'C'
 	strb	r2, [r6]
+#endif
 
 	/* jump to kernel space */
 	mov	r0, #0x0200
@@ -149,3 +179,28 @@ Lperiph:
 	ldr	pc, Lstart
 
 Lstart:	.long	start
+
+Lmsg:
+	ldrb	r2, [r0], #1
+	cmp	r2, #0
+	strneb	r2, [r6]
+Lwait:
+	ldrb	r3, [r6, #0x18]
+	tst	r3, #0x80
+	beq	Lwait
+	cmp	r2, #0
+	bne	Lmsg
+	/* We're toast! */
+	b	.
+	
+Lno_cp15:
+	adr	r0, Lcp15msg
+	b	Lmsg
+Lno_mmu:
+	adr	r0, Lmmumsg
+	b	Lmsg
+
+Lcp15msg:
+	.ascii "Core has no cp15\r\n\0"
+Lmmumsg:
+	.ascii "Core has no MMU\r\n\0"

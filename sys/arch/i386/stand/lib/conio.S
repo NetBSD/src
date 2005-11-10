@@ -1,12 +1,10 @@
-/*	$NetBSD: conio.S,v 1.2.2.1 2005/02/04 11:44:32 skrll Exp $	*/
+/*	$NetBSD: conio.S,v 1.2.2.2 2005/11/10 13:56:54 skrll Exp $	*/
 
 /* PC console handling
   originally from: FreeBSD:sys/i386/boot/netboot/start2.S
  */
 
 #include <machine/asm.h>
-
-#define	data32	.byte 0x66
 
 	.text
 

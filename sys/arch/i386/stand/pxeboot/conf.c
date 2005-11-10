@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2003/03/12 17:33:55 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.2.1 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #ifdef SUPPORT_NFS
 #include <nfs.h>
 #endif
@@ -51,15 +51,11 @@
 #include "pxeboot.h"
 
 #ifdef SUPPORT_NFS
-struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+struct fs_ops file_system_nfs = FS_OPS(nfs);
 #endif
 
 #ifdef SUPPORT_TFTP
-struct fs_ops file_system_tftp = {
-	tftp_open, tftp_close, tftp_read, tftp_write, tftp_seek, tftp_stat
-};
+struct fs_ops file_system_tftp = FS_OPS(tftp);
 #endif
 
 struct pxeboot_fstab pxeboot_fstab[] = {

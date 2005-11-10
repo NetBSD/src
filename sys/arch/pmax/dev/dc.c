@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.74.2.4 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: dc.c,v 1.74.2.5 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.74.2.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.74.2.5 2005/11/10 13:58:15 skrll Exp $");
 
 /*
  * devDC7085.c --
@@ -307,7 +307,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	/* init pseudo DMA structures */
 	pdp = &sc->dc_pdma[0];
 	for (line = 0; line < 4; line++) {
-		pdp->p_addr = (void *)dcaddr;
+		pdp->p_addr = addr;
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
@@ -509,7 +509,8 @@ dcopen(dev, flag, mode, l)
 #endif
 		(void) dcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+		   suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
@@ -806,7 +807,7 @@ dcrint(sc)
 	int overrun = 0;
 	struct tty **dc_tty;
 #if NRASTERCONSOLE > 0
-	char *cp;
+	const char *cp;
 	int cl;
 #endif
 

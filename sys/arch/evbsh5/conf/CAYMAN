@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.12.6.5 2005/03/04 16:38:26 skrll Exp $
+#	$NetBSD: CAYMAN,v 1.12.6.6 2005/11/10 13:56:05 skrll Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -11,7 +11,7 @@ maxusers	8
 options 	INCLUDE_CONFIG_FILE
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident		"CAYMAN-$Revision: 1.12.6.5 $"
+#ident		"CAYMAN-$Revision: 1.12.6.6 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -29,6 +29,7 @@ options 	DDB
 
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_BSDPTY
 
 options 	KTRACE		# system call tracing via ktrace(1)

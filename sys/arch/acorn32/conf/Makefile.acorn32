@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.15.8.3 2004/09/21 13:11:20 skrll Exp $
+#	$NetBSD: Makefile.acorn32,v 1.15.8.4 2005/11/10 13:48:20 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ACORN32=	$S/arch/acorn32
 ARM=		$S/arch/arm
-GENASSYM=	${ARM}/arm32/genassym.cf
+GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 GENASSYM_EXTRAS+=	${ACORN32}/acorn32/genassym.cf
 
 ##

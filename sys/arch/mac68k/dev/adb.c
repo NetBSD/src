@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.44.2.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: adb.c,v 1.44.2.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -271,8 +271,8 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 	int result;
 	volatile int flag = 0;
 
-	result = ADBOp(buffer, (void *)adb_op_comprout,
-	    (void *)&flag, command);	/* send command */
+	result = ADBOp(buffer, (void *)adb_op_comprout, __UNVOLATILE(&flag), 
+	    command);	/* send command */
 	if (result == 0) {		/* send ok? */
 		/*
 		 * Total time to wait is calculated as follows:

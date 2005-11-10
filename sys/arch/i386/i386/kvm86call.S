@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.2.2.4 2004/09/21 13:16:42 skrll Exp $ */
+/* $NetBSD: kvm86call.S,v 1.2.2.5 2005/11/10 13:56:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.2.2.4 2004/09/21 13:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.2.2.5 2005/11/10 13:56:46 skrll Exp $");
 
 	.data
 	.align 4
@@ -108,7 +108,7 @@ ENTRY(kvm86_call)
 	pushl	%eax			/* save address space */
 	movl	PDPpaddr,%ecx
 	movl	%ecx,%ebx
-	addl	$KERNBASE_LOCORE,%ebx	/* va of Idle PDP */
+	addl	$KERNBASE,%ebx		/* va of Idle PDP */
 	movl	0(%ebx),%eax
 	pushl	%eax			/* old pde */
 	pushl	%ebx			/* keep address for reuse */

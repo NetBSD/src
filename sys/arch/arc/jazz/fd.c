@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.15.2.6 2005/01/24 08:34:05 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.15.2.7 2005/11/10 13:55:09 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.15.2.6 2005/01/24 08:34:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.15.2.7 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
-	struct bufq_state sc_q;	/* pending I/O requests */
+	struct bufq_state *sc_q;/* pending I/O requests */
 	int sc_active;		/* number of active I/O operations */
 };
 
@@ -215,16 +215,16 @@ struct dkdriver fddkdriver = { fdstrategy };
 #if 0
 const struct fd_type *fd_nvtotype(char *, int, int);
 #endif
-void fd_set_motor(struct fdc_softc *fdc, int reset);
-void fd_motor_off(void *arg);
-void fd_motor_on(void *arg);
-int fdcresult(struct fdc_softc *fdc);
-void fdcstart(struct fdc_softc *fdc);
-void fdcstatus(struct device *dv, int n, char *s);
-void fdctimeout(void *arg);
-void fdcpseudointr(void *arg);
-void fdcretry(struct fdc_softc *fdc);
-void fdfinish(struct fd_softc *fd, struct buf *bp);
+void fd_set_motor(struct fdc_softc *, int);
+void fd_motor_off(void *);
+void fd_motor_on(void *);
+int fdcresult(struct fdc_softc *);
+void fdcstart(struct fdc_softc *);
+void fdcstatus(struct device *, int, const char *);
+void fdctimeout(void *);
+void fdcpseudointr(void *);
+void fdcretry(struct fdc_softc *);
+void fdfinish(struct fd_softc *, struct buf *);
 __inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 void fd_mountroot_hook(struct device *);
 
@@ -347,7 +347,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": density unknown\n");
 
-	bufq_alloc(&fd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&fd->sc_q, "disksort", BUFQ_SORT_CYLINDER);
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
@@ -461,7 +461,7 @@ fdstrategy(struct buf *bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	BUFQ_PUT(&fd->sc_q, bp);
+	BUFQ_PUT(fd->sc_q, bp);
 	callout_stop(&fd->sc_motoroff_ch);		/* a good idea */
 	if (fd->sc_active == 0)
 		fdstart(fd);
@@ -511,11 +511,11 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
-	(void)BUFQ_GET(&fd->sc_q);
+	(void)BUFQ_GET(fd->sc_q);
 	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		if (BUFQ_PEEK(&fd->sc_q) != NULL)
+		if (BUFQ_PEEK(fd->sc_q) != NULL)
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 		else
 			fd->sc_active = 0;
@@ -682,7 +682,7 @@ fdcstart(struct fdc_softc *fdc)
 }
 
 void
-fdcstatus(struct device *dv, int n, char *s)
+fdcstatus(struct device *dv, int n, const char *s)
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
@@ -735,7 +735,7 @@ fdctimeout(void *arg)
 #endif
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
-	if (BUFQ_PEEK(&fd->sc_q) != NULL)
+	if (BUFQ_PEEK(fd->sc_q) != NULL)
 		fdc->sc_state++;
 	else
 		fdc->sc_state = DEVIDLE;
@@ -777,7 +777,7 @@ loop:
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	bp = BUFQ_PEEK(&fd->sc_q);
+	bp = BUFQ_PEEK(fd->sc_q);
 	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
@@ -1026,7 +1026,7 @@ fdcretry(struct fdc_softc *fdc)
 	char bits[64];
 
 	fd = TAILQ_FIRST(&fdc->sc_drives);
-	bp = BUFQ_PEEK(&fd->sc_q);
+	bp = BUFQ_PEEK(fd->sc_q);
 
 	switch (fdc->sc_errors) {
 	case 0:

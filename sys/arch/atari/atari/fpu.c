@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8.2.3 2004/09/21 13:13:55 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8.2.4 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.2.3 2004/09/21 13:13:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.2.4 2005/11/10 13:55:27 skrll Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.2.3 2004/09/21 13:13:55 skrll Exp $");
 extern int fpu_type;
 extern int *nofault;
 
-static char *fpu_descr[] = {
+static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	" emulated ", 		/* 0 */
 #else
@@ -70,7 +70,7 @@ static char *fpu_descr[] = {
 	"/",			/* 3 68040 internal */
 	"??? " };
 
-char *
+const char *
 fpu_describe(type)
 int	type;
 {

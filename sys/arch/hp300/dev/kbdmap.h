@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.9.12.3 2004/09/21 13:15:16 skrll Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.9.12.4 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,12 +36,12 @@
 
 struct kbdmap {
 	int	kbd_code;
-	char	*kbd_desc;
+	const char *kbd_desc;
 	char	*kbd_keymap;
 	char	*kbd_shiftmap;
 	char	*kbd_ctrlmap;
 	char	*kbd_ctrlshiftmap;
-	char	**kbd_stringmap;
+	const char **kbd_stringmap;
 };
 
 /* kbd_code */

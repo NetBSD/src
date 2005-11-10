@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.46.2.4 2005/02/04 11:44:45 skrll Exp $
+#	$NetBSD: files.mips,v 1.46.2.5 2005/11/10 13:57:33 skrll Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -13,6 +13,7 @@ defflag	opt_cputype.h		NOFPU
 					# ENABLE_MIPS_R3NKK
 defflag	opt_mips_cache.h		MIPS3_NO_PV_UNCACHED
 					ENABLE_MIPS4_CACHE_R10K
+defflag opt_mips3_wired.h		ENABLE_MIPS3_WIRED_MAP
 
 file	arch/mips/mips/locore_mips1.S		mips1
 file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
@@ -37,6 +38,7 @@ file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c
 file	arch/mips/mips/process_machdep.c
 file	arch/mips/mips/cpu_exec.c
+file	arch/mips/mips/wired_map.c (mips3|mips4|mips32|mips64) & enable_mips3_wired_map
 
 file	arch/mips/mips/cache.c
 file	arch/mips/mips/cache_r3k.c		mips1

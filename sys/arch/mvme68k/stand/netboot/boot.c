@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11.6.3 2004/09/21 13:19:17 skrll Exp $ */
+/*	$NetBSD: boot.c,v 1.11.6.4 2005/11/10 13:57:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,7 +37,7 @@
 
 #include <lib/libkern/libkern.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 #include "config.h"
 
@@ -70,7 +70,7 @@ main()
 			if (line[0]) {
 				bugargs.arg_start = line;
 				cp = line;
-				while (cp < (line + sizeof(line) - 1) && *cp) 
+				while (cp < (line + sizeof(line) - 1) && *cp)
 					cp++;
 				bugargs.arg_end = cp;
 				parse_args(&file, &howto, &part);
@@ -88,8 +88,7 @@ main()
  * machdep_common_ether: get ethernet address
  */
 void
-machdep_common_ether(ether)
-	u_char *ether;
+machdep_common_ether(u_char *ether)
 {
 	u_char *ea;
 

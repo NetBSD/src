@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.13.6.3 2004/09/21 13:19:05 skrll Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.13.6.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.13.6.3 2004/09/21 13:19:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.13.6.4 2005/11/10 13:57:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,21 +139,21 @@ clock_pcc_attach(parent, self, aux)
 }
 
 void
-clock_pcc_initclocks(arg, proftick, stattick)
+clock_pcc_initclocks(arg, prof_us, stat_us)
 	void *arg;
-	int proftick;
-	int stattick;
+	int prof_us;
+	int stat_us;
 {
 	struct clock_pcc_softc *sc = arg;
 
 	pcc_reg_write16(sys_pcc, PCCREG_TMR1_PRELOAD,
-	    pcc_timer_us2lim(proftick));
+	    pcc_timer_us2lim(prof_us));
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL, sc->sc_clock_lvl);
 
 	pcc_reg_write16(sys_pcc, PCCREG_TMR2_PRELOAD,
-	    pcc_timer_us2lim(stattick));
+	    pcc_timer_us2lim(stat_us));
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERCLEAR);
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERSTART);
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, sc->sc_clock_lvl);

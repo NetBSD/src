@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.10.2.4 2005/01/24 08:34:12 skrll Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.10.2.5 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.10.2.4 2005/01/24 08:34:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.10.2.5 2005/11/10 13:56:31 skrll Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -319,11 +319,11 @@ pfckbd_callout_hp(void *arg)
 void
 pfckbd_callout_hitachi(void *arg)
 {
-#define PFCKBD_HITACHI_PCCR_MASK 0xfffc
+#define PFCKBD_HITACHI_PCCR_MASK 0xfff3
 #define PFCKBD_HITACHI_PDCR_MASK 0x000c
 #define PFCKBD_HITACHI_PECR_MASK 0x30cf
 
-#define PFCKBD_HITACHI_PCDR_SCN_MASK 0xfe
+#define PFCKBD_HITACHI_PCDR_SCN_MASK 0xfd
 #define PFCKBD_HITACHI_PDDR_SCN_MASK 0xf7
 #define PFCKBD_HITACHI_PEDR_SCN_MASK 0xff
 
@@ -364,7 +364,7 @@ pfckbd_callout_hitachi(void *arg)
 		uint16_t cc, dc, ec; uint8_t c, d, e;
 	} scan[] = {
 		PE(6), PE(3), PE(1), PE(0), PC(7), PC(6), PC(5), PC(4),
-		PC(3), PC(2), PD(1), PC(1)
+		PC(3), PC(2), PD(1), PC(0)
 	};
 
 #undef PC
@@ -373,7 +373,7 @@ pfckbd_callout_hitachi(void *arg)
 
 	struct pfckbd_core *pc = arg;
 	uint16_t cc, dc, ec;
-	uint8_t data[2];
+	uint8_t data[2], cd, dd, ed;
 	int i;
 
 	if (!pc->pc_enabled)
@@ -384,9 +384,13 @@ pfckbd_callout_hitachi(void *arg)
 	dc = _reg_read_2(SH7709_PDCR) & ~PFCKBD_HITACHI_PDCR_MASK;
 	ec = _reg_read_2(SH7709_PECR) & ~PFCKBD_HITACHI_PECR_MASK;
 
+	cd = _reg_read_1(SH7709_PCDR);
+	dd = _reg_read_1(SH7709_PDDR);
+	ed = _reg_read_1(SH7709_PEDR);
+
 	for (i = 0; i < 12; i++) {
 		/* disable output to all lines except the one we scan */
-		_reg_write_2(SH7709_PDCR, cc | scan[i].cc);
+		_reg_write_2(SH7709_PCCR, cc | scan[i].cc);
 		_reg_write_2(SH7709_PDCR, dc | scan[i].dc);
 		_reg_write_2(SH7709_PECR, ec | scan[i].ec);
 		delay(5);
@@ -408,9 +412,9 @@ pfckbd_callout_hitachi(void *arg)
 	}
 
 	/* scan no lines */
-	_reg_write_1(SH7709_PCDR, PFCKBD_HITACHI_PCDR_SCN_MASK);
-	_reg_write_1(SH7709_PDDR, PFCKBD_HITACHI_PDDR_SCN_MASK);
-	_reg_write_1(SH7709_PEDR, PFCKBD_HITACHI_PEDR_SCN_MASK);
+	_reg_write_1(SH7709_PCDR, cd);
+	_reg_write_1(SH7709_PDDR, dd);
+	_reg_write_1(SH7709_PEDR, ed);
 
 	/* enable all scan lines */
 	_reg_write_2(SH7709_PCCR, cc | (0x5555 & PFCKBD_HITACHI_PCCR_MASK));

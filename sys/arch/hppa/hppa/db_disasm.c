@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.1.10.2 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.1.10.2 2005/11/10 13:56:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -909,10 +909,10 @@ struct majoropcode {
 
 /* Disassembly functions */
 int fcoprDasm(union insn, u_int, u_int);
-char *edDCond(u_int);
-char *unitDCond(u_int);
-char *addDCond(u_int);
-char *subDCond(u_int);
+const char *edDCond(u_int);
+const char *unitDCond(u_int);
+const char *addDCond(u_int);
+const char *subDCond(u_int);
 int blDasm(const struct inst *, OFS, union insn);
 int ldDasm(const struct inst *, OFS, union insn);
 int stDasm(const struct inst *, OFS, union insn);
@@ -1155,7 +1155,6 @@ static const struct inst instrs[] = {
 };
 
 
-static const struct inst illeg = { 0, 0, 0, 0, 0, "???", 0 };
 static const struct inst *so_sysop[0xd0];
 static const struct inst *so_mmuop[0x50];
 static const struct inst *so_arith[0x80];
@@ -1171,7 +1170,7 @@ static const struct inst *so_subi [0x02];
 static const struct inst *so_shext[0x08];
 static const struct inst *so_deps [0x08];
 
-#define ILLEG (const struct inst **)&illeg
+#define ILLEG NULL
 #define NENTS(a) (sizeof(a)/sizeof(a[0])-1)
 static struct majoropcode majopcs[NMAJOPCS] = {
 	{ so_sysop, NENTS(so_sysop) }, /* 00 */
@@ -1289,7 +1288,7 @@ iExInit(void)
 	for (i = &instrs[0]; *i->mnem; i++) {
 		m = &majopcs[i->majopc];
 		if (m->maxsubop == 1)
-			m->subops = (const struct inst **)i;
+			m->subops = __UNCONST(i);
 		else
 			m->subops[i->opcext] = i;
 	}
@@ -1415,7 +1414,7 @@ vdepiDasm(const struct inst *i, OFS ofs, union insn w)
  *  ascii description of the passed numeric condition.
  *---------------------------------------------------------------------------*/
 
-char *
+const char *
 subDCond(u_int cond)
 {
 	switch(cond) {
@@ -1446,7 +1445,7 @@ subDCond(u_int cond)
  *  ascii description of the passed numeric condition.
  *---------------------------------------------------------------------------*/
 
-char *
+const char *
 addDCond(u_int cond)
 {
 	switch(cond) {
@@ -1471,7 +1470,7 @@ addDCond(u_int cond)
 	}
 }
 
-char *
+const char *
 unitDCond(u_int cond)
 {
 	switch(cond) {
@@ -1492,7 +1491,7 @@ unitDCond(u_int cond)
 	}
 }
 
-char *
+const char *
 edDCond(u_int cond)
 {
 	switch(cond) {
@@ -1884,7 +1883,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	u_int op1, r1, fmt, t;
 	u_int op2, r2, dfmt;
-	char *p;
+	const char *p;
 
 	op1 = CoprExt1(w);
 	op2 = CoprExt2(w);
@@ -1988,7 +1987,7 @@ int
 fcoprDasm(union insn w, u_int op1, u_int op2)
 {
 	u_int r1, r2, t, fmt, dfmt;
-	char *p;
+	const char *p;
 
 	if (AstNu(w) && op1 == ((1<<4) | 2)) {
 		if (op2 == 0 || op2 == 1 || op2 == 2) {
@@ -2072,7 +2071,7 @@ coprDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	u_int uid = Uid(w);
 	int load = 0;
-	char *pfx = uid > 1 ? "c" : "f";
+	const char *pfx = uid > 1 ? "c" : "f";
 	int dreg = 0;
 
 	if (Match("copr")) {
@@ -2274,9 +2273,9 @@ db_disasm(vaddr_t loc, boolean_t flag)
 		if (i->dasmfcn)
 			(*i->dasmfcn)(i, ofs, instruct);
 		else if (i->mnem[0] == '?')
-			db_printf(illeg.mnem);
+			db_printf("???");
 	} else
-		db_printf(illeg.mnem);
+		db_printf("???");
 
 	db_printf("\n");
 	return (loc + sizeof(instruct));

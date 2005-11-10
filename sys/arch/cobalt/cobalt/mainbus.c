@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.4 2004/09/21 13:14:33 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.5 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.4 2004/09/21 13:14:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.5 2005/11/10 13:55:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.4 2004/09/21 13:14:33 skrll Exp $"
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_search(struct device *, struct cfdata *, void *);
+static int	mainbus_search(struct device *, struct cfdata *,
+			       const int *, void *);
 int		mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -61,7 +62,7 @@ mainbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct mainbus_attach_args ma;
 
 	/*
 	 * XXX Check for Qube/RaQ 1 vs. 2.
@@ -69,13 +70,14 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	config_search(mainbus_search, self, ma);
+	config_search_ia(mainbus_search, self, "mainbus", &ma);
 }
 
 static int
-mainbus_search(parent, cf, aux)
+mainbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;

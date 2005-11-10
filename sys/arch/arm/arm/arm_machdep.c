@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.6.2.4 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.6.2.5 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6.2.4 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6.2.5 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -90,13 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6.2.4 2004/09/21 13:13:08 skrll Ex
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
-
-static __inline struct trapframe *
-process_frame(struct lwp *l)
-{
-
-	return (l->l_addr->u_pcb.pcb_tf);
-}
 
 /*
  * The ARM architecture places the vector page at address 0.

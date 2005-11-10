@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.2.5 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.2.6 2005/11/10 13:57:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.5 2005/02/06 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.6 2005/11/10 13:57:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ cpu_configure(void)
 		*(char *)INTEN1 = 0;
 	}
 
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Enable hardware interrupt registers. */

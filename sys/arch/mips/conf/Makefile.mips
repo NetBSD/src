@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.32.6.4 2004/10/19 15:56:37 skrll Exp $
+#	$NetBSD: Makefile.mips,v 1.32.6.5 2005/11/10 13:57:33 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ S=		../../../..
 .endif
 THISMIPS=	$S/arch/${MACHINE}
 MIPS=		$S/arch/mips
-GENASSYM=	${MIPS}/mips/genassym.cf
+GENASSYM_CONF=	${MIPS}/mips/genassym.cf
 .-include "${THISMIPS}/conf/Makefile.${MACHINE}.inc"
 
 ##

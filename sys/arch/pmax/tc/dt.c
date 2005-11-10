@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: dt.c,v 1.1.12.5 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.12.5 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ dt_msg_get(struct dt_msg *msg, int intr)
 {
 	volatile u_int *poll, *data;
 	uint8_t c;
-	int max;
+	int max_polls;
 
 	poll = dt_state.ds_poll;
 	data = dt_state.ds_data;
@@ -405,17 +405,17 @@ dt_msg_get(struct dt_msg *msg, int intr)
 	}
 
 	for (;;) {
-		max = DT_MAX_POLL;
+		max_polls = DT_MAX_POLL;
 
 		while (!DT_RX_AVAIL(poll)) {
 			if (intr)
 				return (DT_GET_NOTYET);
-			if (max-- <= 0)
+			if (max_polls-- <= 0)
 				break;
 			DELAY(1);
 		}
 
-		if (max <= 0) {
+		if (max_polls <= 0) {
 			if (dt_state.ds_state != 0) {
 				dt_state.ds_bad_pkts++;
 				dt_state.ds_state = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_dze.c,v 1.1.62.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: ieee_dze.c,v 1.1.62.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -29,15 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_dze.c,v 1.1.62.3 2004/09/21 13:19:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_dze.c,v 1.1.62.4 2005/11/10 13:58:09 skrll Exp $");
 
 #include "ieee_internal.h"
 
 int ieee_dze(struct operand *op1, struct operand *op2,
-	     struct operand *f0_op, int xopcode, state *state)
+	     struct operand *f0_op, int xopcode, state *mystate)
 {
   int user_trap = FPC_TT_NONE;
-  unsigned int fsr = state->FSR;
+  unsigned int fsr = mystate->FSR;
   DP(1, "Divide by zero trap: xopcode = 0x%x\n", xopcode);
   fsr |= FPC_DZF;
   if (fsr & FPC_DZE) {
@@ -58,6 +58,6 @@ int ieee_dze(struct operand *op1, struct operand *op2,
       op2->data.d_bits.sign = 1;
     }
   }
-  state->FSR = fsr;
+  mystate->FSR = fsr;
   return user_trap;
 }

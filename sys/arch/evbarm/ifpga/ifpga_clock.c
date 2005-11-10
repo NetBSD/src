@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.4.6.3 2004/09/21 13:14:47 skrll Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.4.6.4 2005/11/10 13:55:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.4.6.3 2004/09/21 13:14:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.4.6.4 2005/11/10 13:55:53 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,9 +198,9 @@ load_timer(int base, int intvl)
  */
 
 void
-setstatclockrate(int hz)
+setstatclockrate(int new_hz)
 {
-	if (hz == stathz)
+	if (new_hz == stathz)
 		timer2min = statmin;
 	else
 		timer2min = profmin;

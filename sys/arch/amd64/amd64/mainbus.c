@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.4 2004/09/21 13:12:07 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.5 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.4 2004/09/21 13:12:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.5 2005/11/10 13:50:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,6 @@ mainbus_attach(parent, self, aux)
 
 #if NACPI > 0
 	if (acpi_present) {
-		mba.mba_acpi.aa_busname = "acpi";
 		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
 		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
 		mba.mba_acpi.aa_pc = NULL;
@@ -211,7 +210,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		config_found_ia(self, "acpibus", &mba.mba_acpi, mainbus_print);
+		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.13.2.2 2004/09/21 13:12:01 skrll Exp $ */
+/* $NetBSD: mcbus.c,v 1.13.2.3 2005/11/10 13:50:23 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.13.2.2 2004/09/21 13:12:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.13.2.3 2005/11/10 13:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,7 @@ struct mcbus_cpu_busdep mcbus_primary;
 static int	mcbusmatch __P((struct device *, struct cfdata *, void *));
 static void	mcbusattach __P((struct device *, struct device *, void *));
 static int	mcbusprint __P((void *, const char *));
-static int	mcbussbm __P((struct device *, struct cfdata *,
-			      const locdesc_t *, void *));
-static char	*mcbus_node_type_str __P((u_int8_t));
+static const char *mcbus_node_type_str __P((u_int8_t));
 
 typedef struct {
 	struct device	mcbus_dev;
@@ -103,21 +101,6 @@ mcbusprint(aux, cp)
 }
 
 static int
-mcbussbm(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
-	    cf->cf_loc[MCBUSCF_MID] != ldesc->locs[MCBUSCF_MID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-static int
 mcbusmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -149,8 +132,7 @@ mcbusattach(parent, self, aux)
 	struct mcbus_dev_attach_args ta;
 	mcbus_softc_t *mbp = (mcbus_softc_t *)self;
 	int i, mid;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[MCBUSCF_NLOCS];
 
 	printf(": %s BCache\n", mcbus_primary.mcbus_valid ?
 	    bcs[mcbus_primary.mcbus_bcache] : "Unknown");
@@ -172,10 +154,9 @@ mcbusattach(parent, self, aux)
 	ta.ma_mid = 1;
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
-	ldesc->len = 1;
-	ldesc->locs[MCBUSCF_MID] = 1;
-	(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
-				   mcbusprint, mcbussbm);
+	locs[MCBUSCF_MID] = 1;
+	(void) config_found_sm_loc(self, "mcbus", locs, &ta,
+				   mcbusprint, config_stdsubmatch);
 
 	/*
 	 * Now find PCI busses.
@@ -190,11 +171,11 @@ mcbusattach(parent, self, aux)
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
-		ldesc->len = 1;
-		ldesc->locs[MCBUSCF_MID] = mid;
+		locs[MCBUSCF_MID] = mid;
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
-			(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
-						   mcbusprint, mcbussbm);
+			(void) config_found_sm_loc(self, "mcbus", locs, &ta,
+						   mcbusprint,
+						   config_stdsubmatch);
 	}
 
 #if 0
@@ -220,10 +201,9 @@ mcbusattach(parent, self, aux)
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
-		ldesc->len = 1;
-		ldesc->locs[MCBUSCF_MID] = mid;
-		(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
-					   mcbusprint, mcbussbm);
+		locs[MCBUSCF_MID] = mid;
+		(void) config_found_sm_loc(self, "mcbus", locs, &ta,
+					   mcbusprint, config_stdsubmatch);
 	}
 #endif
 
@@ -239,7 +219,7 @@ mcbusattach(parent, self, aux)
 	mcpcia_config_cleanup();
 }
 
-static char *
+static const char *
 mcbus_node_type_str(type)
 	u_int8_t type;
 {

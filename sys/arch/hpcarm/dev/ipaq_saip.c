@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.13.6.3 2004/09/21 13:16:00 skrll Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.13.6.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.13.6.3 2004/09/21 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.13.6.4 2005/11/10 13:56:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.13.6.3 2004/09/21 13:16:00 skrll Exp
 /* prototypes */
 static int	ipaq_match(struct device *, struct cfdata *, void *);
 static void	ipaq_attach(struct device *, struct device *, void *);
-static int 	ipaq_search(struct device *, struct cfdata *, void *);
+static int 	ipaq_search(struct device *, struct cfdata *,
+				const int *, void *);
 static int	ipaq_print(void *, const char *);
 
 /* attach structures */
@@ -109,13 +110,14 @@ ipaq_attach(parent, self, aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(ipaq_search, self, NULL);
+	config_search_ia(ipaq_search, self, "ipaqbus", NULL);
 }
 
 int
-ipaq_search(parent, cf, aux)
+ipaq_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	if (config_match(parent, cf, NULL) > 0)

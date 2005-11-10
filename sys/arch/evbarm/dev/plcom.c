@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.7.2.4 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.7.2.5 2005/11/10 13:55:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.7.2.4 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.7.2.5 2005/11/10 13:55:53 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -651,7 +651,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -1815,7 +1815,7 @@ plcomintr(void *arg)
 					bus_space_write_1(iot, ioh, plcom_ecr,
 					    0);
 				if (ISSET(rsr, RSR_BE)) {
-					int cn_trapped = 0;
+					cn_trapped = 0;
 					cn_check_magic(sc->sc_tty->t_dev,
 					    CNC_BREAK, plcom_cnm_state);
 					if (cn_trapped)
@@ -1830,6 +1830,7 @@ plcomintr(void *arg)
 				}
 
 				put[1] = rsr;
+				cn_trapped = 0;
 				cn_check_magic(sc->sc_tty->t_dev,
 					       put[0], plcom_cnm_state);
 				if (cn_trapped) {

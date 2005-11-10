@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.9.2.3 2004/09/21 13:18:54 skrll Exp $ */
+/* $NetBSD: sbmac.c,v 1.9.2.4 2005/11/10 13:57:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.9.2.3 2004/09/21 13:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.9.2.4 2005/11/10 13:57:34 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2244,7 +2244,7 @@ sbmac_parse_xdigit(char str)
  */
 
 static int
-sbmac_parse_hwaddr(char *str, u_char *hwaddr)
+sbmac_parse_hwaddr(const char *str, u_char *hwaddr)
 {
 	int digit1, digit2;
 	int idx = 6;

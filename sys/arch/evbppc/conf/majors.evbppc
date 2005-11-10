@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.8.2.5 2005/02/15 21:32:33 skrll Exp $
+#	$NetBSD: majors.evbppc,v 1.8.2.6 2005/11/10 13:56:04 skrll Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -10,7 +10,7 @@ device-major	mem		char 2
 device-major	pts		char 3			pty
 device-major	ptc		char 4			pty
 device-major	log		char 5
-device-major	swap		char 6   block 1
+device-major	swap		char 6   block 1	vmswap
 
 device-major	bpf		char 10			bpfilter
 device-major	tun		char 11			tun
@@ -79,6 +79,8 @@ device-major	wsfont		char 73			wsfont
 device-major	ksyms		char 74			ksyms
 device-major	dmoverio	char 75			dmoverio
 device-major	twe		char 76 		twe
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

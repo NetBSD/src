@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.165.2.5 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.165.2.6 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.5 2005/01/17 19:29:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.6 2005/11/10 13:57:33 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -208,6 +208,7 @@ int mips_cpu_flags;
 int mips_has_llsc;
 int mips_has_r4k_mmu;
 int mips3_pg_cached;
+u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
 struct	lwp  *fpcurlwp;
@@ -215,10 +216,6 @@ struct	pcb  *curpcb;
 struct	segtab *segbase;
 
 caddr_t	msgbufaddr;
-
-#if defined(MIPS3_4100)			/* VR4100 core */
-int	default_pg_mask = 0x00001800;
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -233,7 +230,7 @@ struct pridtab {
 	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
 	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
 	int	cpu_flags;
-	char	*cpu_name;
+	const char	*cpu_name;
 };
 
 /*
@@ -851,6 +848,12 @@ mips_vector_init(void)
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
 	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
+#if defined(MIPS3_4100)
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+		mips3_pg_shift = MIPS3_4100_PG_SHIFT;
+	else
+#endif
+		mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
@@ -886,12 +889,19 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 #if defined(MIPS3_5900)	/* XXX */
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
 		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
 #else /* MIPS3_5900 */
+#if defined(MIPS3_4100)
+		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
+			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+		else
+#endif
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -902,6 +912,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -911,6 +922,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS64)
 	case CPU_ARCH_MIPS64:
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -962,7 +974,7 @@ cpu_identify(void)
 		"write-through",
 	};
 	static const char * const label = "cpu0";	/* XXX */
-	char *cpuname, *fpuname;
+	const char *cpuname, *fpuname;
 	int i;
 
 	cpuname = mycpu->cpu_name;

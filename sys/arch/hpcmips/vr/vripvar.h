@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.9 2002/02/11 08:15:41 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.9.16.1 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -36,7 +36,7 @@
 #include <hpcmips/vr/vripif.h>
 
 struct vrip_unit {
-	char	*vu_name;
+	const char *vu_name;
 	int	vu_intr[2];
 	int	vu_clkmask;
 	bus_addr_t	vu_lreg;

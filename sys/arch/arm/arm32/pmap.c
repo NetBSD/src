@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.5 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.6 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.5 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.6 2005/11/10 13:55:16 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1872,10 +1872,17 @@ pmap_page_remove(struct vm_page *pg)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	if (flush) {
+		/*
+		 * Note: We can't use pmap_tlb_flush{I,}D() here since that
+		 * would need a subsequent call to pmap_update() to ensure
+		 * curpm->pm_cstate.cs_all is reset. Our callers are not
+		 * required to do that (see pmap(9)), so we can't modify
+		 * the current pmap's state.
+		 */
 		if (PV_BEEN_EXECD(flags))
-			pmap_tlb_flushID(curpm);
+			cpu_tlb_flushID();
 		else
-			pmap_tlb_flushD(curpm);
+			cpu_tlb_flushD();
 	}
 	cpu_cpwait();
 }
@@ -4566,15 +4573,18 @@ pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
 const struct pmap_devmap *
 pmap_devmap_find_pa(paddr_t pa, psize_t size)
 {
+	uint64_t endpa;
 	int i;
 
 	if (pmap_devmap_table == NULL)
 		return (NULL);
 
+	endpa = (uint64_t)pa + (uint64_t)size;
+
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
 		if (pa >= pmap_devmap_table[i].pd_pa &&
-		    pa + size <= pmap_devmap_table[i].pd_pa +
-				 pmap_devmap_table[i].pd_size)
+		    endpa <= (uint64_t)pmap_devmap_table[i].pd_pa +
+			     (uint64_t)pmap_devmap_table[i].pd_size)
 			return (&pmap_devmap_table[i]);
 	}
 
@@ -4807,7 +4817,7 @@ pmap_pte_init_xscale(void)
 #elif defined(XSCALE_CACHE_WRITE_BACK)
 	/* force write back cache mode */
 	write_through = 0;
-#elif defined(CPU_XSCALE_PXA2X0)
+#elif defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	/*
 	 * Intel PXA2[15]0 processors are known to have a bug in
 	 * write-back cache on revision 4 and earlier (stepping

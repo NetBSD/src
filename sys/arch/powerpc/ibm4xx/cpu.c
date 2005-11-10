@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.2.3 2004/09/21 13:20:34 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.2.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.3 2004/09/21 13:20:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.3 2004/09/21 13:20:34 skrll Exp $");
 
 struct cputab {
 	int version;
-	char *name;
+	const char *name;
 };
 static struct cputab models[] = {
 	{ PVR_401A1  >> 16,	"401A1" },
@@ -156,15 +156,15 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 void
 cpu_probe_cache()
 {
-	int version;
+	int pvr;
 
 	/*
 	 * First we need to identify the CPU and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */
-	__asm __volatile("mfpvr %0" : "=r" (version));
-	switch (version & 0xffff0000) {
+	__asm __volatile("mfpvr %0" : "=r" (pvr));
+	switch (pvr & 0xffff0000) {
 	case PVR_401A1:
 		curcpu()->ci_ci.dcache_size = 1024;
 		curcpu()->ci_ci.dcache_line_size = 16;

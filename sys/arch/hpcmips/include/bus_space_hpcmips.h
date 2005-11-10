@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_hpcmips.h,v 1.3 2001/12/02 10:37:54 uch Exp $	*/
+/*	$NetBSD: bus_space_hpcmips.h,v 1.3.20.1 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -51,7 +51,7 @@ struct bus_space_tag_hpcmips {
 bus_space_tag_t hpcmips_system_bus_space(void);
 struct bus_space_tag_hpcmips *hpcmips_system_bus_space_hpcmips(void);
 void hpcmips_init_bus_space(struct bus_space_tag_hpcmips *,
-    struct bus_space_tag_hpcmips *, char *, u_int32_t, u_int32_t);
+    struct bus_space_tag_hpcmips *, const char *, u_int32_t, u_int32_t);
 struct bus_space_tag_hpcmips *hpcmips_alloc_bus_space_tag(void);
 
 #endif /* _BUS_SPACE_HPCMIPS_H_ */

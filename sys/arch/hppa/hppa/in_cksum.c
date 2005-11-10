@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.1.10.2 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*	$OpenBSD: in_cksum.c,v 1.1 2001/01/13 00:00:20 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1.10.2 2005/11/10 13:56:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp 
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16); ADDCARRY}
 #define ROL		asm volatile ("shd %0, %0, 8, %0" : "+r" (sum))
 #define ADDBYTE		{ROL; sum += *w++; bins++; mlen--;}
-#define ADDSHORT	{sum += *((u_short *)w)++; mlen -= 2;}
+#define ADDSHORT	{sum += *(u_short *)w; w += 2; mlen -= 2;}
 #define ADDWORD	asm volatile(	"ldwm 4(%1), %%r19! add %0, %%r19, %0\n\t" \
 				"ldo -4(%2), %2   ! addc    %0, 0, %0" \
 				: "+r" (sum), "+r" (w), "+r" (mlen) :: "r19")

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43.2.10 2005/04/01 14:27:08 skrll Exp $
+# $NetBSD: GENERIC,v 1.43.2.11 2005/11/10 13:55:47 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43.2.10 $"
+#ident 		"GENERIC-$Revision: 1.43.2.11 $"
 
 maxusers	32
 
@@ -46,10 +46,11 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Debugging options
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# kernel dynamic debugger
@@ -66,6 +67,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -88,6 +90,8 @@ file-system	FDESC		# user file descriptor filesystem
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -105,6 +109,7 @@ options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -222,7 +227,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-#piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
@@ -278,6 +282,14 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 #tqphy*		at mii? phy ?			# TDK Semiconductor PHYs
 #ukphy*		at mii? phy ?			# generic unknown PHYs
 
+# PCI IEEE1394 controllers
+#fwohci*	at pci? dev ? function ?		# IEEE1394 Open Host Controller
+
+#ieee1394if*	at fwohci?
+#fwip*		at ieee1394if?			# IP over IEEE1394
+#sbp*		at ieee1394if? euihi ? euilo ?
+#scsibus*	at sbp?
+
 # PCI audio devices
 #clcs*		at pci? dev ? function ?	# Cirrus Logic CS4280
 #eap*		at pci? dev ? function ?	# Ensoniq AudioPCI
@@ -306,6 +318,7 @@ options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 pseudo-device	fss		4		# file system snapshot device
 #pseudo-device	md		1		# memory disk device (ramdisk)
 #pseudo-device	vnd		4		# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # Network pseudo-devices
 pseudo-device	bpfilter	8		# Berkeley packet filter

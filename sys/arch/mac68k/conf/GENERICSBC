@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.24.2.8 2005/03/04 16:38:47 skrll Exp $
+#	$NetBSD: GENERICSBC,v 1.24.2.9 2005/11/10 13:57:13 skrll Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.24.2.8 $"
+#ident 		"GENERICSBC-$Revision: 1.24.2.9 $"
 
 maxusers	16		# estimated number of users
 
@@ -66,6 +66,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -96,6 +97,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	CODA		# Venus/Coda distributed file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -113,6 +115,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -289,6 +292,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vcoda		1	# Venus/Coda distributed file system
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	12	# Berkeley packet filter

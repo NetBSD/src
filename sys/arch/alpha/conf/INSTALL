@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.72.2.8 2005/03/04 16:38:01 skrll Exp $
+# $NetBSD: INSTALL,v 1.72.2.9 2005/11/10 13:48:22 skrll Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -210,7 +210,6 @@ cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 cypide* at pci? dev ? function ?		# Cypress IDE controllers
 hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?		# Opti IDE controllers
-piixide* at pci? dev ? function ?		# Intel IDE controllers
 pdcide* at pci? dev ? function ?		# Promise IDE controllers
 pdcsata* at pci? dev ? function ?		# Promise SATA150 controllers
 satalink* at pci? dev ? function ?		# SiI SATALink controllers

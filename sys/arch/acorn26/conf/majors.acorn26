@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn26,v 1.4.2.3 2004/09/21 13:11:20 skrll Exp $
+#	$NetBSD: majors.acorn26,v 1.4.2.4 2005/11/10 13:48:20 skrll Exp $
 #
 # Device majors for acorn26
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 0
+device-major	swap		char 3   block 0	vmswap
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6
@@ -36,6 +36,8 @@ device-major	cgd		char 29  block 8	cgd
 device-major	ksyms		char 30			ksyms
 device-major	lkm		char 31			lkm
 device-major	wsfont		char 32			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

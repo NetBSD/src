@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.2.3 2004/09/21 13:18:29 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.4 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.3 2004/09/21 13:18:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.4 2005/11/10 13:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,9 +133,9 @@ static void setpartition __P((struct part_map_entry *,
 		struct partition *, int));
 static int getNamedType __P((struct part_map_entry *, int,
 		struct disklabel *, int, int, int *));
-static char *read_mac_label __P((dev_t, void (*)(struct buf *),
+static const char *read_mac_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
-static char *read_dos_label __P((dev_t, void (*)(struct buf *),
+static const char *read_dos_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
 static int get_netbsd_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
@@ -328,7 +328,7 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
  *	NetBSD to live on cluster 0--regardless of the actual order on the
  *	disk.  This whole algorithm should probably be changed in the future.
  */
-static char *
+static const char *
 read_mac_label(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
@@ -338,7 +338,7 @@ read_mac_label(dev, strat, lp, osdep)
 	struct part_map_entry *part;
 	struct partition *pp;
 	struct buf *bp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int i, slot, maxslot = 0, clust;
 	u_int8_t realtype;
 
@@ -405,7 +405,7 @@ done:
  * Hence anything but DOS partitions is treated as unknown FS type, but
  * this should suffice to mount_msdos Zip and other removable media.
  */
-static char *
+static const char *
 read_dos_label(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
@@ -414,7 +414,7 @@ read_dos_label(dev, strat, lp, osdep)
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int i, slot, maxslot = 0;
 	u_int32_t bsdpartoff;
 	struct mbr_partition *bsdp;
@@ -570,7 +570,7 @@ readdisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;

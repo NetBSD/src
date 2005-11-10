@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24.2.3 2004/09/21 13:16:05 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24.2.4 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24.2.3 2004/09/21 13:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24.2.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24.2.3 2004/09/21 13:16:05 skrll Exp $
 
 STATIC int mainbus_match(struct device *, struct cfdata *, void *);
 STATIC void mainbus_attach(struct device *, struct device *, void *);
-STATIC int mainbus_search(struct device *, struct cfdata *, void *);
+STATIC int mainbus_search(struct device *, struct cfdata *,
+			  const int *, void *);
 STATIC int mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -96,12 +97,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/* search and attach devices in order */
 	for (i = 0; i < sizeof(devnames) / sizeof(devnames[0]); i++) {
 		ma.ma_name = devnames[i];
-		config_search(mainbus_search, self, &ma);
+		config_search_ia(mainbus_search, self, "mainbus", &ma);
 	}
 }
 
 int
-mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_search(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = (void *)aux;
 	int locator = cf->cf_loc[MAINBUSCF_PLATFORM];

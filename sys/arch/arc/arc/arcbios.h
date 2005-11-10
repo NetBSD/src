@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.5.2.1 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.5.2.2 2005/11/10 13:55:00 skrll Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -303,8 +303,8 @@ typedef struct arc_calls
 		char *,			/* Path */
 		arc_mount_t);		/* Operation */
 
-	char *(*getenv)(			/* GetEnvironmentVariable 31 */
-		char *);		/* Variable */
+	const char *(*getenv)(		/* GetEnvironmentVariable 31 */
+		const char *);		/* Variable */
 
 	arc_status_t (*putenv)(		/* SetEnvironmentVariable 32 */
 		char *,			/* Variable */

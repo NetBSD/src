@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.34.2.1 2004/11/02 07:50:22 skrll Exp $ */
+/*	$NetBSD: if_es.c,v 1.34.2.2 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.34.2.1 2004/11/02 07:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.34.2.2 2005/11/10 13:51:36 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -580,7 +580,7 @@ esrint(struct es_softc *sc)
 		smc->b2.bsr = BSR_BANK2;
 	}
 #endif
-	data = (u_short *)&smc->b2.data;
+	data = (volatile u_short *)&smc->b2.data;
 	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR | PTR_READ | SWAP(0x0002);
 	(void) smc->b2.mmucr;
 #ifdef ESDEBUG
@@ -835,7 +835,7 @@ esstart(struct ifnet *ifp)
 		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
-		data = (u_short *)&smc->b2.data;
+		data = (volatile u_short *)&smc->b2.data;
 		*data = SWAP(pktctlw);
 		*data = SWAP(pktlen);
 #ifdef ESDEBUG

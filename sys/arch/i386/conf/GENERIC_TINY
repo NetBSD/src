@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.56.2.10 2005/04/01 14:27:39 skrll Exp $
+#	$NetBSD: GENERIC_TINY,v 1.56.2.11 2005/11/10 13:56:32 skrll Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -85,6 +85,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -110,6 +111,8 @@ file-system 	KERNFS		# /kern
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -193,7 +196,8 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
@@ -498,7 +502,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#scsibus* at umass?
 #wd*	at umass?
 
 # USB Ethernet adapters
@@ -528,8 +531,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
@@ -566,6 +567,7 @@ include	"arch/i386/conf/GENERIC.local"
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

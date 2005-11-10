@@ -1,4 +1,4 @@
-/* $NetBSD: pb1000_obio.c,v 1.5.2.3 2004/09/21 13:14:53 skrll Exp $ */
+/* $NetBSD: pb1000_obio.c,v 1.5.2.4 2005/11/10 13:55:54 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.5.2.3 2004/09/21 13:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.5.2.4 2005/11/10 13:55:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pb1000_obio.c,v 1.5.2.3 2004/09/21 13:14:53 skrll Ex
 
 static int	obio_match(struct device *, struct cfdata *, void *);
 static void	obio_attach(struct device *, struct device *, void *);
-static int	obio_submatch(struct device *, struct cfdata *, void *);
+static int	obio_submatch(struct device *, struct cfdata *,
+			      const int *, void *);
 static int	obio_print(void *, const char *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
@@ -99,13 +100,14 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 		oa.oba_name = od->od_name;
 		oa.oba_addr = od->od_addr;
 		oa.oba_irq = od->od_irq;
-		(void) config_found_sm(self, &oa, obio_print,
+		(void) config_found_sm_loc(self, "obio", NULL, &oa, obio_print,
 		    obio_submatch);
 	}
 }
 
 static int
-obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
+obio_submatch(struct device *parent, struct cfdata *cf,
+	      const int *ldesc, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.8.2.4 2005/04/01 14:27:26 skrll Exp $
+#	$NetBSD: Makefile.gzboot,v 1.8.2.5 2005/11/10 13:55:53 skrll Exp $
 
 NOMAN=  # defined
 
@@ -55,7 +55,6 @@ CLEANFILES+= ${PROGSYM}
 SRCS+= vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine
 .NOPATH: machine
 .endif
 

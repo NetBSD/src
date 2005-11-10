@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92.2.4 2004/09/21 13:12:16 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.92.2.5 2005/11/10 13:51:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92.2.4 2004/09/21 13:12:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92.2.5 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ extern struct emul emul_sunos;
 
 int	astpending;
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",

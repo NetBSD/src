@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.14.2.3 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.14.2.4 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14.2.3 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14.2.4 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14.2.3 2004/09/21 13:13:08 skrll Exp 
 struct arm32_insn {
 	u_int mask;
 	u_int pattern;
-	char* name;
-	char* format;
+	const char* name;
+	const char* format;
 };
 
 static const struct arm32_insn arm32_i[] = {
@@ -279,7 +279,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	u_int insn;
 	int matchp;
 	int branch;
-	char* f_ptr;
+	const char* f_ptr;
 	int fmt;
 
 	if (loc & 3) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.42.6.3 2004/09/21 13:20:17 skrll Exp $	*/
+/*	$NetBSD: cfb.c,v 1.42.6.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.42.6.3 2004/09/21 13:20:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.42.6.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ cfbinit(fi, cfbaddr, unit, silent)
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
-		printf("cfb: bad address 0x%p\n", cfbaddr);
+		printf("cfb: bad address %p\n", cfbaddr);
 		return (0);
 	}
 

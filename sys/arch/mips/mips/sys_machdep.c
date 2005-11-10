@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23.2.6 2005/03/04 16:38:48 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23.2.7 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.23.2.6 2005/03/04 16:38:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.23.2.7 2005/11/10 13:57:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,14 +157,14 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
  * non-cacheable.
  */
 int
-mips_user_cachectl(p, va, nbytes, cachectl)
+mips_user_cachectl(p, va, nbytes, cachectlval)
 	struct proc *p;
 	vaddr_t va;
 	size_t nbytes;
-	int cachectl;
+	int cachectlval;
 {
 	/* validate the cache we're going to flush. */
-	switch (cachectl) {
+	switch (cachectlval) {
 	case CACHEABLE:
 	case UNCACHEABLE:
 		break;

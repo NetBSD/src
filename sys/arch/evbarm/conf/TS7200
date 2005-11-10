@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.7.4.6 2005/03/04 16:38:14 skrll Exp $
+#	$NetBSD: TS7200,v 1.7.4.7 2005/11/10 13:55:51 skrll Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -39,6 +39,7 @@ file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -54,6 +55,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
@@ -76,6 +78,7 @@ options 	NFS_BOOT_DHCP
 
 #options 	COMPAT_LINUX
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -168,12 +171,14 @@ isa0		at tspld?
 wdc0		at tspld?
 # TS-5620 battery-backed real-time clock
 tsrtc*		at tspld?
+
 # HD44780 LCD on LCD header
-tslcd*		at tspld?
-wsdisplay*	at tslcd? console ?
+#tslcd*		at tspld?
+#wsdisplay*	at tslcd? console ?
+
 # 4x4 Matrix Keypad on DIO header
-tskp*		at tspld?
-wskbd*	at tskp? console ? mux 1
+#tskp*		at tspld?
+#wskbd*	at tskp? console ? mux 1
 
 # TS-SER[1,2,4] multiport serial PC/104 cards
 com0		at isa? port 0x3f8 irq 6        # Standard PC serial ports
@@ -183,10 +188,16 @@ com3		at isa? port 0x2e8 irq 6
 
 wdc1	at isa? port 0x1f0 irq 7 flags 0x00
 wdc2	at isa? port 0x170 irq 7 flags 0x00
+
 tscs0	at isa? port 0x300 iomem ? irq ? drq ?  # TS-ETH10 PC/104 ethernet
 tscs1	at isa? port 0x310 iomem ? irq ? drq ?
 tscs2	at isa? port 0x320 iomem ? irq ? drq ?
 tscs3	at isa? port 0x330 iomem ? irq ? drq ?
+
+tsdio0  at isa? port 0x100 # TS-DIO24 general-purpose I/O
+tsdio1  at isa? port 0x108
+tsdio2  at isa? port 0x110
+tsdio3  at isa? port 0x118
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
@@ -277,6 +288,9 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
@@ -351,6 +365,10 @@ atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
 # uvisor*	at uhub? port ?
 # ucom*	at uvisor?
 
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
+
 # USB scanners
 # uscanner* at uhub? port ?
 
@@ -374,7 +392,7 @@ ugen*	at uhub? port ?
 # irframe* at oboe?
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 #fw*	at fwbus?			# IP over 1394
 

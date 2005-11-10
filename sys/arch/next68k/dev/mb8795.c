@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.32.2.6 2005/02/04 11:44:47 skrll Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.32.2.7 2005/11/10 13:57:57 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.6 2005/02/04 11:44:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.7 2005/11/10 13:57:57 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -241,7 +241,7 @@ mb8795_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 /****************************************************************/
 #ifdef MB8795_DEBUG
-#define XCHR(x) "0123456789abcdef"[(x) & 0xf]
+#define XCHR(x) hexdigits[(x) & 0xf]
 static void
 mb8795_hex_dump(unsigned char *pkt, size_t len)
 {

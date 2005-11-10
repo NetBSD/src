@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149reg.h,v 1.3 1997/01/21 20:41:09 leo Exp $	*/
+/*	$NetBSD: ym2149reg.h,v 1.3.60.1 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -107,11 +107,11 @@ struct ym2149 {
 extern u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 
 #define ym2149_write_ioport(port, value) {				\
-	int	s = splhigh();						\
+	int	_os = splhigh();					\
 									\
 	YM2149->sd_selr = port;						\
 	YM2149->sd_wdat = value;					\
-	splx(s);							\
+	splx(_os);							\
 }
 
 #define ym2149_write_ioport2(port, value) {				\
@@ -120,43 +120,43 @@ extern u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 }
 
 #define ym2149_fd_select(select) {					\
-	int s = splhigh();						\
+	int _s = splhigh();						\
 									\
 	ym2149_ioa = (ym2149_ioa & ~PA_FDSEL) | (select & PA_FDSEL);	\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
-	splx(s);							\
+	splx(_s);							\
 	}
 
 #define ym2149_rts(set) {						\
-	int s = splhigh();						\
+	int _s = splhigh();						\
 									\
 	ym2149_ioa = set ? ym2149_ioa | PA_SRTS : ym2149_ioa & ~PA_SRTS;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
-	splx(s);							\
+	splx(_s);							\
 	}
 
 #define ym2149_dtr(set) {						\
-	int s = splhigh();						\
+	int _s = splhigh();						\
 									\
 	ym2149_ioa = set ? ym2149_ioa | PA_SDTR : ym2149_ioa & ~PA_SDTR;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
-	splx(s);							\
+	splx(_s);							\
 	}
 
 #define ym2149_strobe(set) {						\
-	int s = splhigh();						\
+	int _s = splhigh();						\
 									\
 	ym2149_ioa = set ? ym2149_ioa | PA_PSTROBE : ym2149_ioa & ~PA_PSTROBE;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
-	splx(s);							\
+	splx(_s);							\
 	}
 
 #define ym2149_ser2(set) {						\
-	int s = splhigh();						\
+	int _s = splhigh();						\
 									\
 	ym2149_ioa = set ? ym2149_ioa | PA_SER2 : ym2149_ioa & ~PA_SER2;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
-	splx(s);							\
+	splx(_s);							\
 	}
 
 #undef ym2149_write_ioport2

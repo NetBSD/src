@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.3.20.3 2004/09/21 13:15:47 skrll Exp $	*/
+/*	$NetBSD: platid.c,v 1.3.20.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(_WIN32)	/* XXX: hpcboot.exe */
-__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.3.20.3 2004/09/21 13:15:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.3.20.4 2005/11/10 13:56:14 skrll Exp $");
 #endif
 
 #include <sys/types.h>
@@ -80,25 +80,25 @@ platid_dump(char *name, void* pxx)
 }
 
 int
-platid_match(platid_t *platid, platid_mask_t *mask)
+platid_match(platid_t *pid, platid_mask_t *mask)
 {
 
-	return (platid_match_sub(platid, mask, 0));
+	return (platid_match_sub(pid, mask, 0));
 }
 
 int
-platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
+platid_match_sub(platid_t *pid, platid_mask_t *mask, int unknown_is_match)
 {
 	int match_count;
 
-#define PLATID_MATCH(mbr)						\
-	if (platid->s.mbr != mask->s.mbr &&				\
-	    mask->s.mbr != platid_wild.s.mbr &&				\
-	    !(platid->s.mbr == platid_unknown.s.mbr &&			\
-	     unknown_is_match)) {					\
-		return (0);						\
-	} else if (platid->s.mbr == mask->s.mbr) {			\
-		match_count++;						\
+#define PLATID_MATCH(mbr)				\
+	if (pid->s.mbr != mask->s.mbr &&		\
+	    mask->s.mbr != platid_wild.s.mbr &&		\
+	    !(pid->s.mbr == platid_unknown.s.mbr &&	\
+	     unknown_is_match)) {			\
+		return (0);				\
+	} else if (pid->s.mbr == mask->s.mbr) {		\
+		match_count++;				\
 	}
 
 	match_count = 1;
@@ -117,12 +117,12 @@ platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 #undef PLATID_MATCH
 }
 
-tchar*
-platid_name(platid_t *platid)
+const tchar *
+platid_name(platid_t *pid)
 {
 	struct platid_name *match;
 
-	match = platid_search(platid,
+	match = platid_search(pid,
 	    platid_name_table, platid_name_table_size,
 	    sizeof(struct platid_name));
 
@@ -130,10 +130,10 @@ platid_name(platid_t *platid)
 }
 
 struct platid_data *
-platid_search_data(platid_t *platid, struct platid_data *datap)
+platid_search_data(platid_t *pid, struct platid_data *datap)
 {
 
-	while (datap->mask != NULL && !platid_match(platid, datap->mask))
+	while (datap->mask != NULL && !platid_match(pid, datap->mask))
 		datap++;
 	if (datap->mask == NULL && datap->data == NULL)
 		return (NULL);
@@ -142,7 +142,7 @@ platid_search_data(platid_t *platid, struct platid_data *datap)
 }
 
 void *
-platid_search(platid_t *platid, void *base, int nmemb, int size)
+platid_search(platid_t *pid, void *base, int nmemb, int size)
 {
 	int i, match_level, res;
 	void *match;
@@ -150,7 +150,7 @@ platid_search(platid_t *platid, void *base, int nmemb, int size)
 	match_level = 0;
 	match = NULL;
 	for (i = 0; i < nmemb; i++) {
-		res = platid_match(platid, *(platid_mask_t**)base);
+		res = platid_match(pid, *(platid_mask_t**)base);
 		if (match_level < res) {
 			match_level = res;
 			match = base;

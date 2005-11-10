@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.2.2 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.3 2005/11/10 13:56:13 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -94,11 +94,13 @@ struct hppa_cpu_info {
 #define HPPA_PA_SPEC_LETTER(x) \
   (((x) & 0xf) == 0 ? '\0' : 'a' + ((x) & 0xf) - 0xa)
 
-	int (*desidhash) __P((void));
+	int (*desidhash)(void);
 	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
-	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
+	int (*hptinit)(vaddr_t, vsize_t);
 };
+#ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
+#endif
 #endif
 
 /*
@@ -191,38 +193,47 @@ struct clockframe {
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+
+	struct	lwp	*ci_curlwp;	/* CPU owner */
+	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 };
 
 #include <machine/intr.h>
 
 extern struct cpu_info cpu_info_store;
 
-#define	curcpu()			(&cpu_info_store)
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+
+#define	curcpu()			(&cpu_info_store)
 #define	cpu_number()			0
 
 #define cpu_proc_fork(p1, p2)
 
-#define MD_CACHE_FLUSH 0
-#define MD_CACHE_PURGE 1
+#ifdef MULTIPROCESSOR
+#define	curlwp				(curcpu()->ci_curlwp)
+#define	CPU_IS_PRIMARY(ci)		1
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = curcpu(), cii < 1; cii++
+
+void	cpu_boot_secondary_processors(void);
+#endif
+
 #define	HPPA_SID_KERNEL 0
-#define MD_CACHE_CTL(a,s,t)	\
-	(((t)? pdcache : fdcache) (HPPA_SID_KERNEL,(vaddr_t)(a),(s)))
 
 extern int want_resched;
 
 #define DELAY(x) delay(x)
 
-static __inline long
-kvtop (const caddr_t va)
+static __inline paddr_t
+kvtop(const caddr_t va)
 {
-	long ret;
-	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (ret) : "r" (va));
-	return ret;
+	paddr_t pa;
+
+	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (pa) : "r" (va));
+	return pa;
 }
 
 extern int (*cpu_desidhash)(void);

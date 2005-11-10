@@ -1,8 +1,9 @@
-# $NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp $
+# $NetBSD: std.i386,v 1.24.2.1 2005/11/10 13:56:32 skrll Exp $
 #
 # standard, required NetBSD/i386 'options'
 
 machine i386 x86
+include		"conf/std"	# MI standard options
 
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries

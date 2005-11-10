@@ -1,8 +1,9 @@
-#	$NetBSD: std.ev64260,v 1.2.2.3 2004/09/21 13:15:01 skrll Exp $
+#	$NetBSD: std.ev64260,v 1.2.2.4 2005/11/10 13:56:04 skrll Exp $
 #
 # standard, required NetBSD/evbppc 'options'
 
 machine evbppc powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# Discovery uses Motorola PPC60x CPUs
 makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

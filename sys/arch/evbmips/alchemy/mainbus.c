@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.5.6.3 2004/09/21 13:14:53 skrll Exp $ */
+/* $NetBSD: mainbus.c,v 1.5.6.4 2005/11/10 13:55:54 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5.6.3 2004/09/21 13:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5.6.4 2005/11/10 13:55:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5.6.3 2004/09/21 13:14:53 skrll Exp $"
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_submatch(struct device *, struct cfdata *, void *);
 static int	mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -94,15 +93,8 @@ mainbus_attach(parent, self, aux)
 	printf("\n");
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
-		config_found_sm(self, NULL, mainbus_print, mainbus_submatch);
+		config_found_ia(self, "mainbus", NULL, mainbus_print);
 	}
-}
-
-static int
-mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return (config_match(parent, cf, aux));
 }
 
 static int

@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.48.2.7 2005/03/04 16:38:04 skrll Exp $
+# $NetBSD: BOOTX,v 1.48.2.8 2005/11/10 13:55:28 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.47 2005/02/25 13:46:48 simonb Exp $
+#		NetBSD: GENERIC.in,v 1.56 2005/11/03 16:48:29 chs Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -38,6 +38,7 @@ options COMPAT_14 # Compatibility with NetBSD 1.4
 options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
+options COMPAT_30 # NetBSD 3.0 compatibility.
 
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
@@ -62,6 +63,7 @@ pseudo-device ppp # ppp
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+
 pseudo-device md 3 # Boot memory disk
 pseudo-device view 4 # View (graphics mapping)
 

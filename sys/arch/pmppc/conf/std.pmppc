@@ -1,8 +1,9 @@
-#	$NetBSD: std.pmppc,v 1.4.2.3 2004/09/21 13:20:25 skrll Exp $
+#	$NetBSD: std.pmppc,v 1.4.2.4 2005/11/10 13:58:15 skrll Exp $
 #
 # standard, required NetBSD/pmppc 'options'
 
 machine		pmppc powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# Artesyn PMPPC uses Motorola PPC750 CPUs
 makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

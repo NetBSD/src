@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4.2.4 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4.2.5 2005/11/10 13:48:20 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.2.4 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.2.5 2005/11/10 13:48:20 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -220,7 +220,7 @@ void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
 	size_t	size;
-	char	*data;
+	const char	*data;
 {
 #if 0
 	extern char	_stext_[], _etext[];
@@ -291,54 +291,54 @@ db_machine_init()
 }
 
 u_int
-db_fetch_reg(reg, db_regs)
+db_fetch_reg(reg, regs)
 	int reg;
-	db_regs_t *db_regs;
+	db_regs_t *regs;
 {
 
 	switch (reg) {
 	case 0:
-		return (db_regs->tf_r0);
+		return (regs->tf_r0);
 	case 1:
-		return (db_regs->tf_r1);
+		return (regs->tf_r1);
 	case 2:
-		return (db_regs->tf_r2);
+		return (regs->tf_r2);
 	case 3:
-		return (db_regs->tf_r3);
+		return (regs->tf_r3);
 	case 4:
-		return (db_regs->tf_r4);
+		return (regs->tf_r4);
 	case 5:
-		return (db_regs->tf_r5);
+		return (regs->tf_r5);
 	case 6:
-		return (db_regs->tf_r6);
+		return (regs->tf_r6);
 	case 7:
-		return (db_regs->tf_r7);
+		return (regs->tf_r7);
 	case 8:
-		return (db_regs->tf_r8);
+		return (regs->tf_r8);
 	case 9:
-		return (db_regs->tf_r9);
+		return (regs->tf_r9);
 	case 10:
-		return (db_regs->tf_r10);
+		return (regs->tf_r10);
 	case 11:
-		return (db_regs->tf_r11);
+		return (regs->tf_r11);
 	case 12:
-		return (db_regs->tf_r12);
+		return (regs->tf_r12);
 	case 13:
-		return (db_regs->tf_svc_sp);
+		return (regs->tf_svc_sp);
 	case 14:
-		return (db_regs->tf_svc_lr);
+		return (regs->tf_svc_lr);
 	case 15:
-		return (db_regs->tf_pc);
+		return (regs->tf_pc);
 	default:
 		panic("db_fetch_reg: botch");
 	}
 }
 
 u_int
-branch_taken(insn, pc, db_regs)
+branch_taken(insn, pc, regs)
 	u_int insn;
 	u_int pc;
-	db_regs_t *db_regs;
+	db_regs_t *regs;
 {
 	u_int addr, nregs;
 
@@ -350,16 +350,16 @@ branch_taken(insn, pc, db_regs)
 			addr |= 0xfc000000;
 		return (pc + 8 + addr);
 	case 0x7:	/* ldr pc, [pc, reg, lsl #2] */
-		addr = db_fetch_reg(insn & 0xf, db_regs);
+		addr = db_fetch_reg(insn & 0xf, regs);
 		addr = pc + 8 + (addr << 2);
 		db_read_bytes(addr, 4, (char *)&addr);
 		return (addr);
 	case 0x1:	/* mov pc, reg */
-		addr = db_fetch_reg(insn & 0xf, db_regs);
+		addr = db_fetch_reg(insn & 0xf, regs);
 		return (addr);
 	case 0x8:	/* ldmxx reg, {..., pc} */
 	case 0x9:
-		addr = db_fetch_reg((insn >> 16) & 0xf, db_regs);
+		addr = db_fetch_reg((insn >> 16) & 0xf, regs);
 		nregs = (insn  & 0x5555) + ((insn  >> 1) & 0x5555);
 		nregs = (nregs & 0x3333) + ((nregs >> 2) & 0x3333);
 		nregs = (nregs + (nregs >> 4)) & 0x0f0f;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.60.2.6 2005/03/04 16:38:26 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.60.2.7 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.6 2005/03/04 16:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.7 2005/11/10 13:56:09 skrll Exp $");
 
 #include "hil.h"
 
@@ -399,7 +399,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && l->l_proc->p_ucred->cr_uid != 0)
+	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);
@@ -565,7 +565,8 @@ itefilter(char stat, char c)
 {
 	static int capsmode = 0;
 	static int metamode = 0;
-	char code, *str;
+	char code;
+	const char *str;
 	struct tty *kbd_tty;
 
 	if (ite_cn.tty == NULL)

@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile.buildboot,v 1.2.6.3 2004/09/21 13:15:40 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2.6.4 2005/11/10 13:56:13 skrll Exp $
 
-MACHINE_ARCH=hppa
-MACHINE=hp700
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
 #DEBUGFLAGS=-DDEBUG
@@ -26,19 +24,18 @@ NOMAN=
 STRIPFLAG=
 BINMODE=	444
 
-CLEANFILES+=	${PROGAOUT} vers.c vers.o
-
-CPPFLAGS+=	-nostdinc -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
+CPPFLAGS+=	-nostdinc -I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
+		-I${.OBJDIR}
 CFLAGS+=	-Os -msoft-float -Wno-main
-CFLAGS+=	-fno-builtin 
+CFLAGS+=	-fno-builtin
 CFLAGS+=	-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 
-.PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version \
+		hp700 ${NEWVERSWHAT}
 
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT} 
@@ -74,3 +71,13 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	@echo ${PROG} total size should not exceed XXXX bytes
 
 .include <bsd.prog.mk>
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s $S/arch/hp700/include machine)
+	@([ -h hppa ] || ln -s $S/arch/hppa/include hppa)
+
+.NOPATH: machine hppa
+.endif
+
+CLEANFILES+=machine hppa

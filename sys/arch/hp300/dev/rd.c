@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.60.2.8 2005/03/04 16:38:26 skrll Exp $	*/
+/*	$NetBSD: rd.c,v 1.60.2.9 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.60.2.8 2005/03/04 16:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.60.2.9 2005/11/10 13:56:09 skrll Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -370,7 +370,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	struct rd_softc *sc = (struct rd_softc *)self;
 	struct hpibbus_attach_args *ha = aux;
 
-	bufq_alloc(&sc->sc_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 
 	if (rdident(parent, sc, ha) == 0) {
 		printf("\n%s: didn't respond to describe command!\n",
@@ -743,7 +743,7 @@ rdstrategy(struct buf *bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(&rs->sc_tab, bp);
+	BUFQ_PUT(rs->sc_tab, bp);
 	if (rs->sc_active == 0) {
 		rs->sc_active = 1;
 		rdustart(rs);
@@ -772,7 +772,7 @@ rdustart(struct rd_softc *rs)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(&rs->sc_tab);
+	bp = BUFQ_PEEK(rs->sc_tab);
 	rs->sc_addr = bp->b_data;
 	rs->sc_resid = bp->b_bcount;
 	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
@@ -784,11 +784,11 @@ rdfinish(struct rd_softc *rs, struct buf *bp)
 {
 
 	rs->sc_errcnt = 0;
-	(void)BUFQ_GET(&rs->sc_tab);
+	(void)BUFQ_GET(rs->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-	if ((bp = BUFQ_PEEK(&rs->sc_tab)) != NULL)
+	if ((bp = BUFQ_PEEK(rs->sc_tab)) != NULL)
 		return (bp);
 	rs->sc_active = 0;
 	if (rs->sc_flags & RDF_WANTED) {
@@ -802,7 +802,7 @@ static void
 rdstart(void *arg)
 {
 	struct rd_softc *rs = arg;
-	struct buf *bp = BUFQ_PEEK(&rs->sc_tab);
+	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int part, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
@@ -880,7 +880,7 @@ static void
 rdgo(void *arg)
 {
 	struct rd_softc *rs = arg;
-	struct buf *bp = BUFQ_PEEK(&rs->sc_tab);
+	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int rw, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
@@ -903,7 +903,7 @@ rdintr(void *arg)
 {
 	struct rd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
-	struct buf *bp = BUFQ_PEEK(&rs->sc_tab);
+	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -1074,7 +1074,7 @@ rderror(int unit)
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
-	bp = BUFQ_PEEK(&rs->sc_tab);
+	bp = BUFQ_PEEK(rs->sc_tab);
 	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.5 2005/01/24 08:34:26 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.6 2005/11/10 13:58:15 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.5 2005/01/24 08:34:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,7 +82,7 @@ void
 decr_intr(struct clockframe *frame)
 {
 	int pri;
-	long tick, xticks;
+	long tbtick, xticks;
 	int nticks;
 	extern u_long intrcnt[];
 	/*
@@ -91,16 +91,16 @@ decr_intr(struct clockframe *frame)
 	if (!ticks_per_intr)
 		return;
 
-	tick = mftbl();
+	tbtick = mftbl();
 	mtspr(SPR_TSR, TSR_PIS);	/* Clear TSR[PIS] */
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	xticks = tick - lasttb;	/* Number of TLB cycles since last exception */
+	xticks = tbtick - lasttb;	/* Number of TLB cycles since last exception */
 	for (nticks = 0; xticks > ticks_per_intr; nticks++)
 		xticks -= ticks_per_intr;
-	lasttb = tick - xticks;
+	lasttb = tbtick - xticks;
 
 	intrcnt[CNT_CLOCK]++;
 	pri = splclock();

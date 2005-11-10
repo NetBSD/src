@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3.2.5 2005/04/01 14:27:38 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3.2.6 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3.2.5 2005/04/01 14:27:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3.2.6 2005/11/10 13:56:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,18 +60,20 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3.2.5 2005/04/01 14:27:38 skrll Exp
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
-    struct core *core)
+cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
 {
 	struct md_coredump md_core;
 	struct coreseg cseg;
-	off_t off;
 	int error;
 
-	CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
-	core->c_hdrsize = ALIGN(sizeof(*core));
-	core->c_seghdrsize = ALIGN(sizeof(cseg));
-	core->c_cpusize = sizeof(md_core);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
+		core->c_hdrsize = ALIGN(sizeof(*core));
+		core->c_seghdrsize = ALIGN(sizeof(cseg));
+		core->c_cpusize = sizeof(md_core);
+		core->c_nseg++;
+		return 0;
+	}
 
 	process_read_regs(l, &md_core.md_reg);
 
@@ -79,20 +81,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_addr = 0;
 	cseg.c_size = core->c_cpusize;
 
-#define	write(vp, addr, n) vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
-			     UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, NULL)
-	
-	off = core->c_hdrsize;
-	if ((error = write(vp, &cseg, core->c_seghdrsize)))
-		return error;
-	off += core->c_seghdrsize;
-	if ((error = write(vp, &md_core, sizeof md_core)))
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    core->c_seghdrsize);
+	if (error)
 		return error;
 
-#undef write
-	core->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 void
@@ -135,7 +130,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("USPACE too small for user");
 #endif
 
-	/* Flush the parent process out of the FPU. */
+	/* Flush the parent LWP out of the FPU. */
 	hppa_fpu_flush(l1);
 
 	/* Now copy the parent PCB into the child. */
@@ -231,10 +226,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 	 * that it's unused.
 	 */
 
-	if (fpu_cur_uspace == l->l_md.md_regs->tf_cr30) {
-		fpu_cur_uspace = 0;
-		mtctl(0, CR_CCR);
-	}
+	hppa_fpu_flush(l);
 }
 
 void
@@ -254,28 +246,19 @@ vmapbuf(struct buf *bp, vsize_t len)
 	paddr_t pa;
 	vsize_t size, off;
 	int npf;
-	struct proc *p;
-	struct vm_map *map;
 	struct pmap *upmap, *kpmap;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 #endif
-	p = bp->b_proc;
-	map = &p->p_vmspace->vm_map;
-	upmap = vm_map_pmap(map);
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	bp->b_saveaddr = bp->b_data;
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
-
-	kva = vm_map_min(phys_map);
-	if (uvm_map(phys_map, &kva, size, NULL, uva, 0,
-	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_KMF_WAITVA | UVM_FLAG_QUANTUM)))
-		panic("vmapbuf: space");
+	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
 	npf = btoc(size);
 	while (npf--) {
@@ -296,20 +279,20 @@ void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *pmap;
-	vaddr_t addr;
+	vaddr_t kva;
 	vsize_t off;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 #endif
-	addr = trunc_page((vaddr_t)bp->b_data);
-	off = (vaddr_t)bp->b_data - addr;
+	kva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 	pmap = vm_map_pmap(phys_map);
-	pmap_remove(pmap, addr, addr + len);
+	pmap_remove(pmap, kva, kva + len);
 	pmap_update(pmap);
-	uvm_unmap1(phys_map, addr, len, UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
+	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

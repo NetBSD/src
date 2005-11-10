@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.6 2003/01/20 05:30:01 simonb Exp $	*/
+/*	$NetBSD: apm.c,v 1.6.2.1 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.6 2003/01/20 05:30:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.6.2.1 2005/11/10 13:56:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,10 @@ extern int hpcarm_apm_getpower(struct apm_power_info *, void *);
 
 int apmmatch(struct device *, struct cfdata *, void *);
 void apmattach(struct device *, struct device *, void *);
-dev_type_open(apmopen);
-dev_type_close(apmclose);
-dev_type_ioctl(apmioctl);
+
+static dev_type_open(apmopen);
+static dev_type_close(apmclose);
+static dev_type_ioctl(apmioctl);
 
 struct apm_softc {
 	struct device sc_dev;
@@ -76,54 +77,40 @@ const struct cdevsw apm_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-
 int
-apmmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apmmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct apm_attach_args *apm_args = (struct apm_attach_args *)aux;
+
 	return (apm_args->aaa_magic == APM_ATTACH_ARGS_MAGIC);
 }
 
 void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *sc = (struct apm_softc *)self;
 
 	sc->sc_parent = (void *)parent;
 
-	return;
+	printf("\n");
 }
 
-int
-apmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+static int
+apmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+
 	return 0;
 }
 
-int
-apmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+static int
+apmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
+
 	return 0;
 }
 
-int
-apmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct apm_softc *sc;
 
@@ -135,11 +122,9 @@ apmioctl(dev, cmd, data, flag, p)
 	case APM_IOC_GETPOWER:
 		return hpcarm_apm_getpower((struct apm_power_info *)data, 
 		    sc->sc_parent);
-		break;
-
+		/* NOTREACHED */
 	default:
 		return EINVAL;
-		break;
 	}
 
 	return 0;

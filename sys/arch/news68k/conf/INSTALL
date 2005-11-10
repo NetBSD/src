@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.22.2.8 2005/03/04 16:38:49 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.22.2.9 2005/11/10 13:57:54 skrll Exp $
 
 #	config for bootable floppy kernel
 #
@@ -46,6 +46,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20		# NetBSD 2.0 binary compatibility
+#options 	COMPAT_30		# NetBSD 3.0 compatibility.
 options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -61,6 +62,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #file-system	FDESC		# /dev/fd/*
 #file-system	NULLFS		# loopback file system
 #file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	NFSSERVER	# nfs server support

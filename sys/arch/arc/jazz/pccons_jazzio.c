@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_jazzio.c,v 1.3.6.4 2005/01/24 08:34:05 skrll Exp $ */
+/* $NetBSD: pccons_jazzio.c,v 1.3.6.5 2005/11/10 13:55:09 skrll Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.4 2005/01/24 08:34:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.5 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,10 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.4 2005/01/24 08:34:05 skrll 
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/wired_map.h>
 
 #include <mips/pte.h>
 
-#include <arc/arc/wired_map.h>
 #include <arc/dev/pcconsvar.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/pica.h>
@@ -97,19 +97,30 @@ pccons_jazzio_init_tag(char *name, bus_space_tag_t *iotp,
 		    PICA_P_LOCAL_VIDEO, PICA_V_LOCAL_VIDEO,
 		    0, PICA_S_LOCAL_VIDEO);
 
-		arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL,
+		arc_wired_enter_page(
+		    PICA_V_LOCAL_VIDEO_CTRL,
 		    PICA_P_LOCAL_VIDEO_CTRL,
-		    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
-		    MIPS3_PG_SIZE_1M);
-		arc_enter_wired(PICA_V_LOCAL_VIDEO,
+		    PICA_S_LOCAL_VIDEO_CTRL / 2);
+		arc_wired_enter_page(
+		    PICA_V_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL / 2,
+		    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL / 2,
+		    PICA_S_LOCAL_VIDEO_CTRL / 2);
+
+		arc_wired_enter_page(PICA_V_LOCAL_VIDEO,
 		    PICA_P_LOCAL_VIDEO,
-		    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2,
-		    MIPS3_PG_SIZE_4M);
+		    PICA_S_LOCAL_VIDEO / 2);
+		arc_wired_enter_page(
+		    PICA_V_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO / 2,
+		    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO / 2,
+		    PICA_S_LOCAL_VIDEO / 2);
 #if 0
-		arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL,
+		arc_wired_enter_page(PICA_V_EXTND_VIDEO_CTRL,
 		    PICA_P_EXTND_VIDEO_CTRL,
-		    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
-		    MIPS3_PG_SIZE_1M);
+		    PICA_S_EXTND_VIDEO_CTRL / 2);
+		arc_wired_enter_page(
+		    PICA_V_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL / 2,
+		    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL / 2,
+		    PICA_S_EXTND_VIDEO_CTRL / 2);
 #endif
 	}
 	*iotp = &vga_io;

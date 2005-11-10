@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4.6.4 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.4.6.5 2005/11/10 13:57:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,11 +85,6 @@
 #define	_MACHINE	next68k
 #define	MACHINE		"next68k"
 
-/*
- * Get interrupt glue.
- */
-#include <machine/intr.h>
-
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
@@ -110,6 +105,9 @@
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
+#ifdef _KERNEL
+#include <machine/intr.h>
+
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
@@ -117,10 +115,11 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
 void	_delay(u_int);
-#endif /* _KERNEL && !_LOCORE */
+#endif /* !_LOCORE */
+#endif /* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */

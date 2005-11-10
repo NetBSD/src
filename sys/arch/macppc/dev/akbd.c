@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.29.6.5 2005/02/04 11:44:33 skrll Exp $	*/
+/*	$NetBSD: akbd.c,v 1.29.6.6 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29.6.5 2005/02/04 11:44:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29.6.6 2005/11/10 13:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,7 +160,7 @@ akbdattach(parent, self, aux)
 	case ADB_EXTKBD:
 		cmd = ADBTALK(sc->adbaddr, 1);
 		kbd_done =
-		    (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0);
+		    (adb_op_sync((Ptr)buffer, NULL, (Ptr)0, cmd) == 0);
 
 		/* Ignore Logitech MouseMan/Trackman pseudo keyboard */
 		if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x20) {

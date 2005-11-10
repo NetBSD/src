@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1.2.8 2005/03/04 16:38:47 skrll Exp $
+#	$NetBSD: GENERIC,v 1.1.2.9 2005/11/10 13:57:09 skrll Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -51,6 +51,8 @@ file-system     FILECORE        # Acorn filecore file system
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -67,6 +69,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
@@ -88,6 +91,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -137,8 +141,8 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -192,7 +196,6 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
@@ -304,8 +307,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -334,6 +337,9 @@ usb*	at uhci?
 # USB Keyboards
 # ukbd*	at uhidev? reportid ?
 # wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+# ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
 # uhid*	at uhidev? reportid ?
@@ -399,6 +405,10 @@ usb*	at uhci?
 # uvisor*	at uhub? port ?
 # ucom*	at uvisor?
 
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
+
 # USB scanners
 # uscanner* at uhub? port ?
 
@@ -426,7 +436,7 @@ usb*	at uhci?
 #fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 #fw*	at fwbus?			# IP over 1394
 
@@ -485,6 +495,7 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices

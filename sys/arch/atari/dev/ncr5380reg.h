@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.16.2.1 2004/12/18 09:31:01 skrll Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.16.2.2 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -238,10 +238,10 @@ static void finish_req __P((SC_REQ *));
 static int  handle_message __P((SC_REQ *, u_int));
 static int  information_transfer __P((struct ncr_softc *));
 static void nack_message __P((SC_REQ *, u_char));
-static void ncr_aprint __P((struct ncr_softc *, char *, ...));
+static void ncr_aprint __P((struct ncr_softc *, const char *, ...));
 static void ncr_ctrl_intr __P((struct ncr_softc *));
 static void ncr_dma_intr __P((struct ncr_softc *));
-static void ncr_tprint __P((SC_REQ *, char *, ...));
+static void ncr_tprint __P((SC_REQ *, const char *, ...));
 static int  reach_msg_out __P((struct ncr_softc *, u_long));
 static void reselect __P((struct ncr_softc *));
 static void run_main __P((struct ncr_softc *));
@@ -251,7 +251,7 @@ static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
 static int  scsi_select __P((SC_REQ *, int));
 static void show_data_sense __P((struct scsipi_xfer *));
 static void show_phase __P((SC_REQ *, int));
-static void show_request __P((SC_REQ *, char *));
+static void show_request __P((SC_REQ *, const char *));
 static void show_signals __P((u_char, u_char));
 static void transfer_dma __P((SC_REQ *, u_int, int));
 static int  transfer_pio __P((u_char *, u_char *, u_long *, int));

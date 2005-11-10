@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.32.2.3 2004/09/21 13:12:26 skrll Exp $ */
+/*	$NetBSD: flsc.c,v 1.32.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.32.2.3 2004/09/21 13:12:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.32.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -323,25 +323,27 @@ void
 flsc_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
-struct ncr53c9x_tinfo *ti;
+	struct ncr53c9x_tinfo *ti;
 
-if (sc->sc_nexus)
-  ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
-else
-  ti = &sc->sc_tinfo[1];	/* XXX */
-if (fsc->sc_active) {
-  printf("dmaaddr %p dmasize %d stat %x flags %x off %d per %d ff %x",
-     *fsc->sc_dmaaddr, fsc->sc_dmasize, fsc->sc_reg[NCR_STAT * 4],
-     ti->flags, ti->offset, ti->period, fsc->sc_reg[NCR_FFLAG * 4]);
-  printf(" intr %x\n", fsc->sc_reg[NCR_INTR * 4]);
+	if (sc->sc_nexus)
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
+	else
+		ti = &sc->sc_tinfo[1];	/* XXX */
+	if (fsc->sc_active) {
+		printf("dmaaddr %p dmasize %d stat %x flags %x off %d ",
+		    *fsc->sc_dmaaddr, fsc->sc_dmasize, 
+		    fsc->sc_reg[NCR_STAT * 4], ti->flags, ti->offset);
+		printf("per %d ff %x intr %x\n", 
+		    ti->period, fsc->sc_reg[NCR_FFLAG * 4], 
+		    fsc->sc_reg[NCR_INTR * 4]);
 #ifdef DDB
-  Debugger();
+		Debugger();
 #endif
-}
+	}
 	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
 	fsc->sc_reg[0x40] = fsc->sc_portbits;
 	fsc->sc_reg[0x80] = 0;
-	*((u_long *)fsc->sc_dmabase) = 0;
+	*((volatile u_long *)fsc->sc_dmabase) = 0;
 	fsc->sc_active = 0;
 	fsc->sc_piomode = 0;
 }
@@ -371,7 +373,7 @@ flsc_dma_intr(struct ncr53c9x_softc *sc)
 		fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
 		fsc->sc_reg[0x40] = fsc->sc_portbits;
 		fsc->sc_reg[0x80] = 0;
-		*((u_long *)fsc->sc_dmabase) = 0;
+		*((volatile u_long *)fsc->sc_dmabase) = 0;
 		cnt = fsc->sc_reg[NCR_TCL * 4];
 		cnt += fsc->sc_reg[NCR_TCM * 4] << 8;
 		cnt += fsc->sc_reg[NCR_TCH * 4] << 16;
@@ -525,7 +527,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
 	fsc->sc_reg[0x40] = fsc->sc_portbits;
 	fsc->sc_reg[0x80] = 0;
-	*((u_long *)fsc->sc_dmabase) = 0;
+	*((volatile u_long *)fsc->sc_dmabase) = 0;
 
 	/*
 	 * If output and length < 16, copy to fifo
@@ -607,7 +609,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	}
 #endif
 	fsc->sc_reg[0x80] = 0;
-	*((u_long *)(fsc->sc_dmabase + (pa & 0x00fffffc))) = pa;
+	*((volatile u_long *)(fsc->sc_dmabase + (pa & 0x00fffffc))) = pa;
 	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
 	fsc->sc_portbits |= FLSC_PB_ENABLE_DMA |
 	    (fsc->sc_datain ? FLSC_PB_DMA_READ : FLSC_PB_DMA_WRITE);
@@ -645,7 +647,7 @@ flsc_dma_stop(struct ncr53c9x_softc *sc)
 	fsc->sc_reg[0x40] = fsc->sc_portbits;
 
 	fsc->sc_reg[0x80] = 0;
-	*((u_long *)fsc->sc_dmabase) = 0;
+	*((volatile u_long *)fsc->sc_dmabase) = 0;
 	fsc->sc_piomode = 0;
 }
 

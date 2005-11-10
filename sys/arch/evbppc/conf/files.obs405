@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.5.2.8 2005/04/01 14:27:26 skrll Exp $
+#	$NetBSD: files.obs405,v 1.5.2.9 2005/11/10 13:56:04 skrll Exp $
 #
 # obs405-specific configuration info
 
@@ -15,7 +15,7 @@ file	arch/evbppc/obs405/obs405_autoconf.c
 file	arch/evbppc/obs405/obs405_machdep.c
 
 device obsled
-attach  obsled at gpio
+attach  obsled at ppcgpio
 file	arch/evbppc/obs405/dev/obsled.c		obsled
 
 # Memory Disk for install kernel
@@ -33,3 +33,15 @@ include "dev/wscons/files.wscons"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+
+#
+# Machine-independent CardBus drivers
+#
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/evbppc/obs405/rbus_machdep.c		cardbus
+
+include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"

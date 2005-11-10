@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.85.2.3 2004/09/21 13:18:49 skrll Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.85.2.4 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -392,6 +392,20 @@ LEAF(mips3_cp0_wired_write)
 	j	ra
 	nop
 END(mips3_cp0_wired_write)
+
+/*
+ * void mips3_cp0_pg_mask_write(u_int32_t)
+ *
+ *	Set the value of the CP0 PG_MASK register.
+ */
+LEAF(mips3_cp0_pg_mask_write)
+	mtc0	a0, MIPS_COP_0_TLB_PG_MASK
+	COP0_SYNC
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cp0_pg_mask_write)
 
 #if defined(_MIPS_BSD_API) && \
     (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)

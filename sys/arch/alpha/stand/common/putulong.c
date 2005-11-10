@@ -1,4 +1,4 @@
-/* $NetBSD: putulong.c,v 1.1 1999/08/18 20:00:27 cgd Exp $ */
+/* $NetBSD: putulong.c,v 1.1.36.1 2005/11/10 13:50:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -25,8 +25,6 @@
 
 #include <lib/libsa/stand.h>
 #include "common.h"
-
-static const char hexdigits[16] = "0123456789abcdef";
 
 void
 putulong(unsigned long ul)

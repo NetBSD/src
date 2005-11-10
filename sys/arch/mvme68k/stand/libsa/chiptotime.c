@@ -1,10 +1,10 @@
-/*	$NetBSD: chiptotime.c,v 1.1 2000/07/24 18:39:44 jdolecek Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.1.26.1 2005/11/10 13:57:53 skrll Exp $ */
 
 #include <sys/types.h>
 
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 /*

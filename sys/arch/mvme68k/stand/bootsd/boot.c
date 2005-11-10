@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3.24.3 2004/09/21 13:19:17 skrll Exp $ */
+/*	$NetBSD: boot.c,v 1.3.24.4 2005/11/10 13:57:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 int debug;

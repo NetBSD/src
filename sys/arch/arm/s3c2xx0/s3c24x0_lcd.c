@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.1.4.5 2005/01/17 08:25:43 skrll Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.1.4.6 2005/11/10 13:55:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.1.4.5 2005/01/17 08:25:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.1.4.6 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,8 +522,8 @@ s3c24x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 {
 	struct s3c24x0_lcd_softc *sc = v;
 	struct s3c24x0_lcd_screen *scr;
-	struct s3c24x0_wsscreen_descr *type =
-	    (struct s3c24x0_wsscreen_descr *)_type;
+	const struct s3c24x0_wsscreen_descr *type =
+	    (const struct s3c24x0_wsscreen_descr *)_type;
 
 	int width, height;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155.2.7 2005/04/01 14:27:39 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155.2.8 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.7 2005/04/01 14:27:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.8 2005/11/10 13:56:47 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3245,13 +3245,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
-#if 1
 	if (flags & VM_PROT_ALL) {
 		npte |= PG_U;
 		if (flags & VM_PROT_WRITE)
 			npte |= PG_M;
 	}
-#endif
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -3299,21 +3297,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		opte = x86_atomic_testset_ul(ptep, npte);
 
 		/*
-		 * Any change in the protection level that the CPU
-		 * should know about ? 
-		 */
-		if ((npte & PG_RW)
-		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW))) {
-			/*
-			 * No need to flush the TLB.
-			 * Just add old PG_M, ... flags in new entry.
-			 */
-			x86_atomic_setbits_l(ptep, opte & (PG_M | PG_U));
-			goto out_ok;
-		}
-
-		/*
-		 * Might be cached in the TLB as being writable
 		 * if this is on the PVLIST, sync R/M bit
 		 */
 		if (opte & PG_PVLIST) {
@@ -3423,10 +3406,12 @@ shootdown_test:
 	/* Update page attributes if needed */
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 #if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
+		int32_t cpumask;
 #endif
 shootdown_now:
 #if defined(MULTIPROCESSOR)
+		cpumask = 0;
+
 		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
 		pmap_tlb_shootnow(cpumask);
 #else
@@ -3436,7 +3421,6 @@ shootdown_now:
 #endif
 	}
 
-out_ok:
 	error = 0;
 
 out:

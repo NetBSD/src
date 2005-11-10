@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.21.2.4 2004/09/21 13:16:24 skrll Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.21.2.5 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.21.2.4 2004/09/21 13:16:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.21.2.5 2005/11/10 13:56:31 skrll Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -199,7 +199,8 @@ STATIC struct pcmcia_chip_functions hd64461pcmcia_functions = {
 STATIC int hd64461pcmcia_match(struct device *, struct cfdata *, void *);
 STATIC void hd64461pcmcia_attach(struct device *, struct device *, void *);
 STATIC int hd64461pcmcia_print(void *, const char *);
-STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *, void *);
+STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *,
+				  const int *, void *);
 
 CFATTACH_DECL(hd64461pcmcia, sizeof(struct hd64461pcmcia_softc),
     hd64461pcmcia_match, hd64461pcmcia_attach, NULL, NULL);
@@ -335,7 +336,8 @@ hd64461pcmcia_print(void *arg, const char *pnp)
 }
 
 int
-hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
+hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf,
+		       const int *ldesc, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct hd64461pcmcia_channel *ch =
@@ -417,8 +419,8 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	paa.iobase = ch->ch_iobase;
 	paa.iosize = ch->ch_iosize;
 
-	ch->ch_pcmcia = config_found_sm(parent, &paa, hd64461pcmcia_print,
-	    hd64461pcmcia_submatch);
+	ch->ch_pcmcia = config_found_sm_loc(parent, "pcmciabus", NULL, &paa,
+	    hd64461pcmcia_print, hd64461pcmcia_submatch);
 
 	if (ch->ch_pcmcia && (detect_card(ch->ch_channel) == EVENT_INSERT)) {
 		ch->ch_attached = 1;

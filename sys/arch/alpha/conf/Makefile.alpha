@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.73.6.3 2004/09/21 13:11:48 skrll Exp $
+#	$NetBSD: Makefile.alpha,v 1.73.6.4 2005/11/10 13:48:22 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 ALPHA=		$S/arch/alpha
-GENASSYM=	${ALPHA}/alpha/genassym.cf
+GENASSYM_CONF=	${ALPHA}/alpha/genassym.cf
 
 ##
 ## (2) compile settings

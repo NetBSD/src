@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.20.2.3 2004/09/21 13:17:36 skrll Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.20.2.4 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,20 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-#define __builtin_next_arg(t)	((t) ? 0 : 0)
-#endif
+
+#define va_start(ap, last)      ((ap) = *(va_list *)0)
+#define va_arg(ap, type)        (*(type *)(void *)&(ap))
+#define va_end(ap)
+#define __va_copy(dest, src)    ((dest) = (src))
+
+#elif __GNUC_PREREQ__(3,0)
+
+#define va_start(ap, last)	__builtin_va_start(ap, last)
+#define va_end(ap)		__builtin_va_end(ap)
+#define va_arg(ap, type)	__builtin_va_arg(ap, type)
+#define __va_copy(dest, src)	__builtin_va_copy(dest, src)
+
+#else
 
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
@@ -55,13 +67,16 @@ typedef _BSD_VA_LIST_	va_list;
 				   sizeof(type) != __va_size(type) ?	\
 				   sizeof(type) : __va_size(type))))
 
-#if !defined(_ANSI_SOURCE) &&						\
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
-     defined(_NETBSD_SOURCE))
-#define	va_copy(dest, src) \
+#define	__va_copy(dest, src) \
 	((dest) = (src))
-#endif
 
 #define	va_end(ap)	
+#endif
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src)	__va_copy(dest, src)
+#endif
 
 #endif /* !_M68K_STDARG_H_ */

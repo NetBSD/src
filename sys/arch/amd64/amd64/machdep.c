@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.2.6 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.2.7 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.6 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.7 2005/11/10 13:50:24 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -257,7 +257,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -1669,7 +1669,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	int64_t rflags;
 
 	if ((flags & _UC_CPU) != 0) {
-		error = check_mcontext(mcp, tf);
+		error = check_mcontext(l, mcp, tf);
 		if (error != 0)
 			return error;
 		/*
@@ -1703,35 +1703,64 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 int
-check_mcontext(const mcontext_t *mcp, struct trapframe *tf)
+check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 {
 	const __greg_t *gr;
 	uint16_t sel;
+	int error;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	gr = mcp->__gregs;
 
 	if (((gr[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
-	sel = gr[_REG_ES] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
+	if (__predict_false((pmap->pm_flags & PMF_USER_LDT) != 0)) {
+		error = valid_user_selector(l, gr[_REG_ES], NULL, 0);
+		if (error != 0)
+			return error;
 
-	sel = gr[_REG_FS] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
+		error = valid_user_selector(l, gr[_REG_FS], NULL, 0);
+		if (error != 0)
+			return error;
 
-	sel = gr[_REG_GS] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
+		error = valid_user_selector(l, gr[_REG_GS], NULL, 0);
+		if (error != 0)
+			return error;
 
-	sel = gr[_REG_DS] & 0xffff;
-	if (!VALID_USER_DSEL(sel))
-		return EINVAL;
+		if ((gr[_REG_DS] & 0xffff) == 0)
+			return EINVAL;
+		error = valid_user_selector(l, gr[_REG_DS], NULL, 0);
+		if (error != 0)
+			return error;
 
-	sel = gr[_REG_SS] & 0xffff;
-	if (!VALID_USER_DSEL(sel)) 
-		return EINVAL;
+		if ((gr[_REG_SS] & 0xffff) == 0)
+			return EINVAL;
+		error = valid_user_selector(l, gr[_REG_SS], NULL, 0);
+		if (error != 0)
+			return error;
+	} else {
+		sel = gr[_REG_ES] & 0xffff;
+		if (sel != 0 && !VALID_USER_DSEL(sel))
+			return EINVAL;
+
+		sel = gr[_REG_FS] & 0xffff;
+		if (sel != 0 && !VALID_USER_DSEL(sel))
+			return EINVAL;
+
+		sel = gr[_REG_GS] & 0xffff;
+		if (sel != 0 && !VALID_USER_DSEL(sel))
+			return EINVAL;
+
+		sel = gr[_REG_DS] & 0xffff;
+		if (!VALID_USER_DSEL(sel))
+			return EINVAL;
+
+		sel = gr[_REG_SS] & 0xffff;
+		if (!VALID_USER_DSEL(sel)) 
+			return EINVAL;
+
+	}
 
 	sel = gr[_REG_CS] & 0xffff;
 	if (!VALID_USER_CSEL(sel))
@@ -1804,6 +1833,70 @@ idt_vec_free(vec)
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
 	simple_unlock(&idt_lock);
+}
+
+int
+memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
+		uint64_t *addr)
+{
+	int off, len;
+	char *dt;
+	struct mem_segment_descriptor *sdp;
+	struct proc *p = l->l_proc;
+	struct pmap *pmap= p->p_vmspace->vm_map.pmap;
+	uint64_t base;
+
+	seg &= 0xffff;
+
+	if (seg == 0) {
+		if (addr != NULL)
+			*addr = 0;
+		return 0;
+	}
+
+	off = (seg & 0xfff8);
+	if (seg & SEL_LDT) {
+		if (ldtp != NULL) {
+			dt = ldtp;
+			len = llen;
+		} else if (pmap->pm_flags & PMF_USER_LDT) {
+			len = pmap->pm_ldt_len;
+			dt = (char *)pmap->pm_ldt;
+		} else {
+			dt = ldtstore;
+			len = LDT_SIZE;
+		}
+
+		if (off > (len - 8))
+			return EINVAL;
+	} else {
+		if (seg != GUDATA_SEL || seg != GUDATA32_SEL)
+			return EINVAL;
+	}
+
+	sdp = (struct mem_segment_descriptor *)(dt + off);
+	if (sdp->sd_type < SDT_MEMRO || sdp->sd_p == 0)
+		return EINVAL;
+
+	base = ((uint64_t)sdp->sd_hibase << 32) | ((uint64_t)sdp->sd_lobase);
+	if (sdp->sd_gran == 1)
+		base <<= PAGE_SHIFT;
+
+	if (base >= VM_MAXUSER_ADDRESS)
+		return EINVAL;
+
+	if (addr == NULL)
+		return 0;
+
+	*addr = base;
+
+	return 0;
+}
+
+int
+valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
+{
+	return memseg_baseaddr(l, seg, ldtp, len, NULL);
 }
 
 /*

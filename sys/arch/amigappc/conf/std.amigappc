@@ -1,8 +1,9 @@
-#	$NetBSD: std.amigappc,v 1.3.2.1 2005/02/04 11:44:15 skrll Exp $
+#	$NetBSD: std.amigappc,v 1.3.2.2 2005/11/10 13:55:00 skrll Exp $
 
 # standard amiga information
 
 machine amigappc powerpc
+include		"conf/std"	# MI standard options
 
 mainbus0	at root
 

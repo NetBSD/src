@@ -1,4 +1,4 @@
-/*	$NetBSD: jazziovar.h,v 1.2.24.1 2005/01/24 08:34:05 skrll Exp $	*/
+/*	$NetBSD: jazziovar.h,v 1.2.24.2 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -32,7 +32,7 @@
 #include <machine/bus.h>
 
 struct jazzio_attach_args {
-	char	*ja_name;
+	const char *ja_name;
 	struct abus *ja_bus;
 	bus_space_tag_t	ja_bust;
 	bus_dma_tag_t	ja_dmat;

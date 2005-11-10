@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16.18.4 2005/03/04 16:38:47 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.16.18.5 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,9 +49,10 @@
 
 #define	MCOUNT \
 MCOUNT_COMPAT								\
-extern void mcount(void) __asm__(MCOUNT_ENTRY);			\
+extern void mcount(void) __asm__(MCOUNT_ENTRY)				\
+	__attribute__((__no_instrument_function__));			\
 void									\
-mcount()								\
+mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
 	/*								\

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46.2.5 2005/01/17 08:25:43 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.46.2.6 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46.2.5 2005/01/17 08:25:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46.2.6 2005/11/10 13:55:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static short	nopens   = 0;		/* Number of opens executed	*/
 static short	fd_state = FLP_IDLE;	/* Current driver state		*/
 static int	lock_stat= 0;		/* DMA locking status		*/
 static short	fd_cmd   = 0;		/* command being executed	*/
-static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
+static const char *fd_error= NULL;	/* error from fd_xfer_ok()	*/
 
 /*
  * Private per device data
@@ -136,7 +136,7 @@ static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
 struct fd_softc {
 	struct device	sc_dv;		/* generic device info		*/
 	struct disk	dkdev;		/* generic disk info		*/
-	struct bufq_state bufq;		/* queue of buf's		*/
+	struct bufq_state *bufq;	/* queue of buf's		*/
 	struct callout	sc_motor_ch;
 	int		unit;		/* unit for atari controlling hw*/
 	int		nheads;		/* number of heads in use	*/
@@ -512,7 +512,7 @@ struct lwp	*l;
 
 		type = FLP_TYPE(dev);
 
-		bufq_alloc(&sc->bufq, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+		bufq_alloc(&sc->bufq, "disksort", BUFQ_SORT_RAWBLOCK);
 		sc->unit        = DISKUNIT(dev);
 		sc->part        = RAW_PART;
 		sc->nheads	= fdtypes[type].nheads;
@@ -635,7 +635,7 @@ struct buf	*bp;
 	 * queue the buf and kick the low level code
 	 */
 	sps = splbio();
-	BUFQ_PUT(&sc->bufq, bp);	/* XXX disksort_cylinder */
+	BUFQ_PUT(sc->bufq, bp);	/* XXX disksort_cylinder */
 	if (!lock_stat) {
 		if (fd_state & FLP_MON)
 			callout_stop(&sc->sc_motor_ch);
@@ -698,7 +698,7 @@ struct fd_softc	*sc;
 {
 	struct buf	*bp;
 
-	bp	     = BUFQ_PEEK(&sc->bufq);
+	bp	     = BUFQ_PEEK(sc->bufq);
 	sc->sector   = bp->b_blkno;	/* Start sector for I/O		*/
 	sc->io_data  = bp->b_data;	/* KVA base for I/O		*/
 	sc->io_bytes = bp->b_bcount;	/* Transfer size in bytes	*/
@@ -736,7 +736,7 @@ register struct fd_softc	*sc;
 		 * Finish current transaction.
 		 */
 		sps = splbio();
-		bp = BUFQ_GET(&sc->bufq);
+		bp = BUFQ_GET(sc->bufq);
 		if (bp == NULL)
 			panic("fddone");
 		splx(sps);
@@ -765,7 +765,7 @@ register struct fd_softc	*sc;
 			i = 0;
 		if((sc1 = fd_cd.cd_devs[i]) == NULL)
 			continue;
-		if (BUFQ_PEEK(&sc1->bufq) != NULL)
+		if (BUFQ_PEEK(sc1->bufq) != NULL)
 			break;
 		if(i == sc->unit) {
 			callout_reset(&sc->sc_motor_ch, FLP_MONDELAY,
@@ -1006,7 +1006,7 @@ struct fd_softc	*sc;
 				return;
 			}
 
-			bp = BUFQ_PEEK(&sc->bufq);
+			bp = BUFQ_PEEK(sc->bufq);
 
 			bp->b_error  = EIO;
 			bp->b_flags |= B_ERROR;

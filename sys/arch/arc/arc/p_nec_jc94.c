@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_jc94.c,v 1.2.2.5 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: p_nec_jc94.c,v 1.2.2.6 2005/11/10 13:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.5 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.6 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -45,7 +45,7 @@ struct platform platform_nec_jc94 = {
 	" R4400 PCI",
 	"Express 5800/230",
 	"NEC",
-	150, /* MHz ?? */
+	200, /* MHz */
 	c_nec_pci_mainbusdevs,
 	platform_generic_match,
 	p_nec_jc94_init,

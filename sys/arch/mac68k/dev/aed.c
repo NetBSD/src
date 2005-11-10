@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.16.6.5 2005/01/25 09:29:04 skrll Exp $	*/
+/*	$NetBSD: aed.c,v 1.16.6.6 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.16.6.5 2005/01/25 09:29:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.16.6.6 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -317,18 +317,18 @@ aed_emulate_mouse(adb_event_t *event)
 static void 
 aed_kbdrpt(void *kstate)
 {
-	struct aed_softc *aed_sc = (struct aed_softc *)kstate;
+	struct aed_softc *sc = (struct aed_softc *)kstate;
 
-	aed_sc->sc_rptevent.bytes[0] |= 0x80;
-	microtime(&aed_sc->sc_rptevent.timestamp);
-	aed_handoff(&aed_sc->sc_rptevent);	/* do key up */
+	sc->sc_rptevent.bytes[0] |= 0x80;
+	microtime(&sc->sc_rptevent.timestamp);
+	aed_handoff(&sc->sc_rptevent);	/* do key up */
 
-	aed_sc->sc_rptevent.bytes[0] &= 0x7f;
-	microtime(&aed_sc->sc_rptevent.timestamp);
-	aed_handoff(&aed_sc->sc_rptevent);	/* do key down */
+	sc->sc_rptevent.bytes[0] &= 0x7f;
+	microtime(&sc->sc_rptevent.timestamp);
+	aed_handoff(&sc->sc_rptevent);	/* do key down */
 
-	if (aed_sc->sc_repeating == aed_sc->sc_rptevent.u.k.key) {
-		callout_reset(&aed_sc->sc_repeat_ch, aed_sc->sc_rptinterval,
+	if (sc->sc_repeating == sc->sc_rptevent.u.k.key) {
+		callout_reset(&sc->sc_repeat_ch, sc->sc_rptinterval,
 		    aed_kbdrpt, kstate);
 	}
 }

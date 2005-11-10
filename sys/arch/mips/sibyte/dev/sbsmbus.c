@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.7.2.4 2005/11/10 13:57:34 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.7.2.4 2005/11/10 13:57:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $"
 static int smbus_match(struct device *, struct cfdata *, void *);
 static void smbus_attach(struct device *, struct device *, void *);
 static int smbus_print(void *, const char *);
-static int smbus_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 
 CFATTACH_DECL(smbus, sizeof(struct device),
     smbus_match, smbus_attach, NULL, NULL);
@@ -87,8 +85,7 @@ smbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smbus_attach_args sa;
 	int i;
-	int help[3];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SMBUSCF_NLOCS];
 
 	found++;
 	printf("\n");
@@ -101,12 +98,11 @@ smbus_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_interface = smbus_devs[i].sa_interface;
 		sa.sa_device = smbus_devs[i].sa_device;
 
-		ldesc->len = 2;
-		ldesc->locs[SMBUSCF_CHAN] = 0; /* XXX */
-		ldesc->locs[SMBUSCF_DEV] = smbus_devs[i].sa_device;
+		locs[SMBUSCF_CHAN] = 0; /* XXX */
+		locs[SMBUSCF_DEV] = smbus_devs[i].sa_device;
 
-		config_found_sm_loc(self, "smbus", ldesc, &sa,
-				    smbus_print, smbus_submatch);
+		config_found_sm_loc(self, "smbus", locs, &sa,
+				    smbus_print, config_stdsubmatch);
 	}
 }
 
@@ -121,19 +117,4 @@ smbus_print(void *aux, const char *pnp)
 	aprint_normal(" device 0x%x", sa->sa_device);
 
 	return (UNCONF);
-}
-
-static int
-smbus_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[SMBUSCF_CHAN] != SMBUSCF_CHAN_DEFAULT &&
-	    cf->cf_loc[SMBUSCF_CHAN] != ldesc->locs[SMBUSCF_CHAN])
-		return (0);
-	if (cf->cf_loc[SMBUSCF_DEV] != SMBUSCF_DEV_DEFAULT &&
-	    cf->cf_loc[SMBUSCF_DEV] != ldesc->locs[SMBUSCF_DEV])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }

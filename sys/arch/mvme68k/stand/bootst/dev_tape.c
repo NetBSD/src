@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.5 2001/07/07 09:06:43 scw Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.5.24.1 2005/11/10 13:57:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <lib/libkern/libkern.h>
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 #include "dev_tape.h"
 

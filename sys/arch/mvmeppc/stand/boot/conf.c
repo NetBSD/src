@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/02/27 21:02:26 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.20.1 2005/11/10 13:57:54 skrll Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -9,14 +9,14 @@
 #include <dev_net.h>
 
 struct fs_ops file_system[] = {
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+	FS_OPS(nfs),
 };
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 struct devsw devsw[] = {
 	{ "net",  net_strategy,  net_open,  net_close,  net_ioctl },
 };
-int	ndevs = sizeof(devsw) / sizeof(devsw[0]);
+int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 extern struct netif_driver bug_driver;
 

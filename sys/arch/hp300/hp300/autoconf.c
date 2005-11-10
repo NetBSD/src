@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62.2.5 2004/11/02 07:50:24 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62.2.6 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.5 2004/11/02 07:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.6 2005/11/10 13:56:09 skrll Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -288,7 +288,8 @@ static void	dev_data_insert(struct dev_data *, ddlist_t *);
 
 static int	mainbusmatch(struct device *, struct cfdata *, void *);
 static void	mainbusattach(struct device *, struct device *, void *);
-static int	mainbussearch(struct device *, struct cfdata *, void *);
+static int	mainbussearch(struct device *, struct cfdata *,
+			      const int *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
@@ -313,11 +314,12 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	config_search(mainbussearch, self, NULL);
+	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf, void *aux)
+mainbussearch(struct device *parent, struct cfdata *cf,
+	      const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
@@ -344,7 +346,7 @@ cpu_configure(void)
 
 	softintr_init();
 
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */

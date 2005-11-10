@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.4 2003/06/09 12:20:38 simonb Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.4.2.1 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,15 +59,3 @@ LEAF(to_monitor)
 	j	v0
 	nop
 END(to_monitor)
-
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-	.align	2
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-	.word	0

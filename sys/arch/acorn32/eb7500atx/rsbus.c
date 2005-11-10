@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.1.4.4 2004/09/21 13:11:27 skrll Exp $ */
+/* $NetBSD: rsbus.c,v 1.1.4.5 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.1.4.4 2004/09/21 13:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.1.4.5 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,8 @@ extern struct bus_space rsbus_bs_tag;
 static int	rsbus_match(struct device *, struct cfdata *, void *);
 static void	rsbus_attach(struct device *, struct device *, void *);
 static int	rsbus_print(void *, const char *);
-static int	rsbus_search(struct device *, struct cfdata *, void *);
+static int	rsbus_search(struct device *, struct cfdata *,
+			     const int *, void *);
 
 CFATTACH_DECL(rsbus, sizeof(struct rsbus_softc),
     rsbus_match, rsbus_attach, NULL, NULL);
@@ -79,13 +80,14 @@ rsbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(rsbus_search, self, NULL);
+	config_search_ia(rsbus_search, self, "rsbus", NULL);
 }
 
 static int
-rsbus_search(parent, cf, aux)
+rsbus_search(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	struct rsbus_softc *sc = (struct rsbus_softc *)parent;

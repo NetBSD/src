@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.2.8.3 2004/09/21 13:13:32 skrll Exp $	*/
+/*	$NetBSD: vt220.c,v 1.2.8.4 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.2.8.3 2004/09/21 13:13:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.2.8.4 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,7 +115,7 @@ void clr_params(struct vt220_info *);
 void respond(struct vconsole *);
 
 int vt220_init(struct vconsole *);
-int vt220_putstring(char *, int, struct vconsole *);
+int vt220_putstring(const char *, int, struct vconsole *);
 int vt220_swapin(struct vconsole *);
 int vt220_swapout(struct vconsole *);
 int vt220_sleep(struct vconsole *);
@@ -603,7 +603,7 @@ vt_da(vc)
 	struct vconsole *vc;
 {
         struct vt220_info *cdata = (struct vt220_info *)vc->data;
-        static u_char *response = (u_char *)DA_VT220;
+        static const char *response = DA_VT220;
 
         cdata->report_chars = response;
         cdata->report_count = 18;
@@ -829,10 +829,10 @@ vt_dsr(vc)
 	struct vconsole *vc;
 {
 	struct vt220_info *cdata = (struct vt220_info *)vc->data;
-	static u_char *answr = (u_char *)"\033[0n";
-	static u_char *panswr = (u_char *)"\033[?13n"; /* Printer Unattached */
-	static u_char *udkanswr = (u_char *)"\033[?21n"; /* UDK Locked */
-	static u_char *langanswr = (u_char *)"\033[?27;1n"; /* North American*/
+	static const char *answr = "\033[0n";
+	static const char *panswr = "\033[?13n"; /* Printer Unattached */
+	static const char *udkanswr = "\033[?21n"; /* UDK Locked */
+	static const char *langanswr = "\033[?27;1n"; /* North American*/
 	static u_char buffer[16];
 	int i = 0;
 
@@ -1311,7 +1311,7 @@ do_render(c, vc)
 
 int
 TERMTYPE_PUTSTRING(string, length, vc)
-	char *string;
+	const char *string;
 	int length;
 	struct vconsole *vc;
 {

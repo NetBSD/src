@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.11.2.3 2004/09/21 13:11:36 skrll Exp $ */
+/* $NetBSD: a12dc.c,v 1.11.2.4 2005/11/10 13:48:21 skrll Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.11.2.3 2004/09/21 13:11:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.11.2.4 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.11.2.3 $");
+	printf(": driver %s\n", "$Revision: 1.11.2.4 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -286,7 +286,7 @@ a12dcopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -306,9 +306,6 @@ a12dcopen(dev, flag, mode, p)
 		/* XXX XXX XXX
 		a12_intr_register_icw(a12dcintr);
 		*/
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
-		splx(s);
-		return EBUSY;
 	}
 
 	splx(s);

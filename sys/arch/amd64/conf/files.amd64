@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.3.2.4 2004/09/21 13:12:07 skrll Exp $
+#	$NetBSD: files.amd64,v 1.3.2.5 2005/11/10 13:50:24 skrll Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -162,6 +162,13 @@ file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
 file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
 
+# Linux compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/amd64/files.linux_amd64"
+file	arch/amd64/amd64/linux_sigcode.S		compat_linux
+file	arch/amd64/amd64/linux_syscall.c		compat_linux
+file	arch/x86/x86/linux_trap.c			compat_linux
+
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
@@ -171,5 +178,8 @@ include	"dev/ieee1394/files.ieee1394"
 
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
+
+# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
+object	/athhal-x86_64-elf.hal.o	ath
 
 include	"arch/amd64/conf/majors.amd64"

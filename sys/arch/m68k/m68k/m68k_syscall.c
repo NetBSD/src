@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.9.2.5 2004/09/21 13:17:56 skrll Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.9.2.6 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.9.2.5 2004/09/21 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.9.2.6 2005/11/10 13:57:09 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -149,7 +149,6 @@ extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
-void	syscall_intern(struct proc *);
 #ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
 #endif
@@ -412,12 +411,12 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		/*

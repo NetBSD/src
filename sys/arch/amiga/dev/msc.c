@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.26.6.4 2004/11/21 13:54:35 skrll Exp $ */
+/*	$NetBSD: msc.c,v 1.26.6.5 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.4 2004/11/21 13:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.5 2005/11/10 13:51:36 skrll Exp $");
 
 #include "msc.h"
 
@@ -407,7 +407,8 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_state &= ~TS_CARR_ON;
 
 	} else {
-		if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
+		if (tp->t_state & TS_XCLUDE &&
+		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		}
@@ -1198,7 +1199,7 @@ mscinitcard(struct zbus_args *zap)
 	(void)mlm->Enable6502Reset;
 
 	/* copy the code across to the board */
-	to = (u_char *)mlm;
+	to = (volatile u_char *)mlm;
 	from = msc6502code; bcount = sizeof(msc6502code) - 2;
 	start = *(short *)from; from += sizeof(start);
 	to += start;

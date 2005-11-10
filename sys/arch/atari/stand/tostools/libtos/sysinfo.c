@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.3.16.3 2004/09/21 13:14:11 skrll Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.3.16.4 2005/11/10 13:55:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #else
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <atari_stand.h>
 #include <string.h>
 #include <libkern.h>

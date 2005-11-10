@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8.2.3 2004/09/21 13:19:30 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.2.4 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8.2.3 2004/09/21 13:19:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8.2.4 2005/11/10 13:57:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,8 @@ struct mainbus_softc {
 /* Definition of the mainbus driver. */
 static int  mainbus_match(struct device *, struct cfdata *, void *);
 static void mainbus_attach(struct device *, struct device *, void *);
-static int  mainbus_search(struct device *, struct cfdata *, void *);
+static int  mainbus_search(struct device *, struct cfdata *,
+				const int *, void *);
 static int  mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
@@ -73,11 +74,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mainbus_found = 1;
 	printf("\n");
 
-	config_search(mainbus_search, self, &ma);
+	config_search_ia(mainbus_search, self, "mainbus", &ma);
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_search(struct device *parent, struct cfdata *cf,
+	const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

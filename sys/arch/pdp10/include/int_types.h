@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1.4.4 2004/09/21 13:20:04 skrll Exp $	*/
+/*	$NetBSD: int_types.h,v 1.1.4.5 2005/11/10 13:58:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,8 @@
 
 #ifndef	_PDP10_INT_TYPES_H_
 #define	_PDP10_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types

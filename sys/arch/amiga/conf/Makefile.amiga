@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.101.6.3 2004/09/21 13:12:18 skrll Exp $
+#	$NetBSD: Makefile.amiga,v 1.101.6.4 2005/11/10 13:51:36 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 AMIGA=		$S/arch/amiga
-GENASSYM=	${AMIGA}/amiga/genassym.cf
+GENASSYM_CONF=	${AMIGA}/amiga/genassym.cf
 
 ##
 ## (2) compile settings

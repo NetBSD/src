@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.2.8 2005/03/04 16:38:59 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.9 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.8 2005/03/04 16:38:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.9 2005/11/10 13:57:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -263,7 +263,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -502,13 +502,15 @@ cpu_init_kcore_hdr(void)
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 static int
 cpu_dumpsize(void)
 {
-	int size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return btodb(roundup(size, dbtob(1)));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -517,7 +519,7 @@ cpu_dumpsize(void)
 static int
 cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
-	int buf[dbtob(1) / sizeof(int)];
+	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -528,7 +530,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 
 	/* Create the segment header. */
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
@@ -806,11 +808,12 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
  *  System dependent initilization
  */
 
-static volatile u_char *dip_switch, *int_status;
+static volatile uint8_t *dip_switch, *int_status;
 
-volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
-volatile u_char *ctrl_led, *sccport0a;
-uint32_t lance_mem_phys;
+const uint8_t *idrom_addr;
+volatile uint8_t *ctrl_ast, *ctrl_int2;
+volatile uint8_t *ctrl_led;
+uint32_t sccport0a, lance_mem_phys;
 
 #ifdef news1700
 static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
@@ -870,22 +873,23 @@ news1700_init(void)
 {
 	struct oidrom idrom;
 	const char *t;
-	u_char *p, *q;
+	const uint8_t *p;
+	uint8_t *q;
 	u_int i;
 
-	dip_switch	= (u_char *)IIOV(0xe1c00100);
-	int_status	= (u_char *)IIOV(0xe1c00200);
+	dip_switch	= (uint8_t *)IIOV(0xe1c00100);
+	int_status	= (uint8_t *)IIOV(0xe1c00200);
 
-	idrom_addr	= (u_char *)IIOV(0xe1c00000);
-	ctrl_ast	= (u_char *)IIOV(0xe1280000);
-	ctrl_int2	= (u_char *)IIOV(0xe1180000);
+	idrom_addr	= (uint8_t *)IIOV(0xe1c00000);
+	ctrl_ast	= (uint8_t *)IIOV(0xe1280000);
+	ctrl_int2	= (uint8_t *)IIOV(0xe1180000);
+	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
 
-	sccport0a	= (u_char *)IIOV(0xe0d40002);
-	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	sccport0a	= IIOV(0xe0d40002);
 	lance_mem_phys	= 0xe0e00000;
 
-	p = (u_char *)idrom_addr;
-	q = (u_char *)&idrom;
+	p = idrom_addr;
+	q = (uint8_t *)&idrom;
 
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
@@ -902,9 +906,9 @@ news1700_init(void)
 	strcat(cpu_model, t);
 	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];
 
-	ctrl_parity	= (u_char *)IIOV(0xe1080000);
-	ctrl_parity_clr	= (u_char *)IIOV(0xe1a00000);
-	parity_vector	= (u_char *)IIOV(0xe1c00200);
+	ctrl_parity	= (uint8_t *)IIOV(0xe1080000);
+	ctrl_parity_clr	= (uint8_t *)IIOV(0xe1a00000);
+	parity_vector	= (uint8_t *)IIOV(0xe1c00200);
 
 	parityenable();
 
@@ -961,22 +965,23 @@ static void
 news1200_init(void)
 {
 	struct idrom idrom;
-	u_char *p, *q;
+	const uint8_t *p;
+	uint8_t *q;
 	int i;
 
-	dip_switch	= (u_char *)IIOV(0xe1680000);
-	int_status	= (u_char *)IIOV(0xe1200000);
+	dip_switch	= (uint8_t *)IIOV(0xe1680000);
+	int_status	= (uint8_t *)IIOV(0xe1200000);
 
-	idrom_addr	= (u_char *)IIOV(0xe1400000);
-	ctrl_ast	= (u_char *)IIOV(0xe1100000);
-	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
+	idrom_addr	= (uint8_t *)IIOV(0xe1400000);
+	ctrl_ast	= (uint8_t *)IIOV(0xe1100000);
+	ctrl_int2	= (uint8_t *)IIOV(0xe10c0000);
+	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
 
-	sccport0a	= (u_char *)IIOV(0xe1780002);
-	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	sccport0a	= IIOV(0xe1780002);
 	lance_mem_phys	= 0xe1a00000;
 
-	p = (u_char *)idrom_addr;
-	q = (u_char *)&idrom;
+	p = idrom_addr;
+	q = (uint8_t *)&idrom;
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
 

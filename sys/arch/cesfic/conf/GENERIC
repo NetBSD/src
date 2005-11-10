@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19.2.5 2005/03/04 16:38:13 skrll Exp $
+# $NetBSD: GENERIC,v 1.19.2.6 2005/11/10 13:55:47 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -36,7 +36,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
@@ -50,6 +51,7 @@ options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_15	# compatibility with NetBSD 1.5
 options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
@@ -74,6 +76,8 @@ file-system 	NFS		# Network filesystem client
 #file-system 	FDESC		# user file descriptor filesystem
 #file-system 	PROCFS		# /proc filesystem
 #file-system 	MFS		# Memory-based filesystem
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
@@ -109,8 +113,8 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 
 # Debugging options
-options 	DIAGNOSTIC	# Extra kernel sanity checks
-options 	DEBUG		# Enable misc. kernel debugging code
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
 options 	DDB		# Kernel Dynamic Debugger
 #options 	KGDB
 makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
@@ -134,6 +138,7 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vnd		4	# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	loop			# loopback network interface

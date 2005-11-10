@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.6.2.3 2004/09/21 13:16:25 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.6.2.4 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -855,9 +855,11 @@ LEAF_ENTRY(TLABEL(emu))
 	 * If the opcode field in the instruction is 4,
 	 * indicating a special function unit SPOP
 	 * instruction, branch to emulate an sfu.
+	 * If the opcode field is 0xe, then it's an FPU instruction.
 	 */
 	extru	%arg0, 5, 6, %r1
 	comib,=,n 4, %r1, $emulate_sfu
+	comib,=,n 0xe, %r1, hppa_fpu_nop0
 
 	/*
 	 * If the uid field in the instruction is not

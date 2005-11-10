@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.27 2003/05/10 23:12:29 thorpej Exp $ */
+/* $NetBSD: disksubr.c,v 1.27.2.1 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2003/05/10 23:12:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27.2.1 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ readdisklabel(dev, strat, lp, clp)
 	struct buf *bp;
 	struct disklabel *dlp;
 	struct dkbad *bdp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	int i;
 
 	/* minimal requirements for archtypal disk label */
@@ -203,8 +203,8 @@ setdisklabel(olp, nlp, openmask, clp)
 
 /*
  * Write disk label back to device after modification.
- * this means write out the Rigid disk blocks to represent the 
- * label.  Hope the user was carefull.
+ * This means write out the rigid disk blocks to represent the 
+ * label.  Hope the user was careful.
  */
 int
 writedisklabel(dev, strat, lp, clp)

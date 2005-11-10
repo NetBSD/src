@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8.2.4 2005/02/15 21:32:31 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.8.2.5 2005/11/10 13:48:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.4 2005/02/15 21:32:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.5 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ cpu_startup()
 	/* Stuff to do here: */
 	/* initmsgbuf() is called from start() */
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

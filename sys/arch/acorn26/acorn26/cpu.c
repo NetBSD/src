@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10.2.4 2004/09/21 13:11:19 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.10.2.5 2005/11/10 13:48:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.4 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.5 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -50,7 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.4 2004/09/21 13:11:19 skrll Exp $");
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
-static int cpu_search(struct device *, struct cfdata *, void *);
+static int cpu_search(struct device *, struct cfdata *,
+		      const int *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM2
 static int arm2_undef_handler(u_int, u_int, struct trapframe *, int);
@@ -124,11 +125,12 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: CPU type not supported by kernel\n",
 		       self->dv_xname);
 	config_interrupts(self, cpu_delay_calibrate);
-	config_search(cpu_search, self, NULL);
+	config_search_ia(cpu_search, self, "cpu", NULL);
 }
 
 static int
-cpu_search(struct device *parent, struct cfdata *cf, void *aux)
+cpu_search(struct device *parent, struct cfdata *cf,
+	   const int *ldesc, void *aux)
 {
 	
 	if (config_match(parent, cf, NULL) > 0)
@@ -295,12 +297,12 @@ int cpu_delay_factor = 1;
 static void
 cpu_delay_calibrate(struct device *self)
 {
-	struct timeval start, end, diff;
+	struct timeval startt, end, diff;
 
-	microtime(&start);
+	microtime(&startt);
 	cpu_delayloop(10000);
 	microtime(&end);
-	timersub(&end, &start, &diff);
+	timersub(&end, &startt, &diff);
 	cpu_delay_factor = 10000 / diff.tv_usec + 1;
 	printf("%s: 10000 loops in %ld microseconds, delay factor = %d\n",
 	       self->dv_xname, diff.tv_usec, cpu_delay_factor);

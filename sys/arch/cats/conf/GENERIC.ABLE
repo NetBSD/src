@@ -1,0 +1,9 @@
+#       $NetBSD: GENERIC.ABLE,v 1.1.8.2 2005/11/10 13:55:47 skrll Exp $
+#
+#       GENERIC.ABLE -- Generic, plus ABLE support.
+#
+
+include "arch/cats/conf/GENERIC"
+
+options ABLEELF
+makeoptions    ABLEELF="1"

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.23.2.6 2005/03/04 16:38:37 skrll Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.23.2.7 2005/11/10 13:56:32 skrll Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -114,6 +114,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -208,6 +209,7 @@ we*	at mca? slot ?			# WD/SMC Ethernet
 ate*	at mca? slot ?			# Allied Telesis AT1720
 ne*	at mca? slot ?			# Novell NE/2 and clones
 tr*	at mca? slot ?			# IBM Token Ring adapter
+tra*	at mca? slot ?			# Tiara LANCard/E and clones
 le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MCA ESDI controllers & disks

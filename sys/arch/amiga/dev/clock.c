@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41.6.3 2004/09/21 13:12:25 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.41.6.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41.6.3 2004/09/21 13:12:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41.6.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,7 @@ clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 void
 clockattach(struct device *pdp, struct device *dp, void *auxp)
 {
-	char *clockchip;
+	const char *clockchip;
 	unsigned short interval;
 #ifdef DRACO
 	u_char dracorev;
@@ -321,7 +321,7 @@ cpu_initclocks(void)
 }
 
 void
-setstatclockrate(int hz)
+setstatclockrate(int hertz)
 {
 }
 

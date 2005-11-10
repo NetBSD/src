@@ -1,8 +1,9 @@
-# $NetBSD: std.alpha,v 1.21 2002/05/03 17:51:10 thorpej Exp $
+# $NetBSD: std.alpha,v 1.21.10.1 2005/11/10 13:48:22 skrll Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
 machine		alpha
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 

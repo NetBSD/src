@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.55.2.4 2005/04/01 14:26:49 skrll Exp $ */
+/* $NetBSD: bus_dma.c,v 1.55.2.5 2005/11/10 13:48:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55.2.4 2005/04/01 14:26:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55.2.5 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -281,6 +282,7 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -371,6 +373,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -441,6 +444,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_window = NULL;
+	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 }
 
 /*

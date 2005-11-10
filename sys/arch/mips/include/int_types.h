@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.6.6.3 2004/09/21 13:18:39 skrll Exp $	*/
+/*	$NetBSD: int_types.h,v 1.6.6.4 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,8 @@
 
 #ifndef	_MIPS_INT_TYPES_H_
 #define	_MIPS_INT_TYPES_H_
+
+#include <sys/cdefs.h>
 
 /*
  * 7.18.1 Integer types

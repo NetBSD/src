@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.11.6.1 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.11.6.2 2005/11/10 13:57:57 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 
 struct nextdma_channel {
-	char			*nd_name;
+	const char		*nd_name;
 	int			nd_base;
 	int			nd_size;
 	u_long			nd_intr;
@@ -81,4 +81,4 @@ void nextdma_reset(struct nextdma_softc *);
 
 void nextdma_print(struct nextdma_softc *);
 
-struct nextdma_softc *nextdma_findchannel(char *);
+struct nextdma_softc *nextdma_findchannel(const char *);

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.18.2.6 2005/03/04 16:39:00 skrll Exp $
+# $NetBSD: SLAB,v 1.18.2.7 2005/11/10 13:57:57 skrll Exp $
 #
 # deberg's development machine
 #
@@ -57,6 +57,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -84,6 +85,7 @@ file-system 	NULLFS		# loopback file system
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
@@ -97,6 +99,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

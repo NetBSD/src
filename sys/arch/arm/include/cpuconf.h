@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.7.2.4 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.7.2.5 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,6 +42,14 @@
 #include "opt_cputypes.h"
 #endif /* _KERNEL_OPT */
 
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+#define	__CPU_XSCALE_PXA2XX
+#endif
+
+#ifdef CPU_XSCALE_PXA2X0
+#warning option CPU_XSCALE_PXA2X0 is obsolete. Use CPU_XSCALE_PXA250 and/or CPU_XSCALE_PXA270.
+#endif
+
 /*
  * IF YOU CHANGE THIS FILE, MAKE SURE TO UPDATE THE DEFINITION OF
  * "PMAP_NEEDS_PTE_SYNC" IN <arm/arm32/pmap.h> FOR THE CPU TYPE
@@ -58,12 +66,13 @@
 			 defined(CPU_ARM7TDMI) +			\
 			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
 			 defined(CPU_ARM10) +				\
+			 defined(CPU_ARM11) +				\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_IXP12X0) +				\
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
-			 defined(CPU_XSCALE_PXA2X0) + 			\
+			 defined(__CPU_XSCALE_PXA2XX) +			\
 			 defined(CPU_XSCALE_IXP425))
 #else
 #define	CPU_NTYPES	2
@@ -97,18 +106,25 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM10) || defined(CPU_XSCALE_80200) ||			\
-     defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0))
+     defined(CPU_XSCALE_80321) || defined(__CPU_XSCALE_PXA2XX))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
 #endif
 
-#define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5)
+#if defined(CPU_ARM11)
+#define ARM_ARCH_6	1
+#else
+#define ARM_ARCH_6	0
+#endif
+
+#define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + \
+			 ARM_ARCH_5 + ARM_ARCH_6)
 #if ARM_NARCH == 0
 #error ARM_NARCH is 0
 #endif
 
-#if ARM_ARCH_5
+#if ARM_ARCH_5 || ARM_ARCH_6
 /*
  * We could support Thumb code on v4T, but the lack of clean interworking
  * makes that hard.
@@ -140,7 +156,8 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10))
+     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM10) ||	\
+     defined(CPU_ARM11))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
@@ -156,7 +173,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425))
+     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0

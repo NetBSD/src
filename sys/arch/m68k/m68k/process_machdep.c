@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20.2.4 2004/09/21 13:17:56 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20.2.5 2005/11/10 13:57:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.2.4 2004/09/21 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.2.5 2005/11/10 13:57:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct frame *frame = process_frame(l);
 
@@ -138,7 +138,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 	struct fpframe *frame = process_fpframe(l);
 

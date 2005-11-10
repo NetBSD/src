@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91.2.5 2004/11/21 13:54:32 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.91.2.6 2005/11/10 13:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91.2.5 2004/11/21 13:54:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91.2.6 2005/11/10 13:51:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ cpu_configure()
 	custom.intena = INTF_INTEN;
 	s = splhigh();
 
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 #ifdef DEBUG_KERNEL_START
@@ -138,7 +138,7 @@ simple_devprint(auxp, pnp)
 
 int
 matchname(fp, sp)
-	char *fp, *sp;
+	const char *fp, *sp;
 {
 	int len;
 
@@ -151,7 +151,7 @@ matchname(fp, sp)
 }
 
 /*
- * use config_search to find appropriate device, then call that device
+ * use config_search_ia to find appropriate device, then call that device
  * directly with NULL device variable storage.  A device can then
  * always tell the difference betwean the real and console init
  * by checking for NULL.
@@ -179,7 +179,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	pdp->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
+	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(pdp, NULL, auxp);
@@ -206,14 +206,14 @@ config_console()
 	/*
 	 * we need mainbus' cfdata.
 	 */
-	cf = config_rootsearch(NULL, "mainbus", "mainbus");
+	cf = config_rootsearch(NULL, "mainbus", NULL);
 	if (cf == NULL) {
 		panic("no mainbus");
 	}
 	/*
 	 * delay clock calibration.
 	 */
-	amiga_config_found(cf, NULL, "clock", NULL);
+	amiga_config_found(cf, NULL, __UNCONST("clock"), NULL);
 
 	/*
 	 * internal grf.
@@ -221,13 +221,13 @@ config_console()
 #ifdef DRACO
 	if (!(is_draco()))
 #endif
-		amiga_config_found(cf, NULL, "grfcc", NULL);
+		amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL);
 
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
 	 */
-	amiga_config_found(cf, NULL, "zbus", NULL);
+	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL);
 }
 
 /*
@@ -266,49 +266,49 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf("\n");
-	config_found(dp, "clock", simple_devprint);
+	config_found(dp, __UNCONST("clock"), simple_devprint);
 	if (is_a3000() || is_a4000()) {
-		config_found(dp, "a34kbbc", simple_devprint);
+		config_found(dp, __UNCONST("a34kbbc"), simple_devprint);
 	} else
 #ifdef DRACO
 	if (!is_draco())
 #endif
 	{
-		config_found(dp, "a2kbbc", simple_devprint);
+		config_found(dp, __UNCONST("a2kbbc"), simple_devprint);
 	}
 #ifdef DRACO
 	if (is_draco()) {
-		config_found(dp, "drbbc", simple_devprint);
-		config_found(dp, "kbd", simple_devprint);
-		config_found(dp, "drsc", simple_devprint);
-		config_found(dp, "drsupio", simple_devprint);
+		config_found(dp, __UNCONST("drbbc"), simple_devprint);
+		config_found(dp, __UNCONST("kbd"), simple_devprint);
+		config_found(dp, __UNCONST("drsc"), simple_devprint);
+		config_found(dp, __UNCONST("drsupio"), simple_devprint);
 	} else
 #endif
 	{
-		config_found(dp, "ser", simple_devprint);
-		config_found(dp, "par", simple_devprint);
-		config_found(dp, "kbd", simple_devprint);
-		config_found(dp, "ms", simple_devprint);
-		config_found(dp, "grfcc", simple_devprint);
-		config_found(dp, "amidisplaycc", simple_devprint);
-		config_found(dp, "fdc", simple_devprint);
+		config_found(dp, __UNCONST("ser"), simple_devprint);
+		config_found(dp, __UNCONST("par"), simple_devprint);
+		config_found(dp, __UNCONST("kbd"), simple_devprint);
+		config_found(dp, __UNCONST("ms"), simple_devprint);
+		config_found(dp, __UNCONST("grfcc"), simple_devprint);
+		config_found(dp, __UNCONST("amidisplaycc"), simple_devprint);
+		config_found(dp, __UNCONST("fdc"), simple_devprint);
 	}
 	if (is_a4000() || is_a1200()) {
-		config_found(dp, "wdc", simple_devprint);
-		config_found(dp, "idesc", simple_devprint);
+		config_found(dp, __UNCONST("wdc"), simple_devprint);
+		config_found(dp, __UNCONST("idesc"), simple_devprint);
 	}
 	if (is_a4000())			/* Try to configure A4000T SCSI */
-		config_found(dp, "afsc", simple_devprint);
+		config_found(dp, __UNCONST("afsc"), simple_devprint);
 	if (is_a3000())
-		config_found(dp, "ahsc", simple_devprint);
+		config_found(dp, __UNCONST("ahsc"), simple_devprint);
 	if (/*is_a600() || */is_a1200())
-		config_found(dp, "pccard", simple_devprint);
+		config_found(dp, __UNCONST("pccard"), simple_devprint);
 #ifdef DRACO
 	if (!is_draco())
 #endif
-		config_found(dp, "aucc", simple_devprint);
+		config_found(dp, __UNCONST("aucc"), simple_devprint);
 
-	config_found(dp, "zbus", simple_devprint);
+	config_found(dp, __UNCONST("zbus"), simple_devprint);
 }
 
 int
@@ -387,7 +387,6 @@ findroot(void)
 	printf("Boot partition offset is %ld\n", boot_partition);
 #endif
 	if (boot_partition != 0) {
-		int i;
 
 		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
 #ifdef DEBUG_KERNEL_START

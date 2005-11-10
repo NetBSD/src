@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.17.6.4 2004/09/21 13:15:16 skrll Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17.6.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -119,7 +119,7 @@ struct itesw {
 	void	(*ite_cursor)(struct ite_data *, int);
 	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
 	u_char	(*ite_readbyte)(struct ite_data *, int);
-	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
+	void	(*ite_writeglyph)(struct ite_data *, volatile u_char *, u_char *);
 };
 
 struct ite_softc {
@@ -261,5 +261,5 @@ void	itecnputc(dev_t, int);
 void	ite_fontinfo(struct ite_data *);
 void	ite_fontinit(struct ite_data *);
 u_char	ite_readbyte(struct ite_data *, int);
-void	ite_writeglyph(struct ite_data *, u_char *, u_char *);
+void	ite_writeglyph(struct ite_data *, volatile u_char *, u_char *);
 #endif

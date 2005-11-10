@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.8.2.3 2004/09/21 13:12:01 skrll Exp $ */
+/* $NetBSD: jensenio.c,v 1.8.2.4 2005/11/10 13:50:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.8.2.3 2004/09/21 13:12:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.8.2.4 2005/11/10 13:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ CFATTACH_DECL(jensenio, sizeof(struct device),
     jensenio_match, jensenio_attach, NULL, NULL);
 
 int	jensenio_print(void *, const char *);
-int	jensenio_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
 
 int	jensenio_attached;
 
@@ -158,8 +156,7 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct jensenio_attach_args ja;
 	struct jensenio_config *jcp = &jensenio_configuration;
 	int i;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[JENSENIOCF_NLOCS];
 
 	printf("\n");
 
@@ -193,10 +190,9 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 		ja.ja_iot = &jcp->jc_internal_iot;
 		ja.ja_ec = &jcp->jc_ec;
 
-		ldesc->len = 1;
-		ldesc->locs[JENSENIOCF_PORT] = jensenio_devs[i].jd_ioaddr;
-		(void) config_found_sm_loc(self, "jensenio", ldesc, &ja,
-		    jensenio_print, jensenio_submatch);
+		locs[JENSENIOCF_PORT] = jensenio_devs[i].jd_ioaddr;
+		(void) config_found_sm_loc(self, "jensenio", locs, &ja,
+		    jensenio_print, config_stdsubmatch);
 	}
 
 	/*
@@ -221,18 +217,6 @@ jensenio_attach(struct device *parent, struct device *self, void *aux)
 	ja.ja_isa.iba_dmat = &jcp->jc_dmat_isa;
 	ja.ja_isa.iba_ic = &jcp->jc_ic;
 	(void) config_found_ia(self, "isabus", &ja.ja_isa, isabusprint);
-}
-
-int
-jensenio_submatch(struct device *parent, struct cfdata *cf,
-		  const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[JENSENIOCF_PORT] != JENSENIOCF_PORT_DEFAULT &&
-	    cf->cf_loc[JENSENIOCF_PORT] != ldesc->locs[JENSENIOCF_PORT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int

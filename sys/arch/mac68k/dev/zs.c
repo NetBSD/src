@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42.2.5 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.42.2.6 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.2.5 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.2.6 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -177,7 +177,7 @@ zs_get_chan_addr(int channel)
 	char *addr;
 	struct zschan *zc;
 
-	addr = (char *)sccA;
+	addr = (char *)__UNVOLATILE(sccA);
 	if (channel == 0) {
 		zc = (struct zschan *)(addr + 2);
 		/* handle the fact the ports are intertwined. */

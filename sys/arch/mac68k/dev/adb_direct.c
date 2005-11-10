@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.48.6.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.48.6.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.48.6.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.48.6.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -213,7 +213,7 @@ struct adbCommand {
 /*
  * Text representations of each hardware class
  */
-char	*adbHardwareDescr[MAX_ADB_HW + 1] = {
+const char	*adbHardwareDescr[MAX_ADB_HW + 1] = {
 	"unknown",
 	"II series",
 	"IIsi series",
@@ -2724,7 +2724,7 @@ adb_read_date_time(unsigned long *time)
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x03;	/* read date/time */
 		result = send_adb_IIsi((u_char *)output, (u_char *)output,
-		    (void *)adb_op_comprout, (int *)&flag, (int)0);
+		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -2742,7 +2742,7 @@ adb_read_date_time(unsigned long *time)
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x03;	/* read date/time */
 		result = send_adb_cuda((u_char *)output, (u_char *)output,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -2783,7 +2783,7 @@ adb_set_date_time(unsigned long time)
 		output[5] = (u_char)(time >> 8);
 		output[6] = (u_char)(time);
 		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -2804,7 +2804,7 @@ adb_set_date_time(unsigned long time)
 		output[5] = (u_char)(time >> 8);
 		output[6] = (u_char)(time);
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -2883,7 +2883,7 @@ adb_prog_switch_enable(void)
 		output[2] = 0x1c;	/* prog. switch control */
 		output[3] = 0x01;	/* enable */
 		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
+		    (void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
@@ -2918,7 +2918,7 @@ adb_prog_switch_disable(void)
 		output[2] = 0x1c;	/* prog. switch control */
 		output[3] = 0x01;	/* disable */
 		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-			(void *)adb_op_comprout, (void *)&flag, (int)0);
+			(void *)adb_op_comprout, __UNVOLATILE(&flag), (int)0);
 		if (result != 0)	/* exit if not sent */
 			return -1;
 

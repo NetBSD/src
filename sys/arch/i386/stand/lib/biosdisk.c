@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.16.2.4 2004/11/02 07:50:35 skrll Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.16.2.5 2005/11/10 13:56:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -66,6 +66,9 @@
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/md5.h>
+#include <sys/param.h>
+
+#include <fs/cd9660/iso.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
@@ -78,7 +81,7 @@
 #include "bootinfo.h"
 #endif
 
-#define BUFSIZE (1 * BIOSDISK_SECSIZE)
+#define BUFSIZE	2048	/* must be large enough for a CD sector */
 
 struct biosdisk {
 	struct biosdisk_ll ll;
@@ -93,64 +96,62 @@ static struct btinfo_bootwedge bi_wedge;
 
 #define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
-int boot_biossector;	/* disk sector partition might have started in */
-
-int 
-biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
-	void           *devdata;
-	int             flag;
-	daddr_t         dblk;
-	size_t          size;
-	void           *buf;
-	size_t         *rsize;
+int
+biosdisk_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		  void *buf, size_t *rsize)
 {
 	struct biosdisk *d;
-	int             blks, frag;
+	int blks, frag;
 
 	if (flag != F_READ)
-		return (EROFS);
+		return EROFS;
 
 	d = (struct biosdisk *) devdata;
 
+	if (d->ll.type == BIOSDISK_TYPE_CD)
+		dblk = dblk * DEV_BSIZE / ISO_DEFAULT_BLOCK_SIZE;
+
 	dblk += d->boff;
 
-	blks = size / BIOSDISK_SECSIZE;
+	blks = size / d->ll.secsize;
 	if (blks && readsects(&d->ll, dblk, blks, buf, 0)) {
 		if (rsize)
 			*rsize = 0;
-		return (EIO);
+		return EIO;
 	}
-	/* do we really need this? */
-	frag = size % BIOSDISK_SECSIZE;
+
+	/* needed for CD */
+	frag = size % d->ll.secsize;
 	if (frag) {
 		if (readsects(&d->ll, dblk + blks, 1, d->buf, 0)) {
 			if (rsize)
-				*rsize = blks * BIOSDISK_SECSIZE;
-			return (EIO);
+				*rsize = blks * d->ll.secsize;
+			return EIO;
 		}
-		memcpy(buf + blks * BIOSDISK_SECSIZE, d->buf, frag);
+		memcpy(buf + blks * d->ll.secsize, d->buf, frag);
 	}
+
 	if (rsize)
 		*rsize = size;
-	return (0);
+	return 0;
 }
 
 static struct biosdisk *
-alloc_biosdisk(int dev)
+alloc_biosdisk(int biosdev)
 {
 	struct biosdisk *d;
 
-	d = (struct biosdisk *)alloc(sizeof *d);
-	if (!d)
+	d = alloc(sizeof(*d));
+	if (d == NULL)
 		return NULL;
-	memset(d, 0, sizeof *d);
+	memset(d, 0, sizeof(*d));
 
-	d->ll.dev = dev;;
+	d->ll.dev = biosdev;
 	if (set_geometry(&d->ll, NULL)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
 #endif
-		free(d, sizeof *d);
+		free(d, sizeof(*d));
 		return NULL;
 	}
 	return d;
@@ -195,13 +196,13 @@ read_label(struct biosdisk *d)
 	int sector_386bsd = -1;
 #endif
 
-	memset(&dflt_lbl, 0, sizeof dflt_lbl);
+	memset(&dflt_lbl, 0, sizeof(dflt_lbl));
 	dflt_lbl.d_npartitions = 8;
 
 	d->boff = 0;
 
-	if (!(d->ll.dev & 0x80)) /* floppy */
-		/* No label on floppy */
+	if (d->ll.type != BIOSDISK_TYPE_HD)
+		/* No label on floppy and CD */
 		return -1;
 
 	/*
@@ -219,7 +220,8 @@ read_label(struct biosdisk *d)
 #endif
 			return EIO;
 		}
-		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts, sizeof mbr);
+		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts,
+		       sizeof(mbr));
 		/* Look for NetBSD partition ID */
 		for (i = 0; i < MBR_PART_COUNT; i++) {
 			typ = mbr[i].mbrp_type;
@@ -282,7 +284,7 @@ read_label(struct biosdisk *d)
 	 */
 	/* XXX fill it to make checksum match kernel one */
 	dflt_lbl.d_checksum = dkcksum(&dflt_lbl);
-	memcpy(d->buf, &dflt_lbl, sizeof dflt_lbl);
+	memcpy(d->buf, &dflt_lbl, sizeof(dflt_lbl));
 	return -1;
 }
 #endif /* NO_DISKLABEL */
@@ -291,14 +293,14 @@ read_label(struct biosdisk *d)
  * partition.
  */
 
-u_int
-biosdiskfindptn(int biosdev, u_int sector)
+int
+biosdisk_findpartition(int biosdev, u_int sector)
 {
 #ifdef NO_DISKLABEL
 	return 0;
 #else
 	struct biosdisk *d;
-	u_int partition = 0;
+	int partition = 0;
 	struct disklabel *lp;
 
 	/* Look for netbsd partition that is the dos boot one */
@@ -316,17 +318,18 @@ biosdiskfindptn(int biosdev, u_int sector)
 		}
 	}
 
-	free(d, sizeof *d);
+	free(d, sizeof(*d));
 	return partition;
-}
 #endif /* NO_DISKLABEL */
+}
 
-int 
-biosdiskopen(struct open_file *f, ...)
-/* file, biosdev, partition */
+int
+biosdisk_open(struct open_file *f, ...)
+/* struct open_file *f, int biosdev, int partition */
 {
 	va_list ap;
 	struct biosdisk *d;
+	int biosdev;
 	int partition;
 #ifndef NO_DISKLABEL
 	struct disklabel *lp;
@@ -334,8 +337,9 @@ biosdiskopen(struct open_file *f, ...)
 	int error = 0;
 
 	va_start(ap, f);
-	d = alloc_biosdisk(va_arg(ap, int));
-	if (!d) {
+	biosdev = va_arg(ap, int);
+	d = alloc_biosdisk(biosdev);
+	if (d == NULL) {
 		error = ENXIO;
 		goto out;
 	}
@@ -363,7 +367,7 @@ biosdiskopen(struct open_file *f, ...)
 
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
 	if (partition >= lp->d_npartitions ||
-	   lp->d_partitions[partition].p_fstype == FS_UNUSED) {
+	    lp->d_partitions[partition].p_fstype == FS_UNUSED) {
 #ifdef DISK_DEBUG
 		printf("illegal partition\n");
 #endif
@@ -408,30 +412,27 @@ out:
         va_end(ap);
 	if (error)
 		free(d, sizeof(struct biosdisk));
-	return (error);
+	return error;
 }
 
 #ifndef LIBSA_NO_FS_CLOSE
-int 
-biosdiskclose(f)
-	struct open_file *f;
+int
+biosdisk_close(struct open_file *f)
 {
 	struct biosdisk *d = f->f_devdata;
 
-	if (!(d->ll.dev & 0x80))/* let the floppy drive go off */
+	/* let the floppy drive go off */
+	if (d->ll.type == BIOSDISK_TYPE_FD)
 		delay(3000000);	/* 2s is enough on all PCs I found */
 
 	free(d, sizeof(struct biosdisk));
 	f->f_devdata = NULL;
-	return (0);
+	return 0;
 }
 #endif
 
-int 
-biosdiskioctl(f, cmd, arg)
-	struct open_file *f;
-	u_long          cmd;
-	void           *arg;
+int
+biosdisk_ioctl(struct open_file *f, u_long cmd, void *arg)
 {
 	return EIO;
 }

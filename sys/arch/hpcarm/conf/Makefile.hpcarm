@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.14.6.3 2004/09/21 13:16:00 skrll Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.14.6.4 2005/11/10 13:56:14 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 HPCARM=		$S/arch/hpcarm
 ARM=		$S/arch/arm
-GENASSYM=	${ARM}/arm32/genassym.cf
+GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 GENASSYM_EXTRAS+=	${HPCARM}/hpcarm/genassym.cf
 
 ##

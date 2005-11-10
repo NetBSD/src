@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32.2.3 2004/09/21 13:19:44 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.32.2.4 2005/11/10 13:58:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,10 +66,6 @@ GLOBAL(endsym)
 	.long	0			/* end of symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-GLOBAL(intrnames)
-GLOBAL(eintrnames)
-GLOBAL(intrcnt)
-GLOBAL(eintrcnt)
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

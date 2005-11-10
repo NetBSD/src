@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.17.16.3 2004/09/21 13:19:15 skrll Exp $	*/
+/*      $NetBSD: clock.c,v 1.17.16.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.16.3 2004/09/21 13:19:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.16.4 2005/11/10 13:57:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,7 +211,7 @@ inittodr(base)
                 badbase = 1;
         }
 
-        if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+        if (todr_gettime(todr_handle, &time) != 0 ||
             time.tv_sec == 0) {
                 printf("WARNING: bad date in battery clock");
                 /*
@@ -248,6 +248,6 @@ resettodr()
         if (!time.tv_sec)
                 return;
 
-        if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+        if (todr_settime(todr_handle, &time) != 0)
                 printf("resettodr: failed to set time\n");
 }

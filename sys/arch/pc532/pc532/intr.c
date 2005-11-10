@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27.2.3 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.27.2.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.2.3 2004/09/21 13:19:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.2.4 2005/11/10 13:58:09 skrll Exp $");
 
 #define DEFINE_SPLX
 #include <sys/param.h>
@@ -158,7 +158,7 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	int intr;
 	void (*vector) __P((void *));
 	void *arg;
-	char *use;
+	const char *use;
 	int blevel;
 	int rlevel;
 	int mode;

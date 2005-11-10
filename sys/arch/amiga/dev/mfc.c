@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.32.6.4 2004/11/21 13:54:35 skrll Exp $ */
+/*	$NetBSD: mfc.c,v 1.32.6.5 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.32.6.4 2004/11/21 13:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.32.6.5 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ struct mfcp_softc {
 
 struct mfc_args {
 	struct zbus_args zargs;
-	char	*subdev;
+	const char	*subdev;
 	char	unit;
 };
 
@@ -455,8 +455,8 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->rptr = sc->wptr = sc->inbuf;
 	sc->sc_mfc = scc;
 	sc->sc_regs = rp = scc->sc_regs;
-	sc->sc_duart = (struct duart_regs *) ((unit & 1) ? &rp->du_mr1b :
-	    &rp->du_mr1a);
+	sc->sc_duart = (struct duart_regs *) ((unit & 1) ? 
+	    __UNVOLATILE(&rp->du_mr1b) : __UNVOLATILE(&rp->du_mr1a));
 	/*
 	 * should have only one vbl routine to handle all ports?
 	 */
@@ -534,7 +534,8 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return(EBUSY);
 	}

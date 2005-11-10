@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ struct iv {
 	long iv_level;
 	long iv_mask;
 	struct evcnt iv_evcnt;
-	char *iv_use;
+	const char *iv_use;
 };
 
 extern struct iv ivt[];
@@ -99,7 +99,7 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 
 void	intr_init __P((void));
 void	check_sir __P((void *));
-int	intr_establish __P((int, void (*)(void *), void *, char *,
+int	intr_establish __P((int, void (*)(void *), void *, const char *,
 				int, int, int));
 
 INTR_STATIC INTR_INLINE int splraise __P((unsigned int));

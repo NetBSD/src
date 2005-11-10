@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.21.2.7 2005/03/04 16:38:49 skrll Exp $
+# 	$NetBSD: NEWS1200,v 1.21.2.8 2005/11/10 13:57:54 skrll Exp $
 
 #	news1200 config file
 #
@@ -43,6 +43,7 @@ options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
+options 	COMPAT_30		# NetBSD 3.0 compatibility.
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
@@ -68,6 +69,7 @@ file-system	NULLFS		# loopback file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
+file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
@@ -80,6 +82,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing

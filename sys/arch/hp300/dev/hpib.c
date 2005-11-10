@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.24.2.5 2005/03/04 16:38:26 skrll Exp $	*/
+/*	$NetBSD: hpib.c,v 1.24.2.6 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.24.2.5 2005/03/04 16:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.24.2.6 2005/11/10 13:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,8 @@ CFATTACH_DECL(hpibbus, sizeof(struct hpibbus_softc),
     hpibbusmatch, hpibbusattach, NULL, NULL);
 
 static void	hpibbus_attach_children(struct hpibbus_softc *);
-static int	hpibbussearch(struct device *, struct cfdata *, void *);
+static int	hpibbussearch(struct device *, struct cfdata *,
+			      const int *, void *);
 static int	hpibbusprint(void *, const char *);
 
 static int	hpibbus_alloc(struct hpibbus_softc *, int, int);
@@ -204,12 +205,13 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 		/*
 		 * Search though all configured children for this bus.
 		 */
-		(void)config_search(hpibbussearch, &sc->sc_dev, &ha);
+		config_search_ia(hpibbussearch, &sc->sc_dev, "hpibbus", &ha);
 	}
 }
 
 static int
-hpibbussearch(struct device *parent, struct cfdata *cf, void *aux)
+hpibbussearch(struct device *parent, struct cfdata *cf,
+	      const int *ldesc, void *aux)
 {
 	struct hpibbus_softc *sc = (struct hpibbus_softc *)parent;
 	struct hpibbus_attach_args *ha = aux;

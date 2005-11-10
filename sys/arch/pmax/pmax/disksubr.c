@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.39.2.3 2004/09/21 13:20:24 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39.2.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39.2.3 2004/09/21 13:20:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39.2.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include "opt_compat_ultrix.h"
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39.2.3 2004/09/21 13:20:24 skrll Exp 
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-	    struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
+const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+	struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
 
 #endif
 
@@ -69,7 +69,7 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -125,7 +125,7 @@ readdisklabel(dev, strat, lp, osdep)
  * Given a buffer bp, try and interpret it as an Ultrix disk label,
  * putting the partition info into a native NetBSD label
  */
-char *
+const char *
 compat_label(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
@@ -134,7 +134,7 @@ compat_label(dev, strat, lp, osdep)
 {
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;

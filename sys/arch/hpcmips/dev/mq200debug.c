@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200debug.c,v 1.1.28.3 2004/09/21 13:16:04 skrll Exp $	*/
+/*	$NetBSD: mq200debug.c,v 1.1.28.4 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.1.28.3 2004/09/21 13:16:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.1.28.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.1.28.3 2004/09/21 13:16:04 skrll Ex
 
 #define ENABLE(b)	((b)?"enable":"disable")
 
-char *mq200_clknames[] = { "BUS", "PLL1", "PLL2", "PLL3" };
+const char *mq200_clknames[] = { "BUS", "PLL1", "PLL2", "PLL3" };
 
 #ifdef MQ200_DEBUG
 
@@ -63,8 +63,8 @@ mq200_dump_pll(struct mq200_softc *sc)
 	u_int32_t reg, pm00r;
 	int clocks[4];
 	int memclock, geclock;
-	static char *clknames[] = { "BUS", "PLL1", "PLL2", "PLL3" };
-	static char *fd_names[] = { "1", "1.5", "2.5", "3.5", "4.5", "5.5", "6.5" };
+	static const char *clknames[] = { "BUS", "PLL1", "PLL2", "PLL3" };
+	static const char *fd_names[] = { "1", "1.5", "2.5", "3.5", "4.5", "5.5", "6.5" };
 	static int fd_vals[] = { 10, 15, 25, 35, 45, 55, 65 };
 #define FIXEDFLOAT1000(a)	(a)/1000, (a)%1000
 
@@ -169,7 +169,7 @@ mq200_dump_pll(struct mq200_softc *sc)
 }
 
 struct {
-	char *name;
+	const char *name;
 	u_int32_t base;
 	int start, end;
 } regs[] = {

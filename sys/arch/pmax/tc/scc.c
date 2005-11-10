@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.81.2.5 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: scc.c,v 1.81.2.6 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81.2.5 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81.2.6 2005/11/10 13:58:15 skrll Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -658,7 +658,8 @@ sccopen(dev, flag, mode, l)
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	}
-	else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0) {
+	else if ((tp->t_state & TS_XCLUDE) &&
+		 suser(p->p_ucred, &p->p_acflag) != 0) {
 		error = EBUSY;
 		splx(s);
 		goto bad;
@@ -1042,7 +1043,7 @@ scc_rxintr(sc, chan, regs, unit)
 	struct tty *tp = sc->scc_tty[chan];
 	int cc, rr1 = 0, rr2 = 0;	/* XXX */
 #if NRASTERCONSOLE > 0
-	char *cp;
+	const char *cp;
 	int cl;
 #endif
 

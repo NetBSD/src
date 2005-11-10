@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.84.6.3 2004/09/21 13:15:13 skrll Exp $
+#	$NetBSD: Makefile.hp300,v 1.84.6.4 2005/11/10 13:56:05 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 HP300=		$S/arch/hp300
-GENASSYM=	${HP300}/hp300/genassym.cf
+GENASSYM_CONF=	${HP300}/hp300/genassym.cf
 
 ##
 ## (2) compile settings

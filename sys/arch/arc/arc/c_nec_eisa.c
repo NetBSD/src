@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.6.2.4 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.6.2.5 2005/11/10 13:55:00 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.6.2.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.6.2.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,12 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.6.2.4 2005/01/24 08:33:58 skrll Exp
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 #include <mips/pte.h>
 
 #include <dev/isa/isavar.h>
 
 #include <arc/arc/arcbios.h>
-#include <arc/arc/wired_map.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
@@ -170,10 +170,11 @@ c_nec_eisa_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
-	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
-	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(RD94_V_EISA_IO, RD94_P_EISA_IO, RD94_P_EISA_MEM,
-	    MIPS3_PG_SIZE_16M);
+	arc_wired_enter_page(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE,
+	    RD94_S_LOCAL_IO_BASE);
+
+	arc_wired_enter_page(RD94_V_EISA_IO, RD94_P_EISA_IO, RD94_S_EISA_IO);
+	arc_wired_enter_page(RD94_V_EISA_MEM, RD94_P_EISA_MEM, RD94_S_EISA_MEM);
 
 	/*
 	 * Initialize interrupt priority

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4.2.1 2004/08/03 10:34:48 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4.2.2 2005/11/10 13:56:10 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.4.2.1 2004/08/03 10:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.4.2.2 2005/11/10 13:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,12 +116,10 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.4.2.1 2004/08/03 10:34:48 skrll Exp $
 #include <sys/syslog.h>
 #include <sys/disk.h>
 
-#define	b_cylin	b_resid
-
-char   *readliflabel(struct buf *, void (*)(struct buf *),
+const char *readliflabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
-char *readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, 
-    int sec, int off, int endian, struct disklabel *lp, int spoofonly);
+const char *readbsdlabel(struct buf *, void (*)(struct buf *), int, 
+    int, int, int, struct disklabel *, int);
 void swapdisklabel(struct disklabel *);
 
 /*
@@ -177,12 +175,12 @@ swapdisklabel(struct disklabel *dlp)
 /*
  * Try to read a standard BSD disklabel at a certain sector.
  */
-char *
+const char *
 readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
     int off, int endian, struct disklabel *lp, int spoofonly)
 {
 	struct disklabel *dlp;
-	char *msg = NULL;
+	const char *msg = NULL;
 	u_int16_t cksum;
 	u_int32_t magic;
 
@@ -194,7 +192,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 		return (NULL);
 
 	bp->b_blkno = sec;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -262,7 +260,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 {
 	int spoofonly = 0;
 	struct buf *bp = NULL;
-	char *msg = "no disk label";
+	const char *msg = "no disk label";
 	int i;
 	struct disklabel minilabel, fallbacklabel;
 
@@ -309,7 +307,7 @@ done:
 }
 
 
-char *
+const char *
 readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep, int *partoffp, int *cylp, int spoofonly)
 {
@@ -319,7 +317,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	bp->b_blkno = btodb(HP700_LIF_VOLSTART);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = btodb(HP700_LIF_VOLSTART) / lp->d_secpercyl;
+	bp->b_cylinder = btodb(HP700_LIF_VOLSTART) / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -338,7 +336,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		bp->b_blkno = btodb(HP700_LIF_DIRSTART);
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = (HP700_LIF_DIRSTART) / lp->d_secpercyl;
+		bp->b_cylinder = (HP700_LIF_DIRSTART) / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if (biowait(bp)) {
@@ -436,7 +434,7 @@ int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
-	char *msg = "no disk label";
+	const char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
 	struct cpu_disklabel cdl;
@@ -469,7 +467,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		labeloffset = LABELOFFSET;
 		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
-		bp->b_cylin = cyl;
+		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
 	}
 
@@ -538,7 +536,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

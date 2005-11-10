@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.12.6.3 2004/09/21 13:16:04 skrll Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.12.6.4 2005/11/10 13:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.12.6.3 2004/09/21 13:16:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.12.6.4 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,8 @@ struct ucb1200_softc {
 int	ucb1200_match(struct device *, struct cfdata *, void *);
 void	ucb1200_attach(struct device *, struct device *, void *);
 int	ucb1200_print(void *, const char *);
-int	ucb1200_search(struct device *, struct cfdata *, void *);
+int	ucb1200_search(struct device *, struct cfdata *,
+		       const int *, void *);
 int	ucb1200_check_id(u_int16_t, int);
 
 #ifdef UCB1200_DEBUG
@@ -141,11 +142,12 @@ ucb1200_attach(struct device *parent, struct device *self, void *aux)
 	(void)ucb1200_check_id(reg, 1);
 	printf("\n");
 
-	config_search(ucb1200_search, self, ucb1200_print);
+	config_search_ia(ucb1200_search, self, "ucbif", ucb1200_print);
 }
 
 int
-ucb1200_search(struct device *parent, struct cfdata *cf, void *aux)
+ucb1200_search(struct device *parent, struct cfdata *cf,
+	       const int *ldesc, void *aux)
 {
 	struct ucb1200_softc *sc = (void*)parent;
 	struct ucb1200_attach_args ucba;

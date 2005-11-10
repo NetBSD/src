@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.3 2004/09/21 13:15:01 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.4 2005/11/10 13:56:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.3 2004/09/21 13:15:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.4 2005/11/10 13:56:05 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -426,7 +426,7 @@ lcsplx(int ipl)
 }
 
 void
-gt_halt(bus_space_tag_t gt_memt, bus_space_handle_t gt_memh)
+gt_halt(bus_space_tag_t memt, bus_space_handle_t memh)
 {
 	int i;
 	u_int32_t data;
@@ -435,10 +435,10 @@ gt_halt(bus_space_tag_t gt_memt, bus_space_handle_t gt_memh)
 	 * Shut down the MPSC ports
 	 */
 	for (i = 0; i < 2; i++) {
-		bus_space_write_4(gt_memt, gt_memh,
+		bus_space_write_4(memt, memh,
 		    SDMA_U_SDCM(i), SDMA_SDCM_AR|SDMA_SDCM_AT);
 		for (;;) {
-			data = bus_space_read_4(gt_memt, gt_memh,
+			data = bus_space_read_4(memt, memh,
 			    SDMA_U_SDCM(i));
 			if (((SDMA_SDCM_AR|SDMA_SDCM_AT) & data) == 0)
 				break;
@@ -449,17 +449,17 @@ gt_halt(bus_space_tag_t gt_memt, bus_space_handle_t gt_memh)
 	 * Shut down the Ethernets
 	 */
 	for (i = 0; i < 3; i++) {
-		bus_space_write_4(gt_memt, gt_memh,
+		bus_space_write_4(memt, memh,
 		    ETH_ESDCMR(2), ETH_ESDCMR_AR|ETH_ESDCMR_AT);
 		for (;;) {
-			data = bus_space_read_4(gt_memt, gt_memh,
+			data = bus_space_read_4(memt, memh,
 			    ETH_ESDCMR(i));
 			if (((ETH_ESDCMR_AR|ETH_ESDCMR_AT) & data) == 0)
 				break;
 		}
-		data = bus_space_read_4(gt_memt, gt_memh, ETH_EPCR(i));
+		data = bus_space_read_4(memt, memh, ETH_EPCR(i));
 		data &= ~ETH_EPCR_EN;
-		bus_space_write_4(gt_memt, gt_memh, ETH_EPCR(i), data);
+		bus_space_write_4(memt, memh, ETH_EPCR(i), data);
 	}
 }
 

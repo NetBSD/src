@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11.2.5 2005/04/01 14:27:26 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.6 2005/11/10 13:56:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.5 2005/04/01 14:27:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.6 2005/11/10 13:56:10 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -619,65 +619,89 @@ void mbus_wrm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a,
 void
 mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
 {
+	volatile u_int8_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*(a++) = *((volatile u_int8_t *)h)++;
+		*a++ = *p++;
 }
 
 void
 mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
 {
+	volatile u_int16_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*(a++) = *((volatile u_int16_t *)h)++;
+		*a++ = *p++;
 }
 
 void
 mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
 {
+	volatile u_int32_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*(a++) = *((volatile u_int32_t *)h)++;
+		*a++ = *p++;
 }
 
 void
 mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c)
 {
+	volatile u_int64_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*(a++) = *((volatile u_int64_t *)h)++;
+		*a++ = *p++;
 }
 
 void
 mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c)
 {
+	volatile u_int8_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int8_t *)h)++ = *(a++);
+		*p++ = *a++;
 }
 
 void
 mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
+	volatile u_int16_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int16_t *)h)++ = *(a++);
+		*p++ = *a++;
 }
 
 void
 mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
+	volatile u_int32_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int32_t *)h)++ = *(a++);
+		*p++ = *a++;
 }
 
 void
 mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c)
 {
+	volatile u_int64_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int64_t *)h)++ = *(a++);
+		*p++ = *a++;
 }
 
 void mbus_rrr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
@@ -691,77 +715,101 @@ void mbus_wrr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_s
 void
 mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
 {
+	volatile u_int8_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int8_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 void
 mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
 {
+	volatile u_int16_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int16_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 void
 mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
 {
+	volatile u_int32_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int32_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 void
 mbus_sr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t c)
 {
+	volatile u_int64_t *p;
+
 	h += o;
+	p = (void *)h;
 	while (c--)
-		*((volatile u_int64_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 void
 mbus_cp_1(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
+	volatile u_int8_t *p1, *p2;
+
 	h1 += o1;
 	h2 += o2;
+	p1 = (void *)h1;
+	p2 = (void *)h2;
 	while (c--)
-		*((volatile u_int8_t *)h1)++ =
-			*((volatile u_int8_t *)h2)++;
+		*p1++ = *p2++;
 }
 
 void
 mbus_cp_2(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
+	volatile u_int16_t *p1, *p2;
+
 	h1 += o1;
 	h2 += o2;
+	p1 = (void *)h1;
+	p2 = (void *)h2;
 	while (c--)
-		*((volatile u_int16_t *)h1)++ =
-			*((volatile u_int16_t *)h2)++;
+		*p1++ = *p2++;
 }
 
 void
 mbus_cp_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
+	volatile u_int32_t *p1, *p2;
+
 	h1 += o1;
 	h2 += o2;
+	p1 = (void *)h1;
+	p2 = (void *)h2;
 	while (c--)
-		*((volatile u_int32_t *)h1)++ =
-			*((volatile u_int32_t *)h2)++;
+		*p1++ = *p2++;
 }
 
 void
 mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
+	volatile u_int64_t *p1, *p2;
+
 	h1 += o1;
 	h2 += o2;
+	p1 = (void *)h1;
+	p2 = (void *)h2;
 	while (c--)
-		*((volatile u_int64_t *)h1)++ =
-			*((volatile u_int64_t *)h2)++;
+		*p1++ = *p2++;
 }
 
 
@@ -1453,7 +1501,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return;
-	config_found_sm(self, ca, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "mainbus", NULL, ca, mbprint, mbsubmatch);
 }
 
 static void
@@ -1462,7 +1510,8 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
 	    ca->ca_hpa != pdc_hpa.hpa)
-		config_found_sm(self, ca, mbprint, mbsubmatch);
+		config_found_sm_loc(self, "mainbus", NULL, ca, mbprint,
+				    mbsubmatch);
 }
 
 void
@@ -1654,7 +1703,8 @@ mbprint(void *aux, const char *pnp)
 }
 
 int
-mbsubmatch(struct device *parent, struct cfdata *cf, void *aux)
+mbsubmatch(struct device *parent, struct cfdata *cf,
+	   const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.43.2.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: sbc.c,v 1.43.2.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -506,7 +506,7 @@ sbc_drq_intr(void *p)
 			}
 #undef W4
 			data = (u_int8_t *)long_data;
-			drq = (u_int8_t *)long_drq;
+			drq = (volatile u_int8_t *)long_drq;
 
 #define W1		*drq++ = *data++
 			while (count) {

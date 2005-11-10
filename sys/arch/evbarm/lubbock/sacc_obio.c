@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.3.4.4 2004/09/21 13:14:53 skrll Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.3.4.5 2005/11/10 13:55:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.3.4.4 2004/09/21 13:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.3.4.5 2005/11/10 13:55:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ sacc_obio_attach(parent, self, aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(sa1111_search, self, NULL);
+	config_search_ia(sa1111_search, self, "sacc", NULL);
 
 	return;
 

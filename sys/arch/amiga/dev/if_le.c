@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.38 2002/10/02 04:55:51 thorpej Exp $ */
+/*	$NetBSD: if_le.c,v 1.38.6.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.38 2002/10/02 04:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.38.6.1 2005/11/10 13:51:36 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -454,14 +454,14 @@ ariadne_copytobuf_word(struct lance_softc *sc, void *from, int boff, int len)
 		/* adjust source pointer */
 		b1 = (u_short *)(a1 + 1);
 		/* compute aligned destination pointer */
-		b2 = (u_short *)(a2 + 1);
+		b2 = (volatile u_short *)(a2 + 1);
 		/* copy first unaligned byte to buf */
 		b2[-1] = (b2[-1] & 0xff00) | *a1;
 		--len;
 	} else {
 		/* destination is aligned or length is zero */
 		b1 = (u_short *)a1;
-		b2 = (u_short *)a2;
+		b2 = (volatile u_short *)a2;
 	}
 
 	/* copy full words with aligned destination */
@@ -484,7 +484,7 @@ ariadne_copyfrombuf_word(struct lance_softc *sc, void *to, int boff, int len)
 
 	if (len > 0 && isodd(boff)) {
 		/* compute aligned source pointer */
-		b1  = (u_short *)(a1 + 1);
+		b1  = (volatile u_short *)(a1 + 1);
 		/* adjust destination pointer (possibly unaligned) */
 		b2  = (u_short *)(a2 + 1);
 		/* copy first unaligned byte from buf */
@@ -492,7 +492,7 @@ ariadne_copyfrombuf_word(struct lance_softc *sc, void *to, int boff, int len)
 		--len;
 	} else {
 		/* source is aligned or length is zero */
-		b1 = (u_short *)a1;
+		b1 = (volatile u_short *)a1;
 		b2 = (u_short *)a2;
 	}
 
@@ -513,11 +513,11 @@ ariadne_zerobuf_word(struct lance_softc *sc, int boff, int len)
 	int i;
 
 	if (len > 0 && isodd(boff)) {
-		b1 = (u_short *)(a1 + 1);
+		b1 = (volatile u_short *)(a1 + 1);
 		b1[-1] &= 0xff00;
 		--len;
 	} else {
-		b1 = (u_short *)a1;
+		b1 = (volatile u_short *)a1;
 	}
 
 	for (i = len >> 1; i > 0; i--)

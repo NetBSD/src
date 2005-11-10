@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21.2.7 2005/04/01 14:28:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21.2.8 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.7 2005/04/01 14:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.8 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -566,21 +566,21 @@ vm_page_alloc1(void)
  *	Object and page must be locked prior to entry.
  */
 void
-vm_page_free1(struct vm_page *mem)
+vm_page_free1(struct vm_page *pg)
 {
 #ifdef DIAGNOSTIC
-	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
-		printf("Freeing invalid page %p\n", mem);
-		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(mem));
+	if (pg->flags != (PG_CLEAN|PG_FAKE)) {
+		printf("Freeing invalid page %p\n", pg);
+		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(pg));
 #ifdef DDB
 		Debugger();
 #endif
 		return;
 	}
 #endif
-	mem->flags |= PG_BUSY;
-	mem->wire_count = 0;
-	uvm_pagefree(mem);
+	pg->flags |= PG_BUSY;
+	pg->wire_count = 0;
+	uvm_pagefree(pg);
 }
 #endif
 
@@ -1372,7 +1372,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 	 * XXXX We will reserve 0-0x80000000 for va==pa mappings.
 	 */
 	if (ctx != KERNEL_PID || (va & 0x80000000)) {
-		pte = pte_find((struct pmap *)ctxbusy[ctx], va);
+		pte = pte_find((struct pmap *)__UNVOLATILE(ctxbusy[ctx]), va);
 		if (pte == NULL) {
 			/* Map unmanaged addresses directly for kernel access */
 			return 1;
@@ -1784,7 +1784,7 @@ pmap_testout()
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	pmap_kenter_pa(va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL);
 	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif

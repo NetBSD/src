@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.44.2.4 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: esp.c,v 1.44.2.5 2005/11/10 13:57:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44.2.4 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44.2.5 2005/11/10 13:57:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,7 +190,7 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 #ifdef ESP_DEBUG
-#define XCHR(x) "0123456789abcdef"[(x) & 0xf]
+#define XCHR(x) hexdigits[(x) & 0xf]
 static void
 esp_hex_dump(unsigned char *pkt, size_t len)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.7.2.1 2005/02/04 11:44:33 skrll Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.7.2.2 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -78,6 +78,8 @@ struct adb_softc {
 	char *sc_regbase;
 };
 
+typedef void (adbComp)(caddr_t, volatile int *, int);
+
 /* adb_direct.c */
 extern int adbHardware;
 
@@ -103,9 +105,9 @@ void	ADBReInit __P((void));
 int	GetIndADB __P((ADBDataBlock * info, int index));
 int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
 int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
+int	ADBOp __P((Ptr buffer, adbComp *compRout, Ptr data, short commandNum));
 int	adb_read_date_time __P((unsigned long *t));
 int	adb_set_date_time __P((unsigned long t));
 
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
-void	adb_op_comprout __P((caddr_t, caddr_t, int));
+int	adb_op_sync __P((Ptr, adbComp *, Ptr, short));
+void	adb_op_comprout __P((caddr_t, volatile int *, int));

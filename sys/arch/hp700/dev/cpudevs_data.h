@@ -1,10 +1,6 @@
-/*	$NetBSD: cpudevs_data.h,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
+/*	$NetBSD: cpudevs_data.h,v 1.2.6.1 2005/11/10 13:56:10 skrll Exp $	*/
 
 /* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */
-
-/* generated from: NetBSD: cpudevs,v 1.1 2002/06/06 19:48:03 fredette Exp  */
-
-/* generated from: OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp  */
 
 {HPPA_TYPE_BOARD,	0x004,	"X 840/930 (Indigo)" },
 {HPPA_TYPE_BOARD,	0x008,	"X 825/925 (FireFox)" },
@@ -35,7 +31,7 @@
 {HPPA_TYPE_BOARD,	0x203,	"0T 735/99 (Hardball)" },
 {HPPA_TYPE_BOARD,	0x204,	"0T 755/99 (Coral II)" },
 {HPPA_TYPE_BOARD,	HPPA_BOARD_HP755_125,	"0T 755/125 (Coral II)" },
-{HPPA_TYPE_BOARD,	0x206,	"0T 735/130 (Snake Cheetah)" },
+{HPPA_TYPE_BOARD,	0x206,	"5T 735/130 (Snake Cheetah)" },
 {HPPA_TYPE_BOARD,	0x280,	"S 817/827/957/957LX/FH20 (Nova Low)" },
 {HPPA_TYPE_BOARD,	0x281,	"S 837/847/857/967/967LX/FGHI30 (Nova High)" },
 {HPPA_TYPE_BOARD,	0x282,	"S 807/917/917LX/927/927LX/937/937LX/947/947LX/F10 (Nova8)" },
@@ -103,11 +99,11 @@
 {HPPA_TYPE_BOARD,	0x58b,	"T' 819/K200 (KittyHawk DC2 100)" },
 {HPPA_TYPE_BOARD,	0x58c,	"T' 859/K220 (ThunderHawk DC3- 120 1M)" },
 {HPPA_TYPE_BOARD,	0x58d,	"T' 869/K420 (ThunderHawk DC3 120 1M)" },
-{HPPA_TYPE_BOARD,	0x58e,	"T' (Raven 120 T')" },
+{HPPA_TYPE_BOARD,	0x58e,	"T' 780/C110 (Raven 120 T')" },
 {HPPA_TYPE_BOARD,	0x58f,	"U 889/K450 (Mohawk 160 U 1M DC3)" },
 {HPPA_TYPE_BOARD,	0x590,	"U 889/K460 (Mohawk 180 U 1M DC3)" },
 {HPPA_TYPE_BOARD,	0x591,	"U (Mohawk 200 U 1M DC3)" },
-{HPPA_TYPE_BOARD,	0x592,	"T' (Raven 100 T')" },
+{HPPA_TYPE_BOARD,	0x592,	"T' 780/C100 (Raven 100 T')" },
 {HPPA_TYPE_BOARD,	0x593,	"U (FireHawk 160 U)" },
 {HPPA_TYPE_BOARD,	0x594,	"U 780/J282 (FireHawk 180 U)" },
 {HPPA_TYPE_BOARD,	0x595,	"U (FireHawk 220 U)" },

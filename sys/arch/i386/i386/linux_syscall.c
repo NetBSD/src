@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.24.2.3 2004/09/21 13:16:42 skrll Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.24.2.4 2005/11/10 13:56:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24.2.3 2004/09/21 13:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24.2.4 2005/11/10 13:56:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -234,16 +234,14 @@ linux_syscall_fancy(frame)
 	}
 	KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
-		goto bad;
-	}
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+out:
 	KERNEL_PROC_UNLOCK(l);
-
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];
@@ -261,7 +259,6 @@ linux_syscall_fancy(frame)
 		/* nothing to do */
 		break;
 	default:
-	bad:
 		error = native_to_linux_errno[error];
 		frame->tf_eax = error;
 		frame->tf_eflags |= PSL_C;	/* carry bit */

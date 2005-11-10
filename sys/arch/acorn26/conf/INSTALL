@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4.6.7 2005/03/04 16:38:00 skrll Exp $
+# $NetBSD: INSTALL,v 1.4.6.8 2005/11/10 13:48:20 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -44,6 +44,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 #file-system	PROCFS		# /proc
 file-system	KERNFS		# /kern
 #file-system	FDESC		# /dev/fd
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -63,6 +64,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

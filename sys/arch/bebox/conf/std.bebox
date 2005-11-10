@@ -1,8 +1,9 @@
-#	$NetBSD: std.bebox,v 1.11.2.3 2004/09/21 13:14:20 skrll Exp $
+#	$NetBSD: std.bebox,v 1.11.2.4 2005/11/10 13:55:33 skrll Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
 machine		bebox powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# BeBox uses Motorola PPC60x CPUs
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

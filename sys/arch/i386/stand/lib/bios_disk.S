@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.13 2003/04/16 12:45:10 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.13.2.1 2005/11/10 13:56:54 skrll Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -6,30 +6,30 @@
  * Mach Operating System
  * Copyright (c) 1992, 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 /*
-  Copyright 1988, 1989, 1990, 1991, 1992 
+  Copyright 1988, 1989, 1990, 1991, 1992
    by Intel Corporation, Santa Clara, California.
 
                 All Rights Reserved
@@ -56,13 +56,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/asm.h>
 
 /*
-# BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
-#	Call with	%ah = 0x0
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:		
-#			%al = 0x0 on success; err code on failure
-*/
-ENTRY(biosdiskreset)
+ * BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
+ *	Call with	%ah = 0x0
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ */
+ENTRY(biosdisk_reset)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -92,23 +92,23 @@ ENTRY(biosdiskreset)
 	ret
 
 /*
-# BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
-#	Call with	%ah = 0x2
-#			%al = number of sectors
-#			%ch = cylinder
-#			%cl = sector
-#			%dh = head
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#			%es:%bx = segment:offset of buffer
-#	Return:		
-#			%al = 0x0 on success; err code on failure
-#
-# biosread( dev, cyl, head, sect, count, buff_addr );
-#
-#  Note: On failure, you must reset the disk with biosdiskreset() before
-#        sending another command.
-*/
-ENTRY(biosread)
+ * BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
+ *	Call with	%ah = 0x2
+ *			%al = number of sectors
+ *			%ch = cylinder
+ *			%cl = sector
+ *			%dh = head
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *			%es:%bx = segment:offset of buffer
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ *
+ * biosdisk_read(dev, cyl, head, sect, count, buff_addr);
+ *
+ *  Note: On failure, you must reset the disk with biosdisk_reset() before
+ *        sending another command.
+ */
+ENTRY(biosdisk_read)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -142,7 +142,7 @@ ENTRY(biosread)
 	movb	$0x2, %ah	# subfunction
 	int	$0x13
 	setc	%al		# error code is in %ah
-	
+
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
@@ -157,13 +157,10 @@ ENTRY(biosread)
 	ret
 
 /*
-#
-# get_diskinfo():  return a word that represents the
-#	max number of sectors, heads and cylinders for this device
-#
-*/
-
-ENTRY(get_diskinfo)
+ * biosdisk_getinfo(int dev):  return a word that represents the
+ *	max number of sectors, heads and cylinders for this device
+ */
+ENTRY(biosdisk_getinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	push	%es
@@ -178,16 +175,21 @@ ENTRY(get_diskinfo)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%dx			# save drive #
 	movb	$0x08, %ah		# ask for disk info
 	int	$0x13
+	pop	%bx			# restore drive #
 	jnc	ok
+
+	testb	$0x80, %bl		# is it a hard disk?
+	jnz	ok
 
 	/*
 	 * Urk.  Call failed.  It is not supported for floppies by old BIOS's.
 	 * Guess it's a 15-sector floppy.  Initialize all the registers for
 	 * documentation, although we only need head and sector counts.
 	 */
-#	subb	%ah, %ah		# %ax = 0
+	xorw	%ax, %ax		# set status to success
 #	movb	%ah, %bh		# %bh = 0
 #	movb	$2, %bl			# %bl bits 0-3 = drive type, 2 = 1.2M
 	movb	$79, %ch		# max track
@@ -202,10 +204,12 @@ ok:
 	.code32
 
 	/* form a longword representing all this gunk */
-	shll	$8, %ecx
-	movb	%dh, %cl
-
-	movl	%ecx, %eax
+	shrl	$8, %eax		# clear unnecessary bits
+	shll	$24, %eax
+	shll	$16, %ecx		# do the same for %ecx
+	shrl	$8, %ecx
+	movb	%dh, %cl		# max head
+	orl	%ecx, %eax		# return value in %eax
 
 	pop	%edi
 	pop	%esi
@@ -217,10 +221,10 @@ ok:
 	ret
 
 /*
-# int13_extension: check for availibility of int13 extensions.
-*/
-
-ENTRY(int13_extension)
+ * int biosdisk_int13ext(int dev):
+ *	check for availibility of int13 extensions.
+ */
+ENTRY(biosdisk_int13ext)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -260,15 +264,15 @@ ENTRY(int13_extension)
 	ret
 
 /*
-# BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
-#	Call with	%ah = 0x42
-#			%ds:%si = parameter block (data buffer address
-#				must be a real mode physical address).
-#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#	Return:		
-#			%al = 0x0 on success; err code on failure
-*/
-ENTRY(biosextread)
+ * BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
+ *	Call with	%ah = 0x42
+ *			%ds:%si = parameter block (data buffer address
+ *				must be a real mode physical address).
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ */
+ENTRY(biosdisk_extread)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
@@ -309,7 +313,7 @@ ENTRY(biosextread)
 	popl	%ebp
 	ret
 
-ENTRY(int13_getextinfo)
+ENTRY(biosdisk_getextinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx

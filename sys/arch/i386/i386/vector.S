@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.9.2.4 2004/11/02 07:50:35 skrll Exp $	*/
+/*	$NetBSD: vector.S,v 1.9.2.5 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -83,8 +83,6 @@
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
-#include <machine/intr.h>
-#include <machine/psl.h>
 
 #include <net/netisr.h>
 
@@ -175,7 +173,6 @@ IDTVEC(resume_lapic_ipi)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 
 #if defined(DDB)
@@ -228,7 +225,6 @@ IDTVEC(resume_lapic_ltimer)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
@@ -312,7 +308,6 @@ IDTVEC(intr_/**/name/**/num)						;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1
@@ -595,19 +590,6 @@ _C_LABEL(ioapic_level_stubs):
 #endif
 
 /*
- * Symbols that vmstat -i wants, even though they're not used.
- */
-.globl	_C_LABEL(intrnames)
-_C_LABEL(intrnames):
-.globl	_C_LABEL(eintrnames)
-_C_LABEL(eintrnames):
-
-.globl	_C_LABEL(intrcnt)
-_C_LABEL(intrcnt):
-.globl	_C_LABEL(eintrcnt)
-_C_LABEL(eintrcnt):
-
-/*
  * Soft interrupt handlers
  */
 
@@ -794,7 +776,9 @@ IDTVEC(trap10)
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
 IDTVEC(trap12)
+	ZTRAP(T_MCA)
 IDTVEC(trap13)
+	ZTRAP(T_XMM)
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -807,7 +791,7 @@ IDTVEC(trap1c)
 IDTVEC(trap1d)
 IDTVEC(trap1e)
 IDTVEC(trap1f)
-	/* 18 - 31 reserved for future exp */
+	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
 IDTVEC(exceptions)

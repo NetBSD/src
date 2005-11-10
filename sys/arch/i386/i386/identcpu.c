@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4.2.5 2005/03/04 16:38:39 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4.2.6 2005/11/10 13:56:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.5 2005/03/04 16:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.6 2005/11/10 13:56:46 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -67,6 +67,7 @@ intel_cpuid_cache_info[] = {
 
 	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
 	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
+	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64 },
 	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
 	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
 	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
@@ -77,6 +78,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
 	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
 	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
+	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64 },
 	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
 	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
 	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
@@ -85,6 +87,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64 },
 	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
 	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
@@ -541,6 +544,19 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	}
 };
 
+/*
+ * disable the TSC such that we don't use the TSC in microtime(9)
+ * because some CPUs got the implementation wrong.
+ */
+static void
+disable_tsc(struct cpu_info *ci)
+{
+	if (cpu_feature & CPUID_TSC) {
+		cpu_feature &= ~CPUID_TSC;
+		printf("WARNING: broken TSC disabled\n");
+	}
+}
+
 void
 cyrix6x86_cpu_setup(ci)
 	struct cpu_info *ci;
@@ -548,8 +564,13 @@ cyrix6x86_cpu_setup(ci)
 	/*
 	 * i8254 latch check routine:
 	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
-	 *     its built-in i8254-compatible clock module.
+	 *     its built-in i8254-compatible clock module (cs5510 cs5520).
 	 *     Set the variable 'clock_broken_latch' to indicate it.
+	 *
+	 * This bug is not present in the cs5530, and the flag
+	 * is disabled again in sys/arch/i386/pci/pcib.c if this later
+	 * model device is detected. Ideally, this work-around should not
+	 * even be in here, it should be in there. XXX
 	 */
 
 	extern int clock_broken_latch;
@@ -563,8 +584,22 @@ cyrix6x86_cpu_setup(ci)
 	}
 
 	/* set up various cyrix registers */
-	/* Enable suspend on halt */
+	/*
+	 * Enable suspend on halt (powersave mode).
+	 * When powersave mode is enabled, the TSC stops counting
+	 * while the CPU is halted in idle() waiting for an interrupt.
+	 * This means we can't use the TSC for interval time in
+	 * microtime(9), and thus it is disabled here.
+	 *
+	 * It still makes a perfectly good cycle counter
+	 * for program profiling, so long as you remember you're
+	 * counting cycles, and not time. Further, if you don't
+	 * mind not using powersave mode, the TSC works just fine,
+	 * so this should really be optional. XXX
+	 */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	disable_tsc(ci);
+
 	/* enable access to ccr4/ccr5 */
 	c3 = cyrix_read_reg(0xC3);
 	cyrix_write_reg(0xC3, c3 | 0x10);
@@ -590,8 +625,7 @@ winchip_cpu_setup(ci)
 #if defined(I586_CPU)
 	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
-		cpu_feature &= ~CPUID_TSC;
-		printf("WARNING: WinChip C6: broken TSC disabled\n");
+		disable_tsc(ci);
 	}
 #endif
 }
@@ -779,15 +813,15 @@ void
 cpu_probe_features(struct cpu_info *ci)
 {
 	const struct cpu_cpuid_nameclass *cpup = NULL;
-	int i, max, family;
+	int i, xmax, family;
 
 	cpu_probe_base_features(ci);
 
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
-	for (i = 0; i < max; i++) {
+	xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
 			cpup = &i386_cpuid_cpus[i];
@@ -1079,13 +1113,13 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *brand = "";
-	int class = CPUCLASS_386, vendor, i, max;
+	int class = CPUCLASS_386, vendor, i, xmax;
 	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
-	char *feature_str[3];
+	const char *feature_str[3];
 
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1101,14 +1135,14 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
-		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
 
-		for (i = 0; i < max; i++) {
+		for (i = 0; i < xmax; i++) {
 			if (!strncmp((char *)ci->ci_vendor,
 			    i386_cpuid_cpus[i].cpu_id, 12)) {
 				cpup = &i386_cpuid_cpus[i];
@@ -1195,9 +1229,6 @@ identifycpu(struct cpu_info *ci)
 		last_tsc = rdtsc();
 		delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-#ifndef NO_TSC_TIME
-		microtime_func = cc_microtime;
-#endif
 	}
 	/* XXX end XXX */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.2.4 2004/09/21 13:14:33 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.5 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.4 2004/09/21 13:14:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.5 2005/11/10 13:55:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,11 +135,10 @@ mach_init(memsize, bim, bip)
 	caddr_t kernend, v;
 	u_long first, last;
 	extern char edata[], end[];
-	char *bi_msg;
+	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
 	caddr_t ssym = 0;
-	caddr_t esym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
@@ -270,7 +269,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

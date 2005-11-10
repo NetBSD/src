@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102.2.5 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.102.2.6 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102.2.5 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102.2.6 2005/11/10 13:57:13 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,7 +125,7 @@ extern struct emul emul_sunos;
 
 int	astpending;
 
-char	*trap_type[] = {
+const char	*trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",
@@ -703,9 +703,9 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+const char *f7sz[] = { "longword", "byte", "word", "line" };
+const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
 char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78.2.5 2005/11/10 13:55:00 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -110,10 +110,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 #ifdef MFS
-#include <ufs/mfs/mfs_extern.h>
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 #endif
 
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -122,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $
 #include <machine/trap.h>
 #include <machine/autoconf.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 #include <mips/pte.h>
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $
 #include <dev/isa/isareg.h>
 
 #include <arc/arc/arcbios.h>
-#include <arc/arc/wired_map.h>
+#include <arc/arc/timervar.h>
 
 #include "ksyms.h"
 
@@ -179,7 +179,7 @@ int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	ncpu = 1;		/* At least one CPU in the system */
 int	cpuspeed = 150;		/* approx CPU clock [MHz] */
-vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
+vsize_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 
@@ -205,7 +205,7 @@ int mem_cluster_cnt;
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init(int, char **argv, char **);
 
-char *firmware_getenv(char *env);
+const char *firmware_getenv(const char *env);
 void arc_sysreset(bus_addr_t, bus_size_t);
 
 /*
@@ -236,7 +236,7 @@ extern struct user *proc0paddr;
 void
 mach_init(int argc, char *argv[], char *envv[])
 {
-	char *cp;
+	const char *cp;
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
@@ -363,6 +363,15 @@ mach_init(int argc, char *argv[], char *envv[])
 
 	(*platform->init)();
 	cpuspeed = platform->clock;
+	curcpu()->ci_cpu_freq = platform->clock * 1000000;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		curcpu()->ci_cycles_per_hz /= 2;
+		curcpu()->ci_divisor_delay /= 2;
+	}
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
@@ -476,8 +485,8 @@ mips_machdep_cache_config(void)
 /*
  * Return a pointer to the given environment variable.
  */
-char *
-firmware_getenv(char *envname)
+const char *
+firmware_getenv(const char *envname)
 {
 	char **env;
 	int l;
@@ -528,7 +537,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -647,17 +656,23 @@ arc_sysreset(bus_addr_t addr, bus_size_t cmd_offset)
 void
 microtime(struct timeval *tvp)
 {
-	int s = splclock();
+	int s;
 	static struct timeval lasttime;
+	uint32_t count, res;
 
+	s = splclock();
 	*tvp = time;
-#ifdef notdef
-	tvp->tv_usec += clkread();
+
+	/* 32bit wrap-around during subtraction ok here. */
+	count = mips3_cp0_count_read() - last_cp0_count;
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
+	tvp->tv_usec += res;
+
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-#endif
+
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
 	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {

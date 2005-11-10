@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle.c,v 1.4 2002/01/28 09:56:46 aymeric Exp $	*/
+/*	$NetBSD: gayle.c,v 1.4.16.1 2005/11/10 13:51:35 skrll Exp $	*/
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.4 2002/01/28 09:56:46 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.4.16.1 2005/11/10 13:51:35 skrll Exp $");
 
 /*
  * Gayle management routines
@@ -26,5 +26,5 @@ gayle_init(void) {
 		return;
 
 	gayle_base_virtual_address =
-		(struct gayle_struct *) ztwomap(GAYLE_PHYS_ADDRESS);
+	    (struct gayle_struct *) __UNVOLATILE(ztwomap(GAYLE_PHYS_ADDRESS));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5.2.4 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.5.2.5 2005/11/10 13:56:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.4 2004/09/21 13:15:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.5 2005/11/10 13:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,15 +113,6 @@ static struct hp700_int_bit {
 /* The CPU interrupt register. */
 struct hp700_int_reg int_reg_cpu;
 
-/* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
-const char intrnames[] = "ipl0\0ipl1\0ipl2\0ipl3\0ipl4\0ipl5\0ipl6\0ipl7\0" \
-	"ipl8\0ipl9\0ipl10\0ipl11\0ipl12\0ipl13\0ipl14\0ipl15\0" \
-	"ipl16\0ipl17\0ipl18\0ipl19\0ipl20\0ipl21\0ipl22\0ipl23\0" \
-	"ipl24\0ipl25\0ipl26\0ipl27\0ipl28\0ipl29\0ipl30\0ipl31\0";
-const char eintrnames[] = "";
-long intrcnt[HP700_INT_BITS];
-long eintrcnt[1];
-
 /*
  * This establishes a new interrupt register.
  */
@@ -163,9 +154,6 @@ hp700_intr_bootstrap(void)
 
 	/* We are not running an interrupt. */
 	hppa_intr_depth = 0;
-
-	/* Zero our counters. */
-	memset(intrcnt, 0, sizeof(intrcnt));
 
 	/* There are no interrupt handlers. */
 	memset(hp700_int_bits, 0, sizeof(hp700_int_bits));
@@ -485,14 +473,12 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 		/* Choose one of the resulting bits to dispatch. */
 		bit_pos = ffs(ipending_run) - 1;
 
-		/* Increment the counter for this interrupt. */
-		intrcnt[bit_pos]++;
-
 		/*
 		 * If this interrupt handler takes the clockframe
 		 * as an argument, conjure one up.
 		 */
 		int_bit = hp700_int_bits + bit_pos;
+		int_bit->int_bit_evcnt.ev_count++;
 		arg = int_bit->int_bit_arg;
 		if (arg == NULL) {
 			clkframe.cf_flags = (old_hppa_intr_depth ? 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.5.2.3 2004/09/21 13:19:32 skrll Exp $
+#	$NetBSD: majors.newsmips,v 1.5.2.4 2005/11/10 13:57:55 skrll Exp $
 #
 # Device majors for newsmips
 #
@@ -9,7 +9,7 @@ device-major	ctty		char 2
 device-major	mem		char 3
 device-major	sd		char 4   block 0	sd
 
-device-major	swap		char 7   block 4
+device-major	swap		char 7   block 4	vmswap
 device-major	pts		char 8			pty
 device-major	ptc		char 9			pty
 device-major	md		char 10  block 2	md
@@ -45,6 +45,8 @@ device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 33	cgd
 device-major	ksyms		char 78			ksyms
 device-major	wsfont		char 79			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

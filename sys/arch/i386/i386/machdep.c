@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.526.2.10 2005/04/01 14:27:39 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.526.2.11 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.10 2005/04/01 14:27:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.11 2005/11/10 13:56:47 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -303,7 +303,7 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf("%s", version);
+	printf("%s%s", copyright, version);
 
 #ifdef TRAPLOG
 	/*
@@ -792,7 +792,7 @@ haltsys:
 			int c;
 			for (c = BEEP_ONHALT_COUNT; c > 0; c--) {
 				sysbeep(BEEP_ONHALT_PITCH,
-				        BEEP_ONHALT_PERIOD * hz / 1000);
+					BEEP_ONHALT_PERIOD * hz / 1000);
 				delay(BEEP_ONHALT_PERIOD * 1000);
 				sysbeep(0, BEEP_ONHALT_PERIOD * hz / 1000);
 				delay(BEEP_ONHALT_PERIOD * 1000);
@@ -862,7 +862,7 @@ int
 cpu_dump()
 {
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	char buf[dbtob(1)];
+	char bf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
@@ -874,10 +874,10 @@ cpu_dump()
 		return (ENXIO);
 	dump = bdev->d_dump;
 
-	memset(buf, 0, sizeof buf);
-	segp = (kcore_seg_t *)buf;
-	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
-	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
+	memset(bf, 0, sizeof bf);
+	segp = (kcore_seg_t *)bf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&bf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&bf[ ALIGN(sizeof(*segp)) +
 	    ALIGN(sizeof(*cpuhdrp))];
 
 	/*
@@ -900,7 +900,7 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (caddr_t)bf, dbtob(1)));
 }
 
 /*
@@ -1006,7 +1006,7 @@ dumpsys()
 	}
 
 #if 0	/* XXX this doesn't work.  grr. */
-        /* toss any characters present prior to dump */
+	/* toss any characters present prior to dump */
 	while (sget() != NULL); /*syscons and pccons differ */
 #endif
 
@@ -1223,7 +1223,7 @@ void cpu_init_idt()
 #else
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 #endif
-        lidt(&region);
+	lidt(&region);
 }
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
@@ -2052,6 +2052,26 @@ cpu_reset()
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 
 	/*
+	 * Reset AMD Geode SC1100.
+	 *
+	 * 1) Write PCI Configuration Address Register (0xcf8) to
+	 *    select Function 0, Register 0x44: Bridge Configuration,
+	 *    GPIO and LPC Configuration Register Space, Reset
+	 *    Control Register.
+	 *
+	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
+	 *    to reset IDE controller, IDE bus, and PCI bus, and
+	 *    to trigger a system-wide reset.
+	 * 
+	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
+	 * sections 6.3.1, 6.3.2, and 6.4.1.
+	 */
+	if (cpu_info_primary.ci_signature == 0x540) {
+		outl(0xcf8, 0x80009044ul);
+		outl(0xcfc, 0xf);
+	}
+
+	/*
 	 * The keyboard controller has 4 random output pins, one of which is
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the
 	 * keyboard controller to pulse this line a couple of times.
@@ -2067,7 +2087,7 @@ cpu_reset()
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-        lidt(&region);
+	lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 0

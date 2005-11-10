@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.14.2.8 2005/03/04 16:38:01 skrll Exp $
+#	$NetBSD: P4032,v 1.14.2.9 2005/11/10 13:48:21 skrll Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.14.2.8 $"
+#ident 		"P4032-$Revision: 1.14.2.9 $"
 
 maxusers 32
 
@@ -41,6 +41,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 file-system	FDESC		# /dev/fd file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -53,6 +54,7 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
@@ -67,6 +69,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
@@ -159,7 +162,6 @@ pci*	at	vtpbc?
 #cypide* at pci? dev ? function ?		# Cypress IDE controllers
 #hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
 #optiide* at pci? dev ? function ?		# Opti IDE controllers
-#piixide* at pci? dev ? function ?		# Intel IDE controllers
 #pdcide* at pci? dev ? function ?		# Promise IDE controllers
 #pdcsata* at pci? dev ? function ?		# Promise SATA150 controllers
 #satalink* at pci? dev ? function ?		# SiI SATALink controllers
@@ -257,6 +259,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
 
+# USB serial adpater
+#ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
 
@@ -283,6 +288,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # FTDI FT8U100AX serial adapter
 #uftdi*	at uhub? port ?
 #ucom*	at uftdi? portno ?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?

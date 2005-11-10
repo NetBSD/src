@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.15.8.7 2005/02/04 11:44:13 skrll Exp $
+#	$NetBSD: NC,v 1.15.8.8 2005/11/10 13:48:20 skrll Exp $
 #
 #	NC - with vidcconsole
 #
@@ -48,6 +48,7 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -59,6 +60,7 @@ file-system	PROCFS		# /proc
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
@@ -78,6 +80,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.

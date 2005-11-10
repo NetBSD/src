@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.55.2.4 2004/12/18 09:31:15 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.55.2.5 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.55.2.4 2004/12/18 09:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.55.2.5 2005/11/10 13:57:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -921,7 +921,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	char *console = CONSDEVNAME;
+	const char *console = CONSDEVNAME;
 
 	if (consinit_called != 0)
 		return;

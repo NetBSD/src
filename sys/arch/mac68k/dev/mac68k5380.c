@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.39.2.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.39.2.5 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.5 2005/11/10 13:57:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.4 2005/01/17 19:29:35 skrll Ex
 #endif
 #ifdef DBG_PID
 	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
-	static char *last_hit[DBG_PID];
+	static const char *last_hit[DBG_PID];
 #	define	PID(a)	\
 	{ int i; \
 	  for (i = 0; i < DBG_PID - 1; i++) \
@@ -130,7 +130,7 @@ static volatile u_char	*ncr		= (volatile u_char *) 0x10000;
 static volatile u_char	*ncr_5380_with_drq	= (volatile u_char *)  0x6000;
 static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 
-#define SCSI_5380		((struct scsi_5380 *) ncr)
+#define SCSI_5380		((volatile struct scsi_5380 *) ncr)
 #define GET_5380_REG(rnum)	SCSI_5380->scsi_5380[((rnum)<<4)]
 #define SET_5380_REG(rnum,val)	(SCSI_5380->scsi_5380[((rnum)<<4)] = (val))
 
@@ -408,7 +408,7 @@ extern	int			*nofault, m68k_fault_addr;
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
 			data = (u_int8_t *) pending_5380_data;
-			drq = (u_int8_t *) ncr_5380_with_drq;
+			drq = (volatile u_int8_t *) ncr_5380_with_drq;
 			while (count) {
 #define R1	*data++ = *drq++
 				R1; count--;
@@ -439,7 +439,7 @@ extern	int			*nofault, m68k_fault_addr;
 		}
 #undef R4
 		data = (u_int8_t *) long_data;
-		drq = (u_int8_t *) long_drq;
+		drq = (volatile u_int8_t *) long_drq;
 		while (count) {
 #define R1	*data++ = *drq++
 			R1; count--;
@@ -458,7 +458,7 @@ extern	int			*nofault, m68k_fault_addr;
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
 			data = (u_int8_t *) pending_5380_data;
-			drq = (u_int8_t *) ncr_5380_with_drq;
+			drq = (volatile u_int8_t *) ncr_5380_with_drq;
 			while (count) {
 #define W1	*drq++ = *data++
 				W1; count--;
@@ -490,7 +490,7 @@ extern	int			*nofault, m68k_fault_addr;
 		}
 #undef W4
 		data = (u_int8_t *) long_data;
-		drq = (u_int8_t *) long_drq;
+		drq = (volatile u_int8_t *) long_drq;
 		while (count) {
 #define W1	*drq++ = *data++
 			W1; count--;

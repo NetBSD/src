@@ -88,4 +88,6 @@ struct hppa_pci_chipset_tag {
 #define	pciide_machdep_compat_intr_establish(a, b, c, d, e)	(NULL)
 #define	pciide_machdep_compat_intr_disestablish(a, b)	((void)(a), (void)(b))
 
+#define	pci_intr_evcnt(a, b) (NULL)
+
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

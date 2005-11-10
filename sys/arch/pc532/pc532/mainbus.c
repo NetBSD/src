@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14.2.3 2004/09/21 13:19:58 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.2.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.3 2004/09/21 13:19:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.4 2005/11/10 13:58:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.3 2004/09/21 13:19:58 skrll Exp $
 
 static int	mbprobe __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbsearch __P((struct device *, struct cfdata *, void *));
+static int	mbsearch __P((struct device *, struct cfdata *,
+			      const int *, void *));
 static int	mbprint __P((void *, const char *));
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
@@ -92,7 +93,7 @@ mbattach(parent, self, aux)
 	if (clk != SIR_CLOCK || net != SIR_NET)
 		panic("Wrong clock or net softint allocated");
 
-	config_search(mbsearch, self, NULL);
+	config_search_ia(mbsearch, self, "mainbus", NULL);
 }
 
 static int
@@ -100,7 +101,7 @@ mbprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	char *delim;
+	const char *delim;
 	struct confargs *ca = aux;
 
 	if (ca->ca_addr != -1) {
@@ -119,9 +120,10 @@ mbprint(aux, pnp)
 }
 
 static int
-mbsearch(parent, cf, aux)
+mbsearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const int *ldesc;
 	void *aux;
 {
 	struct confargs ca;

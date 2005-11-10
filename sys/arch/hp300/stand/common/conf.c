@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.24.4 2005/03/04 16:38:26 skrll Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.24.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -137,18 +137,9 @@ int	npunit = (sizeof(punitsw) / sizeof(punitsw[0]));
 /*
  * Filesystem configuration
  */
-struct fs_ops file_system_rawfs[] = {
-	{ rawfs_open, rawfs_close, rawfs_read, rawfs_write, rawfs_seek,
-	    rawfs_stat },
-};
-
-struct fs_ops file_system_ufs[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-};
-
-struct fs_ops file_system_nfs[] = {
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
-};
+struct fs_ops file_system_rawfs[] = { FS_OPS(rawfs) };
+struct fs_ops file_system_ufs[] = { FS_OPS(ufs) };
+struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
 
 struct fs_ops file_system[1];
 int	nfsys = 1;		/* we always know which one we want */
@@ -156,7 +147,7 @@ int	nfsys = 1;		/* we always know which one we want */
 #if 0
 /*
  * Inititalize controllers
- * 
+ *
  * XXX this should be a table
  */
 void ctlrinit(void)

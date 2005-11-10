@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.87.2.3 2004/09/21 13:12:14 skrll Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.87.2.4 2005/11/10 13:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87.2.3 2004/09/21 13:12:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87.2.4 2005/11/10 13:51:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -908,7 +908,7 @@ start_c_finish()
 	if (is_a3000()) {
 		volatile unsigned char *a3000_magic_reset;
 
-		a3000_magic_reset = (unsigned char *)ztwomap(0xde0002);
+		a3000_magic_reset = (volatile unsigned char *)ztwomap(0xde0002);
 
 		/* Turn SuperKick ROM (V36) back on */
 		*a3000_magic_reset |= 0x80;

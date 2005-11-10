@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.7 2005/03/04 16:38:49 skrll Exp $
+# $NetBSD: GENERIC,v 1.42.2.8 2005/11/10 13:57:47 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.7 $"
+#ident 		"GENERIC-$Revision: 1.42.2.8 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -40,7 +40,8 @@ options 	FPSP
 options 	M060SP
 
 #options 	DDB
-options 	DIAGNOSTIC, DEBUG
+#options 	DIAGNOSTIC
+#options 	DEBUG
 
 #options 	SYSVSHM
 options 	KTRACE
@@ -53,7 +54,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 file-system 	FFS
 file-system 	NFS
@@ -62,6 +64,8 @@ file-system 	MFS
 file-system 	CD9660
 #file-system	MSDOSFS
 #file-system	UNION
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
@@ -74,6 +78,7 @@ options 	INET
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO		# OSI networking
@@ -104,6 +109,7 @@ options 	COMPAT_14
 options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
@@ -134,6 +140,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	vnd 2
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

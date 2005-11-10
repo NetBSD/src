@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.9.2.3 2004/09/21 13:16:42 skrll Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.9.2.4 2005/11/10 13:56:47 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9.2.3 2004/09/21 13:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9.2.4 2005/11/10 13:56:47 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
+#include "opt_compat_mach.h"
+#include "opt_compat_darwin.h"
 #endif
 
 #include <sys/param.h>
@@ -69,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9.2.3 2004/09/21 13:16:42 skrll E
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_exec.h>
+#include <compat/darwin/darwin_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -81,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9.2.3 2004/09/21 13:16:42 skrll E
 
 void mach_trap(struct trapframe);
 
+
 /*
  * Fast syscall gate trap...
  */
@@ -88,29 +93,70 @@ void
 mach_trap(frame)
 	struct trapframe frame;
 {
-	extern struct emul emul_mach;
+	int ok = 0;
+	ksiginfo_t ksi;
+	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct mach_emuldata *med;
+#ifdef COMPAT_DARWIN
+	ok |= p->p_emul == &emul_darwin;
+#endif
+#ifdef COMPAT_MACH
+	ok |= p->p_emul == &emul_mach;
+#endif
 
-	if (curproc->p_emul != &emul_mach) {
-		ksiginfo_t ksi;
+	if (!ok) {
 		DPRINTF(("mach trap %d on bad emulation\n", frame.tf_eax));
-		memset(&ksi, 0, sizeof(ksi));
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_code = ILL_ILLTRP;
-		trapsignal(curlwp, &ksi);
+		goto abort;
+	}
+
+	/*
+	 * We only know about the following traps:
+	 * 0 mach_pthread_self
+	 * 1 mach_pthread_set_self
+	 * 2 mach_old_pthread_create
+	 * 3 mach_pthread_fast_set_self
+	 *
+	 * So odd calls take one argument for now 
+	 *
+	 * Arguments are passed on the stack, and we return values in %eax.
+	 */
+
+	/* mach_pthread_self */
+	if (frame.tf_eax == 0) {
+		/*
+		 * After a fork or exec, l_private is not initialized.
+		 * We have no way of setting it before, so we keep track
+		 * of it being uninitialized with med_dirty_thid.
+		 * XXX This is probably not the most efficient way
+		 */
+		med = p->p_emuldata;
+		if (med->med_dirty_thid != 0) {
+			l->l_private = NULL;
+			med->med_dirty_thid = 0;
+		}
+		frame.tf_eax = (intptr_t)l->l_private;
 		return;
 	}
-
-	switch (frame.tf_eax) {
-	case 0:
-		DPRINTF(("mach_pthread_self();\n"));
-		break;
-	case 1:
-		DPRINTF(("mach_pthread_set_self();\n"));
-		break;
-	default:
-		uprintf("unknown mach trap %d\n", frame.tf_eax);
-		break;
+	/* mach_pthread_set_*self */
+	if (frame.tf_eax & 1) {
+		int error = copyin((void *)frame.tf_esp, &l->l_private,
+		    sizeof(l->l_private));
+		if (error) {
+			DPRINTF(("fast trap %d copyin error %d\n", frame.tf_eax,
+			    error));
+			goto abort;
+		}
+		frame.tf_eax = 0;
+		return;
 	}
+	uprintf("unknown mach fast trap %d\n", frame.tf_eax);
+abort:
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGILL;
+	ksi.ksi_code = ILL_ILLTRP;
+	trapsignal(l, &ksi);
+	return;
 }
 
 void

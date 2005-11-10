@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.9.2.4 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: aucom.c,v 1.9.2.5 2005/11/10 13:57:33 skrll Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.9.2.4 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.9.2.5 2005/11/10 13:57:33 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -891,7 +891,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

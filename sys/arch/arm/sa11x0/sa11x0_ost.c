@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.10.2.3 2004/09/21 13:13:42 skrll Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.10.2.4 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.10.2.3 2004/09/21 13:13:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.10.2.4 2005/11/10 13:55:27 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,12 +215,12 @@ statintr(arg)
 
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(schz)
+	int schz;
 {
 	u_int32_t count;
 
-	saost_sc->sc_statclock_step = TIMER_FREQUENCY / hz;
+	saost_sc->sc_statclock_step = TIMER_FREQUENCY / schz;
 	count = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR);
 	count += saost_sc->sc_statclock_step;
 	saost_sc->sc_statclock_count = count;
@@ -314,7 +314,7 @@ void
 delay(usecs)
 	u_int usecs;
 {
-	u_int32_t tick, otick, delta;
+	u_int32_t xtick, otick, delta;
 	int j, csec, usec;
 
 	csec = usecs / 10000;
@@ -336,12 +336,12 @@ delay(usecs)
 	while (1) {
 		for(j = 100; j > 0; j--)
 			;
-		tick = gettick();
-		delta = tick - otick;
+		xtick = gettick();
+		delta = xtick - otick;
 		if (delta > usecs)
 			break;
 		usecs -= delta;
-		otick = tick;
+		otick = xtick;
 	}
 }
 

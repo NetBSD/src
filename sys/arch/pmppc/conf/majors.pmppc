@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmppc,v 1.5.2.3 2004/09/21 13:20:25 skrll Exp $
+#	$NetBSD: majors.pmppc,v 1.5.2.4 2005/11/10 13:58:15 skrll Exp $
 
 # Majors up to 191 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
@@ -11,7 +11,7 @@ device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
 
-device-major	swap		char 4   block 1
+device-major	swap		char 4   block 1	vmswap
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7
@@ -58,6 +58,8 @@ device-major	pci		char 60			pci
 device-major	cgd		char 61  block 19	cgd
 device-major	ksyms		char 62			ksyms
 device-major	wsfont		char 63			wsfont
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

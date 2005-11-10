@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8.2.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8.2.2 2005/11/10 13:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.2.1 2004/08/03 10:35:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.2.2 2005/11/10 13:56:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1350,6 +1350,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	tlbprot = pmap_prot(pmap, prot) | pmap->pmap_pid;
 	if (wired)
 		tlbprot |= TLB_WIRED;
+	if (flags & VM_PROT_ALL) {
+		tlbprot |= TLB_REF;
+		if (flags & VM_PROT_WRITE)
+			tlbprot |= TLB_DIRTY;
+	}
 
 #ifdef PMAPDEBUG
 	if (!pmap_initialized || (pmapdebug & PDB_ENTER))
@@ -1551,8 +1556,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	s = splvm();
 	for(; sva < eva; sva += PAGE_SIZE) {
-		if((pv = pmap_pv_find_va(space, sva))) {
-			KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
+		if ((pv = pmap_pv_find_va(space, sva))) {
+
 			/*
 			 * Compare new protection with old to see if
 			 * anything needs to be changed.

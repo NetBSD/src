@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17.2.7 2005/03/04 16:38:59 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.17.2.8 2005/11/10 13:57:54 skrll Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -33,6 +33,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
+options 	COMPAT_30		# NetBSD 3.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystems
@@ -41,6 +42,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	MFS		# memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+#file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space

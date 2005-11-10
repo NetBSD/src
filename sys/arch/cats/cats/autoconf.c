@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.5 2005/01/17 19:29:13 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.6 2005/11/10 13:55:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.5 2005/01/17 19:29:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.6 2005/11/10 13:55:47 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -58,19 +58,19 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.5 2005/01/17 19:29:13 skrll Exp $
 
 #include "isa.h"
 
-void isa_intr_init (void);
+void isa_intr_init(void);
 
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(const char *name);
+static void set_root_device(void);
 
 /* Decode a device name to a major and minor number */
 
 static void
-get_device(name)
-	char *name;
+get_device(const char *name)
 {
 	int unit, part;
-	char devname[16], buf[32], *cp;
+	char devname[16], buf[32];
+	const char *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.20.2.9 2005/03/07 08:00:09 skrll Exp $
+# $NetBSD: NET4501,v 1.20.2.10 2005/11/10 13:56:32 skrll Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.20.2.9 $"
+#ident 		"NET4501-$Revision: 1.20.2.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -98,6 +98,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -129,6 +130,8 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -145,6 +148,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
@@ -189,15 +193,16 @@ pci*	at mainbus? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
 elansc*	at pci? dev ? function ?	# Elan SC520 System Controller
+gpio* 	at elansc?
 
 # ISA bus support
 isa0	at mainbus?
@@ -211,8 +216,8 @@ cardbus*	at cardslot?
 pcmcia* 	at cardslot?
 
 # Cardbus NICs
-ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
-atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 
 # Coprocessor Support
 

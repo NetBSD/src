@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.5.2.3 2004/09/21 13:11:19 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.5.2.4 2005/11/10 13:48:20 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -438,17 +438,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-/*
- * Dummy symbols for vmstat -i
- */
-/* LINTSTUB: Var: char intrnames[1], eintrnames[1], intrcnt[1], eintrcnt[1] */
-	.global	_C_LABEL(intrnames)
-_C_LABEL(intrnames):
-	.global	_C_LABEL(eintrnames)
-_C_LABEL(eintrnames):
-	.global	_C_LABEL(intrcnt)
-_C_LABEL(intrcnt):
-	.global	_C_LABEL(eintrcnt)
-_C_LABEL(eintrcnt):
-
-RCSID("$NetBSD: locore.S,v 1.5.2.3 2004/09/21 13:11:19 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.5.2.4 2005/11/10 13:48:20 skrll Exp $")

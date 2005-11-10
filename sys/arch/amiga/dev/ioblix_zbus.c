@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.11 2003/01/06 13:04:58 wiz Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.11.2.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.11 2003/01/06 13:04:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.11.2.1 2005/11/10 13:51:36 skrll Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -91,7 +91,7 @@ iobzmatch(struct device *parent, struct cfdata *cfp, void *auxp)
 }
 
 struct iobz_devs {
-	char *name;
+	const char *name;
 	unsigned off;
 	int arg;
 } iobzdevices[] = {
@@ -143,7 +143,7 @@ iobzattach(struct device *parent, struct device *self, void *auxp)
 	}
 
 	p = (volatile u_int8_t *)zap->va + 2;
-	(void)shutdownhook_establish(iobz_shutdown, (void *)p);
+	(void)shutdownhook_establish(iobz_shutdown, __UNVOLATILE(p));
 	*p = ((*p) & 0x1F) | 0x80;
 }
 

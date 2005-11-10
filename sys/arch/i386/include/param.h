@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54.2.3 2004/09/21 13:16:56 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.54.2.4 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,21 +76,19 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-/*
- * Unfortunately the assembler does not understand 0xf00UL, so we
- * have KERNBASE_LOCORE
- */
-#ifdef KERNBASE
-#error "You should only re-define KERNBASE_LOCORE"
+#if defined(_KERNEL_OPT)
+#include "opt_kernbase.h"
+#endif /* defined(_KERNEL_OPT) */
+
+#ifdef KERNBASE_LOCORE
+#error "You should only re-define KERNBASE"
 #endif
 
-#ifndef	KERNBASE_LOCORE
-#define	KERNBASE_LOCORE	0xc0000000	/* start of kernel virtual space */
+#ifndef	KERNBASE
+#define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
 #endif
 
-#define	KERNBASE	((u_long)KERNBASE_LOCORE)
-
-#define	KERNTEXTOFF	(KERNBASE_LOCORE + 0x100000) /* start of kernel text */
+#define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
 #define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

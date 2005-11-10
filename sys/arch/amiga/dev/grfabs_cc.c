@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.24.2.3 2004/09/21 13:12:27 skrll Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.24.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24.2.3 2004/09/21 13:12:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24.2.3 2004/09/21 13:12:27 skrll Exp
 
 monitor_t *m_this;
 mdata_t *m_this_data;
-char   *monitor_name = "CCMONITOR";
+const char *monitor_name = "CCMONITOR";
 monitor_t monitor;
 mdata_t monitor_data;
 cop_t  *null_mode_copper_list;

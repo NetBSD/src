@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_subnormal.c,v 1.1.62.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: ieee_subnormal.c,v 1.1.62.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_subnormal.c,v 1.1.62.3 2004/09/21 13:19:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_subnormal.c,v 1.1.62.4 2005/11/10 13:58:09 skrll Exp $");
 
 #include "ieee_internal.h"
 
@@ -304,16 +304,16 @@ static int u_cmp(double data1, double data2)
     return 0;
 }
 
-void ieee_cmp(double data1, double data2, state *state)
+void ieee_cmp(double data1, double data2, state *mystate)
 {
   union t_conv d1 = (union t_conv) data1;
   union t_conv d2 = (union t_conv) data2;
   int sign1 = d1.d_bits.sign;
   int sign2 = d2.d_bits.sign;
-  state->PSR &= ~(PSR_N | PSR_Z | PSR_L);
+  mystate->PSR &= ~(PSR_N | PSR_Z | PSR_L);
   switch(sign2 * 2 + sign1) {
   case 2:			/* op2 is negative op1 is positive */
-    state->PSR |= PSR_N;
+    mystate->PSR |= PSR_N;
     break;
   case 1:			/* op2 is positive op1 is negative */
     break;
@@ -324,9 +324,9 @@ void ieee_cmp(double data1, double data2, state *state)
       if(sign1)
 	cmp *= -1;
       if(cmp > 0)
-	state->PSR |= PSR_N;
+	mystate->PSR |= PSR_N;
       else if (cmp == 0)
-	state->PSR |= PSR_Z;
+	mystate->PSR |= PSR_Z;
     }
     break;
   }
@@ -361,9 +361,9 @@ int ieee_scalb(double data1, double *data2)
  * indicates via the FPC_UNDE flag they want to handle it.  */
 
 int ieee_undfl(struct operand *op1, struct operand *op2,
-	       struct operand *f0_op, int xopcode, state *state)
+	       struct operand *f0_op, int xopcode, state *mystate)
 {
-  unsigned int fsr = state->FSR;
+  unsigned int fsr = mystate->FSR;
   int user_trap = FPC_TT_NONE;
   DP(1, "Underflow trap: xopcode = 0x%x\n", xopcode);
   if (fsr & FPC_UNDE) {
@@ -392,7 +392,7 @@ int ieee_undfl(struct operand *op1, struct operand *op2,
       op2->data = op1->data;
       break;
     case CMPF:
-      ieee_cmp(op1->data.d, op2->data.d, state);
+      ieee_cmp(op1->data.d, op2->data.d, mystate);
       break;
     case SUBF:
       op1->data.d_bits.sign ^= 1;
@@ -429,6 +429,6 @@ int ieee_undfl(struct operand *op1, struct operand *op2,
       break;
     }
   }
-  state->FSR = fsr;
+  mystate->FSR = fsr;
   return user_trap;
 }

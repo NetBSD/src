@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2.42.1 2005/01/24 08:34:26 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2.42.2 2005/11/10 13:57:58 skrll Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -41,7 +41,7 @@ atoi(const char *cp)
 {
     int val = 0;
 
-    while(isdigit(*cp))
+    while(isdigit((unsigned char)*cp))
 	val = val * 10 + (*cp++ - '0');
     return val;
 }

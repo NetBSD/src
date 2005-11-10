@@ -1,8 +1,9 @@
-#	$NetBSD: std.ofppc,v 1.9.2.3 2004/09/21 13:19:44 skrll Exp $
+#	$NetBSD: std.ofppc,v 1.9.2.4 2005/11/10 13:57:58 skrll Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
 machine		ofppc powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

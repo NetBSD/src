@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.32.2.3 2004/09/21 13:12:25 skrll Exp $ */
+/*	$NetBSD: afsc.c,v 1.32.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.32.2.3 2004/09/21 13:12:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.32.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,11 @@ afscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	zap = auxp;
 	if (zap->manid == 514 && zap->prodid == 84)
 		return(1);		/* It's an A4091 SCSI card */
-	if (!is_a4000() || !matchname(auxp, "afsc"))
+	if (!is_a4000() || !matchname("afsc", auxp))
 		return(0);		/* Not on an A4000 or not A4000T SCSI */
 	rp = ztwomap(0xdd0040);
-	if (badaddr((caddr_t)&rp->siop_scratch) || badaddr((caddr_t)&rp->siop_temp)) {
+	if (badaddr((caddr_t)__UNVOLATILE(&rp->siop_scratch)) || 
+	    badaddr((caddr_t)__UNVOLATILE(&rp->siop_temp))) {
 		return(0);
 	}
 	scratch = rp->siop_scratch;

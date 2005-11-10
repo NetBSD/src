@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.1.22.3 2004/09/21 13:17:18 skrll Exp $	*/
+/*	$NetBSD: pxe.h,v 1.1.22.4 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>
@@ -35,7 +35,7 @@
  * the Intel PXE documentation.
  */
 
-#define	S_SIZE(s)	s, sizeof(s) - 1
+#define	MEMSTRCMP(p, s)	memcmp((p), (s), sizeof(s) - 1)
 
 #define	IP_STR		"%d.%d.%d.%d"
 #define	IP_ARGS(ip)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.11.10.4 2005/03/04 16:38:25 skrll Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.11.10.5 2005/11/10 13:55:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.11.10.4 2005/03/04 16:38:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.11.10.5 2005/11/10 13:55:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ cpu_initclocks(void)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 
 	/*
@@ -356,7 +356,7 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
@@ -402,7 +402,7 @@ resettodr(void)
 		return;
 
 	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
 

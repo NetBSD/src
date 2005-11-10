@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.11.24.3 2004/09/21 13:19:17 skrll Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.11.24.4 2005/11/10 13:57:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,7 +37,7 @@
 
 #include "loadfile.h"
 
-#include "stand.h"
+#include <lib/libsa/stand.h>
 #include "libsa.h"
 
 /* These must agree with what locore.s expects */

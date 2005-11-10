@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.7.2.3 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: vm_machdep_arm.c,v 1.7.2.4 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.7.2.3 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.7.2.4 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -55,8 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.7.2.3 2004/09/21 13:13:08 skrll
  */
 
 int
-cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
+cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	int error;
 	struct {
@@ -65,10 +64,14 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	} cpustate;
 	struct coreseg cseg;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+		chdr->c_cpusize = sizeof(cpustate);
+		chdr->c_nseg++;
+		return 0;
+	}
 
 	/* Save integer registers. */
 	error = process_read_regs(l, &cpustate.regs);
@@ -83,19 +86,11 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
+	error = coredump_write(iocookie, UIO_SYSSPACE,
+	    &cseg, chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE,
+	    &cpustate, sizeof(cpustate));
 }

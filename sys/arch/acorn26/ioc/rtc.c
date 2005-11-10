@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4.6.3 2004/09/21 13:11:20 skrll Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4.6.4 2005/11/10 13:48:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4.6.3 2004/09/21 13:11:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4.6.4 2005/11/10 13:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,6 @@ resettodr(void)
 		return;
 
 	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }

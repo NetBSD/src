@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.4.6.3 2004/09/21 13:20:26 skrll Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.4.6.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.4.6.3 2004/09/21 13:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.4.6.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ inittodr(time_t base)
 {
 	mc_todregs rtclk;
 	time_t n;
-	int sec, min, hr, dom, mon, yr;
+	int sec, mins, hr, dom, mon, yr;
 	int i, days = 0;
 	int s;
 
@@ -363,14 +363,14 @@ inittodr(time_t base)
 	splx(s);
 
 	sec = hexdectodec(rtclk[MC_SEC]);
-	min = hexdectodec(rtclk[MC_MIN]);
+	mins = hexdectodec(rtclk[MC_MIN]);
 	hr = hexdectodec(rtclk[MC_HOUR]);
 	dom = hexdectodec(rtclk[MC_DOM]);
 	mon = hexdectodec(rtclk[MC_MONTH]);
 	yr = hexdectodec(rtclk[MC_YEAR]);
 	yr = (yr < 70) ? yr+100 : yr;
 
-	n = sec + 60 * min + 3600 * hr;
+	n = sec + 60 * mins + 3600 * hr;
 	n += (dom - 1) * 3600 * 24;
 
 	if (yeartoday(yr) == 366)

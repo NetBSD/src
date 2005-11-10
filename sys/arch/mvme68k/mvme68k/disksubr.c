@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25.2.3 2004/09/21 13:19:15 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.2.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.2.3 2004/09/21 13:19:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.2.4 2005/11/10 13:57:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ static void cputobsdlabel __P((struct disklabel *lp,
 	struct cpu_disklabel *clp));
 
 #ifdef DEBUG
-static void printlp __P((struct disklabel *lp, char *str));
-static void printclp __P((struct cpu_disklabel *clp, char *str));
+static void printlp __P((struct disklabel *lp, const char *str));
+static void printclp __P((struct cpu_disklabel *clp, const char *str));
 #endif
 
 
@@ -78,7 +78,7 @@ readdisklabel(dev, strat, lp, clp)
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
-	char *msg = NULL;
+	const char *msg = NULL;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -457,7 +457,7 @@ cputobsdlabel(lp, clp)
 static void
 printlp(lp, str)
 	struct disklabel *lp;
-	char *str;
+	const char *str;
 {
 	int i;
 
@@ -481,9 +481,9 @@ printlp(lp, str)
 static void
 printclp(clp, str)
 	struct cpu_disklabel *clp;
-	char *str;
+	const char *str;
 {
-	int max, i;
+	int maxp, i;
 
 	printf("%s\n", str);
 	printf("magic1 %lx\n", clp->magic1);
@@ -492,8 +492,8 @@ printclp(clp, str)
 	printf("secsize %x nsect %x ntrack %x ncylinders %x\n",
 	    clp->cfg_psm, clp->cfg_spt, clp->cfg_hds, clp->cfg_trk);
 	printf("Num partitions %x\n", clp->partitions);
-	max = clp->partitions < 16 ? clp->partitions : 16;
-	for (i = 0; i < max; i++) {
+	maxp = clp->partitions < 16 ? clp->partitions : 16;
+	for (i = 0; i < maxp; i++) {
 		struct partition *part;
 		const char *fstyp;
 

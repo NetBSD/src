@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.11 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.11.42.1 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -153,7 +153,7 @@ struct grfabs_sw {
 /* display mode */
 struct display_mode {
     LIST_ENTRY(display_mode)	link;
-    u_char			*name;		/* logical name for mode. */
+    const u_char		*name;		/* logical name for mode. */
     dimen_t			size;		/* screen size		  */
     u_char			depth;		/* screen depth		  */
     void			*data;		/* opaque driver data	  */

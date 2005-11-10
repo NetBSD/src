@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.18 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.18.2.1 2005/11/10 13:48:21 skrll Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.2.1 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,7 +89,7 @@ int	db_active = 0;
 db_regs_t *ddb_regp;
 
 #if defined(MULTIPROCESSOR)
-void	db_mach_cpu __P((db_expr_t, int, db_expr_t, char *));
+void	db_mach_cpu __P((db_expr_t, int, db_expr_t, const char *));
 #endif
 
 const struct db_command db_machine_command_table[] = {
@@ -246,7 +246,7 @@ void
 db_write_bytes(addr, size, data)
 	vaddr_t		addr;
 	register size_t	size;
-	register char	*data;
+	register const char *data;
 {
 	register char	*dst;
 
@@ -276,7 +276,7 @@ db_mach_cpu(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
-	char *		modif;
+	const char *		modif;
 {
 	struct cpu_info *ci;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12.2.3 2004/09/21 13:17:36 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.12.2.4 2005/11/10 13:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -72,6 +72,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#if defined(_LIBC) || defined(_KERNEL)
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
@@ -82,6 +83,7 @@ struct sigcontext {
 	int	sc_ps;			/* psl to restore */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #include <m68k/cpuframe.h>
 

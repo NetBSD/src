@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.49.2.3 2004/09/21 13:12:32 skrll Exp $ */
+/*	$NetBSD: siop.c,v 1.49.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.49.2.3 2004/09/21 13:12:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.49.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.49.2.3 2004/09/21 13:12:32 skrll Exp $");
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
 void siop_select(struct siop_softc *);
-void siopabort(struct siop_softc *, siop_regmap_p, char *);
+void siopabort(struct siop_softc *, siop_regmap_p, const char *);
 void sioperror(struct siop_softc *, siop_regmap_p, u_char);
 void siopstart(struct siop_softc *);
 int  siop_checkintr(struct siop_softc *, u_char, u_char, u_char, int *);
@@ -486,7 +486,7 @@ siop_scsidone(struct siop_acb *acb, int stat)
 }
 
 void
-siopabort(register struct siop_softc *sc, siop_regmap_p rp, char *where)
+siopabort(register struct siop_softc *sc, siop_regmap_p rp, const char *where)
 {
 #ifdef fix_this
 	int i;
@@ -550,7 +550,7 @@ siopinitialize(struct siop_softc *sc)
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop((caddr_t)scripts);
+	sc->sc_scriptspa = kvtop((caddr_t)__UNCONST(scripts));
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
@@ -1020,15 +1020,18 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				++adjust;
 			if (sstat1 & SIOP_SSTAT1_OLF)
 				++adjust;
-			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
+			acb->iob_curlen = 
+			    *((long *)__UNVOLATILE(&rp->siop_dcmd)) & 0xffffff;
 			acb->iob_curlen += adjust;
-			acb->iob_curbuf = *((long *)&rp->siop_dnad) - adjust;
+			acb->iob_curbuf = 
+			    *((long *)__UNVOLATILE(&rp->siop_dnad)) - adjust;
 #ifdef DEBUG
 			if (siop_debug & 0x100) {
 				int i;
 				printf ("Phase mismatch: curbuf %lx curlen %lx dfifo %x dbc %x sstat1 %x adjust %x sbcl %x starts %d acb %p\n",
 				    acb->iob_curbuf, acb->iob_curlen, dfifo,
-				    dbc, sstat1, adjust, rp->siop_sbcl, siopstarts, acb);
+				    dbc, sstat1, adjust, rp->siop_sbcl, 
+				    siopstarts, acb);
 				if (acb->ds.chain[1].datalen) {
 					for (i = 0; acb->ds.chain[i].datalen; ++i)
 						printf("chain[%d] addr %p len %lx\n",
@@ -1387,8 +1390,8 @@ bad_phase:
 	 */
 	printf ("siopchkintr: target %x ds %p\n", target, &acb->ds);
 	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
-	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)rp), rp->siop_dsp,
-	    *((long *)&rp->siop_dcmd));
+	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)__UNVOLATILE(rp)), 
+	    rp->siop_dsp, *((volatile long *)&rp->siop_dcmd));
 	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sstat0, rp->siop_dsps, rp->siop_dsa,
 	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1], rp->siop_sfbr);

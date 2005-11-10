@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.10.2.4 2005/01/24 12:10:40 simonb Exp $ */
+/* $NetBSD: sbscn.c,v 1.10.2.5 2005/11/10 13:57:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.10.2.4 2005/01/24 12:10:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.10.2.5 2005/11/10 13:57:34 skrll Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -240,8 +240,8 @@ static void	sbscn_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbscn, sizeof(struct sbscn_softc),
     sbscn_match, sbscn_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((int64_t *)__UNVOLATILE(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)__UNVOLATILE(rp), (val)))
 
 /*
  * input and output signals are actually the _inverse_ of the bits in the
@@ -421,12 +421,12 @@ sbscn_speed(long speed, long *brcp)
 }
 
 #ifdef SBSCN_DEBUG
-void	sbscn_status(struct sbscn_channel *, char *);
+void	sbscn_status(struct sbscn_channel *, const char *);
 
 int	sbscn_debug = 0 /* XXXCGD */;
 
 void
-sbscn_status(struct sbscn_channel *ch, char *str)
+sbscn_status(struct sbscn_channel *ch, const char *str)
 {
 	struct sbscn_softc *sc = ch->ch_sc;
 	struct tty *tp = ch->ch_tty;
@@ -570,7 +570,7 @@ sbscnopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1330,7 +1330,7 @@ sbscn_diag(arg)
 integrate void
 sbscn_rxsoft(struct sbscn_channel *ch, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char sr;

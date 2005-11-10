@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1.24.3 2004/09/21 13:14:47 skrll Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.1.24.4 2005/11/10 13:55:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -34,13 +34,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * boot configuration structures
- *
- * Created      : 12/09/94
- *
- * Based on kate/boot/bootconfig.h
  */
+
+#include <arm/bootconfig.h>
 
 typedef struct _PhysMem {
 	u_int address;
@@ -59,19 +55,5 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #define MAX_BOOT_STRING 255
-
-#ifdef _KERNEL
-#define BOOTOPT_TYPE_BOOLEAN		0
-#define BOOTOPT_TYPE_STRING		1
-#define BOOTOPT_TYPE_INT		2
-#define BOOTOPT_TYPE_BININT		3
-#define BOOTOPT_TYPE_HEXINT		4
-#define BOOTOPT_TYPE_MASK		7
-
-int get_bootconf_option (char *string, char *option, int type, void *result);
-
-extern char *boot_args;
-extern char *boot_file;
-#endif	/* _KERNEL */
 
 /* End of bootconfig.h */

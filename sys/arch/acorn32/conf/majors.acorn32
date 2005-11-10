@@ -1,10 +1,10 @@
-#	$NetBSD: majors.acorn32,v 1.5.2.3 2004/09/21 13:11:21 skrll Exp $
+#	$NetBSD: majors.acorn32,v 1.5.2.4 2005/11/10 13:48:21 skrll Exp $
 #
 # Device majors for acorn32
 #
 
 device-major	mem		char 0
-device-major	swap		char 1   block 1
+device-major	swap		char 1   block 1	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	physcon		char 4			vt & vidcconsole

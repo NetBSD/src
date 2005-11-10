@@ -1,6 +1,7 @@
-#	$NetBSD: std.news68k,v 1.4 2001/11/20 12:56:34 lukem Exp $
+#	$NetBSD: std.news68k,v 1.4.16.1 2005/11/10 13:57:54 skrll Exp $
 
 machine news68k m68k
+include		"conf/std"	# MI standard options
 
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries

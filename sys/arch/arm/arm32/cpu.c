@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51.2.3 2004/09/21 13:13:09 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.51.2.4 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51.2.3 2004/09/21 13:13:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51.2.4 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -170,8 +170,10 @@ enum cpu_class {
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
 	CPU_CLASS_ARM10E,
+	CPU_CLASS_ARM10EJ,
 	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE
+	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM11J
 };
 
 static const char * const generic_steppings[16] = {
@@ -225,6 +227,13 @@ static const char * const i80321_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char * const i80219_steppings[16] = {
+	"step A-0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 /* Steppings for PXA2[15]0 */
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
@@ -239,6 +248,14 @@ static const char * const pxa2x0_steppings[16] = {
 static const char * const pxa255_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"step A-0",
 	"rev 4",	"step B-0",	"step A-0",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+/* Stepping for PXA27x */
+static const char * const pxa27x_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
+	"step C-0",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
@@ -314,6 +331,8 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
 	  generic_steppings },
+	{ CPU_ID_ARM1026EJS,	CPU_CLASS_ARM10EJ,	"ARM1026EJ-S",
+	  generic_steppings },
 
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
 	  sa110_steppings },
@@ -337,6 +356,13 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  i80321_steppings },
 
+	{ CPU_ID_80219_400,	CPU_CLASS_XSCALE,	"i80219 400MHz",
+	  i80219_steppings },
+	{ CPU_ID_80219_600,	CPU_CLASS_XSCALE,	"i80219 600MHz",
+	  i80219_steppings },
+
+	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
+	  pxa27x_steppings },
 	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210",
@@ -356,6 +382,11 @@ const struct cpuidtab cpuids[] = {
 	  ixp425_steppings },
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
+
+	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
+	  generic_steppings },
+	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
+	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -377,8 +408,10 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
+	{ "ARM10EJ",	"CPU_ARM10" },		/* CPU_CLASS_ARM10EJ */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
+	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
 };
 
 /*
@@ -402,7 +435,7 @@ static const char * const wtnames[] = {
 	"**unknown 11**",
 	"**unknown 12**",
 	"**unknown 13**",
-	"**unknown 14**",
+	"write-back-locking-C",
 	"**unknown 15**",
 };
 
@@ -451,8 +484,10 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_ARM10E:
+	case CPU_CLASS_ARM10EJ:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
+	case CPU_CLASS_ARM11J:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			aprint_normal(" DC disabled");
 		else
@@ -528,14 +563,18 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM10
 	case CPU_CLASS_ARM10E:
+	case CPU_CLASS_ARM10EJ:
 #endif
 #if defined(CPU_SA110) || defined(CPU_SA1100) || \
     defined(CPU_SA1110) || defined(CPU_IXP12X0)
 	case CPU_CLASS_SA1:
 #endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
+#endif
+#ifdef CPU_ARM11
+	case CPU_CLASS_ARM11J:
 #endif
 		break;
 	default:

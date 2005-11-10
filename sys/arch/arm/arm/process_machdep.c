@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.2.4 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10.2.5 2005/11/10 13:55:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.4 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.5 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -149,13 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.4 2004/09/21 13:13:08 skr
 #ifdef ARMFPE
 #include <arm/fpe-arm/armfpe.h>
 #endif
-
-static __inline struct trapframe *
-process_frame(struct lwp *l)
-{
-
-	return l->l_addr->u_pcb.pcb_tf;
-}
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -196,12 +189,12 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
+	bcopy(regs->r, &tf->tf_r0, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
 #ifdef __PROG32
@@ -228,7 +221,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l,  struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_setcontext(p, regs);

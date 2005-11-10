@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.6.10.3 2004/09/21 13:15:53 skrll Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.6.10.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #include "resource.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 STRINGTABLE DISCARDABLE
 {
 	IDS_APP_TITLE			"hpcboot"
@@ -54,9 +56,9 @@ STRINGTABLE DISCARDABLE
 	IDS_DIR_CARD_EN			"\\Storage Card\\"
 	IDS_DIR_CARD_EN1		"\\Storage Card1\\"
 	IDS_DIR_CARD_EN2		"\\Storage Card2\\"
-	IDS_DIR_CARD_JP			"\\ÒÓØ ¶°ÄÞ\\"
-	IDS_DIR_CARD_JP1		"\\ÒÓØ ¶°ÄÞ1\\"
-	IDS_DIR_CARD_JP2		"\\ÒÓØ ¶°ÄÞ2\\"
+	IDS_DIR_CARD_JP			L"\\\xFF92\xFF93\xFF98 \xFF76\xFF70\xFF84\xFF9E\\"
+	IDS_DIR_CARD_JP1		L"\\\xFF92\xFF93\xFF98 \xFF76\xFF70\xFF84\xFF9E1\\"
+	IDS_DIR_CARD_JP2		L"\\\xFF92\xFF93\xFF98 \xFF76\xFF70\xFF84\xFF9E2\\"
 	IDS_DIR_CARD_MMCARD		"\\Multimedia Card\\"
 	IDS_DIR_USER_DEFINED		"user defined"
 }

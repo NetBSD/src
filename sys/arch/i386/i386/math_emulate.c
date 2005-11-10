@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.25.2.3 2004/09/21 13:16:44 skrll Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.25.2.4 2005/11/10 13:56:47 skrll Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25.2.3 2004/09/21 13:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25.2.4 2005/11/10 13:56:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1124,31 +1124,31 @@ static void unsignify(temp_real * a)
 void fadd(const temp_real * src1, const temp_real * src2, temp_real * result)
 {
 	temp_real a,b;
-	int x1,x2,shift;
+	int x1,x2,shft;
 
 	x1 = src1->exponent & 0x7fff;
 	x2 = src2->exponent & 0x7fff;
 	if (x1 > x2) {
 		a = *src1;
 		b = *src2;
-		shift = x1-x2;
+		shft = x1-x2;
 	} else {
 		a = *src2;
 		b = *src1;
-		shift = x2-x1;
+		shft = x2-x1;
 	}
-	if (shift >= 64) {
+	if (shft >= 64) {
 		*result = a;
 		return;
 	}
-	if (shift >= 32) {
+	if (shft >= 32) {
 		b.a = b.b;
 		b.b = 0;
-		shift -= 32;
+		shft -= 32;
 	}
 	__asm__("shrdl %4,%1,%0 ; shrl %4,%1"
 		:"=r" (b.a),"=r" (b.b)
-		:"0" (b.a),"1" (b.b),"c" ((char) shift));
+		:"0" (b.a),"1" (b.b),"c" ((char) shft));
 	signify(&a);
 	signify(&b);
 	__asm__("addl %4,%0 ; adcl %5,%1"
@@ -1334,39 +1334,39 @@ void temp_to_long(const temp_real * a, long_real * b)
 
 void frndint(const temp_real * a, temp_real * b)
 {
-	int shift =  16383 + 63 - (a->exponent & 0x7fff);
+	int shft =  16383 + 63 - (a->exponent & 0x7fff);
 	u_long underflow;
 
-	if ((shift < 0) || (shift == 16383+63)) {
+	if ((shft < 0) || (shft == 16383+63)) {
 		*b = *a;
 		return;
 	}
 	b->a = b->b = underflow = 0;
 	b->exponent = a->exponent;
-	if (shift < 32) {
+	if (shft < 32) {
 		b->b = a->b; b->a = a->a;
-	} else if (shift < 64) {
+	} else if (shft < 64) {
 		b->a = a->b; underflow = a->a;
-		shift -= 32;
+		shft -= 32;
 		b->exponent += 32;
-	} else if (shift < 96) {
+	} else if (shft < 96) {
 		underflow = a->b;
-		shift -= 64;
+		shft -= 64;
 		b->exponent += 64;
 	} else {
 		underflow = 1;
-		shift = 0;
+		shft = 0;
 	}
-	b->exponent += shift;
+	b->exponent += shft;
 	__asm__("shrdl %2,%1,%0"
 		:"=r" (underflow),"=r" (b->a)
-		:"c" ((char) shift),"0" (underflow),"1" (b->a));
+		:"c" ((char) shft),"0" (underflow),"1" (b->a));
 	__asm__("shrdl %2,%1,%0"
 		:"=r" (b->a),"=r" (b->b)
-		:"c" ((char) shift),"0" (b->a),"1" (b->b));
+		:"c" ((char) shft),"0" (b->a),"1" (b->b));
 	__asm__("shrl %1,%0"
 		:"=r" (b->b)
-		:"c" ((char) shift),"0" (b->b));
+		:"c" ((char) shft),"0" (b->b));
 	switch (ROUNDING) {
 		case ROUND_NEAREST:
 			__asm__("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"
@@ -1417,36 +1417,36 @@ void Fscale(const temp_real *a, const temp_real *b, temp_real *c)
 
 void real_to_int(const temp_real * a, temp_int * b)
 {
-	int shift =  16383 + 63 - (a->exponent & 0x7fff);
+	int shft =  16383 + 63 - (a->exponent & 0x7fff);
 	u_long underflow;
 
 	b->a = b->b = underflow = 0;
 	b->sign = (a->exponent < 0);
-	if (shift < 0) {
+	if (shft < 0) {
 		set_OE();
 		return;
 	}
-	if (shift < 32) {
+	if (shft < 32) {
 		b->b = a->b; b->a = a->a;
-	} else if (shift < 64) {
+	} else if (shft < 64) {
 		b->a = a->b; underflow = a->a;
-		shift -= 32;
-	} else if (shift < 96) {
+		shft -= 32;
+	} else if (shft < 96) {
 		underflow = a->b;
-		shift -= 64;
+		shft -= 64;
 	} else {
 		underflow = 1;
-		shift = 0;
+		shft = 0;
 	}
 	__asm__("shrdl %2,%1,%0"
 		:"=r" (underflow),"=r" (b->a)
-		:"c" ((char) shift),"0" (underflow),"1" (b->a));
+		:"c" ((char) shft),"0" (underflow),"1" (b->a));
 	__asm__("shrdl %2,%1,%0"
 		:"=r" (b->a),"=r" (b->b)
-		:"c" ((char) shift),"0" (b->a),"1" (b->b));
+		:"c" ((char) shft),"0" (b->a),"1" (b->b));
 	__asm__("shrl %1,%0"
 		:"=r" (b->b)
-		:"c" ((char) shift),"0" (b->b));
+		:"c" ((char) shft),"0" (b->b));
 	switch (ROUNDING) {
 		case ROUND_NEAREST:
 			__asm__("addl %4,%5 ; adcl $0,%0 ; adcl $0,%1"

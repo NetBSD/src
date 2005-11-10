@@ -1,11 +1,11 @@
-/*	$NetBSD: lk201var.h,v 1.8 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: lk201var.h,v 1.8.28.1 2005/11/10 13:58:15 skrll Exp $	*/
 
 #ifndef _LK201VAR_H_
 #define _LK201VAR_H_
 
 #ifdef _KERNEL
 
-char	*lk_mapchar __P((int, int *));
+const char *lk_mapchar __P((int, int *));
 void	 lk_reset __P((dev_t, void (*)(dev_t, int)));
 void	 lk_mouseinit __P((dev_t, void (*)(dev_t, int), int (*)(dev_t)));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.1.2.2 2005/02/04 11:44:19 skrll Exp $ */
+/* $NetBSD: power.c,v 1.1.2.3 2005/11/10 13:56:10 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.1.2.2 2005/02/04 11:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.1.2.3 2005/11/10 13:56:10 skrll Exp $");
 
 
 /*
@@ -95,8 +95,8 @@ static bus_space_tag_t pwr_sw_reg_bst;
 static bus_space_handle_t pwr_sw_reg_bsh;
 int pwr_sw_state;
 static int pwr_sw_control;
-static char *pwr_sw_state_str[] = {"off", "on"};
-static char *pwr_sw_control_str[] = {"disabled", "enabled", "locked"};
+static const char *pwr_sw_state_str[] = {"off", "on"};
+static const char *pwr_sw_control_str[] = {"disabled", "enabled", "locked"};
 static int pwr_sw_poll_interval; 
 static int pwr_sw_count;
 static struct sysmon_pswitch *pwr_sw_sysmon;
@@ -114,7 +114,7 @@ pwr_sw_init(bus_space_tag_t bst)
 {
 	struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 	struct sysctllog *sysctl_log;
-	struct sysctlnode *pwr_sw_node;
+	const struct sysctlnode *pwr_sw_node;
 	int error, stage;
 
 	pwr_sw_state = 1;
@@ -259,8 +259,11 @@ pwr_sw_ctrl(int enable)
 #ifdef DEBUG
 	printf("pwr_sw_control=%d enable=%d\n", pwr_sw_control, enable);
 #endif /* DEBUG */
-	if (cold != 0)
+	if (cold != 0) {
+		if (panicstr)
+			return;
 		panic("pwr_sw_ctrl can only be called when machine is warm!");
+	}
 	if (pwr_sw_reg_bst == NULL && lasi_pwr_sw_reg == NULL)
 		return;
 	if (enable < PWR_SW_CTRL_MIN || enable > PWR_SW_CTRL_MAX)
@@ -287,7 +290,7 @@ pwr_sw_sysctl_state(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = pwr_sw_state_str[pwr_sw_state];
+	node.sysctl_data = __UNCONST(pwr_sw_state_str[pwr_sw_state]);
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 

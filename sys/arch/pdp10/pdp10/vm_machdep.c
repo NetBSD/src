@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.4.5 2004/09/21 13:20:13 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.4.6 2005/11/10 13:58:13 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,8 +36,7 @@
 #include <uvm/uvm_extern.h>
 
 int
-cpu_coredump(struct lwp *p, struct vnode *vp,
-    struct ucred *cred, struct core *chdr)
+cpu_coredump(struct lwp *p, void *iocookie, struct core *chdr)
 {
 	return 0;
 }

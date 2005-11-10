@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.21.2.3 2004/09/21 13:12:32 skrll Exp $ */
+/*	$NetBSD: siop2.c,v 1.21.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.21.2.3 2004/09/21 13:12:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.21.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.21.2.3 2004/09/21 13:12:32 skrll Exp $")
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
 void siopng_select(struct siop_softc *);
-void siopngabort(struct siop_softc *, siop_regmap_p, char *);
+void siopngabort(struct siop_softc *, siop_regmap_p, const char *);
 void siopngerror(struct siop_softc *, siop_regmap_p, u_char);
 int  siopng_checkintr(struct siop_softc *, u_char, u_char, u_short, int *);
 void siopngreset(struct siop_softc *);
@@ -179,7 +179,7 @@ void siopng_dump_trace(void);
 #endif
 
 
-static char *siopng_chips[] = {
+static const char *siopng_chips[] = {
 	"720", "720SE", "770", "0x3",
 	"810A", "0x5", "0x6", "0x7",
 	"0x8", "0x9", "0xA", "0xB",
@@ -470,7 +470,7 @@ siopng_scsidone(struct siop_acb *acb, int stat)
 }
 
 void
-siopngabort(register struct siop_softc *sc, siop_regmap_p rp, char *where)
+siopngabort(register struct siop_softc *sc, siop_regmap_p rp, const char *where)
 {
 #ifdef fix_this
 	int i;
@@ -536,7 +536,7 @@ siopnginitialize(struct siop_softc *sc)
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop((caddr_t)siopng_scripts);
+	sc->sc_scriptspa = kvtop((caddr_t)__UNCONST(siopng_scripts));
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
@@ -1136,9 +1136,11 @@ siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				++adjust;
 			if (sstat2 & SIOP_SSTAT2_ORF1)	/* sstat2 SODR msb */
 				++adjust;
-			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
+			acb->iob_curlen = 
+			    *((long *)__UNVOLATILE(&rp->siop_dcmd)) & 0xffffff;
 			acb->iob_curlen += adjust;
-			acb->iob_curbuf = *((long *)&rp->siop_dnad) - adjust;
+			acb->iob_curbuf = 
+			    *((long *)__UNVOLATILE(&rp->siop_dnad)) - adjust;
 #ifdef DEBUG
 			if (siopng_debug & 0x100) {
 				int i;
@@ -1510,8 +1512,8 @@ bad_phase:
 	 */
 	printf ("siopngchkintr: target %x ds %p\n", target, &acb->ds);
 	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
-	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)rp), rp->siop_dsp,
-	    *((long *)&rp->siop_dcmd));
+	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)__UNVOLATILE(rp)), 
+	    rp->siop_dsp, *((long *)__UNVOLATILE(&rp->siop_dcmd)));
 	printf ("siopngchkintr: istat %x dstat %x sist %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sist, rp->siop_dsps, rp->siop_dsa,
 	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1], rp->siop_sfbr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.h,v 1.1.4.4 2004/09/21 13:16:56 skrll Exp $ */
+/*	$NetBSD: mach_machdep.h,v 1.1.4.5 2005/11/10 13:56:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,12 +38,5 @@
 
 #ifndef	_MACH_MACHDEP_H_
 #define	_MACH_MACHDEP_H_
-
-/* Exception codes */
-#define MACH_BUS_ADRALN		1
-#define MACH_SEGV_MAPERR	2
-#define MACH_TRAP_BRKPT		1
-#define MACH_ILL_ILLOPC		2
-#define MACH_ILL_PRVOPC		3
 
 #endif /* _MACH_MACHDEP_H_ */
