@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.7 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.7.2.1 2005/11/10 23:56:13 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.7 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.7.2.1 2005/11/10 23:56:13 snj Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -286,7 +286,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (val)
 		sc->axe_phyaddrs[0] = phy;
 
-	return (val);
+	return (le16toh(val));
 }
 
 Static void
@@ -298,6 +298,7 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 	if (sc->axe_dying)
 		return;
 
+	val = htole32(val);
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
@@ -379,6 +380,7 @@ axe_setmulti(struct axe_softc *sc)
 	ifp = GET_IFP(sc);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, (void *)&rxmode);
+	rxmode = le16toh(rxmode);
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 	allmulti:
@@ -1230,7 +1232,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
-				rxmode |= AXE_RXCMD_PROMISC;
+				rxmode = le16toh(rxmode) | AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
 
@@ -1240,7 +1242,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sc->axe_if_flags & IFF_PROMISC) {
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
-				rxmode &= ~AXE_RXCMD_PROMISC;
+				rxmode = le16toh(rxmode) & ~AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
 				axe_setmulti(sc);
