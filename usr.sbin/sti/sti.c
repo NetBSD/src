@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.1 2005/11/10 16:54:05 christos Exp $	*/
+/*	$NetBSD: sti.c,v 1.2 2005/11/10 18:03:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.1 2005/11/10 16:54:05 christos Exp $");
+__RCSID("$NetBSD: sti.c,v 1.2 2005/11/10 18:03:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -47,58 +47,33 @@ __RCSID("$NetBSD: sti.c,v 1.1 2005/11/10 16:54:05 christos Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
-
-#define isodigit(c) (isdigit(c) && ((c) < '8'))
-#define nextc(a) (unsigned char)*((*a)++) 
-
-#ifndef CTRL
-#define CTRL(a) ((a)&037)
-#endif
+#include <vis.h>
+#include <errno.h>
 
 static int
-unescape(char **pp)
+unescape(const char **pp, int *state)
 {
-	int c;
+	char ch, out;
 
-	switch (c = nextc(pp)) {
-	case '\\':
-		switch (c = nextc(pp)) {
-		case 'a':
-			return '\007';         /* Bell */
-		case 'b':
-			return '\010';         /* Backspace */
-		case 't':
-			return '\011';         /* Horizontal Tab */
-		case 'n':
-			return '\012';         /* New Line */
-		case 'v':
-			return '\013';         /* Vertical Tab */
-		case 'f':
-			return '\014';         /* Form Feed */
-		case 'r':
-			return '\015';         /* Carriage Return */
-		case 'e':
-			return '\033';         /* Escape */
-		default:
-			if (isodigit(c)) {
-				int x = c;
-				for (;;) {
-					c = nextc(pp);
-					if (!c || !isodigit(c)) {
-						--(*pp);
-						return x;
-					}
-					x <<= 3;
-					x |= c - '0';
-				}
-			}
-			return c;
+	while ((ch = *(*pp)++) != '\0') {
+		switch(unvis(&out, ch, state, 0)) {
+		case 0:
+		case UNVIS_NOCHAR:
+		        break;
+		case UNVIS_VALID:
+			return out;
+		case UNVIS_VALIDPUSH:
+		        (*pp)--;
+			return out;
+		case UNVIS_SYNBAD:
+			errno = EILSEQ;
+			return -1;
 		}
-	case '^':
-		return CTRL(nextc(pp));
-	default:
-		return c;
 	}
+	if (unvis(&out, '\0', state, UNVIS_END) == UNVIS_VALID)
+		return out;
+	errno = ENODATA;
+	return -1;
 }
 
 static void
@@ -113,14 +88,14 @@ sti(int fd, int c)
 int
 main(int argc, char *argv[])
 {
-	char *tty, *ptr;
+	const char *tty, *ptr;
 	char ttydev[MAXPATHLEN];
-	int fd, c;
+	int fd, c, state;
 
 	setprogname(*argv);
 
 	if (argc < 2) {
-		(void)fprintf(stderr, "Usage: %s tty arg ...", getprogname());
+		(void)fprintf(stderr, "Usage: %s tty arg ...\n", getprogname());
 		return 1;
 	}
 
@@ -143,9 +118,12 @@ main(int argc, char *argv[])
 	if ((fd = open(ttydev, O_RDWR)) == -1)
 		err(1, "Cannot open `%s'", ttydev);
 
-	while (argc--) {
-		for (ptr = *argv++; (c = unescape(&ptr)) != 0;)
+	for (; argc--; argv++) {
+		state = 0;
+		for (ptr = *argv; (c = unescape(&ptr, &state)) != -1;)
                         sti(fd, c);
+		if (c == -1 && errno != ENODATA)
+			warnx("Cannot decode `%s'", *argv);
 		if (argc != 0)
                         sti(fd, ' ');
 	}

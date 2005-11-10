@@ -1,4 +1,4 @@
-.\" $NetBSD: sti.8,v 1.1 2005/11/10 16:54:05 christos Exp $
+.\" $NetBSD: sti.8,v 1.2 2005/11/10 18:03:05 christos Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,13 +57,13 @@ This
 .Xr ioctl 2
 is limited to the superuser.
 .Pp
-Characters in the 
+The
 .Ar string
-prefixed by ^ are interpreted as control characters.
-Characters prefixed by \e are interpreted in the standard ``C'' Language
-fashion.
+is interpreted using
+.Xr unvis 3 .
 .Sh SEE ALSO
-.Xr ioctl 2 
+.Xr ioctl 2 , 
+.Xr unvis 3 
 .Sh HISTORY
 The
 .Nm
