@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.3 2005/11/10 18:04:03 christos Exp $	*/
+/*	$NetBSD: sti.c,v 1.4 2005/11/10 19:07:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.3 2005/11/10 18:04:03 christos Exp $");
+__RCSID("$NetBSD: sti.c,v 1.4 2005/11/10 19:07:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -94,8 +94,9 @@ main(int argc, char *argv[])
 
 	setprogname(*argv);
 
-	if (argc < 2) {
-		(void)fprintf(stderr, "Usage: %s tty arg ...\n", getprogname());
+	if (argc < 1) {
+		(void)fprintf(stderr, "Usage: %s <tty> [arg ...]\n",
+		    getprogname());
 		return 1;
 	}
 
@@ -118,6 +119,18 @@ main(int argc, char *argv[])
 	if ((fd = open(ttydev, O_RDWR)) == -1)
 		err(1, "Cannot open `%s'", ttydev);
 
+	if (argc == 0) {
+		char *line;
+		while ((line = fparseln(stdin, NULL, NULL, NULL, 0)) != NULL) {
+			state = 0;
+			for (ptr = line; (c = unescape(&ptr, &state)) != -1;)
+				sti(fd, c);
+			if (c == -1 && errno != ENODATA)
+				warn("Cannot decode `%s'", line);
+			free(line);
+		}
+		return 0;
+	}
 	for (; argc--; argv++) {
 		state = 0;
 		for (ptr = *argv; (c = unescape(&ptr, &state)) != -1;)
