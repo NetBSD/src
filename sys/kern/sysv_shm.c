@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.84 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.85 2005/11/10 18:45:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.84 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.85 2005/11/10 18:45:20 christos Exp $");
 
 #define SYSVSHM
 
@@ -104,13 +104,7 @@ static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
  * per proc array of 'struct shmmap_state'
  */
 
-#define	SHMSEG_FREE     	0x0200
-#define	SHMSEG_REMOVED  	0x0400
-#define	SHMSEG_ALLOCATED	0x0800
-#define	SHMSEG_WANTED		0x1000
-#define	SHMSEG_RMLINGER		0x2000
-
-static int	shm_last_free, shm_nused, shm_committed;
+int shm_nused;
 struct	shmid_ds *shmsegs;
 
 struct shmmap_entry {
@@ -118,6 +112,8 @@ struct shmmap_entry {
 	vaddr_t va;
 	int shmid;
 };
+
+static int	shm_last_free, shm_committed;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
     "shmmp", &pool_allocator_nointr);
@@ -178,6 +174,11 @@ shm_deallocate_segment(shmseg)
 {
 	struct uvm_object *uobj = shmseg->_shm_internal;
 	size_t size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+
+#ifdef SHMDEBUG
+	printf("shm freeing key 0x%lx seq 0x%x\n",
+	       shmseg->shm_perm._key, shmseg->shm_perm._seq);
+#endif
 
 	(*uobj->pgops->pgo_detach)(uobj);
 	shmseg->_shm_internal = NULL;
@@ -375,7 +376,7 @@ sys_shmat(l, v, retval)
 	shmmap_se->shmid = SCARG(uap, shmid);
 	shmmap_s = shmmap_getprivate(p);
 #ifdef SHMDEBUG
-	printf("shmat: vm %p: add %d @%lx\n", p->p_vmspace, shmid, attach_va);
+	printf("shmat: vm %p: add %d @%lx\n", p->p_vmspace, shmmap_se->shmid, attach_va);
 #endif
 	SLIST_INSERT_HEAD(&shmmap_s->entries, shmmap_se, next);
 	shmmap_s->nitems++;
@@ -596,8 +597,13 @@ sys_shmget(l, v, retval)
 	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
 		mode |= SHMSEG_RMLINGER;
 
+#ifdef SHMDEBUG
+	printf("shmget: key 0x%lx size 0x%x shmflg 0x%x mode 0x%x\n",
+        	SCARG(uap, key), SCARG(uap, size), SCARG(uap, shmflg), mode);
+#endif
+
 	if (SCARG(uap, key) != IPC_PRIVATE) {
-	again:
+again:
 		segnum = shm_find_segment_by_key(SCARG(uap, key));
 		if (segnum >= 0) {
 			error = shmget_existing(p, uap, mode, segnum, retval);
