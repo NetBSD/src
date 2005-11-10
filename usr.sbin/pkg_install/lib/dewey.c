@@ -1,4 +1,4 @@
-/*	$NetBSD: dewey.c,v 1.1.2.3 2005/11/08 18:17:21 jmc Exp $	*/
+/*	$NetBSD: dewey.c,v 1.1.2.4 2005/11/10 10:46:29 tron Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -25,23 +25,11 @@
  *
  */
 
-#if HAVE_ASSERT_H
-#include <assert.h>
-#endif
 #if HAVE_CTYPE_H
 #include <ctype.h>
 #endif
-#if HAVE_ERR_H
-#include <err.h>
-#endif
-#if HAVE_FNMATCH_H
-#include <fnmatch.h>
-#endif
-#if HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-#if HAVE_STRING_H
-#include <string.h>
+#if HAVE_STDLIB_H
+#include <stdlib.h>
 #endif
 
 #include "defs.h"
