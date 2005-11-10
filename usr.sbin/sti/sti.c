@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.2 2005/11/10 18:03:05 christos Exp $	*/
+/*	$NetBSD: sti.c,v 1.3 2005/11/10 18:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.2 2005/11/10 18:03:05 christos Exp $");
+__RCSID("$NetBSD: sti.c,v 1.3 2005/11/10 18:04:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 		for (ptr = *argv; (c = unescape(&ptr, &state)) != -1;)
                         sti(fd, c);
 		if (c == -1 && errno != ENODATA)
-			warnx("Cannot decode `%s'", *argv);
+			warn("Cannot decode `%s'", *argv);
 		if (argc != 0)
                         sti(fd, ' ');
 	}
