@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.4 2005/02/27 05:18:58 perry Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.5 2005/11/10 13:26:34 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.4 2005/02/27 00:26:58 perry Exp
+ *	# NetBSD: acpidevs,v 1.5 2005/11/10 13:25:59 rpaulo Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -619,6 +619,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0FFF",
 	    "Reserved by Microsoft Systems",
+	},
+	{
+	    "SYN1003",
+	    "Synaptics PS/2-style Touchpad",
 	},
 	{
 	    "PNP8001",
