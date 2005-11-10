@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.4 2005/11/10 19:07:03 christos Exp $	*/
+/*	$NetBSD: sti.c,v 1.5 2005/11/10 19:11:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.4 2005/11/10 19:07:03 christos Exp $");
+__RCSID("$NetBSD: sti.c,v 1.5 2005/11/10 19:11:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -85,12 +85,25 @@ sti(int fd, int c)
 		err(1, "Cannot simulate terminal input");
 }
 
+static void
+sendstr(int fd, const char *str)
+{
+	int c, state = 0;
+	const char *ptr = str;
+
+	while ((c = unescape(&ptr, &state)) != -1)
+		sti(fd, c);
+
+	if (c == -1 && errno != ENODATA)
+		warn("Cannot decode `%s'", str);
+}
+
 int
 main(int argc, char *argv[])
 {
-	const char *tty, *ptr;
+	const char *tty;
 	char ttydev[MAXPATHLEN];
-	int fd, c, state;
+	int fd;
 
 	setprogname(*argv);
 
@@ -122,23 +135,15 @@ main(int argc, char *argv[])
 	if (argc == 0) {
 		char *line;
 		while ((line = fparseln(stdin, NULL, NULL, NULL, 0)) != NULL) {
-			state = 0;
-			for (ptr = line; (c = unescape(&ptr, &state)) != -1;)
-				sti(fd, c);
-			if (c == -1 && errno != ENODATA)
-				warn("Cannot decode `%s'", line);
+			sendstr(fd, line);
 			free(line);
 		}
-		return 0;
-	}
-	for (; argc--; argv++) {
-		state = 0;
-		for (ptr = *argv; (c = unescape(&ptr, &state)) != -1;)
-                        sti(fd, c);
-		if (c == -1 && errno != ENODATA)
-			warn("Cannot decode `%s'", *argv);
-		if (argc != 0)
-                        sti(fd, ' ');
+	} else {
+		for (; argc--; argv++) {
+			sendstr(fd, *argv);
+			if (argc != 0)
+				sti(fd, ' ');
+		}
 	}
 
 	(void)close(fd);
