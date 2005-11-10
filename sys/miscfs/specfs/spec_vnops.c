@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.68.2.5 2005/03/04 16:52:55 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.68.2.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.5 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.5 2005/03/04 16:52:55 skrll Ex
 #include <sys/stat.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
@@ -75,7 +76,7 @@ struct vnode	*speclisth[SPECHSZ];
  * equivalent for other filesystems.
  */
 
-int (**spec_vnodeop_p) __P((void *));
+int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -116,11 +117,6 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_islocked_desc, spec_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_vfree_desc, spec_vfree },		/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, spec_update },		/* update */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -460,9 +456,26 @@ spec_ioctl(v)
 	} */ *ap = v;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
-	dev_t dev = ap->a_vp->v_rdev;
+	struct vnode *vp;
+	dev_t dev;
 
-	switch (ap->a_vp->v_type) {
+	/*
+	 * Extract all the info we need from the vnode, taking care to
+	 * avoid a race with VOP_REVOKE().
+	 */
+
+	vp = ap->a_vp;
+	dev = NODEV;
+	simple_lock(&vp->v_interlock);
+	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+		dev = vp->v_rdev;
+	}
+	simple_unlock(&vp->v_interlock);
+	if (dev == NODEV) {
+		return ENXIO;
+	}
+
+	switch (vp->v_type) {
 
 	case VCHR:
 		cdev = cdevsw_lookup(dev);
@@ -509,7 +522,7 @@ spec_poll(v)
 		dev = ap->a_vp->v_rdev;
 		cdev = cdevsw_lookup(dev);
 		if (cdev == NULL)
-			return (ENXIO);
+			return (POLLERR);
 		return (*cdev->d_poll)(dev, ap->a_events, ap->a_l);
 
 	default:
@@ -679,7 +692,7 @@ spec_close(v)
 	const struct cdevsw *cdev;
 	struct session *sess;
 	dev_t dev = vp->v_rdev;
-	int (*devclose) __P((dev_t, int, int, struct lwp *));
+	int (*devclose)(dev_t, int, int, struct lwp *);
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);

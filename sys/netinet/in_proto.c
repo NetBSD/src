@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.58.6.6 2005/02/15 21:33:39 skrll Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.58.6.7 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.6 2005/02/15 21:33:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.7 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.6 2005/02/15 21:33:39 skrll Exp 
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_proto.h>
 
 #ifdef INET6
 #ifndef INET
@@ -156,17 +157,17 @@ const struct protosw inetsw[] = {
   0,
   ip_init,	0,		ip_slowtimo,	ip_drain,	NULL
 },
-{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
+{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   udp_input,	0,		udp_ctlinput,	udp_ctloutput,
   udp_usrreq,
   udp_init,	0,		0,		0,		NULL
 },
-{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
+{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
   tcp_init,	0,		tcp_slowtimo,	tcp_drain,	NULL
 },
-{ SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,

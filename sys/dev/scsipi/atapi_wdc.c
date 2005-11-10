@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.55.6.6 2005/03/04 16:50:32 skrll Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.55.6.7 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55.6.6 2005/03/04 16:50:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55.6.7 2005/11/10 14:07:47 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -140,7 +140,8 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_ntargets = 2;
 	chan->chan_nluns = 1;
 
-	chp->atapibus = config_found(&ata_sc->sc_dev, chan, atapiprint);
+	chp->atapibus = config_found_ia(&ata_sc->sc_dev, "atapi", chan,
+		atapiprint);
 }
 
 static void
@@ -424,7 +425,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (sc_xfer->xs_control & XS_CTL_POLL) ? AT_POLL : 0;
-	char *errstring;
+	const char *errstring;
 
 	ATADEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive,
@@ -433,7 +434,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		drvp->n_xfers++;
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
-		/* If it's not a polled command, we need the kenrel thread */
+		/* If it's not a polled command, we need the kernel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
 		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
 			chp->ch_queue->queue_freeze++;
@@ -611,7 +612,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
-	int ire;
+	int ire, error;
 	int dma_flags = 0;
 	void *cmd;
 
@@ -692,11 +693,22 @@ again:
 		ATADEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
-			if ((*wdc->dma_init)(wdc->dma_arg,
+			error = (*wdc->dma_init)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
-			    xfer->c_databuf, xfer->c_bcount, dma_flags) != 0) {
-				sc_xfer->error = XS_DRIVER_STUFFUP;
-				break;
+			    xfer->c_databuf, xfer->c_bcount, dma_flags);
+			if (error) {
+				if (error == EINVAL) {
+					/*
+					 * We can't do DMA on this transfer
+					 * for some reason.  Fall back to
+					 * PIO.
+					 */
+					xfer->c_flags &= ~C_DMA;
+					error = 0;
+				} else {
+					sc_xfer->error = XS_DRIVER_STUFFUP;
+					break;
+				}
 			}
 		}
 

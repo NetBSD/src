@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.30.2.8 2005/03/04 16:51:59 skrll Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.30.2.9 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.30.2.8 2005/03/04 16:51:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.30.2.9 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_systrace.h"
 
@@ -144,6 +144,9 @@ struct str_process {
 	uid_t saveuid;
 	gid_t setegid;
 	gid_t savegid;
+
+	int isscript;
+	char scriptname[MAXPATHLEN];
 };
 
 uid_t	systrace_seteuid(struct proc *,  uid_t);
@@ -156,6 +159,8 @@ void systrace_unlock(void);
 int	systrace_attach(struct fsystrace *, pid_t);
 int	systrace_detach(struct str_process *);
 int	systrace_answer(struct str_process *, struct systrace_answer *);
+int	systrace_setscriptname(struct str_process *, struct 
+	    systrace_scriptname *);
 int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
@@ -321,6 +326,11 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		if (!pid)
 			ret = EINVAL;
 		break;
+	case STRIOCSCRIPTNAME:
+		pid = ((struct systrace_scriptname *)data)->sn_pid;
+		if (!pid)
+			ret = EINVAL;
+		break;
 	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
@@ -374,6 +384,10 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	case STRIOCIO:
 		ret = systrace_io(strp, (struct systrace_io *)data);
+		break;
+	case STRIOCSCRIPTNAME:
+		ret = systrace_setscriptname(strp,
+		    (struct systrace_scriptname *)data);
 		break;
 	case STRIOCPOLICY:
 		ret = systrace_policy(fst, (struct systrace_policy *)data);
@@ -986,6 +1000,16 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 }
 
 int
+systrace_setscriptname(struct str_process *strp,
+		       struct systrace_scriptname *ans)
+{
+	strlcpy(strp->scriptname, ans->sn_scriptname,
+		sizeof(strp->scriptname));
+
+	return (0);
+}
+
+int
 systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 {
 	struct str_policy *strpol;
@@ -1248,6 +1272,53 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	return (error);
 }
 
+void
+systrace_execve0(struct proc *p)
+{
+	struct str_process *strp;
+
+	systrace_lock();
+	strp = p->p_systrace;
+	strp->isscript = 0;
+	systrace_unlock();
+}
+
+void
+systrace_execve1(char *path, struct proc *p)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	struct str_message msg;
+	struct str_msg_execve *msg_execve;
+
+	do {
+		systrace_lock();
+		strp = p->p_systrace;
+		if (strp == NULL) {
+			systrace_unlock();
+			return;
+		}
+
+		msg_execve = &msg.msg_data.msg_execve;
+		fst = strp->parent;
+		SYSTRACE_LOCK(fst, curlwp);
+		systrace_unlock();
+
+		/*
+		 * susers will get the execve call anyway. Also, if
+		 * we're not allowed to control the process, escape.
+		 */
+		if (fst->issuser ||
+		    fst->p_ruid != p->p_cred->p_ruid ||
+		    fst->p_rgid != p->p_cred->p_rgid) {
+			SYSTRACE_UNLOCK(fst, curlwp);
+			return;
+		}
+
+		strlcpy(msg_execve->path, path, sizeof(msg_execve->path));
+	} while (systrace_make_msg(strp, SYSTR_MSG_EXECVE, &msg) != 0);
+}
+
 /* Prepare to replace arguments */
 
 int
@@ -1354,7 +1425,6 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 int
 systrace_fname(struct str_process *strp, caddr_t kdata, size_t len)
 {
-
 	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
 		return EINVAL;
 
@@ -1379,13 +1449,52 @@ systrace_replacefree(struct str_process *strp)
 	}
 }
 
+int
+systrace_scriptname(struct proc *p, char *dst)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	int error = 0;
+
+	systrace_lock();
+	strp = p->p_systrace;
+	fst = strp->parent;
+
+	SYSTRACE_LOCK(fst, curlwp);
+	systrace_unlock();
+
+	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
+			      fst->p_ruid != p->p_cred->p_ruid ||
+			      fst->p_rgid != p->p_cred->p_rgid)) {
+		error = EPERM;
+		goto out;
+	}
+
+	if (strp != NULL) {
+		if (strp->scriptname[0] == '\0') {
+			error = ENOENT;
+			goto out;
+		}
+
+		strlcpy(dst, strp->scriptname, MAXPATHLEN);
+		strp->isscript = 1;
+	}
+
+ out:
+	strp->scriptname[0] = '\0';
+	SYSTRACE_UNLOCK(fst, curlwp);
+
+	return (error);
+}
+
 void
 systrace_namei(struct nameidata *ndp)
 {
 	struct str_process *strp;
-	struct fsystrace *fst;
+	struct fsystrace *fst = NULL; /* XXXGCC */
 	struct componentname *cnp = &ndp->ni_cnd;
 	size_t i;
+	int hamper = 0;
 
 	systrace_lock();
 	strp = cnp->cn_lwp->l_proc->p_systrace;
@@ -1396,16 +1505,25 @@ systrace_namei(struct nameidata *ndp)
 
 		for (i = 0; i < strp->nfname; i++) {
 			if (strcmp(cnp->cn_pnbuf, strp->fname[i]) == 0) {
-				/* ELOOP if namei() tries to readlink */
-				ndp->ni_loopcnt = MAXSYMLINKS;
-				cnp->cn_flags &= ~FOLLOW;
-				cnp->cn_flags |= NOFOLLOW;
+				hamper = 1;
 				break;
 			}
 		}
+
+		if (!hamper && strp->isscript &&
+		    strcmp(cnp->cn_pnbuf, strp->scriptname) == 0)
+			hamper = 1;
+
 		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
+
+	if (hamper) {
+		/* ELOOP if namei() tries to readlink */
+		ndp->ni_loopcnt = MAXSYMLINKS;
+		cnp->cn_flags &= ~FOLLOW;
+		cnp->cn_flags |= NOFOLLOW;
+	}
 }
 
 struct str_process *
@@ -1620,7 +1738,11 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	struct str_msgcontainer *cont;
 	struct str_message *msg;
 	struct fsystrace *fst = strp->parent;
-	int st;
+	int st, pri;
+
+	pri = PWAIT|PCATCH;
+	if (type == SYSTR_MSG_EXECVE)
+		pri &= ~PCATCH;
 
 	cont = pool_get(&systr_msgcontainer_pl, PR_WAITOK);
 	memset(cont, 0, sizeof(struct str_msgcontainer));
@@ -1657,7 +1779,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 		int f;
 		f = curlwp->l_flag & L_SA;
 		curlwp->l_flag &= ~L_SA;
-		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
+		st = tsleep(strp, pri, "systrmsg", 0);
 		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);

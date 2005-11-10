@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.86.2.4 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.86.2.5 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86.2.4 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86.2.5 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1431,3 +1431,16 @@ hardpps(struct timeval *tvp,		/* time at PPS */
 }
 #endif /* PPS_SYNC */
 #endif /* NTP  */
+
+/*
+ * XXX: Until all md code has it.
+ */
+struct timespec *
+nanotime(struct timespec *ts)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, ts);
+	return ts;
+}

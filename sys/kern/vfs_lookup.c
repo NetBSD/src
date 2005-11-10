@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.48.2.7 2005/04/01 14:30:57 skrll Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.48.2.8 2005/11/10 14:09:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.7 2005/04/01 14:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.8 2005/11/10 14:09:46 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslimits.h>
 #include <sys/time.h>
 #include <sys/namei.h>
@@ -66,7 +67,114 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.7 2005/04/01 14:30:57 skrll Ex
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 
-MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
+/*
+ * Substitute replacement text for 'magic' strings in symlinks.
+ * Returns 0 if successful, and returns non-zero if an error
+ * occurs.  (Currently, the only possible error is running out
+ * of temporary pathname space.)
+ *
+ * Looks for "@<string>" and "@<string>/", where <string> is a
+ * recognized 'magic' string.  Replaces the "@<string>" with the
+ * appropriate replacement text.  (Note that in some cases the
+ * replacement text may have zero length.)
+ *
+ * This would have been table driven, but the variance in
+ * replacement strings (and replacement string lengths) made
+ * that impractical.
+ */
+#define	VNL(x)							\
+	(sizeof(x) - 1)
+
+#define	VO	'{'
+#define	VC	'}'
+
+#define	MATCH(str)						\
+	((termchar == '/' && i + VNL(str) == *len) ||		\
+	 (i + VNL(str) < *len &&				\
+	  cp[i + VNL(str)] == termchar)) &&			\
+	!strncmp((str), &cp[i], VNL(str))
+
+#define	SUBSTITUTE(m, s, sl)					\
+	if ((newlen + (sl)) > MAXPATHLEN)			\
+		return (1);					\
+	i += VNL(m);						\
+	if (termchar != '/')					\
+		i++;						\
+	memcpy(&tmp[newlen], (s), (sl));			\
+	newlen += (sl);						\
+	change = 1;						\
+	termchar = '/';
+
+static int
+symlink_magic(struct proc *p, char *cp, int *len)
+{
+	char tmp[MAXPATHLEN];
+	int change, i, newlen;
+	int termchar = '/';
+
+	for (change = i = newlen = 0; i < *len; ) {
+		if (cp[i] != '@') {
+			tmp[newlen++] = cp[i++];
+			continue;
+		}
+
+		i++;
+
+		/* Check for @{var} syntax. */
+		if (cp[i] == VO) {
+			termchar = VC;
+			i++;
+		}
+
+		/*
+		 * The following checks should be ordered according
+		 * to frequency of use.
+		 */
+		if (MATCH("machine_arch")) {
+			SUBSTITUTE("machine_arch", MACHINE_ARCH,
+			    sizeof(MACHINE_ARCH) - 1);
+		} else if (MATCH("machine")) {
+			SUBSTITUTE("machine", MACHINE,
+			    sizeof(MACHINE) - 1);
+		} else if (MATCH("hostname")) {
+			SUBSTITUTE("hostname", hostname,
+			    hostnamelen);
+		} else if (MATCH("osrelease")) {
+			SUBSTITUTE("osrelease", osrelease,
+			    strlen(osrelease));
+		} else if (MATCH("emul")) {
+			SUBSTITUTE("emul", p->p_emul->e_name,
+			    strlen(p->p_emul->e_name));
+		} else if (MATCH("kernel_ident")) {
+			SUBSTITUTE("kernel_ident", kernel_ident,
+			    strlen(kernel_ident));
+		} else if (MATCH("domainname")) {
+			SUBSTITUTE("domainname", domainname,
+			    domainnamelen);
+		} else if (MATCH("ostype")) {
+			SUBSTITUTE("ostype", ostype,
+			    strlen(ostype));
+		} else {
+			tmp[newlen++] = '@';
+			if (termchar == VC)
+				tmp[newlen++] = VO;
+		}
+	}
+
+	if (! change)
+		return (0);
+
+	memcpy(cp, tmp, newlen);
+	*len = newlen;
+
+	return (0);
+}
+
+#undef VNL
+#undef VO
+#undef VC
+#undef MATCH
+#undef SUBSTITUTE
 
 /*
  * Convert a pathname into a pointer to a locked inode.
@@ -89,8 +197,7 @@ MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
  *	}
  */
 int
-namei(ndp)
-	struct nameidata *ndp;
+namei(struct nameidata *ndp)
 {
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
 	char *cp;			/* pointer into pathname argument */
@@ -102,11 +209,11 @@ namei(ndp)
 
 #ifdef DIAGNOSTIC
 	if (!cnp->cn_cred || !cnp->cn_lwp)
-		panic ("namei: bad cred/proc");
+		panic("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
-		panic ("namei: nameiop contaminated with flags");
+		panic("namei: nameiop contaminated with flags");
 	if (cnp->cn_flags & OPMASK)
-		panic ("namei: flags contaminated with nameiops");
+		panic("namei: flags contaminated with nameiops");
 #endif
 	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
 
@@ -220,7 +327,13 @@ namei(ndp)
 			error = ENOENT;
 			goto badlink;
 		}
-		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
+		/*
+		 * Do symlink substitution, if appropriate, and
+		 * check length for potential overflow.
+		 */
+		if (((ndp->ni_vp->v_mount->mnt_flag & MNT_MAGICLINKS) &&
+		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
+		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
 		}
@@ -268,10 +381,10 @@ namei_hash(const char *name, const char **ep)
 	hash = HASH32_STR_INIT;
 	if (*ep != NULL) {
 		for (; name < *ep; name++)
-			hash = hash * 33 + *(uint8_t *)name;
+			hash = hash * 33 + *(const uint8_t *)name;
 	} else {
 		for (; *name != '\0' && *name != '/'; name++)
-			hash = hash * 33 + *(uint8_t *)name;
+			hash = hash * 33 + *(const uint8_t *)name;
 		*ep = name;
 	}
 	return (hash + (hash >> 5));
@@ -316,8 +429,7 @@ namei_hash(const char *name, const char **ep)
  *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
-lookup(ndp)
-	struct nameidata *ndp;
+lookup(struct nameidata *ndp)
 {
 	const char *cp;			/* pointer into pathname argument */
 	struct vnode *dp = 0;		/* the directory we are searching */
@@ -673,9 +785,7 @@ bad:
  * Reacquire a path name component.
  */
 int
-relookup(dvp, vpp, cnp)
-	struct vnode *dvp, **vpp;
-	struct componentname *cnp;
+relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
 	struct vnode *dp = 0;		/* the directory we are searching */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
@@ -711,7 +821,7 @@ relookup(dvp, vpp, cnp)
 	if (newhash != cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
-		panic ("relookup: bad len");
+		panic("relookup: bad len");
 	while (*cp == '/')
 		cp++;
 	if (*cp != 0)
@@ -730,7 +840,7 @@ relookup(dvp, vpp, cnp)
 		panic("relookup: null name");
 
 	if (cnp->cn_flags & ISDOTDOT)
-		panic ("relookup: lookup on dot-dot");
+		panic("relookup: lookup on dot-dot");
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -767,7 +877,7 @@ relookup(dvp, vpp, cnp)
 	 * Check for symbolic link
 	 */
 	if (dp->v_type == VLNK && (cnp->cn_flags & FOLLOW))
-		panic ("relookup: symlink found.\n");
+		panic("relookup: symlink found");
 #endif
 
 	/*

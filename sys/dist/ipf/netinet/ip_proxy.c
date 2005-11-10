@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.2.6 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.10 2005/02/17 04:40:03 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.12 2005/03/03 14:28:24 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
@@ -153,7 +153,7 @@ aproxy_t	ap_proxies[] = {
 #ifdef	IPF_PPTP_PROXY
 	{ NULL, "pptp", (char)IPPROTO_TCP, 0, 0,
 	  ippr_pptp_init, ippr_pptp_fini, ippr_pptp_new, ippr_pptp_del,
-	  ippr_pptp_inout, ippr_pptp_inout, ippr_pptp_match, NULL },
+	  ippr_pptp_inout, ippr_pptp_inout, NULL, NULL },
 #endif
 #ifdef  IPF_H323_PROXY
 	{ NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, ippr_h323_fini,

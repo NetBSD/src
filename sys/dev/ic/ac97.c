@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.43.2.10 2005/01/17 19:30:39 skrll Exp $ */
+/*      $NetBSD: ac97.c,v 1.43.2.11 2005/11/10 14:04:13 skrll Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,13 +63,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.10 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.11 2005/11/10 14:04:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -102,7 +103,13 @@ static void	ac97_ad198x_init(struct ac97_softc *);
 static void	ac97_alc650_init(struct ac97_softc *);
 static void	ac97_vt1616_init(struct ac97_softc *);
 
+static int	ac97_modem_offhook_set(struct ac97_softc *, int, int);
+static int	ac97_sysctl_verify(SYSCTLFN_ARGS);
+
 #define Ac97Nphone	"phone"
+#define Ac97Nline1	"line1"
+#define Ac97Nline2	"line2"
+#define Ac97Nhandset	"handset"
 
 static const struct audio_mixer_enum
 ac97_on_off = { 2, { { { AudioNoff } , 0 },
@@ -139,7 +146,7 @@ ac97_volume_mono = { { AudioNvolume }, 1 };
 
 #define WRAP(a)  &a, sizeof(a)
 
-static const struct ac97_source_info {
+struct ac97_source_info {
 	const char *class;
 	const char *device;
 	const char *qualifier;
@@ -163,13 +170,18 @@ static const struct ac97_source_info {
 		CHECK_TONE,
 		CHECK_MIC,
 		CHECK_LOUDNESS,
-		CHECK_3D
+		CHECK_3D,
+		CHECK_LINE1,
+		CHECK_LINE2,
+		CHECK_HANDSET
 	} req_feature;
 
 	int  prev;
 	int  next;
 	int  mixer_class;
-} source_info[] = {
+};
+
+static const struct ac97_source_info audio_source_info[] = {
 	{ AudioCinputs,		NULL,		NULL,
 	  AUDIO_MIXER_CLASS, },
 	{ AudioCoutputs,	NULL,		NULL,
@@ -313,7 +325,36 @@ static const struct ac97_source_info {
 	/* Missing features: Simulated Stereo, POP, Loopback mode */
 };
 
-#define SOURCE_INFO_SIZE (sizeof(source_info)/sizeof(source_info[0]))
+static const struct ac97_source_info modem_source_info[] = {
+	/* Classes */
+	{ AudioCinputs,		NULL,		NULL,
+	  AUDIO_MIXER_CLASS, },
+	{ AudioCoutputs,	NULL,		NULL,
+	  AUDIO_MIXER_CLASS, },
+	{ AudioCinputs, 	Ac97Nline1,	NULL,
+	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_mono),
+	  AC97_REG_LINE1_LEVEL, 0x8080, 4, 0, 0, 1, CHECK_LINE1
+	},
+	{ AudioCoutputs,	Ac97Nline1,	NULL,
+	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_mono),
+	  AC97_REG_LINE1_LEVEL, 0x8080, 4, 8, 0, 1, CHECK_LINE1
+	},
+	{ AudioCinputs,		Ac97Nline1,	AudioNmute,
+	  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+	  AC97_REG_LINE1_LEVEL, 0x8080, 1, 7, 0, 0, CHECK_LINE1
+	},
+	{ AudioCoutputs,	Ac97Nline1,	AudioNmute,
+	  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+	  AC97_REG_LINE1_LEVEL, 0x8080, 1, 15, 0, 0, CHECK_LINE1
+	},
+};
+
+#define AUDIO_SOURCE_INFO_SIZE \
+		(sizeof(audio_source_info)/sizeof(audio_source_info[0]))
+#define MODEM_SOURCE_INFO_SIZE \
+		(sizeof(modem_source_info)/sizeof(modem_source_info[0]))
+#define SOURCE_INFO_SIZE(as) ((as)->type == AC97_CODEC_TYPE_MODEM ? \
+	        MODEM_SOURCE_INFO_SIZE : AUDIO_SOURCE_INFO_SIZE)
 
 /*
  * Check out http://developer.intel.com/pc-supp/platform/ac97/ for
@@ -326,16 +367,30 @@ struct ac97_softc {
 
 	struct ac97_host_if *host_if;
 
-#define MAX_SOURCES	(2 * SOURCE_INFO_SIZE)
-	struct ac97_source_info source_info[MAX_SOURCES];
+#define AUDIO_MAX_SOURCES	(2 * AUDIO_SOURCE_INFO_SIZE)
+#define MODEM_MAX_SOURCES	(2 * MODEM_SOURCE_INFO_SIZE)
+	struct ac97_source_info audio_source_info[AUDIO_MAX_SOURCES];
+	struct ac97_source_info modem_source_info[MODEM_MAX_SOURCES];
+	struct ac97_source_info *source_info;
 	int num_source_info;
 
 	enum ac97_host_flags host_flags;
 	unsigned int ac97_clock; /* usually 48000 */
 #define AC97_STANDARD_CLOCK	48000U
+	uint16_t power_all;
 	uint16_t caps;		/* -> AC97_REG_RESET */
 	uint16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
+	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
 	uint16_t shadow_reg[128];
+
+	int type;
+
+	/* sysctl */
+	struct sysctllog *log;
+	int offhook_line1_mib;
+	int offhook_line2_mib;
+	int offhook_line1;
+	int offhook_line2;
 };
 
 static struct ac97_codec_if_vtbl ac97civ = {
@@ -618,11 +673,22 @@ static const struct ac97_codecid {
 	{ 0x83847609, 0xffffffff,	"SigmaTel STAC9721/23",	},
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
 	{ 0x83847650, 0xffffffff,	"SigmaTel STAC9750/51",	},
+	{ 0x83847652, 0xffffffff,	"SigmaTel STAC9752/53",	},
 	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
 	{ 0x83847658, 0xffffffff,	"SigmaTel STAC9758/59",	},
 	{ 0x83847666, 0xffffffff,	"SigmaTel STAC9766/67",	},
 	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
+
+	/* Conexant AC'97 modems -- good luck finding datasheets! */
+	{ AC97_CODEC_ID('C', 'X', 'T', 33),
+	  0xffffffff,			"Conexant HSD11246", },
+	{ AC97_CODEC_ID('C', 'X', 'T', 34),
+	  0xffffffff,			"Conexant D480 MDC V.92 Modem", },
+	{ AC97_CODEC_ID('C', 'X', 'T', 48),
+	  0xffffffff,			"Conexant CXT48", },	
+	{ AC97_CODEC_ID('C', 'X', 'T', 0),
+	  AC97_VENDOR_ID_MASK,		"Conexant unknown", },
 
 	{ 0,
 	  0,			NULL,			}
@@ -758,8 +824,12 @@ ac97_setup_defaults(struct ac97_softc *as)
 
 	memset(as->shadow_reg, 0, sizeof(as->shadow_reg));
 
-	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
-		si = &source_info[idx];
+	for (idx = 0; idx < AUDIO_SOURCE_INFO_SIZE; idx++) {
+		si = &audio_source_info[idx];
+		ac97_write(as, si->reg, si->default_value);
+	}
+	for (idx = 0; idx < MODEM_SOURCE_INFO_SIZE; idx++) {
+		si = &modem_source_info[idx];
 		ac97_write(as, si->reg, si->default_value);
 	}
 }
@@ -774,31 +844,33 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 
 	as = (struct ac97_softc *) self;
 
-	/* make sure chip is fully operational */
-#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
-			| AC97_POWER_ADC)
-	for (idx = 50000; idx >= 0; idx--) {
-		ac97_read(as, AC97_REG_POWER, &val);
-		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
-		       break;
-		DELAY(10);
+	if (as->type == AC97_CODEC_TYPE_AUDIO) {
+		/* make sure chip is fully operational */
+		for (idx = 50000; idx >= 0; idx--) {
+			ac97_read(as, AC97_REG_POWER, &val);
+			if ((val & as->power_all) == as->power_all)
+				break;
+			DELAY(10);
+		}
+
+		/*
+		 * actually try changing a value!
+		 * The default value of AC97_REG_MASTER_VOLUME is 0x8000.
+		 */
+		for (idx = 50000; idx >= 0; idx--) {
+			ac97_write(as, AC97_REG_MASTER_VOLUME, 0x1010);
+			ac97_read(as, AC97_REG_MASTER_VOLUME, &val);
+			if (val == 0x1010)
+				break;
+			DELAY(10);
+		}
 	}
-#undef AC97_POWER_ALL
 
-       /*
-	* actually try changing a value!
-	* The default value of AC97_REG_MASTER_VOLUME is 0x8000.
-	*/
-       for (idx = 50000; idx >= 0; idx--) {
-	       ac97_write(as, AC97_REG_MASTER_VOLUME, 0x1010);
-	       ac97_read(as, AC97_REG_MASTER_VOLUME, &val);
-	       if (val == 0x1010)
-		       break;
-	       DELAY(10);
-       }
-
-       for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
-		si = &source_info[idx];
+       for (idx = 0; idx < SOURCE_INFO_SIZE(as); idx++) {
+		if (as->type == AC97_CODEC_TYPE_MODEM)
+			si = &modem_source_info[idx];
+		else
+			si = &audio_source_info[idx];
 		/* don't "restore" to the reset reg! */
 		if (si->reg != AC97_REG_RESET)
 			ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
@@ -810,6 +882,13 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 			  | AC97_EXT_AUDIO_LDAC)) {
 		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL,
 		    as->shadow_reg[AC97_REG_EXT_AUDIO_CTRL >> 1]);
+	}
+	if (as->ext_mid & (AC97_EXT_MODEM_LINE1 | AC97_EXT_MODEM_LINE2
+			  | AC97_EXT_MODEM_HANDSET | AC97_EXT_MODEM_CID1
+			  | AC97_EXT_MODEM_CID2 | AC97_EXT_MODEM_ID0
+			  | AC97_EXT_MODEM_ID1)) {
+		ac97_write(as, AC97_REG_EXT_MODEM_CTRL,
+		    as->shadow_reg[AC97_REG_EXT_MODEM_CTRL >> 1]);
 	}
 }
 
@@ -841,6 +920,12 @@ ac97_check_capability(struct ac97_softc *as, int check)
 		return as->caps & AC97_CAPS_LOUDNESS;
 	case CHECK_3D:
 		return AC97_CAPS_ENHANCEMENT(as->caps) != 0;
+	case CHECK_LINE1:
+		return as->ext_mid & AC97_EXT_MODEM_LINE1;
+	case CHECK_LINE2:
+		return as->ext_mid & AC97_EXT_MODEM_LINE2;
+	case CHECK_HANDSET:
+		return as->ext_mid & AC97_EXT_MODEM_HANDSET;
 	default:
 		printf("%s: internal error: feature=%d\n", __func__, check);
 		return 0;
@@ -853,13 +938,19 @@ ac97_setup_source_info(struct ac97_softc *as)
 	int idx, ouridx;
 	struct ac97_source_info *si, *si2;
 
-	for (idx = 0, ouridx = 0; idx < SOURCE_INFO_SIZE; idx++) {
+	for (idx = 0, ouridx = 0; idx < SOURCE_INFO_SIZE(as); idx++) {
 		si = &as->source_info[ouridx];
-
-		if (!ac97_check_capability(as, source_info[idx].req_feature))
-			continue;
-
-		memcpy(si, &source_info[idx], sizeof(*si));
+		if (as->type == AC97_CODEC_TYPE_MODEM) {
+			if (!ac97_check_capability(as,
+			    modem_source_info[idx].req_feature))
+				continue;
+			memcpy(si, &modem_source_info[idx], sizeof(*si));
+		} else {
+			if (!ac97_check_capability(as,
+			    audio_source_info[idx].req_feature))
+				continue;
+			memcpy(si, &audio_source_info[idx], sizeof(*si));
+		}
 
 		switch (si->type) {
 		case AUDIO_MIXER_CLASS:
@@ -873,7 +964,12 @@ ac97_setup_source_info(struct ac97_softc *as)
 			/* Add an entry for mute, if necessary */
 			if (si->mute) {
 				si = &as->source_info[ouridx];
-				memcpy(si, &source_info[idx], sizeof(*si));
+				if (as->type == AC97_CODEC_TYPE_MODEM)
+					memcpy(si, &modem_source_info[idx],
+					    sizeof(*si));
+				else
+					memcpy(si, &audio_source_info[idx],
+					    sizeof(*si));
 				si->qualifier = AudioNmute;
 				si->type = AUDIO_MIXER_ENUM;
 				si->info = &ac97_on_off;
@@ -944,8 +1040,15 @@ ac97_setup_source_info(struct ac97_softc *as)
 	}
 }
 
+/* backwords compatibility */
 int
 ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
+{
+	return ac97_attach_type(host_if, sc_dev, AC97_CODEC_TYPE_AUDIO);
+}
+
+int
+ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 {
 	struct ac97_softc *as;
 	int error, i, j;
@@ -966,6 +1069,7 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;
+	as->type = type;
 
 	if ((error = host_if->attach(host_if->arg, &as->codec_if))) {
 		free(as, M_DEVBUF);
@@ -977,35 +1081,54 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 		return error;
 	}
 
-	host_if->write(host_if->arg, AC97_REG_RESET, 0);
-	host_if->write(host_if->arg, AC97_REG_POWER, 0);
-
 	if (host_if->flags)
 		as->host_flags = host_if->flags(host_if->arg);
 
-#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
-			| AC97_POWER_ADC)
-	for (i = 500000; i >= 0; i--) {
+	/*
+	 * Assume codec has all four power bits.
+	 * XXXSCW: what to do for modems?
+	 */
+	as->power_all = AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC |
+	    AC97_POWER_ADC;
+	if (as->type == AC97_CODEC_TYPE_AUDIO) {
+		host_if->write(host_if->arg, AC97_REG_RESET, 0);
+
+		/*
+		 * Power-up everything except the analogue mixer.
+		 * If this codec doesn't support analogue mixer power-down,
+		 * AC97_POWER_MIXER will read back as zero.
+		 */
+		host_if->write(host_if->arg, AC97_REG_POWER, AC97_POWER_MIXER);
 		ac97_read(as, AC97_REG_POWER, &val);
-		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
-		       break;
-		DELAY(1);
+		if ((val & AC97_POWER_MIXER) == 0) {
+			/* Codec doesn't support analogue mixer power-down */
+			as->power_all &= ~AC97_POWER_ANL;
+		}
+		host_if->write(host_if->arg, AC97_REG_POWER, 0);
+
+		for (i = 500000; i >= 0; i--) {
+			ac97_read(as, AC97_REG_POWER, &val);
+			if ((val & as->power_all) == as->power_all)
+			       break;
+			DELAY(1);
+		}
+	} else if (as->type == AC97_CODEC_TYPE_MODEM) {
+		host_if->write(host_if->arg, AC97_REG_EXT_MODEM_ID, 0);
 	}
-#undef AC97_POWER_ALL
 
 	ac97_setup_defaults(as);
-	ac97_read(as, AC97_REG_RESET, &as->caps);
+	if (as->type == AC97_CODEC_TYPE_AUDIO)
+		ac97_read(as, AC97_REG_RESET, &as->caps);
 	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
 
 	id = (id1 << 16) | id2;
-
 	aprint_normal("%s: ac97: ", sc_dev->dv_xname);
 
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
 			char pnp[4];
-
+	
 			AC97_GET_CODEC_ID(id, pnp);
 #define ISASCII(c) ((c) >= ' ' && (c) < 0x7f)
 			if (ISASCII(pnp[0]) && ISASCII(pnp[1]) &&
@@ -1036,76 +1159,203 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 	       ac97enhancement[AC97_CAPS_ENHANCEMENT(as->caps)]);
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
-	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
-	if (as->ext_id != 0) {
-		/* Print capabilities */
-		bitmask_snprintf(as->ext_id, "\20\20SECONDARY10\17SECONDARY01"
+
+	if (as->type == AC97_CODEC_TYPE_AUDIO) {
+		ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
+		if (as->ext_id != 0) {
+			/* Print capabilities */
+			bitmask_snprintf(as->ext_id,
+				 "\20\20SECONDARY10\17SECONDARY01"
 				 "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
 				 "\7CDAC\4VRM\3SPDIF\2DRA\1VRA",
 				 flagbuf, FLAGBUFLEN);
-		aprint_normal("%s: ac97: ext id %s\n", sc_dev->dv_xname, flagbuf);
+			aprint_normal("%s: ac97: ext id %s\n", sc_dev->dv_xname,
+				      flagbuf);
 
-		/* Print unusual settings */
-		if (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
-			aprint_normal("%s: ac97: Slot assignment: ",
+			/* Print unusual settings */
+			if (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+				aprint_normal("%s: ac97: Slot assignment: ",
+					      sc_dev->dv_xname);
+				switch (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+				case AC97_EXT_AUDIO_DSA01:
+					aprint_normal("7&8, 6&9, 10&11.\n");
+					break;
+				case AC97_EXT_AUDIO_DSA10:
+					aprint_normal("6&9, 10&11, 3&4.\n");
+					break;
+				case AC97_EXT_AUDIO_DSA11:
+					aprint_normal("10&11, 3&4, 7&8.\n");
+					break;
+				}
+			}
+
+			/* Enable and disable features */
+			ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
+			extstat &= ~AC97_EXT_AUDIO_DRA;
+			if (as->ext_id & AC97_EXT_AUDIO_LDAC)
+				extstat |= AC97_EXT_AUDIO_LDAC;
+			if (as->ext_id & AC97_EXT_AUDIO_SDAC)
+				extstat |= AC97_EXT_AUDIO_SDAC;
+			if (as->ext_id & AC97_EXT_AUDIO_CDAC)
+				extstat |= AC97_EXT_AUDIO_CDAC;
+			if (as->ext_id & AC97_EXT_AUDIO_VRM)
+				extstat |= AC97_EXT_AUDIO_VRM;
+			if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
+				/* Output the same data as DAC to SPDIF output */
+				extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
+				extstat |= AC97_EXT_AUDIO_SPSA34;
+			}
+			if (as->ext_id & AC97_EXT_AUDIO_VRA)
+				extstat |= AC97_EXT_AUDIO_VRA;
+			ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
+			if (as->ext_id & AC97_EXT_AUDIO_VRA) {
+				/* VRA should be enabled. */
+				/* so it claims to do variable rate, let's make sure */
+				ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
+					   44100);
+				ac97_read(as, AC97_REG_PCM_FRONT_DAC_RATE,
+					  &rate);
+				if (rate != 44100) {
+					/* We can't believe ext_id */
+					as->ext_id = 0;
+					aprint_normal(
+					    "%s: Ignore these capabilities.\n",
+					    sc_dev->dv_xname);
+				}
+				/* restore the default value */
+				ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
+					   AC97_SINGLE_RATE);
+			}
+		}
+	} else if (as->type == AC97_CODEC_TYPE_MODEM) {
+		const struct sysctlnode *node;
+		const struct sysctlnode *node_line1;
+		const struct sysctlnode *node_line2;
+		uint16_t xrate = 8000;
+		uint16_t xval, reg;
+		int err;
+
+		ac97_read(as, AC97_REG_EXT_MODEM_ID, &as->ext_mid);
+		if (as->ext_mid == 0 || as->ext_mid == 0xffff) {
+			aprint_normal("%s: no modem codec found\n",
 				      sc_dev->dv_xname);
-			switch (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
-			case AC97_EXT_AUDIO_DSA01:
-				aprint_normal("7&8, 6&9, 10&11.\n");
-				break;
-			case AC97_EXT_AUDIO_DSA10:
-				aprint_normal("6&9, 10&11, 3&4.\n");
-				break;
-			case AC97_EXT_AUDIO_DSA11:
-				aprint_normal("10&11, 3&4, 7&8.\n");
-				break;
-			}
+			return ENXIO;
+		}
+		as->type = AC97_CODEC_TYPE_MODEM;
+
+		/* Print capabilities */
+		bitmask_snprintf(as->ext_mid,
+				 "\20\5CID2\4CID1\3HANDSET\2LINE2\1LINE1",
+				 flagbuf, FLAGBUFLEN);
+		aprint_normal("%s: ac97: ext mid %s", sc_dev->dv_xname,
+			      flagbuf);
+		aprint_normal(", %s codec\n",
+			      (as->ext_mid & 0xc000) == 0 ?
+			      "primary" : "secondary");
+
+		/* Setup modem and sysctls */
+		err = sysctl_createv(&as->log, 0, NULL, NULL, 0, CTLTYPE_NODE,
+				     "hw", NULL, NULL, 0, NULL, 0, CTL_HW,
+				     CTL_EOL);
+		if (err != 0)
+			goto setup_modem;
+		err = sysctl_createv(&as->log, 0, NULL, &node, 0,
+				     CTLTYPE_NODE, sc_dev->dv_xname, NULL,
+				     NULL, 0, NULL, 0, CTL_HW, CTL_CREATE,
+				     CTL_EOL);
+		if (err != 0)
+			goto setup_modem;
+setup_modem:
+		/* reset */
+		ac97_write(as, AC97_REG_EXT_MODEM_ID, 1);
+
+		/* program rates */
+		xval = 0xff00 & ~AC97_EXT_MODEM_CTRL_PRA;
+		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
+			ac97_write(as, AC97_REG_LINE1_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRC |
+			       AC97_EXT_MODEM_CTRL_PRD);
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
+			ac97_write(as, AC97_REG_LINE2_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRE |
+			       AC97_EXT_MODEM_CTRL_PRF);
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_HANDSET) {
+			ac97_write(as, AC97_REG_HANDSET_RATE, xrate);
+			xval &= ~(AC97_EXT_MODEM_CTRL_PRG |
+			       AC97_EXT_MODEM_CTRL_PRH);
 		}
 
-		/* Enable and disable features */
-		ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
-		extstat &= ~AC97_EXT_AUDIO_DRA;
-		if (as->ext_id & AC97_EXT_AUDIO_LDAC)
-			extstat |= AC97_EXT_AUDIO_LDAC;
-		if (as->ext_id & AC97_EXT_AUDIO_SDAC)
-			extstat |= AC97_EXT_AUDIO_SDAC;
-		if (as->ext_id & AC97_EXT_AUDIO_CDAC)
-			extstat |= AC97_EXT_AUDIO_CDAC;
-		if (as->ext_id & AC97_EXT_AUDIO_VRM)
-			extstat |= AC97_EXT_AUDIO_VRM;
-		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
-			/* Output the same data as DAC to SPDIF output */
-			extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
-			extstat |= AC97_EXT_AUDIO_SPSA34;
+		/* power-up everything */
+		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0);
+		for (i = 5000; i >= 0; i--) {
+			ac97_read(as, AC97_REG_EXT_MODEM_CTRL, &reg);
+			if ((reg & /*XXXval*/0xf) == /*XXXval*/0xf)
+			       break;
+			DELAY(1);
 		}
-		if (as->ext_id & AC97_EXT_AUDIO_VRA)
-			extstat |= AC97_EXT_AUDIO_VRA;
-		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
-		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
-			/* VRA should be enabled. */
-			/* so it claims to do variable rate, let's make sure */
-			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE, 44100);
-			ac97_read(as, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
-			if (rate != 44100) {
-				/* We can't believe ext_id */
-				as->ext_id = 0;
-				aprint_normal(
-				    "%s: Ignore these capabilities.\n",
-				    sc_dev->dv_xname);
-			}
-			/* restore the default value */
-			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
-				   AC97_SINGLE_RATE);
+		if (i <= 0) {
+			printf("%s: codec not responding, status=0x%x\n",
+			    sc_dev->dv_xname, reg);
+			return ENXIO;
 		}
+
+		/* setup sysctls */
+		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
+			ac97_read(as, AC97_REG_GPIO_CFG, &reg);
+			reg &= ~AC97_GPIO_LINE1_OH;
+			ac97_write(as, AC97_REG_GPIO_CFG, reg);
+			ac97_read(as, AC97_REG_GPIO_POLARITY, &reg);
+			reg &= ~AC97_GPIO_LINE1_OH;
+			ac97_write(as, AC97_REG_GPIO_POLARITY, reg);
+
+			err = sysctl_createv(&as->log, 0, NULL, &node_line1,
+					     CTLFLAG_READWRITE, CTLTYPE_INT,
+					     "line1",
+					     SYSCTL_DESCR("off-hook line1"),
+					     ac97_sysctl_verify, 0, as, 0,
+					     CTL_HW, node->sysctl_num,
+					     CTL_CREATE, CTL_EOL);
+			if (err != 0)
+				goto sysctl_err;
+			as->offhook_line1_mib = node_line1->sysctl_num;
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
+			ac97_read(as, AC97_REG_GPIO_CFG, &reg);
+			reg &= ~AC97_GPIO_LINE2_OH;
+			ac97_write(as, AC97_REG_GPIO_CFG, reg);
+			ac97_read(as, AC97_REG_GPIO_POLARITY, &reg);
+			reg &= ~AC97_GPIO_LINE2_OH;
+			ac97_write(as, AC97_REG_GPIO_POLARITY, reg);
+
+			err = sysctl_createv(&as->log, 0, NULL, &node_line2,
+					     CTLFLAG_READWRITE, CTLTYPE_INT,
+					     "line2",
+					     SYSCTL_DESCR("off-hook line2"),
+					     ac97_sysctl_verify, 0, as, 0,
+					     CTL_HW, node->sysctl_num,
+					     CTL_CREATE, CTL_EOL);
+			if (err != 0)
+				goto sysctl_err;
+			as->offhook_line2_mib = node_line2->sysctl_num;
+		}
+sysctl_err:
+
+		ac97_write(as, AC97_REG_GPIO_STICKY, 0xffff);
+		ac97_write(as, AC97_REG_GPIO_WAKEUP, 0x0);
+		ac97_write(as, AC97_REG_MISC_AFE, 0x0);
 	}
 
+	as->source_info = (as->type == AC97_CODEC_TYPE_MODEM ?
+			   as->modem_source_info : as->audio_source_info);
 	ac97_setup_source_info(as);
 
 	memset(&ctl, 0, sizeof(ctl));
 	/* disable mutes */
 	for (i = 0; i < 11; i++) {
 		static struct {
-			char *class, *device;
+			const char *class, *device;
 		} d[11] = {
 			{ AudioCoutputs, AudioNmaster},
 			{ AudioCoutputs, AudioNheadphone},
@@ -1527,7 +1777,10 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 	struct ac97_source_info *si;
 	int ouridx, idx;
 
-	if (as->num_source_info >= MAX_SOURCES) {
+	if ((as->type == AC97_CODEC_TYPE_AUDIO &&
+	     as->num_source_info >= AUDIO_MAX_SOURCES) ||
+	    (as->type == AC97_CODEC_TYPE_MODEM &&
+	     as->num_source_info >= MODEM_MAX_SOURCES)) {
 		printf("%s: internal error: increase MAX_SOURCES in %s\n",
 		       __func__, __FILE__);
 		return -1;
@@ -1697,4 +1950,61 @@ ac97_vt1616_init(struct ac97_softc *as)
 	ac97_add_port(as, &sources[0]);
 	ac97_add_port(as, &sources[1]);
 	ac97_add_port(as, &sources[2]);
+}
+
+static int
+ac97_modem_offhook_set(struct ac97_softc *as, int line, int newval)
+{
+	uint16_t val;
+
+	val = as->shadow_reg[AC97_REG_GPIO_STATUS >> 1];
+	switch (newval) {
+	case 0:
+		val &= ~line;
+		break;
+	case 1:
+		val |= line;
+		break;
+	}
+	ac97_write(as, AC97_REG_GPIO_STATUS, val);
+
+	return 0;
+}
+
+static int
+ac97_sysctl_verify(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+	struct ac97_softc *as;
+
+	node = *rnode;
+	as = rnode->sysctl_data;
+	if (node.sysctl_num == as->offhook_line1_mib) {
+		tmp = as->offhook_line1;
+		node.sysctl_data = &tmp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
+		if (tmp < 0 || tmp > 1)
+			return EINVAL;
+
+		as->offhook_line1 = tmp;
+		ac97_modem_offhook_set(as, AC97_GPIO_LINE1_OH, tmp);
+	} else if (node.sysctl_num == as->offhook_line2_mib) {
+		tmp = as->offhook_line2;
+		node.sysctl_data = &tmp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
+		if (tmp < 0 || tmp > 1)
+			return EINVAL;
+
+		as->offhook_line2 = tmp;
+		ac97_modem_offhook_set(as, AC97_GPIO_LINE2_OH, tmp);
+	}
+
+	return 0;
 }

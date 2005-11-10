@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15.2.4 2005/01/24 08:34:33 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.15.2.5 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,14 +57,16 @@ typedef unsigned long	vsize_t;
 
 typedef int		register_t;
 
-typedef	__volatile unsigned char __cpu_simple_lock_t;
+typedef	volatile unsigned char __cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	0x80
 #define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__SWAP_BROKEN
+
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_SYSCALL_INTERN
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.10.16.5 2005/03/04 16:52:49 skrll Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.10.16.6 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.10.16.5 2005/03/04 16:52:49 skrll Exp $
+ *	$Id: layer_vnops.c,v 1.10.16.6 2005/11/10 14:10:25 skrll Exp $
+ *	$Id: layer_vnops.c,v 1.10.16.6 2005/11/10 14:10:25 skrll Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.10.16.5 2005/03/04 16:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.10.16.6 2005/11/10 14:10:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +289,7 @@ layer_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
-	int (**our_vnodeop_p) __P((void *));
+	int (**our_vnodeop_p)(void *);
 	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;

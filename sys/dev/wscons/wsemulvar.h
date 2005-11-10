@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.8.18.4 2005/03/04 16:51:14 skrll Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.8.18.5 2005/11/10 14:08:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@ struct wsemul_ops {
 	void	*(*attach)(int console, const struct wsscreen_descr *, void *,
 				int, int, void *, long);
 	void	(*output)(void *cookie, const u_char *data, u_int count, int);
-	int	(*translate)(void *, keysym_t, char **);
+	int	(*translate)(void *, keysym_t, const char **);
 	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
 	void    (*reset)(void *, enum wsemul_resetops);
 	void	(*getmsgattrs)(void *, struct wsdisplay_msgattrs *);

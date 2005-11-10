@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.10.2.3 2004/09/21 13:25:56 skrll Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.10.2.4 2005/11/10 14:01:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10.2.3 2004/09/21 13:25:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10.2.4 2005/11/10 14:01:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10.2.3 2004/09/21 13:25:56 skr
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/dirent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,8 +104,9 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 {
-	struct sysctlnode *_root = &netbsd32_sysctl_root;
-	extern char machine_arch32[];
+	const struct sysctlnode *_root = &netbsd32_sysctl_root;
+	extern const char machine_arch32[];
+	extern const char machine32[];
 
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
@@ -137,8 +139,13 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 		       CTL_HW, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine", NULL,
+		       NULL, 0, &machine32, 0,
+		       CTL_HW, HW_MACHINE, CTL_EOL);
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch", NULL,
-		       NULL, 0, machine_arch32, 0,
+		       NULL, 0, &machine_arch32, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 
@@ -156,7 +163,7 @@ netbsd32___sysctl(l, v, retval)
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
 	} */ *uap = v;
-	struct sysctlnode *pnode;
+	const struct sysctlnode *pnode;
 	netbsd32_size_t netbsd32_oldlen;
 	size_t oldlen, *oldlenp, savelen;
 	int name[CTL_MAXNAME], error, nerror, *namep;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.19.16.4 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.19.16.5 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.4 2005/03/04 16:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.5 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.4 2005/03/04 16:52:56 skrll Ex
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/umapfs/umap.h>
 
-u_long umap_findid __P((u_long, u_long [][2], int));
-int umap_node_alloc __P((struct mount *, struct vnode *,
-				struct vnode **));
+u_long umap_findid(u_long, u_long [][2], int);
+int umap_node_alloc(struct mount *, struct vnode *,
+				struct vnode **);
 
 /*
  * umap_findid is called by various routines in umap_vnodeops.c to

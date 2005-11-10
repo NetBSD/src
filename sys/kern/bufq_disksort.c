@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_disksort.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: bufq_disksort.c,v 1.1.2.5 2005/11/10 14:09:44 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,12 +75,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.1.2.5 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
+#include <sys/bufq_impl.h>
 #include <sys/malloc.h>
 
 /*
@@ -105,12 +106,12 @@ static void bufq_disksort_init(struct bufq_state *);
 static void bufq_disksort_put(struct bufq_state *, struct buf *);
 static struct buf *bufq_disksort_get(struct bufq_state *, int);
 
-BUFQ_DEFINE(disksort, BUFQ_DISKSORT, bufq_disksort_init);
+BUFQ_DEFINE(disksort, 20, bufq_disksort_init);
 
 static void
 bufq_disksort_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_disksort *disksort = bufq->bq_private;
+	struct bufq_disksort *disksort = bufq_private(bufq);
 	struct buf *bq, *nbq;
 	int sortby;
 
@@ -204,8 +205,8 @@ bufq_disksort_init(struct bufq_state *bufq)
 
 	bufq->bq_get = bufq_disksort_get;
 	bufq->bq_put = bufq_disksort_put;
-	MALLOC(bufq->bq_private, struct bufq_disksort *,
-	    sizeof(struct bufq_disksort), M_DEVBUF, M_ZERO);
+	bufq->bq_private = malloc(sizeof(struct bufq_disksort),
+	    M_DEVBUF, M_ZERO);
 	disksort = (struct bufq_disksort *)bufq->bq_private;
 	TAILQ_INIT(&disksort->bq_head);
 }

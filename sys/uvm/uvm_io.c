@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.18.2.2 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.18.2.3 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.18.2.2 2005/04/01 14:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.18.2.3 2005/11/10 14:12:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.18.2.2 2005/04/01 14:32:12 skrll Exp $"
  */
 
 int
-uvm_io(map, uio)
-	struct vm_map *map;
-	struct uio *uio;
+uvm_io(struct vm_map *map, struct uio *uio)
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;

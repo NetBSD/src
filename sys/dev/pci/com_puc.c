@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.8.2.4 2005/02/04 11:46:37 skrll Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.8.2.5 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8.2.4 2005/02/04 11:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8.2.5 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,17 +60,8 @@ struct com_puc_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	com_puc_probe(struct device *, struct cfdata *, void *);
-void	com_puc_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(com_puc, sizeof(struct com_puc_softc),
-    com_puc_probe, com_puc_attach, NULL, NULL);
-
-int
-com_puc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+com_puc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct puc_attach_args *aa = aux;
 
@@ -83,10 +74,8 @@ com_puc_probe(parent, match, aux)
 	return (1);
 }
 
-void
-com_puc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+com_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_puc_softc *psc = (void *)self;
 	struct com_softc *sc = &psc->sc_com;
@@ -144,3 +133,6 @@ com_puc_attach(parent, self, aux)
 
 	com_attach_subr(sc);
 }
+
+CFATTACH_DECL(com_puc, sizeof(struct com_puc_softc),
+    com_puc_probe, com_puc_attach, NULL, NULL);

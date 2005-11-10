@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.7.2.3 2004/09/21 13:22:31 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.7.2.4 2005/11/10 13:59:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.7.2.3 2004/09/21 13:22:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.7.2.4 2005/11/10 13:59:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,9 @@ writegpreg(tf, i, val)
 	if (i == 0)
 		return error;
 	else if (i < 16)
-		GPR(tf, i) = *(int32_t *) val;
+		GPR(tf, i) = *(const int32_t *) val;
 	else
-		/* XXX: Fix copyout prototype */
-		error = copyout((caddr_t) val, &IPR(tf, i), sizeof(int32_t));
+		error = copyout(val, &IPR(tf, i), sizeof(int32_t));
 
 	return error;
 }

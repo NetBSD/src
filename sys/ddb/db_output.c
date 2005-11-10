@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.27 2002/02/15 07:33:51 simonb Exp $	*/
+/*	$NetBSD: db_output.c,v 1.27.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.27 2002/02/15 07:33:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.27.16.1 2005/11/10 14:03:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ db_force_whitespace(void)
 static void
 db_more(void)
 {
-	char *p;
+	const char *p;
 	int quit_output = 0;
 
 	for (p = "--db_more--"; *p; p++)

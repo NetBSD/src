@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.7 2002/02/15 07:33:52 simonb Exp $	*/
+/*	$NetBSD: db_run.h,v 1.7.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -48,9 +48,9 @@ void		db_set_single_step(db_regs_t *);
 #ifndef db_clear_single_step
 void		db_clear_single_step(db_regs_t *);
 #endif
-void		db_single_step_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_trace_until_call_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_trace_until_matching_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_continue_cmd(db_expr_t, int, db_expr_t, char *);
+void		db_single_step_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_trace_until_call_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_trace_until_matching_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_continue_cmd(db_expr_t, int, db_expr_t, const char *);
 
 #endif	/* _DDB_DB_RUN_ */

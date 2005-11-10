@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.79.2.3 2004/09/21 13:35:07 skrll Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.79.2.4 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79.2.3 2004/09/21 13:35:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79.2.4 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_compat_43.h"
 
@@ -69,6 +69,8 @@ int	sys_getuid(struct lwp *, void *, register_t *);
 int	sys_getuid_with_euid(struct lwp *, void *, register_t *);
 int	sys_getgid(struct lwp *, void *, register_t *);
 int	sys_getgid_with_egid(struct lwp *, void *, register_t *);
+
+static int grsortu(gid_t *, int);
 
 /* ARGSUSED */
 int
@@ -536,6 +538,45 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+/*
+ * sort -u for groups.
+ */
+static int
+grsortu(gid_t *grp, int ngrp)
+{
+	const gid_t *src, *end;
+	gid_t *dst;
+	gid_t group;
+	int i, j;
+
+	/* bubble sort */
+	for (i = 0; i < ngrp; i++)
+		for (j = i + 1; j < ngrp; j++)
+			if (grp[i] > grp[j]) {
+				gid_t tmp = grp[i];
+				grp[i] = grp[j];
+				grp[j] = tmp;
+			}
+
+	/* uniq */
+	end = grp + ngrp;
+	src = grp;
+	dst = grp;
+	while (src < end) {
+		group = *src++;
+		while (src < end && *src == group)
+			src++;
+		*dst++ = group;
+	}
+
+#ifdef DIAGNOSTIC
+	/* zero out the rest of the array */
+	(void)memset(dst, 0, sizeof(*grp) * (end - dst));
+#endif
+
+	return dst - grp;
+}
+
 /* ARGSUSED */
 int
 sys_setgroups(struct lwp *l, void *v, register_t *retval)
@@ -562,6 +603,8 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	error = copyin(SCARG(uap, gidset), grp, grsize);
 	if (error)
 		return (error);
+
+	ngrp = grsortu(grp, ngrp);
 	/*
 	 * Check if this is a no-op.
 	 */
@@ -647,10 +690,15 @@ crfree(struct ucred *cr)
 int
 crcmp(const struct ucred *cr1, const struct uucred *cr2)
 {
+	/* FIXME: The group lists should be compared element by element,
+	 * as the order of groups may be different in the two lists.
+	 * Currently this function can return a non-zero value for
+	 * equivalent group lists. */
 	return cr1->cr_uid != cr2->cr_uid ||
 	    cr1->cr_gid != cr2->cr_gid ||
 	    cr1->cr_ngroups != (uint32_t)cr2->cr_ngroups ||
-	    memcmp(cr1->cr_groups, cr2->cr_groups, cr1->cr_ngroups);
+	    memcmp(cr1->cr_groups, cr2->cr_groups,
+	        sizeof(cr1->cr_groups[0]) * cr1->cr_ngroups);
 }
 
 /*

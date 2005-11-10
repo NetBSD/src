@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.23.2.6 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.23.2.7 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.6 2005/03/04 16:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.7 2005/11/10 14:12:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.6 2005/03/04 16:55:00 skrll Exp 
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
-static boolean_t ufs_issequential __P((const struct ufsmount *,
-					daddr_t, daddr_t));
-
 static boolean_t
-ufs_issequential(ump, daddr0, daddr1)
-	const struct ufsmount *ump;
-	daddr_t daddr0;
-	daddr_t daddr1;
+ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)
 {
 
 	/* for ufs, blocks in a hole is not 'contiguous'. */
@@ -73,13 +67,12 @@ ufs_issequential(ump, daddr0, daddr1)
 }
 
 /*
- * Bmap converts a the logical block number of a file to its physical block
+ * Bmap converts the logical block number of a file to its physical block
  * number on the disk. The conversion is done by using the logical block
  * number to index into the array of block pointers described by the dinode.
  */
 int
-ufs_bmap(v)
-	void *v;
+ufs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -116,14 +109,8 @@ ufs_bmap(v)
  */
 
 int
-ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
-	struct vnode *vp;
-	daddr_t bn;
-	daddr_t *bnp;
-	struct indir *ap;
-	int *nump;
-	int *runp;
-	ufs_issequential_callback_t is_sequential;
+ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
+    int *nump, int *runp, ufs_issequential_callback_t is_sequential)
 {
 	struct inode *ip;
 	struct buf *bp;
@@ -330,11 +317,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(vp, bn, ap, nump)
-	struct vnode *vp;
-	daddr_t bn;
-	struct indir *ap;
-	int *nump;
+ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 {
 	daddr_t metalbn, realbn;
 	struct ufsmount *ump;
@@ -371,11 +354,7 @@ ufs_getlbns(vp, bn, ap, nump)
 	}
 
 	/* Calculate the address of the first meta-block. */
-	metalbn = 0;		/* XXX: gcc3 */
-	if (realbn >= 0)
-		metalbn = -(realbn - bn + NIADDR - i);
-	else
-		metalbn = -(-realbn - bn + NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
 
 	/*
 	 * At each iteration, off is the offset into the bap array which is

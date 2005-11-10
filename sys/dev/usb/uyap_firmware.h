@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap_firmware.h,v 1.3 2002/11/03 09:57:40 augustss Exp $	*/
+/*	$NetBSD: uyap_firmware.h,v 1.3.6.1 2005/11/10 14:08:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#define U (u_int8_t *)
+#define U (const u_int8_t *)
 {0x10,0x146C,
 	U"\xC2\x00\x90\x7F\xA5\xE0\x54\x18\xFF\x13\x13\x13\x54\x1F\x44\x50"},
 {0x10,0x147C,

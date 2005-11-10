@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.104.2.5 2005/03/04 16:50:55 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.104.2.6 2005/11/10 14:08:06 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.5 2005/03/04 16:50:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.6 2005/11/10 14:08:06 skrll Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -81,13 +81,15 @@ extern int usbdebug;
 #endif
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
-Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *,
-	size_t, int);
+Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
+Static void usbd_devinfo_vp(usbd_device_handle dev,
+			    char v[USB_MAX_ENCODED_STRING_LEN],
+			    char p[USB_MAX_ENCODED_STRING_LEN], int usedev);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
 Static int usbd_print(void *, const char *);
 Static int usbd_submatch(device_ptr_t, struct cfdata *,
-			 const locdesc_t *, void *);
+			 const int *, void *);
 #elif defined(__OpenBSD__)
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
@@ -108,12 +110,12 @@ typedef u_int16_t usb_product_id_t;
  */
 struct usb_vendor {
 	usb_vendor_id_t		vendor;
-	char			*vendorname;
+	const char		*vendorname;
 };
 struct usb_product {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	char			*productname;
+	const char		*productname;
 };
 
 #include <dev/usb/usbdevs_data.h>
@@ -196,72 +198,56 @@ usbd_trim_spaces(char *p)
 {
 	char *q, *e;
 
-	if (p == NULL)
-		return;
 	q = e = p;
-	while (*q == ' ')	/* skip leading spaces */
+	while (*q == ' ')		/* skip leading spaces */
 		q++;
-	while ((*p = *q++))	/* copy string */
-		if (*p++ != ' ') /* remember last non-space */
+	while ((*p = *q++))		/* copy string */
+		if (*p++ != ' ')	/* remember last non-space */
 			e = p;
-	*e = 0;			/* kill trailing spaces */
+	*e = '\0';			/* kill trailing spaces */
 }
 
-void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t lv, char *p, size_t lp,
-	int usedev)
+Static void
+usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
+		char p[USB_MAX_ENCODED_STRING_LEN], int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char *vendor = NULL, *product = NULL;
 #ifdef USBVERBOSE
 	int n;
 #endif
 
-	if (dev == NULL) {
-		v[0] = p[0] = '\0';
+	v[0] = p[0] = '\0';
+	if (dev == NULL)
 		return;
-	}
 
 	if (usedev) {
-		if (usbd_get_string(dev, udd->iManufacturer, v))
-			vendor = NULL;
-		else
-			vendor = v;
-		usbd_trim_spaces(vendor);
-		if (usbd_get_string(dev, udd->iProduct, p))
-			product = NULL;
-		else
-			product = p;
-		usbd_trim_spaces(product);
-		if (vendor && !*vendor)
-			vendor = NULL;
-		if (product && !*product)
-			product = NULL;
-	} else {
-		vendor = NULL;
-		product = NULL;
+		if (usbd_get_string(dev, udd->iManufacturer, v) ==
+		    USBD_NORMAL_COMPLETION)
+			usbd_trim_spaces(v);
+		if (usbd_get_string(dev, udd->iProduct, p) ==
+		    USBD_NORMAL_COMPLETION)
+			usbd_trim_spaces(p);
 	}
+	/* There is no need for strlcpy & snprintf below. */
 #ifdef USBVERBOSE
-	if (vendor == NULL) {
+	if (v[0] == '\0')
 		for (n = 0; n < usb_nvendors; n++)
-			if (usb_vendors[n].vendor == UGETW(udd->idVendor))
-				vendor = usb_vendors[n].vendorname;
-	}
-	if (product == NULL) {
+			if (usb_vendors[n].vendor == UGETW(udd->idVendor)) {
+				strcpy(v, usb_vendors[n].vendorname);
+				break;
+			}
+	if (p[0] == '\0')
 		for (n = 0; n < usb_nproducts; n++)
 			if (usb_products[n].vendor == UGETW(udd->idVendor) &&
-			    usb_products[n].product == UGETW(udd->idProduct))
-				product = usb_products[n].productname;
-	}
+			    usb_products[n].product == UGETW(udd->idProduct)) {
+				strcpy(p, usb_products[n].productname);
+				break;
+			}
 #endif
-	if (vendor != NULL && *vendor)
-		strlcpy(v, vendor, lv);
-	else
-		snprintf(v, lv, "vendor 0x%04x", UGETW(udd->idVendor));
-	if (product != NULL && *product)
-		strlcpy(p, product, lp);
-	else
-		snprintf(p, lp, "product 0x%04x", UGETW(udd->idProduct));
+	if (v[0] == '\0')
+		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
+	if (p[0] == '\0')
+		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
 }
 
 int
@@ -270,19 +256,18 @@ usbd_printBCD(char *cp, size_t l, int bcd)
 	return (snprintf(cp, l, "%x.%02x", bcd >> 8, bcd & 0xff));
 }
 
-void
+Static void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char vendor[USB_MAX_STRING_LEN];
-	char product[USB_MAX_STRING_LEN];
+	char vendor[USB_MAX_ENCODED_STRING_LEN];
+	char product[USB_MAX_ENCODED_STRING_LEN];
 	int bcdDevice, bcdUSB;
 	char *ep;
 
 	ep = cp + l;
 
-	usbd_devinfo_vp(dev, vendor, sizeof(vendor), product,
-	    sizeof(product), 1);
+	usbd_devinfo_vp(dev, vendor, product, 1);
 	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -295,6 +280,22 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	cp += usbd_printBCD(cp, ep - cp, bcdDevice);
 	cp += snprintf(cp, ep - cp, ", addr %d", dev->address);
 	*cp = 0;
+}
+
+char *
+usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
+{
+	char *devinfop;
+
+	devinfop = malloc(DEVINFOSIZE, M_TEMP, M_WAITOK);
+	usbd_devinfo(dev, showclass, devinfop, DEVINFOSIZE);
+	return devinfop;
+}
+
+void
+usbd_devinfo_free(char *devinfop)
+{
+	free(devinfop, M_TEMP);
 }
 
 /* Delay for a certain number of ms */
@@ -755,15 +756,6 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
-	/* Clear any stall and make sure DATA0 toggle will be used next. */
-	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT) {
-		err = usbd_clear_endpoint_stall(p);
-		/* Some devices reject this command, so ignore a STALL. */
-		if (err && err != USBD_STALLED) {
-			printf("usbd_setup_pipe: failed to start endpoint, %s\n", usbd_errstr(err));
-			return (err);
-		}
-	}
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1190,7 +1182,7 @@ usbd_print(void *aux, const char *pnp)
 #if defined(__NetBSD__)
 int
 usbd_submatch(struct device *parent, struct cfdata *cf,
-	      const locdesc_t *ldesc, void *aux)
+	      const int *ldesc, void *aux)
 {
 #elif defined(__OpenBSD__)
 int
@@ -1256,10 +1248,13 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
-	    di->udi_product, sizeof(di->udi_product), usedev);
+	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ddesc.bcdDevice));
+	di->udi_serial[0] = 0;
+	if (usedev)
+		(void)usbd_get_string(dev, dev->ddesc.iSerialNumber,
+				      di->udi_serial);
 	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);
 	di->udi_productNo = UGETW(dev->ddesc.idProduct);
 	di->udi_releaseNo = UGETW(dev->ddesc.bcdDevice);

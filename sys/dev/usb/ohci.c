@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.140.2.7 2005/04/01 14:30:33 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.140.2.8 2005/11/10 14:08:05 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.140.2.7 2005/04/01 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.140.2.8 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ int ohcidebug = 0;
 
 /*
  * The OHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
@@ -541,7 +541,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 		dataphys += curlen;
 		cur = next;
 	}
-	if ((flags & USBD_FORCE_SHORT_XFER) &&
+	if (!rd && (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
 		/* Force a 0 length transfer at the end. */
 
@@ -653,7 +653,7 @@ ohci_init(ohci_softc_t *sc)
 	ohci_soft_ed_t *sed, *psed;
 	usbd_status err;
 	int i;
-	u_int32_t s, ctl, ival, hcr, fm, per, rev, desca;
+	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
 
 	DPRINTF(("ohci_init: start\n"));
 #if defined(__OpenBSD__)
@@ -758,21 +758,31 @@ ohci_init(ohci_softc_t *sc)
 	}
 #endif
 
-	/* Determine in what context we are running. */
+	/* Preserve values programmed by SMM/BIOS but lost over reset. */
 	ctl = OREAD4(sc, OHCI_CONTROL);
+	rwc = ctl & OHCI_RWC;
+	fm = OREAD4(sc, OHCI_FM_INTERVAL);
+	desca = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
+	descb = OREAD4(sc, OHCI_RH_DESCRIPTOR_B);
+
+	/* Determine in what context we are running. */
 	if (ctl & OHCI_IR) {
 		/* SMM active, request change */
 		DPRINTF(("ohci_init: SMM active, request owner change\n"));
+		if ((sc->sc_intre & (OHCI_OC | OHCI_MIE)) ==
+		    (OHCI_OC | OHCI_MIE))
+			OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_MIE);
 		s = OREAD4(sc, OHCI_COMMAND_STATUS);
 		OWRITE4(sc, OHCI_COMMAND_STATUS, s | OHCI_OCR);
 		for (i = 0; i < 100 && (ctl & OHCI_IR); i++) {
 			usb_delay_ms(&sc->sc_bus, 1);
 			ctl = OREAD4(sc, OHCI_CONTROL);
 		}
+		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
 		if ((ctl & OHCI_IR) == 0) {
 			printf("%s: SMM does not respond, resetting\n",
 			       USBDEVNAME(sc->sc_bus.bdev));
-			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 			goto reset;
 		}
 #if 0
@@ -781,7 +791,7 @@ ohci_init(ohci_softc_t *sc)
 		/* BIOS started controller. */
 		DPRINTF(("ohci_init: BIOS active\n"));
 		if ((ctl & OHCI_HCFS_MASK) != OHCI_HCFS_OPERATIONAL) {
-			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL);
+			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL | rwc);
 			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		}
 #endif
@@ -797,11 +807,10 @@ ohci_init(ohci_softc_t *sc)
 	 * without it some controllers do not start.
 	 */
 	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
-	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY);
 
 	/* We now own the host controller and the bus has been reset. */
-	ival = OHCI_GET_IVAL(OREAD4(sc, OHCI_FM_INTERVAL));
 
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_HCR); /* Reset HC */
 	/* Nominal time for a reset is 10 us. */
@@ -829,12 +838,11 @@ ohci_init(ohci_softc_t *sc)
 	OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 	/* disable all interrupts and then switch on all desired interrupts */
 	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
-	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 	/* switch on desired functional features */
 	ctl = OREAD4(sc, OHCI_CONTROL);
 	ctl &= ~(OHCI_CBSR_MASK | OHCI_LES | OHCI_HCFS_MASK | OHCI_IR);
 	ctl |= OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE |
-		OHCI_RATIO_1_4 | OHCI_HCFS_OPERATIONAL;
+		OHCI_RATIO_1_4 | OHCI_HCFS_OPERATIONAL | rwc;
 	/* And finally start it! */
 	OWRITE4(sc, OHCI_CONTROL, ctl);
 
@@ -843,6 +851,7 @@ ohci_init(ohci_softc_t *sc)
 	 * registers that should be set earlier, but that the
 	 * controller ignores when in the SUSPEND state.
 	 */
+	ival = OHCI_GET_IVAL(fm);
 	fm = (OREAD4(sc, OHCI_FM_INTERVAL) & OHCI_FIT) ^ OHCI_FIT;
 	fm |= OHCI_FSMPS(ival) | ival;
 	OWRITE4(sc, OHCI_FM_INTERVAL, fm);
@@ -850,7 +859,6 @@ ohci_init(ohci_softc_t *sc)
 	OWRITE4(sc, OHCI_PERIODIC_START, per);
 
 	/* Fiddle the No OverCurrent Protection bit to avoid chip bug. */
-	desca = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
 	OWRITE4(sc, OHCI_RH_DESCRIPTOR_A, desca | OHCI_NOCP);
 	OWRITE4(sc, OHCI_RH_STATUS, OHCI_LPSC); /* Enable port power */
 	usb_delay_ms(&sc->sc_bus, OHCI_ENABLE_POWER_DELAY);
@@ -882,6 +890,10 @@ ohci_init(ohci_softc_t *sc)
 #endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
+
+	/* Finally, turn on interrupts. */
+	DPRINTFN(1,("ohci_init: enabling\n"));
+	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -990,7 +1002,7 @@ ohci_shutdown(void *v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
@@ -1213,7 +1225,7 @@ ohci_rhsc_enable(void *v_sc)
 }
 
 #ifdef OHCI_DEBUG
-char *ohci_cc_strs[] = {
+const char *ohci_cc_strs[] = {
 	"NO_ERROR",
 	"CRC",
 	"BIT_STUFFING",
@@ -1411,10 +1423,12 @@ ohci_softintr(void *v)
 					for (j = 0; j < iframes; i++, j++) {
 						len = le16toh(sitd->
 						    itd.itd_offset[j]);
-						len =
-						    (OHCI_ITD_PSW_GET_CC(len) ==
-						    OHCI_CC_NOT_ACCESSED) ? 0 :
-						    OHCI_ITD_PSW_LENGTH(len);
+						if ((OHCI_ITD_PSW_GET_CC(len) &
+						    OHCI_CC_NOT_ACCESSED_MASK)
+						    == OHCI_CC_NOT_ACCESSED)
+							len = 0;
+						else
+							len = OHCI_ITD_PSW_LENGTH(len);
 						xfer->frlengths[i] = len;
 						actlen += len;
 					}
@@ -1559,12 +1573,11 @@ ohci_root_ctrl_done(usbd_xfer_handle xfer)
 void
 ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	int timo = xfer->timeout;
-	int usecs;
+	int timo;
 	u_int32_t intrs;
 
 	xfer->status = USBD_IN_PROGRESS;
-	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
+	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
 		if (sc->sc_dying)
 			break;
@@ -2144,6 +2157,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	ohci_soft_td_t *p, *n;
 	ohci_physaddr_t headp;
 	int s, hit;
+	int wake;
 
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,sed));
 
@@ -2158,6 +2172,26 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ohci_abort_xfer: not in process context");
+
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
+	if (xfer->hcflags & UXFER_ABORTING) {
+		DPRINTFN(2, ("ohci_abort_xfer: already aborting\n"));
+#ifdef DIAGNOSTIC
+		if (status == USBD_TIMEOUT)
+			printf("0hci_abort_xfer: TIMEOUT while aborting\n");
+#endif
+		/* Override the status which might be USBD_TIMEOUT. */
+		xfer->status = status;
+		DPRINTFN(2, ("ohci_abort_xfer: waiting for abort to finish\n"));
+		xfer->hcflags |= UXFER_ABORTWAIT;
+		while (xfer->hcflags & UXFER_ABORTING)
+			tsleep(&xfer->hcflags, PZERO, "ohciaw", 0);
+		return;
+	}
+	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -2196,6 +2230,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	p = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (p == NULL) {
+		xfer->hcflags &= ~UXFER_ABORTING; /* XXX */
 		splx(s);
 		printf("ohci_abort_xfer: hcpriv is NULL\n");
 		return;
@@ -2232,7 +2267,11 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 5: Execute callback.
 	 */
+	wake = xfer->hcflags & UXFER_ABORTWAIT;
+	xfer->hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
+	if (wake)
+		wakeup(&xfer->hcflags);
 
 	splx(s);
 }
@@ -2946,8 +2985,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *tail;
-	int len;
-	int s;
+	int s, len, isread, endpt;
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -2962,6 +3000,8 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 #endif
 
 	len = xfer->length;
+	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	data = opipe->tail.td;
 	tail = ohci_alloc_std(sc);
@@ -2970,7 +3010,8 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = htole32(
-		OHCI_TD_IN | OHCI_TD_NOCC |
+		isread ? OHCI_TD_IN : OHCI_TD_OUT |
+		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
 		data->td.td_flags |= htole32(OHCI_TD_R);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.36.2.5 2005/03/04 16:40:54 skrll Exp $	*/
+/*	$NetBSD: acpi.c,v 1.36.2.6 2005/11/10 14:03:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.36.2.5 2005/03/04 16:40:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.36.2.6 2005/11/10 14:03:11 skrll Exp $");
 
 #include "opt_acpi.h"
+#include "opt_pcifixup.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.36.2.5 2005/03/04 16:40:54 skrll Exp $");
 #include <dev/acpi/acpidevs_data.h>
 #endif
 
-#ifdef ACPI_PCI_FIXUP
+#if defined(ACPI_PCI_FIXUP)
+#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP.  Please adjust your kernel configuration file.
+#endif
+
+#ifdef PCI_INTR_FIXUP
 #include <dev/pci/pcidevs.h>
 #endif
 
@@ -152,10 +157,10 @@ static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 void			acpi_pci_fixup(struct acpi_softc *);
 #endif
-#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
+#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
@@ -316,7 +321,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fix up PCI devices.
 	 */
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 	if ((sc->sc_quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) == 0)
 		acpi_pci_fixup(sc);
 #endif
@@ -430,7 +435,7 @@ acpi_build_tree(struct acpi_softc *sc)
 
 		state.scope = as;
 
-		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, (char *) scopes[i],
+		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, scopes[i],
 		    &parent);
 		if (ACPI_SUCCESS(rv)) {
 			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
@@ -651,7 +656,7 @@ acpi_print(void *aux, const char *pnp)
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			aprint_normal(" (%s", aa->aa_node->ad_devinfo->HardwareId.Value);
 			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
-				char *uid;
+				const char *uid;
 
 				uid = aa->aa_node->ad_devinfo->UniqueId.Value;
 				if (uid[0] == '\0')
@@ -786,7 +791,7 @@ acpi_fixed_button_pressed(void *context)
  *	Evaluate an integer object.
  */
 ACPI_STATUS
-acpi_eval_integer(ACPI_HANDLE handle, char *path, ACPI_INTEGER *valp)
+acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -811,7 +816,7 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, ACPI_INTEGER *valp)
  *	Evaluate a (Unicode) string object.
  */
 ACPI_STATUS
-acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
+acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -825,7 +830,7 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
 	if (ACPI_SUCCESS(rv)) {
 		ACPI_OBJECT *param = buf.Pointer;
-		char *ptr = param->String.Pointer;
+		const char *ptr = param->String.Pointer;
 		size_t len = param->String.Length;
 		if ((*stringp = AcpiOsAllocate(len)) == NULL)
 			rv = AE_NO_MEMORY;
@@ -845,7 +850,7 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
  *	Caller must free buf.Pointer by AcpiOsFree().
  */
 ACPI_STATUS
-acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
+acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *bufp)
 {
 	ACPI_STATUS rv;
 
@@ -949,6 +954,36 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 	return 0;
 }
 
+/*
+ * acpi_set_wake_gpe
+ *
+ *	Set GPE as both Runtime and Wake
+ */
+void
+acpi_set_wake_gpe(ACPI_HANDLE handle)
+{
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	ACPI_OBJECT *p, *elt;
+
+	rv = acpi_eval_struct(handle, METHOD_NAME__PRW, &buf);
+	if (ACPI_FAILURE(rv))
+		return;			/* just ignore */
+
+	p = buf.Pointer;
+	if (p->Type != ACPI_TYPE_PACKAGE || p->Package.Count < 2)
+		goto out;		/* just ignore */
+
+	elt = p->Package.Elements;
+
+	/* TBD: package support */
+	AcpiSetGpeType(NULL, elt[0].Integer.Value, ACPI_GPE_TYPE_WAKE_RUN);
+	AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+
+ out:
+	AcpiOsFree(buf.Pointer);
+}
+
 
 /*****************************************************************************
  * ACPI sleep support.
@@ -1030,7 +1065,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return ret;
 }
 
-#ifdef ACPI_PCI_FIXUP
+#ifdef PCI_INTR_FIXUP
 ACPI_STATUS acpi_pci_fixup_bus(ACPI_HANDLE, UINT32, void *, void **);
 /*
  * acpi_pci_fixup:
@@ -1192,11 +1227,9 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		if (ACPI_FAILURE(rv))
 			continue;
 		line = acpi_get_intr(link);
-		if (line == -1) {
-#ifdef ACPI_DEBUG
+		if (line == (uint)-1 || line == 0) {
 			printf("%s: fixing up intr link %s\n",
 			    sc->sc_dev.dv_xname, PrtElement->Source);
-#endif
 			rv = acpi_allocate_resources(link);
 			if (ACPI_FAILURE(rv)) {
 				printf("%s: interrupt allocation failed %s\n",
@@ -1204,7 +1237,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 				continue;
 			}
 			line = acpi_get_intr(link);
-			if (line == -1) {
+			if (line == (uint)-1) {
 				printf("%s: get intr failed %s\n",
 				    sc->sc_dev.dv_xname, PrtElement->Source);
 				continue;
@@ -1220,9 +1253,9 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	AcpiOsFree(buf.Pointer);
 	return AE_OK;
 }
-#endif /* ACPI_PCI_FIXUP */
+#endif /* PCI_INTR_FIXUP */
 
-#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
+#if defined(PCI_INTR_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 /* XXX This very incomplete */
 static ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
@@ -1307,4 +1340,4 @@ out1:
 out:
 	return rv;
 }
-#endif /* ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV */
+#endif /* PCI_INTR_FIXUP || ACPI_ACTIVATE_DEV */

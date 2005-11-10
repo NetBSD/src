@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.2.2.2 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.2.2.3 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ USB_ATTACH(ugensa)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -141,9 +141,10 @@ USB_ATTACH(ugensa)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

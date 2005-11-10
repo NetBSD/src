@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.14.6.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_q931.c,v 1.14.6.5 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.14.6.4 2005/03/04 16:53:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.14.6.5 2005/11/10 14:11:36 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -538,7 +538,7 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 void
 i4b_decode_q931_message(call_desc_t *cd, u_char message_type)
 {
-	char *m = NULL;
+	const char *m = NULL;
 
 	cd->event = EV_ILL;
 

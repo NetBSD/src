@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.34.2.6 2005/03/04 16:50:32 skrll Exp $ */
+/*	$NetBSD: stp4020.c,v 1.34.2.7 2005/11/10 14:07:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.6 2005/03/04 16:50:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.7 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ static int	stp4020match(struct device *, struct cfdata *, void *);
 static void	stp4020attach(struct device *, struct device *, void *);
 static int	stp4020_intr(void *);
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
-static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay);
+static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *cmd_delay);
 static void	stp4020_intr_dispatch(void *arg);
 
 CFATTACH_DECL(nell, sizeof(struct stp4020_softc),
@@ -589,7 +589,7 @@ stp4020_event_thread(arg)
 		s = splhigh();
 		if ((e = SIMPLEQ_FIRST(&sc->events)) == NULL) {
 			splx(s);
-			(void)tsleep(&sc->events, PWAIT, "pcicev", 0);
+			(void)tsleep(&sc->events, PWAIT, "nellevt", 0);
 			continue;
 		}
 		SIMPLEQ_REMOVE_HEAD(&sc->events, se_q);
@@ -785,7 +785,7 @@ stp4020_intr(arg)
  * values for the CMDLNG and CMDDLAY registers.
  */
 static void
-stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay)
+stp4020_calc_speed(int bus_speed, int ns, int *length, int *cmd_delay)
 {
 	int result;
 
@@ -801,13 +801,13 @@ stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay)
 	*length = result;
 
 	/* the sbus frequency range is limited, so we can keep this simple */
-	*delay = ns <= STP4020_MEM_SPEED_MIN? 1 : 2;
+	*cmd_delay = ns <= STP4020_MEM_SPEED_MIN? 1 : 2;
 }
 
 static void
 stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 {
-	int v, length, delay;
+	int v, length, cmd_delay;
 
 	/*
 	 * According to the PC Card standard 300ns access timing should be
@@ -815,13 +815,13 @@ stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 	 * seem to propagate timing information, so we use that
 	 * everywhere.
 	 */
-	stp4020_calc_speed(speed, (win==STP_WIN_ATTR)? 300 : 100, &length, &delay);
+	stp4020_calc_speed(speed, (win==STP_WIN_ATTR)? 300 : 100, &length, &cmd_delay);
 
 	/*
 	 * Fill in the Address Space Select and Base Address
 	 * fields of this windows control register 0.
 	 */
-	v = ((delay << STP4020_WCR0_CMDDLY_S)&STP4020_WCR0_CMDDLY_M)
+	v = ((cmd_delay << STP4020_WCR0_CMDDLY_S)&STP4020_WCR0_CMDDLY_M)
 	    | ((length << STP4020_WCR0_CMDLNG_S)&STP4020_WCR0_CMDLNG_M);
 	switch (win) {
 	case STP_WIN_ATTR:
@@ -1127,7 +1127,7 @@ stp4020_delay(ms)
 	if (ticks > 60*hz)
 		panic("stp4020: preposterous delay: %u", ticks);
 #endif
-	tsleep(&ticks, 0, "stp4020_delay", ticks);
+	tsleep(&ticks, 0, "nelldel", ticks);
 }
 
 #ifdef STP4020_DEBUG

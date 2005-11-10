@@ -27,7 +27,7 @@
  *	i4b_lme.c - layer management entity
  *	-------------------------------------
  *
- *	$Id: i4b_lme.c,v 1.5.8.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_lme.c,v 1.5.8.5 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.5.8.4 2005/03/04 16:53:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.5.8.5 2005/11/10 14:11:36 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -99,10 +99,10 @@ i4b_mdl_assign_ind(l2_softc_t *l2sc)
  *	i4b_mdl_error_ind handler (Q.921 01/94 pp 156)
  *---------------------------------------------------------------------------*/
 void
-i4b_mdl_error_ind(l2_softc_t *l2sc, char *where, int errorcode)
+i4b_mdl_error_ind(l2_softc_t *l2sc, const char *where, int errorcode)
 {
 #if DO_I4B_DEBUG
-	static char *error_text[] = {
+	static const char *error_text[] = {
 		"MDL_ERR_A: rx'd unsolicited response - supervisory (F=1)",
 		"MDL_ERR_B: rx'd unsolicited response - DM (F=1)",
 		"MDL_ERR_C: rx'd unsolicited response - UA (F=1)",

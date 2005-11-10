@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5.12.4 2004/11/29 07:24:05 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5.12.5 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -46,6 +46,10 @@ struct cpu_disklabel {
 };
 
 /* Pull in partition definitions. */
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #endif /* _MACHINE_DISKLABEL_H_ */

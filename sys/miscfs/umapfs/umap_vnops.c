@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.22.16.5 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.22.16.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.22.16.5 2005/03/04 16:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.22.16.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.22.16.5 2005/03/04 16:52:56 skrll E
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umap_lookup	__P((void *));
-int	umap_getattr	__P((void *));
-int	umap_print	__P((void *));
-int	umap_rename	__P((void *));
+int	umap_lookup(void *);
+int	umap_getattr(void *);
+int	umap_print(void *);
+int	umap_rename(void *);
 
 /*
  * Global vfs data structures
@@ -66,7 +66,7 @@ int	umap_rename	__P((void *));
  * go away with a merged buffer/block cache.
  *
  */
-int (**umap_vnodeop_p) __P((void *));
+int (**umap_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc,	umap_bypass },
 
@@ -109,7 +109,7 @@ umap_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
-	int (**our_vnodeop_p) __P((void *));
+	int (**our_vnodeop_p)(void *);
 	struct ucred **credpp = 0, *credp = 0;
 	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;

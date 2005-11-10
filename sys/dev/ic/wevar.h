@@ -1,4 +1,4 @@
-/*	$NetBSD: wevar.h,v 1.1.26.1 2005/02/04 11:45:28 skrll Exp $	*/
+/*	$NetBSD: wevar.h,v 1.1.26.2 2005/11/10 14:04:16 skrll Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -21,7 +21,9 @@ struct we_softc {
 
 	u_int8_t sc_type;		/* our type */
 
-	int sc_16bitp;			/* are we 16 bit? */
+	u_int8_t sc_flags;		/* attachment flags */
+#define WE_16BIT_ENABLE		1	/* are we 16 bit? */
+#define WE_16BIT_NOTOGGLE	2	/* avoid explicit 16bit reset/enable? */
 
 	int sc_iobase;			/* i/o address */
 	int sc_maddr;			/* physical i/o mem addr */

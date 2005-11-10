@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.2.6 2005/04/01 14:28:41 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.7 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.6 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.7 2005/11/10 13:59:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -235,6 +235,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.6 2005/04/01 14:28:41 skrll Exp $
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+/* Defined in vfs_bio.c */
+extern u_int bufpages;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -315,7 +317,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	fputype = FPU_NONE;
 #ifdef  FPU_EMULATE

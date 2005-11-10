@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.20.6.3 2004/09/21 13:37:35 skrll Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.20.6.4 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20.6.3 2004/09/21 13:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20.6.4 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20.6.3 2004/09/21 13:37:35 skrll 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/in_proto.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ecn.h>
@@ -102,6 +104,11 @@ ipcomp4_input(m, va_alist)
 	struct secasvar *sav = NULL;
 	int off, proto;
 	va_list ap;
+	u_int16_t sport = 0;
+	u_int16_t dport = 0;
+#ifdef IPSEC_NAT_T
+	struct m_tag *tag = NULL;
+#endif
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
@@ -114,6 +121,13 @@ ipcomp4_input(m, va_alist)
 		ipsecstat.in_inval++;
 		goto fail;
 	}
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT-T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL)) != NULL) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
 
 	md = m_pulldown(m, off, sizeof(*ipcomp), NULL);
 	if (!md) {
@@ -136,7 +150,8 @@ ipcomp4_input(m, va_alist)
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
-			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi));
+			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi), 
+			sport, dport);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||
 		     sav->state == SADB_SASTATE_DYING)) {
@@ -280,7 +295,8 @@ ipcomp6_input(mp, offp, proto)
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
-			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, htonl(cpi));
+			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, 
+			htonl(cpi), 0, 0);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||
 		     sav->state == SADB_SASTATE_DYING)) {

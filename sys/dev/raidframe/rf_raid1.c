@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.13.6.4 2005/03/04 16:50:07 skrll Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.13.6.5 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.13.6.4 2005/03/04 16:50:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.13.6.5 2005/11/10 14:07:40 skrll Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -263,7 +263,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	RF_AccessStripeMap_t *aasm;
 	RF_SectorCount_t nsector;
 	RF_RaidAddr_t startAddr;
-	char   *buf, *buf1, *buf2;
+	char   *bf, *buf1, *buf2;
 	RF_PhysDiskAddr_t *pda;
 	RF_StripeNum_t psID;
 	RF_MCPair_t *mcpair;
@@ -289,14 +289,14 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	RF_ASSERT(layoutPtr->numDataCol == layoutPtr->numParityCol);
 	stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
 	bcount = nbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol);
-	RF_MallocAndAdd(buf, bcount, (char *), allocList);
-	if (buf == NULL)
+	RF_MallocAndAdd(bf, bcount, (char *), allocList);
+	if (bf == NULL)
 		goto done;
 #if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
 		printf("raid%d: RAID1 parity verify: buf=%lx bcount=%d (%lx - %lx)\n",
-		       raidPtr->raidid, (long) buf, bcount, (long) buf,
-		       (long) buf + bcount);
+		       raidPtr->raidid, (long) bf, bcount, (long) bf,
+		       (long) bf + bcount);
 	}
 #endif
 	/*
@@ -304,7 +304,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
          * just compare data chunks versus "parity" chunks.
          */
 
-	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, nbytes, buf,
+	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, nbytes, bf,
 	    rf_DiskReadFunc, rf_DiskReadUndoFunc, "Rod", allocList, flags,
 	    RF_IO_NORMAL_PRIORITY);
 	if (rd_dag_h == NULL)
@@ -317,10 +317,10 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
          * (which are really mirror copies).
          */
 	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe,
-	    buf, RF_DONT_REMAP);
+	    bf, RF_DONT_REMAP);
 	aasm = asm_h->stripeMap;
 
-	buf1 = buf;
+	buf1 = bf;
 	/*
          * Loop through the data blocks, setting up read nodes for each.
          */
@@ -397,8 +397,8 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
          * buf1 is the beginning of the data blocks chunk
          * buf2 is the beginning of the parity blocks chunk
          */
-	buf1 = buf;
-	buf2 = buf + (nbytes * layoutPtr->numDataCol);
+	buf1 = bf;
+	buf2 = bf + (nbytes * layoutPtr->numDataCol);
 	ret = RF_PARITY_OKAY;
 	/*
          * bbufs is "bad bufs"- an array whose entries are the data
@@ -417,7 +417,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		if (rf_verifyParityDebug) {
 			printf("raid%d: RAID1 parity verify %d bytes: i=%d buf1=%lx buf2=%lx buf=%lx\n",
 			       raidPtr->raidid, nbytes, i, (long) buf1,
-			       (long) buf2, (long) buf);
+			       (long) buf2, (long) bf);
 		}
 #endif
 		ret = memcmp(buf1, buf2, nbytes);
@@ -466,7 +466,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	         * copy, and that we're spooging good data by writing bad over it,
 	         * but there's no way we can know that.
 	         */
-		wr_dag_h = rf_MakeSimpleDAG(raidPtr, nbad, nbytes, buf,
+		wr_dag_h = rf_MakeSimpleDAG(raidPtr, nbad, nbytes, bf,
 		    rf_DiskWriteFunc, rf_DiskWriteUndoFunc, "Wnp", allocList, flags,
 		    RF_IO_NORMAL_PRIORITY);
 		if (wr_dag_h == NULL)

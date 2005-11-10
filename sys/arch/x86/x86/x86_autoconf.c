@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.3.2.2 2004/11/02 07:51:06 skrll Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.3.2.3 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -211,7 +211,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	MD5_CTX ctx;
 	struct vnode *tmpvn;
 	int error;
-	uint8_t buf[DEV_BSIZE];
+	uint8_t bf[DEV_BSIZE];
 	uint8_t hash[16];
 	int found = 0;
 	int bmajor;
@@ -255,15 +255,15 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
 	     nblks != 0; nblks--, blk++) {
-		error = vn_rdwr(UIO_READ, tmpvn, (caddr_t) buf,
-		    sizeof(buf), blk * DEV_BSIZE, UIO_SYSSPACE,
+		error = vn_rdwr(UIO_READ, tmpvn, (caddr_t) bf,
+		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
 			printf("findroot: unable to read block %" PRIu64 "\n",
 			    blk);
 			goto closeout;
 		}
-		MD5Update(&ctx, buf, sizeof(buf));
+		MD5Update(&ctx, bf, sizeof(bf));
 	}
 	MD5Final(hash, &ctx);
 
@@ -370,7 +370,7 @@ findroot(void)
 #ifdef COMPAT_OLDBOOT
 	const char *name;
 	int majdev, unit, part;
-	char buf[32];
+	char bf[32];
 #endif
 
 	if (booted_device)
@@ -500,10 +500,10 @@ findroot(void)
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	snprintf(buf, sizeof(buf), "%s%d", name, unit);
+	snprintf(bf, sizeof(bf), "%s%d", name, unit);
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
+		if (strcmp(bf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
 			return;

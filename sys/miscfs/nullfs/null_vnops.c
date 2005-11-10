@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.26.6.4 2005/03/04 16:52:55 skrll Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.26.6.5 2005/11/10 14:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.26.6.4 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.26.6.5 2005/11/10 14:10:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ __KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.26.6.4 2005/03/04 16:52:55 skrll Ex
 /*
  * Global vfs data structures
  */
-int (**null_vnodeop_p) __P((void *));
+int (**null_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_default_desc,  layer_bypass },
 

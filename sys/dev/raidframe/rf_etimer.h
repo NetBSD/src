@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_etimer.h,v 1.8 2001/10/04 17:42:29 oster Exp $	*/
+/*	$NetBSD: rf_etimer.h,v 1.8.18.1 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,19 +42,19 @@ struct RF_Etimer_s {
 
 #define RF_ETIMER_START(_t_)                                    \
                 {                                               \
-                        int s;                                  \
+                        int _s;                                 \
                         memset(&(_t_), 0, sizeof (_t_));        \
-                        s = splclock();                         \
+                        _s = splclock();                        \
                         (_t_).st = mono_time;                   \
-                        splx(s);                                \
+                        splx(_s);                               \
                 }
 
 #define RF_ETIMER_STOP(_t_)                                     \
                 {                                               \
-                        int s;                                  \
-                        s = splclock();                         \
+                        int _s;                                 \
+                        _s = splclock();                        \
                         (_t_).et = mono_time;                   \
-                        splx(s);                                \
+                        splx(_s);                               \
                 }
 
 #define RF_ETIMER_EVAL(_t_)                                     \

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.9.2.4 2004/11/02 07:51:19 skrll Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.9.2.5 2005/11/10 14:03:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.4 2004/11/02 07:51:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.5 2005/11/10 14:03:11 skrll Exp $");
 
 #include "rnd.h"
 
@@ -233,20 +233,20 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 {
 	struct fdc_softc *sc = &asc->sc_fdc;
 	ACPI_OBJECT *fde;
-	ACPI_BUFFER buf;
+	ACPI_BUFFER abuf;
 	ACPI_STATUS rv;
 	UINT32 *p;
 	int i, drives = -1;
 
-	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &buf);
+	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
 	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
 		printf("%s: failed to evaluate _FDE: %s\n",
-		    sc->sc_dev.dv_xname, rv, AcpiFormatException(rv));
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 #endif
 		return drives;
 	}
-	fde = (ACPI_OBJECT *)buf.Pointer;
+	fde = (ACPI_OBJECT *)abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
 		printf("%s: expected BUFFER, got %d\n", sc->sc_dev.dv_xname,
 		    fde->Type);
@@ -285,7 +285,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	 */
 
 out:
-	AcpiOsFree(buf.Pointer);
+	AcpiOsFree(abuf.Pointer);
 	return drives;
 }
 
@@ -294,14 +294,14 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 {
 	struct fdc_softc *sc = &asc->sc_fdc;
 	ACPI_OBJECT *fdi, *e;
-	ACPI_BUFFER buf;
+	ACPI_BUFFER abuf;
 	ACPI_STATUS rv;
 	int i;
 
 	for (i = 0; i < 4; i++) {
 		if ((sc->sc_present & (1 << i)) == 0)
 			continue;
-		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &buf);
+		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &abuf);
 		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
 			printf("%s: failed to evaluate _FDI: %s on drive %d\n",
@@ -311,7 +311,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
-		fdi = (ACPI_OBJECT *)buf.Pointer;
+		fdi = (ACPI_OBJECT *)abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			printf("%s: expected PACKAGE, got %d\n",
 			    sc->sc_dev.dv_xname, fdi->Type);
@@ -326,7 +326,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_present &= ~(1 << i);
 
 out:
-		AcpiOsFree(buf.Pointer);
+		AcpiOsFree(abuf.Pointer);
 	}
 }
 

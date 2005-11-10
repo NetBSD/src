@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.8 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.8.2.1 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
  * All linux architectures except alpha use the sys_ipc
  * syscall and need the associated defines.
  */
-# if !defined(__alpha__)
+# if !defined(__alpha__) && !defined(__amd64__)
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
-/* Not used on: alpha */
+/* Not used on: alpha, amd64 */
 
 /*
  * Defines for the numbers passes as the first argument to the

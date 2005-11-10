@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.56.2.10 2005/03/04 16:50:08 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.56.2.11 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.10 2005/03/04 16:50:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.11 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -601,6 +601,8 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	 * the right slot */
 	raidPtr->reconControl = tmp_reconctrl;
 	mapPtr = raidPtr->reconControl->reconMap;
+	raidPtr->reconControl->numRUsTotal = mapPtr->totalRUs;
+	raidPtr->reconControl->numRUsComplete =	0;
 	raidPtr->status = rf_rs_reconstructing;
 	raidPtr->Disks[col].status = rf_ds_reconstructing;
 	raidPtr->Disks[col].spareCol = scol;
@@ -879,6 +881,8 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 			Dprintf1("RECON: submitblocked=%d\n", submitblocked);
 			if (!submitblocked)
 				retcode = IssueNextReadRequest(raidPtr, event->col);
+			else
+				retcode = 0;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.28.6.4 2005/01/24 08:34:54 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.28.6.5 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@ void	setvbr(void **);
 void	sunmon_abort(void);
 void	sunmon_halt(void);
 void	sunmon_init(void);
-void	sunmon_reboot(char *);
+void	sunmon_reboot(const char *);
 
 void	swapconf(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10.2.6 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.7 2005/11/10 14:06:01 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -249,6 +249,7 @@
 #define BGE_CHIPID_BCM5705_A3		0x30030000
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
+#define BGE_CHIPID_BCM5751_A1		0x41010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)                  ((x) >> 28)
@@ -1750,8 +1751,6 @@ typedef struct {
 	u_int32_t		bge_addr_lo;
 } bge_hostaddr;
 #endif
-
-#define BGE_HOSTADDR(x)	(x).bge_addr_lo
 
 static __inline void
 bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)

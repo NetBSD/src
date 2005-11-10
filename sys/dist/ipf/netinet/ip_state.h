@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.2.3 2005/02/09 08:26:14 skrll Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.2.4 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.2 2004/10/31 18:44:39 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.3 2005/03/03 14:24:11 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -107,6 +107,7 @@ typedef struct ipstate {
 #define	is_ifpin	is_ifp[0]
 #define	is_ifpout	is_ifp[2]
 #define	is_gre		is_ps.is_ug
+#define	is_call		is_gre.gs_call
 
 #define	IS_WSPORT	SI_W_SPORT	/* 0x00100 */
 #define	IS_WDPORT	SI_W_DPORT	/* 0x00200 */
@@ -227,6 +228,7 @@ extern	u_long	fr_udptimeout;
 extern	u_long	fr_udpacktimeout;
 extern	u_long	fr_icmptimeout;
 extern	u_long	fr_icmpacktimeout;
+extern	u_long	fr_iptimeout;
 extern	int	fr_statemax;
 extern	int	fr_statesize;
 extern	int	fr_state_lock;

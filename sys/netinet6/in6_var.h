@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.34.2.4 2005/02/04 11:48:04 skrll Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.34.2.5 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -471,14 +471,14 @@ extern unsigned long in6_maxmtu;
 /* struct ifnet *ifp; */				\
 /* struct in6_ifaddr *ia; */				\
 do {									\
-	struct ifaddr *ifa;						\
-	for (ifa = (ifp)->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next) {	\
-		if (!ifa->ifa_addr)					\
+	struct ifaddr *_ifa;						\
+	for (_ifa = (ifp)->if_addrlist.tqh_first; _ifa; _ifa = _ifa->ifa_list.tqe_next) {	\
+		if (!_ifa->ifa_addr)					\
 			continue;					\
-		if (ifa->ifa_addr->sa_family == AF_INET6)		\
+		if (_ifa->ifa_addr->sa_family == AF_INET6)		\
 			break;						\
 	}								\
-	(ia) = (struct in6_ifaddr *)ifa;				\
+	(ia) = (struct in6_ifaddr *)_ifa;				\
 } while (/*CONSTCOND*/ 0)
 
 #endif /* _KERNEL */
@@ -524,13 +524,13 @@ struct	in6_multistep {
 /* struct ifnet *ifp; */					\
 /* struct in6_multi *in6m; */					\
 do {								\
-	struct in6_ifaddr *ia;					\
+	struct in6_ifaddr *_ia;					\
 								\
-	IFP_TO_IA6((ifp), ia);					\
-	if (ia == NULL)						\
+	IFP_TO_IA6((ifp), _ia);					\
+	if (_ia == NULL)					\
 	  	(in6m) = NULL;					\
 	else							\
-		for ((in6m) = ia->ia6_multiaddrs.lh_first;	\
+		for ((in6m) = _ia->ia6_multiaddrs.lh_first;	\
 		     (in6m) != NULL &&				\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
 		     (in6m) = (in6m)->in6m_entry.le_next)	\

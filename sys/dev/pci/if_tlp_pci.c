@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.73.2.5 2005/03/04 16:45:19 skrll Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.73.2.6 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.73.2.5 2005/03/04 16:45:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.73.2.6 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,10 +169,8 @@ static const struct tulip_pci_product {
 	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C910SOHOB,
 	  TULIP_CHIP_AN985 },
 
-#if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
 	  TULIP_CHIP_AX88140 },
-#endif
 
 	{ 0,				0,
 	  TULIP_CHIP_INVALID },
@@ -486,6 +484,8 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	case TULIP_CHIP_MX98725:
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -909,8 +909,12 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (!tlp_isv_srom_enaddr(sc, enaddr)) {
 #ifdef __sparc__
-			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
-			    !sc->sc_srom[22]) {
+			if ((sc->sc_srom[20] == 0 &&
+			     sc->sc_srom[21] == 0 &&
+			     sc->sc_srom[22] == 0) ||
+			    (sc->sc_srom[20] == 0xff &&
+			     sc->sc_srom[21] == 0xff &&
+			     sc->sc_srom[22] == 0xff)) {
 				prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
 			} else
 #endif
@@ -924,6 +928,21 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * to it.
 		 */
 		sc->sc_mediasw = &tlp_dm9102_mediasw;
+		break;
+
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		/*
+		 * ASIX AX88140/AX88141 Ethernet Address is located at offset
+		 * 20 of the SROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
+
+		/*
+		 * ASIX AX88140A/AX88141 chip can have a built-in PHY or
+		 * an external MII interface.
+		 */
+		sc->sc_mediasw = &tlp_asix_mediasw;
 		break;
 
 	default:
@@ -1012,6 +1031,8 @@ tlp_pci_dec_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 	if (memcmp(&sc->sc_srom[29], "DE500", 5) == 0 ||
 	    memcmp(&sc->sc_srom[29], "DE450", 5) == 0)
 		memcpy(&sc->sc_name[4], &sc->sc_srom[29], 8);
+	else
+		sc->sc_name[3] = '\0';
 }
 
 static void

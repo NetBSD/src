@@ -1,8 +1,9 @@
-#	$NetBSD: std.sandpoint,v 1.8.2.3 2004/09/21 13:21:08 skrll Exp $
+#	$NetBSD: std.sandpoint,v 1.8.2.4 2005/11/10 13:58:32 skrll Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
 machine		sandpoint powerpc
+include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# Sandpoint uses OEA compliant CPUs
 makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use

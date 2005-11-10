@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.112.2.13 2005/03/04 16:54:24 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112.2.14 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,14 +69,16 @@ enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS,
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
-	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS
+	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
+	VT_TMPFS
 };
 
 #define VNODE_TAGS \
     "VT_NON", "VT_UFS", "VT_NFS", "VT_MFS", "VT_MSDOSFS", "VT_LFS", "VT_LOFS", \
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
-    "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS"
+    "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
+    "VT_TMPFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -121,15 +123,12 @@ struct vnode {
 	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* knotes attached to vnode */
-#ifdef VERIFIED_EXEC
-	char fp_status;				/* fingerprint status
-						   (see below) */
-#endif
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+
 /*
  * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
  * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
@@ -153,6 +152,8 @@ struct vnode {
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
+#define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
@@ -163,7 +164,7 @@ struct vnode {
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 
 #define VNODE_FLAGBITS \
-    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP" \
+    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
     "\10VLOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
     "\15DIROP\16LAYER\17ONWORKLIST\20DIRTY"
 
@@ -182,19 +183,6 @@ extern struct simplelock global_v_numoutput_slock;
 } while (/*CONSTCOND*/ 0)
 
 /*
- * Valid states for the fingerprint flag - if signed exec is being used
- */
-#ifdef VERIFIED_EXEC
-#define FINGERPRINT_INVALID  0  /* fingerprint has not been evaluated */
-#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
-#define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
-                                   indirect execs allowed */
-#define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
-#define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
-#define FINGERPRINT_NODEV    5  /* fingerprint evaluated but no dev list */
-#endif
-
-/*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
  * is unavailable (getattr) or which is not to be changed (setattr).
  */
@@ -205,7 +193,7 @@ struct vattr {
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */
-	long		va_fileid;	/* file id */
+	ino_t		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
 	struct timespec	va_atime;	/* time of last access */
@@ -562,95 +550,8 @@ struct vop_generic_args {
  */
 #include <sys/mount.h>
 
-/*
- * Preparing to start a filesystem write operation. If the operation is
- * permitted, then we bump the count of operations in progress and
- * proceed. If a suspend request is in progress, we wait until the
- * suspension is over, and then proceed.
- * V_PCATCH    adds PCATCH to the tsleep flags.
- * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
- * V_SLEEPONLY wait, but do not bump the operations count.
- * V_LOWER     this is a lower level operation. No further vnodes should be
- *             locked. Otherwise it is a upper level operation. No vnodes
- *             should be locked.
- */
-static inline int
-vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
-{
-	struct mount *mp;
-	int error, mask, prio;
-
-	/*
-	 * If a vnode is provided, get and return the mount point that
-	 * to which it will write.
-	 */
-	if (vp != NULL) {
-		*mpp = vp->v_mount;
-	}
-	if ((mp = *mpp) == NULL)
-		return (0);
-	mp = mp->mnt_leaf;
-	/*
-	 * Check on status of suspension.
-	 */
-	prio = PUSER - 1;
-	if (flags & V_PCATCH)
-		prio |= PCATCH;
-
-	if ((flags & V_LOWER) == 0)
-		mask = IMNT_SUSPEND;
-	else
-		mask = IMNT_SUSPENDLOW;
-
-	while ((mp->mnt_iflag & mask) != 0) {
-		if ((flags & V_WAIT) == 0)
-			return (EWOULDBLOCK);
-		error = tsleep(&mp->mnt_flag, prio, "suspfs", 0);
-		if (error)
-			return (error);
-	}
-	if (flags & V_SLEEPONLY)
-		return (0);
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0)
-		mp->mnt_writeopcountupper++;
-	else
-		mp->mnt_writeopcountlower++;
-	simple_unlock(&mp->mnt_slock);
-	return (0);
-}
-
-/*
- * Filesystem write operation has completed. If we are suspending and this
- * operation is the last one, notify the suspender that the suspension is
- * now in effect.
- */
-static inline void
-vn_finished_write(struct mount *mp, int flags)
-{
-	if (mp == NULL)
-		return;
-	mp = mp->mnt_leaf;
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0) {
-		mp->mnt_writeopcountupper--;
-		if (mp->mnt_writeopcountupper < 0)
-			printf("vn_finished_write: neg cnt upper=%d\n",
-			       mp->mnt_writeopcountupper);
-		if ((mp->mnt_iflag & IMNT_SUSPEND) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountupper);
-	} else {
-		mp->mnt_writeopcountlower--;
-		if (mp->mnt_writeopcountlower < 0)
-			printf("vn_finished_write: neg cnt lower=%d\n",
-			       mp->mnt_writeopcountlower);
-		if ((mp->mnt_iflag & IMNT_SUSPENDLOW) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountlower);
-	}
-	simple_unlock(&mp->mnt_slock);
-}
+int vn_start_write(struct vnode *, struct mount **, int);
+void vn_finished_write(struct mount *, int);
 
 /*
  * Finally, include the default set of vnode operations.
@@ -690,7 +591,7 @@ void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, struct ucred *,
 	    struct lwp *, int, int);
-void	vprint(char *, struct vnode *);
+void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
 void 	vrele(struct vnode *);
@@ -728,12 +629,12 @@ int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
 void	vntblinit(void);
 
 /* misc stuff */
-void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
-void	vn_syncer_remove_from_worklist(struct vnode *vp);
+void	vn_syncer_add_to_worklist(struct vnode *, int);
+void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
 
 /* from vfs_syscalls.c - abused by compat code */
-int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
+int	getvnode(struct filedesc *, int, struct file **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.1.2.5 2005/11/10 14:09:44 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,12 +75,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.1.2.5 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
+#include <sys/bufq_impl.h>
 #include <sys/malloc.h>
 
 /*
@@ -108,7 +109,7 @@ static void bufq_readprio_init(struct bufq_state *);
 static void bufq_prio_put(struct bufq_state *, struct buf *);
 static struct buf *bufq_prio_get(struct bufq_state *, int);
 
-BUFQ_DEFINE(readprio, BUFQ_READ_PRIO, bufq_readprio_init);
+BUFQ_DEFINE(readprio, 30, bufq_readprio_init);
 
 static void
 bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
@@ -225,8 +226,7 @@ bufq_readprio_init(struct bufq_state *bufq)
 
 	bufq->bq_get = bufq_prio_get;
 	bufq->bq_put = bufq_prio_put;
-	MALLOC(bufq->bq_private, struct bufq_prio *,
-	    sizeof(struct bufq_prio), M_DEVBUF, M_ZERO);
+	bufq->bq_private = malloc(sizeof(struct bufq_prio), M_DEVBUF, M_ZERO);
 	prio = (struct bufq_prio *)bufq->bq_private;
 	TAILQ_INIT(&prio->bq_read);
 	TAILQ_INIT(&prio->bq_write);

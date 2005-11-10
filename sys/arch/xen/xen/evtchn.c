@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.4.2.3 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.4.2.3 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,14 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $")
 #include <machine/xenfunc.h>
 
 #include "opt_xen.h"
-
-struct pic xenev_pic = {
-	.pic_dev = {
-		.dv_xname = "xen_fakepic",
-	},
-	.pic_type = PIC_XEN,
-	.pic_lock = __SIMPLELOCK_UNLOCKED,
-};
+#include "isa.h"
+#include "pci.h"
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -69,32 +63,28 @@ struct pic xenev_pic = {
  */
 static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
 
-/* IRQ <-> event-channel mappings. */
-int evtchn_to_irq[NR_EVENT_CHANNELS];
-int irq_to_evtchn[NR_IRQS];
+/* event handlers */
+struct evtsource *evtsource[NR_EVENT_CHANNELS];
 
-/* IRQ <-> VIRQ mapping. */
-static int virq_to_irq[NR_VIRQS];
+/* Reference counts for bindings to event channels */
+static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
+
+/* event-channel <-> VIRQ mapping. */
+static int virq_to_evtch[NR_VIRQS];
 
 
-#ifdef DOM0OPS
-/* IRQ <-> PIRQ mapping */
-static int pirq_to_irq[NR_PIRQS];
+#if NPCI > 0 || NISA > 0
+/* event-channel <-> PIRQ mapping */
+static int pirq_to_evtch[NR_PIRQS];
 /* PIRQ needing notify */
-static u_int32_t irq_needs_unmask_notify[NR_IRQS / 32];
+static u_int32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
 int pirq_interrupt(void *);
-void pirq_notify(int);
 physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
 };
 #endif
 
-/* Reference counts for bindings to IRQs. */
-static int irq_bindcount[NR_IRQS];
-
-#if 0
-static int xen_die_handler(void *);
-#endif
+int debug_port;
 static int xen_debug_handler(void *);
 static int xen_misdirect_handler(void *);
 
@@ -105,43 +95,45 @@ events_default_setup()
 {
 	int i;
 
-	/* No VIRQ -> IRQ mappings. */
+	/* No VIRQ -> event mappings. */
 	for (i = 0; i < NR_VIRQS; i++)
-		virq_to_irq[i] = -1;
+		virq_to_evtch[i] = -1;
 
-#ifdef DOM0OPS
-	/* No PIRQ -> IRQ mappings. */
+#if NPCI > 0 || NISA > 0
+	/* No PIRQ -> event mappings. */
 	for (i = 0; i < NR_PIRQS; i++)
-		pirq_to_irq[i] = -1;
-	for (i = 0; i < NR_IRQS / 32; i++)
-		irq_needs_unmask_notify[i] = 0;
+		pirq_to_evtch[i] = -1;
+	for (i = 0; i < NR_EVENT_CHANNELS / 32; i++)
+		pirq_needs_unmask_notify[i] = 0;
 #endif
 
-	/* No event-channel -> IRQ mappings. */
+	/* No event-channel are 'live' right now. */
 	for (i = 0; i < NR_EVENT_CHANNELS; i++) {
-		evtchn_to_irq[i] = -1;
-		hypervisor_mask_event(i); /* No event channels are 'live' right now. */
+		evtsource[i] = NULL;
+		evtch_bindcount[i] = 0;
+		hypervisor_mask_event(i);
 	}
 
-	/* No IRQ -> event-channel mappings. */
-	for (i = 0; i < NR_IRQS; i++)
-		irq_to_evtchn[i] = -1;
 }
 
 void
 init_events()
 {
-	int irq;
+	int evtch;
 
-	irq = bind_virq_to_irq(VIRQ_DEBUG);
-	aprint_verbose("debug events interrupting at irq %d\n", irq);
-	event_set_handler(irq, &xen_debug_handler, NULL, IPL_DEBUG);
-	hypervisor_enable_irq(irq);
+	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
+	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	    evtch);
+	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
+	    "debugev");
+	hypervisor_enable_event(evtch);
 
-	irq = bind_virq_to_irq(VIRQ_MISDIRECT);
-	event_set_handler(irq, &xen_misdirect_handler, NULL, IPL_DIE);
-	aprint_verbose("misdirect events interrupting at irq %d\n", irq);
-	hypervisor_enable_irq(irq);
+	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
+	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
+	    evtch);
+	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
+	    "misdirev");
+	hypervisor_enable_event(evtch);
 
 	/* This needs to be done early, but after the IRQ subsystem is
 	 * alive. */
@@ -151,176 +143,160 @@ init_events()
 }
 
 unsigned int
-do_event(int irq, struct intrframe *regs)
+evtchn_do_event(int evtch, struct intrframe *regs)
 {
 	struct cpu_info *ci;
 	int ilevel;
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
+	u_int32_t iplmask;
 
-	if (irq >= NR_IRQS) {
 #ifdef DIAGNOSTIC
-		printf("event irq number %d > NR_IRQS\n", irq);
-#endif
-		return ENOENT;
+	if (evtch >= NR_EVENT_CHANNELS) {
+		printf("event number %d > NR_IRQS\n", evtch);
+		panic("evtchn_do_event");
 	}
+#endif
 
 #ifdef IRQ_DEBUG
-	if (irq == IRQ_DEBUG)
-		printf("do_event: irq %d\n", irq);
+	if (evtch == IRQ_DEBUG)
+		printf("evtchn_do_event: evtch %d\n", evtch);
 #endif
-#if 0 /* DDD */
-	if (irq >= 3 && irq != 7) {
-		ci = &cpu_info_primary;
-		printf("do_event %d/%d called, ilevel %d\n", irq,
-		       irq_to_evtchn[irq], ci->ci_ilevel);
-	}
-#endif
-
 	ci = &cpu_info_primary;
 
-	hypervisor_acknowledge_irq(irq);
-	if (ci->ci_isources[irq] == NULL) {
-		printf("ci_isources[%d] is NULL\n", irq);
-		hypervisor_enable_irq(irq);
+	/*
+	 * Shortcut for the debug handler, we want it to always run,
+	 * regardless of the IPL level.
+	 */
+
+	if (evtch == debug_port) {
+		xen_debug_handler(NULL);
+		hypervisor_enable_event(evtch);
 		return 0;
 	}
-	uvmexp.intrs++;
-	ci->ci_isources[irq]->is_evcnt.ev_count++;
-	ilevel = ci->ci_ilevel;
-	if (ci->ci_isources[irq]->is_maxlevel <= ilevel) {
-#ifdef IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
-		    printf("ci_isources[%d]->is_maxlevel %d <= ilevel %d\n", irq,
-		    ci->ci_isources[irq]->is_maxlevel, ilevel);
+
+#ifdef DIAGNOSTIC
+	if (evtsource[evtch] == NULL) {
+		panic("evtchn_do_event: unknown event");
+	}
 #endif
-		ci->ci_ipending |= 1 << irq;
+	uvmexp.intrs++;
+	evtsource[evtch]->ev_evcnt.ev_count++;
+	ilevel = ci->ci_ilevel;
+	if (evtsource[evtch]->ev_maxlevel <= ilevel) {
+#ifdef IRQ_DEBUG
+		if (evtch == IRQ_DEBUG)
+		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
+		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
+#endif
+		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
+		    evtch / 32, evtch % 32);
 		/* leave masked */
 		return 0;
 	}
-	ci->ci_ilevel = ci->ci_isources[irq]->is_maxlevel;
-	/* sti */
+	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
+	iplmask = evtsource[evtch]->ev_imask;
+	sti();
 	ci->ci_idepth++;
 #ifdef MULTIPROCESSOR
 	x86_intlock(regs);
 #endif
-	ih = ci->ci_isources[irq]->is_handlers;
+	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel) {
 #ifdef IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
+		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
 #ifdef MULTIPROCESSOR
 			x86_intunlock(regs);
 #endif
-			ci->ci_ipending |= 1 << irq;
+			cli();
+			hypervisor_set_ipending(iplmask,
+			    evtch / 32, evtch % 32);
 			/* leave masked */
 			ci->ci_idepth--;
 			splx(ilevel);
 			return 0;
 		}
+		iplmask &= ~IUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
-		ih = ih->ih_next;
+		ih = ih->ih_evt_next;
 	}
+	cli();
 #ifdef MULTIPROCESSOR
 	x86_intunlock(regs);
 #endif
-	hypervisor_enable_irq(irq);
+	hypervisor_enable_event(evtch);
 	ci->ci_idepth--;
 	splx(ilevel);
-
-#if 0 /* DDD */
-	if (irq >= 3)
-		if (irq != 7) printf("do_event %d done, ipending %08x\n", irq,
-		    ci->ci_ipending);
-#endif
 
 	return 0;
 }
 
-static int
-find_unbound_irq(void)
-{
-	int irq;
-
-	for (irq = 0; irq < NR_IRQS; irq++)
-		if (irq_bindcount[irq] == 0)
-			break;
-
-	if (irq == NR_IRQS)
-		panic("No available IRQ to bind to: increase NR_IRQS!\n");
-
-	return irq;
-}
-
 int
-bind_virq_to_irq(int virq)
+bind_virq_to_evtch(int virq)
 {
 	evtchn_op_t op;
-	int evtchn, irq, s;
+	int evtchn, s;
 
 	s = splhigh();
 	simple_lock(&irq_mapping_update_lock);
 
-	irq = virq_to_irq[virq];
-	if (irq == -1) {
+	evtchn = virq_to_evtch[virq];
+	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
+		if (virq == VIRQ_DEBUG)
+			debug_port = evtchn;
 
-		irq = find_unbound_irq();
-		evtchn_to_irq[evtchn] = irq;
-		irq_to_evtchn[irq] = evtchn;
-		virq_to_irq[virq] = irq;
+		virq_to_evtch[virq] = evtchn;
 	}
 
-	irq_bindcount[irq]++;
+	evtch_bindcount[evtchn]++;
 
 	simple_unlock(&irq_mapping_update_lock);
 	splx(s);
     
-	return irq;
+	return evtchn;
 }
 
 void
-unbind_virq_from_irq(int virq)
+unbind_virq_from_evtch(int virq)
 {
 	evtchn_op_t op;
-	int irq = virq_to_irq[virq];
-	int evtchn = irq_to_evtchn[irq];
+	int evtchn = virq_to_evtch[virq];
 	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
-	irq_bindcount[irq]--;
-	if (irq_bindcount[irq] == 0) {
+	evtch_bindcount[evtchn]--;
+	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
 		op.u.close.dom = DOMID_SELF;
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind virtual IRQ %d\n", virq);
 
-		evtchn_to_irq[evtchn] = -1;
-		irq_to_evtchn[irq] = -1;
-		virq_to_irq[virq] = -1;
+		virq_to_evtch[virq] = -1;
 	}
 
 	simple_unlock(&irq_mapping_update_lock);
 	splx(s);
 }
 
-#ifdef DOM0OPS
+#if NPCI > 0 || NISA > 0
 int
-bind_pirq_to_irq(int pirq)
+bind_pirq_to_evtch(int pirq)
 {
 	evtchn_op_t op;
-	int evtchn, irq, s;
+	int evtchn, s;
 
 	if (pirq >= NR_PIRQS) {
 		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
@@ -329,8 +305,8 @@ bind_pirq_to_irq(int pirq)
 	s = splhigh();
 	simple_lock(&irq_mapping_update_lock);
 
-	irq = pirq_to_irq[pirq];
-	if (irq == -1) {
+	evtchn = pirq_to_evtch[pirq];
+	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_pirq;
 		op.u.bind_pirq.pirq = pirq;
 		op.u.bind_pirq.flags = BIND_PIRQ__WILL_SHARE;
@@ -338,44 +314,38 @@ bind_pirq_to_irq(int pirq)
 			panic("Failed to bind physical IRQ %d\n", pirq);
 		evtchn = op.u.bind_pirq.port;
 
-		irq = find_unbound_irq();
 #ifdef IRQ_DEBUG
-		printf("pirq %d irq %d evtchn %d\n", pirq, irq, evtchn);
+		printf("pirq %d evtchn %d\n", pirq, evtchn);
 #endif
-		evtchn_to_irq[evtchn] = irq;
-		irq_to_evtchn[irq] = evtchn;
-		pirq_to_irq[pirq] = irq;
+		pirq_to_evtch[pirq] = evtchn;
 	}
 
-	irq_bindcount[irq]++;
+	evtch_bindcount[evtchn]++;
 
 	simple_unlock(&irq_mapping_update_lock);
 	splx(s);
     
-	return irq;
+	return evtchn;
 }
 
 void
-unbind_pirq_from_irq(int pirq)
+unbind_pirq_from_evtch(int pirq)
 {
 	evtchn_op_t op;
-	int irq = pirq_to_irq[pirq];
-	int evtchn = irq_to_evtchn[irq];
+	int evtchn = pirq_to_evtch[pirq];
 	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
-	irq_bindcount[irq]--;
-	if (irq_bindcount[irq] == 0) {
+	evtch_bindcount[evtchn]--;
+	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
 		op.u.close.dom = DOMID_SELF;
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind physical IRQ %d\n", pirq);
 
-		evtchn_to_irq[evtchn] = -1;
-		irq_to_evtchn[irq] = -1;
-		pirq_to_irq[pirq] = -1;
+		pirq_to_evtch[pirq] = -1;
 	}
 
 	simple_unlock(&irq_mapping_update_lock);
@@ -383,22 +353,24 @@ unbind_pirq_from_irq(int pirq)
 }
 
 struct pintrhand *
-pirq_establish(int pirq, int irq, int (*func)(void *), void *arg, int level)
+pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level)
 {
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
+	char evname[8];
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	if (event_set_handler(irq, pirq_interrupt, ih, level) != 0) {
+	snprintf(evname, sizeof(evname), "irq%d", pirq);
+	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
 		free(ih, M_DEVBUF);
 		return NULL;
 	}
 	ih->pirq = pirq;
-	ih->irq = irq;
+	ih->evtch = evtch;
 	ih->func = func;
 	ih->arg = arg;
 
@@ -408,12 +380,12 @@ pirq_establish(int pirq, int irq, int (*func)(void *), void *arg, int level)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
 	if (physdev_op.u.irq_status_query.flags &
 	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
-		irq_needs_unmask_notify[irq >> 5] |= (1 << (irq & 0x1f));
+		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
 #ifdef IRQ_DEBUG
 		printf("pirq %d needs notify\n", pirq);
 #endif
 	}
-	hypervisor_enable_irq(irq);
+	hypervisor_enable_event(evtch);
 	return ih;
 }
 
@@ -426,98 +398,38 @@ pirq_interrupt(void *arg)
 
 	ret = ih->func(ih->arg);
 #ifdef IRQ_DEBUG
-	if (ih->irq == IRQ_DEBUG)
-	    printf("pirq_interrupt irq %d/%d ret %d\n", ih->irq, ih->pirq, ret);
+	if (ih->evtch == IRQ_DEBUG)
+	    printf("pirq_interrupt irq %d ret %d\n", ih->pirq, ret);
 #endif
 	return ret;
 }
 
-void
-pirq_notify(int irq)
-{
-
-	if (irq_needs_unmask_notify[irq >> 5] & (1 << (irq & 0x1f))) {
-#ifdef  IRQ_DEBUG
-		if (irq == IRQ_DEBUG)
-		    printf("pirq_notify(%d)\n", irq);
-#endif
-		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
-	}
-}
-
-#endif /* DOM0OPS */
+#endif /* NPCI > 0 || NISA > 0 */
 
 int
-bind_evtchn_to_irq(int evtchn)
+event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
+    const char *evname)
 {
-	int irq;
-	int s = splhigh();
-
-	simple_lock(&irq_mapping_update_lock);
-
-	irq = evtchn_to_irq[evtchn];
-	if (irq == -1) {
-		irq = find_unbound_irq();
-		evtchn_to_irq[evtchn] = irq;
-		irq_to_evtchn[irq] = evtchn;
-	}
-
-	irq_bindcount[irq]++;
-
-	simple_unlock(&irq_mapping_update_lock);
-	splx(s);
-    
-	return irq;
-}
-
-int
-unbind_evtchn_to_irq(int evtchn)
-{
-	int irq;
-	int s = splhigh();
-
-	simple_lock(&irq_mapping_update_lock);
-
-	irq = evtchn_to_irq[evtchn];
-	if (irq == -1) {
-		simple_unlock(&irq_mapping_update_lock);
-		splx(s);
-		return ENOENT;
-	}
-	irq_bindcount[irq]--;
-	if (irq_bindcount[irq] == 0) {
-		evtchn_to_irq[evtchn] = -1;
-		irq_to_evtchn[irq] = -1;
-	}
-
-	simple_unlock(&irq_mapping_update_lock);
-	splx(s);
-    
-	return irq;
-}
-
-int
-event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
-{
-	struct intrsource *isp;
-	struct intrhand *ih;
+	struct iplsource *ipls;
+	struct evtsource *evts;
+	struct intrhand *ih, **ihp;
 	struct cpu_info *ci;
 	int s;
 
 #ifdef IRQ_DEBUG
-	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
+	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
 #endif
 
-	if (irq >= NR_IRQS) {
 #ifdef DIAGNOSTIC
-		printf("irq number %d > NR_IRQS\n", irq);
-#endif
-		return ENOENT;
+	if (evtch >= NR_EVENT_CHANNELS) {
+		printf("evtch number %d > NR_EVENT_CHANNELS\n", evtch);
+		panic("event_set_handler");
 	}
+#endif
 
 #if 0
-	printf("event_set_handler irq %d/%d handler %p level %d\n", irq,
-	       irq_to_evtchn[irq], handler, level);
+	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
+	       handler, level);
 #endif
 	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
@@ -526,119 +438,150 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 
 
 	ih->ih_level = level;
-	ih->ih_fun = handler;
+	ih->ih_fun = func;
 	ih->ih_arg = arg;
-	ih->ih_next = NULL;
+	ih->ih_evt_next = NULL;
+	ih->ih_ipl_next = NULL;
 
 	ci = &cpu_info_primary;
 	s = splhigh();
-	if (ci->ci_isources[irq] == NULL) {
-		MALLOC(isp, struct intrsource *, sizeof (struct intrsource),
+	if (ci->ci_isources[level] == NULL) {
+		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
-		if (isp == NULL)
+		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
-		isp->is_recurse = xenev_stubs[irq].ist_recurse;
-		isp->is_resume = xenev_stubs[irq].ist_resume;
-		isp->is_handlers = ih;
-		isp->is_pic = &xenev_pic;
-		ci->ci_isources[irq] = isp;
-		snprintf(isp->is_evname, sizeof(isp->is_evname), "irq%d", irq);
-		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    ci->ci_dev->dv_xname, isp->is_evname);
+		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
+		ipls->ipl_resume = xenev_stubs[level].ist_resume;
+		ipls->ipl_handlers = ih;
+		ci->ci_isources[level] = ipls;
 	} else {
-		isp = ci->ci_isources[irq];
-		ih->ih_next = isp->is_handlers;
-		isp->is_handlers = ih;
+		ipls = ci->ci_isources[level];
+		ih->ih_ipl_next = ipls->ipl_handlers;
+		ipls->ipl_handlers = ih;
+	}
+	if (evtsource[evtch] == NULL) {
+		MALLOC(evts, struct evtsource *, sizeof (struct evtsource),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
+		if (evts == NULL)
+			panic("can't allocate fixed interrupt source");
+		evts->ev_handlers = ih;
+		evtsource[evtch] = evts;
+		if (evname)
+			strncpy(evts->ev_evname, evname,
+			    sizeof(evts->ev_evname));
+		else
+			snprintf(evts->ev_evname, sizeof(evts->ev_evname),
+			    "evt%d", evtch);
+		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
+		    ci->ci_dev->dv_xname, evts->ev_evname);
+	} else {
+		evts = evtsource[evtch];
+		/* sort by IPL order, higher first */
+		for (ihp = &evts->ev_handlers; ; ihp = &((*ihp)->ih_evt_next)) {
+			if ((*ihp)->ih_level < ih->ih_level) {
+				/* insert before *ihp */
+				ih->ih_evt_next = *ihp;
+				*ihp = ih;
+				break;
+			}
+			if ((*ihp)->ih_evt_next == NULL) {
+				(*ihp)->ih_evt_next = ih;
+				break;
+			}
+		}
 	}
 
-	intr_calculatemasks(ci);
+	intr_calculatemasks(evts);
 	splx(s);
 
 	return 0;
 }
 
 int
-event_remove_handler(int irq, ev_handler_t handler, void *arg)
+event_remove_handler(int evtch, int (*func)(void *), void *arg)
 {
-	struct intrsource *isp;
+	struct iplsource *ipls;
+	struct evtsource *evts;
 	struct intrhand *ih;
 	struct intrhand **ihp;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	isp = ci->ci_isources[irq];
-	if (isp == NULL)
+	evts = evtsource[evtch];
+	if (evts == NULL)
 		return ENOENT;
 
-	for (ihp = &isp->is_handlers, ih = isp->is_handlers;
+	for (ihp = &evts->ev_handlers, ih = evts->ev_handlers;
 	    ih != NULL;
-	    ihp = &ih->ih_next, ih = ih->ih_next) {
-		if (ih->ih_fun == handler && ih->ih_arg == arg)
+	    ihp = &ih->ih_evt_next, ih = ih->ih_evt_next) {
+		if (ih->ih_fun == func && ih->ih_arg == arg)
 			break;
 	}
 	if (ih == NULL)
 		return ENOENT;
-	*ihp = ih->ih_next;
-	FREE(ih, M_DEVBUF);
-	if (isp->is_handlers == NULL) {
-		evcnt_detach(&isp->is_evcnt);
-		FREE(isp, M_DEVBUF);
-		ci->ci_isources[irq] = NULL;
+	*ihp = ih->ih_evt_next;
+
+	ipls = ci->ci_isources[ih->ih_level];
+	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
+	    ih != NULL;
+	    ihp = &ih->ih_ipl_next, ih = ih->ih_ipl_next) {
+		if (ih->ih_fun == func && ih->ih_arg == arg)
+			break;
 	}
-	intr_calculatemasks(ci);
+	if (ih == NULL)
+		panic("event_remove_handler");
+	*ihp = ih->ih_ipl_next;
+	FREE(ih, M_DEVBUF);
+	if (evts->ev_handlers == NULL) {
+		evcnt_detach(&evts->ev_evcnt);
+		FREE(evts, M_DEVBUF);
+		evtsource[evtch] = NULL;
+	} else {
+		intr_calculatemasks(evts);
+	}
 	return 0;
 }
 
 void
-hypervisor_enable_irq(unsigned int irq)
+hypervisor_enable_event(unsigned int evtch)
 {
 #ifdef IRQ_DEBUG
-	if (irq == IRQ_DEBUG)
-		printf("hypervisor_enable_irq: irq %d\n", irq);
+	if (evtch == IRQ_DEBUG)
+		printf("hypervisor_enable_evtch: evtch %d\n", evtch);
 #endif
 
-	hypervisor_unmask_event(irq_to_evtchn[irq]);
-#ifdef DOM0OPS
-	pirq_notify(irq);
+	hypervisor_unmask_event(evtch);
+#if NPCI > 0 || NISA > 0
+	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
+#ifdef  IRQ_DEBUG
+		if (evtch == IRQ_DEBUG)
+		    printf("pirq_notify(%d)\n", evtch);
 #endif
+		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
+	}
+#endif /* NPCI > 0 || NISA > 0 */
 }
-
-void
-hypervisor_disable_irq(unsigned int irq)
-{
-#ifdef IRQ_DEBUG
-	if (irq == IRQ_DEBUG)
-		printf("hypervisor_disable_irq: irq %d\n", irq);
-#endif
-
-	hypervisor_mask_event(irq_to_evtchn[irq]);
-}
-
-void
-hypervisor_acknowledge_irq(unsigned int irq)
-{
-#ifdef IRQ_DEBUG
-	if (irq == IRQ_DEBUG)
-		printf("hypervisor_acknowledge_irq: irq %d\n", irq);
-#endif
-	hypervisor_mask_event(irq_to_evtchn[irq]);
-	hypervisor_clear_event(irq_to_evtchn[irq]);
-}
-
-#if 0
-static int
-xen_die_handler(void *arg)
-{
-	printf("hypervisor: DIE event received...\n");
-	cpu_reboot(0, NULL);
-	/* NOTREACHED */
-	return 0;
-}
-#endif
 
 static int
 xen_debug_handler(void *arg)
 {
+	struct cpu_info *ci = curcpu();
+	int i;
 	printf("debug event\n");
+	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
+	    ci->ci_ilevel, ci->ci_ipending, ci->ci_idepth);
+	printf("evtchn_upcall_pending %d evtchn_upcall_mask %d"
+	    " evtchn_pending_sel 0x%x\n",
+		HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending,
+		HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask, 
+		HYPERVISOR_shared_info->evtchn_pending_sel);
+	printf("evtchn_mask");
+	for (i = 0 ; i < 32; i++)
+		printf(" %x", HYPERVISOR_shared_info->evtchn_mask[i]);
+	printf("\n");
+	printf("evtchn_pending");
+	for (i = 0 ; i < 32; i++)
+		printf(" %x", HYPERVISOR_shared_info->evtchn_pending[i]);
+	printf("\n");
 	return 0;
 }
 

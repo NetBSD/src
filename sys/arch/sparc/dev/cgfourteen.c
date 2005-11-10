@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.34.2.4 2005/02/04 07:09:16 skrll Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.34.2.5 2005/11/10 13:58:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,7 +78,7 @@
 #undef CG14_CG8
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.34.2.4 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.34.2.5 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ cgfourteenattach(parent, self, aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int node, ramsize;
-	u_int32_t *lut;
+	volatile u_int32_t *lut;
 	int i, isconsole;
 
 	node = sa->sa_node;
@@ -284,7 +284,7 @@ cgfourteenattach(parent, self, aux)
 	/*
 	 * Grab the initial colormap
 	 */
-	lut = (u_int32_t *) sc->sc_clut1->clut_lut;
+	lut = sc->sc_clut1->clut_lut;
 	for (i = 0; i < CG14_CLUT_SIZE; i++)
 		sc->sc_cmap.cm_chip[i] = lut[i];
 
@@ -632,8 +632,8 @@ static void
 cg14_init(sc)
 	struct cgfourteen_softc *sc;
 {
-	u_int32_t *clut;
-	u_int8_t  *xlut;
+	volatile u_int32_t *clut;
+	volatile u_int8_t  *xlut;
 	int i;
 
 	/*
@@ -647,8 +647,8 @@ cg14_init(sc)
 	sc->sc_savectl = sc->sc_ctl->ctl_mctl;
 	sc->sc_savehwc = sc->sc_hwc->curs_ctl;
 
-	clut = (u_int32_t *) sc->sc_clut1->clut_lut;
-	xlut = (u_int8_t *) sc->sc_xlut->xlut_lut;
+	clut = sc->sc_clut1->clut_lut;
+	xlut = sc->sc_xlut->xlut_lut;
 	for (i = 0; i < CG14_CLUT_SIZE; i++) {
 		sc->sc_saveclut.cm_chip[i] = clut[i];
 		sc->sc_savexlut[i] = xlut[i];
@@ -678,8 +678,8 @@ static void
 cg14_reset(sc)	/* Restore the state saved on cg14_init */
 	struct cgfourteen_softc *sc;
 {
-	u_int32_t *clut;
-	u_int8_t  *xlut;
+	volatile u_int32_t *clut;
+	volatile u_int8_t  *xlut;
 	int i;
 
 	/*
@@ -699,8 +699,8 @@ cg14_reset(sc)	/* Restore the state saved on cg14_init */
 						    CG14_MCTL_POWERCTL));
 	sc->sc_hwc->curs_ctl = sc->sc_savehwc;
 
-	clut = (u_int32_t *) sc->sc_clut1->clut_lut;
-	xlut = (u_int8_t *) sc->sc_xlut->xlut_lut;
+	clut = sc->sc_clut1->clut_lut;
+	xlut = sc->sc_xlut->xlut_lut;
 	for (i = 0; i < CG14_CLUT_SIZE; i++) {
 		clut[i] = sc->sc_saveclut.cm_chip[i];
 		xlut[i] = sc->sc_savexlut[i];

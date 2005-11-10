@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.12.2.5 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.12.2.6 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,7 +251,7 @@ struct ext2_gd {
  * a power of 3, 5 or 7
  */
 
-static __inline__ int cg_has_sb __P((int)) __attribute__((__unused__));
+static __inline__ int cg_has_sb(int) __attribute__((__unused__));
 static __inline int
 cg_has_sb(i)
 	int i;
@@ -284,8 +284,8 @@ cg_has_sb(i)
 #	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
 #	define e2fs_cgsave(old, new, size) memcpy((new), (old), (size));
 #else
-void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
-void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
+void e2fs_sb_bswap(struct ext2fs *, struct ext2fs *);
+void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #	define h2fs16(x) bswap16(x)
 #	define h2fs32(x) bswap32(x)
 #	define h2fs64(x) bswap64(x)

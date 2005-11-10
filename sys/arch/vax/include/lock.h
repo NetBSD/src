@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13.2.3 2004/09/21 13:23:43 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.13.2.4 2005/11/10 13:59:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -84,12 +84,12 @@ do {									\
 	struct cpu_info *__ci = curcpu();				\
 									\
 	while (__cpu_simple_lock_try(alp) == 0) {			\
-		int __s;						\
+		int ___s;						\
 									\
 		if (__ci->ci_ipimsgs & VAX_LOCK_CHECKS) {		\
-			__s = splipi();					\
+			___s = splipi();				\
 			cpu_handle_ipi();				\
-			splx(__s);					\
+			splx(___s);					\
 		}							\
 	}								\
 } while (0)
@@ -163,14 +163,14 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 #define SPINLOCK_SPIN_HOOK						\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
-	int __s;							\
+	int ___s;							\
 									\
 	if (__ci->ci_ipimsgs != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
-		__s = splipi();						\
+		___s = splipi();					\
 		cpu_handle_ipi();					\
-		splx(__s);						\
+		splx(___s);						\
 	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */

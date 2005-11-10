@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.10.2.6 2005/03/04 16:41:05 skrll Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.10.2.7 2005/11/10 14:03:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.6 2005/03/04 16:41:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.7 2005/11/10 14:03:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.6 2005/03/04 16:41:05 skrl
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 

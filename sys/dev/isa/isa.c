@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.116.2.4 2004/09/21 13:29:45 skrll Exp $	*/
+/*	$NetBSD: isa.c,v 1.116.2.5 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116.2.4 2004/09/21 13:29:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116.2.5 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ CFATTACH_DECL2(isa, sizeof(struct isa_softc),
 void	isa_attach_knowndevs(struct isa_softc *);
 void	isa_free_knowndevs(struct isa_softc *);
 
-int	isasubmatch(struct device *, struct cfdata *, const locdesc_t *, void *);
-int	isasearch(struct device *, struct cfdata *, const locdesc_t *, void *);
+int	isasubmatch(struct device *, struct cfdata *, const int *, void *);
+int	isasearch(struct device *, struct cfdata *, const int *, void *);
 
 int
 isamatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -89,7 +89,7 @@ isaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
-	static const int wildcard[7] = {
+	static const int wildcard[ISACF_NLOCS] = {
 		ISACF_PORT_DEFAULT, ISACF_SIZE_DEFAULT,
 		ISACF_IOMEM_DEFAULT, ISACF_IOSIZ_DEFAULT,
 		ISACF_IRQ_DEFAULT, ISACF_DRQ_DEFAULT, ISACF_DRQ2_DEFAULT
@@ -139,11 +139,9 @@ isaattach(struct device *parent, struct device *self, void *aux)
 int
 isarescan(struct device *self, const char *ifattr, const int *locators)
 {
-	int help[8];
-	locdesc_t *ldesc = (void *)help; /* XXX */;
+	int locs[ISACF_NLOCS];
 
-	ldesc->len = 7;
-	memcpy(&ldesc->locs, locators, 7 * sizeof(int));
+	memcpy(locs, locators, sizeof(locs));
 
 	/*
 	 * XXX Bus independant code calling this function does not
@@ -151,12 +149,12 @@ isarescan(struct device *self, const char *ifattr, const int *locators)
 	 * (should be made available by "config" one day)
 	 * So fixup where the "-1" is not correct.
 	 */
-	if (ldesc->locs[ISACF_SIZE] == -1)
-		ldesc->locs[ISACF_SIZE] = ISACF_SIZE_DEFAULT;
-	if (ldesc->locs[ISACF_IOSIZ] == -1)
-		ldesc->locs[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT;
+	if (locs[ISACF_SIZE] == -1)
+		locs[ISACF_SIZE] = ISACF_SIZE_DEFAULT;
+	if (locs[ISACF_IOSIZ] == -1)
+		locs[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT;
 
-	config_search_loc(isasearch, self, ifattr, ldesc, NULL);
+	config_search_loc(isasearch, self, ifattr, locs, NULL);
 	return (0);
 }
 
@@ -290,7 +288,7 @@ checkattachargs(struct isa_attach_args *ia, const int *loc)
 
 int
 isasubmatch(struct device *parent, struct cfdata *cf,
-	    const locdesc_t *ldesc, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -382,7 +380,7 @@ isaprint(void *aux, const char *isa)
 
 int
 isasearch(struct device *parent, struct cfdata *cf,
-	  const locdesc_t *ldesc, void *aux)
+	  const int *slocs, void *aux)
 {
 	struct isa_io res_io[1];
 	struct isa_iomem res_mem[1];
@@ -390,8 +388,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 	struct isa_drq res_drq[2];
 	struct isa_softc *sc = (struct isa_softc *)parent;
 	struct isa_attach_args ia;
-	int help[8];
-	locdesc_t *locs = (void *)&help; /* XXX */
+	int flocs[ISACF_NLOCS];
 	int tryagain;
 
 	do {
@@ -427,7 +424,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 		ia.ia_drq = res_drq;
 		ia.ia_ndrq = 2;
 
-		if (!checkattachargs(&ia, ldesc->locs))
+		if (!checkattachargs(&ia, slocs))
 			return (0);
 
 		tryagain = 0;
@@ -436,15 +433,14 @@ isasearch(struct device *parent, struct cfdata *cf,
 			 * This is not necessary for detach, but might
 			 * still be useful to collect device information.
 			 */
-			locs->len = 7;
-			locs->locs[ISACF_PORT] = ia.ia_io[0].ir_addr;
-			locs->locs[ISACF_SIZE] = ia.ia_io[0].ir_size;
-			locs->locs[ISACF_IOMEM] = ia.ia_iomem[0].ir_addr;
-			locs->locs[ISACF_IOSIZ] = ia.ia_iomem[0].ir_size;
-			locs->locs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
-			locs->locs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
-			locs->locs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
-			config_attach_loc(parent, cf, locs, &ia, isaprint);
+			flocs[ISACF_PORT] = ia.ia_io[0].ir_addr;
+			flocs[ISACF_SIZE] = ia.ia_io[0].ir_size;
+			flocs[ISACF_IOMEM] = ia.ia_iomem[0].ir_addr;
+			flocs[ISACF_IOSIZ] = ia.ia_iomem[0].ir_size;
+			flocs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
+			flocs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
+			flocs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
+			config_attach_loc(parent, cf, flocs, &ia, isaprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);
@@ -452,7 +448,7 @@ isasearch(struct device *parent, struct cfdata *cf,
 	return (0);
 }
 
-char *
+const char *
 isa_intr_typename(int type)
 {
 

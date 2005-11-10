@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.103.2.9 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.103.2.10 2005/11/10 14:11:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.103.2.9 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.103.2.10 2005/11/10 14:11:08 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -187,6 +187,7 @@ struct mowner udp_tx_mowner = { "udp", "tx" };
 #ifdef UDP_CSUM_COUNTERS
 #include <sys/device.h>
 
+#if defined(INET)
 struct evcnt udp_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "udp", "hwcsum bad");
 struct evcnt udp_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
@@ -196,12 +197,29 @@ struct evcnt udp_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 struct evcnt udp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "udp", "swcsum");
 
-#define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
-
 EVCNT_ATTACH_STATIC(udp_hwcsum_bad);
 EVCNT_ATTACH_STATIC(udp_hwcsum_ok);
 EVCNT_ATTACH_STATIC(udp_hwcsum_data);
 EVCNT_ATTACH_STATIC(udp_swcsum);
+#endif /* defined(INET) */
+
+#if defined(INET6)
+struct evcnt udp6_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum bad");
+struct evcnt udp6_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum ok");
+struct evcnt udp6_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "hwcsum data");
+struct evcnt udp6_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp6", "swcsum");
+
+EVCNT_ATTACH_STATIC(udp6_hwcsum_bad);
+EVCNT_ATTACH_STATIC(udp6_hwcsum_ok);
+EVCNT_ATTACH_STATIC(udp6_hwcsum_data);
+EVCNT_ATTACH_STATIC(udp6_swcsum);
+#endif /* defined(INET6) */
+
+#define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
 #else
 
@@ -443,6 +461,11 @@ static int
 udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 {
 
+	/*
+	 * XXX it's better to record and check if this mbuf is
+	 * already checked.
+	 */
+
 	if (__predict_false((m->m_flags & M_LOOP) && !udp_do_loopback_cksum)) {
 		goto good;
 	}
@@ -450,9 +473,34 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 		udp6stat.udp6s_nosum++;
 		goto bad;
 	}
-	if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
+
+	switch (m->m_pkthdr.csum_flags &
+	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv6) |
+	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+	case M_CSUM_UDPv6|M_CSUM_TCP_UDP_BAD:
+		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_bad);
 		udp6stat.udp6s_badsum++;
 		goto bad;
+
+#if 0 /* notyet */
+	case M_CSUM_UDPv6|M_CSUM_DATA:
+#endif
+
+	case M_CSUM_UDPv6:
+		/* Checksum was okay. */
+		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_ok);
+		break;
+
+	default:
+		/*
+		 * Need to compute it ourselves.  Maybe skip checksum
+		 * on loopback interfaces.
+		 */
+		UDP_CSUM_COUNTER_INCR(&udp6_swcsum);
+		if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
+			udp6stat.udp6s_badsum++;
+			goto bad;
+		}
 	}
 
 good:
@@ -1080,18 +1128,11 @@ udp_output(struct mbuf *m, ...)
 		/*
 		 * XXX Cache pseudo-header checksum part for
 		 * XXX "connected" UDP sockets.
-		 * Maybe skip checksums on loopback interfaces.
 		 */
 		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
 		    ui->ui_dst.s_addr, htons((u_int16_t)len +
 		    sizeof(struct udphdr) + IPPROTO_UDP));
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   udp_do_loopback_cksum))
-			m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
-		else
-			m->m_pkthdr.csum_flags = 0;
+		m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 	} else
 		ui->ui_sum = 0;
@@ -1343,6 +1384,13 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       sysctl_inpcblist, 0, &udbtable, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_CREATE,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("UDP statistics"),
+		       NULL, 0, &udpstat, sizeof(udpstat),
+		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS,
+		       CTL_EOL);
 }
 #endif
 
@@ -1367,6 +1415,9 @@ udp4_espinudp(m, off, src, so)
 	size_t iphdrlen;
 	struct ip *ip;
 	struct mbuf *n;
+	struct m_tag *tag;
+	struct udphdr *udphdr;
+	u_int16_t sport, dport;
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
@@ -1407,14 +1458,22 @@ udp4_espinudp(m, off, src, so)
 	}
 
 	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
-		u_int64_t *st = (u_int64_t *)data;
+		u_int32_t *st = (u_int32_t *)data;
 
 		if ((len <= sizeof(u_int64_t) + sizeof(struct esp))
-		    || (*st != 0))
+		    || ((st[0] | st[1]) != 0))
 			return 0; /* Normal UDP processing */
 
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
 	}
+
+	/*
+	 * Get the UDP ports. They are handled in network 
+	 * order everywhere in IPSEC_NAT_T code.
+	 */
+	udphdr = (struct udphdr *)(data - skip);
+	sport = udphdr->uh_sport;
+	dport = udphdr->uh_dport;
 
 	/*
 	 * Remove the UDP header (and possibly the non ESP marker)
@@ -1448,6 +1507,22 @@ udp4_espinudp(m, off, src, so)
 		printf("udp4_espinudp: m_dup failed\n");
 		return 0;
 	}
+
+	/*
+	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
+	 * the source UDP port. This is required if we want
+	 * to select the right SPD for multiple hosts behind 
+	 * same NAT 
+	 */
+	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
+		printf("udp4_espinudp: m_tag_get failed\n");
+		m_freem(n);
+		return 0;
+	}
+	((u_int16_t *)(tag + 1))[0] = sport;
+	((u_int16_t *)(tag + 1))[1] = dport;
+	m_tag_prepend(n, tag);
 
 	esp4_input(n, iphdrlen);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.19.2.5 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.19.2.6 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.5 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.6 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,8 @@ struct x68k_bus_dma intio_bus_dma = {
  */
 static int intio_match(struct device *, struct cfdata *, void *);
 static void intio_attach(struct device *, struct device *, void *);
-static int intio_search(struct device *, struct cfdata *cf, void *);
+static int intio_search(struct device *, struct cfdata *cf,
+			const int *, void *);
 static int intio_print(void *, const char *);
 static void intio_alloc_system_ports(struct intio_softc*);
 
@@ -212,11 +213,12 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 	ia.ia_bst = sc->sc_bst;
 	ia.ia_dmat = sc->sc_dmat;
 
-	config_search(intio_search, self, &ia);
+	config_search_ia(intio_search, self, "intio", &ia);
 }
 
 static int
-intio_search(struct device *parent, struct cfdata *cf, void *aux)
+intio_search(struct device *parent, struct cfdata *cf,
+	     const int *ldesc, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct intio_softc *sc = (struct intio_softc *)parent;

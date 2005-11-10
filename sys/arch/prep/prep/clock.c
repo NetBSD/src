@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5.2.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.5.2.4 2005/11/10 13:58:32 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5.2.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5.2.4 2005/11/10 13:58:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,7 +110,7 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	if (todr_gettime(todr_handle, &time) != 0 ||
 	    time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
@@ -150,7 +150,7 @@ resettodr()
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	if (todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
@@ -174,7 +174,7 @@ decr_intr(frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long ticks;
 	int nticks;
 	extern long intrcnt[];
 
@@ -193,16 +193,16 @@ decr_intr(frame)
 	} else {
 		asm volatile ("mftb %0" : "=r"(tb));
 	}
-	asm ("mfdec %0" : "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mfdec %0" : "=r"(ticks));
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(ticks));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + ticks - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.3 2002/11/26 18:43:21 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.3.6.1 2005/11/10 14:01:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,8 @@
 #define LINUX_SIG_BLOCK		0
 #define LINUX_SIG_UNBLOCK	1
 #define LINUX_SIG_SETMASK	2
+
+#define	LINUX_MINSIGSTKSZ	2048
 
 typedef void	(*linux_handler_t) __P((int));
 

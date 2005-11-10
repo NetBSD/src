@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.8.2.6 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: xen.h,v 1.8.2.7 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -45,6 +45,7 @@ union xen_cmdline_parseinfo {
 #define	XEN_PARSE_BOOTDEV	0
 #define	XEN_PARSE_NETINFO	1
 #define	XEN_PARSE_CONSOLE	2
+#define	XEN_PARSE_BOOTFLAGS	3
 
 void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
@@ -57,10 +58,11 @@ void	xennetback_init(void);
 void	xen_shm_init(void);
 
 void	xenevt_event(int);
+void	xenevt_notify(void);
 
 void	idle_block(void);
 
-#ifdef XENDEBUG
+#if defined(XENDEBUG) || 1 /* XXX */
 void printk(const char *, ...);
 void vprintk(const char *, _BSD_VA_LIST_);
 #endif
@@ -223,7 +225,7 @@ x86_variable_test_bit(const volatile void *ptr, int bitno)
 		"btl %2,%1 ;"
 		"sbbl %0,%0"
 		:"=r" (result)
-		:"m" (*(volatile uint32_t *)(ptr)), "Ir" (bitno));
+		:"m" (*(const volatile uint32_t *)(ptr)), "Ir" (bitno));
 	return result;
 }
 

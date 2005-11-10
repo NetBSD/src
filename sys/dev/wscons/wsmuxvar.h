@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.9.2.3 2004/09/21 13:34:30 skrll Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.9.2.4 2005/11/10 14:08:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct wsmux_softc {
 	struct wsevsrc sc_base;
 	struct proc *sc_p;		/* open proc */
 	CIRCLEQ_HEAD(, wsevsrc) sc_cld; /* list of children */
+	u_int32_t sc_kbd_layout;	/* current layout of keyboard */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;		        /* A hack to remember the kbd mode */
 #endif

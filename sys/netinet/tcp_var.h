@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.102.2.10 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102.2.11 2005/11/10 14:11:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -216,6 +216,7 @@ struct tcpcb {
 #define	TF_WILL_SACK	0x0800		/* try to use SACK */
 #define	TF_REASSEMBLING	0x1000		/* we're busy reassembling */
 #define	TF_DEAD		0x2000		/* dead and to-be-released */
+#define	TF_PMTUD_PEND	0x4000		/* Path MTU Discovery pending */
 #define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
@@ -294,14 +295,12 @@ struct tcpcb {
 	struct sackblk rcv_dsack_block;	/* RX D-SACK block. */
 	struct ipqehead timeq;		/* time sequenced queue. */
 	struct sackhead snd_holes;	/* TX SACK holes. */
+	int	snd_numholes;		/* Number of TX SACK holes. */
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	tcp_seq sack_newdata;		/* New data xmitted in this recovery
 					   episode starts at this seq number*/
 	tcp_seq snd_fack;		/* FACK TCP.  Forward-most data held by
 					   peer. */
-
-/* path MTU discovery blackhole detection */
-	int t_mtudisc;			/* perform mtudisc for this tcb */
 
 /* pointer for syn cache entries*/
 	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
@@ -311,6 +310,16 @@ struct tcpcb {
 	int	t_inoff;		/* data offset in previous mbuf */
 	int	t_lastoff;		/* last data address in mbuf chain */
 	int	t_lastlen;		/* last length read from mbuf chain */
+
+/* Path-MTU discovery blackhole detection */
+	int t_mtudisc;			/* perform mtudisc for this tcb */
+/* Path-MTU Discovery Information */
+	u_int	t_pmtud_mss_acked;	/* MSS acked, lower bound for MTU */
+	u_int	t_pmtud_mtu_sent;	/* MTU used, upper bound for MTU */
+	tcp_seq	t_pmtud_th_seq;		/* TCP SEQ from ICMP payload */
+	u_int	t_pmtud_nextmtu;	/* Advertised Next-Hop MTU from ICMP */
+	u_short	t_pmtud_ip_len;		/* IP length from ICMP payload */
+	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 };
 
 /*
@@ -663,7 +672,10 @@ struct	tcpstat {
 #define	TCPCTL_IDENT		27	/* rfc 931 identd */
 #define	TCPCTL_ACKDROPRATELIMIT	28	/* SYN/RST -> ACK rate limit */
 #define	TCPCTL_LOOPBACKCKSUM	29	/* do TCP checksum on loopback */
-#define	TCPCTL_MAXID		30
+#define	TCPCTL_STATS		30	/* TCP statistics */
+#define	TCPCTL_DEBUG		31	/* TCP debug sockets */
+#define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
+#define	TCPCTL_MAXID		33
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -696,6 +708,9 @@ struct	tcpstat {
 	{ "ident", CTLTYPE_STRUCT }, \
 	{ "ackdropppslimit", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
+	{ "debug", CTLTYPE_STRUCT }, \
+	{ "debx", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -718,7 +733,9 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
-extern	int tcp_do_loopback_cksum;/* do TCP checksum on loopback? */
+extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
+extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
+extern int tcp_sack_globalholes;	/* Number of holes present. */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
@@ -802,6 +819,7 @@ void	 tcp_init(void);
 int	 tcp6_input(struct mbuf **, int *, int);
 #endif
 void	 tcp_input(struct mbuf *, ...);
+u_int	 tcp_hdrsz(struct tcpcb *);
 u_long	 tcp_mss_to_advertise(const struct ifnet *, int);
 void	 tcp_mss_from_peer(struct tcpcb *, int);
 void	 tcp_tcpcb_template(void);
@@ -819,6 +837,7 @@ void	 tcp_quench(struct inpcb *, int);
 #ifdef INET6
 void	 tcp6_quench(struct in6pcb *, int);
 #endif
+void	 tcp_mtudisc(struct inpcb *, int);
 
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
@@ -858,14 +877,14 @@ int	 tcp_sack_numblks(const struct tcpcb *);
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
 		struct mbuf *, u_char *, int, struct tcp_opt_info *);
-void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
+void	 syn_cache_unreach(const struct sockaddr *, const struct sockaddr *,
 	   struct tcphdr *);
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int,
 		struct socket *so, struct mbuf *);
 void	 syn_cache_init(void);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
-struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
+struct syn_cache *syn_cache_lookup(const struct sockaddr *, const struct sockaddr *,
 		struct syn_cache_head **);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.105.2.10 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.105.2.11 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.10 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.11 2005/11/10 14:11:55 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -85,13 +85,13 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
-	struct lwp *l;
+	struct lwp *l = uio->uio_lwp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
-	caddr_t baddr, ep, edp;
+	caddr_t baddr;
 	int got_buf = 0, error = 0, n = 0, on = 0, en, enn;
 	int enough = 0;
-	struct dirent *dp, *pdp;
+	struct dirent *dp, *pdp, *edp, *ep;
 	off_t curoff = 0;
 
 #ifdef DIAGNOSTIC
@@ -102,7 +102,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		return (0);
 	if (vp->v_type != VDIR && uio->uio_offset < 0)
 		return (EINVAL);
-	l = uio->uio_lwp;
 #ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
@@ -191,27 +190,36 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
-		if (uio->uio_offset >= np->n_size) {
-			break;
-		}
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
-			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
-					      uio->uio_resid);
+			vsize_t bytelen;
 
-			if (bytelen == 0)
+			nfs_delayedtruncate(vp);
+			if (np->n_size <= uio->uio_offset) {
 				break;
+			}
+			bytelen =
+			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
 			if (error) {
-				break;
+				/*
+				 * XXXkludge
+				 * the file has been truncated on the server.
+				 * there isn't much we can do.
+				 */
+				if (uio->uio_offset >= np->n_size) {
+					/* end of file */
+					error = 0;
+				} else {
+					break;
+				}
 			}
 		}
-		n = 0;
 		break;
 
 	    case VLNK:
@@ -221,7 +229,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 			bp->b_flags |= B_READ;
-			error = nfs_doio(bp, l);
+			error = nfs_doio(bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -266,7 +274,7 @@ diragain:
 		if ((bp->b_flags & B_DONE) == 0) {
 		    bp->b_flags |= B_READ;
 		    bp->b_dcookie = ndp->dc_blkcookie;
-		    error = nfs_doio(bp, l);
+		    error = nfs_doio(bp);
 		    if (error) {
 			/*
 			 * Yuck! The directory has been modified on the
@@ -311,11 +319,12 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = bp->b_data + bp->b_bcount - bp->b_resid;
+		edp = (struct dirent *)(void *)(bp->b_data + bp->b_bcount -
+		    bp->b_resid);
 		enn = 0;
-		while (enn < en && (caddr_t)dp < edp) {
+		while (enn < en && dp < edp) {
 			pdp = dp;
-			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 
@@ -326,7 +335,7 @@ diragain:
 		 * stale. Flush it and try again (i.e. go to
 		 * the server).
 		 */
-		if ((caddr_t)dp >= edp || (caddr_t)dp + dp->d_reclen > edp ||
+		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(dp) > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
 		    	printf("invalid cache: %p %p %p off %lx %lx\n",
@@ -351,8 +360,7 @@ diragain:
 		 */
 
 		if (en == 0 && pdp == dp) {
-			dp = (struct dirent *)
-			    ((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 
@@ -362,14 +370,14 @@ diragain:
 		} else
 			n = bp->b_bcount - bp->b_resid - on;
 
-		ep = bp->b_data + on + n;
+		ep = (struct dirent *)(void *)(bp->b_data + on + n);
 
 		/*
 		 * Find last complete entry to copy, caching entries
 		 * (if requested) as we go.
 		 */
 
-		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {
+		while (dp < ep && (struct dirent *)_DIRENT_NEXT(dp) <= ep) {
 			if (cflag & NFSBIO_CACHECOOKIES) {
 				nndp = nfs_enterdircache(vp, NFS_GETCOOKIE(pdp),
 				    ndp->dc_blkcookie, enn, bp->b_lblkno);
@@ -380,7 +388,7 @@ diragain:
 				nfs_putdircache(np, nndp);
 			}
 			pdp = dp;
-			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			dp = _DIRENT_NEXT(dp);
 			enn++;
 		}
 		nfs_putdircache(np, ndp);
@@ -416,7 +424,7 @@ diragain:
 			}
 		}
 
-		n = ((caddr_t)pdp + pdp->d_reclen) - (bp->b_data + on);
+		n = (char *)_DIRENT_NEXT(pdp) - (bp->b_data + on);
 
 		/*
 		 * If not eof and read aheads are enabled, start one.
@@ -505,8 +513,6 @@ nfs_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
-		panic("nfs_write lwp");
 #endif
 	if (vp->v_type != VREG)
 		return (EIO);
@@ -954,9 +960,7 @@ nfs_doio_read(bp, uiop)
 		      np->n_lrev != np->n_brev) ||
 		     (!(nmp->nm_flag & NFSMNT_NQNFS) &&
 		      timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)))) {
-			uprintf("Process killed due to "
-				"text file modification\n");
-			psignal(uiop->uio_lwp->l_proc, SIGKILL);
+			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
 #if 0 /* XXX NJWLWP */
 			uiop->uio_lwp->l_proc->p_holdcnt++;
 #endif
@@ -965,7 +969,7 @@ nfs_doio_read(bp, uiop)
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, curlwp->l_proc->p_ucred);
+		error = nfs_readlinkrpc(vp, uiop, np->n_rcred);
 		break;
 	case VDIR:
 		nfsstats.readdir_bios++;
@@ -1253,9 +1257,8 @@ nfs_doio_phys(bp, uiop)
  * synchronously or from an nfsiod.
  */
 int
-nfs_doio(bp, l)
+nfs_doio(bp)
 	struct buf *bp;
-	struct lwp *l;
 {
 	int error;
 	struct uio uio;

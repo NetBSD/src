@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.8.6.4 2004/10/19 15:56:42 skrll Exp $	*/
+/*	$NetBSD: ka680.c,v 1.8.6.5 2005/11/10 13:59:59 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.8.6.4 2004/10/19 15:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.8.6.5 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -108,7 +108,7 @@ struct cpu_dep ka680_calls = {
 void
 ka680_conf()
 {
-	char *cpuname;
+	const char *cpuname;
 
 	/* Don't ask why, but we seem to need this... */
 

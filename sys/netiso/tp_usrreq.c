@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.21.2.4 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.21.2.5 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.21.2.4 2004/09/21 13:38:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.21.2.5 2005/11/10 14:11:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ struct tp_pcb  *tp_listeners, *tp_intercepts;
  *  print (str) followed by the control info in the mbufs of an mbuf chain (n)
  */
 void
-dump_mbuf(struct mbuf *n, char *str)
+dump_mbuf(struct mbuf *n, const char *str)
 {
 	struct mbuf    *nextrecord;
 

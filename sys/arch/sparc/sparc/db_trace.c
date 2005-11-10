@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19.2.3 2004/09/21 13:22:31 skrll Exp $ */
+/*	$NetBSD: db_trace.c,v 1.19.2.4 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19.2.3 2004/09/21 13:22:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19.2.4 2005/11/10 13:59:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,14 +50,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
 	void		(*pr)(const char *, ...);
 {
 	struct frame	*frame, *prevframe;
 	db_addr_t	pc;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
-	char		c, *cp = modif;
+	const char	*cp = modif;
+	char		c;
 
 	if (ddb_cpuinfo == NULL)
 		ddb_cpuinfo = curcpu();
@@ -101,7 +102,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	while (count--) {
 		int		i;
 		db_expr_t	offset;
-		char		*name;
+		const char	*name;
 		db_addr_t	prevpc;
 
 #define FR(framep,field) (INKERNEL(framep)			\

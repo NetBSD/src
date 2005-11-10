@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_sh.c,v 1.5.2.3 2004/09/21 13:21:37 skrll Exp $	*/
+/*	$NetBSD: cpu_sh.c,v 1.5.2.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_sh.c,v 1.5.2.3 2004/09/21 13:21:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_sh.c,v 1.5.2.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,7 +91,7 @@ cpu_shattach(struct device *parent, struct device *self, void *args)
 	struct superhyway_attach_args *sa = args;
 	bus_space_handle_t bh;
 	u_int64_t vcr;
-	u_int cpuid, version;
+	u_int cpuid, vers;
 	const char *cpustr;
 	char str[64];
 
@@ -106,10 +106,10 @@ cpu_shattach(struct device *parent, struct device *self, void *args)
 	 */
 	if (vcr == 0) {
 		cpuid = bootparams.bp_cpu[0].cpuid;
-		version = bootparams.bp_cpu[0].version;
+		vers = bootparams.bp_cpu[0].version;
 	} else {
 		cpuid = SUPERHYWAY_VCR_MOD_ID(vcr);
-		version = SUPERHYWAY_VCR_MOD_VERS(vcr);
+		vers = SUPERHYWAY_VCR_MOD_VERS(vcr);
 	}
 
 	switch (cpuid) {
@@ -124,7 +124,7 @@ cpu_shattach(struct device *parent, struct device *self, void *args)
 	}
 
 	printf("\n%s: %s, Version %d, %ld.%02ld MHz\n", self->dv_xname, cpustr,
-	    version, (long)(bootparams.bp_cpu[0].speed / 1000000),
+	    vers, (long)(bootparams.bp_cpu[0].speed / 1000000),
 	    (long)(bootparams.bp_cpu[0].speed % 1000000) / 10000);
 
 	if (sh5_cache_ops.iinfo.type == SH5_CACHE_INFO_TYPE_NONE) {

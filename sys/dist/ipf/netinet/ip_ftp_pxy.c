@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.1.2.6 2005/11/10 14:09:07 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.1.2.6 2005/11/10 14:09:07 skrll Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -11,7 +11,7 @@ __KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.88.2.10 2005/02/04 10:22:54 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.88.2.15 2005/03/19 19:38:10 darrenr Exp
  */
 
 #define	IPF_FTP_PROXY
@@ -22,14 +22,6 @@ __KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp
 #define	IPF_MAX227LEN	51
 #define	IPF_MIN229LEN	47
 #define	IPF_MAX229LEN	51
-/*
- * On Unix, a pathname can be upto 256 bytes long, so that must fit in half
- * of the buffer.  Why half?  Because we allow a message being parsed to
- * start upto half way into the buffer so less arbitrary moving around of
- * data to make messages fit is required.  And so, 526 is 2*(4+1+256+2)
- * (XXXX path\r\n)
- */
-#define	IPF_FTPBUFSZ	526	/* This *MUST* be >= 53! */
 
 #define	FTPXY_GO	0
 #define	FTPXY_INIT	1
@@ -190,7 +182,7 @@ int dlen;
 	if (dlen < IPF_MINPORTLEN) {
 		if (ippr_ftp_debug > 1)
 			printf("ippr_ftp_port:dlen(%d) < IPF_MINPORTLEN\n",
-				dlen);
+			       dlen);
 		return 0;
 	}
 	/*
@@ -212,6 +204,7 @@ int dlen;
 			printf("ippr_ftp_port:ippr_ftp_atoi(%d) failed\n", 2);
 		return 0;
 	}
+
 	/*
 	 * Check that IP address in the PORT/PASV reply is the same as the
 	 * sender of the command - prevents using PORT for port scanning.
@@ -249,8 +242,19 @@ int dlen;
 			printf("ippr_ftp_port:missing %s\n", "cr-lf");
 		return 0;
 	}
+
 	a5 >>= 8;
 	a5 &= 0xff;
+	sp = a5 << 8 | a6;
+	/*
+	 * Don't allow the PORT command to specify a port < 1024 due to
+	 * security crap.
+	 */
+	if (sp < 1024) {
+		if (ippr_ftp_debug > 0)
+			printf("ippr_ftp_port:sp(%d) < 1024\n", sp);
+		return 0;
+	}
 	/*
 	 * Calculate new address parts for PORT command
 	 */
@@ -277,7 +281,7 @@ int dlen;
 	if ((inc + ip->ip_len) > 65535) {
 		if (ippr_ftp_debug > 0)
 			printf("ippr_ftp_port:inc(%d) + ip->ip_len > 65535\n",
-				inc);
+			       inc);
 		return 0;
 	}
 
@@ -287,16 +291,16 @@ int dlen;
 # if defined(MENTAT)
 	if (inc < 0)
 		(void)adjmsg(m, inc);
-# else
+# else /* defined(MENTAT) */
+	/*
+	 * m_adj takes care of pkthdr.len, if required and treats inc<0 to
+	 * mean remove -len bytes from the end of the packet.
+	 * The mbuf chain will be extended if necessary by m_copyback().
+	 */
 	if (inc < 0)
 		m_adj(m, inc);
-#  ifdef	M_PKTHDR
-	if (!(m->m_flags & M_PKTHDR))
-		m->m_pkthdr.len += inc;
-#  endif
-# endif
-#endif
-	/* the mbuf chain will be extended if necessary by m_copyback() */
+# endif /* defined(MENTAT) */
+#endif /* !defined(_KERNEL) */
 	COPYBACK(m, off, nlen, newbuf);
 
 	if (inc != 0) {
@@ -305,20 +309,6 @@ int dlen;
 		fin->fin_plen += inc;
 	}
 
-	/*
-	 * Add skeleton NAT entry for connection which will come back the
-	 * other way.
-	 */
-	sp = a5 << 8 | a6;
-	/*
-	 * Don't allow the PORT command to specify a port < 1024 due to
-	 * security crap.
-	 */
-	if (sp < 1024) {
-		if (ippr_ftp_debug > 0)
-			printf("ippr_ftp_port:sp(%d) < 1024\n", sp);
-		return 0;
-	}
 	/*
 	 * The server may not make the connection back from port 20, but
 	 * it is the most likely so use it here to check for a conflicting
@@ -330,6 +320,10 @@ int dlen;
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = fin->fin_data[1] - 1;
+	/*
+	 * Add skeleton NAT entry for connection which will come back the
+	 * other way.
+	 */
 	if (nat->nat_dir == NAT_OUTBOUND)
 		nat2 = nat_outlookup(&fi, NAT_SEARCH|IPN_TCP, nat->nat_p,
 				     nat->nat_inip, nat->nat_oip);
@@ -482,7 +476,8 @@ int dlen;
 {
 	u_int a1, a2, a3, a4, data_ip;
 	char newbuf[IPF_FTPBUFSZ];
-	char *s, *brackets[2];
+	char *s;
+	const char *brackets[2];
 	u_short a5, a6;
 	ftpside_t *f;
 
@@ -490,7 +485,7 @@ int dlen;
 	    ftp->ftp_side[0].ftps_cmds != FTPXY_C_PASV) {
 		if (ippr_ftp_debug > 0)
 			printf("ippr_ftp_pasv:ftps_cmds(%d) != FTPXY_C_PASV\n",
-				ftp->ftp_side[0].ftps_cmds);
+			       ftp->ftp_side[0].ftps_cmds);
 		return 0;
 	}
 
@@ -503,7 +498,7 @@ int dlen;
 	if (dlen < IPF_MIN227LEN) {
 		if (ippr_ftp_debug > 1)
 			printf("ippr_ftp_pasv:dlen(%d) < IPF_MIN227LEN\n",
-				dlen);
+			       dlen);
 		return 0;
 	} else if (strncmp(f->ftps_rptr,
 			   "227 Entering Passive Mod", PASV_REPLEN)) {
@@ -645,20 +640,24 @@ u_int data_ip;
 	if ((inc + ip->ip_len) > 65535) {
 		if (ippr_ftp_debug > 0)
 			printf("ippr_ftp_pasv:inc(%d) + ip->ip_len > 65535\n",
-				inc);
+			       inc);
 		return 0;
 	}
 
 #if !defined(_KERNEL)
-	bcopy(newmsg, (char *)m + off, nlen);
+	bcopy(newmsg, MTOD(m, char *) + off, nlen);
 #else
 # if defined(MENTAT)
 	if (inc < 0)
 		(void)adjmsg(m, inc);
 # else /* defined(MENTAT) */
+	/*
+	 * m_adj takes care of pkthdr.len, if required and treats inc<0 to
+	 * mean remove -len bytes from the end of the packet.
+	 * The mbuf chain will be extended if necessary by m_copyback().
+	 */
 	if (inc < 0)
 		m_adj(m, inc);
-	/* the mbuf chain will be extended if necessary by m_copyback() */
 # endif /* defined(MENTAT) */
 #endif /* !defined(_KERNEL) */
 	COPYBACK(m, off, nlen, newmsg);
@@ -832,18 +831,23 @@ ftpside_t *ftps;
 char *buf;
 size_t len;
 {
-	register char *s, c;
+	register char *s, c, pc;
 	register size_t i = len;
 	char cmd[5];
+
+	s = buf;
+
+	if (ftps->ftps_junk == 1)
+		return 1;
 
 	if (i < 5) {
 		if (ippr_ftp_debug > 3)
 			printf("ippr_ftp_client_valid:i(%d) < 5\n", (int)i);
 		return 2;
 	}
-	s = buf;
-	c = *s++;
+
 	i--;
+	c = *s++;
 
 	if (ISALPHA(c)) {
 		cmd[0] = TOUPPER(c);
@@ -872,15 +876,17 @@ size_t len;
 	} else {
 bad_client_command:
 		if (ippr_ftp_debug > 3)
-			printf("ippr_ftp_client_valid:bad:junk %d len %d/%d c 0x%x buf [%*.*s]\n",
-				ftps->ftps_junk, (int)len, (int)i, c,
-				(int)len, (int)len, buf);
+			printf("%s:bad:junk %d len %d/%d c 0x%x buf [%*.*s]\n",
+			       "ippr_ftp_client_valid",
+			       ftps->ftps_junk, (int)len, (int)i, c,
+			       (int)len, (int)len, buf);
 		return 1;
 	}
 
 	for (; i; i--) {
+		pc = c;
 		c = *s++;
-		if (c == '\n') {
+		if ((pc == '\r') && (c == '\n')) {
 			cmd[4] = '\0';
 			if (!strcmp(cmd, "PASV"))
 				ftps->ftps_cmds = FTPXY_C_PASV;
@@ -890,7 +896,8 @@ bad_client_command:
 		}
 	}
 #if !defined(_KERNEL)
-	printf("ippr_ftp_client_valid:junk after cmd[%s]\n", buf);
+	printf("ippr_ftp_client_valid:junk after cmd[%*.*s]\n",
+	       (int)len, (int)len, buf);
 #endif
 	return 2;
 }
@@ -901,17 +908,24 @@ ftpside_t *ftps;
 char *buf;
 size_t len;
 {
-	register char *s, c;
+	register char *s, c, pc;
 	register size_t i = len;
 	int cmd;
 
-	if (i < 5)
-		return 2;
 	s = buf;
-	c = *s++;
 	cmd = 0;
-	i--;
 
+	if (ftps->ftps_junk == 1)
+		return 1;
+
+	if (i < 5) {
+		if (ippr_ftp_debug > 3)
+			printf("ippr_ftp_servert_valid:i(%d) < 5\n", (int)i);
+		return 2;
+	}
+
+	c = *s++;
+	i--;
 	if (c == ' ')
 		goto search_eol;
 
@@ -936,22 +950,24 @@ size_t len;
 	} else {
 bad_server_command:
 		if (ippr_ftp_debug > 3)
-			printf("ippr_ftp_server_valid:bad:junk %d len %d/%d c 0x%x buf [%*.*s]\n",
-				ftps->ftps_junk, (int)len, (int)i,
-				c, (int)len, (int)len, buf);
+			printf("%s:bad:junk %d len %d/%d c 0x%x buf [%*.*s]\n",
+			       "ippr_ftp_server_valid",
+			       ftps->ftps_junk, (int)len, (int)i,
+			       c, (int)len, (int)len, buf);
 		return 1;
 	}
 search_eol:
 	for (; i; i--) {
+		pc = c;
 		c = *s++;
-		if (c == '\n') {
+		if ((pc == '\r') && (c == '\n')) {
 			ftps->ftps_cmds = cmd;
 			return 0;
 		}
 	}
-	if (ippr_ftp_debug > 1)
+	if (ippr_ftp_debug > 3)
 		printf("ippr_ftp_server_valid:junk after cmd[%*.*s]\n",
-			(int)len, (int)len, buf);
+		       (int)len, (int)len, buf);
 	return 2;
 }
 
@@ -990,8 +1006,8 @@ ftpinfo_t *ftp;
 int rv;
 {
 	int mlen, len, off, inc, i, sel, sel2, ok, ackoff, seqoff;
+	char *rptr, *wptr, *s;
 	u_32_t thseq, thack;
-	char *rptr, *wptr;
 	ap_session_t *aps;
 	ftpside_t *f, *t;
 	tcphdr_t *tcp;
@@ -1038,14 +1054,14 @@ int rv;
 		seqoff = aps->aps_ackoff[sel];
 		if (ippr_ftp_debug > 2)
 			printf("seqoff %d thseq %x ackmin %x\n", seqoff, thseq,
-				aps->aps_ackmin[sel]);
+			       aps->aps_ackmin[sel]);
 		if (aps->aps_ackmin[sel] > seqoff + thseq)
 			seqoff = aps->aps_ackoff[!sel];
 
 		ackoff = aps->aps_seqoff[sel2];
 		if (ippr_ftp_debug > 2)
 			printf("ackoff %d thack %x seqmin %x\n", ackoff, thack,
-				aps->aps_seqmin[sel2]);
+			       aps->aps_seqmin[sel2]);
 		if (ackoff > 0) {
 			if (aps->aps_seqmin[sel2] > ackoff + thack)
 				ackoff = aps->aps_seqoff[!sel2];
@@ -1056,14 +1072,14 @@ int rv;
 	}
 	if (ippr_ftp_debug > 2) {
 		printf("%s: %x seq %x/%d ack %x/%d len %d/%d off %d\n",
-			rv ? "IN" : "OUT", tcp->th_flags, thseq, seqoff,
-			thack, ackoff, mlen, fin->fin_plen, off);
+		       rv ? "IN" : "OUT", tcp->th_flags, thseq, seqoff,
+		       thack, ackoff, mlen, fin->fin_plen, off);
 		printf("sel %d seqmin %x/%x offset %d/%d\n", sel,
-			aps->aps_seqmin[sel], aps->aps_seqmin[sel2],
-			aps->aps_seqoff[sel], aps->aps_seqoff[sel2]);
+		       aps->aps_seqmin[sel], aps->aps_seqmin[sel2],
+		       aps->aps_seqoff[sel], aps->aps_seqoff[sel2]);
 		printf("sel %d ackmin %x/%x offset %d/%d\n", sel2,
-			aps->aps_ackmin[sel], aps->aps_ackmin[sel2],
-			aps->aps_ackoff[sel], aps->aps_ackoff[sel2]);
+		       aps->aps_ackmin[sel], aps->aps_ackmin[sel2],
+		       aps->aps_ackoff[sel], aps->aps_ackoff[sel2]);
 	}
 
 	/*
@@ -1073,7 +1089,7 @@ int rv;
 	 */
 	if (ippr_ftp_debug > 2) {
 		printf("rv %d t:seq[0] %x seq[1] %x %d/%d\n",
-			rv, t->ftps_seq[0], t->ftps_seq[1], seqoff, ackoff);
+		       rv, t->ftps_seq[0], t->ftps_seq[1], seqoff, ackoff);
 	}
 
 	ok = 0;
@@ -1111,14 +1127,15 @@ int rv;
 	if (!mlen) {
 		if (t->ftps_seq[0] + ackoff != thack) {
 			if (ippr_ftp_debug > 1) {
-				printf("ippr_ftp_process:seq[0](%x) + ackoff(%x) != thack(%x)\n",
-					t->ftps_seq[0], ackoff, thack);
+				printf("%s:seq[0](%x) + (%x) != (%x)\n",
+				       "ippr_ftp_process", t->ftps_seq[0],
+				       ackoff, thack);
 			}
 			return APR_ERR(1);
 		}
 
 		if (ippr_ftp_debug > 2) {
-			printf("f:seq[0] %x seq[1] %x\n",
+			printf("ippr_ftp_process:f:seq[0] %x seq[1] %x\n",
 				f->ftps_seq[0], f->ftps_seq[1]);
 		}
 
@@ -1129,7 +1146,7 @@ int rv;
 			} else {
 				if (ippr_ftp_debug > 1) {
 					printf("FIN: thseq %x seqoff %d ftps_seq %x\n",
-						thseq, seqoff, f->ftps_seq[0]);
+					       thseq, seqoff, f->ftps_seq[0]);
 				}
 				return APR_ERR(1);
 			}
@@ -1154,11 +1171,11 @@ int rv;
 		if (ippr_ftp_debug > 1) {
 			printf("inc %d sel %d rv %d\n", inc, sel, rv);
 			printf("th_seq %x ftps_seq %x/%x\n",
-				thseq, f->ftps_seq[0], f->ftps_seq[1]);
+			       thseq, f->ftps_seq[0], f->ftps_seq[1]);
 			printf("ackmin %x ackoff %d\n", aps->aps_ackmin[sel],
-				aps->aps_ackoff[sel]);
+			       aps->aps_ackoff[sel]);
 			printf("seqmin %x seqoff %d\n", aps->aps_seqmin[sel],
-				aps->aps_seqoff[sel]);
+			       aps->aps_seqoff[sel]);
 		}
 
 		return APR_ERR(1);
@@ -1172,29 +1189,58 @@ int rv;
 	f->ftps_len = mlen;
 
 	while (mlen > 0) {
-		len = MIN(mlen, FTP_BUFSZ / 2);
+		len = MIN(mlen, sizeof(f->ftps_buf) - (wptr - rptr));
 		COPYDATA(m, off, len, wptr);
 		mlen -= len;
 		off += len;
 		wptr += len;
 
 		if (ippr_ftp_debug > 3)
-			printf("ippr_ftp_process:len %d/%d off %d wptr %lx junk %d\n",
-				len, mlen, off, (u_long)wptr, f->ftps_junk);
+			printf("%s:len %d/%d off %d wptr %lx junk %d [%*.*s]\n",
+			       "ippr_ftp_process",
+			       len, mlen, off, (u_long)wptr, f->ftps_junk,
+			       len, len, rptr);
 
 		f->ftps_wptr = wptr;
-		if (f->ftps_junk == 2)
+		if (f->ftps_junk != 0) {
+			i = f->ftps_junk;
 			f->ftps_junk = ippr_ftp_valid(ftp, rv, rptr,
 						      wptr - rptr);
+
+			if (ippr_ftp_debug > 5)
+				printf("%s:junk %d -> %d\n",
+				       "ippr_ftp_process", i, f->ftps_junk);
+
+			if (f->ftps_junk != 0) {
+				if (wptr - rptr == sizeof(f->ftps_buf)) {
+					if (ippr_ftp_debug > 4)
+						printf("%s:full buffer\n",
+						       "ippr_ftp_process");
+					f->ftps_rptr = f->ftps_buf;
+					f->ftps_wptr = f->ftps_buf;
+					rptr = f->ftps_rptr;
+					wptr = f->ftps_wptr;
+					/*
+					 * Because we throw away data here that
+					 * we would otherwise parse, set the
+					 * junk flag to indicate just ignore
+					 * any data upto the next CRLF.
+					 */
+					f->ftps_junk = 1;
+					continue;
+				}
+			}
+		}
 
 		while ((f->ftps_junk == 0) && (wptr > rptr)) {
 			len = wptr - rptr;
 			f->ftps_junk = ippr_ftp_valid(ftp, rv, rptr, len);
 
 			if (ippr_ftp_debug > 3) {
-				printf("ippr_ftp_valid=%d len %d rv %d ptr %lx/%lx\n",
-					f->ftps_junk, len, rv, (u_long)rptr,
-					(u_long)wptr);
+				printf("%s=%d len %d rv %d ptr %lx/%lx ",
+				       "ippr_ftp_valid",
+				       f->ftps_junk, len, rv, (u_long)rptr,
+				       (u_long)wptr);
 				printf("buf [%*.*s]\n", len, len, rptr);
 			}
 
@@ -1219,45 +1265,39 @@ int rv;
 			/* f->ftps_seq[1] += inc; */
 
 			if (ippr_ftp_debug > 1)
-				printf("ippr_ftp_process:cmds == 0 junk == %d\n", 1);
+				printf("%s:cmds == 0 junk == 1\n",
+				       "ippr_ftp_process");
 			return APR_ERR(2);
 		}
 
-		while ((f->ftps_junk == 1) && (rptr < wptr)) {
-			while ((rptr < wptr) && (*rptr != '\r'))
-				rptr++;
-
-			if (*rptr == '\r') {
-				if (rptr + 1 < wptr) {
-					if (*(rptr + 1) == '\n') {
-						rptr += 2;
-						f->ftps_junk = 0;
-					} else
-						rptr++;
-				} else
+		if ((f->ftps_junk != 0) && (rptr < wptr)) {
+			for (s = rptr; s < wptr; s++) {
+				if ((*s == '\r') && (s + 1 < wptr) &&
+				    (*(s + 1) == '\n')) {
+					rptr = s + 2;
+					f->ftps_junk = 0;
 					break;
+				}
 			}
 		}
-		f->ftps_rptr = rptr;
 
 		if (rptr == wptr) {
 			rptr = wptr = f->ftps_buf;
 		} else {
-			if ((wptr > f->ftps_buf + FTP_BUFSZ / 2)) {
-				i = wptr - rptr;
-				if ((rptr == f->ftps_buf) ||
-				    (wptr - rptr > FTP_BUFSZ / 2)) {
-					f->ftps_junk = 1;
-					rptr = wptr = f->ftps_buf;
-				} else {
-					bcopy(rptr, f->ftps_buf, i);
-					wptr = f->ftps_buf + i;
-					rptr = f->ftps_buf;
-				}
+			/*
+			 * Compact the buffer back to the start.  The junk
+			 * flag should already be set and because we're not
+			 * throwing away any data, it is preserved from its
+			 * current state.
+			 */
+			if (rptr > f->ftps_buf) {
+				bcopy(rptr, f->ftps_buf, len);
+				wptr -= rptr - f->ftps_buf;
+				rptr = f->ftps_buf;
 			}
-			f->ftps_rptr = rptr;
-			f->ftps_wptr = wptr;
 		}
+		f->ftps_rptr = rptr;
+		f->ftps_wptr = wptr;
 	}
 
 	/* f->ftps_seq[1] += inc; */
@@ -1271,7 +1311,7 @@ int rv;
 #endif
 		mlen -= off;
 		printf("ftps_seq[1] = %x inc %d len %d\n",
-			f->ftps_seq[1], inc, mlen);
+		       f->ftps_seq[1], inc, mlen);
 	}
 
 	f->ftps_rptr = rptr;
@@ -1416,36 +1456,3 @@ int dlen;
 	return ippr_ftp_pasvreply(fin, ip, nat, f, (u_int)ap, newbuf, s,
 				  ip->ip_src.s_addr);
 }
-
-
-#if 0
-ippr_ftp_parse(str, len)
-{
-	char *s, c;
-
-	if (len < 5)
-		return -1;
-	s = str;
-	if (*s++ != '|')
-		return -1;
-	c = *s++;
-	if (c != '|') {
-		if (*s++ != '|')
-			return -1;
-	} else
-		c = '1';
-
-	if (c == '1') {
-		/*
-		 * IPv4 dotted quad.
-		 */
-		return 0;
-	} else if (c == '2') {
-		/*
-		 * IPv6 hex string
-		 */
-		return 0;
-	}
-	return -1;
-}
-#endif

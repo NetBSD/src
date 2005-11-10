@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.10 2005/03/04 16:40:02 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.11 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.10 2005/03/04 16:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.11 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.10 2005/03/04 16:40:02 skrll 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 
@@ -155,7 +156,8 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_FILECORE,	LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		},
-	{ MOUNT_PTYFS,		LINUX_DEVPTS_SUPER_MAGIC	}
+	{ MOUNT_PTYFS,		LINUX_DEVPTS_SUPER_MAGIC	},
+	{ MOUNT_TMPFS,		LINUX_DEFAULT_SUPER_MAGIC	}
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
@@ -166,8 +168,10 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 #endif
 
 /* Local linux_misc.c functions: */
+#ifndef __amd64__
 static void bsd_to_linux_statfs __P((const struct statvfs *,
     struct linux_statfs *));
+#endif
 static int linux_to_bsd_limit __P((int));
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
@@ -300,6 +304,7 @@ linux_sys_brk(l, v, retval)
 	return 0;
 }
 
+#ifndef __amd64__
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.
  * Linux doesn't have f_flag, and we can't set f_frsize due
@@ -425,6 +430,7 @@ linux_sys_fstatfs(l, v, retval)
 
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
+#endif /* __amd64__ */
 
 /*
  * uname(). Just copy the info from the various strings stored in the
@@ -447,7 +453,11 @@ linux_sys_uname(l, v, retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
+#ifdef LINUX_UNAME_ARCH
+	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+#else
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+#endif
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
@@ -669,25 +679,33 @@ linux_sys_mprotect(l, v, retval)
 		syscallarg(unsigned long) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
-	unsigned long end, start = (unsigned long)SCARG(uap, start), len;
-	int prot = SCARG(uap, prot);
 	struct vm_map_entry *entry;
-	struct vm_map *map = &l->l_proc->p_vmspace->vm_map;
+	struct vm_map *map;
+	struct proc *p;
+	vaddr_t end, start, len, stacklim;
+	int prot, grows;
+
+	start = (vaddr_t)SCARG(uap, start);
+	len = round_page(SCARG(uap, len));
+	prot = SCARG(uap, prot);
+	grows = prot & (LINUX_PROT_GROWSDOWN | LINUX_PROT_GROWSUP);
+	prot &= ~grows;
+	end = start + len;
 
 	if (start & PAGE_MASK)
 		return EINVAL;
-
-	len = round_page(SCARG(uap, len));
-	end = start + len;
-
 	if (end < start)
 		return EINVAL;
-	else if (end == start)
+	if (end == start)
 		return 0;
 
-	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+	if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;
+	if (grows == (LINUX_PROT_GROWSDOWN | LINUX_PROT_GROWSUP))
 		return EINVAL;
 
+	p = l->l_proc;
+	map = &p->p_vmspace->vm_map;
 	vm_map_lock(map);
 #ifdef notdef
 	VM_MAP_RANGE_CHECK(map, start, end);
@@ -695,6 +713,25 @@ linux_sys_mprotect(l, v, retval)
 	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
 		vm_map_unlock(map);
 		return ENOMEM;
+	}
+
+	/*
+	 * Approximate the behaviour of PROT_GROWS{DOWN,UP}.
+	 */
+
+	stacklim = (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur;
+	if (grows & LINUX_PROT_GROWSDOWN) {
+		if (USRSTACK - stacklim <= start && start < USRSTACK) {
+			start = USRSTACK - stacklim;
+		} else {
+			start = entry->start;
+		}
+	} else if (grows & LINUX_PROT_GROWSUP) {
+		if (USRSTACK <= end && end < USRSTACK + stacklim) {
+			end = USRSTACK + stacklim;
+		} else {
+			end = entry->end;
+		}
 	}
 	vm_map_unlock(map);
 	return uvm_map_protect(map, start, end, prot, FALSE);
@@ -772,7 +809,7 @@ linux_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t	inp, buf;		/* BSD-format */
+	caddr_t	inp, tbuf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
 	caddr_t outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
@@ -815,12 +852,12 @@ linux_sys_getdents(l, v, retval)
 			buflen = va.va_blocksize;
 		oldcall = 0;
 	}
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -838,7 +875,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = buf;
+	inp = tbuf;
 	outp = (caddr_t)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -851,7 +888,10 @@ again:
 			panic("linux_readdir");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
@@ -886,7 +926,10 @@ again:
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		off = *cookie++;	/* each entry points to itself */
+		if (cookie)
+			off = *cookie++; /* each entry points to itself */
+		else
+			off += reclen;
 		/* advance output past Linux-shaped entry */
 		outp += linux_reclen;
 		resid -= linux_reclen;
@@ -908,7 +951,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, l);
 	return error;
@@ -1266,7 +1309,7 @@ out:
 	return error;
 }
 
-#endif /* __i386__ || __m68k__ */
+#endif /* __i386__ || __m68k__ || __amd64__ */
 
 /*
  * We have nonexistent fsuid equal to uid.
@@ -1369,7 +1412,7 @@ linux_sys_ptrace(l, v, retval)
 {
 	struct linux_sys_ptrace_args /* {
 		i386, m68k, powerpc: T=int
-		alpha: T=long
+		alpha, amd64: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
 		syscallarg(T) addr;
@@ -1406,7 +1449,8 @@ linux_sys_ptrace(l, v, retval)
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (caddr_t)SCARG(uap, data), sizeof *retval);
+				    (caddr_t)SCARG(uap, data), 
+				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
 			default:
@@ -1487,7 +1531,7 @@ linux_sys_swapon(l, v, retval)
 	} */ *uap = v;
 
 	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	SCARG(&ua, arg) = (void *)__UNCONST(SCARG(uap, name));
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(l, &ua, retval));
 }
@@ -1507,7 +1551,7 @@ linux_sys_swapoff(l, v, retval)
 	} */ *uap = v;
 
 	SCARG(&ua, cmd) = SWAP_OFF;
-	SCARG(&ua, arg) = (void *)SCARG(uap, path);
+	SCARG(&ua, arg) = __UNCONST(SCARG(uap, path)); /*XXXUNCONST*/
 	return (sys_swapctl(l, &ua, retval));
 }
 
@@ -1657,7 +1701,7 @@ linux_sys_setrlimit(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys_setrlimit_args ap;
+	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
 	int error;
@@ -1669,13 +1713,12 @@ linux_sys_setrlimit(l, v, retval)
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
 	linux_to_bsd_rlimit(&rl, &orl);
-	/* XXX: alpha complains about this */
-	if ((error = copyout(&rl, (void *)SCARG(&ap, rlp), sizeof(rl))) != 0)
+	if ((error = copyout(&rl, SCARG(&ap, rlp), sizeof(rl))) != 0)
 		return error;
 	return sys_setrlimit(l, &ap, retval);
 }
 
-#ifndef __mips__
+#if !defined(__mips__) && !defined(__amd64__)
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
 linux_sys_ugetrlimit(l, v, retval)

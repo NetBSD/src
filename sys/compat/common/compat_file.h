@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.h,v 1.3.2.1 2004/08/03 10:43:29 skrll Exp $ */
+/*	$NetBSD: compat_file.h,v 1.3.2.2 2005/11/10 14:00:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@ int bsd_sys_undelete(struct lwp *, void *, register_t *);
 int bsd_sys_lchmod(struct lwp *, void *, register_t *);
 int bsd_sys_lchown(struct lwp *, void *, register_t *);
 int bsd_sys_lutimes(struct lwp *, void *, register_t *);
-int bsd_sys___stat13(struct lwp *, void *, register_t *);
-int bsd_sys___lstat13(struct lwp *, void *, register_t *);
+int bsd_sys___stat30(struct lwp *, void *, register_t *);
+int bsd_sys___lstat30(struct lwp *, void *, register_t *);
 int bsd_sys___posix_chown(struct lwp *, void *, register_t *);
 int bsd_sys___posix_lchown(struct lwp *, void *, register_t *);
 int bsd_sys_lchflags(struct lwp *, void *, register_t *);

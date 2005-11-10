@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.66.2.7 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.66.2.8 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.7 2005/04/01 14:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.8 2005/11/10 14:12:39 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -112,10 +112,7 @@ static void uvm_uarea_free(vaddr_t);
  */
 
 boolean_t
-uvm_kernacc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
 	boolean_t rv;
 	vaddr_t saddr, eaddr;
@@ -144,10 +141,7 @@ uvm_kernacc(addr, len, rw)
  * we can ensure the change takes place properly.
  */
 void
-uvm_chgkprot(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_chgkprot(caddr_t addr, size_t len, int rw)
 {
 	vm_prot_t prot;
 	paddr_t pa;
@@ -175,11 +169,7 @@ uvm_chgkprot(addr, len, rw)
  */
 
 int
-uvm_vslock(p, addr, len, access_type)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
-	vm_prot_t access_type;
+uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
 	struct vm_map *map;
 	vaddr_t start, end;
@@ -200,10 +190,7 @@ uvm_vslock(p, addr, len, access_type)
  */
 
 void
-uvm_vsunlock(p, addr, len)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
+uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 {
 	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
 		round_page((vaddr_t)addr + len));
@@ -215,9 +202,7 @@ uvm_vsunlock(p, addr, len)
  * - the address space is copied as per parent map's inherit values
  */
 void
-uvm_proc_fork(p1, p2, shared)
-	struct proc *p1, *p2;
-	boolean_t shared;
+uvm_proc_fork(struct proc *p1, struct proc *p2, boolean_t shared)
 {
 
 	if (shared == TRUE) {
@@ -246,12 +231,8 @@ uvm_proc_fork(p1, p2, shared)
  *   than just hang
  */
 void
-uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct user *up = l2->l_addr;
 	int error;
@@ -375,8 +356,7 @@ uvm_uarea_drain(boolean_t empty)
  */
 
 void
-uvm_proc_exit(p)
-	struct proc *p;
+uvm_proc_exit(struct proc *p)
 {
 	struct lwp *l = curlwp; /* XXX */
 	struct vmspace *ovm;
@@ -411,8 +391,7 @@ uvm_lwp_exit(struct lwp *l)
  */
 
 void
-uvm_init_limits(p)
-	struct proc *p;
+uvm_init_limits(struct proc *p)
 {
 
 	/*
@@ -442,8 +421,7 @@ int	swapdebug = 0;
  */
 
 void
-uvm_swapin(l)
-	struct lwp *l;
+uvm_swapin(struct lwp *l)
 {
 	vaddr_t addr;
 	int s, error;
@@ -479,7 +457,7 @@ uvm_swapin(l)
  */
 
 void
-uvm_scheduler()
+uvm_scheduler(void)
 {
 	struct lwp *l, *ll;
 	int pri;
@@ -577,7 +555,7 @@ loop:
  */
 
 void
-uvm_swapout_threads()
+uvm_swapout_threads(void)
 {
 	struct lwp *l;
 	struct lwp *outl, *outl2;
@@ -604,7 +582,6 @@ uvm_swapout_threads()
 			continue;
 		switch (l->l_stat) {
 		case LSONPROC:
-			KDASSERT(l->l_cpu != curcpu());
 			continue;
 
 		case LSRUN:
@@ -655,8 +632,7 @@ uvm_swapout_threads()
  */
 
 static void
-uvm_swapout(l)
-	struct lwp *l;
+uvm_swapout(struct lwp *l)
 {
 	vaddr_t addr;
 	int s;
@@ -706,16 +682,11 @@ uvm_swapout(l)
  */
 
 int
-uvm_coredump_walkmap(l, vp, cred, func, cookie)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	int (*func)(struct lwp *, struct vnode *, struct ucred *,
-	    struct uvm_coredump_state *);
-	void *cookie;
+uvm_coredump_walkmap(struct proc *p, void *iocookie,
+    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
+    void *cookie)
 {
 	struct uvm_coredump_state state;
-	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	struct vm_map *map = &vm->vm_map;
 	struct vm_map_entry *entry;
@@ -723,6 +694,7 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 
 	entry = NULL;
 	vm_map_lock_read(map);
+	state.end = 0;
 	for (;;) {
 		if (entry == NULL)
 			entry = map->header.next;
@@ -732,7 +704,12 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 			break;
 
 		state.cookie = cookie;
-		state.start = entry->start;
+		if (state.end > entry->start) {
+			state.start = state.end;
+		} else {
+			state.start = entry->start;
+		}
+		state.realend = entry->end;
 		state.end = entry->end;
 		state.prot = entry->protection;
 		state.flags = 0;
@@ -747,6 +724,8 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 		 *     (eg. an executable text section).
 		 *
 		 * (3) the region's object is a device.
+		 *
+		 * (4) the region is unreadable by the process.
 		 */
 
 		KASSERT(!UVM_ET_ISSUBMAP(entry));
@@ -754,22 +733,61 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 		KASSERT(state.end <= VM_MAXUSER_ADDRESS);
 		if (entry->object.uvm_obj == NULL &&
 		    entry->aref.ar_amap == NULL) {
-			state.flags |= UVM_COREDUMP_NODUMP;
-		}
-		if ((entry->protection & VM_PROT_WRITE) == 0 &&
+			state.realend = state.start;
+		} else if ((entry->protection & VM_PROT_WRITE) == 0 &&
 		    entry->aref.ar_amap == NULL) {
-			state.flags |= UVM_COREDUMP_NODUMP;
-		}
-		if (entry->object.uvm_obj != NULL &&
+			state.realend = state.start;
+		} else if (entry->object.uvm_obj != NULL &&
 		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
-			state.flags |= UVM_COREDUMP_NODUMP;
+			state.realend = state.start;
+		} else if ((entry->protection & VM_PROT_READ) == 0) {
+			state.realend = state.start;
+		} else {
+			if (state.start >= (vaddr_t)vm->vm_maxsaddr)
+				state.flags |= UVM_COREDUMP_STACK;
+
+			/*
+			 * If this an anonymous entry, only dump instantiated
+			 * pages.
+			 */
+			if (entry->object.uvm_obj == NULL) {
+				vaddr_t end;
+
+				amap_lock(entry->aref.ar_amap);
+				for (end = state.start;
+				     end < state.end; end += PAGE_SIZE) {
+					struct vm_anon *anon;
+					anon = amap_lookup(&entry->aref,
+					    end - entry->start);
+					/*
+					 * If we have already encountered an
+					 * uninstantiated page, stop at the
+					 * first instantied page.
+					 */
+					if (anon != NULL &&
+					    state.realend != state.end) {
+						state.end = end;
+						break;
+					}
+
+					/*
+					 * If this page is the first
+					 * uninstantiated page, mark this as
+					 * the real ending point.  Continue to
+					 * counting uninstantiated pages.
+					 */
+					if (anon == NULL &&
+					    state.realend == state.end) {
+						state.realend = end;
+					}
+				}
+				amap_unlock(entry->aref.ar_amap);
+			}
 		}
-		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
-			state.flags |= UVM_COREDUMP_STACK;
-		}
+		
 
 		vm_map_unlock_read(map);
-		error = (*func)(l, vp, cred, &state);
+		error = (*func)(p, iocookie, &state);
 		if (error)
 			return (error);
 		vm_map_lock_read(map);

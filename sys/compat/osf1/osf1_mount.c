@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.24.2.6 2005/03/04 16:40:22 skrll Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.24.2.7 2005/11/10 14:01:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.24.2.6 2005/03/04 16:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.24.2.7 2005/11/10 14:01:30 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -298,7 +298,7 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 
 	len = strlen(mfs_name) + 1;
 	SCARG(bsd_argp, type) = stackgap_alloc(p, &sg, len);
-	if ((error = copyout(mfs_name, (void *)SCARG(bsd_argp, type), len)))
+	if ((error = copyout(mfs_name, __UNCONST(SCARG(bsd_argp, type)), len)))
 		return error;
 
 	return 0;
@@ -361,7 +361,7 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 
 	len = strlen(nfs_name) + 1;
 	SCARG(bsd_argp, type) = stackgap_alloc(p, &sg, len);
-	if ((error = copyout(MOUNT_NFS, (void *)SCARG(bsd_argp, type), len)))
+	if ((error = copyout(MOUNT_NFS, __UNCONST(SCARG(bsd_argp, type)), len)))
 		return error;
 
 	return 0;

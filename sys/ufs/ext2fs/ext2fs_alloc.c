@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.6 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.7 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.6 2005/03/04 16:54:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.7 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,20 +78,21 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.6 2005/03/04 16:54:45 skrll 
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 u_long ext2gennumber;
 
-static daddr_t	ext2fs_alloccg __P((struct inode *, int, daddr_t, int));
-static u_long	ext2fs_dirpref __P((struct m_ext2fs *));
-static void	ext2fs_fserr __P((struct m_ext2fs *, u_int, char *));
-static u_long	ext2fs_hashalloc __P((struct inode *, int, long, int,
+static daddr_t	ext2fs_alloccg(struct inode *, int, daddr_t, int);
+static u_long	ext2fs_dirpref(struct m_ext2fs *);
+static void	ext2fs_fserr(struct m_ext2fs *, u_int, const char *);
+static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
 				   daddr_t (*)(struct inode *, int, daddr_t,
-						   int)));
-static daddr_t	ext2fs_nodealloccg __P((struct inode *, int, daddr_t, int));
-static daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, daddr_t));
+						   int));
+static daddr_t	ext2fs_nodealloccg(struct inode *, int, daddr_t, int);
+static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
 
 /*
  * Allocate a block in the file system.
@@ -111,11 +112,8 @@ static daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, daddr_t));
  *	  available block is located.
  */
 int
-ext2fs_alloc(ip, lbn, bpref, cred, bnp)
-	struct inode *ip;
-	daddr_t lbn, bpref;
-	struct ucred *cred;
-	daddr_t *bnp;
+ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, struct ucred *cred,
+		daddr_t *bnp)
 {
 	struct m_ext2fs *fs;
 	daddr_t bno;
@@ -167,24 +165,16 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(v)
-	void *v;
+ext2fs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
+    struct vnode **vpp)
 {
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-	struct vnode *pvp = ap->a_pvp;
 	struct inode *pip;
 	struct m_ext2fs *fs;
 	struct inode *ip;
-	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
 
-	*ap->a_vpp = NULL;
+	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if (fs->e2fs.e2fs_ficount == 0)
@@ -198,15 +188,16 @@ ext2fs_valloc(v)
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
+	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		VOP_VFREE(pvp, ino, mode);
+		ext2fs_vfree(pvp, ino, mode);
 		return (error);
 	}
-	ip = VTOI(*ap->a_vpp);
+	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
-		printf("mode = 0%o, nlinks %d, inum = %d, fs = %s\n",
-			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
+		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
+		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
+		    (unsigned long long)ip->i_number, fs->e2fs_fsmnt);
 		panic("ext2fs_valloc: dup alloc");
 	}
 
@@ -220,7 +211,7 @@ ext2fs_valloc(v)
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:
-	ext2fs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");
+	ext2fs_fserr(fs, cred->cr_uid, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
 	return (ENOSPC);
 }
@@ -233,8 +224,7 @@ noinodes:
  * free inodes, the one with the smallest number of directories.
  */
 static u_long
-ext2fs_dirpref(fs)
-	struct m_ext2fs *fs;
+ext2fs_dirpref(struct m_ext2fs *fs)
 {
 	int cg, maxspace, mincg, avgifree;
 
@@ -263,11 +253,8 @@ ext2fs_dirpref(fs)
  * ufs/ufs/inode.h) help this.
  */
 daddr_t
-ext2fs_blkpref(ip, lbn, indx, bap)
-	struct inode *ip;
-	daddr_t lbn;
-	int indx;
-	int32_t *bap;	/* XXX ondisk32 */
+ext2fs_blkpref(struct inode *ip, daddr_t lbn, int indx,
+		int32_t *bap /* XXX ondisk32 */)
 {
 	struct m_ext2fs *fs;
 	int cg, i;
@@ -310,12 +297,8 @@ ext2fs_blkpref(ip, lbn, indx, bap)
  *   3) brute force search for a free block.
  */
 static u_long
-ext2fs_hashalloc(ip, cg, pref, size, allocator)
-	struct inode *ip;
-	int cg;
-	long pref;
-	int size;	/* size for data blocks, mode for inodes */
-	daddr_t (*allocator) __P((struct inode *, int, daddr_t, int));
+ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
+		daddr_t (*allocator)(struct inode *, int, daddr_t, int))
 {
 	struct m_ext2fs *fs;
 	long result;
@@ -364,11 +347,7 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
  */
 
 static daddr_t
-ext2fs_alloccg(ip, cg, bpref, size)
-	struct inode *ip;
-	int cg;
-	daddr_t bpref;
-	int size;
+ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 {
 	struct m_ext2fs *fs;
 	char *bbp;
@@ -453,11 +432,7 @@ gotit:
  *	  inode in the specified cylinder group.
  */
 static daddr_t
-ext2fs_nodealloccg(ip, cg, ipref, mode)
-	struct inode *ip;
-	int cg;
-	daddr_t ipref;
-	int mode;
+ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 {
 	struct m_ext2fs *fs;
 	char *ibp;
@@ -525,9 +500,7 @@ gotit:
  * free map.
  */
 void
-ext2fs_blkfree(ip, bno)
-	struct inode *ip;
-	daddr_t bno;
+ext2fs_blkfree(struct inode *ip, daddr_t bno)
 {
 	struct m_ext2fs *fs;
 	char *bbp;
@@ -537,8 +510,8 @@ ext2fs_blkfree(ip, bno)
 	fs = ip->i_e2fs;
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
-		printf("bad block %lld, ino %d\n", (long long)bno,
-		    ip->i_number);
+		printf("bad block %lld, ino %llu\n", (long long)bno,
+		    (unsigned long long)ip->i_number);
 		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
 		return;
 	}
@@ -570,26 +543,19 @@ ext2fs_blkfree(ip, bno)
  * The specified inode is placed back in the free map.
  */
 int
-ext2fs_vfree(v)
-	void *v;
+ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
 	struct m_ext2fs *fs;
 	char *ibp;
 	struct inode *pip;
-	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
 
-	pip = VTOI(ap->a_pvp);
+	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
+			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
@@ -601,15 +567,15 @@ ext2fs_vfree(v)
 	ibp = (char *)bp->b_data;
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
-		printf("dev = 0x%x, ino = %d, fs = %s\n",
-			pip->i_dev, ino, fs->e2fs_fsmnt);
+		printf("dev = 0x%x, ino = %llu, fs = %s\n",
+		    pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
 	clrbit(ibp, ino);
 	fs->e2fs.e2fs_ficount++;
 	fs->e2fs_gd[cg].ext2bgd_nifree++;
-	if ((ap->a_mode & IFMT) == IFDIR) {
+	if ((mode & IFMT) == IFDIR) {
 		fs->e2fs_gd[cg].ext2bgd_ndirs--;
 	}
 	fs->e2fs_fmod = 1;
@@ -625,10 +591,7 @@ ext2fs_vfree(v)
  */
 
 static daddr_t
-ext2fs_mapsearch(fs, bbp, bpref)
-	struct m_ext2fs *fs;
-	char *bbp;
-	daddr_t bpref;
+ext2fs_mapsearch(struct m_ext2fs *fs, char *bbp, daddr_t bpref)
 {
 	daddr_t bno;
 	int start, len, loc, i, map;
@@ -673,10 +636,7 @@ ext2fs_mapsearch(fs, bbp, bpref)
  *	fs: error message
  */
 static void
-ext2fs_fserr(fs, uid, cp)
-	struct m_ext2fs *fs;
-	u_int uid;
-	char *cp;
+ext2fs_fserr(struct m_ext2fs *fs, u_int uid, const char *cp)
 {
 
 	log(LOG_ERR, "uid %d on %s: %s\n", uid, fs->e2fs_fsmnt, cp);

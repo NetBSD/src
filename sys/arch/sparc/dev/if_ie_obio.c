@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.29.2.3 2004/09/21 13:22:02 skrll Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.29.2.4 2005/11/10 13:58:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.29.2.3 2004/09/21 13:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.29.2.4 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ ie_obio_attach(parent, self, aux)
 	int error;
 	paddr_t pa;
 	struct intrhand *ih;
-	bus_size_t msize;
+	bus_size_t memsize;
 	u_long iebase;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
@@ -304,7 +304,7 @@ ie_obio_attach(parent, self, aux)
 	sc->ie_bus_read16 = ie_obio_read16;
 	sc->ie_bus_write16 = ie_obio_write16;
 	sc->ie_bus_write24 = ie_obio_write24;
-	sc->sc_msize = msize = 65536; /* XXX */
+	sc->sc_msize = memsize = 65536; /* XXX */
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
 			  sizeof(struct ieob),
@@ -318,14 +318,14 @@ ie_obio_attach(parent, self, aux)
 	/*
 	 * Allocate control & buffer memory.
 	 */
-	if ((error = bus_dmamap_create(dmatag, msize, 1, msize, 0,
+	if ((error = bus_dmamap_create(dmatag, memsize, 1, memsize, 0,
 					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
 					&sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",
 			sc->sc_dev.dv_xname, error);
 		return;
 	}
-	if ((error = bus_dmamem_alloc(dmatag, msize, 64*1024, 0,
+	if ((error = bus_dmamem_alloc(dmatag, memsize, 64*1024, 0,
 			     &seg, 1, &rseg,
 			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		printf("%s: DMA memory allocation error %d\n",
@@ -334,7 +334,7 @@ ie_obio_attach(parent, self, aux)
 	}
 
 	/* Map DMA buffer in CPU addressable space */
-	if ((error = bus_dmamem_map(dmatag, &seg, rseg, msize,
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, memsize,
 				    (caddr_t *)&sc->sc_maddr,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
@@ -345,16 +345,16 @@ ie_obio_attach(parent, self, aux)
 
 	/* Load the segment */
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
-				     sc->sc_maddr, msize, NULL,
+				     sc->sc_maddr, memsize, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			sc->sc_dev.dv_xname, error);
-		bus_dmamem_unmap(dmatag, sc->sc_maddr, msize);
+		bus_dmamem_unmap(dmatag, sc->sc_maddr, memsize);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 
-	wzero(sc->sc_maddr, msize);
+	wzero(sc->sc_maddr, memsize);
 	sc->bh = (bus_space_handle_t)(sc->sc_maddr);
 
 	/*
@@ -374,7 +374,7 @@ ie_obio_attach(parent, self, aux)
 	|---//--- ISCP-SCB-----scp-|--//- buffers -//-|... |iscp-scb-----SCP-|
 	|         |                |                  |    |             |   |
 	|         |<---PAGE_SIZE-->|                  |    |<--PAGE_SIZE-+-->|
-	|         |<------------- msize ------------->|    |       ^     |
+	|         |<------------ memsize ------------>|    |       ^     |
 	|         |                                                |     |
 	|         \@maddr                                 (last page dbl mapped)
 	|                                                                |
@@ -413,7 +413,7 @@ ie_obio_attach(parent, self, aux)
 	 * are used for buffers.
 	 */
 	sc->buf_area = PAGE_SIZE;
-	sc->buf_area_sz = msize - PAGE_SIZE;
+	sc->buf_area_sz = memsize - PAGE_SIZE;
 
 	if (i82586_proberam(sc) == 0) {
 		printf(": memory probe failed\n");

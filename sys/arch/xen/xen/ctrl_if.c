@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.4.2.3 2005/11/10 14:00:34 skrll Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,11 +9,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.4.2.3 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 #include <sys/malloc.h>
 
 #include <machine/xen.h>
@@ -21,7 +22,6 @@ __KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.4.2.2 2005/04/01 14:29:11 skrll Exp $"
 #include <machine/ctrl_if.h>
 #include <machine/evtchn.h>
 
-void printk(char *, ...);
 #if 0
 #define DPRINTK(_f, _a...) printk("(file=%s, line=%d) " _f, \
                            __FILE__ , __LINE__ , ## _a )
@@ -37,7 +37,6 @@ void printk(char *, ...);
 int initdom_ctrlif_domcontroller_port = -1;
 
 /* static */ int ctrl_if_evtchn = -1;
-static int ctrl_if_irq;
 static struct simplelock ctrl_if_lock;
 
 static CONTROL_RING_IDX ctrl_if_tx_resp_cons;
@@ -48,10 +47,6 @@ static CONTROL_RING_IDX ctrl_if_rx_req_cons;
 static ctrl_msg_handler_t ctrl_if_rxmsg_handler[256];
     /* Primary message type -> callback in process context? */
 static unsigned long ctrl_if_rxmsg_blocking_context[256/sizeof(unsigned long)];
-#if 0
-    /* Is it late enough during bootstrap to use schedule_task()? */
-static int safe_to_schedule_task;
-#endif
     /* Queue up messages to be handled in process context. */
 static ctrl_msg_t ctrl_if_rxmsg_deferred[CONTROL_RING_SIZE];
 static CONTROL_RING_IDX ctrl_if_rxmsg_deferred_prod;
@@ -65,20 +60,14 @@ static struct {
 
 /* For received messages that must be deferred to process context. */
 static void __ctrl_if_rxmsg_deferred(void *unused);
-
-#ifdef notyet
-/* Deferred callbacks for people waiting for space in the transmit ring. */
-static int DECLARE_TASK_QUEUE(ctrl_if_tx_tq);
-#endif
-
-static void *ctrl_if_softintr = NULL;
+static void ctrl_if_kthread_create(void *);
 
 static int ctrl_if_tx_wait;
 static void __ctrl_if_tx_tasklet(unsigned long data);
 
 static void __ctrl_if_rx_tasklet(unsigned long data);
 
-#define get_ctrl_if() ((control_if_t *)((char *)HYPERVISOR_shared_info + 2048))
+#define get_ctrl_if() ((control_if_t *)((uintptr_t)HYPERVISOR_shared_info + 2048))
 #define TX_FULL(_c)   \
     (((_c)->tx_req_prod - ctrl_if_tx_resp_cons) == CONTROL_RING_SIZE)
 
@@ -93,7 +82,8 @@ static void ctrl_if_rxmsg_default_handler(ctrl_msg_t *msg, unsigned long id)
     ctrl_if_send_response(msg);
 }
 
-static void __ctrl_if_tx_tasklet(unsigned long data)
+static void
+__ctrl_if_tx_tasklet(unsigned long data)
 {
     control_if_t *ctrl_if = get_ctrl_if();
     ctrl_msg_t   *msg;
@@ -132,30 +122,41 @@ static void __ctrl_if_tx_tasklet(unsigned long data)
     if ( was_full && !TX_FULL(ctrl_if) )
     {
         wakeup(&ctrl_if_tx_wait);
-#ifdef notyet
-        run_task_queue(&ctrl_if_tx_tq);
-#endif
     }
 }
 
-static void __ctrl_if_rxmsg_deferred(void *unused)
+static void
+__ctrl_if_rxmsg_deferred(void *unused)
 {
 	ctrl_msg_t *msg;
 	CONTROL_RING_IDX dp;
+	int s;
 
-	dp = ctrl_if_rxmsg_deferred_prod;
-	__insn_barrier(); /* Ensure we see all deferred requests up to 'dp'. */
 
-	while ( ctrl_if_rxmsg_deferred_cons != dp )
-	{
-		msg = &ctrl_if_rxmsg_deferred[
-		    MASK_CONTROL_IDX(ctrl_if_rxmsg_deferred_cons)];
-		(*ctrl_if_rxmsg_handler[msg->type])(msg, 0);
-		ctrl_if_rxmsg_deferred_cons++;
+	while (1) {
+		s = splsoftnet();
+		dp = ctrl_if_rxmsg_deferred_prod;
+		__insn_barrier(); /* Ensure we see all requests up to 'dp'. */
+		if (ctrl_if_rxmsg_deferred_cons == dp) {
+			tsleep(&ctrl_if_rxmsg_deferred_cons, PRIBIO,
+			    "rxdef", 0);
+			splx(s);
+			continue;
+		}
+		splx(s);
+
+		while ( ctrl_if_rxmsg_deferred_cons != dp )
+		{
+			msg = &ctrl_if_rxmsg_deferred[
+			    MASK_CONTROL_IDX(ctrl_if_rxmsg_deferred_cons)];
+			(*ctrl_if_rxmsg_handler[msg->type])(msg, 0);
+			ctrl_if_rxmsg_deferred_cons++;
+		}
 	}
 }
 
-static void __ctrl_if_rx_tasklet(unsigned long data)
+static void
+__ctrl_if_rx_tasklet(unsigned long data)
 {
     control_if_t *ctrl_if = get_ctrl_if();
     ctrl_msg_t    msg, *pmsg;
@@ -177,7 +178,12 @@ static void __ctrl_if_rx_tasklet(unsigned long data)
 
         if ( msg.length != 0 )
             memcpy(msg.msg, pmsg->msg, msg.length);
-
+	/*
+	 * increase ctrl_if_rx_req_cons now,
+	 * as the handler may end up calling __ctrl_if_rx_tasklet() again
+	 * though the console polling code.
+	 */
+	ctrl_if_rx_req_cons++;
         if ( x86_atomic_test_bit(
                       (unsigned long *)&ctrl_if_rxmsg_blocking_context,
 		      msg.type) )
@@ -185,30 +191,35 @@ static void __ctrl_if_rx_tasklet(unsigned long data)
                    &msg, offsetof(ctrl_msg_t, msg) + msg.length);
         else
             (*ctrl_if_rxmsg_handler[msg.type])(&msg, 0);
-
-	ctrl_if_rx_req_cons++;
+	/* update rp, in case the console polling code was used */
+    	rp = ctrl_if->rx_req_prod;
+    	x86_lfence(); /* Ensure we see all requests up to 'rp'. */
     }
 
     if ( dp != ctrl_if_rxmsg_deferred_prod )
     {
         __insn_barrier();
         ctrl_if_rxmsg_deferred_prod = dp;
-	if (ctrl_if_softintr)
-		softintr_schedule(ctrl_if_softintr);
+        wakeup(&ctrl_if_rxmsg_deferred_cons);
     }
 }
 
 static int ctrl_if_interrupt(void *arg)
 {
 	control_if_t *ctrl_if = get_ctrl_if();
+	int ret = 0;
 
-	if ( ctrl_if_tx_resp_cons != ctrl_if->tx_resp_prod )
+	if ( ctrl_if_tx_resp_cons != ctrl_if->tx_resp_prod ) {
+		ret = 1;
 		__ctrl_if_tx_tasklet(0);
+	}
 
-	if ( ctrl_if_rx_req_cons != ctrl_if->rx_req_prod )
+	if ( ctrl_if_rx_req_cons != ctrl_if->rx_req_prod ) {
+		ret = 1;
 		__ctrl_if_rx_tasklet(0);
+	}
 
-	return 0;
+	return ret;
 }
 
 int
@@ -225,15 +236,20 @@ ctrl_if_send_message_noblock(
     save_and_cli(flags);
     simple_lock(&ctrl_if_lock);
 
-    if ( TX_FULL(ctrl_if) )
+    while ( TX_FULL(ctrl_if) )
     {
         simple_unlock(&ctrl_if_lock);
 	restore_flags(flags);
 	s = splhigh();
-	if ( ctrl_if_tx_resp_cons != ctrl_if->tx_resp_prod )
+	if ( ctrl_if_tx_resp_cons != ctrl_if->tx_resp_prod ) {
 		__ctrl_if_tx_tasklet(0);
-	splx(s);
-        return EAGAIN;
+		splx(s);
+		save_and_cli(flags);
+		simple_lock(&ctrl_if_lock);
+	} else {
+		splx(s);
+        	return EAGAIN;
+	}
     }
 
     msg->id = 0xFF;
@@ -447,16 +463,7 @@ ctrl_if_unregister_receiver(
     restore_flags(flags);
 
     /* Ensure that @hnd will not be executed after this function returns. */
-    if (ctrl_if_softintr)
-	    softintr_schedule(ctrl_if_softintr);
-}
-
-static void
-ctrl_if_softintr_handler(void *arg)
-{
-
-	if ( ctrl_if_rxmsg_deferred_cons != ctrl_if_rxmsg_deferred_prod )
-		__ctrl_if_rxmsg_deferred(NULL);
+    wakeup(&ctrl_if_rxmsg_deferred_cons);
 }
 
 #ifdef notyet
@@ -495,11 +502,12 @@ void ctrl_if_resume(void)
     ctrl_if_rx_req_cons  = ctrl_if->rx_resp_prod;
 
     ctrl_if_evtchn = xen_start_info.domain_controller_evtchn;
-    ctrl_if_irq    = bind_evtchn_to_irq(ctrl_if_evtchn);
-    aprint_verbose("Domain controller: using irq %d\n", ctrl_if_irq);
+    aprint_verbose("Domain controller: using event channel %d\n",
+	ctrl_if_evtchn);
 
-    event_set_handler(ctrl_if_irq, &ctrl_if_interrupt, NULL, IPL_HIGH + 2);
-    hypervisor_enable_irq(ctrl_if_irq);
+    event_set_handler(ctrl_if_evtchn, &ctrl_if_interrupt, NULL, IPL_SCHED,
+	"ctrlev");
+    hypervisor_enable_event(ctrl_if_evtchn);
 }
 
 void ctrl_if_early_init(void)
@@ -520,22 +528,22 @@ void ctrl_if_init(void)
 	if (ctrl_if_evtchn == -1)
 		ctrl_if_early_init();
 
-	ctrl_if_softintr = softintr_establish(IPL_SOFTNET,
-	    ctrl_if_softintr_handler, NULL);
+	kthread_create(ctrl_if_kthread_create, NULL);
 
 	ctrl_if_resume();
 }
 
-
-#if 0
-/* This is called after it is safe to call schedule_task(). */
-static int __init ctrl_if_late_setup(void)
+static void
+ctrl_if_kthread_create(void *arg)
 {
-    safe_to_schedule_task = 1;
-    return 0;
+	int error;
+	static struct proc *ctrl_if_proc;
+	if ((error = kthread_create1(__ctrl_if_rxmsg_deferred, NULL,
+	    &ctrl_if_proc, "ctrlif")) != 0) {
+		aprint_error("ctrlif: unable to create kernel thread: "
+		    "error %d\n", error);
+	}
 }
-__initcall(ctrl_if_late_setup);
-#endif
 
 
 /*
@@ -553,3 +561,29 @@ void ctrl_if_discard_responses(void)
     ctrl_if_tx_resp_cons = get_ctrl_if()->tx_resp_prod;
 }
 
+/*
+ * polling functions, for xencons's benefit
+ * We need to enable events before calling HYPERVISOR_block().
+ * Do this at a high enouth IPL so that no other interrupt will interfere
+ * with our polling.
+ */
+
+void
+ctrl_if_console_poll(void)
+{
+	int s = splhigh();
+
+	/*
+	 * Unmask the ctrl event, and block waiting for an interrupt.
+	 * Note that the event we get may not be for the console.
+	 * In this case, the console code will call us again.
+	 */
+
+	while (ctrl_if_interrupt(NULL) == 0) {
+		/* enable interrupts. */
+		hypervisor_clear_event(ctrl_if_evtchn);
+		hypervisor_unmask_event(ctrl_if_evtchn);
+		HYPERVISOR_block();
+	}
+	splx(s);
+}

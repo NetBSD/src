@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.61.2.5 2005/03/04 16:41:30 skrll Exp $	*/
+/*	$NetBSD: midway.c,v 1.61.2.6 2005/11/10 14:04:15 skrll Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61.2.5 2005/03/04 16:41:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61.2.6 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_natm.h"
 
@@ -3468,19 +3468,19 @@ int unit, level;
     }
 
     if (level & END_MREGS) {
-      char sbuf[256];
+      char ybuf[256];
 
       printf("mregs:\n");
       printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
 
-      bitmask_snprintf(EN_READ(sc, MID_INTSTAT), MID_INTBITS, sbuf, sizeof(sbuf));
-      printf("interrupt status = 0x%s\n", sbuf);
+      bitmask_snprintf(EN_READ(sc, MID_INTSTAT), MID_INTBITS, ybuf, sizeof(ybuf));
+      printf("interrupt status = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_INTENA), MID_INTBITS, sbuf, sizeof(sbuf));
-      printf("interrupt enable = 0x%s\n", sbuf);
+      bitmask_snprintf(EN_READ(sc, MID_INTENA), MID_INTBITS, ybuf, sizeof(ybuf));
+      printf("interrupt enable = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS, sbuf, sizeof(sbuf));
-      printf("mcsr = 0x%s\n", sbuf);
+      bitmask_snprintf(EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS, ybuf, sizeof(ybuf));
+      printf("mcsr = 0x%s\n", ybuf);
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
 			MID_SL_A2REG(sc->hwslistp));

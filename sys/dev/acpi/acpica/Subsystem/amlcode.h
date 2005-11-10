@@ -3,7 +3,7 @@
  * Name: amlcode.h - Definitions for AML, as included in "definition blocks"
  *                   Declarations and definitions contained herein are derived
  *                   directly from the ACPI specification.
- *       xRevision: 74 $
+ *       xRevision: 81 $
  *
  *****************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -219,8 +219,7 @@
 
 /* prefixed opcodes */
 
-#define AML_EXTOP                   (UINT16) 0x005b
-
+#define AML_EXTOP                   (UINT16) 0x005b     /* prefix for 2-byte opcodes */
 
 #define AML_MUTEX_OP                (UINT16) 0x5b01
 #define AML_EVENT_OP                (UINT16) 0x5b02
@@ -243,6 +242,7 @@
 #define AML_REVISION_OP             (UINT16) 0x5b30
 #define AML_DEBUG_OP                (UINT16) 0x5b31
 #define AML_FATAL_OP                (UINT16) 0x5b32
+#define AML_TIMER_OP                (UINT16) 0x5b33     /* ACPI 3.0 */
 #define AML_REGION_OP               (UINT16) 0x5b80
 #define AML_FIELD_OP                (UINT16) 0x5b81
 #define AML_DEVICE_OP               (UINT16) 0x5b82
@@ -266,7 +266,6 @@
  * Use only "Unknown" AML opcodes, don't attempt to use
  * any valid ACPI ASCII values (A-Z, 0-9, '-')
  */
-
 #define AML_INT_NAMEPATH_OP         (UINT16) 0x002d
 #define AML_INT_NAMEDFIELD_OP       (UINT16) 0x0030
 #define AML_INT_RESERVEDFIELD_OP    (UINT16) 0x0031
@@ -286,7 +285,6 @@
  * There can be up to 31 unique argument types
  * Zero is reserved as end-of-list indicator
  */
-
 #define ARGP_BYTEDATA               0x01
 #define ARGP_BYTELIST               0x02
 #define ARGP_CHARLIST               0x03
@@ -350,6 +348,7 @@
 #define ARGI_COMPLEXOBJ             0x13    /* Buffer, String, or package (Used by INDEX op only) */
 #define ARGI_REF_OR_STRING          0x14    /* Reference or String (Used by DEREFOF op only) */
 #define ARGI_REGION_OR_FIELD        0x15    /* Used by LOAD op only */
+#define ARGI_DATAREFOBJ             0x16
 
 /* Note: types above can expand to 0x1F maximum */
 
@@ -366,7 +365,6 @@
 /*
  * opcode groups and types
  */
-
 #define OPGRP_NAMED                 0x01
 #define OPGRP_FIELD                 0x02
 #define OPGRP_BYTELIST              0x04
@@ -378,22 +376,25 @@
 
 /* Opcode flags */
 
-#define AML_HAS_ARGS                0x0800
-#define AML_HAS_TARGET              0x0400
-#define AML_HAS_RETVAL              0x0200
-#define AML_NSOBJECT                0x0100
-#define AML_NSOPCODE                0x0080
-#define AML_NSNODE                  0x0040
-#define AML_NAMED                   0x0020
-#define AML_DEFER                   0x0010
-#define AML_FIELD                   0x0008
-#define AML_CREATE                  0x0004
-#define AML_MATH                    0x0002
 #define AML_LOGICAL                 0x0001
-#define AML_CONSTANT                0x1000
+#define AML_LOGICAL_NUMERIC         0x0002
+#define AML_MATH                    0x0004
+#define AML_CREATE                  0x0008
+#define AML_FIELD                   0x0010
+#define AML_DEFER                   0x0020
+#define AML_NAMED                   0x0040
+#define AML_NSNODE                  0x0080
+#define AML_NSOPCODE                0x0100
+#define AML_NSOBJECT                0x0200
+#define AML_HAS_RETVAL              0x0400
+#define AML_HAS_TARGET              0x0800
+#define AML_HAS_ARGS                0x1000
+#define AML_CONSTANT                0x2000
+#define AML_NO_OPERAND_RESOLVE      0x4000
 
 /* Convenient flag groupings */
 
+#define AML_FLAGS_EXEC_0A_0T_1R                                     AML_HAS_RETVAL
 #define AML_FLAGS_EXEC_1A_0T_0R     AML_HAS_ARGS                                   /* Monadic1  */
 #define AML_FLAGS_EXEC_1A_0T_1R     AML_HAS_ARGS |                  AML_HAS_RETVAL /* Monadic2  */
 #define AML_FLAGS_EXEC_1A_1T_0R     AML_HAS_ARGS | AML_HAS_TARGET
@@ -411,17 +412,18 @@
  * The opcode Type is used in a dispatch table, do not change
  * without updating the table.
  */
-#define AML_TYPE_EXEC_1A_0T_0R      0x00 /* Monadic1  */
-#define AML_TYPE_EXEC_1A_0T_1R      0x01 /* Monadic2  */
-#define AML_TYPE_EXEC_1A_1T_0R      0x02
-#define AML_TYPE_EXEC_1A_1T_1R      0x03 /* Monadic2R */
-#define AML_TYPE_EXEC_2A_0T_0R      0x04 /* Dyadic1   */
-#define AML_TYPE_EXEC_2A_0T_1R      0x05 /* Dyadic2   */
-#define AML_TYPE_EXEC_2A_1T_1R      0x06 /* Dyadic2R  */
-#define AML_TYPE_EXEC_2A_2T_1R      0x07
-#define AML_TYPE_EXEC_3A_0T_0R      0x08
-#define AML_TYPE_EXEC_3A_1T_1R      0x09
-#define AML_TYPE_EXEC_6A_0T_1R      0x0A
+#define AML_TYPE_EXEC_0A_0T_1R      0x00
+#define AML_TYPE_EXEC_1A_0T_0R      0x01 /* Monadic1  */
+#define AML_TYPE_EXEC_1A_0T_1R      0x02 /* Monadic2  */
+#define AML_TYPE_EXEC_1A_1T_0R      0x03
+#define AML_TYPE_EXEC_1A_1T_1R      0x04 /* Monadic2R */
+#define AML_TYPE_EXEC_2A_0T_0R      0x05 /* Dyadic1   */
+#define AML_TYPE_EXEC_2A_0T_1R      0x06 /* Dyadic2   */
+#define AML_TYPE_EXEC_2A_1T_1R      0x07 /* Dyadic2R  */
+#define AML_TYPE_EXEC_2A_2T_1R      0x08
+#define AML_TYPE_EXEC_3A_0T_0R      0x09
+#define AML_TYPE_EXEC_3A_1T_1R      0x0A
+#define AML_TYPE_EXEC_6A_0T_1R      0x0B
 /* End of types used in dispatch table */
 
 #define AML_TYPE_LITERAL            0x0B
@@ -448,6 +450,12 @@
 #define AML_TYPE_UNDEFINED          0x19
 #define AML_TYPE_BOGUS              0x1A
 
+/* AML Package Length encodings */
+
+#define ACPI_AML_PACKAGE_TYPE1      0x40
+#define ACPI_AML_PACKAGE_TYPE2      0x4000
+#define ACPI_AML_PACKAGE_TYPE3      0x400000
+#define ACPI_AML_PACKAGE_TYPE4      0x40000000
 
 /*
  * Opcode classes
@@ -569,11 +577,17 @@ typedef enum
 } AML_ACCESS_ATTRIBUTE;
 
 
-/* bit fields in MethodFlags byte */
+/* Bit fields in MethodFlags byte */
 
-#define METHOD_FLAGS_ARG_COUNT      0x07
-#define METHOD_FLAGS_SERIALIZED     0x08
-#define METHOD_FLAGS_SYNCH_LEVEL    0xF0
+#define AML_METHOD_ARG_COUNT        0x07
+#define AML_METHOD_SERIALIZED       0x08
+#define AML_METHOD_SYNCH_LEVEL      0xF0
+
+/* METHOD_FLAGS_ARG_COUNT is not used internally, define additional flags */
+
+#define AML_METHOD_INTERNAL_ONLY    0x01
+#define AML_METHOD_RESERVED1        0x02
+#define AML_METHOD_RESERVED2        0x04
 
 
 #endif /* __AMLCODE_H__ */

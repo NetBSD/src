@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.42.2.5 2005/03/04 16:50:56 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.42.2.6 2005/11/10 14:08:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.42.2.5 2005/03/04 16:50:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.42.2.6 2005/11/10 14:08:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,13 +320,14 @@ USB_ATTACH(uscanner)
 	USB_ATTACH_START(uscanner, sc, uaa);
 	usb_interface_descriptor_t *id = 0;
 	usb_endpoint_descriptor_t *ed, *ed_bulkin = NULL, *ed_bulkout = NULL;
-	char devinfo[1024];
+	char *devinfop;
 	int i;
 	usbd_status err;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
 
@@ -706,7 +707,7 @@ uscannerpoll(dev_t dev, int events, struct lwp *l)
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (POLLHUP);
 
 	/*
 	 * We have no easy way of determining if a read will

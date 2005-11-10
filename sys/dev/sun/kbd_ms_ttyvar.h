@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_ms_ttyvar.h,v 1.1.26.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: kbd_ms_ttyvar.h,v 1.1.26.4 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ struct tty;
 struct consdev;
 
 struct kbd_ms_tty_attach_args {
-	char *kmta_name;	/* Either "keyboard" or "mouse" */
+	const char *kmta_name;	/* Either "keyboard" or "mouse" */
 	dev_t kmta_dev;
 	struct tty *kmta_tp;	/* tty to take over */
 	struct consdev *kmta_consdev;	/* Tells us we're the console. */

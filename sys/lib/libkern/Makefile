@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70.2.4 2005/03/04 16:52:29 skrll Exp $
+#	$NetBSD: Makefile,v 1.70.2.5 2005/11/10 14:10:24 skrll Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -41,7 +41,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c md4c.c md5c.c sha1.c pmatch.c
-SRCS+=	_que.c arc4random.c
+SRCS+=	_que.c arc4random.c mcount.c
 
 SRCS+=	strstr.c strlcpy.c strlcat.c
 
@@ -49,14 +49,6 @@ SRCS+=	xlat_mbr_fstype.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
-
-#
-# Special rules for certain objects
-#
-
-# mcount cannot be compiled with profiling
-mcount.po: mcount.o
-	cp mcount.o mcount.po
 
 # XXX these stub builds should be cleaned up even further.
 
@@ -79,8 +71,6 @@ SRCS+=	strchr.c
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
 .endif
-
-POBJS+=	mcount.po
 
 # only needed during build
 libinstall::

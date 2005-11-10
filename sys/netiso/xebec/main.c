@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9.8.4 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.9.8.5 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.4 2005/03/04 16:54:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.5 2005/11/10 14:11:55 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -148,7 +148,7 @@ includecode(file, f)
 	register char *g;
 
 	IFDEBUG(a)
-		fprintf(stdout, "including: %s, f=0x%p", f,f);
+		fprintf(stdout, "including: %s, f=%p", f,f);
 	ENDDEBUG
 	g = ++f;
 	while(count>0) {

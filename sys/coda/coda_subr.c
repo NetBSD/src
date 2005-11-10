@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.14.2.4 2005/03/04 16:39:21 skrll Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.14.2.5 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.14.2.4 2005/03/04 16:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.14.2.5 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,7 @@ coda_alloc(void)
  * Deallocate a cnode.
  */
 void
-coda_free(cp)
-     struct cnode *cp;
+coda_free(struct cnode *cp)
 {
 
     CNODE_NEXT(cp) = coda_freelist;
@@ -134,8 +133,7 @@ coda_free(cp)
  * Put a cnode in the hash table
  */
 void
-coda_save(cp)
-     struct cnode *cp;
+coda_save(struct cnode *cp)
 {
 	CNODE_NEXT(cp) = coda_cache[coda_hash(&cp->c_fid)];
 	coda_cache[coda_hash(&cp->c_fid)] = cp;
@@ -145,8 +143,7 @@ coda_save(cp)
  * Remove a cnode from the hash table
  */
 void
-coda_unsave(cp)
-     struct cnode *cp;
+coda_unsave(struct cnode *cp)
 {
     struct cnode *ptr;
     struct cnode *ptrprev = NULL;
@@ -174,8 +171,7 @@ coda_unsave(cp)
  * NOTE: this allows multiple cnodes with same fid -- dcs 1/25/95
  */
 struct cnode *
-coda_find(fid)
-     CodaFid *fid;
+coda_find(CodaFid *fid)
 {
     struct cnode *cp;
 
@@ -202,9 +198,7 @@ coda_find(fid)
  * coda_mnttbl. -- DCS 12/1/94 */
 
 int
-coda_kill(whoIam, dcstat)
-	struct mount *whoIam;
-	enum dc_status dcstat;
+coda_kill(struct mount *whoIam, enum dc_status dcstat)
 {
 	int hash, count = 0;
 	struct cnode *cp;
@@ -246,8 +240,7 @@ coda_kill(whoIam, dcstat)
  * name cache or it may be executing.
  */
 void
-coda_flush(dcstat)
-	enum dc_status dcstat;
+coda_flush(enum dc_status dcstat)
 {
     int hash;
     struct cnode *cp;
@@ -292,8 +285,7 @@ coda_testflush(void)
  *
  */
 void
-coda_unmounting(whoIam)
-	struct mount *whoIam;
+coda_unmounting(struct mount *whoIam)
 {
 	int hash;
 	struct cnode *cp;
@@ -314,8 +306,7 @@ coda_unmounting(whoIam)
 
 #ifdef	DEBUG
 void
-coda_checkunmounting(mp)
-	struct mount *mp;
+coda_checkunmounting(struct mount *mp)
 {
 	struct vnode *vp, *nvp;
 	struct cnode *cp;
@@ -336,8 +327,7 @@ loop:
 }
 
 void
-coda_cacheprint(whoIam)
-	struct mount *whoIam;
+coda_cacheprint(struct mount *whoIam)
 {
 	int hash;
 	struct cnode *cp;
@@ -386,8 +376,7 @@ coda_cacheprint(whoIam)
  * CODA_REPLACE -- replace one CodaFid with another throughout the name cache
  */
 
-int handleDownCall(opcode, out)
-     int opcode; union outputArgs *out;
+int handleDownCall(int opcode, union outputArgs *out)
 {
     int error;
 
@@ -528,8 +517,7 @@ int handleDownCall(opcode, out)
 /* coda_grab_vnode: lives in either cfs_mach.c or cfs_nbsd.c */
 
 int
-coda_vmflush(cp)
-     struct cnode *cp;
+coda_vmflush(struct cnode *cp)
 {
     return 0;
 }

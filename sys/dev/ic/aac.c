@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.9.2.8 2005/04/01 14:29:52 skrll Exp $	*/
+/*	$NetBSD: aac.c,v 1.9.2.9 2005/11/10 14:04:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9.2.8 2005/04/01 14:29:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9.2.9 2005/11/10 14:04:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,6 @@ static int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
 				 u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
 static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
-static int	aac_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 
 #ifdef AAC_DEBUG
 static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
@@ -154,13 +152,7 @@ aac_attach(struct aac_softc *sc)
 	struct aac_ccb *ac;
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX - Not clean
-		The big plan is to let config(8) issue information
-		about the length of the locator array in a useful way.
-		Then the allocation can be centralized. See also
-		http://mail-index.netbsd.org/tech-kern/2005/02/09/0025.html
-	*/
+	int locs[AACCF_NLOCS];
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -259,11 +251,10 @@ aac_attach(struct aac_softc *sc)
 			continue;
 		aaca.aaca_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[AACCF_UNIT] = i;
+		locs[AACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "aac", ldesc, &aaca,
-				    aac_print, aac_submatch);
+		config_found_sm_loc(&sc->sc_dv, "aac", locs, &aaca,
+				    aac_print, config_stdsubmatch);
 	}
 
 	/*
@@ -312,24 +303,6 @@ aac_print(void *aux, const char *pnp)
 }
 
 /*
- * Match a sub-device.
- */
-static int
-aac_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-	struct aac_attach_args *aaca;
-
-	aaca = aux;
-
-	if (cf->cf_loc[AACCF_UNIT] != AACCF_UNIT_DEFAULT &&
-	    cf->cf_loc[AACCF_UNIT] != ldesc->locs[AACCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
-}
-
-/*
  * Look up a text description of a numeric error code and return a pointer to
  * same.
  */
@@ -348,7 +321,7 @@ aac_describe_code(const struct aac_code_lookup *table, u_int32_t code)
 /*
  * bitmask_snprintf(9) format string for the adapter options.
  */
-static char *optfmt = 
+static const char *optfmt = 
     "\20\1SNAPSHOT\2CLUSTERS\3WCACHE\4DATA64\5HOSTTIME\6RAID50"
     "\7WINDOW4GB"
     "\10SCSIUPGD\11SOFTERR\12NORECOND\13SGMAP64\14ALARM\15NONDASD";
@@ -357,13 +330,13 @@ static void
 aac_describe_controller(struct aac_softc *sc)
 {
 	u_int8_t fmtbuf[256];
-	u_int8_t buf[AAC_FIB_DATASIZE];
+	u_int8_t tbuf[AAC_FIB_DATASIZE];
 	u_int16_t bufsize;
 	struct aac_adapter_info *info;
 	u_int8_t arg;
 
 	arg = 0;
-	if (aac_sync_fib(sc, RequestAdapterInfo, 0, &arg, sizeof(arg), &buf,
+	if (aac_sync_fib(sc, RequestAdapterInfo, 0, &arg, sizeof(arg), &tbuf,
 	    &bufsize)) {
 		aprint_error("%s: RequestAdapterInfo failed\n",
 		    sc->sc_dv.dv_xname);
@@ -371,11 +344,11 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	if (bufsize != sizeof(*info)) {
 		aprint_error("%s: "
-		    "RequestAdapterInfo returned wrong data size (%d != %d)\n",
-		    sc->sc_dv.dv_xname, bufsize, sizeof(*info));
+		    "RequestAdapterInfo returned wrong data size (%d != %lu)\n",
+		    sc->sc_dv.dv_xname, bufsize, (long unsigned) sizeof(*info));
 		return;
 	}
-	info = (struct aac_adapter_info *)&buf[0];
+	info = (struct aac_adapter_info *)&tbuf[0];
 
 	aprint_normal("%s: %s at %dMHz, %dMB mem (%dMB cache), %s\n",
 	    sc->sc_dv.dv_xname,
@@ -454,8 +427,7 @@ aac_init(struct aac_softc *sc)
 {
 	int nsegs, i, rv, state, norm, high;
 	struct aac_adapter_init	*ip;
-	u_int32_t code;
-	u_int8_t *qaddr;
+	u_int32_t code, qoff;
 
 	state = 0;
 
@@ -554,9 +526,9 @@ aac_init(struct aac_softc *sc)
 	 * generic list manipulation functions which 'know' the size of each
 	 * list by virtue of a table.
 	 */
-	qaddr = &sc->sc_common->ac_qbuf[0] + AAC_QUEUE_ALIGN;
-	qaddr -= (u_int32_t)qaddr % AAC_QUEUE_ALIGN; 	/* XXX not portable */
-	sc->sc_queues = (struct aac_queue_table *)qaddr;
+	qoff = offsetof(struct aac_common, ac_qbuf) + AAC_QUEUE_ALIGN;
+	qoff &= ~(AAC_QUEUE_ALIGN - 1);
+	sc->sc_queues = (struct aac_queue_table *)((uintptr_t)sc->sc_common + qoff);
 	ip->CommHeaderAddress = htole32(sc->sc_common_seg.ds_addr +
 	    ((caddr_t)sc->sc_queues - (caddr_t)sc->sc_common));
 	memset(sc->sc_queues, 0, sizeof(struct aac_queue_table));
@@ -699,8 +671,8 @@ aac_startup(struct aac_softc *sc)
 		}
 		if (rsize != sizeof(mir)) {
 			aprint_error("%s: container info response wrong size "
-			    "(%d should be %d)\n",
-			    sc->sc_dv.dv_xname, rsize, sizeof(mir));
+			    "(%d should be %lu)\n",
+			    sc->sc_dv.dv_xname, rsize, (long unsigned) sizeof(mir));
 			continue;
 		}
 
@@ -1325,7 +1297,7 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;
 	struct aac_sg_table *sg;
-	char buf[512];
+	char tbuf[512];
 	int i;
 
 	printf("%s: FIB @ %p\n", caller, fib);
@@ -1352,10 +1324,10 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 	    "\23BIOSFIB"
 	    "\24FAST_RESPONSE"
 	    "\25APIFIB\n",
-	    buf,
-	    sizeof(buf));
+	    tbuf,
+	    sizeof(tbuf));
 
-	printf("  XferState       %s\n", buf);
+	printf("  XferState       %s\n", tbuf);
 	printf("  Command         %d\n", le16toh(fib->Header.Command));
 	printf("  StructType      %d\n", fib->Header.StructType);
 	printf("  Flags           0x%x\n", fib->Header.Flags);

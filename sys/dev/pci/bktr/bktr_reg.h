@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_reg.h,v 1.3 2003/03/11 23:11:27 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_reg.h,v 1.13 2003/03/12 00:14:41 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.13.2.1 2005/11/10 14:07:23 skrll Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp$
  *
@@ -408,7 +408,7 @@ struct TVTUNER {
 
 /* description of the PHYSICAL tuner */
 struct TUNER {
-	char*		name;
+	const char*	name;
 	u_char		type;
 	u_char		pllControl[4];
 	u_char		bandLimits[2];
@@ -423,7 +423,7 @@ struct TUNER {
 #define EEPROMBLOCKSIZE		32
 struct CARDTYPE {
 	unsigned int		card_id;	/* card id (from #define's) */
-	char*			name;
+	const char*		name;
 	const struct TUNER*	tuner;		/* Tuner details */
 	u_char			tuner_pllAddr;	/* Tuner i2c address */
 	u_char			dbx;		/* Has DBX chip? */

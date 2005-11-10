@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.1.4.4 2005/03/04 16:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.1.4.5 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,13 +306,11 @@ filecore_getparent(ip)
 	return (paddr + (i << FILECORE_INO_INDEX));
 }
 
-/*static char filecore_hexchar[16]="0123456789abcdef";*/
-
 int
 filecore_fn2unix(fcfn, ufn, len)
 	char *fcfn;
 	char *ufn;
-	u_int8_t *len;
+	u_int16_t *len;
 {
 	int i = 0;
 
@@ -325,12 +323,14 @@ filecore_fn2unix(fcfn, ufn, len)
 			*ufn++ = *fcfn;
 		fcfn++;
 	}
-/*	if (ip->i_mnt->fc_mntflags & FILECOREMNT_FILETYPE) {
+#ifdef notdef
+	if (ip->i_mnt->fc_mntflags & FILECOREMNT_FILETYPE) {
 		*ufn++ = ',';
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 10) & 15];
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 9) & 15];
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 8) & 15];
-	} */
+		*ufn++ = hexdigits[(ip->i_dirent.load >> 10) & 15];
+		*ufn++ = hexdigits[(ip->i_dirent.load >> 9) & 15];
+		*ufn++ = hexdigits[(ip->i_dirent.load >> 8) & 15];
+	}
+#endif
 	*ufn = 0;
 	*len = i - 1;
 	return 0;

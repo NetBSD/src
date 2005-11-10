@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.6.6.4 2005/03/04 16:41:05 skrll Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.6.6.5 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.4 2005/03/04 16:41:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.5 2005/11/10 14:03:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	 */
 	ncomp = 0;
 	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
-		if (up->bus == ca->ca_bus && up->device == ca->ca_device) {
+		if (up->bus == ca->ca_bus) {
 			DPRINTF(("ehci_cardbus_attach: companion %s\n",
 				 USBDEVNAME(up->usb->bdev)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
@@ -235,7 +235,6 @@ usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, struct u
 {
 	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
 	up->bus = ca->ca_bus;
-	up->device = ca->ca_device;
 	up->function = ca->ca_function;
 	up->usb = bu;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.17.2.4 2004/09/21 13:33:21 skrll Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.17.2.5 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -49,7 +49,7 @@ struct cd_softc {
 		u_long disksize512;	/* total number sectors */
 	} params;
 
-	struct bufq_state buf_queue;
+	struct bufq_state *buf_queue;
 	struct callout sc_callout;
 
 #if NRND > 0

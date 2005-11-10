@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.17.2.4 2005/03/04 16:40:12 skrll Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.17.2.5 2005/11/10 14:01:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -534,16 +534,16 @@ struct mach_device_iterator {
 /* Make this dynamic if it ever gets useful */
 #define MACH_IOKIT_MAX_PARENTS	8
 struct mach_iokit_devclass {
-	char *mid_string;
+	const char *mid_string;
 	struct mach_iokit_devclass *mid_parent[MACH_IOKIT_MAX_PARENTS];
-	char *mid_properties;
+	const char *mid_properties;
 	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
 	int (*mid_connect_method_scalari_structo)(struct mach_trap_args *);
 	int (*mid_connect_method_structi_structo)(struct mach_trap_args *);
 	int (*mid_connect_method_scalari_structi)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
-	char *mid_name;
+	const char *mid_name;
 	struct mach_right *mid_notify;
 };
 

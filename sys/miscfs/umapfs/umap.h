@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.9.36.4 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: umap.h,v 1.9.36.5 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,8 +84,8 @@ struct umap_node {
 	struct	layer_node	ln;
 };
 
-u_long umap_reverse_findid __P((u_long id, u_long map[][2], int nentries));
-void umap_mapids __P((struct mount *v_mount, struct ucred *credp));
+u_long umap_reverse_findid(u_long id, u_long map[][2], int nentries);
+void umap_mapids(struct mount *v_mount, struct ucred *credp);
 
 #define	umap_hash	ln.layer_hash
 #define	umap_lowervp	ln.layer_lowervp
@@ -101,10 +101,10 @@ void umap_mapids __P((struct mount *v_mount, struct ucred *credp));
 #define	UMAPVPTOLOWERVP(vp) (VTOUMAP(vp)->umap_lowervp)
 #endif
 
-extern int (**umap_vnodeop_p) __P((void *));
+extern int (**umap_vnodeop_p)(void *);
 extern struct vfsops umapfs_vfsops;
 
-int     umap_bypass     __P((void *));
+int     umap_bypass(void *);
 
 #define NUMAPNODECACHE	16
 

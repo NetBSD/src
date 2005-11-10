@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1998/06/30 11:59:11 msaitoh Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2.50.1 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Masaru Oki
@@ -51,7 +51,11 @@ struct dos_partition {
   unsigned long dp_size;	/* partition size (1024bytes/block) */
 };
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#else
 #include <sys/dkbad.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
 	struct dkbad bad;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              xRevision: 75 $
+ *              xRevision: 83 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.6.2.3 2004/09/21 13:26:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __EXCONFIG_C__
 
@@ -126,10 +126,19 @@ __KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.6.2.3 2004/09/21 13:26:44 skrll Exp $
 #include "acnamesp.h"
 #include "acevents.h"
 #include "actables.h"
+#include "acdispat.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exconfig")
+
+/* Local prototypes */
+
+static ACPI_STATUS
+AcpiExAddTable (
+    ACPI_TABLE_HEADER       *Table,
+    ACPI_NAMESPACE_NODE     *ParentNode,
+    ACPI_OPERAND_OBJECT     **DdbHandle);
 
 
 /*******************************************************************************
@@ -147,7 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.6.2.3 2004/09/21 13:26:44 skrll Exp $
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiExAddTable (
     ACPI_TABLE_HEADER       *Table,
     ACPI_NAMESPACE_NODE     *ParentNode,
@@ -173,10 +182,10 @@ AcpiExAddTable (
 
     ACPI_MEMSET (&TableInfo, 0, sizeof (ACPI_TABLE_DESC));
 
-    TableInfo.Type         = 5;
-    TableInfo.Pointer      = Table;
-    TableInfo.Length       = (ACPI_SIZE) Table->Length;
-    TableInfo.Allocation   = ACPI_MEM_ALLOCATED;
+    TableInfo.Type       = ACPI_TABLE_SSDT;
+    TableInfo.Pointer    = Table;
+    TableInfo.Length     = (ACPI_SIZE) Table->Length;
+    TableInfo.Allocation = ACPI_MEM_ALLOCATED;
 
     Status = AcpiTbInstallTable (&TableInfo);
     if (ACPI_FAILURE (Status))
@@ -314,11 +323,10 @@ AcpiExLoadTableOp (
             StartNode = ParentNode;
         }
 
-        /*
-         * Find the node referenced by the ParameterPathString
-         */
+        /* Find the node referenced by the ParameterPathString */
+
         Status = AcpiNsGetNodeByPath (Operand[4]->String.Pointer, StartNode,
-                                        ACPI_NS_SEARCH_PARENT, &ParameterNode);
+                    ACPI_NS_SEARCH_PARENT, &ParameterNode);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -339,8 +347,9 @@ AcpiExLoadTableOp (
     {
         /* Store the parameter data into the optional parameter object */
 
-        Status = AcpiExStore (Operand[5], ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, ParameterNode),
-                                WalkState);
+        Status = AcpiExStore (Operand[5],
+                    ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, ParameterNode),
+                    WalkState);
         if (ACPI_FAILURE (Status))
         {
             (void) AcpiExUnloadTable (DdbHandle);
@@ -378,7 +387,7 @@ AcpiExLoadOp (
     ACPI_OPERAND_OBJECT     *DdbHandle;
     ACPI_OPERAND_OBJECT     *BufferDesc = NULL;
     ACPI_TABLE_HEADER       *TablePtr = NULL;
-    UINT8                   *TableDataPtr;
+    ACPI_PHYSICAL_ADDRESS   Address;
     ACPI_TABLE_HEADER       TableHeader;
     UINT32                  i;
 
@@ -394,18 +403,42 @@ AcpiExLoadOp (
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Load from Region %p %s\n",
             ObjDesc, AcpiUtGetObjectTypeName (ObjDesc)));
 
-        /* Get the table header */
+        /*
+         * If the Region Address and Length have not been previously evaluated,
+         * evaluate them now and save the results.
+         */
+        if (!(ObjDesc->Common.Flags & AOPOBJ_DATA_VALID))
+        {
+            Status = AcpiDsGetRegionArguments (ObjDesc);
+            if (ACPI_FAILURE (Status))
+            {
+                return_ACPI_STATUS (Status);
+            }
+        }
+
+        /* Get the base physical address of the region */
+
+        Address = ObjDesc->Region.Address;
+
+        /* Get the table length from the table header */
 
         TableHeader.Length = 0;
-        for (i = 0; i < sizeof (ACPI_TABLE_HEADER); i++)
+        for (i = 0; i < 8; i++)
         {
             Status = AcpiEvAddressSpaceDispatch (ObjDesc, ACPI_READ,
-                                (ACPI_PHYSICAL_ADDRESS) i, 8,
+                                (ACPI_PHYSICAL_ADDRESS) (i + Address), 8,
                                 ((UINT8 *) &TableHeader) + i);
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
             }
+        }
+
+        /* Sanity check the table length */
+
+        if (TableHeader.Length < sizeof (ACPI_TABLE_HEADER))
+        {
+            return_ACPI_STATUS (AE_BAD_HEADER);
         }
 
         /* Allocate a buffer for the entire table */
@@ -416,18 +449,13 @@ AcpiExLoadOp (
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
 
-        /* Copy the header to the buffer */
-
-        ACPI_MEMCPY (TablePtr, &TableHeader, sizeof (ACPI_TABLE_HEADER));
-        TableDataPtr = ACPI_PTR_ADD (UINT8, TablePtr, sizeof (ACPI_TABLE_HEADER));
-
-        /* Get the table from the op region */
+        /* Get the entire table from the op region */
 
         for (i = 0; i < TableHeader.Length; i++)
         {
             Status = AcpiEvAddressSpaceDispatch (ObjDesc, ACPI_READ,
-                                (ACPI_PHYSICAL_ADDRESS) i, 8,
-                                ((UINT8 *) TableDataPtr + i));
+                                (ACPI_PHYSICAL_ADDRESS) (i + Address), 8,
+                                ((UINT8 *) TablePtr + i));
             if (ACPI_FAILURE (Status))
             {
                 goto Cleanup;
@@ -454,7 +482,15 @@ AcpiExLoadOp (
             goto Cleanup;
         }
 
-        TablePtr = ACPI_CAST_PTR (ACPI_TABLE_HEADER, BufferDesc->Buffer.Pointer);
+        TablePtr = ACPI_CAST_PTR (ACPI_TABLE_HEADER,
+                        BufferDesc->Buffer.Pointer);
+
+         /* Sanity check the table length */
+
+        if (TablePtr->Length < sizeof (ACPI_TABLE_HEADER))
+        {
+            return_ACPI_STATUS (AE_BAD_HEADER);
+        }
         break;
 
 

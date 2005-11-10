@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.11.2.4 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.11.2.5 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11.2.4 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11.2.5 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,8 @@ prop_insert(struct kdbobj *obj, const char *name, void *val, size_t len,
 	if (type & PROP_CONST) {
 		prop->kp_val = val;
 	} else {
-		char *dest = (char *)prop->kp_val;
+		/*XXXUNCONST*/
+		char *dest = __UNCONST(prop->kp_val);
 		memcpy(dest, val, len);
 	}
 	prop->kp_len = len;
@@ -598,7 +599,8 @@ prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 
 oprop = prop; /* XXXX -- use vars to make gcc happy. */
 			rv = prop_insert(nobj, srcp->kp_name,
-				(void *)srcp->kp_val, srcp->kp_len,
+				/*XXXUNCONST*/
+				__UNCONST(srcp->kp_val), srcp->kp_len,
 				srcp->kp_type, wait);
 			if (rv) {
 				/* Error of some sort */

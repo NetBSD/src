@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.1.4.6 2005/04/01 14:29:11 skrll Exp $ */
+/* $NetBSD: privcmd.c,v 1.1.4.7 2005/11/10 14:00:34 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.4.6 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.4.7 2005/11/10 14:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,19 +82,29 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 		error = -error;
 		break;
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
+#if 1 /* COMPAT_xxx */
+	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
 		break;
+#endif
+	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
+		{
+		extern int initdom_ctrlif_domcontroller_port;
+		*(int *)ap->a_data = initdom_ctrlif_domcontroller_port;
+		}
+		error = 0;
+		break;
 	case IOCTL_PRIVCMD_MMAP:
 	{
-		int i, j, error;
+		int i, j;
 		privcmd_mmap_t *mcmd = ap->a_data;
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
 		u_long ma;
+		vm_prot_t prot;
 		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
 
 		pmap_t pmap = vm_map_pmap(&ap->a_p->p_vmspace->vm_map);
@@ -112,14 +122,29 @@ privcmd_ioctl(void *v)
 #endif
 			va = mentry.va & ~PAGE_MASK;
 			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			vm_map_lock_read(&ap->a_p->p_vmspace->vm_map);
+			if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
+			    va, va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_WRITE))
+				prot = VM_PROT_READ | VM_PROT_WRITE;
+			else if (uvm_map_checkprot(&ap->a_p->p_vmspace->vm_map,
+			    va, va + (mentry.npages << PGSHIFT) - 1,
+			    VM_PROT_READ))
+				prot = VM_PROT_READ;
+			else {
+				printf("uvm_map_checkprot 0x%lx -> 0x%lx "
+				    "failed\n",
+				    va, va + (mentry.npages << PGSHIFT) - 1);
+				vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+				return EINVAL;
+			}
+			vm_map_unlock_read(&ap->a_p->p_vmspace->vm_map);
+
 			for (j = 0; j < mentry.npages; j++) {
 				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
-#if 0
-				if (!pmap_extract(pmap, va, NULL))
-					return EINVAL; /* XXX */
-#endif
 				if ((error = pmap_remap_pages(pmap, va, ma, 1,
-				    PMAP_WIRED | PMAP_CANFAIL, mcmd->dom)))
+				    prot, PMAP_WIRED | PMAP_CANFAIL,
+				    mcmd->dom)))
 					return error;
 				va += PAGE_SIZE;
 				ma += PAGE_SIZE;
@@ -128,10 +153,65 @@ privcmd_ioctl(void *v)
 		break;
 	}
 	case IOCTL_PRIVCMD_MMAPBATCH:
-		/* XXX */
-		printf("IOCTL_PRIVCMD_MMAPBATCH\n");
-		error = EOPNOTSUPP;
+	{
+		int i;
+		privcmd_mmapbatch_t* pmb = ap->a_data;
+		vaddr_t va0, va;
+		u_long mfn, ma;
+		struct vm_map *vmm;
+		vm_prot_t prot;
+		pmap_t pmap;
+
+		vmm = &ap->a_p->p_vmspace->vm_map;
+		pmap = vm_map_pmap(vmm);
+		va0 = pmb->addr & ~PAGE_MASK;
+
+		if (va0 > VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
+			return EINVAL;
+		
+		//printf("mmapbatch: va0=%lx num=%d dom=%d\n", va0, pmb->num, pmb->dom);
+		vm_map_lock_read(vmm);
+		if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_WRITE))
+			prot = VM_PROT_READ | VM_PROT_WRITE;
+		else if (uvm_map_checkprot(vmm,
+		    va0, va0 + (pmb->num << PGSHIFT) - 1,
+		    VM_PROT_READ))
+			prot = VM_PROT_READ;
+		else {
+			printf("uvm_map_checkprot2 0x%lx -> 0x%lx "
+			    "failed\n",
+			    va0, va0 + (pmb->num << PGSHIFT) - 1);
+			vm_map_unlock_read(vmm);
+			return EINVAL;
+		}
+		vm_map_unlock_read(vmm);
+
+		for(i = 0; i < pmb->num; ++i) {
+			va = va0 + (i * PAGE_SIZE);
+			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
+			if (error != 0)
+				return error;
+			ma = mfn << PGSHIFT;
+			
+			/*
+			 * XXXjld@panix.com: figure out how to stuff
+			 * these into fewer hypercalls.
+			 */
+			//printf("mmapbatch: va=%lx ma=%lx dom=%d\n", va, ma, pmb->dom);
+			error = pmap_remap_pages(pmap, va, ma, 1, prot,
+			    PMAP_WIRED | PMAP_CANFAIL, pmb->dom);
+			if (error != 0) {
+				printf("mmapbatch: remap error %d!\n", error);
+				mfn |= 0xF0000000;
+				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
+			}
+		}
 		break;
+	}
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
 		{
 		unsigned long *mfn_start = ap->a_data;

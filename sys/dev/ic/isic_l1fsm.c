@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.9.6.1 2005/03/04 16:41:29 skrll Exp $
+ *	$Id: isic_l1fsm.c,v 1.9.6.2 2005/11/10 14:04:14 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9.6.1 2005/03/04 16:41:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9.6.2 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9.6.1 2005/03/04 16:41:29 skrll Exp
 #include "nisacsx.h"
 
 #if DO_I4B_DEBUG
-static char *state_text[N_STATES] = {
+static const char *state_text[N_STATES] = {
 	"F3 Deactivated",
 	"F4 Awaiting Signal",
 	"F5 Identifying Input",
@@ -97,7 +97,7 @@ static char *state_text[N_STATES] = {
 	"Illegal State"
 };
 
-static char *event_text[N_EVENTS] = {
+static const char *event_text[N_EVENTS] = {
 	"EV_PHAR PH_ACT_REQ",
 	"EV_T3 Timer 3 expired",
 	"EV_INFO0 INFO0 received",
@@ -539,9 +539,9 @@ isic_next_state(struct isic_softc *sc, int event)
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/
-char *
+const char *
 isic_printstate(struct isic_softc *sc)
 {
-	return((char *) state_text[sc->sc_I430state]);
+	return(state_text[sc->sc_I430state]);
 }
 #endif

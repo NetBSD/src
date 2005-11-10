@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.17.2.3 2004/09/21 13:36:18 skrll Exp $	*/
+/*	$NetBSD: ether.c,v 1.17.2.4 2005/11/10 14:10:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -117,8 +117,8 @@ readether(d, pkt, len, tleft, etype)
 		return (-1);
 
 	/* Validate Ethernet address. */
-	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
-	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
+	if (memcmp(d->myea, eh->ether_dhost, 6) != 0 &&
+	    memcmp(bcea, eh->ether_dhost, 6) != 0) {
 #ifdef ETHER_DEBUG
 		if (debug)
 			printf("readether: not ours (ea=%s)\n",

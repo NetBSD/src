@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.5.2.4 2005/03/04 16:41:25 skrll Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.5.2.5 2005/11/10 14:04:13 skrll Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.4 2005/03/04 16:41:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.5 2005/11/10 14:04:13 skrll Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.4 2005/03/04 16:41:25 skrll Exp $"
 struct ahd_softc_tailq ahd_tailq = TAILQ_HEAD_INITIALIZER(ahd_tailq);
 
 /***************************** Lookup Tables **********************************/
-char *ahd_chip_names[] =
+const char *ahd_chip_names[] =
 {
 	"NONE",
 	"aic7901",
@@ -76,7 +76,7 @@ char *ahd_chip_names[] =
  */
 struct ahd_hard_error_entry {
         uint8_t errno;
-	char *errmesg;
+	const char *errmesg;
 };
 
 static struct ahd_hard_error_entry ahd_hard_errors[] = {
@@ -178,7 +178,8 @@ static void		ahd_reinitialize_dataptrs(struct ahd_softc *ahd);
 static void		ahd_handle_devreset(struct ahd_softc *ahd,
 					    struct ahd_devinfo *devinfo,
 					    u_int lun, cam_status status,
-					    char *message, int verbose_level);
+					    const char *message,
+					    int verbose_level);
 #if AHD_TARGET_MODE
 static void		ahd_setup_target_msgin(struct ahd_softc *ahd,
 					       struct ahd_devinfo *devinfo,
@@ -1560,7 +1561,7 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 			ahd_outb(ahd, CLRLQOINT1, 0);
 		}
 	} else if ((status & SELTO) != 0) {
-		u_int  scbid;
+		u_int  scbid1;
 
 		/* Stop the selection */
 		ahd_outb(ahd, SCSISEQ0, 0);
@@ -1581,12 +1582,12 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 		 */
 		ahd_outb(ahd, CLRSINT0, CLRSELINGO);
 
-		scbid = ahd_inw(ahd, WAITING_TID_HEAD);
-		scb = ahd_lookup_scb(ahd, scbid);
+		scbid1 = ahd_inw(ahd, WAITING_TID_HEAD);
+		scb = ahd_lookup_scb(ahd, scbid1);
 		if (scb == NULL) {
 			printf("%s: ahd_intr - referenced scb not "
 			       "valid during SELTO scb(0x%x)\n",
-			       ahd_name(ahd), scbid);
+			       ahd_name(ahd), scbid1);
 			ahd_dump_card_state(ahd);
 		} else {
 			struct ahd_devinfo devinfo;
@@ -1594,7 +1595,7 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 			if ((ahd_debug & AHD_SHOW_SELTO) != 0) {
 				ahd_print_path(ahd, scb);
 				printf("Saw Selection Timeout for SCB 0x%x\n",
-				       scbid);
+				       scbid1);
 			}
 #endif
 			/*
@@ -1657,21 +1658,21 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 		case BUSFREE_DFF0:
 		case BUSFREE_DFF1:
 		{
-			u_int	scbid;
-			struct	scb *scb;
+			u_int	scbid1;
+			struct	scb *scb1;
 
 			mode = busfreetime == BUSFREE_DFF0
 			     ? AHD_MODE_DFF0 : AHD_MODE_DFF1;
 			ahd_set_modes(ahd, mode, mode);
-			scbid = ahd_get_scbptr(ahd);
-			scb = ahd_lookup_scb(ahd, scbid);
-			if (scb == NULL) {
+			scbid1 = ahd_get_scbptr(ahd);
+			scb1 = ahd_lookup_scb(ahd, scbid1);
+			if (scb1 == NULL) {
 				printf("%s: Invalid SCB %d in DFF%d "
 				       "during unexpected busfree\n",
-				       ahd_name(ahd), scbid, mode);
+				       ahd_name(ahd), scbid1, mode);
 				packetized = 0;
 			} else
-				packetized = (scb->flags & SCB_PACKETIZED) != 0;
+				packetized = (scb1->flags & SCB_PACKETIZED) != 0;
 			clear_fifo = 1;
 			break;
 		}
@@ -4990,7 +4991,7 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
  */
 static void
 ahd_handle_devreset(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
-		    u_int lun, cam_status status, char *message,
+		    u_int lun, cam_status status, const char *message,
 		    int verbose_level)
 {
 #ifdef AHD_TARGET_MODE
@@ -5952,18 +5953,18 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 }
 
 void
-ahd_controller_info(struct ahd_softc *ahd, char *buf, size_t l)
+ahd_controller_info(struct ahd_softc *ahd, char *tbuf, size_t l)
 {
 	const char *speed;
 	const char *type;
 	int len;
 	char *ep;
 
-	ep = buf + l;
+	ep = tbuf + l;
 
-	len = snprintf(buf, ep - buf, "%s: ",
+	len = snprintf(tbuf, ep - tbuf, "%s: ",
 	    ahd_chip_names[ahd->chip & AHD_CHIPID_MASK]);
-	buf += len;
+	tbuf += len;
 
 	speed = "Ultra320 ";
 	if ((ahd->features & AHD_WIDE) != 0) {
@@ -5971,11 +5972,11 @@ ahd_controller_info(struct ahd_softc *ahd, char *buf, size_t l)
 	} else {
 		type = "Single ";
 	}
-	len = snprintf(buf, ep - buf, "%s%sChannel %c, SCSI Id=%d, ",
+	len = snprintf(tbuf, ep - tbuf, "%s%sChannel %c, SCSI Id=%d, ",
 		      speed, type, ahd->channel, ahd->our_id);
-	buf += len;
+	tbuf += len;
 
-	snprintf(buf, ep - buf, "%s, %d SCBs", ahd->bus_description,
+	snprintf(tbuf, ep - tbuf, "%s, %d SCBs", ahd->bus_description,
 		ahd->scb_data.maxhscbs);
 }
 
@@ -7664,14 +7665,14 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 		if (ahd->enabled_targets[target] == NULL)
 			continue;
 		for (initiator = 0; initiator <= max_scsiid; initiator++) {
-			struct ahd_devinfo devinfo;
+			struct ahd_devinfo dinfo;
 
-			ahd_compile_devinfo(&devinfo, target, initiator,
+			ahd_compile_devinfo(&dinfo, target, initiator,
 					    CAM_LUN_WILDCARD,
 					    'A', ROLE_UNKNOWN);
-			ahd_set_width(ahd, &devinfo, MSG_EXT_WDTR_BUS_8_BIT,
+			ahd_set_width(ahd, &dinfo, MSG_EXT_WDTR_BUS_8_BIT,
 				      AHD_TRANS_CUR, /*paused*/TRUE);
-			ahd_set_syncrate(ahd, &devinfo, /*period*/0,
+			ahd_set_syncrate(ahd, &dinfo, /*period*/0,
 					 /*offset*/0, /*ppr_options*/0,
 					 AHD_TRANS_CUR, /*paused*/TRUE);
 		}
@@ -8899,12 +8900,12 @@ ahd_dump_scbs(struct ahd_softc *ahd)
 /**************************** Flexport Logic **********************************/
 /*
  * Read count 16bit words from 16bit word address start_addr from the
- * SEEPROM attached to the controller, into buf, using the controller's
+ * SEEPROM attached to the controller, into tbuf, using the controller's
  * SEEPROM reading state machine.  Optionally treat the data as a byte
  * stream in terms of byte order.
  */
 int
-ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *buf,
+ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *tbuf,
 		 u_int start_addr, u_int count, int bytestream)
 {
 	u_int cur_addr;
@@ -8931,27 +8932,27 @@ ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 		if (bytestream != 0) {
 			uint8_t *bytestream_ptr;
 
-			bytestream_ptr = (uint8_t *)buf;
+			bytestream_ptr = (uint8_t *)tbuf;
 			*bytestream_ptr++ = ahd_inb(ahd, SEEDAT);
 			*bytestream_ptr = ahd_inb(ahd, SEEDAT+1);
 		} else {
 			/*
 			 * ahd_inw() already handles machine byte order.
 			 */
-			*buf = ahd_inw(ahd, SEEDAT);
+			*tbuf = ahd_inw(ahd, SEEDAT);
 		}
-		buf++;
+		tbuf++;
 	}
 	return (error);
 }
 
 /*
- * Write count 16bit words from buf, into SEEPROM attache to the
+ * Write count 16bit words from tbuf, into SEEPROM attache to the
  * controller starting at 16bit word address start_addr, using the
  * controller's SEEPROM writing state machine.
  */
 int
-ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
+ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *tbuf,
 		  u_int start_addr, u_int count)
 {
 	u_int cur_addr;
@@ -8976,7 +8977,7 @@ ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 	retval = EINVAL;
 	end_addr = start_addr + count;
 	for (cur_addr = start_addr; cur_addr < end_addr; cur_addr++) {
-		ahd_outw(ahd, SEEDAT, *buf++);
+		ahd_outw(ahd, SEEDAT, *tbuf++);
 		ahd_outb(ahd, SEEADR, cur_addr);
 		ahd_outb(ahd, SEECTL, SEEOP_WRITE | SEESTART);
 

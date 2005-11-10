@@ -1,4 +1,4 @@
-/*	$NetBSD: residual.c,v 1.1.14.4 2004/11/02 07:50:47 skrll Exp $	*/
+/*	$NetBSD: residual.c,v 1.1.14.5 2005/11/10 13:58:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.1.14.4 2004/11/02 07:50:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.1.14.5 2005/11/10 13:58:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,8 +139,6 @@ static char *Flags[] = {
 	"Integrated",
 	"Enabled",
 };
-
-static char hextochr[] = "0123456789ABCDEF";
 
 void
 print_residual_device_info(void)
@@ -338,8 +336,8 @@ print_residual_device_info(void)
 		    ((p[0] >> 2) & 0x1f) + 'A' - 1,
 		    (((p[0] & 0x03) << 3) | ((p[1] >> 5) & 0x07)) + 'A' - 1,
 		    (p[1] & 0x1f) + 'A' - 1,
-		    hextochr[(p[2] >> 4) & 0xf], hextochr[p[2] & 0xf],
-		    hextochr[(p[3] >> 4) & 0xf], hextochr[p[3] & 0xf]);
+		    HEXDIGITS[(p[2] >> 4) & 0xf], HEXDIGITS[p[2] & 0xf],
+		    HEXDIGITS[(p[3] >> 4) & 0xf], HEXDIGITS[p[3] & 0xf]);
 		printf("\t\tSerialNum = 0x%08lx\n", be32toh(id->SerialNum));
 		l = be32toh(id->Flags);
 		printf("\t\tFlags = 0x%08lx\n", l);
@@ -421,8 +419,8 @@ pnp_small_pkt(void *v)
 		    ((q[0] >> 2) & 0x1f) + 'A' - 1,
 		    (((q[0] & 0x03) << 3) | ((q[1] >> 5) & 0x07)) + 'A' - 1,
 		    (q[1] & 0x1f) + 'A' - 1,
-		    hextochr[(q[2] >> 4) & 0xf], hextochr[q[2] & 0xf],
-		    hextochr[(q[3] >> 4) & 0xf], hextochr[q[3] & 0xf]);
+		    HEXDIGITS[(q[2] >> 4) & 0xf], HEXDIGITS[q[2] & 0xf],
+		    HEXDIGITS[(q[3] >> 4) & 0xf], HEXDIGITS[q[3] & 0xf]);
 		}
 		break;
 

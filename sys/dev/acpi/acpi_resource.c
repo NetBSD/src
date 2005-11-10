@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.6.2.4 2005/03/04 16:40:54 skrll Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.6.2.5 2005/11/10 14:03:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6.2.4 2005/03/04 16:40:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6.2.5 2005/11/10 14:03:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
  *	items, such as GPE bits.
  */
 ACPI_STATUS
-acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, char *path,
+acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, const char *path,
     void *arg, const struct acpi_resource_parse_ops *ops)
 {
 	struct resource_parse_callback_arg cbarg;
@@ -296,7 +296,7 @@ acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, char *path,
 	cbarg.ops = ops;
 	cbarg.dev = dev;
 
-	rv =AcpiWalkResources(handle, path, acpi_resource_parse_callback,
+	rv = AcpiWalkResources(handle, path, acpi_resource_parse_callback,
 	    &cbarg);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: ACPI: unable to get %s resources: %s\n",

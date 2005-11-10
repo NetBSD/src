@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.16.10.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.16.10.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -274,6 +274,6 @@ extern struct pklcdhead pk_listenhead;
 extern struct mbuf_cache pk_input_cache;
 extern struct mbuf_cache pk_output_cache;
 
-extern char	*pk_name[], *pk_state[];
+extern const char	*pk_name[], *pk_state[];
 extern int	pk_t20, pk_t21, pk_t22, pk_t23;
 #endif

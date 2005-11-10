@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.17.6.3 2005/03/04 16:41:31 skrll Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.17.6.4 2005/11/10 14:04:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.17.6.3 2005/03/04 16:41:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.17.6.4 2005/11/10 14:04:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ lm_probe(iot, ioh)
 	cr = bus_space_read_1(iot, ioh, LMC_DATA);
 
 	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01))
+	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03))
 		rv = 1;
 	else
 		rv = 0;
@@ -374,6 +374,9 @@ wb_match(sc)
 	case WB_CHIPID_83627:
 		printf(": W83627HF\n");
 		break;
+	case WB_CHIPID_83627THF:
+		printf(": W83627THF\n");
+		break;
 	default:
 		printf(": unknow winbond chip ID 0x%x\n", j);
 		/* handle as a standart lm7x */
@@ -427,7 +430,8 @@ int
 itec_match(sc)
 	struct lm_softc *sc;
 {
-	int vendor;
+	int vendor, coreid;
+
 	/* do the same thing as in  lm_probe() */
 	if ((*sc->lm_readreg)(sc, ITEC_RES48) != ITEC_RES48_DEFAULT)
 		return 0;
@@ -435,13 +439,21 @@ itec_match(sc)
 	if ((*sc->lm_readreg)(sc, ITEC_RES52) != ITEC_RES52_DEFAULT)
 		return 0;
 
-	vendor=(*sc->lm_readreg)(sc, ITEC_VENDID);
+	/* We check for the core ID register (0x5B), which is available
+	 * only in the 8712F, if that fails, we check the vendor ID
+	 * register, available on 8705F and 8712F */
 
-	if (vendor == ITEC_VENDID_ITE)
-		printf(": iTE IT8705f\n");
-	else
-		printf(": unknown IT8705f compatible, vendorid 0x%02x\n",
-		    vendor);
+	coreid = (*sc->lm_readreg)(sc, ITEC_COREID);
+
+	if (coreid == ITEC_COREID_ITE)
+		printf(": ITE8712F\n");
+	else {
+		vendor = (*sc->lm_readreg)(sc, ITEC_VENDID);
+		if (vendor == ITEC_VENDID_ITE)
+			printf(": ITE8705F\n");
+		else
+			printf(": unknown ITE87%02x compatible\n", vendor);
+	}
 
 	/*
 	 * XXX this is a litle bit lame...

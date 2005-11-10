@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46.2.3 2004/09/21 13:22:43 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.46.2.4 2005/11/10 13:59:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46.2.3 2004/09/21 13:22:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46.2.4 2005/11/10 13:59:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -182,6 +182,9 @@ static int zs_console_flags __P((int, int, int));
 /* Power management hooks */
 int  zs_enable __P((struct zs_chanstate *));
 void zs_disable __P((struct zs_chanstate *));
+
+/* from dev/ic/z8530tty.c */
+struct tty *zstty_get_tty_from_dev(struct device *);
 
 /*
  * Is the zs chip present?
@@ -344,8 +347,9 @@ zs_attach(zsc, zsd, pri)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!(child = 
-		      config_found(&zsc->zsc_dev, (void *)&zsc_args, zs_print))) {
+		child = config_found(&zsc->zsc_dev, (void *)&zsc_args, 
+		    zs_print);
+		if (child == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -363,15 +367,9 @@ zs_attach(zsc, zsd, pri)
 		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
 		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
-			struct zstty_softc {	
-				/* The following are the only fields we need here */
-				struct	device zst_dev;
-				struct  tty *zst_tty;
-				struct	zs_chanstate *zst_cs;
-			} *zst = (struct zstty_softc *)child;
 			struct tty *tp;
 
-			kma.kmta_tp = tp = zst->zst_tty;
+			kma.kmta_tp = tp = zstty_get_tty_from_dev(child);
 			kma.kmta_dev = tp->t_dev;
 			kma.kmta_consdev = zsc_args.consdev;
 			

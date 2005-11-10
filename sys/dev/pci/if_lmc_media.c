@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.15.2.1 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.15.2.2 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.15.2.1 2005/03/04 16:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.15.2.2 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.15.2.1 2005/03/04 16:45:18 skrll 
 /*
  * For lack of a better place, put the T1 cable stuff here.
  */
-char *lmc_t1_cables[] = {
+const char *lmc_t1_cables[] = {
 	"V.10/RS423", "EIA530A", "reserved", "X.21", "V.35",
 	"EIA449/EIA530/V.36", "V.28/EIA232", "none", NULL
 };

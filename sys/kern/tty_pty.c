@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70.2.7 2005/03/04 16:52:02 skrll Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.70.2.8 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.7 2005/03/04 16:52:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.8 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -478,7 +478,7 @@ ptspoll(dev, events, l)
 	struct tty *tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
-		return (EIO);
+		return (POLLHUP);
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
@@ -623,7 +623,7 @@ ptcread(dev, uio, flag)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
-	u_char buf[BUFSIZ];
+	u_char bf[BUFSIZ];
 	int error = 0, cc;
 	int s;
 
@@ -694,12 +694,12 @@ ptcread(dev, uio, flag)
 			error = EIO;
 	}
 	while (uio->uio_resid > 0 && error == 0) {
-		cc = q_to_b(&tp->t_outq, buf, min(uio->uio_resid, BUFSIZ));
+		cc = q_to_b(&tp->t_outq, bf, min(uio->uio_resid, BUFSIZ));
 		if (cc <= 0)
 			break;
 		TTY_UNLOCK(tp);
 		splx(s);
-		error = uiomove(buf, cc, uio);
+		error = uiomove(bf, cc, uio);
 		s = spltty();
 		TTY_LOCK(tp);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))

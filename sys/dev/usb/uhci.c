@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.173.2.4 2005/03/04 16:50:55 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.173.2.5 2005/11/10 14:08:05 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173.2.4 2005/03/04 16:50:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173.2.5 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ struct uhci_pipe {
 		/* Interrupt pipe */
 		struct {
 			int npoll;
+			int isread;
 			uhci_soft_qh_t **qhs;
 		} intr;
 		/* Bulk pipe */
@@ -197,7 +198,7 @@ Static void		uhci_add_bulk(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_remove_ls_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_hs_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_bulk(uhci_softc_t *,uhci_soft_qh_t *);
-Static int		uhci_str(usb_string_descriptor_t *, int, char *);
+Static int		uhci_str(usb_string_descriptor_t *, int, const char *);
 Static void		uhci_add_loop(uhci_softc_t *sc);
 Static void		uhci_rem_loop(uhci_softc_t *sc);
 
@@ -530,11 +531,11 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 #endif
 
+	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
+
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
-
-	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	return (uhci_run(sc, 1));		/* and here we go... */
 }
@@ -1343,7 +1344,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 #endif
 	/*
 	 * If the last TD is still active we need to check whether there
-	 * is a an error somewhere in the middle, or whether there was a
+	 * is an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
 	if (le32toh(lstd->td.td_status) & UHCI_TD_ACTIVE) {
@@ -1938,6 +1939,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	uhci_softc_t *sc = (uhci_softc_t *)upipe->pipe.device->bus;
 	uhci_soft_td_t *std;
 	int s;
+	int wake;
 
 	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
@@ -1952,6 +1954,26 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("uhci_abort_xfer: not in process context");
+
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
+	if (xfer->hcflags & UXFER_ABORTING) {
+		DPRINTFN(2, ("uhci_abort_xfer: already aborting\n"));
+#ifdef DIAGNOSTIC
+		if (status == USBD_TIMEOUT)
+			printf("uhci_abort_xfer: TIMEOUT while aborting\n");
+#endif
+		/* Override the status which might be USBD_TIMEOUT. */
+		xfer->status = status;
+		DPRINTFN(2, ("uhci_abort_xfer: waiting for abort to finish\n"));
+		xfer->hcflags |= UXFER_ABORTWAIT;
+		while (xfer->hcflags & UXFER_ABORTING)
+			tsleep(&xfer->hcflags, PZERO, "uhciaw", 0);
+		return;
+	}
+	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -1989,7 +2011,11 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 #ifdef DIAGNOSTIC
 	ii->isdone = 1;
 #endif
+	wake = xfer->hcflags & UXFER_ABORTWAIT;
+	xfer->hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
+	if (wake)
+		wakeup(&xfer->hcflags);
 	splx(s);
 }
 
@@ -2071,6 +2097,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status err;
+	int isread, endpt;
 	int i, s;
 
 	if (sc->sc_dying)
@@ -2084,8 +2111,14 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 		panic("uhci_device_intr_transfer: a request");
 #endif
 
-	err = uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
-				   &xfer->dmabuf, &data, &dataend);
+	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+
+	upipe->u.intr.isread = isread;
+
+	err = uhci_alloc_std_chain(upipe, sc, xfer->length, isread,
+				   xfer->flags, &xfer->dmabuf, &data,
+				   &dataend);
 	if (err)
 		return (err);
 	dataend->td.td_status |= htole32(UHCI_TD_IOC);
@@ -2992,7 +3025,7 @@ usb_hub_descriptor_t uhci_hubd_piix = {
 };
 
 int
-uhci_str(usb_string_descriptor_t *p, int l, char *s)
+uhci_str(usb_string_descriptor_t *p, int l, const char *s)
 {
 	int i;
 
@@ -3493,7 +3526,8 @@ uhci_root_intr_transfer(usbd_xfer_handle xfer)
 	if (err)
 		return (err);
 
-	/* Pipe isn't running (otherwise err would be USBD_INPROG),
+	/*
+	 * Pipe isn't running (otherwise err would be USBD_INPROG),
 	 * start first
 	 */
 	return (uhci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));

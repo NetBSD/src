@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.163.2.10 2005/11/10 14:07:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.10 2005/11/10 14:07:47 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $");
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/tape.h>
+#include <sys/sysctl.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -104,6 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $");
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
 #endif
+
+struct tape *
+drive_attach(char *name);
 
 static dev_type_open(stopen);
 static dev_type_close(stclose);
@@ -347,6 +352,14 @@ static const struct scsipi_periphsw st_switch = {
 	stdone
 };
 
+/*
+ * A global list of all tape drives attached to the system.  May grow or
+ * shrink over time.
+ */
+struct  tapelist_head tapelist = TAILQ_HEAD_INITIALIZER(tapelist);
+int     tape_count = 0;             /* number of drives in global tapelist */
+struct simplelock tapelist_slock = SIMPLELOCK_INITIALIZER;
+
 #if	defined(ST_ENABLE_EARLYWARN)
 #define	ST_INIT_FLAGS	ST_EARLYWARN
 #else
@@ -381,7 +394,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	bufq_alloc(&st->buf_queue, BUFQ_FCFS);
+	bufq_alloc(&st->buf_queue, "fcfs", 0);
 
 	callout_init(&st->sc_callout);
 
@@ -394,7 +407,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
-	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
+	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "quirks apply, " : "");
 	if (scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE) ||
 	    st->ops(st, ST_OPS_MODESENSE,
@@ -410,6 +423,8 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 
+	st->stats = drive_attach(st->sc_dev.dv_xname);
+	
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
 			  RND_TYPE_TAPE, 0);
@@ -451,9 +466,9 @@ stdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&st->buf_queue);
+	bufq_drain(st->buf_queue);
 
-	bufq_free(&st->buf_queue);
+	bufq_free(st->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(st->sc_periph);
@@ -465,6 +480,16 @@ stdetach(struct device *self, int flags)
 	vdevgone(bmaj, mn, mn+STNMINOR-1, VBLK);
 	vdevgone(cmaj, mn, mn+STNMINOR-1, VCHR);
 
+	if (tape_count == 0) {
+		printf("%s detach: tape_count already zero\n",
+		       st->sc_dev.dv_xname);
+	} else {
+		simple_lock(&tapelist_slock);
+		TAILQ_REMOVE(&tapelist, st->stats, link);
+		tape_count--;
+		simple_unlock(&tapelist_slock);
+		free(st->stats, M_DEVBUF);
+	}
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -481,11 +506,11 @@ stdetach(struct device *self, int flags)
 static void
 st_identify_drive(struct st_softc *st, struct scsipi_inquiry_pattern *inqbuf)
 {
-	struct st_quirk_inquiry_pattern *finger;
+	const struct st_quirk_inquiry_pattern *finger;
 	int priority;
 
-	finger = (struct st_quirk_inquiry_pattern *)scsipi_inqmatch(inqbuf,
-	    (caddr_t)st_quirk_patterns,
+	finger = scsipi_inqmatch(inqbuf,
+	    st_quirk_patterns,
 	    sizeof(st_quirk_patterns) / sizeof(st_quirk_patterns[0]),
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
@@ -506,7 +531,7 @@ static void
 st_loadquirks(struct st_softc *st)
 {
 	int i;
-	struct	modes *mode;
+	const struct	modes *mode;
 	struct	modes *mode2;
 
 	mode = st->quirkdata->modes;
@@ -1119,7 +1144,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(&st->buf_queue, bp);
+	BUFQ_PUT(st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1162,7 +1187,7 @@ ststart(struct scsipi_periph *periph)
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
 	struct scsipi_xfer *xs;
-	int flags, error;
+	int flags, error, s;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 	/*
@@ -1183,7 +1208,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
+			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 				bp->b_flags |= B_ERROR;
@@ -1196,9 +1221,15 @@ ststart(struct scsipi_periph *periph)
 			}
 		}
 
-		if ((bp = BUFQ_PEEK(&st->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
 			return;
 
+		if (st->stats->busy++ == 0) {
+			s = splclock();
+			st->stats->timestamp = mono_time;
+			splx(s);
+		}
+		
 		/*
 		 * only FIXEDBLOCK devices have pending I/O or space operations.
 		 */
@@ -1216,14 +1247,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						BUFQ_GET(&st->buf_queue);
+						BUFQ_GET(st->buf_queue);
 						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
 					}
 				} else {
-					BUFQ_GET(&st->buf_queue);
+					BUFQ_GET(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					bp->b_flags &= ~B_ERROR;
@@ -1238,7 +1269,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			BUFQ_GET(&st->buf_queue);
+			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING) {
 				bp->b_error = EIO;
@@ -1300,10 +1331,10 @@ ststart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(&st->buf_queue) != bp)
+		if (BUFQ_GET(st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
-		BUFQ_GET(&st->buf_queue);
+		BUFQ_GET(st->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -1325,6 +1356,8 @@ stdone(struct scsipi_xfer *xs, int error)
 {
 	struct st_softc *st = (void *)xs->xs_periph->periph_dev;
 	struct buf *bp = xs->bp;
+	int s;
+	struct timeval st_time, diff_time;
 
 	if (bp) {
 		bp->b_error = error;
@@ -1336,6 +1369,33 @@ stdone(struct scsipi_xfer *xs, int error)
 			st->flags |= ST_WRITTEN;
 		else
 			st->flags &= ~ST_WRITTEN;
+
+		if (st->stats->busy-- == 0) {
+			  /* this is not really fatal so we don't panic */
+			printf("%s: busy < 0, Oops.\n", st->stats->name);
+			st->stats->busy = 0;
+		} else {
+			s = splclock();
+			st_time = mono_time;
+			splx(s);
+
+			timersub(&st_time, &st->stats->timestamp, &diff_time);
+			timeradd(&st->stats->time, &diff_time,
+				 &st->stats->time);
+
+			st->stats->timestamp = st_time;
+			if (bp->b_bcount > 0) {
+				if ((bp->b_flags & B_READ) == B_WRITE) {
+					st->stats->wbytes += bp->b_bcount;
+					st->stats->wxfer++;
+				} else {
+					st->stats->rbytes += bp->b_bcount;
+					st->stats->rxfer++;
+				}
+			}
+		}
+		
+			
 #if NRND > 0
 		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
 #endif
@@ -1629,7 +1689,7 @@ try_new_value:
  * Do a synchronous read.
  */
 static int
-st_read(struct st_softc *st, char *buf, int size, int flags)
+st_read(struct st_softc *st, char *bf, int size, int flags)
 {
 	struct scsi_rw_tape cmd;
 
@@ -1647,7 +1707,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	} else
 		_lto3b(size, cmd.len);
 	return (scsipi_command(st->sc_periph,
-	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, ST_IO_TIME, NULL,
+	    (void *)&cmd, sizeof(cmd), (void *)bf, size, 0, ST_IO_TIME, NULL,
 	    flags | XS_CTL_DATA_IN));
 }
 
@@ -2068,9 +2128,8 @@ st_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
-	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
-	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
+	if (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	    SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED)
 		return (retval);
 
 	if (sense->response_code & SSD_RCODE_VALID)
@@ -2333,12 +2392,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 static int
 st_touch_tape(struct st_softc *st)
 {
-	char *buf;
+	char *bf;
 	int readsize;
 	int error;
 
-	buf = malloc(1024, M_TEMP, M_NOWAIT);
-	if (buf == NULL)
+	bf = malloc(1024, M_TEMP, M_NOWAIT);
+	if (bf == NULL)
 		return (ENOMEM);
 
 	if ((error = st->ops(st, ST_OPS_MODESENSE, 0)) != 0)
@@ -2376,14 +2435,14 @@ st_touch_tape(struct st_softc *st)
 			st->blksize -= 512;
 			continue;
 		}
-		st_read(st, buf, readsize, XS_CTL_SILENT);	/* XXX */
+		st_read(st, bf, readsize, XS_CTL_SILENT);	/* XXX */
 		if ((error = st_rewind(st, 0, 0)) != 0) {
-bad:			free(buf, M_TEMP);
+bad:			free(bf, M_TEMP);
 			return (error);
 		}
 	} while (readsize != 1 && readsize > st->blksize);
 
-	free(buf, M_TEMP);
+	free(bf, M_TEMP);
 	return (0);
 }
 
@@ -2393,4 +2452,157 @@ stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 
 	/* Not implemented. */
 	return (ENXIO);
+}
+
+int
+sysctl_hw_tapenames(SYSCTLFN_ARGS)
+{
+	char bf[TAPENAMELEN + 1];
+	char *where = oldp;
+	struct tape *tapep;
+	size_t needed, left, slen;
+	int error, first;
+
+	if (newp != NULL)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	first = 1;
+	error = 0;
+	needed = 0;
+	left = *oldlenp;
+
+	simple_lock(&tapelist_slock);
+	for (tapep = TAILQ_FIRST(&tapelist); tapep != NULL;
+	    tapep = TAILQ_NEXT(tapep, link)) {
+		if (where == NULL)
+			needed += strlen(tapep->name) + 1;
+		else {
+			memset(bf, 0, sizeof(bf));
+			if (first) {
+				strncpy(bf, tapep->name, sizeof(bf));
+				first = 0;
+			} else {
+				bf[0] = ' ';
+				strncpy(bf + 1, tapep->name, sizeof(bf) - 1);
+			}
+			bf[TAPENAMELEN] = '\0';
+			slen = strlen(bf);
+			if (left < slen + 1)
+				break;
+			/* +1 to copy out the trailing NUL byte */
+			error = copyout(bf, where, slen + 1);
+			if (error)
+				break;
+			where += slen;
+			needed += slen;
+			left -= slen;
+		}
+	}
+	simple_unlock(&tapelist_slock);
+	*oldlenp = needed;
+	return (error);
+}
+
+int
+sysctl_hw_tapestats(SYSCTLFN_ARGS)
+{
+	struct tape_sysctl stape;
+	struct tape *tapep;
+	char *where = oldp;
+	size_t tocopy, left;
+	int error;
+
+	if (newp != NULL)
+		return (EPERM);
+
+	tocopy = name[0];
+
+	if (where == NULL) {
+		*oldlenp = tape_count * tocopy;
+		return (0);
+	}
+
+	error = 0;
+	left = *oldlenp;
+	memset(&stape, 0, sizeof(stape));
+	*oldlenp = 0;
+
+	simple_lock(&tapelist_slock);
+	TAILQ_FOREACH(tapep, &tapelist, link) {
+		if (left < tocopy)
+			break;
+		strncpy(stape.name, tapep->name, sizeof(stape.name));
+		stape.xfer = tapep->rxfer + tapep->wxfer;
+		stape.rxfer = tapep->rxfer;
+		stape.wxfer = tapep->wxfer;
+		stape.bytes = tapep->rbytes + tapep->wbytes;
+		stape.rbytes = tapep->rbytes;
+		stape.wbytes = tapep->wbytes;
+		stape.attachtime_sec = tapep->attachtime.tv_sec;
+		stape.attachtime_usec = tapep->attachtime.tv_usec;
+		stape.timestamp_sec = tapep->timestamp.tv_sec;
+		stape.timestamp_usec = tapep->timestamp.tv_usec;
+		stape.time_sec = tapep->time.tv_sec;
+		stape.time_usec = tapep->time.tv_usec;
+		stape.busy = tapep->busy;
+
+		error = copyout(&stape, where, min(tocopy, sizeof(stape)));
+		if (error)
+			break;
+		where += tocopy;
+		*oldlenp += tocopy;
+		left -= tocopy;
+	}
+	simple_unlock(&tapelist_slock);
+	return (error);
+}
+
+struct tape *
+drive_attach(char *name) 
+{
+	struct tape *stats;
+	int s;
+	
+	/* Allocate and initialise statistics */
+	stats = (struct tape *) malloc(sizeof(struct tape), M_DEVBUF,
+					   M_WAITOK);
+	stats->rxfer = stats->wxfer = stats->rbytes = 0;
+	stats->wbytes = stats->busy = 0;
+
+	/*
+	 * Set the attached timestamp.
+	 */
+	s = splclock();
+	stats->attachtime = mono_time;
+	splx(s);
+
+	  /* and clear the utilisation time */
+	timerclear(&stats->time);
+
+	  /* link the tape drive to the tapelist */
+	simple_lock(&tapelist_slock);
+	TAILQ_INSERT_TAIL(&tapelist, stats, link);
+	tape_count++;
+	simple_unlock(&tapelist_slock);
+	stats->name = name;
+
+	return stats;
+}
+
+SYSCTL_SETUP(sysctl_tape_stats_setup, "sysctl tape stats setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "tapenames",
+		       SYSCTL_DESCR("List of tape devices present"),
+		       sysctl_hw_tapenames, 0, NULL, 0,
+		       CTL_HW, HW_TAPENAMES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "tapestats",
+		       SYSCTL_DESCR("Statistics on tape drive operation"),
+		       sysctl_hw_tapestats, 0, NULL, 0,
+		       CTL_HW, HW_TAPESTATS, CTL_EOL);
 }

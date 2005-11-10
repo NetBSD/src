@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.16.2.6 2005/03/04 16:45:15 skrll Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.16.2.7 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.6 2005/03/04 16:45:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.7 2005/11/10 14:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 static void agp_i810_powerhook(int, void *);
 
-struct agp_methods agp_i810_methods = {
+static struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
 	agp_i810_set_aperture,
 	agp_i810_bind_page,

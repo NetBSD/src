@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.28.2.5 2005/03/04 16:50:31 skrll Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.28.2.6 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.28.2.5 2005/03/04 16:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.28.2.6 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,14 +721,14 @@ esp_dma_isactive(sc)
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 
-void db_esp(db_expr_t, int, db_expr_t, char*);
+void db_esp(db_expr_t, int, db_expr_t, const char*);
 
 void
 db_esp(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;

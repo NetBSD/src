@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.23.2.5 2005/03/04 16:40:43 skrll Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.23.2.6 2005/11/10 14:01:40 skrll Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23.2.5 2005/03/04 16:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23.2.6 2005/11/10 14:01:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -608,7 +608,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
  * Pseudo-tty ioctl translations.
  */
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
-		int error, on;
+		int on;
 
 		error = copyin(SCARG(uap, data), &on, sizeof (on));
 		if (error != 0)
@@ -616,7 +616,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		return (*ctl)(fp, TIOCUCNTL, &on, l);
 	}
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
-		int error, sig;
+		int sig;
 
 		error = copyin(SCARG(uap, data), &sig, sizeof (sig));
 		if (error != 0)
@@ -692,20 +692,20 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 	case _IOWR('i', 20, struct ifconf):	/* SIOCGIFCONF */
 	    {
-		struct ifconf ifconf;
+		struct ifconf ifconfarg;
 
 		/*
 		 * XXX: two more problems
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		error = copyin(SCARG(uap, data), &ifconf, sizeof (ifconf));
+		error = copyin(SCARG(uap, data), &ifconfarg, sizeof (ifconfarg));
 		if (error)
 			return error;
-		error = (*ctl)(fp, OSIOCGIFCONF, &ifconf, l);
+		error = (*ctl)(fp, OSIOCGIFCONF, &ifconfarg, l);
 		if (error)
 			return error;
-		return copyout(&ifconf, SCARG(uap, data), sizeof (ifconf));
+		return copyout(&ifconfarg, SCARG(uap, data), sizeof (ifconfarg));
 	    }
 
 

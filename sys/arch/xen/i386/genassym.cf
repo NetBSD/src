@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.4.4 2004/09/21 13:24:36 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.1.4.5 2005/11/10 14:00:20 skrll Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -103,15 +103,6 @@ include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/types.h>
 
-if defined(_KERNEL) && !defined(_LKM) && !defined(XENO)
-include "ioapic.h"
-include "apm.h"
-endif
-if NAPM > 0
-include <machine/bioscall.h>
-include <machine/apmvar.h>
-endif
-
 ifdef COMPAT_SVR4
 include <compat/svr4/svr4_ucontext.h>
 endif
@@ -129,24 +120,29 @@ ifdef MULTIPROCESSOR
 include <machine/cpu.h>
 endif
 
-if NIOAPIC > 0
-include <machine/i82093reg.h>
-include <machine/i82093var.h>
-endif
-
-if defined(_KERNEL) && !defined(_LKM) && !defined(XENO)
-include "isa.h"
-endif
-if NISA > 0
-include <machine/isa_machdep.h>
-endif
-
 include <machine/tlog.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
+
+define	PTE_BASE		PTE_BASE
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	KERNBASE		KERNBASE
+define	KERNTEXTOFF		KERNTEXTOFF
+
+define	PGSHIFT			PGSHIFT
+define	PGOFSET			PGOFSET
+define	PDSHIFT			PDSHIFT
+define	PDOFSET			PDOFSET
+define	NBPD			NBPD
+
+define	PG_RW			PG_RW
+define	PG_V			PG_V
+define	PG_KW			PG_KW
+define	PG_KR			PG_KR
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
@@ -240,25 +236,7 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
-define	IH_NEXT			offsetof(struct intrhand, ih_next)
-
-if NAPM > 0
-define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
-define	APM_CODE16		offsetof(struct apm_connect_info, apm_code16_seg_base)
-define	APM_DATA		offsetof(struct apm_connect_info, apm_data_seg_base)
-define	APM_CODE32_LEN		offsetof(struct apm_connect_info, apm_code32_seg_len)
-define	APM_DATA_LEN		offsetof(struct apm_connect_info, apm_data_seg_len)
-define	APM_ENTRY		offsetof(struct apm_connect_info, apm_entrypt)
-define	APM_DETAIL		offsetof(struct apm_connect_info, apm_detail)
-define	APM_SIZE		sizeof(struct apm_connect_info)
-define	BIOSCALLREG_EAX		offsetof(struct bioscallregs, EAX)
-define	BIOSCALLREG_EBX		offsetof(struct bioscallregs, EBX)
-define	BIOSCALLREG_ECX		offsetof(struct bioscallregs, ECX)
-define	BIOSCALLREG_EDX		offsetof(struct bioscallregs, EDX)
-define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
-define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
-define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
-endif
+define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
@@ -282,33 +260,22 @@ define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
-define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 
-if NIOAPIC > 0
-define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
-define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
-define		PIC_LOCK		offsetof(struct pic, pic_lock)
-endif
-
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 
-define        SIZEOF_ISOURCE          sizeof(struct intrsource)
+define        SIZEOF_IPLSOURCE          sizeof(struct iplsource)
 define        SIZEOF_ISTUB            sizeof(struct intrstub)
 
-define		IS_RECURSE	offsetof(struct intrsource, is_recurse)
-define		IS_RESUME	offsetof(struct intrsource, is_resume)
-define		IS_EVCNTLO	offsetof(struct intrsource, is_evcnt.ev_count)
-define		IS_EVCNTHI	offsetof(struct intrsource, is_evcnt.ev_count)+4
-define		IS_HANDLERS	offsetof(struct intrsource, is_handlers)
-define		IS_PIC		offsetof(struct intrsource, is_pic)
-define		IS_FLAGS	offsetof(struct intrsource, is_flags)
-define		IS_PIN		offsetof(struct intrsource, is_pin)
-define		IS_TYPE		offsetof(struct intrsource, is_type)
-define		IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define		IS_RECURSE	offsetof(struct iplsource, ipl_recurse)
+define		IS_RESUME	offsetof(struct iplsource, ipl_resume)
+define		IS_HANDLERS	offsetof(struct iplsource, ipl_handlers)
+
+define		EV_EVCNTLO	offsetof(struct evcnt, ev_count)
+define		EV_EVCNTHI	offsetof(struct evcnt, ev_count)+4
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -321,3 +288,20 @@ define	TREC_IBT		offsetof(struct trec, tr_ibt)
 
 define	SIZEOF_TREC		sizeof(struct trec)
 define	SIZEOF_TLOG		sizeof(struct tlog)
+
+define	IPL_NONE		IPL_NONE
+define	IPL_SCHED		IPL_SCHED
+define	IPL_HIGH		IPL_HIGH
+
+define	IPL_SOFTNET		IPL_SOFTNET
+define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
+define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
+
+define	IREENT_MAGIC		IREENT_MAGIC
+
+define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
+define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
+define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
+
+define	PSL_MBO			PSL_MBO

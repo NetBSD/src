@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstorob - AML Interpreter object store support, store to object
- *              xRevision: 51 $
+ *              xRevision: 57 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __EXSTOROB_C__
 
@@ -153,9 +153,8 @@ AcpiExStoreBufferToBuffer (
     ACPI_FUNCTION_TRACE_PTR ("ExStoreBufferToBuffer", SourceDesc);
 
 
-    /*
-     * We know that SourceDesc is a buffer by now
-     */
+    /* We know that SourceDesc is a buffer by now */
+
     Buffer = (UINT8 *) SourceDesc->Buffer.Pointer;
     Length = SourceDesc->Buffer.Length;
 
@@ -172,36 +171,57 @@ AcpiExStoreBufferToBuffer (
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
 
-        TargetDesc->Common.Flags &= ~AOPOBJ_STATIC_POINTER;
         TargetDesc->Buffer.Length = Length;
     }
 
-    /*
-     * Buffer is a static allocation,
-     * only place what will fit in the buffer.
-     */
+    /* Copy source buffer to target buffer */
+
     if (Length <= TargetDesc->Buffer.Length)
     {
         /* Clear existing buffer and copy in the new one */
 
         ACPI_MEMSET (TargetDesc->Buffer.Pointer, 0, TargetDesc->Buffer.Length);
         ACPI_MEMCPY (TargetDesc->Buffer.Pointer, Buffer, Length);
+
+#ifdef ACPI_OBSOLETE_BEHAVIOR
+        /*
+         * NOTE: ACPI versions up to 3.0 specified that the buffer must be
+         * truncated if the string is smaller than the buffer.  However, "other"
+         * implementations of ACPI never did this and thus became the defacto
+         * standard. ACPI 3.0A changes this behavior such that the buffer
+         * is no longer truncated.
+         */
+
+        /*
+         * OBSOLETE BEHAVIOR:
+         * If the original source was a string, we must truncate the buffer,
+         * according to the ACPI spec.  Integer-to-Buffer and Buffer-to-Buffer
+         * copy must not truncate the original buffer.
+         */
+        if (OriginalSrcType == ACPI_TYPE_STRING)
+        {
+            /* Set the new length of the target */
+
+            TargetDesc->Buffer.Length = Length;
+        }
+#endif
     }
     else
     {
-        /*
-         * Truncate the source, copy only what will fit
-         */
-        ACPI_MEMCPY (TargetDesc->Buffer.Pointer, Buffer, TargetDesc->Buffer.Length);
+        /* Truncate the source, copy only what will fit */
+
+        ACPI_MEMCPY (TargetDesc->Buffer.Pointer, Buffer,
+            TargetDesc->Buffer.Length);
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "Truncating src buffer from %X to %X\n",
+            "Truncating source buffer from %X to %X\n",
             Length, TargetDesc->Buffer.Length));
     }
 
     /* Copy flags */
 
     TargetDesc->Buffer.Flags = SourceDesc->Buffer.Flags;
+    TargetDesc->Common.Flags &= ~AOPOBJ_STATIC_POINTER;
     return_ACPI_STATUS (AE_OK);
 }
 
@@ -231,9 +251,8 @@ AcpiExStoreStringToString (
     ACPI_FUNCTION_TRACE_PTR ("ExStoreStringToString", SourceDesc);
 
 
-    /*
-     * We know that SourceDesc is a string by now.
-     */
+    /* We know that SourceDesc is a string by now */
+
     Buffer = (UINT8 *) SourceDesc->String.Pointer;
     Length = SourceDesc->String.Length;
 
@@ -248,7 +267,8 @@ AcpiExStoreStringToString (
          * String will fit in existing non-static buffer.
          * Clear old string and copy in the new one
          */
-        ACPI_MEMSET (TargetDesc->String.Pointer, 0, (ACPI_SIZE) TargetDesc->String.Length + 1);
+        ACPI_MEMSET (TargetDesc->String.Pointer, 0,
+            (ACPI_SIZE) TargetDesc->String.Length + 1);
         ACPI_MEMCPY (TargetDesc->String.Pointer, Buffer, Length);
     }
     else
@@ -260,13 +280,13 @@ AcpiExStoreStringToString (
         if (TargetDesc->String.Pointer &&
            (!(TargetDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
-            /*
-             * Only free if not a pointer into the DSDT
-             */
+            /* Only free if not a pointer into the DSDT */
+
             ACPI_MEM_FREE (TargetDesc->String.Pointer);
         }
 
-        TargetDesc->String.Pointer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
+        TargetDesc->String.Pointer = ACPI_MEM_CALLOCATE (
+                                        (ACPI_SIZE) Length + 1);
         if (!TargetDesc->String.Pointer)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.21.2.6 2005/04/01 14:29:36 skrll Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.21.2.7 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.21.2.6 2005/04/01 14:29:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.21.2.7 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ linux_sys_fstat64(l, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys___fstat13_args fsa;
+	struct sys___fstat30_args fsa;
 	struct linux_stat64 tmplst;
 	struct stat *st,tmpst;
 	caddr_t sg;
@@ -143,7 +143,7 @@ linux_sys_fstat64(l, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(l, &fsa, retval)))
+	if ((error = sys___fstat30(l, &fsa, retval)))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -165,7 +165,7 @@ linux_do_stat64(l, v, retval, dolstat)
 	int dolstat;
 {
 	struct proc *p = l->l_proc;
-	struct sys___stat13_args sa;
+	struct sys___stat30_args sa;
 	struct linux_stat64 tmplst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -179,8 +179,8 @@ linux_do_stat64(l, v, retval, dolstat)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = (dolstat ? sys___lstat13(l, &sa, retval) :
-				sys___stat13(l, &sa, retval))))
+	if ((error = (dolstat ? sys___lstat30(l, &sa, retval) :
+				sys___stat30(l, &sa, retval))))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -266,7 +266,7 @@ linux_sys_ftruncate64(l, v, retval)
 	return sys_ftruncate(l, &ta, retval);
 }
 
-#if !defined(__m68k__)
+#if !defined(__m68k__) && !defined(__amd64__)
 static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
     const struct flock *));
 static void linux_to_bsd_flock64 __P((struct flock *,
@@ -375,7 +375,7 @@ linux_sys_fcntl64(l, v, retval)
 		return linux_sys_fcntl(l, v, retval);
 	}
 }
-#endif /* !m68k */
+#endif /* !m68k && !amd64 */
 
 #endif /* !alpha */
 
@@ -407,7 +407,7 @@ linux_sys_getdents64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t	inp, buf;		/* BSD-format */
+	caddr_t	inp, tbuf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
 	caddr_t outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
@@ -443,12 +443,12 @@ linux_sys_getdents64(l, v, retval)
 	buflen = min(MAXBSIZE, nbytes);
 	if (buflen < va.va_blocksize)
 		buflen = va.va_blocksize;
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -466,7 +466,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = buf;
+	inp = tbuf;
 	outp = (caddr_t)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -479,7 +479,10 @@ again:
 			panic("linux_readdir");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
@@ -488,7 +491,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -519,7 +525,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 out1:
 	FILE_UNUSE(fp, l);
 	return error;

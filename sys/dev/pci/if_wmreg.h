@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.5.2.5 2005/03/04 16:45:21 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.5.2.6 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,7 +70,7 @@ typedef struct wiseman_rxdesc {
 /* wrx_status bits */
 #define	WRX_ST_DD	(1U << 0)	/* descriptor done */
 #define	WRX_ST_EOP	(1U << 1)	/* end of packet */
-#define	WRX_ST_ISXM	(1U << 2)	/* ignore checksum indication */
+#define	WRX_ST_IXSM	(1U << 2)	/* ignore checksum indication */
 #define	WRX_ST_VP	(1U << 3)	/* VLAN packet */
 #define	WRX_ST_BPDU	(1U << 4)	/* ??? */
 #define	WRX_ST_TCPCS	(1U << 5)	/* TCP checksum performed */

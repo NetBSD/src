@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_quirks.c,v 1.2.16.3 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.2.16.4 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.2.16.3 2004/09/21 13:31:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.2.16.4 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,9 +50,7 @@ static const struct pci_quirkdata pci_quirks[] = {
 };
 
 const struct pci_quirkdata *
-pci_lookup_quirkdata(vendor, product)
-	pci_vendor_id_t vendor;
-	pci_product_id_t product;
+pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
 {
 	int i;
 

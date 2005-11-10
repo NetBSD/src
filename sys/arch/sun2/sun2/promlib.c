@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: promlib.c,v 1.10.2.5 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.10.2.5 2005/11/10 13:59:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ prom_halt(void)
  * Caller must pass a string that is in our data segment.
  */
 void 
-prom_boot(char *bs)
+prom_boot(const char *bs)
 {
 	_mode_monitor(&sunmon_kernel_state, 1);
 	(*romVectorPtr->reBoot)(bs);

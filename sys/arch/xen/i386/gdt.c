@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1.4.5 2005/04/01 14:28:58 skrll Exp $	*/
+/*	$NetBSD: gdt.c,v 1.1.4.6 2005/11/10 14:00:20 skrll Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.4.5 2005/04/01 14:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.4.6 2005/11/10 14:00:20 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -398,15 +398,15 @@ tss_free(int sel)
  * Caller must have pmap locked for both of these functions.
  */
 void
-ldt_alloc(struct pmap *pmap, union descriptor *ldt, size_t len)
+ldt_alloc(struct pmap *pmap, union descriptor *ldtp, size_t len)
 {
 	int slot;
 
 	slot = gdt_get_slot1(1);
 #ifndef XEN
-	setgdt(slot, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
+	setgdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
 #else
-	cpu_info_primary.ci_gdt[slot].ld.ld_base = (uint32_t)ldt;
+	cpu_info_primary.ci_gdt[slot].ld.ld_base = (uint32_t)ldtp;
 	cpu_info_primary.ci_gdt[slot].ld.ld_entries =
 		len / sizeof(union descriptor);
 #endif

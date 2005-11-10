@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmem24 - Memory resource descriptors
- *              xRevision: 25 $
+ *              xRevision: 28 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __RSMEMORY_C__
 
@@ -158,15 +158,15 @@ AcpiRsMemory24Resource (
     ACPI_RESOURCE           *OutputStruct = (void *) *OutputBuffer;
     UINT16                  Temp16 = 0;
     UINT8                   Temp8 = 0;
-    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (ACPI_RESOURCE_MEM24);
+    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (
+                                            ACPI_RESOURCE_MEM24);
 
 
     ACPI_FUNCTION_TRACE ("RsMemory24Resource");
 
 
-    /*
-     * Point past the Descriptor to get the number of bytes consumed
-     */
+    /* Point past the Descriptor to get the number of bytes consumed */
+
     Buffer += 1;
 
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
@@ -174,48 +174,41 @@ AcpiRsMemory24Resource (
     *BytesConsumed = (ACPI_SIZE) Temp16 + 3;
     OutputStruct->Id = ACPI_RSTYPE_MEM24;
 
-    /*
-     * Check Byte 3 the Read/Write bit
-     */
+    /* Check Byte 3 the Read/Write bit */
+
     Temp8 = *Buffer;
     Buffer += 1;
     OutputStruct->Data.Memory24.ReadWriteAttribute = Temp8 & 0x01;
 
-    /*
-     * Get MinBaseAddress (Bytes 4-5)
-     */
+    /* Get MinBaseAddress (Bytes 4-5) */
+
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.MinBaseAddress = Temp16;
 
-    /*
-     * Get MaxBaseAddress (Bytes 6-7)
-     */
+    /* Get MaxBaseAddress (Bytes 6-7) */
+
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.MaxBaseAddress = Temp16;
 
-    /*
-     * Get Alignment (Bytes 8-9)
-     */
+    /* Get Alignment (Bytes 8-9) */
+
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.Alignment = Temp16;
 
-    /*
-     * Get RangeLength (Bytes 10-11)
-     */
+    /* Get RangeLength (Bytes 10-11) */
+
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     OutputStruct->Data.Memory24.RangeLength = Temp16;
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -251,53 +244,45 @@ AcpiRsMemory24Stream (
     ACPI_FUNCTION_TRACE ("RsMemory24Stream");
 
 
-    /*
-     * The descriptor field is static
-     */
+    /* The descriptor field is static */
+
     *Buffer = 0x81;
     Buffer += 1;
 
-    /*
-     * The length field is static
-     */
+    /* The length field is static */
+
     Temp16 = 0x09;
     ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
-    /*
-     * Set the Information Byte
-     */
+    /* Set the Information Byte */
+
     Temp8 = (UINT8) (LinkedList->Data.Memory24.ReadWriteAttribute & 0x01);
     *Buffer = Temp8;
     Buffer += 1;
 
-    /*
-     * Set the Range minimum base address
-     */
+    /* Set the Range minimum base address */
+
     ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.MinBaseAddress);
     Buffer += 2;
 
-    /*
-     * Set the Range maximum base address
-     */
+    /* Set the Range maximum base address */
+
     ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.MaxBaseAddress);
     Buffer += 2;
 
-    /*
-     * Set the base alignment
-     */
+    /* Set the base alignment */
+
     ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.Alignment);
     Buffer += 2;
 
-    /*
-     * Set the range length
-     */
+    /* Set the range length */
+
     ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.RangeLength);
     Buffer += 2;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }
@@ -335,15 +320,15 @@ AcpiRsMemory32RangeResource (
     ACPI_RESOURCE           *OutputStruct = (void *) *OutputBuffer;
     UINT16                  Temp16 = 0;
     UINT8                   Temp8 = 0;
-    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (ACPI_RESOURCE_MEM32);
+    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (
+                                            ACPI_RESOURCE_MEM32);
 
 
     ACPI_FUNCTION_TRACE ("RsMemory32RangeResource");
 
 
-    /*
-     * Point past the Descriptor to get the number of bytes consumed
-     */
+    /* Point past the Descriptor to get the number of bytes consumed */
+
     Buffer += 1;
 
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
@@ -362,45 +347,38 @@ AcpiRsMemory32RangeResource (
      *  4 * sizeof(RESOURCE_DATA) instead of 4 * sizeof(UINT8)
      */
 
-    /*
-     * Check Byte 3 the Read/Write bit
-     */
+    /* Check Byte 3 the Read/Write bit */
+
     Temp8 = *Buffer;
     Buffer += 1;
 
     OutputStruct->Data.Memory32.ReadWriteAttribute = Temp8 & 0x01;
 
-    /*
-     * Get MinBaseAddress (Bytes 4-7)
-     */
+    /* Get MinBaseAddress (Bytes 4-7) */
+
     ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.MinBaseAddress, Buffer);
     Buffer += 4;
 
-    /*
-     * Get MaxBaseAddress (Bytes 8-11)
-     */
+    /* Get MaxBaseAddress (Bytes 8-11) */
+
     ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.MaxBaseAddress, Buffer);
     Buffer += 4;
 
-    /*
-     * Get Alignment (Bytes 12-15)
-     */
+    /* Get Alignment (Bytes 12-15) */
+
     ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.Alignment, Buffer);
     Buffer += 4;
 
-    /*
-     * Get RangeLength (Bytes 16-19)
-     */
+    /* Get RangeLength (Bytes 16-19) */
+
     ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.RangeLength, Buffer);
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -438,15 +416,15 @@ AcpiRsFixedMemory32Resource (
     ACPI_RESOURCE           *OutputStruct = (void *) *OutputBuffer;
     UINT16                  Temp16 = 0;
     UINT8                   Temp8 = 0;
-    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (ACPI_RESOURCE_FIXED_MEM32);
+    ACPI_SIZE               StructSize = ACPI_SIZEOF_RESOURCE (
+                                            ACPI_RESOURCE_FIXED_MEM32);
 
 
     ACPI_FUNCTION_TRACE ("RsFixedMemory32Resource");
 
 
-    /*
-     * Point past the Descriptor to get the number of bytes consumed
-     */
+    /* Point past the Descriptor to get the number of bytes consumed */
+
     Buffer += 1;
     ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
@@ -455,32 +433,28 @@ AcpiRsFixedMemory32Resource (
 
     OutputStruct->Id = ACPI_RSTYPE_FIXED_MEM32;
 
-    /*
-     * Check Byte 3 the Read/Write bit
-     */
+    /* Check Byte 3 the Read/Write bit */
+
     Temp8 = *Buffer;
     Buffer += 1;
     OutputStruct->Data.FixedMemory32.ReadWriteAttribute = Temp8 & 0x01;
 
-    /*
-     * Get RangeBaseAddress (Bytes 4-7)
-     */
-    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeBaseAddress, Buffer);
+    /* Get RangeBaseAddress (Bytes 4-7) */
+
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeBaseAddress,
+        Buffer);
     Buffer += 4;
 
-    /*
-     * Get RangeLength (Bytes 8-11)
-     */
+    /* Get RangeLength (Bytes 8-11) */
+
     ACPI_MOVE_32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeLength, Buffer);
 
-    /*
-     * Set the Length parameter
-     */
+    /* Set the Length parameter */
+
     OutputStruct->Length = (UINT32) StructSize;
 
-    /*
-     * Return the final size of the structure
-     */
+    /* Return the final size of the structure */
+
     *StructureSize = StructSize;
     return_ACPI_STATUS (AE_OK);
 }
@@ -516,54 +490,46 @@ AcpiRsMemory32RangeStream (
     ACPI_FUNCTION_TRACE ("RsMemory32RangeStream");
 
 
-    /*
-     * The descriptor field is static
-     */
+    /* The descriptor field is static */
+
     *Buffer = 0x85;
     Buffer += 1;
 
-    /*
-     * The length field is static
-     */
+    /* The length field is static */
+
     Temp16 = 0x11;
 
     ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
-    /*
-     * Set the Information Byte
-     */
+    /* Set the Information Byte */
+
     Temp8 = (UINT8) (LinkedList->Data.Memory32.ReadWriteAttribute & 0x01);
     *Buffer = Temp8;
     Buffer += 1;
 
-    /*
-     * Set the Range minimum base address
-     */
+    /* Set the Range minimum base address */
+
     ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.MinBaseAddress);
     Buffer += 4;
 
-    /*
-     * Set the Range maximum base address
-     */
+    /* Set the Range maximum base address */
+
     ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.MaxBaseAddress);
     Buffer += 4;
 
-    /*
-     * Set the base alignment
-     */
+    /* Set the base alignment */
+
     ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.Alignment);
     Buffer += 4;
 
-    /*
-     * Set the range length
-     */
+    /* Set the range length */
+
     ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.RangeLength);
     Buffer += 4;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }
@@ -599,44 +565,38 @@ AcpiRsFixedMemory32Stream (
     ACPI_FUNCTION_TRACE ("RsFixedMemory32Stream");
 
 
-    /*
-     * The descriptor field is static
-     */
+    /* The descriptor field is static */
+
     *Buffer = 0x86;
     Buffer += 1;
 
-    /*
-     * The length field is static
-     */
+    /* The length field is static */
+
     Temp16 = 0x09;
 
     ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
-    /*
-     * Set the Information Byte
-     */
+    /* Set the Information Byte */
+
     Temp8 = (UINT8) (LinkedList->Data.FixedMemory32.ReadWriteAttribute & 0x01);
     *Buffer = Temp8;
     Buffer += 1;
 
-    /*
-     * Set the Range base address
-     */
+    /* Set the Range base address */
+
     ACPI_MOVE_32_TO_32 (Buffer,
-                            &LinkedList->Data.FixedMemory32.RangeBaseAddress);
+        &LinkedList->Data.FixedMemory32.RangeBaseAddress);
     Buffer += 4;
 
-    /*
-     * Set the range length
-     */
+    /* Set the range length */
+
     ACPI_MOVE_32_TO_32 (Buffer,
-                            &LinkedList->Data.FixedMemory32.RangeLength);
+        &LinkedList->Data.FixedMemory32.RangeLength);
     Buffer += 4;
 
-    /*
-     * Return the number of bytes consumed in this operation
-     */
+    /* Return the number of bytes consumed in this operation */
+
     *BytesConsumed = ACPI_PTR_DIFF (Buffer, *OutputBuffer);
     return_ACPI_STATUS (AE_OK);
 }

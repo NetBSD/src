@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.13.16.5 2005/03/04 16:50:54 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.13.16.6 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ typedef struct {
 #define  EHCI_QTD_MISSEDMICRO	0x04
 #define  EHCI_QTD_SPLITXSTATE	0x02
 #define  EHCI_QTD_PINGSTATE	0x01
-#define  EHCI_QTD_STATERRS	0x7c
+#define  EHCI_QTD_STATERRS	0x3c
 #define EHCI_QTD_GET_PID(x)	(((x) >>  8) & 0x3)
 #define EHCI_QTD_SET_PID(x)	((x) <<  8)
 #define  EHCI_QTD_PID_OUT	0x0

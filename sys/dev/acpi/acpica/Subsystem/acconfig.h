@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acconfig.h - Global configuration constants
- *       xRevision: 148 $
+ *       xRevision: 183 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -137,11 +137,21 @@
 
 /* Version string */
 
-#define ACPI_CA_VERSION                 0x20040211
+#define ACPI_CA_VERSION                 0x20050408
+
+/*
+ * OS name, used for the _OS object.  The _OS object is essentially obsolete,
+ * but there is a large base of ASL/AML code in existing machines that check
+ * for the string below.  The use of this string usually guarantees that
+ * the ASL will execute down the most tested code path.  Also, there is some
+ * code that will not execute the _OSI method unless _OS matches the string
+ * below.  Therefore, change this string at your own risk.
+ */
+#define ACPI_OS_NAME                    "Microsoft Windows NT"
 
 /* Maximum objects in the various object caches */
 
-#define ACPI_MAX_STATE_CACHE_DEPTH      64          /* State objects for stacks */
+#define ACPI_MAX_STATE_CACHE_DEPTH      64          /* State objects */
 #define ACPI_MAX_PARSE_CACHE_DEPTH      96          /* Parse tree objects */
 #define ACPI_MAX_EXTPARSE_CACHE_DEPTH   64          /* Parse tree objects */
 #define ACPI_MAX_OBJECT_CACHE_DEPTH     64          /* Interpreter operand objects */
@@ -162,7 +172,7 @@
 
 /* Version of ACPI supported */
 
-#define ACPI_CA_SUPPORT_LEVEL           2
+#define ACPI_CA_SUPPORT_LEVEL           3
 
 /* String size constants */
 
@@ -193,9 +203,8 @@
 #define ACPI_MAX_GPE_BLOCKS             2
 #define ACPI_GPE_REGISTER_WIDTH         8
 
-/*
- * Method info (in WALK_STATE), containing local variables and argumetns
- */
+/* Method info (in WALK_STATE), containing local variables and argumetns */
+
 #define ACPI_METHOD_NUM_LOCALS          8
 #define ACPI_METHOD_MAX_LOCAL           7
 
@@ -225,10 +234,11 @@
 
 /* Constants used in searching for the RSDP in low memory */
 
-#define ACPI_LO_RSDP_WINDOW_BASE        0           /* Physical Address */
-#define ACPI_HI_RSDP_WINDOW_BASE        0xE0000     /* Physical Address */
-#define ACPI_LO_RSDP_WINDOW_SIZE        0x400
-#define ACPI_HI_RSDP_WINDOW_SIZE        0x20000
+#define ACPI_EBDA_PTR_LOCATION          0x0000040E     /* Physical Address */
+#define ACPI_EBDA_PTR_LENGTH            2
+#define ACPI_EBDA_WINDOW_SIZE           1024
+#define ACPI_HI_RSDP_WINDOW_BASE        0x000E0000     /* Physical Address */
+#define ACPI_HI_RSDP_WINDOW_SIZE        0x00020000
 #define ACPI_RSDP_SCAN_STEP             16
 
 /* Operation regions */
@@ -257,6 +267,10 @@
 /* SMBus bidirectional buffer size */
 
 #define ACPI_SMBUS_BUFFER_SIZE          34
+
+/* Number of strings associated with the _OSI reserved method */
+
+#define ACPI_NUM_OSI_STRINGS            10
 
 
 /******************************************************************************

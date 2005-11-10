@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.23.2.6 2005/03/04 16:40:42 skrll Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.23.2.7 2005/11/10 14:01:39 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.23.2.6 2005/03/04 16:40:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.23.2.7 2005/11/10 14:01:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ svr4_32_sys_getdents64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* SVR4-format */
 	int resid, svr4_32_reclen;	/* SVR4-format */
@@ -294,11 +294,11 @@ svr4_32_sys_getdents64(l, v, retval)
 	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	sbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = sbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -316,7 +316,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = buf;
+	inp = sbuf;
 	outp = (char *)(u_long) SCARG(uap, dp);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -329,7 +329,10 @@ again:
 			panic("svr4_32_getdents64: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		svr4_32_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -338,7 +341,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -368,7 +374,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(sbuf, M_TEMP);
  out1:
 	FILE_UNUSE(fp, l);
 	return error;
@@ -385,7 +391,7 @@ svr4_32_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	caddr_t inp, sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	caddr_t outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
@@ -414,11 +420,11 @@ svr4_32_sys_getdents(l, v, retval)
 	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	sbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
-	aiov.iov_base = buf;
+	aiov.iov_base = sbuf;
 	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -436,7 +442,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = buf;
+	inp = sbuf;
 	outp = (caddr_t)(u_long)SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -447,7 +453,10 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("svr4_32_getdents: bad reclen");
-		off = *cookie++;	/* each entry points to the next */
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
 		if ((off >> 32) != 0) {
 			compat_offseterr(vp, "svr4_32_getdents");
 			error = EINVAL;
@@ -492,7 +501,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	free(sbuf, M_TEMP);
  out1:
 	FILE_UNUSE(fp, l);
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.13.2.6 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: keydb.h,v 1.13.2.7 2005/11/10 14:11:55 skrll Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -34,6 +34,10 @@
 #define _NETKEY_KEYDB_H_
 
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_ipsec.h"
+#endif
 
 #include <sys/mallocvar.h>
 #include <netkey/key_var.h>
@@ -108,10 +112,10 @@ struct secasvar {
 
 	u_int32_t id;			/* SA id */
 	/* Nat-Traversal state */
+#ifdef IPSEC_NAT_T
 	u_int16_t	natt_type;
-	u_int16_t	remote_ike_port;
-	u_int16_t	local_ike_port;
 	u_int16_t	esp_frag;
+#endif
 };
 
 /* replay prevention */

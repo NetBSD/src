@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.1.2.5 2005/03/04 16:45:19 skrll Exp $ */
+/* $NetBSD: if_txp.c,v 1.1.2.6 2005/11/10 14:06:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.1.2.5 2005/03/04 16:45:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.1.2.6 2005/11/10 14:06:02 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -103,7 +103,7 @@ int txp_reset_adapter(struct txp_softc *);
 int txp_download_fw(struct txp_softc *);
 int txp_download_fw_wait(struct txp_softc *);
 int txp_download_fw_section(struct txp_softc *,
-    struct txp_fw_section_header *, int);
+    const struct txp_fw_section_header *, int);
 int txp_alloc_rings(struct txp_softc *);
 void txp_dma_free(struct txp_softc *, struct txp_dma_alloc *);
 int txp_dma_malloc(struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int);
@@ -432,8 +432,8 @@ int
 txp_download_fw(sc)
 	struct txp_softc *sc;
 {
-	struct txp_fw_file_header *fileheader;
-	struct txp_fw_section_header *secthead;
+	const struct txp_fw_file_header *fileheader;
+	const struct txp_fw_section_header *secthead;
 	int sect;
 	u_int32_t r, i, ier, imr;
 
@@ -457,7 +457,7 @@ txp_download_fw(sc)
 	/* Ack the status */
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
-	fileheader = (struct txp_fw_file_header *)tc990image;
+	fileheader = (const struct txp_fw_file_header *)tc990image;
 	if (bcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
@@ -472,14 +472,15 @@ txp_download_fw(sc)
 		return (-1);
 	}
 
-	secthead = (struct txp_fw_section_header *)(((u_int8_t *)tc990image) +
-	    sizeof(struct txp_fw_file_header));
+	secthead = (const struct txp_fw_section_header *)
+		(((const u_int8_t *)tc990image) +
+		 sizeof(struct txp_fw_file_header));
 
 	for (sect = 0; sect < le32toh(fileheader->nsections); sect++) {
 		if (txp_download_fw_section(sc, secthead, sect))
 			return (-1);
-		secthead = (struct txp_fw_section_header *)
-		    (((u_int8_t *)secthead) + le32toh(secthead->nbytes) +
+		secthead = (const struct txp_fw_section_header *)
+		    (((const u_int8_t *)secthead) + le32toh(secthead->nbytes) +
 			sizeof(*secthead));
 	}
 
@@ -533,7 +534,7 @@ txp_download_fw_wait(sc)
 int
 txp_download_fw_section(sc, sect, sectnum)
 	struct txp_softc *sc;
-	struct txp_fw_section_header *sect;
+	const struct txp_fw_section_header *sect;
 	int sectnum;
 {
 	struct txp_dma_alloc dma;
@@ -546,7 +547,7 @@ txp_download_fw_section(sc, sect, sectnum)
 		return (0);
 
 	/* Make sure we aren't past the end of the image */
-	rseg = ((u_int8_t *)sect) - ((u_int8_t *)tc990image);
+	rseg = ((const u_int8_t *)sect) - ((const u_int8_t *)tc990image);
 	if (rseg >= sizeof(tc990image)) {
 		printf(": fw invalid section address, section %d\n", sectnum);
 		return (-1);
@@ -565,7 +566,7 @@ txp_download_fw_section(sc, sect, sectnum)
 		return (-1);
 	}
 
-	bcopy(((u_int8_t *)sect) + sizeof(*sect), dma.dma_vaddr,
+	bcopy(((const u_int8_t *)sect) + sizeof(*sect), dma.dma_vaddr,
 	    le32toh(sect->nbytes));
 
 	/*
@@ -696,7 +697,7 @@ txp_rx_reclaim(sc, r, dma)
 		}
 
 		/* retrieve stashed pointer */
-		bcopy((u_long *)&rxd->rx_vaddrlo, &sd, sizeof(sd));
+		bcopy(__UNVOLATILE(&rxd->rx_vaddrlo), &sd, sizeof(sd));
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -837,7 +838,7 @@ txp_rxbuf_reclaim(sc)
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
 
 		/* stash away pointer */
-		bcopy(&sd, (u_long *)&rbd->rb_vaddrlo, sizeof(sd));
+		bcopy(&sd, __UNVOLATILE(&rbd->rb_vaddrlo), sizeof(sd));
 
 		rbd->rb_paddrlo = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
 		    & 0xffffffff;
@@ -1118,7 +1119,7 @@ txp_alloc_rings(sc)
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 		/* stash away pointer */
-		bcopy(&sd, (u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, sizeof(sd));
+		bcopy(&sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo), sizeof(sd));
 
 		sc->sc_rxbufs[i].rb_paddrlo =
 		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
@@ -1467,7 +1468,7 @@ txp_start(ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		if ((mtag = VLAN_OUTPUT_TAG(sc->sc_ethercom, m)))
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_arpcom, m)))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
 			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
 
@@ -2065,14 +2066,15 @@ txp_capabilities(sc)
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPCKSUM) {
 		sc->sc_tx_capability |= OFFLOAD_IPCKSUM;
 		sc->sc_rx_capability |= OFFLOAD_IPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx;
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
 		sc->sc_rx_capability |= OFFLOAD_TCPCKSUM;
 #ifdef TRY_TX_TCP_CSUM
 		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
 #endif
 	}
 
@@ -2080,7 +2082,8 @@ txp_capabilities(sc)
 		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
 #ifdef TRY_TX_UDP_CSUM
 		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 	}
 

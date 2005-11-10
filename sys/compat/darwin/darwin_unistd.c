@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.3.2.2 2005/03/04 16:39:23 skrll Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.3.2.3 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.3.2.2 2005/03/04 16:39:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.3.2.3 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.3.2.2 2005/03/04 16:39:23 skrll 
 #include <sys/sa.h>
 #include <sys/endian.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>

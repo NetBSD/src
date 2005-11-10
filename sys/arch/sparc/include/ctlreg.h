@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.24.2.3 2004/09/21 13:22:15 skrll Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.24.2.4 2005/11/10 13:58:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -438,3 +438,57 @@
 #define HYPERSPARC_ICCR_ICE	1	/* Instruction cache enable */
 #define HYPERSPARC_ICCR_FTD	2	/* Unimpl. flush trap disable */
 #define HYPERSPARC_ASRNUM_ICCR	31	/* ICCR == ASR#31 */
+
+
+/*
+ * microSPARC-IIep has control space registers in PA[30:28] = 0x1
+ */
+
+/* Asynchronous memory Fault Status/Address Registers */
+#define MSIIEP_AFSR	0x10001000
+#define MSIIEP_AFAR	0x10001004
+
+#define MSIIEP_AFSR_ERR		0x80000000 /* summary bit: LE || TO || BE */
+#define MSIIEP_AFSR_LE		0x40000000 /* late error */
+#define MSIIEP_AFSR_TO		0x20000000 /* time out */
+#define MSIIEP_AFSR_BE		0x10000000 /* bus error */
+#define MSIIEP_AFSR_S		0x01000000 /* supervisor */
+#define MSIIEP_AFSR_ME		0x00080000 /* multiple error */
+#define MSIIEP_AFSR_RD		0x00040000 /* read operation */
+#define MSIIEP_AFSR_FAV		0x00020000 /* fault address valid */
+
+#define MSIIEP_AFSR_BITS	"\177\20"			\
+		"b\37ERR\0" "b\36LE\0" "b\35TO\0" "b\34BE\0"	\
+		"b\30S\0" "b\23ME\0" "b\22RD\0" "b\21FAV\0"
+
+
+/* Memory Fault Status/Address Registers (parity faults) */
+#define MSIIEP_MFSR	0x10001050
+#define MSIIEP_MFAR	0x10001054
+
+#define MSIIEP_MFSR_ERR		0x80000000 /* summary bit */
+#define MSIIEP_MFSR_S		0x01000000 /* supervisor */
+#define MSIIEP_MFSR_CP		0x00800000 /* CPU transaction */
+#define MSIIEP_MFSR_ME		0x00080000 /* multiple error */
+#define MSIIEP_MFSR_ATO		0x00008000 /* PCI local bus timeout */
+#define MSIIEP_MFSR_PERR_1	0x00004000 /* parity error [1] */
+#define MSIIEP_MFSR_PERR_0	0x00002000 /* parity error [0] */
+#define MSIIEP_MFSR_BM		0x00001000 /* boot mode */
+#define MSIIEP_MFSR_C		0x00000800 /* cacheable */
+#define MSIIEP_MFSR_REQ		0x000000f0 /* request type */
+
+#define MSIIEP_MFSR_REQ_NOP		0x00
+#define MSIIEP_MFSR_REQ_RD64		0x10
+#define MSIIEP_MFSR_REQ_RD128		0x20
+#define MSIIEP_MFSR_REQ_RD256		0x40
+#define MSIIEP_MFSR_REQ_WR8		0x90
+#define MSIIEP_MFSR_REQ_WR16		0xa0
+#define MSIIEP_MFSR_REQ_WR32		0xb0
+#define MSIIEP_MFSR_REQ_WR64		0xc0
+
+#define MSIIEP_MFSR_BITS	"\177\20"				   \
+		"b\37ERR\0" "b\30S\0" "b\27CP\0" "b\23ME\0" "b\17ATO\0"	   \
+		"b\16PERR1\0" "b\15PERR0\0" "b\14BM\0" "b\13C\0"	   \
+		"f\4\4REQ\0" ":\0(NOP)\0" ":\1(RD64)\0" ":\2(RD128)\0"	   \
+		":\4(RD256)\0" ":\11(WR8)\0" ":\12(WR16)\0" ":\13(WR32)\0" \
+		":\14(WR64)\0"

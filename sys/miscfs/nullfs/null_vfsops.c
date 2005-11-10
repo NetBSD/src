@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.42.2.8 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.42.2.9 2005/11/10 14:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.8 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.9 2005/11/10 14:10:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.8 2005/04/01 14:31:34 skrll E
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	nullfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct lwp *));
-int	nullfs_unmount __P((struct mount *, int, struct lwp *));
+int	nullfs_mount(struct mount *, const char *, void *,
+	    struct nameidata *, struct lwp *);
+int	nullfs_unmount(struct mount *, int, struct lwp *);
 
 /*
  * Mount null layer
@@ -119,7 +119,6 @@ nullfs_mount(mp, path, data, ndp, l)
 		if (lmp == NULL)
 			return EIO;
 		args.la.target = NULL;
-		vfs_showexport(mp, &args.la.export, &lmp->layerm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	/*
@@ -130,16 +129,10 @@ nullfs_mount(mp, path, data, ndp, l)
 		return (error);
 
 	/*
-	 * Update only does export updating.
+	 * Update is not supported
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		lmp = MOUNTTOLAYERMOUNT(mp);
-		if (args.nulla_target == NULL)
-			return (vfs_export(mp, &lmp->layerm_export,
-			    &args.la.export));
-		else
-			return (EOPNOTSUPP);
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return EOPNOTSUPP;
 
 	/*
 	 * Find lower node
@@ -317,9 +310,7 @@ struct vfsops nullfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	layerfs_checkexp,
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	nullfs_vnodeopv_descs,

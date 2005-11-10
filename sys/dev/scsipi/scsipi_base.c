@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.88.2.10 2005/03/04 16:50:33 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.88.2.11 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88.2.10 2005/03/04 16:50:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88.2.11 2005/11/10 14:07:47 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -766,7 +766,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	int error;
 #ifndef	SCSIVERBOSE
 	u_int32_t info;
-	static char *error_mes[] = {
+	static const char *error_mes[] = {
 		"soft error (corrected)",
 		"not ready", "medium error",
 		"non-media hardware failure", "illegal request",
@@ -989,7 +989,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	default:
 #if    defined(SCSIDEBUG) || defined(DEBUG)
 	{
-		static char *uc = "undecodable sense error";
+		static const char *uc = "undecodable sense error";
 		int i;
 		u_int8_t *cptr = (u_int8_t *) sense;
 		scsipi_printaddr(periph);
@@ -2116,6 +2116,9 @@ scsipi_completion_thread(void *arg)
 			    ADAPTER_REQ_GROW_RESOURCES, NULL);
 			scsipi_channel_thaw(chan, 1);
 			splx(s);
+			if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
+				preempt(1);
+			}
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_KICK) {

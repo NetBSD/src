@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.50.2.6 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.50.2.7 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.50.2.6 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.50.2.7 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -269,8 +269,7 @@ fddi_output(ifp, m0, dst, rt0)
 	case AF_INET: {
 #define SIN(x) ((struct sockaddr_in *)(x))
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)fddibroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	memcpy(edst, fddibroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
 			    (caddr_t)edst)
@@ -296,11 +295,9 @@ fddi_output(ifp, m0, dst, rt0)
 	case AF_ARP: {
 		struct arphdr *ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else
-			bcopy((caddr_t)ar_tha(ah),
-				(caddr_t)edst, sizeof(edst));
+			memcpy(edst, ar_tha(ah), sizeof(edst));
 
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
@@ -322,8 +319,8 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef IPX
 	case AF_IPX:
 		etype = htons(ETHERTYPE_IPX);
- 		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
+ 		memcpy(edst, &(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
+		    sizeof (edst));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -359,10 +356,10 @@ fddi_output(ifp, m0, dst, rt0)
 				senderr(ENOBUFS);
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
-			bcopy(at_org_code, llc.llc_snap_org_code,
+			memcpy(llc.llc_snap_org_code, at_org_code,
 			    sizeof(at_org_code));
 			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
-			bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
+			memcpy(mtod(m, caddr_t), &llc, sizeof(struct llc));
 			etype = 0;
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
@@ -373,9 +370,9 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef NS
 	case AF_NS:
 		etype = htons(ETHERTYPE_NS);
- 		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
+ 		memcpy(edst, &(((struct sockaddr_ns *)dst)->sns_addr.x_host),
+		    sizeof (edst));
+		if (!memcmp(edst, &ns_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -390,7 +387,7 @@ fddi_output(ifp, m0, dst, rt0)
 
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
+			memcpy(edst, LLADDR(sdl), sizeof(edst));
 		} else if ((error =
 			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
 					    (char *)edst, &snpalen)) != 0)
@@ -403,10 +400,9 @@ fddi_output(ifp, m0, dst, rt0)
 			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
 			if (mcopy) {
 				fh = mtod(mcopy, struct fddi_header *);
-				bcopy((caddr_t)edst,
-				      (caddr_t)fh->fddi_dhost, sizeof (edst));
-				bcopy((caddr_t)FDDIADDR(ifp),
-				      (caddr_t)fh->fddi_shost, sizeof (edst));
+				memcpy(fh->fddi_dhost, edst, sizeof (edst));
+				memcpy(fh->fddi_shost, FDDIADDR(ifp),
+				    sizeof (edst));
 			}
 		}
 		M_PREPEND(m, 3, M_DONTWAIT);
@@ -426,7 +422,7 @@ fddi_output(ifp, m0, dst, rt0)
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst, sizeof(edst));
+			memcpy(edst, LLADDR(sdl), sizeof(edst));
 		} else goto bad; /* Not a link interface ? Funny ... */
 
 		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
@@ -434,10 +430,9 @@ fddi_output(ifp, m0, dst, rt0)
 			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
 			if (mcopy) {
 				fh = mtod(mcopy, struct fddi_header *);
-				bcopy((caddr_t)edst,
-				      (caddr_t)fh->fddi_dhost, sizeof (edst));
-				bcopy((caddr_t)FDDIADDR(ifp),
-				      (caddr_t)fh->fddi_shost, sizeof (edst));
+				memcpy(fh->fddi_dhost, edst, sizeof (edst));
+				memcpy(fh->fddi_shost, FDDIADDR(ifp),
+				   sizeof (edst));
 				fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
 			}
 		}
@@ -461,16 +456,16 @@ fddi_output(ifp, m0, dst, rt0)
 
 	case pseudo_AF_HDRCMPLT:
 	{
-		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
+		struct fddi_header *fh1 = (struct fddi_header *)dst->sa_data;
 		hdrcmplt = 1;
-		bcopy((caddr_t)fh->fddi_shost, (caddr_t)esrc, sizeof (esrc));
+		memcpy(esrc, fh1->fddi_shost, sizeof (esrc));
 		/*FALLTHROUGH*/
 	}
 
 	case AF_LINK:
 	{
-		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
- 		bcopy((caddr_t)fh->fddi_dhost, (caddr_t)edst, sizeof (edst));
+		struct fddi_header *fh1 = (struct fddi_header *)dst->sa_data;
+ 		memcpy(edst, fh1->fddi_dhost, sizeof (edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
 		etype = 0;
@@ -481,7 +476,7 @@ fddi_output(ifp, m0, dst, rt0)
 	{
 		struct ether_header *eh;
 		eh = (struct ether_header *)dst->sa_data;
- 		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
+ 		memcpy(edst, eh->ether_dhost, sizeof (edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
 		etype = eh->ether_type;
@@ -541,8 +536,7 @@ fddi_output(ifp, m0, dst, rt0)
 		l->llc_control = LLC_UI;
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] = l->llc_snap.org_code[2] = 0;
-		bcopy((caddr_t) &etype, (caddr_t) &l->llc_snap.ether_type,
-			sizeof(u_int16_t));
+		memcpy(&l->llc_snap.ether_type, &etype, sizeof(u_int16_t));
 	}
 	/*
 	 * Add local net header.  If no space in first mbuf,
@@ -553,16 +547,14 @@ fddi_output(ifp, m0, dst, rt0)
 		senderr(ENOBUFS);
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
- 	bcopy((caddr_t)edst, (caddr_t)fh->fddi_dhost, sizeof (edst));
+ 	memcpy(fh->fddi_dhost, edst, sizeof (edst));
 #if NBPFILTER > 0
   queue_it:
 #endif
 	if (hdrcmplt)
-		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
+		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else
-		bcopy((caddr_t)FDDIADDR(ifp), (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
+		memcpy(fh->fddi_shost, FDDIADDR(ifp), sizeof(fh->fddi_shost));
 
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
@@ -599,14 +591,14 @@ fddi_input(ifp, m)
 
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (fh->fddi_dhost[0] & 1) {
-		if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,
+		if (memcmp(fddibroadcastaddr, fh->fddi_dhost,
 		    sizeof(fddibroadcastaddr)) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	} else if ((ifp->if_flags & IFF_PROMISC)
-	    && bcmp(FDDIADDR(ifp), (caddr_t)fh->fddi_dhost,
+	    && memcmp(FDDIADDR(ifp), (caddr_t)fh->fddi_dhost,
 		    sizeof(fh->fddi_dhost)) != 0) {
 		m_freem(m);
 		return;
@@ -760,8 +752,7 @@ fddi_input(ifp, m)
 			l->llc_ssap = c;
 			eh = (struct ether_header *)sa.sa_data;
 			if (m->m_flags & (M_BCAST | M_MCAST))
-				bcopy((caddr_t)FDDIADDR(ifp),
-				      (caddr_t)eh->ether_dhost, 6);
+				memcpy(eh->ether_dhost, FDDIADDR(ifp), 6);
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
 			for (i = 0; i < 6; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.1.2.3 2004/09/21 13:22:41 skrll Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.1.2.4 2005/11/10 13:59:18 skrll Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.1.2.3 2004/09/21 13:22:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.1.2.4 2005/11/10 13:59:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,9 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.1.2.3 2004/09/21 13:22:41 skrll Ex
 #include <machine/openfirm.h>
 
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
-#include <dev/rasops/rasops.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 
 #include <sparc64/dev/ffbreg.h>
 #include <sparc64/dev/ffbvar.h>
@@ -63,10 +62,7 @@ CFATTACH_DECL(ffb_mainbus, sizeof(struct ffb_softc),
 	      ffb_mainbus_match, ffb_mainbus_attach, NULL, NULL);
 
 int
-ffb_mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ffb_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -77,9 +73,7 @@ ffb_mainbus_match(parent, match, aux)
 }
 
 void
-ffb_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ffb_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ffb_softc *sc = (struct ffb_softc *)self;
 	struct mainbus_attach_args *ma = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.7.16.3 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.7.16.4 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -31,22 +31,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.7.16.3 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.7.16.4 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/types.h>
-#include <sys/systm.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
-#if !defined(_KERNEL)
+#if defined(_KERNEL)
+#include <sys/systm.h>
+#else
 #include <string.h>
 #endif
 
 /* These functions are only needed if native byte order is not big endian */
 #if BYTE_ORDER == BIG_ENDIAN
 void
-e2fs_sb_bswap(old, new)
-	struct ext2fs *old, *new;
+e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 {
 	/* preserve unused fields */
 	memcpy(new, old, sizeof(struct ext2fs));
@@ -84,9 +84,7 @@ e2fs_sb_bswap(old, new)
 	new->e2fs_algo		=	bswap32(old->e2fs_algo);
 }
 
-void e2fs_cg_bswap(old, new, size)
-	struct  ext2_gd *old, *new;
-	int size;
+void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 {
 	int i;
 	for (i=0; i < (size / sizeof(struct  ext2_gd)); i++) {
@@ -99,8 +97,7 @@ void e2fs_cg_bswap(old, new, size)
 	}
 }
 
-void e2fs_i_bswap(old, new)
-	struct ext2fs_dinode *old, *new;
+void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 {
 	new->e2di_mode		=	bswap16(old->e2di_mode);
 	new->e2di_uid		=	bswap16(old->e2di_uid);

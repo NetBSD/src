@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.13.2.3 2004/09/21 13:22:01 skrll Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.13.2.4 2005/11/10 13:58:55 skrll Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.13.2.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.13.2.4 2005/11/10 13:58:55 skrll Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -335,7 +335,6 @@ ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 		ea->ea_reg[n].hi = PCI_MAPREG_START
 		    + ea->ea_reg[n].hi * sizeof(pcireg_t);
 	    }
-
 
 	err = prom_getprop(node, "address", sizeof(u_int32_t),
 			   &ea->ea_nvaddr, &ea->ea_vaddr);

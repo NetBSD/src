@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.20.2.5 2005/03/04 16:41:34 skrll Exp $	*/
+/*	$NetBSD: tropic.c,v 1.20.2.6 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.20.2.5 2005/03/04 16:41:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.20.2.6 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -243,28 +243,28 @@ tr_attach(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
-		int	nbuf = 0;
+		int	numbuf = 0;
 
 		switch (sc->sc_memsize) {
 		case 65536:
-			nbuf = 58;
+			numbuf = 58;
 			sc->sc_maxmtu = IPMTU_4MBIT_MAX;
 			break;
 		case 32768:
-			nbuf = 29;
+			numbuf = 29;
 			sc->sc_maxmtu = IPMTU_4MBIT_MAX;
 			break;
 		case 16384:
-			nbuf = 13;
+			numbuf = 13;
 			sc->sc_maxmtu = IPMTU_4MBIT_MAX;
 			break;
 		case 8192:
-			nbuf = 5;
+			numbuf = 5;
 			sc->sc_maxmtu = ISO88025_MTU;
 		}
 
 		sc->sc_minbuf = ((sc->sc_maxmtu + 511) / 512) + 1;
-		sc->sc_nbuf = nbuf;
+		sc->sc_nbuf = numbuf;
 
 /*
  *  Create circular queues caching the buffer pointers ?

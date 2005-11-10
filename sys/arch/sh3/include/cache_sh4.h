@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.5 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.5.12.1 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * SH4: SH7750 SH7750S
+ * SH4: SH7750 SH7750S SH7750R SH7751 SH7751R
  */
 
 #ifndef _SH3_CACHE_SH4_H_
@@ -47,9 +47,12 @@
 
 #define	SH4_ICACHE_SIZE		8192
 #define	SH4_DCACHE_SIZE		16384
+#define	SH4_EMODE_ICACHE_SIZE	16384
+#define	SH4_EMODE_DCACHE_SIZE	32768
 #define	SH4_CACHE_LINESZ	32
 
 #define	SH4_CCR			0xff00001c
+#define   SH4_CCR_EMODE		  0x80000000
 #define	  SH4_CCR_IIX		  0x00008000
 #define	  SH4_CCR_ICI		  0x00000800
 #define	  SH4_CCR_ICE		  0x00000100
@@ -71,6 +74,7 @@
 #define	  CCIA_A		  0x00000008	/* associate bit */
 #define	  CCIA_ENTRY_SHIFT	  5		/* line size 32B */
 #define	  CCIA_ENTRY_MASK	  0x00001fe0	/* [12:5] 256-entries */
+#define	  CCIA_EMODE_ENTRY_MASK	  0x00003fe0	/* [13:5] 512-entries */
 /* data specification */
 #define	  CCIA_V		  0x00000001
 #define	  CCIA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
@@ -79,7 +83,7 @@
 /* address specification */
 #define	  CCID_L_SHIFT		  2
 #define	  CCID_L_MASK		  0x1c		/* line-size is 32B */
-#define	  CCID_ENTRY_MASK	  0x00001fe0	/* [12:5] 128-entries */
+#define	  CCID_ENTRY_MASK	  0x00001fe0	/* [12:5] 256-entries */
 
 /* D-cache address/data array  */
 #define	SH4_CCDA		0xf4000000
@@ -107,17 +111,41 @@ do {									\
 	/* D-cache */							\
 	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
-		(*(__volatile__ u_int32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
+		(*(__volatile__ uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
 	}								\
 	/* I-cache */							\
 	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
 		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
-		(*(__volatile__ u_int32_t *)__a) &= ~(CCIA_V);		\
+		(*(__volatile__ uint32_t *)__a) &= ~(CCIA_V);		\
+	}								\
+} while(/*CONSTCOND*/0)
+
+#define	SH4_EMODE_CACHE_FLUSH()						\
+do {									\
+	uint32_t __e, __a;						\
+									\
+	/* D-cache */							\
+	for (__e = 0;__e < (SH4_EMODE_DCACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
+		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
+		(*(__volatile__ uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
+	}								\
+	/* I-cache */							\
+	for (__e = 0;__e < (SH4_EMODE_ICACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
+		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
+		(*(__volatile__ uint32_t *)__a) &= ~(CCIA_V);		\
 	}								\
 } while(/*CONSTCOND*/0)
 
 #define	SH7750_CACHE_FLUSH()		SH4_CACHE_FLUSH()
 #define	SH7750S_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7751_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#if defined(SH4_CACHE_DISABLE_EMODE)
+#define	SH7750R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7751R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#else
+#define	SH7750R_CACHE_FLUSH()		SH4_EMODE_CACHE_FLUSH()
+#define	SH7751R_CACHE_FLUSH()		SH4_EMODE_CACHE_FLUSH()
+#endif
 
 #ifndef _LOCORE
 extern void sh4_cache_config(void);

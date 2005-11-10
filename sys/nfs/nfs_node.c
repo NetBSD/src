@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.68.2.7 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.68.2.8 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.7 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.8 2005/11/10 14:11:55 skrll Exp $");
 
 #include "opt_nfs.h"
 
@@ -79,10 +79,10 @@ void nfs_gop_size(struct vnode *, off_t, off_t *, int);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
-struct genfs_ops nfs_genfsops = {
-	nfs_gop_size,
-	nfs_gop_alloc,
-	nfs_gop_write,
+static const struct genfs_ops nfs_genfsops = {
+	.gop_size = nfs_gop_size,
+	.gop_alloc = nfs_gop_alloc,
+	.gop_write = nfs_gop_write,
 };
 
 /*
@@ -147,13 +147,12 @@ nfs_nhdone()
  * nfsnode structure is returned.
  */
 int
-nfs_nget1(mntp, fhp, fhsize, npp, lkflags, l)
+nfs_nget1(mntp, fhp, fhsize, npp, lkflags)
 	struct mount *mntp;
 	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
 	int lkflags;
-	struct lwp *l;
 {
 	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.1.2.5 2005/03/04 16:41:33 skrll Exp $ */
+/* $NetBSD: rtwphy.c,v 1.1.2.6 2005/11/10 14:04:15 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1.2.5 2005/03/04 16:41:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1.2.6 2005/11/10 14:04:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1.2.5 2005/03/04 16:41:33 skrll Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_radiotap.h>
+#include <net80211/ieee80211_var.h>
 
 #include <dev/ic/rtwreg.h>
 #include <dev/ic/max2820reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.33.2.4 2005/03/04 16:53:00 skrll Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.33.2.5 2005/11/10 14:10:33 skrll Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.33.2.4 2005/03/04 16:53:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.33.2.5 2005/11/10 14:10:33 skrll Exp $");
 
 #include "ppp.h"
 
@@ -373,7 +373,7 @@ pppwrite(tp, uio, flag)
     int flag;
 {
     struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
-    struct mbuf *m, *m0, **mp;
+    struct mbuf *m, *m0;
     struct sockaddr dst;
     int len, error;
 
@@ -386,15 +386,19 @@ pppwrite(tp, uio, flag)
     if (uio->uio_resid > sc->sc_if.if_mtu + PPP_HDRLEN ||
 	uio->uio_resid < PPP_HDRLEN)
 	return (EMSGSIZE);
-    for (mp = &m0; uio->uio_resid; mp = &m->m_next) {
-	m = m_get(M_WAIT, MT_DATA);
-	if ((*mp = m) == NULL) {
-	    m_freem(m0);
-	    return (ENOBUFS);
-	}
-	m->m_len = 0;
-	if (uio->uio_resid >= MCLBYTES / 2)
-	    MCLGET(m, M_DONTWAIT);
+
+    MGETHDR(m0, M_WAIT, MT_DATA);
+    if (m0 == NULL)
+	return ENOBUFS;
+
+    m0->m_len = 0;
+    m0->m_pkthdr.len = uio->uio_resid;
+    m0->m_pkthdr.rcvif = NULL;
+
+    if (uio->uio_resid >= MCLBYTES / 2)
+	MCLGET(m0, M_DONTWAIT);
+
+    for (m = m0; uio->uio_resid;) {
 	len = M_TRAILINGSPACE(m);
 	if (len > uio->uio_resid)
 	    len = uio->uio_resid;
@@ -403,11 +407,21 @@ pppwrite(tp, uio, flag)
 	    return (error);
 	}
 	m->m_len = len;
+
+	if (uio->uio_resid == 0)
+	    break;
+
+	MGET(m->m_next, M_WAIT, MT_DATA);
+	if (m->m_next == NULL) {
+	    m_freem(m0);
+	    return ENOBUFS;
+	}
+	m = m->m_next;
+	m->m_len = 0;
     }
     dst.sa_family = AF_UNSPEC;
     bcopy(mtod(m0, u_char *), dst.sa_data, PPP_HDRLEN);
-    m0->m_data += PPP_HDRLEN;
-    m0->m_len -= PPP_HDRLEN;
+    m_adj(m0, PPP_HDRLEN);
     return ((*sc->sc_if.if_output)(&sc->sc_if, m0, &dst, (struct rtentry *)0));
 }
 
@@ -1255,22 +1269,21 @@ pppdumpb(b, l)
     u_char *b;
     int l;
 {
-    char buf[3*MAX_DUMP_BYTES+4];
-    char *bp = buf;
-    static char digits[] = "0123456789abcdef";
+    char bf[3*MAX_DUMP_BYTES+4];
+    char *bp = bf;
 
     while (l--) {
-	if (bp >= buf + sizeof(buf) - 3) {
+	if (bp >= bf + sizeof(bf) - 3) {
 	    *bp++ = '>';
 	    break;
 	}
-	*bp++ = digits[*b >> 4]; /* convert byte to ascii hex */
-	*bp++ = digits[*b++ & 0xf];
+	*bp++ = hexdigits[*b >> 4]; /* convert byte to ascii hex */
+	*bp++ = hexdigits[*b++ & 0xf];
 	*bp++ = ' ';
     }
 
     *bp = 0;
-    printf("%s\n", buf);
+    printf("%s\n", bf);
 }
 
 static void

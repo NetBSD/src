@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1.2.5 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.2.6 2005/11/10 14:01:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.2.5 2004/09/21 13:25:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.2.6 2005/11/10 14:01:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.2.5 2004/09/21 13:25:53 s
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>

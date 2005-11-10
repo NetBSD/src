@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14.2.5 2005/03/04 16:39:51 skrll Exp $
+	$NetBSD: syscalls.master,v 1.14.2.6 2005/11/10 14:00:59 skrll Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -380,18 +380,27 @@
 223	UNIMPL		/* unused */
 224	UNIMPL		gettid
 225	UNIMPL		readahead
-226	UNIMPL		setxattr
-227	UNIMPL		lsetxattr
-228	UNIMPL		fsetxattr
-229	UNIMPL		getxattr
-230	UNIMPL		lgetxattr
-231	UNIMPL		fgetxattr
-232	UNIMPL		listxattr
-233	UNIMPL		llistxattr
-234	UNIMPL		flistxattr
-235	UNIMPL		removexattr
-236	UNIMPL		lremovexattr
-237	UNIMPL		fremovexattr
+226	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+227	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+228	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+229	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+230	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+231	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+232	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+233	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+234	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+235	STD		{ int linux_sys_removexattr(char *path, char *name); }
+236	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+237	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 238	UNIMPL		tkill
 239	UNIMPL		sendfile64
 240	UNIMPL		futex
@@ -416,10 +425,15 @@
 259	UNIMPL		timer_gettime
 260	UNIMPL		timer_getoverrun
 261	UNIMPL		timer_delete
-262	UNIMPL		clock_settime
-263	UNIMPL		clock_gettime
-264	UNIMPL		clock_getres
-265	UNIMPL		clock_nanosleep
+262	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+263	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+264	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+265	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 266	STD		{ int linux_sys_statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 267	STD		{ int linux_sys_fstatfs64(int fd, \

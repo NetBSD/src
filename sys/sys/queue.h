@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.33.6.4 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: queue.h,v 1.33.6.5 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,7 +57,7 @@
  *
  * A simple queue is headed by a pair of pointers, one the head of the
  * list and the other to the tail of the list. The elements are singly
- * linked to save space, so only elements can only be removed from the
+ * linked to save space, so elements can only be removed from the
  * head of the list. New elements can be added to the list after
  * an existing element, at the head of the list, or at the end of the
  * list. A simple queue may only be traversed in the forward direction.
@@ -384,20 +384,22 @@ struct {								\
 /*
  * Tail queue definitions.
  */
-#define	TAILQ_HEAD(name, type)						\
+#define	_TAILQ_HEAD(name, type, qual)					\
 struct name {								\
-	struct type *tqh_first;	/* first element */			\
-	struct type **tqh_last;	/* addr of last next element */		\
+	qual type *tqh_first;		/* first element */		\
+	qual type *qual *tqh_last;	/* addr of last next element */	\
 }
+#define TAILQ_HEAD(name, type)	_TAILQ_HEAD(name, struct type,)
 
 #define	TAILQ_HEAD_INITIALIZER(head)					\
 	{ NULL, &(head).tqh_first }
 
-#define	TAILQ_ENTRY(type)						\
+#define	_TAILQ_ENTRY(type, qual)					\
 struct {								\
-	struct type *tqe_next;	/* next element */			\
-	struct type **tqe_prev;	/* address of previous next element */	\
+	qual type *tqe_next;		/* next element */		\
+	qual type *qual *tqe_prev;	/* address of previous next element */\
 }
+#define TAILQ_ENTRY(type)	_TAILQ_ENTRY(struct type,)
 
 /*
  * Tail queue functions.
@@ -514,6 +516,44 @@ struct {								\
 /*
  * Circular queue definitions.
  */
+#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#define QUEUEDEBUG_CIRCLEQ_HEAD(head, field)				\
+	if ((head)->cqh_first != (void *)(head) &&			\
+	    (head)->cqh_first->field.cqe_prev != (void *)(head))	\
+		panic("CIRCLEQ head forw %p %s:%d", (head),		\
+		      __FILE__, __LINE__);				\
+	if ((head)->cqh_last != (void *)(head) &&			\
+	    (head)->cqh_last->field.cqe_next != (void *)(head))		\
+		panic("CIRCLEQ head back %p %s:%d", (head),		\
+		      __FILE__, __LINE__);
+#define QUEUEDEBUG_CIRCLEQ_ELM(head, elm, field)			\
+	if ((elm)->field.cqe_next == (void *)(head)) {			\
+		if ((head)->cqh_last != (elm))				\
+			panic("CIRCLEQ elm last %p %s:%d", (elm),	\
+			      __FILE__, __LINE__);			\
+	} else {							\
+		if ((elm)->field.cqe_next->field.cqe_prev != (elm))	\
+			panic("CIRCLEQ elm forw %p %s:%d", (elm),	\
+			      __FILE__, __LINE__);			\
+	}								\
+	if ((elm)->field.cqe_prev == (void *)(head)) {			\
+		if ((head)->cqh_first != (elm))				\
+			panic("CIRCLEQ elm first %p %s:%d", (elm),	\
+			      __FILE__, __LINE__);			\
+	} else {							\
+		if ((elm)->field.cqe_prev->field.cqe_next != (elm))	\
+			panic("CIRCLEQ elm prev %p %s:%d", (elm),	\
+			      __FILE__, __LINE__);			\
+	}
+#define QUEUEDEBUG_CIRCLEQ_POSTREMOVE(elm, field)			\
+	(elm)->field.cqe_next = (void *)1L;				\
+	(elm)->field.cqe_prev = (void *)1L;
+#else
+#define QUEUEDEBUG_CIRCLEQ_HEAD(head, field)
+#define QUEUEDEBUG_CIRCLEQ_ELM(head, elm, field)
+#define QUEUEDEBUG_CIRCLEQ_POSTREMOVE(elm, field)
+#endif
+
 #define	CIRCLEQ_HEAD(name, type)					\
 struct name {								\
 	struct type *cqh_first;		/* first element */		\
@@ -538,6 +578,8 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_INSERT_AFTER(head, listelm, elm, field) do {		\
+	QUEUEDEBUG_CIRCLEQ_HEAD((head), field)				\
+	QUEUEDEBUG_CIRCLEQ_ELM((head), (listelm), field)		\
 	(elm)->field.cqe_next = (listelm)->field.cqe_next;		\
 	(elm)->field.cqe_prev = (listelm);				\
 	if ((listelm)->field.cqe_next == (void *)(head))		\
@@ -548,6 +590,8 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_INSERT_BEFORE(head, listelm, elm, field) do {		\
+	QUEUEDEBUG_CIRCLEQ_HEAD((head), field)				\
+	QUEUEDEBUG_CIRCLEQ_ELM((head), (listelm), field)		\
 	(elm)->field.cqe_next = (listelm);				\
 	(elm)->field.cqe_prev = (listelm)->field.cqe_prev;		\
 	if ((listelm)->field.cqe_prev == (void *)(head))		\
@@ -558,6 +602,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_INSERT_HEAD(head, elm, field) do {			\
+	QUEUEDEBUG_CIRCLEQ_HEAD((head), field)				\
 	(elm)->field.cqe_next = (head)->cqh_first;			\
 	(elm)->field.cqe_prev = (void *)(head);				\
 	if ((head)->cqh_last == (void *)(head))				\
@@ -568,6 +613,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_INSERT_TAIL(head, elm, field) do {			\
+	QUEUEDEBUG_CIRCLEQ_HEAD((head), field)				\
 	(elm)->field.cqe_next = (void *)(head);				\
 	(elm)->field.cqe_prev = (head)->cqh_last;			\
 	if ((head)->cqh_first == (void *)(head))			\
@@ -578,6 +624,8 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_REMOVE(head, elm, field) do {				\
+	QUEUEDEBUG_CIRCLEQ_HEAD((head), field)				\
+	QUEUEDEBUG_CIRCLEQ_ELM((head), (elm), field)			\
 	if ((elm)->field.cqe_next == (void *)(head))			\
 		(head)->cqh_last = (elm)->field.cqe_prev;		\
 	else								\
@@ -588,6 +636,7 @@ struct {								\
 	else								\
 		(elm)->field.cqe_prev->field.cqe_next =			\
 		    (elm)->field.cqe_next;				\
+	QUEUEDEBUG_CIRCLEQ_POSTREMOVE((elm), field)			\
 } while (/*CONSTCOND*/0)
 
 #define	CIRCLEQ_FOREACH(var, head, field)				\

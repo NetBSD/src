@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.c,v 1.6.2.4 2005/03/04 16:52:42 skrll Exp $ */
+/* $NetBSD: inftrees.c,v 1.6.2.5 2005/11/10 14:10:25 skrll Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
@@ -144,7 +144,7 @@ uIntf *v;               /* working area: values in order of bit length */
   {
     *t = (inflate_huft *)Z_NULL;
     *m = 0;
-    return Z_OK;
+    return Z_NEED_DICT;
   }
 
 

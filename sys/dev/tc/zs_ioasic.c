@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.21.2.5 2005/03/04 16:50:54 skrll Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.21.2.6 2005/11/10 14:08:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.21.2.5 2005/03/04 16:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.21.2.6 2005/11/10 14:08:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,7 +195,7 @@ int	zs_ioasic_match(struct device *, struct cfdata *, void *);
 void	zs_ioasic_attach(struct device *, struct device *, void *);
 int	zs_ioasic_print(void *, const char *name);
 int	zs_ioasic_submatch(struct device *, struct cfdata *,
-				const locdesc_t *, void *);
+				const int *, void *);
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
@@ -249,8 +249,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct zshan *zc;
 	int s, channel;
 	u_long zflg;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[ZSCCF_NLOCS];
 
 	printf("\n");
 
@@ -268,7 +267,7 @@ zs_ioasic_attach(parent, self, aux)
 			cs = malloc(sizeof(struct zs_chanstate),
 					M_DEVBUF, M_NOWAIT|M_ZERO);
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
-			cs->cs_reg_csr = (void *)&zc->zc_csr;
+			cs->cs_reg_csr = (volatile void *)&zc->zc_csr;
 
 			bcopy(zs_ioasic_init_reg, cs->cs_creg, 16);
 			bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
@@ -319,14 +318,13 @@ zs_ioasic_attach(parent, self, aux)
 		else
 			cs->cs_ctl_chan = NULL;
 
-		ldesc->len = 1;
-		ldesc->locs[ZSCCF_CHANNEL] = channel;
+		locs[ZSCCF_CHANNEL] = channel;
 
 		/*
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (config_found_sm_loc(self, "zsc", ldesc, (void *)&zs_args,
+		if (config_found_sm_loc(self, "zsc", locs, (void *)&zs_args,
 				zs_ioasic_print, zs_ioasic_submatch) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
@@ -386,18 +384,18 @@ zs_ioasic_print(aux, name)
 }
 
 int
-zs_ioasic_submatch(parent, cf, ldesc, aux)
+zs_ioasic_submatch(parent, cf, locs, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *locs;
 	void *aux;
 {
 	struct zsc_softc *zs = (void *)parent;
 	struct zsc_attach_args *pa = aux;
-	char *defname = "";
+	const char *defname = "";
 
 	if (cf->cf_loc[ZSCCF_CHANNEL] != ZSCCF_CHANNEL_DEFAULT &&
-	    cf->cf_loc[ZSCCF_CHANNEL] != ldesc->locs[ZSCCF_CHANNEL])
+	    cf->cf_loc[ZSCCF_CHANNEL] != locs[ZSCCF_CHANNEL])
 		return (0);
 
 	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT) {
@@ -574,7 +572,7 @@ zs_read_reg(cs, reg)
 	struct zs_chanstate *cs;
 	u_int reg;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
 
 	zc->zc_csr = reg << 8;
@@ -591,7 +589,7 @@ zs_write_reg(cs, reg, val)
 	struct zs_chanstate *cs;
 	u_int reg, val;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
 	zc->zc_csr = reg << 8;
 	tc_wmb();
@@ -605,7 +603,7 @@ u_int
 zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
 
 	val = (zc->zc_csr >> 8) & 0xff;
@@ -619,7 +617,7 @@ zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_int val;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
 	zc->zc_csr = val << 8;
 	tc_wmb();
@@ -630,7 +628,7 @@ u_int
 zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
 
 	val = (zc->zc_data) >> 8 & 0xff;
@@ -644,7 +642,7 @@ zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_int val;
 {
-	struct zshan *zc = (void *)cs->cs_reg_csr;
+	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
 	zc->zc_data = val << 8;
 	tc_wmb();
@@ -772,7 +770,7 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	zc = zs_ioasic_get_chan_addr(zs_addr, channel);
 
 	/* Setup temporary chanstate. */
-	cs->cs_reg_csr = (void *)&zc->zc_csr;
+	cs->cs_reg_csr = (volatile void *)&zc->zc_csr;
 
 	cs->cs_channel = channel;
 	cs->cs_ops = &zsops_null;

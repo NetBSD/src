@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.42.2.10 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.42.2.11 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.10 2005/03/04 16:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.11 2005/11/10 14:06:01 skrll Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -745,7 +745,7 @@ bge_alloc_jumbo_mem(sc)
 
 	state = 4;
 	sc->bge_cdata.bge_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("bge_jumbo_buf = 0x%p\n", sc->bge_cdata.bge_jumbo_buf));
+	DPRINTFN(1,("bge_jumbo_buf = %p\n", sc->bge_cdata.bge_jumbo_buf));
 
 	SLIST_INIT(&sc->bge_jfree_listhead);
 	SLIST_INIT(&sc->bge_jinuse_listhead);
@@ -1942,6 +1942,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 A1" },
 
+	{ BGE_CHIPID_BCM5751_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5751 A1" },
+
 	{ 0, 0, NULL }
 };
 
@@ -2104,6 +2108,11 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5751,
 	  "Broadcom BCM5751 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5751M,
+	  "Broadcom BCM5751M Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2471,7 +2480,9 @@ bge_attach(parent, self, aux)
 
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
 		sc->ethercom.ec_if.if_capabilities |=
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 
@@ -3564,7 +3575,7 @@ bge_init(ifp)
 
 	/* Specify MTU. */
 	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN); 
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&(LLADDR(ifp->if_sadl)[0]);
@@ -3956,7 +3967,7 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 {
 	int rc, bge_root_num;
-	struct sysctlnode *node;
+	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.1.4.3 2005/03/04 16:45:21 skrll Exp $	*/
+/*	$NetBSD: iteide.c,v 1.1.4.4 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.1.4.4 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

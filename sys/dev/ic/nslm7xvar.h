@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.10.6.3 2005/03/04 16:41:31 skrll Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.10.6.4 2005/11/10 14:04:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #define WB_CHIPID_83781_2	0x11
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
+#define WB_CHIPID_83627THF	0x90
 #define WB_CHIPID_83697		0x60
 #define WB_BANK0_FANBAT	0x5D
 /* Bank1 regs */
@@ -138,16 +139,18 @@
 #define ITEC_TEMP3	0x31	/* TMPIN1 temperature */
 #define ITEC_RES48	0x48	/* reserved, used for probing the chip */
 #define ITEC_RES52	0x52	/* reserved, used for probing the chip */
-#define ITEC_VENDID	0x58	/* vendor ID register */
+#define	ITEC_VENDID	0x58	/* vendor ID register */
+#define ITEC_COREID	0x5b	/* core ID register, only 8712F */
 
 /*
  * misc values
  */
-#define ITEC_VENDID_ITE	0x90	/* iTE vendor ID */
+#define ITEC_VENDID_ITE		0x90	/* iTE vendor ID */
+#define ITEC_COREID_ITE		0x12	/* iTE core ID */
 #define ITEC_RES48_DEFAULT	0x2d
 #define ITEC_RES52_DEFAULT	0x7f
 #define ITEC_NUM_SENSORS	15
-#define ITEC_VREF	4096		/* VREF in mV */
+#define ITEC_VREF		4096	/* VREF in mV */
 
 
 struct lm_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.20.2.4 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.20.2.5 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.20.2.4 2005/03/04 16:54:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.20.2.5 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -152,8 +152,8 @@ ffs_dinode2_swap(struct ufs2_dinode *o, struct ufs2_dinode *n)
 	n->di_mtimensec = bswap32(o->di_mtimensec);
 	n->di_ctime = bswap64(o->di_ctime);
 	n->di_ctimensec = bswap32(o->di_ctimensec);
-	n->di_birthtime = bswap64(o->di_ctime);
-	n->di_birthnsec = bswap32(o->di_ctimensec);
+	n->di_birthtime = bswap64(o->di_birthtime);
+	n->di_birthnsec = bswap32(o->di_birthnsec);
 	n->di_gen = bswap32(o->di_gen);
 	n->di_kernflags = bswap32(o->di_kernflags);
 	n->di_flags = bswap32(o->di_flags);
@@ -239,9 +239,6 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 		n->cg_initediblk = bswap32(o->cg_initediblk);
 		n->cg_time = bswap64(o->cg_time);
 
-		if (fs->fs_magic == FS_UFS2_MAGIC)
-			return;
-
 		if (n->cg_magic == CG_MAGIC) {
 			btotoff = n->cg_old_btotoff;
 			boff = n->cg_old_boff;
@@ -251,6 +248,15 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 			boff = bswap32(n->cg_old_boff);
 			clustersumoff = bswap32(n->cg_clustersumoff);
 		}
+
+		n32 = (u_int32_t *)((u_int8_t *)n + clustersumoff);
+		o32 = (u_int32_t *)((u_int8_t *)o + clustersumoff);
+		for (i = 1; i < fs->fs_contigsumsize + 1; i++)
+			n32[i] = bswap32(o32[i]);
+
+		if (fs->fs_magic == FS_UFS2_MAGIC)
+			return;
+
 		n32 = (u_int32_t *)((u_int8_t *)n + btotoff);
 		o32 = (u_int32_t *)((u_int8_t *)o + btotoff);
 		n16 = (u_int16_t *)((u_int8_t *)n + boff);
@@ -261,10 +267,5 @@ ffs_cg_swap(struct cg *o, struct cg *n, struct fs *fs)
 
 		for (i = 0; i < fs->fs_old_cpg * fs->fs_old_nrpos; i++)
 			n16[i] = bswap16(o16[i]);
-
-		n32 = (u_int32_t *)((u_int8_t *)n + clustersumoff);
-		o32 = (u_int32_t *)((u_int8_t *)o + clustersumoff);
-		for (i = 1; i < fs->fs_contigsumsize + 1; i++)
-			n32[i] = bswap32(o32[i]);
 	}
 }

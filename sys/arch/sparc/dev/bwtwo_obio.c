@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.9.6.3 2004/09/21 13:22:01 skrll Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.9.6.4 2005/11/10 13:58:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.9.6.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.9.6.4 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ bwtwoattach_obio(parent, self, uax)
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
 	bus_space_handle_t bh;
 	int constype, isconsole;
-	char *name;
+	const char *name;
 
 	oba = &uoba->uoba_oba4;
 

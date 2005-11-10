@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41.2.7 2005/04/01 14:29:36 skrll Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.8 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.7 2005/04/01 14:29:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.8 2005/11/10 14:03:00 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -76,7 +76,7 @@ ddb_init(int symsize, void *vss, void *vse)
 }
 
 boolean_t
-db_eqname(char *src, char *dst, int c)
+db_eqname(const char *src, const char *dst, int c)
 {
 
 	if (!strcmp(src, dst))
@@ -87,8 +87,9 @@ db_eqname(char *src, char *dst, int c)
 }
 
 boolean_t
-db_value_of_name(char *name, db_expr_t *valuep)
+db_value_of_name(const char *name, db_expr_t *valuep)
 {
+	char symbol[128];
 	char *mod, *sym;
 	unsigned long uval;
 	long val;
@@ -108,7 +109,8 @@ db_value_of_name(char *name, db_expr_t *valuep)
 		return (TRUE);
 	}
 #endif
-	db_symsplit(name, &mod, &sym);
+	(void)strlcpy(symbol, name, sizeof(symbol));
+	db_symsplit(symbol, &mod, &sym);
 	if (ksyms_getval(mod, sym, &uval, KSYMS_EXTERN) == 0) {
 		val = (long) uval;
 		*valuep = (db_expr_t)val;
@@ -208,7 +210,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	unsigned long naddr;
 	db_sym_t ret = DB_SYM_NULL;
 	const char *mod;
-	char *sym;
+	const char *sym;
 
 #ifdef DB_AOUT_SYMBOLS
 	db_expr_t newdiff;
@@ -241,7 +243,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
  * Return name and value of a symbol
  */
 void
-db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
+db_symbol_values(db_sym_t sym, const char **namep, db_expr_t *valuep)
 {
 	const char *mod;
 
@@ -294,7 +296,7 @@ unsigned int	db_maxoff = 0x100000;
 void
 db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 {
-	char  *name;
+	const char  *name;
 	const char *mod;
 	unsigned long val;
 
@@ -302,7 +304,6 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 	if (using_aout_symtab) {
 		db_expr_t	d;
 		char 		*filename;
-		char		*name;
 		db_expr_t	value;
 		int 		linenum;
 		db_sym_t	cursym;
@@ -363,7 +364,7 @@ void
 db_printsym(db_expr_t off, db_strategy_t strategy,
     void (*pr)(const char *, ...))
 {
-	char  *name;
+	const char  *name;
 	const char *mod;
 	unsigned long uval;
 	long val;
@@ -376,7 +377,6 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 	if (using_aout_symtab) {
 		db_expr_t	d;
 		char 		*filename;
-		char		*name;
 		db_expr_t	value;
 		int 		linenum;
 		db_sym_t	cursym;

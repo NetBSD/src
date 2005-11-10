@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.18.2.4 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: interwave.c,v 1.18.2.5 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18.2.4 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18.2.5 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -939,28 +939,28 @@ iw_dma_count(struct iw_softc *sc, u_short count, int io)
 }
 
 int
-iw_init_output(addr, buf, cc)
+iw_init_output(addr, sbuf, cc)
 	void	*addr;
-	void	*buf;
+	void	*sbuf;
 	int	cc;
 {
 	struct iw_softc *sc = (struct iw_softc *) addr;
 
 	DPRINTF(("iw_init_output\n"));
 
-	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_playdrq, sbuf,
 		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
 
 int
-iw_init_input(void *addr, void *buf, int cc)
+iw_init_input(void *addr, void *sbuf, int cc)
 {
 	struct	iw_softc *sc;
 
 	DPRINTF(("iw_init_input\n"));
 	sc = (struct iw_softc *) addr;
-	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, sbuf,
 		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }

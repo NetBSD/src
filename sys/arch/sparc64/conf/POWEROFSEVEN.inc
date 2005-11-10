@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.7 2005/03/04 16:39:11 skrll Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.8 2005/11/10 13:59:17 skrll Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -120,6 +120,7 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
@@ -144,6 +145,7 @@ file-system	MFS		# memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -157,6 +159,7 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -185,7 +188,6 @@ cpu0	at mainbus0
 #### Bus types found on SPARC systems.
 
 #sbus0	at mainbus0				# Ultra 1
-#upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at ppb?
@@ -299,7 +301,6 @@ cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
@@ -449,9 +450,6 @@ audio*		at audiocs?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 #cgfourteen0	at obio0			# sun4m
-
-## Sun FFB not supported
-#ffb*		at upa?
 
 #### Other device configuration
 

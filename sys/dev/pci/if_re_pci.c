@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.3.4.5 2005/03/04 16:45:18 skrll Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.3.4.6 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -106,8 +106,14 @@ static const struct rtk_type re_devs[] = {
 		"RealTek 8169 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, RTK_HWREV_8169S,
+		"Corega CG-LAPCIGT Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
 		"RealTek 8110S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T, RTK_HWREV_8169S,
+		"D-Link DGE-528T Gigabit Ethernet" },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902, RTK_HWREV_8169S,
+		"US Robotics (3Com) USR997902 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.18.2.4 2005/03/04 16:50:07 skrll Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.18.2.5 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.18.2.4 2005/03/04 16:50:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.18.2.5 2005/11/10 14:07:40 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -189,7 +189,7 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	RF_AccessStripeMap_t *asmap;
 	RF_AllocListElem_t *alloclist;
 	RF_PhysDiskAddr_t *pda;
-	char   *pbuf, *buf, *end_p, *p;
+	char   *pbuf, *bf, *end_p, *p;
 	int     i, retcode;
 	RF_ReconUnitNum_t which_ru;
 	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr,
@@ -205,16 +205,16 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 
 	mcpair = rf_AllocMCPair();
 	rf_MakeAllocList(alloclist);
-	RF_MallocAndAdd(buf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
+	RF_MallocAndAdd(bf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
 	RF_MallocAndAdd(pbuf, numbytes, (char *), alloclist);
-	end_p = buf + bytesPerStripe;
+	end_p = bf + bytesPerStripe;
 
-	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
+	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, bf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
 	    "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 	blockNode = rd_dag_h->succedents[0];
 
 	/* map the stripe and fill in the PDAs in the dag */
-	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, buf, RF_DONT_REMAP);
+	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, bf, RF_DONT_REMAP);
 	asmap = asm_h->stripeMap;
 
 	for (pda = asmap->physInfo, i = 0; i < layoutPtr->numDataCol; i++, pda = pda->next) {
@@ -263,14 +263,14 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		retcode = RF_PARITY_COULD_NOT_VERIFY;
 		goto out;
 	}
-	for (p = buf; p < end_p; p += numbytes) {
+	for (p = bf; p < end_p; p += numbytes) {
 		rf_bxor(p, pbuf, numbytes);
 	}
 	for (i = 0; i < numbytes; i++) {
-		if (pbuf[i] != buf[bytesPerStripe + i]) {
+		if (pbuf[i] != bf[bytesPerStripe + i]) {
 			if (!correct_it)
 				RF_ERRORMSG3("Parity verify error: byte %d of parity is 0x%x should be 0x%x\n",
-				    i, (u_char) buf[bytesPerStripe + i], (u_char) pbuf[i]);
+				    i, (u_char) bf[bytesPerStripe + i], (u_char) pbuf[i]);
 			retcode = RF_PARITY_BAD;
 			break;
 		}
@@ -402,7 +402,7 @@ RF_DagHeader_t *
 rf_MakeSimpleDAG(RF_Raid_t *raidPtr, int nNodes, int bytesPerSU, char *databuf,
 		 int (*doFunc) (RF_DagNode_t * node),
 		 int (*undoFunc) (RF_DagNode_t * node),
-		 char *name, RF_AllocListElem_t *alloclist,
+		 const char *name, RF_AllocListElem_t *alloclist,
 		 RF_RaidAccessFlags_t flags, int priority)
 {
 	RF_DagHeader_t *dag_h;

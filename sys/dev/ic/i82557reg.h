@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.12.2.4 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.12.2.5 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ struct fxp_cb_ias {
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
-	volatile u_int8_t macaddr[6];
+	u_int8_t macaddr[6];
 };
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -290,7 +290,7 @@ struct fxp_cb_mcs {
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
 	volatile u_int16_t mc_cnt;
-	volatile u_int8_t mc_addr[MAXMCADDR][6];
+	u_int8_t mc_addr[MAXMCADDR][6];
 };
 
 #define	MAXUCODESIZE		192
@@ -298,7 +298,7 @@ struct fxp_cb_ucode {
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
-	volatile u_int32_t ucode[MAXUCODESIZE];
+	u_int32_t ucode[MAXUCODESIZE];
 };
 
 struct fxp_ipcb {

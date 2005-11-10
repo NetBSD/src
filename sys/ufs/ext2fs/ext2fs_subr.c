@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.9.2.3 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.9.2.4 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.9.2.3 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.9.2.4 2005/11/10 14:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,41 +82,65 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.9.2.3 2004/09/21 13:39:07 skrll Ex
  * remaining space in the directory.
  */
 int
-ext2fs_blkatoff(v)
-	void *v;
+ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	daddr_t lbn;
 	int error;
 
-	ip = VTOI(ap->a_vp);
+	ip = VTOI(vp);
 	fs = ip->i_e2fs;
-	lbn = lblkno(fs, ap->a_offset);
+	lbn = lblkno(fs, offset);
 
-	*ap->a_bpp = NULL;
-	if ((error = bread(ap->a_vp, lbn, fs->e2fs_bsize, NOCRED, &bp)) != 0) {
+	*bpp = NULL;
+	if ((error = bread(vp, lbn, fs->e2fs_bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
-	if (ap->a_res)
-		*ap->a_res = (char *)bp->b_data + blkoff(fs, ap->a_offset);
-	*ap->a_bpp = bp;
+	if (res)
+		*res = (char *)bp->b_data + blkoff(fs, offset);
+	*bpp = bp;
 	return (0);
+}
+
+void
+ext2fs_itimes(struct inode *ip, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *cre)
+{
+	struct timespec *ts = NULL, tsb;
+
+	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {
+		return;
+	}
+
+	if (ip->i_flag & IN_ACCESS) {
+		if (acc == NULL)
+			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ip->i_e2fs_atime = acc->tv_sec;
+	}
+	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
+		if (mod == NULL)
+			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ip->i_e2fs_mtime = mod->tv_sec;
+		ip->i_modrev++;
+	}
+	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
+		if (cre == NULL)
+			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		ip->i_e2fs_ctime = cre->tv_sec;
+	}
+	if (ip->i_flag & (IN_ACCESS | IN_MODIFY))
+		ip->i_flag |= IN_ACCESSED;
+	if (ip->i_flag & (IN_UPDATE | IN_CHANGE))
+		ip->i_flag |= IN_MODIFIED;
+	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }
 
 #ifdef DIAGNOSTIC
 void
-ext2fs_checkoverlap(bp, ip)
-	struct buf *bp;
-	struct inode *ip;
+ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
 {
 #if 0
 	struct buf *ebp, *ep;

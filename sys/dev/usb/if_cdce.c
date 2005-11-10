@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.4.2.2 2004/11/02 07:53:02 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.4.2.3 2005/11/10 14:08:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.4.2.2 2004/11/02 07:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.4.2.3 2005/11/10 14:08:05 skrll Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ USB_MATCH(cdce)
 USB_ATTACH(cdce)
 {
 	USB_ATTACH_START(cdce, sc, uaa);
-	char				 devinfo[1024];
+	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
 	usbd_device_handle		 dev = uaa->device;
@@ -167,11 +167,12 @@ USB_ATTACH(cdce)
 	int				 i;
 	u_char				 eaddr[ETHER_ADDR_LEN];
 	const usb_cdc_ethernet_descriptor_t *ue;
-	char				 eaddr_str[USB_MAX_STRING_LEN];
+	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
 	sc->cdce_ctl_iface = uaa->iface;
@@ -183,7 +184,7 @@ USB_ATTACH(cdce)
 	if (sc->cdce_flags & CDCE_NO_UNION)
 		sc->cdce_data_iface = sc->cdce_ctl_iface;
 	else {
-		ud = (usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
+		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
 		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
 			printf("%s: no union descriptor\n",
@@ -247,7 +248,7 @@ USB_ATTACH(cdce)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	ue = (usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
+	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
             UDESC_INTERFACE, UDESCSUB_CDC_ENF);
 	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str)) {
 		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
@@ -255,11 +256,11 @@ USB_ATTACH(cdce)
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
 		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
 	} else {
-		int i;
+		int j;
 
 		memset(eaddr, 0, ETHER_ADDR_LEN);
-		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
-			int c = eaddr_str[i];
+		for (j = 0; j < ETHER_ADDR_LEN * 2; j++) {
+			int c = eaddr_str[j];
 
 			if ('0' <= c && c <= '9')
 				c -= '0';
@@ -268,7 +269,7 @@ USB_ATTACH(cdce)
 			c &= 0xf;
 			if (c%2 == 0)
 				c <<= 4;
-			eaddr[i / 2] |= c;
+			eaddr[j / 2] |= c;
 		}
 	}
 

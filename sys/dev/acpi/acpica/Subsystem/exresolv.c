@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresolv - AML Interpreter object resolution
- *              xRevision: 123 $
+ *              xRevision: 132 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __EXRESOLV_C__
 
@@ -130,6 +130,13 @@ __KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exresolv")
+
+/* Local prototypes */
+
+static ACPI_STATUS
+AcpiExResolveObjectToValue (
+    ACPI_OPERAND_OBJECT     **StackPtr,
+    ACPI_WALK_STATE         *WalkState);
 
 
 /*******************************************************************************
@@ -176,6 +183,12 @@ AcpiExResolveToValue (
         {
             return_ACPI_STATUS (Status);
         }
+
+        if (!*StackPtr)
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Internal - null pointer\n"));
+            return_ACPI_STATUS (AE_AML_NO_OPERAND);
+        }
     }
 
     /*
@@ -202,18 +215,17 @@ AcpiExResolveToValue (
  *
  * FUNCTION:    AcpiExResolveObjectToValue
  *
- * PARAMETERS:  StackPtr        - Pointer to a stack location that contains a
- *                                ptr to an internal object.
+ * PARAMETERS:  StackPtr        - Pointer to an internal object
  *              WalkState       - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Retrieve the value from an internal object.  The Reference type
+ * DESCRIPTION: Retrieve the value from an internal object. The Reference type
  *              uses the associated AML opcode to determine the value.
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiExResolveObjectToValue (
     ACPI_OPERAND_OBJECT     **StackPtr,
     ACPI_WALK_STATE         *WalkState)
@@ -243,7 +255,7 @@ AcpiExResolveObjectToValue (
         case AML_NAME_OP:
 
             /*
-             * Convert indirect name ptr to a direct name ptr.
+             * Convert name reference to a namespace node
              * Then, AcpiExResolveNodeToValue can be used to get the value
              */
             TempNode = StackDesc->Reference.Object;
@@ -252,7 +264,7 @@ AcpiExResolveObjectToValue (
 
             AcpiUtRemoveReference (StackDesc);
 
-            /* Put direct name pointer onto stack and exit */
+            /* Return the namespace node */
 
             (*StackPtr) = TempNode;
             break;
@@ -272,15 +284,15 @@ AcpiExResolveObjectToValue (
                 return_ACPI_STATUS (Status);
             }
 
+            ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Arg/Local %X] ValueObj is %p\n",
+                StackDesc->Reference.Offset, ObjDesc));
+
             /*
              * Now we can delete the original Reference Object and
-             * replace it with the resolve value
+             * replace it with the resolved value
              */
             AcpiUtRemoveReference (StackDesc);
             *StackPtr = ObjDesc;
-
-            ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Arg/Local %d] ValueObj is %p\n",
-                StackDesc->Reference.Offset, ObjDesc));
             break;
 
 
@@ -343,10 +355,19 @@ AcpiExResolveObjectToValue (
 
             break;
 
+        case AML_INT_NAMEPATH_OP:   /* Reference to a named object */
+
+            /* Get the object pointed to by the namespace node */
+
+            *StackPtr = (StackDesc->Reference.Node)->Object;
+            AcpiUtAddReference (*StackPtr);
+            AcpiUtRemoveReference (StackDesc);
+            break;
 
         default:
 
-            ACPI_REPORT_ERROR (("During resolve, Unknown Reference opcode %X (%s) in %p\n",
+            ACPI_REPORT_ERROR ((
+                "During resolve, Unknown Reference opcode %X (%s) in %p\n",
                 Opcode, AcpiPsGetOpcodeName (Opcode), StackDesc));
             Status = AE_AML_INTERNAL;
             break;
@@ -366,9 +387,8 @@ AcpiExResolveObjectToValue (
         break;
 
 
-    /*
-     * These cases may never happen here, but just in case..
-     */
+    /* These cases may never happen here, but just in case.. */
+
     case ACPI_TYPE_BUFFER_FIELD:
     case ACPI_TYPE_LOCAL_REGION_FIELD:
     case ACPI_TYPE_LOCAL_BANK_FIELD:
@@ -415,10 +435,43 @@ AcpiExResolveMultiple (
     ACPI_OPERAND_OBJECT     *ObjDesc = (void *) Operand;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OBJECT_TYPE        Type;
+    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE ("AcpiExResolveMultiple");
 
+
+    /* Operand can be either a namespace node or an operand descriptor */
+
+    switch (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc))
+    {
+    case ACPI_DESC_TYPE_OPERAND:
+        Type = ObjDesc->Common.Type;
+        break;
+
+    case ACPI_DESC_TYPE_NAMED:
+        Type = ((ACPI_NAMESPACE_NODE *) ObjDesc)->Type;
+        ObjDesc = AcpiNsGetAttachedObject ((ACPI_NAMESPACE_NODE *) ObjDesc);
+
+        /* If we had an Alias node, use the attached object for type info */
+
+        if (Type == ACPI_TYPE_LOCAL_ALIAS)
+        {
+            Type = ((ACPI_NAMESPACE_NODE *) ObjDesc)->Type;
+            ObjDesc = AcpiNsGetAttachedObject ((ACPI_NAMESPACE_NODE *) ObjDesc);
+        }
+        break;
+
+    default:
+        return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
+    }
+
+    /* If type is anything other than a reference, we are done */
+
+    if (Type != ACPI_TYPE_LOCAL_REFERENCE)
+    {
+        goto Exit;
+    }
 
     /*
      * For reference objects created via the RefOf or Index operators,
@@ -440,8 +493,9 @@ AcpiExResolveMultiple (
 
             if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
             {
-                ACPI_REPORT_ERROR (("AcpiExResolveMultiple: Not a NS node %p [%s]\n",
-                        Node, AcpiUtGetDescriptorName (Node)));
+                ACPI_REPORT_ERROR ((
+                    "AcpiExResolveMultiple: Not a NS node %p [%s]\n",
+                    Node, AcpiUtGetDescriptorName (Node)));
                 return_ACPI_STATUS (AE_AML_INTERNAL);
             }
 
@@ -483,6 +537,13 @@ AcpiExResolveMultiple (
              * This could of course in turn be another reference object.
              */
             ObjDesc = *(ObjDesc->Reference.Where);
+            if (!ObjDesc)
+            {
+                /* NULL package elements are allowed */
+
+                Type = 0; /* Uninitialized */
+                goto Exit;
+            }
             break;
 
 
@@ -496,8 +557,9 @@ AcpiExResolveMultiple (
 
             if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
             {
-                ACPI_REPORT_ERROR (("AcpiExResolveMultiple: Not a NS node %p [%s]\n",
-                        Node, AcpiUtGetDescriptorName (Node)));
+                ACPI_REPORT_ERROR ((
+                    "AcpiExResolveMultiple: Not a NS node %p [%s]\n",
+                    Node, AcpiUtGetDescriptorName (Node)));
                return_ACPI_STATUS (AE_AML_INTERNAL);
             }
 
@@ -521,6 +583,38 @@ AcpiExResolveMultiple (
             break;
 
 
+        case AML_LOCAL_OP:
+        case AML_ARG_OP:
+
+            if (ReturnDesc)
+            {
+                Status = AcpiDsMethodDataGetValue (ObjDesc->Reference.Opcode,
+                            ObjDesc->Reference.Offset, WalkState, &ObjDesc);
+                if (ACPI_FAILURE (Status))
+                {
+                    return_ACPI_STATUS (Status);
+                }
+                AcpiUtRemoveReference (ObjDesc);
+            }
+            else
+            {
+                Status = AcpiDsMethodDataGetNode (ObjDesc->Reference.Opcode,
+                            ObjDesc->Reference.Offset, WalkState, &Node);
+                if (ACPI_FAILURE (Status))
+                {
+                    return_ACPI_STATUS (Status);
+                }
+
+                ObjDesc = AcpiNsGetAttachedObject (Node);
+                if (!ObjDesc)
+                {
+                    Type = ACPI_TYPE_ANY;
+                    goto Exit;
+                }
+            }
+            break;
+
+
         case AML_DEBUG_OP:
 
             /* The Debug Object is of type "DebugObject" */
@@ -531,7 +625,8 @@ AcpiExResolveMultiple (
 
         default:
 
-            ACPI_REPORT_ERROR (("AcpiExResolveMultiple: Unknown Reference subtype %X\n",
+            ACPI_REPORT_ERROR ((
+                "AcpiExResolveMultiple: Unknown Reference subtype %X\n",
                 ObjDesc->Reference.Opcode));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }

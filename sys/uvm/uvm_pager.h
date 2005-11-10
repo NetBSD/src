@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.26.2.3 2004/09/21 13:39:29 skrll Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.26.2.4 2005/11/10 14:12:40 skrll Exp $	*/
 
 /*
  *
@@ -160,6 +160,8 @@ struct uvm_pagerops {
 #define PGO_BUSYFAIL	0x080	/* fail if a page is busy [put] */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
 #define PGO_PASTEOF	0x400	/* allow allocation of pages past EOF */
+#define PGO_NOBLOCKALLOC 0x800	/* backing block allocation is not needed */
+#define PGO_NOTIMESTAMP 0x1000	/* don't mark object accessed/modified */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */

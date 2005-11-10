@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_norm.c,v 1.3.2.6 2004/12/18 09:32:35 skrll Exp $	*/
-/*	$OpenBSD: pf_norm.c,v 1.96 2004/07/17 00:17:27 frantzen Exp $ */
+/*	$NetBSD: pf_norm.c,v 1.3.2.7 2005/11/10 14:09:08 skrll Exp $	*/
+/*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -524,6 +524,9 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		for (m2 = m; m2; m2 = m2->m_next)
 			plen += m2->m_len;
 		m->m_pkthdr.len = plen;
+#if defined(__NetBSD__)
+		m->m_pkthdr.csum_flags = 0;
+#endif /* defined(__NetBSD__) */
 	}
 
 	DPFPRINTF(("complete: %p(%d)\n", m, ntohs(ip->ip_len)));
@@ -643,11 +646,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 				 * than this mbuf magic.  For my next trick,
 				 * I'll pull a rabbit out of my laptop.
 				 */
-#ifdef __OpenBSD__
 				*m0 = m_copym2(m, 0, h->ip_hl << 2, M_NOWAIT);
-#else
-				*m0 = m_dup(m, 0, h->ip_hl << 2, M_NOWAIT);
-#endif
 				if (*m0 == NULL)
 					goto no_mem;
 				KASSERT((*m0)->m_next == NULL);
@@ -1269,7 +1268,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 		}
 	}
 
-	if (rm == NULL)
+	if (rm == NULL || rm->action == PF_NOSCRUB)
 		return (PF_PASS);
 	else
 		r->packets++;

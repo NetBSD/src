@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.23.2.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l4.c,v 1.23.2.5 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.23.2.4 2005/03/04 16:53:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.23.2.5 2005/11/10 14:11:36 skrll Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -129,16 +129,16 @@ isdn_detach_isdnif(struct isdn_l3_driver *l3drv)
 	struct isdn_l3_driver *sc;
 	int s = splnet();
 	int isdnif = l3drv->isdnif;
-	int max;
+	int maxidx;
 
 	i4b_l4_contr_ev_ind(isdnif, 0);
 	SLIST_REMOVE(&isdnif_list, l3drv, isdn_l3_driver, l3drvq);
 
-	max = -1;
+	maxidx = -1;
 	SLIST_FOREACH(sc, &isdnif_list, l3drvq)
-		if (sc->isdnif > max)
-			max = sc->isdnif;
-	next_isdnif = max+1;
+		if (sc->isdnif > maxidx)
+			maxidx = sc->isdnif;
+	next_isdnif = maxidx+1;
 
 	free_all_cd_of_isdnif(isdnif);
 

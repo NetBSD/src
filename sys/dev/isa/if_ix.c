@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.17.6.5 2005/03/04 16:43:13 skrll Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.17.6.6 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.5 2005/03/04 16:43:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.6 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ ix_copyout (sc, src, offset, size)
 	}
 
 	dribble = size % 2;
-	wptr = (u_int16_t*) bptr;
+	wptr = (const u_int16_t*) bptr;
 
 	if (isc->use_pio) {
 		for(i = 0; i < size / 2; i++) {
@@ -352,7 +352,7 @@ ix_copyout (sc, src, offset, size)
 		}
 	} else {
 		bus_space_write_region_2(sc->bt, sc->bh, offset,
-					 (u_int16_t *)bptr, size / 2);
+		    (const u_int16_t *)bptr, size / 2);
 	}
 
 	if (dribble) {
@@ -521,7 +521,7 @@ ix_match(parent, cf, aux)
 	int i;
 	int rv = 0;
 	bus_addr_t maddr;
-	bus_size_t msize;
+	bus_size_t msiz;
 	u_short checksum = 0;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot;
@@ -600,23 +600,23 @@ ix_match(parent, cf, aux)
 	switch (val) {
 	case 0x00:
 		maddr = 0;
-		msize = 0;
+		msiz = 0;
 		break;
 
 	case 0x01:
-		msize = 16 * 1024;
+		msiz = 16 * 1024;
 		break;
 
 	case 0x03:
-		msize = 32 * 1024;
+		msiz = 32 * 1024;
 		break;
 
 	case 0x07:
-		msize = 48 * 1024;
+		msiz = 48 * 1024;
 		break;
 
 	case 0x0f:
-		msize = 64 * 1024;
+		msiz = 64 * 1024;
 		break;
 
 	default:
@@ -633,7 +633,7 @@ ix_match(parent, cf, aux)
 	}
 
 	if (ia->ia_iomem[0].ir_size != ISA_UNKNOWN_IOSIZ &&
-	    ia->ia_iomem[0].ir_size != msize) {
+	    ia->ia_iomem[0].ir_size != msiz) {
 		DPRINTF((
 		   "ix_match: memsize of board @ 0x%x doesn't match config\n",
 		   ia->ia_iobase));
@@ -659,7 +659,7 @@ ix_match(parent, cf, aux)
 	 * boards with 16K of mapped memory, as those setups don't seem
 	 * to work otherwise.
 	 */
-	if (msize != 0 && msize != 16384) {
+	if (msiz != 0 && msiz != 16384) {
 		/* Set board up with memory-mapping info */
 	adjust = IX_MCTRL_FMCS16 | (pg & 0x3) << 2;
 	decode = ((1 << (ia->ia_iomem[0].ir_size / 16384)) - 1) << pg;
@@ -707,7 +707,7 @@ ix_match(parent, cf, aux)
 
 	ia->ia_niomem = 1;
 	ia->ia_iomem[0].ir_addr = maddr;
-	ia->ia_iomem[0].ir_size = msize;
+	ia->ia_iomem[0].ir_size = msiz;
 
 	ia->ia_nirq = 1;
 	ia->ia_irq[0].ir_irq = irq;

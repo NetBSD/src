@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.4.2.4 2005/03/04 16:39:02 skrll Exp $	*/
+/*	$NetBSD: altivec.c,v 1.4.2.5 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.4.2.4 2005/03/04 16:39:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.4.2.5 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -264,27 +264,28 @@ vzeropage(paddr_t pa)
 	__asm("vxor %0,%0,%0" :: "n"(ZERO_VEC));
 
 	/*
-	 * Turn off data relocation (DMMU off).
-	 */
-	msr &= ~PSL_DR;
-	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
-
-	/*
 	 * Zero the page using a single cache line.
 	 */
-	do {
-		__asm("stvx %2,%0,%1" ::  "b"(pa), "r"( 0), "n"(ZERO_VEC));
-		__asm("stvxl %2,%0,%1" :: "b"(pa), "r"(16), "n"(ZERO_VEC));
-		__asm("stvx %2,%0,%1" ::  "b"(pa), "r"(32), "n"(ZERO_VEC));
-		__asm("stvxl %2,%0,%1" :: "b"(pa), "r"(48), "n"(ZERO_VEC));
-		pa += 64;
-	} while (pa < ea);
-
-	/*
-	 * Restore data relocation (DMMU on);
-	 */
-	msr |= PSL_DR;
-	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
+	__asm __volatile(
+	    "   sync ;"
+	    "   mfmsr  %[msr];"
+	    "   rlwinm %[msr],%[msr],0,28,26;"	/* Clear PSL_DR */
+	    "   mtmsr  %[msr];"			/* Turn off DMMU */
+	    "   isync;"
+	    "1: stvx   %[zv], %[pa], %[off0];"
+	    "   stvxl  %[zv], %[pa], %[off16];"
+	    "   stvx   %[zv], %[pa], %[off32];"
+	    "   stvxl  %[zv], %[pa], %[off48];"
+	    "   addi   %[pa], %[pa], 64;"
+	    "   cmplw  %[pa], %[ea];"
+	    "	blt+   1b;"
+	    "   ori    %[msr], %[msr], 0x10;"	/* Set PSL_DR */
+	    "   sync;"
+	    "	mtmsr  %[msr];"			/* Turn on DMMU */
+	    "   isync;"
+	    :: [msr] "r"(msr), [pa] "b"(pa), [ea] "b"(ea),
+	    [off0] "r"(0), [off16] "r"(16), [off32] "r"(32), [off48] "r"(48), 
+	    [zv] "n"(ZERO_VEC));
 
 	/*
 	 * Restore VEC register (now that we can access the stack again).
@@ -323,29 +324,31 @@ vcopypage(paddr_t dst, paddr_t src)
 	__asm("stvx %2,%1,%0" :: "b"(vp), "r"(16), "n"(HI_VEC));
 
 	/*
-	 * Turn off data relocation (DMMU off).
+	 * Copy the page using a single cache line, with DMMU
+	 * disabled.  On most PPCs, two vector registers occupy one
+	 * cache line.
 	 */
-	msr &= ~PSL_DR;
-	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
-
-	/*
-	 * Copy the page using a single cache line.  On most PPCs, two 
-	 * vector registers occupy one cache line.
-	 */
-	do {
-		__asm("lvx %2,%0,%1"   :: "b"(src), "r"( 0), "n"(LO_VEC));
-		__asm("stvx %2,%0,%1"  :: "b"(dst), "r"( 0), "n"(LO_VEC));
-		__asm("lvxl %2,%0,%1"  :: "b"(src), "r"(16), "n"(HI_VEC));
-		__asm("stvxl %2,%0,%1" :: "b"(dst), "r"(16), "n"(HI_VEC));
-		src += 32;
-		dst += 32;
-	} while (dst < edst);
-
-	/*
-	 * Restore data relocation (DMMU on);
-	 */
-	msr |= PSL_DR;
-	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
+	__asm __volatile(
+	    "   sync ;"
+	    "   mfmsr  %[msr];"
+	    "   rlwinm %[msr],%[msr],0,28,26;"	/* Clear PSL_DR */
+	    "   mtmsr  %[msr];"			/* Turn off DMMU */
+	    "   isync;"
+	    "1: lvx    %[lv], %[src], %[off0];"
+	    "   stvx   %[lv], %[dst], %[off0];"
+	    "   lvxl   %[hv], %[src], %[off16];"
+	    "   stvxl  %[hv], %[dst], %[off16];"
+	    "   addi   %[src], %[src], 32;"
+	    "   addi   %[dst], %[dst], 32;"
+	    "   cmplw  %[dst], %[edst];"
+	    "	blt+   1b;"
+	    "   ori    %[msr], %[msr], 0x10;"	/* Set PSL_DR */
+	    "   sync;"
+	    "	mtmsr  %[msr];"			/* Turn on DMMU */
+	    "   isync;"
+	    :: [msr] "r"(msr), [src] "b"(src), [dst] "b"(dst),
+	    [edst] "b"(edst), [off0] "r"(0), [off16] "r"(16), 
+	    [lv] "n"(LO_VEC), [hv] "n"(HI_VEC));
 
 	/*
 	 * Restore VEC registers (now that we can access the stack again).

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.9 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.10 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.9 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.10 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.9 2005/03/04 16:51:46 skrll Ex
 #include <sys/sysctl.h>
 
 
-/*#define NTFS_DEBUG 1*/
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_subr.h>
@@ -70,26 +69,26 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.9 2005/03/04 16:51:46 skrll Ex
 
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
-static int	ntfs_bypass __P((struct vop_generic_args *ap));
-static int	ntfs_read __P((struct vop_read_args *));
-static int	ntfs_write __P((struct vop_write_args *ap));
-static int	ntfs_getattr __P((struct vop_getattr_args *ap));
-static int	ntfs_inactive __P((struct vop_inactive_args *ap));
-static int	ntfs_print __P((struct vop_print_args *ap));
-static int	ntfs_reclaim __P((struct vop_reclaim_args *ap));
-static int	ntfs_strategy __P((struct vop_strategy_args *ap));
-static int	ntfs_access __P((struct vop_access_args *ap));
-static int	ntfs_open __P((struct vop_open_args *ap));
-static int	ntfs_close __P((struct vop_close_args *ap));
-static int	ntfs_readdir __P((struct vop_readdir_args *ap));
-static int	ntfs_lookup __P((struct vop_lookup_args *ap));
-static int	ntfs_bmap __P((struct vop_bmap_args *ap));
+static int	ntfs_bypass(struct vop_generic_args *ap);
+static int	ntfs_read(struct vop_read_args *);
+static int	ntfs_write(struct vop_write_args *ap);
+static int	ntfs_getattr(struct vop_getattr_args *ap);
+static int	ntfs_inactive(struct vop_inactive_args *ap);
+static int	ntfs_print(struct vop_print_args *ap);
+static int	ntfs_reclaim(struct vop_reclaim_args *ap);
+static int	ntfs_strategy(struct vop_strategy_args *ap);
+static int	ntfs_access(struct vop_access_args *ap);
+static int	ntfs_open(struct vop_open_args *ap);
+static int	ntfs_close(struct vop_close_args *ap);
+static int	ntfs_readdir(struct vop_readdir_args *ap);
+static int	ntfs_lookup(struct vop_lookup_args *ap);
+static int	ntfs_bmap(struct vop_bmap_args *ap);
 #if defined(__FreeBSD__)
-static int	ntfs_getpages __P((struct vop_getpages_args *ap));
-static int	ntfs_putpages __P((struct vop_putpages_args *));
-static int	ntfs_fsync __P((struct vop_fsync_args *ap));
+static int	ntfs_getpages(struct vop_getpages_args *ap);
+static int	ntfs_putpages(struct vop_putpages_args *);
 #endif
-static int	ntfs_pathconf __P((void *));
+static int	ntfs_fsync(struct vop_fsync_args *ap);
+static int	ntfs_pathconf(void *);
 
 extern int prtactive;
 
@@ -156,9 +155,11 @@ ntfs_read(ap)
 	u_int64_t toread;
 	int error;
 
-	dprintf(("ntfs_read: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
+	dprintf(("ntfs_read: ino: %llu, off: %qd resid: %qd, segflg: %d\n",
+	    (unsigned long long)ip->i_number, (long long)uio->uio_offset,
+	    (long long)uio->uio_resid, uio->uio_segflg));
 
-	dprintf(("ntfs_read: filesize: %d",(u_int32_t)fp->f_size));
+	dprintf(("ntfs_read: filesize: %qu",(long long)fp->f_size));
 
 	/* don't allow reading after end of file */
 	if (uio->uio_offset > fp->f_size)
@@ -166,7 +167,7 @@ ntfs_read(ap)
 	else
 		toread = MIN(uio->uio_resid, fp->f_size - uio->uio_offset );
 
-	dprintf((", toread: %d\n",(u_int32_t)toread));
+	dprintf((", toread: %qu\n",(long long)toread));
 
 	if (toread == 0)
 		return (0);
@@ -208,7 +209,8 @@ ntfs_getattr(ap)
 	struct ntnode *ip = FTONT(fp);
 	struct vattr *vap = ap->a_vap;
 
-	dprintf(("ntfs_getattr: %d, flags: %d\n",ip->i_number,ip->i_flag));
+	dprintf(("ntfs_getattr: %llu, flags: %d\n",
+	    (unsigned long long)ip->i_number, ip->i_flag));
 
 #if defined(__FreeBSD__)
 	vap->va_fsid = dev2udev(ip->i_dev);
@@ -249,7 +251,8 @@ ntfs_inactive(ap)
 	struct ntnode *ip = VTONT(vp);
 #endif
 
-	dprintf(("ntfs_inactive: vnode: %p, ntnode: %d\n", vp, ip->i_number));
+	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
+	    (unsigned long long)ip->i_number));
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
@@ -276,7 +279,8 @@ ntfs_reclaim(ap)
 	struct ntnode *ip = FTONT(fp);
 	int error;
 
-	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %d\n", vp, ip->i_number));
+	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
+	    (unsigned long long)ip->i_number));
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_reclaim: pushing active", vp);
@@ -306,8 +310,9 @@ ntfs_print(ap)
 {
 	struct ntnode *ip = VTONT(ap->a_vp);
 
-	printf("tag VT_NTFS, ino %u, flag %#x, usecount %d, nlink %ld\n",
-	    ip->i_number, ip->i_flag, ip->i_usecount, ip->i_nlink);
+	printf("tag VT_NTFS, ino %llu, flag %#x, usecount %d, nlink %ld\n",
+	    (unsigned long long)ip->i_number, ip->i_flag, ip->i_usecount,
+	    ip->i_nlink);
 	printf("       ");
 	lockmgr_printinfo(ap->a_vp->v_vnlock);
 	printf("\n");
@@ -416,8 +421,10 @@ ntfs_write(ap)
 	size_t written;
 	int error;
 
-	dprintf(("ntfs_write: ino: %d, off: %d resid: %d, segflg: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid,uio->uio_segflg));
-	dprintf(("ntfs_write: filesize: %d",(u_int32_t)fp->f_size));
+	dprintf(("ntfs_write: ino: %llu, off: %qd resid: %qd, segflg: %d\n",
+	    (unsigned long long)ip->i_number, (long long)uio->uio_offset,
+	    (long long)uio->uio_resid, uio->uio_segflg));
+	dprintf(("ntfs_write: filesize: %qu",(long long)fp->f_size));
 
 	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
 		printf("ntfs_write: CAN'T WRITE BEYOND END OF FILE\n");
@@ -426,7 +433,7 @@ ntfs_write(ap)
 
 	towrite = MIN(uio->uio_resid, fp->f_size - uio->uio_offset);
 
-	dprintf((", towrite: %d\n",(u_int32_t)towrite));
+	dprintf((", towrite: %qu\n",(long long)towrite));
 
 	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
 		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
@@ -454,7 +461,7 @@ ntfs_access(ap)
 	gid_t *gp;
 	int i;
 
-	dprintf(("ntfs_access: %d\n",ip->i_number));
+	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -526,11 +533,11 @@ ntfs_open(ap)
 		struct lwp *a_l;
 	} */ *ap;
 {
-#if NTFS_DEBUG
+#ifdef NTFS_DEBUG
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_open: %d\n",ip->i_number);
+	printf("ntfs_open: %llu\n", (unsigned long long)ip->i_number);
 #endif
 
 	/*
@@ -555,11 +562,11 @@ ntfs_close(ap)
 		struct lwp *a_l;
 	} */ *ap;
 {
-#if NTFS_DEBUG
+#ifdef NTFS_DEBUG
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_close: %d\n",ip->i_number);
+	printf("ntfs_close: %llu\n", (unsigned long long)ip->i_number);
 #endif
 
 	return (0);
@@ -586,7 +593,9 @@ ntfs_readdir(ap)
 	struct dirent *cde;
 	off_t off;
 
-	dprintf(("ntfs_readdir %d off: %d resid: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid));
+	dprintf(("ntfs_readdir %llu off: %qd resid: %qd\n",
+	    (unsigned long long)ip->i_number, (long long)uio->uio_offset,
+	    (long long)uio->uio_resid));
 
 	off = uio->uio_offset;
 
@@ -673,8 +682,8 @@ ntfs_readdir(ap)
 
 	dprintf(("ntfs_readdir: %d entries (%d bytes) read\n",
 		ncookies,(u_int)(uio->uio_offset - off)));
-	dprintf(("ntfs_readdir: off: %d resid: %d\n",
-		(u_int32_t)uio->uio_offset,uio->uio_resid));
+	dprintf(("ntfs_readdir: off: %qd resid: %qu\n",
+		(long long)uio->uio_offset,(long long)uio->uio_resid));
 
 	if (!error && ap->a_ncookies != NULL) {
 		struct dirent* dpStart;
@@ -732,12 +741,12 @@ ntfs_lookup(ap)
 	struct ucred *cred = cnp->cn_cred;
 	int error;
 	int lockparent = cnp->cn_flags & LOCKPARENT;
-#if NTFS_DEBUG
+#ifdef NTFS_DEBUG
 	int wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
 #endif
-	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %d, lp: %d, wp: %d \n",
-		(int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
-		dip->i_number, lockparent, wantparent));
+	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %llu, lp: %d, wp: %d \n",
+	    (int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
+	    (unsigned long long)dip->i_number, lockparent, wantparent));
 
 	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_lwp);
 	if(error)
@@ -762,8 +771,8 @@ ntfs_lookup(ap)
 #endif
 
 	if(cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
-		dprintf(("ntfs_lookup: faking . directory in %d\n",
-			dip->i_number));
+		dprintf(("ntfs_lookup: faking . directory in %llu\n",
+		    (unsigned long long)dip->i_number));
 
 		VREF(dvp);
 		*ap->a_vpp = dvp;
@@ -771,8 +780,8 @@ ntfs_lookup(ap)
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		struct ntvattr *vap;
 
-		dprintf(("ntfs_lookup: faking .. directory in %d\n",
-			 dip->i_number));
+		dprintf(("ntfs_lookup: faking .. directory in %llu\n",
+		    (unsigned long long)dip->i_number));
 
 		VOP_UNLOCK(dvp, 0);
 		cnp->cn_flags |= PDIRUNLOCK;
@@ -807,8 +816,8 @@ ntfs_lookup(ap)
 			return (error);
 		}
 
-		dprintf(("ntfs_lookup: found ino: %d\n",
-			VTONT(*ap->a_vpp)->i_number));
+		dprintf(("ntfs_lookup: found ino: %llu\n",
+		    (unsigned long long)VTONT(*ap->a_vpp)->i_number));
 
 		if(!lockparent || (cnp->cn_flags & ISLASTCN) == 0) {
 			VOP_UNLOCK(dvp, 0);
@@ -822,7 +831,6 @@ ntfs_lookup(ap)
 	return (error);
 }
 
-#if defined(__FreeBSD__)
 /*
  * Flush the blocks of a file to disk.
  *
@@ -834,15 +842,25 @@ ntfs_fsync(ap)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
-		int a_waitfor;
+		int a_flags;
 		off_t offlo;
 		off_t offhi;
 		struct lwp *a_l;
 	} */ *ap;
 {
-	return (0);
+
+	struct vnode *vp = ap->a_vp;
+	int wait;
+
+	if (ap->a_flags & FSYNC_CACHE) {
+		return EOPNOTSUPP;
+	}
+
+	wait = (ap->a_flags & FSYNC_WAIT) != 0;
+	vflushbuf(vp, wait);
+
+	return 0;
 }
-#endif
 
 /*
  * Return POSIX pathconf information applicable to NTFS filesystem
@@ -950,7 +968,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
-	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
+	{ &vop_fsync_desc, (vop_t *) ntfs_fsync },	/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
 	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
@@ -971,12 +989,6 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ntfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, genfs_nullop },		/* advlock */
-	{ &vop_blkatoff_desc, genfs_eopnotsupp },	/* blkatoff */
-	{ &vop_valloc_desc, genfs_eopnotsupp },		/* valloc */
-	{ &vop_reallocblks_desc, genfs_eopnotsupp },	/* reallocblks */
-	{ &vop_vfree_desc, genfs_eopnotsupp },		/* vfree */
-	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
-	{ &vop_update_desc, genfs_nullop },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_compat_getpages },	/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */

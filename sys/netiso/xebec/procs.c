@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.7.8.2 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: procs.c,v 1.7.8.3 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.7.8.2 2005/03/04 16:54:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.7.8.3 2005/11/10 14:11:55 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -65,18 +65,18 @@ end_events()
 	size = (((Nevents)<<Eventshift)+Nstates)*sizeof(struct Predicate *) ;
 	addr = (char *)Predlist;
 	IFDEBUG(N)
-		fprintf(OUT, "Predlist at 0x%p, sbrk 0x%p bzero size %d at addr 0x%p\n",
+		fprintf(OUT, "Predlist at %p, sbrk %p bzero size %d at addr %p\n",
 		Predlist, sbrk(0), size, addr);
 	ENDDEBUG
 #define BZSIZE 8192
 	while(size) {
 		part = size>BZSIZE?BZSIZE:size;
 	IFDEBUG(N)
-		fprintf(OUT, "bzero addr 0x%p part %d size %d\n",addr, part, size);
+		fprintf(OUT, "bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG
 		bzero(addr, part);
 	IFDEBUG(N)
-		fprintf(OUT, "after bzero addr 0x%p part %d size %d\n",addr, part, size);
+		fprintf(OUT, "after bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG
 		addr += part;
 		size -= part;
@@ -156,7 +156,7 @@ statetable(string, oldstate, newstate, action, event)
 	register int different;
 
 	IFDEBUG(a)
-		fprintf(OUT,"statetable(0x%p, 0x%p,0x%p, 0x%x)\n",
+		fprintf(OUT,"statetable(%p, %p,%p, 0x%x)\n",
 			string, oldstate, newstate, action);
 		fprintf(OUT,"statetable(%s, %s,%s, 0x%x)\n",
 			string, oldstate->obj_name, newstate->obj_name, action);
@@ -184,7 +184,7 @@ stateentry(index, oldstate, newstate, action)
 	extern FILE *statevalfile;
 
 	IFDEBUG(a)
-		fprintf(OUT,"stateentry(0x%x,0x%x,0x%x,0x%x) Statelist@0x%p, val 0x%p\n",
+		fprintf(OUT,"stateentry(0x%x,0x%x,0x%x,0x%x) Statelist@%p, val %p\n",
 			index, oldstate, newstate,action, &Statelist, Statelist);
 	ENDDEBUG
 
@@ -270,7 +270,7 @@ predtable(os, oe, str, action, newstate)
 
 			IFDEBUG(g)
 				fprintf(stdout,
-			  	  "predtable index 0x%x, transno %d, E 0x%p, S 0x%p\n",
+			  	  "predtable index 0x%x, transno %d, E %p, S %p\n",
 					 Index, transno, e, s);
 			ENDDEBUG
 
@@ -399,7 +399,7 @@ dump_predtable(f)
 			if (xyz == (struct Predicate *)(-1))
 				fprintf(f, "-1,");
 			else
-				fprintf(f, "0x%p,", Predlist[(e<<Eventshift)+s]);
+				fprintf(f, "%p,", Predlist[(e<<Eventshift)+s]);
 		}
 		fprintf(f, " },\n");
 	}
@@ -423,7 +423,7 @@ char *buf;
 	strcpy(c, buf);
 
 	IFDEBUG(z)
-		fprintf(stdout,"stash %s at 0x%p\n", c,c);
+		fprintf(stdout,"stash %s at %p\n", c,c);
 	ENDDEBUG
 	return(c);
 }

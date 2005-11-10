@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.3.2.5 2005/04/01 14:28:58 skrll Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.3.2.6 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.2.5 2005/04/01 14:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.2.6 2005/11/10 14:00:20 skrll Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -68,23 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.2.5 2005/04/01 14:28:58 s
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#include <machine/atomic.h>
 
 #include "opt_xen.h"
 
 /* #define PORT_DEBUG -1 */
-
-/*
- * Force a proper event-channel callback from Xen after clearing the
- * callback mask. We do this in a very simple manner, by making a call
- * down into Xen. The pending flag will be checked by Xen on return.
- */
-void
-hypervisor_force_callback(void)
-{
-	// DDD printf("hypervisor_force_callback\n");
-
-	(void)HYPERVISOR_xen_version(0);
-}
 
 int stipending(void);
 int
@@ -93,7 +81,6 @@ stipending()
 	uint32_t l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
-	int irq;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int ret;
@@ -123,16 +110,24 @@ stipending()
 			l1 &= ~(1 << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
+			/*
+			 * mask and clear event. More efficient than calling
+			 * hypervisor_mask/clear_event for each event.
+			 */
+			x86_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
+			x86_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
 			while ((l2i = ffs(l2)) != 0) {
 				l2i--;
 				l2 &= ~(1 << l2i);
 
 				port = (l1i << 5) + l2i;
-				if ((irq = evtchn_to_irq[port]) != -1) {
-					hypervisor_acknowledge_irq(irq);
-					ci->ci_ipending |= (1 << irq);
+				if (evtsource[port]) {
+					hypervisor_set_ipending(
+					    evtsource[port]->ev_imask,
+					    l1i, l2i);
+					evtsource[port]->ev_evcnt.ev_count++;
 					if (ret == 0 && ci->ci_ilevel <
-					    ci->ci_isources[irq]->is_maxlevel)
+					    evtsource[port]->ev_maxlevel)
 						ret = 1;
 				}
 #ifdef DOM0OPS
@@ -161,7 +156,6 @@ do_hypervisor_callback(struct intrframe *regs)
 	uint32_t l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
-	int irq;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int level;
@@ -181,6 +175,16 @@ do_hypervisor_callback(struct intrframe *regs)
 			l1 &= ~(1 << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
+			/*
+			 * mask and clear the pending events.
+			 * Doing it here for all event that will be processed
+			 * avoids a race with stipending (which can be called
+			 * though evtchn_do_event->splx) that could cause an event to
+			 * be both processed and marked pending.
+			 */
+			x86_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
+			x86_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
+
 			while ((l2i = ffs(l2)) != 0) {
 				l2i--;
 				l2 &= ~(1 << l2i);
@@ -188,11 +192,11 @@ do_hypervisor_callback(struct intrframe *regs)
 				port = (l1i << 5) + l2i;
 #ifdef PORT_DEBUG
 				if (port == PORT_DEBUG)
-					printf("do_hypervisor_callback event %d irq %d\n", port, evtchn_to_irq[port]);
+					printf("do_hypervisor_callback event %d%d\n", port);
 #endif
-				if ((irq = evtchn_to_irq[port]) != -1)
-					do_event(irq, regs);
-#if DOM0OPS
+				if (evtsource[port])
+					evtchn_do_event(port, regs);
+#ifdef DOM0OPS
 				else
 					xenevt_event(port);
 #endif
@@ -253,4 +257,57 @@ hypervisor_clear_event(unsigned int ev)
 #endif
 
 	x86_atomic_clear_bit(&s->evtchn_pending[0], ev);
+}
+
+void
+hypervisor_enable_ipl(unsigned int ipl)
+{
+	u_int32_t l1, l2;
+	int l1i, l2i;
+	struct cpu_info *ci = curcpu();
+
+	/*
+	 * enable all events for ipl. As we only set an event in ipl_evt_mask
+	 * for its lowest IPL, and pending IPLs are processed high to low,
+	 * we know that all callback for this event have been processed.
+	 */
+
+	l1 = ci->ci_isources[ipl]->ipl_evt_mask1;
+	ci->ci_isources[ipl]->ipl_evt_mask1 = 0;
+	while ((l1i = ffs(l1)) != 0) {
+		l1i--;
+		l1 &= ~(1 << l1i);
+		l2 = ci->ci_isources[ipl]->ipl_evt_mask2[l1i];
+		ci->ci_isources[ipl]->ipl_evt_mask2[l1i] = 0;
+		while ((l2i = ffs(l2)) != 0) {
+			int evtch;
+
+			l2i--;
+			l2 &= ~(1 << l2i);
+
+			evtch = (l1i << 5) + l2i;
+			hypervisor_enable_event(evtch);
+		}
+	}
+}
+
+void
+hypervisor_set_ipending(u_int32_t iplmask, int l1, int l2)
+{
+	int ipl;
+	struct cpu_info *ci = curcpu();
+
+	/* set pending bit for the appropriate IPLs */	
+	ci->ci_ipending |= iplmask;
+
+	/*
+	 * And set event pending bit for the lowest IPL. As IPL are handled
+	 * from high to low, this ensure that all callbacks will have been
+	 * called when we ack the event
+	 */
+	ipl = ffs(iplmask);
+	KASSERT(ipl > 0);
+	ipl--;
+	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
+	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.26.2.10 2005/03/04 16:39:22 skrll Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.26.2.11 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26.2.10 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26.2.11 2005/11/10 14:00:34 skrll Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -110,22 +110,19 @@ struct vfsops coda_vfsops = {
     coda_nb_statvfs,
     coda_sync,
     coda_vget,
-    (int (*) (struct mount *, struct fid *, struct vnode ** ))
-	eopnotsupp,
-    (int (*) (struct vnode *, struct fid *)) eopnotsupp,
+    NULL,		/* vfs_fhtovp */
+    NULL,		/* vfs_vptofh */
     coda_init,
     NULL,
     coda_done,
-    NULL,
     (int (*)(void)) eopnotsupp,
-    (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
-	eopnotsupp,
     (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
     vfs_stdextattrctl,
     coda_vnodeopv_descs,
     0
 };
 
+VFS_ATTACH(coda_vfsops);
 
 int
 coda_vfsopstats_init(void)
@@ -149,18 +146,17 @@ coda_vfsopstats_init(void)
  */
 /*ARGSUSED*/
 int
-coda_mount(vfsp, path, data, ndp, l)
-    struct mount *vfsp;		/* Allocated and initialized by mount(2) */
-    const char *path;		/* path covered: ignored by the fs-layer */
-    void *data;			/* Need to define a data type for this in netbsd? */
-    struct nameidata *ndp;	/* Clobber this to lookup the device name */
-    struct lwp *l;		/* The ever-famous lwp pointer */
+coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
+	const char *path,	/* path covered: ignored by the fs-layer */
+	void *data,		/* Need to define a data type for this in netbsd? */
+	struct nameidata *ndp,	/* Clobber this to lookup the device name */
+	struct lwp *l)		/* The ever-famous lwp pointer */
 {
     struct vnode *dvp;
     struct cnode *cp;
     dev_t dev;
     struct coda_mntinfo *mi;
-    struct vnode *rootvp;
+    struct vnode *rtvp;
     const struct cdevsw *cdev;
     CodaFid rootfid = INVAL_FID;
     CodaFid ctlfid = CTL_FID;
@@ -240,8 +236,8 @@ coda_mount(vfsp, path, data, ndp, l)
      * to coda_root in case a server is down while venus is starting.
      */
     cp = make_coda_node(&rootfid, vfsp, VDIR);
-    rootvp = CTOV(cp);
-    rootvp->v_flag |= VROOT;
+    rtvp = CTOV(cp);
+    rtvp->v_flag |= VROOT;
 
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
@@ -254,7 +250,7 @@ coda_mount(vfsp, path, data, ndp, l)
 
     /* Add vfs and rootvp to chain of vfs hanging off mntinfo */
     mi->mi_vfsp = vfsp;
-    mi->mi_rootvp = rootvp;
+    mi->mi_rootvp = rtvp;
 
     /* set filesystem block size */
     vfsp->mnt_stat.f_bsize = 8192;	    /* XXX -JJK */
@@ -274,10 +270,7 @@ coda_mount(vfsp, path, data, ndp, l)
 }
 
 int
-coda_start(vfsp, flags, l)
-    struct mount *vfsp;
-    int flags;
-    struct lwp *l;
+coda_start(struct mount *vfsp, int flags, struct lwp *l)
 {
     ENTRY;
     vftomi(vfsp)->mi_started = 1;
@@ -285,10 +278,7 @@ coda_start(vfsp, flags, l)
 }
 
 int
-coda_unmount(vfsp, mntflags, l)
-    struct mount *vfsp;
-    int mntflags;
-    struct lwp *l;
+coda_unmount(struct mount *vfsp, int mntflags, struct lwp *l)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int active, error = 0;
@@ -340,9 +330,7 @@ coda_unmount(vfsp, mntflags, l)
  * find root of cfs
  */
 int
-coda_root(vfsp, vpp)
-	struct mount *vfsp;
-	struct vnode **vpp;
+coda_root(struct mount *vfsp, struct vnode **vpp)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int error;
@@ -408,12 +396,8 @@ coda_root(vfsp, vpp)
 }
 
 int
-coda_quotactl(vfsp, cmd, uid, arg, l)
-    struct mount *vfsp;
-    int cmd;
-    uid_t uid;
-    void *arg;
-    struct lwp *l;
+coda_quotactl(struct mount *vfsp, int cmd, uid_t uid, void *arg,
+	struct lwp *l)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -423,10 +407,7 @@ coda_quotactl(vfsp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-coda_nb_statvfs(vfsp, sbp, l)
-    struct mount *vfsp;
-    struct statvfs *sbp;
-    struct lwp *l;
+coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
 {
     struct coda_statfs fsstat;
     struct proc *p = l->l_proc;
@@ -470,11 +451,7 @@ coda_nb_statvfs(vfsp, sbp, l)
  * Flush any pending I/O.
  */
 int
-coda_sync(vfsp, waitfor, cred, l)
-    struct mount *vfsp;
-    int    waitfor;
-    struct ucred *cred;
-    struct lwp *l;
+coda_sync(struct mount *vfsp, int waitfor, struct ucred *cred, struct lwp *l)
 {
     ENTRY;
     MARK_ENTRY(CODA_SYNC_STATS);
@@ -483,10 +460,7 @@ coda_sync(vfsp, waitfor, cred, l)
 }
 
 int
-coda_vget(vfsp, ino, vpp)
-    struct mount *vfsp;
-    ino_t ino;
-    struct vnode **vpp;
+coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -498,13 +472,8 @@ coda_vget(vfsp, ino, vpp)
  * a type-specific fid.
  */
 int
-coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
-    struct mount *vfsp;
-    struct fid *fhp;
-    struct mbuf *nam;
-    struct vnode **vpp;
-    int *exflagsp;
-    struct ucred **creadanonp;
+coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
+	struct vnode **vpp, int *exflagsp, struct ucred **creadanonp)
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
@@ -541,9 +510,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 }
 
 int
-coda_vptofh(vnp, fidp)
-    struct vnode *vnp;
-    struct fid   *fidp;
+coda_vptofh(struct vnode *vnp, struct fid *fidp)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -598,8 +565,7 @@ SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
  */
 
 int
-getNewVnode(vpp)
-     struct vnode **vpp;
+getNewVnode(struct vnode **vpp)
 {
     struct cfid cfid;
     struct coda_mntinfo *mi = vftomi((*vpp)->v_mount);
@@ -625,8 +591,7 @@ getNewVnode(vpp)
 /* get the mount structure corresponding to a given device.  Assume
  * device corresponds to a UFS. Return NULL if no device is found.
  */
-struct mount *devtomp(dev)
-    dev_t dev;
+struct mount *devtomp(dev_t dev)
 {
     struct mount *mp, *nmp;
 

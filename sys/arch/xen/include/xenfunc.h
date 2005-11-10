@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.2.2.6 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.2.2.7 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -53,8 +53,10 @@ void xen_update_descriptor(union descriptor *, union descriptor *);
 static __inline void 
 invlpg(u_int addr)
 {
+	int s = splvm();
 	xpq_queue_invlpg(addr);
 	xpq_flush_queue();
+	splx(s);
 }  
 
 static __inline void
@@ -90,19 +92,25 @@ rcr0(void)
 
 #define lcr3(_v) _lcr3((_v), __FILE__, __LINE__)
 static __inline void
-_lcr3(u_int val, char *file, int line)
+_lcr3(u_int val, const char *file, int line)
 {
+	int s = splvm();
 /* 	__PRINTK(("lcr3 %08x at %s:%d\n", val, file, line)); */
 	xpq_queue_pt_switch(xpmap_ptom(val) & PG_FRAME);
 	xpq_flush_queue();
+	splx(s);
 }
 
 static __inline void
 tlbflush(void)
 {
+	int s = splvm();
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
+	splx(s);
 }
+
+#define	tlbflushg()	tlbflush()	/* we don't use PGE */
 
 static __inline u_int
 rdr6(void)

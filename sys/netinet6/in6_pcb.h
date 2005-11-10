@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.21.6.3 2004/09/21 13:37:33 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.21.6.4 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ void	in6_pcbdisconnect __P((struct in6pcb *));
 struct	in6pcb *in6_pcblookup_port __P((struct inpcbtable *, struct in6_addr *,
 	u_int, int));
 int	in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
-	u_int, struct sockaddr *, u_int, int, void *,
+	u_int, const struct sockaddr *, u_int, int, void *,
 	void (*)(struct in6pcb *, int)));
 void	in6_pcbpurgeif0 __P((struct inpcbtable *, struct ifnet *));
 void	in6_pcbpurgeif __P((struct inpcbtable *, struct ifnet *));
@@ -174,7 +174,7 @@ int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *, struct proc *));
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
 extern struct in6pcb *in6_pcblookup_connect __P((struct inpcbtable *,
-	struct in6_addr *, u_int, struct in6_addr *, u_int, int));
+	struct in6_addr *, u_int, const struct in6_addr *, u_int, int));
 extern struct in6pcb *in6_pcblookup_bind __P((struct inpcbtable *,
 	struct in6_addr *, u_int, int));
 #endif /* _KERNEL */

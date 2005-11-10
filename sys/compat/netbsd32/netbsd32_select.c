@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrll Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.4.2.4 2005/11/10 14:01:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.4 2005/11/10 14:01:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrl
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/poll.h>
+#include <sys/select.h>
+#include <sys/dirent.h>
 
 #include <sys/proc.h>
 
@@ -50,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrl
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_select(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_select_args /* {
 		syscallarg(int) nd;
@@ -62,104 +62,98 @@ netbsd32_select(l, v, retval)
 		syscallarg(netbsd32_fd_setp_t) ex;
 		syscallarg(netbsd32_timevalp_t) tv;
 	} */ *uap = v;
-/* This one must be done in-line 'cause of the timeval */
-	struct proc *p = l->l_proc;
+	int error;
 	struct netbsd32_timeval tv32;
-	caddr_t bits;
-	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
-	struct timeval atv;
-	int s, ncoll, error = 0, timo;
-	size_t ni;
-	extern int	selwait, nselcoll;
-	extern int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
-
-	if (SCARG(uap, nd) < 0)
-		return (EINVAL);
-	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
-		/* forgiving; slightly wrong */
-		SCARG(uap, nd) = p->p_fd->fd_nfiles;
-	}
-	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
-	if (ni * 6 > sizeof(smallbits))
-		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
-	else
-		bits = smallbits;
-
-#define	getbits(name, x) \
-	if (SCARG(uap, name)) { \
-		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, name)), \
-		    bits + ni * x, ni); \
-		if (error) \
-			goto done; \
-	} else \
-		memset(bits + ni * x, 0, ni);
-	getbits(in, 0);
-	getbits(ou, 1);
-	getbits(ex, 2);
-#undef	getbits
+	struct timeval atv, *tv = NULL;
 
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)),
-		    (caddr_t)&tv32, sizeof(tv32));
-		if (error)
-			goto done;
+		if ((error = copyin(NETBSD32PTR64(SCARG(uap, tv)),
+		    (caddr_t)&tv32, sizeof(tv32))) != 0)
+			return error;
 		netbsd32_to_timeval(&tv32, &atv);
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
+		tv = &atv;
 	}
-retry:
-	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
-	error = selscan(p, (fd_mask *)(bits + ni * 0),
-			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
-	if (error || *retval)
-		goto done;
-	if (SCARG(uap, tv)) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = hzto(&atv);
-	} else
-		timo = 0;
-	if (timo <= 0)
-		goto done;
-	s = splhigh();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
-		goto retry;
+
+	return selcommon(l, retval, SCARG(uap, nd), NETBSD32PTR64(SCARG(uap, in)),
+	    NETBSD32PTR64(SCARG(uap, ou)), NETBSD32PTR64(SCARG(uap, ex)), tv,
+	    NULL);
+}
+
+int
+netbsd32_pselect(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_pselect_args /* {
+		syscallarg(int) nd;
+		syscallarg(netbsd32_fd_setp_t) in;
+		syscallarg(netbsd32_fd_setp_t) ou;
+		syscallarg(netbsd32_fd_setp_t) ex;
+		syscallarg(const netbsd32_timespecp_t) ts;
+		syscallarg(const netbsd32_sigsetp_t) mask;
+	} */ *uap = v;
+	int error;
+	struct netbsd32_timespec ts32;
+	struct timespec ts;
+	struct timeval atv, *tv = NULL;
+	sigset_t amask, *mask = NULL;
+
+	if (SCARG(uap, ts)) {
+		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
+		    (caddr_t)&ts32, sizeof(ts32))) != 0)
+			return error;
+		netbsd32_to_timespec(&ts32, &ts);
+		atv.tv_sec = ts.tv_sec;
+		atv.tv_usec = ts.tv_nsec / 1000;
+		tv = &atv;
 	}
-	l->l_flag &= ~L_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
-done:
-	l->l_flag &= ~L_SELECT;
-	/* select is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-	if (error == 0) {
-#define	putbits(name, x) \
-		if (SCARG(uap, name)) { \
-			error = copyout(bits + ni * x, \
-			    (caddr_t)NETBSD32PTR64(SCARG(uap, name)), ni); \
-			if (error) \
-				goto out; \
-		}
-		putbits(in, 3);
-		putbits(ou, 4);
-		putbits(ex, 5);
-#undef putbits
+	if (SCARG(uap, mask)) {
+		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
+		    (caddr_t)&amask, sizeof(amask))) != 0)
+			return error;
+		mask = &amask;
 	}
-out:
-	if (ni * 6 > sizeof(smallbits))
-		free(bits, M_TEMP);
-	return (error);
+
+	return selcommon(l, retval, SCARG(uap, nd), NETBSD32PTR64(SCARG(uap, in)),
+	    NETBSD32PTR64(SCARG(uap, ou)), NETBSD32PTR64(SCARG(uap, ex)), tv,
+	    mask);
+}
+
+int
+netbsd32_pollts(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_pollts_args /* {
+		syscallarg(struct netbsd32_pollfdp_t) fds;
+		syscallarg(u_int) nfds;
+		syscallarg(const netbsd32_timespecp_t) ts;
+		syscallarg(const netbsd32_sigsetp_t) mask;
+	} */ *uap = v;
+	int error;
+	struct netbsd32_timespec ts32;
+	struct timespec ts;
+	struct timeval atv, *tv = NULL;
+	sigset_t amask, *mask = NULL;
+
+	if (SCARG(uap, ts)) {
+		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
+		    (caddr_t)&ts32, sizeof(ts32))) != 0)
+			return error;
+		netbsd32_to_timespec(&ts32, &ts);
+		atv.tv_sec = ts.tv_sec;
+		atv.tv_usec = ts.tv_nsec / 1000;
+		tv = &atv;
+	}
+	if (SCARG(uap, mask)) {
+		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
+		    (caddr_t)&amask, sizeof(amask))) != 0)
+			return error;
+		mask = &amask;
+	}
+
+	return pollcommon(l, retval, NETBSD32PTR64(SCARG(uap, fds)),
+	    SCARG(uap, nfds), tv, mask);
 }

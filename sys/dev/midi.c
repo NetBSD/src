@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.34.2.6 2005/03/04 16:40:53 skrll Exp $	*/
+/*	$NetBSD: midi.c,v 1.34.2.7 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.6 2005/03/04 16:40:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.7 2005/11/10 14:03:00 skrll Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -80,8 +80,8 @@ int midi_wait;
 void	midi_in(void *, int);
 void	midi_out(void *);
 int	midi_start_output(struct midi_softc *, int);
-int	midi_sleep_timo(int *, char *, int);
-int	midi_sleep(int *, char *);
+int	midi_sleep_timo(int *, const char *, int);
+int	midi_sleep(int *, const char *);
 void	midi_wakeup(int *);
 void	midi_initbuf(struct midi_buffer *);
 void	midi_timeout(void *);
@@ -231,7 +231,7 @@ midi_initbuf(struct midi_buffer *mb)
 }
 
 int
-midi_sleep_timo(int *chan, char *label, int timo)
+midi_sleep_timo(int *chan, const char *label, int timo)
 {
 	int st;
 
@@ -250,7 +250,7 @@ midi_sleep_timo(int *chan, char *label, int timo)
 }
 
 int
-midi_sleep(int *chan, char *label)
+midi_sleep(int *chan, const char *label)
 {
 	return midi_sleep_timo(chan, label, 0);
 }
@@ -656,14 +656,14 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
  * a write that is smaller than the MIDI buffer.
  */
 int
-midi_writebytes(int unit, u_char *buf, int cc)
+midi_writebytes(int unit, u_char *bf, int cc)
 {
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	struct midi_buffer *mb = &sc->outbuf;
 	int n, s;
 
 	DPRINTFN(2, ("midi_writebytes: %p, unit=%d, cc=%d\n", sc, unit, cc));
-	DPRINTFN(3, ("midi_writebytes: %x %x %x\n",buf[0],buf[1],buf[2]));
+	DPRINTFN(3, ("midi_writebytes: %x %x %x\n",bf[0],bf[1],bf[2]));
 
 	if (sc->dying)
 		return EIO;
@@ -677,13 +677,13 @@ midi_writebytes(int unit, u_char *buf, int cc)
 	if (cc < n)
 		n = cc;
 	mb->used += cc;
-	memcpy(mb->inp, buf, n);
+	memcpy(mb->inp, bf, n);
 	mb->inp += n;
 	if (mb->inp >= mb->end) {
 		mb->inp = mb->start;
 		cc -= n;
 		if (cc > 0) {
-			memcpy(mb->inp, buf + n, cc);
+			memcpy(mb->inp, bf + n, cc);
 			mb->inp += cc;
 		}
 	}
@@ -756,7 +756,7 @@ midipoll(dev_t dev, int events, struct lwp *l)
 	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
 
 	if (sc->dying)
-		return EIO;
+		return POLLHUP;
 
 	s = splaudio();
 

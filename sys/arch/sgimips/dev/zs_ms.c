@@ -1,7 +1,7 @@
-/*	$NetBSD: zs_ms.c,v 1.1.2.5 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.1.2.6 2005/11/10 13:58:33 skrll Exp $	*/
 
 /*
- * Copyright (c) 2004 Steve Rumble 
+ * Copyright (c) 2004 Steve Rumble
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * IP12/IP20 serial mouse driver attached to zs channel 1 at 4800bps.
  * This layer feeds wsmouse.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.1.2.5 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.1.2.6 2005/11/10 13:58:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,17 +65,17 @@ struct zsms_softc {
 	struct device	sc_dev;
 
 	/* tail-chasing fifo */
-	u_char		rxq[ZSMS_RXQ_LEN];	
+	u_char		rxq[ZSMS_RXQ_LEN];
 	u_char		rxq_head;
 	u_char		rxq_tail;
 
-	/* 5-byte packet as described above */ 
+	/* 5-byte packet as described above */
 #define	ZSMS_PACKET_SYNC	0
 #define	ZSMS_PACKET_X1		1
 #define	ZSMS_PACKET_Y1		2
 #define	ZSMS_PACKET_X2		3
 #define	ZSMS_PACKET_Y2		4
-	u_char		packet[5];
+	int8_t		packet[5];
 
 #define ZSMS_STATE_SYNC	0x01
 #define ZSMS_STATE_X1	0x02
@@ -84,13 +84,13 @@ struct zsms_softc {
 #define ZSMS_STATE_Y2	0x10
 	u_char		state;
 
-	/* wsmouse bits */	
+	/* wsmouse bits */
 	int		enabled;
 	struct device  *wsmousedev;
 };
 
 static int	zsms_match(struct device *, struct cfdata *, void *);
-static void	zsms_attach(struct device *, struct device *, void *); 
+static void	zsms_attach(struct device *, struct device *, void *);
 static void	zsms_rxint(struct zs_chanstate *);
 static void	zsms_txint(struct zs_chanstate *);
 static void	zsms_stint(struct zs_chanstate *, int);
@@ -100,15 +100,15 @@ static void	zsms_wsmouse_input(struct zsms_softc *);
 static int	zsms_wsmouse_enable(void *);
 static void	zsms_wsmouse_disable(void *);
 static int	zsms_wsmouse_ioctl(void *, u_long, caddr_t, int,
-						   struct lwp *); 
+						   struct lwp *);
 
 CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
 	      zsms_match, zsms_attach, NULL, NULL);
 
-static struct zsops zsms_zsops = { 
+static struct zsops zsms_zsops = {
 	zsms_rxint,
 	zsms_stint,
-	zsms_txint,	
+	zsms_txint,
 	zsms_softint
 };
 
@@ -164,7 +164,7 @@ zsms_attach(struct device *parent, struct device *self, void *aux)
 	/* attach wsmouse */
 	wsmaa.accessops =	&zsms_wsmouse_accessops;
 	wsmaa.accesscookie =	sc;
-	sc->wsmousedev =	config_found(self, &wsmaa, wsmousedevprint); 
+	sc->wsmousedev =	config_found(self, &wsmaa, wsmousedevprint);
 }
 
 void
@@ -209,7 +209,7 @@ zsms_softint(struct zs_chanstate *cs)
 {
 	struct zsms_softc *sc = (struct zsms_softc *)cs->cs_private;
 
-	/* No need to keep score if nobody is listening */ 
+	/* No need to keep score if nobody is listening */
 	if (!sc->enabled) {
 		sc->rxq_head = sc->rxq_tail;
 		return;
@@ -220,11 +220,11 @@ zsms_softint(struct zs_chanstate *cs)
 	 * then let wsmouse know what has happened.
 	 */
 	while (sc->rxq_head != sc->rxq_tail) {
-		u_char c = sc->rxq[sc->rxq_head];
+		int8_t c = sc->rxq[sc->rxq_head];
 
 		switch (sc->state) {
 		case ZSMS_STATE_SYNC:
-			if ((c & ZSMS_SYNC_MASK) == ZSMS_SYNC) { 
+			if ((c & ZSMS_SYNC_MASK) == ZSMS_SYNC) {
 				sc->packet[ZSMS_PACKET_SYNC] = c;
 				sc->state = ZSMS_STATE_X1;
 			}
@@ -265,18 +265,23 @@ zsms_softint(struct zs_chanstate *cs)
 static void
 zsms_wsmouse_input(struct zsms_softc *sc)
 {
-	int	x, y;
 	u_int	btns;
+	int bl, bm, br;
+	int	x, y;
 
-	btns = sc->packet[ZSMS_PACKET_SYNC] & ZSMS_SYNC_BTN_MASK;
-	x = sc->packet[ZSMS_PACKET_X1] + sc->packet[ZSMS_PACKET_X2];
-	y = sc->packet[ZSMS_PACKET_Y1] + sc->packet[ZSMS_PACKET_Y2];
+	btns = (uint8_t)sc->packet[ZSMS_PACKET_SYNC] & ZSMS_SYNC_BTN_MASK;
 
-	/*
-	 * XXX - how does wsmouse want the buttons represented???
-	 */
+	bl = (btns & ZSMS_SYNC_BTN_L) == 0;
+	bm = (btns & ZSMS_SYNC_BTN_M) == 0;
+	br = (btns & ZSMS_SYNC_BTN_R) == 0;
 
-	wsmouse_input(sc->wsmousedev, btns, x, y, 0, WSMOUSE_INPUT_DELTA);	
+	/* for wsmouse(4), 1 is down, 0 is up, the most left button is LSB */
+	btns = (bl ? (1 << 0) : 0) | (bm ? (1 << 1) : 0) | (br ? (1 << 2) : 0);
+
+	x = (int)sc->packet[ZSMS_PACKET_X1] + (int)sc->packet[ZSMS_PACKET_X2];
+	y = (int)sc->packet[ZSMS_PACKET_Y1] + (int)sc->packet[ZSMS_PACKET_Y2];
+
+	wsmouse_input(sc->wsmousedev, btns, x, y, 0, WSMOUSE_INPUT_DELTA);
 }
 
 static int
@@ -307,7 +312,7 @@ zsms_wsmouse_ioctl(void *cookie, u_long cmd,
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_SGI;	
+		*(u_int *)data = WSMOUSE_TYPE_SGI;
 		break;
 
 #ifdef notyet

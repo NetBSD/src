@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.60.2.4 2004/12/18 09:31:35 skrll Exp $ */
+/*	$NetBSD: sbus.c,v 1.60.2.5 2005/11/10 13:59:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60.2.4 2004/12/18 09:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60.2.5 2005/11/10 13:59:18 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -311,11 +311,11 @@ sbus_attach(parent, self, aux)
 	 */
 	node0 = OF_child(node);
 	for (node = node0; node; node = OF_peer(node)) {
-		char *name = prom_getpropstring(node, "name");
+		char *name1 = prom_getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
-			printf("sbus_attach: %s: incomplete\n", name);
+			printf("sbus_attach: %s: incomplete\n", name1);
 			continue;
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
@@ -635,10 +635,10 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[vec];
 #ifdef DEBUG
 			if (sbus_debug & SDB_INTR) {
-				int64_t intrmap = *ih->ih_map;
+				int64_t imap = *ih->ih_map;
 				
 				printf("SBUS %lx IRQ as %llx in slot %d\n", 
-				       (long)vec, (long long)intrmap, slot);
+				       (long)vec, (long long)imap, slot);
 				printf("\tmap addr %p clr addr %p\n",
 				    ih->ih_map, ih->ih_clr);
 			}
@@ -649,27 +649,27 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 			*(ih->ih_map) = vec;
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
-			int64_t intrmap = 0;
+			int64_t imap = 0;
 			int i;
 
 			/* Insert IGN */
 			vec |= sc->sc_ign;
 			for (i = 0; &intrptr[i] <=
 			    (int64_t *)&sc->sc_sysio->reserved_int_map &&
-			    INTVEC(intrmap = intrptr[i]) != INTVEC(vec); i++)
+			    INTVEC(imap = intrptr[i]) != INTVEC(vec); i++)
 				;
-			if (INTVEC(intrmap) == INTVEC(vec)) {
+			if (INTVEC(imap) == INTVEC(vec)) {
 				DPRINTF(SDB_INTR,
 				    ("OBIO %lx IRQ as %lx in slot %d\n", 
-				    vec, (long)intrmap, i));
+				    vec, (long)imap, i));
 				/* Register the map and clear intr registers */
 				ih->ih_map = &intrptr[i];
 				intrptr = (int64_t *)&sc->sc_sysio->scsi_clr_int;
 				ih->ih_clr = &intrptr[i];
 				/* Enable the interrupt */
-				intrmap |= INTMAP_V;
+				imap |= INTMAP_V;
 				/* XXXX */
-				*(ih->ih_map) = intrmap;
+				*(ih->ih_map) = imap;
 			} else
 				panic("IRQ not found!");
 		}

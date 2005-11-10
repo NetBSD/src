@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.31.2.7 2005/04/01 14:30:56 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.31.2.8 2005/11/10 14:09:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.7 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.8 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_verified_exec.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -69,6 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.7 2005/04/01 14:30:56 skrll E
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#ifdef VERIFIED_EXEC
+#define	VERIEXEC_NEED_NODE
+#include <sys/verified_exec.h>
+#endif /* VERIFIED_EXEC */
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -84,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.7 2005/04/01 14:30:56 skrll E
 #endif
 
 #include <machine/cpu.h>
+
+/* XXX this should not be here */
+int security_curtain = 0;
 
 /*
  * try over estimating by 5 procs/lwps
@@ -136,6 +144,10 @@ static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
+#ifdef VERIFIED_EXEC
+static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
+#endif
+static int sysctl_kern_cpid(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
@@ -238,6 +250,12 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 		       SYSCTL_DESCR("Emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security",
+		       SYSCTL_DESCR("Security"),
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
 }
 
 /*
@@ -331,6 +349,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "hardclock_ticks",
+		       SYSCTL_DESCR("Number of hardclock ticks"),
+		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
+		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode",
 		       SYSCTL_DESCR("System vnode table"),
 		       sysctl_kern_vnode, 0, NULL, 0,
@@ -372,7 +396,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "saved_ids",
-		       SYSCTL_DESCR("Whether saved set-group/user ID is "
+		       SYSCTL_DESCR("Whether POSIX saved set-group/user ID is "
 				    "available"), NULL,
 #ifdef _POSIX_SAVED_IDS
 		       1,
@@ -727,6 +751,46 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
+#ifdef VERIFIED_EXEC
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "veriexec",
+		       SYSCTL_DESCR("Verified Exec"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Verified Exec verbose level"),
+		       NULL, 0, &veriexec_verbose, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_VERBOSE,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "strict",
+		       SYSCTL_DESCR("Verified Exec strict level"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_STRICT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "algorithms",
+		       SYSCTL_DESCR("Verified Exec supported hashing "
+				    "algorithms"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_ALGORITHMS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &veriexec_count_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "count",
+		       SYSCTL_DESCR("Number of fingerprints on device(s)"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
+#endif /* VERIFIED_EXEC */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "cp_id",
+		       SYSCTL_DESCR("Mapping of CPU number to CPU id"),
+		       sysctl_kern_cpid, 0, NULL, 0,
+		       CTL_KERN, KERN_CP_ID, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -938,7 +1002,8 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
 			       CTLTYPE_STRING, "name", NULL,
-			       NULL, 0, cdp->debugname, 0,
+			       /*XXXUNCONST*/
+			       NULL, 0, __UNCONST(cdp->debugname), 0,
 			       CTL_DEBUG, i, CTL_DEBUG_NAME, CTL_EOL);
 		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
@@ -953,6 +1018,17 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 	}
 }
 #endif /* DEBUG */
+
+SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects"
+				    " to users not owning them."),
+		       NULL, 0, &security_curtain, 0,
+		       CTL_SECURITY, SECURITY_CURTAIN, CTL_EOL);
+}
 
 /*
  * ********************************************************************
@@ -1029,7 +1105,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.maxvnodes.  ensures that the new
+ * sysctl helper routine for kern.maxproc.  ensures that the new
  * values are not too low or too high.
  */
 static int
@@ -1188,6 +1264,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
+		if (CURTAIN(l->l_proc->p_ucred->cr_uid, fp->f_cred->cr_uid))
+			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
 			return (ENOMEM);
@@ -1495,7 +1573,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	struct shm_sysctl_info *shmsi = NULL;
 #endif
 	size_t infosize, dssize, tsize, buflen;
-	void *buf = NULL;
+	void *bf = NULL;
 	char *start;
 	int32_t nds;
 	int i, error, ret;
@@ -1556,25 +1634,25 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		*sizep = 0;
 		return (ENOMEM);
 	}
-	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
-	memset(buf, 0, min(tsize, buflen));
+	bf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
+	memset(bf, 0, min(tsize, buflen));
 
 	switch (*name) {
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
-		msgsi = (struct msg_sysctl_info *)buf;
+		msgsi = (struct msg_sysctl_info *)bf;
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
-		semsi = (struct sem_sysctl_info *)buf;
+		semsi = (struct sem_sysctl_info *)bf;
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
-		shmsi = (struct shm_sysctl_info *)buf;
+		shmsi = (struct shm_sysctl_info *)bf;
 		shmsi->shminfo = shminfo;
 		break;
 #endif
@@ -1610,12 +1688,12 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		}
 	}
 	*sizep -= buflen;
-	error = copyout(buf, start, *sizep);
+	error = copyout(bf, start, *sizep);
 	/* If copyout succeeded, use return code set earlier. */
 	if (error == 0)
 		error = ret;
-	if (buf)
-		free(buf, M_TEMP);
+	if (bf)
+		free(bf, M_TEMP);
 	return (error);
 }
 
@@ -1635,19 +1713,19 @@ static int
 sysctl_kern_maxptys(SYSCTLFN_ARGS)
 {
 	int pty_maxptys(int, int);		/* defined in kern/tty_pty.c */
-	int error, max;
+	int error, xmax;
 	struct sysctlnode node;
 
 	/* get current value of maxptys */
-	max = pty_maxptys(0, 0);
+	xmax = pty_maxptys(0, 0);
 
 	node = *rnode;
-	node.sysctl_data = &max;
+	node.sysctl_data = &xmax;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
-	if (max != pty_maxptys(max, 1))
+	if (xmax != pty_maxptys(xmax, 1))
 		return (EINVAL);
 
 	return (0);
@@ -1899,6 +1977,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
+			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
+				    fp->f_cred->cr_uid))
+				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
 				error = copyout(&kf, dp, out_size);
@@ -1922,6 +2003,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
+				continue;
+			if (CURTAIN(l->l_proc->p_ucred->cr_uid,
+				    p->p_ucred->cr_uid))
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2052,6 +2136,10 @@ again:
 		 */
 		if (p->p_stat == SIDL)
 			continue;
+
+		if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+			continue;
+
 		/*
 		 * TODO - make more efficient (see notes below).
 		 * do by session.
@@ -2188,6 +2276,10 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	int nargv, type, error;
 	char *arg;
 	char *tmp;
+	struct vmspace *vmspace;
+	vaddr_t psstr_addr;
+	vaddr_t offsetn;
+	vaddr_t offsetv;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -2208,16 +2300,27 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
+	proclist_lock_read();
+
 	/* check pid */
-	if ((p = pfind(pid)) == NULL)
-		return (EINVAL);
+	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
+		error = EINVAL;
+		goto out_locked;
+	}
+
+	if (CURTAIN(l->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid)) {
+		error = EPERM;
+		goto out_locked;
+	}
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
 		if (up->p_ucred->cr_uid != 0) {
 			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
-			    up->p_cred->p_ruid != p->p_cred->p_svuid)
-				return (EPERM);
+			    up->p_cred->p_ruid != p->p_cred->p_svuid) {
+				error = EPERM;
+				goto out_locked;
+			}
 		}
 	}
 
@@ -2226,24 +2329,40 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			*oldlenp = sizeof (int);
 		else
 			*oldlenp = ARG_MAX;	/* XXX XXX XXX */
-		return (0);
+		error = 0;
+		goto out_locked;
 	}
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
-		return (EINVAL);
+	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+		error = EINVAL;
+		goto out_locked;
+	}
 
 	/*
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
-		return (EFAULT);
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+		error = EFAULT;
+		goto out_locked;
+	}
 
-	p->p_vmspace->vm_refcnt++;	/* XXX */
+	psstr_addr = (vaddr_t)p->p_psstr;
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV) {
+		offsetn = p->p_psnargv;
+		offsetv = p->p_psargv;
+	} else {
+		offsetn = p->p_psnenv;
+		offsetv = p->p_psenv;
+	}
+	vmspace = p->p_vmspace;
+	vmspace->vm_refcnt++;	/* XXX */
+
+	proclist_unlock_read();
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2257,19 +2376,16 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	aiov.iov_len = sizeof(pss);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)p->p_psstr;
+	auio.uio_offset = psstr_addr;
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_lwp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
-	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
-		memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
-	else
-		memcpy(&nargv, (char *)&pss + p->p_psnenv, sizeof(nargv));
+	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
 		error = copyout(&nargv, oldp, sizeof(nargv));
 		*oldlenp = sizeof(nargv);
@@ -2281,10 +2397,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	switch (type) {
 	case KERN_PROC_ARGV:
 		/* XXX compat32 stuff here */
-		memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
-		break;
+		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
-		memcpy(&tmp, (char *)&pss + p->p_psenv, sizeof(tmp));
+		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
 		break;
 	default:
 		return (EINVAL);
@@ -2298,7 +2413,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_lwp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
@@ -2320,7 +2435,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_lwp = NULL;
-		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		error = uvm_io(&vmspace->vm_map, &auio);
 		if (error)
 			goto done;
 
@@ -2348,10 +2463,149 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	*oldlenp = len;
 
 done:
-	uvmspace_free(p->p_vmspace);
+	uvmspace_free(vmspace);
 
 	free(arg, M_TEMP);
+	return error;
+
+out_locked:
+	proclist_unlock_read();
+	return error;
+}
+
+/*
+ * Sysctl helper routine for Verified Exec.
+ */
+#ifdef VERIFIED_EXEC
+static int
+sysctl_kern_veriexec(SYSCTLFN_ARGS)
+{
+	int newval, error;
+	int *var = NULL, raise_only = 0;
+	struct sysctlnode node;
+
+	node = *rnode;
+
+	switch (rnode->sysctl_num) {
+	case VERIEXEC_STRICT:
+		raise_only = 1;
+		var = &veriexec_strict;
+		break;
+	case VERIEXEC_ALGORITHMS:
+		node.sysctl_data = veriexec_fp_names;
+		node.sysctl_size = strlen(veriexec_fp_names) + 1;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	default:
+		return (EINVAL);
+	}
+
+	newval = *var;
+
+	node.sysctl_data = &newval;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL) {
+		return (error);
+	}
+
+	if (raise_only && (newval < *var))
+		return (EPERM);
+
+	*var = newval;
+
 	return (error);
+}
+#endif /* VERIFIED_EXEC */
+
+/*
+ * sysctl helper routine for kern.cp_id node.  maps cpus to their
+ * cpuids.
+ */
+static int
+sysctl_kern_cpid(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+
+#ifndef MULTIPROCESSOR
+	u_int64_t id;
+
+	if (namelen == 1) {
+		if (name[0] != 0)
+			return (ENOENT);
+		/*
+		 * you're allowed to ask for the zero'th processor
+		 */
+		name++;
+		namelen--;
+	}
+	node.sysctl_data = &id;
+	node.sysctl_size = sizeof(id);
+	id = cpu_number();
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+
+#else /* MULTIPROCESSOR */
+	u_int64_t *cp_id = NULL;
+	int error, n = sysctl_ncpus();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	/*
+	 * here you may either retrieve a single cpu id or the whole
+	 * set.  the size you get back when probing depends on what
+	 * you ask for.
+	 */
+	switch (namelen) {
+	case 0:
+		node.sysctl_size = n * sizeof(u_int64_t);
+		n = -2; /* ALL */
+		break;
+	case 1:
+		if (name[0] < 0 || name[0] >= n)
+			return (ENOENT); /* ENOSUCHPROCESSOR */
+		node.sysctl_size = sizeof(u_int64_t);
+		n = name[0];
+		/*
+		 * adjust these so that sysctl_lookup() will be happy
+		 */
+		name++;
+		namelen--;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	cp_id = malloc(node.sysctl_size, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (cp_id == NULL)
+		return (ENOMEM);
+	node.sysctl_data = cp_id;
+	memset(cp_id, 0, node.sysctl_size);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (n <= 0)
+			cp_id[0] = ci->ci_cpuid;
+		/*
+		 * if a specific processor was requested and we just
+		 * did it, we're done here
+		 */
+		if (n == 0)
+			break;
+		/*
+		 * if doing "all", skip to next cp_id slot for next processor
+		 */
+		if (n == -2)
+			cp_id++;
+		/*
+		 * if we're doing a specific processor, we're one
+		 * processor closer
+		 */
+		if (n > 0)
+			n--;
+	}
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	free(node.sysctl_data, M_TEMP);
+	return (error);
+
+#endif /* MULTIPROCESSOR */
 }
 
 /*

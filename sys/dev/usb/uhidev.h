@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.3.6.2 2004/09/21 13:33:46 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.3.6.3 2005/11/10 14:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,11 +46,15 @@ struct uhidev_softc {
 	USBBASEDEVICE sc_dev;		/* base device */
 	usbd_device_handle sc_udev;
 	usbd_interface_handle sc_iface;	/* interface */
-	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
-	int sc_ep_addr;
+	usbd_pipe_handle sc_ipipe;	/* input interrupt pipe */
+	int sc_iep_addr;
 
 	u_char *sc_ibuf;
 	u_int sc_isize;
+
+	usbd_pipe_handle sc_opipe;	/* output interrupt pipe */
+	usbd_xfer_handle sc_oxfer;	/* write request */
+	int sc_oep_addr;
 
 	void *sc_repdesc;
 	int sc_repdesc_size;
@@ -89,3 +93,4 @@ void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *scd, int type, void *data,int len);
 void uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len);
 usbd_status uhidev_get_report(struct uhidev *scd, int type, void *data,int len);
+usbd_status uhidev_write(struct uhidev_softc *, void *, int);

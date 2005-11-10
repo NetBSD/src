@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.15.2.5 2005/04/01 14:29:52 skrll Exp $	*/
+/*	$NetBSD: spkr.c,v 1.15.2.6 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.2.5 2005/04/01 14:29:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.2.6 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,11 @@ static void playtone(int, int, int);
 static void playstring(char *, int);
 
 static
-void tone(hz, ticks)
+void tone(xhz, ticks)
 /* emit tone of frequency hz for given number of ticks */
-    u_int hz, ticks;
+    u_int xhz, ticks;
 {
-	pcppi_bell(ppicookie, hz, ticks, PCPPI_BELL_SLEEP);
+	pcppi_bell(ppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
 }
 
 static void
@@ -190,9 +190,9 @@ playinit()
 }
 
 static void
-playtone(pitch, value, sustain)
+playtone(pitch, val, sustain)
 /* play tone of proper duration for current rhythm signature */
-    int	pitch, value, sustain;
+    int	pitch, val, sustain;
 {
     int	sound, silence, snum = 1, sdenom = 1;
 
@@ -204,12 +204,12 @@ playtone(pitch, value, sustain)
     }
 
     if (pitch == -1)
-	rest(whole * snum / (value * sdenom));
+	rest(whole * snum / (val * sdenom));
     else
     {
-	sound = (whole * snum) / (value * sdenom)
-		- (whole * (FILLTIME - fill)) / (value * FILLTIME);
-	silence = whole * (FILLTIME-fill) * snum / (FILLTIME * value * sdenom);
+	sound = (whole * snum) / (val * sdenom)
+		- (whole * (FILLTIME - fill)) / (val * FILLTIME);
+	silence = whole * (FILLTIME-fill) * snum / (FILLTIME * val * sdenom);
 
 #ifdef SPKRDEBUG
 	printf("playtone: pitch %d for %d ticks, rest for %d ticks\n",

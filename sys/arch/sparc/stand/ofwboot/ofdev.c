@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4.2.4 2004/11/14 08:15:32 skrll Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4.2.5 2005/11/10 13:59:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ filename(str, ppart)
 	char savec;
 	int dhandle;
 	char devtype[16];
-	
+
 	lp = str;
 	devtype[0] = 0;
 	*ppart = 0;
@@ -138,20 +138,20 @@ strategy(devdata, rw, blk, size, buf, rsize)
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
 	int n;
-	
+
 	if (rw != F_READ)
 		return EPERM;
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
-	
+
 #ifdef NON_DEBUG
-	printf("strategy: block %lx, partition offset %lx, blksz %lx\n", 
+	printf("strategy: block %lx, partition offset %lx, blksz %lx\n",
 	       (long)blk, (long)dev->partoff, (long)dev->bsize);
-	printf("strategy: seek position should be: %lx\n", 
+	printf("strategy: seek position should be: %lx\n",
 	       (long)((blk + dev->partoff) * dev->bsize));
 #endif
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
-	
+
 	for (;;) {
 #ifdef NON_DEBUG
 		printf("strategy: seeking to %lx\n", (long)pos);
@@ -178,7 +178,7 @@ devclose(of)
 {
 	struct of_dev *op = of->f_devdata;
 
-#ifdef NETBOOT	
+#ifdef NETBOOT
 	if (op->type == OFDEV_NET)
 		net_close(op);
 #endif
@@ -196,20 +196,13 @@ static struct devsw devsw[1] = {
 int ndevs = sizeof devsw / sizeof devsw[0];
 
 #ifdef SPARC_BOOT_UFS
-static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
+static struct fs_ops file_system_ufs = FS_OPS(ufs);
 #endif
 #ifdef SPARC_BOOT_HSFS
-static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
-};
+static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 #endif
 #ifdef NETBOOT
-static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+static struct fs_ops file_system_nfs = FS_OPS(nfs);
 #endif
 
 struct fs_ops file_system[3];
@@ -227,7 +220,7 @@ get_long(p)
 	const void *p;
 {
 	const unsigned char *cp = p;
-	
+
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 /************************************************************************
@@ -354,7 +347,7 @@ search_label(devp, off, buf, lp, off0)
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
 	int error;
-	
+
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -479,7 +472,7 @@ devopen(of, name, file)
 			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, buf, &label, 0);
-			if (errmsg) { 
+			if (errmsg) {
 				printf("devopen: search_label returned %s\n", errmsg);
 				error = ERDLAB;
 			}
@@ -508,7 +501,7 @@ devopen(of, name, file)
 #endif
 			}
 		}
-		
+
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS

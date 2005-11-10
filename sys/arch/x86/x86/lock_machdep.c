@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock_machdep.c,v 1.1.2.4 2004/11/02 07:51:06 skrll Exp $ */
+/* 	$NetBSD: lock_machdep.c,v 1.1.2.5 2005/11/10 14:00:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.1.2.4 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.1.2.5 2005/11/10 14:00:20 skrll Exp $");
 
 /*
  * Machine-dependent spin lock operations.
@@ -75,14 +75,14 @@ __cpu_simple_lock(lockp)
 #if defined (DEBUG)
 #if defined(DDB)
 	int spincount = 0;
-	int cpu = cpu_number();
-	int limit = spin_limit * (cpu + 1);
+	int mycpu = cpu_number();
+	int limit = spin_limit * (mycpu + 1);
 #endif
 	__cpu_simple_lock_t v = *lockp;
 
 	KDASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #if defined(DDB)
-	wantlock[cpu] = lockp;
+	wantlock[mycpu] = lockp;
 #endif
 #endif
 
@@ -97,18 +97,18 @@ __cpu_simple_lock(lockp)
 
 			if (db_active) {
 				db_printf("cpu%d: spinout while in debugger\n",
-				    cpu);
+				    mycpu);
 				while (db_active)
 					;
 			}
-			db_printf("cpu%d: spinout\n", cpu);
+			db_printf("cpu%d: spinout\n", mycpu);
 			Debugger();
 		}
 #endif
 	}
 #if defined(DEBUG) && defined(DDB)
-	wantlock[cpu] = 0;
-	gotlock[cpu] = lockp;
+	wantlock[mycpu] = 0;
+	gotlock[mycpu] = lockp;
 #endif
 	__insn_barrier();
 }

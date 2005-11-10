@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9.24.3 2004/09/21 13:22:57 skrll Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.9.24.4 2005/11/10 13:59:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.24.3 2004/09/21 13:22:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.24.4 2005/11/10 13:59:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -116,18 +116,18 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.24.3 2004/09/21 13:22:57 skrll Exp
 
 struct sparc_insn {
 	  unsigned int match;
-	  char* name;
-	  char* format;
+	  const char* name;
+	  const char* format;
 };
 
-char* regs[] = {
+const char* regs[] = {
 	"g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7",
 	"o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7",
 	"l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
 	"i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7"
 };
 
-char* priv_regs[] = {
+const char* priv_regs[] = {
 	"tpc", "tnpc", "tstate", "tt", "tick", "tba", "pstate", "tl",
 	"pil", "cwp", "cansave", "canrestore", "cleanwin", "otherwin",
 	"wstate", "fq",
@@ -135,18 +135,18 @@ char* priv_regs[] = {
 	"", "", "", "", "", "", "", "ver"
 };
 
-char* state_regs[] = {
+const char* state_regs[] = {
 	"y", "", "ccr", "asi", "tick", "pc", "fprs", "asr",
 	"", "", "", "", "", "", "", "",
 	"pcr", "pic", "dcr", "gsr", "set_softint", "clr_softint", "softint", "tick_cmpr", "",
 	"", "", "", "", "", "", "", ""
 };
 
-char* ccodes[] = {
+const char* ccodes[] = {
 	"fcc0", "fcc1", "fcc2", "fcc3", "icc", "", "xcc", ""
 };
 
-char* prefetch[] = {
+const char* prefetch[] = {
 	"n_reads", "one_read", "n_writes", "one_write", "page"
 };
 
@@ -884,7 +884,7 @@ db_disasm(loc, altfmt)
 
 	unsigned int insn, you_lose, bitmask;
 	int matchp;
-	char* f_ptr, *cp;
+	const char *f_ptr, *cp;
 
 	you_lose = 0;
 	matchp = 0;

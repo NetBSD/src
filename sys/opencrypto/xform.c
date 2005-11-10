@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.13.4.4 2004/09/21 13:38:44 skrll Exp $ */
+/*	$NetBSD: xform.c,v 1.13.4.5 2005/11/10 14:12:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.13.4.4 2004/09/21 13:38:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.13.4.5 2005/11/10 14:12:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 		M_CRYPTO_DATA, M_NOWAIT);
 	if (p != NULL) {
 		bzero(p, sizeof(des_key_schedule));
-		des_set_key((des_cblock *) key, p[0]);
+		des_set_key((des_cblock *)__UNCONST(key), p[0]);
 		err = 0;
 	} else
 		err = ENOMEM;
@@ -370,9 +370,9 @@ des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 		M_CRYPTO_DATA, M_NOWAIT);
 	if (p != NULL) {
 		bzero(p, 3*sizeof(des_key_schedule));
-		des_set_key((des_cblock *)(key +  0), p[0]);
-		des_set_key((des_cblock *)(key +  8), p[1]);
-		des_set_key((des_cblock *)(key + 16), p[2]);
+		des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
+		des_set_key((des_cblock *)__UNCONST(key +  8), p[1]);
+		des_set_key((des_cblock *)__UNCONST(key + 16), p[2]);
 		err = 0;
 	} else
 		err = ENOMEM;

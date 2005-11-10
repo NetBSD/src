@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.2.24.3 2004/09/21 13:30:18 skrll Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.2.24.4 2005/11/10 14:05:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.2.24.3 2004/09/21 13:30:18 skrll Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.2.24.4 2005/11/10 14:05:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2.24.3 2004/09/21 13:30:18 skrll Exp $\t*/\n\n");
+	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2.24.4 2005/11/10 14:05:43 skrll Exp $\t*/\n\n");
 	fprintf(out_file, "\
 /*
  * Firmware for Cyclades Z series multiport serial boards.
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 	fprintf(out_file, "#ifndef _%s_\n", include_name);
 	fprintf(out_file, "#define\t_%s_\n\n", include_name);
 
-	fprintf(out_file, "static const u_int8_t cycladesz_firmware[] = {\n");
+	fprintf(out_file, "static const uint8_t cycladesz_firmware[] = {\n");
 
 	i = 0;
 	while (in_len != 0) {

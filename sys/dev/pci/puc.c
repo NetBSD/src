@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.18.2.5 2005/03/04 16:45:26 skrll Exp $	*/
+/*	$NetBSD: puc.c,v 1.18.2.6 2005/11/10 14:06:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18.2.5 2005/03/04 16:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18.2.6 2005/11/10 14:06:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,25 +95,12 @@ struct puc_softc {
         } sc_ports[PUC_MAX_PORTS];
 };
 
-int	puc_match(struct device *, struct cfdata *, void *);
-void	puc_attach(struct device *, struct device *, void *);
-int	puc_print(void *, const char *);
-int	puc_submatch(struct device *, struct cfdata *,
-			  const locdesc_t *, void *);
+static int	puc_print(void *, const char *);
 
-CFATTACH_DECL(puc, sizeof(struct puc_softc),
-    puc_match, puc_attach, NULL, NULL);
+static const char *puc_port_type_name(int);
 
-const struct puc_device_description *
-	puc_find_description(pcireg_t, pcireg_t, pcireg_t, pcireg_t);
-static const char *
-	puc_port_type_name(int);
-
-int
-puc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+puc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct puc_device_description *desc;
@@ -152,10 +139,8 @@ puc_match(parent, match, aux)
 	return (0);
 }
 
-void
-puc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct puc_softc *sc = (struct puc_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -168,8 +153,7 @@ puc_attach(parent, self, aux)
 #ifdef PUCCN
 	bus_space_handle_t ioh;
 #endif
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[PUCCF_NLOCS];
 
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
@@ -314,19 +298,19 @@ puc_attach(parent, self, aux)
 		    (long)paa.t, (long)paa.h);
 #endif
 
-		ldesc->len = 1;
-		ldesc->locs[PUCCF_PORT] = i;
+		locs[PUCCF_PORT] = i;
 
 		/* and configure it */
-		sc->sc_ports[i].dev = config_found_sm_loc(self, "puc", ldesc,
-			&paa, puc_print, puc_submatch);
+		sc->sc_ports[i].dev = config_found_sm_loc(self, "puc", locs,
+			&paa, puc_print, config_stdsubmatch);
 	}
 }
 
-int
-puc_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+CFATTACH_DECL(puc, sizeof(struct puc_softc),
+    puc_match, puc_attach, NULL, NULL);
+
+static int
+puc_print(void *aux, const char *pnp)
 {
 	struct puc_attach_args *paa = aux;
 
@@ -336,24 +320,9 @@ puc_print(aux, pnp)
 	return (UNCONF);
 }
 
-int
-puc_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const locdesc_t *ldesc;
-	void *aux;
-{
-
-	if (cf->cf_loc[PUCCF_PORT] != PUCCF_PORT_DEFAULT &&
-	    cf->cf_loc[PUCCF_PORT] != ldesc->locs[PUCCF_PORT])
-		return 0;
-
-	return (config_match(parent, cf, aux));
-}
-
 const struct puc_device_description *
-puc_find_description(vend, prod, svend, sprod)
-	pcireg_t vend, prod, svend, sprod;
+puc_find_description(pcireg_t vend, pcireg_t prod, pcireg_t svend,
+    pcireg_t sprod)
 {
 	int i;
 
@@ -374,8 +343,7 @@ puc_find_description(vend, prod, svend, sprod)
 }
 
 static const char *
-puc_port_type_name(type)
-	int type;
+puc_port_type_name(int type)
 {
 
 	switch (type) {

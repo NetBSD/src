@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.11.6.4 2004/10/19 15:56:44 skrll Exp $
+$NetBSD: TODO,v 1.11.6.5 2005/11/10 14:03:00 skrll Exp $
 
 In rough order.
 
@@ -13,15 +13,15 @@ done	examine /m (hex + character dump) doesn't work.
 4.	"dot", "next", and "last" are not set properly and are usually
 	the same.
 
-5.	The vax port supports decimal pids in "kill", etc. This should be
+5.	The vax port supports decimal pids in "trace", etc. This should be
 	MI or not exist at all.
 
-6.	double-quote delimitted strings don't work in "print", nor do
+6.	double-quote delimited strings don't work in "print", nor do
 	multiple arguments (like the manpage says)
 
 Features to be implemented:
 
-1.	Have "ps" print pids with a 0t prefix to reduce radix
+dead	Have "ps" print pids with a 0t prefix to reduce radix
 	confusion. This is very ugly...needs thought.
 
 done	"set" should display the old value as "write" does.

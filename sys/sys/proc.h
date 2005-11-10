@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.9 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.10 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -128,6 +128,9 @@ struct emul {
 	int		(*e_fault)(struct proc *, vaddr_t, int, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
+
+	/* Emulation-specific hook for userspace page faults */
+	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 };
 
 /*
@@ -148,6 +151,7 @@ struct emul {
  *
  * Fields marked 'p:' are protected by the process's own p_lock.
  * Fields marked 'l:' are protected by the proclist_lock
+ * Fields marked 's:' are protected by the SCHED_LOCK.
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
@@ -166,7 +170,7 @@ struct proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
-	int		p_exitsig;	/* signal to sent to parent on exit */
+	int		p_exitsig;	/* signal to send to parent on exit */
 	int		p_flag;		/* P_* flags. */
 	char		p_stat;		/* S* process status. */
 	char		p_pad1[3];
@@ -188,7 +192,7 @@ struct proc {
 #define	p_startzero	p_nlwps
 
 	int 		p_nlwps;	/* p: Number of LWPs */
-	int 		p_nrlwps;	/* p: Number of running LWPs */
+	int 		p_nrlwps;	/* s: Number of running LWPs */
 	int 		p_nzlwps;	/* p: Number of zombie LWPs */
 	int 		p_nlwpid;	/* p: Next LWP ID */
 
@@ -197,7 +201,7 @@ struct proc {
 	struct sadata 	*p_sa;		/* Scheduler activation information */
 
 	/* scheduling */
-	u_int		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
+	fixpt_t		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	int		p_cpticks;	/* Ticks of CPU time */
 	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
@@ -440,14 +444,14 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(const void *, int, const char *, int,
+int	ltsleep(__volatile const void *, int, const char *, int,
 	    __volatile struct simplelock *);
-void	wakeup(const void *);
-void	wakeup_one(const void *);
+void	wakeup(__volatile const void *);
+void	wakeup_one(__volatile const void *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
-void	proc0_insert(struct proc *, struct lwp *, struct pgrp *, struct session *);
+void	proc0_init(void);
 void	proc_free(struct proc *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
@@ -464,6 +468,10 @@ void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 #ifndef cpu_lwp_free
 void	cpu_lwp_free(struct lwp *, int);
+#endif
+
+#ifdef __HAVE_SYSCALL_INTERN
+void	syscall_intern(struct proc *);
 #endif
 
 void	child_return(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.8.6.1 2005/03/04 16:39:53 skrll Exp $ */
+/* $NetBSD: linux_signal.h,v 1.8.6.2 2005/11/10 14:01:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@ struct linux_pt_regs {
 #define LINUX_SA_NOMASK		LINUX_SA_NODEFER
 #define LINUX_SA_ONESHOT	LINUX_SA_RESETHAND
 #define LINUX_SA_ALLBITS	0xfc010009 /* XXX from i386, not in mips. */
+
+#define	LINUX_MINSIGSTKSZ	2048
 
 typedef void (*linux___sighandler_t) __P((int));
 

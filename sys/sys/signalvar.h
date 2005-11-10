@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.39.2.5 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.39.2.6 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -131,6 +131,8 @@ do {									\
 
 #ifdef _KERNEL
 
+#include <sys/systm.h>			/* for copyin_t/copyout_t */
+
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
@@ -140,7 +142,7 @@ struct ucred;
  * Machine-independent functions:
  */
 int	coredump(struct lwp *, const char *);
-int	coredump_netbsd(struct lwp *, struct vnode *, struct ucred *);
+int	coredump_netbsd(struct lwp *, void *);
 void	execsigs(struct proc *);
 void	gsignal(int, int);
 void	kgsignal(int, struct ksiginfo *, void *);
@@ -177,33 +179,18 @@ void	sigactsunshare(struct proc *);
 void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
+siginfo_t *siginfo_alloc(int);
+void	siginfo_free(void *);
+
+int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
+    copyin_t, copyout_t);
 
 /*
  * Machine-dependent functions:
  */
 void	sendsig(const struct ksiginfo *, const sigset_t *);
-struct core;
-struct core32;
-int	cpu_coredump(struct lwp *, struct vnode *, struct ucred *,
-	    struct core *);
-int	cpu_coredump32(struct lwp *, struct vnode *, struct ucred *,
-	    struct core32 *);
 
-/*
- * Compatibility functions.  See compat/common/kern_sig_13.c.
- */
-void	native_sigset13_to_sigset(const sigset13_t *, sigset_t *);
-void	native_sigset_to_sigset13(const sigset_t *, sigset13_t *);
-void	native_sigaction13_to_sigaction(const struct sigaction13 *,
-	    struct sigaction *);
-void	native_sigaction_to_sigaction13(const struct sigaction *,
-	    struct sigaction13 *);
-void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
-	    struct sigaltstack *);
-void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
-	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
-#endif	/* !_SYS_SIGNALVAR_H_ */
 
 #ifdef	_KERNEL
 #ifdef	SIGPROP
@@ -278,3 +265,4 @@ const int sigprop[NSIG] = {
 extern const int sigprop[NSIG];
 #endif	/* SIGPROP */
 #endif	/* _KERNEL */
+#endif	/* !_SYS_SIGNALVAR_H_ */

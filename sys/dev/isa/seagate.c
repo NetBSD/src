@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.54.2.4 2005/03/04 16:43:16 skrll Exp $	*/
+/*	$NetBSD: seagate.c,v 1.54.2.5 2005/11/10 14:05:37 skrll Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.54.2.4 2005/03/04 16:43:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.54.2.5 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ static volatile int main_running = 0;
 				 */
 
 typedef struct {
-	char *signature;
+	const char *signature;
 	int offset, length;
 	int type;
 } BiosSignature;

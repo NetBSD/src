@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.95.2.8 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.95.2.9 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -161,7 +161,8 @@ struct ctlname {
 #define	CTL_PROC	10		/* per-proc attr */
 #define	CTL_VENDOR	11		/* vendor-specific data */
 #define	CTL_EMUL	12		/* emulation-specific data */
-#define	CTL_MAXID	13		/* number of valid top-level ids */
+#define	CTL_SECURITY	13		/* security */
+#define	CTL_MAXID	14		/* number of valid top-level ids */
 
 #define	CTL_NAMES { \
 	{ 0, 0 }, \
@@ -177,6 +178,7 @@ struct ctlname {
 	{ "proc", CTLTYPE_NODE }, \
 	{ "vendor", CTLTYPE_NODE }, \
 	{ "emul", CTLTYPE_NODE }, \
+	{ "security", CTLTYPE_NODE }, \
 }
 
 /*
@@ -268,7 +270,10 @@ struct ctlname {
 #define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
 #define	KERN_BUF		76	/* struct: buffers */
 #define	KERN_FILE2		77	/* struct: file entries */
-#define	KERN_MAXID		78	/* number of valid kern ids */
+#define	KERN_VERIEXEC		78	/* node: verified exec */
+#define	KERN_CP_ID		79	/* struct: cpu id numbers */
+#define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
+#define	KERN_MAXID		81	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -350,6 +355,9 @@ struct ctlname {
 	{ "drivers", CTLTYPE_STRUCT }, \
 	{ "buf", CTLTYPE_NODE }, \
 	{ "file2", CTLTYPE_STRUCT }, \
+	{ "veriexec", CTLTYPE_NODE }, \
+	{ "cp_id", CTLTYPE_STRUCT }, \
+	{ "hardclock_ticks", CTLTYPE_INT }, \
 }
 
 /*
@@ -701,7 +709,9 @@ struct kinfo_file {
 #define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
 #define	HW_PHYSMEM64	13		/* quad: total memory (bytes) */
 #define	HW_USERMEM64	14		/* quad: non-kernel memory (bytes) */
-#define	HW_MAXID	15		/* number of valid hw ids */
+#define	HW_TAPENAMES	15		/* string: tape drive names */
+#define	HW_TAPESTATS	16		/* struct: tapestats[] */
+#define	HW_MAXID	16		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -888,6 +898,20 @@ struct kinfo_file {
 	{ "mach", CTLTYPE_NODE }, \
 }
 
+/*
+ * CTL_SECURITY definitions.
+ */
+#define	SECURITY_CURTAIN	1
+#define	SECURITY_MAXID		2
+
+#define	CTL_SECURITY_NAMES { \
+	{ 0, 0 }, \
+	{ "curtain", CTLTYPE_INT }, \
+}
+
+/* XXX this should not be here */
+extern int security_curtain;
+
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
@@ -924,7 +948,7 @@ struct sysctllog;
  * infrastructure is retained for backwards compatibility.
  */
 struct ctldebug {
-	char	*debugname;	/* name of debugging variable */
+	const char *debugname;	/* name of debugging variable */
 	int	*debugvar;	/* pointer to debugging variable */
 };
 #ifdef	DEBUG
@@ -940,15 +964,9 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #define SYSCTLFN_ARGS const int *name, u_int namelen, void *oldp, \
 	size_t *oldlenp, const void *newp, size_t newlen, \
 	const int *oname, struct lwp *l, const struct sysctlnode *rnode
-#define SYSCTLFN_RWPROTO const int *, u_int, void *, \
-	size_t *, const void *, size_t, \
-	const int *, struct lwp *, struct sysctlnode *
-#define SYSCTLFN_RWARGS const int *name, u_int namelen, void *oldp, \
-	size_t *oldlenp, const void *newp, size_t newlen, \
-	const int *oname, struct lwp *l, struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
-	oname, l, (struct sysctlnode *)node
+	oname, l, node
 
 #ifdef _LKM
 
@@ -1017,28 +1035,28 @@ void	sysctl_init(void);
  * typical syscall call order
  */
 int	sysctl_lock(struct lwp *, void *, size_t);
-int	sysctl_dispatch(SYSCTLFN_RWPROTO);
+int	sysctl_dispatch(SYSCTLFN_PROTO);
 void	sysctl_unlock(struct lwp *);
 
 /*
  * tree navigation primitives (must obtain lock before using these)
  */
-int	sysctl_locate(struct lwp *, const int *, u_int, struct sysctlnode **,
-		      int *);
+int	sysctl_locate(struct lwp *, const int *, u_int,
+		      const struct sysctlnode **, int *);
 int	sysctl_query(SYSCTLFN_PROTO);
 #ifdef SYSCTL_DEBUG_CREATE
 #define sysctl_create _sysctl_create
 #endif /* SYSCTL_DEBUG_CREATE */
-int	sysctl_create(SYSCTLFN_RWPROTO);
-int	sysctl_destroy(SYSCTLFN_RWPROTO);
-int	sysctl_lookup(SYSCTLFN_RWPROTO);
+int	sysctl_create(SYSCTLFN_PROTO);
+int	sysctl_destroy(SYSCTLFN_PROTO);
+int	sysctl_lookup(SYSCTLFN_PROTO);
 int	sysctl_describe(SYSCTLFN_PROTO);
 
 /*
  * simple variadic interface for adding/removing nodes
  */
 int	sysctl_createv(struct sysctllog **, int,
-		       struct sysctlnode **, struct sysctlnode **,
+		       const struct sysctlnode **, const struct sysctlnode **,
 		       int, int, const char *, const char *,
 		       sysctlfn, u_quad_t, void *, size_t, ...);
 int	sysctl_destroyv(struct sysctlnode *, ...);
@@ -1067,6 +1085,8 @@ int	old_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
  */
 int	sysctl_hw_disknames(SYSCTLFN_PROTO);
 int	sysctl_hw_diskstats(SYSCTLFN_PROTO);
+int	sysctl_hw_tapenames(SYSCTLFN_PROTO);
+int	sysctl_hw_tapestats(SYSCTLFN_PROTO);
 int	sysctl_kern_vnode(SYSCTLFN_PROTO);
 int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
 int	sysctl_consdev(SYSCTLFN_PROTO);
@@ -1190,13 +1210,13 @@ struct sysctldesc {
 
 #define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
 #define __sysc_desc_adv(d, l) \
-	(/*LINTED ptr cast*/(struct sysctldesc *) \
-	(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
+	(/*XXXUNCONST ptr cast*/(struct sysctldesc *) \
+	__UNCONST(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) +\
 		__sysc_desc_roundup(l)))
 #define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 
-static __inline struct sysctlnode *
-sysctl_rootof(struct sysctlnode *n)
+static __inline const struct sysctlnode *
+sysctl_rootof(const struct sysctlnode *n)
 {
 	while (n->sysctl_parent != NULL)
 		n = n->sysctl_parent;

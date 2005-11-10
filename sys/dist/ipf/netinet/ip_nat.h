@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.2.6 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.6 2005/02/04 09:56:15 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.9 2005/03/28 11:09:55 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -137,7 +137,6 @@ typedef	struct	nat	{
 #define	nat_seq		nat_un.nat_uni.ici_seq
 #define	nat_id		nat_un.nat_uni.ici_id
 #define	nat_tcpstate	nat_tqe.tqe_state
-#define	nat_gre		nat_un.nat_ugre
 
 /*
  * Values for nat_dir
@@ -251,6 +250,8 @@ typedef	struct	ipnat	{
 #define	IPN_STICKY	0x80000
 #define	IPN_FRAG	0x100000
 #define	IPN_FIXEDDPORT	0x200000
+#define	IPN_FINDFORWARD	0x400000
+#define	IPN_IN		0x800000
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
 			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|\
 			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY)

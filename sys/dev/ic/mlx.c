@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.28.2.6 2005/03/04 16:41:30 skrll Exp $	*/
+/*	$NetBSD: mlx.c,v 1.28.2.7 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28.2.6 2005/03/04 16:41:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28.2.7 2005/11/10 14:04:15 skrll Exp $");
 
 #include "ld.h"
 
@@ -133,8 +133,6 @@ static void	mlx_periodic_thread(void *);
 static int	mlx_print(void *, const char *);
 static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
-static int	mlx_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
 static __inline__ time_t	mlx_curtime(void);
@@ -536,7 +534,7 @@ static void
 mlx_describe(struct mlx_softc *mlx)
 {
 	struct mlx_cinfo *ci;
-	static char buf[80];
+	static char tbuf[80];
 	const char *model;
 	int i;
 
@@ -550,8 +548,8 @@ mlx_describe(struct mlx_softc *mlx)
 		}
 
 	if (model == NULL) {
-		snprintf(buf, sizeof(buf), " model 0x%x", ci->ci_hardware_id);
-		model = buf;
+		snprintf(tbuf, sizeof(tbuf), " model 0x%x", ci->ci_hardware_id);
+		model = tbuf;
 	}
 
 	printf("%s: DAC%s, %d channel%s, firmware %d.%02d-%c-%02d",
@@ -577,8 +575,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[MLXCF_NLOCS];
 
 	mlx->mlx_flags |= MLXF_RESCANNING;
 
@@ -643,11 +640,10 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		 */
 		mlxa.mlxa_unit = i;
 
-		ldesc->len = 1;
-		ldesc->locs[MLXCF_UNIT] = i;
+		locs[MLXCF_UNIT] = i;
 
-		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", NULL, &mlxa, mlx_print,
-		    mlx_submatch);
+		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", locs,
+				&mlxa, mlx_print, config_stdsubmatch);
 		nunits += (ms->ms_dv != NULL);
 	}
 
@@ -674,21 +670,6 @@ mlx_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", mlxa->mlxa_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-mlx_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[MLXCF_UNIT] != MLXCF_UNIT_DEFAULT &&
-	    cf->cf_loc[MLXCF_UNIT] != ldesc->locs[MLXCF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -1121,6 +1102,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 	u_int lsn;
 
 	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx_ccb_unmap(mlx, mc);
 
 	/*
 	 * Command completed OK?
@@ -2130,22 +2112,22 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 const char *
 mlx_ccb_diagnose(struct mlx_ccb *mc)
 {
-	static char buf[80];
+	static char tbuf[80];
 	int i;
 
 	for (i = 0; i < sizeof(mlx_msgs) / sizeof(mlx_msgs[0]); i++)
 		if ((mc->mc_mbox[0] == mlx_msgs[i].command ||
 		    mlx_msgs[i].command == 0) &&
 		    mc->mc_status == mlx_msgs[i].status) {
-			snprintf(buf, sizeof(buf), "%s (0x%x)",
+			snprintf(tbuf, sizeof(tbuf), "%s (0x%x)",
 			    mlx_status_msgs[mlx_msgs[i].msg], mc->mc_status);
-			return (buf);
+			return (tbuf);
 		}
 
-	snprintf(buf, sizeof(buf), "unknown response 0x%x for command 0x%x",
+	snprintf(tbuf, sizeof(tbuf), "unknown response 0x%x for command 0x%x",
 	    (int)mc->mc_status, (int)mc->mc_mbox[0]);
 
-	return (buf);
+	return (tbuf);
 }
 
 /*

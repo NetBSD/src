@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.22.6.4 2005/01/24 08:34:54 skrll Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.22.6.5 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.6.4 2005/01/24 08:34:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.6.5 2005/11/10 13:59:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.6.4 2005/01/24 08:34:54 skrll Exp 
 extern char etext[];	/* defined by the linker */
 extern char	kernel_text[];	/* locore.s */
 
-static void db_write_text(char *, size_t size, char *);
+static void db_write_text(char *, size_t size, const char *);
 
 
 /*
@@ -106,7 +106,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
  * Makes text page writable temporarily.
  */
 static void 
-db_write_text(char *dst, size_t size, char *data)
+db_write_text(char *dst, size_t size, const char *data)
 {
 	int oldpte, tmppte;
 	vaddr_t pgva, prevpg;
@@ -180,7 +180,7 @@ db_write_text(char *dst, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void 
-db_write_bytes(db_addr_t addr, size_t size, char *data)
+db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;
 
@@ -191,12 +191,12 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 	}
 
 	if (size == 4) {
-		*((int *)dst) = *((int *)data);
+		*((int *)dst) = *((const int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short *)dst) = *((short *)data);
+		*((short *)dst) = *((const short *)data);
 		return;
 	}
 

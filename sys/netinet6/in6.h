@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.42.2.3 2004/09/21 13:37:32 skrll Exp $	*/
+/*	$NetBSD: in6.h,v 1.42.2.4 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ struct in6_pktinfo {
 	{ "hlim", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
 	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
 	{ "mrtproto", CTLTYPE_INT }, \
 	{ "maxfragpackets", CTLTYPE_INT }, \
@@ -647,6 +647,7 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 }
 
 int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
+void	in6_delayed_cksum __P((struct mbuf *));
 int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));
 struct	in6_ifaddr *in6_ifawithscope __P((struct ifnet *, struct in6_addr *));

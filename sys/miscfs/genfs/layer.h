@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.4.22.3 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: layer.h,v 1.4.22.4 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
 
 struct layer_args {
 	char	*target;		/* Target of loopback  */
-	struct	export_args	export;	/* network export info */
+	struct export_args30 _pad1; /* compat with old userland tools */
 };
 
 #ifdef _KERNEL
@@ -85,17 +85,16 @@ LIST_HEAD(layer_node_hashhead, layer_node);
 struct layer_mount {
 	struct mount		*layerm_vfs;
 	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
-	struct netexport	layerm_export;	/* export info */
 	u_int			layerm_flags;	/* mount point layer flags */
 	u_int			layerm_size;	/* size of fs's struct node */
 	enum vtype		layerm_tag;	/* vtag of our vnodes */
 	int				/* bypass routine for this mount */
-				(*layerm_bypass) __P((void *));
+				(*layerm_bypass)(void *);
 	int			(*layerm_alloc)	/* alloc a new layer node */
-				__P((struct mount *, struct vnode *,
-						struct vnode **));
+				(struct mount *, struct vnode *,
+						struct vnode **);
 	int			(**layerm_vnodeop_p)	/* ops for our nodes */
-				__P((void *));
+				(void *);
 	struct layer_node_hashhead	/* head of hash list for layer_nodes */
 				*layerm_node_hashtbl;
 	u_long			layerm_node_hash; /* hash mask for hash chain */
@@ -148,13 +147,14 @@ struct layer_node {
 #define	LAYERFS_DO_BYPASS(vp, ap)	\
 	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))
 
-extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
+struct vnode *layer_checkvp(struct vnode *vp, const char *fil, int lno);
 
 #define	MOUNTTOLAYERMOUNT(mp) ((struct layer_mount *)((mp)->mnt_data))
 #define	VTOLAYER(vp) ((struct layer_node *)(vp)->v_data)
 #define	LAYERTOV(xp) ((xp)->layer_vnode)
 #ifdef LAYERFS_DIAGNOSTIC
 #define	LAYERVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
+extern int layerfs_debug;
 #else
 #define	LAYERVPTOLOWERVP(vp) (VTOLAYER(vp)->layer_lowervp)
 #endif

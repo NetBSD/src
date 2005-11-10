@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.3.2.4 2005/03/04 16:41:33 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.3.2.5 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3.2.4 2005/03/04 16:41:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3.2.5 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -85,7 +85,7 @@ static void		slhci_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle slhci_allocx(struct usbd_bus *);
 static void		slhci_freex(struct usbd_bus *, usbd_xfer_handle);
 
-static int		slhci_str(usb_string_descriptor_t *, int, char *);
+static int		slhci_str(usb_string_descriptor_t *, int, const char *);
 
 static usbd_status	slhci_root_ctrl_transfer(usbd_xfer_handle);
 static usbd_status	slhci_root_ctrl_start(usbd_xfer_handle);
@@ -153,7 +153,7 @@ void		print_xfer(usbd_xfer_handle);
 
 
 /* XXX: sync with argument */
-static char *sltypestr [] = {
+static const char *sltypestr [] = {
 	"SL11H/T",
 	"SL811HS/T",
 };
@@ -682,7 +682,7 @@ usb_hub_descriptor_t slhci_hubd = {
 };
 
 static int
-slhci_str(usb_string_descriptor_t *p, int l, char *s)
+slhci_str(usb_string_descriptor_t *p, int l, const char *s)
 {
 	int i;
 

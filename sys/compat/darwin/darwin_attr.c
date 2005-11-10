@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.4.2.5 2005/03/04 16:39:22 skrll Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.4.2.6 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4.2.5 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4.2.6 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4.2.5 2005/03/04 16:39:22 skrll Ex
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/mount.h>
 
 #include <compat/common/compat_util.h>
 
@@ -104,7 +107,7 @@ darwin_sys_getattrlist(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct darwin_attrlist kalist;
-	char *buf;
+	char *tbuf;
 	char *bp;
 	size_t len;
 	size_t shift = 0;
@@ -116,7 +119,7 @@ darwin_sys_getattrlist(l, v, retval)
 	darwin_attrreference_t *vol_mountpoint_p = NULL;
 	darwin_attrreference_t *vol_name_p = NULL;
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
-	struct sys___stat13_args cup1;
+	struct sys___stat30_args cup1;
 	struct stat *ust;
 	struct stat st;
 	struct compat_20_sys_statfs_args cup2;
@@ -163,10 +166,10 @@ darwin_sys_getattrlist(l, v, retval)
 	SCARG(&cup1, path) = path;
 	SCARG(&cup1, ub) = ust;
 	if (follow) {
-		if ((error = sys___stat13(l, &cup1, retval)) != 0)
+		if ((error = sys___stat30(l, &cup1, retval)) != 0)
 			return error;
 	} else {
-		if ((error = sys___lstat13(l, &cup1, retval)) != 0)
+		if ((error = sys___lstat30(l, &cup1, retval)) != 0)
 			return error;
 	}
 
@@ -188,8 +191,8 @@ darwin_sys_getattrlist(l, v, retval)
 	/*
 	 * Prepare the buffer
 	 */
-	buf = malloc(len, M_TEMP, M_WAITOK);
-	bp = buf;
+	tbuf = malloc(len, M_TEMP, M_WAITOK);
+	bp = tbuf;
 
 	/*
 	 * vnode structure
@@ -433,10 +436,10 @@ darwin_sys_getattrlist(l, v, retval)
 	}
 
 	if (kalist.volattr & DARWIN_ATTR_VOL_SPACEFREE) {
-		off_t free;
+		off_t ofree;
 
-		free = f.f_bfree * f.f_bsize;
-		if (ATTR_APPEND(free, bp, len) != 0)
+		ofree = f.f_bfree * f.f_bsize;
+		if (ATTR_APPEND(ofree, bp, len) != 0)
 			goto out3;
 	}
 
@@ -449,10 +452,10 @@ darwin_sys_getattrlist(l, v, retval)
 	}
 
 	if (kalist.volattr & DARWIN_ATTR_VOL_MINALLOCATION) {
-		off_t min;
+		off_t omin;
 
-		min = f.f_bsize; /* XXX proably wrong */
-		if (ATTR_APPEND(min, bp, len) != 0)
+		omin = f.f_bsize; /* XXX proably wrong */
+		if (ATTR_APPEND(omin, bp, len) != 0)
 			goto out3;
 	}
 
@@ -793,12 +796,12 @@ darwin_sys_getattrlist(l, v, retval)
 	 * We are done! Copyout the stuff and get away
 	 */
 	if (error == 0)
-		error = copyout(buf, SCARG(uap, attributes), *whole_len_p);
+		error = copyout(tbuf, SCARG(uap, attributes), *whole_len_p);
 out3:
 	vput(vp);
 out2:
 	crfree(cred);
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 
 	return error;
 }

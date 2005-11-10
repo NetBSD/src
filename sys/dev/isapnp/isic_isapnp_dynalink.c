@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.4.10.1 2005/03/04 16:43:40 skrll Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.4.10.2 2005/11/10 14:05:42 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -75,7 +75,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.4.10.1 2005/03/04 16:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.4.10.2 2005/11/10 14:05:42 skrll Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -501,15 +501,15 @@ static void dynalink_write_fifo(struct isic_softc *sc, int what, const void *buf
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			bus_space_write_1(t, h, ADDR, 0);
-			bus_space_write_multi_1(t, h, ISAC, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, ISAC, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
 			bus_space_write_1(t, h, ADDR, HSCXA);
-			bus_space_write_multi_1(t, h, HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, HSCX, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
 			bus_space_write_1(t, h, ADDR, HSCXB);
-			bus_space_write_multi_1(t, h, HSCX, (u_int8_t*)buf, size);
+			bus_space_write_multi_1(t, h, HSCX, buf, size);
 			break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.41.2.5 2005/03/04 16:52:49 skrll Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.41.2.6 2005/11/10 14:10:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.5 2005/03/04 16:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.6 2005/11/10 14:10:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ struct fifoinfo {
 	long		fi_writers;
 };
 
-int (**fifo_vnodeop_p) __P((void *));
+int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -106,14 +106,9 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fifo_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, fifo_update },		/* update */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };

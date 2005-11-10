@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.48.2.6 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.48.2.7 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct simplelock {
 	const char *unlock_file;
 	short lock_line;
 	short unlock_line;
-	TAILQ_ENTRY(simplelock) list;
+	_TAILQ_ENTRY(struct simplelock, __volatile) list;
 	cpuid_t lock_holder;		/* CPU ID */
 #endif
 };
@@ -148,7 +148,7 @@ struct lock {
 			/* CPU ID of exclusive lock holder */
 			cpuid_t lk_spin_cpu;
 #if defined(LOCKDEBUG)
-			TAILQ_ENTRY(lock) lk_spin_list;
+			_TAILQ_ENTRY(struct lock, __volatile) lk_spin_list;
 #endif
 		} lk_un_spin;
 	} lk_un;
@@ -346,7 +346,7 @@ void	simple_lock_only_held(__volatile struct simplelock *, const char *);
 
 #define	LOCK_ASSERT(x)		KASSERT(x)
 
-void	simple_lock_init(struct simplelock *);
+void	simple_lock_init(__volatile struct simplelock *);
 void	simple_lock_dump(void);
 void	simple_lock_freecheck(void *, void *);
 void	simple_lock_switchcheck(void);

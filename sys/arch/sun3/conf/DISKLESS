@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.41.2.5 2005/01/24 08:34:47 skrll Exp $
+# $NetBSD: DISKLESS,v 1.41.2.6 2005/11/10 13:59:38 skrll Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -52,6 +52,7 @@ options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -66,13 +67,14 @@ file-system	NFS		# Sun NFS client support
 #file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	MFS		# memory-based filesystem
+#file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
-options 	INET		# IP prototol stack support
+options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP

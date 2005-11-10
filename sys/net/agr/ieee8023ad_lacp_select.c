@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.1.4.2 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.1.4.3 2005/11/10 14:10:50 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.1.4.2 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.1.4.3 2005/11/10 14:10:50 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 

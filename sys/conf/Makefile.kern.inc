@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.34.2.5 2005/03/04 16:40:43 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.34.2.6 2005/11/10 14:01:40 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -30,6 +30,8 @@ OBJDUMP?=	objdump
 CSCOPE?=	cscope
 MKID?=		mkid
 UUDECODE?=	${TOOL_UUDECODE:Uuudecode}
+HEXDUMP?=	${TOOL_HEXDUMP:Uhexdump}
+GENASSYM?=	${TOOL_GENASSYM:Ugenassym}
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 _MKMSG?=		@\#
@@ -52,6 +54,7 @@ S!=	cd ../../../..; pwd
 ##
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
+_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
 INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
@@ -64,19 +67,21 @@ CWARNFLAGS+=	-Werror
 .endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+.if !${_ISGCC295}
+CWARNFLAGS+=	-Wreturn-type
+.endif
+CWARNFLAGS+=	-Wswitch -Wshadow
+CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
-CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
-CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPUFLAGS} -ffreestanding
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
 # Disable unitialized warnings with 2.95 - it gets it wrong way too often
-_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
 .if ${_ISGCC295}
 CWARNFLAGS+=	-Wno-uninitialized
 .else
@@ -195,7 +200,7 @@ LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
 DEBUG?=
-.if ${DEBUG} == "-g" || ${DEBUG} == "-gstabs" || ${DEBUG} == "-gstabs+"
+.if !empty(DEBUG:M-g*)
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
@@ -210,10 +215,10 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 .if !target(assym.h)
-assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
+assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
-	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${HOST_SH} $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
+	    ${GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -293,13 +298,32 @@ dependall: depend all
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
+# We have to assume that we'll eventually run out of command line.
+# We already hit that on non-NetBSD hosts.
+_SFILES=${MD_SFILES} ${SFILES}
+_CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
+.if ${MAKEVERBOSE} == 2
+_T=-t
+.else
+_T=
+.endif
+_XargsMKDEP=${MKDEP:M*=*} xargs ${_T} ${MKDEP:N*=*}
+_SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
+
+# This dance is necessary to avoid long command lines.
+${SRCS:S,^,list-,}:
+	@echo ${.TARGET:S,^list-,,}
+
+_sfiles: ${_SFILES:S,^,list-,}
+_cfiles: ${_CFILES:S,^,list-,}
+
 .depend: ${SRCS} assym.h config_time.h
 	${_MKTARGET_CREATE}
-	${MKDEP} -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
-	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
-	    ${CFILES}
-	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    ${HOST_SH} $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
+	@> $@
+	@${_SubMake} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
+	@${_SubMake} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
+	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
+	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/^.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
@@ -400,6 +424,10 @@ EXTRA_CLEAN+= .gdbinit
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 .endif
+
+CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
+CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
+CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
 ##
 ## the end

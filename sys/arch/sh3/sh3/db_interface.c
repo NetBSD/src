@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22.2.4 2005/04/01 14:28:20 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.22.2.5 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22.2.4 2005/04/01 14:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22.2.5 2005/11/10 13:58:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -67,16 +67,16 @@ extern int exp_types;
 
 void kdb_printtrap(u_int, int);
 
-void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
+void db_tlbdump_cmd(db_expr_t, int, db_expr_t, const char *);
 void __db_tlbdump_page_size_sh4(uint32_t);
 void __db_tlbdump_pfn(uint32_t);
-void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
+void db_cachedump_cmd(db_expr_t, int, db_expr_t, const char *);
 
 void __db_cachedump_sh3(vaddr_t);
 void __db_cachedump_sh4(vaddr_t);
 
-void db_stackcheck_cmd(db_expr_t, int, db_expr_t, char *);
-void db_frame_cmd(db_expr_t, int, db_expr_t, char *);
+void db_stackcheck_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_frame_cmd(db_expr_t, int, db_expr_t, const char *);
 void __db_print_symbol(db_expr_t);
 char *__db_procname_by_asid(int);
 
@@ -218,7 +218,8 @@ db_clear_single_step(db_regs_t *regs)
  */
 #define	ON(x, c)	((x) & (c) ? '|' : '.')
 void
-db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 	static const char *pr[] = { "_r", "_w", "rr", "ww" };
 	static const char title[] =
@@ -386,7 +387,8 @@ __db_tlbdump_page_size_sh4(uint32_t r)
  * CACHE
  */
 void
-db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 #ifdef SH3
 	if (CPU_IS_SH3)
@@ -496,7 +498,7 @@ __db_cachedump_sh4(vaddr_t va)
 #undef ON
 
 void
-db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct switchframe *sf = &curpcb->pcb_sf;
 	struct trapframe *tf, *tftop;
@@ -558,7 +560,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 __db_print_symbol(db_expr_t value)
 {
-	char *name;
+	const char *name;
 	db_expr_t offset;
 
 	db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
@@ -575,7 +577,8 @@ __db_print_symbol(db_expr_t value)
  * Stack overflow check
  */
 void
-db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+		  const char *modif)
 {
 	struct lwp *l;
 	struct user *u;

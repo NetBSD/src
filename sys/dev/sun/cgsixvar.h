@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.4 2002/10/01 01:37:56 thorpej Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.4.6.1 2005/11/10 14:08:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,38 @@ struct cgsix_softc {
 	short	sc_fhcrev;		/* hardware rev */
 	short	sc_blanked;		/* true if blanked */
 	struct	cg6_cursor sc_cursor;	/* software cursor info */
+	
+	uint32_t sc_width;
+	uint32_t sc_height;	/* display width / height */
+	uint32_t sc_stride;
+	uint32_t sc_mono_width;	/* how many monochrome pixels to write */
+	uint32_t sc_ramsize;		/* VRAM size in bytes */
+#if NWSDISPLAY > 0	
+	int sc_mode;
+	uint32_t sc_bg;
+	void (*switchcb)(void *, int, int);
+	void *switchcbarg;
+	struct callout switch_callout;
+	LIST_HEAD(, cg6_screen) screens;
+	struct cg6_screen *active, *wanted;
+	const struct wsscreen_descr *currenttype;
+#endif	
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
+};
+
+struct cg6_screen {
+	struct rasops_info ri;
+	LIST_ENTRY(cg6_screen) next;
+	struct cgsix_softc *sc;
+	const struct wsscreen_descr *type;
+	int active;
+	u_int16_t *chars;
+	long *attrs;
+
+	int cursoron;
+	int cursorcol;
+	int cursorrow;
+	int cursordrawn;
 };
 
 #ifdef RASTERCONSOLE
@@ -78,4 +109,4 @@ extern int cgsix_use_rasterconsole;
 #define cgsix_use_rasterconsole 0
 #endif
 
-void	cg6attach(struct cgsix_softc *, char *, int);
+void	cg6attach(struct cgsix_softc *, const char *, int);

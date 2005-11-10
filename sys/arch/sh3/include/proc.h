@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5.2.3 2004/09/21 13:21:25 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.5.2.4 2005/11/10 13:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -43,8 +43,8 @@
 
 /* Kernel stack PTE */
 struct md_upte {
-	u_int32_t addr;
-	u_int32_t data;
+	uint32_t addr;
+	uint32_t data;
 };
 
 struct mdlwp {
@@ -59,12 +59,14 @@ struct mdlwp {
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 
 struct mdproc {
-	__volatile int md_astpending;	/* AST pending on return to userland */
+	void (*md_syscall)(struct lwp *, struct trapframe *);
+
+	volatile int md_astpending;	/* AST pending on return to userland */
 };
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-void sh_proc0_init(void);
+extern void sh_proc0_init(void);
 extern struct md_upte *curupte;	/* SH3 wired u-area hack */
 #endif /* _LOCORE */
 #endif /* _KERNEL */

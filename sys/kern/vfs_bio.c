@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.92.2.10 2005/04/01 14:30:57 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.92.2.11 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.10 2005/04/01 14:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.11 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1711,7 +1711,7 @@ vfs_bufstats(void)
 	struct buf *bp;
 	struct bqueue *dp;
 	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
-	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
+	static const char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;

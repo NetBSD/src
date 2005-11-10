@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.5.4.4 2004/09/21 13:38:44 skrll Exp $ */
+/*	$NetBSD: xform.h,v 1.5.4.5 2005/11/10 14:12:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -34,7 +34,7 @@
 /* Declarations */
 struct auth_hash {
 	int type;
-	char *name;
+	const char *name;
 	u_int16_t keysize;
 	u_int16_t hashsize;
 	u_int16_t authsize;
@@ -49,7 +49,7 @@ struct auth_hash {
 
 struct enc_xform {
 	int type;
-	char *name;
+	const char *name;
 	u_int16_t blocksize;
 	u_int16_t minkey, maxkey;
 	void (*encrypt) (caddr_t, u_int8_t *);
@@ -60,7 +60,7 @@ struct enc_xform {
 
 struct comp_algo {
 	int type;
-	char *name;
+	const char *name;
 	size_t minlen;
 	u_int32_t (*compress) (u_int8_t *, u_int32_t, u_int8_t **);
 	u_int32_t (*decompress) (u_int8_t *, u_int32_t, u_int8_t **);

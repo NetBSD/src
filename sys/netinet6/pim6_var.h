@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.10.6.2 2004/09/21 13:37:36 skrll Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.10.6.3 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -64,6 +64,6 @@ int pim6_input __P((struct mbuf **, int*, int));
 
 #define PIM6CTL_NAMES { \
 	{ 0, 0 }, \
-	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 #endif /* _NETINET6_PIM6_VAR_H_ */

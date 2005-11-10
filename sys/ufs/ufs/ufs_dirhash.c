@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.1.2.3 2005/03/04 16:55:00 skrll Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.1.2.4 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -30,8 +30,6 @@
 /*
  * This implements a hash-based lookup scheme for UFS directories.
  */
-
-#ifdef UFS_DIRHASH
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +198,7 @@ ufsdirhash_build(struct inode *ip)
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (VOP_BLKATOFF(vp, (off_t)pos, NULL, &bp) != 0)
+			if (UFS_BLKATOFF(vp, (off_t)pos, NULL, &bp) != 0)
 				goto fail;
 		}
 
@@ -395,7 +393,7 @@ restart:
 			if (bp != NULL)
 				brelse(bp);
 			blkoff = offset & ~bmask;
-			if (VOP_BLKATOFF(vp, (off_t)blkoff, NULL, &bp) != 0)
+			if (UFS_BLKATOFF(vp, (off_t)blkoff, NULL, &bp) != 0)
 				return (EJUSTRETURN);
 		}
 		dp = (struct direct *)(bp->b_data + (offset & bmask));
@@ -504,7 +502,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	    dh->dh_blkfree[dirblock] >= howmany(slotneeded, DIRALIGN));
 	DIRHASH_UNLOCK(dh);
 	pos = dirblock * dirblksiz;
-	error = VOP_BLKATOFF(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
+	error = UFS_BLKATOFF(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
 	if (error)
 		return (-1);
 	/* Find the first entry with free space. */
@@ -780,12 +778,12 @@ ufsdirhash_dirtrunc(struct inode *ip, doff_t offset)
  * a directory block matches its actual contents. Panics if a mismatch
  * is detected.
  *
- * On entry, `buf' should point to the start of an in-core
+ * On entry, `sbuf' should point to the start of an in-core
  * DIRBLKSIZ-sized directory block, and `offset' should contain the
  * offset from the start of the directory of that block.
  */
 void
-ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
+ufsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 {
 	struct dirhash *dh;
 	struct direct *dp;
@@ -810,7 +808,7 @@ ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
 
 	nfree = 0;
 	for (i = 0; i < dirblksiz; i += dp->d_reclen) {
-		dp = (struct direct *)(buf + i);
+		dp = (struct direct *)(sbuf + i);
 		if (dp->d_reclen == 0 || i + dp->d_reclen > dirblksiz)
 			panic("ufsdirhash_checkblock: bad dir");
 
@@ -1057,7 +1055,7 @@ ufsdirhash_init()
 }
 
 void
-ufsdirhash_done()
+ufsdirhash_done(void)
 {
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
 #ifdef _LKM
@@ -1067,7 +1065,7 @@ ufsdirhash_done()
 
 SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
 {
-	struct sysctlnode *rnode, *cnode;
+	const struct sysctlnode *rnode, *cnode;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
@@ -1117,5 +1115,3 @@ SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
 		       NULL, 0, &ufs_dirhashcheck, 0,
 		       CTL_CREATE, CTL_EOL);
 }
-
-#endif /* UFS_DIRHASH */

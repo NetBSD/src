@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.14.2.3 2004/09/21 13:34:29 skrll Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.14.2.4 2005/11/10 14:08:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.14.2.3 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.14.2.4 2005/11/10 14:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,16 +325,16 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 			break;
 		    case 2: /* tab stop report */
 			{
-			int i, n, ps = 0;
+			int i, j, ps = 0;
 			char buf[20];
 			KASSERT(edp->tabs != 0);
 			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
 			for (i = 0; i < edp->ncols; i++)
 				if (edp->tabs[i]) {
-					n = snprintf(buf, sizeof(buf), "%s%d",
+					j = snprintf(buf, sizeof(buf), "%s%d",
 					    (ps ? "/" : ""), i + 1);
 					wsdisplay_emulinput(edp->cbcookie,
-							    buf, n);
+							    buf, j);
 					ps = 1;
 				}
 			}

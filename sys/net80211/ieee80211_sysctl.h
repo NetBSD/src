@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.1.2.5 2005/03/04 16:53:17 skrll Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.1.2.6 2005/11/10 14:10:51 skrll Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -31,9 +31,9 @@
 #ifndef _NET80211_IEEE80211_SYSCTL_H_
 #define _NET80211_IEEE80211_SYSCTL_H_
 
-#include <net80211/ieee80211_channel.h>
+#include <net80211/_ieee80211.h>
 
-/* sysctl(9) interface to net80211 client/peer records */
+/* sysctl(9) interface to net80211 client/peer records */   
 
 /* Name index, offset from net.link.ieee80211.node. */
 
@@ -55,7 +55,7 @@
 						 */
 
 #define	IEEE80211_SYSCTL_OP_ALL		0
-
+ 
 /* Every record begins with this information. */
 struct ieee80211_node_sysctlhdr {
 /*00*/	u_int16_t	sh_ifindex;
@@ -78,7 +78,7 @@ struct ieee80211_node_sysctl {
 /*1a*/	u_int8_t	ns_rssi;	/* recv ssi */
 /*1b*/	u_int8_t	ns_esslen;
 /*1c*/	u_int8_t	ns_essid[IEEE80211_NWID_LEN];
-/*3c*/	u_int8_t	ns_pwrsave;	/* power saving mode */
+/*3c*/	u_int8_t	ns_rsvd0;	/* reserved */
 /*3d*/	u_int8_t	ns_erp;		/* 11g only */
 /*3e*/	u_int16_t	ns_associd;	/* assoc response */
 /*40*/	u_int32_t	ns_inact;	/* inactivity mark count */
@@ -105,10 +105,17 @@ struct ieee80211_node_sysctl {
 } __attribute__((__packed__));
 
 #ifdef __NetBSD__
+enum ieee80211_node_walk_state {
+	IEEE80211_WALK_BSS = 0,
+	IEEE80211_WALK_SCAN,
+	IEEE80211_WALK_STA
+};
+
 struct ieee80211_node_walk {
-	struct ieee80211com	*nw_ic;
-	struct ieee80211_node	*nw_ni;
-	u_short			nw_ifindex;
+	struct ieee80211com		*nw_ic;
+	struct ieee80211_node_table	*nw_nt;
+	struct ieee80211_node		*nw_ni;
+	u_short				nw_ifindex;
 };
 #endif /* __NetBSD__ */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.3.4.6 2005/03/04 16:45:18 skrll Exp $ */
+/* $NetBSD: if_skvar.h,v 1.3.4.7 2005/11/10 14:06:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ struct sk_softc {
 	struct resource		*sk_res;	/* I/O or shared mem handle */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
-  	char			*sk_name;
+  	const char		*sk_name;
 	char			*sk_vpd_prodname;
 	char			*sk_vpd_readonly;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */

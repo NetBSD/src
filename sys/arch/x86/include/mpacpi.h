@@ -1,7 +1,7 @@
-/*	$NetBSD: mpacpi.h,v 1.2 2003/05/29 20:22:32 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.h,v 1.2.2.1 2005/11/10 14:00:20 skrll Exp $	*/
 
-#ifndef _I386_MPACPI_H
-#define _I386_MPACPI_H
+#ifndef _X86_MPACPI_H_
+#define _X86_MPACPI_H_
 
 struct pcibus_attach_args;
 
@@ -11,4 +11,4 @@ int mpacpi_pci_attach_hook(struct device *, struct device *,
 			   struct pcibus_attach_args *);
 int mpacpi_scan_pci(struct device *, struct pcibus_attach_args *, cfprint_t);
 
-#endif /* _I386_MPACPI_H */
+#endif /* _X86_MPACPI_H_ */

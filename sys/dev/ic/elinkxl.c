@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.70.2.9 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.70.2.10 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70.2.9 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70.2.10 2005/11/10 14:04:14 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -439,8 +439,10 @@ ex_config(sc)
 	 * The 3c90xB has hardware IPv4/TCPv4/UDPv4 checksum support.
 	 */
 	if (sc->ex_conf & EX_CONF_90XB)
-		sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
-		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		sc->sc_ethercom.ec_if.if_capabilities |=
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
@@ -787,9 +789,12 @@ ex_txstat(sc)
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
+	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER
+	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
+	 * upper byte?
 	 */
-	while ((i = bus_space_read_1(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
-		bus_space_write_1(iot, ioh, ELINK_TXSTATUS, 0x0);
+	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
+		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
@@ -811,11 +816,12 @@ ex_txstat(sc)
 			ex_init(ifp);
 			/* TODO: be more subtle here */
 		} else if (i & TXS_MAX_COLLISION) {
+			++sc->sc_ethercom.ec_if.if_oerrors;
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		} else
-			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
+		} else if (sc->tx_succ_ok < 100)
+			sc->tx_succ_ok++;
 	}
 }
 
@@ -1113,7 +1119,7 @@ ex_start(ifp)
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
-		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
+		    ((const char *)(intptr_t)dpd - (const char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1126,7 +1132,7 @@ ex_start(ifp)
 		 */
 		if (sc->tx_head != NULL) {
 			prevdpd = sc->tx_tail->tx_dpd;
-			offset = ((caddr_t)prevdpd - (caddr_t)sc->sc_dpd);
+			offset = ((const char *)(intptr_t)prevdpd - (const char *)sc->sc_dpd);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);

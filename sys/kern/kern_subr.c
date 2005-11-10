@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.9 2005/02/04 11:47:42 skrll Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.10 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.9 2005/02/04 11:47:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.10 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.9 2005/02/04 11:47:42 skrll Ex
 #include <sys/queue.h>
 #include <sys/systrace.h>
 #include <sys/ktrace.h>
+#include <sys/fcntl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -128,24 +129,16 @@ struct hook_desc {
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
 
-static void *hook_establish(hook_list_t *, void (*)(void *), void *);
-static void hook_disestablish(hook_list_t *, void *);
-static void hook_destroy(hook_list_t *);
-static void hook_proc_run(hook_list_t *, struct proc *);
-
 MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
 int
-uiomove(buf, n, uio)
-	void *buf;
-	size_t n;
-	struct uio *uio;
+uiomove(void *buf, size_t n, struct uio *uio)
 {
 	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-	struct lwp *l = uio->uio_lwp;
+	struct lwp *l;
 	struct proc *p;
 	int hold_count;
 
@@ -182,19 +175,10 @@ uiomove(buf, n, uio)
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
-			if (__predict_true(p == curproc)) {
-				if (uio->uio_rw == UIO_READ)
-					error = copyout(cp, iov->iov_base, cnt);
-				else
-					error = copyin(iov->iov_base, cp, cnt);
-			} else {
-				if (uio->uio_rw == UIO_READ)
-					error = copyout_proc(p, cp,
-					    iov->iov_base, cnt);
-				else
-					error = copyin_proc(p, iov->iov_base,
-					    cp, cnt);
-			}
+			if (uio->uio_rw == UIO_READ)
+				error = copyout_proc(p, cp, iov->iov_base, cnt);
+			else
+				error = copyin_proc(p, iov->iov_base, cp, cnt);
 			if (error)
 				goto out;
 			break;
@@ -242,9 +226,7 @@ uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
  * Give next character to user as result of read.
  */
 int
-ureadc(c, uio)
-	int c;
-	struct uio *uio;
+ureadc(int c, struct uio *uio)
 {
 	struct iovec *iov;
 
@@ -290,6 +272,9 @@ copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
+	if (__predict_true(p == curproc))
+		return copyin(uaddr, kaddr, len);
+
 	iov.iov_base = kaddr;
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
@@ -323,7 +308,10 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	iov.iov_base = (void *) kaddr;	/* XXX cast away const */
+	if (__predict_true(p == curproc))
+		return copyout(kaddr, uaddr, len);
+
+	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
@@ -344,18 +332,38 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 }
 
 /*
+ * Like copyin(), except it operates on kernel addresses when the FKIOCTL
+ * flag is passed in `ioctlflags' from the ioctl call.
+ */
+int
+ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len)
+{
+	if (ioctlflags & FKIOCTL)
+		return kcopy(src, dst, len);
+	return copyin(src, dst, len);
+}
+
+/*
+ * Like copyout(), except it operates on kernel addresses when the FKIOCTL
+ * flag is passed in `ioctlflags' from the ioctl call.
+ */
+int
+ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len)
+{
+	if (ioctlflags & FKIOCTL)
+		return kcopy(src, dst, len);
+	return copyout(src, dst, len);
+}
+
+/*
  * General routine to allocate a hash table.
  * Allocate enough memory to hold at least `elements' list-head pointers.
  * Return a pointer to the allocated space and set *hashmask to a pattern
  * suitable for masking a value to use as an index into the returned array.
  */
 void *
-hashinit(elements, htype, mtype, mflags, hashmask)
-	u_int elements;
-	enum hashtype htype;
-	struct malloc_type *mtype;
-	int mflags;
-	u_long *hashmask;
+hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
+    int mflags, u_long *hashmask)
 {
 	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
@@ -406,9 +414,7 @@ hashinit(elements, htype, mtype, mflags, hashmask)
  * Free memory from hash table previosly allocated via hashinit().
  */
 void
-hashdone(hashtbl, mtype)
-	void *hashtbl;
-	struct malloc_type *mtype;
+hashdone(void *hashtbl, struct malloc_type *mtype)
 {
 
 	free(hashtbl, mtype);
@@ -416,10 +422,7 @@ hashdone(hashtbl, mtype)
 
 
 static void *
-hook_establish(list, fn, arg)
-	hook_list_t *list;
-	void (*fn)(void *);
-	void *arg;
+hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
 {
 	struct hook_desc *hd;
 
@@ -435,9 +438,7 @@ hook_establish(list, fn, arg)
 }
 
 static void
-hook_disestablish(list, vhook)
-	hook_list_t *list;
-	void *vhook;
+hook_disestablish(hook_list_t *list, void *vhook)
 {
 #ifdef DIAGNOSTIC
 	struct hook_desc *hd;
@@ -455,8 +456,7 @@ hook_disestablish(list, vhook)
 }
 
 static void
-hook_destroy(list)
-	hook_list_t *list;
+hook_destroy(hook_list_t *list)
 {
 	struct hook_desc *hd;
 
@@ -467,9 +467,7 @@ hook_destroy(list)
 }
 
 static void
-hook_proc_run(list, p)
-	hook_list_t *list;
-	struct proc *p;
+hook_proc_run(hook_list_t *list, struct proc *p)
 {
 	struct hook_desc *hd;
 
@@ -490,19 +488,16 @@ hook_proc_run(list, p)
  * it won't be run again.
  */
 
-hook_list_t shutdownhook_list;
+static hook_list_t shutdownhook_list;
 
 void *
-shutdownhook_establish(fn, arg)
-	void (*fn)(void *);
-	void *arg;
+shutdownhook_establish(void (*fn)(void *), void *arg)
 {
 	return hook_establish(&shutdownhook_list, fn, arg);
 }
 
 void
-shutdownhook_disestablish(vhook)
-	void *vhook;
+shutdownhook_disestablish(void *vhook)
 {
 	hook_disestablish(&shutdownhook_list, vhook);
 }
@@ -516,7 +511,7 @@ shutdownhook_disestablish(vhook)
  * it won't be run again.
  */
 void
-doshutdownhooks()
+doshutdownhooks(void)
 {
 	struct hook_desc *dp;
 
@@ -540,31 +535,28 @@ doshutdownhooks()
  * "Mountroot hook" types, functions, and variables.
  */
 
-hook_list_t mountroothook_list;
+static hook_list_t mountroothook_list;
 
 void *
-mountroothook_establish(fn, dev)
-	void (*fn)(struct device *);
-	struct device *dev;
+mountroothook_establish(void (*fn)(struct device *), struct device *dev)
 {
 	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
 }
 
 void
-mountroothook_disestablish(vhook)
-	void *vhook;
+mountroothook_disestablish(void *vhook)
 {
 	hook_disestablish(&mountroothook_list, vhook);
 }
 
 void
-mountroothook_destroy()
+mountroothook_destroy(void)
 {
 	hook_destroy(&mountroothook_list);
 }
 
 void
-domountroothook()
+domountroothook(void)
 {
 	struct hook_desc *hd;
 
@@ -576,19 +568,16 @@ domountroothook()
 	}
 }
 
-hook_list_t exechook_list;
+static hook_list_t exechook_list;
 
 void *
-exechook_establish(fn, arg)
-	void (*fn)(struct proc *, void *);
-	void *arg;
+exechook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
 	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
 }
 
 void
-exechook_disestablish(vhook)
-	void *vhook;
+exechook_disestablish(void *vhook)
 {
 	hook_disestablish(&exechook_list, vhook);
 }
@@ -597,25 +586,21 @@ exechook_disestablish(vhook)
  * Run exec hooks.
  */
 void
-doexechooks(p)
-	struct proc *p;
+doexechooks(struct proc *p)
 {
 	hook_proc_run(&exechook_list, p);
 }
 
-hook_list_t exithook_list;
+static hook_list_t exithook_list;
 
 void *
-exithook_establish(fn, arg)
-	void (*fn)(struct proc *, void *);
-	void *arg;
+exithook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
 	return hook_establish(&exithook_list, (void (*)(void *))fn, arg);
 }
 
 void
-exithook_disestablish(vhook)
-	void *vhook;
+exithook_disestablish(void *vhook)
 {
 	hook_disestablish(&exithook_list, vhook);
 }
@@ -624,24 +609,21 @@ exithook_disestablish(vhook)
  * Run exit hooks.
  */
 void
-doexithooks(p)
-	struct proc *p;
+doexithooks(struct proc *p)
 {
 	hook_proc_run(&exithook_list, p);
 }
 
-hook_list_t forkhook_list;
+static hook_list_t forkhook_list;
 
 void *
-forkhook_establish(fn)
-	void (*fn)(struct proc *, struct proc *);
+forkhook_establish(void (*fn)(struct proc *, struct proc *))
 {
 	return hook_establish(&forkhook_list, (void (*)(void *))fn, NULL);
 }
 
 void
-forkhook_disestablish(vhook)
-	void *vhook;
+forkhook_disestablish(void *vhook)
 {
 	hook_disestablish(&forkhook_list, vhook);
 }
@@ -650,8 +632,7 @@ forkhook_disestablish(vhook)
  * Run fork hooks.
  */
 void
-doforkhooks(p2, p1)
-	struct proc *p2, *p1;
+doforkhooks(struct proc *p2, struct proc *p1)
 {
 	struct hook_desc *hd;
 
@@ -674,13 +655,11 @@ struct powerhook_desc {
 	void	*sfd_arg;
 };
 
-CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
-	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
+static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
+    CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
-powerhook_establish(fn, arg)
-	void (*fn)(int, void *);
-	void *arg;
+powerhook_establish(void (*fn)(int, void *), void *arg)
 {
 	struct powerhook_desc *ndp;
 
@@ -697,8 +676,7 @@ powerhook_establish(fn, arg)
 }
 
 void
-powerhook_disestablish(vhook)
-	void *vhook;
+powerhook_disestablish(void *vhook)
 {
 #ifdef DIAGNOSTIC
 	struct powerhook_desc *dp;
@@ -719,8 +697,7 @@ powerhook_disestablish(vhook)
  * Run power hooks.
  */
 void
-dopowerhooks(why)
-	int why;
+dopowerhooks(int why)
 {
 	struct powerhook_desc *dp;
 
@@ -780,9 +757,7 @@ int booted_partition;
 	 strcmp((dv)->dv_cfdata->cf_name, "dk") != 0))
 
 void
-setroot(bootdv, bootpartition)
-	struct device *bootdv;
-	int bootpartition;
+setroot(struct device *bootdv, int bootpartition)
 {
 	struct device *dv;
 	int len;
@@ -1117,8 +1092,7 @@ setroot(bootdv, bootpartition)
 }
 
 static struct device *
-finddevice(name)
-	const char *name;
+finddevice(const char *name)
 {
 	struct device *dv;
 #if defined(BOOT_FROM_RAID_HOOKS) || defined(BOOT_FROM_MEMORY_HOOKS)
@@ -1151,11 +1125,7 @@ finddevice(name)
 }
 
 static struct device *
-getdisk(str, len, defpart, devp, isdump)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
-	int isdump;
+getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 {
 	struct device	*dv;
 #ifdef MEMORY_DISK_HOOKS
@@ -1199,10 +1169,7 @@ getdisk(str, len, defpart, devp, isdump)
 }
 
 static struct device *
-parsedisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
+parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
 	char *cp, c;
@@ -1275,17 +1242,13 @@ parsedisk(str, len, defpart, devp)
  *	252215296	`240 MB'
  */
 int
-humanize_number(buf, len, bytes, suffix, divisor)
-	char		*buf;
-	size_t		 len;
-	u_int64_t	 bytes;
-	const char	*suffix;
-	int 		divisor;
+humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
+    int divisor)
 {
        	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
 	const char *prefixes;
 	int		r;
-	u_int64_t	max;
+	u_int64_t	umax;
 	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
@@ -1306,10 +1269,10 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	} else
 		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
-	max = 1;
+	umax = 1;
 	for (i = 0; i < len - suffixlen - 3; i++)
-		max *= 10;
-	for (i = 0; bytes >= max && prefixes[i + 1]; i++)
+		umax *= 10;
+	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
 		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
@@ -1319,10 +1282,7 @@ humanize_number(buf, len, bytes, suffix, divisor)
 }
 
 int
-format_bytes(buf, len, bytes)
-	char		*buf;
-	size_t		 len;
-	u_int64_t	 bytes;
+format_bytes(char *buf, size_t len, uint64_t bytes)
 {
 	int	rv;
 	size_t	nlen;
@@ -1346,7 +1306,7 @@ format_bytes(buf, len, bytes)
  */
 int
 trace_enter(struct lwp *l, register_t code,
-	register_t realcode, const struct sysent *callp, void *args)
+    register_t realcode, const struct sysent *callp, void *args)
 {
 #if defined(KTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;

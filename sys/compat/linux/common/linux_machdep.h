@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.7.6.3 2004/09/21 13:25:39 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.7.6.4 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <compat/linux/arch/mips/linux_machdep.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_machdep.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_machdep.h>
 #else
 #error Undefined linux_machdep.h machine type.
 #endif
@@ -60,6 +62,12 @@ __BEGIN_DECLS
 void linux_sendsig __P((const ksiginfo_t *, const sigset_t *));
 dev_t linux_fakedev __P((dev_t, int));
 __END_DECLS
+#ifdef LINUX_NPTL
+__BEGIN_DECLS
+unsigned long linux_get_newtls __P((struct lwp *));
+int linux_set_newtls __P((struct lwp *, unsigned long));
+__END_DECLS
+#endif /* !LINUX_NPTL */
 #endif /* !_KERNEL */
 
 #endif /* !_LINUX_MACHDEP_H */

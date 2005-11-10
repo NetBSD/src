@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.12.2.4 2004/09/21 13:33:53 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.12.2.5 2005/11/10 14:08:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.12.2.4 2004/09/21 13:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.12.2.5 2005/11/10 14:08:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ USB_ATTACH(ustir)
 	USB_ATTACH_START(ustir, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
-	char devinfo[1024];
+	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i;
@@ -319,9 +319,10 @@ USB_ATTACH(ustir)
 
 	DPRINTFN(10,("ustir_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;

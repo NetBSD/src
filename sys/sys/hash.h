@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1 2001/12/05 06:51:55 lukem Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.20.1 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,14 +51,14 @@
 
 /*
  * uint32_t
- * hash32_buf(const void *buf, size_t len, uint32_t hash)
+ * hash32_buf(const void *bf, size_t len, uint32_t hash)
  *	return a 32 bit hash of the binary buffer buf (size len),
  *	seeded with an initial hash value of hash (usually HASH32_BUF_INIT).
  */
 static __inline uint32_t
-hash32_buf(const void *buf, size_t len, uint32_t hash)
+hash32_buf(const void *bf, size_t len, uint32_t hash)
 {
-	const uint8_t *s = buf;
+	const uint8_t *s = bf;
 
 	while (len-- != 0)			/* "nemesi": k=257, r=r*257 */
 		hash = hash * 257 + *s++;
@@ -72,14 +72,14 @@ hash32_buf(const void *buf, size_t len, uint32_t hash)
 #define	HASH32_STR_INIT	5381
 /*
  * uint32_t
- * hash32_str(const void *buf, uint32_t hash)
+ * hash32_str(const void *bf, uint32_t hash)
  *	return a 32 bit hash of NUL terminated ASCII string buf,
  *	seeded with an initial hash value of hash (usually HASH32_STR_INIT).
  */
 static __inline uint32_t
-hash32_str(const void *buf, uint32_t hash)
+hash32_str(const void *bf, uint32_t hash)
 {
-	const uint8_t *s = buf;
+	const uint8_t *s = bf;
 	uint8_t	c;
 
 	while ((c = *s++) != 0)
@@ -89,15 +89,15 @@ hash32_str(const void *buf, uint32_t hash)
 
 /*
  * uint32_t
- * hash32_strn(const void *buf, size_t len, uint32_t hash)
+ * hash32_strn(const void *bf, size_t len, uint32_t hash)
  *	return a 32 bit hash of NUL terminated ASCII string buf up to
  *	a maximum of len bytes,
  *	seeded with an initial hash value of hash (usually HASH32_STR_INIT).
  */
 static __inline uint32_t
-hash32_strn(const void *buf, size_t len, uint32_t hash)
+hash32_strn(const void *bf, size_t len, uint32_t hash)
 {
-	const uint8_t	*s = buf;
+	const uint8_t	*s = bf;
 	uint8_t	c;
 
 	while ((c = *s++) != 0 && len-- != 0)

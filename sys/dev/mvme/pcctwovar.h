@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.1 2002/02/12 20:38:50 scw Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.1.20.1 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct pcctwo_attach_args {
  * Structure used to describe a device for autoconfiguration purposes.
  */
 struct pcctwo_device {
-	char *pcc_name;		/* name of device (e.g. "clock") */
+	const char *pcc_name;	/* name of device (e.g. "clock") */
 	bus_addr_t pcc_offset;	/* offset from PCC2 base */
 };
 
@@ -94,7 +94,8 @@ struct pcctwo_softc {
 
 extern struct pcctwo_softc *sys_pcctwo;
 
-extern void pcctwo_init(struct pcctwo_softc *, struct pcctwo_device *, int);
+extern void pcctwo_init(struct pcctwo_softc *,
+		const struct pcctwo_device *, int);
 extern struct evcnt *pcctwointr_evcnt(int);
 extern void pcctwointr_establish(int, int (*)(void *), int, void *,
 		struct evcnt *);

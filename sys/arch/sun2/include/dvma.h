@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.4 2003/04/02 07:53:56 thorpej Exp $	*/
+/*	$NetBSD: dvma.h,v 1.4.2.1 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define DVMA_MAP_BASE		0x00F00000
 #define DVMA_MAP_SIZE_120	0x00040000
 #define DVMA_MAP_SIZE_50	0x000F8000
-#define DVMA_MAP_SIZE		(cpu_machine_id == SUN2_MACH_120 ? DVMA_MAP_SIZE_120 : DVMA_MAP_SIZE_50)
+#define DVMA_MAP_SIZE		(cpu_machine_id == ID_SUN2_120 ? DVMA_MAP_SIZE_120 : DVMA_MAP_SIZE_50)
 #define DVMA_MAP_AVAIL		(DVMA_MAP_SIZE-PAGE_SIZE)
 
 /*

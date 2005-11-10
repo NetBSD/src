@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.66.2.9 2005/04/01 14:31:34 skrll Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.66.2.10 2005/11/10 14:10:32 skrll Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.66.2.9 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.66.2.10 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3991,7 +3991,7 @@ chap_failure:
 			sp->pp_auth_failures++;
 			splx(x);
 			sppp_auth_send(&chap, sp, CHAP_FAILURE, h->ident,
-				       sizeof(FAILMSG) - 1, (u_char *)FAILMSG,
+				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
 				       0);
 			chap.tld(sp);
 			break;
@@ -4001,7 +4001,7 @@ chap_failure:
 		if (sp->state[IDX_CHAP] == STATE_REQ_SENT ||
 		    sp->state[IDX_CHAP] == STATE_OPENED)
 			sppp_auth_send(&chap, sp, CHAP_SUCCESS, h->ident,
-				       sizeof(SUCCMSG) - 1, (u_char *)SUCCMSG,
+				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
 				       0);
 		if (sp->state[IDX_CHAP] == STATE_REQ_SENT) {
 			sppp_cp_change_state(&chap, sp, STATE_OPENED);
@@ -4285,7 +4285,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			mlen = sizeof(FAILMSG) - 1;
 			sppp_auth_send(&pap, sp, PAP_NAK, h->ident,
 				       sizeof mlen, (const char *)&mlen,
-				       sizeof(FAILMSG) - 1, (u_char *)FAILMSG,
+				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
 				       0);
 			pap.tld(sp);
 			break;
@@ -4296,7 +4296,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			mlen = sizeof(SUCCMSG) - 1;
 			sppp_auth_send(&pap, sp, PAP_ACK, h->ident,
 				       sizeof mlen, (const char *)&mlen,
-				       sizeof(SUCCMSG) - 1, (u_char *)SUCCMSG,
+				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
 				       0);
 		}
 		if (sp->state[IDX_PAP] == STATE_REQ_SENT) {
@@ -4647,7 +4647,7 @@ sppp_keepalive(void *dummy)
 		    /* idle timeout is enabled for this interface */
 		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
 		    	if (ifp->if_flags & IFF_DEBUG)
-			    printf("%s: no activitiy for %lu seconds\n",
+			    printf("%s: no activity for %lu seconds\n",
 				sp->pp_if.if_xname,
 				(unsigned long)(now-sp->pp_last_activity));
 			lcp.Close(sp);
@@ -5133,14 +5133,14 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	    break;
 	case SPPPGETLCPCFG:
 	    {
-	    	struct sppplcpcfg *lcp = (struct sppplcpcfg *)data;
-	    	lcp->lcp_timeout = sp->lcp.timeout;
+	    	struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
+	    	lcpp->lcp_timeout = sp->lcp.timeout;
 	    }
 	    break;
 	case SPPPSETLCPCFG:
 	    {
-	    	struct sppplcpcfg *lcp = (struct sppplcpcfg *)data;
-	    	sp->lcp.timeout = lcp->lcp_timeout;
+	    	struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
+	    	sp->lcp.timeout = lcpp->lcp_timeout;
 	    }
 	    break;
 	case SPPPGETSTATUS:

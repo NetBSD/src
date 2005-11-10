@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.2.2.5 2005/03/04 16:45:15 skrll Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.2.2.6 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.2.2.5 2005/03/04 16:45:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.2.2.6 2005/11/10 14:06:00 skrll Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -71,37 +71,39 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 }
 
 #define ID_ALL_MASK			0xFFFFFFFFFFFFFFFFull
-#define ID_ALL_IROC_MASK		0xFFFFFF7FFFFFFFFFull
+#define ID_ALL_IROC_MASK		0xFF7FFFFFFFFFFFFFull
 #define ID_DEV_VENDOR_MASK		0xFFFFFFFF00000000ull
 #define ID_9005_GENERIC_MASK		0xFFF0FFFF00000000ull
-#define ID_9005_GENERIC_IROC_MASK	0xFFF0FF7F00000000ull
+#define ID_9005_GENERIC_IROC_MASK	0xFF70FFFF00000000ull
 
 #define ID_AIC7901			0x800F9005FFFF9005ull
 #define ID_AHA_29320A			0x8000900500609005ull
 #define ID_AHA_29320ALP			0x8017900500449005ull
 
 #define ID_AIC7901A			0x801E9005FFFF9005ull
-#define ID_AHA_29320			0x8012900500429005ull
-#define ID_AHA_29320B			0x8013900500439005ull
 #define ID_AHA_29320LP			0x8014900500449005ull
 
 #define ID_AIC7902			0x801F9005FFFF9005ull
 #define ID_AIC7902_B			0x801D9005FFFF9005ull
 #define ID_AHA_39320			0x8010900500409005ull
+#define ID_AHA_29320			0x8012900500429005ull
+#define ID_AHA_29320B			0x8013900500439005ull
 #define ID_AHA_39320_B			0x8015900500409005ull
 #define ID_AHA_39320A			0x8016900500409005ull
 #define ID_AHA_39320D			0x8011900500419005ull
 #define ID_AHA_39320D_B			0x801C900500419005ull
+#define ID_AHA_39320_B_DELL		0x8015900501681028ull
 #define ID_AHA_39320D_HP		0x8011900500AC0E11ull
 #define ID_AHA_39320D_B_HP		0x801C900500AC0E11ull
 #define ID_AIC7902_PCI_REV_A4		0x3
 #define ID_AIC7902_PCI_REV_B0		0x10
 #define SUBID_HP			0x0E11
 
+#define DEVID_9005_HOSTRAID(id) ((id) & 0x80)
+
 #define DEVID_9005_TYPE(id) ((id) & 0xF)
 #define		DEVID_9005_TYPE_HBA		0x0	/* Standard Card */
 #define		DEVID_9005_TYPE_HBA_2EXT	0x1	/* 2 External Ports */
-#define		DEVID_9005_TYPE_IROC		0x8	/* Raid(0,1,10) Card */
 #define		DEVID_9005_TYPE_MB		0xF	/* On Motherboard */
 
 #define DEVID_9005_MFUNC(id) ((id) & 0x10)
@@ -125,7 +127,7 @@ static ahd_device_setup_t ahd_aic7901A_setup;
 static ahd_device_setup_t ahd_aic7902_setup;
 static ahd_device_setup_t ahd_aic790X_setup;
 
-struct ahd_pci_identity ahd_pci_ident_table [] =
+static struct ahd_pci_identity ahd_pci_ident_table [] =
 {
 	/* aic7901 based controllers */
 	{
@@ -141,18 +143,6 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 		ahd_aic7901_setup
 	},
 	/* aic7901A based controllers */
-	{
-		ID_AHA_29320,
-		ID_ALL_MASK,
-		"Adaptec 29320 Ultra320 SCSI adapter",
-		ahd_aic7901A_setup
-	},
-	{
-		ID_AHA_29320B,
-		ID_ALL_MASK,
-		"Adaptec 29320B Ultra320 SCSI adapter",
-		ahd_aic7901A_setup
-	},
 	{
 		ID_AHA_29320LP,
 		ID_ALL_MASK,
@@ -170,6 +160,12 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 		ID_AHA_39320_B,
 		ID_ALL_MASK,
 		"Adaptec 39320 Ultra320 SCSI adapter",
+		ahd_aic7902_setup
+	},
+	{
+		ID_AHA_39320_B_DELL,
+		ID_ALL_IROC_MASK,
+		"Adaptec (Dell OEM) 39320 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
@@ -202,22 +198,10 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 		"Adaptec (HP OEM) 39320D Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
-	{
-		ID_AHA_29320,
-		ID_ALL_MASK,
-		"Adaptec 29320 Ultra320 SCSI adapter",
-		ahd_aic7902_setup
-	},
-	{
-		ID_AHA_29320B,
-		ID_ALL_MASK,
-		"Adaptec 29320B Ultra320 SCSI adapter",
-		ahd_aic7902_setup
-	},
 	/* Generic chip probes for devices we don't know 'exactly' */
 	{
-		ID_AIC7901 & ID_DEV_VENDOR_MASK,
-		ID_DEV_VENDOR_MASK,
+		ID_AIC7901 & ID_9005_GENERIC_MASK,
+		ID_9005_GENERIC_MASK,
 		"Adaptec AIC7901 Ultra320 SCSI adapter",
 		ahd_aic7901_setup
 	},
@@ -235,7 +219,7 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 	}
 };
 
-const u_int ahd_num_pci_devs = NUM_ELEMENTS(ahd_pci_ident_table);
+static const u_int ahd_num_pci_devs = NUM_ELEMENTS(ahd_pci_ident_table);
 
 #define	                DEVCONFIG		0x40
 #define		        PCIXINITPAT	        0x0000E000ul
@@ -274,20 +258,17 @@ static const char *pci_bus_modes[] =
 
 #define		LATTIME		0x0000ff00ul
 
-int	ahd_pci_probe(struct device *, struct cfdata *, void *);
-void	ahd_pci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(ahd_pci, sizeof(struct ahd_softc),
-    ahd_pci_probe, ahd_pci_attach, NULL, NULL);
-
 static int	ahd_check_extport(struct ahd_softc *ahd);
 static void	ahd_configure_termination(struct ahd_softc *ahd,
 					  u_int adapter_control);
 static void	ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat);
 
-const struct ahd_pci_identity *
-ahd_find_pci_device(id, subid)
-	pcireg_t id, subid;
+static int	ahd_pci_test_register_access(struct ahd_softc *);
+
+static int	ahd_pci_intr(struct ahd_softc *);
+
+static const struct ahd_pci_identity *
+ahd_find_pci_device(pcireg_t id, pcireg_t subid)
 {
 	u_int64_t  full_id;
 	const struct	   ahd_pci_identity *entry;
@@ -304,11 +285,8 @@ ahd_find_pci_device(id, subid)
 	return (NULL);
 }
 
-int
-ahd_pci_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ahd_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahd_pci_identity *entry;
@@ -319,10 +297,8 @@ ahd_pci_probe(parent, match, aux)
 	return entry != NULL ? 1 : 0;
 }
 
-void
-ahd_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	struct ahd_softc       	*ahd = (void *)self;
@@ -534,12 +510,12 @@ ahd_pci_attach(parent, self, aux)
 	 * 64bit bus (PCI64BIT set in devconfig).
 	 */
 	if ((ahd->flags & (AHD_39BIT_ADDRESSING|AHD_64BIT_ADDRESSING)) != 0) {
-		uint32_t devconfig;
+		uint32_t dvconfig;
 
 		aprint_normal("%s: Enabling 39Bit Addressing\n", ahd_name(ahd));
-		devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
-		devconfig |= DACEN;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, devconfig);
+		dvconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
+		dvconfig |= DACEN;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, dvconfig);
 	}
 
 	/* Ensure busmastering is enabled */
@@ -601,11 +577,14 @@ ahd_pci_attach(parent, self, aux)
 	ahd_attach(ahd);
 }
 
+CFATTACH_DECL(ahd_pci, sizeof(struct ahd_softc),
+    ahd_pci_probe, ahd_pci_attach, NULL, NULL);
+
 /*
  * Perform some simple tests that should catch situations where
  * our registers are invalidly mapped.
  */
-int
+static int
 ahd_pci_test_register_access(struct ahd_softc *ahd)
 {
 	uint32_t cmd;
@@ -665,11 +644,11 @@ ahd_pci_test_register_access(struct ahd_softc *ahd)
 		goto fail;
 
 	if ((ahd_inb(ahd, INTSTAT) & PCIINT) != 0) {
-		u_int targpcistat;
+		u_int trgpcistat;
 
 		ahd_set_modes(ahd, AHD_MODE_CFG, AHD_MODE_CFG);
-		targpcistat = ahd_inb(ahd, TARGPCISTAT);
-		if ((targpcistat & STA) != 0)
+		trgpcistat = ahd_inb(ahd, TARGPCISTAT);
+		if ((trgpcistat & STA) != 0)
 			goto fail;
 	}
 
@@ -981,7 +960,7 @@ static const char *pci_status_strings[] =
 	"%s: Address or Write Phase Parity Error Detected in %s.\n"
 };
 
-int
+static int
 ahd_pci_intr(struct ahd_softc *ahd)
 {
 	uint8_t			pci_status[8];

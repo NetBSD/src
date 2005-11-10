@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.2.6.2 2005/04/01 14:29:11 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.2.6.3 2005/11/10 14:00:34 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -46,6 +46,8 @@
 #include <machine/xenio.h>
 #include <machine/xen.h>
 
+extern struct evcnt softxenevt_evtcnt;
+
 /*
  * Interface between the event channel and userland.
  * Each process with a xenevt device instance open can regiter events it
@@ -87,6 +89,9 @@ const struct cdevsw xenevt_cdevsw = {
 #define XENEVT_RING_SIZE 2048
 #define XENEVT_RING_MASK 2047
 struct xenevt_d {
+	struct simplelock lock;
+	STAILQ_ENTRY(xenevt_d) pendingq;
+	boolean_t pending;
 	u_int16_t ring[2048]; 
 	u_int ring_read; /* pointer of the reader */
 	u_int ring_write; /* pointer of the writer */
@@ -98,6 +103,13 @@ struct xenevt_d {
 /* event -> user device mapping */
 static struct xenevt_d *devevent[NR_EVENT_CHANNELS];
 
+/* pending events */
+struct simplelock devevent_pending_lock = SIMPLELOCK_INITIALIZER;
+STAILQ_HEAD(, xenevt_d) devevent_pending =
+    STAILQ_HEAD_INITIALIZER(devevent_pending);
+
+static void xenevt_donotify(struct xenevt_d *);
+static void xenevt_record(struct xenevt_d *, int);
 
 /* called at boot time */
 void
@@ -110,26 +122,92 @@ xenevtattach(int n)
 void
 xenevt_event(int port)
 {
-	hypervisor_mask_event(port);
-	hypervisor_clear_event(port);
-	if (devevent[port] != NULL) {
-		/*
-		 * This algorithm overflows for one less slot than available.
-		 * Not really an issue, and the correct algorithm would be more
-		 * complex
-		 */
-		 
-		if (devevent[port]->ring_read ==
-		    ((devevent[port]->ring_write + 1) & XENEVT_RING_MASK)) {
-			devevent[port]->flags |= XENEVT_F_OVERFLOW;
-			printf("xenevt_event: ring overflow port %d\n", port);
-		} else {
-			devevent[port]->ring[devevent[port]->ring_write] = port;
-			devevent[port]->ring_write =
-			    (devevent[port]->ring_write + 1) & XENEVT_RING_MASK;
+	struct xenevt_d *d;
+	struct cpu_info *ci;
+
+	d = devevent[port];
+	if (d != NULL) {
+		xenevt_record(d, port);
+
+		if (d->pending) {
+			return;
 		}
-		selnotify(&devevent[port]->sel, 1);
-		wakeup(&devevent[port]->ring_read);
+
+		ci = curcpu();
+
+		if (ci->ci_ilevel < IPL_SOFTXENEVT) {
+			/* fast and common path */
+			softxenevt_evtcnt.ev_count++;
+			xenevt_donotify(d);
+		} else {
+			simple_lock(&devevent_pending_lock);
+			STAILQ_INSERT_TAIL(&devevent_pending, d, pendingq);
+			simple_unlock(&devevent_pending_lock);
+			d->pending = TRUE;
+			softintr(SIR_XENEVT);
+		}
+	}
+}
+
+void
+xenevt_notify()
+{
+
+	cli();
+	simple_lock(&devevent_pending_lock);
+	while (/* CONSTCOND */ 1) {
+		struct xenevt_d *d;
+
+		d = STAILQ_FIRST(&devevent_pending);
+		if (d == NULL) {
+			break;
+		}
+		STAILQ_REMOVE_HEAD(&devevent_pending, pendingq);
+		simple_unlock(&devevent_pending_lock);
+		sti();
+
+		d->pending = FALSE;
+		xenevt_donotify(d);
+
+		cli();
+		simple_lock(&devevent_pending_lock);
+	}
+	simple_unlock(&devevent_pending_lock);
+	sti();
+}
+
+static void
+xenevt_donotify(struct xenevt_d *d)
+{
+	int s;
+
+	s = splsoftxenevt();
+	simple_lock(&d->lock);
+	 
+	selnotify(&d->sel, 1);
+	wakeup(&d->ring_read);
+
+	simple_unlock(&d->lock);
+	splx(s);
+}
+
+static void
+xenevt_record(struct xenevt_d *d, int port)
+{
+
+	/*
+	 * This algorithm overflows for one less slot than available.
+	 * Not really an issue, and the correct algorithm would be more
+	 * complex
+	 */
+
+	if (d->ring_read ==
+	    ((d->ring_write + 1) & XENEVT_RING_MASK)) {
+		d->flags |= XENEVT_F_OVERFLOW;
+		printf("xenevt_event: ring overflow port %d\n", port);
+	} else {
+		d->ring[d->ring_write] = port;
+		d->ring_write = (d->ring_write + 1) & XENEVT_RING_MASK;
 	}
 }
 
@@ -146,6 +224,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct proc *p)
 		return error;
 
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
+	simple_lock_init(&d->lock);
 
 	return fdclone(p, fp, fd, flags, &xenevt_fileops, d);
 }
@@ -175,45 +254,71 @@ xenevt_read(struct file *fp, off_t *offp, struct uio *uio,
 	struct xenevt_d *d = fp->f_data;
 	int error;
 	size_t len, uio_len;
+	int ring_read;
+	int ring_write;
+	int s;
 
-	while (d->ring_read == d->ring_write) {
-		if (d->flags & XENEVT_F_OVERFLOW)
-			return EFBIG;
-		/* nothing to read */
-		if (fp->f_flag & FNONBLOCK)
-			return (EAGAIN);
-		error = tsleep(&d->ring_read, PRIBIO | PCATCH, "xenevt", 0);
-		if (error == EINTR || error == ERESTART) {
-			return(error);
-		}
-		if (d->ring_read != d->ring_write)
+	error = 0;
+	s = splsoftxenevt();
+	simple_lock(&d->lock);
+	while (error == 0) {
+		ring_read = d->ring_read;
+		ring_write = d->ring_write;
+		if (ring_read != ring_write) {
 			break;
+		}
+		if (d->flags & XENEVT_F_OVERFLOW) {
+			break;
+		}
+
+		/* nothing to read */
+		if (fp->f_flag & FNONBLOCK) {
+			error = EAGAIN;
+		} else {
+			error = ltsleep(&d->ring_read, PRIBIO | PCATCH,
+			    "xenevt", 0, &d->lock);
+		}
 	}
-	if (d->flags & XENEVT_F_OVERFLOW)
-		return EFBIG;
+	if (error == 0 && (d->flags & XENEVT_F_OVERFLOW)) {
+		error = EFBIG;
+	}
+	simple_unlock(&d->lock);
+	splx(s);
+
+	if (error) {
+		return error;
+	}
 
 	uio_len = uio->uio_resid >> 1; 
-	if (d->ring_read <= d->ring_write)
-		len = d->ring_write - d->ring_read;
+	if (ring_read <= ring_write)
+		len = ring_write - ring_read;
 	else
-		len = XENEVT_RING_SIZE - d->ring_read;
+		len = XENEVT_RING_SIZE - ring_read;
 	if (len > uio_len)
 		len = uio_len;
-	error = uiomove(&d->ring[d->ring_read], len << 1, uio);
+	error = uiomove(&d->ring[ring_read], len << 1, uio);
 	if (error)
 		return error;
-	d->ring_read = (d->ring_read + len) & XENEVT_RING_MASK;
+	ring_read = (ring_read + len) & XENEVT_RING_MASK;
 	uio_len = uio->uio_resid >> 1; 
 	if (uio_len == 0)
-		return 0; /* we're done */
+		goto done;
 	/* ring wrapped, read the second part */
-	len = d->ring_write - d->ring_read;
+	len = ring_write - ring_read;
 	if (len > uio_len)
 		len = uio_len;
-	error = uiomove(&d->ring[d->ring_read], len << 1, uio);
+	error = uiomove(&d->ring[ring_read], len << 1, uio);
 	if (error)
 		return error;
-	d->ring_read = (d->ring_read + len) & XENEVT_RING_MASK;
+	ring_read = (ring_read + len) & XENEVT_RING_MASK;
+
+done:
+	s = splsoftxenevt();
+	simple_lock(&d->lock);
+	d->ring_read = ring_read;
+	simple_unlock(&d->lock);
+	splx(s);
+
 	return 0;
 }
 
@@ -235,8 +340,9 @@ xenevt_write(struct file *fp, off_t *offp, struct uio *uio,
 		return error;
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
-		    devevent[chans[i]] == d)
+		    devevent[chans[i]] == d) {
 			hypervisor_unmask_event(chans[i]);
+		}
 	}
 	return 0;
 }

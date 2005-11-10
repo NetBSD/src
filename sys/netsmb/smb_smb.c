@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.20.2.4 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.20.2.5 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.4 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.5 2005/11/10 14:11:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	const smb_unichar *unipp;
 	smb_uniptr ntencpass = NULL;
-	char *pp, *up, *pbuf, *encpass;
+	char *up, *pbuf, *encpass;
+	const char *pp;
 	int error, plen, uniplen, ulen, upper;
 
 	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
@@ -369,7 +370,7 @@ again:
 		smb_rq_wend(rqp);
 		smb_rq_bstart(rqp);
 		mb_put_mem(mbp, pp, plen, MB_MSYSTEM);
-		mb_put_mem(mbp, (caddr_t)unipp, uniplen, MB_MSYSTEM);
+		mb_put_mem(mbp, (const void *)unipp, uniplen, MB_MSYSTEM);
 		smb_put_dstring(mbp, vcp, up, SMB_CS_NONE);		/* AccountName */
 		smb_put_dstring(mbp, vcp, vcp->vc_domain, SMB_CS_NONE);	/* PrimaryDomain */
 		smb_put_dstring(mbp, vcp, "NetBSD", SMB_CS_NONE);	/* Client's OS */

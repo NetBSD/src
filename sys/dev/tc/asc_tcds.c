@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.11.2.1 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.11.2.2 2005/11/10 14:08:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.11.2.1 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.11.2.2 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD0_VALID11)
 				dudmask |= TCDS_DUD_BYTE11;
 #endif
-			NCR_DMA(("dud0 at 0x%p dudmask 0x%x\n",
+			NCR_DMA(("dud0 at %p dudmask 0x%x\n",
 			    addr, dudmask));
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}

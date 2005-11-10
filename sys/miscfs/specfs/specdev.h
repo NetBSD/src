@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.23.2.3 2004/09/21 13:36:34 skrll Exp $	*/
+/*	$NetBSD: specdev.h,v 1.23.2.4 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ extern	struct vnode *speclisth[SPECHSZ];
 /*
  * Prototypes for special file operations on vnodes.
  */
-extern	int (**spec_vnodeop_p) __P((void *));
+extern	int (**spec_vnodeop_p)(void *);
 struct	nameidata;
 struct	componentname;
 struct	ucred;
@@ -103,24 +103,24 @@ struct	flock;
 struct	buf;
 struct	uio;
 
-int	spec_lookup	__P((void *));
+int	spec_lookup(void *);
 #define	spec_create	genfs_badop
 #define	spec_mknod	genfs_badop
-int	spec_open	__P((void *));
-int	spec_close	__P((void *));
+int	spec_open(void *);
+int	spec_close(void *);
 #define	spec_access	genfs_ebadf
 #define	spec_getattr	genfs_ebadf
 #define	spec_setattr	genfs_ebadf
-int	spec_read	__P((void *));
-int	spec_write	__P((void *));
+int	spec_read(void *);
+int	spec_write(void *);
 #define	spec_lease_check genfs_nullop
 #define spec_fcntl	genfs_fcntl
-int	spec_ioctl	__P((void *));
-int	spec_poll	__P((void *));
-int	spec_kqfilter	__P((void *));
+int	spec_ioctl(void *);
+int	spec_poll(void *);
+int	spec_kqfilter(void *);
 #define spec_revoke	genfs_revoke
 #define	spec_mmap	genfs_mmap
-int	spec_fsync	__P((void *));
+int	spec_fsync(void *);
 #define	spec_seek	genfs_nullop		/* XXX should query device */
 #define	spec_remove	genfs_badop
 #define	spec_link	genfs_badop
@@ -132,24 +132,18 @@ int	spec_fsync	__P((void *));
 #define	spec_readlink	genfs_badop
 #define	spec_abortop	genfs_badop
 #define	spec_reclaim	genfs_nullop
-int	spec_inactive	__P((void *));
+int	spec_inactive(void *);
 #define	spec_lock	genfs_nolock
 #define	spec_unlock	genfs_nounlock
-int	spec_bmap	__P((void *));
-int	spec_strategy	__P((void *));
-int	spec_print	__P((void *));
+int	spec_bmap(void *);
+int	spec_strategy(void *);
+int	spec_print(void *);
 #define	spec_islocked	genfs_noislocked
-int	spec_pathconf	__P((void *));
-int	spec_advlock	__P((void *));
-#define	spec_blkatoff	genfs_badop
-#define	spec_valloc	genfs_badop
-#define	spec_reallocblks genfs_badop
-#define	spec_vfree	genfs_badop
-#define	spec_truncate	genfs_nullop
-#define	spec_update	genfs_nullop
+int	spec_pathconf(void *);
+int	spec_advlock(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
-int	spec_size	__P((void *));
+int	spec_size(void *);
 
 #endif /* _MISCFS_SPECFS_SPECDEV_H_ */

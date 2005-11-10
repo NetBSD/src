@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.11.2.3 2004/09/21 13:26:40 skrll Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.11.2.4 2005/11/10 14:03:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,7 +55,6 @@
  *	This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
-	const char *aa_busname;		/* XXX should be common */
 	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset */
@@ -260,10 +259,11 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
+void		acpi_set_wake_gpe(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, ACPI_INTEGER *);
-ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
-ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
+ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
+ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
+ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
 
 ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
 		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
@@ -271,7 +271,7 @@ ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
 const char*	acpi_name(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, char *,
+ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6.6.3 2004/09/21 13:21:37 skrll Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6.6.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.3 2004/09/21 13:21:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
     rtcmatch, rtcattach, NULL, NULL);
 extern struct cfdriver rtc_cd;
 
-static int rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int rtc_settime(struct todr_chip_handle *, struct timeval *);
+static int rtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
+static int rtc_settime(struct todr_chip_handle *, volatile struct timeval *);
 static int rtc_getcal(struct todr_chip_handle *, int *);
 static int rtc_setcal(struct todr_chip_handle *, int);
 
@@ -115,12 +115,12 @@ rtcattach(struct device *parent, struct device *self, void *args)
 }
 
 static int
-rtc_gettime(struct todr_chip_handle *todr, struct timeval *tv)
+rtc_gettime(struct todr_chip_handle *todr, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = todr->cookie;
 	struct clock_ymdhms dt;
 	u_int8_t r64cnt;
-	u_int8_t sec, min, hour;
+	u_int8_t second, minute, hour;
 	u_int8_t dow, day, mon;
 	u_int16_t year;
 	int s, retry;
@@ -131,8 +131,8 @@ rtc_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 	do {
 		r64cnt = rtc_read_r64cnt(sc->sc_bust, sc->sc_bush);
 
-		sec = rtc_read(sc, RTC_REG_RSECCNT);
-		min = rtc_read(sc, RTC_REG_RMINCNT);
+		second = rtc_read(sc, RTC_REG_RSECCNT);
+		minute = rtc_read(sc, RTC_REG_RMINCNT);
 		hour = rtc_read(sc, RTC_REG_RHRCNT);
 		dow = rtc_read(sc, RTC_REG_RWKCNT);
 		day = rtc_read(sc, RTC_REG_RDAYCNT);
@@ -151,8 +151,8 @@ rtc_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 		return (1);
 	}
 
-	dt.dt_sec = FROMBCD(sec);
-	dt.dt_min = FROMBCD(min);
+	dt.dt_sec = FROMBCD(second);
+	dt.dt_min = FROMBCD(minute);
 	dt.dt_hour = FROMBCD(hour);
 	dt.dt_day = FROMBCD(day);
 	dt.dt_wday = FROMBCD(dow);
@@ -167,20 +167,20 @@ rtc_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 }
 
 static int
-rtc_settime(struct todr_chip_handle *todr, struct timeval *tv)
+rtc_settime(struct todr_chip_handle *todr, volatile struct timeval *tv)
 {
 	struct rtc_softc *sc = todr->cookie;
 	struct clock_ymdhms dt;
 	u_int8_t r64cnt;
-	u_int8_t sec, min, hour;
+	u_int8_t second, minute, hour;
 	u_int8_t dow, day, mon;
 	u_int16_t year;
 	int s, retry;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	sec = TOBCD(dt.dt_sec);
-	min = TOBCD(dt.dt_min);
+	second = TOBCD(dt.dt_sec);
+	minute = TOBCD(dt.dt_min);
 	hour = TOBCD(dt.dt_hour);
 	day = TOBCD(dt.dt_day);
 	dow = TOBCD(dt.dt_wday);
@@ -200,8 +200,8 @@ rtc_settime(struct todr_chip_handle *todr, struct timeval *tv)
 		rtc_write(sc, RTC_REG_RDAYCNT, day);
 		rtc_write(sc, RTC_REG_RWKCNT, dow);
 		rtc_write(sc, RTC_REG_RHRCNT, hour);
-		rtc_write(sc, RTC_REG_RMINCNT, min);
-		rtc_write(sc, RTC_REG_RSECCNT, sec);
+		rtc_write(sc, RTC_REG_RMINCNT, minute);
+		rtc_write(sc, RTC_REG_RSECCNT, second);
 
 		retry--;
 	} while (r64cnt != rtc_read_r64cnt(sc->sc_bust, sc->sc_bush) && retry);

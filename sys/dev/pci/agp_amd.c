@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.9.2.2 2005/03/04 16:45:15 skrll Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.9.2.3 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.9.2.2 2005/03/04 16:45:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.9.2.3 2005/11/10 14:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static int agp_amd_unbind_page(struct agp_softc *, off_t);
 static void agp_amd_flush_tlb(struct agp_softc *);
 
 
-struct agp_methods agp_amd_methods = {
+static struct agp_methods agp_amd_methods = {
 	agp_amd_get_aperture,
 	agp_amd_set_aperture,
 	agp_amd_bind_page,

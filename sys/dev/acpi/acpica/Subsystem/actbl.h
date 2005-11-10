@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actbl.h - Table data structures defined in ACPI specification
- *       xRevision: 64 $
+ *       xRevision: 69 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -209,7 +209,6 @@ typedef struct acpi_table_header /* ACPI common table header */
 #define DUAL_PIC                0
 #define MULTIPLE_APIC           1
 
-
 /* Master MADT */
 
 typedef struct multiple_apic_table
@@ -220,7 +219,6 @@ typedef struct multiple_apic_table
     UINT32_BIT              Reserved1       : 31;
 
 } MULTIPLE_APIC_TABLE;
-
 
 /* Values for Type in APIC_HEADER_DEF */
 
@@ -345,6 +343,8 @@ typedef struct madt_local_sapic
     UINT8                   LocalSapicEid;          /* SAPIC EID */
     UINT8                   Reserved [3];           /* Reserved - must be zero */
     LOCAL_APIC_FLAGS
+    UINT32                  ProcessorUID;           /* Numeric UID - ACPI 3.0 */
+    char                    ProcessorUIDString[1];  /* String UID  - ACPI 3.0 */
 
 } MADT_LOCAL_SAPIC;
 
@@ -357,7 +357,7 @@ typedef struct madt_interrupt_source
     UINT8                   ProcessorEid;           /* Processor EID */
     UINT8                   IoSapicVector;          /* Vector value for PMI interrupts */
     UINT32                  Interrupt;              /* Global system interrupt */
-    UINT32                  Reserved;               /* Reserved - must be zero */
+    UINT32                  Flags;                  /* Interrupt Source Flags */
 
 } MADT_INTERRUPT_SOURCE;
 
@@ -374,20 +374,6 @@ typedef struct smart_battery_table
 
 } SMART_BATTERY_TABLE;
 
-
-/*
- * High performance timer
- */
-typedef struct hpet_table
-{
-    ACPI_TABLE_HEADER_DEF
-    UINT32                  HardwareId;
-    UINT32                  BaseAddress [3];
-    UINT8                   HpetNumber;
-    UINT16                  ClockTick;
-    UINT8                   Attributes;
-
-} HPET_TABLE;
 
 #pragma pack()
 
@@ -417,8 +403,8 @@ typedef struct hpet_table
 
 typedef struct acpi_table_support
 {
-    char                    *Name;
-    char                    *Signature;
+    const char              *Name;
+    const char              *Signature;
     void                    **GlobalPtr;
     UINT8                   SigLength;
     UINT8                   Flags;
@@ -432,5 +418,22 @@ typedef struct acpi_table_support
 #include "actbl1.h"   /* Acpi 1.0 table definitions */
 #include "actbl2.h"   /* Acpi 2.0 table definitions */
 
+
+#pragma pack(1)
+/*
+ * High performance timer
+ */
+typedef struct hpet_table
+{
+    ACPI_TABLE_HEADER_DEF
+    UINT32                  HardwareId;
+    ACPI_GENERIC_ADDRESS    BaseAddress;
+    UINT8                   HpetNumber;
+    UINT16                  ClockTick;
+    UINT8                   Attributes;
+
+} HPET_TABLE;
+
+#pragma pack()
 
 #endif /* __ACTBL_H__ */

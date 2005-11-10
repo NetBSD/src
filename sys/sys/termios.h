@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.25.2.4 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: termios.h,v 1.25.2.5 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -236,6 +236,8 @@ struct termios {
 #define B76800	76800
 #define B115200	115200
 #define B230400	230400
+#define B460800	460800
+#define B921600	921600
 #define EXTA	19200
 #define EXTB	38400
 #endif  /* defined(_NETBSD_SOURCE) */

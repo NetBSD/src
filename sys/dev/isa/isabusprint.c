@@ -1,4 +1,6 @@
-/* $NetBSD: isabusprint.c,v 1.1.2.4 2004/09/21 13:29:46 skrll Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isabusprint.c,v 1.1.2.5 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

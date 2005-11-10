@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.3 2003/02/26 17:39:08 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.3.2.1 2005/11/10 13:59:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
 
 static void	obp_v2_putchar __P((int));
 static int	obp_v2_seek __P((int, u_quad_t));
-static char	*obp_v0_getbootpath __P((void));
-static char	*obp_v2_getbootpath __P((void));
+static const char	*obp_v0_getbootpath __P((void));
+static const char	*obp_v2_getbootpath __P((void));
 
 /*
  * PROM entry points.
@@ -114,14 +114,14 @@ obp_v2_seek(handle, offset)
  * is NULL but `*promvec->pv_v2bootargs.v2_bootargs' points to
  * "netbsd -s" or whatever.
  */
-char *
+const char *
 obp_v0_getbootpath()
 {
 	struct v0bootargs *ba = promops.po_bootcookie;
 	return (ba->ba_argv[0]);
 }
 
-char *
+const char *
 obp_v2_getbootpath()
 {
 	struct v2bootargs *ba = promops.po_bootcookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.163.2.7 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: systm.h,v 1.163.2.8 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -94,6 +94,7 @@ extern char machine[];		/* machine type */
 extern char machine_arch[];	/* machine architecture */
 extern const char osrelease[];	/* short system version */
 extern const char ostype[];	/* system type */
+extern const char kernel_ident[];/* kernel configuration ID */
 extern const char version[];	/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
@@ -113,6 +114,9 @@ extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
+
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
@@ -236,8 +240,16 @@ int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
 
+#ifdef _KERNEL
+typedef	int	(*copyin_t)(const void *, void *, size_t);
+typedef int	(*copyout_t)(const void *, void *, size_t);
+#endif
+
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);
+
+int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
+int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
 
 int	subyte(void *, int);
 int	suibyte(void *, int);
@@ -387,16 +399,16 @@ typedef struct cnm_state {
 
 void cn_init_magic(cnm_state_t *);
 void cn_destroy_magic(cnm_state_t *);
-int cn_set_magic(char *);
-int cn_get_magic(char *, int);
+int cn_set_magic(const char *);
+int cn_get_magic(char *, size_t);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\
 	do {								\
 		if (cn_isconsole(d)) {					\
-			int v = (s).cnm_magic[(s).cnm_state];		\
-			if ((k) == CNS_MAGIC_VAL(v)) {			\
-				(s).cnm_state = CNS_MAGIC_NEXT(v);	\
+			int _v = (s).cnm_magic[(s).cnm_state];		\
+			if ((k) == CNS_MAGIC_VAL(_v)) {			\
+				(s).cnm_state = CNS_MAGIC_NEXT(_v);	\
 				if ((s).cnm_state == CNS_TERM) {	\
 					cn_trap();			\
 					(s).cnm_state = 0;		\

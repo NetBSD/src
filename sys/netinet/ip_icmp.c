@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.74.2.6 2005/03/04 16:53:29 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.74.2.7 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.6 2005/03/04 16:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.7 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.6 2005/03/04 16:53:29 skrll Exp $
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
 
 #ifdef IPSEC
@@ -225,7 +226,7 @@ icmp_mtudisc_callback_register(void (*func)(struct in_addr))
  */
 void
 icmp_error(struct mbuf *n, int type, int code, n_long dest,
-    struct ifnet *destifp)
+    int destmtu)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
 	unsigned oiplen = oip->ip_hl << 2;
@@ -235,7 +236,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		printf("icmp_error(%x, %d, %d)\n", oip, type, code);
+		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type,
+			code);
 #endif
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
@@ -325,8 +327,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 			icp->icmp_pptr = code;
 			code = 0;
 		} else if (type == ICMP_UNREACH &&
-		    code == ICMP_UNREACH_NEEDFRAG && destifp)
-			icp->icmp_nextmtu = htons(destifp->if_mtu);
+		    code == ICMP_UNREACH_NEEDFRAG && destmtu)
+			icp->icmp_nextmtu = htons(destmtu);
 	}
 
 	icp->icmp_code = code;
@@ -360,7 +362,7 @@ freeit:
 	m_freem(n);
 }
 
-static struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
+struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
 struct sockaddr_in icmpmask = { 8, 0 };
@@ -394,10 +396,10 @@ icmp_input(struct mbuf *m, ...)
 	 */
 	icmplen = ntohs(ip->ip_len) - hlen;
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_input from %x to %x, len %d\n",
-		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
-		    icmplen);
+	if (icmpprintfs) {
+		printf("icmp_input from `%s' to ", inet_ntoa(ip->ip_src));
+		printf("`%s', len %d\n", inet_ntoa(ip->ip_dst), icmplen);
+	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
 		icmpstat.icps_tooshort++;
@@ -425,7 +427,7 @@ icmp_input(struct mbuf *m, ...)
 	 * Message type specific processing.
 	 */
 	if (icmpprintfs)
-		printf("icmp_input, type %d code %d\n", icp->icmp_type,
+		printf("icmp_input(type:%d, code:%d)\n", icp->icmp_type,
 		    icp->icmp_code);
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
@@ -578,9 +580,10 @@ reflect:
 		icmpgw.sin_addr = ip->ip_src;
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
-		if (icmpprintfs)
-			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
-			    icp->icmp_gwaddr);
+		if (icmpprintfs) {
+			printf("redirect dst `%s' to ", inet_ntoa(icp->icmp_ip.ip_dst));
+			printf("`%s'\n", inet_ntoa(icp->icmp_gwaddr));
+		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rt = NULL;
@@ -862,8 +865,10 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	m->m_data -= hlen;
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
+	if (icmpprintfs) {
+		printf("icmp_send to destination `%s' from ", inet_ntoa(ip->ip_dst));
+		printf("`%s'\n", inet_ntoa(ip->ip_src));
+	}
 #endif
 	(void) ip_output(m, opts, NULL, 0,
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
@@ -1006,6 +1011,13 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       &icmp_redirtimeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_REDIRTIMEOUT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("ICMP statistics"), 
+		       NULL, 0, &icmpstat, sizeof(icmpstat),
+		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
+		       CTL_EOL);
 }
 
 /* Table of common MTUs: */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112.2.7 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112.2.8 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.7 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.8 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -183,6 +183,11 @@ extern u_char	at_org_code[3];
 extern u_char	aarp_org_code[3];
 #endif /* NETATALK */
 
+static struct timeval bigpktppslim_last;
+static int bigpktppslim = 2;	/* XXX */
+static int bigpktpps_count;
+
+
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
@@ -262,8 +267,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
@@ -280,8 +284,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
+                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else
 			bcopy((caddr_t)ar_tha(ah),
 				(caddr_t)edst, sizeof(edst));
@@ -650,7 +653,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct ethercom *ec = (struct ethercom *) ifp;
 	struct ifqueue *inq;
 	u_int16_t etype;
-	int s;
 	struct ether_header *eh;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
@@ -672,8 +674,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
-		printf("%s: discarding oversize frame (len=%d)\n",
-		    ifp->if_xname, m->m_pkthdr.len);
+		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
+			    bigpktppslim)) {
+			printf("%s: discarding oversize frame (len=%d)\n",
+			    ifp->if_xname, m->m_pkthdr.len);
+		}
 		m_freem(m);
 		return;
 	}
@@ -816,13 +821,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			inq = &ppoediscinq;
 		else
 			inq = &ppoeinq;
-		s = splnet();
 		if (IF_QFULL(inq)) {
 			IF_DROP(inq);
 			m_freem(m);
 		} else
 			IF_ENQUEUE(inq, m);
-		splx(s);
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		if (!callout_pending(&pppoe_softintr))
 			callout_reset(&pppoe_softintr, 1, pppoe_softintr_handler, NULL);
@@ -1072,19 +1075,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* ISO || LLC || NETATALK*/
 	}
 
-	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
 	} else
 		IF_ENQUEUE(inq, m);
-	splx(s);
 }
 
 /*
  * Convert Ethernet address to printable (loggable) representation.
  */
-static char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(const u_char *ap)
 {
@@ -1093,8 +1093,8 @@ ether_sprintf(const u_char *ap)
 	int i;
 
 	for (i = 0; i < 6; i++) {
-		*cp++ = digits[*ap >> 4];
-		*cp++ = digits[*ap++ & 0xf];
+		*cp++ = hexdigits[*ap >> 4];
+		*cp++ = hexdigits[*ap++ & 0xf];
 		*cp++ = ':';
 	}
 	*--cp = 0;

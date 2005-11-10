@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.82.2.8 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.82.2.9 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  *
@@ -245,7 +245,6 @@ struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
-struct vmspace;
 struct vmtotal;
 
 /*
@@ -307,9 +306,9 @@ struct uvmexp {
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
-	int nanon;	/* number total of anon's in system */
-	int nanonneeded;/* number of anons currently needed */
-	int nfreeanon;	/* number of free anon's */
+	int unused1;	/* used to be nanon */
+	int unused2;	/* used to be nanonneeded */
+	int unused3;	/* used to be nfreeanon */
 
 	/* stat counters */
 	int faults;		/* page fault count */
@@ -401,9 +400,9 @@ struct uvmexp_sysctl {
 	int64_t	swpginuse;
 	int64_t	swpgonly;
 	int64_t	nswget;
-	int64_t	nanon;
-	int64_t	nanonneeded;
-	int64_t	nfreeanon;
+	int64_t	unused1; /* used to be nanon */
+	int64_t	unused2; /* used to be nanonneeded */
+	int64_t	unused3; /* used to be nfreeanon */
 	int64_t	faults;
 	int64_t	traps;
 	int64_t	intrs;
@@ -511,13 +510,13 @@ extern struct pool *uvm_aiobuf_pool;
 struct uvm_coredump_state {
 	void *cookie;		/* opaque for the caller */
 	vaddr_t start;		/* start of region */
-	vaddr_t end;		/* end of region */
+	vaddr_t realend;	/* real end of region */
+	vaddr_t end;		/* virtual end of region */
 	vm_prot_t prot;		/* protection of region */
 	int flags;		/* flags; see below */
 };
 
 #define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
-#define	UVM_COREDUMP_NODUMP	0x02	/* don't actually dump this region */
 
 /*
  * the various kernel maps, owned by MD code
@@ -573,10 +572,9 @@ void			uvm_chgkprot(caddr_t, size_t, int);
 void			uvm_proc_fork(struct proc *, struct proc *, boolean_t);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
-int			uvm_coredump_walkmap(struct lwp *,
-			    struct vnode *, struct ucred *,
-			    int (*)(struct lwp *, struct vnode *,
-				    struct ucred *,
+int			uvm_coredump_walkmap(struct proc *,
+			    void *,
+			    int (*)(struct proc *, void *,
 				    struct uvm_coredump_state *), void *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);

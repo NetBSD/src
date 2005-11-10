@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.4.2.7 2005/03/04 16:40:12 skrll Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.4.2.8 2005/11/10 14:01:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.7 2005/03/04 16:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.8 2005/11/10 14:01:20 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
@@ -414,12 +414,12 @@ mach_siginfo_to_exception(ksi, code)
 	const struct ksiginfo *ksi;
 	int *code;
 {
+	code[1] = (long)ksi->ksi_addr;
 	switch (ksi->ksi_signo) {
 	case SIGBUS:
 		switch (ksi->ksi_code) {
 		case BUS_ADRALN:
 			code[0] = MACH_BUS_ADRALN;
-			code[1] = (long)ksi->ksi_addr;
 			break;
 		default:
 			printf("untranslated siginfo signo %d, code %d\n",
@@ -432,7 +432,9 @@ mach_siginfo_to_exception(ksi, code)
 		switch (ksi->ksi_code) {
 		case SEGV_MAPERR:
 			code[0] = MACH_SEGV_MAPERR;
-			code[1] = (long)ksi->ksi_addr;
+			break;
+		case SEGV_ACCERR:
+			code[0] = MACH_SEGV_ACCERR;
 			break;
 		default:
 			printf("untranslated siginfo signo %d, code %d\n",
@@ -459,14 +461,14 @@ mach_siginfo_to_exception(ksi, code)
 		case ILL_ILLOPC:
 		case ILL_ILLOPN:
 		case ILL_ILLADR:
-		case ILL_ILLTRP:
 			code[0] = MACH_ILL_ILLOPC;
-			code[1] = (long)ksi->ksi_addr;
 			break;
 		case ILL_PRVOPC:
 		case ILL_PRVREG:
 			code[0] = MACH_ILL_PRVOPC;
-			code[1] = (long)ksi->ksi_addr;
+			break;
+		case ILL_ILLTRP:
+			code[0] = MACH_ILL_ILLTRP;
 			break;
 		default:
 			printf("untranslated siginfo signo %d, code %d\n",
@@ -480,7 +482,6 @@ mach_siginfo_to_exception(ksi, code)
 		    ksi->ksi_signo, ksi->ksi_code);
 		break;
 	}
-	return;
 }
 
 int

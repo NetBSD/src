@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfobj - Public interfaces to the ACPI subsystem
  *                         ACPI Object oriented interfaces
- *              xRevision: 117 $
+ *              xRevision: 119 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __NSXFOBJ_C__
 
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $"
  * FUNCTION:    AcpiGetType
  *
  * PARAMETERS:  Handle          - Handle of object whose type is desired
- *              *RetType        - Where the type will be placed
+ *              RetType         - Where the type will be placed
  *
  * RETURN:      Status
  *

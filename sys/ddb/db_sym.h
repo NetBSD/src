@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.19 2003/05/16 15:02:08 itojun Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.19.2.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -69,10 +69,10 @@ typedef void (db_forall_func_t)
 typedef struct {
 	const char     *sym_format;
 	boolean_t	(*sym_init)(int, void *, void *, const char *);
-	db_sym_t	(*sym_lookup)(db_symtab_t *, char *);
+	db_sym_t	(*sym_lookup)(db_symtab_t *, const char *);
 	db_sym_t	(*sym_search)(db_symtab_t *, db_addr_t, db_strategy_t,
 			    db_expr_t *);
-	void		(*sym_value)(db_symtab_t *, db_sym_t, char **,
+	void		(*sym_value)(db_symtab_t *, db_sym_t, const char **,
 			    db_expr_t *);
 	boolean_t	(*sym_line_at_pc)(db_symtab_t *, db_sym_t, char **,
 			    int *, db_expr_t);
@@ -88,10 +88,10 @@ extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 /*
  * Functions exported by the symtable module
  */
-boolean_t	db_eqname(char *, char *, int);
+boolean_t	db_eqname(const char *, const char *, int);
 					/* strcmp, modulo leading char */
 
-int		db_value_of_name(char *, db_expr_t *);
+int		db_value_of_name(const char *, db_expr_t *);
 					/* find symbol value given name */
 
 void		db_sifting(char *, int);
@@ -100,7 +100,7 @@ void		db_sifting(char *, int);
 db_sym_t	db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
 					/* find symbol given value */
 
-void		db_symbol_values(db_sym_t, char **, db_expr_t *);
+void		db_symbol_values(db_sym_t, const char **, db_expr_t *);
 					/* return name and value of symbol */
 
 #define db_find_sym_and_offset(val,namep,offp)	\

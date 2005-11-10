@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.3.4.4 2004/09/21 13:26:23 skrll Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.3.4.5 2005/11/10 14:02:59 skrll Exp $	*/
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.3.4.4 2004/09/21 13:26:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.3.4.5 2005/11/10 14:02:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,20 +39,20 @@ __KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.3.4.4 2004/09/21 13:26:23 skrll Exp $")
 #include <crypto/ripemd160/rmd160.h>
 
 #define PUT_64BIT_LE(cp, value) do { \
-	(cp)[7] = (value) >> 56; \
-	(cp)[6] = (value) >> 48; \
-	(cp)[5] = (value) >> 40; \
-	(cp)[4] = (value) >> 32; \
-	(cp)[3] = (value) >> 24; \
-	(cp)[2] = (value) >> 16; \
-	(cp)[1] = (value) >> 8; \
-	(cp)[0] = (value); } while (0)
+	(cp)[7] = (u_char)((value) >> 56); \
+	(cp)[6] = (u_char)((value) >> 48); \
+	(cp)[5] = (u_char)((value) >> 40); \
+	(cp)[4] = (u_char)((value) >> 32); \
+	(cp)[3] = (u_char)((value) >> 24); \
+	(cp)[2] = (u_char)((value) >> 16); \
+	(cp)[1] = (u_char)((value) >> 8); \
+	(cp)[0] = (u_char)((value)); } while (/*CONSTCOND*/0)
 
 #define PUT_32BIT_LE(cp, value) do { \
 	(cp)[3] = (value) >> 24; \
 	(cp)[2] = (value) >> 16; \
 	(cp)[1] = (value) >> 8; \
-	(cp)[0] = (value); } while (0)
+	(cp)[0] = (value); } while (/*CONSTCOND*/0)
 
 #define	H0	0x67452301U
 #define	H1	0xEFCDAB89U
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.3.4.4 2004/09/21 13:26:23 skrll Exp $")
 	do { \
 		a = ROL(sj, a + Fj(b,c,d) + X(rj) + Kj) + e; \
 		c = ROL(10, c); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #define X(i)	x[i]
 
@@ -111,14 +111,14 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 {
 	u_int32_t have, off, need;
 
-	have = (ctx->count/8) % 64;
+	have = (u_int32_t)((ctx->count/8) % 64);
 	need = 64 - have;
 	ctx->count += 8 * len;
 	off = 0;
 
 	if (len >= need) {
 		if (have) {
-			memcpy(ctx->buffer + have, input, need);
+			memcpy(ctx->buffer + have, input, (size_t)need);
 			RMD160Transform(ctx->state, ctx->buffer);
 			off = need;
 			have = 0;
@@ -130,7 +130,7 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 		}
 	}
 	if (off < len)
-		memcpy(ctx->buffer + have, input+off, len-off);
+		memcpy(ctx->buffer + have, input+off, (size_t)len-off);
 }
 
 void
@@ -146,7 +146,7 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 	 * pad to 64 byte blocks, at least one byte from PADDING plus 8 bytes
 	 * for the size
 	 */
-	padlen = 64 - ((ctx->count/8) % 64);
+	padlen = (u_int32_t)(64 - ((ctx->count/8) % 64));
 	if (padlen < 1 + 8)
 		padlen += 64;
 	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
@@ -165,12 +165,12 @@ RMD160Transform(u_int32_t state[5], const u_char block[64])
 	u_int32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	memcpy(x, block, 64);
+	memcpy(x, block, (size_t)64);
 #else
 	int i;
 
 	for (i = 0; i < 16; i++)
-		x[i] = le32toh(*(u_int32_t*)(block+i*4));
+		x[i] = le32toh(*(const u_int32_t*)(block+i*4));
 #endif
 
 	a = state[0];

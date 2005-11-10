@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.16.6.4 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.16.6.5 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.5 2005/11/10 13:59:54 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -265,7 +265,7 @@ wmemcpy(void *dst, const void *src, size_t l)
 {
 	const u_char *b1e, *b1 = src;
 	u_char *b2 = dst;
-	u_short *sp;
+	const u_short *sp;
 	int bstore = 0;
 
 	if (l == 0)
@@ -278,13 +278,13 @@ wmemcpy(void *dst, const void *src, size_t l)
 	}
 
 	/* middle, */
-	sp = (u_short *)b1;
+	sp = (const u_short *)b1;
 	b1e = b1 + l;
 	if (l & 1)
 		b1e--;
 	bstore = (u_long)b2 & 1;
 
-	while (sp < (u_short *)b1e) {
+	while (sp < (const u_short *)b1e) {
 		if (bstore) {
 			b2[1] = *sp & 0xff;
 			b2[0] = *sp >> 8;

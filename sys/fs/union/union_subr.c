@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.6.2.6 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.6.2.7 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.6 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.7 2005/11/10 14:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,15 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.6 2005/03/04 16:51:46 skrll Exp
 static LIST_HEAD(unhead, union_node) unhead[NHASH];
 static int unvplock[NHASH];
 
-static int union_list_lock __P((int));
-static void union_list_unlock __P((int));
-void union_updatevp __P((struct union_node *, struct vnode *, struct vnode *));
-static int union_relookup __P((struct union_mount *, struct vnode *,
+static int union_list_lock(int);
+static void union_list_unlock(int);
+void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
+static int union_relookup(struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
-			       struct componentname *, const char *, int));
-int union_vn_close __P((struct vnode *, int, struct ucred *, struct lwp *));
-static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *, struct lwp *));
+			       struct componentname *, const char *, int);
+int union_vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+static void union_dircache_r(struct vnode *, struct vnode ***, int *);
+struct vnode *union_dircache(struct vnode *, struct lwp *);
 
 void
 union_init()
@@ -624,7 +624,7 @@ union_copyfile(fvp, tvp, cred, l)
 	struct ucred *cred;
 	struct lwp *l;
 {
-	char *buf;
+	char *tbuf;
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
@@ -648,7 +648,7 @@ union_copyfile(fvp, tvp, cred, l)
 	VOP_LEASE(tvp, l, cred, LEASE_WRITE);
 	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
-	buf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
+	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
 	/* ugly loop follows... */
 	do {
@@ -656,7 +656,7 @@ union_copyfile(fvp, tvp, cred, l)
 
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		iov.iov_base = buf;
+		iov.iov_base = tbuf;
 		iov.iov_len = MAXBSIZE;
 		uio.uio_resid = iov.iov_len;
 		uio.uio_rw = UIO_READ;
@@ -665,7 +665,7 @@ union_copyfile(fvp, tvp, cred, l)
 		if (error == 0) {
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
-			iov.iov_base = buf;
+			iov.iov_base = tbuf;
 			iov.iov_len = MAXBSIZE - uio.uio_resid;
 			uio.uio_offset = offset;
 			uio.uio_rw = UIO_WRITE;
@@ -681,7 +681,7 @@ union_copyfile(fvp, tvp, cred, l)
 
 	} while (error == 0);
 
-	free(buf, M_TEMP);
+	free(tbuf, M_TEMP);
 	return (error);
 }
 

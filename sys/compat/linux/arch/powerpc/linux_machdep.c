@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.22.2.5 2005/03/04 16:40:02 skrll Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.22.2.6 2005/11/10 14:01:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22.2.5 2005/03/04 16:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22.2.6 2005/11/10 14:01:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,4 +567,10 @@ linux_sys_new_select(l, v, retval)
 	register_t *retval;
 {
 	return linux_sys_select(l, v, retval);
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.33.6.6 2005/04/01 14:28:04 skrll Exp $ */
+/* $NetBSD: sci.c,v 1.33.6.7 2005/11/10 13:58:37 skrll Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.33.6.6 2005/04/01 14:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.33.6.7 2005/11/10 13:58:37 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -671,7 +671,7 @@ sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

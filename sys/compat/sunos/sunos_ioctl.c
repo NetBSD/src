@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.47.2.4 2004/11/21 13:54:35 skrll Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.47.2.5 2005/11/10 14:01:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.47.2.4 2004/11/21 13:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.47.2.5 2005/11/10 14:01:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -614,7 +614,7 @@ sunos_sys_ioctl(l, v, retval)
  * Pseudo-tty ioctl translations.
  */
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
-		int error, on;
+		int on;
 
 		error = copyin (SCARG(uap, data), (caddr_t)&on, sizeof (on));
 		if (error)
@@ -623,7 +623,7 @@ sunos_sys_ioctl(l, v, retval)
 		break;
 	}
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
-		int error, sig;
+		int sig;
 
 		error = copyin (SCARG(uap, data), (caddr_t)&sig, sizeof (sig));
 		if (error)
@@ -709,22 +709,22 @@ sunos_sys_ioctl(l, v, retval)
 
 	case _IOWR('i', 20, struct ifconf):	/* SIOCGIFCONF */
 	    {
-		struct ifconf ifconf;
+		struct ifconf ifc;
 
 		/*
 		 * XXX: two more problems
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
-		    sizeof (ifconf));
+		error = copyin (SCARG(uap, data), (caddr_t)&ifc,
+		    sizeof (ifc));
 		if (error)
 			break;
-		error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, l);
+		error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifc, l);
 		if (error)
 			break;
-		error = copyout ((caddr_t)&ifconf, SCARG(uap, data),
-		    sizeof (ifconf));
+		error = copyout ((caddr_t)&ifc, SCARG(uap, data),
+		    sizeof (ifc));
 		break;
 	    }
 

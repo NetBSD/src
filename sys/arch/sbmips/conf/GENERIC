@@ -1,13 +1,13 @@
-# $NetBSD: GENERIC,v 1.21.2.8 2005/03/04 16:39:09 skrll Exp $
+# $NetBSD: GENERIC,v 1.21.2.9 2005/11/10 13:58:33 skrll Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.8 $"
+#ident 		"GENERIC-$Revision: 1.21.2.9 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 
 # The following three options are required for BCM1250 pass 1 silicon
 #options 	SB1250_PASS1
@@ -28,7 +28,7 @@ options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
 
 # Debugging options
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	USERCONF	# userconf(4) support
@@ -40,7 +40,7 @@ options 	SYMTAB_SPACE=200000	# size for embedded symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
-#options 	COMPAT_10	# NetBSD 0.9 binary compatibility
+#options 	COMPAT_09	# NetBSD 0.9 binary compatibility
 #options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 #options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
@@ -48,6 +48,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -68,6 +69,8 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -85,6 +88,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
@@ -161,6 +165,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # Network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

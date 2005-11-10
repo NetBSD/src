@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187.2.14 2005/03/04 16:45:17 skrll Exp $
+#	$NetBSD: files.pci,v 1.187.2.15 2005/11/10 14:06:01 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -198,107 +198,107 @@ file	dev/pci/gtp.c			gtp
 define pciide_common
 file dev/pci/pciide_common.c pciide_common
 
-device	pciide {[channel = -1]}: ata, pciide_common, wdc_common
+device	pciide: ata, pciide_common, wdc_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
 # Acard IDE controllers
-device	acardide {[channel = -1]}: ata, pciide_common, wdc_common
+device	acardide: ata, pciide_common, wdc_common
 attach	acardide at pci
 file	dev/pci/acardide.c		acardide
 
 # Acer Lab IDE controllers
-device	aceride {[channel = -1]}: ata, pciide_common, wdc_common
+device	aceride: ata, pciide_common, wdc_common
 attach	aceride at pci
 file	dev/pci/aceride.c		aceride
 
 # Intel i31244 SATA controller
-device	artsata {[channel = -1]}: ata, pciide_common, wdc_common, sata
+device	artsata: ata, pciide_common, wdc_common, sata
 attach	artsata at pci
 file	dev/pci/artsata.c		artsata
 
 # CMD tech IDE controllers
-device	cmdide {[channel = -1]}: ata, pciide_common, wdc_common
+device	cmdide: ata, pciide_common, wdc_common
 attach	cmdide at pci
 file	dev/pci/cmdide.c		cmdide
 
 # Cypress IDE controllers
-device	cypide {[channel = -1]}: ata, pciide_common, wdc_common, cy82c693
+device	cypide: ata, pciide_common, wdc_common, cy82c693
 attach	cypide at pci
 file	dev/pci/cypide.c		cypide
 
 # AMD Geode IDE controllers
-device	geodeide {[channel = -1]}: ata, pciide_common, wdc_common
+device	geodeide: ata, pciide_common, wdc_common
 attach	geodeide at pci
 file	dev/pci/geodeide.c		geodeide
 
 # Triones/HighPoint IDE controllers
-device	hptide {[channel = -1]}: ata, pciide_common, wdc_common
+device	hptide: ata, pciide_common, wdc_common
 attach	hptide at pci
 file	dev/pci/hptide.c		hptide
 
 # Integrated Technology Express IDE controllers
-device	iteide {[channel = -1]}: ata, pciide_common, wdc_common
+device	iteide: ata, pciide_common, wdc_common
 attach	iteide at pci
 file	dev/pci/iteide.c		iteide
 
 # Opti IDE controllers
-device	optiide {[channel = -1]}: ata, pciide_common, wdc_common
+device	optiide: ata, pciide_common, wdc_common
 attach	optiide at pci
 file	dev/pci/optiide.c		optiide
 
 # Intel IDE controllers
-device	piixide {[channel = -1]}: ata, pciide_common, wdc_common
+device	piixide: ata, pciide_common, wdc_common
 attach	piixide at pci
 file	dev/pci/piixide.c		piixide
 
 # Promise Serial ATA controllers
-device	pdcsata {[channel = -1]}: ata, pciide_common, wdc_common
+device	pdcsata: ata, pciide_common, wdc_common
 attach	pdcsata at pci
 file	dev/pci/pdcsata.c		pdcsata
 
 # Promise IDE controllers
-device	pdcide {[channel = -1]}: ata, pciide_common, wdc_common
+device	pdcide: ata, pciide_common, wdc_common
 attach	pdcide at pci
 file	dev/pci/pdcide.c		pdcide
 
 # ServerWorks IDE controllers
-device	rccide {[channel = -1]}: ata, pciide_common, wdc_common
+device	rccide: ata, pciide_common, wdc_common
 attach	rccide at pci
 file	dev/pci/rccide.c		rccide
 
 # Silicon Image SATALink controllers
-device	satalink {[channel = -1]}: ata, pciide_common, wdc_common, sata
+device	satalink: ata, pciide_common, wdc_common, sata
 attach	satalink at pci
 file	dev/pci/satalink.c		satalink
 
 # SiS IDE controllers
-device	siside {[channel = -1]}: ata, pciide_common, wdc_common
+device	siside: ata, pciide_common, wdc_common
 attach	siside at pci
 file	dev/pci/siside.c		siside
 
 # Symphony Labs IDE controllers
-device	slide {[channel = -1]}: ata, pciide_common, wdc_common
+device	slide: ata, pciide_common, wdc_common
 attach	slide at pci
 file	dev/pci/slide.c		slide
 
 # ServerWorks IDE controllers
-#device	swide {[channel = -1]}: ata, pciide_common, wdc_common
+#device	swide: ata, pciide_common, wdc_common
 #attach	swide at pci
 #file	dev/pci/swide.c		swide
 
 # VIA/AMD/Nvidia IDE controllers
-device	viaide {[channel = -1]}: ata, pciide_common, wdc_common
+device	viaide: ata, pciide_common, wdc_common
 attach	viaide at pci
 file	dev/pci/viaide.c	viaide
 
 # STMicroelectronics STPC IDE controllers
-device	stpcide {[channel = -1 ]}: ata, pciide_common, wdc_common
+device	stpcide: ata, pciide_common, wdc_common
 attach	stpcide at pci
 file	dev/pci/stpcide.c	stpcide
 
 # ATI IXP IDE controllers
-device	ixpide {[channel = -1]}: ata, pciide_common, wdc_common
+device	ixpide: ata, pciide_common, wdc_common
 attach	ixpide at pci
 file	dev/pci/ixpide.c	ixpide
 
@@ -437,6 +437,12 @@ device	auixp: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auixp at pci
 file	dev/pci/auixp.c			auixp
 
+# High Definition Audio
+device	azalia: audiobus, auconv, mulaw, ac97, aurateconv
+attach	azalia at pci
+file	dev/pci/azalia.c		azalia
+file	dev/pci/azalia_codec.c		azalia
+
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
 attach	neo at pci
@@ -548,10 +554,6 @@ file	dev/pci/usb_pci.c		ehci_pci | ehci_cardbus
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
 file	dev/pci/fwohci_pci.c		fwohci_pci
-
-# IEEE 1394 TI "Lynx" controller
-attach	fwlynx at pci with fwlynx_pci
-file	dev/pci/fwlynx_pci.c		fwlynx_pci
 
 # VIA Rhine/Rhine II Fast Ethernet controllers
 device	vr: ether, ifnet, arp, mii, mii_bitbang
@@ -670,6 +672,10 @@ file	dev/pci/if_atw_pci.c		atw_pci
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
 
+# Ralink RT2500 PCI/Mini-PCI
+attach	ral at pci with ral_pci: ralcommon
+file	dev/pci/if_ral_pci.c		ral_pci
+
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
 file	dev/pci/if_wi_pci.c		wi_pci
@@ -748,7 +754,7 @@ attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
 
 # Intel PRO/Wireless 2100
-device	ipw: ifnet, wlan
+device	ipw: ifnet, arp, wlan
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
@@ -757,8 +763,13 @@ file	dev/pci/if_ipw.c		ipw
 attach	njs at pci with njs_pci
 file	dev/pci/njs_pci.c		njs_pci
 
+# S2io Xframe 10 Gigabit ethernet (Xframe driver)
+device  xge: ether, ifnet, arp
+attach  xge  at pci 
+file    dev/pci/if_xge.c		xge
+
 # Intel PRO/Wireless 2200BG/2915ABG
-device	iwi: ifnet, wlan
+device	iwi: ifnet, arp, wlan
 attach	iwi at pci
 file	dev/pci/if_iwi.c		iwi
 
@@ -766,3 +777,7 @@ file	dev/pci/if_iwi.c		iwi
 device	vge: ether, ifnet, arp, mii
 attach	vge at pci
 file	dev/pci/if_vge.c		vge
+
+# Atheros 5210/5211/5212 PCI/Mini-PCI
+attach	ath at pci with ath_pci
+file	dev/pci/if_ath_pci.c		ath_pci

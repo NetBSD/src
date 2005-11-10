@@ -1,0 +1,7 @@
+# $NetBSD: files.gpio,v 1.1.6.2 2005/11/10 14:04:00 skrll Exp $
+
+define	gpio {pin, mask}
+
+device	gpio: gpio
+attach	gpio at gpiobus
+file	dev/gpio/gpio.c				gpio	needs-flag

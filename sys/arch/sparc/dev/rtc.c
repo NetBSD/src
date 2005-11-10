@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.9.6.3 2004/09/21 13:22:02 skrll Exp $ */
+/*	$NetBSD: rtc.c,v 1.9.6.4 2005/11/10 13:58:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9.6.3 2004/09/21 13:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9.6.4 2005/11/10 13:58:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,8 +71,8 @@ CFATTACH_DECL(rtc_ebus, sizeof(struct rtc_ebus_softc),
 extern todr_chip_handle_t todr_handle;
 
 /* todr(9) methods */
-int rtc_gettime(todr_chip_handle_t, struct timeval *);
-int rtc_settime(todr_chip_handle_t, struct timeval *);
+int rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+int rtc_settime(todr_chip_handle_t, volatile struct timeval *);
 int rtc_getcal(todr_chip_handle_t, int *);
 int rtc_setcal(todr_chip_handle_t, int);
 
@@ -172,7 +172,7 @@ rtcattach_ebus(parent, self, aux)
 int
 rtc_gettime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
 	struct clock_ymdhms dt;
@@ -221,7 +221,7 @@ rtc_gettime(handle, tv)
 int
 rtc_settime(handle, tv)
 	todr_chip_handle_t handle;
-	struct timeval *tv;
+	volatile struct timeval *tv;
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
 	struct clock_ymdhms dt;

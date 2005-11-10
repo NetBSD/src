@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.17.2.8 2005/01/24 08:36:05 skrll Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.17.2.9 2005/11/10 14:12:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.8 2005/01/24 08:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.9 2005/11/10 14:12:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #endif
 
@@ -62,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.8 2005/01/24 08:36:05 skrll Ex
 #endif
 
 /* how many times ufs_init() was called */
-int ufs_initcount = 0;
+static int ufs_initcount = 0;
 
 POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
     &pool_allocator_nointr);
@@ -73,10 +74,7 @@ POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+ufs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
 	return (0);
@@ -86,9 +84,7 @@ ufs_start(mp, flags, l)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+ufs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -103,12 +99,7 @@ ufs_root(mp, vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(mp, cmds, uid, arg, l)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 {
 
 #ifndef QUOTA
@@ -175,40 +166,11 @@ ufs_quotactl(mp, cmds, uid, arg, l)
 }
 
 /*
- * Verify a remote client has export rights and return these rights via.
- * exflagsp and credanonp.
- */
-int
-ufs_check_export(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct netcred *np;
-	struct ufsmount *ump = VFSTOUFS(mp);
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}
-
-/*
  * This is the generic part of fhtovp called after the underlying
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp)
-	struct mount *mp;
-	struct ufid *ufhp;
-	struct vnode **vpp;
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
@@ -232,7 +194,7 @@ ufs_fhtovp(mp, ufhp, vpp)
  * Initialize UFS filesystems, done only once.
  */
 void
-ufs_init()
+ufs_init(void)
 {
 	if (ufs_initcount++ > 0)
 		return;
@@ -252,7 +214,7 @@ ufs_init()
 }
 
 void
-ufs_reinit()
+ufs_reinit(void)
 {
 	ufs_ihashreinit();
 #ifdef QUOTA
@@ -264,7 +226,7 @@ ufs_reinit()
  * Free UFS filesystem resources, done only once.
  */
 void
-ufs_done()
+ufs_done(void)
 {
 	if (--ufs_initcount > 0)
 		return;
