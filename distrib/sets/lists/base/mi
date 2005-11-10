@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.577 2005/10/29 08:17:18 scw Exp $
+# $NetBSD: mi,v 1.578 2005/11/10 16:58:18 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1154,6 +1154,7 @@
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
 ./usr/sbin/statmsg				base-obsolete		obsolete
+./usr/sbin/sti					base-sysutil-bin
 ./usr/sbin/stdethers				base-nis-bin		yp
 ./usr/sbin/stdhosts				base-nis-bin		yp
 ./usr/sbin/sunlabel				base-sysutil-bin
