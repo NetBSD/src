@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.4 2005/02/27 00:26:58 perry Exp $
+# $NetBSD: acpidevs,v 1.5 2005/11/10 13:25:59 rpaulo Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -173,6 +173,7 @@ PNP0F21	Reserved by Microsoft Input Device Group
 PNP0F22	Reserved by Microsoft Input Device Group
 PNP0F23	Reserved by Microsoft Input Device Group
 PNP0FFF	Reserved by Microsoft Systems
+SYN1003	Synaptics PS/2-style Touchpad
 # ***** Network Adapters - PNP8xxx ***********************
 PNP8001	Novell/Anthem NE3200
 PNP8004	Compaq NE3200
