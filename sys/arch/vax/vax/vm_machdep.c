@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82.2.7 2005/04/01 14:28:41 skrll Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.82.2.8 2005/11/10 13:59:59 skrll Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.7 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.8 2005/11/10 13:59:59 skrll Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -232,43 +232,34 @@ sys_sysarch(l, v, retval)
  * way to do this, but good for my purposes so far.
  */
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
-	struct trapframe *tf;
-	struct md_coredump state;
+	struct md_coredump md_core;
 	struct coreseg cseg;
 	int error;
 
-	tf = l->l_addr->u_pcb.framep;
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = sizeof(struct core);
-	chdr->c_seghdrsize = sizeof(struct coreseg);
-	chdr->c_cpusize = sizeof(struct md_coredump);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+		chdr->c_hdrsize = sizeof(struct core);
+		chdr->c_seghdrsize = sizeof(struct coreseg);
+		chdr->c_cpusize = sizeof(struct md_coredump);
+		chdr->c_nseg++;
+		return 0;
+	}
 
-	bcopy(tf, &state, sizeof(struct md_coredump));
+	md_core.md_tf = *(struct trapframe *)l->l_addr->u_pcb.framep; /*XXX*/
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core));
 }
 
 /*
@@ -326,7 +317,8 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY);

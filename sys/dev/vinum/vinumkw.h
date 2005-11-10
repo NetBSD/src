@@ -29,7 +29,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumkw.h,v 1.1.1.1.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumkw.h,v 1.1.1.1.4.5 2005/11/10 14:08:43 skrll Exp $
  * $FreeBSD$
  */
 
@@ -127,7 +127,7 @@ enum keyword {
 };
 
 struct _keywords {
-    char *name;
+    const char *name;
     enum keyword keyword;
 };
 

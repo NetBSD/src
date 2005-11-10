@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.5.2.4 2004/09/21 13:24:36 skrll Exp $
+#	$NetBSD: Makefile.xen,v 1.5.2.5 2005/11/10 14:00:20 skrll Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -28,7 +28,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 XEN=		$S/arch/xen
-GENASSYM=	${XEN}/${XEN_BUILD}/genassym.cf
+I386=		$S/arch/i386
+GENASSYM_CONF=	${XEN}/${XEN_BUILD}/genassym.cf
 
 ##
 ## (2) compile settings
@@ -47,8 +48,17 @@ KERN_AS=	obj
 ##
 MD_OBJS=	locore.o spl.o vector.o
 MD_CFILES=
-MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S ${XEN}/${XEN_BUILD}/spl.S \
+MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S \
+		${XEN}/${XEN_BUILD}/spl.S \
 		${XEN}/${XEN_BUILD}/vector.S
+
+.if ${MACHINE_ARCH} == i386
+MD_OBJS+=	copy.o
+MD_SFILES+=	${I386}/i386/copy.S
+
+copy.o: ${I386}/i386/copy.S assym.h
+	${NORMAL_S}
+.endif
 
 locore.o: ${XEN}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}
@@ -59,6 +69,7 @@ spl.o: ${XEN}/${XEN_BUILD}/spl.S assym.h
 vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
 
+.ifndef noBEGIN
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 .for A in ${XEN_MACHINE_ARCHS}
@@ -68,6 +79,7 @@ vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	-rm -rf xen-ma
 	mkdir xen-ma
 	ln -s ../${XEN_BUILD} xen-ma/machine
+.endif
 .endif
 
 ##
@@ -110,6 +122,25 @@ clock.o: config_time.h
 %LOAD
 
 %RULES
+
+# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
+#       It needs a pathname of some sort for "object"        
+.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
+OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
+ 
+.PATH: $S/contrib/arch/i386/dev
+ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${UUDECODE} -p $> \> ${.TARGET}; \
+		rm -f ${.TARGET}; \
+		${UUDECODE} -p $> > ${.TARGET}
+athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
+	${ATH_UUDEC}
+all depend:	opt_ah.h
+opt_ah.h:	athhal-i386-elf.opt_ah.h
+	ln -s ${.ALLSRC} ${.TARGET}
+.endif
 
 ##
 ## (9) port independent kernel machinery

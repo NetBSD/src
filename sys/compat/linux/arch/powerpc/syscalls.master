@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15.2.5 2005/03/04 16:40:02 skrll Exp $  
+	$NetBSD: syscalls.master,v 1.15.2.6 2005/11/10 14:01:06 skrll Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,6 +82,8 @@
 #include <compat/linux/common/linux_mmap.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+%%
 
 0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -195,7 +197,11 @@
 			    struct stat43 *up); } oolstat
 85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
+#ifdef EXEC_AOUT
 86	STD		{ int linux_sys_uselib(const char *path); }
+#else
+86	UNIMPL		sys_uselib
+#endif
 87	STD		{ int linux_sys_swapon(char *name); }
 88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
@@ -378,18 +384,27 @@
 206	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 207	UNIMPL		gettid
 208	UNIMPL		tkill
-209	UNIMPL		setxattr
-210	UNIMPL		lsetxattr
-211	UNIMPL		fsetxattr
-212	UNIMPL		getxattr
-213	UNIMPL		lgetxattr
-214	UNIMPL		fgetxattr
-215	UNIMPL		listxattr
-216	UNIMPL		llistxattr
-217	UNIMPL		flistxattr
-218	UNIMPL		removexattr
-219	UNIMPL		lremovexattr
-220	UNIMPL		fremovexattr
+209	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+210	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+211	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+212	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+213	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+214	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+215	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+216	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+217	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+218	STD		{ int linux_sys_removexattr(char *path, char *name); }
+219	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+220	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 221	UNIMPL		futex
 222	UNIMPL		sched_setaffinity
 223	UNIMPL		sched_getaffinity
@@ -414,10 +429,15 @@
 242	UNIMPL		timer_gettime
 243	UNIMPL		timer_getoverrun
 244	UNIMPL		timer_delete
-245	UNIMPL		clock_settime
-246	UNIMPL		clock_gettime
-247	UNIMPL		clock_getres
-248	UNIMPL		clock_nanosleep
+245	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+246	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+247	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+248	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 249	UNIMPL		swapcontext
 250	UNIMPL		tgkill
 251	UNIMPL		utimes

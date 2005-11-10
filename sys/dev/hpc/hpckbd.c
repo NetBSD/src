@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.10.6.5 2005/03/04 16:41:15 skrll Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.10.6.6 2005/11/10 14:04:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.10.6.5 2005/03/04 16:41:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.10.6.6 2005/11/10 14:04:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,15 @@ hpckbd_keymap_setup(struct hpckbd_core *hc, const keysym_t *map, int mapsize)
 	struct wscons_keydesc *desc;
 
 	/* fix keydesc table */
-	desc = (struct wscons_keydesc *)hpckbd_keymapdata.keydesc;
+	/* 
+	 * XXX The way this is done is really wrong.  The __UNCONST()
+	 * is a hint as to what is wrong.  This actally ends up modifying
+	 * initialized data which is marked "const".
+	 * The reason we get away with it here is apparently that text
+	 * and read-only data gets mapped read/write on the platforms
+	 * using this code.
+	 */
+	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
 	for (i = 0; desc[i].name != 0; i++) {
 		if ((desc[i].name & KB_MACHDEP) && desc[i].map == NULL) {
 			desc[i].map = map;

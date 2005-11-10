@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15.2.5 2004/11/18 21:20:22 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15.2.6 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.5 2004/11/18 21:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.6 2005/11/10 13:58:26 skrll Exp $");
 
 #include "opt_altivec.h"
 
@@ -68,7 +68,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_regs(struct lwp *l, struct reg *regs)
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe * const tf = trapframe(l);
 
@@ -102,7 +102,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
 	struct pcb * const pcb = &l->l_addr->u_pcb;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.29.2.5 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: namei.h,v 1.29.2.6 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -176,10 +176,10 @@ struct	namecache {
 #include <sys/mallocvar.h>
 #include <sys/pool.h>
 
+struct mount;
+
 extern struct pool pnbuf_pool;		/* pathname buffer pool */
 extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
-
-MALLOC_DECLARE(M_NAMEI);
 
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
@@ -188,19 +188,19 @@ int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup(struct nameidata *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *);
-void cache_purge1(struct vnode *, const struct componentname *, int);
+void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
-int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
-int cache_lookup_raw(struct vnode *, struct vnode **, struct componentname *);
-int cache_revlookup(struct vnode *, struct vnode **, char **, char *);
-void cache_enter(struct vnode *, struct vnode *, struct componentname *);
-void nchinit(void);
-void nchreinit(void);
-struct mount;
-void cache_purgevfs(struct mount *);
-void namecache_print(struct vnode *, void (*)(const char *, ...));
+int	cache_lookup(struct vnode *, struct vnode **, struct componentname *);
+int	cache_lookup_raw(struct vnode *, struct vnode **,
+			 struct componentname *);
+int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
+void	cache_enter(struct vnode *, struct vnode *, struct componentname *);
+void	nchinit(void);
+void	nchreinit(void);
+void	cache_purgevfs(struct mount *);
+void	namecache_print(struct vnode *, void (*)(const char *, ...));
 #endif
 
 /*

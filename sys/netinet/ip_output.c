@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.11 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.11 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -128,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll E
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/in_offload.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -153,10 +154,51 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll E
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+static int ip_getoptval(struct mbuf *, u_int8_t *, u_int);
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
 #endif
+
+int	ip_do_loopback_cksum = 0;
+
+#define	IN_NEED_CHECKSUM(ifp, csum_flags) \
+	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
+	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
+
+struct ip_tso_output_args {
+	struct ifnet *ifp;
+	struct sockaddr *sa;
+	struct rtentry *rt;
+};
+
+static int ip_tso_output_callback(void *, struct mbuf *);
+static int ip_tso_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *);
+
+static int
+ip_tso_output_callback(void *vp, struct mbuf *m)
+{
+	struct ip_tso_output_args *args = vp;
+	struct ifnet *ifp = args->ifp;
+
+	return (*ifp->if_output)(ifp, m, args->sa, args->rt);
+}
+
+static int
+ip_tso_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+    struct rtentry *rt)
+{
+	struct ip_tso_output_args args;
+
+	args.ifp = ifp;
+	args.sa = sa;
+	args.rt = rt;
+
+	return tcp4_segment(m, ip_tso_output_callback, &args);
+}
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -235,7 +277,26 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		ip->ip_id = ip_newid();
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			ip->ip_id = ip_newid();
+		} else {
+
+			/*
+			 * TSO capable interfaces (typically?) increment
+			 * ip_id for each segment.
+			 * "allocate" enough ids here to increase the chance
+			 * for them to be unique.
+			 *
+			 * note that the following calculation is not
+			 * needed to be precise.  wasting some ip_id is fine.
+			 */
+
+			unsigned int segsz = m->m_pkthdr.segsz;
+			unsigned int datasz = ntohs(ip->ip_len) - hlen;
+			unsigned int num = howmany(datasz, segsz);
+
+			ip->ip_id = ip_newid_range(num);
+		}
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
 	} else {
@@ -350,14 +411,14 @@ ip_output(struct mbuf *m0, ...)
 		 * of outgoing interface.
 		 */
 		if (in_nullhost(ip->ip_src)) {
-			struct in_ifaddr *ia;
+			struct in_ifaddr *xia;
 
-			IFP_TO_IA(ifp, ia);
-			if (!ia) {
+			IFP_TO_IA(ifp, xia);
+			if (!xia) {
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
-			ip->ip_src = ia->ia_addr.sin_addr;
+			ip->ip_src = xia->ia_addr.sin_addr;
 		}
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
@@ -409,14 +470,12 @@ ip_output(struct mbuf *m0, ...)
 
 		goto sendit;
 	}
-#ifndef notdef
 	/*
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
 	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
-#endif
 
 	/*
 	 * packets with Class-D address as source are not valid per
@@ -769,9 +828,9 @@ spd_done:
 #endif
 
 	/* Maybe skip checksums on loopback interfaces. */
-	if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
-			   ip_do_loopback_cksum))
+	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	}
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
 	 * If small enough for mtu of path, or if using TCP segmentation
@@ -798,11 +857,15 @@ spd_done:
 			 * XXX fields to be 0?
 			 */
 			if (sw_csum & M_CSUM_IPv4) {
+				KASSERT(IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4));
 				ip->ip_sum = in_cksum(m, hlen);
 				m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 			}
 			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-				in_delayed_cksum(m);
+				if (IN_NEED_CHECKSUM(ifp,
+				    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
+					in_delayed_cksum(m);
+				}
 				m->m_pkthdr.csum_flags &=
 				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 			}
@@ -812,7 +875,16 @@ spd_done:
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
-		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+
+		if (__predict_true(
+		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
+		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
+			error =
+			    (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+		} else {
+			error =
+			    ip_tso_output(ifp, m, sintosa(dst), ro->ro_rt);
+		}
 		goto done;
 	}
 
@@ -823,7 +895,10 @@ spd_done:
 	 * XXX Some hardware can do this.
 	 */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		if (IN_NEED_CHECKSUM(ifp,
+		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
+			in_delayed_cksum(m);
+		}
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
@@ -1099,9 +1174,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == 0)
 			return (m);
 		MCLAIM(n, m->m_owner);
-		M_COPY_PKTHDR(n, m);
-		m_tag_delete_chain(m, NULL);
-		m->m_flags &= ~M_PKTHDR;
+		M_MOVE_PKTHDR(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
@@ -1552,6 +1625,32 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 	return ifp;
 }
 
+static int
+ip_getoptval(struct mbuf *m, u_int8_t *val, u_int maxval)
+{
+	u_int tval;
+
+	if (m == NULL)
+		return EINVAL;
+
+	switch (m->m_len) {
+	case sizeof(u_char):
+		tval = *(mtod(m, u_char *));
+		break;
+	case sizeof(u_int):
+		tval = *(mtod(m, u_int *));
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (tval > maxval)
+		return EINVAL;
+
+	*val = tval;
+	return 0;
+}
+
 /*
  * Set the IP multicast options in response to user setsockopt().
  */
@@ -1559,7 +1658,6 @@ int
 ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 {
 	int error = 0;
-	u_char loop;
 	int i;
 	struct in_addr addr;
 	struct ip_mreq *mreq;
@@ -1628,11 +1726,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		/*
 		 * Set the IP time-to-live for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_ttl = *(mtod(m, u_char *));
+		error = ip_getoptval(m, &imo->imo_multicast_ttl, MAXTTL);
 		break;
 
 	case IP_MULTICAST_LOOP:
@@ -1640,12 +1734,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Set the loopback flag for outgoing multicast packets.
 		 * Must be zero or one.
 		 */
-		if (m == NULL || m->m_len != 1 ||
-		   (loop = *(mtod(m, u_char *))) > 1) {
-			error = EINVAL;
-			break;
-		}
-		imo->imo_multicast_loop = loop;
+		error = ip_getoptval(m, &imo->imo_multicast_loop, 1);
 		break;
 
 	case IP_ADD_MEMBERSHIP:

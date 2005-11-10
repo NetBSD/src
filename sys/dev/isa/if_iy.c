@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.62.2.6 2005/03/04 16:43:14 skrll Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.62.2.7 2005/11/10 14:05:37 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.6 2005/03/04 16:43:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.7 2005/11/10 14:05:37 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1212,7 +1212,7 @@ iyioctl(ifp, cmd, data)
 	ifr = (struct ifreq *)data;
 
 #ifdef IYDEBUG
-	printf("iyioctl called with ifp 0x%p (%s) cmd 0x%lx data 0x%p\n",
+	printf("iyioctl called with ifp %p (%s) cmd 0x%lx data %p\n",
 	    ifp, ifp->if_xname, cmd, data);
 #endif
 

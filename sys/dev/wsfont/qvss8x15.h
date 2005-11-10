@@ -1,4 +1,4 @@
-/* 	$NetBSD: qvss8x15.h,v 1.6.2.4 2005/03/04 16:51:15 skrll Exp $ */
+/* 	$NetBSD: qvss8x15.h,v 1.6.2.5 2005/11/10 14:08:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986
@@ -68,9 +68,9 @@
  *									*
  ************************************************************************/
 
-extern u_char qvss8x15_data[];
+static u_char qvss8x15_data[];
 
-struct wsdisplay_font qvss8x15 = {
+static struct wsdisplay_font qvss8x15 = {
 	"QVSS",				/* typeface name */
 	' ',				/* firstchar */
 	0377 - ' ' + 1,			/* numchars */

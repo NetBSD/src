@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.9.6.4 2005/02/04 11:46:36 skrll Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.9.6.5 2005/11/10 14:06:00 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -223,7 +223,7 @@ struct mscp_softc {
 	bus_space_handle_t mi_iph;	/* initialisation and polling */
 	bus_space_handle_t mi_sah;	/* status & address (read part) */
 	bus_space_handle_t mi_swh;	/* status & address (write part) */
-	struct bufq_state mi_resq;	/* While waiting for packets */
+	struct bufq_state *mi_resq;	/* While waiting for packets */
 };
 
 /* mi_flags */
@@ -272,7 +272,7 @@ void	mscp_printevent(struct mscp *);
 void	mscp_go(struct mscp_softc *, struct mscp *, int);
 void	mscp_requeue(struct mscp_softc *);
 void	mscp_dorsp(struct mscp_softc *);
-int	mscp_decodeerror(char *, struct mscp *, struct mscp_softc *);
+int	mscp_decodeerror(const char *, struct mscp *, struct mscp_softc *);
 int	mscp_print(void *, const char *);
 void	mscp_hexdump(struct mscp *);
 void	mscp_strategy(struct buf *, struct device *);

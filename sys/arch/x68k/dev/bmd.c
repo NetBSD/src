@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.1.8.4 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: bmd.c,v 1.1.8.5 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.1.8.4 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.1.8.5 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ bmd_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (ia->ia_addr != BMD_ADDR1 && ia->ia_addr != BMD_ADDR2)
 		return (0);
 
-	if (badaddr((caddr_t)INTIO_ADDR(ia->ia_addr)))
+	if (badaddr(INTIO_ADDR(ia->ia_addr)))
 		return (0);
 
 	ia->ia_size = 2;

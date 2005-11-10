@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.57.2.6 2005/03/04 16:50:32 skrll Exp $	*/
+/*	$NetBSD: ch.c,v 1.57.2.7 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.6 2005/03/04 16:50:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.7 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,9 +532,8 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't an extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
-	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
-	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
+	if (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	    SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED)
 		return (EJUSTRETURN);
 
 	/*
@@ -1237,13 +1236,12 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 static void
 ch_get_quirks(struct ch_softc *sc, struct scsipi_inquiry_pattern *inqbuf)
 {
-	struct chquirk *match;
+	const struct chquirk *match;
 	int priority;
 
 	sc->sc_settledelay = 0;
 
-	match = (struct chquirk *)scsipi_inqmatch(inqbuf,
-	    (caddr_t)chquirks,
+	match = scsipi_inqmatch(inqbuf, chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);
 	if (priority != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.25.2.3 2004/09/21 13:25:41 skrll Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.25.2.4 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25.2.3 2004/09/21 13:25:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25.2.4 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25.2.3 2004/09/21 13:25:41 sk
 #endif
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
-/* Not used on: alpha */
+/* Not used on: alpha, amd64 */
 
 /*
  * This file contains the linux_socketcall() multiplexer.  Arguments
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25.2.3 2004/09/21 13:25:41 sk
 
 /* The sizes of the arguments.  Used for copyin. */
 static const struct {
-	char *name;
+	const char *name;
 	int argsize;
 } linux_socketcall[LINUX_MAX_SOCKETCALL+1] = {
 	{"invalid",	-1},						/* 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.25.6.4 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.25.6.5 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.25.6.4 2005/03/04 16:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.25.6.5 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/errno.h>
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.25.6.4 2005/03/04 16:50:06 skrll Exp
 #include "rf_dagutils.h"
 #include "rf_shutdown.h"
 #include "rf_raid.h"
+#include "rf_kintf.h"
 
 static void rf_ShutdownEngine(void *);
 static void DAGExecutionThread(RF_ThreadArg_t arg);
@@ -825,11 +826,13 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 }
 
 /*
- * rf_RaidIOThread() -- When I/O to a component completes,
- * KernelWakeupFunc() puts the completed request onto raidPtr->iodone
- * TAILQ.  This function looks after requests on that queue by calling
- * rf_DiskIOComplete() for the request, and by calling any required
- * CompleteFunc for the request.
+ * rf_RaidIOThread() -- When I/O to a component begins, raidstrategy()
+ * puts the I/O on a buf_queue, and then signals raidPtr->iodone.  If
+ * necessary, this function calls raidstart() to initiate the I/O.
+ * When I/O to a component completes, KernelWakeupFunc() puts the
+ * completed request onto raidPtr->iodone TAILQ.  This function looks
+ * after requests on that queue by calling rf_DiskIOComplete() for the
+ * request, and by calling any required CompleteFunc for the request.  
  */
 
 static void
@@ -846,7 +849,8 @@ rf_RaidIOThread(RF_ThreadArg_t arg)
 
 	while (!raidPtr->shutdown_raidio) {
 		/* if there is nothing to do, then snooze. */
-		if (TAILQ_EMPTY(&(raidPtr->iodone))) {
+		if (TAILQ_EMPTY(&(raidPtr->iodone)) &&
+		    rf_buf_queue_check(raidPtr->raidid)) {
 			ltsleep(&(raidPtr->iodone), PRIBIO, "raidiow", 0,
 				&(raidPtr->iodone_lock));
 		}
@@ -859,6 +863,12 @@ rf_RaidIOThread(RF_ThreadArg_t arg)
 			(req->CompleteFunc) (req->argument, req->error);
 			simple_lock(&(raidPtr->iodone_lock));
 		}
+
+		/* process any pending outgoing IO */
+		simple_unlock(&(raidPtr->iodone_lock));
+		raidstart(raidPtr);
+		simple_lock(&(raidPtr->iodone_lock));
+
 	}
 
 	/* Let rf_ShutdownEngine know that we're done... */

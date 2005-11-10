@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23.6.4 2005/01/24 08:35:02 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.23.6.5 2005/11/10 13:59:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23.6.4 2005/01/24 08:35:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23.6.5 2005/11/10 13:59:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ oclock_match(struct device *parent, struct cfdata *cf, void *args)
 	 * The 3/80 can not probe the Intersil absent,
 	 * but it never has one, so "just say no."
 	 */
-	if (cpu_machine_id == SUN3X_MACH_80)
+	if (cpu_machine_id == ID_SUN3X_80)
 		return (0);
 
 	/* OK, really probe for the Intersil. */

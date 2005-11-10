@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmutils - AML disassembler utilities
- *              xRevision: 9 $
+ *              xRevision: 14 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,17 +116,21 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmutils.c,v 1.2.2.1 2004/08/03 10:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmutils.c,v 1.2.2.2 2005/11/10 14:03:12 skrll Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
 #include "acdisasm.h"
+#include "acnamesp.h"
 
 
 #ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmutils")
+
+
+ACPI_EXTERNAL_LIST              *AcpiGbl_ExternalList = NULL;
 
 
 /* Data used in keeping track of fields */
@@ -221,28 +225,6 @@ const char                      *AcpiGbl_DECDecode[2] =
     "SubDecode"
 };
 
-const char                      *AcpiGbl_RNGDecode[4] =
-{
-    "InvalidRanges",
-    "NonISAOnlyRanges",
-    "ISAOnlyRanges",
-    "EntireRange"
-};
-
-const char                      *AcpiGbl_MEMDecode[4] =
-{
-    "NonCacheable",
-    "Cacheable",
-    "WriteCombining",
-    "Prefetchable"
-};
-
-const char                      *AcpiGbl_RWDecode[2] =
-{
-    "ReadOnly",
-    "ReadWrite"
-};
-
 const char                      *AcpiGbl_IrqDecode[2] =
 {
     "IRQNoFlags",
@@ -289,6 +271,101 @@ const char                      *AcpiGbl_SIZDecode[4] =
     "InvalidSize"
 };
 
+/* Type Specific Flags */
+
+const char                      *AcpiGbl_TTPDecode[2] =
+{
+    "TypeStatic",
+    "TypeTranslation"
+};
+
+const char                      *AcpiGbl_MTPDecode[4] =
+{
+    "AddressRangeMemory",
+    "AddressRangeReserved",
+    "AddressRangeACPI",
+    "AddressRangeNVS"
+};
+
+const char                      *AcpiGbl_MEMDecode[4] =
+{
+    "NonCacheable",
+    "Cacheable",
+    "WriteCombining",
+    "Prefetchable"
+};
+
+const char                      *AcpiGbl_RWDecode[2] =
+{
+    "ReadOnly",
+    "ReadWrite"
+};
+
+const char                      *AcpiGbl_TRSDecode[2] =
+{
+    "DenseTranslation",
+    "SparseTranslation"
+};
+
+const char                      *AcpiGbl_RNGDecode[4] =
+{
+    "InvalidRanges",
+    "NonISAOnlyRanges",
+    "ISAOnlyRanges",
+    "EntireRange"
+};
+
+
+#ifdef _ACPI_ASL_COMPILER
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmAddToExternalList
+ *
+ * PARAMETERS:  Path            - Internal (AML) path to the object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Insert a new path into the list of Externals which will in
+ *              turn be emitted as an External() declaration in the disassembled
+ *              output.
+ *
+ ******************************************************************************/
+
+void
+AcpiDmAddToExternalList (
+    char                    *Path)
+{
+    char                    *ExternalPath;
+    ACPI_EXTERNAL_LIST      *NewExternal;
+    ACPI_STATUS             Status;
+
+
+    if (!Path)
+    {
+        return;
+    }
+
+    /* Externalize the ACPI path */
+
+    Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, Path,
+                    NULL, &ExternalPath);
+    if (ACPI_SUCCESS (Status))
+    {
+        /* Allocate and init a new External() descriptor */
+
+        NewExternal = ACPI_MEM_CALLOCATE (sizeof (ACPI_EXTERNAL_LIST));
+        NewExternal->Path = ExternalPath;
+
+        /* Link the new descriptor into the global list */
+
+        if (AcpiGbl_ExternalList)
+        {
+            NewExternal->Next = AcpiGbl_ExternalList;
+        }
+        AcpiGbl_ExternalList = NewExternal;
+    }
+}
+#endif
 
 /*******************************************************************************
  *
@@ -462,6 +539,5 @@ AcpiDmCommaIfFieldMember (
         AcpiOsPrintf (", ");
     }
 }
-
 
 #endif

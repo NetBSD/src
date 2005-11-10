@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.2.3 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.31 2003/07/25 12:29:59 darrenr Exp
+ * Id: ip_proxy.h,v 2.31.2.2 2005/03/12 19:33:48 darrenr Exp
  */
 
 #ifndef _NETINET_IP_PROXY_H_
@@ -132,9 +132,18 @@ typedef	struct	aproxy	{
 #endif
 
 /*
- * For the ftp proxy.
+ * This is the scratch buffer size used to hold strings from the TCP stream
+ * that we may want to parse.  It's an arbitrary size, really, but it must
+ * be at least as large as IPF_FTPBUFSZ.
+ */ 
+#define	FTP_BUFSZ	120
+
+/*
+ * This buffer, however, doesn't need to be nearly so big.  It just needs to
+ * be able to squeeze in the largest command it needs to rewrite, Which ones
+ * does it rewrite? EPRT, PORT, 227 replies.
  */
-#define	FTP_BUFSZ	160
+#define	IPF_FTPBUFSZ	80	/* This *MUST* be >= 53! */
 
 typedef struct  ftpside {
 	char	*ftps_rptr;
@@ -142,7 +151,7 @@ typedef struct  ftpside {
 	void	*ftps_ifp;
 	u_32_t	ftps_seq[2];
 	u_32_t	ftps_len;
-	int	ftps_junk;
+	int	ftps_junk;	/* 2 = no cr/lf yet, 1 = cannot parse */
 	int	ftps_cmds;
 	char	ftps_buf[FTP_BUFSZ];
 } ftpside_t;
@@ -201,6 +210,9 @@ typedef	struct	raudio_s {
 #define	RAP_M_UDP_ROBUST	(RAP_M_UDP|RAP_M_ROBUST)
 
 
+/*
+ * MSN RPC proxy
+ */
 typedef	struct	msnrpcinfo	{
 	u_int		mri_flags;
 	int		mri_cmd[2];
@@ -223,6 +235,29 @@ typedef struct ipsec_pxy {
 	nat_t		*ipsc_nat;
 	ipstate_t	*ipsc_state;
 } ipsec_pxy_t;
+
+/*
+ * PPTP proxy
+ */
+typedef	struct pptp_side {
+	u_32_t		pptps_nexthdr;
+	u_32_t		pptps_next;
+	int		pptps_state;
+	int		pptps_gothdr;
+	int		pptps_len;
+	int		pptps_bytes;
+	char		*pptps_wptr;
+	char		pptps_buffer[512];
+} pptp_side_t;
+
+typedef	struct pptp_pxy {
+	ipnat_t		pptp_rule;
+	nat_t		*pptp_nat;
+	ipstate_t	*pptp_state;
+	u_short		pptp_call[2];
+	pptp_side_t	pptp_side[2];
+} pptp_pxy_t;
+
 
 /*
  * Sun RPCBIND proxy

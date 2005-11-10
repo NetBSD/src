@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.9.10.2 2005/02/04 11:45:25 skrll Exp $ */
+/*	$NetBSD: gemvar.h,v 1.9.10.3 2005/11/10 14:04:14 skrll Exp $ */
 
 /*
  *
@@ -137,6 +137,7 @@ struct gem_softc {
 #define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
 
 	u_int		sc_flags;	/* */
+	short		sc_if_flags;	/* copy of ifp->if_flags */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
 
 	void *sc_sdhook;		/* shutdown hook */
@@ -149,6 +150,8 @@ struct gem_softc {
 	int		sc_cdnseg;	/* number of segments */
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+
+	bus_dmamap_t sc_nulldmamap;	/* for small packets padding */
 
 	/*
 	 * Software state for transmit and receive descriptors.

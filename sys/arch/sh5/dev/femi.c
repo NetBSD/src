@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.8.2.3 2004/09/21 13:21:37 skrll Exp $	*/
+/*	$NetBSD: femi.c,v 1.8.2.4 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.8.2.3 2004/09/21 13:21:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.8.2.4 2005/11/10 13:58:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.8.2.3 2004/09/21 13:21:37 skrll Exp $");
 static int femimatch(struct device *, struct cfdata *, void *);
 static void femiattach(struct device *, struct device *, void *);
 static int femiprint(void *, const char *);
-static int femisubmatch(struct device *, struct cfdata *, void *);
+static int femisubmatch(struct device *, struct cfdata *,
+			const int *, void *);
 
 struct femi_softc {
 	struct device sc_dev;
@@ -128,7 +129,7 @@ femiattach(struct device *parent, struct device *self, void *args)
 	printf("%s: Base Address: 0x%x, Length: 0x%x\n",
 	    sc->sc_dev.dv_xname, sc->sc_base, sc->sc_top - sc->sc_base);
 
-	config_search(femisubmatch, self, NULL);
+	config_search_ia(femisubmatch, self, "femi", NULL);
 }
 
 static int
@@ -142,7 +143,8 @@ femiprint(void *arg, const char *cp)
 }
 
 static int
-femisubmatch(struct device *dev, struct cfdata *cf, void *arg)
+femisubmatch(struct device *dev, struct cfdata *cf,
+	const int *ldesc, void *arg)
 {
 	struct femi_softc *sc = (struct femi_softc *) dev;
 	struct femi_attach_args fa;

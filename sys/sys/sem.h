@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.16.2.6 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: sem.h,v 1.16.2.7 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,21 +72,6 @@ struct semid_ds {
 	struct __sem	*_sem_base;	/* pointer to first semaphore in set */
 };
 
-#ifdef _KERNEL
-struct semid_ds14 {
-	struct ipc_perm14 sem_perm;	/* operation permission struct */
-	struct __sem	*sem_base;	/* pointer to first semaphore in set */
-	unsigned short	sem_nsems;	/* number of sems in set */
-	time_t		sem_otime;	/* last operation time */
-	long		sem_pad1;	/* SVABI/386 says I need this here */
-	time_t		sem_ctime;	/* last change time */
-    					/* Times measured in secs since */
-    					/* 00:00:00 GMT, Jan. 1, 1970 */
-	long		sem_pad2;	/* SVABI/386 says I need this here */
-	long		sem_pad3[4];	/* SVABI/386 says I need this here */
-};
-#endif /* _KERNEL */
-
 /*
  * semop's sops parameter structure
  */
@@ -114,8 +99,6 @@ struct sembuf {
  */
 #define SEMVMX	32767		/* semaphore maximum value */
 #define SEMAEM	16384		/* adjust on exit max value */
-
-#define MAX_SOPS	5	/* maximum # of sembuf's per semop call */
 
 /*
  * Permissions
@@ -231,11 +214,7 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if defined(__LIBC12_SOURCE__)
-int	semctl(int, int, int, union __semun);
-int	__semctl(int, int, int, union __semun *);
-int	__semctl13(int, int, int, ...);
-#else
+#ifndef __LIBC12_SOURCE__
 int	semctl(int, int, int, ...) __RENAME(__semctl13);
 #endif
 int	semget(key_t, int, int);
@@ -251,4 +230,4 @@ void	semexit(struct proc *, void *);
 int	semctl1(struct proc *, int, int, int, void *, register_t *);
 #endif /* !_KERNEL */
 
-#endif /* !_SEM_H_ */
+#endif /* !_SYS_SEM_H_ */

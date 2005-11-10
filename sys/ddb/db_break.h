@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.16 2002/02/15 07:33:49 simonb Exp $	*/
+/*	$NetBSD: db_break.h,v 1.16.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -52,9 +52,9 @@ typedef struct db_breakpoint {
 db_breakpoint_t	db_find_breakpoint_here(db_addr_t);
 void		db_set_breakpoints(void);
 void		db_clear_breakpoints(void);
-void		db_delete_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_breakpoint_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_listbreak_cmd(db_expr_t, int, db_expr_t, char *);
+void		db_delete_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_breakpoint_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_listbreak_cmd(db_expr_t, int, db_expr_t, const char *);
 boolean_t	db_map_equal(struct vm_map *, struct vm_map *);
 boolean_t	db_map_current(struct vm_map *);
 struct vm_map  *db_map_addr(vaddr_t);

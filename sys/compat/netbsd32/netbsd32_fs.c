@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.14.2.7 2005/03/04 16:40:20 skrll Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.14.2.8 2005/11/10 14:01:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.7 2005/03/04 16:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.8 2005/11/10 14:01:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.7 2005/03/04 16:40:20 skrll E
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -615,12 +616,12 @@ netbsd32_futimes(l, v, retval)
 }
 
 int
-netbsd32_getdents(l, v, retval)
+netbsd32_sys___getdents30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getdents_args /* {
+	struct netbsd32_sys___getdents30_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
@@ -669,12 +670,12 @@ netbsd32_lutimes(l, v, retval)
 }
 
 int
-netbsd32___stat13(l, v, retval)
+netbsd32_sys___stat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___stat13_args /* {
+	struct netbsd32_sys___stat30_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statp_t) ub;
 	} */ *uap = v;
@@ -697,19 +698,19 @@ netbsd32___stat13(l, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	netbsd32_from___stat13(&sb, &sb32);
+	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);
 }
 
 int
-netbsd32___fstat13(l, v, retval)
+netbsd32_sys___fstat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___fstat13_args /* {
+	struct netbsd32_sys___fstat30_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
@@ -729,7 +730,7 @@ netbsd32___fstat13(l, v, retval)
 	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
-		netbsd32_from___stat13(&ub, &sb32);
+		netbsd32_from___stat30(&ub, &sb32);
 		error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, sb)),
 		    sizeof(sb32));
 	}
@@ -737,12 +738,12 @@ netbsd32___fstat13(l, v, retval)
 }
 
 int
-netbsd32___lstat13(l, v, retval)
+netbsd32_sys___lstat30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___lstat13_args /* {
+	struct netbsd32_sys___lstat30_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statp_t) ub;
 	} */ *uap = v;
@@ -758,14 +759,14 @@ netbsd32___lstat13(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	netbsd32_from___stat13(&sb, &sb32);
+	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);

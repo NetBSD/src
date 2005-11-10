@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.26.2.8 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.26.2.9 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.8 2005/03/04 16:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.9 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -354,7 +354,7 @@ emuxki_scinit(struct emuxki_softc *sc)
 			EMU_HCFG_AUDIOENABLE | EMU_HCFG_AUTOMUTE);
 	} else {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_HCFG,
-			EMU_HCFG_AUDIOENABLE |
+			EMU_HCFG_AUDIOENABLE | EMU_HCFG_JOYENABLE |
 			EMU_HCFG_LOCKTANKCACHE_MASK | EMU_HCFG_AUTOMUTE);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_INTE,

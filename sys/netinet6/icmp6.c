@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.94.2.4 2005/01/17 19:32:54 skrll Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.94.2.5 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94.2.4 2005/01/17 19:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94.2.5 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -601,7 +601,7 @@ icmp6_input(mp, offp, proto)
 				m = NULL;
 				goto deliverecho;
 			}
-			M_COPY_PKTHDR(n, n0);
+			M_MOVE_PKTHDR(n, n0);
 			/*
 			 * Copy IPv6 and ICMPv6 only.
 			 */
@@ -620,7 +620,6 @@ icmp6_input(mp, offp, proto)
 			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
 			m_adj(n0, off + sizeof(struct icmp6_hdr));
 			n->m_next = n0;
-			n0->m_flags &= ~M_PKTHDR;
 		} else {
 	 deliverecho:
 			nip6 = mtod(n, struct ip6_hdr *);
@@ -1377,7 +1376,7 @@ ni6_input(m, off)
 		m_freem(m);
 		return (NULL);
 	}
-	M_COPY_PKTHDR(n, m); /* just for rcvif */
+	M_MOVE_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*
@@ -2618,6 +2617,7 @@ noredhdropt:
 		m0 = NULL;
 	}
 
+	sip6 = mtod(m, struct ip6_hdr *);
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
 		sip6->ip6_src.s6_addr16[1] = 0;
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_dst))
@@ -2846,7 +2846,8 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	return (nd6_sysctl(rnode->sysctl_num, oldp, oldlenp,
-	    (void*)newp, newlen));
+	    /*XXXUNCONST*/
+	    __UNCONST(newp), newlen));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,

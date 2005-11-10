@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.57.2.7 2005/03/04 16:53:00 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.57.2.8 2005/11/10 14:10:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.57.2.7 2005/03/04 16:53:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.57.2.8 2005/11/10 14:10:33 skrll Exp $");
 
 #include "opt_ns.h"
 
@@ -183,7 +183,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 	struct rt_addrinfo info;
 	int  s = splsoftnet(), err = 0, msgtype = RTM_MISS;
 
-	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
+	if (rnh && (rn = rnh->rnh_matchaddr(dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
 		if (report && (rt->rt_flags & RTF_CLONING)) {
@@ -296,7 +296,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	 */
 #define	equal(a1, a2) \
 	((a1)->sa_len == (a2)->sa_len && \
-	 bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
+	 memcmp((a1), (a2), (a1)->sa_len) == 0)
 	if (!(flags & RTF_DONE) && rt &&
 	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
@@ -637,14 +637,13 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
 		}
-		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
-		    rnh, rt->rt_nodes);
+		rn = rnh->rnh_addaddr(ndst, netmask, rnh, rt->rt_nodes);
 		if (rn == NULL && (crt = rtalloc1(ndst, 0)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt);
-				rn = rnh->rnh_addaddr((caddr_t)ndst,
-				    (caddr_t)netmask, rnh, rt->rt_nodes);
+				rn = rnh->rnh_addaddr(ndst,
+				    netmask, rnh, rt->rt_nodes);
 			}
 			RTFREE(crt);
 		}
@@ -698,7 +697,7 @@ rt_setgate( struct rtentry *rt0, const struct sockaddr *dst,
 		Bzero(new, dlen + glen);
 		rt->rt_nodes->rn_key = new;
 	} else {
-		new = (void *)rt->rt_nodes->rn_key;
+		new = __UNCONST(rt->rt_nodes->rn_key); /*XXXUNCONST*/
 		old = 0;
 	}
 	Bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
@@ -733,9 +732,9 @@ void
 rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 	const struct sockaddr *netmask)
 {
-	const u_char *cp1 = (u_char *)src;
+	const u_char *cp1 = (const u_char *)src;
 	u_char *cp2 = (u_char *)dst;
-	const u_char *cp3 = (u_char *)netmask;
+	const u_char *cp3 = (const u_char *)netmask;
 	u_char *cplim = cp2 + *cp3;
 	u_char *cplim2 = cp2 + *cp1;
 
@@ -746,7 +745,7 @@ rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 	while (cp2 < cplim)
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
-		memset((caddr_t)cp2, 0, (unsigned)(cplim2 - cp2));
+		memset(cp2, 0, (unsigned)(cplim2 - cp2));
 }
 
 /*

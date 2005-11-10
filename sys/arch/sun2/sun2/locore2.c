@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: locore2.c,v 1.10.2.5 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.10.2.5 2005/11/10 13:59:38 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,7 +89,7 @@ int mmutype = MMU_SUN;
  */
 
 u_char cpu_machine_id = 0;
-char *cpu_string = NULL;
+const char *cpu_string = NULL;
 int cpu_has_multibus = 0;
 int cpu_has_vme = 0;
 
@@ -233,14 +233,14 @@ _verify_hardware(void)
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
-	case SUN2_MACH_120 :
+	case ID_SUN2_120 :
 		cpu_match++;
 		cpu_string = "{120,170}";
 		delay_divisor = 205;	/* 10 MHz */
 		cpu_has_multibus = TRUE;
 		break;
 
-	case SUN2_MACH_50 :
+	case ID_SUN2_50 :
 		cpu_match++;
 		cpu_string = "50";
 		delay_divisor = 205;	/* 10 MHz */

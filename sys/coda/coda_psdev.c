@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.26.2.4 2005/03/04 16:39:21 skrll Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.26.2.5 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.26.2.4 2005/03/04 16:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.26.2.5 2005/11/10 14:00:34 skrll Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -128,8 +128,7 @@ struct vmsg {
 
 /* vcodaattach: do nothing */
 void
-vcodaattach(n)
-    int n;
+vcodaattach(int n)
 {
 }
 
@@ -137,11 +136,7 @@ vcodaattach(n)
  * These functions are written for NetBSD.
  */
 int
-vc_nb_open(dev, flag, mode, l)
-    dev_t        dev;
-    int          flag;
-    int          mode;
-    struct lwp *l;             /* NetBSD only */
+vc_nb_open(dev_t dev, int flag, int mode, struct lwp *l /* NetBSD only */)
 {
     struct vcomm *vcp;
 
@@ -169,11 +164,7 @@ vc_nb_open(dev, flag, mode, l)
 }
 
 int
-vc_nb_close (dev, flag, mode, l)
-    dev_t        dev;
-    int          flag;
-    int          mode;
-    struct lwp *l;
+vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
     struct vcomm *vcp;
     struct vmsg *vmp, *nvmp = NULL;
@@ -261,10 +252,7 @@ vc_nb_close (dev, flag, mode, l)
 }
 
 int
-vc_nb_read(dev, uiop, flag)
-    dev_t        dev;
-    struct uio  *uiop;
-    int          flag;
+vc_nb_read(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
@@ -315,17 +303,14 @@ vc_nb_read(dev, uiop, flag)
 }
 
 int
-vc_nb_write(dev, uiop, flag)
-    dev_t        dev;
-    struct uio  *uiop;
-    int          flag;
+vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
     struct coda_out_hdr *out;
     u_long seq;
     u_long opcode;
-    int buf[2];
+    int tbuf[2];
     int error = 0;
 
     ENTRY;
@@ -337,14 +322,14 @@ vc_nb_write(dev, uiop, flag)
 
     /* Peek at the opcode, unique without transfering the data. */
     uiop->uio_rw = UIO_WRITE;
-    error = uiomove((caddr_t)buf, sizeof(int) * 2, uiop);
+    error = uiomove((caddr_t)tbuf, sizeof(int) * 2, uiop);
     if (error) {
 	myprintf(("vcwrite: error (%d) on uiomove\n", error));
 	return(EINVAL);
     }
 
-    opcode = buf[0];
-    seq = buf[1];
+    opcode = tbuf[0];
+    seq = tbuf[1];
 
     if (codadebug)
 	myprintf(("vcwrite got a call for %ld.%ld\n", opcode, seq));
@@ -394,7 +379,7 @@ vc_nb_write(dev, uiop, flag)
 	return(EINVAL);
     }
 
-    buf[0] = uiop->uio_resid; 	/* Save this value. */
+    tbuf[0] = uiop->uio_resid; 	/* Save this value. */
     uiop->uio_rw = UIO_WRITE;
     error = uiomove((caddr_t) &out->result, vmp->vm_outSize - (sizeof(int) * 2), uiop);
     if (error) {
@@ -407,7 +392,7 @@ vc_nb_write(dev, uiop, flag)
     /* XXX - aren't these two already correct? -bnoble */
     out->opcode = opcode;
     out->unique = seq;
-    vmp->vm_outSize	= buf[0];	/* Amount of data transferred? */
+    vmp->vm_outSize	= tbuf[0];	/* Amount of data transferred? */
     vmp->vm_flags |= VM_WRITE;
     wakeup(&vmp->vm_sleep);
 
@@ -415,12 +400,7 @@ vc_nb_write(dev, uiop, flag)
 }
 
 int
-vc_nb_ioctl(dev, cmd, addr, flag, l)
-    dev_t         dev;
-    u_long        cmd;
-    caddr_t       addr;
-    int           flag;
-    struct lwp  *l;
+vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
     ENTRY;
 
@@ -469,10 +449,7 @@ vc_nb_ioctl(dev, cmd, addr, flag, l)
 }
 
 int
-vc_nb_poll(dev, events, l)
-    dev_t         dev;
-    int           events;
-    struct lwp  *l;
+vc_nb_poll(dev_t dev, int events, struct lwp *l)
 {
     struct vcomm *vcp;
     int event_msk = 0;
@@ -567,8 +544,8 @@ struct coda_clstat coda_clstat;
  */
 
 int
-coda_call(mntinfo, inSize, outSize, buffer)
-     struct coda_mntinfo *mntinfo; int inSize; int *outSize; caddr_t buffer;
+coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
+	caddr_t buffer)
 {
 	struct vcomm *vcp;
 	struct vmsg *vmp;

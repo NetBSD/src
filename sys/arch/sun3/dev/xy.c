@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.46.2.6 2005/02/04 07:09:16 skrll Exp $	*/
+/*	$NetBSD: xy.c,v 1.46.2.7 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.6 2005/02/04 07:09:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.7 2005/11/10 13:59:54 skrll Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -160,7 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.6 2005/02/04 07:09:16 skrll Exp $");
 /* internals */
 struct xy_iopb *xyc_chain(struct xyc_softc *, struct xy_iorq *);
 int	xyc_cmd(struct xyc_softc *, int, int, int, int, int, char *, int);
-char   *xyc_e2str(int);
+const char *xyc_e2str(int);
 int	xyc_entoact(int);
 int	xyc_error(struct xyc_softc *, struct xy_iorq *, struct xy_iopb *, int);
 int	xyc_ioctlcmd(struct xy_softc *, dev_t dev, struct xd_iocmd *);
@@ -504,7 +504,7 @@ xyattach(struct device *parent, struct device *self, void *aux)
 	xy->parent = xyc;
 
 	/* init queue of waiting bufs */
-	bufq_alloc(&xy->xyq, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&xy->xyq, "disksort", BUFQ_SORT_RAWBLOCK);
 	xy->xyrq = &xyc->reqs[xa->driveno];
 
 	xy->xy_drive = xa->driveno;
@@ -1008,7 +1008,7 @@ xystrategy(struct buf *bp)
 
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(&xy->xyq, bp);	 /* XXX disksort_cylinder */
+	BUFQ_PUT(xy->xyq, bp);	 /* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1578,7 +1578,7 @@ xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
-			    (void)BUFQ_GET(&iorq->xy->xyq);
+			    (void)BUFQ_GET(iorq->xy->xyq);
 			    disk_unbusy(&iorq->xy->sc_dk,
 				(iorq->buf->b_bcount - iorq->buf->b_resid),
 				(iorq->buf->b_flags & B_READ));
@@ -1621,9 +1621,9 @@ xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_PEEK(&xy->xyq) == NULL) continue;
+			if (BUFQ_PEEK(xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(&xy->xyq));
+			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1751,7 +1751,7 @@ xyc_remove_iorq(struct xyc_softc *xycsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			(void)BUFQ_GET(&iorq->xy->xyq);
+			(void)BUFQ_GET(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));
@@ -1981,7 +1981,7 @@ done:
 /*
  * xyc_e2str: convert error code number into an error string
  */
-char *
+const char *
 xyc_e2str(int no)
 {
 	switch (no) {

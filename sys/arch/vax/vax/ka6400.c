@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.4.6.3 2004/09/21 13:23:57 skrll Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.4.6.4 2005/11/10 13:59:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.4.6.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.4.6.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -79,8 +79,8 @@ static int ka6400_mchk(caddr_t);
 static void ka6400_steal_pages(void);
 #if defined(MULTIPROCESSOR)
 static void ka6400_startslave(struct device *, struct cpu_info *);
-static void ka6400_txrx(int, char *, int);
-static void ka6400_sendstr(int, char *);
+static void ka6400_txrx(int, const char *, int);
+static void ka6400_sendstr(int, const char *);
 static void ka6400_sergeant(int);
 static int rxchar(void);
 static void ka6400_putc(int);
@@ -353,7 +353,7 @@ ka6400_startslave(struct device *dev, struct cpu_info *ci)
 	ka6400_txrx(id, "D/I 10 %x\r", (int)ci->ci_pcb);	/* PCB for idle proc */
 	ka6400_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka6400_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
-	ka6400_txrx(id, "S %x\r", (int)&tramp); /* Start! */
+	ka6400_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
 		if ((volatile)ci->ci_flags & CI_RUNNING)
@@ -364,7 +364,7 @@ ka6400_startslave(struct device *dev, struct cpu_info *ci)
 }
 
 void
-ka6400_txrx(int id, char *fmt, int arg)
+ka6400_txrx(int id, const char *fmt, int arg)
 {
 	char buf[20];
 
@@ -374,7 +374,7 @@ ka6400_txrx(int id, char *fmt, int arg)
 }
 
 void
-ka6400_sendstr(int id, char *buf)
+ka6400_sendstr(int id, const char *buf)
 {
 	register u_int utchr; /* Ends up in R11 with PCC */
 	int ch, i;

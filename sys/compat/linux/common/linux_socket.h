@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.10.16.3 2004/09/21 13:25:41 skrll Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.10.16.4 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -185,6 +185,8 @@
 #include <compat/linux/arch/mips/linux_socket.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_socket.h>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_socket.h>
 #else
 #error Undefined linux_socket.h machine type.
 #endif

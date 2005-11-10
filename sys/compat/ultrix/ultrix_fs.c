@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.27.2.5 2005/03/04 16:40:43 skrll Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.27.2.6 2005/11/10 14:01:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27.2.5 2005/03/04 16:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27.2.6 2005/11/10 14:01:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27.2.5 2005/03/04 16:40:43 skrll Exp
 #include <sys/namei.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/vnode_if.h>
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -349,7 +351,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];
-	char * fstype;
+	const char *fstype;
 	struct sys_mount_args nuap;
 	char *native_fstype;
 
@@ -398,8 +400,8 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		/* attempt to mount a native, rather than 4.2bsd, ffs */
 		struct ufs_args ua;
 
+		memset(&ua, 0, sizeof(ua));
 		ua.fspec = SCARG(uap, special);
-		memset(&ua.export, 0, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
 
 		if ((error = copyout(&ua, SCARG(&nuap, data),
@@ -412,7 +414,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		 * and if so, set MNT_UPDATE so we can mount / read-write.
 		 */
 		fsname[0] = 0;
-		if ((error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
+		if ((error = copyinstr(SCARG(&nuap, path), fsname,
 				      sizeof fsname, NULL)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {

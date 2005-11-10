@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.11.10.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.11.10.4 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,8 +60,8 @@ SOFTWARE.
 
 #ifndef _NETISO_ARGO_DEBUG_H_
 #define _NETISO_ARGO_DEBUG_H_
-void Dump_buf (caddr_t, int);
-#define dump_buf(a, b) Dump_buf((caddr_t)(a), (int)(b))
+void Dump_buf    (const void *, size_t);
+#define dump_buf(a, b) Dump_buf((a), (b))
 
 /***********************************************
  * DEBUG ON:

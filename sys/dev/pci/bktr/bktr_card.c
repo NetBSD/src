@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.15.2.3 2004/09/21 13:32:19 skrll Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.15.2.4 2005/11/10 14:07:23 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.15.2.3 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.15.2.4 2005/11/10 14:07:23 skrll Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -379,7 +379,7 @@ readEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data)
 {
 	int	x;
 	int	addr;
-	int	max;
+	int	xmax;
 	int	byte;
 
 	/* get the address of the EEProm */
@@ -387,8 +387,8 @@ readEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data)
 	if (addr == 0)
 		return(-1);
 
-	max = (int)(bktr->card.eepromSize * EEPROMBLOCKSIZE);
-	if ((offset + count) > max)
+	xmax = (int)(bktr->card.eepromSize * EEPROMBLOCKSIZE);
+	if ((offset + count) > xmax)
 		return(-1);
 
 	/* set the start address */
@@ -1225,8 +1225,8 @@ checkMSPEnd:
         }
         /* If a remote control is found, poll it 5 times to turn off the LED */
         if (bktr->remote_control) {
-                int i;
-                for (i=0; i<5; i++)
+                int ii;
+                for (ii=0; ii<5; ii++)
                         i2cRead(bktr, bktr->remote_control_addr);
         }
 /* End of Check Remote */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.19.2.3 2004/09/21 13:22:14 skrll Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.19.2.4 2005/11/10 13:58:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,15 +73,15 @@
  * and so forth).
  */
 struct v0devops {
-	int	(*v0_open) __P((char *dev));
-	int	(*v0_close) __P((int d));
-	int	(*v0_rbdev) __P((int d, int nblks, int blkno, void *addr));
-	int	(*v0_wbdev) __P((int d, int nblks, int blkno, void *addr));
-	int	(*v0_wnet) __P((int d, int nbytes, void *addr));
-	int	(*v0_rnet) __P((int d, int nbytes, void *addr));
-	int	(*v0_rcdev) __P((int d, int nbytes, int, void *addr));
-	int	(*v0_wcdev) __P((int d, int nbytes, int, void *addr));
-	int	(*v0_seek) __P((int d, long offset, int whence));
+	int	(*v0_open)(const char *);
+	int	(*v0_close)(int);
+	int	(*v0_rbdev)(int, int, int, void *);
+	int	(*v0_wbdev)(int, int, int, void *);
+	int	(*v0_wnet)(int, int, void *);
+	int	(*v0_rnet)(int, int, void *);
+	int	(*v0_rcdev)(int, int, int, void *);
+	int	(*v0_wcdev)(int, int, int, void *);
+	int	(*v0_seek)(int, long, int);
 };
 
 /*
@@ -99,25 +99,25 @@ struct v2devops {
 	 * Convert an `instance handle' (acquired through v2_open()) to
 	 * a `package handle', a.k.a. a `node'.
 	 */
-	int	(*v2_fd_phandle) __P((int d));
+	int	(*v2_fd_phandle)(int);
 
 	/* Memory allocation and release. */
-	void	*(*v2_malloc) __P((caddr_t va, u_int sz));
-	void	(*v2_free) __P((caddr_t va, u_int sz));
+	void	*(*v2_malloc)(caddr_t, u_int);
+	void	(*v2_free)(caddr_t, u_int);
 
 	/* Device memory mapper. */
-	caddr_t	(*v2_mmap) __P((caddr_t va, int asi, u_int pa, u_int sz));
-	void	(*v2_munmap) __P((caddr_t va, u_int sz));
+	caddr_t	(*v2_mmap)(caddr_t, int, u_int, u_int);
+	void	(*v2_munmap)(caddr_t, u_int);
 
 	/* Device open, close, etc. */
-	int	(*v2_open) __P((char *devpath));
-	void	(*v2_close) __P((int d));
-	int	(*v2_read) __P((int d, void *buf, int nbytes));
-	int	(*v2_write) __P((int d, void *buf, int nbytes));
-	void	(*v2_seek) __P((int d, int hi, int lo));
+	int	(*v2_open)(const char *);
+	void	(*v2_close)(int);
+	int	(*v2_read)(int, void *, int);
+	int	(*v2_write)(int, const void *, int);
+	void	(*v2_seek)(int, int, int);
 
-	void	(*v2_chain) __P((void));	/* ??? */
-	void	(*v2_release) __P((void));	/* ??? */
+	void	(*v2_chain)(void);	/* ??? */
+	void	(*v2_release)(void);	/* ??? */
 };
 
 /*
@@ -239,37 +239,37 @@ struct promvec {
 #define	PROMDEV_TTYB	2		/* in/out to ttyb */
 
 	/* Blocking getchar/putchar.  NOT REENTRANT! (grr) */
-	int	(*pv_getchar) __P((void));
-	void	(*pv_putchar) __P((int ch));
+	int	(*pv_getchar)(void);
+	void	(*pv_putchar)(int);
 
 	/* Non-blocking variants that return -1 on error. */
-	int	(*pv_nbgetchar) __P((void));
-	int	(*pv_nbputchar) __P((int ch));
+	int	(*pv_nbgetchar)(void);
+	int	(*pv_nbputchar)(int);
 
 	/* Put counted string (can be very slow). */
-	void	(*pv_putstr) __P((char *str, int len));
+	void	(*pv_putstr)(const char *, int);
 
 	/* Miscellany. */
-	void	(*pv_reboot) __P((char *bootstr)) __attribute__((noreturn));
-	void	(*pv_printf) __P((const char *fmt, ...));
-	void	(*pv_abort) __P((void));	/* L1-A abort */
+	void	(*pv_reboot)(const char *) __attribute__((__noreturn__));
+	void	(*pv_printf)(const char *, ...);
+	void	(*pv_abort)(void);	/* L1-A abort */
 	int	*pv_ticks;		/* Ticks since last reset */
-	__dead void (*pv_halt) __P((void)) __attribute__((noreturn));/* Halt! */
-	void	(**pv_synchook) __P((void));	/* "sync" command hook */
+	__dead void (*pv_halt)(void) __attribute__((__noreturn__));/* Halt! */
+	void	(**pv_synchook)(void);	/* "sync" command hook */
 
 	/*
 	 * This eval's a FORTH string.  Unfortunately, its interface
 	 * changed between V0 and V2, which gave us much pain.
 	 */
 	union {
-		void	(*v0_eval) __P((int len, char *str));
-		void	(*v2_eval) __P((char *str));
+		void	(*v0_eval)(int, const char *);
+		void	(*v2_eval)(const char *);
 	} pv_fortheval;
 
 	struct	v0bootargs **pv_v0bootargs;	/* V0: Boot args */
 
 	/* Extract Ethernet address from network device. */
-	u_int	(*pv_enaddr) __P((int d, char *enaddr));
+	u_int	(*pv_enaddr)(int, char *);
 
 	struct	v2bootargs pv_v2bootargs;	/* V2: Boot args + std in/out */
 	struct	v2devops pv_v2devops;	/* V2: device operations */
@@ -287,18 +287,16 @@ struct promvec {
 	 * all memory references go to the PROM, so the PROM can do it
 	 * easily.
 	 */
-	void	(*pv_setctxt) __P((int ctxt, caddr_t va, int pmeg));
+	void	(*pv_setctxt)(int, caddr_t, int);
 
 	/*
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
 	 */
-	int	(*pv_v3cpustart) __P((int module,
-				      struct openprom_addr *ctxtbl,
-				      int context, caddr_t pc));
-	int 	(*pv_v3cpustop) __P((int module));
-	int	(*pv_v3cpuidle) __P((int module));
-	int 	(*pv_v3cpuresume) __P((int module));
+	int	(*pv_v3cpustart)(int, struct openprom_addr *, int, caddr_t);
+	int 	(*pv_v3cpustop)(int);
+	int	(*pv_v3cpuidle)(int);
+	int 	(*pv_v3cpuresume)(int);
 };
 
 /*
@@ -330,19 +328,18 @@ struct nodeops {
 	/*
 	 * Tree traversal.
 	 */
-	int	(*no_nextnode) __P((int node));	/* next(node) */
-	int	(*no_child) __P((int node));	/* first child */
+	int	(*no_nextnode)(int);	/* next(node) */
+	int	(*no_child)(int);	/* first child */
 
 	/*
 	 * Property functions.  Proper use of getprop requires calling
 	 * proplen first to make sure it fits.  Kind of a pain, but no
 	 * doubt more convenient for the PROM coder.
 	 */
-	int	(*no_proplen) __P((int node, char *name));
-	int	(*no_getprop) __P((int node, char *name, void *val));
-	int	(*no_setprop) __P((int node, char *name, const void *val,
-				   int len));
-	char	*(*no_nextprop) __P((int node, char *name));
+	int	(*no_proplen)(int, const char *);
+	int	(*no_getprop)(int, const char *, void *);
+	int	(*no_setprop)(int, const char *, const void *, int);
+	char	*(*no_nextprop)(int, const char *);
 };
 
 /*

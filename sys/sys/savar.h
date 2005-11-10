@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.4.2.3 2004/09/21 13:38:49 skrll Exp $	*/
+/*	$NetBSD: savar.h,v 1.4.2.4 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct sadata_upcall {
 	int	sau_type;
 	size_t	sau_argsize;
 	void	*sau_arg;
+	void	(*sau_argfreefunc)(void *);
 	stack_t	sau_stack;
 	union sau_state	sau_event;
 	union sau_state	sau_interrupted;
@@ -131,10 +132,11 @@ struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 
 void	sa_release(struct proc *);
-void	sa_switch(struct lwp *, int);
+void	sa_switch(struct lwp *, struct sadata_upcall *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
-int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
+int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
+		  void (*)(void *));
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct sadata_vp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.28.6.7 2005/03/04 16:50:36 skrll Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.28.6.8 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.7 2005/03/04 16:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.8 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,10 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 		return(0);
 	}
 #ifdef DIAGNOSTIC
-	if (BUFQ_GET(&ss->buf_queue) != bp)
+	if (BUFQ_GET(ss->buf_queue) != bp)
 		panic("ssstart(): dequeued wrong buf");
 #else
-	BUFQ_GET(&ss->buf_queue);
+	BUFQ_GET(ss->buf_queue);
 #endif
 	error = scsipi_execute_xs(xs);
 	/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -315,7 +315,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
  * Do a synchronous write.  Used to send control messages.
  */
 static int
-scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
+scanjet_ctl_write(struct ss_softc *ss, char *tbuf, u_int size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;
@@ -329,7 +329,7 @@ scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
 	_lto3b(size, cmd.len);
 
 	return (scsipi_command(ss->sc_periph,
-	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, 100000, NULL,
+	    (void *)&cmd, sizeof(cmd), (void *)tbuf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
@@ -338,7 +338,7 @@ scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
  * Do a synchronous read.  Used to read responses to control messages.
  */
 static int
-scanjet_ctl_read(struct ss_softc *ss, char *buf, u_int size)
+scanjet_ctl_read(struct ss_softc *ss, char *tbuf, u_int size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;
@@ -352,7 +352,7 @@ scanjet_ctl_read(struct ss_softc *ss, char *buf, u_int size)
 	_lto3b(size, cmd.len);
 
 	return (scsipi_command(ss->sc_periph,
-	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, 100000, NULL,
+	    (void *)&cmd, sizeof(cmd), (void *)tbuf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
 }
 

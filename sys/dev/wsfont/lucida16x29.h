@@ -1,4 +1,4 @@
-/*	 $NetBSD: lucida16x29.h,v 1.6.2.1 2005/03/04 16:51:15 skrll Exp $ */
+/*	 $NetBSD: lucida16x29.h,v 1.6.2.2 2005/11/10 14:08:44 skrll Exp $ */
 
 /*
 
@@ -63,9 +63,9 @@ This is the LEGAL NOTICE pertaining to the Lucida fonts from Bigelow & Holmes:
 
 */
 
-extern u_char lucida16x29_data[];
+static u_char lucida16x29_data[];
 
-struct wsdisplay_font lucida16x29 = {
+static struct wsdisplay_font lucida16x29 = {
 	"Lucida",			/* typeface name */
 	' ',				/* firstchar */
 	'~' - ' ' + 1,			/* numchars */

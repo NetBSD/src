@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.4.2.6 2004/10/31 07:24:35 skrll Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.4.2.7 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.6 2004/10/31 07:24:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.7 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,15 +82,16 @@ POOL_INIT(msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0, "msdosnopl",
 
 extern int prtactive;
 
-struct genfs_ops msdosfs_genfsops = {
-	genfs_size,
-	msdosfs_gop_alloc,
-	genfs_gop_write,
+static const struct genfs_ops msdosfs_genfsops = {
+	.gop_size = genfs_size,
+	.gop_alloc = msdosfs_gop_alloc,
+	.gop_write = genfs_gop_write,
+	.gop_markupdate = msdosfs_gop_markupdate,
 };
 
-static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long, struct lwp *));
-static void msdosfs_hashins __P((struct denode *));
-static void msdosfs_hashrem __P((struct denode *));
+static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
+static void msdosfs_hashins(struct denode *);
+static void msdosfs_hashrem(struct denode *);
 
 #ifdef _LKM
 MALLOC_DECLARE(M_MSDOSFSFAT);
@@ -154,11 +155,10 @@ msdosfs_done()
 }
 
 static struct denode *
-msdosfs_hashget(dev, dirclust, diroff, l)
+msdosfs_hashget(dev, dirclust, diroff)
 	dev_t dev;
 	u_long dirclust;
 	u_long diroff;
-	struct lwp *l;
 {
 	struct denode *dep;
 	struct vnode *vp;
@@ -225,7 +225,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
-	extern int (**msdosfs_vnodeop_p) __P((void *));
+	extern int (**msdosfs_vnodeop_p)(void *);
 	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
@@ -255,7 +255,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * entry that represented the file happens to be reused while the
 	 * deleted file is still open.
 	 */
-	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset, curlwp);
+	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset);
 	if (ldep) {
 		*depp = ldep;
 		return (0);
@@ -377,7 +377,8 @@ deupdat(dep, waitfor)
 	int waitfor;
 {
 
-	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor ? UPDATE_WAIT : 0));
+	return (msdosfs_update(DETOV(dep), NULL, NULL,
+	    waitfor ? UPDATE_WAIT : 0));
 }
 
 /*
@@ -693,4 +694,22 @@ msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     struct ucred *cred)
 {
 	return 0;
+}
+
+void
+msdosfs_gop_markupdate(struct vnode *vp, int flags)
+{
+	u_long mask = 0;
+
+	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
+		mask = DE_ACCESS;
+	}
+	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
+		mask |= DE_UPDATE;
+	}
+	if (mask) {
+		struct denode *dep = VTODE(vp);
+
+		dep->de_flag |= mask;
+	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.23.2.9 2005/04/01 14:28:04 skrll Exp $
+#	$NetBSD: NATSUMI,v 1.23.2.10 2005/11/10 13:58:26 skrll Exp $
 #
 #	for development
 #
@@ -50,6 +50,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
@@ -72,6 +73,7 @@ file-system	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	FFS_EI		# FFS Endian Independant support
@@ -87,6 +89,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -304,6 +307,9 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
@@ -351,6 +357,10 @@ ucom*	at uplcom? portno ?
 # USB Handspring Visor
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?

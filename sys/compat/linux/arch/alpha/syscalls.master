@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42.2.5 2005/03/04 16:39:51 skrll Exp $
+	$NetBSD: syscalls.master,v 1.42.2.6 2005/11/10 14:00:53 skrll Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -608,18 +608,27 @@
 379	UNIMPL		readahead
 380	UNIMPL		/* unused */
 381	UNIMPL		tkill
-382	UNIMPL		setxattr
-383	UNIMPL		lsetxattr
-384	UNIMPL		fsetxattr
-385	UNIMPL		getxattr
-386	UNIMPL		lgetxattr
-387	UNIMPL		fgetxattr
-388	UNIMPL		listxattr
-389	UNIMPL		llistxattr
-390	UNIMPL		flistxattr
-391	UNIMPL		removexattr
-392	UNIMPL		lremovexattr
-393	UNIMPL		fremovexattr
+382	STD		{ int linux_sys_setxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+383	STD		{ int linux_sys_lsetxattr(char *path, char *name, \
+			    void *value, size_t size, int flags); }
+384	STD		{ int linux_sys_fsetxattr(int fd, char *name, \
+			    void *value, size_t size, int flags); }
+385	STD		{ ssize_t linux_sys_getxattr(char *path, char *name, \
+			    void *value, size_t size); }
+386	STD		{ ssize_t linux_sys_lgetxattr(char *path, char *name, \
+			    void *value, size_t size); }
+387	STD		{ ssize_t linux_sys_fgetxattr(int fd, char *name, \
+			    void *value, size_t size); }
+388	STD		{ ssize_t linux_sys_listxattr(char *path, char *list, \
+			    size_t size); }
+389	STD		{ ssize_t linux_sys_llistxattr(char *path, char *list, \
+			    size_t size); }
+390	STD		{ ssize_t linux_sys_flistxattr(int fd, char *list, \
+			    size_t size); }
+391	STD		{ int linux_sys_removexattr(char *path, char *name); }
+392	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
+393	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 394	UNIMPL		futex
 395	UNIMPL		sched_setaffinity
 396	UNIMPL		sched_getaffinity
@@ -645,10 +654,15 @@
 416	UNIMPL		timer_gettime
 417	UNIMPL		timer_getoverrun
 418	UNIMPL		timer_delete
-419	UNIMPL		clock_settime
-420	UNIMPL		clock_gettime
-421	UNIMPL		clock_getres
-422	UNIMPL		clock_nanosleep
+419	STD		{ int linux_sys_clock_settime(clockid_t which, \
+			    struct linux_timespec *tp); }
+420	STD		{ int linux_sys_clock_gettime(clockid_t which, \
+			    struct linux_timespec *tp); }
+421	STD		{ int linux_sys_clock_getres(clockid_t which, \
+			    struct linux_timespec *tp); }
+422	STD		{ int linux_sys_clock_nanosleep(clockid_t which, \
+			    int flags, struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 423	UNIMPL		semtimedop
 424	UNIMPL		tgkill
 425	UNIMPL		stat64

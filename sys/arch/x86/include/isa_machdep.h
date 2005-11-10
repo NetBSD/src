@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.2.4 2005/11/10 14:00:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@
  * or in spite of using isavar.h, and should be fixed.
  */
 
-#ifndef _I386_ISA_MACHDEP_H_			/* XXX */
-#define _I386_ISA_MACHDEP_H_			/* XXX */
+#ifndef _X86_ISA_MACHDEP_H_			/* XXX */
+#define _X86_ISA_MACHDEP_H_			/* XXX */
 
 #include <machine/bus.h>
 #include <dev/isa/isadmavar.h>
@@ -230,4 +230,4 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
  */
 void sysbeep(int, int);		/* beep with the system speaker */
 
-#endif /* _I386_ISA_MACHDEP_H_ XXX */
+#endif /* _X86_ISA_MACHDEP_H_ XXX */

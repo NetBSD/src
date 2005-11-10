@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.94.2.8 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.94.2.9 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.8 2005/04/01 14:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.9 2005/11/10 14:11:07 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -196,6 +196,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.8 2005/04/01 14:31:50 skrll Ex
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+#include <netinet/in_offload.h>
 
 #ifdef IPSEC
 #include <netkey/key.h>
@@ -206,7 +207,7 @@ extern struct mbuf *m_copypack();
 #endif
 
 /*
- * Knob to enable Congestion Window Monitoring, and control the
+ * Knob to enable Congestion Window Monitoring, and control
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
@@ -549,7 +550,7 @@ tcp_output(struct tcpcb *tp)
 #endif
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
-	unsigned optlen, hdrlen;
+	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
 	int txsegsize_nosack;
@@ -749,6 +750,12 @@ again:
 		} else
 			len = ((long)ulmin(cwin, p->end - p->rxmit));
 		off = p->rxmit - tp->snd_una;
+		if (off + len > so->so_snd.sb_cc) {
+			/* 1 for TH_FIN */
+			KASSERT(off + len == so->so_snd.sb_cc + 1);
+			KASSERT(p->rxmit + len == tp->snd_max);
+			len = so->so_snd.sb_cc - off;
+		}
 		if (len > 0) {
 			sack_rxmit = 1;
 			sendalot = 1;
@@ -803,8 +810,13 @@ again:
 			 * sending new data, having retransmitted all the
 			 * data possible in the scoreboard.
 			 */
-			len = ((long)ulmin(so->so_snd.sb_cc, tp->snd_wnd) 
-				       - off);
+			if (tp->snd_wnd < so->so_snd.sb_cc) {
+				len = tp->snd_wnd - off;
+				flags &= ~TH_FIN;
+			} else {
+				len = so->so_snd.sb_cc - off;
+			}
+
 			/*
 			 * From FreeBSD:
 			 *  Don't remove this (len > 0) check !
@@ -820,7 +832,10 @@ again:
 						sack_bytes_rxmt;
 				if (cwin < 0)
 					cwin = 0;
-				len = lmin(len, cwin);
+				if (cwin < len) {
+					len = cwin;
+					flags &= ~TH_FIN;
+				}
 			}
 		} else if (win < so->so_snd.sb_cc) {
 			len = win - off;
@@ -1049,12 +1064,12 @@ send:
 				optlen += 4;
 			}
 			if (tcp_do_sack) {
-				u_int8_t *p = (u_int8_t *)(opt + optlen);
+				u_int8_t *cp = (u_int8_t *)(opt + optlen);
 
-				p[0] = TCPOPT_SACK_PERMITTED;
-				p[1] = 2;
-				p[2] = TCPOPT_NOP;
-				p[3] = TCPOPT_NOP;
+				cp[0] = TCPOPT_SACK_PERMITTED;
+				cp[1] = 2;
+				cp[2] = TCPOPT_NOP;
+				cp[3] = TCPOPT_NOP;
 				optlen += 4;
 			}
 		}
@@ -1103,7 +1118,8 @@ send:
 			KASSERT(tiqe != NULL);
 			sack_numblks--;
 			*lp++ = htonl(tiqe->ipqe_seq);
-			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len);
+			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
+			    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
 		}
 		optlen += sack_len + 2;
 	}
@@ -1306,7 +1322,7 @@ send:
 
 	/*
 	 * Set ourselves up to be checksummed just before the packet
-	 * hits the wire.  Maybe skip checksums on loopback interfaces.
+	 * hits the wire.
 	 */
 	switch (af) {
 #ifdef INET
@@ -1316,13 +1332,7 @@ send:
 			m->m_pkthdr.segsz = txsegsize;
 			m->m_pkthdr.csum_flags = M_CSUM_TSOv4;
 		} else {
-			if (__predict_true(ro->ro_rt == NULL ||
-					   !(ro->ro_rt->rt_ifp->if_flags &
-					     IFF_LOOPBACK) ||
-					   tcp_do_loopback_cksum))
-				m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
-			else
-				m->m_pkthdr.csum_flags = 0;
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
 			if (len + optlen) {
 				/* Fixup the pseudo-header checksum. */
 				/* XXXJRT Not IP Jumbogram safe. */
@@ -1334,39 +1344,14 @@ send:
 #endif
 #ifdef INET6
 	case AF_INET6:
-		/*
-		 * XXX Actually delaying the checksum is Hard
-		 * XXX (well, maybe not for Itojun, but it is
-		 * XXX for me), but we can still take advantage
-		 * XXX of the cached pseudo-header checksum.
-		 */
-		/* equals to hdrlen + len */
-		m->m_pkthdr.len = sizeof(struct ip6_hdr)
-			+ sizeof(struct tcphdr) + optlen + len;
-#ifdef notyet
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   tcp_do_loopback_cksum))
-			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
-		else
-			m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
-#endif
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
 		if (len + optlen) {
 			/* Fixup the pseudo-header checksum. */
 			/* XXXJRT: Not IPv6 Jumbogram safe. */
 			th->th_sum = in_cksum_addword(th->th_sum,
 			    htons((u_int16_t) (len + optlen)));
 		}
-#ifndef notyet
-		if (__predict_true(ro->ro_rt == NULL ||
-				   !(ro->ro_rt->rt_ifp->if_flags &
-				     IFF_LOOPBACK) ||
-				   tcp_do_loopback_cksum))
-			th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
-			    sizeof(struct tcphdr) + optlen + len);
-#endif
 		break;
 #endif
 	}
@@ -1443,6 +1428,7 @@ timer:
 #ifdef INET
 	case AF_INET:
 		ip->ip_len = htons(m->m_pkthdr.len);
+		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
@@ -1457,6 +1443,7 @@ timer:
 #endif
 #ifdef INET6
 	case AF_INET6:
+		packetlen = m->m_pkthdr.len;
 		ip6->ip6_nxt = IPPROTO_TCP;
 		if (tp->t_in6pcb) {
 			/*
@@ -1472,6 +1459,9 @@ timer:
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
 #endif
+	default:	/*pacify gcc*/
+		packetlen = 0;
+		break;
 	}
 
 	switch (af) {
@@ -1539,6 +1529,10 @@ out:
 
 		return (error);
 	}
+
+	if (packetlen > tp->t_pmtud_mtu_sent)
+		tp->t_pmtud_mtu_sent = packetlen;
+	
 	tcpstat.tcps_sndtotal++;
 	if (tp->t_flags & TF_DELACK)
 		tcpstat.tcps_delack++;
@@ -1582,3 +1576,131 @@ tcp_setpersist(struct tcpcb *tp)
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
 }
+
+#if defined(INET)
+/*
+ * tcp4_segment: handle M_CSUM_TSOv4 by software.
+ *
+ * => always consume m.
+ * => call output_func with output_arg for each segments.
+ */
+
+int
+tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
+    void *output_arg)
+{
+	int mss;
+	int iphlen;
+	int thlen;
+	int hlen;
+	int len;
+	struct ip *iph;
+	struct tcphdr *th;
+	uint16_t ipid;
+	uint32_t tcpseq;
+	struct mbuf *hdr = NULL;
+	struct mbuf *t;
+	int error = 0;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0);
+
+	m->m_pkthdr.csum_flags = 0;
+
+	len = m->m_pkthdr.len;
+	KASSERT(len >= sizeof(*iph) + sizeof(*th));
+
+	if (m->m_len < sizeof(*iph)) {
+		m = m_pullup(m, sizeof(*iph));
+		if (m == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+	}
+	iph = mtod(m, struct ip *);
+	iphlen = iph->ip_hl * 4;
+	KASSERT(iph->ip_v == IPVERSION);
+	KASSERT(iphlen >= sizeof(*iph));
+	KASSERT(iph->ip_p == IPPROTO_TCP);
+	ipid = ntohs(iph->ip_id);
+
+	hlen = iphlen + sizeof(*th);
+	if (m->m_len < hlen) {
+		m = m_pullup(m, hlen);
+		if (m == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+	}
+	th = (void *)(mtod(m, char *) + iphlen);
+	tcpseq = ntohl(th->th_seq);
+	thlen = th->th_off * 4;
+	hlen = iphlen + thlen;
+
+	mss = m->m_pkthdr.segsz;
+	KASSERT(mss != 0);
+	KASSERT(len > hlen);
+
+	t = m_split(m, hlen, M_NOWAIT);
+	if (t == NULL) {
+		error = ENOMEM;
+		goto quit;
+	}
+	hdr = m;
+	m = t;
+	len -= hlen;
+	KASSERT(len % mss == 0);
+	while (len > 0) {
+		struct mbuf *n;
+
+		n = m_dup(hdr, 0, hlen, M_NOWAIT);
+		if (n == NULL) {
+			error = ENOMEM;
+			goto quit;
+		}
+		KASSERT(n->m_len == hlen); /* XXX */
+
+		t = m_split(m, mss, M_NOWAIT);
+		if (t == NULL) {
+			m_freem(n);
+			error = ENOMEM;
+			goto quit;
+		}
+		m_cat(n, m);
+		m = t;
+
+		KASSERT(n->m_len >= hlen); /* XXX */
+
+		n->m_pkthdr.len = hlen + mss;
+		iph = mtod(n, struct ip *);
+		KASSERT(iph->ip_v == IPVERSION);
+		iph->ip_len = htons(n->m_pkthdr.len);
+		iph->ip_id = htons(ipid);
+		th = (void *)(mtod(n, char *) + iphlen);
+		th->th_seq = htonl(tcpseq);
+		iph->ip_sum = 0;
+		iph->ip_sum = in_cksum(n, iphlen);
+		th->th_sum = 0;
+		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
+
+		error = (*output_func)(output_arg, n);
+		if (error) {
+			goto quit;
+		}
+
+		tcpseq += mss;
+		ipid++;
+		len -= mss;
+	}
+
+quit:
+	if (hdr != NULL) {
+		m_freem(hdr);
+	}
+	if (m != NULL) {
+		m_freem(m);
+	}
+
+	return error;
+}
+#endif /* defined(INET) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.1.2.2 2004/09/21 13:27:37 skrll Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.1.2.3 2005/11/10 14:04:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.1.2.2 2004/09/21 13:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.1.2.3 2005/11/10 14:04:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ CFATTACH_DECL(cs80bus, sizeof(struct cs80bus_softc),
 
 static int	cs80bus_alloc(struct cs80bus_softc *, int, int);
 static int	cs80bussearch(struct device *, struct cfdata *,
-			      const locdesc_t *, void *);
+			      const int *, void *);
 static int	cs80busprint(void *, const char *);
 
 /*
@@ -150,7 +150,7 @@ int
 cs80bussearch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	const locdesc_t *ldesc;
+	const int *ldesc;
 	void *aux;
 {
 	struct cs80bus_softc *sc = (struct cs80bus_softc *)parent;

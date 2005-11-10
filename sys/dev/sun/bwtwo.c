@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.8.2.5 2005/11/10 14:08:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.8.2.5 2005/11/10 14:08:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ bwtwo_pfour_probe(vaddr, arg)
 void
 bwtwoattach(sc, name, isconsole)
 	struct	bwtwo_softc *sc;
-	char	*name;
+	const char *name;
 	int	isconsole;
 {
 	struct fbdevice *fb = &sc->sc_fb;
@@ -183,7 +183,7 @@ bwtwoattach(sc, name, isconsole)
 		printf("\n");
 
 	if ((fb->fb_flags & FB_PFOUR) && (sc->sc_ovtype != BWO_NONE)) {
-		char *ovnam;
+		const char *ovnam;
 
 		switch (sc->sc_ovtype) {
 		case BWO_CGFOUR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.1.2.4 2004/09/21 13:34:29 skrll Exp $	*/
+/*	$NetBSD: mra.c,v 1.1.2.5 2005/11/10 14:08:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -28,21 +28,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.1.2.4 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.1.2.5 2005/11/10 14:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-int mra_Y_AX1_BX2_C(int *, int, int *, int, int *, int, int, int, int *,
-    int *, int *);
+extern int mra_Y_AX1_BX2_C(const int *, int,
+			   const int *, int, const int *, int, int, int,
+			   int *, int *, int *);
 
 /*
  * multiple regression analysis
  * Y = AX1 + BX2 + C
  */
 int
-mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s, int n,
-    int scale, int *a, int *b, int *c)
+mra_Y_AX1_BX2_C(const int *y, int ys,
+		const int *x1, int x1s, const int *x2, int x2s,
+		int n, int scale,
+		int *a, int *b, int *c)
 {
 	int i;
 	int64_t X1a, X2a, Ya;
@@ -51,7 +54,7 @@ mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s, int n,
 	int64_t S11, S22, S12;
 	int64_t SYY, S1Y, S2Y;
 	int64_t A, B, C, M;
-#define AA(p, s, i)	(*((long*)(((char*)(p)) + (s) * (i))))
+#define AA(p, s, i)	(*((const long *)(((const char *)(p)) + (s) * (i))))
 #define X1(i)		AA(x1, x1s, i)
 #define X2(i)		AA(x2, x2s, i)
 #define Y(i)		AA(y, ys, i)

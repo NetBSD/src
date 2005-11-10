@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.6.2.6 2005/03/04 16:40:53 skrll Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.6.2.7 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _SYS_DEV_FSSVAR_H
 #define _SYS_DEV_FSSVAR_H
 
+#define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
+
 struct fss_set {
 	char		*fss_mount;	/* Mount point of file system */
 	char		*fss_bstore;	/* Path of backing store */
@@ -56,6 +58,8 @@ struct fss_get {
 #define FSSIOCSET	_IOW('F', 0, struct fss_set)	/* Configure */
 #define FSSIOCGET	_IOR('F', 1, struct fss_get)	/* Status */
 #define FSSIOCCLR	_IO('F', 2)			/* Unconfigure */
+#define FSSIOFSET	_IOW('F', 3, int)		/* Set flags */
+#define FSSIOFGET	_IOR('F', 4, int)		/* Get flags */
 
 #ifdef _KERNEL
 
@@ -145,8 +149,10 @@ struct fss_softc {
 #define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_EXCL	0x08		/* Exclusive access granted */
-#define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
+#define FSS_CDEV_OPEN	0x40		/* character device open */
+#define FSS_BDEV_OPEN	0x80		/* block device open */
+	int		sc_uflags;	/* User visible flags */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
@@ -164,7 +170,7 @@ struct fss_softc {
 	long		sc_clresid;	/* Bytes in last cluster */
 	int		sc_cache_size;	/* Number of entries in sc_cache */
 	struct fss_cache *sc_cache;	/* Cluster cache */
-	struct bufq_state sc_bufq;	/* Transfer queue */
+	struct bufq_state *sc_bufq;	/* Transfer queue */
 	u_int32_t	sc_clnext;	/* Next free cluster on backing store */
 	int		sc_indir_size;	/* # clusters for indirect mapping */
 	u_int8_t	*sc_indir_valid; /* Map of valid indirect clusters */

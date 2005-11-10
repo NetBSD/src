@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.3.4.5 2005/03/04 16:49:38 skrll Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.3.4.6 2005/11/10 14:07:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -74,7 +74,6 @@ struct pckbport_attach_args {
 	pckbport_slot_t pa_slot;
 };
 
-extern const char * const pckbport_slot_names[];
 extern struct pckbport_tag pckbport_consdata;
 extern int pckbport_console_attached;
 

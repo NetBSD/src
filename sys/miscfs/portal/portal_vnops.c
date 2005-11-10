@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.47.2.8 2005/03/04 16:52:55 skrll Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.47.2.9 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.8 2005/03/04 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.9 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,17 +68,17 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.8 2005/03/04 16:52:55 skrll 
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
 
-static void	portal_closefd __P((struct lwp *, int));
-static int	portal_connect __P((struct socket *, struct socket *));
+static void	portal_closefd(struct lwp *, int);
+static int	portal_connect(struct socket *, struct socket *);
 
-int	portal_lookup	__P((void *));
+int	portal_lookup(void *);
 #define	portal_create	genfs_eopnotsupp
 #define	portal_mknod	genfs_eopnotsupp
-int	portal_open	__P((void *));
+int	portal_open(void *);
 #define	portal_close	genfs_nullop
 #define	portal_access	genfs_nullop
-int	portal_getattr	__P((void *));
-int	portal_setattr	__P((void *));
+int	portal_getattr(void *);
+int	portal_setattr(void *);
 #define	portal_read	genfs_eopnotsupp
 #define	portal_write	genfs_eopnotsupp
 #define	portal_fcntl	genfs_fcntl
@@ -88,33 +88,28 @@ int	portal_setattr	__P((void *));
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
 #define	portal_remove	genfs_eopnotsupp
-int	portal_link	__P((void *));
+int	portal_link(void *);
 #define	portal_rename	genfs_eopnotsupp
 #define	portal_mkdir	genfs_eopnotsupp
 #define	portal_rmdir	genfs_eopnotsupp
-int	portal_symlink	__P((void *));
-int	portal_readdir	__P((void *));
+int	portal_symlink(void *);
+int	portal_readdir(void *);
 #define	portal_readlink	genfs_eopnotsupp
 #define	portal_abortop	genfs_abortop
-int	portal_inactive	__P((void *));
-int	portal_reclaim	__P((void *));
+int	portal_inactive(void *);
+int	portal_reclaim(void *);
 #define	portal_lock	genfs_lock
 #define	portal_unlock	genfs_unlock
 #define	portal_bmap	genfs_badop
 #define	portal_strategy	genfs_badop
-int	portal_print	__P((void *));
+int	portal_print(void *);
 #define	portal_islocked	genfs_islocked
-int	portal_pathconf	__P((void *));
+int	portal_pathconf(void *);
 #define	portal_advlock	genfs_badop
-#define	portal_blkatoff	genfs_badop
-#define	portal_valloc	genfs_eopnotsupp
-#define	portal_vfree	genfs_nullop
-#define	portal_truncate	genfs_eopnotsupp
-#define	portal_update	genfs_eopnotsupp
 #define	portal_bwrite	genfs_eopnotsupp
 #define	portal_putpages	genfs_null_putpages
 
-int (**portal_vnodeop_p) __P((void *));
+int (**portal_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, portal_lookup },		/* lookup */
@@ -152,11 +147,6 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_islocked_desc, portal_islocked },	/* islocked */
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, portal_valloc },		/* valloc */
-	{ &vop_vfree_desc, portal_vfree },		/* vfree */
-	{ &vop_truncate_desc, portal_truncate },	/* truncate */
-	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, portal_putpages },	/* putpages */
 	{ NULL, NULL }

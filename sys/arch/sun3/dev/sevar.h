@@ -1,4 +1,4 @@
-/*	$NetBSD: sevar.h,v 1.1 1997/10/17 03:39:50 gwr Exp $	*/
+/*	$NetBSD: sevar.h,v 1.1.52.1 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 struct sebuf_attach_args {
 	struct confargs ca;
-	char *name;	/* name of child (se, ie) */
+	const char *name; /* name of child (se, ie) */
 	char *buf;	/* KVA, pre-mapped. */
 	int blen;  	/* length of above */
 	void *regs;	/* KVA of regs. */

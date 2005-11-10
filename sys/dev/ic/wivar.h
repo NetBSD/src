@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.34.2.5 2005/03/04 16:41:36 skrll Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34.2.6 2005/11/10 14:04:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,7 +75,9 @@ typedef SLIST_HEAD(,wi_rssdesc) wi_rssdescq_t;
  */
 struct wi_softc	{
 	struct device		sc_dev;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
+	u_int32_t		sc_ic_flags;	/* backup of ic->ic_flags */
 	void			*sc_ih;		/* interrupt handler */
 	int			(*sc_enable)(struct wi_softc *);
 	void			(*sc_disable)(struct wi_softc *);
@@ -83,6 +85,8 @@ struct wi_softc	{
 
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	void			(*sc_set_tim)(struct ieee80211com *,
+				    struct ieee80211_node *, int);
 
 	int			sc_attached;
 	int			sc_enabled;
@@ -166,10 +170,9 @@ struct wi_softc	{
 	struct callout		sc_rssadapt_ch;
 };
 
+#define	sc_if		sc_ec.ec_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
-
-#define	sc_if			sc_ic.ic_if
 
 struct wi_node {
 	struct ieee80211_node		wn_node;
@@ -198,10 +201,11 @@ struct wi_node {
 #define	WI_FLAGS_BUG_AUTOINC		0x0100
 #define	WI_FLAGS_HAS_FRAGTHR		0x0200
 #define	WI_FLAGS_HAS_DBMADJUST		0x0400
+#define	WI_FLAGS_WEP_VALID		0x0800
 
 struct wi_card_ident {
 	u_int16_t	card_id;
-	char		*card_name;
+	const char	*card_name;
 	u_int8_t	firm_type;
 };
 

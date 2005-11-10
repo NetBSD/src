@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.1.4.7 2005/03/04 16:41:28 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.1.4.8 2005/11/10 14:04:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1.4.7 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1.4.8 2005/11/10 14:04:14 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1.4.7 2005/03/04 16:41:28 skrll Exp $")
 
 
 /* Supported chip variants */
-char *i82596_typenames[] = { "unknowen", "DX/SX", "CA" };
+const char *i82596_typenames[] = { "unknown", "DX/SX", "CA" };
 
 
 
@@ -421,11 +421,11 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 	case IEE_CB_CMD_NOP:	/* NOP CMD */
 		break;
 	case IEE_CB_CMD_IAS:	/* Individual Address Setup */
-		memcpy((void*)cb->cb_ind_addr, LLADDR(ifp->if_sadl),
+		memcpy(__UNVOLATILE(cb->cb_ind_addr), LLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN);
 		break;
 	case IEE_CB_CMD_CONF:	/* Configure */
-		memcpy((void*)cb->cb_cf, sc->sc_cf, sc->sc_cf[0]
+		memcpy(__UNVOLATILE(cb->cb_cf), sc->sc_cf, sc->sc_cf[0]
 		    & IEE_CF_0_CNT_M);
 		break;
 	case IEE_CB_CMD_MCS:	/* Multicast Setup */
@@ -453,8 +453,8 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 				cb->cb_mcast.mc_size = 0;
 				break;
 			}
-			memcpy((void*) &cb->cb_mcast.mc_addrs[
-			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN],
+			memcpy(__UNVOLATILE(&cb->cb_mcast.mc_addrs[
+			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN]),
 			    enm->enm_addrlo, ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
 			cb->cb_mcast.mc_size++;

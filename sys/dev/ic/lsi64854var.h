@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.5.2.1 2005/02/04 11:45:26 skrll Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.5.2.2 2005/11/10 14:04:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,17 +86,17 @@ struct lsi64854_softc {
 #define DMA_ISACTIVE(sc)		((sc)->sc_active)
 
 #define DMA_ENINTR(sc) do {			\
-	u_int32_t csr = L64854_GCSR(sc);	\
-	csr |= L64854_INT_EN;			\
-	L64854_SCSR(sc, csr);			\
-} while (0)
+	u_int32_t _csr = L64854_GCSR(sc);	\
+	_csr |= L64854_INT_EN;			\
+	L64854_SCSR(sc, _csr);			\
+} while (/*CONSTCOND*/0)
 
 #define DMA_ISINTR(sc)	(L64854_GCSR(sc) & (D_INT_PEND|D_ERR_PEND))
 
 #define DMA_GO(sc) do {				\
-	u_int32_t csr = L64854_GCSR(sc);	\
-	csr |= D_EN_DMA;			\
-	L64854_SCSR(sc, csr);			\
+	u_int32_t _csr = L64854_GCSR(sc);	\
+	_csr |= D_EN_DMA;			\
+	L64854_SCSR(sc, _csr);			\
 	sc->sc_active = 1;			\
 } while (0)
 

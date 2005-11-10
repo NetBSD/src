@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.2.2.4 2005/01/24 08:34:33 skrll Exp $	*/
+/*	$NetBSD: mmu.c,v 1.2.2.5 2005/11/10 13:59:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ int mmu_init(void)
 		if (CPU_ISSUN4) {
 			/* Find out if we're on a 3-lvl sun4 MMU. */
 			struct idprom *idp = prom_getidprom();
-			if (idp->id_machine == ID_SUN4_400)
+			if (idp->idp_machtype == ID_SUN4_400)
 				sun4_mmu3l = 1;
 		}
 		/*

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.18.6.3 2005/03/04 16:45:21 skrll Exp $ */
+/* $NetBSD: isic_pci.c,v 1.18.6.4 2005/11/10 14:06:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.3 2005/03/04 16:45:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.4 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -177,7 +177,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -185,7 +185,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",

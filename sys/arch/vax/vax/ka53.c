@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.8.6.3 2004/09/21 13:23:57 skrll Exp $	*/
+/*	$NetBSD: ka53.c,v 1.8.6.4 2005/11/10 13:59:59 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.8.6.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.8.6.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ struct cpu_dep ka53_calls = {
 void
 ka53_conf()
 {
-	char *cpuname;
+	const char *cpuname;
 
 	/* Don't ask why, but we seem to need this... */
 	volatile int *hej = (void *)mfpr(PR_ISP);

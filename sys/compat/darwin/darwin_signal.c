@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.6.2.4 2005/03/04 16:39:23 skrll Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.6.2.5 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.6.2.4 2005/03/04 16:39:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.6.2.5 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.6.2.4 2005/03/04 16:39:23 skrll 
 #include <sys/signal.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <compat/common/compat_util.h>
 

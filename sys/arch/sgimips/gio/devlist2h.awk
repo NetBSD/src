@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2.4.4 2004/09/21 13:21:13 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.2.4.5 2005/11/10 13:58:33 skrll Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -136,7 +136,7 @@ END {
 
 	printf("struct gio_knowndev {\n") > dfile
 	printf("\tint productid;\n") > dfile
-	printf("\tchar *product;\n") > dfile
+	printf("\tconst char *product;\n") > dfile
 	printf("};\n") > dfile
 	printf("\nstruct gio_knowndev gio_knowndevs[] = {\n") > dfile
 

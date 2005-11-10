@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.69.2.6 2005/03/04 16:51:14 skrll Exp $ */
+/* $NetBSD: wskbd.c,v 1.69.2.7 2005/11/10 14:08:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.6 2005/03/04 16:51:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.7 2005/11/10 14:08:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.6 2005/03/04 16:51:14 skrll Exp $")
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
@@ -165,6 +166,8 @@ struct wskbd_softc {
 
 	int	sc_repeating;		/* we've called timeout() */
 	struct callout sc_repeat_ch;
+	u_int	sc_repeat_type;
+	int	sc_repeat_value;
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
@@ -234,6 +237,7 @@ static void wskbd_holdscreen(struct wskbd_softc *, int);
 
 static int wskbd_do_ioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
 			     struct lwp *);
+static void wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value);
 
 #if NWSMUX > 0
 static int wskbd_mux_open(struct wsevsrc *, struct wseventvar *);
@@ -495,7 +499,6 @@ wskbd_cndetach(void)
 	wskbd_console_initted = 0;
 }
 
-#if NWSDISPLAY > 0
 static void
 wskbd_repeat(void *v)
 {
@@ -510,17 +513,27 @@ wskbd_repeat(void *v)
 		splx(s);
 		return;
 	}
-	if (sc->sc_base.me_dispdv != NULL) {
-		int i;
-		for (i = 0; i < sc->sc_repeating; i++)
-			wsdisplay_kbdinput(sc->sc_base.me_dispdv,
-					   sc->id->t_symbols[i]);
+	if (sc->sc_translating) {
+		/* deliver keys */
+#if NWSDISPLAY > 0
+		if (sc->sc_base.me_dispdv != NULL) {
+			int i;
+			for (i = 0; i < sc->sc_repeating; i++)
+				wsdisplay_kbdinput(sc->sc_base.me_dispdv,
+						   sc->id->t_symbols[i]);
+		}
+#endif
+	} else {
+#if defined(WSKBD_EVENT_AUTOREPEAT)
+		/* queue event */
+		wskbd_deliver_event(sc, sc->sc_repeat_type,
+				    sc->sc_repeat_value);
+#endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
 	}
 	callout_reset(&sc->sc_repeat_ch,
 	    (hz * sc->sc_keyrepeat_data.delN) / 1000, wskbd_repeat, sc);
 	splx(s);
 }
-#endif
 
 int
 wskbd_activate(struct device *self, enum devact act)
@@ -589,20 +602,16 @@ void
 wskbd_input(struct device *dev, u_int type, int value)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
-	struct wscons_event *ev;
-	struct wseventvar *evar;
-	struct timeval thistime;
 #if NWSDISPLAY > 0
 	int num, i;
 #endif
-	int put;
 
-#if NWSDISPLAY > 0
 	if (sc->sc_repeating) {
 		sc->sc_repeating = 0;
 		callout_stop(&sc->sc_repeat_ch);
 	}
 
+#if NWSDISPLAY > 0
 	/*
 	 * If /dev/wskbdN is not connected in event mode translate and
 	 * send upstream.
@@ -623,22 +632,47 @@ wskbd_input(struct device *dev, u_int type, int value)
 						sc->id->t_symbols[i]);
 			}
 
-			sc->sc_repeating = num;
-			callout_reset(&sc->sc_repeat_ch,
-			    (hz * sc->sc_keyrepeat_data.del1) / 1000,
-			    wskbd_repeat, sc);
+			if (sc->sc_keyrepeat_data.del1 != 0) {
+				sc->sc_repeating = num;
+				callout_reset(&sc->sc_repeat_ch,
+				    (hz * sc->sc_keyrepeat_data.del1) / 1000,
+				    wskbd_repeat, sc);
+			}
 		}
 		return;
 	}
 #endif
 
-	/*
-	 * Keyboard is generating events.  Turn this keystroke into an
-	 * event and put it in the queue.  If the queue is full, the
-	 * keystroke is lost (sorry!).
-	 */
+	wskbd_deliver_event(sc, type, value);
+
+#if defined(WSKBD_EVENT_AUTOREPEAT)
+	/* Repeat key presses if set. */
+	if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_keyrepeat_data.del1 != 0) {
+		sc->sc_repeat_type = type;
+		sc->sc_repeat_value = value;
+		sc->sc_repeating = 1;
+		callout_reset(&sc->sc_repeat_ch,
+		    (hz * sc->sc_keyrepeat_data.del1) / 1000,
+		    wskbd_repeat, sc);
+	}
+#endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
+}
+
+/*
+ * Keyboard is generating events.  Turn this keystroke into an
+ * event and put it in the queue.  If the queue is full, the
+ * keystroke is lost (sorry!).
+ */
+static void
+wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
+{
+	struct wseventvar *evar;
+	struct wscons_event *ev;
+	struct timeval thistime;
+	int put;
 
 	evar = sc->sc_base.me_evp;
+
 	if (evar == NULL) {
 		DPRINTF(("wskbd_input: not open\n"));
 		return;
@@ -650,7 +684,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 		return;
 	}
 #endif
-
+	
 	put = evar->put;
 	ev = &evar->q[put];
 	put = (put + 1) % WSEVENT_QSIZE;
@@ -669,7 +703,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void
-wskbd_rawinput(struct device *dev, u_char *buf, int len)
+wskbd_rawinput(struct device *dev, u_char *tbuf, int len)
 {
 #if NWSDISPLAY > 0
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
@@ -677,7 +711,7 @@ wskbd_rawinput(struct device *dev, u_char *buf, int len)
 
 	if (sc->sc_base.me_dispdv != NULL)
 		for (i = 0; i < len; i++)
-			wsdisplay_kbdinput(sc->sc_base.me_dispdv, buf[i]);
+			wsdisplay_kbdinput(sc->sc_base.me_dispdv, tbuf[i]);
 	/* this is KS_GROUP_Ascii */
 #endif
 }
@@ -725,6 +759,12 @@ wskbd_enable(struct wskbd_softc *sc, int on)
 	if (sc->sc_base.me_dispdv != NULL)
 		return (0);
 #endif
+
+	/* Always cancel auto repeat when fiddling with the kbd. */
+	if (sc->sc_repeating) {
+		sc->sc_repeating = 0;
+		callout_stop(&sc->sc_repeat_ch);
+	}
 
 	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
 	DPRINTF(("wskbd_enable: sc=%p on=%d res=%d\n", sc, on, error));
@@ -943,7 +983,7 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	struct wskbd_mapdata md;
 	struct proc *p = l ? l->l_proc : NULL;
 	kbd_t enc;
-	void *buf;
+	void *tbuf;
 	int len, error;
 
 	switch (cmd) {
@@ -1074,18 +1114,18 @@ getkeyrepeat:
 			return (EINVAL);
 
 		len = umdp->maplen*sizeof(struct wscons_keymap);
-		buf = malloc(len, M_TEMP, M_WAITOK);
-		error = copyin(umdp->map, buf, len);
+		tbuf = malloc(len, M_TEMP, M_WAITOK);
+		error = copyin(umdp->map, tbuf, len);
 		if (error == 0) {
 			wskbd_init_keymap(umdp->maplen,
 					  &sc->sc_map, &sc->sc_maplen);
-			memcpy(sc->sc_map, buf, len);
+			memcpy(sc->sc_map, tbuf, len);
 			/* drop the variant bits handled by the map */
 			sc->sc_layout = KB_USER |
 			      (KB_VARIANT(sc->sc_layout) & KB_HANDLEDBYWSKBD);
 			wskbd_update_layout(sc->id, sc->sc_layout);
 		}
-		free(buf, M_TEMP);
+		free(tbuf, M_TEMP);
 		return(error);
 
 	case WSKBDIO_GETMAP:
@@ -1140,12 +1180,10 @@ getkeyrepeat:
 					 | MOD_META_L | MOD_META_R
 					 | MOD_COMMAND
 					 | MOD_COMMAND1 | MOD_COMMAND2);
-#if NWSDISPLAY > 0
 		if (sc->sc_repeating) {
 			sc->sc_repeating = 0;
 			callout_stop(&sc->sc_repeat_ch);
 		}
-#endif
 		splx(s);
 	}
 #endif
@@ -1158,7 +1196,7 @@ wskbdpoll(dev_t dev, int events, struct lwp *l)
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	if (sc->sc_base.me_evp == NULL)
-		return (EINVAL);
+		return (POLLERR);
 	return (wsevent_poll(sc->sc_base.me_evp, events, l));
 }
 
@@ -1292,6 +1330,17 @@ wskbd_cngetc(dev_t dev)
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,
 				 &type, &data);
+			if (type == WSCONS_EVENT_ASCII) {
+				/*
+				 * We assume that when the driver falls back
+				 * to deliver pure ASCII it is in a state that
+				 * it can not track press/release events
+				 * reliable - so we clear all previously
+				 * accuulated modifier state.
+				 */
+				wskbd_console_data.t_modifiers = 0;
+				return(data);
+			}
 			num = wskbd_translate(&wskbd_console_data, type, data);
 			pos = 0;
 		}

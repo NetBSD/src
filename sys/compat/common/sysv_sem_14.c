@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.5.2.1 2005/03/04 16:39:22 skrll Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.5.2.2 2005/11/10 14:00:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.2.1 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.2.2 2005/11/10 14:00:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.2.1 2005/03/04 16:39:22 skrll Ex
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/sem.h>
 
 static void semid_ds14_to_native __P((struct semid_ds14 *, struct semid_ds *));
 static void native_to_semid_ds14 __P((struct semid_ds *, struct semid_ds14 *));

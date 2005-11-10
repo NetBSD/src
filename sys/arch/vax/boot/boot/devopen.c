@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10.6.3 2004/09/21 13:23:40 skrll Exp $ */
+/*	$NetBSD: devopen.c,v 1.10.6.4 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -30,16 +30,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lib/libsa/stand.h"
-#include "lib/libkern/libkern.h"
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-#include "machine/rpb.h"
-#include "machine/sid.h"
-#include "machine/pte.h"
+#include <machine/rpb.h>
+#include <machine/sid.h>
+#include <machine/pte.h>
 #define	VAX780 1
-#include "machine/ka750.h"
+#include <machine/ka750.h>
 
-#include "dev/bi/bireg.h"
+#include <dev/bi/bireg.h>
 
 #include "vaxstand.h"
 
@@ -62,7 +62,7 @@ devopen(f, fname, file)
 
 	/*
 	 * Adaptor and controller are normally zero (or uninteresting),
-	 * but we need to do some conversion here anyway (if it's a 
+	 * but we need to do some conversion here anyway (if it's a
 	 * manual boot, but that's checked by the device driver).
 	 * Set them to -1 to tell if it's a set number or default.
 	 */

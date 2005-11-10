@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.39.2.5 2004/11/02 07:53:24 skrll Exp $	*/
+/*	$NetBSD: nfs.h,v 1.39.2.6 2005/11/10 14:11:55 skrll Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -157,15 +157,35 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 /*
  * Set the attribute timeout based on how recently the file has been modified.
  */
-#define	NFS_ATTRTIMEO(np) \
+#define	NFS_ATTRTIMEO(nmp, np) \
+    ((nmp->nm_flag & NFSMNT_NOAC) ? 0 : \
 	((((np)->n_flag & NMODIFIED) || \
 	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
 	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10))
+	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10)))
 
 /*
- * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
- * should ever try and use it.
+ * Export arguments for local filesystem mount calls.
+ * Keep in mind that changing this structure modifies nfssvc(2)'s ABI (see
+ * 'struct mountd_exports_list' below).
+ * When modifying this structure, take care to also edit the
+ * nfs_update_exports_30 function in nfs_export.c accordingly to convert
+ * export_args to export_args30.
+ */
+struct export_args {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
+	struct	sockaddr *ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+	char	*ex_indexfile;		/* index file for WebNFS URLs */
+};
+
+/*
+ * Structures for the nfssvc(2) syscall. Not that anyone but mountd, nfsd and
+ * mount_nfs should ever try and use it.
  */
 struct nfsd_args {
 	int	sock;		/* Socket to serve */
@@ -196,6 +216,12 @@ struct nfsd_cargs {
 	u_int		ncd_verflen;	/* and the verifier */
 	u_char		*ncd_verfstr;
 	NFSKERBKEY_T	ncd_key;	/* Session key */
+};
+
+struct mountd_exports_list {
+	const char		*mel_path;
+	size_t			mel_nexports;
+	struct export_args	*mel_exports;
 };
 
 /*
@@ -247,6 +273,7 @@ struct nfsstats {
 #define	NFSSVC_GOTAUTH	0x040
 #define	NFSSVC_AUTHINFAIL 0x080
 #define	NFSSVC_MNTD	0x100
+#define	NFSSVC_SETEXPORTSLIST	0x200
 
 /*
  * fs.nfs sysctl(3) identifiers
@@ -543,6 +570,17 @@ extern int nfs_numasync;
 	    ((c) >= 'A' ? ((c) - ('A' - 10)) : ((c) - '0')))
 #define HEXSTRTOI(p) \
 	((HEXTOC(p[0]) << 4) + HEXTOC(p[1]))
+
+/*
+ * Structure holding information for a publicly exported filesystem
+ * (WebNFS).  Currently the specs allow just for one such filesystem.
+ */
+struct nfs_public {
+	int		np_valid;	/* Do we hold valid information */
+	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	struct mount	*np_mount;	/* Mountpoint of exported fs */
+	char		*np_index;	/* Index file */
+};
 #endif	/* _KERNEL */
 
 #endif /* _NFS_NFS_H */

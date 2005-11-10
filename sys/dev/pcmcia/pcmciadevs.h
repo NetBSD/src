@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.184.2.7 2005/04/01 14:30:33 skrll Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.184.2.8 2005/11/10 14:07:24 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
+ *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -94,6 +94,7 @@
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_ANYCOM	0x0264	/* Anycom */
+#define	PCMCIA_VENDOR_ALVARION	0x0268	/* Alvarion Ltd. */
 #define	PCMCIA_VENDOR_ARTEM	0x0268	/* ARtem */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
@@ -170,6 +171,10 @@
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
+
+/* Alvarion Ltd. */
+#define	PCMCIA_CIS_ALVARION_BREEZENET	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ALVARION_BREEZENET	0x0001
 
 /* Anycom */
 #define	PCMCIA_CIS_ANYCOM_LSE041	{ NULL, NULL, NULL, NULL }
@@ -264,6 +269,8 @@
 #define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
 #define	PCMCIA_CIS_ELSA_XI325_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI325_IEEE	0x0005
+#define	PCMCIA_CIS_ELSA_SMC2531WB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_SMC2531WB	0x0010
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
@@ -760,7 +767,7 @@
 #define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
 #define	PCMCIA_CIS_TAMARACK_ETHERNET	{ "TAMARACK", "Ethernet", "A", NULL }
 #define	PCMCIA_PRODUCT_TAMARACK_ETHERNET	-1
-#define	PCMCIA_CIS_TEAC_IDECARDII	{ NULL, "NinjaATA-", NULL, NULL }
+#define	PCMCIA_CIS_TEAC_IDECARDII	{ " ", "NinjaATA-", NULL, NULL }
 #define	PCMCIA_PRODUCT_TEAC_IDECARDII	-1
 #define	PCMCIA_CIS_TOSHIBA_CBIDE2	{ "LOOKMEET", "CBIDE2      ", NULL, NULL }
 #define	PCMCIA_PRODUCT_TOSHIBA_CBIDE2	-1

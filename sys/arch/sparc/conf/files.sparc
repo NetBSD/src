@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.122.6.4 2004/09/21 13:22:01 skrll Exp $
+#	$NetBSD: files.sparc,v 1.122.6.5 2005/11/10 13:58:55 skrll Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -105,6 +105,10 @@ attach cpu at mainbus with cpu_mainbus
 attach cpu at cpuunit with cpu_cpuunit
 file	arch/sparc/sparc/cpu.c
 
+device clkctrl
+attach clkctrl at obio
+file	arch/sparc/sparc/clkctrl.c		clkctrl
+
 device memreg
 attach memreg at mainbus with memreg_mainbus
 attach memreg at obio with memreg_obio
@@ -114,7 +118,7 @@ device eccmemctl
 attach eccmemctl at mainbus
 file	arch/sparc/sparc/memecc.c		eccmemctl
 
-device tctrl
+device tctrl: sysmon_envsys, sysmon_power, sysmon_taskq
 attach tctrl at obio
 file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
@@ -148,14 +152,13 @@ file	arch/sparc/dev/sbus.c			sbus needs-flag
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
-device tpcic: pcmciabus
-attach tpcic at sbus
-file	arch/sparc/dev/ts102.c			tpcic
+device tslot: pcmciabus
+attach tslot at sbus
+file	arch/sparc/dev/ts102.c			tslot
 
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
-
 
 #
 # Console related stuff
@@ -174,8 +177,9 @@ file dev/sun/kbd_zs.c			kbd_zs		# kbd lower layer
 
 # sun keyboard at a tty line discipline
 # only used by sparc64, but we can test-compile it here
-#attach kbd at zstty with kbd_tty
-#file	dev/sun/sunkbd.c		kbd_tty		# kbd lower layer
+attach kbd at zstty with kbd_tty
+file	dev/sun/sunkbd.c		kbd_tty		# kbd lower layer
+
 
 # shared middle layer for serial keyboard
 file	dev/sun/kbdsun.c		kbd_zs | kbd_tty # kbd middle layer
@@ -191,8 +195,8 @@ file	dev/sun/ms_zs.c			ms_zs		# mouse lower layer
 
 # sun (mouse systems) mouse at a tty line discipline
 # only used by sparc64, but we can test-compile it here
-#attach ms at zstty with ms_tty
-#file	dev/sun/sunms.c			ms_tty		# mouse lower layer
+attach ms at zstty with ms_tty
+file	dev/sun/sunms.c			ms_tty		# mouse lower layer
 
 # XXX: middle layer for sun (mouse systems) serial mice consists of
 # just one function in dev/sun/ms.c (upper layer).  Split it out?
@@ -297,6 +301,7 @@ file	arch/sparc/sparc/procfs_machdep.c	procfs
 file	arch/sparc/sparc/pmap.c
 # the following overrides the generic "sys_process.c"
 # commented out by deraadt
+file	arch/sparc/sparc/syscall.c
 #file	arch/sparc/sparc/sys_process.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c

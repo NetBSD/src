@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.14.6.4 2005/03/04 16:49:52 skrll Exp $	*/
+/*	$NetBSD: if_de.c,v 1.14.6.5 2005/11/10 14:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.14.6.4 2005/03/04 16:49:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.14.6.5 2005/11/10 14:07:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -176,7 +176,7 @@ struct	de_softc {
 
 static	int dematch(struct device *, struct cfdata *, void *);
 static	void deattach(struct device *, struct device *, void *);
-static	void dewait(struct de_softc *, char *);
+static	void dewait(struct de_softc *, const char *);
 static	int deinit(struct ifnet *);
 static	int deioctl(struct ifnet *, u_long, caddr_t);
 static	void dereset(struct device *);
@@ -213,7 +213,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	int csr1, error;
-	char *c;
+	const char *c;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -601,7 +601,7 @@ deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * and check for errors.
  */
 void
-dewait(struct de_softc *sc, char *fn)
+dewait(struct de_softc *sc, const char *fn)
 {
 	int csr0;
 

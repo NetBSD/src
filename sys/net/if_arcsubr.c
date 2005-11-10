@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.42.2.5 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.42.2.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.42.2.5 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.42.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -371,7 +371,7 @@ arc_defrag(ifp, m)
 	struct arccom *ac;
 	struct ac_frag *af;
 	struct mbuf *m1;
-	char *s;
+	const char *s;
 	int newflen;
 	u_char src, dst, typ;
 
@@ -612,7 +612,6 @@ arc_input(ifp, m)
 /*
  * Convert Arcnet address to printable (loggable) representation.
  */
-static char digits[] = "0123456789abcdef";
 char *
 arc_sprintf(ap)
 	u_int8_t *ap;
@@ -620,8 +619,8 @@ arc_sprintf(ap)
 	static char arcbuf[3];
 	char *cp = arcbuf;
 
-	*cp++ = digits[*ap >> 4];
-	*cp++ = digits[*ap++ & 0xf];
+	*cp++ = hexdigits[*ap >> 4];
+	*cp++ = hexdigits[*ap++ & 0xf];
 	*cp   = 0;
 	return (arcbuf);
 }

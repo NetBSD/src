@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.14.2.2 2005/03/04 16:45:15 skrll Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.14.2.3 2005/11/10 14:06:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.2.2 2005/03/04 16:45:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.2.3 2005/11/10 14:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,24 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.14.2.2 2005/03/04 16:45:15 skrll Exp $
 #define PCI_BASEADR_IO        0x10
 
 /******************************************************************************/
-
-int	adv_pci_match(struct device *, struct cfdata *, void *);
-void	adv_pci_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
-    adv_pci_match, adv_pci_attach, NULL, NULL);
-
-/******************************************************************************/
 /*
  * Check the slots looking for a board we recognise
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int
-adv_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+adv_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -123,11 +112,8 @@ adv_pci_match(parent, match, aux)
 	return 0;
 }
 
-
-void
-adv_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+adv_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	ASC_SOFTC      *sc = (void *) self;
@@ -261,4 +247,6 @@ adv_pci_attach(parent, self, aux)
 	 */
 	adv_attach(sc);
 }
-/******************************************************************************/
+
+CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
+    adv_pci_match, adv_pci_attach, NULL, NULL);

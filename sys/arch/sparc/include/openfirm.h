@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.2.24.3 2004/09/21 13:22:15 skrll Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2.24.4 2005/11/10 13:58:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,14 +56,14 @@ typedef u_int32_t cell_t;
 #define ADR2CELL(x)	(cell_t)(x)
 #endif /* SUN4U */
 
-int	OF_test(char* service);
-int	OF_test_method(int handle, char* method);
-void	OF_set_symbol_lookup (void (*s2v)(void *), void (*v2s)(void *));
-int	OF_searchprop (int node, char *prop, void *buf, int buflen);
-int	OF_mapintr(int node, int *interrupt, int validlen, int buflen);
+int	OF_test(const char *);
+int	OF_test_method(int, const char *);
+void	OF_set_symbol_lookup(void (*)(void *), void (*)(void *));
+int	OF_searchprop (int, const char *, void *, int);
+int	OF_mapintr(int, int *, int, int);
 
 void	OF_poweroff(void) __attribute__((__noreturn__));
-int	OF_interpret(char *, int, int, ...);
+int	OF_interpret(const char *, int, int, ...);
 void	OF_sym2val(void *);
 void	OF_val2sym(void *);
 

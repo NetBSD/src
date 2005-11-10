@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.7.8.4 2005/03/04 16:53:45 skrll Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.7.8.5 2005/11/10 14:11:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.7.8.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l2.h,v 1.7.8.5 2005/11/10 14:11:36 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -314,13 +314,13 @@ extern void i4b_l1_activate ( l2_softc_t *l2sc );
 extern int i4b_l2_nr_ok ( int nr, int va, int vs );
 extern void i4b_make_rand_ri ( l2_softc_t *l2sc );
 extern void i4b_mdl_assign_ind ( l2_softc_t *l2sc );
-extern void i4b_mdl_error_ind ( l2_softc_t *l2sc, char *where, int errorcode );
+extern void i4b_mdl_error_ind ( l2_softc_t *l2sc, const char *where, int errorcode );
 extern void i4b_next_l2state ( l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event );
 extern void i4b_nr_error_recovery ( l2_softc_t *l2sc );
 extern int i4b_ph_activate_ind ( l2_softc_t* );
 extern int i4b_ph_deactivate_ind ( l2_softc_t* );
 extern void i4b_print_frame ( int len, u_char *buf );
-extern char *i4b_print_l2state ( l2_softc_t *l2sc );
+extern const char *i4b_print_l2state ( l2_softc_t *l2sc );
 extern void i4b_print_l2var ( l2_softc_t *l2sc );
 extern void i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int nr);
 extern void i4b_rxd_i_frame ( l2_softc_t *, struct isdn_l3_driver *drv, struct mbuf *m );

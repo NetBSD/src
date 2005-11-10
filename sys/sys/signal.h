@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.51.2.5 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.51.2.6 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -46,11 +46,6 @@
 
 #if defined(_NETBSD_SOURCE)
 #define NSIG _NSIG
-
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-/* Number of signals supported by old style signal mask. */
-#define	NSIG13		32
-#endif
 
 #endif /* _NETBSD_SOURCE */
 
@@ -103,17 +98,6 @@
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-/*
- * Signal vector "template" used in sigaction call.
- */
-struct	sigaction13 {
-	void	(*osa_handler)		/* signal handler */
-			   (int);
-	sigset13_t osa_mask;		/* signal mask to apply */
-	int	osa_flags;		/* see signal options below */
-};
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 #ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)
@@ -200,23 +184,6 @@ typedef	void (*sig_t)(int);	/* type of signal function */
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
-
-#if defined(_NETBSD_SOURCE)
-/*
- * 4.3 compatibility:
- * Signal vector "template" used in sigvec call.
- */
-struct	sigvec {
-	void	(*sv_handler)		/* signal handler */
-			   (int);
-	int	sv_mask;		/* signal mask to apply */
-	int	sv_flags;		/* see signal options below */
-};
-#define SV_ONSTACK	SA_ONSTACK
-#define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
-#define SV_RESETHAND	SA_RESETHAND
-#define sv_onstack sv_flags	/* isn't compatibility wonderful! */
-#endif /* _NETBSD_SOURCE */
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)

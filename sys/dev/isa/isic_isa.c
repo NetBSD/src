@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.17.6.5 2005/03/04 16:43:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.17.6.6 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -381,7 +381,7 @@ static int
 isicattach(int flags, struct isic_softc *sc)
 {
 	int ret = 0;
-	char *drvid;
+	const char *drvid;
 
 #ifdef __FreeBSD__
 
@@ -405,7 +405,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 #endif /* __FreeBSD__ */
 
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -413,7 +413,7 @@ isicattach(int flags, struct isic_softc *sc)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",

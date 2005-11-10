@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.2.6 2005/04/01 14:28:41 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.7 2005/11/10 13:59:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.6 2005/04/01 14:28:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.7 2005/11/10 13:59:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,7 +159,7 @@ union sun3sir sun3sir;
 int	safepri = PSL_LOWIPL;
 
 u_char cpu_machine_id = 0;
-char *cpu_string = NULL;
+const char *cpu_string = NULL;
 int cpu_has_vme = 0;
 int has_iocache = 0;
 
@@ -241,7 +241,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 	initfpu();	/* also prints FPU type */
 
@@ -361,13 +361,13 @@ identifycpu(void)
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
-	case SUN3X_MACH_80:
+	case ID_SUN3X_80:
 		cpu_string = "80";  	/* Hydra */
 		delay_divisor = 102;	/* 20 MHz */
 		cpu_has_vme = FALSE;
 		break;
 
-	case SUN3X_MACH_470:
+	case ID_SUN3X_470:
 		cpu_string = "470"; 	/* Pegasus */
 		delay_divisor = 62; 	/* 33 MHz */
 		cpu_has_vme = TRUE;

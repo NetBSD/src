@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.183.2.6 2005/04/01 14:30:33 skrll Exp $
+$NetBSD: pcmciadevs,v 1.183.2.7 2005/11/10 14:07:24 skrll Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -87,6 +87,7 @@ vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
 vendor ANYCOM			0x0264	Anycom
+vendor ALVARION			0x0268	Alvarion Ltd.
 vendor ARTEM			0x0268	ARtem
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
@@ -146,6 +147,9 @@ product AIRONET 350		0x000a Aironet 350 Wireless LAN Adapter
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
+
+/* Alvarion Ltd. */
+product ALVARION BREEZENET	0x0001 Alvarion Ltd. BreezeNET PC-DS.11b
 
 /* Anycom */
 product ANYCOM LSE041		0x0004 AnyCom BlueCard LSE041 R1B
@@ -209,6 +213,7 @@ product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 product ELSA XI325_IEEE		0x0005 XI325 Wireless LAN
+product ELSA SMC2531WB          0x0010 SMC2531W-B EliteConnect Wireless Adapter
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
@@ -526,7 +531,7 @@ product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", NULL, NULL }
 product SVEC PN650TX		-1 SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", NULL } Synergy 21 S21810+ NE2000 Compatible Card
 product TAMARACK ETHERNET	{ "TAMARACK", "Ethernet", "A", NULL } TAMARACK Ethernet Card
-product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
+product TEAC IDECARDII		{ "&sp", "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product TOSHIBA CBIDE2		{ "LOOKMEET", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", NULL } Xircom CompactCard CFE-10
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD

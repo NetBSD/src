@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.3.2.4 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: denode.h,v 1.3.2.5 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -177,6 +177,9 @@ struct denode {
  */
 #define	WIN_MAXLEN	255
 
+/* Maximum size of a file on a FAT filesystem */
+#define MSDOSFS_FILESIZE_MAX	0xFFFFFFFFLL
+
 /*
  * Transfer directory entries between internal and external form.
  * dep is a struct denode * (internal form),
@@ -199,6 +202,8 @@ struct denode {
 
 #define DE_EXTERNALIZE32(dp, dep)			\
 	 putushort((dp)->deHighClust, (dep)->de_StartCluster >> 16)
+#define DE_EXTERNALIZE16(dp, dep)			\
+	 putushort((dp)->deHighClust, 0)
 #define DE_EXTERNALIZE(dp, dep)				\
 	(memcpy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
@@ -211,7 +216,7 @@ struct denode {
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
 	 putulong((dp)->deFileSize,			\
 	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize), \
-	 (FAT32((dep)->de_pmp) ? DE_EXTERNALIZE32((dp), (dep)) : 0))
+	 (FAT32((dep)->de_pmp) ? DE_EXTERNALIZE32((dp), (dep)) : DE_EXTERNALIZE16((dp), (dep))))
 
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
@@ -222,20 +227,8 @@ struct denode {
 #define	DETOV(de)	((de)->de_vnode)
 
 #define	DETIMES(dep, acc, mod, cre, gmtoff) \
-	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
-		(dep)->de_flag |= DE_MODIFIED; \
-		if ((dep)->de_flag & DE_UPDATE) { \
-			unix2dostime((mod), gmtoff, &(dep)->de_MDate, &(dep)->de_MTime, NULL); \
-			(dep)->de_Attributes |= ATTR_ARCHIVE; \
-		} \
-		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
-			if ((dep)->de_flag & DE_ACCESS) \
-				unix2dostime((acc), gmtoff, &(dep)->de_ADate, NULL, NULL); \
-			if ((dep)->de_flag & DE_CREATE) \
-				unix2dostime((cre), gmtoff, &(dep)->de_CDate, &(dep)->de_CTime, &(dep)->de_CHun); \
-		} \
-		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
-	}
+	while ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) \
+		msdosfs_detimes(dep, acc, mod, cre, gmtoff)
 
 /*
  * This overlays the fid structure (see mount.h)
@@ -254,57 +247,62 @@ struct defid {
 /*
  * Prototypes for MSDOSFS vnode operations
  */
-int	msdosfs_lookup		__P((void *));
-int	msdosfs_create		__P((void *));
-int	msdosfs_mknod		__P((void *));
-int	msdosfs_open		__P((void *));
-int	msdosfs_close		__P((void *));
-int	msdosfs_access		__P((void *));
-int	msdosfs_getattr		__P((void *));
-int	msdosfs_setattr		__P((void *));
-int	msdosfs_read		__P((void *));
-int	msdosfs_write		__P((void *));
+int	msdosfs_lookup		(void *);
+int	msdosfs_create		(void *);
+int	msdosfs_mknod		(void *);
+int	msdosfs_open		(void *);
+int	msdosfs_close		(void *);
+int	msdosfs_access		(void *);
+int	msdosfs_getattr		(void *);
+int	msdosfs_setattr		(void *);
+int	msdosfs_read		(void *);
+int	msdosfs_write		(void *);
 #define	msdosfs_lease_check	genfs_lease_check
 #define	msdosfs_ioctl		genfs_enoioctl
 #define	msdosfs_poll		genfs_poll
 #define	msdosfs_revoke		genfs_revoke
 #define	msdosfs_mmap		genfs_mmap
-#define	msdosfs_fsync		genfs_fsync
+int	msdosfs_fsync		(void *);
 #define	msdosfs_seek		genfs_seek
-int	msdosfs_remove		__P((void *));
-int	msdosfs_link		__P((void *));
-int	msdosfs_rename		__P((void *));
-int	msdosfs_mkdir		__P((void *));
-int	msdosfs_rmdir		__P((void *));
-int	msdosfs_symlink		__P((void *));
-int	msdosfs_readdir		__P((void *));
-int	msdosfs_readlink	__P((void *));
+int	msdosfs_remove		(void *);
+int	msdosfs_link		(void *);
+int	msdosfs_rename		(void *);
+int	msdosfs_mkdir		(void *);
+int	msdosfs_rmdir		(void *);
+int	msdosfs_symlink		(void *);
+int	msdosfs_readdir		(void *);
+int	msdosfs_readlink	(void *);
 #define	msdosfs_abortop		genfs_abortop
-int	msdosfs_inactive	__P((void *));
-int	msdosfs_reclaim		__P((void *));
-int	msdosfs_bmap		__P((void *));
-int	msdosfs_strategy	__P((void *));
-int	msdosfs_print		__P((void *));
-int	msdosfs_advlock		__P((void *));
-int	msdosfs_reallocblks	__P((void *));
-int	msdosfs_pathconf	__P((void *));
-int	msdosfs_update		__P((void *));
+int	msdosfs_inactive	(void *);
+int	msdosfs_reclaim		(void *);
+int	msdosfs_bmap		(void *);
+int	msdosfs_strategy	(void *);
+int	msdosfs_print		(void *);
+int	msdosfs_advlock		(void *);
+int	msdosfs_pathconf	(void *);
 
 /*
  * Internal service routine prototypes.
  */
-int createde __P((struct denode *, struct denode *, struct denode **, struct componentname *));
-int deextend __P((struct denode *, u_long, struct ucred *));
-int deget __P((struct msdosfsmount *, u_long, u_long, struct denode **));
-int detrunc __P((struct denode *, u_long, int, struct ucred *, struct lwp *));
-int deupdat __P((struct denode *, int));
-int doscheckpath __P((struct denode *, struct denode *));
-int dosdirempty __P((struct denode *));
-int readde __P((struct denode *, struct buf **, struct direntry **));
-int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **));
-void reinsert __P((struct denode *));
-int removede __P((struct denode *, struct denode *));
-int uniqdosname __P((struct denode *, struct componentname *, u_char *));
-int findwin95 __P((struct denode *));
-int msdosfs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
+int msdosfs_update(struct vnode *, const struct timespec *,
+	    const struct timespec *, int);
+int createde(struct denode *, struct denode *,
+		struct denode **, struct componentname *);
+int deextend(struct denode *, u_long, struct ucred *);
+int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
+int detrunc(struct denode *, u_long, int, struct ucred *, struct lwp *);
+int deupdat(struct denode *, int);
+int doscheckpath(struct denode *, struct denode *);
+int dosdirempty(struct denode *);
+int readde(struct denode *, struct buf **, struct direntry **);
+int readep(struct msdosfsmount *, u_long, u_long,
+		struct buf **, struct direntry **);
+void reinsert(struct denode *);
+int removede(struct denode *, struct denode *);
+int uniqdosname(struct denode *, struct componentname *, u_char *);
+int findwin95(struct denode *);
+int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+void msdosfs_gop_markupdate(struct vnode *, int);
+void msdosfs_detimes(struct denode *, const struct timespec *,
+    const struct timespec *, const struct timespec *, int);
 #endif	/* _KERNEL */

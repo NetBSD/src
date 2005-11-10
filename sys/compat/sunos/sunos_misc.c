@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.124.2.6 2005/03/04 16:40:29 skrll Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.124.2.7 2005/11/10 14:01:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.6 2005/03/04 16:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.7 2005/11/10 14:01:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.124.2.6 2005/03/04 16:40:29 skrll E
 #include <sys/socketvar.h>
 #include <sys/exec.h>
 #include <sys/swap.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -554,7 +556,10 @@ again:
 		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
 			continue;
 		}
 		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
@@ -563,7 +568,10 @@ again:
 			outp++;
 			break;
 		}
-		off = *cookie++;	/* each entry points to next */
+		if (cookie)
+			off = *cookie++;	/* each entry points to next */
+		else
+			off += reclen;
 		/*
 		 * Massage in place to make a Sun-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

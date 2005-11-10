@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.5.4.5 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: optiide.c,v 1.5.4.6 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.5.4.6 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.22.2.7 2005/03/04 16:41:29 skrll Exp $ */
+/*	$NetBSD: iha.c,v 1.22.2.8 2005/11/10 14:04:14 skrll Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22.2.7 2005/03/04 16:41:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22.2.8 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2608,7 +2608,7 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	uint16_t *buf = (uint16_t *)eeprom;
+	uint16_t *tbuf = (uint16_t *)eeprom;
 	uint8_t gctrl;
 
 	/* Enable EEProm programming */
@@ -2616,7 +2616,7 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 	bus_space_write_1(iot, ioh, TUL_GCTRL0, gctrl);
 
 	/* Read EEProm */
-	if (iha_se2_rd_all(sc, buf) == 0)
+	if (iha_se2_rd_all(sc, tbuf) == 0)
 		panic("%s: cannot read EEPROM", sc->sc_dev.dv_xname);
 
 	/* Disable EEProm programming */
@@ -2745,17 +2745,17 @@ iha_se2_rd(struct iha_softc *sc, int addr)
  * iha_se2_rd_all - Read SCSI H/A config parameters from serial EEPROM
  */
 static int
-iha_se2_rd_all(struct iha_softc *sc, uint16_t *buf)
+iha_se2_rd_all(struct iha_softc *sc, uint16_t *tbuf)
 {
-	struct iha_eeprom *eeprom = (struct iha_eeprom *)buf;
+	struct iha_eeprom *eeprom = (struct iha_eeprom *)tbuf;
 	uint32_t chksum;
 	int i;
 
 	for (i = 0, chksum = 0; i < EEPROM_SIZE - 1; i++) {
-		*buf = iha_se2_rd(sc, i);
-		chksum += *buf++;
+		*tbuf = iha_se2_rd(sc, i);
+		chksum += *tbuf++;
 	}
-	*buf = iha_se2_rd(sc, 31); /* read checksum from EEPROM */
+	*tbuf = iha_se2_rd(sc, 31); /* read checksum from EEPROM */
 
 	chksum &= 0x0000ffff; /* lower 16 bits */
 

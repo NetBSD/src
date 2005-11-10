@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.9.6.6 2005/03/04 16:50:36 skrll Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.9.6.7 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -67,7 +67,7 @@ struct ss_softc {
 #define	SSF_AUTOCONF	0x04	/* set during auto-configuration */
 	struct scsipi_periph *sc_periph; /* contains our targ, lun, etc. */
 	struct scan_io sio;
-	struct bufq_state buf_queue;	/* the queue of pending IO operations */
+	struct bufq_state *buf_queue;	/* the queue of pending IO operations */
 	struct callout sc_callout;	/* to restart the buf queue */
 	u_int quirks;			/* scanner is only mildly twisted */
 #define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread() */

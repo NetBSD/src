@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.5.2.4 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.5.2.5 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5.2.4 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5.2.5 2005/11/10 14:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,29 +152,29 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case GDT_IOCTL_CTRTYPE:
 	    {
 		struct icp_softc *icp;
-		gdt_ctrt_t *p = (void *) data;
+		gdt_ctrt_t *ctrt = (void *) data;
 
-		icp = device_lookup(&icp_cd, p->io_node);
+		icp = device_lookup(&icp_cd, ctrt->io_node);
 		if (icp == NULL) {
 			error = ENXIO;
 			break;
 		}
 
 		/* XXX magic numbers */
-		p->oem_id = 0x8000;
-		p->type = 0xfd;
-		p->info = (icp->icp_pci_bus << 8) | (icp->icp_pci_device << 3);
-		p->ext_type = 0x6000 | icp->icp_pci_subdevice_id;
-		p->device_id = icp->icp_pci_device_id;
-		p->sub_device_id = icp->icp_pci_subdevice_id;
+		ctrt->oem_id = 0x8000;
+		ctrt->type = 0xfd;
+		ctrt->info = (icp->icp_pci_bus << 8) | (icp->icp_pci_device << 3);
+		ctrt->ext_type = 0x6000 | icp->icp_pci_subdevice_id;
+		ctrt->device_id = icp->icp_pci_device_id;
+		ctrt->sub_device_id = icp->icp_pci_subdevice_id;
 		break;
 	    }
 
 	case GDT_IOCTL_OSVERS:
 	    {
-		gdt_osv_t *p = (void *) data;
+		gdt_osv_t *osv = (void *) data;
 
-		p->oscode = 12;
+		osv->oscode = 12;
 
 		/*
 		 * __NetBSD_Version__ is encoded thusly:
@@ -192,11 +192,11 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * data.
 		 */
 
-		p->version = __NetBSD_Version__ / 100000000;
-		p->subversion = (__NetBSD_Version__ / 1000000) % 100;
-		p->revision = (__NetBSD_Version__ / 10000) % 100;
+		osv->version = __NetBSD_Version__ / 100000000;
+		osv->subversion = (__NetBSD_Version__ / 1000000) % 100;
+		osv->revision = (__NetBSD_Version__ / 10000) % 100;
 
-		strcpy(p->name, ostype);
+		strcpy(osv->name, ostype);
 		break;
 	    }
 
@@ -207,15 +207,15 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case GDT_IOCTL_EVENT:
 	    {
 		struct icp_softc *icp;
-		gdt_event_t *p = (void *) data;
-		gdt_evt_str *e = &p->dvr;
+		gdt_event_t *evt = (void *) data;
+		gdt_evt_str *e = &evt->dvr;
 		int s;
 
 		icp = device_lookup(&icp_cd, minor(dev));
 
-		switch (p->erase) {
+		switch (evt->erase) {
 		case 0xff:
-			switch (p->dvr.event_source) {
+			switch (evt->dvr.event_source) {
 			case GDT_ES_TEST:
 				e->event_data.size =
 				    sizeof(e->event_data.eu.test);
@@ -249,11 +249,11 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 
 		case 0:
-			p->handle = icp_read_event(icp, p->handle, e);
+			evt->handle = icp_read_event(icp, evt->handle, e);
 			break;
 
 		default:
-			icp_readapp_event(icp, (u_int8_t) p->erase, e);
+			icp_readapp_event(icp, (u_int8_t) evt->erase, e);
 			break;
 		}
 		break;

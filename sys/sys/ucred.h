@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.17.2.4 2005/03/04 16:54:24 skrll Exp $	*/
+/*	$NetBSD: ucred.h,v 1.17.2.5 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,6 +91,14 @@ struct ucred	*crget(void);
 int		suser(const struct ucred *, u_short *);
 void		crcvt(struct ucred *, const struct uucred *);
 int		crcmp(const struct ucred *, const struct uucred *);
+
+/*
+ * Check if we need to curtain information when a user requests information
+ * about an object.
+ */
+#define	CURTAIN(user_id, object_id)	(security_curtain && 		\
+					 (user_id) != 0 &&		\
+					 (user_id) != (object_id))
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.4.2.8 2005/04/01 14:30:55 skrll Exp $	*/
+/*	$NetBSD: fil.c,v 1.4.2.9 2005/11/10 14:09:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,10 +135,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4.2.8 2005/04/01 14:30:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4.2.9 2005/11/10 14:09:07 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.50 2005/02/17 05:32:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";
 #endif
 #endif
 
@@ -239,7 +239,7 @@ static	int		fr_grpmapinit __P((frentry_t *fr));
 static	INLINE void	*fr_resolvelookup __P((u_int, u_int, lookupfunc_t *));
 #endif
 static	void		frsynclist __P((frentry_t *, void *));
-static	ipftuneable_t	*fr_findtunebyname __P((char *));
+static	ipftuneable_t	*fr_findtunebyname __P((const char *));
 static	ipftuneable_t	*fr_findtunebycookie __P((void *, void **));
 
 
@@ -354,17 +354,19 @@ static	INLINE int	frpr_fragment6 __P((fr_info_t *));
 /* for IPv6 and marks the packet with FI_SHORT if so.  See function comment */
 /* for frpr_short() for more details.                                       */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_short6(fin, min)
+static INLINE void frpr_short6(fin, xmin)
 fr_info_t *fin;
-int min;
+int xmin;
 {
 	fr_ip_t *fi = &fin->fin_fi;
 	int off;
 
 	off = fin->fin_off;
 	if (off == 0) {
-		if (fin->fin_plen < fin->fin_hlen + min)
+		if (fin->fin_plen < fin->fin_hlen + xmin)
 			fi->fi_flx |= FI_SHORT;
+	} else if (off < xmin) {
+		fi->fi_flx |= FI_SHORT;
 	}
 }
 
@@ -488,6 +490,21 @@ fr_info_t *fin;
 			break;
 		}
 		hdrcount++;
+
+		/*
+		 * It is important to note that at this point, for the
+		 * extension headers (go != 0), the entire header may not have
+		 * been pulled up when the code gets to this point.  This is
+		 * only done for "go != 0" because the other header handlers
+		 * will all pullup their complete header and the other
+		 * indicator of an incomplete header is that this eas just an
+		 * extension header.
+		 */
+		if ((go != 0) && (p != IPPROTO_NONE) &&
+		    (frpr_pullup(fin, 0) == -1)) {
+			p = IPPROTO_NONE;
+			go = 0;
+		}
 	}
 	fi->fi_p = p;
 }
@@ -606,6 +623,12 @@ fr_info_t *fin;
 
 	fin->fin_flx |= (FI_FRAG|FI_V6EXTHDR);
 
+				/* 8 is default length of extension hdr */
+	if ((fin->fin_dlen - 8) < 0) {
+		fin->fin_flx |= FI_SHORT;
+		return IPPROTO_NONE;
+	}
+
 	/*
 	 * Only one frgament header is allowed per IPv6 packet but it need
 	 * not be the first nor last (not possible in some cases.)
@@ -621,7 +644,7 @@ fr_info_t *fin;
 
 	fin->fin_optmsk |= ip6exthdr[i].ol_bit;
 
-	if (frpr_pullup(fin, 8) == -1)
+	if (frpr_pullup(fin, sizeof(*frag)) == -1)
 		return IPPROTO_NONE;
 	hdr = fin->fin_dp;
 
@@ -827,18 +850,18 @@ int plen;
 /* start within the layer 4 header (hdrmin) or if it is at offset 0, the    */
 /* entire layer 4 header must be present (min).                             */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_short(fin, min)
+static INLINE void frpr_short(fin, xmin)
 fr_info_t *fin;
-int min;
+int xmin;
 {
 	fr_ip_t *fi = &fin->fin_fi;
 	int off;
 
 	off = fin->fin_off;
 	if (off == 0) {
-		if (fin->fin_plen < fin->fin_hlen + min)
+		if (fin->fin_plen < fin->fin_hlen + xmin)
 			fi->fi_flx |= FI_SHORT;
-	} else if (off < min) {
+	} else if (off < xmin) {
 		fi->fi_flx |= FI_SHORT;
 	}
 }
@@ -863,12 +886,17 @@ fr_info_t *fin;
 	int minicmpsz = sizeof(struct icmp);
 	icmphdr_t *icmp;
 
+	if (fin->fin_off != 0) {
+		frpr_short(fin, ICMPERR_ICMPHLEN);
+		return;
+	}
+
 	if (frpr_pullup(fin, ICMPERR_ICMPHLEN) == -1)
 		return;
 
 	fr_checkv4sum(fin);
 
-	if (!fin->fin_off && (fin->fin_dlen > 1)) {
+	if (fin->fin_dlen > 1) {
 		icmp = fin->fin_dp;
 
 		fin->fin_data[0] = *(u_short *)icmp;
@@ -1079,13 +1107,13 @@ fr_info_t *fin;
 
 	fi = &fin->fin_fi;
 	fi->fi_flx |= FI_TCPUDP;
-	if (fin->fin_off != 0)
-		return;
 
-	if (frpr_pullup(fin, sizeof(*udp)) == -1)
-		return;
+	if (!fin->fin_off && (fin->fin_dlen > 3)) {
+		if (frpr_pullup(fin, sizeof(*udp)) == -1) {
+			fi->fi_flx |= FI_SHORT;
+			return;
+		}
 
-	if (fin->fin_dlen > 3) {
 		udp = fin->fin_dp;
 
 		fin->fin_sport = ntohs(udp->uh_sport);
@@ -1148,7 +1176,7 @@ fr_info_t *fin;
 static INLINE void frpr_esp(fin)
 fr_info_t *fin;
 {
-	if (frpr_pullup(fin, 8) == -1)
+	if (fin->fin_off == 0 && frpr_pullup(fin, 8) == -1)
 		return;
 
 	if (fin->fin_v == 4)
@@ -1170,7 +1198,9 @@ fr_info_t *fin;
 static INLINE void frpr_gre(fin)
 fr_info_t *fin;
 {
-	if (frpr_pullup(fin, sizeof(grehdr_t)) == -1)
+	grehdr_t *gre;
+
+	if (fin->fin_off == 0 && frpr_pullup(fin, sizeof(grehdr_t)) == -1)
 		return;
 
 	if (fin->fin_v == 4)
@@ -1179,6 +1209,11 @@ fr_info_t *fin;
 	else if (fin->fin_v == 6)
 		frpr_short6(fin, sizeof(grehdr_t));
 #endif
+	if (fin->fin_off == 0 ) {
+		gre = fin->fin_dp;
+		if (GRE_REV(gre->gr_flags) == 1)
+			fin->fin_data[0] = gre->gr_call;
+        }
 }
 
 
@@ -2172,6 +2207,7 @@ int out;
 #ifdef USE_INET6
 	ip6_t *ip6;
 #endif
+	SPL_INT(s);
 
 	/*
 	 * The first part of fr_check() deals with making sure that what goes
@@ -2251,6 +2287,8 @@ int out;
 	fin->fin_dp = (char *)ip + hlen;
 
 	fin->fin_ipoff = (char *)ip - MTOD(m, char *);
+
+	SPL_NET(s);
 
 #ifdef	USE_INET6
 	if (v == 6) {
@@ -2480,7 +2518,9 @@ finished:
 #endif
 	}
 
+	SPL_X(s);
 	RWLOCK_EXIT(&ipf_global);
+
 #ifdef _KERNEL
 # if OpenBSD >= 200311    
 	if (FR_ISPASS(pass) && (v == 4)) {
@@ -2903,7 +2943,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.243.2.50 2005/02/17 05:32:24 darrenr Exp
+ * Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -3314,13 +3354,14 @@ int proto, flags;
 /* slen bytes.                                                              */
 /* ------------------------------------------------------------------------ */
 char *memstr(src, dst, slen, dlen)
-char *src, *dst;
-int slen, dlen;
+const char *src;
+char *dst;
+size_t slen, dlen;
 {
 	char *s = NULL;
 
 	while (dlen >= slen) {
-		if (bcmp(src, dst, slen) == 0) {
+		if (memcmp(src, dst, slen) == 0) {
 			s = dst;
 			break;
 		}
@@ -3873,10 +3914,10 @@ caddr_t data;
 {
 	frentry_t frd, *fp, *f, **fprev, **ftail;
 	int error = 0, in, v;
+	void *ptr, *uptr;
 	u_int *p, *pp;
 	frgroup_t *fg;
 	char *group;
-	void *ptr;
 
 	fg = NULL;
 	fp = &frd;
@@ -3900,6 +3941,7 @@ caddr_t data;
 		return EINVAL;
 
 	v = fp->fr_v;
+	uptr = fp->fr_data;
 
 	/*
 	 * Only filter rules for IPv4 or IPv6 are accepted.
@@ -3981,7 +4023,7 @@ caddr_t data;
 	}
 
 	for (f = *fprev; (f = *fprev) != NULL; fprev = &f->fr_next)
-		if (fp->fr_collect < f->fr_collect)
+		if (fp->fr_collect <= f->fr_collect)
 			break;
 	ftail = fprev;
 
@@ -3993,9 +4035,9 @@ caddr_t data;
 			KMALLOCS(ptr, void *, fp->fr_dsize);
 			if (!ptr)
 				return ENOMEM;
-			error = COPYIN(fp->fr_data, ptr, fp->fr_dsize);
+			error = COPYIN(uptr, ptr, fp->fr_dsize);
 		} else {
-			ptr = fp->fr_data;
+			ptr = uptr;
 			error = 0;
 		}
 		if (error != 0) {
@@ -4125,8 +4167,8 @@ caddr_t data;
 	for (; (f = *ftail) != NULL; ftail = &f->fr_next)
 		if ((fp->fr_cksum == f->fr_cksum) &&
 		    (f->fr_dsize == fp->fr_dsize) &&
-		    !bcmp((char *)&f->fr_dsize,
-			  (char *)&fp->fr_dsize, FR_CMPSIZ) &&
+		    !bcmp((char *)&f->fr_func,
+			  (char *)&fp->fr_func, FR_CMPSIZ) &&
 		    (!ptr || !f->fr_data ||
 		     !bcmp((char *)ptr, (char *)f->fr_data, f->fr_dsize)))
 			break;
@@ -4138,10 +4180,27 @@ caddr_t data;
 		if (f == NULL)
 			error = ESRCH;
 		else {
-			error = fr_outobj(data, f, IPFOBJ_FRENTRY);
+			/*
+			 * Copy and reduce lock because of impending copyout.
+			 * Well we should, but if we do then the atomicity of
+			 * this call and the correctness of fr_hits and
+			 * fr_bytes cannot be guaranteed.  As it is, this code
+			 * only resets them to 0 if they are successfully
+			 * copied out into user space.
+			 */
+			bcopy((char *)f, (char *)fp, sizeof(*f));
+			/* MUTEX_DOWNGRADE(&ipf_mutex); */
+
+			/*
+			 * When we copy this rule back out, set the data
+			 * pointer to be what it was in user space.
+			 */
+			fp->fr_data = uptr;
+			error = fr_outobj(data, fp, IPFOBJ_FRENTRY);
+
 			if (error == 0) {
-				if (f->fr_dsize != 0 && f->fr_data != NULL)
-					error = COPYOUT(f->fr_data, ptr,
+				if ((f->fr_dsize != 0) && (uptr != NULL))
+					error = COPYOUT(f->fr_data, uptr,
 							f->fr_dsize);
 				if (error == 0) {
 					f->fr_hits = 0;
@@ -4150,7 +4209,7 @@ caddr_t data;
 			}
 		}
 
-		if (ptr != NULL && makecopy != 0) {
+		if ((ptr != NULL) && (makecopy != 0)) {
 			KFREES(ptr, fp->fr_dsize);
 		}
 		RWLOCK_EXIT(&ipf_mutex);
@@ -4323,8 +4382,8 @@ ipfunc_t funcptr;
 /*                                                                          */
 /* Copy in a ipfunc_resolve_t structure and then fill in the missing field. */
 /* This will either be the function name (if the pointer is set) or the     */
-/* function pointer if the name is set.  When found, fill in the details so */
-/* it can be copied back to user space.                                     */
+/* function pointer if the name is set.  When found, fill in the other one  */
+/* so that the entire, complete, structure can be copied back to user space.*/
 /* ------------------------------------------------------------------------ */
 int fr_resolvefunc(data)
 void *data;
@@ -4541,6 +4600,16 @@ u_32_t *passp;
 }
 #endif /* IPFILTER_LOOKUP */
 
+/*
+ * Queue functions
+ * ===============
+ * These functions manage objects on queues for efficient timeouts.  There are
+ * a number of system defined queues as well as user defined timeouts.  It is
+ * expected that a lock is held in the domain in which the queue belongs
+ * (i.e. either state or NAT) when calling any of these functions that prevents
+ * fr_freetimeoutqueue() from being called at the same time as any other.
+ */
+
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_addtimeoutqueue                                          */
@@ -4554,26 +4623,35 @@ u_32_t *passp;
 /* being requested.  If it finds one, increments the reference counter and  */
 /* returns a pointer to it.  If none are found, it allocates a new one and  */
 /* inserts it at the top of the list.                                       */
+/*                                                                          */
+/* Locking.                                                                 */
+/* It is assumed that the caller of this function has an appropriate lock   */
+/* held (exclusively) in the domain that encompases 'parent'.               */
 /* ------------------------------------------------------------------------ */
 ipftq_t *fr_addtimeoutqueue(parent, seconds)
 ipftq_t **parent;
 u_int seconds;
 {
-	u_int period;
 	ipftq_t *ifq;
+	u_int period;
 
 	period = seconds * IPF_HZ_DIVIDE;
-	MUTEX_ENTER(&ipf_timeoutlock);
-	for (ifq = *parent; ifq != NULL; ifq = ifq->ifq_next)
-		if (ifq->ifq_ttl == period)
-			break;
 
-	if (ifq != NULL) {
-		MUTEX_ENTER(&ifq->ifq_lock);
-		ifq->ifq_ref++;
-		MUTEX_EXIT(&ifq->ifq_lock);
-		MUTEX_EXIT(&ipf_timeoutlock);
-		return ifq;
+	MUTEX_ENTER(&ipf_timeoutlock);
+	for (ifq = *parent; ifq != NULL; ifq = ifq->ifq_next) {
+		if (ifq->ifq_ttl == period) {
+			/*
+			 * Reset the delete flag, if set, so the structure
+			 * gets reused rather than freed and reallocated.
+			 */
+			MUTEX_ENTER(&ifq->ifq_lock);
+			ifq->ifq_flags &= ~IFQF_DELETE;
+			ifq->ifq_ref++;
+			MUTEX_EXIT(&ifq->ifq_lock);
+			MUTEX_EXIT(&ipf_timeoutlock);
+
+			return ifq;
+		}
 	}
 
 	KMALLOC(ifq, ipftq_t *);
@@ -4597,37 +4675,107 @@ u_int seconds;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_deletetimeoutqueue                                       */
-/* Returns:     Nil                                                         */
-/* Parameters:  difp(I) - timeout queue which is losing a reference.        */
+/* Returns:     int    - new reference count value of the timeout queue     */
+/* Parameters:  ifq(I) - timeout queue which is losing a reference.         */
+/* Locks:       ifq->ifq_lock                                               */
 /*                                                                          */
 /* This routine must be called when we're discarding a pointer to a timeout */
-/* queue object.  It takes care of the reference counter and free's it when */
-/* it reaches 0.                                                            */
+/* queue object, taking care of the reference counter.                      */
+/*                                                                          */
+/* Now that this just sets a DELETE flag, it requires the expire code to    */
+/* check the list of user defined timeout queues and call the free function */
+/* below (currently commented out) to stop memory leaking.  It is done this */
+/* way because the locking may not be sufficient to safely do a free when   */
+/* this function is called.                                                 */
 /* ------------------------------------------------------------------------ */
-void fr_deletetimeoutqueue(ifq)
+int fr_deletetimeoutqueue(ifq)
 ipftq_t *ifq;
 {
-	MUTEX_ENTER(&ipf_timeoutlock);
-	MUTEX_ENTER(&ifq->ifq_lock);
 
 	ifq->ifq_ref--;
-
-	if ((ifq->ifq_ref == 0) && (ifq->ifq_head == NULL)) {
-		/*
-		 * Remove from its position in the list.
-		 */
-		*ifq->ifq_pnext = ifq->ifq_next;
-		if (ifq->ifq_next != NULL)
-			ifq->ifq_next->ifq_pnext = ifq->ifq_pnext;
-
-		MUTEX_EXIT(&ifq->ifq_lock);	/* Tru64 */
-		MUTEX_DESTROY(&ifq->ifq_lock);
-		KFREE(ifq);
-		fr_userifqs--;
-	} else {
-		MUTEX_EXIT(&ifq->ifq_lock);
+	if ((ifq->ifq_ref == 0) && ((ifq->ifq_flags & IFQF_USER) != 0)) {
+		ifq->ifq_flags |= IFQF_DELETE;
 	}
-	MUTEX_EXIT(&ipf_timeoutlock);
+
+	return ifq->ifq_ref;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_freetimeoutqueue                                         */
+/* Parameters:  ifq(I) - timeout queue which is losing a reference.         */
+/* Returns:     Nil                                                         */
+/*                                                                          */
+/* Locking:                                                                 */
+/* It is assumed that the caller of this function has an appropriate lock   */
+/* held (exclusively) in the domain that encompases the callers "domain".   */
+/* The ifq_lock for this structure should not be held.                      */
+/*                                                                          */
+/* Remove a user definde timeout queue from the list of queues it is in and */
+/* tidy up after this is done.                                              */
+/* ------------------------------------------------------------------------ */
+void fr_freetimeoutqueue(ifq)
+ipftq_t *ifq;
+{
+
+
+	if (((ifq->ifq_flags & IFQF_DELETE) == 0) || (ifq->ifq_ref != 0) ||
+	    ((ifq->ifq_flags & IFQF_USER) == 0)) {
+		printf("fr_freetimeoutqueue(%lx) flags 0x%x ttl %d ref %d\n",
+		       (u_long)ifq, ifq->ifq_flags, ifq->ifq_ttl,
+		       ifq->ifq_ref);
+		return;
+	}
+
+	/*
+	 * Remove from its position in the list.
+	 */
+	*ifq->ifq_pnext = ifq->ifq_next;
+	if (ifq->ifq_next != NULL)
+		ifq->ifq_next->ifq_pnext = ifq->ifq_pnext;
+
+	MUTEX_DESTROY(&ifq->ifq_lock);
+	fr_userifqs--;
+	KFREE(ifq);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_deletequeueentry                                         */
+/* Returns:     Nil                                                         */
+/* Parameters:  tqe(I) - timeout queue entry to delete                      */
+/*              ifq(I) - timeout queue to remove entry from                 */
+/*                                                                          */
+/* Remove a tail queue entry from its queue and make it an orphan.          */
+/* fr_deletetimeoutqueue is called to make sure the reference count on the  */
+/* queue is correct.  We can't, however, call fr_freetimeoutqueue because   */
+/* the correct lock(s) may not be held that would make it safe to do so.    */
+/* ------------------------------------------------------------------------ */
+void fr_deletequeueentry(tqe)
+ipftqent_t *tqe;
+{
+	ipftq_t *ifq;
+
+	ifq = tqe->tqe_ifq;
+	if (ifq == NULL)
+		return;
+
+	MUTEX_ENTER(&ifq->ifq_lock);
+
+	if (tqe->tqe_pnext != NULL) {
+		*tqe->tqe_pnext = tqe->tqe_next;
+		if (tqe->tqe_next != NULL)
+			tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
+		else    /* we must be the tail anyway */
+			ifq->ifq_tail = tqe->tqe_pnext;
+
+		tqe->tqe_pnext = NULL;
+		tqe->tqe_ifq = NULL;
+	}
+
+	(void) fr_deletetimeoutqueue(ifq);
+
+	MUTEX_EXIT(&ifq->ifq_lock);
 }
 
 
@@ -4647,8 +4795,8 @@ ipftqent_t *tqe;
 	if (ifq == NULL)
 		return;
 
+	MUTEX_ENTER(&ifq->ifq_lock);
 	if (ifq->ifq_head != tqe) {
-		MUTEX_ENTER(&ifq->ifq_lock);
 		*tqe->tqe_pnext = tqe->tqe_next;
 		if (tqe->tqe_next)
 			tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
@@ -4659,8 +4807,8 @@ ipftqent_t *tqe;
 		ifq->ifq_head->tqe_pnext = &tqe->tqe_next;
 		ifq->ifq_head = tqe;
 		tqe->tqe_pnext = &ifq->ifq_head;
-		MUTEX_EXIT(&ifq->ifq_lock);
 	}
+	MUTEX_EXIT(&ifq->ifq_lock);
 }
 
 
@@ -4681,10 +4829,12 @@ ipftqent_t *tqe;
 		return;
 	tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
 
-	if (tqe->tqe_next == NULL)		/* at the end already ? */
-		return;
-
 	MUTEX_ENTER(&ifq->ifq_lock);
+	if (tqe->tqe_next == NULL) {		/* at the end already ? */
+		MUTEX_EXIT(&ifq->ifq_lock);
+		return;
+	}
+
 	/*
 	 * Remove from list
 	 */
@@ -4725,6 +4875,7 @@ void *parent;
 	tqe->tqe_next = NULL;
 	tqe->tqe_ifq = ifq;
 	tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
+	ifq->ifq_ref++;
 	MUTEX_EXIT(&ifq->ifq_lock);
 }
 
@@ -4747,13 +4898,15 @@ ipftq_t *oifq, *nifq;
 	/*
 	 * Is the operation here going to be a no-op ?
 	 */
-	if (oifq == nifq && *oifq->ifq_tail == tqe)
+	MUTEX_ENTER(&oifq->ifq_lock);
+	if (oifq == nifq && *oifq->ifq_tail == tqe) {
+		MUTEX_EXIT(&oifq->ifq_lock);
 		return;
+	}
 
 	/*
 	 * Remove from the old queue
 	 */
-	MUTEX_ENTER(&oifq->ifq_lock);
 	*tqe->tqe_pnext = tqe->tqe_next;
 	if (tqe->tqe_next)
 		tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
@@ -4768,11 +4921,13 @@ ipftq_t *oifq, *nifq;
 	 */
 	if (oifq != nifq) {
 		tqe->tqe_ifq = NULL;
+
+		(void) fr_deletetimeoutqueue(oifq);
+
 		MUTEX_EXIT(&oifq->ifq_lock);
-		if ((oifq->ifq_flags & IFQF_USER) != 0)
-			fr_deletetimeoutqueue(oifq);
 
 		MUTEX_ENTER(&nifq->ifq_lock);
+
 		tqe->tqe_ifq = nifq;
 		nifq->ifq_ref++;
 	}
@@ -5500,6 +5655,8 @@ ipftuneable_t ipf_tuneables[] = {
 			sizeof(fr_icmptimeout),		IPFT_WRDISABLED },
 	{ { &fr_icmpacktimeout }, "fr_icmpacktimeout",	1,	0x7fffffff,
 			sizeof(fr_icmpacktimeout),	IPFT_WRDISABLED },
+	{ { &fr_iptimeout }, "fr_iptimeout",		1,	0x7fffffff,
+			sizeof(fr_iptimeout),		IPFT_WRDISABLED },
 	{ { &fr_statemax },	"fr_statemax",		1,	0x7fffffff,
 			sizeof(fr_statemax),		0 },
 	{ { &fr_statesize },	"fr_statesize",		1,	0x7fffffff,
@@ -5620,7 +5777,7 @@ void *cookie, **next;
 /* to the matching structure.                                               */
 /* ------------------------------------------------------------------------ */
 static ipftuneable_t *fr_findtunebyname(name)
-char *name;
+const char *name;
 {
 	ipftuneable_t *ta;
 
@@ -5800,6 +5957,7 @@ void *data;
 				tu.ipft_vshort = *ta->ipft_pshort;
 			else if (ta->ipft_sz == sizeof(u_char))
 				tu.ipft_vchar = *ta->ipft_pchar;
+			tu.ipft_cookie = ta;
 			tu.ipft_sz = ta->ipft_sz;
 			tu.ipft_min = ta->ipft_min;
 			tu.ipft_max = ta->ipft_max;

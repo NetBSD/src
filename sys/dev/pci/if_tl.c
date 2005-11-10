@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.57.2.6 2005/02/04 11:46:38 skrll Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.57.2.7 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57.2.6 2005/02/04 11:46:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57.2.7 2005/11/10 14:06:02 skrll Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -221,6 +221,8 @@ const struct tl_product_desc tl_compaq_products[] = {
 	  "Integrated Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
 	  "Compaq Netelligent 10 T" },
+	{ PCI_PRODUCT_COMPAQ_N10T2, TLPHY_MEDIA_10_2,
+	  "Compaq Netelligent 10 T/2 UTP/Coax" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
 	  "Compaq Integrated NetFlex 3/P" },
 	{ PCI_PRODUCT_COMPAQ_IntPL100TX, TLPHY_MEDIA_10_2|TLPHY_MEDIA_NO_10_T,
@@ -615,7 +617,7 @@ static int tl_init(ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
-	char *errstring;
+	const char *errstring;
 	char *nullbuf;
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.18.6.2 2005/02/04 11:47:23 skrll Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.18.6.3 2005/11/10 14:07:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.2 2005/02/04 11:47:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.3 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,10 @@ lebufattach(parent, self, aux)
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		struct sbus_attach_args sa;
+		struct sbus_attach_args sax;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       bt, dt, node, &sa);
-		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
-		sbus_destroy_attach_args(&sa);
+				       bt, dt, node, &sax);
+		(void)config_found(&sc->sc_dev, (void *)&sax, lebufprint);
+		sbus_destroy_attach_args(&sax);
 	}
 }

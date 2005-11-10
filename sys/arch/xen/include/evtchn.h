@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.2.4.2 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.2.4.3 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  *
@@ -34,30 +34,24 @@
 #ifndef _XEN_EVENTS_H_
 #define _XEN_EVENTS_H_
 
-#define	NR_IRQS		32
-#define NR_PIRQS	32 /* XXX is this enouth ? */
+#define NR_PIRQS	256
 
-extern int evtchn_to_irq[];
-
-/* typedef unsigned int (*ev_handler_t)(int, struct pt_regs *); */
-typedef int (*ev_handler_t)(void *);
+extern struct evtsource *evtsource[];
 
 void events_default_setup(void);
 void init_events(void);
-unsigned int do_event(int, struct intrframe *);
-int event_set_handler(int, ev_handler_t, void *, int);
-int event_remove_handler(int, ev_handler_t, void *);
+unsigned int evtchn_do_event(int, struct intrframe *);
+int event_set_handler(int, int (*func)(void *), void *, int, const char *);
+int event_remove_handler(int, int (*func)(void *), void *);
 
-int bind_virq_to_irq(int);
-int bind_pirq_to_irq(int);
-void unbind_pirq_from_irq(int);
-void unbind_virq_from_irq(int);
-int bind_evtchn_to_irq(int);
-int unbind_evtchn_to_irq(int);
+int bind_virq_to_evtch(int);
+int bind_pirq_to_evtch(int);
+void unbind_pirq_from_evtch(int);
+void unbind_virq_from_evtch(int);
 
 struct pintrhand {
 	int pirq;
-	int irq;
+	int evtch;
 	int (*func)(void *);
 	void *arg;
 };

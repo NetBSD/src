@@ -1,3 +1,0 @@
-# Atheros 5210/5211/5212 PCI/Mini-PCI
-attach	ath at pci with ath_pci
-file	dev/pci/if_ath_pci.c		ath_pci

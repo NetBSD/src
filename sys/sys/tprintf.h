@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.13.6.4 2005/02/04 11:48:07 skrll Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.13.6.5 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,6 @@
 #ifndef _SYS_TPRINF_H_
 #define _SYS_TPRINF_H_
 
-#ifdef _KERNEL
 typedef struct session *tpr_t;
 
 tpr_t	tprintf_open(struct proc *);
@@ -42,6 +41,5 @@ void	tprintf_close(tpr_t);
 
 void	tprintf(tpr_t, const char *fmt, ...)
     __attribute__((__format__(__printf__,2,3)));
-#endif /* _KERNEL */
 
 #endif /* _SYS_TPRINF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.21.2.4 2005/03/04 16:40:12 skrll Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.21.2.5 2005/11/10 14:01:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21.2.4 2005/03/04 16:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21.2.5 2005/11/10 14:01:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -767,7 +767,7 @@ mach_io_registry_entry_get_property(args)
 
 	/* And copyout its associated value */
 	if ((error = mach_ool_copyout(l,
-	    (void *)mip->mip_value, &uaddr, size, MACH_OOL_TRACE)) != 0) {
+	    mip->mip_value, &uaddr, size, MACH_OOL_TRACE)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit property failed\n",
 		    l->l_proc->p_pid, l->l_lid);

@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumutil.h,v 1.1.1.1.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumutil.h,v 1.1.1.1.4.5 2005/11/10 14:08:43 skrll Exp $
  * $FreeBSD$
  */
 
@@ -43,11 +43,11 @@
  * Functions defined in vinumutil.c, which is used both in userland
  * and in the kernel.
  */
-char *drive_state(enum drivestate);
-char *volume_state(enum volumestate);
-char *plex_state(enum plexstate);
-char *plex_org(enum plexorg);
-char *sd_state(enum sdstate);
+const char *drive_state(enum drivestate);
+const char *volume_state(enum volumestate);
+const char *plex_state(enum plexstate);
+const char *plex_org(enum plexorg);
+const char *sd_state(enum sdstate);
 enum drivestate DriveState(char *text);
 enum sdstate SdState(char *text);
 enum plexstate PlexState(char *text);

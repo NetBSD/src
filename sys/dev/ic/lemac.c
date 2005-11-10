@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.23.16.5 2005/03/04 16:41:30 skrll Exp $ */
+/* $NetBSD: lemac.c,v 1.23.16.6 2005/11/10 14:04:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.5 2005/03/04 16:41:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.6 2005/11/10 14:04:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -727,7 +727,7 @@ lemac_ifstart(
 			cp += alen; txoff += alen; len -= alen;
 		    }
 		    if (len >= 2) {
-			LEMAC_PUTBUF16(sc, txoff, len / 2, (void *) cp);
+			LEMAC_PUTBUF16(sc, txoff, len / 2, (const void *) cp);
 			cp += len & ~1; txoff += len & ~1; len &= 1;
 		    }
 		}

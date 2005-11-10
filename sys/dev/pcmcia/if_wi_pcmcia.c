@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.8 2005/04/01 14:30:33 skrll Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.9 2005/11/10 14:07:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.8 2005/04/01 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.9 2005/11/10 14:07:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.8 2005/04/01 14:30:33 skrll 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
+#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_rssadapt.h>
 
@@ -124,6 +124,10 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE737A,
 	  PCMCIA_CIS_3COM_3CRWE737A },
 
+	{ PCMCIA_VENDOR_ALVARION,
+	  PCMCIA_PRODUCT_ALVARION_BREEZENET,
+	  PCMCIA_CIS_ALVARION_BREEZENET },
+
 	{ PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11 },
 
@@ -159,6 +163,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI800_IEEE,
 	  PCMCIA_CIS_ELSA_XI800_IEEE },
+
+	{ PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_SMC2531WB,
+	  PCMCIA_CIS_ELSA_SMC2531WB },
 
 	{ PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
 	  PCMCIA_CIS_COMPAQ_NC5004 },
@@ -494,6 +501,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 	int buflen, ebuflen;
 {
 	const u_int8_t *p, *ep, *q, *eq;
+	char *endp;
 	u_int32_t addr, id, eid;
 	int i, len, elen, nblk, pdrlen;
 
@@ -505,8 +513,10 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 	while (p < ep && *p++ != ' ');	/* FILE: */
 	while (p < ep && *p++ != ' ');	/* filename */
 	while (p < ep && *p++ != ' ');	/* type of the firmware */
-	nblk = strtoul(p, (void *)&p, 10);
-	pdrlen = strtoul(p + 1, (void *)&p, 10);
+	nblk = strtoul(p, &endp, 10);
+	p = (void *)endp;
+	pdrlen = strtoul(p + 1, &endp, 10);
+	p = (void *)endp;
 	while (p < ep && *p++ != 0x1a);	/* skip rest of header */
 
 	/*

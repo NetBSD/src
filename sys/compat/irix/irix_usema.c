@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.9.2.7 2005/03/04 16:39:39 skrll Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.9.2.8 2005/11/10 14:00:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.7 2005/03/04 16:39:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.8 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct vfsops irix_usema_dummy_vfsops = {
 	"usema_dummy",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, irix_usema_vnodeopv_descs,
+	irix_usema_vnodeopv_descs,
 };
 void irix_usema_dummy_vfs_init(void) { return; } /* Do nothing */
 const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[] = {

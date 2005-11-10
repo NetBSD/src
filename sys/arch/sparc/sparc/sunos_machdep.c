@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.11.2.3 2004/09/21 13:22:39 skrll Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.11.2.4 2005/11/10 13:59:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.11.2.3 2004/09/21 13:22:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.11.2.4 2005/11/10 13:59:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.11.2.3 2004/09/21 13:22:39 skrll
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>

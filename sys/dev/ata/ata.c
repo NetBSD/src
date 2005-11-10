@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.18.2.9 2005/03/04 16:41:02 skrll Exp $      */
+/*      $NetBSD: ata.c,v 1.18.2.10 2005/11/10 14:03:54 skrll Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.9 2005/03/04 16:41:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.10 2005/11/10 14:03:54 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -158,9 +158,11 @@ ata_channel_attach(struct ata_channel *chp)
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
+	chp->ch_queue->queue_flags = 0;
 	chp->ch_queue->active_xfer = NULL;
 
-	chp->atabus = config_found(&chp->ch_atac->atac_dev, chp, atabusprint);
+	chp->atabus = config_found_ia(&chp->ch_atac->atac_dev, "ata", chp,
+		atabusprint);
 }
 
 static void
@@ -234,8 +236,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
-		    &adev, ataprint);
+		chp->ata_drives[i] = config_found_ia(&atabus_sc->sc_dev,
+		    "ata_hl", &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
 		else {
@@ -322,14 +324,10 @@ atabus_thread(void *arg)
 	splx(s);
 
 	/* Configure the devices on the bus. */
-	if (sc->sc_sleeping == 1) {
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		sc->sc_sleeping = 0;
-	} else
-		atabusconfig(sc);
+	atabusconfig(sc);
 
+	s = splbio();
 	for (;;) {
-		s = splbio();
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
@@ -338,7 +336,6 @@ atabus_thread(void *arg)
 			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
-			splx(s);
 			break;
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
@@ -359,10 +356,10 @@ atabus_thread(void *arg)
 			(*xfer->c_start)(xfer->c_chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
 			panic("ata_thread: queue_freeze");
-		splx(s);
 	}
+	splx(s);
 	chp->ch_thread = NULL;
-	wakeup((void *)&chp->ch_flags);
+	wakeup(&chp->ch_flags);
 	kthread_exit(0);
 }
 
@@ -430,7 +427,6 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
 
-	sc->sc_sleeping = 0;
 	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -514,7 +510,7 @@ atabus_detach(struct device *self, int flags)
 	splx(s);
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
-		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
+		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
 	/* power hook */
 	if (sc->sc_powerhook)
@@ -699,6 +695,22 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 }
 
 /*
+ * freeze the queue and wait for the controller to be idle. Caller has to
+ * unfreeze/restart the queue
+ */
+void
+ata_queue_idle(struct ata_queue *queue)
+{
+	int s = splbio();
+	queue->queue_freeze++;
+	while (queue->active_xfer != NULL) {
+		queue->queue_flags |= QF_IDLE_WAIT;
+		tsleep(&queue->queue_flags, PRIBIO, "qidl", 0);
+	}
+	splx(s);
+}
+
+/*
  * Add a command to the queue and start controller.
  *
  * MUST BE CALLED AT splbio()!
@@ -772,7 +784,11 @@ atastart(struct ata_channel *chp)
 		return; /* channel aleady active */
 	}
 	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
-		return; /* queue froozen */
+		if (chp->ch_queue->queue_flags & QF_IDLE_WAIT) {
+			chp->ch_queue->queue_flags &= ~QF_IDLE_WAIT;
+			wakeup(&chp->ch_queue->queue_flags);
+		}
+		return; /* queue frozen */
 	}
 	/*
 	 * if someone is waiting for the command to be active, wake it up
@@ -978,14 +994,14 @@ ata_print_modes(struct ata_channel *chp)
 	int drive;
 	struct ata_drive_datas *drvp;
 
-	for (drive = 0; drive < 2; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
 		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
-			chp->ch_channel, drive, drvp->PIO_mode);
+			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -1068,7 +1084,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
 	int i, printed, s;
-	char *sep = "";
+	const char *sep = "";
 	int cf_flags;
 
 	if (ata_get_params(drvp, AT_WAIT, &params) != CMD_OK) {
@@ -1422,17 +1438,17 @@ atabus_powerhook(int why, void *hdl)
 	switch (why) {
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
-		sc->sc_sleeping = 1;
-		s = splbio();
-		chp->ch_flags = ATACH_SHUTDOWN;
-		splx(s);
-		wakeup(&chp->ch_thread);
-		while (chp->ch_thread != NULL)
-			(void) tsleep((void *)&chp->ch_flags, PRIBIO,
-			    "atadown", 0);
+		/* freeze the queue and wait for the controller to be idle */
+		ata_queue_idle(chp->ch_queue);
 		break;
 	case PWR_RESUME:
-		atabus_create_thread(sc);
+		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
+		s = splbio();
+		KASSERT(chp->ch_queue->queue_freeze > 0);
+		/* unfreeze the queue and reset drives (to wake them up) */
+		chp->ch_queue->queue_freeze--;
+		ata_reset_channel(chp, AT_WAIT);
+		splx(s);
 		break;
 	case PWR_SUSPEND:
 	case PWR_STANDBY:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48.6.7 2005/03/04 16:41:34 skrll Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.48.6.8 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -595,6 +595,7 @@ extern const struct tulip_mediasw tlp_pmac_mediasw;
 extern const struct tulip_mediasw tlp_al981_mediasw;
 extern const struct tulip_mediasw tlp_an985_mediasw;
 extern const struct tulip_mediasw tlp_dm9102_mediasw;
+extern const struct tulip_mediasw tlp_asix_mediasw;
 
 void	tlp_attach(struct tulip_softc *, const u_int8_t *);
 int	tlp_activate(struct device *, enum devact);
@@ -606,6 +607,7 @@ int	tlp_isv_srom(const u_int8_t *);
 int	tlp_isv_srom_enaddr(struct tulip_softc *, u_int8_t *);
 int	tlp_parse_old_srom(struct tulip_softc *, u_int8_t *);
 void	tlp_reset(struct tulip_softc *);
+void	tlp_idle(struct tulip_softc *, u_int32_t);
 
 int	tlp_mediachange(struct ifnet *);
 void	tlp_mediastatus(struct ifnet *, struct ifmediareq *);

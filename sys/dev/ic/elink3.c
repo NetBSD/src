@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.106.2.7 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: elink3.c,v 1.106.2.8 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106.2.7 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106.2.8 2005/11/10 14:04:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1496,7 +1496,7 @@ epread(sc)
 again:
 	if (ifp->if_flags & IFF_DEBUG) {
 		int err = len & ERR_MASK;
-		char *s = NULL;
+		const char *s = NULL;
 
 		if (len & ERR_INCOMPLETE)
 			s = "incomplete packet";

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.16.6.5 2005/03/04 16:53:30 skrll Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.16.6.6 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.16.6.5 2005/03/04 16:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.16.6.6 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,9 +534,10 @@ esp_output(m, nexthdrp, md, isr, af)
 		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
 			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
 		else
-			udp->uh_sport = htons(sav->local_ike_port);
+			udp->uh_sport = 
+			    KEY_PORTFROMSADDR(&sav->sah->saidx.src);
 
-		udp->uh_dport = htons(sav->remote_ike_port);
+		udp->uh_dport = KEY_PORTFROMSADDR(&sav->sah->saidx.dst);
 		udp->uh_sum = 0;
 	} else {
 		*nexthdrp = IPPROTO_ESP;
@@ -610,7 +612,6 @@ esp_output(m, nexthdrp, md, isr, af)
     {
 	const struct ah_algorithm *aalgo;
 	u_char authbuf[AH_MAXSUMSIZE];
-	struct mbuf *n;
 	u_char *p;
 	size_t siz;
 #ifdef INET

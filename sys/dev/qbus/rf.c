@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.2.2.7 2005/03/04 16:49:54 skrll Exp $	*/
+/*	$NetBSD: rf.c,v 1.2.2.8 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.7 2005/03/04 16:49:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.8 2005/11/10 14:07:40 skrll Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -173,7 +173,7 @@ CFATTACH_DECL(
 struct rf_softc {
 	struct device sc_dev;		/* common device data */
 	struct disk sc_disk;		/* common disk device data */
-	struct bufq_state sc_bufq;	/* queue of pending transfers */
+	struct bufq_state *sc_bufq;	/* queue of pending transfers */
 	int sc_state;			/* state of drive */
 	u_int8_t sc_dnum;		/* drive number, 0 or 1 */
 };
@@ -496,7 +496,7 @@ rf_attach(struct device *parent, struct device *self, void *aux)
 	dl->d_partitions[2].p_fsize = 0;	/* fs basic fragment size */
 	dl->d_partitions[2].p_fstype = 0;	/* fs type */
 	dl->d_partitions[2].p_frag = 0;		/* fs fragments per block */
-	bufq_alloc(&rf_sc->sc_bufq, BUFQ_DISKSORT | BUFQ_SORT_CYLINDER);
+	bufq_alloc(&rf_sc->sc_bufq, "disksort", BUFQ_SORT_CYLINDER);
 	printf("\n");
 	return;
 }
@@ -601,7 +601,7 @@ rfstrategy(struct buf *buf)
 		rfc_intr(rfc_sc);
 	} else {
 		buf->b_resid = buf->b_blkno / RX2_SECTORS;
-		BUFQ_PUT(&rf_sc->sc_bufq, buf);
+		BUFQ_PUT(rf_sc->sc_bufq, buf);
 		buf->b_resid = 0;
 	}
 	splx(i);
@@ -626,7 +626,7 @@ get_new_buf( struct rfc_softc *rfc_sc)
 	struct rf_softc *other_drive;
 
 	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
-	rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
+	rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
 	if (rfc_sc->sc_curbuf != NULL) {
 		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
 		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
@@ -635,10 +635,10 @@ get_new_buf( struct rfc_softc *rfc_sc)
 		other_drive = (struct rf_softc *)
 		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0];
 		if (other_drive != NULL
-		    && BUFQ_PEEK(&other_drive->sc_bufq) != NULL) {
+		    && BUFQ_PEEK(other_drive->sc_bufq) != NULL) {
 			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
 			rf_sc = other_drive;
-			rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
+			rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
 			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
 			rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 		} else

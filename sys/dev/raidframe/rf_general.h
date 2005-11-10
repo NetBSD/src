@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.11.2.4 2005/03/04 16:50:06 skrll Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.11.2.5 2005/11/10 14:07:40 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -49,10 +49,10 @@
 #define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
 #define RF_ERRORMSG3(s,a,b,c)     printf((s),(a),(b),(c))
 
-void rf_print_panic_message(int, char *);
-void rf_print_assert_panic_message(int, char *, char *);
-void rf_print_unable_to_init_mutex(char *, int, int);
-void rf_print_unable_to_add_shutdown(char *, int, int);
+void rf_print_panic_message(int, const char *);
+void rf_print_assert_panic_message(int, const char *, const char *);
+void rf_print_unable_to_init_mutex(const char *, int, int);
+void rf_print_unable_to_add_shutdown(const char *, int, int);
 
 
 extern char rf_panicbuf[];

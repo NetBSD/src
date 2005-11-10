@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psargs - Parse AML opcode arguments
- *              xRevision: 76 $
+ *              xRevision: 80 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.6.2.4 2005/11/10 14:03:13 skrll Exp $");
 
 #define __PSARGS_C__
 
@@ -126,6 +126,16 @@ __KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $")
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psargs")
+
+/* Local prototypes */
+
+static UINT32
+AcpiPsGetNextPackageLength (
+    ACPI_PARSE_STATE        *ParserState);
+
+static ACPI_PARSE_OBJECT *
+AcpiPsGetNextField (
+    ACPI_PARSE_STATE        *ParserState);
 
 
 /*******************************************************************************
@@ -141,7 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.6.2.3 2004/09/21 13:26:46 skrll Exp $")
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiPsGetNextPackageLength (
     ACPI_PARSE_STATE        *ParserState)
 {
@@ -154,7 +164,6 @@ AcpiPsGetNextPackageLength (
 
     EncodedLength = (UINT32) ACPI_GET8 (ParserState->Aml);
     ParserState->Aml++;
-
 
     switch (EncodedLength >> 6) /* bits 6-7 contain encoding scheme */
     {
@@ -370,15 +379,16 @@ AcpiPsGetNextNamepath (
          * parent tree, but don't open a new scope -- we just want to lookup the
          * object  (MUST BE mode EXECUTE to perform upsearch)
          */
-        Status = AcpiNsLookup (&ScopeInfo, Path, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
-                    ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
+        Status = AcpiNsLookup (&ScopeInfo, Path, ACPI_TYPE_ANY,
+                    ACPI_IMODE_EXECUTE,
+                    ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE,
+                    NULL, &Node);
         if (ACPI_SUCCESS (Status) && MethodCall)
         {
             if (Node->Type == ACPI_TYPE_METHOD)
             {
-                /*
-                 * This name is actually a control method invocation
-                 */
+                /* This name is actually a control method invocation */
+
                 MethodDesc = AcpiNsGetAttachedObject (Node);
                 ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
                     "Control Method - %p Desc %p Path=%p\n",
@@ -450,7 +460,7 @@ AcpiPsGetNextNamepath (
                 /*
                  * We got a NOT_FOUND during table load or we encountered
                  * a CondRefOf(x) where the target does not exist.
-                 * -- either case is ok
+                 * Either case is ok
                  */
                 Status = AE_OK;
             }
@@ -578,12 +588,13 @@ AcpiPsGetNextSimpleArg (
  *
  ******************************************************************************/
 
-ACPI_PARSE_OBJECT *
+static ACPI_PARSE_OBJECT *
 AcpiPsGetNextField (
     ACPI_PARSE_STATE        *ParserState)
 {
-    UINT32                  AmlOffset = (UINT32) ACPI_PTR_DIFF (ParserState->Aml,
-                                                       ParserState->AmlStart);
+    UINT32                  AmlOffset = (UINT32)
+                                ACPI_PTR_DIFF (ParserState->Aml,
+                                               ParserState->AmlStart);
     ACPI_PARSE_OBJECT       *Field;
     UINT16                  Opcode;
     UINT32                  Name;
@@ -592,7 +603,7 @@ AcpiPsGetNextField (
     ACPI_FUNCTION_TRACE ("PsGetNextField");
 
 
-    /* determine field type */
+    /* Determine field type */
 
     switch (ACPI_GET8 (ParserState->Aml))
     {
@@ -613,7 +624,6 @@ AcpiPsGetNextField (
         ParserState->Aml++;
         break;
     }
-
 
     /* Allocate a new field op */
 
@@ -677,10 +687,10 @@ AcpiPsGetNextField (
  *
  * FUNCTION:    AcpiPsGetNextArg
  *
- * PARAMETERS:  ParserState         - Current parser state object
+ * PARAMETERS:  WalkState           - Current state
+ *              ParserState         - Current parser state object
  *              ArgType             - The argument type (AML_*_ARG)
- *              ArgCount            - If the argument points to a control method
- *                                    the method's argument is returned here.
+ *              ReturnArg           - Where the next arg is returned
  *
  * RETURN:      Status, and an op object containing the next argument.
  *
@@ -715,7 +725,7 @@ AcpiPsGetNextArg (
     case ARGP_NAME:
     case ARGP_NAMESTRING:
 
-        /* constants, strings, and namestrings are all the same size */
+        /* Constants, strings, and namestrings are all the same size */
 
         Arg = AcpiPsAllocOp (AML_BYTE_OP);
         if (!Arg)
@@ -756,7 +766,6 @@ AcpiPsGetNextArg (
                 {
                     Arg = Field;
                 }
-
                 Prev = Field;
             }
 
@@ -781,8 +790,8 @@ AcpiPsGetNextArg (
 
             /* Fill in bytelist data */
 
-            Arg->Common.Value.Size = (UINT32) ACPI_PTR_DIFF (ParserState->PkgEnd,
-                                                             ParserState->Aml);
+            Arg->Common.Value.Size = (UINT32)
+                ACPI_PTR_DIFF (ParserState->PkgEnd, ParserState->Aml);
             Arg->Named.Data = ParserState->Aml;
 
             /* Skip to End of byte data */
@@ -813,7 +822,7 @@ AcpiPsGetNextArg (
         }
         else
         {
-            /* single complex argument, nothing returned */
+            /* Single complex argument, nothing returned */
 
             WalkState->ArgCount = 1;
         }
@@ -823,7 +832,7 @@ AcpiPsGetNextArg (
     case ARGP_DATAOBJ:
     case ARGP_TERMARG:
 
-        /* single complex argument, nothing returned */
+        /* Single complex argument, nothing returned */
 
         WalkState->ArgCount = 1;
         break;
@@ -835,7 +844,7 @@ AcpiPsGetNextArg (
 
         if (ParserState->Aml < ParserState->PkgEnd)
         {
-            /* non-empty list of variable arguments, nothing returned */
+            /* Non-empty list of variable arguments, nothing returned */
 
             WalkState->ArgCount = ACPI_VAR_ARGS;
         }

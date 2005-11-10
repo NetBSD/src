@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8.2.12 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8.2.13 2005/11/10 14:09:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.12 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.13 2005/11/10 14:09:26 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -70,8 +70,6 @@ int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
-		       struct ucred **));
 int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
@@ -86,8 +84,8 @@ MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
 MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
 MALLOC_DEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
 
-struct genfs_ops adosfs_genfsops = {
-	genfs_size,
+static const struct genfs_ops adosfs_genfsops = {
+	.gop_size = genfs_size,
 };
 
 int (**adosfs_vnodeop_p) __P((void *));
@@ -116,7 +114,6 @@ adosfs_mount(mp, path, data, ndp, l)
 		args.gid = amp->gid;
 		args.mask = amp->mask;
 		args.fspec = NULL;
-		vfs_showexport(mp, &args.export, &amp->export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof(struct adosfs_args));
@@ -125,15 +122,10 @@ adosfs_mount(mp, path, data, ndp, l)
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
-		amp = VFSTOADOSFS(mp);
-		if (args.fspec == 0)
-			return (vfs_export(mp, &amp->export, &args.export));
-	}
+
+	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+		return EOPNOTSUPP;
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -502,7 +494,8 @@ adosfs_vget(mp, an, vpp)
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: name length too long blk %d\n", an);
+		printf("adosfs: aget: name length too long blk %llu\n",
+		    (unsigned long long)an);
 #endif
 		brelse(bp);
 		vput(vp);
@@ -742,35 +735,6 @@ adosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-adosfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	struct adosfsmount *amp = VFSTOADOSFS(mp);
-#if 0
-	struct anode *ap;
-#endif
-	struct netcred *np;
-
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adcheckexp(%x, %x, %x)\n", mp, nam, exflagsp);
-#endif
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &amp->export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return(0);
-}
-
-int
 adosfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
@@ -885,9 +849,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_init,
 	NULL,
 	adosfs_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	adosfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	adosfs_vnodeopv_descs,

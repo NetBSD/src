@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.9 2003/03/01 13:01:56 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.9.2.1 2005/11/10 13:59:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,10 @@ struct promdata {
 #define DDB_MAGIC2	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('2') )
 
 extern time_t	getsecs __P((void));
-extern char	*prom_bootdevice;
+
+#define	MAX_PROM_PATH	128
+
+extern char	prom_bootdevice[MAX_PROM_PATH];
 extern int	cputyp, nbpg, pgofset, pgshift;
 extern int	debug;
 

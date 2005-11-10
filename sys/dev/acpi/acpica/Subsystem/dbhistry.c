@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              xRevision: 29 $
+ *              xRevision: 32 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.6.2.3 2004/09/21 13:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -166,7 +166,8 @@ AcpiDbAddToHistory (
 
     /* Put command into the next available slot */
 
-    ACPI_STRCPY (AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].Command, CommandLine);
+    ACPI_STRCPY (AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].Command,
+        CommandLine);
 
     AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].CmdNum = AcpiGbl_NextCmdNum;
 
@@ -209,7 +210,8 @@ AcpiDbAddToHistory (
  ******************************************************************************/
 
 void
-AcpiDbDisplayHistory (void)
+AcpiDbDisplayHistory (
+    void)
 {
     ACPI_NATIVE_UINT        i;
     UINT16                  HistoryIndex;
@@ -240,7 +242,7 @@ AcpiDbDisplayHistory (void)
  * PARAMETERS:  CommandNumArg           - String containing the number of the
  *                                        command to be retrieved
  *
- * RETURN:      None
+ * RETURN:      Pointer to the retrieved command. Null on error.
  *
  * DESCRIPTION: Get a command from the history buffer
  *
@@ -288,7 +290,6 @@ AcpiDbGetFromHistory (
     AcpiOsPrintf ("Invalid history number: %d\n", HistoryIndex);
     return (NULL);
 }
-
 
 #endif /* ACPI_DEBUGGER */
 

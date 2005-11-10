@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.51.2.5 2004/09/21 13:38:37 skrll Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.51.2.6 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.51.2.5 2004/09/21 13:38:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.51.2.6 2005/11/10 14:11:55 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -979,7 +979,7 @@ nqnfs_callback(nmp, mrep, md, dpos, l)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	m_freem(mrep);
-	error = nfs_nget(nmp->nm_mountp, (nfsfh_t *)fhp, NFSX_V3FH, &np, l);
+	error = nfs_nget(nmp->nm_mountp, (nfsfh_t *)fhp, NFSX_V3FH, &np);
 	if (error)
 		return (error);
 	vp = NFSTOV(np);

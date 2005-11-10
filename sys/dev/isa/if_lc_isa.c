@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.16.6.5 2005/03/04 16:43:14 skrll Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.16.6.6 2005/11/10 14:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.5 2005/03/04 16:43:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.6 2005/11/10 14:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ lemac_isa_find(sc, ia, attach)
 	int attach;
 {
 	bus_addr_t maddr;
-	bus_addr_t msize;
+	bus_addr_t msiz;
 	int rv = 0, irq;
 
 	if (ia->ia_nio < 1)
@@ -121,20 +121,20 @@ lemac_isa_find(sc, ia, attach)
 	/*
 	 * Get information about memory space and attempt to map it.
 	 */
-	lemac_info_get(sc->sc_iot, sc->sc_ioh, &maddr, &msize, &irq);
+	lemac_info_get(sc->sc_iot, sc->sc_ioh, &maddr, &msiz, &irq);
 
 	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	    ia->ia_iomem[0].ir_addr != maddr)
 		goto outio;
 
 	if (attach) {
-		if (msize == 0) {
+		if (msiz == 0) {
 			printf(": memory configuration is invalid\n");
 			goto outio;
 		}
 
 		sc->sc_memt = ia->ia_memt;
-		if (bus_space_map(ia->ia_memt, maddr, msize, 0, &sc->sc_memh)) {
+		if (bus_space_map(ia->ia_memt, maddr, msiz, 0, &sc->sc_memh)) {
 			printf(": can't map mem space\n");
 			goto outio;
 		}
@@ -170,7 +170,7 @@ lemac_isa_find(sc, ia, attach)
 
 	ia->ia_niomem = 1;
 	ia->ia_iomem[0].ir_addr = maddr;
-	ia->ia_iomem[0].ir_size = msize;
+	ia->ia_iomem[0].ir_size = msiz;
 
 	ia->ia_nirq = 1;
 	ia->ia_irq[0].ir_irq = irq;
@@ -178,7 +178,7 @@ lemac_isa_find(sc, ia, attach)
 	ia->ia_ndrq = 0;
 
 	if (rv == 0 && attach)
-		bus_space_unmap(sc->sc_memt, sc->sc_memh, msize);
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, msiz);
 outio:
 	if (rv == 0 || !attach)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, LEMAC_IOSIZE);

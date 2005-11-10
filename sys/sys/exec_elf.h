@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.70.2.9 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.70.2.10 2005/11/10 14:12:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -653,6 +653,13 @@ typedef struct {
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
 #define	ELF_NOTE_TYPE_NETBSD_TAG	1
+/* NetBSD-specific note type: Checksum.  There should be 1 NOTE per PT_LOAD
+   section.  desc is a tuple of <phnum>(16),<chk-type>(16),<chk-value>. */
+#define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
+#define	ELF_NOTE_CHECKSUM_CRC32		1
+#define	ELF_NOTE_CHECKSUM_MD5		2
+#define	ELF_NOTE_CHECKSUM_SHA1		3
+#define	ELF_NOTE_CHECKSUM_SHA256	4
 
 /* NetBSD-specific note name and description sizes */
 #define	ELF_NOTE_NETBSD_NAMESZ		7
@@ -822,9 +829,9 @@ int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     	    struct ps_strings *, char **, void *);
 
-int	coredump_elf32(struct lwp *, struct vnode *, struct ucred *);
-int	coredump_writenote_elf32(struct lwp *, struct vnode *,
-	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *);
+int	coredump_elf32(struct lwp *, void *);
+int	coredump_writenote_elf32(struct proc *, void *, Elf32_Nhdr *,
+	    const char *, void *);
 
 int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
@@ -835,9 +842,9 @@ int	elf64_read_from(struct lwp *, struct vnode *, u_long, caddr_t, int);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
 	    struct ps_strings *, char **, void *);
 
-int	coredump_elf64(struct lwp *, struct vnode *, struct ucred *);
-int	coredump_writenote_elf64(struct lwp *, struct vnode *,
-	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *);
+int	coredump_elf64(struct lwp *, void *);
+int	coredump_writenote_elf64(struct proc *, void *, Elf64_Nhdr *,
+	    const char *, void *);
 
 int	elf64_check_header(Elf64_Ehdr *, int);
 #endif

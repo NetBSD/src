@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.16.6.3 2004/09/21 13:39:29 skrll Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.16.6.4 2005/11/10 14:12:40 skrll Exp $	*/
 
 /*
  *
@@ -87,8 +87,34 @@ extern struct uvm_pagerops aobj_pager;
 	((uobj)->pgops == &uvm_vnodeops &&				\
 	 ((struct vnode *)uobj)->v_flag & VEXECMAP)
 
+#define	UVM_OBJ_IS_CLEAN(uobj)						\
+	(UVM_OBJ_IS_VNODE(uobj) && 					\
+	 (((struct vnode *)uobj)->v_flag & VONWORKLST) == 0)
+
+/*
+ * UVM_OBJ_NEEDS_WRITEFAULT: true if the uobj needs to detect modification.
+ * (ie. wants to avoid writable user mappings.)
+ *
+ * XXX bad name
+ */
+
+#define	UVM_OBJ_NEEDS_WRITEFAULT(uobj)					\
+	(UVM_OBJ_IS_VNODE(uobj) && 					\
+	 ((((struct vnode *)uobj)->v_flag & VONWORKLST) == 0 ||		\
+	 (((struct vnode *)uobj)->v_flag & (VWRITEMAP|VWRITEMAPDIRTY))	\
+	 == VWRITEMAP))
+
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
+
+#define	UVM_OBJ_INIT(uobj, ops, refs)					\
+	do {								\
+		simple_lock_init(&(uobj)->vmobjlock);			\
+		(uobj)->pgops = (ops);					\
+		TAILQ_INIT(&(uobj)->memq);				\
+		(uobj)->uo_npages = 0;					\
+		(uobj)->uo_refs = (refs);				\
+	} while (/* CONSTCOND */ 0)
 
 #endif /* _KERNEL */
 

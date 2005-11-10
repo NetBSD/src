@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.1.2.2 2005/01/24 08:34:26 skrll Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.1.2.3 2005/11/10 13:58:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -43,7 +43,7 @@
 #include <powerpc/ibm4xx/dev/gpioreg.h>
 #include <powerpc/ibm4xx/dev/gpiovar.h>
 
-struct gpio_softc {
+struct ppcgpio_softc {
 	struct device		sc_dev;		/* device generic */
 	struct gpio_controller	sc_gpio;	/* GPIO controller */
         u_long			sc_addr;	/* GPIO controller address */
@@ -51,7 +51,7 @@ struct gpio_softc {
 
 static int	gpio_print(void *, const char *);
 static int	gpio_search(struct device *, struct cfdata *,
-			const locdesc_t *ldesc, void *aux);
+			const int *ldesc, void *aux);
 static int	gpio_match(struct device *, struct cfdata *, void *);
 static void	gpio_attach(struct device *, struct device *, void *);
 
@@ -68,7 +68,7 @@ static void	gpio_write_bit(void *, int, int, int);
 static uint32_t	gpio_read(void *, int);
 static void	gpio_write(void *, int, uint32_t);
 
-CFATTACH_DECL(gpio, sizeof(struct gpio_softc),
+CFATTACH_DECL(ppcgpio, sizeof(struct ppcgpio_softc),
     gpio_match, gpio_attach, NULL, NULL);
 
 static int
@@ -83,13 +83,13 @@ gpio_print(void *aux, const char *pnp)
 
 static int
 gpio_search(struct device *parent, struct cfdata *cf,
-	const locdesc_t *ldesc, void *aux)
+	const int *ldesc, void *aux)
 {
-	struct gpio_softc *sc = (void *)parent;
+	struct ppcgpio_softc *sc = (void *)parent;
 	struct gpio_attach_args gaa;
 
 	gaa.ga_tag = &sc->sc_gpio;
-	gaa.ga_addr = cf->cf_loc[GPIOCF_ADDR];
+	gaa.ga_addr = cf->cf_loc[PPCGPIOCF_ADDR];
 
 	if (config_match(parent, cf, &gaa) > 0)
 		config_attach(parent, cf, &gaa, gpio_print);
@@ -111,7 +111,7 @@ gpio_match(struct device *parent, struct cfdata *cf, void *args)
 static void
 gpio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gpio_softc *sc = (struct gpio_softc *)self;
+	struct ppcgpio_softc *sc = (struct ppcgpio_softc *)self;
 	struct opb_attach_args *oaa = aux;
 
 	aprint_naive(": GPIO controller\n");
@@ -199,7 +199,7 @@ gpio_write_bit(void *arg, int offset, int addr, int bit)
 static uint32_t
 gpio_read(void *arg, int offset)
 {
-	struct gpio_softc *sc = arg;
+	struct ppcgpio_softc *sc = arg;
 	uint32_t rv;
 
         rv = inl(sc->sc_addr + offset);
@@ -210,7 +210,7 @@ gpio_read(void *arg, int offset)
 static void
 gpio_write(void *arg, int offset, uint32_t out)
 {
-	struct gpio_softc *sc = arg;
+	struct ppcgpio_softc *sc = arg;
 
         outl((sc->sc_addr + offset), out);
 }

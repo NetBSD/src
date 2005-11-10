@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.10 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.11 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.10 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.11 2005/11/10 14:09:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -103,7 +103,7 @@ static int	lkm_state = LKMS_IDLE;
 static TAILQ_HEAD(lkms_head, lkm_table) lkmods;	/* table of loaded modules */
 static struct lkm_table	*curp;			/* global for in-progress ops */
 
-static struct lkm_table *lkmlookup(int, char *, int *);
+static struct lkm_table *lkmlookup(int, char *, int, int *);
 static struct lkm_table *lkmalloc(void);
 static void lkmfree(void);
 static void lkmunreserve(int);
@@ -175,7 +175,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct lwp *l)
  * Look up for a LKM in the list.
  */
 static struct lkm_table *
-lkmlookup(int i, char *name, int *error)
+lkmlookup(int i, char *name, int need_copyin, int *error)
 {
 	struct lkm_table *p;
 	char istr[MAXLKMNAME];
@@ -197,9 +197,12 @@ lkmlookup(int i, char *name, int *error)
 		 * Copy name and lookup id from all loaded
 		 * modules.  May fail.
 		 */
-		*error = copyinstr(name, istr, MAXLKMNAME - 1, NULL);
-		if (*error)
-			return (NULL);
+		if (need_copyin) {
+			*error = copyinstr(name, istr, MAXLKMNAME - 1, NULL);
+			if (*error)
+				return (NULL);
+		} else
+			strncpy(istr, name, MAXLKMNAME - 1);
 		istr[MAXLKMNAME - 1] = '\0';
 
 		TAILQ_FOREACH(p, &lkmods, link) {
@@ -565,7 +568,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		unloadp = (struct lmc_unload *)data;
 
-		curp = lkmlookup(unloadp->id, unloadp->name, &error);
+		curp = lkmlookup(unloadp->id, unloadp->name, 1, &error);
 		if (curp == NULL)
 			break;
 
@@ -585,7 +588,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		statp = (struct lmc_stat *)data;
 
-		if ((curp = lkmlookup(statp->id, statp->name, &error)) == NULL)
+		if ((curp = lkmlookup(statp->id, statp->name, 0, &error)) == NULL)
 			break;
 
 		if ((error = (*curp->entry)(curp, LKM_E_STAT, LKM_VERSION)))

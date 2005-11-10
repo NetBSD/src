@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.21.2.7 2005/03/04 16:49:54 skrll Exp $	*/
+/*	$NetBSD: rl.c,v 1.21.2.8 2005/11/10 14:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.7 2005/03/04 16:49:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.8 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ const struct cdevsw rl_cdevsw = {
 #define RL_RREG(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, (reg))
 
-static char *rlstates[] = {
+static const char *rlstates[] = {
 	"drive not loaded",
 	"drive spinning up",
 	"drive brushes out",
@@ -126,7 +126,7 @@ static struct dkdriver rldkdriver = {
 	rlstrategy, minphys
 };
 
-static char *
+static const char *
 rlstate(struct rlc_softc *sc, int unit)
 {
 	int i = 0;
@@ -221,7 +221,7 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 		printf(": Failed to allocate DMA map, error %d\n", error);
 		return;
 	}
-	bufq_alloc(&sc->sc_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_CYLINDER);
 	for (i = 0; i < RL_MAXDPC; i++) {
 		waitcrdy(sc);
 		RL_WREG(RL_DA, RLDA_GS|RLDA_RST);
@@ -431,7 +431,7 @@ rlstrategy(struct buf *bp)
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_q, bp);
+	BUFQ_PUT(sc->sc_q, bp);
 	rlcstart(sc, 0);
 	splx(s);
 	return;
@@ -582,7 +582,7 @@ rlwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(rlstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-static char *rlerr[] = {
+static const char *rlerr[] = {
 	"no",
 	"operation incomplete",
 	"read data CRC",
@@ -647,7 +647,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		return;	/* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(&sc->sc_q);
+		bp = BUFQ_GET(sc->sc_q);
 		if (bp == NULL)
 			return;	/* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;
@@ -740,7 +740,7 @@ rlcreset(struct device *dev)
 	if (sc->sc_active == 0)
 		return;
 
-	BUFQ_PUT(&sc->sc_q, sc->sc_active);
+	BUFQ_PUT(sc->sc_q, sc->sc_active);
 	sc->sc_active = 0;
 	rlcstart(sc, 0);
 }

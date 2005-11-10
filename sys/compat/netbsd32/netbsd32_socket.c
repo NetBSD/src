@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.11.2.6 2005/03/04 16:40:20 skrll Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.11.2.7 2005/11/10 14:01:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.11.2.6 2005/03/04 16:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.11.2.7 2005/11/10 14:01:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.11.2.6 2005/03/04 16:40:20 skr
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -209,7 +210,7 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 			len = 0;
 		else {
 			struct mbuf *m = control;
-			caddr_t p = (caddr_t)NETBSD32PTR64(mp->msg_control);
+			caddr_t cp = (caddr_t)NETBSD32PTR64(mp->msg_control);
 
 			do {
 				i = m->m_len;
@@ -217,16 +218,16 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
 				}
-				error = copyout(mtod(m, caddr_t), p,
+				error = copyout(mtod(m, caddr_t), cp,
 				    (unsigned)i);
 				if (m->m_next)
 					i = ALIGN(i);
-				p += i;
+				cp += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
 			} while ((m = m->m_next) != NULL);
-			len = p - (caddr_t)NETBSD32PTR64(mp->msg_control);
+			len = cp - (caddr_t)NETBSD32PTR64(mp->msg_control);
 		}
 		mp->msg_controllen = len;
 	}

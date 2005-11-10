@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.3.36.1 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,18 +30,18 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
 #define NRSP 0 /* Kludge */
 #define NCMD 0 /* Kludge */
 
-#include "sys/param.h"
-#include "sys/disklabel.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
 
-#include "lib/libsa/stand.h"
+#include <lib/libsa/stand.h>
 
 #include "../include/pte.h"
-#include "dev/mscp/mscp.h"
-#include "dev/mscp/mscpreg.h"
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
 
 #include "vaxstand.h"
 

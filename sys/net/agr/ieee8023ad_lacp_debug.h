@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.h,v 1.1.4.2 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.h,v 1.1.4.3 2005/11/10 14:10:50 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -47,15 +47,15 @@
 #define	LACP_STATESTR_MAX	(255) /* XXX */
 
 void lacp_dump_lacpdu(const struct lacpdu *);
-char *lacp_format_partner(const struct lacp_peerinfo *, char *, size_t);
-char *lacp_format_lagid(const struct lacp_peerinfo *,
+const char *lacp_format_partner(const struct lacp_peerinfo *, char *, size_t);
+const char *lacp_format_lagid(const struct lacp_peerinfo *,
     const struct lacp_peerinfo *, char *, size_t);
-char *lacp_format_lagid_aggregator(const struct lacp_aggregator *,
+const char *lacp_format_lagid_aggregator(const struct lacp_aggregator *,
     char *, size_t);
-char *lacp_format_state(uint8_t, char *, size_t);
-char *lacp_format_mac(const uint8_t *, char *, size_t);
-char *lacp_format_systemid(const struct lacp_systemid *, char *, size_t);
-char *lacp_format_portid(const struct lacp_portid *, char *, size_t);
+const char *lacp_format_state(uint8_t, char *, size_t);
+const char *lacp_format_mac(const uint8_t *, char *, size_t);
+const char *lacp_format_systemid(const struct lacp_systemid *, char *, size_t);
+const char *lacp_format_portid(const struct lacp_portid *, char *, size_t);
 
 #if defined(LACP_DEBUG)
 extern int lacpdebug;

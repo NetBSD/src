@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.6.24.4 2005/03/04 16:45:17 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.6.24.5 2005/11/10 14:06:01 skrll Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -161,7 +161,7 @@ END {
 
 	printf("\n") > dfile
 
-	printf("const struct pci_vendor pci_vendors[] = {\n") > dfile
+	printf("static const struct pci_vendor pci_vendors[] = {\n") > dfile
 	for (i = 1; i <= nvendors; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    PCI_VENDOR_%s,\n", vendors[i, 1]) \
@@ -185,7 +185,7 @@ END {
 
 	printf("\n") > dfile
 
-	printf("const struct pci_product pci_products[] = {\n") > dfile
+	printf("static const struct pci_product pci_products[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s,\n",

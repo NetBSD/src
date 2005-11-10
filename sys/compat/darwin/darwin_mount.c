@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.4.2.5 2005/03/04 16:39:22 skrll Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.4.2.6 2005/11/10 14:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.4.2.5 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.4.2.6 2005/11/10 14:00:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.4.2.5 2005/03/04 16:39:22 skrll E
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/signal.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>

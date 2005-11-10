@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.49.2.9 2005/04/01 14:30:33 skrll Exp $	*/
+/*	$NetBSD: ss.c,v 1.49.2.10 2005/11/10 14:07:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.49.2.9 2005/04/01 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.49.2.10 2005/11/10 14:07:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ ssmatch(struct device *parent, struct cfdata *match, void *aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)ss_patterns, sizeof(ss_patterns) / sizeof(ss_patterns[0]),
+	    ss_patterns, sizeof(ss_patterns) / sizeof(ss_patterns[0]),
 	    sizeof(ss_patterns[0]), &priority);
 	return (priority);
 }
@@ -163,7 +163,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	bufq_alloc(&ss->buf_queue, BUFQ_FCFS);
+	bufq_alloc(&ss->buf_queue, "fcfs", 0);
 
 	callout_init(&ss->sc_callout);
 
@@ -199,9 +199,9 @@ ssdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	bufq_drain(&ss->buf_queue);
+	bufq_drain(ss->buf_queue);
 
-	bufq_free(&ss->buf_queue);
+	bufq_free(ss->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(ss->sc_periph);
@@ -441,7 +441,7 @@ ssstrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(&ss->buf_queue, bp);
+	BUFQ_PUT(ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -496,7 +496,7 @@ ssstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(&ss->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(ss->buf_queue)) == NULL)
 			return;
 
 		if (ss->special && ss->special->read) {

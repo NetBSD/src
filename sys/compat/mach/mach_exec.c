@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.32.2.7 2005/04/01 14:29:36 skrll Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.32.2.8 2005/11/10 14:01:20 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.7 2005/04/01 14:29:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.8 2005/11/10 14:01:20 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -188,9 +188,9 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 
 int
 exec_mach_probe(path)
-	char **path;
+	const char **path;
 {
-	*path = (char *)emul_mach.e_path;
+	*path = emul_mach.e_path;
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.19.6.7 2005/03/04 16:53:00 skrll Exp $	*/
+/*	$NetBSD: radix.c,v 1.19.6.8 2005/11/10 14:10:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.7 2005/03/04 16:53:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.8 2005/11/10 14:10:33 skrll Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -64,8 +64,6 @@ static const char normal_chars[] =
 static char *rn_zeros, *rn_ones;
 
 #define rn_masktop (mask_rnhead->rnh_treetop)
-#undef Bcmp
-#define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
 
 static int rn_satisfies_leaf(const char *, struct radix_node *, int);
 static int rn_lexobetter(const void *, const void *);
@@ -150,9 +148,9 @@ rn_refines(
 {
 	const char *m = m_arg;
 	const char *n = n_arg;
-	const char *lim = n + *(u_char *)n;
+	const char *lim = n + *(const u_char *)n;
 	const char *lim2 = lim;
-	int longer = (*(u_char *)n++) - (int)(*(u_char *)m++);
+	int longer = (*(const u_char *)n++) - (int)(*(const u_char *)m++);
 	int masks_are_equal = 1;
 
 	if (longer > 0)
@@ -205,12 +203,12 @@ rn_satisfies_leaf(
 	const char *cp2 = leaf->rn_key;
 	const char *cp3 = leaf->rn_mask;
 	const char *cplim;
-	int length = min(*(u_char *)cp, *(u_char *)cp2);
+	int length = min(*(const u_char *)cp, *(const u_char *)cp2);
 
 	if (cp3 == 0)
 		cp3 = rn_ones;
 	else
-		length = min(length, *(u_char *)cp3);
+		length = min(length, *(const u_char *)cp3);
 	cplim = cp + length; cp3 += skip; cp2 += skip;
 	for (cp += skip; cp < cplim; cp++, cp2++, cp3++)
 		if ((*cp ^ *cp2) & *cp3)
@@ -232,7 +230,7 @@ rn_match(
 	const char *cp2;
 	const char *cplim;
 	int off = t->rn_off;
-	int vlen = *(u_char *)cp;
+	int vlen = *(const u_char *)cp;
 	int matched_off;
 	int test, b, rn_b;
 
@@ -258,7 +256,7 @@ rn_match(
 	 * are probably the most common case...
 	 */
 	if (t->rn_mask)
-		vlen = *(u_char *)t->rn_mask;
+		vlen = *(const u_char *)t->rn_mask;
 	cp += off; cp2 = t->rn_key + off; cplim = v + vlen;
 	for (; cp < cplim; cp++, cp2++)
 		if (*cp != *cp2)
@@ -363,7 +361,7 @@ rn_insert(
 	struct radix_node *tt;
 	const char *v = v_arg;
 	int head_off = top->rn_off;
-	int vlen = *((u_char *)v);
+	int vlen = *((const u_char *)v);
 	const char *cp = v + head_off;
 	int b;
     	/*
@@ -432,7 +430,7 @@ rn_addmask(
 	int maskduplicated, m0, isnormal;
 	static int last_zeroed = 0;
 
-	if ((mlen = *(u_char *)netmask) > max_keylen)
+	if ((mlen = *(const u_char *)netmask) > max_keylen)
 		mlen = max_keylen;
 	if (skip == 0)
 		skip = 1;
@@ -477,7 +475,7 @@ rn_addmask(
 	 * Calculate index of mask, and check for normalcy.
 	 */
 	cplim = netmask + mlen; isnormal = 1;
-	for (cp = netmask + skip; (cp < cplim) && *(u_char *)cp == 0xff;)
+	for (cp = netmask + skip; (cp < cplim) && *(const u_char *)cp == 0xff;)
 		cp++;
 	if (cp != cplim) {
 		for (j = 0x80; (j & *cp) != 0; j >>= 1)
@@ -615,7 +613,7 @@ rn_addroute(
 		t=tt+1; tt->rn_info = rn_nodenum++; t->rn_info = rn_nodenum++;
 		tt->rn_twin = t; tt->rn_ybro = rn_clist; rn_clist = tt;
 #endif
-		tt->rn_key = (caddr_t) v;
+		tt->rn_key = __UNCONST(v); /*XXXUNCONST*/
 		tt->rn_b = -1;
 		tt->rn_flags = RNF_ACTIVE;
 	}
@@ -713,7 +711,7 @@ rn_delete(
 	x = head->rnh_treetop;
 	tt = rn_search(v, x);
 	head_off = x->rn_off;
-	vlen =  *(u_char *)v;
+	vlen =  *(const u_char *)v;
 	saved_tt = tt;
 	top = x;
 	if (tt == 0 ||

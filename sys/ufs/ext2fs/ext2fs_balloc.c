@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.5 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.6 2005/11/10 14:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.5 2005/03/04 16:54:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.6 2005/11/10 14:12:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -93,13 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.5 2005/03/04 16:54:45 skrll
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_balloc(ip, bn, size, cred, bpp, flags)
-	struct inode *ip;
-	daddr_t bn;
-	int size;
-	struct ucred *cred;
-	struct buf **bpp;
-	int flags;
+ext2fs_balloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
+		struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;
 	daddr_t nb;
@@ -388,7 +383,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		}
 
 		/*
-		 * increase file size now, VOP_BALLOC() requires that
+		 * increase file size now, ext2fs_balloc() requires that
 		 * EOF be up-to-date before each call.
 		 */
 

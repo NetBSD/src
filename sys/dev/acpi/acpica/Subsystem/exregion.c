@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              xRevision: 86 $
+ *              xRevision: 90 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __EXREGION_C__
 
@@ -194,13 +194,12 @@ AcpiExSystemMemorySpaceHandler (
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
 
-
 #ifndef ACPI_MISALIGNED_TRANSFERS
     /*
      * Hardware does not support non-aligned data transfers, we must verify
      * the request.
      */
-    (void) AcpiUtShortDivide ((ACPI_INTEGER *) &Address, Length, NULL, &Remainder);
+    (void) AcpiUtShortDivide ((ACPI_INTEGER) Address, Length, NULL, &Remainder);
     if (Remainder != 0)
     {
         return_ACPI_STATUS (AE_AML_ALIGNMENT);
@@ -214,7 +213,8 @@ AcpiExSystemMemorySpaceHandler (
      */
     if ((Address < MemInfo->MappedPhysicalAddress) ||
         (((ACPI_INTEGER) Address + Length) >
-            ((ACPI_INTEGER) MemInfo->MappedPhysicalAddress + MemInfo->MappedLength)))
+            ((ACPI_INTEGER)
+            MemInfo->MappedPhysicalAddress + MemInfo->MappedLength)))
     {
         /*
          * The request cannot be resolved by the current memory mapping;
@@ -232,7 +232,9 @@ AcpiExSystemMemorySpaceHandler (
          * Don't attempt to map memory beyond the end of the region, and
          * constrain the maximum mapping size to something reasonable.
          */
-        WindowSize = (ACPI_SIZE) ((MemInfo->Address + MemInfo->Length) - Address);
+        WindowSize = (ACPI_SIZE)
+            ((MemInfo->Address + MemInfo->Length) - Address);
+
         if (WindowSize > ACPI_SYSMEM_REGION_WINDOW_SIZE)
         {
             WindowSize = ACPI_SYSMEM_REGION_WINDOW_SIZE;
@@ -244,8 +246,9 @@ AcpiExSystemMemorySpaceHandler (
                                     (void **) &MemInfo->MappedLogicalAddress);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not map memory at %8.8X%8.8X, size %X\n",
-                    ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Could not map memory at %8.8X%8.8X, size %X\n",
+                ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
             MemInfo->MappedLength = 0;
             return_ACPI_STATUS (Status);
         }
@@ -261,10 +264,12 @@ AcpiExSystemMemorySpaceHandler (
      * access
      */
     LogicalAddrPtr = MemInfo->MappedLogicalAddress +
-                    ((ACPI_INTEGER) Address - (ACPI_INTEGER) MemInfo->MappedPhysicalAddress);
+                     ((ACPI_INTEGER) Address -
+                      (ACPI_INTEGER) MemInfo->MappedPhysicalAddress);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "SystemMemory %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
+            "SystemMemory %d (%d width) Address=%8.8X%8.8X\n",
+            Function, BitWidth,
             ACPI_FORMAT_UINT64 (Address)));
 
    /*
@@ -386,13 +391,15 @@ AcpiExSystemIoSpaceHandler (
     {
     case ACPI_READ:
 
-        Status = AcpiOsReadPort ((ACPI_IO_ADDRESS) Address, &Value32, BitWidth);
+        Status = AcpiOsReadPort ((ACPI_IO_ADDRESS) Address,
+                    &Value32, BitWidth);
         *Value = Value32;
         break;
 
     case ACPI_WRITE:
 
-        Status = AcpiOsWritePort ((ACPI_IO_ADDRESS) Address, (UINT32) *Value, BitWidth);
+        Status = AcpiOsWritePort ((ACPI_IO_ADDRESS) Address,
+                    (UINT32) *Value, BitWidth);
         break;
 
     default:
@@ -464,12 +471,14 @@ AcpiExPciConfigSpaceHandler (
     case ACPI_READ:
 
         *Value = 0;
-        Status = AcpiOsReadPciConfiguration (PciId, PciRegister, Value, BitWidth);
+        Status = AcpiOsReadPciConfiguration (PciId, PciRegister,
+                    Value, BitWidth);
         break;
 
     case ACPI_WRITE:
 
-        Status = AcpiOsWritePciConfiguration (PciId, PciRegister, *Value, BitWidth);
+        Status = AcpiOsWritePciConfiguration (PciId, PciRegister,
+                    *Value, BitWidth);
         break;
 
     default:
@@ -594,8 +603,7 @@ AcpiExDataTableSpaceHandler (
 
     LogicalAddrPtr = ACPI_PHYSADDR_TO_PTR (Address);
 
-
-   /* Perform the memory read or write */
+    /* Perform the memory read or write */
 
     switch (Function)
     {

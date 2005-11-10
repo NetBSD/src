@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signo.c,v 1.3 2002/04/03 17:18:21 christos Exp $	*/
+/*	$NetBSD: linux_signo.c,v 1.3.14.1 2005/11/10 14:01:07 skrll Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.3 2002/04/03 17:18:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.3.14.1 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -136,6 +136,8 @@ const int native_to_linux_signo[NSIG];
 #include <compat/linux/arch/mips/linux_sigarray.c>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_sigarray.c>
+#elif defined(__amd64__)
+#include <compat/linux/arch/amd64/linux_sigarray.c>
 #else
 const int linux_to_native_signo[NSIG];
 #endif

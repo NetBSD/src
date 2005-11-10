@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.2.2.5 2005/03/04 16:51:29 skrll Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.2.2.6 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.2.2.5 2005/03/04 16:51:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.2.2.6 2005/11/10 14:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,27 +59,27 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.2.2.5 2005/03/04 16:51:29 skrll Ex
 
 typedef struct {
 	char type[2];
-	int (*func) __P((void *, ISO_RRIP_ANALYZE *));
-	void (*func2) __P((void *, ISO_RRIP_ANALYZE *));
+	int (*func)(void *, ISO_RRIP_ANALYZE *);
+	void (*func2)(void *, ISO_RRIP_ANALYZE *);
 	int result;
 } RRIP_TABLE;
 
-static int cd9660_rrip_attr __P((void *, ISO_RRIP_ANALYZE *));
-static void cd9660_rrip_defattr __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_slink __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_altname __P((void *, ISO_RRIP_ANALYZE *));
-static void cd9660_rrip_defname __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_pclink __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_reldir __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_tstamp __P((void *, ISO_RRIP_ANALYZE *));
-static void cd9660_rrip_deftstamp __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_device __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_idflag __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_cont __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_stop __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_extref __P((void *, ISO_RRIP_ANALYZE *));
-static int cd9660_rrip_loop __P((struct iso_directory_record *,
-				 ISO_RRIP_ANALYZE *, const RRIP_TABLE *));
+static int cd9660_rrip_attr(void *, ISO_RRIP_ANALYZE *);
+static void cd9660_rrip_defattr(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_slink(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_altname(void *, ISO_RRIP_ANALYZE *);
+static void cd9660_rrip_defname(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_pclink(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_reldir(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_tstamp(void *, ISO_RRIP_ANALYZE *);
+static void cd9660_rrip_deftstamp(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_device(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_idflag(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_cont(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_stop(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_extref(void *, ISO_RRIP_ANALYZE *);
+static int cd9660_rrip_loop(struct iso_directory_record *,
+				 ISO_RRIP_ANALYZE *, const RRIP_TABLE *);
 /*
  * POSIX file attribute
  */
@@ -122,7 +122,8 @@ cd9660_rrip_slink(v, ana)
 	ISO_RRIP_SLINK_COMPONENT *pcomp;
 	ISO_RRIP_SLINK_COMPONENT *pcompe;
 	int len, wlen, cont;
-	char *outbuf, *inbuf;
+	char *outbuf;
+	const char *inbuf;
 
 	pcomp = (ISO_RRIP_SLINK_COMPONENT *)p->component;
 	pcompe = (ISO_RRIP_SLINK_COMPONENT *)
@@ -231,7 +232,7 @@ cd9660_rrip_altname(v, ana)
 	ISO_RRIP_ANALYZE *ana;
 {
 	ISO_RRIP_ALTNAME *p = v;
-	char *inbuf;
+	const char *inbuf;
 	int wlen;
 	int cont;
 

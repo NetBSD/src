@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.26.2.3 2004/09/21 13:22:57 skrll Exp $ */
+/*	$NetBSD: db_trace.c,v 1.26.2.4 2005/11/10 13:59:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26.2.3 2004/09/21 13:22:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26.2.4 2005/11/10 13:59:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,11 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26.2.3 2004/09/21 13:22:57 skrll Exp 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-void db_dump_fpstate __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_fpstate __P((db_expr_t, int, db_expr_t, const char *));
+void db_dump_window __P((db_expr_t, int, db_expr_t, const char *));
+void db_dump_stack __P((db_expr_t, int, db_expr_t, const char *));
+void db_dump_trap __P((db_expr_t, int, db_expr_t, const char *));
+void db_dump_ts __P((db_expr_t, int, db_expr_t, const char *));
 void db_print_window __P((u_int64_t));
 
 #if 0
@@ -63,13 +63,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
-	char            *modif;
+	const char      *modif;
  	void		(*pr) __P((const char *, ...));
 {
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
-	char		c, *cp = modif;
+	char		c;
+	const char	*cp = modif;
 
 	while ((c = *cp++) != 0) {
 		if (c == 't')
@@ -111,7 +112,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	while (count--) {
 		int		i;
 		db_expr_t	offset;
-		char		*name;
+		const char	*name;
 		db_addr_t	pc;
 		struct frame64	*f64;
 		struct frame32  *f32;
@@ -177,7 +178,7 @@ db_dump_window(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	int i;
 	u_int64_t frame = DDB_TF->tf_out[6];
@@ -287,12 +288,13 @@ db_dump_stack(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	int		i;
 	u_int64_t	frame, oldframe;
 	boolean_t	kernel_only = TRUE;
-	char		c, *cp = modif;
+	char		c;
+	const char	*cp = modif;
 
 	while ((c = *cp++) != 0)
 		if (c == 'u')
@@ -347,7 +349,7 @@ db_dump_trap(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	struct trapframe64 *tf;
 
@@ -355,7 +357,8 @@ db_dump_trap(addr, have_addr, count, modif)
 	tf = &ddb_regs.ddb_tf;
 	{
 		/* Or the user trapframe? */
-		register char c, *cp = modif;
+		register char c;
+		register const char *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'u')
 				tf = curlwp->l_md.md_tf;
@@ -431,7 +434,7 @@ db_dump_fpstate(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	struct fpstate64 *fpstate;
 
@@ -523,7 +526,7 @@ db_dump_ts(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
-	char *modif;
+	const char *modif;
 {
 	struct trapstate	*ts;
 	int			i, tl;

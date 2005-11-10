@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17.2.4 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.17.2.5 2005/11/10 14:01:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.4 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.5 2005/11/10 14:01:06 skrll Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -909,4 +909,10 @@ linux_machdepioctl(l, v, retval)
 	}
 	SCARG(&bia, com) = com;
 	return sys_ioctl(l, &bia, retval);
+}
+
+int
+linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+{
+	return 0;
 }

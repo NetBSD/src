@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.67.2.7 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.67.2.8 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -523,28 +523,6 @@ struct cmsghdr {
 #define	SHUT_RD		0		/* Disallow further receives. */
 #define	SHUT_WR		1		/* Disallow further sends. */
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
-
-#if defined(_NETBSD_SOURCE)
-/*
- * 4.3 compat sockaddr, move to compat file later
- */
-struct osockaddr {
-	__uint16_t	sa_family;	/* address family */
-	char		sa_data[14];	/* up to 14 bytes of direct address */
-};
-
-/*
- * 4.3-compat message header (move to compat file later).
- */
-struct omsghdr {
-	__caddr_t	msg_name;	/* optional address */
-	int		msg_namelen;	/* size of address */
-	struct iovec	*msg_iov;	/* scatter/gather array */
-	int		msg_iovlen;	/* # elements in msg_iov */
-	__caddr_t	msg_accrights;	/* access rights sent/received */
-	int		msg_accrightslen;
-};
-#endif
 
 #include <sys/cdefs.h>
 

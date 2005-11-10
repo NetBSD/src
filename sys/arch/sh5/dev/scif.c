@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.10.2.5 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: scif.c,v 1.10.2.6 2005/11/10 13:58:50 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.5 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.6 2005/11/10 13:58:50 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -588,15 +588,15 @@ scifstart(struct tty *tp)
 	/* Output the first chunk of the contiguous buffer. */
 	{
 		int n;
-		int max;
+		int maxb;
 		int i;
 
 		n = sc->sc_tbc;
-		max = sc->sc_fifolen -
+		maxb = sc->sc_fifolen -
 		    ((scif_rd_scfdr2(sc) >> SCIF_SCFDR2_T_SHIFT) &
 		        SCIF_SCFDR2_T_MASK);
-		if (n > max)
-			n = max;
+		if (n > maxb)
+			n = maxb;
 
 		for (i = 0; i < n; i++) {
 			scif_putc(sc->sc_iot, sc->sc_ioh, *(sc->sc_tba));
@@ -1059,7 +1059,7 @@ scifdiag(void *arg)
 integrate void
 scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr2;
@@ -1425,15 +1425,15 @@ scifintr(void *arg)
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
 			int n;
-			int max;
+			int maxb;
 			int i;
 
 			n = sc->sc_tbc;
-			max = sc->sc_fifolen -
+			maxb = sc->sc_fifolen -
 			    ((scif_rd_scfdr2(sc) >> SCIF_SCFDR2_T_SHIFT) &
 				SCIF_SCFDR2_T_MASK);
-			if (n > max)
-				n = max;
+			if (n > maxb)
+				n = maxb;
 
 			for (i = 0; i < n; i++) {
 				scif_putc(sc->sc_iot, sc->sc_ioh,*(sc->sc_tba));

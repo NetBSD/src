@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.2.2.3 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.2.2.4 2005/11/10 14:09:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
  */
 struct msdosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args30 _pad1; /* compat with old userland tools */
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */
@@ -130,7 +130,6 @@ struct msdosfsmount {
 	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	u_int pm_flags;		/* see below */
-	struct netexport pm_export;	/* export information */
 };
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	((cn) * (pmp)->pm_fatmult / (pmp)->pm_fatdiv)
@@ -226,9 +225,9 @@ struct msdosfsmount {
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
  */
-void msdosfs_init __P((void));
-void msdosfs_reinit __P((void));
-void msdosfs_done __P((void));
+void msdosfs_init(void);
+void msdosfs_reinit(void);
+void msdosfs_done(void);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_msdosfs_setup);

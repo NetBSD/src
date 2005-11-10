@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.12.20.7 2005/03/04 16:52:59 skrll Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.12.20.8 2005/11/10 14:10:33 skrll Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ you leave this credit intact on any copies of this file.
 #define SADB_X_SPDEXPIRE  21	/* not yet */
 #define SADB_X_SPDDELETE2 22	/* by policy id */
 #define SADB_X_NAT_T_NEW_MAPPING 23
+#if 0
+#define	SADB_X_MIGRATE    24	/* KAME */
+#endif
 #define SADB_MAX          23
 
 struct sadb_msg {
@@ -309,6 +312,11 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EXT_NAT_T_DPORT        22
 #define SADB_X_EXT_NAT_T_OA           23
 #define SADB_X_EXT_NAT_T_FRAG	      24
+#if 0
+#define	SADB_X_EXT_TAG		      25	/* KAME */
+#define	SADB_X_EXT_SA3		      26	/* KAME */
+#define	SADB_X_EXT_PACKET	      27	/* KAME */
+#endif
 #define SADB_EXT_MAX                  24
 
 #define SADB_SATYPE_UNSPEC	0
@@ -412,13 +420,14 @@ struct sadb_x_nat_t_frag {
 /* Utilities */
 #define PFKEY_ALIGN8(a) (1 + (((a) - 1) | (8 - 1)))
 #define	PFKEY_EXTLEN(msg) \
-	PFKEY_UNUNIT64(((struct sadb_ext *)(msg))->sadb_ext_len)
+	PFKEY_UNUNIT64(((struct sadb_ext *)(void *)(msg))->sadb_ext_len)
 #define PFKEY_ADDR_PREFIX(ext) \
-	(((struct sadb_address *)(ext))->sadb_address_prefixlen)
+	(((struct sadb_address *)(void *)(ext))->sadb_address_prefixlen)
 #define PFKEY_ADDR_PROTO(ext) \
-	(((struct sadb_address *)(ext))->sadb_address_proto)
+	(((struct sadb_address *)(void *)(ext))->sadb_address_proto)
 #define PFKEY_ADDR_SADDR(ext) \
-	((struct sockaddr *)((caddr_t)(ext) + sizeof(struct sadb_address)))
+	((struct sockaddr *)(void *)((char *)(void *)(ext) + \
+	sizeof(struct sadb_address)))
 
 /* in 64bits */
 #define	PFKEY_UNUNIT64(a)	((a) << 3)

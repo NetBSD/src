@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.8 2005/03/04 16:50:07 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.9 2005/11/10 14:07:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.8 2005/03/04 16:50:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.9 2005/11/10 14:07:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -206,12 +206,10 @@ static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 
 /* prototypes */
-static void KernelWakeupFunc(struct buf * bp);
-static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
-		   dev_t dev, RF_SectorNum_t startSect,
-		   RF_SectorCount_t numSect, caddr_t buf,
-		   void (*cbFunc) (struct buf *), void *cbArg,
-		   int logBytesPerSector, struct proc * b_proc);
+static void KernelWakeupFunc(struct buf *);
+static void InitBP(struct buf *, struct vnode *, unsigned,
+    dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
+    void *, int, struct proc *);
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
@@ -255,7 +253,7 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct bufq_state buf_queue;	/* used for the device queue */
+	struct bufq_state *buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -397,7 +395,8 @@ raidattach(int num)
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
-		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
+		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
+		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -669,7 +668,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			rs->sc_flags &= ~RAIDF_INITED;
 
 			/* Detach the disk. */
-			disk_detach(&rs->sc_dkdev);
+			pseudo_disk_detach(&rs->sc_dkdev);
 		}
 	}
 
@@ -734,9 +733,10 @@ raidstrategy(struct buf *bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_PUT(&rs->buf_queue, bp);
+	BUFQ_PUT(rs->buf_queue, bp);
 
-	raidstart(raidPtrs[raidID]);
+	/* scheduled the IO to happen at the next convenient time */
+	wakeup(&(raidPtrs[raidID]->iodone));
 
 	splx(s);
 }
@@ -981,7 +981,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		rs->sc_flags &= ~RAIDF_INITED;
 
 		/* Detach the disk. */
-		disk_detach(&rs->sc_dkdev);
+		pseudo_disk_detach(&rs->sc_dkdev);
 
 		raidunlock(rs);
 
@@ -1619,7 +1619,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
-	disk_attach(&rs->sc_dkdev);
+	pseudo_disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
@@ -1701,7 +1701,7 @@ raidstart(RF_Raid_t *raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_GET(&rs->buf_queue)) == NULL) {
+		if ((bp = BUFQ_GET(rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
@@ -1998,7 +1998,7 @@ KernelWakeupFunc(struct buf *vbp)
  */
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
-       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t buf,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t bf,
        void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
        struct proc *b_proc)
 {
@@ -2008,7 +2008,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
 	bp->b_dev = dev;
-	bp->b_data = buf;
+	bp->b_data = bf;
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
@@ -3327,11 +3327,31 @@ rf_disk_unbusy(RF_RaidAccessDesc_t *desc)
 }
 
 void
-rf_pool_init(struct pool *p, size_t size, char *w_chan,
-	     size_t min, size_t max)
+rf_pool_init(struct pool *p, size_t size, const char *w_chan,
+	     size_t xmin, size_t xmax)
 {
 	pool_init(p, size, 0, 0, 0, w_chan, NULL);
-	pool_sethiwat(p, max);
-	pool_prime(p, min);
-	pool_setlowat(p, min);
+	pool_sethiwat(p, xmax);
+	pool_prime(p, xmin);
+	pool_setlowat(p, xmin);
+}
+
+/*
+ * rf_buf_queue_check(int raidid) -- looks into the buf_queue to see
+ * if there is IO pending and if that IO could possibly be done for a
+ * given RAID set.  Returns 0 if IO is waiting and can be done, 1
+ * otherwise.
+ *
+ */
+
+int
+rf_buf_queue_check(int raidid)
+{
+	if ((BUFQ_PEEK(raid_softc[raidid].buf_queue) != NULL) &&
+	    raidPtrs[raidid]->openings > 0) {
+		/* there is work to do */
+		return 0;
+	} 
+	/* default is nothing to do */
+	return 1;
 }

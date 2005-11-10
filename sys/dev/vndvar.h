@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.11.2.5 2005/04/01 14:29:37 skrll Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.11.2.6 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct vnd_softc {
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
-	struct bufq_state sc_tab;	/* transfer queue */
+	struct bufq_state *sc_tab;	/* transfer queue */
 	int		 sc_active;	/* number of active transfers */
 	char		 sc_xname[8];	/* XXX external name */
 	struct disk	 sc_dkdev;	/* generic disk device info */
@@ -163,6 +163,13 @@ struct vnd_softc {
 	struct pool	 sc_vxpool;	/* vndxfer pool */
 	struct pool	 sc_vbpool;	/* vndbuf pool */
 	struct proc 	*sc_kthread;	/* kernel thread */
+	u_int32_t	 sc_comp_blksz;	/* precompressed block size */
+	u_int32_t	 sc_comp_numoffs;/* count of compressed block offsets */
+	u_int64_t	*sc_comp_offsets;/* file idx's to compressed blocks */
+	unsigned char	*sc_comp_buff;	/* compressed data buffer */
+	unsigned char	*sc_comp_decombuf;/* decompressed data buffer */
+	int32_t		 sc_comp_buffblk;/*current decompressed block */
+	z_stream	 sc_comp_stream;/* decompress descriptor */
 };
 #endif
 
@@ -177,10 +184,28 @@ struct vnd_softc {
 #define	VNF_VLABEL	0x080	/* label is valid */
 #define	VNF_KTHREAD	0x100	/* thread is running */
 #define	VNF_VUNCONF	0x200	/* device is unconfiguring */
+#define VNF_COMP	0x400	/* file is compressed */
+
+/* structure of header in a compressed file */
+struct vnd_comp_header
+{
+	char preamble[128];
+	u_int32_t block_size;
+	u_int32_t num_blocks;
+};
 
 /*
  * A simple structure for describing which vnd units are in use.
  */
+#ifdef COMPAT_30
+struct vnd_ouser {
+	int		vnu_unit;	/* which vnd unit */
+	dev_t		vnu_dev;	/* file is on this device... */
+	uint32_t	vnu_ino;	/* ...at this inode */
+};
+#define VNDIOOCGET	_IOWR('F', 2, struct vnd_ouser)	/* get list */
+#endif
+
 struct vnd_user {
 	int		vnu_unit;	/* which vnd unit */
 	dev_t		vnu_dev;	/* file is on this device... */
@@ -195,4 +220,4 @@ struct vnd_user {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
-#define VNDIOCGET	_IOWR('F', 2, struct vnd_user)	/* get list */
+#define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */

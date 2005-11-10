@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.8.2.5 2004/11/02 07:50:57 skrll Exp $
+#	$NetBSD: files.x86,v 1.8.2.6 2005/11/10 14:00:20 skrll Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -6,6 +6,10 @@ defflag opt_mpacpi.h MPACPI MPACPI_SCANPCI
 
 # MTRR support
 defflag                 MTRR
+
+# PCI fixup options
+defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
+			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
 define  cpubus { [apid = -1] }
 

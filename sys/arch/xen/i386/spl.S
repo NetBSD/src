@@ -1,5 +1,5 @@
-/*	$NetBSD: spl.S,v 1.2.2.5 2005/04/01 14:28:58 skrll Exp $	*/
-/*	NetBSD: spl.S,v 1.8 2004/02/20 17:35:01 yamt Exp 	*/
+/*	$NetBSD: spl.S,v 1.2.2.6 2005/11/10 14:00:21 skrll Exp $	*/
+/*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include "opt_ddb.h"
 #include "opt_xen.h"
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>

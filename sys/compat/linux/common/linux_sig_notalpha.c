@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.27.2.1 2005/03/04 16:40:03 skrll Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.27.2.2 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.27.2.1 2005/03/04 16:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.27.2.2 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.27.2.1 2005/03/04 16:40:03 
 /* Used on: arm, i386, m68k, mips, sparc, sparc64 */
 /* Not used on: alpha */
 
+#if !defined(__amd64__)
 /*
  * The Linux signal() system call. I think that the signal() in the C
  * library actually calls sigaction, so I doubt this one is ever used.
@@ -95,7 +96,7 @@ linux_sys_signal(l, v, retval)
 	error = sigaction1(p, linux_to_native_signo[sig],
 	    &nbsa, &obsa, NULL, 0);
 	if (error == 0)
-		*retval = (int)obsa.sa_handler;
+		*retval = (int)(long)obsa.sa_handler; /* XXXmanu cast */
 	return (error);
 }
 
@@ -165,6 +166,7 @@ linux_sys_sigprocmask(l, v, retval)
 	return(linux_sigprocmask1(p, SCARG(uap, how),
 				SCARG(uap, set), SCARG(uap, oset)));
 }
+#endif /* !__amd64__ */
 
 /*
  * The deprecated pause(2), which is really just an instance

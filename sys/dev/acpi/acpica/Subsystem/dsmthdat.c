@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              xRevision: 77 $
+ *              xRevision: 84 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __DSMTHDAT_C__
 
@@ -129,6 +129,29 @@ __KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsmthdat")
 
+/* Local prototypes */
+
+static void
+AcpiDsMethodDataDeleteValue (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_WALK_STATE         *WalkState);
+
+static ACPI_STATUS
+AcpiDsMethodDataSetValue (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_OPERAND_OBJECT     *Object,
+    ACPI_WALK_STATE         *WalkState);
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+ACPI_OBJECT_TYPE
+AcpiDsMethodDataGetType (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_WALK_STATE         *WalkState);
+#endif
+
 
 /*******************************************************************************
  *
@@ -139,8 +162,8 @@ __KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6.2.3 2004/09/21 13:26:41 skrll Exp $
  * RETURN:      Status
  *
  * DESCRIPTION: Initialize the data structures that hold the method's arguments
- *              and locals.  The data struct is an array of NTEs for each.
- *              This allows RefOf and DeRefOf to work properly for these
+ *              and locals.  The data struct is an array of namespace nodes for
+ *              each - this allows RefOf and DeRefOf to work properly for these
  *              special data types.
  *
  * NOTES:       WalkState fields are initialized to zero by the
@@ -170,7 +193,8 @@ AcpiDsMethodDataInit (
         WalkState->Arguments[i].Name.Integer |= (i << 24);
         WalkState->Arguments[i].Descriptor    = ACPI_DESC_TYPE_NAMED;
         WalkState->Arguments[i].Type          = ACPI_TYPE_ANY;
-        WalkState->Arguments[i].Flags         = ANOBJ_END_OF_PEER_LIST | ANOBJ_METHOD_ARG;
+        WalkState->Arguments[i].Flags         = ANOBJ_END_OF_PEER_LIST |
+                                                ANOBJ_METHOD_ARG;
     }
 
     /* Init the method locals */
@@ -183,7 +207,8 @@ AcpiDsMethodDataInit (
         WalkState->LocalVariables[i].Name.Integer |= (i << 24);
         WalkState->LocalVariables[i].Descriptor    = ACPI_DESC_TYPE_NAMED;
         WalkState->LocalVariables[i].Type          = ACPI_TYPE_ANY;
-        WalkState->LocalVariables[i].Flags         = ANOBJ_END_OF_PEER_LIST | ANOBJ_METHOD_LOCAL;
+        WalkState->LocalVariables[i].Flags         = ANOBJ_END_OF_PEER_LIST |
+                                                     ANOBJ_METHOD_LOCAL;
     }
 
     return_VOID;
@@ -282,16 +307,19 @@ AcpiDsMethodDataInitArgs (
         return_ACPI_STATUS (AE_OK);
     }
 
-    /* Copy passed parameters into the new method stack frame  */
+    /* Copy passed parameters into the new method stack frame */
 
-    while ((Index < ACPI_METHOD_NUM_ARGS) && (Index < MaxParamCount) && Params[Index])
+    while ((Index < ACPI_METHOD_NUM_ARGS) &&
+           (Index < MaxParamCount)        &&
+            Params[Index])
     {
         /*
          * A valid parameter.
          * Store the argument in the method/walk descriptor.
          * Do not copy the arg in order to implement call by reference
          */
-        Status = AcpiDsMethodDataSetValue (AML_ARG_OP, Index, Params[Index], WalkState);
+        Status = AcpiDsMethodDataSetValue (AML_ARG_OP, Index,
+                    Params[Index], WalkState);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -310,11 +338,13 @@ AcpiDsMethodDataInitArgs (
  * FUNCTION:    AcpiDsMethodDataGetNode
  *
  * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
- *              Index               - Which localVar or argument whose type
- *                                      to get
+ *              Index               - Which Local or Arg whose type to get
  *              WalkState           - Current walk state object
+ *              Node                - Where the node is returned.
  *
- * RETURN:      Get the Node associated with a local or arg.
+ * RETURN:      Status and node
+ *
+ * DESCRIPTION: Get the Node associated with a local or arg.
  *
  ******************************************************************************/
 
@@ -337,7 +367,8 @@ AcpiDsMethodDataGetNode (
 
         if (Index > ACPI_METHOD_MAX_LOCAL)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Local index %d is invalid (max %d)\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Local index %d is invalid (max %d)\n",
                 Index, ACPI_METHOD_MAX_LOCAL));
             return_ACPI_STATUS (AE_AML_INVALID_INDEX);
         }
@@ -351,7 +382,8 @@ AcpiDsMethodDataGetNode (
 
         if (Index > ACPI_METHOD_MAX_ARG)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Arg index %d is invalid (max %d)\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Arg index %d is invalid (max %d)\n",
                 Index, ACPI_METHOD_MAX_ARG));
             return_ACPI_STATUS (AE_AML_INVALID_INDEX);
         }
@@ -375,7 +407,7 @@ AcpiDsMethodDataGetNode (
  * FUNCTION:    AcpiDsMethodDataSetValue
  *
  * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
- *              Index               - Which localVar or argument to get
+ *              Index               - Which Local or Arg to get
  *              Object              - Object to be inserted into the stack entry
  *              WalkState           - Current walk state object
  *
@@ -386,7 +418,7 @@ AcpiDsMethodDataGetNode (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDsMethodDataSetValue (
     UINT16                  Opcode,
     UINT32                  Index,
@@ -401,7 +433,7 @@ AcpiDsMethodDataSetValue (
 
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-        "obj %p op %X, ref count = %d [%s]\n", Object,
+        "NewObj %p Opcode %X, Refs=%d [%s]\n", Object,
         Opcode, Object->Common.ReferenceCount,
         AcpiUtGetTypeName (Object->Common.Type)));
 
@@ -430,69 +462,16 @@ AcpiDsMethodDataSetValue (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDsMethodDataGetType
- *
- * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
- *              Index               - Which localVar or argument whose type
- *                                      to get
- *              WalkState           - Current walk state object
- *
- * RETURN:      Data type of current value of the selected Arg or Local
- *
- ******************************************************************************/
-
-ACPI_OBJECT_TYPE
-AcpiDsMethodDataGetType (
-    UINT16                  Opcode,
-    UINT32                  Index,
-    ACPI_WALK_STATE         *WalkState)
-{
-    ACPI_STATUS             Status;
-    ACPI_NAMESPACE_NODE     *Node;
-    ACPI_OPERAND_OBJECT     *Object;
-
-
-    ACPI_FUNCTION_TRACE ("DsMethodDataGetType");
-
-
-    /* Get the namespace node for the arg/local */
-
-    Status = AcpiDsMethodDataGetNode (Opcode, Index, WalkState, &Node);
-    if (ACPI_FAILURE (Status))
-    {
-        return_VALUE ((ACPI_TYPE_NOT_FOUND));
-    }
-
-    /* Get the object */
-
-    Object = AcpiNsGetAttachedObject (Node);
-    if (!Object)
-    {
-        /* Uninitialized local/arg, return TYPE_ANY */
-
-        return_VALUE (ACPI_TYPE_ANY);
-    }
-
-    /* Get the object type */
-
-    return_VALUE (ACPI_GET_OBJECT_TYPE (Object));
-}
-
-
-/*******************************************************************************
- *
  * FUNCTION:    AcpiDsMethodDataGetValue
  *
  * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
  *              Index               - Which localVar or argument to get
  *              WalkState           - Current walk state object
- *              *DestDesc           - Ptr to Descriptor into which selected Arg
- *                                    or Local value should be copied
+ *              DestDesc            - Where Arg or Local value is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Retrieve value of selected Arg or Local from the method frame
- *              at the current top of the method stack.
+ * DESCRIPTION: Retrieve value of selected Arg or Local for this method
  *              Used only in AcpiExResolveToValue().
  *
  ******************************************************************************/
@@ -543,18 +522,37 @@ AcpiDsMethodDataGetValue (
          * was referenced by the method (via the ASL)
          * before it was initialized.  Either case is an error.
          */
-        switch (Opcode)
+
+        /* If slack enabled, init the LocalX/ArgX to an Integer of value zero */
+
+        if (AcpiGbl_EnableInterpreterSlack)
+        {
+            Object = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
+            if (!Object)
+            {
+                return_ACPI_STATUS (AE_NO_MEMORY);
+            }
+
+            Object->Integer.Value = 0;
+            Node->Object = Object;
+        }
+
+        /* Otherwise, return the error */
+
+        else switch (Opcode)
         {
         case AML_ARG_OP:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Uninitialized Arg[%d] at node %p\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Uninitialized Arg[%d] at node %p\n",
                 Index, Node));
 
             return_ACPI_STATUS (AE_AML_UNINITIALIZED_ARG);
 
         case AML_LOCAL_OP:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Uninitialized Local[%d] at node %p\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Uninitialized Local[%d] at node %p\n",
                 Index, Node));
 
             return_ACPI_STATUS (AE_AML_UNINITIALIZED_LOCAL);
@@ -586,12 +584,12 @@ AcpiDsMethodDataGetValue (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Delete the entry at Opcode:Index on the method stack.  Inserts
+ * DESCRIPTION: Delete the entry at Opcode:Index.  Inserts
  *              a null into the stack slot after the object is deleted.
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDsMethodDataDeleteValue (
     UINT16                  Opcode,
     UINT32                  Index,
@@ -644,7 +642,7 @@ AcpiDsMethodDataDeleteValue (
  * FUNCTION:    AcpiDsStoreObjectToLocal
  *
  * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
- *              Index               - Which localVar or argument to set
+ *              Index               - Which Local or Arg to set
  *              ObjDesc             - Value to be stored
  *              WalkState           - Current walk state
  *
@@ -670,7 +668,7 @@ AcpiDsStoreObjectToLocal (
 
 
     ACPI_FUNCTION_TRACE ("DsStoreObjectToLocal");
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Opcode=%d Idx=%d Obj=%p\n",
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Opcode=%X Index=%d Obj=%p\n",
         Opcode, Index, ObjDesc));
 
     /* Parameter validation */
@@ -740,20 +738,21 @@ AcpiDsStoreObjectToLocal (
         if (Opcode == AML_ARG_OP)
         {
             /*
-             * Make sure that the object is the correct type.  This may be overkill, but
-             * it is here because references were NS nodes in the past.  Now they are
-             * operand objects of type Reference.
+             * Make sure that the object is the correct type.  This may be
+             * overkill, butit is here because references were NS nodes in
+             *  the past.  Now they are operand objects of type Reference.
              */
             if (ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) != ACPI_DESC_TYPE_OPERAND)
             {
-                ACPI_REPORT_ERROR (("Invalid descriptor type while storing to method arg: [%s]\n",
-                        AcpiUtGetDescriptorName (CurrentObjDesc)));
+                ACPI_REPORT_ERROR ((
+                    "Invalid descriptor type while storing to method arg: [%s]\n",
+                    AcpiUtGetDescriptorName (CurrentObjDesc)));
                 return_ACPI_STATUS (AE_AML_INTERNAL);
             }
 
             /*
-             * If we have a valid reference object that came from RefOf(), do the
-             * indirect store
+             * If we have a valid reference object that came from RefOf(),
+             * do the indirect store
              */
             if ((CurrentObjDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
                 (CurrentObjDesc->Reference.Opcode == AML_REF_OF_OP))
@@ -763,11 +762,13 @@ AcpiDsStoreObjectToLocal (
                         NewObjDesc, CurrentObjDesc));
 
                 /*
-                 * Store this object to the Node
-                 * (perform the indirect store)
+                 * Store this object to the Node (perform the indirect store)
+                 * NOTE: No implicit conversion is performed, as per the ACPI
+                 * specification rules on storing to Locals/Args.
                  */
                 Status = AcpiExStoreObjectToNode (NewObjDesc,
-                            CurrentObjDesc->Reference.Object, WalkState);
+                            CurrentObjDesc->Reference.Object, WalkState,
+                            ACPI_NO_IMPLICIT_CONVERSION);
 
                 /* Remove local reference if we copied the object above */
 
@@ -802,5 +803,59 @@ AcpiDsStoreObjectToLocal (
 
     return_ACPI_STATUS (Status);
 }
+
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDsMethodDataGetType
+ *
+ * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
+ *              Index               - Which Local or Arg whose type to get
+ *              WalkState           - Current walk state object
+ *
+ * RETURN:      Data type of current value of the selected Arg or Local
+ *
+ * DESCRIPTION: Get the type of the object stored in the Local or Arg
+ *
+ ******************************************************************************/
+
+ACPI_OBJECT_TYPE
+AcpiDsMethodDataGetType (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_WALK_STATE         *WalkState)
+{
+    ACPI_STATUS             Status;
+    ACPI_NAMESPACE_NODE     *Node;
+    ACPI_OPERAND_OBJECT     *Object;
+
+
+    ACPI_FUNCTION_TRACE ("DsMethodDataGetType");
+
+
+    /* Get the namespace node for the arg/local */
+
+    Status = AcpiDsMethodDataGetNode (Opcode, Index, WalkState, &Node);
+    if (ACPI_FAILURE (Status))
+    {
+        return_VALUE ((ACPI_TYPE_NOT_FOUND));
+    }
+
+    /* Get the object */
+
+    Object = AcpiNsGetAttachedObject (Node);
+    if (!Object)
+    {
+        /* Uninitialized local/arg, return TYPE_ANY */
+
+        return_VALUE (ACPI_TYPE_ANY);
+    }
+
+    /* Get the object type */
+
+    return_VALUE (ACPI_GET_OBJECT_TYPE (Object));
+}
+#endif
 
 

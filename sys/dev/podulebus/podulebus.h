@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.6 2002/05/22 22:43:14 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.6.6.1 2005/11/10 14:07:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -48,12 +48,12 @@
 
 struct podule_description {
 	int product_id;
-	char *description;
+	const char *description;
 };
 
 struct manufacturer_description {
 	int manufacturer_id;
-	char *description;
+	const char *description;
 };
 
 #include <machine/podulebus_machdep.h>

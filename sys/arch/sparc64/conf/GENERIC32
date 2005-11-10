@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.69.2.12 2005/03/04 16:39:11 skrll Exp $
+# 	$NetBSD: GENERIC32,v 1.69.2.13 2005/11/10 13:59:17 skrll Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69.2.12 $"
+#ident 		"GENERIC-$Revision: 1.69.2.13 $"
 
 maxusers	64
 
@@ -56,7 +56,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
@@ -134,6 +135,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
+options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
@@ -160,6 +162,7 @@ file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -173,6 +176,7 @@ options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 options 	MROUTING	# packet forwarding of multicast packets
@@ -215,7 +219,6 @@ cpu0	at mainbus0
 #### Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# Ultra 1
-#upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at ppb?
@@ -349,7 +352,6 @@ cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
@@ -403,6 +405,7 @@ ld*	at mlx? unit ?
 ## miniroot images, etc.
 
 pseudo-device	vnd	4
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -509,44 +512,121 @@ ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
-usb*	at ehci?			# USB bus support
+# USB bus support
+usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
+#usb*	at slhci?
 
-uhub*	at usb?						# USB Hubs
+# USB Hubs
+uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
-uhidev*	at uhub? port ? configuration ? interface ?	# USB HID
-uhid*	at uhidev? reportid ?				# USB Generic HID
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
 
-ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
 
-umodem*	at uhub? port ? configuration ?			# USB Modem
+# USB eGalax touch-panel
+uep*	at uhub? port ?
+wsmouse* at uep? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
-umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+wd*	at umass?
 
-uaudio*	at uhub? port ? configuration ?			# USB audio
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-uscanner* at uhub? port ?				# USB scanners
-uyap*	at uhub? port ?					# Y@P firmware loader
-ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+# USB 802.11b adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 
-# PCI IEEE1394 controllers
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
-fw*	at fwbus?			# IP over 1394
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
 
-# IEEE1394 nodes
-#fwnode* at fwbus? idhi ? idlo ?
-#sbpscsi* at fwnode?
+# Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
+
+# D-Link DSB-R100 USB radio
+udsbr*	at uhub? port ?
+radio*	at udsbr?
+
+# USB Generic driver
+ugen*	at uhub? port ?
 
 ## Loopback network interface; required
 pseudo-device	loop
@@ -609,27 +689,24 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## CardBus cards; UT marks untested.
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards UT
+#com*	at cardbus? function ?	# Modems and serial cards UT
 
 # CardBus SCSI controllers
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480 UT
-#njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
+#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+#ahc*	at cardbus? function ?	# Adaptec ADP-1480 UT
+#njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus network interfaces
-#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
-#atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11) UT
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX UT
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x UT
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139 UT
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143 UT
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11 UT
+#atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
+#ex*	at cardbus? function ?	# 3Com 3C575TX UT
+#fxp*	at cardbus? function ?	# Intel i8255x UT
+#rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
+#tlp*	at cardbus? function ?	# DECchip 21143 UT
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
-
-# CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller UT
+#ehci*	at cardbus? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? function ?	# Open Host Controller
 
 ## PCMCIA cards; UT marks untested.
 
@@ -696,15 +773,32 @@ audio*		at audiobus?
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
-wsdisplay*	at cgsix?
 
 ## Sun FFB
 ffb*		at mainbus0
-wsdisplay*	at ffb?
 
 # On board vga on U5/U10 etc.
 machfb*		at pci?
-wsdisplay*	at machfb?
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+# wsmouse for sun ms
+wsmouse*        at ms0
+
+# wskbd for sun kbd
+wskbd0 at kbd0
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_SUN		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_GALLANT12x22		# PROM font look-alike
 
 #### Other device configuration
 
@@ -721,6 +815,8 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 pseudo-device	rnd
 
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.24.6.6 2005/04/01 14:32:12 skrll Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.24.6.7 2005/11/10 14:12:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,7 +74,7 @@
  * inline functions [maybe]
  */
 
-#if defined(UVM_MAP_INLINE) || defined(UVM_MAP)
+#if defined(UVM_MAP_INLINE) || defined(UVM_MAP_C)
 
 #ifndef _UVM_UVM_MAP_I_H_
 #define _UVM_UVM_MAP_I_H_
@@ -84,13 +84,13 @@
  */
 
 MAP_INLINE struct vm_map *
-uvm_map_create(pmap_t pmap, vaddr_t min, vaddr_t max, int flags)
+uvm_map_create(pmap_t pmap, vaddr_t vmin, vaddr_t vmax, int flags)
 {
 	struct vm_map *result;
 
 	MALLOC(result, struct vm_map *, sizeof(struct vm_map),
 	    M_VMMAP, M_WAITOK);
-	uvm_map_setup(result, min, max, flags);
+	uvm_map_setup(result, vmin, vmax, flags);
 	result->pmap = pmap;
 	return(result);
 }
@@ -102,7 +102,7 @@ uvm_map_create(pmap_t pmap, vaddr_t min, vaddr_t max, int flags)
  */
 
 MAP_INLINE void
-uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
+uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 {
 
 	RB_INIT(&map->rbhead);
@@ -110,8 +110,8 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->nentries = 0;
 	map->size = 0;
 	map->ref_count = 1;
-	vm_map_setmin(map, min);
-	vm_map_setmax(map, max);
+	vm_map_setmin(map, vmin);
+	vm_map_setmax(map, vmax);
 	map->flags = flags;
 	map->first_free = &map->header;
 	map->hint = &map->header;
@@ -186,4 +186,4 @@ vm_map_to_kernel(struct vm_map *map)
 
 #endif /* _UVM_UVM_MAP_I_H_ */
 
-#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
+#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP_C) */

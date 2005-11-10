@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.22 2002/02/15 07:33:50 simonb Exp $	*/
+/*	$NetBSD: db_command.h,v 1.22.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@ struct db_command;
 
 void	db_skip_to_eol(void);
 void	db_command_loop(void);
-void	db_error(char *);
+void	db_error(const char *);
 
 extern db_addr_t db_dot;	/* current location */
 extern db_addr_t db_last_addr;	/* last explicit address typed */
@@ -51,7 +51,7 @@ extern db_addr_t db_next;	/* next address to be examined
 struct db_command {
 	const char	*name;		/* command name */
 	/* function to call */
-	void		(*fcn)(db_expr_t, int, db_expr_t, char *);
+	void		(*fcn)(db_expr_t, int, db_expr_t, const char *);
 	int		flag;		/* extra info: */
 #define	CS_OWN		0x1		/* non-standard syntax */
 #define	CS_MORE		0x2		/* standard syntax, but may have other

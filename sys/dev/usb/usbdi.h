@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.62.6.4 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.62.6.5 2005/11/10 14:08:06 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USB_CDEV_MAJOR 108
 #endif
 
+#define DEVINFOSIZE 1024
+
 usbd_status usbd_open_pipe(usbd_interface_handle, u_int8_t,
 			   u_int8_t, usbd_pipe_handle *);
 usbd_status usbd_close_pipe(usbd_pipe_handle);
@@ -163,24 +165,26 @@ const char *usbd_errstr(usbd_status);
 void usbd_add_dev_event(int, usbd_device_handle);
 void usbd_add_drv_event(int, usbd_device_handle, device_ptr_t);
 
-void usbd_devinfo(usbd_device_handle, int, char *, size_t);
+char *usbd_devinfo_alloc(usbd_device_handle, int);
+void usbd_devinfo_free(char *);
+
 const struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 			(usbd_interface_handle, u_int8_t);
 
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
-int usbd_ratecheck(struct timeval *last);
+int usbd_ratecheck(struct timeval *);
 
-usbd_status usbd_get_string(usbd_device_handle dev, int si, char *buf);
+usbd_status usbd_get_string(usbd_device_handle, int, char *);
 
 /* An iterator for descriptors. */
 typedef struct {
 	const uByte *cur;
 	const uByte *end;
 } usbd_desc_iter_t;
-void usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter);
-const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *iter);
+void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event

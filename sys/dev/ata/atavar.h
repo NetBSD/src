@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26.6.8 2005/03/04 16:41:02 skrll Exp $	*/
+/*	$NetBSD: atavar.h,v 1.26.6.9 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -88,6 +88,8 @@ struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
 	int queue_freeze; /* freeze count for the queue */
 	struct ata_xfer *active_xfer; /* active command */
+	int queue_flags;	/* flags for this queue */
+#define QF_IDLE_WAIT   0x01    /* someone is wants the controller idle */
 };
 
 /* ATA bus instance state information. */
@@ -97,7 +99,6 @@ struct atabus_softc {
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
 	void *sc_powerhook;
-	int sc_sleeping;
 };
 
 /*
@@ -325,7 +326,7 @@ struct ata_channel {
 #define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
-#define ATACH_TH_RUN   0x100	/* the kenrel thread is working */
+#define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 	u_int8_t ch_status;	/* copy of status register */
 	u_int8_t ch_error;	/* copy of error register */
@@ -441,6 +442,7 @@ int	ata_downgrade_mode(struct ata_drive_datas *, int);
 void	ata_probe_caps(struct ata_drive_datas *);
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
+void	ata_queue_idle(struct ata_queue *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */

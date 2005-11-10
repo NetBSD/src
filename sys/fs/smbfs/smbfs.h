@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.9.2.4 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.9.2.5 2005/11/10 14:09:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -61,7 +61,6 @@ struct smbfs_args {
 	mode_t 		file_mode;
 	mode_t 		dir_mode;
 	int		caseopt;
-	struct	export_args export;	/* network export information */
 };
 
 #ifdef _KERNEL

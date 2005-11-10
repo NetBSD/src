@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.13.2.4 2005/03/04 16:45:17 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.13.2.5 2005/11/10 14:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13.2.4 2005/03/04 16:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13.2.5 2005/11/10 14:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,6 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
-int	ehci_pci_match(struct device *, struct cfdata *, void *);
-void	ehci_pci_attach(struct device *, struct device *, void *);
-int	ehci_pci_detach(device_ptr_t, int);
-
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
@@ -77,10 +73,7 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
-    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);
-
-int
+static int
 ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -93,7 +86,7 @@ ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
@@ -204,7 +197,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 				       usbctlprint);
 }
 
-int
+static int
 ehci_pci_detach(device_ptr_t self, int flags)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
@@ -223,3 +216,6 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	}
 	return (0);
 }
+
+CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
+    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);

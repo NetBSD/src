@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.8.2.3 $
+ *       $Revision: 1.8.2.4 $
  *
  *****************************************************************************/
 
@@ -116,16 +116,6 @@
 
 #ifndef __ACNETBSD_H__
 #define __ACNETBSD_H__
-
-#if 0
-/*
- * XXX this is technically correct, but will cause problems with some ASL
- *     which only works if the string names a Microsoft operating system.
- */
-#define ACPI_OS_NAME		"NetBSD"
-#else
-#define ACPI_OS_NAME		"Microsoft Windows NT"
-#endif
 
 /* NetBSD uses GCC */
 

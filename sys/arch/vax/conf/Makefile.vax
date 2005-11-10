@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.70.6.3 2004/09/21 13:23:40 skrll Exp $
+#	$NetBSD: Makefile.vax,v 1.70.6.4 2005/11/10 13:59:59 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 VAX=		$S/arch/vax
-GENASSYM=	${VAX}/vax/genassym.cf
+GENASSYM_CONF=	${VAX}/vax/genassym.cf
 
 ##
 ## (2) compile settings

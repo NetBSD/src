@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.62.2.5 2005/03/04 16:52:03 skrll Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.62.2.6 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62.2.5 2005/03/04 16:52:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62.2.6 2005/11/10 14:09:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(p, control);
-	if (sbappendaddr(&so2->so_rcv, (struct sockaddr *)sun, m,
+	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		m_freem(control);
 		m_freem(m);
@@ -286,7 +286,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			snd->sb_mbmax += unp->unp_mbcnt - rcv->sb_mbcnt;
 			unp->unp_mbcnt = rcv->sb_mbcnt;
 			newhiwat = snd->sb_hiwat + unp->unp_cc - rcv->sb_cc;
-			(void)chgsbsize(so2->so_uid,
+			(void)chgsbsize(so2->so_uidinfo,
 			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
 			unp->unp_cc = rcv->sb_cc;
 			sowwakeup(so2);
@@ -306,8 +306,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, l)))
-			break;
+		if (control && (error = unp_internalize(control, l))) {
+			goto die;
+		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
@@ -364,7 +365,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
 			newhiwat = snd->sb_hiwat -
 			    (rcv->sb_cc - unp->unp_conn->unp_cc);
-			(void)chgsbsize(so->so_uid,
+			(void)chgsbsize(so->so_uidinfo,
 			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
 			unp->unp_conn->unp_cc = rcv->sb_cc;
 			sorwakeup(so2);
@@ -641,7 +642,7 @@ restart:
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
-	vattr.va_mode = ACCESSPERMS;
+	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	VOP_LEASE(nd.ni_dvp, l, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);

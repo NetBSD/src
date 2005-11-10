@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.37.2.9 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.37.2.10 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.9 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.10 2005/11/10 14:10:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,22 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.9 2005/04/01 14:31:34 skrll
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
-void	portal_init __P((void));
-void	portal_done __P((void));
-int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *));
-int	portal_start __P((struct mount *, int, struct lwp *));
-int	portal_unmount __P((struct mount *, int, struct lwp *));
-int	portal_root __P((struct mount *, struct vnode **));
-int	portal_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct lwp *));
-int	portal_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int	portal_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	portal_vget __P((struct mount *, ino_t, struct vnode **));
-int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
-			   struct ucred **));
-int	portal_vptofh __P((struct vnode *, struct fid *));
+void	portal_init(void);
+void	portal_done(void);
+int	portal_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct lwp *);
+int	portal_start(struct mount *, int, struct lwp *);
+int	portal_unmount(struct mount *, int, struct lwp *);
+int	portal_root(struct mount *, struct vnode **);
+int	portal_quotactl(struct mount *, int, uid_t, void *,
+			     struct lwp *);
+int	portal_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int	portal_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	portal_vget(struct mount *, ino_t, struct vnode **);
 
 void
 portal_init()
@@ -183,7 +179,7 @@ portal_unmount(mp, mntflags, l)
 	int mntflags;
 	struct lwp *l;
 {
-	struct vnode *rootvp = VFSTOPORTAL(mp)->pm_root;
+	struct vnode *rtvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
 
 	if (mntflags & MNT_FORCE)
@@ -199,19 +195,19 @@ portal_unmount(mp, mntflags, l)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (rootvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1)
 		return (EBUSY);
-	if ((error = vflush(mp, rootvp, flags)) != 0)
+	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);
 
 	/*
 	 * Release reference on underlying root vnode
 	 */
-	vrele(rootvp);
+	vrele(rtvp);
 	/*
 	 * And blow it away for future re-use
 	 */
-	vgone(rootvp);
+	vgone(rtvp);
 	/*
 	 * Shutdown the socket.  This will cause the select in the
 	 * daemon to wake up, and then the accept will get ECONNABORTED
@@ -306,36 +302,6 @@ portal_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-int
-portal_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_checkexp(mp, mb, what, anon)
-	struct mount *mp;
-	struct mbuf *mb;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
-
 SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
 {
 
@@ -374,14 +340,12 @@ struct vfsops portal_vfsops = {
 	portal_statvfs,
 	portal_sync,
 	portal_vget,
-	portal_fhtovp,
-	portal_vptofh,
+	NULL,				/* vfs_fhtovp */
+	NULL,				/* vfs_vptofh */
 	portal_init,
 	NULL,
 	portal_done,
-	NULL,
 	NULL,				/* vfs_mountroot */
-	portal_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	portal_vnodeopv_descs,

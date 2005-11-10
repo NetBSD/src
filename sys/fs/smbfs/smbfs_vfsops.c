@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.8 2005/04/01 14:30:56 skrll Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.9 2005/11/10 14:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.8 2005/04/01 14:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.9 2005/11/10 14:09:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -69,7 +69,7 @@ SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
 #else
 SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 {
-	struct sysctlnode *smb = NULL;
+	const struct sysctlnode *smb = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -109,8 +109,6 @@ void smbfs_reinit(void);
 void smbfs_done(void);
 
 int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
-int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int smbfs_vptofh(struct vnode *, struct fid *);
 
 POOL_INIT(smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0, "smbfsnopl",
     &pool_allocator_nointr);
@@ -131,15 +129,12 @@ struct vfsops smbfs_vfsops = {
 	smbfs_statvfs,
 	smbfs_sync,
 	smbfs_vget,
-	smbfs_fhtovp,
-	smbfs_vptofh,
+	NULL,			/* vfs_fhtovp */
+	NULL,			/* vfs_vptofh */
 	smbfs_init,
 	smbfs_reinit,
 	smbfs_done,
-	NULL,
 	(int (*) (void)) eopnotsupp, /* mountroot */
-	(int (*) (struct mount *, struct mbuf *, int *,
-		  struct ucred **)) eopnotsupp, /* checkexp */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	smbfs_vnodeopv_descs,
@@ -485,27 +480,6 @@ int smbfs_vget(mp, ino, vpp)
 	struct vnode **vpp;
 {
 	return (EOPNOTSUPP);
-}
-
-/* ARGSUSED */
-int smbfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
-{
-	return (EINVAL);
-}
-
-/*
- * Vnode pointer to File handle, should never happen either
- */
-/* ARGSUSED */
-int
-smbfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-	return (EINVAL);
 }
 
 #endif /* __FreeBSD_version < 400009 */

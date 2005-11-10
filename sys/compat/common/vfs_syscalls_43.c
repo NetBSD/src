@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.6 2005/03/04 16:39:22 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.7 2005/11/10 14:00:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.6 2005/03/04 16:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.7 2005/11/10 14:00:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -61,10 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.6 2005/03/04 16:39:22 skr
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
+#include <compat/sys/mount.h>
 
 static void cvtstat __P((struct stat *, struct stat43 *));
 
@@ -503,3 +507,63 @@ unionread:
 	FILE_UNUSE(fp, l);
 	return (error);
 }
+
+/*
+ * sysctl helper routine for vfs.generic.conf lookups.
+ */
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+static int
+sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
+{
+        struct vfsconf vfc;
+        extern const char * const mountcompatnames[];
+        extern int nmountcompatnames;
+	struct sysctlnode node;
+	struct vfsops *vfsp;
+	u_int vfsnum;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+	vfsnum = name[0];
+	if (vfsnum >= nmountcompatnames ||
+	    mountcompatnames[vfsnum] == NULL)
+		return (EOPNOTSUPP);
+	vfsp = vfs_getopsbyname(mountcompatnames[vfsnum]);
+	if (vfsp == NULL)
+		return (EOPNOTSUPP);
+
+	vfc.vfc_vfsops = vfsp;
+	strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
+	vfc.vfc_typenum = vfsnum;
+	vfc.vfc_refcount = vfsp->vfs_refcount;
+	vfc.vfc_flags = 0;
+	vfc.vfc_mountroot = vfsp->vfs_mountroot;
+	vfc.vfc_next = NULL;
+
+	node = *rnode;
+	node.sysctl_data = &vfc;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * Top level filesystem related information gathering.
+ */
+SYSCTL_SETUP(compat_sysctl_vfs_setup, "compat sysctl vfs subtree setup")
+{
+	extern int nmountcompatnames;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "maxtypenum",
+		       SYSCTL_DESCR("Highest valid filesystem type number"),
+		       NULL, nmountcompatnames, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "conf",
+		       SYSCTL_DESCR("Filesystem configuration information"),
+		       sysctl_vfs_generic_conf, 0, NULL,
+		       sizeof(struct vfsconf),
+		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
+}
+#endif

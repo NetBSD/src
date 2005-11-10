@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.15 2002/02/15 07:33:54 simonb Exp $	*/
+/*	$NetBSD: db_watch.h,v 1.15.16.1 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -42,9 +42,9 @@ typedef struct db_watchpoint {
 	struct db_watchpoint *link;	/* link in in-use or free chain */
 } *db_watchpoint_t;
 
-void		db_deletewatch_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_watchpoint_cmd(db_expr_t, int, db_expr_t, char *);
-void		db_listwatch_cmd(db_expr_t, int, db_expr_t, char *);
+void		db_deletewatch_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_watchpoint_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_listwatch_cmd(db_expr_t, int, db_expr_t, const char *);
 void		db_set_watchpoints(void);
 void		db_clear_watchpoints(void);
 

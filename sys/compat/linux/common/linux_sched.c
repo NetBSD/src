@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.12.2.2 2004/09/21 13:25:40 skrll Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.12.2.3 2005/11/10 14:01:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,20 +42,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12.2.2 2004/09/21 13:25:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12.2.3 2005/11/10 14:01:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
+#include <sys/malloc.h>
 #include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 
 #include <machine/cpu.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+#include <compat/linux/common/linux_emuldata.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -70,8 +76,16 @@ linux_sys_clone(l, v, retval)
 	struct linux_sys_clone_args /* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
+#ifdef LINUX_NPTL
+		syscallarg(void *) parent_tidptr;
+		syscallarg(void *) child_tidptr;
+#endif
 	} */ *uap = v;
 	int flags, sig;
+	int error;
+#ifdef LINUX_NPTL
+	struct linux_emuldata *led;
+#endif
 
 	/*
 	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
@@ -108,14 +122,50 @@ linux_sys_clone(l, v, retval)
 		return (EINVAL);
 	sig = linux_to_native_signo[sig];
 
+#ifdef LINUX_NPTL
+	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
+
+	if (SCARG(uap, flags) & LINUX_CLONE_PARENT_SETTID) {
+		if (SCARG(uap, parent_tidptr) == NULL) {
+			printf("linux_sys_clone: NULL parent_tidptr\n");
+			return EINVAL;
+		}
+
+		if ((error = copyout(&l->l_proc->p_pid,
+		    SCARG(uap, parent_tidptr), 
+		    sizeof(l->l_proc->p_pid))) != 0)
+			return error;
+	}
+
+	/* CLONE_CHILD_CLEARTID: TID clear in the child on exit() */
+	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_CLEARTID)
+		led->child_clear_tid = SCARG(uap, child_tidptr);
+	else	
+		led->child_clear_tid = NULL;
+
+	/* CLONE_CHILD_SETTID: TID set in the child on clone() */
+	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_SETTID)
+		led->child_set_tid = SCARG(uap, child_tidptr);
+	else
+		led->child_set_tid = NULL;
+
+	/* CLONE_SETTLS: new Thread Local Storage in the child */
+	if (SCARG(uap, flags) & LINUX_CLONE_SETTLS)
+		led->set_tls = linux_get_newtls(l);
+	else
+		led->set_tls = 0;
+#endif /* LINUX_NPTL */
 	/*
 	 * Note that Linux does not provide a portable way of specifying
 	 * the stack area; the caller must know if the stack grows up
 	 * or down.  So, we pass a stack size of 0, so that the code
 	 * that makes this adjustment is a noop.
 	 */
-	return (fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    NULL, NULL, retval, NULL));
+	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
+	    NULL, NULL, retval, NULL)) != 0)
+		return error;
+
+	return 0;
 }
 
 int
@@ -353,17 +403,142 @@ linux_sys_exit_group(l, v, retval)
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
+	struct proc *p;
+	struct linux_emuldata *led;
+	pid_t group_pid;
 
 	/*
-	 * XXX The calling thread is supposed to kill all threads
+	 * The calling thread is supposed to kill all threads
 	 * in the same thread group (i.e. all threads created
-	 * via clone(2) with CLONE_THREAD flag set). This appears
-	 * to not be used yet, so the thread group handling
-	 * is currently not implemented.
+	 * via clone(2) with CLONE_THREAD flag set).
 	 */
+	led = l->l_proc->p_emuldata;
+	group_pid = led->s->group_pid;
+	PROCLIST_FOREACH(p, &allproc) {
+		if (p->p_emul != &emul_linux)
+			continue;
+
+		if (p == l->l_proc)
+			continue;
+
+		led = p->p_emuldata;
+		if (led->s->group_pid == group_pid) {
+			/* XXX we should exit, not send a SIGKILL */
+			psignal(p, SIGKILL);
+		}
+	}
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
 	/* NOTREACHED */
 	return 0;
 }
 #endif /* !__m68k__ */
+
+#ifdef LINUX_NPTL
+int
+linux_sys_set_tid_address(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_set_tid_address_args /* {
+		syscallarg(int *) tidptr;
+	} */ *uap = v;
+	struct linux_emuldata *led;
+
+	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
+	led->clear_tid = SCARG(uap, tid);
+
+	*retval = l->l_proc->p_pid;
+
+	return 0;
+}
+
+/* ARGUSED1 */
+int
+linux_sys_gettid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	*retval = l->l_proc->p_pid;
+	return 0;
+}
+
+int
+linux_sys_sched_getaffinity(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sched_getaffinity_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(unsigned int) len;
+		syscallarg(unsigned long *) mask;
+	} */ *uap = v;
+	int error;
+	int ret;
+	int ncpu;
+	int name[2];
+	size_t sz;
+	char *data;
+	int *retp;
+
+	if (SCARG(uap, mask) == NULL)
+		return EINVAL;
+
+	if (SCARG(uap, len) < sizeof(int))
+		return EINVAL;
+
+	if (pfind(SCARG(uap, pid)) == NULL)
+		return ESRCH;
+
+	/* 
+	 * return the actual number of CPU, tag all of them as available 
+	 * The result is a mask, the first CPU being in the least significant
+	 * bit.
+	 */
+	name[0] = CTL_HW;
+	name[1] = HW_NCPU;
+	sz = sizeof(ncpu);
+
+	if ((error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL)) != 0)
+		return error;
+
+	ret = (1 << ncpu) - 1;
+
+	data = malloc(SCARG(uap, len), M_TEMP, M_WAITOK|M_ZERO);
+	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
+	*retp = ret;
+
+	if ((error = copyout(data, SCARG(uap, mask), SCARG(uap, len))) != 0)
+		return error;
+
+	free(data, M_TEMP);
+
+	return 0;
+
+}
+
+int
+linux_sys_sched_setaffinity(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sched_setaffinity_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(unsigned int) len;
+		syscallarg(unsigned long *) mask;
+	} */ *uap = v;
+
+	if (pfind(SCARG(uap, pid)) == NULL)
+		return ESRCH;
+
+	/* Let's ignore it */
+#ifdef DEBUG_LINUX
+	printf("linux_sys_sched_setaffinity\n");
+#endif
+	return 0;
+};
+#endif /* LINUX_NPTL */

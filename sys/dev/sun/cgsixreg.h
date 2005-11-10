@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.4.24.3 2004/09/21 13:33:26 skrll Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.4.24.4 2005/11/10 14:08:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -169,7 +169,8 @@ struct cg6_fbc {
 	u_int32_t fbc_s;		/* global status */
 	u_int32_t fbc_draw;		/* drawing pipeline status */
 	u_int32_t fbc_blit;		/* blitter status */
-	u_int32_t fbc_pad3[25];
+	u_int32_t fbc_font;		/* pixel transfer register */
+	u_int32_t fbc_pad3[24];
 	u_int32_t fbc_x0;		/* blitter, src llx */
 	u_int32_t fbc_y0;		/* blitter, src lly */
 	u_int32_t fbc_pad4[2];
@@ -184,7 +185,10 @@ struct cg6_fbc {
 	u_int32_t fbc_pad7[2];
 	u_int32_t fbc_offx;		/* x offset for drawing */
 	u_int32_t fbc_offy;		/* y offset for drawing */
-	u_int32_t fbc_pad8[6];
+	u_int32_t fbc_pad8[2];
+	u_int32_t fbc_incx;		/* x offset for drawing */
+	u_int32_t fbc_incy;		/* y offset for drawing */
+	u_int32_t fbc_pad81[2];
 	u_int32_t fbc_clipminx;		/* clip rectangle llx */
 	u_int32_t fbc_clipminy;		/* clip rectangle lly */
 	u_int32_t fbc_pad9[2];
@@ -192,7 +196,7 @@ struct cg6_fbc {
 	u_int32_t fbc_clipmaxy;		/* clip rectangle ury */
 	u_int32_t fbc_pad10[2];
 	u_int32_t fbc_fg;		/* fg value for rop */
-	u_int32_t fbc_pad11[1];
+	u_int32_t fbc_bg;
 	u_int32_t fbc_alu;		/* operation to be performed */
 	u_int32_t fbc_pad12[509];
 	u_int32_t fbc_arectx;		/* rectangle drawing, x coord */

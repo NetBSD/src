@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.37.2.8 2005/04/01 14:30:11 skrll Exp $	*/
+/*	$NetBSD: twe.c,v 1.37.2.9 2005/11/10 14:06:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.8 2005/04/01 14:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.9 2005/11/10 14:06:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,6 @@ static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
 static int	twe_reset(struct twe_softc *);
-static int	twe_submatch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
@@ -128,15 +126,6 @@ static int	twe_del_unit(struct twe_softc *, int);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
-
-dev_type_open(tweopen);
-dev_type_close(tweclose);
-dev_type_ioctl(tweioctl);
-
-const struct cdevsw twe_cdevsw = {
-	tweopen, tweclose, noread, nowrite, tweioctl,
-	nostop, notty, nopoll, nommap,
-};
 
 extern struct	cfdriver twe_cd;
 
@@ -334,7 +323,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
         struct ctlname ctlnames[] = CTL_NAMES;
-        struct sysctlnode *node;
+        const struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
@@ -560,8 +549,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	int rv;
 	uint16_t dsize;
 	uint8_t newtype, newstripe;
-	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[TWECF_NLOCS];
 
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
@@ -649,11 +637,10 @@ twe_add_unit(struct twe_softc *sc, int unit)
 
 	twea.twea_unit = unit;
 
-	ldesc->len = 1;
-	ldesc->locs[TWECF_UNIT] = unit;
+	locs[TWECF_UNIT] = unit;
 
-	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", NULL, &twea,
-					 twe_print, twe_submatch);
+	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", locs, &twea,
+					 twe_print, config_stdsubmatch);
 
 	rv = 0;
  out:
@@ -782,21 +769,6 @@ twe_print(void *aux, const char *pnp)
 		aprint_normal("block device at %s", pnp);
 	aprint_normal(" unit %d", twea->twea_unit);
 	return (UNCONF);
-}
-
-/*
- * Match a sub-device.
- */
-static int
-twe_submatch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
-{
-
-	if (cf->cf_loc[TWECF_UNIT] != TWECF_UNIT_DEFAULT &&
-	    cf->cf_loc[TWECF_UNIT] != ldesc->locs[TWECF_UNIT])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -1218,7 +1190,7 @@ done:
  */
 static int
 twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
-	      void *buf)
+	      void *sbuf)
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1248,7 +1220,7 @@ twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	tp->tp_table_id = htole16(table_id);
 	tp->tp_param_id = param_id;
 	tp->tp_param_size = size;
-	memcpy(tp->tp_data, buf, size);
+	memcpy(tp->tp_data, sbuf, size);
 
 	/* Map the transfer. */
 	if ((rv = twe_ccb_map(sc, ccb)) != 0) {
@@ -1738,7 +1710,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 /*
  * Accept an open operation on the control device.
  */
-int
+static int
 tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
@@ -1755,7 +1727,7 @@ tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 /*
  * Accept the last close on the control device.
  */
-int
+static int
 tweclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
@@ -1776,7 +1748,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
 /*
  * Handle control operations.
  */
-int
+static int
 tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct twe_softc *twe;
@@ -1934,6 +1906,11 @@ done:
 		free(pdata, M_DEVBUF);
 	return error;
 }
+
+const struct cdevsw twe_cdevsw = {
+	tweopen, tweclose, noread, nowrite, tweioctl,
+	    nostop, notty, nopoll, nommap,
+};
 
 /*
  * Print some information about the controller

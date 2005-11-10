@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.18.48.1 2005/01/24 08:34:54 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.18.48.2 2005/11/10 13:59:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct confargs {
 #define cf_intpri	cf_loc[1]
 #define cf_intvec	cf_loc[2]
 
-int bus_scan(struct device *, struct cfdata *, void *);
+int bus_scan(struct device *, struct cfdata *, const int *, void *);
 int bus_print(void *, const char *);
 int bus_peek(int, int, int);
 void * bus_mapin(int, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.34.2.4 2005/03/04 16:53:30 skrll Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.34.2.5 2005/11/10 14:11:25 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34.2.4 2005/03/04 16:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34.2.5 2005/11/10 14:11:25 skrll Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -422,7 +422,7 @@ ip6_forward(m, srcrt)
 		if (mcopy) {
 			u_long mtu;
 #ifdef IPSEC
-			struct secpolicy *sp;
+			struct secpolicy *xsp;
 			int ipsecerror;
 			size_t ipsechdrsiz;
 #endif
@@ -436,9 +436,9 @@ ip6_forward(m, srcrt)
 			 * case, as we have the outgoing interface for
 			 * encapsulated packet as "rt->rt_ifp".
 			 */
-			sp = ipsec6_getpolicybyaddr(mcopy, IPSEC_DIR_OUTBOUND,
+			xsp = ipsec6_getpolicybyaddr(mcopy, IPSEC_DIR_OUTBOUND,
 				IP_FORWARDING, &ipsecerror);
-			if (sp) {
+			if (xsp) {
 				ipsechdrsiz = ipsec6_hdrsiz(mcopy,
 					IPSEC_DIR_OUTBOUND, NULL);
 				if (ipsechdrsiz < mtu)

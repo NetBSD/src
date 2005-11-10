@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.92.2.5 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.92.2.6 2005/11/10 14:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92.2.5 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92.2.6 2005/11/10 14:09:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -138,6 +138,9 @@ int	dumponpanic = DUMP_ON_PANIC;
 void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
 
+const char hexdigits[] = "0123456789abcdef";
+const char HEXDIGITS[] = "0123456789ABCDEF";
+
 
 /*
  * functions
@@ -148,8 +151,7 @@ void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
  */
 
 void
-tablefull(tab, hint)
-	const char *tab, *hint;
+tablefull(const char *tab, const char *hint)
 {
 	if (hint)
 		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
@@ -281,10 +283,7 @@ log(int level, const char *fmt, ...)
  */
 
 void
-vlog(level, fmt, ap)
-	int level;
-	const char *fmt;
-	va_list ap;
+vlog(int level, const char *fmt, va_list ap)
 {
 	int s;
 
@@ -305,8 +304,7 @@ vlog(level, fmt, ap)
  */
 
 void
-logpri(level)
-	int level;
+logpri(int level)
 {
 	int s;
 
@@ -319,8 +317,7 @@ logpri(level)
  * Note: we must be in the mutex here!
  */
 void
-klogpri(level)
-	int level;
+klogpri(int level)
 {
 	char *p;
 	char snbuf[KPRINTF_BUFSIZE];
@@ -367,10 +364,7 @@ addlog(const char *fmt, ...)
  * => we must already be in the mutex!
  */
 static void
-putchar(c, flags, tp)
-	int c;
-	int flags;
-	struct tty *tp;
+putchar(int c, int flags, struct tty *tp)
 {
 	struct kern_msgbuf *mbp;
 
@@ -456,8 +450,7 @@ uprintf(const char *fmt, ...)
  */
 
 tpr_t
-tprintf_open(p)
-	struct proc *p;
+tprintf_open(struct proc *p)
 {
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -472,8 +465,7 @@ tprintf_open(p)
  */
 
 void
-tprintf_close(sess)
-	tpr_t sess;
+tprintf_close(tpr_t sess)
 {
 
 	if (sess)
@@ -554,9 +546,7 @@ db_printf(const char *fmt, ...)
 }
 
 void
-db_vprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+db_vprintf(const char *fmt, va_list ap)
 {
 
 	/* No mutex needed; DDB pauses all processors. */
@@ -763,9 +753,7 @@ printf(const char *fmt, ...)
  */
 
 void
-vprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+vprintf(const char *fmt, va_list ap)
 {
 	int s;
 
@@ -783,15 +771,15 @@ vprintf(fmt, ap)
  * sprintf: print a message to a buffer
  */
 int
-sprintf(char *buf, const char *fmt, ...)
+sprintf(char *bf, const char *fmt, ...)
 {
 	int retval;
 	va_list ap;
 
 	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
+	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
 	va_end(ap);
-	*(buf + retval) = 0;	/* null terminate */
+	*(bf + retval) = 0;	/* null terminate */
 	return(retval);
 }
 
@@ -800,15 +788,12 @@ sprintf(char *buf, const char *fmt, ...)
  */
 
 int
-vsprintf(buf, fmt, ap)
-	char *buf;
-	const char *fmt;
-	va_list ap;
+vsprintf(char *bf, const char *fmt, va_list ap)
 {
 	int retval;
 
-	retval = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
-	*(buf + retval) = 0;	/* null terminate */
+	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
+	*(bf + retval) = 0;	/* null terminate */
 	return (retval);
 }
 
@@ -816,7 +801,7 @@ vsprintf(buf, fmt, ap)
  * snprintf: print a message to a buffer
  */
 int
-snprintf(char *buf, size_t size, const char *fmt, ...)
+snprintf(char *bf, size_t size, const char *fmt, ...)
 {
 	int retval;
 	va_list ap;
@@ -824,9 +809,9 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
 
 	if (size < 1)
 		return (-1);
-	p = buf + size - 1;
+	p = bf + size - 1;
 	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
+	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
 	va_end(ap);
 	*(p) = 0;	/* null terminate */
 	return(retval);
@@ -836,19 +821,15 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
  * vsnprintf: print a message to a buffer [already have va_alist]
  */
 int
-vsnprintf(buf, size, fmt, ap)
-        char *buf;
-        size_t size;
-        const char *fmt;
-        va_list ap;
+vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 {
 	int retval;
 	char *p;
 
 	if (size < 1)
 		return (-1);
-	p = buf + size - 1;
-	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
+	p = bf + size - 1;
+	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
 	*(p) = 0;	/* null terminate */
 	return(retval);
 }
@@ -859,20 +840,17 @@ vsnprintf(buf, size, fmt, ap)
  * => returns pointer to the buffer
  */
 char *
-bitmask_snprintf(val, p, buf, buflen)
-	u_quad_t val;
-	const char *p;
-	char *buf;
-	size_t buflen;
+bitmask_snprintf(u_quad_t val, const char *p, char *bf, size_t buflen)
 {
 	char *bp, *q;
 	size_t left;
-	char *sbase, snbuf[KPRINTF_BUFSIZE];
+	const char *sbase;
+	char snbuf[KPRINTF_BUFSIZE];
 	int base, bit, ch, len, sep;
 	u_quad_t field;
 
-	bp = buf;
-	memset(buf, 0, buflen);
+	bp = bf;
+	memset(bf, 0, buflen);
 
 	/*
 	 * Always leave room for the trailing NULL.
@@ -884,13 +862,13 @@ bitmask_snprintf(val, p, buf, buflen)
 	 * enough room.
 	 */
 	if (buflen < KPRINTF_BUFSIZE)
-		return (buf);
+		return (bf);
 
 	ch = *p++;
 	base = ch != '\177' ? ch : *p++;
 	sbase = base == 8 ? "%qo" : base == 10 ? "%qd" : base == 16 ? "%qx" : 0;
 	if (sbase == 0)
-		return (buf);	/* punt if not oct, dec, or hex */
+		return (bf);	/* punt if not oct, dec, or hex */
 
 	snprintf(snbuf, sizeof(snbuf), sbase, val);
 	for (q = snbuf ; *q ; q++) {
@@ -903,7 +881,7 @@ bitmask_snprintf(val, p, buf, buflen)
 	 * or if we don't have room for "<x>", we're done.
 	 */
 	if (((val == 0) && (ch != '\177')) || left < 3)
-		return (buf);
+		return (bf);
 
 #define PUTBYTE(b, c, l) do {	\
 	*(b)++ = (c);		\
@@ -988,7 +966,7 @@ bitmask_snprintf(val, p, buf, buflen)
 		PUTBYTE(bp, '>', left);
 
 out:
-	return (buf);
+	return (bf);
 
 #undef PUTBYTE
 #undef PUTSTR
@@ -1063,14 +1041,9 @@ out:
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
 int
-kprintf(fmt0, oflags, vp, sbuf, ap)
-	const char *fmt0;
-	int oflags;
-	void *vp;
-	char *sbuf;
-	va_list ap;
+kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 {
-	char *fmt;		/* format string */
+	const char *fmt;	/* format string */
 	int ch;			/* character from fmt */
 	int n;			/* handy integer (short term usage) */
 	char *cp;		/* handy char pointer (short term usage) */
@@ -1085,8 +1058,8 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
-	char *xdigs;		/* digits for [xX] conversion */
-	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
+	const char *xdigs;	/* digits for [xX] conversion */
+	char bf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
 
 	tailp = NULL;	/* XXX: shutup gcc */
@@ -1096,7 +1069,7 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	cp = NULL;	/* XXX: shutup gcc */
 	size = 0;	/* XXX: shutup gcc */
 
-	fmt = (char *)fmt0;
+	fmt = fmt0;
 	ret = 0;
 
 	xdigs = NULL;		/* XXX: shut up gcc warning */
@@ -1205,7 +1178,7 @@ reswitch:	switch (ch) {
 			flags |= SIZEINT;
 			goto rflag;
 		case 'c':
-			*(cp = buf) = va_arg(ap, int);
+			*(cp = bf) = va_arg(ap, int);
 			size = 1;
 			sign = '\0';
 			break;
@@ -1255,13 +1228,14 @@ reswitch:	switch (ch) {
 			/* NOSTRICT */
 			_uquad = (u_long)va_arg(ap, void *);
 			base = HEX;
-			xdigs = "0123456789abcdef";
+			xdigs = hexdigits;
 			flags |= HEXPREFIX;
 			ch = 'x';
 			goto nosign;
 		case 's':
 			if ((cp = va_arg(ap, char *)) == NULL)
-				cp = "(null)";
+				/*XXXUNCONST*/
+				cp = __UNCONST("(null)");
 			if (prec >= 0) {
 				/*
 				 * can't use strlen; can only look for the
@@ -1288,10 +1262,10 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto nosign;
 		case 'X':
-			xdigs = "0123456789ABCDEF";
+			xdigs = hexdigits;
 			goto hex;
 		case 'x':
-			xdigs = "0123456789abcdef";
+			xdigs = hexdigits;
 hex:			_uquad = UARG();
 			base = HEX;
 			/* leading 0x/X only if non-zero */
@@ -1313,7 +1287,7 @@ number:			if ((dprec = prec) >= 0)
 			 * explicit precision of zero is no characters.''
 			 *	-- ANSI X3J11
 			 */
-			cp = buf + KPRINTF_BUFSIZE;
+			cp = bf + KPRINTF_BUFSIZE;
 			if (_uquad != 0 || prec != 0) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
@@ -1348,19 +1322,20 @@ number:			if ((dprec = prec) >= 0)
 					break;
 
 				default:
-					cp = "bug in kprintf: bad base";
+					/*XXXUNCONST*/
+					cp = __UNCONST("bug in kprintf: bad base");
 					size = strlen(cp);
 					goto skipsize;
 				}
 			}
-			size = buf + KPRINTF_BUFSIZE - cp;
+			size = bf + KPRINTF_BUFSIZE - cp;
 		skipsize:
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */
 			if (ch == '\0')
 				goto done;
 			/* pretend it was %c with argument ch */
-			cp = buf;
+			cp = bf;
 			*cp = ch;
 			size = 1;
 			sign = '\0';

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.82.6.3 2004/09/21 13:22:01 skrll Exp $
+# 	$NetBSD: Makefile.sparc,v 1.82.6.4 2005/11/10 13:58:55 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SPARC=		$S/arch/sparc
-GENASSYM=	${SPARC}/sparc/genassym.cf
+GENASSYM_CONF=	${SPARC}/sparc/genassym.cf
 
 ##
 ## (2) compile settings

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.10.2.4 2005/03/04 16:45:25 skrll Exp $ */
+/*	$NetBSD: pciide_sis_reg.h,v 1.10.2.5 2005/11/10 14:06:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -85,6 +85,10 @@
 #define SIS_REG_CBL_33(channel) (0x10 << (channel))
 #define SIS96x_REG_CBL(channel) (0x51 + (channel) * 2)
 #define SIS96x_REG_CBL_33 0x80
+
+/* SIS96x: when bit 7 in reg 0x40 is 0, the device masquerade as a SIS503 */
+#define SIS96x_DETECT	0x40
+#define SIS96x_DETECT_MASQ	0x40
 
 #define SIS_PRODUCT_5518 0x5518
 

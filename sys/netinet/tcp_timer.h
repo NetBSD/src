@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.19.2.4 2005/03/04 16:53:30 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.19.2.5 2005/11/10 14:11:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 #define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
 
 #ifdef	TCPTIMERS
-char *tcptimers[] =
+const char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
 #endif
 

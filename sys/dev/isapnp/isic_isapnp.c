@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.15.6.5 2005/03/04 16:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.15.6.6 2005/11/10 14:05:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -119,8 +119,8 @@ extern void isic_attach_siemens_isurf(struct isic_softc *sc);
 extern void isic_attach_isapnp_itkix1(struct isic_softc *sc);
 
 struct isic_isapnp_card_desc {
-	char *devlogic;			/* ISAPNP logical device ID */
-	char *name;			/* Name of the card */
+	const char *devlogic;		/* ISAPNP logical device ID */
+	const char *name;		/* Name of the card */
 	int card_type;			/* isic card type identifier */
 	allocmaps_func allocmaps;	/* map allocator function */
 	attach_func attach;		/* card attach and init function */
@@ -212,7 +212,7 @@ isic_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -220,7 +220,7 @@ isic_isapnp_attach(parent, self, aux)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.44.16.4 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: am7930.c,v 1.44.16.5 2005/11/10 14:04:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44.16.4 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44.16.5 2005/11/10 14:04:13 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -200,7 +200,7 @@ am7930_open(void *addr, int flags)
 	sc = addr;
 	DPRINTF(("sa_open: unit %p\n", sc));
 	sc->sc_glue->onopen(sc);
-	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
+	DPRINTF(("saopen: ok -> sc=%p\n",sc));
 	return 0;
 }
 

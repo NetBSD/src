@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.92.2.10 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.92.2.11 2005/11/10 14:11:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.10 2005/04/01 14:32:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.11 2005/11/10 14:11:55 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1214,22 +1214,130 @@ tryagain:
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		if (*tl != 0) {
 			error = fxdr_unsigned(int, *tl);
-			if (error == NFSERR_ACCES && retry_cred) {
+			switch (error) {
+			case NFSERR_PERM:
+				error = EPERM;
+				break;
+
+			case NFSERR_NOENT:
+				error = ENOENT;
+				break;
+
+			case NFSERR_IO:
+				error = EIO;
+				break;
+
+			case NFSERR_NXIO:
+				error = ENXIO;
+				break;
+
+			case NFSERR_ACCES:
+				error = EACCES;
+				if (!retry_cred)
+					break;
 				m_freem(mrep);
 				m_freem(rep->r_mreq);
 				FREE(rep, M_NFSREQ);
 				use_opencred = !use_opencred;
 				if (mrest_backup == NULL)
-					return ENOMEM; /* m_copym failure */
+					/* m_copym failure */
+					return ENOMEM;
 				mrest = mrest_backup;
 				mrest_backup = NULL;
 				cred = origcred;
 				error = 0;
 				retry_cred = FALSE;
 				goto tryagain_cred;
-			}
-			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
-				error == NFSERR_TRYLATER) {
+
+			case NFSERR_EXIST:
+				error = EEXIST;
+				break;
+
+			case NFSERR_XDEV:
+				error = EXDEV;
+				break;
+
+			case NFSERR_NODEV:
+				error = ENODEV;
+				break;
+
+			case NFSERR_NOTDIR:
+				error = ENOTDIR;
+				break;
+
+			case NFSERR_ISDIR:
+				error = EISDIR;
+				break;
+
+			case NFSERR_INVAL:
+				error = EINVAL;
+				break;
+
+			case NFSERR_FBIG:
+				error = EFBIG;
+				break;
+
+			case NFSERR_NOSPC:
+				error = ENOSPC;
+				break;
+
+			case NFSERR_ROFS:
+				error = EROFS;
+				break;
+
+			case NFSERR_MLINK:
+				error = EMLINK;
+				break;
+
+			case NFSERR_TIMEDOUT:
+				error = ETIMEDOUT;
+				break;
+
+			case NFSERR_NAMETOL:
+				error = ENAMETOOLONG;
+				break;
+
+			case NFSERR_NOTEMPTY:
+				error = ENOTEMPTY;
+				break;
+
+			case NFSERR_DQUOT:
+				error = EDQUOT;
+				break;
+
+			case NFSERR_STALE:
+				/*
+				 * If the File Handle was stale, invalidate the
+				 * lookup cache, just in case.
+				 */
+				error = ESTALE;
+				cache_purge(NFSTOV(np));
+				break;
+
+			case NFSERR_REMOTE:
+				error = EREMOTE;
+				break;
+
+			case NFSERR_WFLUSH:
+			case NFSERR_BADHANDLE:
+			case NFSERR_NOT_SYNC:
+			case NFSERR_BAD_COOKIE:
+				error = EINVAL;
+				break;
+
+			case NFSERR_NOTSUPP:
+				error = ENOTSUP;
+				break;
+
+			case NFSERR_TOOSMALL:
+			case NFSERR_SERVERFAULT:
+			case NFSERR_BADTYPE:
+				error = EINVAL;
+				break;
+
+			case NFSERR_TRYLATER:
+				if ((nmp->nm_flag & NFSMNT_NFSV3) == 0)
+					break;
 				m_freem(mrep);
 				error = 0;
 				waituntil = time.tv_sec + trylater_delay;
@@ -1246,14 +1354,19 @@ tryagain:
 				 */
 				nfs_renewxid(rep);
 				goto tryagain;
+
+			case NFSERR_STALEWRITEVERF:
+				error = EINVAL;
+				break;
+
+			default:
+#ifdef DIAGNOSTIC
+				printf("Invalid rpc error code %d\n", error);
+#endif
+				error = EINVAL;
+				break;
 			}
 
-			/*
-			 * If the File Handle was stale, invalidate the
-			 * lookup cache, just in case.
-			 */
-			if (error == ESTALE)
-				cache_purge(NFSTOV(np));
 			if (nmp->nm_flag & NFSMNT_NFSV3) {
 				*mrp = mrep;
 				*mdp = md;
@@ -2020,7 +2133,7 @@ nfsmout:
 int
 nfs_msg(l, server, msg)
 	struct lwp *l;
-	char *server, *msg;
+	const char *server, *msg;
 {
 	tpr_t tpr;
 

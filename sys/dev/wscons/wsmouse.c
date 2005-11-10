@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.31.2.6 2005/03/04 16:51:14 skrll Exp $ */
+/* $NetBSD: wsmouse.c,v 1.31.2.7 2005/11/10 14:08:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.6 2005/03/04 16:51:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.7 2005/11/10 14:08:44 skrll Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.6 2005/03/04 16:51:14 skrll Exp $
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -612,7 +613,7 @@ wsmousepoll(dev_t dev, int events, struct lwp *l)
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
 
 	if (sc->sc_base.me_evp == NULL)
-		return (EINVAL);
+		return (POLLERR);
 	return (wsevent_poll(sc->sc_base.me_evp, events, l));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.11 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.12 2005/11/10 14:11:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.11 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.12 2005/11/10 14:11:56 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -834,7 +834,9 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			if (uiop->uio_segflg == UIO_SYSSPACE)
 				memcpy(uiocp, mbufcp, xfer);
 			else
-				copyout(mbufcp, uiocp, xfer);
+				if ((error = copyout_proc(uiop->uio_lwp->l_proc,
+				    mbufcp, uiocp, xfer)) != 0)
+					return error;
 			left -= xfer;
 			len -= xfer;
 			mbufcp += xfer;
@@ -910,17 +912,19 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 				mlen = M_TRAILINGSPACE(mp);
 			}
 			xfer = (left > mlen) ? mlen : left;
+			cp = mtod(mp, caddr_t) + mp->m_len;
 #ifdef notdef
 			/* Not Yet.. */
 			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
+				(*(uiop->uio_iov->iov_op))(uiocp, cp, xfer);
 			else
 #endif
 			if (uiop->uio_segflg == UIO_SYSSPACE)
-				memcpy(mtod(mp, caddr_t)+mp->m_len, uiocp, xfer);
+				(void)memcpy(cp, uiocp, xfer);
 			else
-				copyin(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
+				/*XXX: Check error */
+				(void)copyin_proc(uiop->uio_lwp->l_proc, uiocp,
+				    cp, xfer);
 			mp->m_len += xfer;
 			left -= xfer;
 			uiocp += xfer;
@@ -939,7 +943,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			mp->m_len = 0;
 			mp2->m_next = mp;
 		}
-		cp = mtod(mp, caddr_t)+mp->m_len;
+		cp = mtod(mp, caddr_t) + mp->m_len;
 		for (left = 0; left < rem; left++)
 			*cp++ = '\0';
 		mp->m_len += rem;
@@ -1340,8 +1344,8 @@ nfs_searchdircache(vp, off, do32, hashent)
 	 * Zero is always a valid cookie.
 	 */
 	if (off == 0)
-		/* LINTED const cast away */
-		return (struct nfsdircache *)&dzero;
+		/* XXXUNCONST */
+		return (struct nfsdircache *)__UNCONST(&dzero);
 
 	if (!np->n_dircache)
 		return NULL;
@@ -1412,8 +1416,8 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	 * isn't so bad, as 0 is a special case anyway.
 	 */
 	if (off == 0)
-		/* LINTED const cast away */
-		return (struct nfsdircache *)&dzero;
+		/* XXXUNCONST */
+		return (struct nfsdircache *)__UNCONST(&dzero);
 
 	if (!np->n_dircache)
 		/*
@@ -1796,8 +1800,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_gid = gid;
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
 		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
-		vap->va_fileid = fxdr_unsigned(int32_t,
-		    fp->fa3_fileid.nfsuquad[1]);
+		vap->va_fileid = fxdr_hyper(&fp->fa3_fileid);
 		fxdr_nfsv3time(&fp->fa3_atime, &vap->va_atime);
 		vap->va_flags = 0;
 		vap->va_filerev = 0;
@@ -1860,10 +1863,11 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vaper;
 {
 	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -2018,14 +2022,14 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 {
 	struct uio auio;
 	struct iovec aiov;
-	caddr_t buf, cp;
+	caddr_t tbuf, cp;
 	struct dirent *dp;
 	off_t *cookies = NULL, *cop;
 	int error, eof, nc, len;
 
-	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
+	MALLOC(tbuf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
 
-	aiov.iov_base = buf;
+	aiov.iov_base = tbuf;
 	aiov.iov_len = NFS_DIRFRAGSIZ;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -2039,7 +2043,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 
 	len = NFS_DIRFRAGSIZ - auio.uio_resid;
 	if (error || len == 0) {
-		FREE(buf, M_TEMP);
+		FREE(tbuf, M_TEMP);
 		if (cookies)
 			free(cookies, M_TEMP);
 		return;
@@ -2049,7 +2053,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	 * Find the first valid entry and look at its offset cookie.
 	 */
 
-	cp = buf;
+	cp = tbuf;
 	for (cop = cookies; len > 0; len -= dp->d_reclen) {
 		dp = (struct dirent *)cp;
 		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
@@ -2064,11 +2068,12 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 		cp += dp->d_reclen;
 	}
 
-	FREE(buf, M_TEMP);
+	FREE(tbuf, M_TEMP);
 	free(cookies, M_TEMP);
 }
 #endif /* NFS */
 
+#ifdef NFSSERVER
 /*
  * Set up nameidata for a lookup() call and do it.
  *
@@ -2320,6 +2325,7 @@ out:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	return (error);
 }
+#endif /* NFSSERVER */
 
 /*
  * A fiddled version of m_adj() that ensures null fill to a 32-bit
@@ -2484,8 +2490,7 @@ nfsm_srvfattr(nfsd, vap, fp)
 		fp->fa3_rdev.specdata2 = txdr_unsigned(minor(vap->va_rdev));
 		fp->fa3_fsid.nfsuquad[0] = 0;
 		fp->fa3_fsid.nfsuquad[1] = txdr_unsigned(vap->va_fsid);
-		fp->fa3_fileid.nfsuquad[0] = 0;
-		fp->fa3_fileid.nfsuquad[1] = txdr_unsigned(vap->va_fileid);
+		txdr_hyper(vap->va_fileid, &fp->fa3_fileid);
 		txdr_nfsv3time(&vap->va_atime, &fp->fa3_atime);
 		txdr_nfsv3time(&vap->va_mtime, &fp->fa3_mtime);
 		txdr_nfsv3time(&vap->va_ctime, &fp->fa3_ctime);
@@ -2507,6 +2512,7 @@ nfsm_srvfattr(nfsd, vap, fp)
 	}
 }
 
+#ifdef NFSSERVER
 /*
  * nfsrv_fhtovp() - convert a fh to a vnode ptr (optionally locked)
  * 	- look up fsid in mount list (if not found ret error)
@@ -2542,7 +2548,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	mp = vfs_getvfs(&fhp->fh_fsid);
 	if (!mp)
 		return (ESTALE);
-	error = VFS_CHECKEXP(mp, nam, &exflags, &credanon);
+	error = nfs_check_export(mp, nam, &exflags, &credanon);
 	if (error)
 		return (error);
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
@@ -2608,6 +2614,7 @@ nfs_ispublicfh(fhp)
 			return (FALSE);
 	return (TRUE);
 }
+#endif /* NFSSERVER */
 
 /*
  * This function compares two net addresses by family and returns TRUE

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.42.6.7 2005/03/04 16:52:57 skrll Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.42.6.8 2005/11/10 14:10:32 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.42.6.7 2005/03/04 16:52:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.42.6.8 2005/11/10 14:10:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -218,7 +218,7 @@ gif_start(ifp)
 #ifdef GIF_ENCAPCHECK
 int
 gif_encapcheck(m, off, proto, arg)
-	const struct mbuf *m;
+	struct mbuf *m;
 	int off;
 	int proto;
 	void *arg;
@@ -263,8 +263,7 @@ gif_encapcheck(m, off, proto, arg)
 	if (m->m_pkthdr.len < sizeof(ip))
 		return 0;
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
 
 	switch (ip.ip_v) {
 #ifdef INET
@@ -538,8 +537,8 @@ gif_input(m, af, ifp)
 		eh = mtod(m, struct ether_header *);
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 		if (eh->ether_dhost[0] & 1) {
-			if (bcmp((caddr_t) etherbroadcastaddr,
-			    (caddr_t)eh->ether_dhost, sizeof(etherbroadcastaddr)) == 0)
+			if (memcmp(etherbroadcastaddr,
+			    eh->ether_dhost, sizeof(etherbroadcastaddr)) == 0)
 				m->m_flags |= M_BCAST;
 			else
 				m->m_flags |= M_MCAST;
@@ -602,8 +601,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */

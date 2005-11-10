@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5.16.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5.16.4 2005/11/10 13:58:26 skrll Exp $	*/
 /*	$OpenBSD: db_memrw.c,v 1.2 1996/12/28 06:21:52 rahnds Exp $	*/
 
 /* 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5.16.3 2004/09/21 13:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5.16.4 2005/11/10 13:58:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -78,17 +78,17 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;
 
 	if (size == 4) {
 
-		*((int*)dst) = *((int*)data);
+		*((int*)dst) = *((const int*)data);
 
 	} else 	if (size == 2) {
 
-		*((short*)dst) = *((short*)data);
+		*((short*)dst) = *((const short*)data);
 
 	} else {
 

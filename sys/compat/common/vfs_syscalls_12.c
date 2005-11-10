@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.13.2.4 2004/09/21 13:24:58 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.13.2.5 2005/11/10 14:00:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.13.2.4 2004/09/21 13:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.13.2.5 2005/11/10 14:00:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.13.2.4 2004/09/21 13:24:58 skr
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/stat.h>
 
 static void cvtstat __P((struct stat *, struct stat12 *));
 

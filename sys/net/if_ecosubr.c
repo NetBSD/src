@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.12.2.5 2005/04/01 14:31:34 skrll Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.12.2.6 2005/11/10 14:10:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12.2.5 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12.2.5 2005/04/01 14:31:34 skrll Ex
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12.2.5 2005/04/01 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12.2.6 2005/11/10 14:10:32 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -274,7 +274,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (m1 == NULL)
 			senderr(ENOBUFS);
-		M_COPY_PKTHDR(m1, m);
+		M_MOVE_PKTHDR(m1, m);
 		m1->m_len = sizeof(*ecah);
 		m1->m_pkthdr.len = m1->m_len;
 		MH_ALIGN(m1, m1->m_len);
@@ -413,7 +413,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	       		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 			if (m1 == NULL)
 				goto drop;
-			M_COPY_PKTHDR(m1, m);
+			M_MOVE_PKTHDR(m1, m);
 			m1->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
 			    2*ifp->if_data.ifi_addrlen;
 			m1->m_pkthdr.len = m1->m_len;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.nfs,v 1.2.6.5 2005/03/04 16:54:20 skrll Exp $
+#	$NetBSD: files.nfs,v 1.2.6.6 2005/11/10 14:11:55 skrll Exp $
 
 deffs	fs_nfs.h		NFS
 
@@ -22,6 +22,7 @@ file	nfs/nfs_boot.c		nfs
 file	nfs/nfs_bootdhcp.c	nfs & (nfs_boot_bootp | nfs_boot_dhcp)
 file	nfs/nfs_bootparam.c	nfs & nfs_boot_bootparam
 file	nfs/nfs_bootstatic.c	nfs & nfs_boot_bootstatic
+file	nfs/nfs_export.c	nfsserver
 file	nfs/nfs_kq.c		nfs
 file	nfs/nfs_node.c		nfs
 file	nfs/nfs_nqlease.c	nfsserver | nfs

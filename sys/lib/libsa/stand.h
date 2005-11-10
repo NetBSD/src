@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.48.2.4 2005/03/04 16:52:42 skrll Exp $	*/
+/*	$NetBSD: stand.h,v 1.48.2.5 2005/11/10 14:10:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -83,6 +83,7 @@
 #define vprintf		libsa_vprintf
 #define vsprintf	libsa_vsprintf
 #endif
+#define bcmp(s1, s2, l)	memcmp(s1, s2, l)
 #ifdef LIBSA_USE_MEMSET
 #define	bzero(s, l)	memset(s, 0, l)
 #endif
@@ -281,5 +282,8 @@ int	oclose(int);
 ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
+
+extern const char HEXDIGITS[];
+extern const char hexdigits[];
 
 #endif /* _LIBSA_STAND_H_ */

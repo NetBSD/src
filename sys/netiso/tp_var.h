@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.6.2.5 2005/03/04 16:54:09 skrll Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.6.2.6 2005/11/10 14:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -157,7 +157,6 @@ void tp0_stash  (struct tp_pcb *, struct tp_event *);
 void tp0_openflow (struct tp_pcb *);
 int tp_setup_perf (struct tp_pcb *);
 void dump_addr   (struct sockaddr *);
-void Dump_buf    (caddr_t, int);
 
 /* tp_timer.c */
 void tp_timerinit (void);
@@ -174,7 +173,7 @@ void tp_cuntimeout (struct tp_pcb *, int);
 void tpTrace    (struct tp_pcb *, u_int, u_int, u_int, u_int, u_int, u_int);
 
 /* tp_usrreq.c */
-void dump_mbuf  (struct mbuf *, char *);
+void dump_mbuf  (struct mbuf *, const char *);
 int tp_rcvoob   (struct tp_pcb *, struct socket *, struct mbuf *,
 		     int *, int);
 int tp_sendoob  (struct tp_pcb *, struct socket *, struct mbuf *, int *);

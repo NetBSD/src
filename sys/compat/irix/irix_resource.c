@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.2.2.2 2005/03/04 16:39:38 skrll Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.2.2.3 2005/11/10 14:00:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.2.2.2 2005/03/04 16:39:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.2.2.3 2005/11/10 14:00:52 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -188,7 +188,7 @@ irix_sys_setrlimit(l, v, retval)
 {
 	struct irix_sys_getrlimit_args /* {
 		syscallarg(int) resource;
-		syscallarg(struct irix_rlimit *) rlp;
+		syscallarg(const struct irix_rlimit *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
@@ -213,9 +213,6 @@ irix_sys_setrlimit(l, v, retval)
 	else
 		rlp.rlim_max = irlp.rlim_cur;
 
-	if ((error = copyout(&rlp, (void *)SCARG(&cup, rlp), sizeof(rlp))) != 0)
-		return error;
-
 	if ((error = sys_setrlimit(l, &cup, retval)) != 0)
 		return error;
 
@@ -230,7 +227,7 @@ irix_sys_setrlimit64(l, v, retval)
 {
 	struct irix_sys_getrlimit_args /* {
 		syscallarg(int) resource;
-		syscallarg(struct irix_rlimit64 *) rlp;
+		syscallarg(const struct irix_rlimit64 *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
@@ -254,9 +251,6 @@ irix_sys_setrlimit64(l, v, retval)
 		rlp.rlim_max = RLIM_INFINITY;
 	else
 		rlp.rlim_max = irlp.rlim_cur;
-
-	if ((error = copyout(&rlp, (void *)SCARG(&cup, rlp), sizeof(rlp))) != 0)
-		return error;
 
 	if ((error = sys_setrlimit(l, &cup, retval)) != 0)
 		return error;

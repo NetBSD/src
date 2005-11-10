@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.2.6 2004/12/18 09:31:27 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.7 2005/11/10 13:58:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.6 2004/12/18 09:31:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.7 2005/11/10 13:58:37 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.6 2004/12/18 09:31:27 skrll Exp 
 
 static struct device *booted_controller = NULL;
 static int	booted_slot, booted_unit;
-static char	*booted_protocol = NULL;
+static const char	*booted_protocol = NULL;
 
 extern struct platform platform;
 
@@ -66,7 +66,7 @@ cpu_configure()
 	softintr_init();
 
 	s = splhigh();
-	if (config_rootfound("mainbus", "mainbus") == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/*
@@ -76,7 +76,8 @@ cpu_configure()
 	(*platform.bus_reset)();
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
-	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);
+	    splmasks[IPL_BIO] >> 8, splmasks[IPL_NET] >> 8, 
+	    splmasks[IPL_TTY] >> 8, splmasks[IPL_CLOCK] >> 8);
 
 	_splnone();
 }

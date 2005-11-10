@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.4.6.3 2004/09/21 13:33:48 skrll Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.4.6.4 2005/11/10 14:08:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.4.6.3 2004/09/21 13:33:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.4.6.4 2005/11/10 14:08:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,77 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 	UMQ_TERMINATOR
 };
 
+/*
+ * ROLAND UA-1000
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA1000, 3, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
 
+UMQ_DEF(ROLAND, ROLAND_UA1000, 3) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA1000, 3),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND UA-101
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101, 2, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UA101, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA101, 2),
+	UMQ_TERMINATOR
+};
+
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101F, 2, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UA101F, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA101F, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND Fantom-X
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_FANTOMX, 0, 1, 1) = {
+	/* out */
+	{ 0, 1 },
+	/* in */
+	{ 1, 1 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_FANTOMX, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_FANTOMX, 0),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND PCR
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PCR, 0, 1, 1) = {
+	/* out */
+	{ 0, 3 },
+	/* in */
+	{ 1, 3 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_PCR, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_PCR, 0),
+	UMQ_TERMINATOR
+};
 
 /*
  * quirk list
@@ -388,6 +458,11 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_SD20, 0),
 	UMQ_REG(ROLAND, ROLAND_SD80, 0),
 	UMQ_REG(ROLAND, ROLAND_UA700, 3),
+	UMQ_REG(ROLAND, ROLAND_UA1000, 3),
+	UMQ_REG(ROLAND, ROLAND_UA101, 2),
+	UMQ_REG(ROLAND, ROLAND_UA101F, 2),
+	UMQ_REG(ROLAND, ROLAND_FANTOMX, 0),
+	UMQ_REG(ROLAND, ROLAND_PCR, 0),
 	UMQ_TERMINATOR
 };
 
@@ -417,14 +492,14 @@ umidi_search_quirk(int vendor, int product, int ifaceno)
 				for (q=p->quirks; q->type; q++)
 					p->type_mask |= 1<<(q->type-1);
 			return p;
-                }
+		}
 		DPRINTFN(10, ("\n"));
 	}
 
 	return NULL;
 }
 
-static char *quirk_name[] = {
+static const char *quirk_name[] = {
 	"NULL",
 	"Fixed Endpoint",
 	"Yamaha Specific",

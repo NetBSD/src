@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.5.2.4 2005/03/04 16:52:42 skrll Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.5.2.5 2005/11/10 14:10:25 skrll Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -65,10 +65,12 @@
 
 #define NELEM(x) (sizeof (x) / sizeof(*x))
 
+
+typedef uint32_t ino32_t;
 typedef struct entry_t entry_t;
 struct entry_t {
 	entry_t	*e_next;
-	ino_t	e_ino;
+	ino32_t	e_ino;
 	uint8_t	e_type;
 	char	e_name[1];
 };
@@ -107,8 +109,10 @@ fn_match(const char *fname, const char *pattern)
 
 	if (pc != '*')
 		return 0;
-	/* Too hard (and unnecessary really) too check for "*?name" etc....
-	   "**" will look for a '*' and "*?" a '?' */
+	/*
+	 * Too hard (and unnecessary really) too check for "*?name" etc....
+	 * "**" will look for a '*' and "*?" a '?'
+	 */
 	pc = *pattern++;
 	if (!pc)
 		return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.9.2.6 2005/03/04 16:41:05 skrll Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.9.2.7 2005/11/10 14:03:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9.2.6 2005/03/04 16:41:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9.2.7 2005/11/10 14:03:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,38 +89,22 @@ static int  ppb_cardbus_detach(struct device * self, int flags);
 /*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
 /*static*/ int  ppb_cardbus_enable(struct ppb_softc * sc);
 /*static*/ void ppb_cardbus_disable(struct ppb_softc * sc);
-static int  ppb_activate(struct device *self, enum devact act);
-int rppbprint(void *aux, const char *pnp);
-int rbus_intr_fixup(pci_chipset_tag_t pc, int minbus,
-			  int maxbus, int line);
-void rbus_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
-			      void *context);
+static int  ppb_activate(struct device *, enum devact);
+int rppbprint(void *, const char *);
+int rbus_intr_fixup(pci_chipset_tag_t, int, int, int);
+void rbus_do_header_fixup(pci_chipset_tag_t, pcitag_t, void *);
 
-static void rbus_pci_phys_allocate(pci_chipset_tag_t pc,
-					pcitag_t tag,
-					void *context);
+static void rbus_pci_phys_allocate(pci_chipset_tag_t, pcitag_t, void *);
 
-static int rbus_do_phys_allocate(pci_chipset_tag_t pc,
-				      pcitag_t tag,
-				      int mapreg,
-				      void *ctx,
-				      int type,
-				      bus_addr_t *addr,
-				      bus_size_t size);
+static int rbus_do_phys_allocate(pci_chipset_tag_t, pcitag_t, int,
+				 void *, int, bus_addr_t *, bus_size_t);
 
-static void rbus_pci_phys_countspace(pci_chipset_tag_t pc,
-					  pcitag_t tag,
-					  void *context);
+static void rbus_pci_phys_countspace(pci_chipset_tag_t, pcitag_t, void *);
 
-static int rbus_do_phys_countspace(pci_chipset_tag_t pc,
-					pcitag_t tag,
-					int mapreg,
-					void *ctx,
-					int type,
-					bus_addr_t *addr,
-					bus_size_t size);
+static int rbus_do_phys_countspace(pci_chipset_tag_t, pcitag_t, int,
+				   void *, int, bus_addr_t *, bus_size_t);
 
-unsigned int rbus_round_up(unsigned int size, unsigned int min);
+unsigned int rbus_round_up(unsigned int, unsigned int);
 
 
 struct ppb_cardbus_softc {
@@ -242,7 +226,7 @@ struct rbus_pci_addr_fixup_context {
 };
 
 unsigned int
-rbus_round_up(unsigned int size, unsigned int min)
+rbus_round_up(unsigned int size, unsigned int minval)
 {
   unsigned int power2;
 
@@ -250,7 +234,7 @@ rbus_round_up(unsigned int size, unsigned int min)
     return 0;
   }
 
-  power2=min;
+  power2=minval;
 
   while(power2 < (1 << 31) &&
 	power2 < size) {
@@ -589,7 +573,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 	bus_space_handle_t handle;
 	int busflags = 0;
 	int flags    = 0;
-	char *bustype;
+	const char *bustype;
 	int bus, device, function;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);

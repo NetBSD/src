@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.4.10.1 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4.10.2 2005/11/10 13:59:38 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -41,9 +41,5 @@
 #define DB_MACHINE_COMMANDS
 
 extern char	*esym;	/* end of symbols */
-
-/* These are in db_memrw.c */
-extern void db_read_bytes (db_addr_t, size_t, char *);
-extern void db_write_bytes(db_addr_t, size_t, char *);
 
 #endif	/* _SUN2_DB_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58.2.6 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.58.2.7 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -162,7 +162,7 @@ typedef	__gid_t		gid_t;		/* group id */
 #endif
 
 typedef	uint32_t	id_t;		/* group id, process id or user id */
-typedef	uint32_t	ino_t;		/* inode number */
+typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
@@ -289,62 +289,9 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #undef	_BSD_USECONDS_T_
 #endif
 
-#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_POSIX_C_SOURCE - 0) >= 200112L || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
-
-/*
- * Implementation dependent defines, hidden from user space. X/Open does not
- * specify them.
- */
-#define	__NBBY	8		/* number of bits in a byte */
-typedef int32_t	__fd_mask;
-
-/* bits per mask */
-#define __NFDBITS	((unsigned int)sizeof(__fd_mask) * __NBBY)
-
-#ifndef howmany
-#define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
-#else
-#define __howmany(x, y) howmany(x, y)
-#endif
-
-/*
- * Select uses bit masks of file descriptors in longs.  These macros
- * manipulate such bit fields (the filesystem macros use chars).
- * FD_SETSIZE may be defined by the user, but the default here should
- * be enough for most uses.
- */
-#ifndef	FD_SETSIZE
-#define	FD_SETSIZE	256
-#endif
-
-typedef	struct fd_set {
-	__fd_mask	fds_bits[__howmany(FD_SETSIZE, __NFDBITS)];
-} fd_set;
-
-#define	FD_SET(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] |= (1 << ((n) % __NFDBITS)))
-#define	FD_CLR(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] &= ~(1 << ((n) % __NFDBITS)))
-#define	FD_ISSET(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] & (1 << ((n) % __NFDBITS)))
-#define	FD_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
-
-/*
- * Expose our internals if we are not required to hide them.
- */
-#if defined(_NETBSD_SOURCE)
-
-#define NBBY __NBBY
-#define fd_mask __fd_mask
-#define NFDBITS __NFDBITS
-#ifndef howmany
-#define howmany(a, b) __howmany(a, b)
-#endif
-
-#define	FD_COPY(f, t)	(void)memcpy((t), (f), sizeof(*(f)))
-
+#ifdef _NETBSD_SOURCE
+#include <sys/fd_set.h>
+#define	NBBY	__NBBY
 #endif
 
 #if defined(__STDC__) && defined(_KERNEL)
@@ -365,8 +312,6 @@ struct	buf;
 struct	tty;
 struct	uio;
 #endif
-
-#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \

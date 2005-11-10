@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.9.16.4 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.9.16.5 2005/11/10 14:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.9.16.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.9.16.5 2005/11/10 14:00:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,7 +165,7 @@ tv_init(struct ite_softc *ip)
 	 */
 	tv_top = 0;
 	for (i = 0; i < PLANELINES; i++)
-		tv_row[i] = (void *)&IODEVbase->tvram[ROWOFFSET(i)];
+		tv_row[i] = (void *)__UNVOLATILE(&IODEVbase->tvram[ROWOFFSET(i)]);
 	/* shadow ANK font */
 	memcpy(kern_font, (void *)&IODEVbase->cgrom0_8x16, 256 * FONTHEIGHT);
 	ite_set_glyph();
@@ -279,13 +279,13 @@ tv_putc_nm(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
@@ -308,13 +308,13 @@ tv_putc_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
@@ -337,13 +337,13 @@ tv_putc_bd(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
@@ -384,13 +384,13 @@ tv_putc_ul(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
@@ -421,13 +421,13 @@ tv_putc_bd_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
@@ -454,13 +454,13 @@ tv_putc_ul_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
@@ -491,13 +491,13 @@ tv_putc_bd_ul(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
@@ -538,13 +538,13 @@ tv_putc_bd_ul_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
 	char *f;
-	short *kf;
+	volatile short *kf;
 
 	hi = ip->save_char & 0x7f;
 
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
-		kf = (short *)tv_kfont[hi];
+		kf = (volatile short *)tv_kfont[hi];
 		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
@@ -699,13 +699,13 @@ tv_scroll(struct ite_softc *ip, int srcy, int srcx, int count, int dir)
 		for (pl = 0; pl < PLANESIZE * 4; pl += PLANESIZE) {
 			short fh;
 			char *src = CHADDR(srcy, srcx) + pl;
-			char *dst = CHADDR(srcy, srcx - count) + pl;
+			char *dest = CHADDR(srcy, srcx - count) + pl;
 
 			siz = ip->cols - srcx;
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				memcpy(dst, src, siz);
+				memcpy(dest, src, siz);
 				src += ROWBYTES;
-				dst += ROWBYTES;
+				dest += ROWBYTES;
 			}
 		}
 		break;
@@ -714,13 +714,13 @@ tv_scroll(struct ite_softc *ip, int srcy, int srcx, int count, int dir)
 		for (pl = 0; pl < PLANESIZE * 4; pl += PLANESIZE) {
 			short fh;
 			char *src = CHADDR(srcy, srcx) + pl;
-			char *dst = CHADDR(srcy, srcx + count) + pl;
+			char *dest = CHADDR(srcy, srcx + count) + pl;
 
 			siz = ip->cols - (srcx + count);
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				memcpy(dst, src, siz);
+				memcpy(dest, src, siz);
 				src += ROWBYTES;
-				dst += ROWBYTES;
+				dest += ROWBYTES;
 			}
 		}
 		break;

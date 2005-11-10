@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
- *              xRevision: 60 $
+ *              xRevision: 63 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2005, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.6.2.3 2004/09/21 13:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.6.2.4 2005/11/10 14:03:12 skrll Exp $");
 
 #define __DSWSCOPE_C__
 
@@ -127,14 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.6.2.3 2004/09/21 13:26:42 skrll Exp $
         ACPI_MODULE_NAME    ("dswscope")
 
 
-#define STACK_POP(head) head
-
-
 /****************************************************************************
  *
  * FUNCTION:    AcpiDsScopeStackClear
  *
- * PARAMETERS:  None
+ * PARAMETERS:  WalkState       - Current state
+ *
+ * RETURN:      None
  *
  * DESCRIPTION: Pop (and free) everything on the scope stack except the
  *              root scope object (which remains at the stack top.)
@@ -158,7 +157,8 @@ AcpiDsScopeStackClear (
         WalkState->ScopeInfo = ScopeInfo->Scope.Next;
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "Popped object type (%s)\n", AcpiUtGetTypeName (ScopeInfo->Common.Value)));
+            "Popped object type (%s)\n",
+            AcpiUtGetTypeName (ScopeInfo->Common.Value)));
         AcpiUtDeleteGenericState (ScopeInfo);
     }
 }
@@ -168,8 +168,11 @@ AcpiDsScopeStackClear (
  *
  * FUNCTION:    AcpiDsScopeStackPush
  *
- * PARAMETERS:  *Node,              - Name to be made current
- *              Type,               - Type of frame being pushed
+ * PARAMETERS:  Node            - Name to be made current
+ *              Type            - Type of frame being pushed
+ *              WalkState       - Current state
+ *
+ * RETURN:      Status
  *
  * DESCRIPTION: Push the current scope on the scope stack, and make the
  *              passed Node current.
@@ -201,7 +204,8 @@ AcpiDsScopeStackPush (
 
     if (!AcpiUtValidObjectType (Type))
     {
-        ACPI_REPORT_WARNING (("DsScopeStackPush: Invalid object type: 0x%X\n", Type));
+        ACPI_REPORT_WARNING ((
+            "DsScopeStackPush: Invalid object type: 0x%X\n", Type));
     }
 
     /* Allocate a new scope object */
@@ -253,16 +257,11 @@ AcpiDsScopeStackPush (
  *
  * FUNCTION:    AcpiDsScopeStackPop
  *
- * PARAMETERS:  Type                - The type of frame to be found
+ * PARAMETERS:  WalkState       - Current state
  *
- * DESCRIPTION: Pop the scope stack until a frame of the requested type
- *              is found.
+ * RETURN:      Status
  *
- * RETURN:      Count of frames popped.  If no frame of the requested type
- *              was found, the count is returned as a negative number and
- *              the scope stack is emptied (which sets the current scope
- *              to the root).  If the scope stack was empty at entry, the
- *              function is a no-op and returns 0.
+ * DESCRIPTION: Pop the scope stack once.
  *
  ***************************************************************************/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.1.2.4 2005/03/04 16:41:30 skrll Exp $	*/
+/*	$NetBSD: mpt.h,v 1.1.2.5 2005/11/10 14:04:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -180,7 +180,7 @@ void mpt_print_reply(void *);
 void mpt_print_db(u_int32_t);
 void mpt_print_config_reply(void *);
 char *mpt_ioc_diag(u_int32_t);
-char *mpt_req_state(enum mpt_req_state);
+const char *mpt_req_state(enum mpt_req_state);
 void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
 void mpt_print_config_request(void *);
 void mpt_print_request(void *);

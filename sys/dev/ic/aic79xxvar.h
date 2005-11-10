@@ -834,7 +834,7 @@ struct ahd_tmode_tstate {
 struct ahd_phase_table_entry {
         uint8_t phase;
         uint8_t mesg_out; /* Message response to parity errors */
-	char *phasemsg;
+	const char *phasemsg;
 };
 
 /************************** Serial EEPROM Format ******************************/
@@ -1324,17 +1324,15 @@ typedef int (ahd_device_setup_t)(struct ahd_softc *, struct pci_attach_args *);
 struct ahd_pci_identity {
 	uint64_t		 full_id;
 	uint64_t		 id_mask;
-	char			*name;
+	const char		*name;
 	ahd_device_setup_t	*setup;
 };
-extern struct ahd_pci_identity ahd_pci_ident_table [];
-extern const u_int ahd_num_pci_devs;
 
 /***************************** VL/EISA Declarations ***************************/
 struct aic7770_identity {
 	uint32_t		 full_id;
 	uint32_t		 id_mask;
-	char			*name;
+	const char		*name;
 	ahd_device_setup_t	*setup;
 };
 extern struct aic7770_identity aic7770_ident_table [];
@@ -1354,12 +1352,6 @@ ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl)
 {
 	ahd_busy_tcl(ahd, tcl, SCB_LIST_NULL);
 }
-
-/***************************** PCI Front End *********************************/
-const struct ahd_pci_identity *ahd_find_pci_device(pcireg_t, pcireg_t); /*ahd_dev_softc_t);*/
-int			ahd_pci_config(struct ahd_softc *,
-				       struct ahd_pci_identity *);
-int			ahd_pci_test_register_access(struct ahd_softc *);
 
 /************************** SCB and SCB queue management **********************/
 int			ahd_probe_scbs(struct ahd_softc *);
@@ -1400,7 +1392,6 @@ int			 ahd_read_flexport(struct ahd_softc *, u_int,
 int			 ahd_wait_flexport(struct ahd_softc *);
 
 /*************************** Interrupt Services *******************************/
-int			ahd_pci_intr(struct ahd_softc *);
 void			ahd_clear_intstat(struct ahd_softc *);
 void			ahd_flush_qoutfifo(struct ahd_softc *);
 void			ahd_run_qoutfifo(struct ahd_softc *);

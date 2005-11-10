@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.12.2.4 2005/03/04 16:45:19 skrll Exp $ */
+/* $NetBSD: if_tireg.h,v 1.12.2.5 2005/11/10 14:06:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1071,7 +1071,7 @@ struct ti_chain_data {
 struct ti_type {
 	u_int16_t		ti_vid;
 	u_int16_t		ti_did;
-	char			*ti_name;
+	const char		*ti_name;
 };
 
 #define TI_HWREV_TIGON		0x01

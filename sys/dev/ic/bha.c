@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.54.2.6 2005/03/04 16:41:27 skrll Exp $	*/
+/*	$NetBSD: bha.c,v 1.54.2.7 2005/11/10 14:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54.2.6 2005/03/04 16:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54.2.7 2005/11/10 14:04:14 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1562,7 +1562,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 			u_char *cp = &ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("comp_stat %x for mbi addr = 0x%p, ",
+			printf("comp_stat %x for mbi addr = %p, ",
 			    mbi->comp_stat, mbi);
 			printf("ccb addr = %p\n", ccb);
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.20.2.5 2005/01/17 19:31:52 skrll Exp $ */
+/* $NetBSD: bba.c,v 1.20.2.6 2005/11/10 14:08:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20.2.5 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20.2.6 2005/11/10 14:08:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,7 +662,7 @@ bba_input_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 	m = dst->end - dst->start;
 	m = min(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 1, m) {
-		*d = ((*(uint32_t *)s) >> 16) & 0xff;
+		*d = ((*(const uint32_t *)s) >> 16) & 0xff;
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }

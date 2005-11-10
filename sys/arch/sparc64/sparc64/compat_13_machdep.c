@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.13.2.3 2004/09/21 13:22:57 skrll Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.13.2.4 2005/11/10 13:59:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.2.3 2004/09/21 13:22:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.2.4 2005/11/10 13:59:33 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.2.3 2004/09/21 13:22:57 s
 #include <sys/syscallargs.h>
 #include <sparc64/sparc64/sigdebug.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.11 2002/05/15 09:44:54 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.11.10.1 2005/11/10 13:59:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
+#include <string.h>
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
@@ -74,7 +75,8 @@ void	loadboot __P((struct open_file *, caddr_t));
 int
 main()
 {
-	char	*dummy;
+	char	*dummy1;
+	const char	*dummy;
 	void (*entry)__P((void *)) = (void (*)__P((void *)))PROM_LOADADDR;
 	void	*arg;
 
@@ -85,9 +87,11 @@ main()
 	}
 #endif
 	prom_init();
-	prom_bootdevice = prom_getbootpath();
+	dummy = prom_getbootpath();
+	if (dummy && *dummy != '\0')
+		strcpy(prom_bootdevice, dummy);
 	io.f_flags = F_RAW;
-	if (devopen(&io, 0, &dummy)) {
+	if (devopen(&io, 0, &dummy1)) {
 		panic("%s: can't open device `%s'", progname,
 			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}

@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.9.2.1 2005/03/04 16:40:29 skrll Exp $
+;	$NetBSD: syscalls.master,v 1.9.2.2 2005/11/10 14:01:31 skrll Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -34,6 +34,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
+#include "opt_compat_sunos.h"
 
 #include "fs_nfs.h"
 #endif

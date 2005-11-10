@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.8.2.3 2004/09/21 13:31:05 skrll Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.8.2.4 2005/11/10 14:06:02 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.8.2.3 2004/09/21 13:31:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.8.2.4 2005/11/10 14:06:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -55,16 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.8.2.3 2004/09/21 13:31:05 skrll Exp
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciio.h>
 
-dev_type_open(pciopen);
-dev_type_ioctl(pciioctl);
-dev_type_mmap(pcimmap);
-
-const struct cdevsw pci_cdevsw = {
-	pciopen, nullclose, noread, nowrite, pciioctl,
-	nostop, notty, nopoll, pcimmap, nokqfilter,
-};
-
-int
+static int
 pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct pci_softc *sc;
@@ -78,7 +69,7 @@ pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
@@ -117,7 +108,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	return (0);
 }
 
-paddr_t
+static paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
 #if 0
@@ -136,6 +127,11 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	return (-1);
 #endif
 }
+
+const struct cdevsw pci_cdevsw = {
+	pciopen, nullclose, noread, nowrite, pciioctl,
+	    nostop, notty, nopoll, pcimmap, nokqfilter,
+};
 
 /*
  * pci_devioctl:

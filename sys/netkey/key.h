@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11.6.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: key.h,v 1.11.6.4 2005/11/10 14:11:55 skrll Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -35,6 +35,10 @@
 
 #ifdef _KERNEL
 
+#if defined(_KERNEL_OPT)
+#include "opt_ipsec.h"
+#endif
+
 #include <sys/queue.h>
 
 extern struct key_cb key_cb;
@@ -55,8 +59,8 @@ extern struct secpolicy *key_allocsp __P((u_int16_t, struct secpolicyindex *,
 	u_int));
 extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
-extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,
-					u_int, u_int32_t));
+extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t, u_int, 
+					 u_int32_t, u_int16_t, u_int16_t));
 extern struct secpolicy *key_getspbyid __P((u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
 extern void key_freesav __P((struct secasvar *));
@@ -84,6 +88,10 @@ extern void key_sa_routechange __P((struct sockaddr *));
 extern void key_sa_stir_iv __P((struct secasvar *));
 
 extern int key_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+#ifdef IPSEC_NAT_T
+u_int16_t key_portfromsaddr __P((struct sockaddr *));
+#define KEY_PORTFROMSADDR(saddr) key_portfromsaddr((struct sockaddr *)(saddr))
+#endif
 
 #endif /* defined(_KERNEL) */
 #endif /* _NETKEY_KEY_H_ */

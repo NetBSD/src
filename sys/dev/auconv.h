@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.9.14.3 2005/01/17 19:30:38 skrll Exp $	*/
+/*	$NetBSD: auconv.h,v 1.9.14.4 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,16 +118,16 @@ struct audio_format {
 #define	AUFMT_BACK_RIGHT		0x00020U /* USB audio compatible */
 #define	AUFMT_FRONT_LEFT_OF_CENTER	0x00040U /* USB audio compatible */
 #define	AUFMT_FRONT_RIGHT_OF_CENTER	0x00080U /* USB audio compatible */
-#define	AUFMT_FRONT_BACK_CENTER		0x00100U /* USB audio compatible */
-#define	AUFMT_FRONT_SIDE_LEFT		0x00200U /* USB audio compatible */
-#define	AUFMT_FRONT_SIDE_RIGHT		0x00400U /* USB audio compatible */
-#define	AUFMT_FRONT_TOP_CENTER		0x00800U /* USB audio compatible */
-#define	AUFMT_FRONT_TOP_FRONT_LEFT	0x01000U
-#define	AUFMT_FRONT_TOP_FRONT_CENTER	0x02000U
-#define	AUFMT_FRONT_TOP_FRONT_RIGHT	0x04000U
-#define	AUFMT_FRONT_TOP_BACK_LEFT	0x08000U
-#define	AUFMT_FRONT_TOP_BACK_CENTER	0x10000U
-#define	AUFMT_FRONT_TOP_BACK_RIGHT	0x20000U
+#define	AUFMT_BACK_CENTER		0x00100U /* USB audio compatible */
+#define	AUFMT_SIDE_LEFT			0x00200U /* USB audio compatible */
+#define	AUFMT_SIDE_RIGHT		0x00400U /* USB audio compatible */
+#define	AUFMT_TOP_CENTER		0x00800U /* USB audio compatible */
+#define	AUFMT_TOP_FRONT_LEFT		0x01000U
+#define	AUFMT_TOP_FRONT_CENTER		0x02000U
+#define	AUFMT_TOP_FRONT_RIGHT		0x04000U
+#define	AUFMT_TOP_BACK_LEFT		0x08000U
+#define	AUFMT_TOP_BACK_CENTER		0x10000U
+#define	AUFMT_TOP_BACK_RIGHT		0x20000U
 
 #define	AUFMT_MONAURAL		AUFMT_FRONT_CENTER
 #define	AUFMT_STEREO		(AUFMT_FRONT_LEFT | AUFMT_FRONT_RIGHT)

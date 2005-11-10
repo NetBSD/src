@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.32.2.3 2004/09/21 13:22:15 skrll Exp $ */
+/*	$NetBSD: types.h,v 1.32.2.4 2005/11/10 13:58:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define	__HAVE_NWSCONS
 

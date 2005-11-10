@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.h,v 1.3.2.5 2005/04/01 14:29:10 skrll Exp $	*/
-/*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
+/*	$NetBSD: pmap.h,v 1.3.2.6 2005/11/10 14:00:34 skrll Exp $	*/
+/*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
  *
@@ -359,7 +359,7 @@ int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, vm_prot_t,
 		    int);
 boolean_t	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 int		pmap_remap_pages(struct pmap *, vaddr_t, paddr_t, int,
-		    int, int);
+		    vm_prot_t, int, int);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 

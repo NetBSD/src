@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.8.2.6 2005/04/01 14:29:10 skrll Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.8.2.7 2005/11/10 14:00:34 skrll Exp $	*/
 
 /*
  * 
@@ -85,16 +85,14 @@ extern union start_info_union start_info_union;
 /* hypervisor.c */
 struct intrframe;
 void do_hypervisor_callback(struct intrframe *regs);
-void hypervisor_notify_via_evtchn(unsigned int);
-void hypervisor_enable_irq(unsigned int);
-void hypervisor_disable_irq(unsigned int);
-void hypervisor_acknowledge_irq(unsigned int);
+void hypervisor_enable_event(unsigned int);
 
 /* hypervisor_machdep.c */
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
-void hypervisor_force_callback(void);
+void hypervisor_enable_ipl(unsigned int);
+void hypervisor_set_ipending(u_int32_t, int, int);
 
 /*
  * Assembler stubs for hyper-calls.
@@ -525,6 +523,26 @@ HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
 	: "memory" );
 
     return ret;
+}
+
+/* 
+ * Force a proper event-channel callback from Xen after clearing the
+ * callback mask. We do this in a very simple manner, by making a call
+ * down into Xen. The pending flag will be checked by Xen on return. 
+ */
+static inline void hypervisor_force_callback(void)
+{
+	(void)HYPERVISOR_xen_version(0);
+} __attribute__((no_instrument_function)) /* used by mcount */
+
+static inline void
+hypervisor_notify_via_evtchn(unsigned int port)
+{
+	evtchn_op_t op;
+
+	op.cmd = EVTCHNOP_send;
+	op.u.send.local_port = port;
+	(void)HYPERVISOR_event_channel_op(&op);
 }
 
 #endif /* _XEN_HYPERVISOR_H_ */

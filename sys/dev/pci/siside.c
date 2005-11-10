@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.7.2.6 2005/03/04 16:45:26 skrll Exp $	*/
+/*	$NetBSD: siside.c,v 1.7.2.7 2005/11/10 14:06:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.7.2.7 2005/11/10 14:06:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +100,7 @@ static struct sis_hostbr_type {
 	u_int16_t id;
 	u_int8_t rev;
 	u_int8_t udma_mode;
-	char *name;
+	const char *name;
 	u_int8_t type;
 #define SIS_TYPE_NOUDMA	0
 #define SIS_TYPE_66	1
@@ -151,6 +154,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_962,   0x00, 6, "962", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_963,   0x00, 6, "963", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_964,   0x00, 6, "964", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_965,   0x00, 6, "965", SIS_TYPE_133NEW},
 };
 
 static struct sis_hostbr_type *sis_hostbr_type_match;
@@ -159,9 +163,24 @@ static int
 sis_hostbr_match(struct pci_attach_args *pa)
 {
 	int i;
+	pcireg_t id, reg;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SIS)
 		return 0;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_85C503) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SIS96x_DETECT);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
+		    reg | SIS96x_DETECT_MASQ);
+		id = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
+		if (((PCI_PRODUCT(id) & 0xfff0) != 0x0960)
+		    && (PCI_PRODUCT(id) != 0x0018)) {
+			pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
+			    reg);
+		} else {
+			pa->pa_id = id;
+		}
+	}
+		
 	sis_hostbr_type_match = NULL;
 	for (i = 0;
 	    i < sizeof(sis_hostbr_type) / sizeof(sis_hostbr_type[0]);

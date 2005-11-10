@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.2.20.3 2004/09/21 13:38:50 skrll Exp $	*/
+/*	$NetBSD: stdint.h,v 1.2.20.4 2005/11/10 14:12:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _SYS_STDINT_H_
 #define _SYS_STDINT_H_
 
+#include <sys/cdefs.h>
 #include <machine/int_types.h>
 
 #ifndef	int8_t

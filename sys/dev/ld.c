@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.26.2.10 2005/04/01 14:29:37 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.26.2.11 2005/11/10 14:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.10 2005/04/01 14:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.11 2005/11/10 14:03:00 skrll Exp $");
 
 #include "rnd.h"
 
@@ -101,7 +101,7 @@ static void	*ld_sdh;
 void
 ldattach(struct ld_softc *sc)
 {
-	char buf[9];
+	char tbuf[9];
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
@@ -140,10 +140,10 @@ ldattach(struct ld_softc *sc)
 			sc->sc_ncylinders = (int)ncyl;
 	}
 
-	format_bytes(buf, sizeof(buf), sc->sc_secperunit *
+	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
 	aprint_normal("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
-	    sc->sc_dv.dv_xname, buf, sc->sc_ncylinders, sc->sc_nheads,
+	    sc->sc_dv.dv_xname, tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
 #if NRND > 0
@@ -155,19 +155,19 @@ ldattach(struct ld_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
-	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sc->sc_dk);
 }
 
 int
-ldadjqparam(struct ld_softc *sc, int max)
+ldadjqparam(struct ld_softc *sc, int xmax)
 {
 	int s;
 
 	s = splbio();
-	sc->sc_maxqueuecnt = max;
+	sc->sc_maxqueuecnt = xmax;
 	splx(s);
 
 	return (0);
@@ -217,10 +217,10 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	bufq_drain(&sc->sc_bufq);
+	bufq_drain(sc->sc_bufq);
 	splx(s);
 
-	bufq_free(&sc->sc_bufq);
+	bufq_free(sc->sc_bufq);
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
@@ -589,7 +589,7 @@ ldstrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
-	BUFQ_PUT(&sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_bufq, bp);
 	ldstart(sc);
 	splx(s);
 	return;
@@ -609,7 +609,7 @@ ldstart(struct ld_softc *sc)
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
-		if ((bp = BUFQ_PEEK(&sc->sc_bufq)) == NULL)
+		if ((bp = BUFQ_PEEK(sc->sc_bufq)) == NULL)
 			break;
 
 		disk_busy(&sc->sc_dk);
@@ -620,7 +620,7 @@ ldstart(struct ld_softc *sc)
 			 * The back-end is running the job; remove it from
 			 * the queue.
 			 */
-			(void) BUFQ_GET(&sc->sc_bufq);
+			(void) BUFQ_GET(sc->sc_bufq);
 		} else  {
 			disk_unbusy(&sc->sc_dk, 0, (bp->b_flags & B_READ));
 			sc->sc_queuecnt--;
@@ -635,7 +635,7 @@ ldstart(struct ld_softc *sc)
 				 */
 				break;
 			} else {
-				(void) BUFQ_GET(&sc->sc_bufq);
+				(void) BUFQ_GET(sc->sc_bufq);
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.24.24.3 2004/09/21 13:23:57 skrll Exp $ */
+/*	$NetBSD: ka410.c,v 1.24.24.4 2005/11/10 13:59:59 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.24.24.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.24.24.4 2005/11/10 13:59:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,7 +164,7 @@ ka410_reboot(arg)
 static void
 ka410_clrf()
 {
-	struct ka410_clock *clk = (void *)clk_page;
+	volatile struct ka410_clock *clk = (volatile void *)clk_page;
 
 	/*
 	 * Clear restart and boot in progress flags

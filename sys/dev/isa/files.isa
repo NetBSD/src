@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.129.2.8 2005/04/01 14:29:52 skrll Exp $
+#	$NetBSD: files.isa,v 1.129.2.9 2005/11/10 14:05:37 skrll Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -332,16 +332,6 @@ file	dev/isa/ad1848_isa.c		ad1848
 define	ics2101
 file	dev/isa/ics2101.c		ics2101
 
-
-# Audio systems based on Echo Speech Corp. ESC61[45] ASICs
-device	pss {[port = -1], [size = 0],
-	     [iomem = -1], [iosiz = 0],
-	     [irq = -1], [drq = -1]}
-attach	pss at isa
-device	sp: audiobus, isadma, ad1848, auconv
-attach	sp at pss
-file	dev/isa/pss.c			pss			needs-flag
-
 # Microsoft Windows Sound System
 device	wss { } : audiobus, isadma, ad1848, auconv
 file	dev/isa/wss.c			wss			needs-flag
@@ -494,13 +484,25 @@ attach	joy at isa with joy_isa
 file	dev/isa/joy_isa.c		joy_isa
 
 # NSC PC87366 Super IO / monitor chip
-device nsclpcsio: sysmon_envsys
+device nsclpcsio: sysmon_envsys, gpiobus
 attach nsclpcsio at isa with nsclpcsio_isa
 file dev/isa/nsclpcsio_isa.c nsclpcsio_isa
 
 # USB Controller
 attach	slhci at isa with slhci_isa
 file	dev/isa/slhci_isa.c		slhci_isa
+
+device	tsdio {}
+attach	tsdio at isa
+file	dev/isa/tsdio.c			tsdio
+
+device	toasterlcd: hd44780, wsemuldisplaydev
+attach	toasterlcd at tsdio
+file	dev/isa/toasterlcd.c		toasterlcd
+
+device toaster
+attach toaster at tsdio
+file	dev/isa/toaster.c		toaster
 
 #
 # ISA Plug 'n Play autoconfiguration glue.

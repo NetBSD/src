@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.4.2.3 2004/09/21 13:35:53 skrll Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.4.2.4 2005/11/10 14:10:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.4.2.3 2004/09/21 13:35:53 skrll Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.4.2.4 2005/11/10 14:10:24 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ bcopy(src0, dst0, length)
 		 * Copy whole words, then mop up any trailing bytes.
 		 */
 		t = length / wsize;
-		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
+		TLOOP(*(word *)dst = *(const word *)src; src += wsize; dst += wsize);
 		t = length & wmask;
 		TLOOP(*dst++ = *src++);
 #ifndef MEMCOPY
@@ -135,7 +135,7 @@ bcopy(src0, dst0, length)
 			TLOOP1(*--dst = *--src);
 		}
 		t = length / wsize;
-		TLOOP(src -= wsize; dst -= wsize; *(word *)dst = *(word *)src);
+		TLOOP(src -= wsize; dst -= wsize; *(word *)dst = *(const word *)src);
 		t = length & wmask;
 		TLOOP(*--dst = *--src);
 	}

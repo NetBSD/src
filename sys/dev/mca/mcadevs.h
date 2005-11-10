@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.19.2.1 2005/03/04 16:43:50 skrll Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.19.2.2 2005/11/10 14:05:42 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.18 2003/06/29 14:48:21 jdolecek Exp
+ *	NetBSD: mcadevs,v 1.19 2005/04/03 11:17:49 jdolecek Exp 
  */
 
 /*-
@@ -50,6 +50,9 @@
 
 #define	MCA_PRODUCT_BT640A	0x0708	/* BusTek BT-640A SCSI Host Adapter */
 #define	MCA_PRODUCT_AHA1640	0x0F1F	/* Adaptec AHA-1640 SCSI Adapter */
+#define	MCA_PRODUCT_TIARA	0x6000	/* Tiara LANCard/E Ethernet Adapter */
+#define	MCA_PRODUCT_TIARA_TP	0x6001	/* Tiara LANcard/E Ethernet Adapter */
+#define	MCA_PRODUCT_SMC3016	0x6016	/* Standard MicroSystems 3016/MC Ethernet */
 #define	MCA_PRODUCT_3C523	0x6042	/* 3Com EtherLink/MC Ethernet Adapter (3C523) */
 #define	MCA_PRODUCT_WD_8013EP	0x61C8	/* EtherCard PLUS Elite/A (8013EP/A) */
 #define	MCA_PRODUCT_WD_8013WP	0x61C9	/* EtherCard PLUS Elite 10T/A (8013WP/A) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepvar.h,v 1.3 2002/03/28 19:50:21 uwe Exp $ */
+/*	$NetBSD: msiiepvar.h,v 1.3.10.1 2005/11/10 13:59:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -31,25 +31,19 @@
 #define _SPARC_MSIIEP_VAR_H_
 
 struct msiiep_attach_args {
-	char *msa_name;
+	const char *msa_name;
 	struct mainbus_attach_args *msa_ma;
 };
 
 struct mspcic_softc {
 	struct	device		sc_dev;
 
+	/* PROM node */
+	int			sc_node;
+
 	/* parent (mainbus) tags */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
-
-	/*
-	 * PCIC control registers.  Not that we need this field, as
-	 * they are mapped as fixed VA (MSIIEP_PCIC_VA) anyway.
-	 */
-	bus_space_handle_t	sc_bh;
-
-	int			sc_node;	/* prom node */
-	int			sc_clockfreq;	/* in Hz */
 
 	/* our tags */
 	bus_space_tag_t		sc_memt;
@@ -57,6 +51,6 @@ struct mspcic_softc {
 	bus_dma_tag_t		sc_dmat;
 };
 
-extern int	mspcic_assigned_interrupt(int line);
+extern int	mspcic_assigned_interrupt(int);
 
 #endif /* _SPARC_MSIIEP_VAR_H_ */
