@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.6 2004/09/28 19:05:19 jdolecek Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.7 2005/11/10 18:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,43 @@ struct linux_shmid_ds {
 	void			*l_private3;
 };
 
+struct linux_shmid64_ds {
+	struct linux_ipc64_perm	l_shm_perm;
+	uint			l_shm_segsz;
+	linux_time_t		l_shm_atime;
+	u_long			l____unused1;
+	linux_time_t		l_shm_dtime;
+	u_long			l____unused2;
+	linux_time_t		l_shm_ctime;
+	u_long			l____unused3;
+	int			l_shm_cpid;
+	int			l_shm_lpid;
+	u_long			l_shm_nattch;
+	u_long			l___unused4;
+	u_long			l___unused5;
+};
+
+struct linux_shminfo64 {
+	u_long			l_shmmax;
+	u_long			l_shmmin;
+	u_long			l_shmmni;
+	u_long			l_shmseg;
+	u_long			l_shmall;
+	u_long			l___unused1;
+	u_long			l___unused2;
+	u_long			l___unused3;
+	u_long			l___unused4;
+};
+
+struct linux_shm_info {
+	int			l_used_ids;
+	u_long			l_shm_tot;
+	u_long			l_shm_rss;
+	u_long			l_shm_swp;
+	u_long			l_swap_attempts;
+	u_long			l_swap_successes;
+};
+
 #define LINUX_SHM_RDONLY	0x1000
 #define LINUX_SHM_RND		0x2000
 #define LINUX_SHM_REMAP		0x4000
@@ -90,8 +127,12 @@ int linux_sys_shmat __P((struct lwp *, void *, register_t *));
 int linux_sys_shmctl __P((struct lwp *, void *, register_t *));
 void linux_to_bsd_shmid_ds __P((struct linux_shmid_ds *,
     struct shmid_ds *));
+void linux_to_bsd_shmid64_ds __P((struct linux_shmid64_ds *,
+    struct shmid_ds *));
 void bsd_to_linux_shmid_ds __P((struct shmid_ds *,
     struct linux_shmid_ds *));
+void bsd_to_linux_shmid64_ds __P((struct shmid_ds *,
+    struct linux_shmid64_ds *));
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSHM */
