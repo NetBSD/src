@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.h,v 1.6 2001/05/30 11:37:27 mrg Exp $	*/
+/*	$NetBSD: linux_ipc.h,v 1.7 2005/11/10 18:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -67,18 +67,38 @@ struct linux_ipc_perm {
 	ushort		l_seq;
 };
 
+struct linux_ipc64_perm {
+	linux_key_t	l_key;
+	uint		l_uid;
+	uint		l_gid;
+	uint		l_cuid;
+	uint		l_cgid;
+	ushort		l_mode;
+	ushort		l___pad1;
+	ushort		l_seq;
+	ushort		l___pad2;
+	ulong		l___unused1;
+	ulong		l___unused2;
+};
+
 #define LINUX_IPC_RMID	0
 #define LINUX_IPC_SET	1
 #define LINUX_IPC_STAT	2
 #define LINUX_IPC_INFO	3
+
+#define LINUX_IPC_64	0x100
 
 #if defined (SYSVSEM) || defined(SYSVSHM) || defined(SYSVMSG)
 #ifdef _KERNEL
 __BEGIN_DECLS
 void linux_to_bsd_ipc_perm __P((struct linux_ipc_perm *,
 				       struct ipc_perm *));
+void linux_to_bsd_ipc64_perm __P((struct linux_ipc64_perm *,
+				       struct ipc_perm *));
 void bsd_to_linux_ipc_perm __P((struct ipc_perm *,
 				       struct linux_ipc_perm *));
+void bsd_to_linux_ipc64_perm __P((struct ipc_perm *,
+				       struct linux_ipc64_perm *));
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM, !SYSVSHM, !SYSVMSG */
