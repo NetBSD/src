@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.7 2005/11/10 18:39:30 christos Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.8 2005/11/10 18:43:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.7 2005/11/10 18:39:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.8 2005/11/10 18:43:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.7 2005/11/10 18:39:30 christos Exp
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-#include <compat/sys/shm.h>
 
 static void msqid_ds14_to_native __P((struct msqid_ds14 *, struct msqid_ds *));
 static void native_to_msqid_ds14 __P((struct msqid_ds *, struct msqid_ds14 *));
