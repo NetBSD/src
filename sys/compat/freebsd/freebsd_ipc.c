@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.11 2003/01/18 07:33:16 thorpej Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.12 2005/11/10 18:47:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11 2003/01/18 07:33:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.12 2005/11/10 18:47:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11 2003/01/18 07:33:16 thorpej Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <compat/sys/shm.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 
 #ifdef SYSVSEM
