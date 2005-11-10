@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.5.16.4 2005/01/17 19:29:23 skrll Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.5.16.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ struct intio_attach_args {
 };
 
 struct intio_builtins {
-	char *ib_modname;			/* module name */
+	const char *ib_modname;			/* module name */
 	bus_size_t ib_offset;			/* intio offset */
 	int ib_ipl;				/* interrupt priority level */
 };

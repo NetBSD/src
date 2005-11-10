@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.7.2.4 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.7.2.5 2005/11/10 13:57:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.4 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.5 2005/11/10 13:57:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.4 2005/01/24 08:34:18 skrll Exp $");
 int	intiomatch(struct device *, struct cfdata *, void *);
 void	intioattach(struct device *, struct device *, void *);
 int	intioprint(void *, const char *);
-int	intiosearch(struct device *, struct cfdata *, void *);
+int	intiosearch(struct device *, struct cfdata *,
+		    const int *, void *);
 
 CFATTACH_DECL(intio, sizeof(struct device),
     intiomatch, intioattach, NULL, NULL);
@@ -85,7 +86,7 @@ intioattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	config_search(intiosearch, self, aux);
+	config_search_ia(intiosearch, self, "intio", aux);
 
 	intio_attached = 1;
 }
@@ -102,7 +103,8 @@ intioprint(void *aux, const char *pnp)
 }
 
 int
-intiosearch(struct device *parent, struct cfdata *cf, void *aux)
+intiosearch(struct device *parent, struct cfdata *cf,
+	    const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct intio_attach_args ia;

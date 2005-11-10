@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.12.2.4 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: hb.c,v 1.12.2.5 2005/11/10 13:57:57 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12.2.4 2005/02/06 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12.2.5 2005/11/10 13:57:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -15,7 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 static int	hb_match(struct device *, struct cfdata *, void *);
 static void	hb_attach(struct device *, struct device *, void *);
-static int	hb_search(struct device *, struct cfdata *, void *);
+static int	hb_search(struct device *, struct cfdata *,
+			  const int *, void *);
 static int	hb_print(void *, const char *);
 
 CFATTACH_DECL(hb, sizeof(struct device),
@@ -52,11 +53,12 @@ hb_attach(struct device *parent, struct device *self, void *aux)
 		LIST_INIT(&ip->intr_q);
 	}
 
-	config_search(hb_search, self, &ha);
+	config_search_ia(hb_search, self, "hb", &ha);
 }
 
 static int
-hb_search(struct device *parent, struct cfdata *cf, void *aux)
+hb_search(struct device *parent, struct cfdata *cf,
+	  const int *ldesc, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 

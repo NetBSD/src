@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.6.2.4 2004/09/21 13:17:10 skrll Exp $
+# $NetBSD: Makefile.boot,v 1.6.2.5 2005/11/10 13:56:53 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -62,11 +62,13 @@ CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
 CPPFLAGS+= -DCONSADDR=boot_params.bp_consaddr
 CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 
+CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
+CPPFLAGS+= -DEPIA_HACK
 
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
@@ -80,31 +82,16 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86 lib
-.NOPATH: machine x86
-.endif
-
-realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
-machine::
-	-rm -f $@
-	ln -s $S/arch/i386/include $@
-
-x86::
-	-rm -f $@
-	ln -s $S/arch/x86/include $@
-
-${OBJS}: machine x86 lib
-
-lib:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && ln -s $S/arch/i386/include machine
+	-rm -f x86 && ln -s $S/arch/x86/include x86
 .ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
 .endif
 
 ### find out what to use for libi386
@@ -139,7 +126,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
+vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.

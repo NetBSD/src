@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.24.4 2004/11/02 07:50:21 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.24.5 2005/11/10 13:48:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.4 2004/11/02 07:50:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.5 2005/11/10 13:48:21 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -60,7 +60,7 @@ cpu_configure(void)
 	intr_init();
 
 	(void) splhigh();
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", NULL) == 0)
 		panic("no mainbus found");
 	(void) spl0();
 }

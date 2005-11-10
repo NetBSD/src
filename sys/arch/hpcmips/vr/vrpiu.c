@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.28.2.4 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.28.2.5 2005/11/10 13:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.28.2.4 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.28.2.5 2005/11/10 13:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 				break;
 		}
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		    (caddr_t)&calibrations[i].coords, 0, 0);
+		    (caddr_t)__UNCONST(&calibrations[i].coords), 0, 0);
 	}
 #endif
 

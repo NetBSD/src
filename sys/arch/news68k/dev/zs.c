@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17.2.3 2004/09/21 13:19:25 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.2.4 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17.2.3 2004/09/21 13:19:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17.2.4 2005/11/10 13:57:54 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -582,7 +582,7 @@ zscninit(struct consdev *cn)
 
 	extern const struct cdevsw zstty_cdevsw;
 	extern int tty00_is_console;
-	extern volatile u_char *sccport0a;
+	extern uint32_t sccport0a;
 
 	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	if (tty00_is_console)

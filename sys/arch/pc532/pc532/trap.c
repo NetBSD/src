@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.2.6 2005/02/04 11:44:48 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.2.7 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.2.6 2005/02/04 11:44:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.2.7 2005/11/10 13:58:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -184,7 +184,7 @@ userret(l, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"non-vectored interrupt",		/*  0 T_NVI */
 	"non-maskable interrupt",		/*  1 T_NMI */
 	"abort trap",				/*  2 T_ABT */
@@ -608,11 +608,12 @@ syscall(frame)
 	}
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = frame.sf_regs.r_r1;
 	error = (*callp->sy_call)(l, args, rval);
+out:
 	switch (error) {
 	case 0:
 		/*

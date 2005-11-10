@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.2.6.3 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2.6.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -148,6 +148,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #endif
 
 	blk <<= DEV_BSHIFT;
+	blk += dp->part_off;
 	if ((pzdev->pz_class & PCL_CLASS_MASK) == PCL_SEQU) {
 		/* rewind and re-read to seek */
 		if (blk < dp->last_blk) {

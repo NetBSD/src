@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5.2.3 2004/09/21 13:14:20 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5.2.4 2005/11/10 13:55:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,9 +39,17 @@
 #define	RAW_PART	3		/* raw partition: XX?d (XXX) */
 
 /* Pull in MBR partition definitions. */
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/dkbad.h>
+#else
 #include <sys/dkbad.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct mbr_partition dosparts[MBR_PART_COUNT];
 	struct dkbad bad;

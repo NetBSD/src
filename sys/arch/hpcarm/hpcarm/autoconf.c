@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.2.4 2004/11/02 07:50:24 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.5 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.4 2004/11/02 07:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.5 2005/11/10 13:56:14 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -57,23 +57,22 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.4 2004/11/02 07:50:24 skrll Exp $
 
 extern dev_t dumpdev;
 
-void dumpconf __P((void));
-void isa_intr_init __P((void));
+void dumpconf(void);
+void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(const char *);
+static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
-
 static void
-get_device(name)
-	char *name;
+get_device(const char *name)
 {
 	int unit, part;
-	char devname[16], buf[32], *cp;
+	char devname[16], buf[32];
+	const char *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
@@ -105,11 +104,9 @@ get_device(name)
 	}
 }
 
-
 /* Set the rootdev variable from the root specifier in the boot args */
-
 static void
-set_root_device()
+set_root_device(void)
 {
             
 	if (boot_file[0] != '\0')
@@ -124,7 +121,7 @@ set_root_device()
  * Set up the root device from the boot args
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 #ifndef MEMORY_DISK_IS_ROOT
 	set_root_device();
@@ -142,9 +139,8 @@ cpu_rootconf()
  * Configure all the root devices
  * The root devices are expected to configure their own children
  */
-
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	config_hook_init();
@@ -170,13 +166,14 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	/* Debugging information */
-
+#ifdef DEBUG
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY],
 	    imask[IPL_VM]);
 	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
 	    imask[IPL_AUDIO], imask[IPL_CLOCK], imask[IPL_HIGH],
 	    imask[IPL_SERIAL]);
+#endif
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();
@@ -203,5 +200,5 @@ struct consdev constab[] = {
 #if (NSACOM > 0)
 	cons_init(sacom),
 #endif
-	{ 0 },
+	{ NULL },
 };

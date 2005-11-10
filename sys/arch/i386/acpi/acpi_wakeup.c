@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.7.2.5 2005/02/04 11:44:19 skrll Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.7.2.6 2005/11/10 13:56:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.7.2.5 2005/02/04 11:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.7.2.6 2005/11/10 13:56:32 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -149,7 +149,8 @@ enter_s4_with_bios(void)
 	ef = read_eflags();
 	disable_intr();
 
-	AcpiHwDisableNonWakeupGpes();
+	AcpiHwDisableAllGpes(ACPI_ISR);
+	AcpiHwEnableAllWakeupGpes(ACPI_ISR);
 
 	/* flush caches */
 
@@ -168,7 +169,8 @@ enter_s4_with_bios(void)
 			break;
 	} while (!ret);
 
-	AcpiHwEnableNonWakeupGpes();
+	AcpiHwDisableAllGpes(ACPI_NOT_ISR);
+	AcpiHwEnableAllRuntimeGpes(ACPI_NOT_ISR);
 
 	write_eflags(ef);
 
@@ -176,9 +178,21 @@ enter_s4_with_bios(void)
 }
 
 static u_int16_t	r_ldt;
-static u_int16_t	r_cs, r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
-static u_int32_t	r_eax, r_ebx, r_ecx, r_edx, r_ebp, r_esi, r_edi,
-			r_efl, r_cr0, r_cr2, r_cr3, r_cr4, r_esp;
+static u_int16_t	r_cs __used;
+static u_int16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
+static u_int32_t	r_eax __used;
+static u_int32_t	r_ebx __used;
+static u_int32_t	r_ecx __used;
+static u_int32_t	r_edx __used;
+static u_int32_t	r_ebp __used;
+static u_int32_t	r_esi __used;
+static u_int32_t	r_edi __used;
+static u_int32_t	r_efl __used;
+static u_int32_t	r_cr0 __used;
+static u_int32_t	r_cr2 __used;
+static u_int32_t	r_cr3 __used;
+static u_int32_t	r_cr4 __used;
+static u_int32_t	r_esp __used;
 static u_int32_t	ret_addr;
 static struct region_descriptor	r_idt, r_gdt;
 

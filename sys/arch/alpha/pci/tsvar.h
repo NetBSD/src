@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.3 2000/11/29 06:30:09 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.3.24.1 2005/11/10 13:50:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -68,7 +68,7 @@ struct tsp_softc {
 };
 
 struct tsp_attach_args {
-	char	*tsp_name;
+	const char *tsp_name;
 	int	tsp_slot;
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.18.2.5 2005/01/17 19:29:12 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.18.2.6 2005/11/10 13:55:16 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -27,7 +27,7 @@ NEED_OWN_INSTALL_TARGET?=no
 THISARM=	$S/arch/${MACHINE}
 ARM=		$S/arch/arm
 ARM32=		$S/arch/arm32
-GENASSYM=	${ARM}/arm32/genassym.cf
+GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 .-include "$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
 
 ##
@@ -61,6 +61,9 @@ locore.o: ${ARM}/arm32/locore.S assym.h
 ##
 LOADADDRESS?=	0xF0000000
 LINKFLAGS_NORMAL=	-X
+# Strip ARM mapping symbols from the kernel image, as they interfere
+# with ddb, but don't strip them in the .gdb
+STRIPFLAGS=-g --strip-symbol='$$a' --strip-symbol='$$t' --strip-symbol='$$d'
 
 ##
 ## (6) port specific target dependencies

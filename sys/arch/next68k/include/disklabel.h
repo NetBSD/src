@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2.6.3 2004/09/21 13:19:42 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2.6.4 2005/11/10 13:57:58 skrll Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -32,7 +32,11 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#else
 #include <sys/bootblock.h>
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #if 0 /* XXX the following doesn't work - still need to find a proper place for the NetBSD disklabel */
 /*

@@ -1,11 +1,7 @@
-$NetBSD: TODO,v 1.19 2003/05/25 15:46:15 tsutsui Exp $
+$NetBSD: TODO,v 1.19.2.1 2005/11/10 13:55:00 skrll Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
-
-    o   Boot. Standalone boot program to load ELF kernels instead of
-	booting ECOFF kernels directly.
-	(maybe sgimips/stand would help, but annoying buggy ARC BIOS)
 
     o	sysinst
 	maybe MD fdisk partitioning support is required to load files
@@ -147,8 +143,6 @@ XXX some entries might be obsolete.
     o   Can we have 32 double registers?
 
     o	64bit kernel/userland
-
-    o	fix implementation of DELAY(), clean up clock implementation
 
     o	omit __SWAP_BROKEN in <mips/types.h>
 

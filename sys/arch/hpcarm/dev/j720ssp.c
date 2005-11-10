@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.17.2.4 2005/01/24 08:59:39 skrll Exp $ */
+/* $NetBSD: j720ssp.c,v 1.17.2.5 2005/11/10 13:56:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.4 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.5 2005/11/10 13:56:14 skrll Exp $");
 
 #include "apm.h"
 
@@ -144,10 +144,6 @@ static int  j720ssp_readwrite __P((struct j720ssp_softc *, int,
 int  j720sspprobe __P((struct device *, struct cfdata *, void *));
 void j720sspattach __P((struct device *, struct device *, void *));
 
-int  j720kbd_submatch __P((struct device *, struct cfdata *, void *));
-int  j720tp_submatch __P((struct device *, struct cfdata *, void *));
-int  apm_submatch __P((struct device *, struct cfdata *, void *));
-
 int  j720kbd_enable __P((void *, int));
 void j720kbd_set_leds __P((void *, int));
 int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
@@ -198,7 +194,6 @@ static int j720ssp_powerstate = 1;
 static struct j720ssp_softc j720kbdcons_sc;
 static int j720kbdcons_initstate = 0;
 
-#define DEBUG
 #ifdef DEBUG
 int j720sspwaitcnt;
 int j720sspwaittime;
@@ -273,8 +268,8 @@ j720sspattach(parent, self, aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found_sm(self, &kbd_args, wskbddevprint,
-	    j720kbd_submatch);
+	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &kbd_args,
+					  wskbddevprint);
 
 #ifdef DEBUG
 	/* Zero the stat counters */
@@ -288,8 +283,8 @@ j720sspattach(parent, self, aux)
 	mouse_args.accessops = &j720tp_accessops;
 	mouse_args.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm(self, &mouse_args, 
-	    wsmousedevprint, j720tp_submatch);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &mouse_args, 
+	    wsmousedevprint);
 	tpcalib_init(&sc->sc_tpcalib);
 
 	/* XXX fill in "default" calibrate param */
@@ -302,7 +297,7 @@ j720sspattach(parent, self, aux)
 			  { 988, 927,   0, 239 },
 			  {  88, 940, 639, 239 } } };
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		    (caddr_t)&j720_default_calib, 0, 0);
+		    __UNCONST(&j720_default_calib), 0, 0);
 	}
 
 	j720tp_disable(sc);
@@ -328,7 +323,7 @@ j720sspattach(parent, self, aux)
 #if NAPM > 0
 	/* attach APM emulation */
 	apm_args.aaa_magic = APM_ATTACH_ARGS_MAGIC; /* magic number */
-	(void)config_found_sm(self, &apm_args, NULL, apm_submatch);
+	(void)config_found_ia(self, "j720sspapm", &apm_args, NULL);
 #endif
 
 	return;
@@ -377,40 +372,6 @@ j720ssp_kthread(arg)
 	/* NOTREACHED */
 }
 
-
-int
-j720kbd_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf; 
-	void *aux;
-{
-	if (strcmp(cf->cf_name, "wskbd") == 0)
-		return (1);
-	return (0);
-}
-
-int
-j720tp_submatch(parent, cf, aux)
-	struct device *parent; 
-	struct cfdata *cf;
-	void *aux;
-{
-	if (strcmp(cf->cf_name, "wsmouse") == 0)
-		return (1);
-	return (0);
-}
-
-int
-apm_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	if (strcmp(cf->cf_name, "apm") == 0)
-		return (1);
-	return (0);
-}
-
 int
 j720kbd_enable(v, on)
 	void *v;
@@ -447,6 +408,9 @@ j720kbd_ioctl(v, cmd, data, flag, l)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_KBD;
+		return 0;
+	case WSKBDIO_GETLEDS:	/* dummy for wsconsctl(8) */
+		*(int *)data = 0;
 		return 0;
 	}
 

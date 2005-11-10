@@ -1,8 +1,9 @@
-#	$NetBSD: std.macppc,v 1.15.2.3 2004/09/21 13:18:19 skrll Exp $
+#	$NetBSD: std.macppc,v 1.15.2.4 2005/11/10 13:57:27 skrll Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
 machine	macppc powerpc
+include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_OEA		# OEA class PowerPC chips
@@ -16,3 +17,5 @@ options 	EXEC_SCRIPT	# shell script support
 options 	INTSTK=0x2000
 
 options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
+
+options		AH_REGOPS_FUNC	# Use ath_hal_reg_{read,write}

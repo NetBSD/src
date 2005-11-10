@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.48 2003/01/20 05:29:59 simonb Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.48.2.1 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.48 2003/01/20 05:29:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.48.2.1 2005/11/10 13:51:36 skrll Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -604,16 +604,16 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 		} while (x--);
 
 		if (md->DEP != 4) {
-			short x = 256-17;
-			unsigned char col = 16;
+			short xx = 256-17;
+			unsigned char cols = 16;
 			do {
 
-				vgaw(ba, VDAC_REG_DATA, col);
-				vgaw(ba, VDAC_REG_DATA, col);
-				vgaw(ba, VDAC_REG_DATA, col);
-				col++;
+				vgaw(ba, VDAC_REG_DATA, cols);
+				vgaw(ba, VDAC_REG_DATA, cols);
+				vgaw(ba, VDAC_REG_DATA, cols);
+				cols++;
 
-			} while (x--);
+			} while (xx--);
 		}
 	}
 
@@ -671,12 +671,12 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 		  }
 
 		  if (md->FX > 8) {
-			unsigned short z;
+			unsigned short zz;
 
 			Map(3);
 			c = fb + md->FLo*32;
 			f = md->FData+1;
-			for (z = md->FLo; z <= md->FHi; z++) {
+			for (zz = md->FLo; z <= md->FHi; zz++) {
 
 				short y = md->FY-1;
 				do {

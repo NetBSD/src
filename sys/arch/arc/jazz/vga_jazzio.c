@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.9.6.4 2005/01/24 08:34:05 skrll Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.9.6.5 2005/11/10 13:55:09 skrll Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.4 2005/01/24 08:34:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.5 2005/11/10 13:55:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.4 2005/01/24 08:34:05 skrll Exp
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/wired_map.h>
 
 #include <mips/pte.h>
 
@@ -48,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.4 2005/01/24 08:34:05 skrll Exp
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 
-#include <arc/arc/wired_map.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/vga_jazziovar.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.4 2005/01/24 08:34:05 skrll Exp
 
 #define WSDISPLAY_TYPE_JAZZVGA	WSDISPLAY_TYPE_PCIVGA	/* XXX not really */
 
-int	vga_jazzio_init_tag(char*, bus_space_tag_t *, bus_space_tag_t *);
+int	vga_jazzio_init_tag(const char *, bus_space_tag_t *, bus_space_tag_t *);
 paddr_t	vga_jazzio_mmap(void *, off_t, int);
 int	vga_jazzio_match(struct device *, struct cfdata *, void *);
 void	vga_jazzio_attach(struct device *, struct device *, void *);
@@ -72,7 +72,8 @@ const struct vga_funcs vga_jazzio_funcs = {
 };
 
 int
-vga_jazzio_init_tag(char *name, bus_space_tag_t *iotp, bus_space_tag_t *memtp)
+vga_jazzio_init_tag(const char *name, bus_space_tag_t *iotp,
+    bus_space_tag_t *memtp)
 {
 	static int initialized = 0;
 	static struct arc_bus_space vga_io, vga_mem;
@@ -90,19 +91,29 @@ vga_jazzio_init_tag(char *name, bus_space_tag_t *iotp, bus_space_tag_t *memtp)
 		    PICA_P_LOCAL_VIDEO, PICA_V_LOCAL_VIDEO,
 		    0, PICA_S_LOCAL_VIDEO);
 
-		arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL,
+		arc_wired_enter_page(PICA_V_LOCAL_VIDEO_CTRL,
 		    PICA_P_LOCAL_VIDEO_CTRL,
+		    PICA_S_LOCAL_VIDEO_CTRL / 2);
+		arc_wired_enter_page(
+		    PICA_V_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
 		    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
-		    MIPS3_PG_SIZE_1M);
-		arc_enter_wired(PICA_V_LOCAL_VIDEO,
+		    PICA_S_LOCAL_VIDEO_CTRL / 2);
+
+		arc_wired_enter_page(PICA_V_LOCAL_VIDEO,
 		    PICA_P_LOCAL_VIDEO,
-		    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2,
-		    MIPS3_PG_SIZE_4M);
+		    PICA_S_LOCAL_VIDEO / 2);
+		arc_wired_enter_page(
+		    PICA_V_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO / 2,
+		    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO / 2,
+		    PICA_S_LOCAL_VIDEO / 2);
 #if 0
-		arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL,
+		arc_wired_enter_page(PICA_V_EXTND_VIDEO_CTRL,
 		    PICA_P_EXTND_VIDEO_CTRL,
-		    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
-		    MIPS3_PG_SIZE_1M);
+		    PICA_S_EXTND_VIDEO_CTRL / 2);
+		arc_wired_enter_page(
+		    PICA_V_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL / 2,
+		    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL / 2,
+		    PICA_S_EXTND_VIDEO_CTRL / 2);
 #endif
 	}
 	*iotp = &vga_io;

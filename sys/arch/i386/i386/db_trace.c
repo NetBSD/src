@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39.2.3 2004/09/21 13:16:41 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.39.2.4 2005/11/10 13:56:46 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.2.3 2004/09/21 13:16:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.2.4 2005/11/10 13:56:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.2.3 2004/09/21 13:16:41 skrll Exp 
 #include <ddb/db_interface.h>
 
 /*
- * Machine register set.
+ * Machine set.
  */
 
 #define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
@@ -121,7 +121,7 @@ void db_find_trace_symbols(void);
 int db_numargs(int *);
 int db_nextframe(int **, int **, int **, db_addr_t *, int *, int,
     void (*) (const char *, ...));
-db_sym_t db_frame_info(int *, db_addr_t, char **, db_expr_t *, int *, int *);
+db_sym_t db_frame_info(int *, db_addr_t, const char **, db_expr_t *, int *, int *);
 
 void
 db_find_trace_symbols()
@@ -271,13 +271,13 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 }
 
 db_sym_t
-db_frame_info(int *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
+db_frame_info(int *frame, db_addr_t callpc, const char **namep, db_expr_t *offp,
 	      int *is_trap, int *nargp)
 {
 	db_expr_t	offset;
 	db_sym_t	sym;
 	int narg;
-	char *name;
+	const char *name;
 
 	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 	db_symbol_values(sym, &name, NULL);
@@ -359,7 +359,7 @@ db_frame_info(int *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
 
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
-		     char *modif, void (*pr)(const char *, ...))
+		     const char *modif, void (*pr)(const char *, ...))
 {
 	int *frame, *lastframe;
 	int *retaddr, *arg0;
@@ -375,8 +375,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 #endif
 
 	{
-		register char *cp = modif;
-		register char c;
+		const char *cp = modif;
+		char c;
 
 		while ((c = *cp++) != 0) {
 			if (c == 't')
@@ -430,7 +430,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	lastframe = 0;
 	while (count && frame != 0) {
 		int		narg;
-		char *	name;
+		const char *	name;
 		db_expr_t	offset;
 		db_sym_t	sym;
 		char	*argnames[MAXNARG], **argnp = NULL;

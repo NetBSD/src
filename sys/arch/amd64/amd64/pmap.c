@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.2.6 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6.2.7 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.2.6 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.2.7 2005/11/10 13:50:24 skrll Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -592,13 +592,13 @@ pmap_is_curpmap(pmap)
  */
 
 __inline static boolean_t
-pmap_is_active(pmap, cpu_id)
+pmap_is_active(pmap, cpu_num)
 	struct pmap *pmap;
-	int cpu_id;
+	int cpu_num;
 {
 
 	return (pmap == pmap_kernel() ||
-	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
+	    (pmap->pm_cpus & (1U << cpu_num)) != 0);
 }
 
 /*
@@ -1291,13 +1291,13 @@ pmap_init()
 	 * are always all-zero if !LOCKDEBUG.
 	 */
 	for (lcv = 0; lcv < vm_nphysseg ; lcv++) {
-		int off, npages;
+		int off, num_pages;
 		struct pmap_physseg *pmsegp;
 
-		npages = vm_physmem[lcv].end - vm_physmem[lcv].start;
+		num_pages = vm_physmem[lcv].end - vm_physmem[lcv].start;
 		pmsegp = &vm_physmem[lcv].pmseg;
 
-		for (off = 0; off <npages; off++)
+		for (off = 0; off <num_pages; off++)
 			simple_lock_init(&pmsegp->pvhead[off].pvh_lock);
 
 	}
@@ -2051,7 +2051,8 @@ pmap_fork(pmap1, pmap2)
 		size_t len;
 
 		len = pmap1->pm_ldt_len;
-		new_ldt = (char *)uvm_km_alloc(kernel_map, len, UVM_KMF_WIRED);
+		new_ldt = (char *)uvm_km_alloc(kernel_map, len, 0,
+		    UVM_KMF_WIRED);
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2128,6 +2129,10 @@ pmap_activate(l)
 		 */
 		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 	}
+	if (pcb->pcb_flags & PCB_GS64)
+		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
+	if (pcb->pcb_flags & PCB_FS64)
+		wrmsr(MSR_FSBASE, pcb->pcb_fs);
 }
 
 /*
@@ -2245,9 +2250,10 @@ pmap_virtual_space(startp, endp)
 }
 
 /*
- * pmap_map: map a range of PAs into kvm
+ * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
+ * => does not do TLB shootdowns
  * => XXX: pmap_map() should be phased out?
  */
 
@@ -2257,8 +2263,16 @@ pmap_map(va, spa, epa, prot)
 	paddr_t spa, epa;
 	vm_prot_t prot;
 {
+	pt_entry_t *pte, opte, npte;
+
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pte = kvtopte(va);
+
+		npte = spa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
+		    PG_V | pmap_pg_g;
+		opte = pmap_pte_set(pte, npte);
+		if (pmap_valid_entry(opte))
+			pmap_update_pg(va);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
@@ -3268,6 +3282,11 @@ enter_now:
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
 
 	ptes[pl1_i(va)] = npte;		/* zap! */
 
@@ -3691,8 +3710,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 void
 pmap_do_tlb_shootdown(struct cpu_info *self)
 {
-	u_long cpu_id = cpu_number();
-	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
+	u_long cpu_num = cpu_number();
+	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_num];
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
 #ifdef MULTIPROCESSOR
@@ -3737,7 +3756,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_ul(&ci->ci_tlb_ipi_mask,
-		    (1U << cpu_id));
+		    (1U << cpu_num));
 	__cpu_simple_unlock(&pq->pq_slock);
 #endif
 

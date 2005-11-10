@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2002/01/14 19:08:35 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.16.1 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -79,12 +79,12 @@ extern void _clrsoftintr __P((int));
  */
 #define setsoft(x)	do {			\
 	extern u_int ssir;			\
-	int s;					\
+	int _s;					\
 						\
-	s = splhigh();				\
+	_s = splhigh();				\
 	ssir |= 1 << (x);			\
 	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
-	splx(s);				\
+	splx(_s);				\
 } while (0)
 
 #define softintr_schedule(arg)						\

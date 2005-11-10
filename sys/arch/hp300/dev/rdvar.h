@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.11.6.4 2004/09/21 13:15:17 skrll Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.11.6.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
 struct	rdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */
 	short	ri_maxunum;		/* maximum allowed unit number */
-	char	*ri_desc;		/* drive type description */
+	const char *ri_desc;		/* drive type description */
 	int	ri_nbpt;		/* DEV_BSIZE blocks per track */
 	int	ri_ntpc;		/* tracks per cylinder */
 	int	ri_ncyl;		/* cylinders per unit */
@@ -114,7 +114,7 @@ struct	rd_softc {
 	struct	rd_ssmcmd sc_ssmc;
 	struct	rd_srcmd sc_src;
 	struct	rd_clearcmd sc_clear;
-	struct	bufq_state sc_tab;
+	struct	bufq_state *sc_tab;
 	int	sc_active;
 	int	sc_errcnt;
 	struct	rdstats sc_stats;

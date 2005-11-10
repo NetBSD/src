@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2.6.3 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: dk.c,v 1.2.6.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -54,7 +54,7 @@ dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 int
 dkopen(struct open_file *f, ...)
 {
-	struct disklabel *lp;
+	struct disklabel dkl;
 	struct hppa_dev *dp = f->f_devdata;
 	const char *st;
 	u_int i;
@@ -67,13 +67,13 @@ dkopen(struct open_file *f, ...)
 	if (!(dp->pz_dev = pdc_findev(-1, PCL_RANDOM)))
 		return ENXIO;
 
-	lp = dp->label;
+	dp->part_off = 0;
 	st = NULL;
 #ifdef DEBUG
 	if (debug)
 		printf ("disklabel\n");
 #endif
-	if ((st = dk_disklabel(dp, lp)) != NULL) {
+	if ((st = dk_disklabel(dp, &dkl)) != NULL) {
 #ifdef DEBUG
 		if (debug)
 			printf ("dkopen: %s\n", st);
@@ -104,9 +104,10 @@ dkopen(struct open_file *f, ...)
 		if (debug)
 			printf("bootdev 0x%x, partition %u\n", dp->bootdev, i);
 #endif
-		if (i >= lp->d_npartitions || !lp->d_partitions[i].p_size) {
+		if (i >= dkl.d_npartitions || !dkl.d_partitions[i].p_size) {
 			return (EPART);
 		}
+		dp->part_off = dkl.d_partitions[i].p_offset * dkl.d_secsize;
 	}
 #ifdef DEBUGBUG
 	if (debug)

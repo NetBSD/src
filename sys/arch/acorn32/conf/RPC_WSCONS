@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.17.8.9 2005/03/04 16:38:00 skrll Exp $
+#	$NetBSD: RPC_WSCONS,v 1.17.8.10 2005/11/10 13:48:21 skrll Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.17.8.9 $"
+#ident		"GENERIC-$Revision: 1.17.8.10 $"
 
 # estimated number of users
 maxusers	32
@@ -64,6 +64,7 @@ file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -79,6 +80,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -97,6 +99,7 @@ options 	INET6		# IPV6
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.

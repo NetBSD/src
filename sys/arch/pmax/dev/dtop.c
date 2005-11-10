@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.66.2.4 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: dtop.c,v 1.66.2.5 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.66.2.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.66.2.5 2005/11/10 13:58:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -335,7 +335,7 @@ dtopopen(dev, flag, mode, l)
 		(void) dtopparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE)
-	    && curproc->p_ucred->cr_uid != 0)
+	    && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
@@ -629,7 +629,7 @@ dtop_get_packet(dtop, pkt)
 {
 	poll_reg_t	poll;
 	data_reg_t	data;
-	int		max, i, len;
+	int		ctr, i, len;
 	unsigned char	c;
 	int state;
 	int escaped;
@@ -648,10 +648,10 @@ dtop_get_packet(dtop, pkt)
 	len = 0;		/* packet data length */
 	i = 0;			/* packet data index */
 	while (1) {
-		for (max = 0; (max < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll);
-		    max++)
+		for (ctr = 0; (ctr < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll);
+		    ctr++)
 			DELAY(1);
-		if (max == DTOP_MAX_POLL) {
+		if (ctr == DTOP_MAX_POLL) {
 			++dtop->bad_pkts;
 			return (-1);
 		}
@@ -860,7 +860,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
 	int msg_len, c, s, cl;
-	char *cp;
+	const char *cp;
 #ifdef RCONS_BRAINDAMAGE
 	struct tty *tp = DTOP_TTY(0);
 #endif
@@ -1003,7 +1003,7 @@ dtop_keyboard_repeat(arg)
 {
 	dtop_device_t dev = (dtop_device_t)arg;
 	int i, c, cl;
-	char *cp;
+	const char *cp;
 #if 0
 	struct tty *tp = DTOP_TTY(0);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.2.4 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.5 2005/11/10 13:57:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.4 2005/02/06 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.5 2005/11/10 13:57:57 skrll Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -485,7 +485,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

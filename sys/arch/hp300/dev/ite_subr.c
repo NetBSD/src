@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.9.12.4 2004/09/21 13:15:16 skrll Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.9.12.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_subr.c,v 1.9.12.4 2004/09/21 13:15:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_subr.c,v 1.9.12.5 2005/11/10 13:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -130,13 +130,13 @@ ite_fontinit(struct ite_data *ip)
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
 	u_char fontbuf[500];		/* XXX malloc not initialize yet */
-	u_char *dp, *fbmem;
+	u_char *dp;
+	volatile u_char *fbmem;
 	int c, i, romp;
 
 	romp = getword(ip, getword(ip, FONTROM) + FONTADDR) + FONTDATA;
 	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *)
-		    (FBBASE +
+		fbmem = (FBBASE +
 		     (ip->fonty + (c / ip->cpl) * ip->ftheight) * ip->fbwidth +
 		     (ip->fontx + (c % ip->cpl) * ip->ftwidth));
 		dp = fontbuf;
@@ -158,7 +158,7 @@ ite_readbyte(struct ite_data *ip, int disp)
 }
 
 void
-ite_writeglyph(struct ite_data *ip, u_char *fbmem, u_char *glyphp)
+ite_writeglyph(struct ite_data *ip, volatile u_char *fbmem, u_char *glyphp)
 {
 	int bn;
 	int l, b;

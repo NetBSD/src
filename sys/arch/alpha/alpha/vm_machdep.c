@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.80.2.5 2005/04/01 14:26:49 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.80.2.6 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.5 2005/04/01 14:26:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.6 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,17 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.5 2005/04/01 14:26:49 skrll Ex
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
+cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	int error;
 	struct md_coredump cpustate;
 	struct coreseg cseg;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
+	if (iocookie == NULL) {
+		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+		chdr->c_cpusize = sizeof(cpustate);
+		chdr->c_nseg++;
+		return 0;
+	}
 
 	cpustate.md_tf = *l->l_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
@@ -77,20 +80,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
+	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
-
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
+	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
+	    sizeof(cpustate));
 }
 
 void

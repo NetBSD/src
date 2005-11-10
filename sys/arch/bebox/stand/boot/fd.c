@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4.22.3 2004/09/21 13:14:26 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.4.22.4 2005/11/10 13:55:46 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -33,7 +33,7 @@
  */
 
 #include <sys/param.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include "boot.h"
 
 /*---------------------------------------------------------------------------*

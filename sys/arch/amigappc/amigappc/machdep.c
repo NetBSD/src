@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24.2.3 2004/09/21 13:12:46 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.24.2.4 2005/11/10 13:55:00 skrll Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.3 2004/09/21 13:12:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.4 2005/11/10 13:55:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -711,7 +711,7 @@ cpu_startup()
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
 
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));

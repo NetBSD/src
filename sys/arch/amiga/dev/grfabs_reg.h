@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.7 2002/01/26 13:40:56 aymeric Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.7.16.1 2005/11/10 13:51:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -228,7 +228,7 @@ typedef monitor_t  *get_monitor_func (dmode_t *);
 
 struct display_mode {
     LIST_ENTRY(display_mode) link;
-    u_char    *name;			/* logical name for mode. */
+    const u_char    *name;		/* logical name for mode. */
     dimen_t    nominal_size;		/* best fit. */
     void      *data;			/* mode specific flags. */
     alloc_view_func       *alloc_view;	/* allocate a view for this mode. */
@@ -248,7 +248,7 @@ typedef void    free_bitmap_func (bmap_t *bm);
 
 struct monitor {
     LIST_ENTRY(monitor) link; /* a link into the database. */
-    u_char     *name;	/* a logical name for this monitor. */
+    const u_char     *name;   /* a logical name for this monitor. */
     void       *data;	/* monitor specific data. */
     get_current_mode_func *get_current_mode;
     vbl_handler_func	*vbl_handler;	/* called on every vbl if not NULL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.21.6.5 2005/02/15 21:32:32 skrll Exp $	*/
+/*	$NetBSD: ser.c,v 1.21.6.6 2005/11/10 13:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.5 2005/02/15 21:32:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.6 2005/11/10 13:55:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -229,7 +229,6 @@ void	serdiag __P((void *));
 int	serhwiflow __P((struct tty *, int));
 void	serinit __P((int));
 void	serinitcons __P((int));
-int	baud;
 int	sermintr __P((void *));
 int	sertrintr __P((void *));
 int	serparam __P((struct tty *, struct termios *));
@@ -398,7 +397,7 @@ seropen(dev, flag, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

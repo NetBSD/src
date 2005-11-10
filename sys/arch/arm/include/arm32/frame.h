@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5.8.3 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.5.8.4 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -76,7 +76,9 @@ typedef struct irqframe {
 	unsigned int if_pc;
 } irqframe_t;
 
-#define clockframe irqframe
+struct clockframe {
+	struct irqframe cf_if;
+};
 
 /*
  * Switch frame

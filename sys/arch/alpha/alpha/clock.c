@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.33.2.3 2004/09/21 13:11:44 skrll Exp $ */
+/* $NetBSD: clock.c,v 1.33.2.4 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.3 2004/09/21 13:11:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.4 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -141,7 +141,7 @@ clockattach(dev, fns)
  *
  * Inittodr initializes the time of day hardware which provides
  * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
+ * system information in case the hardware clock lost state.
  *
  * Resettodr restores the time of day hardware after a time change.
  */
@@ -201,7 +201,7 @@ setstatclockrate(newhz)
 }
 
 /*
- * Initialze the time of day register, based on the time base which is, e.g.
+ * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.  Base provides the time to within six months,
  * and the time of year clock (if any) provides the rest.
  */

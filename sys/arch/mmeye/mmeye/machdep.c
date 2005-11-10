@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.3 2004/09/21 13:19:04 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.4 2005/11/10 13:57:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.3 2004/09/21 13:19:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.4 2005/11/10 13:57:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -110,7 +110,7 @@ char machine[] = MACHINE;		/* mmeye */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
 
 void initSH3 __P((void *));
-void LoadAndReset __P((char *));
+void LoadAndReset __P((const char *));
 void XLoadAndReset __P((char *));
 void consinit __P((void));
 void sh3_cache_on __P((void));
@@ -139,14 +139,14 @@ cpu_startup()
 static int
 sysctl_machdep_loadandreset(SYSCTLFN_ARGS)
 {
-	char *osimage;
+	const char *osimage;
 	int error;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
 	if (error || newp == NULL)
 		return (error);
 
-	osimage = (char *)(*(u_long *)newp);
+	osimage = (const char *)(*(const u_long *)newp);
 	LoadAndReset(osimage);
 	/* not reach here */
 	return (0);
@@ -444,11 +444,11 @@ sh3_cache_on(void)
 
 void
 LoadAndReset(osimage)
-	char *osimage;
+	const char *osimage;
 {
 	void *buf_addr;
 	u_long size;
-	u_long *src;
+	const u_long *src;
 	u_long *dest;
 	u_long csum = 0;
 	u_long csum2 = 0;
@@ -459,8 +459,8 @@ LoadAndReset(osimage)
 	printf("LoadAndReset: copy start\n");
 	buf_addr = (void *)OSIMAGE_BUF_ADDR;
 
-	size = *(u_long *)osimage;
-	src = (u_long *)osimage;
+	size = *(const u_long *)osimage;
+	src = (const u_long *)osimage;
 	dest = buf_addr;
 
 	size = (size + sizeof(u_long) * 2 + 3) >> 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.58.2.4 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: rcons.c,v 1.58.2.5 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.58.2.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.58.2.5 2005/11/10 13:58:15 skrll Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -335,7 +335,8 @@ rconsopen(dev, flag, mode, l)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);

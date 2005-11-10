@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.21.2.4 2005/01/24 08:59:39 skrll Exp $ */
+/*	$NetBSD: txcom.c,v 1.21.2.5 2005/11/10 13:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.4 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.5 2005/11/10 13:56:27 skrll Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -799,7 +799,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

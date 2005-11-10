@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.28.2.3 2004/09/21 13:12:31 skrll Exp $ */
+/*	$NetBSD: sci.c,v 1.28.2.4 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.28.2.3 2004/09/21 13:12:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.28.2.4 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.28.2.3 2004/09/21 13:12:31 skrll Exp $");
 int  sciicmd(struct sci_softc *, int, void *, int, void *, int,u_char);
 int  scigo(struct sci_softc *, struct scsipi_xfer *);
 int  sciselectbus(struct sci_softc *, u_char, u_char);
-void sciabort(struct sci_softc *, char *);
+void sciabort(struct sci_softc *, const char *);
 void scierror(struct sci_softc *, u_char);
 void scisetdelay(int);
 void sci_scsidone(struct sci_softc *, int);
@@ -262,7 +262,7 @@ sci_scsidone(struct sci_softc *dev, int stat)
 }
 
 void
-sciabort(struct sci_softc *dev, char *where)
+sciabort(struct sci_softc *dev, const char *where)
 {
 	printf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
 	  dev->sc_dev.dv_xname, where, *dev->sci_csr, *dev->sci_bus_csr);

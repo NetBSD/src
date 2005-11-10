@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: platform.cpp,v 1.2.24.3 2004/09/21 13:15:53 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: platform.cpp,v 1.2.24.4 2005/11/10 13:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@ HpcMenuInterface::_platform(int n, enum _platform_op op)
 		switch(op) {
 		case _PLATFORM_OP_GET:
 			if (n == cnt)
-				return reinterpret_cast <void *>(name->name);
+				// XXX: constification fallout
+				return reinterpret_cast <void *>
+					(const_cast <tchar *>(name->name));
 			break;
 		case _PLATFORM_OP_SET:
 			if (n == cnt) {

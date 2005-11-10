@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.1.26.4 2005/01/24 08:33:58 skrll Exp $ */
+/* $NetBSD: timer.c,v 1.1.26.5 2005/11/10 13:55:00 skrll Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,17 +79,20 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.1.26.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.1.26.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+
+#include <mips/locore.h>
 
 #include <arc/arc/timervar.h>
 
 struct device *timerdev;
 const struct timerfns *timerfns;
 int timerinitted;
+uint32_t last_cp0_count;
 
 void
 timerattach(struct device *dev, const struct timerfns *fns)
@@ -149,11 +152,29 @@ setstatclockrate(int newhz)
 
 /*
  * Wait "n" microseconds.
- * XXX Should be calibrated with the cycle counter.
  */
 void
-delay(int n)
+delay(unsigned int n)
 {
+	uint32_t cur, last, delta, usecs;
 
-	DELAY(n);
+	last = mips3_cp0_count_read();
+	delta = usecs = 0;
+
+	while (n > usecs) {
+		cur = mips3_cp0_count_read();
+
+		/* Check to see if the timer has wrapped around. */
+		if (cur < last)
+ 			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
+		else
+			delta += (cur - last);
+
+		last = cur;
+
+		if (delta >= curcpu()->ci_divisor_delay) {
+			usecs += delta / curcpu()->ci_divisor_delay;
+			delta %= curcpu()->ci_divisor_delay;
+		}
+	}
 }

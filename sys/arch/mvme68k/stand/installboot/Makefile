@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/02/04 13:34:56 matt Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2005/11/10 13:57:53 skrll Exp $
 
 NOMAN=	# defined
 
@@ -14,7 +14,6 @@ LDSTATIC= -static
 
 .BEGIN: machine
 .NOPATH: machine
-realdepend realall: machine
 CLEANFILES+= machine
 
 .PATH.c: ${LIBSA}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93.2.10 2005/03/04 16:38:26 skrll Exp $
+# $NetBSD: GENERIC,v 1.93.2.11 2005/11/10 13:56:05 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93.2.10 $"
+#ident 		"GENERIC-$Revision: 1.93.2.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -64,10 +64,11 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Debugging options
-options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
@@ -87,6 +88,7 @@ options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_15	# compatibility with NetBSD 1.5
 options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
@@ -114,12 +116,14 @@ file-system	PROCFS		# /proc filesystem
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# Union filesystem (req. for FDESC)
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network filesystem server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
@@ -130,6 +134,7 @@ options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
@@ -269,10 +274,11 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	gre		2	# generic L3 over IP tunnel

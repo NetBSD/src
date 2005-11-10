@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.1.24.1 2005/11/10 13:48:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,19 +67,6 @@ END(_delay)
 	.data
 
 	.globl _C_LABEL(delay_divisor)
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-
 	.align	2
 _C_LABEL(delay_divisor):
 	.word	0
-
-
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-
-	.align	2
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):

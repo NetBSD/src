@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8.2.5 2005/02/04 11:44:33 skrll Exp $	*/
+/*	$NetBSD: apm.c,v 1.8.2.6 2005/11/10 13:57:27 skrll Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8.2.5 2005/02/04 11:44:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8.2.6 2005/11/10 13:57:27 skrll Exp $");
 
 #include "apm.h"
 
@@ -306,9 +306,9 @@ apmioctl(dev, cmd, data, flag, l)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			int flag = *(int *)data;
-			DPRINTF(( "APM_IOC_PRN_CTL: %d\n", flag ));
-			switch (flag) {
+			int op = *(int *)data;
+			DPRINTF(( "APM_IOC_PRN_CTL: %d\n", op ));
+			switch (op) {
 			case APM_PRINT_ON:	/* enable printing */
 				sc->sc_flags &= ~SCFLAG_PRINT;
 				break;

@@ -1,9 +1,11 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1.2.3 2004/09/21 13:12:14 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.1.2.4 2005/11/10 13:51:35 skrll Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
 
 #include <sys/ucontext.h>
+#include <compat/sys/ucontext.h>
+#include <compat/sys/siginfo.h>
 
 typedef	u_int32_t netbsd32_pointer_t;
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))

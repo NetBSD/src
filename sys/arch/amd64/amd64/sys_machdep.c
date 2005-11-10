@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.2.4 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.2.4 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -91,35 +91,88 @@ int x86_64_iopl __P((struct lwp *, void *, register_t *));
 int x86_64_get_mtrr __P((struct lwp *, void *, register_t *));
 int x86_64_set_mtrr __P((struct lwp *, void *, register_t *));
 
-/* XXXfvdl disabled USER_LDT stuff until I check this stuff */
+#ifdef USER_LDT
 
-#if defined(USER_LDT) && 0
+static int x86_64_walk_ldt(const char *ldt,
+    void (*fn)(int, const struct common_segment_descriptor *))
+{
+	const struct common_segment_descriptor *cd;
+	chat *curp;
+	int count, size, error;
+
+	for (count = 0, curp = ldt;
+	    cd = (struct common_segment_descriptor *)curp;
+	    curp += size, count++) {
+		error = fn(count, cd);
+		if (error != 0)
+			return error;
+		if (cd->scd_type >= SDT_MEMRO)
+			size = 8;
+		else
+			size = 16;
+	}
+
+	return 0;
+}
+
+#ifdef LDT_DEBUG
+static int x86_64_print_ldt(int, const struct common_segment_descriptor *);
+
+static int
+x86_64_print_ldt(int  i, const struct common_segment_descriptor *d)
+{
+	const struct sys_segment_descriptor *sd;
+	const struct mem_segment_descriptor *md;
+
+	if (d->scd_type >= SDT_MEMRO) {
+		md = (const struct mem_segment_descriptor *)d;
+		printf("[%d] memdesc lolimit=0x%x, lobase=0x%x, type=%u, "
+		    "dpl=%u, p=%u, hilimit=0x%x, xx=%x, def32=%u, gran=%u, "
+		    "hibase=0x%x\n",
+		    i, md->sd_lolimit, md->sd_lobase, md->sd_type, md->sd_dpl,
+		    md->sd_p, md->sd_hilimit, md->sd_xx, md->sd_def32,
+		    md->sd_gran, md->sd_hibase);
+	} else {
+		sd = (const struct mem_segment_descriptor *)d;
+		printf("[%d] sysdesc lolimit=0x%x, lobase=0x%x, type=%u, "
+		    "dpl=%u, p=%u, hilimit=0x%x, xx=%x, def32=%u, gran=%u, "
+		    "hibase=0x%x\n",
+		    i, (unsigned)sd->sd_lolimit, (unsigned)sd->sd_lobase, (unsigned)sd->sd_type, (unsigned)sd->sd_dpl,
+		    (unsigned)sd->sd_p, (unsigned)sd->sd_hilimit, sd->sd_xx, sd->sd_def32,
+		    sd->sd_gran, sd->sd_hibase);
+	}
+
+	return 0;
+}
+#endif
+
 int
-x86_64_get_ldt(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
+	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
-	union descriptor *lp;
-	struct x86_64_get_ldt_args ua;
+	union descriptor *lp, *cp;
+	struct i386_get_ldt_args ua;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 #ifdef	LDT_DEBUG
-	printf("x86_64_get_ldt: start=%d num=%d descs=%p\n", ua.start,
+	printf("i386_get_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
 
-	if (ua.start < 0 || ua.num < 0)
+	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
+	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
-	/*
-	 * XXX LOCKING.
-	 */
+	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	if (cp == NULL)
+		return ENOMEM;
+
+	simple_lock(&pmap->pm_lock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
@@ -129,106 +182,69 @@ x86_64_get_ldt(p, args, retval)
 		lp = ldt;
 	}
 
-	if (ua.start > nldt)
+	if (ua.start > nldt) {
+		simple_unlock(&pmap->pm_lock);
+		free(cp, M_TEMP);
 		return (EINVAL);
+	}
 
 	lp += ua.start;
 	num = min(ua.num, nldt - ua.start);
+#ifdef LDT_DEBUG
+	{
+		int i;
+		for (i = 0; i < num; i++)
+			i386_print_ldt(i, &lp[i].sd);
+	}
+#endif
 
-	error = copyout(lp, ua.desc, num * sizeof(union descriptor));
-	if (error)
-		return (error);
+	memcpy(cp, lp, num * sizeof(union descriptor));
+	simple_unlock(&pmap->pm_lock);
 
-	*retval = num;
-	return (0);
+	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
+	if (error == 0)
+		*retval = num;
+
+	free(cp, M_TEMP);
+	return (error);
 }
 
 int
-x86_64_set_ldt(p, args, retval)
-	struct proc *p;
+i386_set_ldt(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error, i, n;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct proc *p = l->l_proc;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct x86_64_set_ldt_args ua;
-	union descriptor desc;
+	struct i386_set_ldt_args ua;
+	union descriptor *descv;
+	size_t old_len, new_len, ldt_len;
+	union descriptor *old_ldt, *new_ldt;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-#ifdef	LDT_DEBUG
-	printf("x86_64_set_ldt: start=%d num=%d descs=%p\n", ua.start,
-	    ua.num, ua.desc);
-#endif
-
-	if (ua.start < 0 || ua.num < 0)
-		return (EINVAL);
-	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
+	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
+	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
-	/*
-	 * XXX LOCKING
-	 */
+	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
+	if (descv == NULL)
+		return (ENOMEM);
 
-	/* allocate user ldt */
-	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
-		size_t old_len, new_len;
-		union descriptor *old_ldt, *new_ldt;
-
-		if (pmap->pm_flags & PMF_USER_LDT) {
-			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
-			old_ldt = pmap->pm_ldt;
-		} else {
-			old_len = NLDT * sizeof(union descriptor);
-			old_ldt = ldt;
-			pmap->pm_ldt_len = 512;
-		}
-		while ((ua.start + ua.num) > pmap->pm_ldt_len)
-			pmap->pm_ldt_len *= 2;
-		new_len = pmap->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len,
-		    0, UVM_KMF_WIRED);
-		memcpy(new_ldt, old_ldt, old_len);
-		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
-		pmap->pm_ldt = new_ldt;
-
-		if (pmap->pm_flags & PCB_USER_LDT)
-			ldt_free(pmap);
-		else
-			pmap->pm_flags |= PCB_USER_LDT;
-		ldt_alloc(pmap, new_ldt, new_len);
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-
-		/*
-		 * XXX Need to notify other processors which may be
-		 * XXX currently using this pmap that they need to
-		 * XXX re-load the LDT.
-		 */
-
-		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len, 0,
-			    UVM_KMF_WIRED);
-#ifdef LDT_DEBUG
-		printf("x86_64_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
-#endif
-	}
-
-	if (pcb == curpcb)
-		savectx(curpcb);
-	error = 0;
+	if ((error = copyin(ua.desc, descv, sizeof (*descv) * ua.num)) != 0)
+		goto out;
 
 	/* Check descriptors for access violations. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
-			return (error);
+	for (i = 0; i < ua.num; i++) {
+		union descriptor *desc = &descv[i];
 
-		switch (desc.sd.sd_type) {
+		switch (desc->sd.sd_type) {
 		case SDT_SYSNULL:
-			desc.sd.sd_p = 0;
+			desc->sd.sd_p = 0;
 			break;
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
@@ -238,19 +254,24 @@ x86_64_set_ldt(p, args, retval)
 			 * part of the gdt.  Segments in the LDT are
 			 * constrained (below) to be user segments.
 			 */
-			if (desc.gd.gd_p != 0 && !ISLDT(desc.gd.gd_selector) &&
-			    ((IDXSEL(desc.gd.gd_selector) >= NGDT) ||
-			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
-				 SEL_UPL)))
-				return (EACCES);
+			if (desc->gd.gd_p != 0 &&
+			    !ISLDT(desc->gd.gd_selector) &&
+			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
+			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
+				 SEL_UPL))) {
+				error = EACCES;
+				goto out;
+			}
 			break;
 		case SDT_MEMEC:
 		case SDT_MEMEAC:
 		case SDT_MEMERC:
 		case SDT_MEMERAC:
 			/* Must be "present" if executable and conforming. */
-			if (desc.sd.sd_p == 0)
-				return (EACCES);
+			if (desc->sd.sd_p == 0) {
+				error = EACCES;
+				goto out;
+			}
 			break;
 		case SDT_MEMRO:
 		case SDT_MEMROA:
@@ -266,30 +287,96 @@ x86_64_set_ldt(p, args, retval)
 		case SDT_MEMERA:
 			break;
 		default:
-			/* Only care if it's present. */
-			if (desc.sd.sd_p != 0)
-				return (EACCES);
+			/*
+			 * Make sure that unknown descriptor types are
+			 * not marked present.
+			 */
+			if (desc->sd.sd_p != 0) {
+				error = EACCES;
+				goto out;
+			}
 			break;
 		}
 
-		if (desc.sd.sd_p != 0) {
+		if (desc->sd.sd_p != 0) {
 			/* Only user (ring-3) descriptors may be present. */
-			if (desc.sd.sd_dpl != SEL_UPL)
-				return (EACCES);
+			if (desc->sd.sd_dpl != SEL_UPL) {
+				error = EACCES;
+				goto out;
+			}
 		}
 	}
 
-	/* Now actually replace the descriptors. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
-		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
-			goto out;
+	/* allocate user ldt */
+	simple_lock(&pmap->pm_lock);
+	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
+		if (pmap->pm_flags & PMF_USER_LDT)
+			ldt_len = pmap->pm_ldt_len;
+		else
+			ldt_len = 512;
+		while ((ua.start + ua.num) > ldt_len)
+			ldt_len *= 2;
+		new_len = ldt_len * sizeof(union descriptor);
 
-		pmap->pm_ldt[n] = desc;
+		simple_unlock(&pmap->pm_lock);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
+		    new_len, 0, UVM_KMF_WIRED);
+		simple_lock(&pmap->pm_lock);
+
+		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
+			/*
+			 * Another thread (re)allocated the LDT to
+			 * sufficient size while we were blocked in
+			 * uvm_km_alloc. Oh well. The new entries
+			 * will quite probably not be right, but
+			 * hey.. not our problem if user applications
+			 * have race conditions like that.
+			 */
+			uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+			    UVM_KMF_WIRED);
+			goto copy;
+		}
+
+		old_ldt = pmap->pm_ldt;
+
+		if (old_ldt != NULL) {
+			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
+		} else {
+			old_len = NLDT * sizeof(union descriptor);
+			old_ldt = ldt;
+		}
+
+		memcpy(new_ldt, old_ldt, old_len);
+		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
+
+		if (old_ldt != ldt)
+			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
+			    UVM_KMF_WIRED);
+
+		pmap->pm_ldt = new_ldt;
+		pmap->pm_ldt_len = ldt_len;
+
+		if (pmap->pm_flags & PMF_USER_LDT)
+			ldt_free(pmap);
+		else
+			pmap->pm_flags |= PMF_USER_LDT;
+		ldt_alloc(pmap, new_ldt, new_len);
+		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+		if (pcb == curpcb)
+			lldt(pcb->pcb_ldt_sel);
+
 	}
+copy:
+	/* Now actually replace the descriptors. */
+	for (i = 0, n = ua.start; i < ua.num; i++, n++)
+		pmap->pm_ldt[n] = descv[i];
+
+	simple_unlock(&pmap->pm_lock);
 
 	*retval = ua.start;
 
 out:
+	free(descv, M_TEMP);
 	return (error);
 }
 #endif	/* USER_LDT */

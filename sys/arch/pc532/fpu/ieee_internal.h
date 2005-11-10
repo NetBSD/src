@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.5.6.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.5.6.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -129,30 +129,30 @@ struct operand {
 };
 
 
-int ieee_undfl(struct operand *op1, struct operand *op2,
-	       struct operand *f0_op, int xopcode, state *state);
+int ieee_undfl(struct operand *, struct operand *,
+	       struct operand *, int, state *);
 
-int ieee_ovfl(struct operand *op1, struct operand *op2,
-	      struct operand *f0_op, int xopcode, state *state);
+int ieee_ovfl(struct operand *, struct operand *,
+	      struct operand *, int, state *);
 
-int ieee_dze(struct operand *op1, struct operand *op2,
-	     struct operand *f0_op, int xopcode, state *state);
+int ieee_dze(struct operand *, struct operand *,
+	     struct operand *, int, state *);
 
-int ieee_invop(struct operand *op1, struct operand *op2,
-	       struct operand *f0_op, int xopcode, state *state);
+int ieee_invop(struct operand *, struct operand *,
+	       struct operand *, int, state *);
 
-int ieee_add(double data1, double *data2);
+int ieee_add(double, double *);
 
-int ieee_mul(double data1, double *data2);
+int ieee_mul(double, double *);
 
-int ieee_div(double data1, double *data2);
+int ieee_div(double, double *);
 
-int ieee_dot(double data1, double data2, double *data3);
+int ieee_dot(double, double, double *);
 
-void ieee_cmp(double data1, double data2, state *status);
+void ieee_cmp(double, double, state *);
 
-int ieee_normalize(union t_conv *data);
+int ieee_normalize(union t_conv *);
 
-int ieee_scalb(double data1, double *data2);
+int ieee_scalb(double, double *);
 
 #endif /* _IEEE_INTERNAL_H_ */

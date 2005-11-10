@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.13.2.1 2004/11/29 07:24:02 skrll Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.13.2.2 2005/11/10 13:51:36 skrll Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.13.2.1 2004/11/29 07:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.13.2.2 2005/11/10 13:51:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 /*static*/ void aster_write_fifo(struct isic_softc *sc, int what,
 	const void *data, size_t size);
 
-static int supio_isicattach(struct isic_softc *sc, char *);
+static int supio_isicattach(struct isic_softc *sc, const char *);
 
 struct isic_supio_softc {
 	struct isic_softc	sc_isic;
@@ -218,7 +218,7 @@ aster_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 	bus_space_handle_t h = sc->sc_maps[what].h;
 	bus_size_t o = sc->sc_maps[what].offset;
 
-	bus_space_write_multi_1(t, h, o, (u_int8_t*)buf, size);
+	bus_space_write_multi_1(t, h, o, (const u_int8_t *)buf, size);
 }
 
 /*static*/ u_int8_t
@@ -256,9 +256,9 @@ aster_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 #define	TERMFMT	"\n"
 
 int
-supio_isicattach(struct isic_softc *sc, char *cardname)
+supio_isicattach(struct isic_softc *sc, const char *cardname)
 {
-  	static char *ISACversion[] = {
+  	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		"2085 Version B1",
 		"2085 Version B2",
@@ -266,7 +266,7 @@ supio_isicattach(struct isic_softc *sc, char *cardname)
 		"Unknown Version"
 	};
 
-	static char *HSCXversion[] = {
+	static const char *HSCXversion[] = {
 		"82525 Version A1",
 		"Unknown (0x01)",
 		"82525 Version A2",

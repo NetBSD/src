@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.4.2.3 2004/09/21 13:15:13 skrll Exp $
+#	$NetBSD: majors.hp300,v 1.4.2.4 2005/11/10 13:56:05 skrll Exp $
 #
 # Device majors for hp300
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	swap		char 3   block 3
+device-major	swap		char 3   block 3	vmswap
 device-major	pts		char 4			pty
 device-major	ptc		char 5			pty
 device-major	log		char 6
@@ -50,6 +50,8 @@ device-major	ch		char 48			ch
 device-major	ss		char 49			ss
 device-major	uk		char 50			uk
 device-major	ses		char 51			ses
+
+device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

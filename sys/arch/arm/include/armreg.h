@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.25.2.4 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.25.2.5 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -142,6 +142,8 @@
 #define CPU_ID_ARCH_V5		0x00030000
 #define CPU_ID_ARCH_V5T		0x00040000
 #define CPU_ID_ARCH_V5TE	0x00050000
+#define CPU_ID_ARCH_V5TEJ	0x00060000
+#define CPU_ID_ARCH_V6		0x00070000
 #define CPU_ID_VARIANT_MASK	0x00f00000
 
 /* Next three nybbles are part number */
@@ -189,6 +191,9 @@
 #define	CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
 #define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
+#define CPU_ID_ARM1026EJS	0x4106a260
+#define CPU_ID_ARM1136JS	0x4107b360
+#define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -208,6 +213,8 @@
 #define	CPU_ID_80321_600	0x69052430
 #define	CPU_ID_80321_400_B0	0x69052c20
 #define	CPU_ID_80321_600_B0	0x69052c30
+#define	CPU_ID_80219_400	0x69052e20
+#define	CPU_ID_80219_600	0x69052e30
 #define	CPU_ID_IXP425_533	0x690541c0
 #define	CPU_ID_IXP425_400	0x690541d0
 #define	CPU_ID_IXP425_266	0x690541f0

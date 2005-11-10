@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.6.2.11 2005/04/01 14:26:49 skrll Exp $
+#	$NetBSD: EB7500ATX,v 1.6.2.12 2005/11/10 13:48:20 skrll Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.6.2.11 $"
+#ident		"EB7500ATX-$Revision: 1.6.2.12 $"
 
 # estimated number of users
 maxusers	32
@@ -59,6 +59,7 @@ file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -74,6 +75,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -105,6 +107,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options		COMPAT_15	# NetBSD 1.5 compatibility.
@@ -149,7 +152,8 @@ options		SYMTAB_SPACE=250000
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 

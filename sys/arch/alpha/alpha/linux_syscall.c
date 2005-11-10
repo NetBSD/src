@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.10.2.3 2004/09/21 13:11:46 skrll Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.10.2.4 2005/11/10 13:48:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10.2.3 2004/09/21 13:11:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10.2.4 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,12 +323,12 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 
 	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto bad;
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-
+out:
 	switch (error) {
 	case 0:
 		framep->tf_regs[FRAME_V0] = rval[0];

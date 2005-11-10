@@ -1,4 +1,4 @@
-$NetBSD: cpudevs,v 1.2 2002/08/05 20:58:36 fredette Exp $
+$NetBSD: cpudevs,v 1.2.6.1 2005/11/10 13:56:10 skrll Exp $
 
 $OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp $
 
@@ -108,8 +108,7 @@ board	x		0x202	S 730/66 (King Cobra)
 board	x		0x203	0T 735/99 (Hardball)
 board	x		0x204	0T 755/99 (Coral II)
 board	HP755_125	0x205	0T 755/125 (Coral II)
-#board	HP755_125	0x205	0T 755/125 (Snake Eagle, opt 91)
-board	x		0x206	0T 735/130 (Snake Cheetah)
+board	x		0x206	5T 735/130 (Snake Cheetah)
 
 board	x		0x280	S 817/827/957/957LX/FH20 (Nova Low)
 board	x		0x281	S 837/847/857/967/967LX/FGHI30 (Nova High)
@@ -185,12 +184,12 @@ board	x		0x58a	T' 831/D200-2/D400-2 (UltraLight Proc 2-way T'100)
 board	x		0x58b	T' 819/K200 (KittyHawk DC2 100)
 board	x		0x58c	T' 859/K220 (ThunderHawk DC3- 120 1M)
 board	x		0x58d	T' 869/K420 (ThunderHawk DC3 120 1M)
-board	x		0x58e   T' (Raven 120 T')
+board	x		0x58e   T' 780/C110 (Raven 120 T')
 
 board	x		0x58f	U 889/K450 (Mohawk 160 U 1M DC3)
 board	x		0x590	U 889/K460 (Mohawk 180 U 1M DC3)
 board	x		0x591	U (Mohawk 200 U 1M DC3)
-board	x		0x592	T' (Raven 100 T')
+board	x		0x592	T' 780/C100 (Raven 100 T')
 board	x		0x593	U (FireHawk 160 U)
 board	x		0x594	U 780/J282 (FireHawk 180 U)
 board	x		0x595	U (FireHawk 220 U)

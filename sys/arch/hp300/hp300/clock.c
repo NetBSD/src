@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27.12.4 2004/09/21 13:15:25 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.12.5 2005/11/10 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27.12.4 2004/09/21 13:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27.12.5 2005/11/10 13:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ microtime(struct timeval *tvp)
 {
 	volatile struct clkreg *clk;
 	int s, u, t, u2, s2;
+	static struct timeval lasttime;
 
 	/*
 	 * Read registers from slowest-changing to fastest-changing,
@@ -375,12 +376,19 @@ microtime(struct timeval *tvp)
 	} while (u != u2 || s != s2);
 
 	u += (clkint - t) * CLK_RESOLUTION;
-	if (u >= 1000000) {		/* normalize */
+	while (u >= 1000000) {		/* normalize */
+		s++;
+		u -= 1000000;
+	}
+	if (s == lasttime.tv_sec &&
+	    u <= lasttime.tv_usec &&
+	    (u = lasttime.tv_usec + 1) >= 1000000) {
 		s++;
 		u -= 1000000;
 	}
 	tvp->tv_sec = s;
 	tvp->tv_usec = u;
+	lasttime = *tvp;
 }
 
 /*
@@ -390,6 +398,7 @@ microtime(struct timeval *tvp)
 void
 inittodr(time_t base)
 {
+	struct timeval tv;
 	int badbase = 0, waszero = (base == 0);
 
 	if (base < 5 * SECYR) {
@@ -405,8 +414,8 @@ inittodr(time_t base)
 		badbase = 1;
 	}
 
-	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
-	    time.tv_sec == 0) {
+	if (todr_gettime(todr_handle, &tv) != 0 ||
+	    tv.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -416,7 +425,10 @@ inittodr(time_t base)
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = time.tv_sec - base;
+		int deltat;
+
+		time = tv;
+		deltat = time.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
@@ -437,9 +449,12 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval tv;
+
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+	tv = time;
+	if (todr_settime(todr_handle, &tv) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.15.6.3 2004/09/21 13:18:39 skrll Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.15.6.4 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,10 +147,15 @@ struct tlb {
 #define	MIPS3_PG_IOPAGE(cca) \
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
 #define	MIPS3_PG_FRAME	0x3fffffc0
-#ifdef MIPS3_4100			/* VR4100 core */
-#define MIPS3_PG_SHIFT	4
+
+#define MIPS3_DEFAULT_PG_SHIFT	6
+#define MIPS3_4100_PG_SHIFT	4
+
+/* NEC Vr4100 CPUs have different PFN layout to support 1kbytes/page */
+#if defined(MIPS3_4100)
+#define MIPS3_PG_SHIFT	mips3_pg_shift
 #else
-#define MIPS3_PG_SHIFT	6
+#define MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
 #endif
 
 /* pte accessor macros */
@@ -177,3 +182,23 @@ struct tlb {
 #define	MIPS3_PG_SIZE_16M	0x01ffe000
 #define	MIPS3_PG_SIZE_64M	0x07ffe000
 #define	MIPS3_PG_SIZE_256M	0x1fffe000
+
+#define	MIPS3_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
+    ((((pg_mask) | 0x00001fff) + 1) / 2)
+
+#define	MIPS3_PG_SIZE_TO_MASK(pg_size)		\
+    ((((pg_size) * 2) - 1) & ~0x00001fff)
+
+/* NEC Vr41xx uses different pagemask values. */
+#define	MIPS4100_PG_SIZE_1K	0x00000000
+#define	MIPS4100_PG_SIZE_4K	0x00001800
+#define	MIPS4100_PG_SIZE_16K	0x00007800
+#define	MIPS4100_PG_SIZE_64K	0x0001f800
+#define	MIPS4100_PG_SIZE_256K	0x0007f800
+
+#define	MIPS4100_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
+    ((((pg_mask) | 0x000007ff) + 1) / 2)
+
+#define	MIPS4100_PG_SIZE_TO_MASK(pg_size)		\
+    ((((pg_size) * 2) - 1) & ~0x000007ff)
+

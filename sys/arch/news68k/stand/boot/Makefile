@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/04/19 07:34:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2005/11/10 13:57:54 skrll Exp $
 
 NOMAN= # defined
 
@@ -30,9 +30,8 @@ CLEANFILES+= ${PROG}.sym machine m68k
 L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
-.BEGIN: machine m68k
 .NOPATH: machine m68k
-realdepend realall: machine m68k
+.BEGIN: machine m68k
 
 machine::
 	-rm -f $@
@@ -42,7 +41,7 @@ m68k::
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
 
-${PROG}: ${OBJS} machine m68k
+${PROG}: ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	-${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}

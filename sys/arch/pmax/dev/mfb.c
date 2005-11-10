@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.49.6.3 2004/09/21 13:20:19 skrll Exp $	*/
+/*	$NetBSD: mfb.c,v 1.49.6.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49.6.3 2004/09/21 13:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49.6.4 2005/11/10 13:58:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -260,7 +260,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 
 	/* check for no frame buffer */
 	if (badaddr(mfbaddr, 4)) {
-		printf("mfb: bad address 0x%p\n", mfbaddr);
+		printf("mfb: bad address %p\n", mfbaddr);
 		return (0);
 	}
 

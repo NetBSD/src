@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.5.2.4 2004/12/18 09:31:15 skrll Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.5.2.5 2005/11/10 13:57:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.5.2.4 2004/12/18 09:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.5.2.5 2005/11/10 13:57:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ timer_hb_attach(struct device *parent, struct device *self, void *aux)
  * Note that clock interrupts MUST STAY DISABLED until here.
  */
 static void
-timer_hb_initclocks(int tick, int statint)
+timer_hb_initclocks(int prof, int stat)
 {
 	int s;
 

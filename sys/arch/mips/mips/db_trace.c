@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23.2.3 2004/09/21 13:18:48 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.23.2.4 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23.2.3 2004/09/21 13:18:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23.2.4 2005/11/10 13:57:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,8 +133,8 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
-    char *modif, void (*pr)(const char *, ...))
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif, void (*pr)(const char *, ...))
 {
 #ifndef DDB_TRACE
 	struct pcb *pcb;

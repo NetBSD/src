@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.5.6.4 2004/09/21 13:14:47 skrll Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.5.6.5 2005/11/10 13:55:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.4 2004/09/21 13:14:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.5 2005/11/10 13:55:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ ifpga_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 	static char irqstr[12];		/* 6 + 1 + NULL + sanity */
 
 #ifdef PCI_DEBUG
-	printf("ifpga_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
+	printf("ifpga_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
 		panic("ifpga_pci_intr_string: bogus handle 0x%lx", ih);

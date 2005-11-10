@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.11.2.6 2005/04/01 14:26:51 skrll Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.11.2.7 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.6 2005/04/01 14:26:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.7 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1610,20 +1610,20 @@ vidcrender_flash_go(vc)
 
 /* What does this function do ? */
 int 
-vidcrender_flash(vc, flash)
+vidcrender_flash(vc, flashit)
 	struct vconsole *vc;
-	int flash;
+	int flashit;
 {
-	flash = flash;
+	flashit = flashit;
 	return(0);
 }
 
 int
-vidcrender_cursorflash(vc, flash)
+vidcrender_cursorflash(vc, flashit)
 	struct vconsole *vc;
-	int flash;
+	int flashit;
 {
-	cursor_flash = flash;
+	cursor_flash = flashit;
 	return(0);
 }
 

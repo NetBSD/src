@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.2.4.2 2005/01/17 19:29:12 skrll Exp $ */
+/*	$NetBSD: epcom.c,v 1.2.4.3 2005/11/10 13:55:16 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.2.4.2 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.2.4.3 2005/11/10 13:55:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -483,7 +483,7 @@ epcomopen(dev, flag, mode, p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		p->p_ucred->cr_uid != 0)
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -957,7 +957,7 @@ epcom_rxsoft(sc, tp)
 	struct epcom_softc *sc;
 	struct tty *tp;
 {
-	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
+	int (*rint) __P((int, struct tty *)) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char sts;

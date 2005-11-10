@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.35.2.5 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: pccons.c,v 1.35.2.6 2005/11/10 13:55:09 skrll Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.35.2.5 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.35.2.6 2005/11/10 13:55:09 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -619,7 +619,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

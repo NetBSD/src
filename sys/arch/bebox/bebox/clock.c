@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11.2.3 2004/09/21 13:14:20 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.2.4 2005/11/10 13:55:33 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.2.3 2004/09/21 13:14:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.2.4 2005/11/10 13:55:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ decr_intr(struct clockframe *frame)
 	int msr;
 	int pri;
 	u_long tb;
-	long tick;
+	long ticks;
 	int nticks;
 	extern long intrcnt[];
 
@@ -71,16 +71,16 @@ decr_intr(struct clockframe *frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(ticks));
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	asm volatile ("mtdec %0" :: "r"(ticks));
 
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = tb + ticks - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.3.2.4 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.3.2.5 2005/11/10 13:55:00 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.3.2.4 2005/01/24 08:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.3.2.5 2005/11/10 13:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ void arc_sysreset(bus_addr_t, bus_size_t);
 #include <arc/dti/btlvar.h>
 #endif
 
-char *p_dti_arcstation_mainbusdevs[] = {
+const char *p_dti_arcstation_mainbusdevs[] = {
 	"arcsisabr",
 	NULL,
 };

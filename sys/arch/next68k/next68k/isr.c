@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17.6.4 2005/01/24 08:34:18 skrll Exp $ */
+/*	$NetBSD: isr.c,v 1.17.6.5 2005/11/10 13:57:58 skrll Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -48,12 +48,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.6.4 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.6.5 2005/11/10 13:57:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 

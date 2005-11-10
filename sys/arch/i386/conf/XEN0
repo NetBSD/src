@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.2.4.2 2005/04/01 14:27:39 skrll Exp $
+# $NetBSD: XEN0,v 1.2.4.3 2005/11/10 13:56:32 skrll Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,6 +13,9 @@ maxusers	32		# estimated number of users
 #
 options  	XEN
 options 	DOM0OPS
+#making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
+# do a domU, at the expense of a highter memory usage by the network stack.
+#options 	MCLSHIFT=12
 
 #options 	I586_CPU
 options 	I686_CPU
@@ -31,7 +34,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -70,6 +73,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -104,6 +108,8 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -121,6 +127,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -174,6 +181,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_SCROLLSUPPORT
 options 	PCDISPLAY_SOFTCURSOR
 
 config		netbsd	root on ? type ?
@@ -199,12 +207,12 @@ xencons*	at hypervisor?		# Xen virtual console
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 # Xen will hide ppb devices from the guests kernels, and instead present all
-# PCI busses from the hyperviror. So ppb devices should never probe.
+# PCI busses from the hypervisor. So ppb devices should never probe.
 #pci*		at ppb? bus ?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -216,8 +224,9 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -235,6 +244,8 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
+vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
@@ -394,6 +405,9 @@ wsmouse* at uep? mux 0
 ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
+# USB serial adpater
+ucycom*	at uhidev? reportid ?
+
 # USB Generic HID devices
 uhid*   at uhidev? reportid ?
 
@@ -406,7 +420,6 @@ ucom*   at umodem?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?
-scsibus* at umass?
 wd*     at umass?
 
 # USB audio
@@ -461,6 +474,10 @@ urio*   at uhub? port ?
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*   at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_keymaps.c,v 1.8.12.3 2004/09/21 13:15:14 skrll Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.8.12.4 2005/11/10 13:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.8.12.3 2004/09/21 13:15:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.8.12.4 2005/11/10 13:56:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <hp300/dev/kbdmap.h>
@@ -179,7 +179,7 @@ char	us_ctrlshiftmap[] = {
 	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 
-char	*us_stringmap[] = {
+const char *us_stringmap[] = {
 	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"\033V","\033h",
 	"\033U",NULL,	NULL,	NULL,	NULL,	NULL,	"\033K","\033J",

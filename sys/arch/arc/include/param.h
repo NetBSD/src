@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18.2.4 2005/01/24 08:33:58 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.18.2.5 2005/11/10 13:55:09 skrll Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -102,8 +102,7 @@
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-/* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
-#define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
@@ -154,21 +153,9 @@
 #ifndef _LOCORE
 
 extern int cpuspeed;
-extern void delay(int n);
+void delay(unsigned int n);
 
-#if 0 /* XXX: should use mips_mcclock.c */
-#define	DELAY(n)	do {						\
-	int N = cpuspeed * (n); while (--N > 0);		\
-} while (/*CONSTCOND*/ 0)
-#else
-/*
- *   Delay is based on an assumtion that each time in the loop
- *   takes 3 clocks. Three is for branch and subtract in the delay slot.
- */
-#define	DELAY(n)	do {						\
-	int N = cpuspeed * (n); while ((N -= 3) > 0);		\
-} while (/*CONSTCOND*/ 0)
-#endif
+#define	DELAY(n)	delay(n)
 
 #include <machine/intr.h>
 

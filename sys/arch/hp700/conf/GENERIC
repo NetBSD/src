@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15.2.12 2005/03/04 16:38:36 skrll Exp $
+# $NetBSD: GENERIC,v 1.15.2.13 2005/11/10 13:56:09 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.15.2.12 $"
+#ident 		"GENERIC-$Revision: 1.15.2.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,7 +69,8 @@ options 	LKM		# loadable kernel modules
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -82,8 +83,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_16	# compatability with NetBSD 1.6,
 options 	COMPAT_20	# compatability with NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -110,6 +111,8 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -127,6 +130,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
@@ -386,7 +390,6 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
@@ -536,6 +539,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter

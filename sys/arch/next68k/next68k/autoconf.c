@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.2.5 2005/01/24 08:34:18 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.6 2005/11/10 13:57:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.5 2005/01/24 08:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.6 2005/11/10 13:57:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,13 +108,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.5 2005/01/24 08:34:18 skrll Exp 
 volatile u_long *intrstat;
 volatile u_long *intrmask;
 
-static struct device *getdevunit(char *, int);
+static struct device *getdevunit(const char *, int);
 static int devidentparse(const char *, int *, int *, int *);
 static int atoi(const char *);
 
 struct device_equiv {
-	char *alias;
-	char *real;
+	const char *alias;
+	const char *real;
 };
 static struct device_equiv device_equiv[] = {
 	{ "en", "xe" },
@@ -188,7 +188,7 @@ cpu_rootconf(void)
  * find a device matching "name" and unit number
  */
 static struct device *
-getdevunit(char *name, int unit)
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];

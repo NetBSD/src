@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72.2.6 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72.2.7 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -306,8 +306,8 @@ struct mac68k_machine_S {
 	/* What kind of model is this */
 struct cpu_model_info {
 	int	machineid;	/* MacOS Gestalt value. */
-	char	*model_major;	/* Make this distinction to save a few */
-	char	*model_minor;	/*      bytes--might be useful, too. */
+	const char	*model_major;	/* Make this distinction to save a few */
+	const char	*model_minor;	/*      bytes--might be useful, too. */
 	int	class;		/* Rough class of machine. */
 	  /* forwarded romvec_s is defined in mac68k/macrom.h */
 	struct romvec_s *rom_vectors; /* Pointer to our known rom vectors */

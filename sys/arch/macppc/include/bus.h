@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.2.1 2005/04/01 14:27:54 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.2.2 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -386,6 +386,10 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 #define bus_space_write_stream_1(t, h, o, v)	out8(__BA(t, h, o), (v))
 #define bus_space_write_stream_2(t, h, o, v)	out16(__BA(t, h, o), (v))
 #define bus_space_write_stream_4(t, h, o, v)	out32(__BA(t, h, o), (v))
+
+#define bus_space_mmap(tag, addr, off, prot, flags) \
+    (paddr_t)((tag & MACPPC_BUS_ADDR_MASK) + addr + off)
+#define bus_space_vaddr(tag, handle)	__BA(tag, handle, 0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define bus_space_write_8		!!! unimplemented !!!

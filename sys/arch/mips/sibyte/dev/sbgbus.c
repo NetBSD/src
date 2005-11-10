@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.6.2.3 2004/09/21 13:18:54 skrll Exp $ */
+/* $NetBSD: sbgbus.c,v 1.6.2.4 2005/11/10 13:57:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.6.2.3 2004/09/21 13:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.6.2.4 2005/11/10 13:57:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ CFATTACH_DECL(sbgbus, sizeof(struct device),
     sbgbus_match, sbgbus_attach, NULL, NULL);
 
 static int	sbgbussearch(struct device *, struct cfdata *,
-			     const locdesc_t *, void *);
+			     const int *, void *);
 static int	sbgbusprint(void *, const char *);
 
 static int
@@ -96,7 +96,7 @@ sbgbusprint(void *aux, const char *pnp)
 
 static int
 sbgbussearch(struct device *parent, struct cfdata *cf,
-	     const locdesc_t *ldesc, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct sbgbus_attach_args sga;
 	int tryagain;

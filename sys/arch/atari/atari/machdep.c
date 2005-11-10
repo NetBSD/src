@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127.2.5 2005/02/15 21:32:32 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.2.6 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.5 2005/02/15 21:32:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.6 2005/11/10 13:55:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -248,7 +248,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s%s", copyright, version);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), mem_size);
@@ -332,7 +332,7 @@ char cpu_model[120];
 static void
 identifycpu()
 {
-       char	*mach, *mmu, *fpu, *cpu;
+       const char *mach, *mmu, *fpu, *cpu;
 
 	switch (machineid & ATARI_ANYMACH) {
 		case ATARI_TT:

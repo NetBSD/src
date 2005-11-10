@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.5 2002/01/26 13:18:58 aymeric Exp $
+ * $NetBSD: xd.c,v 1.5.16.1 2005/11/10 13:55:00 skrll Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -33,7 +33,7 @@
 
 #include <sys/types.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <ufs.h>
 #include <ustarfs.h>
 
@@ -53,9 +53,8 @@ static struct devsw devsw[] = {
 };
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
-	  ustarfs_stat },
+	FS_OPS(ufs),
+	FS_OPS(ustarfs),
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.14.2.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.14.2.4 2005/11/10 13:58:09 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,7 @@
  * */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.14.2.3 2004/09/21 13:19:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.14.2.4 2005/11/10 13:58:09 skrll Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"
@@ -226,8 +226,8 @@ static const int regoffsets[] = {REGOFFSET(0), REGOFFSET(1), REGOFFSET(2),
 				REGOFFSET(3), REGOFFSET(4), REGOFFSET(5),
 				REGOFFSET(6), REGOFFSET(7)};
 
-static inline void read_reg(int regno, struct operand *op, state *state) {
-  vaddr_t addr = REGBASE(state) + regoffsets[regno];
+static inline void read_reg(int regno, struct operand *op, state *mystate) {
+  vaddr_t addr = REGBASE(mystate) + regoffsets[regno];
   switch(op->size) {
   case 1: *(char *) &op->data = *(char *) addr; break;
   case 2: *(short *) &op->data = *(short *) addr; break;
@@ -237,25 +237,25 @@ static inline void read_reg(int regno, struct operand *op, state *state) {
   op->where.addr = (vaddr_t) &op->data;
 }
 
-static inline vaddr_t reg_addr(int regno, state *state) {
-  return REGBASE(state) + regoffsets[regno];
+static inline vaddr_t reg_addr(int regno, state *mystate) {
+  return REGBASE(mystate) + regoffsets[regno];
 }
 
 
-static void read_freg(int regno, struct operand *op, state *state) {
+static void read_freg(int regno, struct operand *op, state *mystate) {
   vaddr_t addr;
   if (op->size == sizeof(float)) {
     static const int offsets[] = {
       FREGOFFSET(0), FREGOFFSET(1), FREGOFFSET(2), FREGOFFSET(3),
       FREGOFFSET(4), FREGOFFSET(5), FREGOFFSET(6), FREGOFFSET(7)};
-    addr = FREGBASE(state) + offsets[regno];
+    addr = FREGBASE(mystate) + offsets[regno];
     *(float *) &op->data = *(float *) addr;
   }
   else {
     static const int offsets[] = {
       LREGOFFSET(0), LREGOFFSET(1), LREGOFFSET(2), LREGOFFSET(3),
       LREGOFFSET(4), LREGOFFSET(5), LREGOFFSET(6), LREGOFFSET(7)};
-    addr = LREGBASE(state) + offsets[regno];
+    addr = LREGBASE(mystate) + offsets[regno];
     *(double *) &op->data = *(double *) addr;
   }
   op->where.tag = op_where_register;
@@ -392,7 +392,7 @@ static int fetch_data (char *addr) {
   int n_min = addr - copyin_buffer.max + 1;
   n = MIN(n_max, MAX(n_min, MIN(FETCH_CHUNK, n_page)));
   COPYIN(u_addr, k_addr, n);
-  DP(2, "fetch_data: addr = 0x%p, from 0x%lx, to 0x%lx, n = %d\n", addr,
+  DP(2, "fetch_data: addr = %p, from 0x%lx, to 0x%lx, n = %d\n", addr,
      (long)u_addr, (long)k_addr, n);
   copyin_buffer.max += n;
   return 1;
@@ -430,7 +430,7 @@ static int get_displacement (char **buffer)
   return disp;
 }
 
-static int get_operand(char **buf, unsigned char gen, unsigned char index, struct operand *op, state *state)
+static int get_operand(char **buf, unsigned char gen, unsigned char index, struct operand *op, state *mystate)
 {
   int ret = FPC_TT_NONE;
   vaddr_t addr = 0;
@@ -438,25 +438,25 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
   DP(1,"gen = 0x%x\n", gen);
 
   if (op->type == op_type_float && (gen & ~7) == 0) {
-    read_freg(gen, op, state);
+    read_freg(gen, op, mystate);
     return ret;
   }
   switch (gen) {
   case 0: case 1: case 2: case 3:
   case 4: case 5: case 6: case 7:
     if (op->class != op_class_addr) {
-      read_reg(gen, op, state);
+      read_reg(gen, op, mystate);
       return ret;
     }
     else
-      addr = reg_addr(gen, state);
+      addr = reg_addr(gen, mystate);
     break;
   case 0x8: case 0x9: case 0xa: case 0xb:
   case 0xc: case 0xd: case 0xe: case 0xf:
     /* Register relative disp(R0 -- R7) */
-    /* rn out of state, then get data out of res_addr */
+    /* rn out of mystate, then get data out of res_addr */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + *(unsigned int *)reg_addr(gen & 7, state));
+    addr =  (disp1 + *(unsigned int *)reg_addr(gen & 7, mystate));
     break;
   case 0x10:
   case 0x11:
@@ -465,8 +465,8 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     disp1 = get_displacement (buf);
     disp2 = get_displacement (buf);
     addr =  (disp1
-	     + (vaddr_t) (gen == 0x10? state->FP: (gen == 0x11? state->SP:
-						       state->SB)));
+	     + (vaddr_t) (gen == 0x10? mystate->FP: (gen == 0x11? mystate->SP:
+						       mystate->SB)));
     addr =  disp2 + get_dword(addr);
     break;
   case 0x14:
@@ -498,14 +498,14 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     return FPC_TT_ILL;			/* Unsupported */
   case 0x17:
     /* Top of stack tos */
-    addr = state->SP;
+    addr = mystate->SP;
     switch (op->class) {
     case op_class_read:
-      state->SP += op->size;
+      mystate->SP += op->size;
       break;
     case op_class_write:
-      state->SP -= op->size;
-      addr =  state->SP;
+      mystate->SP -= op->size;
+      addr =  mystate->SP;
       break;
     default: ;
       /* Keep gcc quiet */
@@ -514,22 +514,22 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
   case 0x18:
     /* Memory space disp(FP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vaddr_t) state->FP);
+    addr =  (disp1 + (vaddr_t) mystate->FP);
     break;
   case 0x19:
     /* Memory space disp(SP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vaddr_t) state->SP);
+    addr =  (disp1 + (vaddr_t) mystate->SP);
     break;
   case 0x1a:
     /* Memory space disp(SB) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vaddr_t) state->SB);
+    addr =  (disp1 + (vaddr_t) mystate->SB);
     break;
   case 0x1b:
     /* Memory space disp(PC) */
     disp1 = get_displacement (buf);
-    addr = disp1 + (vaddr_t) state->PC;
+    addr = disp1 + (vaddr_t) mystate->PC;
     break;
   case 0x1c:
   case 0x1d:
@@ -539,9 +539,9 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     {
       enum op_class save = op->class;
       op->class = op_class_addr;
-      if ((ret = get_operand(buf, index >> 3, 0, op, state)) != FPC_TT_NONE)
+      if ((ret = get_operand(buf, index >> 3, 0, op, mystate)) != FPC_TT_NONE)
 	return ret;
-      addr = op->where.addr + (* (int *) reg_addr(index & 7, state)) * (1 << (gen & 3));
+      addr = op->where.addr + (* (int *) reg_addr(index & 7, mystate)) * (1 << (gen & 3));
       op->class = save;
       break;
     }
@@ -554,10 +554,10 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
   return ret;
 }
 
-static int default_trap_handle(struct operand *op1, struct operand *op2, struct operand *f0_op, int xopcode, state *state)
+static int default_trap_handle(struct operand *op1, struct operand *op2, struct operand *f0_op, int xopcode, state *mystate)
 {
   int user_trap = FPC_TT_NONE;
-  unsigned int fsr = state->FSR;
+  unsigned int fsr = mystate->FSR;
   int   trap_type = fsr & FPC_TT;
 
   DP(2, "trap type %d\n", trap_type);
@@ -567,20 +567,20 @@ static int default_trap_handle(struct operand *op1, struct operand *op2, struct 
     switch (trap_type)
       {
       case FPC_TT_UNDFL:	/* Underflow */
-	user_trap = ieee_undfl(op1, op2, f0_op, xopcode, state);
+	user_trap = ieee_undfl(op1, op2, f0_op, xopcode, mystate);
 	break;
       case FPC_TT_OVFL:		/* Overflow */
-	user_trap = ieee_ovfl(op1, op2, f0_op, xopcode, state);
+	user_trap = ieee_ovfl(op1, op2, f0_op, xopcode, mystate);
 	break;
       case FPC_TT_DIV0:		/* Divide by zero */
-	user_trap = ieee_dze(op1, op2, f0_op, xopcode, state);
+	user_trap = ieee_dze(op1, op2, f0_op, xopcode, mystate);
 	break;
       case FPC_TT_ILL:		/* Illegal instruction */
 	/* Illegal instruction. Cause a SIGILL ? */
 	user_trap = FPC_TT_ILL;
 	break;
       case FPC_TT_INVOP:	/* Invalid operation */
-	user_trap = ieee_invop(op1, op2, f0_op, xopcode, state);
+	user_trap = ieee_invop(op1, op2, f0_op, xopcode, mystate);
 	break;
       case FPC_TT_INEXACT:	/* Inexact result */
 	/* Nothing to be done */
@@ -596,7 +596,7 @@ static int default_trap_handle(struct operand *op1, struct operand *op2, struct 
   return user_trap;
 }
 
-int ieee_handle_exception(state *state)
+int ieee_handle_exception(state *mystate)
 {
   int fmt, xopcode, ret;
   int fsr, user_trap;
@@ -604,7 +604,7 @@ int ieee_handle_exception(state *state)
   unsigned char int_type, float_type, opcode, gen1, gen2, index1, index2;
   struct operand op1, op2, f0_op, *res;
   char *buf = copyin_buffer.buf;
-  copyin_buffer.base = state->PC;
+  copyin_buffer.base = mystate->PC;
   /* Save fsr and set fsr to 0 so that floating point operations within
    * the emulation proceed in a known way. */
   ofsr = GET_SET_FSR(0);
@@ -624,7 +624,7 @@ int ieee_handle_exception(state *state)
    */
   FETCH_DATA(buf + 2);
 
-  fsr = state->FSR;
+  fsr = mystate->FSR;
 
   switch(fmt = bit_extract(buf, 0, 8))
     {
@@ -695,18 +695,18 @@ int ieee_handle_exception(state *state)
     op1.size = op2.size = f0_op.size = float_type? 4: 8;
     op2.class = op_class_read;
     f0_op.class = op_class_rmw;
-    read_freg(0, &f0_op, state);
+    read_freg(0, &f0_op, mystate);
     canonicalise_op(&f0_op);
     res = &f0_op;
     break;
   }
 
-  if ((ret = get_operand(&buf, gen1, index1, &op1, state)) != FPC_TT_NONE) {
+  if ((ret = get_operand(&buf, gen1, index1, &op1, mystate)) != FPC_TT_NONE) {
     user_trap = ret;
     DP(0, "get_operand failed\n");
   }
 
-  if ((ret = get_operand(&buf, gen2, index2, &op2, state)) != FPC_TT_NONE) {
+  if ((ret = get_operand(&buf, gen2, index2, &op2, mystate)) != FPC_TT_NONE) {
     user_trap = ret;
     DP(0, "get_operand failed\n");
   }
@@ -722,8 +722,8 @@ int ieee_handle_exception(state *state)
   canonicalise_op(&op2);
 
   if(user_trap == FPC_TT_NONE) {
-    user_trap = default_trap_handle(&op1, &op2, &f0_op, xopcode, state);
-    fsr = state->FSR;		/* May have been side effected */
+    user_trap = default_trap_handle(&op1, &op2, &f0_op, xopcode, mystate);
+    fsr = mystate->FSR;		/* May have been side effected */
 
     /* user_trap now has traps generated during emulation. Correct ieee
      * results already calculated, but must see whether we need to
@@ -735,9 +735,9 @@ int ieee_handle_exception(state *state)
      */
 
     if (res) {
-      int ret;
-      if((ret = canonical_to_size(res)) != FPC_TT_NONE)
-	user_trap = ret;
+      int ret2;
+      if((ret2 = canonical_to_size(res)) != FPC_TT_NONE)
+	user_trap = ret2;
     }
 
     switch (user_trap) {
@@ -781,8 +781,8 @@ int ieee_handle_exception(state *state)
       store_result(res);
     }
   }
-  state->PC = BUF_TO_UADDR(buf);
+  mystate->PC = BUF_TO_UADDR(buf);
   SET_FSR(ofsr);
-  state->FSR = fsr;
+  mystate->FSR = fsr;
   return user_trap;
 }

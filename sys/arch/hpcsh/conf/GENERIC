@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.2.8 2005/03/08 13:53:09 skrll Exp $
+# $NetBSD: GENERIC,v 1.28.2.9 2005/11/10 13:56:27 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -85,7 +85,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Likely stable but not yet the default.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -105,6 +106,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -128,6 +130,8 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
@@ -142,6 +146,10 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -170,9 +178,18 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_VT100
 # allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=4
-# different kernel output - see dev/wscons/wsdisplayvar.h
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -198,6 +215,7 @@ wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?
+adc*		at shb?			# analog->digital converter
 pfckbd*		at mainbus?
 
 #
@@ -217,8 +235,6 @@ wskbd0		at hpckbd? mux 1
 scif0		at shb?
 options 	SCIFCN_SPEED=19200
 
-adc*		at shb?			# analog->digital converter
-
 j6x0pwr*	at adc?			# '680 battery, on/off, etc
 
 j6x0lcd*	at shb?			# '680 LCD power, brightness, contrast
@@ -234,15 +250,20 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 #options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
 #options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
 
-hd64461if* at shb?
-hd64461pcmcia*	at hd64461if?
-#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
-hd64461video*	at hd64461if?
-
 #
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
 com0		at hd64461if?
+
+psh3lcd*	at shb?			# PERSONA SH3 power, brightness, contrast
+
+psh3tp*		at adc?			# PERSONA SH3 touch panel
+wsmouse*	at psh3tp? mux 0
+
+hd64461if* at shb?
+hd64461pcmcia*	at hd64461if?
+#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
+hd64461video*	at hd64461if?
 
 #
 # machine independent part
@@ -284,6 +305,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd		4	# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices

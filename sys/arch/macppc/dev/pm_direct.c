@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.19.6.5 2005/02/04 11:44:33 skrll Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.19.6.6 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.19.6.5 2005/02/04 11:44:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.19.6.6 2005/11/10 13:57:27 skrll Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -89,7 +89,7 @@ u_int	pm_counter = 0;			/* clock count */
 
 static enum batt_type { BATT_COMET, BATT_HOOPER, BATT_SMART } pmu_batt_type;
 static int	pmu_nbatt;
-static int	strinlist(char *, char *, int);
+static int	strinlist(const char *, char *, int);
 static enum pmu_type { PMU_UNKNOWN, PMU_OHARE, PMU_G3, PMU_KEYLARGO } pmu_type;
 
 /* these values shows that number of data returned after 'send' cmd is sent */
@@ -171,7 +171,7 @@ signed char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr __P((char *, int, int, char *));
+void	pm_printerr __P((const char *, int, int, const char *));
 #endif
 
 int	pm_wait_busy __P((int));
@@ -183,7 +183,7 @@ static int	pm_send __P((u_char));
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
-int	pm_adb_op __P((u_char *, void *, void *, int));
+int	pm_adb_op __P((u_char *, adbComp *, volatile int *, int));
 
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result __P((PMData *));
@@ -194,8 +194,8 @@ void	pm_adb_get_ADB_data __P((PMData *));
  * These variables are in adb_direct.c.
  */
 extern u_char	*adbBuffer;	/* pointer to user data area */
-extern void	*adbCompRout;	/* pointer to the completion routine */
-extern void	*adbCompData;	/* pointer to the completion routine data */
+extern adbComp	*adbCompRout;	/* pointer to the completion routine */
+extern volatile int *adbCompData;	/* pointer to the completion routine data */
 extern int	adbWaiting;	/* waiting for return data from the device */
 extern int	adbWaitingCmd;	/* ADB command we are waiting for */
 extern int	adbStarting;	/* doing ADB reinit, so do "polling" differently */
@@ -206,8 +206,8 @@ struct adbCommand {
 	u_char	header[ADB_MAX_HDR_LENGTH];	/* not used yet */
 	u_char	data[ADB_MAX_MSG_LENGTH];	/* packet data only */
 	u_char	*saveBuf;	/* where to save result */
-	u_char	*compRout;	/* completion routine pointer */
-	u_char	*compData;	/* completion routine data pointer */
+	adbComp	*compRout;	/* completion routine pointer */
+	volatile int	*compData;	/* completion routine data pointer */
 	u_int	cmd;		/* the original command for this data */
 	u_int	unsol;		/* 1 if packet was unsolicited */
 	u_int	ack_only;	/* 1 for no special processing */
@@ -227,10 +227,10 @@ extern int	zshard __P((int));		/* from zs.c */
  */
 void
 pm_printerr(ttl, rval, num, data)
-	char *ttl;
+	const char *ttl;
 	int rval;
 	int num;
-	char *data;
+	const char *data;
 {
 	int i;
 
@@ -251,16 +251,22 @@ pm_setup_adb()
 {
 }
 
+/*
+ * Search for targ in list.  list is an area of listlen bytes
+ * containing null-terminated strings.
+ */
 static int
-strinlist(char *targ, char *list, int listlen)
+strinlist(const char *targ, char *list, int listlen)
 {
 	char	*str;
 	int	sl;
+	int	targlen;
 
 	str = list;
+	targlen = strlen(targ);
 	while (listlen > 0) {
 		sl = strlen(str);
-		if (strncmp(targ, str, sl) == 0)
+		if (sl == targlen && (strncmp(targ, str, sl) == 0))
 			return 1;
 		str += sl+1;
 		listlen -= sl+1;
@@ -277,7 +283,7 @@ pm_init(void)
 	uint32_t	regs[10];
 	PMData		pmdata;
 	char		compat[128];
-	int		clen, node, imask;
+	int		clen, node, pm_imask;
 
 	node = OF_peer(0);
 	if (node == -1) {
@@ -290,7 +296,8 @@ pm_init(void)
 		return;
 	}
 
-	imask = PMU_INT_PCEJECT | PMU_INT_SNDBRT | PMU_INT_ADB | PMU_INT_TICK;
+	pm_imask =
+	    PMU_INT_PCEJECT | PMU_INT_SNDBRT | PMU_INT_ADB | PMU_INT_TICK;
 
 	if (strinlist("AAPL,3500", compat, clen) ||
 	    strinlist("AAPL,3400/2400", compat, clen)) {
@@ -324,7 +331,7 @@ pm_init(void)
 	pmdata.num_data = 1;
 	pmdata.s_buf = pmdata.data;
 	pmdata.r_buf = pmdata.data;
-	pmdata.data[0] = imask;	
+	pmdata.data[0] = pm_imask;	
 	pmgrop(&pmdata);
 }
 
@@ -347,8 +354,8 @@ pm_check_adb_devices(id)
  * Wait until PM IC is busy
  */
 int
-pm_wait_busy(delay)
-	int delay;
+pm_wait_busy(delaycycles)
+	int delaycycles;
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
@@ -358,7 +365,7 @@ pm_wait_busy(delay)
 		(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0)
+		if ((--delaycycles) < 0)
 			return 1;	/* timeout */
 	}
 	return 0;
@@ -369,8 +376,8 @@ pm_wait_busy(delay)
  * Wait until PM IC is free
  */
 int
-pm_wait_free(delay)
-	int delay;
+pm_wait_free(delaycycles)
+	int delaycycles;
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
@@ -380,7 +387,7 @@ pm_wait_free(delay)
 		(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0)
+		if ((--delaycycles) < 0)
 			return 0;	/* timeout */
 	}
 	return 1;
@@ -649,8 +656,8 @@ pm_intr(void *arg)
 int
 pm_adb_op(buffer, compRout, data, command)
 	u_char *buffer;
-	void *compRout;
-	void *data;
+	adbComp *compRout;
+	volatile int *data;
 	int command;
 {
 	int i;
@@ -998,7 +1005,7 @@ static int
 pm_battery_info_legacy(int battery, struct pmu_battery_info *info, int ty)
 {
 	PMData p;
-	long pcharge=0, charge, vb, vmax, lmax;
+	long pcharge=0, charge, vb, vmax, chargemax;
 	long vmax_charging, vmax_charged, amperage, voltage;
 
 	p.command = PMU_BATTERY_STATE;
@@ -1012,12 +1019,12 @@ pm_battery_info_legacy(int battery, struct pmu_battery_info *info, int ty)
 		if (ty == BATT_COMET) {
 			vmax_charging = 213;
 			vmax_charged = 189;
-			lmax = 6500;
+			chargemax = 6500;
 		} else {
 			/* Experimental values */
 			vmax_charging = 365;
 			vmax_charged = 365;
-			lmax = 6500;
+			chargemax = 6500;
 		}
 		vmax = vmax_charged;
 		vb = (p.data[1] << 8) | p.data[2];
@@ -1033,10 +1040,10 @@ pm_battery_info_legacy(int battery, struct pmu_battery_info *info, int ty)
 		charge = (100 * vb) / vmax;
 		if (info->flags & PMU_PWR_PCHARGE_RESET) {
 			pcharge = (p.data[6] << 8) | p.data[7];
-			if (pcharge > lmax)
-				pcharge = lmax;
+			if (pcharge > chargemax)
+				pcharge = chargemax;
 			pcharge *= 100;
-			pcharge = 100 - pcharge / lmax;
+			pcharge = 100 - pcharge / chargemax;
 			if (pcharge < charge)
 				charge = pcharge;
 		}

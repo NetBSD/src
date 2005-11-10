@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49.2.4 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.2.5 2005/11/10 13:57:33 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.4 2005/01/17 19:29:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.5 2005/11/10 13:57:33 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -63,9 +63,9 @@ int		db_active = 0;
 db_regs_t	ddb_regs;
 mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
-void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
-void db_kvtophys_cmd(db_expr_t, int, db_expr_t, char *);
-void db_cp0dump_cmd(db_expr_t, int, db_expr_t, char *);
+void db_tlbdump_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_kvtophys_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_cp0dump_cmd(db_expr_t, int, db_expr_t, const char *);
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -290,7 +290,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	vaddr_t p = addr;
 	size_t n = size;
@@ -301,19 +301,19 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 #endif
 
 	while (n >= 4) {
-		kdbpoke_4(p, *(int*)data);
+		kdbpoke_4(p, *(const int *)data);
 		p += 4;
 		data += 4;
 		n -= 4;
 	}
 	if (n >= 2) {
-		kdbpoke_2(p, *(short*)data);
+		kdbpoke_2(p, *(const short *)data);
 		p += 2;
 		data += 2;
 		n -= 2;
 	}
 	if (n == 1) {
-		kdbpoke_1(p, *(char*)data);
+		kdbpoke_1(p, *(const char *)data);
 	}
 
 	mips_icache_sync_range((vaddr_t) addr, size);
@@ -321,7 +321,8 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 
 #ifndef KGDB
 void
-db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+	       const char *modif)
 {
 
 #ifdef MIPS1
@@ -383,7 +384,8 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 void
-db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+		const char *modif)
 {
 
 	if (!have_addr)
@@ -429,7 +431,8 @@ do {									\
 } while (0)
 
 void
-db_cp0dump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_cp0dump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+	       const char *modif)
 {
 
 	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
@@ -550,10 +553,10 @@ boolean_t
 inst_branch(int inst)
 {
 	InstFmt i;
-	int delay;
+	int delslt;
 
 	i.word = inst;
-	delay = 0;
+	delslt = 0;
 	switch (i.JType.op) {
 	case OP_BCOND:
 	case OP_J:
@@ -566,7 +569,7 @@ inst_branch(int inst)
 	case OP_BNEL:
 	case OP_BLEZL:
 	case OP_BGTZL:
-		delay = 1;
+		delslt = 1;
 		break;
 
 	case OP_COP0:
@@ -574,16 +577,16 @@ inst_branch(int inst)
 		switch (i.RType.rs) {
 		case OP_BCx:
 		case OP_BCy:
-			delay = 1;
+			delslt = 1;
 		}
 		break;
 
 	case OP_SPECIAL:
 		if (i.RType.op == OP_JR || i.RType.op == OP_JALR)
-			delay = 1;
+			delslt = 1;
 		break;
 	}
-	return delay;
+	return delslt;
 }
 
 /*

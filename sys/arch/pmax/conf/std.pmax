@@ -1,7 +1,8 @@
-#	$NetBSD: std.pmax,v 1.15.6.3 2004/09/21 13:20:14 skrll Exp $
+#	$NetBSD: std.pmax,v 1.15.6.4 2005/11/10 13:58:14 skrll Exp $
 # standard, required pmax info
 
 machine pmax mips
+include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 # Standard exec-package options

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.25.2.5 2005/03/04 16:38:13 skrll Exp $	*/
+/*	$NetBSD: maple.c,v 1.25.2.6 2005/11/10 13:55:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.25.2.5 2005/03/04 16:38:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.25.2.6 2005/11/10 13:55:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,8 @@ static void	maple_check_subunit_change(struct maple_softc *,
 static void	maple_check_unit_change(struct maple_softc *,
 		    struct maple_unit *);
 static void	maple_print_unit(void *, const char *);
-static int	maplesubmatch(struct device *, struct cfdata *, void *);
+static int	maplesubmatch(struct device *, struct cfdata *,
+		    const int *, void *);
 static int	mapleprint(void *, const char *);
 static void	maple_attach_unit(struct maple_softc *, struct maple_unit *);
 static void	maple_detach_unit_nofix(struct maple_softc *,
@@ -637,7 +638,8 @@ maple_print_unit(void *aux, const char *pnp)
 }
 
 static int
-maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
+maplesubmatch(struct device *parent, struct cfdata *match,
+	      const int *ldesc, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -696,8 +698,8 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 		u->u_func[f].f_dev = NULL;
 		if (func & MAPLE_FUNC(f)) {
 			ma.ma_function = f;
-			u->u_func[f].f_dev = config_found_sm(&sc->sc_dev, &ma,
-			    mapleprint, maplesubmatch);
+			u->u_func[f].f_dev = config_found_sm_loc(&sc->sc_dev,
+			    "maple", NULL, &ma, mapleprint, maplesubmatch);
 			u->u_ping_func = f;	/* XXX using largest func */
 		}
 	}

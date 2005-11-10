@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.57.2.7 2005/03/04 16:38:04 skrll Exp $
+# $NetBSD: FALCON,v 1.57.2.8 2005/11/10 13:55:28 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.47 2005/02/25 13:46:48 simonb Exp $
+#		NetBSD: GENERIC.in,v 1.56 2005/11/03 16:48:29 chs Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -53,6 +53,7 @@ file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
+file-system PTYFS # /dev/pts/N support
 
 options QUOTA # Disk quotas for local disks
 
@@ -74,6 +75,7 @@ options COMPAT_14 # Compatibility with NetBSD 1.4
 options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
+options COMPAT_30 # NetBSD 3.0 compatibility.
 
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
@@ -87,7 +89,7 @@ options P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options KTRACE # Add kernel tracing system call
 options SYSTRACE # system call vetting via systrace(1)
-options DIAGNOSTIC # Add additional error checking code
+
 options USERCONF # userconf(4) support
 
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
@@ -116,6 +118,7 @@ pseudo-device ppp # ppp
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+
 pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter 2 # berkeley packet filters

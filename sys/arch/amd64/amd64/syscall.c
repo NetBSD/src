@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.2.4 2004/09/21 15:18:45 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.4 2004/09/21 15:18:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -64,13 +64,36 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.4 2004/09/21 15:18:45 skrll Exp $"
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall_intern __P((struct proc *));
-void syscall_plain __P((struct trapframe *));
-void syscall_fancy __P((struct trapframe *));
+void syscall_intern(struct proc *);
+static void syscall_plain(struct trapframe *);
+static void syscall_fancy(struct trapframe *);
 
 void
-syscall_intern(p)
-	struct proc *p;
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
+
+	tf->tf_rax = 0;
+	tf->tf_rflags &= ~PSL_C;
+
+	KERNEL_PROC_UNLOCK(l);
+
+	userret(l);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(l);
+		ktrsysret(l, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(l);
+	}
+#endif
+}
+
+void
+syscall_intern(struct proc *p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
@@ -92,9 +115,8 @@ syscall_intern(p)
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
-void
-syscall_plain(frame)
-	struct trapframe *frame;
+static void
+syscall_plain(struct trapframe *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -199,9 +221,8 @@ syscall_plain(frame)
 	userret(l);
 }
 
-void
-syscall_fancy(frame)
-	struct trapframe *frame;
+static void
+syscall_fancy(struct trapframe *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -232,6 +253,7 @@ syscall_fancy(frame)
 		break;
 	default:
 		break;
+
 	}
 	code &= (SYS_NSYSENT - 1);
 	callp += code;
@@ -266,14 +288,13 @@ syscall_fancy(frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
-		goto bad;
-	}
+	if ((error = trace_enter(l, code, code, NULL, argp)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, argp, rval);
+out:
 	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
@@ -302,29 +323,4 @@ syscall_fancy(frame)
 	trace_exit(l, code, argp, rval, error);
 
 	userret(l);
-}
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct lwp *l = arg;
-	struct trapframe *tf = l->l_md.md_regs;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-
-	tf->tf_rax = 0;
-	tf->tf_rflags &= ~PSL_C;
-
-	KERNEL_PROC_UNLOCK(l);
-
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
 }

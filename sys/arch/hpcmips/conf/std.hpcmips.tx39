@@ -1,5 +1,5 @@
 #
-#	$NetBSD: std.hpcmips.tx39,v 1.1 2002/01/02 13:13:19 uch Exp $
+#	$NetBSD: std.hpcmips.tx39,v 1.1.20.1 2005/11/10 13:56:14 skrll Exp $
 #	TX39XX common configuration.
 #
 
@@ -23,3 +23,4 @@ tx39sib*	at txsim?
 tx39uart*	at txsim?
 txcom0		at tx39uart? slot 0
 txcom1		at tx39uart? slot 1
+tx39spi*	at txsim?

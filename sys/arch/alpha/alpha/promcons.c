@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.24.2.1 2004/11/21 08:53:48 skrll Exp $ */
+/* $NetBSD: promcons.c,v 1.24.2.2 2005/11/10 13:48:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.24.2.1 2004/11/21 08:53:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.24.2.2 2005/11/10 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,8 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state&TS_XCLUDE &&
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return EBUSY;
 	}

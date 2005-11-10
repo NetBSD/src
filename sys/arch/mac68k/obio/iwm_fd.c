@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.8 2005/01/25 09:29:04 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.9 2005/11/10 13:57:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.8 2005/01/25 09:29:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.9 2005/11/10 13:57:13 skrll Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -460,7 +460,7 @@ fd_attach(struct device *parent, struct device *self, void *auxp)
 	iwm->fd[ia->unit] = fd;		/* iwm has ptr to this drive */
 	iwm->drives++;
 
-	bufq_alloc(&fd->bufQueue, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
+	bufq_alloc(&fd->bufQueue, "disksort", BUFQ_SORT_CYLINDER);
 	callout_init(&fd->motor_ch);
 
 	printf(" drive %d: ", fd->unit);
@@ -1080,7 +1080,7 @@ fdstrategy(struct buf *bp)
 		}
 		spl = splbio();
 		callout_stop(&fd->motor_ch);
-		BUFQ_PUT(&fd->bufQueue, bp);
+		BUFQ_PUT(fd->bufQueue, bp);
 		if (fd->sc_active == 0)
 			fdstart(fd);
 		splx(spl);
@@ -1141,7 +1141,7 @@ fdstart(fd_softc_t *fd)
 {
 	int st;
 
-	static char *stateDesc[] = {
+	static const char *stateDesc[] = {
 		"Init",
 		"Seek",
 		"Read",
@@ -1153,7 +1153,7 @@ fdstart(fd_softc_t *fd)
 		"Exit",
 		"Done"
 	};
-	int (*state[])(fd_softc_t *fd) = {
+	int (*state[])(fd_softc_t *) = {
 		fdstart_Init,
 		fdstart_Seek,
 		fdstart_Read,
@@ -1193,7 +1193,7 @@ fdstart_Init(fd_softc_t *fd)
 	 * Get the first entry from the queue. This is the buf we gave to
 	 * fdstrategy(); disksort() put it into our softc.
 	 */
-	bp = BUFQ_PEEK(&fd->bufQueue);
+	bp = BUFQ_PEEK(fd->bufQueue);
 	if (NULL == bp) {
 		if (TRACE_STRAT)
 			printf("Queue empty: Nothing to do");
@@ -1588,7 +1588,7 @@ fdstart_Exit(fd_softc_t *fd)
 			    fd->pos.track, fd->pos.side, fd->pos.sector);
 #endif
 
-	bp = BUFQ_GET(&fd->bufQueue);
+	bp = BUFQ_GET(fd->bufQueue);
 
 	bp->b_resid = fd->bytesLeft;
 	bp->b_error = (0 == fd->iwmErr) ? 0 : EIO;
@@ -1603,7 +1603,7 @@ fdstart_Exit(fd_softc_t *fd)
 	}
 	if (DISABLED && TRACE_STRAT)
 		printf(" Next buf (bufQueue first) at %p\n",
-		    BUFQ_PEEK(&fd->bufQueue));
+		    BUFQ_PEEK(fd->bufQueue));
 	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid,
 	    (bp->b_flags & B_READ));
 	biodone(bp);
@@ -1896,7 +1896,7 @@ seek(fd_softc_t *fd, int style)
 	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
 #endif
 
-	char *stateDesc[] = {
+	const char *stateDesc[] = {
 		"Init",
 		"Seek",
 		"Recalibrate",
@@ -1904,11 +1904,11 @@ seek(fd_softc_t *fd, int style)
 		"Exit"
 	};
 	enum {
-		state_Init = 0,
-		state_Seek,
-		state_Recalibrate,
-		state_Verify,
-		state_Exit
+		seek_state_Init = 0,
+		seek_state_Seek,
+		seek_state_Recalibrate,
+		seek_state_Verify,
+		seek_state_Exit
 	};
 	/* XXX egcs */
 	done = err = ierr = 0;
@@ -1917,14 +1917,14 @@ seek(fd_softc_t *fd, int style)
 
 	loc = &fd->pos;
 
-	state = state_Init;
+	state = seek_state_Init;
 	do {
 		if (TRACE_STEP)
 			printf(" seek state %d [%s].\n",
 			    state, stateDesc[state]);
 		switch (state) {
 
-		case state_Init:
+		case seek_state_Init:
 			if (TRACE_STEP)
 				printf("Current track is %d, new track %d.\n",
 				    loc->oldTrack, loc->track);
@@ -1933,23 +1933,23 @@ seek(fd_softc_t *fd, int style)
 			fd->seekRetries = 0;
 			fd->verifyRetries = 0;
 			state = (style == IWM_SEEK_RECAL)
-			    ? state_Recalibrate : state_Seek;
+			    ? seek_state_Recalibrate : seek_state_Seek;
 			done = 0;
 			break;
 
-		case state_Recalibrate:
+		case seek_state_Recalibrate:
 			ierr = iwmTrack00();
 			if (ierr == 0) {
 				loc->oldTrack = 0;
-				state = state_Seek;
+				state = seek_state_Seek;
 			} else {
 				strncpy(action, "Recalibrate (track 0)",
 				    sizeof(action));
-				state = state_Exit;
+				state = seek_state_Exit;
 			}
 			break;
 
-		case state_Seek:
+		case seek_state_Seek:
 			ierr = 0;
 			steps = loc->track - loc->oldTrack;
 
@@ -1958,34 +1958,34 @@ seek(fd_softc_t *fd, int style)
 			if (ierr == 0) {
 				/* No error or nothing to do */
 				state = (style == IWM_SEEK_VERIFY)
-				    ? state_Verify : state_Exit;
+				    ? seek_state_Verify : seek_state_Exit;
 			} else {
 				if (fd->seekRetries++ < iwm->maxRetries)
-					state = state_Recalibrate;
+					state = seek_state_Recalibrate;
 				else {
 					strncpy(action, "Seek retries",
 					    sizeof(action));
-					state = state_Exit;
+					state = seek_state_Exit;
 				}
 			}
 			break;
 
-		case state_Verify:
+		case seek_state_Verify:
 			ierr = checkTrack(loc, TRACE_STEP);
 			if (ierr == 0 && loc->track == hdr.track)
-				state = state_Exit;
+				state = seek_state_Exit;
 			else {
 				if (fd->verifyRetries++ < iwm->maxRetries)
-					state = state_Recalibrate;
+					state = seek_state_Recalibrate;
 				else {
 					strncpy(action, "Verify retries",
 					    sizeof(action));
-					state = state_Exit;
+					state = seek_state_Exit;
 				}
 			}
 			break;
 
-		case state_Exit:
+		case seek_state_Exit:
 			if (ierr == 0) {
 				loc->oldTrack = loc->track;
 				err = 0;

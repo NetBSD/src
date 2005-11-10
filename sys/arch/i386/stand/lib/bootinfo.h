@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5.44.3 2004/09/21 13:17:10 skrll Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5.44.4 2005/11/10 13:56:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -41,8 +41,8 @@ extern struct bootinfo *bootinfo;
 
 #define BI_FREE() free(bootinfo, 0)
 
-#define BI_ADD(x, type, size) bi_add((struct btinfo_common*)(x), type, size)
+#define BI_ADD(x, type, size) bi_add((struct btinfo_common *)(x), type, size)
 
-void bi_add __P((struct btinfo_common*, int, int));
-void bi_getbiosgeom __P((void));
-void bi_getmemmap __P((void));
+void bi_add(struct btinfo_common *, int, int);
+void bi_getbiosgeom(void);
+void bi_getmemmap(void);

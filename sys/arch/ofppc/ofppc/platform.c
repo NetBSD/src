@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.3.20.3 2004/09/21 13:19:47 skrll Exp $	*/
+/*	$NetBSD: platform.c,v 1.3.20.4 2005/11/10 13:58:08 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.20.3 2004/09/21 13:19:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.20.4 2005/11/10 13:58:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,21 +80,9 @@ struct platmap platmap[] = {
 extern void	ofwgen_init(void);
 
 #include "opt_firepower_es.h"
-#if defined(FIREPOWER_ES)
-extern void	firepower_init(void);
-#else
-#define		firepower_init		platform_not_configured
-#endif
-
 #include "opt_firepower_mx.h"
-#if defined(FIREPOWER_MX)
-extern void	firepower_init(void);
-#else
-#define		firepower_init		platform_not_configured
-#endif
-
 #include "opt_firepower_lx.h"
-#if defined(FIREPOWER_LX)
+#if defined(FIREPOWER_ES) || defined(FIREPOWER_MX) || defined(FIREPOWER_LX)
 extern void	firepower_init(void);
 #else
 #define		firepower_init		platform_not_configured

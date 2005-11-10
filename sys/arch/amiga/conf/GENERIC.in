@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.12.2.9 2005/03/04 16:38:02 skrll Exp $
+# $NetBSD: GENERIC.in,v 1.12.2.10 2005/11/10 13:51:36 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12.2.9 $"
+#ident 		"GENERIC-$Revision: 1.12.2.10 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -100,6 +100,7 @@ options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
@@ -161,6 +162,8 @@ file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
 ')m4_dnl
 
 # Filesystem options
@@ -195,6 +198,7 @@ options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_15	# compatibility with NetBSD 1.5
 options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -242,14 +246,15 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
 
 #
 # Misc. debugging options
 #
 options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
@@ -599,11 +604,14 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 ', `m4_dnl
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
 ')m4_dnl
 
 pseudo-device	vnd		4	# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

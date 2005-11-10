@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdelay.S,v 1.2 2003/02/01 14:48:17 dsl Exp $	*/
+/*	$NetBSD: biosdelay.S,v 1.2.2.1 2005/11/10 13:56:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -34,21 +34,19 @@
 
 #include <machine/asm.h>
 
-#define data32	.byte 0x66
-
 	.text
 
 /*
-# BIOS call "INT 15H Function 86H" to sleep for a set number of microseconds
-#	Call with	%ah = 0x86
-#			%cx = time interval (high)
-#			%dx = time interval (low)
-#	Return:	
-#		If error
-#			CF  = set
-#		else
-#			CF  = clear
-*/
+ * BIOS call "INT 15H Function 86H" to sleep for a set number of microseconds
+ *	Call with	%ah = 0x86
+ *			%cx = time interval (high)
+ *			%dx = time interval (low)
+ *	Return:
+ *		If error
+ *			CF  = set
+ *		else
+ *			CF  = clear
+ */
 ENTRY(delay)
 	pushl	%ebp
 	pushl	%ebx

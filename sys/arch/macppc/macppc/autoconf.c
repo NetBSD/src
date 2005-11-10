@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37.2.4 2004/11/02 07:50:36 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.2.5 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.2.4 2004/11/02 07:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.2.5 2005/11/10 13:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -344,19 +344,12 @@ cpu_rootconf()
 }
 
 int
-#ifdef __STDC__
-OF_interpret(char *cmd, int nreturns, ...)
-#else
-OF_interpret(cmd, nreturns, va_alist)
-	char *cmd;
-	int nreturns;
-	va_dcl
-#endif
+OF_interpret(const char *cmd, int nreturns, ...)
 {
 	va_list ap;
 	int i;
 	static struct {
-		char *name;
+		const char *name;
 		int nargs;
 		int nreturns;
 		char *cmd;

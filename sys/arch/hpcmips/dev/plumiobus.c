@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.8.6.3 2004/09/21 13:16:04 skrll Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.8.6.4 2005/11/10 13:56:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.8.6.3 2004/09/21 13:16:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.8.6.4 2005/11/10 13:56:27 skrll Exp $");
 
 #define PLUMIOBUSDEBUG
 
@@ -70,7 +70,8 @@ int	plumiobus_debug = 0;
 int plumiobus_match(struct device *, struct cfdata *, void *);
 void plumiobus_attach(struct device *, struct device *, void *);
 int plumiobus_print(void *, const char *);
-int plumiobus_search(struct device *, struct cfdata *, void *);
+int plumiobus_search(struct device *, struct cfdata *,
+		     const int *, void *);
 
 struct plumisa_resource {
 	int		pr_irq;
@@ -171,7 +172,7 @@ plumiobus_attach(struct device *parent, struct device *self, void *aux)
 	plumiobus_dump(sc);
 #endif
 
-	config_search(plumiobus_search, self, plumiobus_print);
+	config_search_ia(plumiobus_search, self, "plumiobusif", plumiobus_print);
 }
 
 /* XXX something kludge */
@@ -192,7 +193,8 @@ __plumiobus_subregion(bus_space_tag_t t, bus_addr_t ofs, bus_size_t size)
 }
 
 int
-plumiobus_search(struct device *parent, struct cfdata *cf, void *aux)
+plumiobus_search(struct device *parent, struct cfdata *cf,
+		 const int *ldesc, void *aux)
 {
 	struct plumiobus_softc *sc = (void*)parent;
 	struct plumiobus_attach_args pba;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.8.8.3 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.8.8.4 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.8.8.3 2004/09/21 13:13:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.8.8.4 2005/11/10 13:55:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,8 @@ struct vidc20_softc {
 
 static int  vidcmatch(struct device *, struct cfdata *, void *);
 static void vidcattach(struct device *, struct device *, void *);
-static int  vidcsearch(struct device *, struct cfdata *, void *);
+static int  vidcsearch(struct device *, struct cfdata *,
+		       const int *, void *);
 
 /*
  * vidc_base gives the base of the VIDC chip in memory; this is for
@@ -106,7 +107,8 @@ vidcmatch(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 static int
-vidcsearch(struct device *parent, struct cfdata *cf, void *aux)
+vidcsearch(struct device *parent, struct cfdata *cf,
+	   const int *ldesc, void *aux)
 {
 	
 	if (config_match(parent, cf, NULL) > 0)
@@ -148,7 +150,7 @@ vidcattach(struct device *parent, struct device *self, void *aux)
 		break;
 	};
 
-	config_search(vidcsearch, self, NULL);
+	config_search_ia(vidcsearch, self, "vidc", NULL);
 }
 
 /* End of vidc20.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102.2.5 2005/03/04 16:38:47 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.102.2.6 2005/11/10 13:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -263,11 +263,13 @@ extern u_int32_t cpus_attached;
  * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
  * we could stall hardclock ticks if another interrupt takes too long.
  */
-#define clockframe intrframe
+struct clockframe {
+	struct intrframe cf_if;
+};
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
-#define	CLKF_PC(frame)		((frame)->if_eip)
+#define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
 /*

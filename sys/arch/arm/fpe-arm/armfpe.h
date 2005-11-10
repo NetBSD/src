@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.2 2002/03/10 15:29:54 bjh21 Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.2.16.1 2005/11/10 13:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -124,10 +124,10 @@ void arm_fpe_core_shutdown		__P((void));
 void arm_fpe_core_activatecontext	__P((u_int context));
 u_int arm_fpe_core_deactivatecontext	__P((void));
 u_int arm_fpe_core_savecontext	__P((u_int context, fp_context_frame_t *savearea, int pc));
-void arm_fpe_core_loadcontext	__P((u_int context, fp_context_frame_t *loadarea));
+void arm_fpe_core_loadcontext	__P((u_int context, const fp_context_frame_t *loadarea));
 void arm_fpe_copycontext	__P((u_int c1, u_int c2));
 void arm_fpe_getcontext		__P((struct proc *p, struct fpreg *fpregs));
-void arm_fpe_setcontext		__P((struct proc *p, struct fpreg *fpregs));
+void arm_fpe_setcontext		__P((struct proc *p, const struct fpreg *fpregs));
 
 void arm_fpe_exception_glue	__P((int exception));
 void arm_fpe_panic		__P((void));

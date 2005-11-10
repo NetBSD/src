@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $ */
+/* $NetBSD: sbscd.c,v 1.7.2.4 2005/11/10 13:57:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.7.2.4 2005/11/10 13:57:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,6 @@ CFATTACH_DECL(sbscd, sizeof(struct device),
     sbscd_match, sbscd_attach, NULL, NULL);
 
 static int	sbscd_print(void *, const char *);
-static int	sbscd_submatch(struct device *, struct cfdata *,
-			       const locdesc_t *, void *);
 static const char *sbscd_device_type_name(enum sbscd_device_type type);
 
 static const struct sbscd_attach_locs sb1250_sbscd_devs[] = {
@@ -87,8 +85,7 @@ sbscd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbscd_attach_args sa;
 	int i;
-	int help[4];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	int locs[SBSCDCF_NLOCS];
 
 	printf("\n");
 
@@ -97,15 +94,14 @@ sbscd_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_base = 0x10000000;			/* XXXCGD */
 		sa.sa_locs = sb1250_sbscd_devs[i];
 
-		ldesc->len = 3;
-		ldesc->locs[SBSCDCF_OFFSET] = sb1250_sbscd_devs[i].sa_offset;
-		ldesc->locs[SBSCDCF_INTR + 0] =
+		locs[SBSCDCF_OFFSET] = sb1250_sbscd_devs[i].sa_offset;
+		locs[SBSCDCF_INTR + 0] =
 			sb1250_sbscd_devs[i].sa_intr[0];
-		ldesc->locs[SBSCDCF_INTR + 1] =
+		locs[SBSCDCF_INTR + 1] =
 			sb1250_sbscd_devs[i].sa_intr[1];
 
-		config_found_sm_loc(self, "sbscd", ldesc, &sa,
-				    sbscd_print, sbscd_submatch);
+		config_found_sm_loc(self, "sbscd", locs, &sa,
+				    sbscd_print, config_stdsubmatch);
 	}
 	return;
 }
@@ -126,26 +122,6 @@ sbscd_print(void *aux, const char *pnp)
 			    (long)sap->sa_locs.sa_intr[i]);
 	}
 	return (UNCONF);
-}
-
-static int
-sbscd_submatch(struct device *parent, struct cfdata *cf,
-	       const locdesc_t *ldesc, void *aux)
-{
-	int i;
-
-	if (cf->cf_loc[SBSCDCF_OFFSET] != SBSCDCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[SBSCDCF_OFFSET] != ldesc->locs[SBSCDCF_OFFSET])
-		return (0);
-
-	for (i = 0; i < 2; i++) {
-		if (cf->cf_loc[SBSCDCF_INTR + i] != SBSCDCF_INTR_DEFAULT &&
-		    cf->cf_loc[SBSCDCF_INTR + i]
-		    		!= ldesc->locs[SBSCDCF_INTR + i])
-			return (0);
-	}
-
-	return (config_match(parent, cf, aux));
 }
 
 static const char *

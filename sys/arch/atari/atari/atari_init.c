@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.58.2.3 2004/09/21 13:13:54 skrll Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.58.2.4 2005/11/10 13:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.58.2.3 2004/09/21 13:13:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.58.2.4 2005/11/10 13:55:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -622,12 +622,13 @@ set_machtype()
 
 #else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if(badbaddr((caddr_t)&MFP2->mf_gpip, sizeof(char))) {
+	if(badbaddr((caddr_t)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if(!badbaddr((caddr_t)&MFP->mf_gpip, sizeof(char))) {
+		if(!badbaddr((caddr_t)__UNVOLATILE(&MFP->mf_gpip),
+		     sizeof(char))) {
 			machineid |= ATARI_FALCON;
 			return;
 		}
@@ -797,13 +798,15 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
  * Used by dumpconf() to get the size of the machine-dependent panic-dump
  * header in disk blocks.
  */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
 int
 cpu_dumpsize()
 {
-	int	size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(MDHDRSIZE);
 }
 
 /*
@@ -811,11 +814,9 @@ cpu_dumpsize()
  * XXX: Assumes that it will all fit in one diskblock.
  */
 int
-cpu_dump(dump, p_blkno)
-int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-daddr_t	*p_blkno;
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *p_blkno)
 {
-	int		buf[dbtob(1)/sizeof(int)];
+	int		buf[MDHDRSIZE/sizeof(int)];
 	int		error;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t	*chdr_p;
@@ -827,14 +828,14 @@ daddr_t	*p_blkno;
 	 * Generate a segment header
 	 */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
 
 	/*
 	 * Add the md header
 	 */
 	*chdr_p = cpu_kcore_hdr;
-	error = dump(dumpdev, *p_blkno, (caddr_t)buf, dbtob(1));
-	*p_blkno += 1;
+	error = dump(dumpdev, *p_blkno, (caddr_t)buf, sizeof(buf));
+	*p_blkno += btodb(sizeof(buf));
 	return (error);
 }
 

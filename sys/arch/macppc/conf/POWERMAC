@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.39.6.8 2005/03/04 16:38:48 skrll Exp $
+#	$NetBSD: POWERMAC,v 1.39.6.9 2005/11/10 13:57:27 skrll Exp $
 #
 # POWERMAC config file
 #
@@ -30,6 +30,7 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -38,6 +39,7 @@ file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
 #file-system 	NFS		# Network File System client
 file-system 	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Network File System server
@@ -99,8 +101,7 @@ wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
-scsibus* at esp?
-scsibus* at mesh?
+scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 
 pseudo-device	loop			# network loopback

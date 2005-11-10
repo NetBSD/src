@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26.2.5 2005/02/04 11:44:33 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.26.2.6 2005/11/10 13:57:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.5 2005/02/04 11:44:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.6 2005/11/10 13:57:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -971,7 +971,7 @@ zscngetc(dev_t dev)
 	int c;
 
 	if (zc) {
-		c = zs_getc((void *)zc);
+		c = zs_getc(__UNVOLATILE(zc));
 	} else {
 		char ch = 0;
 		OF_read(stdin, &ch, 1);
@@ -989,7 +989,7 @@ zscnputc(dev_t dev, int c)
 	volatile struct zschan *zc = zs_conschan;
 
 	if (zc) {
-		zs_putc((void *)zc, c);
+		zs_putc(__UNVOLATILE(zc), c);
 	} else {
 		char ch = c;
 		OF_write(stdout, &ch, 1);

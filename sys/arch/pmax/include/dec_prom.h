@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.17.24.3 2004/09/21 13:20:21 skrll Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.17.24.4 2005/11/10 13:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,50 +92,50 @@ typedef int jmp_buf[12];
 typedef void (*psig_t)(int);
 
 struct callback {
-	void	*(*_memcpy) __P((void *s1, void *s2, int n));		/* 00 */
-	void	*(*_memset) __P((void *s1, int c, int n));		/* 04 */
-	char	*(*_strcat) __P((char *s1, char *s2));			/* 08 */
-	int	(*_strcmp) __P((char *s1, char *s2));			/* 0c */
-	char	*(*_strcpy) __P((char *s1, char *s2));			/* 10 */
-	int	(*_strlen) __P((char *s1));				/* 14 */
-	char	*(*_strncat) __P((char *s1, char *s2, int n));		/* 18 */
-	char	*(*_strncpy) __P((char *s1, char *s2, int n));		/* 1c */
-	int	(*_strncmp) __P((char *s1, char *s2, int n));		/* 20 */
-	int	(*_getchar) __P((void));				/* 24 */
-	char	*(*_gets) __P((char *s));				/* 28 */
-	int	(*_puts) __P((char *s));				/* 2c */
-	int	(*_printf) __P((char *fmt, ...));			/* 30 */
-	int	(*_sprintf) __P((char *s, char *fmt, ...));		/* 34 */
-	int	(*_io_poll) __P((void));				/* 38 */
-	long	(*_strtol) __P((char *s, char **endptr, int base));	/* 3c */
-	psig_t	(*_signal) __P((int sig, psig_t func));			/* 40 */
-	int	(*_raise) __P((int sig));				/* 44 */
-	long	(*_time) __P((long *tod));				/* 48 */
-	int	(*_setjmp) __P((jmp_buf env));				/* 4c */
-	void	(*_longjmp) __P((jmp_buf env, int value));		/* 50 */
-	int	(*_bootinit) __P((char *fname));			/* 54 */
-	int	(*_bootread) __P((int b, void *buffer, int n));		/* 58 */
-	int	(*_bootwrite) __P((int b, void *buffer, int n));	/* 5c */
-	int	(*_setenv) __P((char *name, char *value));		/* 60 */
-	char	*(*_getenv) __P((char *name));				/* 64 */
-	int	(*_unsetenv) __P((char *name));				/* 68 */
-	u_long	(*_slot_address) __P((int sn));				/* 6c */
-	void	(*_wbflush) __P((void));				/* 70 */
-	void	(*_msdelay) __P((int delay));				/* 74 */
-	void	(*_leds) __P((int value));				/* 78 */
-	void	(*_clear_cache) __P((char *addr, int len));		/* 7c */
-	int	(*_getsysid) __P((void));				/* 80 */
-	int	(*_getbitmap) __P((memmap *map));			/* 84 */
-	int	(*_disableintr) __P((int sn));				/* 88 */
-	int	(*_enableintr) __P((int sn));				/* 8c */
-	int	(*_testintr) __P((int sn));				/* 90 */
-	void	*_reserved_data;					/* 94 */
-	int	(*_console_init) __P((void));				/* 98 */
-	void	(*_halt) __P((int *v, int cnt));			/* 9c */
-	void	(*_showfault) __P((void));				/* a0 */
-	tcinfo	*(*_gettcinfo) __P((void));	/*XXX* bogus proto */	/* a4 */
-	int	(*_execute_cmd) __P((char *cmd));			/* a8 */
-	void	(*_rex) __P((char cmd));				/* ac */
+	void	*(*_memcpy) __P((void *, void *, int));		/* 00 */
+	void	*(*_memset) __P((void *, int, int));		/* 04 */
+	char	*(*_strcat) __P((char *, char *));		/* 08 */
+	int	(*_strcmp) __P((char *, char *));		/* 0c */
+	char	*(*_strcpy) __P((char *, char *));		/* 10 */
+	int	(*_strlen) __P((char *));			/* 14 */
+	char	*(*_strncat) __P((char *, char *, int));	/* 18 */
+	char	*(*_strncpy) __P((char *, char *, int));	/* 1c */
+	int	(*_strncmp) __P((char *, char *, int));		/* 20 */
+	int	(*_getchar) __P((void));			/* 24 */
+	char	*(*_gets) __P((char *));			/* 28 */
+	int	(*_puts) __P((char *));				/* 2c */
+	int	(*_printf) __P((const char *, ...));		/* 30 */
+	int	(*_sprintf) __P((char *, char *, ...));		/* 34 */
+	int	(*_io_poll) __P((void));			/* 38 */
+	long	(*_strtol) __P((char *, char **, int));		/* 3c */
+	psig_t	(*_signal) __P((int, psig_t));			/* 40 */
+	int	(*_raise) __P((int));				/* 44 */
+	long	(*_time) __P((long *));				/* 48 */
+	int	(*_setjmp) __P((jmp_buf));			/* 4c */
+	void	(*_longjmp) __P((jmp_buf, int));		/* 50 */
+	int	(*_bootinit) __P((char *));			/* 54 */
+	int	(*_bootread) __P((int, void *, int));		/* 58 */
+	int	(*_bootwrite) __P((int, void *, int));		/* 5c */
+	int	(*_setenv) __P((char *, char *));		/* 60 */
+	char	*(*_getenv) __P((const char *));		/* 64 */
+	int	(*_unsetenv) __P((char *));			/* 68 */
+	u_long	(*_slot_address) __P((int));			/* 6c */
+	void	(*_wbflush) __P((void));			/* 70 */
+	void	(*_msdelay) __P((int));				/* 74 */
+	void	(*_leds) __P((int));				/* 78 */
+	void	(*_clear_cache) __P((char *, int));		/* 7c */
+	int	(*_getsysid) __P((void));			/* 80 */
+	int	(*_getbitmap) __P((memmap *));			/* 84 */
+	int	(*_disableintr) __P((int));			/* 88 */
+	int	(*_enableintr) __P((int));			/* 8c */
+	int	(*_testintr) __P((int));			/* 90 */
+	void	*_reserved_data;				/* 94 */
+	int	(*_console_init) __P((void));			/* 98 */
+	void	(*_halt) __P((int *, int));			/* 9c */
+	void	(*_showfault) __P((void));			/* a0 */
+	tcinfo	*(*_gettcinfo) __P((void)); /*XXX* bogus proto */ /* a4 */
+	int	(*_execute_cmd) __P((char *));			/* a8 */
+	void	(*_rex) __P((char));				/* ac */
 	/* b0 to d4 reserved */
 };
 
