@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.10 2005/11/10 10:00:19 tron Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.11 2005/11/10 12:05:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.10 2005/11/10 10:00:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.11 2005/11/10 12:05:01 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -290,15 +290,16 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 Static void
-axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
+axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int aval)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	usbd_status		err;
+	u_int16_t		val;
 
 	if (sc->axe_dying)
 		return;
 
-	val = htole32(val);
+	val = htole16(aval);
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
