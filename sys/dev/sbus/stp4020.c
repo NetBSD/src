@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.45 2005/11/05 13:59:02 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.46 2005/11/10 21:25:35 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.45 2005/11/05 13:59:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.46 2005/11/10 21:25:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static void	stp4020_wr_sockctl(struct stp4020_socket *, int, int);
 static int	stp4020_rd_winctl(struct stp4020_socket *, int, int);
 static void	stp4020_wr_winctl(struct stp4020_socket *, int, int, int);
 
-void	stp4020_delay(unsigned int);
+void	stp4020_delay(struct stp4020_softc *sc, unsigned int);
 void	stp4020_attach_socket(struct stp4020_socket *, int);
 void	stp4020_create_event_thread(void *);
 void	stp4020_event_thread(void *);
@@ -968,7 +968,7 @@ stp4020_chip_socket_enable(pch)
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
-	stp4020_delay((300 + 100) * 1000);
+	stp4020_delay(h->sc, 300 + 100);
 
 	/* Power up the socket */
 	v = STP4020_ICR1_MSTPWR;
@@ -978,7 +978,7 @@ stp4020_chip_socket_enable(pch)
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
 	 */
-	stp4020_delay((100 + 20) * 1000);
+	stp4020_delay(h->sc, 100 + 20);
 
 	v |= STP4020_ICR1_PCIFOE|STP4020_ICR1_VPP1_VCC;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
@@ -996,7 +996,7 @@ stp4020_chip_socket_enable(pch)
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
-	stp4020_delay(20000);
+	stp4020_delay(h->sc, 20);
 
 	/* Wait for the chip to finish initializing (5 seconds max) */
 	for (i = 10000; i > 0; i--) {
@@ -1068,7 +1068,7 @@ stp4020_chip_socket_disable(pch)
 	/*
 	 * wait 300ms until power fails (Tpf).
 	 */
-	stp4020_delay(300 * 1000);
+	stp4020_delay(h->sc, 300);
 }
 
 void *
@@ -1110,13 +1110,11 @@ stp4020_chip_intr_disestablish(pch, ih)
  * XXX - assumes a context
  */
 void
-stp4020_delay(ms)
+stp4020_delay(sc, ms)
+	struct stp4020_softc *sc;
 	unsigned int ms;
 {
-	unsigned int ticks;
-
-	/* Convert to ticks */
-	ticks = (ms * hz ) / 1000000;
+	unsigned int ticks = mstohz(ms);
 
 	if (cold || ticks == 0) {
 		delay(ms);
@@ -1127,7 +1125,7 @@ stp4020_delay(ms)
 	if (ticks > 60*hz)
 		panic("stp4020: preposterous delay: %u", ticks);
 #endif
-	tsleep(&ticks, 0, "nelldel", ticks);
+	tsleep(sc, 0, "nelldel", ticks);
 }
 
 #ifdef STP4020_DEBUG
