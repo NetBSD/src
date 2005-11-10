@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.25 2004/10/24 06:58:14 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.26 2005/11/10 11:18:55 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.25 2004/10/24 06:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.26 2005/11/10 11:18:55 scw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -169,6 +169,9 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 }
 
 static struct undefined_handler gdb_uh;
+#ifdef THUMB_CODE
+static struct undefined_handler gdb_uh_thumb;
+#endif
 
 void
 undefined_init()
@@ -183,7 +186,8 @@ undefined_init()
 	gdb_uh.uh_handler = gdb_trapper;
 	install_coproc_handler_static(CORE_UNKNOWN_HANDLER, &gdb_uh);
 #ifdef THUMB_CODE
-	install_coproc_handler_static(THUMB_UNKNOWN_HANDLER, &gdb_uh);
+	gdb_uh_thumb.uh_handler = gdb_trapper;
+	install_coproc_handler_static(THUMB_UNKNOWN_HANDLER, &gdb_uh_thumb);
 #endif
 }
 
