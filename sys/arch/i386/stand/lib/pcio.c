@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.19 2005/01/27 18:20:45 mycroft Exp $	 */
+/*	$NetBSD: pcio.c,v 1.20 2005/11/11 22:25:09 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -52,7 +52,8 @@ static int iodev;
 #ifdef DIRECT_SERIAL
 #include "comio_direct.h"
 
-#define cominit_x()	cominit_d(btinfo_console.addr, btinfo_console.speed)
+#define cominit_x()	btinfo_console.speed = \
+			    cominit_d(btinfo_console.addr, btinfo_console.speed)
 #define computc_x(ch)	computc_d(ch, btinfo_console.addr)
 #define comgetc_x()	comgetc_d(btinfo_console.addr)
 #define comstatus_x()	comstatus_d(btinfo_console.addr)
