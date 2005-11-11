@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.6 2005/11/10 13:30:46 rpaulo Exp $
+# $NetBSD: acpidevs,v 1.7 2005/11/11 02:10:09 kochi Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -17,6 +17,7 @@ PNP0004	Cyrix SLiC MP interrupt controller
 PNP0100	AT Timer
 PNP0101	EISA Timer
 PNP0102	MCA Timer
+PNP0103	HPET Timer
 # --DMA--
 PNP0200	AT DMA Controller
 PNP0201	EISA DMA Controller
