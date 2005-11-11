@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.6 2003/10/25 15:52:38 simonb Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.7 2005/11/11 23:45:56 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.6 2003/10/25 15:52:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.7 2005/11/11 23:45:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,17 @@ struct sb1250_ihand {
 };
 static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given software interrupt priority level.
+ */
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
+
 #define	SB1250_I_IMR_ADDR	(MIPS_PHYS_TO_KSEG1(0x10020000 + 0x0028))
 #define	SB1250_I_IMR_SSTATUS	(MIPS_PHYS_TO_KSEG1(0x10020000 + 0x0040))
 #define	SB1250_I_MAP(x)							\
@@ -73,7 +84,6 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
 
 static void	sb1250_cpu_intr(uint32_t, uint32_t, uint32_t, uint32_t);
-static void	sb1250_cpu_setsoftintr(void);
 static void	*sb1250_intr_establish(u_int, u_int,
 		    void (*fun)(void *, uint32_t, uint32_t), void *);
 
@@ -89,7 +99,6 @@ sb1250_icu_init(void)
 	memset(sb1250_ihands, 0, sizeof sb1250_ihands);
 
 	systemsw.s_cpu_intr = sb1250_cpu_intr;
-	systemsw.s_cpu_setsoftintr = sb1250_cpu_setsoftintr;
 	systemsw.s_intr_establish = sb1250_intr_establish;
 
 	WRITE_REG(SB1250_I_IMR_ADDR, imr_all);
@@ -102,18 +111,18 @@ sb1250_icu_init(void)
 		evcnt_attach_dynamic(&sb1250_ihands[i].count, EVCNT_TYPE_INTR,
 		    NULL, "sb1250", name);	/* XXX "sb1250"? */
 	}
+
+	softintr_init();
 }
 
 static void
 sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-	int i, j, s;
+	int i, j;
 	uint64_t sstatus;
 	uint32_t cycles;
 
 	uvmexp.intrs++;
-
-	s = splhigh();	/* XXX */
 
 	/* XXX do something if 5? */
 	if (ipending & (MIPS_INT_MASK_0 << 5)) {
@@ -138,31 +147,18 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			}
 		}
 		cause &= ~(MIPS_INT_MASK_0 << i);
-#if 0
-		_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-#endif
 	}
 
-	/* software interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
-		uvmexp.softs++;
-		dosoftints();
+	/* Re-enable anything that we have processed. */
+	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 
-		cause &= MIPS_SOFT_INT_MASK_0;
-#if 0
-		_splset((status & ~cause & MIPS_INT_MASK) | MIPS_SR_INT_IE);
-#endif
-	}
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
 
-	splx(s);	/* XXX */
-}
+	_clrsoftintr(ipending);
 
-static void
-sb1250_cpu_setsoftintr(void)
-{
-
-	_setsoftintr(MIPS_SOFT_INT_MASK_0);
+	softintr_dispatch(ipending);
 }
 
 static void *

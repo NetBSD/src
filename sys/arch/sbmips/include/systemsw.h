@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.4 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: systemsw.h,v 1.5 2005/11/11 23:45:56 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -40,7 +40,6 @@
 struct systemsw {
 	/* ordered to match likely locality. */
 	void	(*s_cpu_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
-	void	(*s_cpu_setsoftintr)(void);
 	void	(*s_microtime)(struct timeval *);
 	uint32_t (*s_clkread)(void);
 	void	(*s_delay)(u_long);
@@ -67,7 +66,6 @@ int	system_set_todrfns(void *, void (*)(void *, time_t), void (*)(void *));
 #define	delay(n)	((*systemsw.s_delay)(n))
 #define	DELAY(n)	((*systemsw.s_delay)(n))
 
-#define	cpu_setsoftintr()		((*systemsw.s_cpu_setsoftintr)())
 #define	cpu_intr_establish(n,s,f,a)	((*systemsw.s_intr_establish)(n,s,f,a))
 
 void	sb1250_icu_init(void);

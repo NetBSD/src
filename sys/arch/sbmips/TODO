@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.2 2003/07/18 05:18:19 simonb Exp $
+$NetBSD: TODO,v 1.3 2005/11/11 23:45:55 simonb Exp $
 
 NetBSD/sbmips to-do list
 
@@ -13,8 +13,6 @@ REALLY REALLY SHOULD ("MUST") BE DONE BEFORE INTEGRATION INTO NetBSD:
 
 
 SHOULD BE DONE BEFORE INTEGRATION INTO NetBSD:
-
-	* redo the softintr code.  should use arch/mips/mips/softintr.c.
 
 	* clean as many changes off of 'stand' as possible.  the files
 	  in there were the most part derived from other ports (alpha

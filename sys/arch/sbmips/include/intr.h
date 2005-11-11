@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3 2003/10/25 15:52:38 simonb Exp $ */
+/* $NetBSD: intr.h,v 1.4 2005/11/11 23:45:56 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -38,17 +38,26 @@
 #include <machine/systemsw.h>
 
 /* Interrupt levels */
-#define	IPL_SERIAL	0
-#define	IPL_STATCLOCK	1
-#define	IPL_CLOCK	2
-#define	IPL_BIO		3
-#define	IPL_NET		4
-#define	IPL_TTY		5
-#define	_NIPL		6
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
+#define	_IPL_NSOFT	4	/* max soft IPL - IPL_SOFT + 1 */
 
-#define	IPL_SOFTSERIAL	1000
-#define	IPL_SOFTNET	1001
-#define	IPL_SOFTCLOCK	1002
+#define	IPL_SERIAL	5
+#define	IPL_STATCLOCK	6
+#define	IPL_CLOCK	7
+#define	IPL_BIO		8
+#define	IPL_NET		9
+#define	IPL_TTY		10
+#define	_NIPL		11
+
+#define	IPL_SOFTNAMES {							\
+	"misc",								\
+	"clock",							\
+	"net",								\
+	"serial",							\
+}
 
 #define	_IMR_SOFT	(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
 #define	_IMR_VM		(_IMR_SOFT | MIPS_INT_MASK_0)
@@ -74,25 +83,14 @@
 #define	spllowersoftclock()	_spllower(_IMR_SOFT)
 #define	splx(s)			_splset(s)
 
-#define	__GENERIC_SOFT_INTERRUPTS
+int	_splraise(int);
+int	_spllower(int);
+int	_splset(int);
+int	_splget(void);
+int	_splnone(void);
+int	_setsoftintr(int);
+int	_clrsoftintr(int);
 
-void		*softintr_establish(int level, void (*fun)(void *), void *arg);
-void		softintr_disestablish(void *cookie);
-void		softintr_schedule(void *cookie);
-
-/* for interrupt dispatch code */
-void		dosoftints(void);
-
-/* XXX backward-compat */
-void		setsoftclock(void);
-void		setsoftnet(void);
-
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(void);
-extern void		_splnone(void);
-extern void		_setsoftintr(int);
-extern void		_clrsoftintr(int);
+#include <mips/softintr.h>
 
 #endif /* _SBMIPS_INTR_H_ */
