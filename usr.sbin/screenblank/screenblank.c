@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.22 2004/11/25 20:23:36 christos Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.23 2005/11/11 15:14:24 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.22 2004/11/25 20:23:36 christos Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.23 2005/11/11 15:14:24 peter Exp $");
 #endif
 
 #include <sys/types.h>
@@ -227,8 +227,7 @@ main(int argc, char *argv[])
 	/* Start the state machine. */
 	for (;;) {
 		change = 0;
-		for (dsp = ds_list.lh_first; dsp != NULL;
-		    dsp = dsp->ds_link.le_next) {
+		LIST_FOREACH(dsp, &ds_list, ds_link) {
 			/* Don't check framebuffers in graphics mode. */
 			if (is_graphics_fb(dsp))
 				continue;
@@ -363,7 +362,7 @@ change_state(int state)
 	int fd;
 	int fail = 1;
 
-	for (dsp = ds_list.lh_first; dsp != NULL; dsp = dsp->ds_link.le_next) {
+	LIST_FOREACH(dsp, &ds_list, ds_link) {
 		/* Don't change the state of non-framebuffers! */
 		if (dsp->ds_isfb == 0)
 			continue;
