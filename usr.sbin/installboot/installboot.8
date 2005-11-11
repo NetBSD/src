@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.47 2005/10/10 05:41:28 dyoung Exp $
+.\"	$NetBSD: installboot.8,v 1.48 2005/11/11 21:09:50 dsl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2005
+.Dd November 11, 2006
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -75,6 +75,16 @@
 .Op Fl t Ar fstype
 .Ek
 .Ar filesystem
+.Nm
+.Fl e
+.Op Fl nv
+.Bk -words
+.Op Fl m Ar machine
+.Ek
+.Bk -words
+.Op Fl o Ar options
+.Ek
+.Ar bootstrap
 .
 .Sh DESCRIPTION
 The
@@ -182,6 +192,10 @@ so that its size can be determined.
 .
 .It Fl c
 Clear (remove) any existing bootstrap instead of installing one.
+.
+.It Fl e
+Edit the options of an existing bootstrap.
+.Sy [ amd64 , i386 ]
 .
 .It Fl m Ar machine
 Use

@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.18 2004/08/16 05:57:52 yamt Exp $ */
+/* $NetBSD: i386.c,v 1.19 2005/11/11 21:09:50 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.18 2004/08/16 05:57:52 yamt Exp $");
+__RCSID("$NetBSD: i386.c,v 1.19 2005/11/11 21:09:50 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -58,6 +58,101 @@ __RCSID("$NetBSD: i386.c,v 1.18 2004/08/16 05:57:52 yamt Exp $");
 
 #include "installboot.h"
 
+#define nelem(x) (sizeof (x)/sizeof *(x))
+
+static const char *const console_names[] = {
+	"pc", "com0", "com1", "com2", "com3",
+	"com0kbd", "com1kbd", "com2kbd", "com3kbd",
+	NULL };
+
+static void
+show_i386_boot_params(struct x86_boot_params  *bpp)
+{
+	uint32_t i;
+
+	printf("Boot options:        ");
+	printf("timeout %d, ", le32toh(bpp->bp_timeout));
+	printf("flags %x, ", le32toh(bpp->bp_flags));
+	printf("speed %d, ", le32toh(bpp->bp_conspeed));
+	printf("ioaddr %x, ", le32toh(bpp->bp_consaddr));
+	i = le32toh(bpp->bp_consdev);
+	if (i < nelem(console_names) - 1)
+		printf("console %s\n", console_names[i]);
+	else
+		printf("console %d\n", i);
+	if (bpp->bp_keymap[0])
+		printf("                     keymap %s\n", bpp->bp_keymap);
+}
+
+static int
+update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
+{
+	struct x86_boot_params bp;
+	int bplen;
+	int i;
+
+	bplen = le32toh(bpp->bp_length);
+	if (bplen > sizeof bp)
+		/* Ignore pad space in bootxx */
+		bplen = sizeof bp;
+
+	/* Take (and update) local copy so we handle size mismatches */
+	memset(&bp, 0, sizeof bp);
+	memcpy(&bp, bpp, bplen);
+
+	if (params->flags & IB_TIMEOUT)
+		bp.bp_timeout = htole32(params->timeout);
+	if (params->flags & IB_RESETVIDEO)
+		bp.bp_flags ^= htole32(X86_BP_FLAGS_RESET_VIDEO);
+	if (params->flags & IB_CONSPEED)
+		bp.bp_conspeed = htole32(params->conspeed);
+	if (params->flags & IB_CONSADDR)
+		bp.bp_consaddr = htole32(params->consaddr);
+	if (params->flags & IB_CONSOLE) {
+		for (i = 0; ; i++) {
+			if (console_names[i] == NULL) {
+				warnx("invalid console name, valid names are:");
+				fprintf(stderr, "\t%s", console_names[0]);
+				for (i = 1; console_names[i] != NULL; i++)
+					fprintf(stderr, ", %s", console_names[i]);
+				fprintf(stderr, "\n");
+				return 1;
+			}
+			if (strcmp(console_names[i], params->console) == 0)
+				break;
+		}
+		bp.bp_consdev = htole32(i);
+	}
+	if (params->flags & IB_PASSWORD) {
+		if (params->password[0]) {
+			MD5_CTX md5ctx;
+			MD5Init(&md5ctx);
+			MD5Update(&md5ctx, params->password,
+			    strlen(params->password));
+			MD5Final(bp.bp_password, &md5ctx);
+			bp.bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
+		} else {
+			memset(&bp.bp_password, 0, sizeof bp.bp_password);
+			bp.bp_flags &= ~htole32(X86_BP_FLAGS_PASSWORD);
+		}
+	}
+	if (params->flags & IB_KEYMAP)
+		strlcpy(bp.bp_keymap, params->keymap, sizeof bp.bp_keymap);
+
+	if (params->flags & (IB_NOWRITE | IB_VERBOSE))
+		show_i386_boot_params(&bp);
+
+	/* Check we aren't trying to set anything we can't save */
+	if (bplen < sizeof bp && memcmp((char *)&bp + bplen,
+					(char *)&bp + bplen + 1,
+					sizeof bp - bplen - 1) != 0) {
+		warnx("Patch area in stage1 bootstrap is too small");
+		return 1;
+	}
+	memcpy(bpp, &bp, bplen);
+	return 0;
+}
+
 int
 i386_setboot(ib_params *params)
 {
@@ -66,8 +161,7 @@ i386_setboot(ib_params *params)
 	u_int		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
-	struct x86_boot_params	bp, *bpp;
-	int		bplen;
+	struct x86_boot_params	*bpp;
 	struct mbr_sector	mbr;
 
 	assert(params != NULL);
@@ -188,57 +282,8 @@ i386_setboot(ib_params *params)
 	 * See sys/arch/i386/stand/bootxx/bootxx.S for more information.
 	 */
 	bpp = (void *)(bootstrapbuf + 512 * 2 + 8);
-	bplen = le32toh(bpp->bp_length);
-	if (bplen > sizeof bp)
-		/* Ignore pad space in bootxx */
-		bplen = sizeof bp;
-	/* Take (and update) local copy so we handle size mismatches */
-	memset(&bp, 0, sizeof bp);
-	memcpy(&bp, bpp, bplen);
-	if (params->flags & IB_TIMEOUT)
-		bp.bp_timeout = htole32(params->timeout);
-	if (params->flags & IB_RESETVIDEO)
-		bp.bp_flags |= htole32(X86_BP_FLAGS_RESET_VIDEO);
-	if (params->flags & IB_CONSPEED)
-		bp.bp_conspeed = htole32(params->conspeed);
-	if (params->flags & IB_CONSADDR)
-		bp.bp_consaddr = htole32(params->consaddr);
-	if (params->flags & IB_CONSOLE) {
-		static const char *names[] = {
-			"pc", "com0", "com1", "com2", "com3",
-			"com0kbd", "com1kbd", "com2kbd", "com3kbd",
-			NULL };
-		for (i = 0; ; i++) {
-			if (names[i] == NULL) {
-				warnx("invalid console name, valid names are:");
-				fprintf(stderr, "\t%s", names[0]);
-				for (i = 1; names[i] != NULL; i++)
-					fprintf(stderr, ", %s", names[i]);
-				fprintf(stderr, "\n");
-				goto done;
-			}
-			if (strcmp(names[i], params->console) == 0)
-				break;
-		}
-		bp.bp_consdev = htole32(i);
-	}
-	if (params->flags & IB_PASSWORD) {
-		MD5_CTX md5ctx;
-		MD5Init(&md5ctx);
-		MD5Update(&md5ctx, params->password, strlen(params->password));
-		MD5Final(bp.bp_password, &md5ctx);
-		bp.bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
-	}
-	if (params->flags & IB_KEYMAP)
-		strlcpy(bp.bp_keymap, params->keymap, sizeof bp.bp_keymap);
-	/* Check we aren't trying to set anything we can't save */
-	if (bplen < sizeof bp && memcmp((char *)&bp + bplen,
-					(char *)&bp + bplen + 1,
-					sizeof bp - bplen - 1) != 0) {
-		warnx("Patch area in stage1 bootstrap is too small");
+	if (update_i386_boot_params(params, bpp))
 		goto done;
-	}
-	memcpy(bpp, &bp, bplen);
 
 	if (params->flags & IB_NOWRITE) {
 		retval = 1;
@@ -275,5 +320,79 @@ i386_setboot(ib_params *params)
  done:
 	if (bootstrapbuf)
 		free(bootstrapbuf);
+	return retval;
+}
+
+int
+i386_editboot(ib_params *params)
+{
+	int		retval;
+	uint8_t		buf[512];
+	ssize_t		rv;
+	uint32_t	magic;
+	uint32_t	offset;
+	struct x86_boot_params	*bpp;
+
+	assert(params != NULL);
+	assert(params->fsfd != -1);
+	assert(params->filesystem != NULL);
+
+	retval = 0;
+
+	/*
+	 * Read in the existing bootstrap.
+	 */
+
+	bpp = NULL;
+	for (offset = 0; offset < 4 * 512; offset += 512) {
+		rv = pread(params->fsfd, &buf, sizeof buf, offset);
+		if (rv == -1) {
+			warn("Reading `%s'", params->filesystem);
+			goto done;
+		} else if (rv != sizeof buf) {
+			warnx("Reading `%s': short read", params->filesystem);
+			goto done;
+		}
+
+		magic = *(uint32_t *)(buf + 4) | 0xf;
+		if (magic != htole32(X86_BOOT_MAGIC_1 | 0xf))
+			continue;
+		bpp = (void *)(buf + 8);
+		break;
+	}
+	if (bpp == NULL) {
+		warnx("Invalid magic in stage1 boostrap");
+		goto done;
+	}
+
+	/*
+	 * Fill in any user-specified options into the
+	 *      struct x86_boot_params
+	 * that's 8 bytes in from the start of the third sector.
+	 * See sys/arch/i386/stand/bootxx/bootxx.S for more information.
+	 */
+	if (update_i386_boot_params(params, bpp))
+		goto done;
+
+	if (params->flags & IB_NOWRITE) {
+		retval = 1;
+		goto done;
+	}
+
+	/*
+	 * Write boot code back
+	 */
+	rv = pwrite(params->fsfd, buf, sizeof buf, offset);
+	if (rv == -1) {
+		warn("Writing `%s'", params->filesystem);
+		goto done;
+	} else if (rv != sizeof buf) {
+		warnx("Writing `%s': short write", params->filesystem);
+		goto done;
+	}
+
+	retval = 1;
+
+ done:
 	return retval;
 }
