@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.13 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.14 2005/11/11 07:07:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.13 2005/10/23 00:09:14 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.14 2005/11/11 07:07:42 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -483,7 +483,6 @@ netbsd32_clock_gettime(l, v, retval)
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */ *uap = v;
 	clockid_t clock_id;
-	struct timeval atv;
 	struct timespec ats;
 	struct netbsd32_timespec ts32;
 
@@ -491,8 +490,7 @@ netbsd32_clock_gettime(l, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	microtime(&atv);
-	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+	nanotime(&ats);
 	netbsd32_from_timespec(&ats, &ts32);
 
 	return copyout(&ts32, (caddr_t)NETBSD32PTR64(SCARG(uap, tp)),

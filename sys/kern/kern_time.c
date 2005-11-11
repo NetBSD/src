@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.95 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.95 2005/10/23 00:09:14 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -169,8 +169,7 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 	clock_id = SCARG(uap, clock_id);
 	switch (clock_id) {
 	case CLOCK_REALTIME:
-		microtime(&atv);
-		TIMEVAL_TO_TIMESPEC(&atv,&ats);
+		nanotime(&ats);
 		break;
 	case CLOCK_MONOTONIC:
 		/* XXX "hz" granularity */

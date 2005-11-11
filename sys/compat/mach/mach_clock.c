@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.13 2005/02/26 23:10:19 perry Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.14 2005/11/11 07:07:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.13 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.14 2005/11/11 07:07:42 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,6 @@ mach_sys_clock_sleep_trap(l, v, retval)
 		syscallarg(mach_timespec_t *) wakeup_time;
 	} */ *uap = v;
 	struct timespec mts, cts, tts;
-	struct timeval now;
 	mach_timespec_t mcts;
 	int dontcare;
 	int error;
@@ -78,8 +77,7 @@ mach_sys_clock_sleep_trap(l, v, retval)
 	mts.tv_nsec = SCARG(uap, sleep_nsec);
 
 	if (SCARG(uap, sleep_type) == MACH_TIME_ABSOLUTE) {
-		microtime(&now);
-		TIMEVAL_TO_TIMESPEC(&now, &cts);
+		nanotime(&cts);
 		timespecsub(&mts, &cts, &tts);
 	} else {
 		tts.tv_sec = mts.tv_sec;
@@ -92,8 +90,7 @@ mach_sys_clock_sleep_trap(l, v, retval)
 	tsleep(&dontcare, PZERO|PCATCH, "sleep", ticks);
 
 	if (SCARG(uap, wakeup_time) != NULL) {
-		microtime(&now);
-		TIMEVAL_TO_TIMESPEC(&now, &cts);
+		nanotime(&cts);
 		mcts.tv_sec = cts.tv_sec;
 		mcts.tv_nsec = cts.tv_nsec;
 		error = copyout(&mcts, SCARG(uap, wakeup_time), sizeof(mcts));
