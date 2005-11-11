@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/08/21 23:04:30 chs Exp $
+#	$NetBSD: Makefile,v 1.9 2005/11/11 21:42:13 dsl Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -33,8 +33,14 @@ CPUFLAGS=  -mcpu=i386
 CPPFLAGS+= -DSLOW	# for libz
 
 .if (${BASE} == "pxeboot_ia32")
+# Take config values from patchable header
+CPPFLAGS+= -DSUPPORT_SERIAL=boot_params.bp_consdev
+CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
+CPPFLAGS+= -DCONSADDR=boot_params.bp_consaddr
+CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
+CPPFLAGS+= -DDIRECT_SERIAL
 # Various serial line configurations
-CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
+#CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
 #	or
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0KBD
 #	or
