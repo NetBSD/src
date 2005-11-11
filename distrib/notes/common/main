@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.9 2005/11/10 19:36:22 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.10 2005/11/11 10:02:53 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -497,8 +497,8 @@ resulting in much faster operation. It supprots four different enforcement
 levels and full control over verbosity. Signature files are easier
 to generate and are more flexible than in the previous version.
 .It
-Added userland support for more secure SHA2 hashing algorithms in libc,
-and made cksum(1) and mtree(8) support them.
+Added SHA2 to libc to provide more secure hashing algorithms and made
+cksum(1) and mtree(8) support them.
 .bullet)
 .
 .Ss2 System administration and user tools
