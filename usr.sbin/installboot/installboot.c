@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.19 2005/11/11 21:09:50 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.20 2005/11/11 21:24:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.19 2005/11/11 21:09:50 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.20 2005/11/11 21:24:01 wiz Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -530,8 +530,8 @@ usage(void)
 
 	prog = getprogname();
 	fprintf(stderr,
-"usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
-"\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
+"usage: %s [-nv] [-B s2bno] [-b s1bno] [-m machine] [-o options]\n"
+"\t\t   [-t fstype] filesystem primary [secondary]\n"
 "usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n"
 "usage: %s -e [-nv] [-m machine] [-o options] bootstrap\n",
 	    prog, prog, prog);
