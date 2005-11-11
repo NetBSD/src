@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.5 2005/11/10 19:11:48 christos Exp $	*/
+/*	$NetBSD: sti.c,v 1.6 2005/11/11 15:08:40 peter Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.5 2005/11/10 19:11:48 christos Exp $");
+__RCSID("$NetBSD: sti.c,v 1.6 2005/11/11 15:08:40 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 
 	setprogname(*argv);
 
-	if (argc < 1) {
+	if (argc < 2) {
 		(void)fprintf(stderr, "Usage: %s <tty> [arg ...]\n",
 		    getprogname());
 		return 1;
