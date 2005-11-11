@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.2 2005/11/11 17:10:42 christos Exp $	*/
+/*	$NetBSD: msg.h,v 1.1 2005/11/11 17:10:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,42 +38,49 @@
  */
 
 /*
- * SVID compatible sem.h file
+ * SVID compatible msg.h file
  *
- * Author: Daniel Boulet
+ * Author:  Daniel Boulet
+ *
+ * Copyright 1993 Daniel Boulet and RTMX Inc.
+ *
+ * This system call was implemented by Daniel Boulet under contract from RTMX.
+ *
+ * Redistribution and use in source forms, with and without modification,
+ * are permitted provided that this entire comment appears intact.
+ *
+ * Redistribution in binary form may occur without any restrictions.
+ * Obviously, it would be nice if you gave credit where credit is due
+ * but requiring it would be too onerous.
+ *
+ * This software is provided ``AS IS'' without any warranties of any kind.
  */
 
-#ifndef _COMPAT_SYS_SEM_H_
-#define _COMPAT_SYS_SEM_H_
+#ifndef _COMPAT_SYS_MSG_H_
+#define _COMPAT_SYS_MSG_H_
 
 #ifdef _KERNEL
-
 #include <compat/sys/ipc.h>
-
-struct semid_ds14 {
-	struct ipc_perm14 sem_perm;	/* operation permission struct */
-	struct __sem	*sem_base;	/* pointer to first semaphore in set */
-	unsigned short	sem_nsems;	/* number of sems in set */
-	time_t		sem_otime;	/* last operation time */
-	long		sem_pad1;	/* SVABI/386 says I need this here */
-	time_t		sem_ctime;	/* last change time */
-    					/* Times measured in secs since */
-    					/* 00:00:00 GMT, Jan. 1, 1970 */
-	long		sem_pad2;	/* SVABI/386 says I need this here */
-	long		sem_pad3[4];	/* SVABI/386 says I need this here */
+/*
+ * Old message queue data structure used before NetBSD 1.5.
+ */
+struct msqid_ds14 {
+	struct	ipc_perm14 msg_perm;	/* msg queue permission bits */
+	struct	__msg *msg_first;	/* first message in the queue */
+	struct	__msg *msg_last;	/* last message in the queue */
+	u_long	msg_cbytes;	/* number of bytes in use on the queue */
+	u_long	msg_qnum;	/* number of msgs in the queue */
+	u_long	msg_qbytes;	/* max # of bytes on the queue */
+	pid_t	msg_lspid;	/* pid of last msgsnd() */
+	pid_t	msg_lrpid;	/* pid of last msgrcv() */
+	time_t	msg_stime;	/* time of last msgsnd() */
+	long	msg_pad1;
+	time_t	msg_rtime;	/* time of last msgrcv() */
+	long	msg_pad2;
+	time_t	msg_ctime;	/* time of last msgctl() */
+	long	msg_pad3;
+	long	msg_pad4[4];
 };
-
-#else /* !_KERNEL */
-
-__BEGIN_DECLS
-int	semctl(int, int, int, union __semun);
-int	__semctl(int, int, int, union __semun *);
-int	__semctl13(int, int, int, ...);
-#if defined(_NETBSD_SOURCE)
-int	semconfig(int);
 #endif
-__END_DECLS
 
-#endif /* !_KERNEL */
-
-#endif /* !_COMPAT_SYS_SEM_H_ */
+#endif /* !_COMPAT_SYS_MSG_H_ */
