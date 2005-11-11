@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.25 2005/11/09 21:56:11 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.26 2005/11/11 22:45:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.25 2005/11/09 21:56:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.26 2005/11/11 22:45:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -51,14 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.25 2005/11/09 21:56:11 manu Exp $"
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 
 #include <machine/cpu.h>
 
 #include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
 #include <compat/linux/common/linux_emuldata.h>
@@ -403,30 +401,14 @@ linux_sys_exit_group(l, v, retval)
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
-	struct proc *p;
-	struct linux_emuldata *led;
-	pid_t group_pid;
 
 	/*
-	 * The calling thread is supposed to kill all threads
+	 * XXX The calling thread is supposed to kill all threads
 	 * in the same thread group (i.e. all threads created
-	 * via clone(2) with CLONE_THREAD flag set).
+	 * via clone(2) with CLONE_THREAD flag set). This appears
+	 * to not be used yet, so the thread group handling
+	 * is currently not implemented.
 	 */
-	led = l->l_proc->p_emuldata;
-	group_pid = led->s->group_pid;
-	PROCLIST_FOREACH(p, &allproc) {
-		if (p->p_emul != &emul_linux)
-			continue;
-
-		if (p == l->l_proc)
-			continue;
-
-		led = p->p_emuldata;
-		if (led->s->group_pid == group_pid) {
-			/* XXX we should exit, not send a SIGKILL */
-			psignal(p, SIGKILL);
-		}
-	}
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
 	/* NOTREACHED */
