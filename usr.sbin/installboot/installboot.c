@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.18 2005/07/10 07:12:13 isaki Exp $	*/
+/*	$NetBSD: installboot.c,v 1.19 2005/11/11 21:09:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.18 2005/07/10 07:12:13 isaki Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.19 2005/11/11 21:09:50 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	if ((p = getenv("MACHINE")) != NULL)
 		getmachine(params, p, "$MACHINE");
 
-	while ((ch = getopt(argc, argv, "b:B:cm:no:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cem:no:t:v")) != -1) {
 		switch (ch) {
 
 		case 'b':
@@ -140,6 +140,10 @@ main(int argc, char *argv[])
 
 		case 'c':
 			params->flags |= IB_CLEAR;
+			break;
+
+		case 'e':
+			params->flags |= IB_EDIT;
 			break;
 
 		case 'm':
@@ -172,11 +176,12 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (((params->flags & IB_CLEAR) != 0 && argc != 1) ||
-	    ((params->flags & IB_CLEAR) == 0 && (argc < 2 || argc > 3)))
+	if (params->flags & IB_CLEAR && params->flags & IB_EDIT)
+		usage();
+	if (argc < 1 || argc + 2 * !!(params->flags & (IB_CLEAR | IB_EDIT)) > 3)
 		usage();
 
-		/* set missing defaults */
+	/* set missing defaults */
 	if (params->machine == NULL) {
 		if (uname(&utsname) == -1)
 			err(1, "Determine uname");
@@ -185,7 +190,7 @@ main(int argc, char *argv[])
 
 	/* Check that options are supported by this system */
 	unsupported_flags = params->flags & ~params->machine->valid_flags;
-	unsupported_flags &= ~(IB_VERBOSE | IB_NOWRITE |IB_CLEAR);
+	unsupported_flags &= ~(IB_VERBOSE | IB_NOWRITE | IB_CLEAR | IB_EDIT);
 	if (unsupported_flags != 0) {
 		int ndx;
 		for (ndx = 0; options[ndx].name != NULL; ndx++) {
@@ -261,14 +266,18 @@ main(int argc, char *argv[])
 		printf("File system type:    %s (blocksize %u, needswap %d)\n",
 		    params->fstype->name,
 		    params->fstype->blocksize, params->fstype->needswap);
-		printf("Primary bootstrap:   %s\n",
-		    (params->flags & IB_CLEAR) ? "(to be cleared)"
-		    : params->stage1);
+		if (!(params->flags & IB_EDIT))
+			printf("Primary bootstrap:   %s\n",
+			    (params->flags & IB_CLEAR) ? "(to be cleared)"
+			    : params->stage1 ? params->stage1 : "(none)" );
 		if (params->stage2 != NULL)
 			printf("Secondary bootstrap: %s\n", params->stage2);
 	}
 
-	if (params->flags & IB_CLEAR) {
+	if (params->flags & IB_EDIT) {
+		op = "Edit";
+		rv = params->machine->editboot(params);
+	} else if (params->flags & IB_CLEAR) {
 		op = "Clear";
 		rv = params->machine->clearboot(params);
 	} else {
@@ -404,7 +413,6 @@ no_setboot(ib_params *params)
 
 	assert(params != NULL);
 
-		/* bootstrap installation is not supported */
 	warnx("%s: bootstrap installation is not supported",
 	    params->machine->name);
 	return (0);
@@ -416,8 +424,18 @@ no_clearboot(ib_params *params)
 
 	assert(params != NULL);
 
-		/* bootstrap removal is not supported */
 	warnx("%s: bootstrap removal is not supported",
+	    params->machine->name);
+	return (0);
+}
+
+int
+no_editboot(ib_params *params)
+{
+
+	assert(params != NULL);
+
+	warnx("%s: bootstrap editing is not supported",
 	    params->machine->name);
 	return (0);
 }
@@ -514,8 +532,9 @@ usage(void)
 	fprintf(stderr,
 "usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
 "\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
-"usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
-	    prog, prog);
+"usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n"
+"usage: %s -e [-nv] [-m machine] [-o options] bootstrap\n",
+	    prog, prog, prog);
 	machine_usage();
 	fstype_usage();
 	options_usage();
