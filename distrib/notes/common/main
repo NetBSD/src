@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.295 2005/11/06 17:25:55 tron Exp $
+.\"	$NetBSD: main,v 1.296 2005/11/11 03:45:57 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1328,6 +1328,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
 .It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
+.It Ta John Nemeth Ta Mt jnemeth@NetBSD.org
 .It Ta Bob Nestor Ta Mt rnestor@NetBSD.org
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.org
