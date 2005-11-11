@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.6 2005/11/10 13:31:03 rpaulo Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.7 2005/11/11 02:11:07 kochi Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.6 2005/11/10 13:30:46 rpaulo Exp
+ *	# NetBSD: acpidevs,v 1.7 2005/11/11 02:10:09 kochi Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -39,6 +39,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0102",
 	    "MCA Timer",
+	},
+	{
+	    "PNP0103",
+	    "HPET Timer",
 	},
 	{
 	    "PNP0200",
