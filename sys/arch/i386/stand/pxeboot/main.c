@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2005/08/21 23:02:34 chs Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2005/11/11 21:42:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -36,12 +36,18 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/reboot.h>
+#include <sys/bootblock.h>
+
 #include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>
 
 #include <libi386.h>
 #include "pxeboot.h"
+
+extern struct x86_boot_params boot_params;
 
 int errno;
 int debug;
