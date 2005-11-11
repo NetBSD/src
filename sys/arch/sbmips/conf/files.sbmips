@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.10 2004/03/25 15:26:35 wiz Exp $
+# $NetBSD: files.sbmips,v 1.11 2005/11/11 23:45:56 simonb Exp $
 
 maxpartitions 8
 
@@ -6,7 +6,6 @@ maxusers 1 8 64
 
 file arch/sbmips/sbmips/autoconf.c
 file arch/sbmips/sbmips/machdep.c
-file arch/sbmips/sbmips/softintr.c
 file arch/sbmips/sbmips/console.c
 file arch/sbmips/sbmips/disksubr.c
 file arch/sbmips/sbmips/systemsw.c
@@ -15,6 +14,7 @@ file dev/cons.c
 file arch/sbmips/sbmips/sb1250_icu.c
 
 file arch/mips/cfe/cfe_api.c
+file arch/mips/mips/softintr.c
 
 
 ###
