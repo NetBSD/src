@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.15 2005/08/26 11:49:13 drochner Exp $ */
+/* $NetBSD: sbobio.c,v 1.16 2005/11/11 06:27:09 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.15 2005/08/26 11:49:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16 2005/11/11 06:27:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,11 +158,9 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 			devcount = sb1250_rev1_sbobio_dev_count;
 		}
 		break;
-#ifdef DIAGNOSTIC
 	default:
 		panic("un-matched in sbobio_attach");
 		break;
-#endif
 	}
 
 	printf(": %s peripherals\n", dscr);
