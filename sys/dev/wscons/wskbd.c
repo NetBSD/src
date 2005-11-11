@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.83 2005/06/21 14:01:13 ws Exp $ */
+/* $NetBSD: wskbd.c,v 1.84 2005/11/11 07:07:42 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.83 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.84 2005/11/11 07:07:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -668,7 +668,6 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 {
 	struct wseventvar *evar;
 	struct wscons_event *ev;
-	struct timeval thistime;
 	int put;
 
 	evar = sc->sc_base.me_evp;
@@ -695,8 +694,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	}
 	ev->type = type;
 	ev->value = value;
-	microtime(&thistime);
-	TIMEVAL_TO_TIMESPEC(&thistime, &ev->time);
+	nanotime(&ev->time);
 	evar->put = put;
 	WSEVENT_WAKEUP(evar);
 }
