@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.43 2005/10/02 15:34:42 chs Exp $	*/
+/*	$NetBSD: queue.h,v 1.44 2005/11/11 15:04:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -641,12 +641,12 @@ struct {								\
 
 #define	CIRCLEQ_FOREACH(var, head, field)				\
 	for ((var) = ((head)->cqh_first);				\
-		(var) != (void *)(head);				\
+		(var) != (const void *)(head);				\
 		(var) = ((var)->field.cqe_next))
 
 #define	CIRCLEQ_FOREACH_REVERSE(var, head, field)			\
 	for ((var) = ((head)->cqh_last);				\
-		(var) != (void *)(head);				\
+		(var) != (const void *)(head);				\
 		(var) = ((var)->field.cqe_prev))
 
 /*
