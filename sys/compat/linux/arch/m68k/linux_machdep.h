@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.4 2002/07/13 08:28:41 scw Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.5 2005/11/11 23:22:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
 #define _M68K_LINUX_MACHDEP_H
 
 #include <m68k/frame.h>
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 
 /*
  * Signal stack definitions for old signal interface.
