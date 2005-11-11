@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.16 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: msg.h,v 1.17 2005/11/11 17:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,29 +96,6 @@ struct msqid_ds {
 	struct __msg	*_msg_last;	/* last message in the queue */
 	msglen_t	_msg_cbytes;	/* # of bytes currently in queue */
 };
-
-#ifdef _KERNEL
-/*
- * Old message queue data structure used before NetBSD 1.5.
- */
-struct msqid_ds14 {
-	struct	ipc_perm14 msg_perm;	/* msg queue permission bits */
-	struct	__msg *msg_first;	/* first message in the queue */
-	struct	__msg *msg_last;	/* last message in the queue */
-	u_long	msg_cbytes;	/* number of bytes in use on the queue */
-	u_long	msg_qnum;	/* number of msgs in the queue */
-	u_long	msg_qbytes;	/* max # of bytes on the queue */
-	pid_t	msg_lspid;	/* pid of last msgsnd() */
-	pid_t	msg_lrpid;	/* pid of last msgrcv() */
-	time_t	msg_stime;	/* time of last msgsnd() */
-	long	msg_pad1;
-	time_t	msg_rtime;	/* time of last msgrcv() */
-	long	msg_pad2;
-	time_t	msg_ctime;	/* time of last msgctl() */
-	long	msg_pad3;
-	long	msg_pad4[4];
-};
-#endif
 
 #if defined(_NETBSD_SOURCE)
 /*

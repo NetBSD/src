@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.27 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: ipc.h,v 1.28 2005/11/11 17:11:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -118,22 +118,6 @@ struct ipc_perm_sysctl {
 };
 #endif /* _NETBSD_SOURCE */
 
-#ifdef _KERNEL
-/*
- * Old IPC permission structure used before NetBSD 1.5.
- */
-struct ipc_perm14 {
-	unsigned short	cuid;	/* creator user id */
-	unsigned short	cgid;	/* creator group id */
-	unsigned short	uid;	/* user id */
-	unsigned short	gid;	/* group id */
-	unsigned short	mode;	/* r/w permission */
-	unsigned short	seq;	/* sequence # (to generate unique
-				   msg/sem/shm id) */
-	key_t	key;		/* user specified msg/sem/shm key */
-};
-#endif /* _KERNEL */
-
 /* Common access type bits, used with ipcperm(). */
 #define	IPC_R		000400	/* read permission */
 #define	IPC_W		000200	/* write/alter permission */
@@ -165,8 +149,6 @@ struct ipc_perm14 {
 
 int	ipcperm(struct ucred *, struct ipc_perm *, int);
 
-void	ipc_perm14_to_native(struct ipc_perm14 *, struct ipc_perm *);
-void	native_to_ipc_perm14(struct ipc_perm *, struct ipc_perm14 *);
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
