@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.48 2005/11/11 21:09:50 dsl Exp $
+.\"	$NetBSD: installboot.8,v 1.49 2005/11/11 21:22:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,46 +44,26 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl nv
-.Bk -words
-.Op Fl m Ar machine
-.Ek
-.Bk -words
-.Op Fl o Ar options
-.Ek
-.Bk -words
-.Op Fl t Ar fstype
-.Ek
-.Bk -words
-.Op Fl b Ar s1bno
-.Ek
-.Bk -words
 .Op Fl B Ar s2bno
-.Ek
+.Op Fl b Ar s1bno
+.Op Fl m Ar machine
+.Op Fl o Ar options
+.Op Fl t Ar fstype
 .Ar filesystem
 .Ar primary
 .Op Ar secondary
 .Nm
 .Fl c
 .Op Fl nv
-.Bk -words
 .Op Fl m Ar machine
-.Ek
-.Bk -words
 .Op Fl o Ar options
-.Ek
-.Bk -words
 .Op Fl t Ar fstype
-.Ek
 .Ar filesystem
 .Nm
 .Fl e
 .Op Fl nv
-.Bk -words
 .Op Fl m Ar machine
-.Ek
-.Bk -words
 .Op Fl o Ar options
-.Ek
 .Ar bootstrap
 .
 .Sh DESCRIPTION
@@ -162,16 +142,6 @@ are as follows:
 .
 .Bl -tag -width "optionsxxx"
 .
-.It Fl b Ar s1bno
-Install
-.Ar primary
-at block number
-.Ar s1bno
-instead of the default location for the machine and file system type.
-.Sy [ alpha ,
-.Sy pmax ,
-.Sy vax ]
-.
 .It Fl B Ar s2bno
 When hard-coding the blocks of
 .Ar secondary
@@ -189,6 +159,16 @@ should refer to an actual secondary bootstrap (rather than the
 file name of the one present in
 .Ar filesystem )
 so that its size can be determined.
+.
+.It Fl b Ar s1bno
+Install
+.Ar primary
+at block number
+.Ar s1bno
+instead of the default location for the machine and file system type.
+.Sy [ alpha ,
+.Sy pmax ,
+.Sy vax ]
 .
 .It Fl c
 Clear (remove) any existing bootstrap instead of installing one.
