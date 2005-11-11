@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.309 2005/11/10 23:58:02 snj Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.310 2005/11/11 22:15:44 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14019,4 +14019,9 @@ sys/dev/usb/if_axe.c				1.10
 
 	Big endian fixes from Garrett D'Amore in PR#32032.
 	[tron, ticket #950]
+
+usr.sbin/mtree/mtree.8				1.42
+
+	SHA2 support has been pulled up to NetBSD 3.0, update the history part.
+	[elad, ticket #952]
 
