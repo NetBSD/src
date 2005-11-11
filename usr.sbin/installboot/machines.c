@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.28 2005/07/16 10:43:00 hannken Exp $	*/
+/*	$NetBSD: machines.c,v 1.29 2005/11/11 21:09:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,48 +42,50 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.28 2005/07/16 10:43:00 hannken Exp $");
+__RCSID("$NetBSD: machines.c,v 1.29 2005/11/11 21:09:50 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
 #include "installboot.h"
 
 struct ib_mach machines[] = {
-	{ "alpha",	alpha_setboot,	alpha_clearboot,
+	{ "alpha",	alpha_setboot,	alpha_clearboot, no_editboot,
 		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM },
-	{ "amd64",	i386_setboot,	no_clearboot,
+	{ "amd64",	i386_setboot,	no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT },
-	{ "amiga",	amiga_setboot,	no_clearboot,
+	{ "amiga",	amiga_setboot,	no_clearboot, no_editboot,
 		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
-	{ "hp300",	hp300_setboot,	no_clearboot,
+	{ "hp300",	hp300_setboot,	no_clearboot, no_editboot,
 		IB_APPEND },
-	{ "hp700",	hp700_setboot,	hp700_clearboot,
+	{ "hp700",	hp700_setboot,	hp700_clearboot, no_editboot,
 		0 },
-	{ "i386",	i386_setboot,	no_clearboot,
+	{ "i386",	i386_setboot,	no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT },
-	{ "macppc",	macppc_setboot,	macppc_clearboot,
+	{ "macppc",	macppc_setboot,	macppc_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "news68k",	news68k_setboot, news68k_clearboot,
+	{ "news68k",	news68k_setboot, news68k_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "newsmips",	newsmips_setboot, newsmips_clearboot,
+	{ "newsmips",	newsmips_setboot, newsmips_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "next68k",	next68k_setboot, no_clearboot,
+	{ "next68k",	next68k_setboot, no_clearboot, no_editboot,
 		0 },
-	{ "pmax",	pmax_setboot,	pmax_clearboot,
+	{ "pmax",	pmax_setboot,	pmax_clearboot, no_editboot,
 		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
-	{ "shark",	no_setboot,	no_clearboot, },
-	{ "sparc",	sparc_setboot,	sparc_clearboot,
+	{ "shark",	no_setboot,	no_clearboot, no_editboot,
+		0 },
+	{ "sparc",	sparc_setboot,	sparc_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "sparc64",	sparc64_setboot, sparc64_clearboot },
-	{ "sun2",	sun68k_setboot,	sun68k_clearboot,
+	{ "sparc64",	sparc64_setboot, sparc64_clearboot, no_editboot,
+		0 },
+	{ "sun2",	sun68k_setboot,	sun68k_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "sun3",	sun68k_setboot,	sun68k_clearboot,
+	{ "sun3",	sun68k_setboot,	sun68k_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "vax",	vax_setboot,	vax_clearboot,
+	{ "vax",	vax_setboot,	vax_clearboot, no_editboot,
 		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
-	{ "x68k",	x68k_setboot,	x68k_clearboot,
+	{ "x68k",	x68k_setboot,	x68k_clearboot, no_editboot,
 		IB_STAGE1START | IB_STAGE2START },
 	{ 0, 0, 0, 0 },
 };

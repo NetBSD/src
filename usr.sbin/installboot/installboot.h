@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.26 2005/05/14 14:46:21 chs Exp $	*/
+/*	$NetBSD: installboot.h,v 1.27 2005/11/11 21:09:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ typedef enum {
 	IB_VERBOSE =	1<<0,		/* verbose operation */
 	IB_NOWRITE =	1<<1,		/* don't write */
 	IB_CLEAR =	1<<2,		/* clear boot block */
+	IB_EDIT =	1<<3,		/* edit boot parameters */
 
 				/* flags from -o options */
 	IB_ALPHASUM =	1<<8,		/* set Alpha checksum */
@@ -104,6 +105,7 @@ struct ib_mach {
 	const char	*name;
 	int		(*setboot)	(ib_params *);
 	int		(*clearboot)	(ib_params *);
+	int		(*editboot)	(ib_params *);
 	ib_flags	valid_flags;
 };
 
@@ -143,6 +145,7 @@ uint16_t	compute_sunsum(const uint16_t *);
 int		set_sunsum(ib_params *, uint16_t *, uint16_t);
 int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
+int		no_editboot(ib_params *);
 
 	/* bbinfo.c */
 int		shared_bbinfo_clearboot(ib_params *, struct bbinfo_params *,
@@ -165,6 +168,7 @@ int		hp300_setboot(ib_params *);
 int		hp700_setboot(ib_params *);
 int		hp700_clearboot(ib_params *);
 int		i386_setboot(ib_params *);
+int		i386_editboot(ib_params *);
 int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
 int		news68k_setboot(ib_params *);
