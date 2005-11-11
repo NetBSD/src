@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.20 2005/11/10 18:47:53 christos Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.21 2005/11/11 17:10:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.20 2005/11/10 18:47:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.21 2005/11/11 17:10:42 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.20 2005/11/10 18:47:53 christos Exp 
 
 #include <compat/sys/sem.h>
 #include <compat/sys/shm.h>
+#include <compat/sys/msg.h>
 
 #define IBCS2_IPC_RMID	0
 #define IBCS2_IPC_SET	1
