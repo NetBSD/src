@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.1 2005/11/10 18:36:20 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.2 2005/11/11 11:59:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,6 +74,8 @@
 
 #ifndef _COMPAT_SYS_SHM_H_
 #define _COMPAT_SYS_SHM_H_
+
+#include <sys/ipc.h>
 
 struct shmid_ds14 {
 	struct ipc_perm14 shm_perm;	/* operation permission structure */
