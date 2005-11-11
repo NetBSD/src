@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.6 2005/02/26 23:10:19 perry Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.7 2005/11/11 23:22:08 chs Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _MIPS_LINUX_MACHDEP_H
 #define _MIPS_LINUX_MACHDEP_H
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
 /*
