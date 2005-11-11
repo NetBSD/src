@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.50 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.51 2005/11/11 15:50:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.50 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.51 2005/11/11 15:50:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,11 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	off_t osize;
 	int sync;
 	struct ufsmount *ump = oip->i_ump;
+
+	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
+	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {
+		return 0;
+	}
 
 	if (length < 0)
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.13 2005/11/08 23:04:03 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.14 2005/11/11 15:50:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13 2005/11/08 23:04:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.14 2005/11/11 15:50:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1141,8 +1141,6 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 	case VDIR:
 		return EISDIR;
 
-	case VLNK:
-		/* FALLTHROUGH */
 	case VREG:
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
@@ -1152,17 +1150,15 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 		/* FALLTHROUGH */
 	case VCHR:
 		/* FALLTHROUGH */
-	case VSOCK:
-		/* FALLTHROUGH */
 	case VFIFO:
 		/* Allow modifications of special files even if in the file
 		 * system is mounted read-only (we are not modifying the
 		 * files themselves, but the objects they represent). */
-		break;
+		return 0;
 
 	default:
 		/* Anything else is unsupported. */
-		return EINVAL;
+		return EOPNOTSUPP;
 	}
 
 	/* Immutable or append-only files cannot be modified, either. */
