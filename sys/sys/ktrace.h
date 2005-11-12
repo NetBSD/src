@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.11 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.12 2005/11/12 17:04:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -74,6 +74,7 @@ struct ktr_header {
 #define ktr_lid	_ktr_id._lid
 #define ktr_time _ktr_time._ts
 #define ktr_tv _ktr_time._tv
+#define ktr_ts _ktr_time._ts
 #define ktr_unused _ktr_id._buf
 
 #define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
