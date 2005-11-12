@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.7 2003/11/17 21:29:37 wiz Exp $
+.\"	$NetBSD: pxeboot.8,v 1.8 2005/11/12 09:12:13 dsl Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 17, 2003
+.Dd November 12, 2005
 .Os
 .Dt PXEBOOT 8 i386
 .Sh NAME
@@ -207,6 +207,15 @@ Leave the
 .Nm
 program.
 .El
+.Pp
+By default the output from
+.Nm
+and from the booted kernel will go to the system's bios console.
+This can be changed to be one of the serial ports by using
+.Nm installboot
+to modify the boot options contained in the
+.Pa pxeboot_ia32.bin
+file.
 .Sh EXAMPLES
 The first
 .Pa /etc/dhcpd.conf
@@ -274,10 +283,15 @@ is only used in the
 case and by the
 .Nx
 kernel to mount the root file system.
+.Sh FILES
+.Bl -tag -width /usr/mdec/pxeboot_ia32.bin
+.It Pa /usr/mdec/pxeboot_ia32.bin
+.El
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dhcpd 8 ,
-.Xr diskless 8
+.Xr diskless 8 ,
+.Xr installboot 8
 .Rs
 .%T Preboot Execution Environment (PXE) Specification
 .%N Version 2.1
@@ -297,3 +311,8 @@ kernel file or if its file format wasn't recognized, it is
 impossible to retry the operation because the
 .Tn PXE
 network stack is already removed from the system RAM.
+.Pp
+You need the
+.Nm
+from an i386 build to boot an i386 kernel,
+and that from an amd64 build to boot an amd64 kernel.
