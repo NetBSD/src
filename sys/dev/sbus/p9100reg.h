@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100reg.h,v 1.1 2005/05/16 14:43:23 macallan Exp $ */
+/*	$NetBSD: p9100reg.h,v 1.2 2005/11/12 23:25:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,13 +54,30 @@
 #define	DAC_INDX_HI	0x0214	/* IBM RGB528 Index High */
 #define	DAC_INDX_DATA	0x0218	/* IBM RGB528 Index Data (Indexed Registers) */
 #define	DAC_INDX_CTL	0x021c	/* IBM RGB528 Index Control */
+	#define DAC_INDX_AUTOINCR	0x01
+
+#define DAC_CURSOR_CTL	0x30
+	#define DAC_CURSOR_OFF	0x00
+	#define DAC_CURSOR_WIN	0x02
+	#define DAC_CURSOR_X11	0x03
+	#define DAC_CURSOR_64	0x04	/* clear for 32x32 cursor */
+#define DAC_CURSOR_X		0x31	/* 8-low, 8-high */
+#define DAC_CURSOR_Y		0x33	/* 8-low, 8-high */
+#define DAC_CURSOR_HOT_X	0x35	/* hotspot */
+#define DAC_CURSOR_HOT_Y	0x36
+#define DAC_CURSOR_COL_1	0x40	/* red. green and blue */
+#define DAC_CURSOR_COL_2	0x43	
+#define DAC_CURSOR_COL_3	0x46	
+#define DAC_PIX_PLL		0x8e
+#define DAC_CURSOR_DATA		0x100
 
 #define ENGINE_STATUS	0x2000	/* drawing engine status register */
 	#define BLITTER_BUSY	0x80000000
-	#define ENGINE_BUSY		0x40000000
-#define COMMAND_BLIT	0x2004
-#define COMMAND_QUAD	0x2008
-#define PIXEL_1			0x2080	/* pixel data for monochrome colour expansion */
+	#define ENGINE_BUSY	0x40000000
+#define COMMAND_BLIT		0x2004
+#define COMMAND_QUAD		0x2008
+/* pixel data for monochrome colour expansion */
+#define PIXEL_1			0x2080	
 /* apparently bits 2-6 control how many pixels we write - n+1 */
 
 /* drawing engine registers */
