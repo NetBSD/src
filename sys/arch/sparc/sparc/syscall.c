@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.6.2 2005/11/10 13:59:08 skrll Exp $ */
+/*	$NetBSD: syscall.c,v 1.3.6.3 2005/11/12 13:25:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.6.2 2005/11/10 13:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.6.3 2005/11/12 13:25:02 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -408,7 +408,7 @@ child_return(void *arg)
 	p = l->l_proc;
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p,
+		ktrsysret(l,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}

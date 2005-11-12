@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9.6.2 2005/11/10 13:59:34 skrll Exp $ */
+/*	$NetBSD: syscall.c,v 1.9.6.3 2005/11/12 13:25:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.6.2 2005/11/10 13:59:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.6.3 2005/11/12 13:25:02 skrll Exp $");
 
 #define NEW_FPSTATE
 
@@ -532,7 +532,7 @@ child_return(arg)
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
+		ktrsysret(l,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
