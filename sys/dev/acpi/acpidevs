@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.7 2005/11/11 02:10:09 kochi Exp $
+# $NetBSD: acpidevs,v 1.8 2005/11/12 11:53:30 rpaulo Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -108,6 +108,7 @@ PNP0A03	PCI Bus
 PNP0A04	VESA/VL Bus
 PNP0A05	Generic ACPI Bus
 PNP0A06	Generic ACPI Extended-IO Bus (EIO bus)
+PNP0A08	ACPI Three-wire Device Bus
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
