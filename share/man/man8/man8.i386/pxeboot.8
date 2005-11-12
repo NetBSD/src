@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.8 2005/11/12 09:12:13 dsl Exp $
+.\"	$NetBSD: pxeboot.8,v 1.9 2005/11/12 16:43:07 wiz Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -210,12 +210,16 @@ program.
 .Pp
 By default the output from
 .Nm
-and from the booted kernel will go to the system's bios console.
+and from the booted kernel will go to the system's BIOS console.
 This can be changed to be one of the serial ports by using
 .Nm installboot
 to modify the boot options contained in the
 .Pa pxeboot_ia32.bin
 file.
+.Sh FILES
+.Bl -tag -width /usr/mdec/pxeboot_ia32.bin
+.It Pa /usr/mdec/pxeboot_ia32.bin
+.El
 .Sh EXAMPLES
 The first
 .Pa /etc/dhcpd.conf
@@ -283,10 +287,6 @@ is only used in the
 case and by the
 .Nx
 kernel to mount the root file system.
-.Sh FILES
-.Bl -tag -width /usr/mdec/pxeboot_ia32.bin
-.It Pa /usr/mdec/pxeboot_ia32.bin
-.El
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dhcpd 8 ,
