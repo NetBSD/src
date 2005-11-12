@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.2 2005/06/02 01:24:45 lukem Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.3 2005/11/12 20:30:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.2 2005/06/02 01:24:45 lukem Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.3 2005/11/12 20:30:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,6 +346,7 @@ tryagain:
 			switch (sa->sa_family) {
 			case AF_INET:
 				((struct sockaddr_in *)sa)->sin_port = port;
+				break;
 #ifdef INET6
 			case AF_INET6:
 				((struct sockaddr_in6 *)sa)->sin6_port = port;
