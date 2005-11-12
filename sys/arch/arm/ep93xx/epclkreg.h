@@ -1,4 +1,4 @@
-/*	$NetBSD: epclkreg.h,v 1.1 2004/12/22 19:13:32 joff Exp $ */
+/*	$NetBSD: epclkreg.h,v 1.2 2005/11/12 05:33:23 hamajima Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -35,6 +35,32 @@
 #ifndef _EPCLKREG_H_
 #define _EPCLKREG_H_
 
-#include <arm/ep93xx/ep93xxreg.h>
+/* Timer1 16-bit timer (Free running/Load based) */
+#define	EP93XX_TIMERS_Timer1Load	0x00000000UL
+#define	 TimerLoad_MASK			0x0000ffffUL
+#define	EP93XX_TIMERS_Timer1Value	0x00000004UL
+#define	 TimerValue_MASK		0x0000ffffUL
+#define	EP93XX_TIMERS_Timer1Control	0x00000008UL
+#define	 TimerControl_ENABLE		(1<<7)
+#define	 TimerControl_MODE		(1<<6)
+#define	 TimerControl_CLKSEL		(1<<3)
+#define	EP93XX_TIMERS_Timer1Clear	0x0000000cUL
+
+/* Timer2 16-bit timer (Free running/Load based) */
+#define	EP93XX_TIMERS_Timer2Load	0x00000020UL
+#define	EP93XX_TIMERS_Timer2Value	0x00000024UL
+#define	EP93XX_TIMERS_Timer2Control	0x00000028UL
+#define	EP93XX_TIMERS_Timer2Clear	0x0000002cUL
+
+/* Timer3 32-bit timer (Free running/Load based) */
+#define	EP93XX_TIMERS_Timer3Load	0x00000080UL
+#define	EP93XX_TIMERS_Timer3Value	0x00000084UL
+#define	EP93XX_TIMERS_Timer3Control	0x00000088UL
+#define	EP93XX_TIMERS_Timer3Clear	0x0000008cUL
+
+/* Timer4 40-bit timer (Free running) */
+#define	EP93XX_TIMERS_Timer4Enable	0x00000064UL
+#define	EP93XX_TIMERS_Timer4ValueHigh	0x00000064UL
+#define	EP93XX_TIMERS_Timer4ValueLow	0x00000060UL
 
 #endif /* _EPCLKREG_H_ */
