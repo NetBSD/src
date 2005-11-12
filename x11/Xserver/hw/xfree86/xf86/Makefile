@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/10/01 22:51:31 macallan Exp $
+#	$NetBSD: Makefile,v 1.10 2005/11/12 22:57:47 spz Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -94,7 +94,7 @@ DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa vga \
 IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
 		dmc dynapro elographics tek4957 microtouch \
 		mutouch penmount spaceorb summa wacom void \
-		magellan hyperpen jamstudio fpit palmax
+		magellan hyperpen jamstudio fpit palmax usbtablet
 
 CPPFLAGS.xf86Bus.c=		-DBUILDERADDR='"xfree86@xfree86.org"'
 CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
