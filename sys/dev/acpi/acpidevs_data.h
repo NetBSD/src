@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.7 2005/11/11 02:11:07 kochi Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.8 2005/11/12 11:54:29 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.7 2005/11/11 02:10:09 kochi Exp
+ *	# NetBSD: acpidevs,v 1.8 2005/11/12 11:53:30 rpaulo Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -371,6 +371,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0A06",
 	    "Generic ACPI Extended-IO Bus (EIO bus)",
+	},
+	{
+	    "PNP0A08",
+	    "ACPI Three-wire Device Bus",
 	},
 	{
 	    "PNP0800",
