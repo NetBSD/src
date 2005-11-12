@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.310 2005/11/11 22:15:44 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.311 2005/11/12 22:16:24 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14024,4 +14024,9 @@ usr.sbin/mtree/mtree.8				1.42
 
 	SHA2 support has been pulled up to NetBSD 3.0, update the history part.
 	[elad, ticket #952]
+
+bin/ps/ps.1					1.72
+
+	Add "uaddr" and improve text for "laddr".
+	[chs, ticket #953]
 
