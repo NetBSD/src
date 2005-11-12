@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.50 2005/10/01 22:51:31 macallan Exp $
+#	$NetBSD: bsd.x11.mk,v 1.51 2005/11/12 22:57:46 spz Exp $
 
 .include <bsd.init.mk>
 
@@ -45,7 +45,7 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 
 #	 OS_DEFINES
 X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
-			-DDDXOSVERRORF -DDDXTIME
+			-DDDXOSVERRORF -DDDXTIME -DUSB_HID
 
 .if !(${MACHINE} == "acorn32"	|| \
     ${MACHINE} == "alpha"	|| \

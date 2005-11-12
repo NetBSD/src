@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.16 2005/10/01 22:51:31 macallan Exp $
+# $NetBSD: md.sparc,v 1.17 2005/11/12 22:57:46 spz Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -109,6 +109,7 @@
 ./usr/X11R6/lib/modules/input/spaceorb_drv.o
 ./usr/X11R6/lib/modules/input/summa_drv.o
 ./usr/X11R6/lib/modules/input/tek4957_drv.o
+./usr/X11R6/lib/modules/input/usbtablet_drv.o
 ./usr/X11R6/lib/modules/input/void_drv.o
 ./usr/X11R6/lib/modules/input/wacom_drv.o
 ./usr/X11R6/lib/modules/libcfb.a
@@ -170,6 +171,7 @@
 ./usr/X11R6/man/cat4/sunleo.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suntcx.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/tek4957.0			-unknown-		.cat
+./usr/X11R6/man/cat4/usbtablet.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wsfb.0			-unknown-		.cat
@@ -209,6 +211,7 @@
 ./usr/X11R6/man/man4/sunleo.4			-unknown-		.man
 ./usr/X11R6/man/man4/suntcx.4			-unknown-		.man
 ./usr/X11R6/man/man4/tek4957.4			-unknown-		.man
+./usr/X11R6/man/man4/usbtablet.4		-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
 ./usr/X11R6/man/man4/wsfb.4			-unknown-		.man
