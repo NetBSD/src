@@ -1,4 +1,4 @@
-/*	$NetBSD: epsocvar.h,v 1.1 2004/12/22 19:12:21 joff Exp $ */
+/*	$NetBSD: epsocvar.h,v 1.2 2005/11/12 05:33:23 hamajima Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -40,6 +40,8 @@
 
 #include <machine/bus.h>
 
+struct epgpio_softc;
+
 struct epsoc_attach_args {
 	bus_space_tag_t		sa_iot;		/* Bus tag */
 	bus_dma_tag_t		sa_dmat;
@@ -48,6 +50,7 @@ struct epsoc_attach_args {
 	int			sa_intr;
 	u_int32_t		sa_hclk;
 	u_int32_t		sa_pclk;
+	struct epgpio_softc	*sa_gpio;
 };
 
 struct epsoc_softc {

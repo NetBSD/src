@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.3 2005/10/19 14:01:49 hamajima Exp $	*/
+/*	$NetBSD: epe.c,v 1.4 2005/11/12 05:33:23 hamajima Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.3 2005/10/19 14:01:49 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.4 2005/11/12 05:33:23 hamajima Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.3 2005/10/19 14:01:49 hamajima Exp $");
 #include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/epereg.h> 
 #include <arm/ep93xx/epevar.h> 
+
+#define DEFAULT_MDCDIV	32
 
 #ifndef EPE_FAST
 #define EPE_FAST
@@ -155,6 +157,14 @@ epe_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
+
+	/* Fetch the Ethernet address from property if set. */
+	if (prop_get(dev_propdb, 0, "mac-addr", sc->sc_enaddr,
+		       ETHER_ADDR_LEN, NULL) == ETHER_ADDR_LEN) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EPE_AFP, 0);
+		bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, EPE_IndAd,
+					 sc->sc_enaddr, ETHER_ADDR_LEN);
+	}
 
         ep93xx_intr_establish(sc->sc_intr, IPL_NET, epe_intr, sc);
 	epe_init(sc);
@@ -299,6 +309,7 @@ epe_init(struct epe_softc *sc)
 	caddr_t addr;
 	int rsegs, err, i;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
+	int mdcdiv = DEFAULT_MDCDIV;
 
 	callout_init(&sc->epe_tick_ch);
 
@@ -406,7 +417,9 @@ epe_init(struct epe_softc *sc)
 	}
 
 	/* Divide HCLK by 32 for MDC clock */
-	EPE_WRITE(SelfCtl, (SelfCtl_MDCDIV(32)|SelfCtl_PSPRS));
+	if (sc->sc_dev.dv_cfdata->cf_flags)
+		mdcdiv = sc->sc_dev.dv_cfdata->cf_flags;
+	EPE_WRITE(SelfCtl, (SelfCtl_MDCDIV(mdcdiv)|SelfCtl_PSPRS));
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = epe_mii_readreg;

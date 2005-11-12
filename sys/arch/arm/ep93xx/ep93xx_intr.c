@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.4 2005/08/14 03:10:16 joff Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.5 2005/11/12 05:33:23 hamajima Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.4 2005/08/14 03:10:16 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.5 2005/11/12 05:33:23 hamajima Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -526,3 +526,15 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 		ep93xx_do_pending();
 	}
 }
+
+/* Dummy entries to keep vmstat happy */
+asm ( \
+	".text\n"
+        ".globl  intrnames, eintrnames, intrcnt, eintrcnt\n"
+"intrnames:\n"
+"eintrnames:\n"
+	".long	0\n"
+"intrcnt:\n"
+"eintrcnt:\n"
+	".long	0\n"
+);
