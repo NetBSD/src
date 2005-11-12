@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.13.2.2 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.13.2.3 2005/11/12 17:00:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13.2.2 2005/11/10 14:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13.2.3 2005/11/12 17:00:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -495,7 +495,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	/* Allocate a node that represents the new file. */
 	error = tmpfs_alloc_node(tmp, vap->va_type, cnp->cn_cred->cr_uid,
 	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev,
-	    cnp->cn_proc, &node);
+	    cnp->cn_lwp->l_proc, &node);
 	if (error != 0)
 		goto out;
 
@@ -1187,7 +1187,7 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
  */
 int
 tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
-    int vaflags, struct ucred *cred, struct proc *p)
+    int vaflags, struct ucred *cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1208,9 +1208,9 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &p->p_acflag)) &&
+	    (error = suser(cred, &l->l_proc->p_acflag)) &&
 	    ((vaflags & VA_UTIMES_NULL) == 0 ||
-	    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
+	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;
 
 	if (atime->tv_sec != VNOVAL && atime->tv_nsec != VNOVAL)
