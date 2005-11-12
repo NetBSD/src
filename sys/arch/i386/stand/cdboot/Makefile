@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2005/07/20 03:27:51 junyoung Exp $
+#	$NetBSD: Makefile,v 1.3 2005/11/12 04:19:01 simonb Exp $
 
-S=	${.CURDIR}/../../../../../
+S=	${.CURDIR}/../../../..
 
 NOMAN=		# defined
 STRIPFLAG=	# nothing
