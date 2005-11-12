@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.10 2005/08/26 13:19:35 drochner Exp $	*/
+/*	$NetBSD: tspld.c,v 1.11 2005/11/12 05:34:28 hamajima Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.10 2005/08/26 13:19:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.11 2005/11/12 05:34:28 hamajima Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.10 2005/08/26 13:19:35 drochner Exp $");
 #include <evbarm/tsarm/tspldvar.h>
 #include <arm/ep93xx/ep93xxvar.h>
 #include <arm/ep93xx/ep93xxreg.h>
+#include <arm/ep93xx/epgpioreg.h>
 #include <arm/arm32/machdep.h>
 #include <arm/cpufunc.h>
 #include <dev/sysmon/sysmonvar.h>
