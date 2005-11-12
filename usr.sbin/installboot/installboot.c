@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.20 2005/11/11 21:24:01 wiz Exp $	*/
+/*	$NetBSD: installboot.c,v 1.21 2005/11/12 09:35:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.20 2005/11/11 21:24:01 wiz Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.21 2005/11/12 09:35:31 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -217,6 +217,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (argc >= 3) {
+		params->stage2 = argv[2];
+	}
+
 	params->filesystem = argv[0];
 	if (params->flags & IB_NOWRITE) {
 		op = "only";
@@ -235,19 +239,20 @@ main(int argc, char *argv[])
 			errx(1, "File system `%s' is not of type %s",
 			    params->filesystem, params->fstype->name);
 	} else {
-		params->fstype = &fstypes[0];
-		while (params->fstype->name != NULL &&
-			! params->fstype->match(params))
-			params->fstype++;
-		if (params->fstype->name == NULL)
-			errx(1, "File system `%s' is of an unknown type",
-			    params->filesystem);
+		if (params->stage2 != NULL) {
+			params->fstype = &fstypes[0];
+			while (params->fstype->name != NULL &&
+				    !params->fstype->match(params))
+				params->fstype++;
+			if (params->fstype->name == NULL)
+				errx(1, "File system `%s' is of an unknown type",
+				    params->filesystem);
+		}
 	}
 
 	if (argc >= 2) {
 		params->stage1 = argv[1];
-		if ((params->s1fd = open(params->stage1, O_RDONLY, 0600))
-		    == -1)
+		if ((params->s1fd = open(params->stage1, O_RDONLY, 0600)) == -1)
 			err(1, "Opening primary bootstrap `%s'",
 			    params->stage1);
 		if (fstat(params->s1fd, &params->s1stat) == -1)
@@ -256,16 +261,15 @@ main(int argc, char *argv[])
 		if (!S_ISREG(params->s1stat.st_mode))
 			errx(1, "`%s' must be a regular file", params->stage1);
 	}
-	if (argc == 3) {
-		params->stage2 = argv[2];
-	}
 	assert(params->machine != NULL);
 
 	if (params->flags & IB_VERBOSE) {
 		printf("File system:         %s\n", params->filesystem);
-		printf("File system type:    %s (blocksize %u, needswap %d)\n",
-		    params->fstype->name,
-		    params->fstype->blocksize, params->fstype->needswap);
+		if (params->fstype) 
+			printf("File system type:    %s (blocksize %u, "
+				"needswap %d)\n",
+			    params->fstype->name, params->fstype->blocksize,
+			    params->fstype->needswap);
 		if (!(params->flags & IB_EDIT))
 			printf("Primary bootstrap:   %s\n",
 			    (params->flags & IB_CLEAR) ? "(to be cleared)"
