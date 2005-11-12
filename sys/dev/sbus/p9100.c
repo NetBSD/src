@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.23 2005/06/04 04:36:04 tsutsui Exp $ */
+/*	$NetBSD: p9100.c,v 1.24 2005/11/12 23:25:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23 2005/06/04 04:36:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.24 2005/11/12 23:25:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +83,22 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23 2005/06/04 04:36:04 tsutsui Exp $");
 #include <sparc/dev/tctrlvar.h>/*XXX*/
 #endif
 
+struct pnozz_cursor {
+	short	pc_enable;		/* cursor is enabled */
+	struct	fbcurpos pc_pos;	/* position */
+	struct	fbcurpos pc_hot;	/* hot-spot */
+	struct	fbcurpos pc_size;	/* size of mask & image fields */
+	uint32_t pc_bits[0x100];	/* space for mask & image bits */
+	unsigned char red[3], green[3];
+	unsigned char blue[3];		/* cursor palette */
+};
+
 /* per-display variables */
 struct p9100_softc {
 	struct device	sc_dev;		/* base device */
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
+
 	bus_space_tag_t	sc_bustag;
 
 	bus_addr_t	sc_ctl_paddr;	/* phys address description */
@@ -110,6 +121,8 @@ struct p9100_softc {
 	uint32_t sc_stride;
 	uint32_t sc_depth;
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
+
+	struct pnozz_cursor sc_cursor;
 
 #ifdef PNOZZ_SOFT_PUTCHAR
 	void (*putchar)(void *c, int row, int col, u_int uc, long attr);
@@ -238,6 +251,10 @@ int	p9100_load_font(void *, void *, struct wsdisplay_font *);
 
 void	p9100_init_screen(struct p9100_softc *, struct p9100_screen *, int, 
 	    long *);
+void	p9100_init_cursor(struct p9100_softc *);
+void	p9100_set_fbcursor(struct p9100_softc *);
+void	p9100_setcursorcmap(struct p9100_softc *);
+void	p9100_loadcursor(struct p9100_softc *);
 
 int	p9100_intr(void *);
 
@@ -343,7 +360,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 			  * all registers, so we just map what we need 
 			  */
 			 /*sc->sc_ctl_psize*/ 0x8000,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_ctl_memh) != 0) {
+			 /*BUS_SPACE_MAP_LINEAR*/0, &sc->sc_ctl_memh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}
@@ -451,6 +468,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_bg = (defattr >> 16) & 0xff;
 
 	p9100_clearscreen(sc);
+	p9100_init_cursor(sc);
 
 	aa.console = isconsole;
 	aa.scrdata = &p9100_screenlist;
@@ -517,7 +535,7 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;
-	int error;
+	int error, v;
 
 	switch (cmd) {
 
@@ -558,6 +576,107 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	case FBIOSVIDEO:
 		p9100_set_video(sc, *(int *)data);
+		break;
+
+/* these are for both FBIOSCURSOR and FBIOGCURSOR */
+#define p ((struct fbcursor *)data)
+#define pc (&sc->sc_cursor)
+
+	case FBIOGCURSOR:
+		p->set = FB_CUR_SETALL;	/* close enough, anyway */
+		p->enable = pc->pc_enable;
+		p->pos = pc->pc_pos;
+		p->hot = pc->pc_hot;
+		p->size = pc->pc_size;
+
+		if (p->image != NULL) {
+			error = copyout(pc->pc_bits, p->image, 0x200);
+			if (error)
+				return error;
+			error = copyout(&pc->pc_bits[0x80], p->mask, 0x200);
+			if (error)
+				return error;
+		}
+		
+		p->cmap.index = 0;
+		p->cmap.count = 3;
+		if (p->cmap.red != NULL) {
+			copyout(pc->red, p->cmap.red, 3);
+			copyout(pc->green, p->cmap.green, 3);
+			copyout(pc->blue, p->cmap.blue, 3);
+		}
+		break;
+
+	case FBIOSCURSOR:
+	{
+		int count;
+		uint32_t image[0x80], mask[0x80];
+		uint8_t red[3], green[3], blue[3];
+		
+		v = p->set;
+		if (v & FB_CUR_SETCMAP) {
+			error = copyin(p->cmap.red, red, 3);
+			error |= copyin(p->cmap.green, green, 3);
+			error |= copyin(p->cmap.blue, blue, 3);
+			if (error)
+				return error;
+		}
+		if (v & FB_CUR_SETSHAPE) {
+			if (p->size.x > 64 || p->size.y > 64)
+				return EINVAL;
+			memset(&mask, 0, 0x200);
+			memset(&image, 0, 0x200);
+			count = p->size.y * 8;
+			error = copyin(p->image, image, count);
+			if (error)
+				return error;
+			error = copyin(p->mask, mask, count);
+			if (error)
+				return error;
+		}
+
+		/* parameters are OK; do it */
+		if (v & (FB_CUR_SETCUR | FB_CUR_SETPOS | FB_CUR_SETHOT)) {
+			if (v & FB_CUR_SETCUR)
+				pc->pc_enable = p->enable;
+			if (v & FB_CUR_SETPOS)
+				pc->pc_pos = p->pos;
+			if (v & FB_CUR_SETHOT)
+				pc->pc_hot = p->hot;
+			p9100_set_fbcursor(sc);
+		}
+		
+		if (v & FB_CUR_SETCMAP) {
+			memcpy(pc->red, red, 3);
+			memcpy(pc->green, green, 3);
+			memcpy(pc->blue, blue, 3);
+			p9100_setcursorcmap(sc);
+		}
+		
+		if (v & FB_CUR_SETSHAPE) {
+			memcpy(pc->pc_bits, image, 0x200);
+			memcpy(&pc->pc_bits[0x80], mask, 0x200);
+			p9100_loadcursor(sc);
+		}
+	}
+	break;
+
+#undef p
+#undef cc
+
+	case FBIOGCURPOS:
+		*(struct fbcurpos *)data = sc->sc_cursor.pc_pos;
+		break;
+
+	case FBIOSCURPOS:
+		sc->sc_cursor.pc_pos = *(struct fbcurpos *)data;
+		p9100_set_fbcursor(sc);
+		break;
+
+	case FBIOGCURMAX:
+		/* max cursor size is 64x64 */
+		((struct fbcurpos *)data)->x = 64;
+		((struct fbcurpos *)data)->y = 64;
 		break;
 
 	default:
@@ -1372,7 +1491,6 @@ p9100_putcmap(struct p9100_softc *sc, struct wsdisplay_cmap *cm)
 	u_char rbuf[256], gbuf[256], bbuf[256];
 	u_char *r, *g, *b;
 
-	printf("putcmap: %d %d\n",index, count);
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
@@ -1447,4 +1565,138 @@ p9100_intr(void *arg)
 	/*p9100_softc *sc=arg;
 	printf(".");*/
 	return 1;
+}
+
+void
+p9100_init_cursor(struct p9100_softc *sc)
+{
+	
+	memset(&sc->sc_cursor, 0, sizeof(struct pnozz_cursor));
+	sc->sc_cursor.pc_size.x = 64;
+	sc->sc_cursor.pc_size.y = 64;
+
+}
+
+void
+p9100_set_fbcursor(struct p9100_softc *sc)
+{
+#ifdef PNOZZ_PARANOID
+	int s;
+	
+	s = splhigh();	/* just in case... */
+#endif
+	/* set position and hotspot */
+	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+	p9100_ramdac_write(sc, DAC_INDX_HI, 0);
+	p9100_ramdac_write(sc, DAC_INDX_LO, DAC_CURSOR_CTL);
+	if (sc->sc_cursor.pc_enable) {
+		p9100_ramdac_write(sc, DAC_INDX_DATA, DAC_CURSOR_X11 | 
+		    DAC_CURSOR_64);
+	} else
+		p9100_ramdac_write(sc, DAC_INDX_DATA, DAC_CURSOR_OFF);
+	/* next two registers - x low, high, y low, high */
+	p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.pc_pos.x & 0xff);
+	p9100_ramdac_write(sc, DAC_INDX_DATA, (sc->sc_cursor.pc_pos.x >> 8) & 
+	    0xff);
+	p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.pc_pos.y & 0xff);
+	p9100_ramdac_write(sc, DAC_INDX_DATA, (sc->sc_cursor.pc_pos.y >> 8) & 
+	    0xff);
+	/* hotspot */
+	p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.pc_hot.x & 0xff);
+	p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.pc_hot.y & 0xff);
+	
+#ifdef PNOZZ_PARANOID
+	splx(s);
+#endif
+
+}
+
+void
+p9100_setcursorcmap(struct p9100_softc *sc)
+{
+	int i;
+	
+#ifdef PNOZZ_PARANOID
+	int s;
+	s = splhigh();	/* just in case... */
+#endif
+	
+	/* set cursor colours */
+	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+	p9100_ramdac_write(sc, DAC_INDX_HI, 0);
+	p9100_ramdac_write(sc, DAC_INDX_LO, DAC_CURSOR_COL_1);
+
+	for (i = 0; i < 3; i++) {
+		p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.red[i]);
+		p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.green[i]);
+		p9100_ramdac_write(sc, DAC_INDX_DATA, sc->sc_cursor.blue[i]);
+	}
+	
+#ifdef PNOZZ_PARANOID
+	splx(s);
+#endif
+}
+
+void
+p9100_loadcursor(struct p9100_softc *sc)
+{
+	uint32_t *image, *mask;
+	uint32_t bit, bbit, im, ma;
+	int i, j, k;
+	uint8_t latch1, latch2;
+		
+#ifdef PNOZZ_PARANOID
+	int s;
+	s = splhigh();	/* just in case... */
+#endif
+	/* set cursor shape */
+	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+	p9100_ramdac_write(sc, DAC_INDX_HI, 1);
+	p9100_ramdac_write(sc, DAC_INDX_LO, 0);
+
+	image = sc->sc_cursor.pc_bits;
+	mask = &sc->sc_cursor.pc_bits[0x80];
+
+	for (i = 0; i < 0x80; i++) {
+		bit = 0x80000000;
+		im = image[i];
+		ma = mask[i];
+		for (k = 0; k < 4; k++) {
+			bbit = 0x1;
+			latch1 = 0;
+			for (j = 0; j < 4; j++) {
+				if (im & bit)
+					latch1 |= bbit;
+				bbit <<= 1;
+				if (ma & bit)
+					latch1 |= bbit;
+				bbit <<= 1;
+				bit >>= 1;
+			}
+			bbit = 0x1;
+			latch2 = 0;
+			for (j = 0; j < 4; j++) {
+				if (im & bit)
+					latch2 |= bbit;
+				bbit <<= 1;
+				if (ma & bit)
+					latch2 |= bbit;
+				bbit <<= 1;
+				bit >>= 1;
+			}
+			p9100_ramdac_write(sc, DAC_INDX_DATA, latch1);
+			p9100_ramdac_write(sc, DAC_INDX_DATA, latch2);
+		}
+	}
+#ifdef DEBUG_CURSOR
+	printf("image:\n");
+	for (i=0;i<0x80;i+=2)
+		printf("%08x %08x\n", image[i], image[i+1]);
+	printf("mask:\n");
+	for (i=0;i<0x80;i+=2)
+		printf("%08x %08x\n", mask[i], mask[i+1]);
+#endif
+#ifdef PNOZZ_PARANOID
+	splx(s);
+#endif
 }
