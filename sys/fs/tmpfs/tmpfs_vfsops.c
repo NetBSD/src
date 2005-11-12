@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.9.6.2 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.9.6.3 2005/11/12 17:00:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.9.6.2 2005/11/10 14:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.9.6.3 2005/11/12 17:00:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,17 +66,17 @@ MALLOC_DEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
 /* --------------------------------------------------------------------- */
 
 static int	tmpfs_mount(struct mount *, const char *, void *,
-		    struct nameidata *, struct proc *);
-static int	tmpfs_start(struct mount *, int, struct proc *);
-static int	tmpfs_unmount(struct mount *, int, struct proc *);
+		    struct nameidata *, struct lwp *);
+static int	tmpfs_start(struct mount *, int, struct lwp *);
+static int	tmpfs_unmount(struct mount *, int, struct lwp *);
 static int	tmpfs_root(struct mount *, struct vnode **);
 static int	tmpfs_quotactl(struct mount *, int, uid_t, void *,
-		    struct proc *);
+		    struct lwp *);
 static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 static int	tmpfs_vptofh(struct vnode *, struct fid *);
-static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct proc *);
-static int	tmpfs_sync(struct mount *, int, struct ucred *, struct proc *);
+static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+static int	tmpfs_sync(struct mount *, int, struct ucred *, struct lwp *);
 static void	tmpfs_init(void);
 static void	tmpfs_done(void);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
@@ -86,7 +86,7 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp, struct proc *p)
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error;
 	ino_t nodes;
@@ -175,7 +175,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args.ta_root_uid,
 	    args.ta_root_gid, args.ta_root_mode & ALLPERMS, NULL, NULL,
-	    VNOVAL, p, &root);
+	    VNOVAL, l->l_proc, &root);
 	KASSERT(error == 0 && root != NULL);
 	tmp->tm_root = root;
 
@@ -185,13 +185,13 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
-	    mp, p);
+	    mp, l);
 }
 
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp, int flags, struct proc *p)
+tmpfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
 	return 0;
@@ -201,7 +201,7 @@ tmpfs_start(struct mount *mp, int flags, struct proc *p)
 
 /* ARGSUSED2 */
 static int
-tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
+tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	int error;
 	int flags = 0;
@@ -282,7 +282,7 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 
 static int
 tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
-    struct proc *p)
+    struct lwp *l)
 {
 
 	printf("tmpfs_quotactl called; need for it unknown yet\n");
@@ -352,7 +352,7 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp)
 
 /* ARGSUSED2 */
 static int
-tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
+tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	fsfilcnt_t freenodes, usednodes;
 	struct tmpfs_mount *tmp;
@@ -388,7 +388,7 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 
 /* ARGSUSED0 */
 static int
-tmpfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct proc *p)
+tmpfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct lwp *l)
 {
 
 	return 0;
