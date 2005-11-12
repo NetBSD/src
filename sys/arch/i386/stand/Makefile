@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/07/26 08:45:12 dsl Exp $
+#	$NetBSD: Makefile,v 1.24 2005/11/12 09:42:51 dsl Exp $
 
 SUBDIR=		genprom .WAIT
 
@@ -9,6 +9,5 @@ SUBDIR+=	dosboot misc
 SUBDIR+=	netboot
 
 SUBDIR+=	pxeboot
-SUBDIR+=	pxeboot_com0
 
 .include <bsd.subdir.mk>
