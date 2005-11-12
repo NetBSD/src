@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.71 2004/12/29 08:48:09 skrll Exp $
+.\"	$NetBSD: ps.1,v 1.71.2.1 2005/11/12 22:14:21 tron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd December 29, 2004
+.Dd November 11, 2005
 .Dt PS 1
 .Os
 .Sh NAME
@@ -499,9 +499,9 @@ tracing flags
 .It ktracep
 tracing vnode
 .It laddr
-kernel virtual address of a
+kernel virtual address of the
 .Tn "struct lwp"
-belonging to the process.
+belonging to the LWP.
 .It lid
 ID of the LWP
 .It lim
@@ -616,6 +616,10 @@ text size (in Kbytes)
 control terminal name (two letter abbreviation)
 .It tty
 full name of control terminal
+.It uaddr
+kernel virtual address of the
+.Tn "struct user"
+belonging to the LWP.
 .It ucomm
 name to be used for accounting
 .It uid
