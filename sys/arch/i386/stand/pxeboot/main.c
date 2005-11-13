@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2005/11/11 21:42:13 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2005/11/13 22:23:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -54,8 +54,6 @@ int debug;
 
 extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
 		bootprog_maker[];
-
-#define TIMEOUT 5
 
 int	main(void);
 
@@ -130,7 +128,7 @@ main(void)
 	printf("Press return to boot now, any other key for boot menu\n");
 	printf("Starting in ");
 
-	c = awaitkey(TIMEOUT, 1);
+	c = awaitkey(boot_params.bp_timeout, 1);
 	if ((c != '\r') && (c != '\n') && (c != '\0')) {
 		printf("type \"?\" or \"help\" for help.\n");
 		bootmenu();	/* does not return */
