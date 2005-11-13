@@ -1,13 +1,4 @@
-<<<<<<< dewey.c
-/* $NetBSD: dewey.c,v 1.5 2005/11/13 20:07:41 agc Exp $ */
-=======
-/*	$NetBSD: dewey.c,v 1.5 2005/11/13 20:07:41 agc Exp $	*/
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <nbcompat.h>
->>>>>>> 1.4
+/* $NetBSD: dewey.c,v 1.6 2005/11/13 20:37:23 agc Exp $ */
 
 /*
  * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
