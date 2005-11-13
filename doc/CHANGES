@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.533 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.534 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		possible. [bouyer 20051002]
 	racoon(8): ipsec-tools 0.6.2 imported [manu 20051014]
 	file(1): update to 4.16.  [pooka 20051018]
+	evbarm: Add support for the Atmark Techno Armadillo-9.
+		[hamajima 20051113]
