@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.10 2005/11/11 10:02:53 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.11 2005/11/13 15:03:30 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -447,13 +447,213 @@ went into the
 release.
 Some highlights include:
 .
+.Ss2 Supported platforms and machines
+.
+.(bullet
+A port to new platform: iyonix. The iyonix port supports the Iyonix PC,
+which is a desktop computer from Castle Technology, based on a 600MHz
+XScale 80321 processor.
+.It
+The xen port now supports Xen 2.0, both in privileged and unprivileged mode.
+.It
+The evbarm port has support for the TS-7200 single board computer,
+which is also known as
+.Dq the NetBSD Controlled Toaster .
+.It
+The sgimips port now supports IP12 (Personal Iris 4D/30, 4D/35,
+and Indigo R3K) machines.
+.It
+The PowerPC 601 support is added, and the prep port now supports
+IBM RS/6000 60P 7020-011.
+.bullet)
+.
+.Ss2 Supported devices
+.
+.(bullet
+.It
+Added
+.Xr iteide 4 :
+driver for ITE 8212 IDE controller.
+.It
+Added
+.Xr ixpide 4 :
+driver for ATI IXP series chipset IDE controller.
+.It
+Added
+.Xr pdcsata 4 :
+driver for Promise SATA150 (aka PDC203xx) controllers.
+.It
+Added
+.Xr ipw 4 :
+driver for Intel PRO/Wireless 2100.
+.It
+Added
+.Xr iwi 4 :
+driver for Intel PRO/Wireless 2200AG/2915ABG.
+.It
+Added
+.Xr rtw 4 :
+driver for Realtek RTL8180L IEEE 802.11b wireless network.
+.It
+Added
+.Xr vge 4 :
+driver for VIA VT612X Gigabit Ethernet contoroller.
+.It
+Added
+.Xr xge 4 :
+driver for Neterion Xframe-I 10 gigabit Ethernet.
+.It
+Added
+.Xr cdce 4 :
+driver for CDC USB Ethernet.
+.It
+Added
+.Xr atu 4 :
+driver for Atmel AT76C50x based 802.11b wireless network interfaces.
+.It
+Added
+.Xr uep 4 :
+driver for eGalax USB touchpanel controller.
+.It
+Added
+.Xr ugensa 4 :
+driver for USB generic serial adapter, which currently supports
+CDMA Wireless PC Card.
+.It
+Added
+.Xr auixp 4 :
+driver for ATI IXP series chipset audio controller.
+.It
+Added
+.Xr auacer 4 :
+driver for ALi M5455 audio controller.
+.It
+Added
+.azalia 4 :
+driver for High Definition Audio controller.
+.It
+Added
+.Xr spif 4 :
+driver for Sun SUNW,spif multi-port Sbus card.
+.It
+.Xr viaide 4
+now supports nForce2 Ultra 400, nForce3 250 IDE and SATA, and
+nForce4 IDE and SATA controllers.
+.It
+.Xr siside 4
+now supports SiS 180 and 741 SATA controllers.
+.It
+.Xr artsata 4 ,
+which is the Intel i31244 Serial ATA disk controller driver,
+now supports DPA mode.
+.It
+.Xr satalink 4
+now supports Silicon Image 3512 SATA.
+.It
+.Xr piixide 4
+now supports i6300ESB IDE and SATA controller, and
+82801FB/FR (ICH6/6R) IDE and STAT controllers.
+.It
+.Xr aac 4
+now supports Adaptec SATA RAID 2810SA.
+.It
+.Xr mpt 4
+now supports LSI Logic FC919x SCSI controllers.
+.It
+.Xr spc 4
+now has support for Fujitsu MB87030-based PCMCIA SCSI controller.
+.It
+.Xr bge 4
+now supports Broadcom BCM5788, BCM5705K, and BCM5721 Gigabit Ethernet
+controllers, and has 802.3x flow control support.
+.It
+.Xr gem 4
+and
+.Xr hme 4
+now have hardware cksum support.
+.It
+.Xr re 4
+and
+.Xr wm 4
+now supports TCPv4 hardware transmit segment offload.
+.It
+.Xr wm 4
+now supports 64bit PCI DMA transfer.
+.It
+.Xr re 4
+now supports RTL8169 based CardBus Ethernet interfaces, including
+NetGear GA-511.
+.It
+.Xr ex 4
+now supports 3Com 3c920B-EMB-WNM Integrated Fast Ethernet.
+.It
+.Xr sk 4
+now supports Belkin Gigabit Desktop Network card.
+.It
+Many improvements for
+.Xr atw 4 
+ADMtek ADM8211 802.11 wireless network driver.
+.It
+.Xr auich 4
+now supports nForce2 Ultra 400, nForce3 250 MCP-T AC-97, and
+nForce4 audio controllers.
+.It
+.Xr auvia 4
+now supports suspend and resume.
+.It
+.Xr puc 4
+now supports VS-Com PCI-210H 2S/1P card, VScom PCI-200 2S card, and
+ADDI-DATA APCI-7800 8-port serial adapter.
+.It
+.Xr uftdi 4
+now supports Sealevel Systems' uftdi-based USB-Serial adapter.
+.It
+.Xr pms 4
+now supports synaptics touchpad.
+.It
+.Xr lm 4
+now supports iTE IT8705f and Winbond 83627THF environment monitor controllers.
+.It
+Many bug fixes and improvements for
+.Xr ehci 4
+USB 2.0 controllers.
+.It
+Many fixes for
+.Xr uaudio 4
+devices.
+.It
+.Xr uax 4
+ASIX AX88172 USB Ethernet driver has been replaced by
+.Xr axe 4
+driver derived from
+.Fx .
+.bullet)
+.
 .Ss2 Kernel
 .
 .(bullet
-Ports to new platforms including:
-iyonix
-and
-Xen 2.0.
+The i386 port now supports the Enhanced SpeedStep Technology.
+.It
+Added
+.Xr statvfs 2
+family of system calls.
+.It
+Added
+.Xr ptm 4 ,
+pty/98 pty multiplexor device.
+.It
+Added
+swwdog 4 ,
+a software watchdog timer facility.
+.It
+Autoconfiguration framework is rewritten for device driver LKMs.
+.It
+.Xr compat_darwin 8
+emulation now supports MacOS X.3 binaries.
+.It
+sparc64 and shark ports have switched to
+.Xr wscons 9 ,
+the machine-independent console framework.
 .bullet)
 .
 .Ss2 Networking
@@ -470,16 +670,38 @@ IP Filter has been upgraded to version 4.1.8.
 .It
 The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
 .It
+IPv4 Protocol Independent Multicast (PIM) routing support is added.
+.It
 ipsec-tools 0.6.2 provides IKE support for ESP over NAT connections (RFC 3947),
 user authentification via XAuth and automatic network configurations of VPN
 clients via Mode Config.
+.It
+Added
+.Xr tap 4 ,
+the virtual Ethernet device.
+.It
+.Xr ppp 4
+is updated to 2.4.3.
 .bullet)
 .
 .Ss2 File system
 .
 .(bullet
-UFS_DIRHASH
+UFS_DIRHASH support is added from
+.Fx ,
+which increase lookup performance
+by maintaining in-core hash tables for large directories on UFS.
+.It
+.Xr fss 4 ,
+file system snapshot support is added.
+.It
+Added ptyfs, pseudo-terminal file system.
+.It
+CD9660 file system now supports UTF-8 filename on Joliet extension.
 .bullet)
+.It
+.Xr vnd 4
+now support compressed image.
 .
 .Ss2 Libraries
 .
@@ -504,19 +726,37 @@ cksum(1) and mtree(8) support them.
 .Ss2 System administration and user tools
 .
 .(bullet
-TBD
+Numerous improvements for
+.Xr syslogd 8 ,
+mostly from
+.Fx .
+.It
+.Xf fsck 8
+now has a progress meter option.
 .bullet)
 .
 .Ss2 Miscellaneous
 .
 .(bullet
-TBD
+.Xr
+audio 9
+interface is improved. Added capability of audio software filter pipeline,
+which makes it easy for hardware drivers to add encoding support or
+sample rates support.
 .(bullet -compact -offset indent
-am-utils 6-1-20050417
+am-utils 6.1-rc2
 .It
 BIND 9.3.0
 .It
+binutils 2.15-20041204
+.It
 cvs 1.11.20
+.It
+file 4.13
+.It
+gcc 3.3.3
+.It
+groff 1.19.1
 .It
 OpenSSH 3.9
 .It
@@ -527,6 +767,8 @@ Postfix 2.1.5
 sendmail 8.13.3
 .It
 tcpdump 3.8.3
+.It
+texinfo 4.7
 .It
 XFree86 4.5.0
 .bullet)
