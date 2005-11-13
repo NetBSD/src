@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.376 2005/11/01 20:20:13 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.377 2005/11/13 10:08:36 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -742,7 +742,7 @@ for the import.
 
 Package:	top
 Version:	3.5beta12
-Current Vers:	3.6alpha9
+Current Vers:	3.6beta3
 Maintainer:	William LeFebvre <wnl@groupsys.com>
 Archive Site:	ftp://ftp.groupsys.com/pub/top/
 Home Page:	http://www.unixtop.org/
