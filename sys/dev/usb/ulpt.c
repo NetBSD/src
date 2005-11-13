@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.70 2005/11/13 10:47:39 rpaulo Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69 2005/05/30 04:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.70 2005/11/13 10:47:39 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,7 @@ ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		}
 
 		/* If it's not opened for read then set up a reader. */
-		if (!(flags & FREAD)) {
+		if (!(flag & FREAD)) {
 			DPRINTF(("ulpt_open: start read callout\n"));
 			usb_callout_init(sc->sc_read_callout);
 			usb_callout(sc->sc_read_callout, hz/5, ulpt_tick, sc);
