@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.11 2005/11/13 15:03:30 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.12 2005/11/13 15:37:27 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1069,7 +1069,18 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx \*V .
 .
-.Ss2 Issues affecting an upgrade from NetBSD 1.6
+.Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
+It is
+.Ic very important
+that you populate the directory
+.Pa /etc/pam.d
+with appropriate configuration files for the Pluggable Authentication Modules
+(PAM) because you will not be able to login any more otherwise. Using
+.Em postinstall
+as described below will take care of this. Please refer to
+.Lk http://www.netbsd.org/guide/en/chap-pam.html
+for documentation about PAM.
+
 The following issues can generally be resolved by extracting the
 .Sy etc
 set into a temporary directory and running
@@ -1091,6 +1102,8 @@ These include:
 .It
 .Pa /etc/mtree/*
 .It
+.Pa /etc/pam.d/*
+.It
 .Pa /etc/daily
 .It
 .Pa /etc/weekly
@@ -1108,37 +1121,17 @@ These include:
 .Pa /etc/rc.d/*
 .bullet)
 .
-.It
-The following files are now obsolete:
-.Pa /etc/rc.d/fsck.sh
-.Pa /etc/rc.d/gated
-.Pa /etc/rc.d/kerberos
-.Pa /etc/rc.d/NETWORK
-.Pa /etc/rc.d/systemfs
-.Pa /etc/rc.d/xntpd
-and
-.Pa /etc/rc.d/ypset .
-.
-.It
-The users and groups
-.Sq smmsp ,
-needs to be created,
-.Sq news
-is no longer part of the system.
-.bullet)
-.
 .Pp
 The following issues need to be resolved manually:
 .
 .(bullet -offset indent
-.Xr postfix 8
-configuration files require upgrading.
-.(disp
-cd /usr/share/examples/postfix
-cp post-install postfix-files postfix-script /etc/postfix
-postfix check
-.disp)
-.
+The user
+.Sq _pflogd
+ and the groups
+.Sq _pflogd
+and
+.Sq authpf 
+need to be created.
 .bullet)
 .
 .
