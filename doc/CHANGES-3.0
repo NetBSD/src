@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.312 2005/11/13 14:01:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.313 2005/11/13 16:04:15 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14036,4 +14036,9 @@ sys/kern/kern_lwp.c				1.33
 	Prevent occasional panics while signaling a process which uses LWPs.
 	Fixes PR kern/28886 and PR kern/26771.
 	[chs, ticket #954]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC1.
 
