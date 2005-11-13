@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.56 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.57 2005/11/13 19:48:35 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.56 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.57 2005/11/13 19:48:35 wiz Exp $");
 #endif
 #endif
 
@@ -196,8 +196,13 @@ pmatch(const char *pattern, const char *pkg)
 		return alternate_match(pattern, pkg);
 	}
 	if (strpbrk(pattern, "<>") != (char *) NULL) {
+		int ret;
+
 		/* perform relational dewey match on version number */
-		return dewey_match(pattern, pkg);
+		ret = dewey_match(pattern, pkg);
+		if (ret < 0)
+			errx(EXIT_FAILURE, "dewey_match returned error");
+		return ret;
 	}
 	if (strpbrk(pattern, "*?[]") != (char *) NULL) {
 		/* glob match */
