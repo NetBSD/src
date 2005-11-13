@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.29.4.1 2005/10/04 14:16:42 tron Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.29.4.2 2005/11/13 13:56:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.4.1 2005/10/04 14:16:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.4.2 2005/11/13 13:56:02 tron Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,6 +81,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	boolean_t inmem;
 	ucontext_t *newuc;
 	int s, error;
+
+	if (p->p_flag & P_SA)
+		return EINVAL;
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
@@ -176,6 +179,9 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	struct lwp *t;
 	struct lwp *t2;
 
+	if (p->p_flag & P_SA)
+		return EINVAL;
+
 	target_lid = SCARG(uap, target);
 
 	LIST_FOREACH(t, &p->p_lwps, l_sibling)
@@ -255,6 +261,9 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	int s, target_lid;
 	struct proc *p = l->l_proc;
 	struct lwp *t;
+
+	if (p->p_flag & P_SA)
+		return EINVAL;
 
 	target_lid = SCARG(uap, target);
 
