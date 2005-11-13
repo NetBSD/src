@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2005/10/04 23:00:34 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2005/11/13 17:24:31 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -751,8 +751,8 @@ defparam(const char *fname, struct nvlist *opts, struct nvlist *deps)
 }
 
 /*
- * Define an option which must have a value, and which
- * emits  a "needs-flag" style output.
+ * Define an option which must not have a value, and which
+ * emits a "needs-flag" style output.
  */
 void
 defflag(const char *fname, struct nvlist *opts, struct nvlist *deps)
