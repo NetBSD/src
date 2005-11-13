@@ -1,13 +1,16 @@
-/*	$NetBSD: dewey.c,v 1.4 2005/11/13 19:48:19 wiz Exp $	*/
+<<<<<<< dewey.c
+/* $NetBSD: dewey.c,v 1.5 2005/11/13 20:07:41 agc Exp $ */
+=======
+/*	$NetBSD: dewey.c,v 1.5 2005/11/13 20:07:41 agc Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
 #include <nbcompat.h>
+>>>>>>> 1.4
 
 /*
- * FreeBSD install - a package for the installation and maintainance
- * of non-core utilities.
+ * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,13 +20,27 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
- * Jordan K. Hubbard
- * 18 July 1993
- *
- * Miscellaneous string utilities.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
 
 #if HAVE_CTYPE_H
 #include <ctype.h>
