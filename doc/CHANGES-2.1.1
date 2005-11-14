@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.8 2005/11/06 00:52:00 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.9 2005/11/14 22:38:46 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -103,4 +103,10 @@ sbin/newfs/mkfs.c				1.92
 	don't set fs_maxsymlinklen and fs_old_inodefmt twice,
 	we set them correctly the first time.  fixes PR 26995.
 	[chs, ticket #5971]
+
+sys/kern/vfs_vnops.c				1.99
+
+	vput() -> vrele(). Vnode is already unlocked.
+	With much help from Pavel Cahyna.  PR#32005
+	[hannken, ticket #5983]
 
