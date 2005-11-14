@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.35 2005/10/29 11:00:17 scw Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.36 2005/11/14 11:58:52 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.35 2005/10/29 11:00:17 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.36 2005/11/14 11:58:52 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -141,6 +141,7 @@ static int	iwi_scan(struct iwi_softc *);
 static int	iwi_auth_and_assoc(struct iwi_softc *);
 static int	iwi_init(struct ifnet *);
 static void	iwi_stop(struct ifnet *, int);
+static void	iwi_error_log(struct iwi_softc *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -166,6 +167,18 @@ MEM_READ_4(struct iwi_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IWI_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
+}
+
+static void
+MEM_CPY(struct iwi_softc *sc, void *dst, uint32_t base, size_t sz)
+{
+	KASSERT(sz % 4 == 0);
+	int j;
+
+	uint32_t *p = dst;
+
+	for (j = 0; j < sz / 4; j++)
+		p[j] = MEM_READ_4(sc, base + j * sizeof(uint32_t));
 }
 
 CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
@@ -1287,6 +1300,8 @@ iwi_intr(void *arg)
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
+		if (r & IWI_INTR_FATAL_ERROR)
+			iwi_error_log(sc);
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
 	}
@@ -2396,4 +2411,45 @@ iwi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+}
+
+static void
+iwi_error_log(struct iwi_softc *sc)
+{
+	uint32_t b, n;
+	int i;
+
+	static const char *const msg[] = {
+		"no error",
+		"failed",
+		"memory range low",
+		"memory range high",
+		"bad parameter",
+		"checksum",
+		"NMI",
+		"bad database",
+		"allocation failed",
+		"DMA underrun",
+		"DMA status",
+		"DINO",
+		"EEPROM",
+		"device assert",
+		"fatal"
+	};
+
+	b = CSR_READ_4(sc, IWI_CSR_ERRORLOG);
+	n = MEM_READ_4(sc, b);
+
+	b += 4;
+
+	for (i = 0; i < n ; i++) {
+		struct iwi_error fw_error;
+
+		MEM_CPY(sc, &fw_error, b, sizeof(fw_error));
+
+		DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname,
+		    msg[fw_error.type]));
+
+		b += sizeof(fw_error);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.12 2005/10/29 12:03:44 scw Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.13 2005/11/14 11:58:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -60,6 +60,7 @@
 #define IWI_CSR_TX4_RIDX	0x0290
 #define IWI_CSR_RX_RIDX		0x02a0
 #define IWI_CSR_RX_BASE		0x0500
+#define IWI_CSR_ERRORLOG	0x0610
 #define IWI_CSR_TABLE0_SIZE	0x0700
 #define IWI_CSR_TABLE0_BASE	0x0704
 #define IWI_CSR_CURRENT_TX_RATE	IWI_CSR_TABLE0_BASE
@@ -106,6 +107,17 @@
 
 /* possible flags for IWI_CSR_READ_INT */
 #define IWI_READ_INT_INIT_HOST	0x20000000
+
+/* error log definitions */
+struct iwi_error {
+	uint32_t	type;
+	uint32_t	reserved2;
+	uint32_t	reserved3;
+	uint32_t	reserved4;
+	uint32_t	reserved5;
+	uint32_t	reserved6;
+	uint32_t	reserved7;
+} __attribute__((__packed__));
 
 /* table2 offsets */
 #define IWI_INFO_ADAPTER_MAC	40
