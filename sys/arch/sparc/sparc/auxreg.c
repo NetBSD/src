@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.34 2003/08/07 16:29:44 agc Exp $ */
+/*	$NetBSD: auxreg.c,v 1.35 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.34 2003/08/07 16:29:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.35 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_blink.h"
 
@@ -56,14 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.34 2003/08/07 16:29:44 agc Exp $");
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch_mainbus __P((struct device *, struct cfdata *, void *));
-static int auxregmatch_obio __P((struct device *, struct cfdata *, void *));
-static void auxregattach_mainbus
-		__P((struct device *, struct device *, void *));
-static void auxregattach_obio
-		__P((struct device *, struct device *, void *));
+static int auxregmatch_mainbus(struct device *, struct cfdata *, void *);
+static int auxregmatch_obio(struct device *, struct cfdata *, void *);
+static void auxregattach_mainbus(struct device *, struct device *, void *);
+static void auxregattach_obio(struct device *, struct device *, void *);
 
-static void auxregattach __P((struct device *));
+static void auxregattach(struct device *);
 
 CFATTACH_DECL(auxreg_mainbus, sizeof(struct device),
     auxregmatch_mainbus, auxregattach_mainbus, NULL, NULL);
@@ -74,11 +72,10 @@ CFATTACH_DECL(auxreg_obio, sizeof(struct device),
 #ifdef BLINK
 static struct callout blink_ch = CALLOUT_INITIALIZER;
 
-static void blink __P((void *zero));
+static void blink(void *);
 
 static void
-blink(zero)
-	void *zero;
+blink(void *zero)
 {
 	register int s;
 
@@ -101,10 +98,7 @@ blink(zero)
  * The OPENPROM calls this "auxiliary-io" (sun4c) or "auxio" (sun4m).
  */
 static int
-auxregmatch_mainbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+auxregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -112,10 +106,7 @@ auxregmatch_mainbus(parent, cf, aux)
 }
 
 static int
-auxregmatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+auxregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -127,9 +118,7 @@ auxregmatch_obio(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-auxregattach_mainbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxregattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -150,9 +139,7 @@ auxregattach_mainbus(parent, self, aux)
 }
 
 static void
-auxregattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxregattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -173,8 +160,7 @@ auxregattach_obio(parent, self, aux)
 }
 
 static void
-auxregattach(self)
-	struct device *self;
+auxregattach(struct device *self)
 {
 
 	printf("\n");
@@ -186,8 +172,7 @@ auxregattach(self)
 }
 
 unsigned int
-auxregbisc(bis, bic)
-	int bis, bic;
+auxregbisc(int bis, int bic)
 {
 	register int s;
 

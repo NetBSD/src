@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.10 2005/09/25 00:08:59 macallan Exp $ */
+/*	$NetBSD: auxreg.h,v 1.11 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,5 @@
 #ifndef _LOCORE
 volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
 u_char auxio_regval;
-unsigned int auxregbisc __P((int, int));
+unsigned int auxregbisc(int, int);
 #endif
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.84 2005/10/27 00:36:16 uwe Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.85 2005/11/14 03:30:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2005/10/27 00:36:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2005/11/14 03:30:50 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2005/10/27 00:36:16 uwe Exp $");
  * do not need to pass an access_type to pmap_enter().   
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -128,9 +126,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
@@ -186,12 +182,9 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
+	     void *stack, size_t stacksize,
+	     void (*func)(void *), void *arg)
 {
 	struct pcb *opcb = &l1->l_addr->u_pcb;
 	struct pcb *npcb = &l2->l_addr->u_pcb;
@@ -323,10 +316,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	/*struct trapframe *tf = l->l_md.md_tf;*/

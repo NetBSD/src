@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.162 2005/10/27 00:04:55 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.162 2005/10/27 00:04:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -212,9 +212,9 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-void trap __P((unsigned, int, int, struct trapframe *));
-void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
-void mem_access_fault4m __P((unsigned, u_int, u_int, struct trapframe *));
+void trap(unsigned, int, int, struct trapframe *);
+void mem_access_fault(unsigned, int, u_int, int, int, struct trapframe *);
+void mem_access_fault4m(unsigned, u_int, u_int, struct trapframe *);
 
 int ignore_bogus_traps = 1;
 
@@ -223,10 +223,7 @@ int ignore_bogus_traps = 1;
  * (MMU-related traps go through mem_access_fault, below.)
  */
 void
-trap(type, psr, pc, tf)
-	unsigned type;
-	int psr, pc;
-	struct trapframe *tf;
+trap(unsigned type, int psr, int pc, struct trapframe *tf)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -724,8 +721,7 @@ badtrap:
  * If the windows cannot be saved, pcb_nsaved is restored and we return -1.
  */
 int
-rwindow_save(l)
-	struct lwp *l;
+rwindow_save(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow *rw = &pcb->pcb_rw[0];
@@ -767,8 +763,7 @@ rwindow_save(l)
  * the registers into the new process after the exec.
  */
 void
-kill_user_windows(l)
-	struct lwp *l;
+kill_user_windows(struct lwp *l)
 {
 
 	write_user_windows();
@@ -787,12 +782,8 @@ kill_user_windows(l)
  * we just want to page in the page and try again.
  */
 void
-mem_access_fault(type, ser, v, pc, psr, tf)
-	unsigned type;
-	int ser;
-	u_int v;
-	int pc, psr;
-	struct trapframe *tf;
+mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
+		 struct trapframe *tf)
 {
 #if defined(SUN4) || defined(SUN4C)
 	struct proc *p;
@@ -997,11 +988,7 @@ out:
 static int tfaultaddr = (int) 0xdeadbeef;
 
 void
-mem_access_fault4m(type, sfsr, sfva, tf)
-	unsigned type;
-	u_int sfsr;
-	u_int sfva;
-	struct trapframe *tf;
+mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 {
 	int pc, psr;
 	struct proc *p;
