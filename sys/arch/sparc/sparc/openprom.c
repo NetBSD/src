@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.22 2004/03/18 15:14:33 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.23 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.22 2004/03/18 15:14:33 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.23 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -69,15 +69,13 @@ const struct cdevsw openprom_cdevsw = {
 
 static	int lastnode;			/* speed hack */
 
-static int openpromcheckid __P((int, int));
-static int openpromgetstr __P((int, char *, char **));
+static int openpromcheckid(int, int);
+static int openpromgetstr(int, char *, char **);
 
 int
-openpromopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+openpromopen(dev_t dev, int flags, int mode, struct proc *p)
 {
+
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4)
 		return (ENODEV);
@@ -91,8 +89,7 @@ openpromopen(dev, flags, mode, p)
  * listed from node ID sid forward.
  */
 static int
-openpromcheckid(sid, tid)
-	int sid, tid;
+openpromcheckid(int sid, int tid)
 {
 
 	for (; sid != 0; sid = nextsibling(sid))
@@ -103,9 +100,7 @@ openpromcheckid(sid, tid)
 }
 
 static int
-openpromgetstr(len, user, cpp)
-	int len;
-	char *user, **cpp;
+openpromgetstr(int len, char *user, char **cpp)
 {
 	int error;
 	char *cp;
@@ -121,12 +116,7 @@ openpromgetstr(len, user, cpp)
 }
 
 int
-openpromioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct opiocdesc *op;
 	int node, optionsnode, len, ok, error, s;

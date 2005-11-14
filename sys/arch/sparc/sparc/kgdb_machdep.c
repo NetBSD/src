@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.15 2005/11/14 03:11:38 uwe Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.16 2005/11/14 03:30:49 uwe Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2005/11/14 03:11:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.16 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -147,16 +147,14 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2005/11/14 03:11:38 uwe Exp $"
 
 #include <sparc/sparc/asm.h>
 
-static __inline void kgdb_copy __P((char *, char *, int));
-static __inline void kgdb_zero __P((char *, int));
+static __inline void kgdb_copy(char *, char *, int);
+static __inline void kgdb_zero(char *, int);
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
  */
 static __inline void
-kgdb_copy(src, dst, len)
-	register char *src, *dst;
-	register int len;
+kgdb_copy(register char *src, register char *dst, register int len)
 {
 
 	while (--len >= 0)
@@ -165,10 +163,9 @@ kgdb_copy(src, dst, len)
 
 /* ditto for bzero */
 static __inline void
-kgdb_zero(ptr, len)
-	register char *ptr;
-	register int len;
+kgdb_zero(register char *ptr, register int len)
 {
+
 	while (--len >= 0)
 		*ptr++ = (char) 0;
 }
@@ -220,7 +217,7 @@ kgdb_resume_others(void)
 }
 
 static void
-kgdb_suspend()
+kgdb_suspend(void)
 {
 
 	while (cpuinfo.flags & CPUFLG_PAUSED)
@@ -234,8 +231,7 @@ kgdb_suspend()
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
 	if (kgdb_dev < 0)
@@ -266,7 +262,7 @@ kgdb_connect(verbose)
  * Decide what to do on panic.
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 
 	if (kgdb_dev >= 0 && kgdb_debug_panic)
@@ -279,8 +275,7 @@ kgdb_panic()
  * XXX should this be done at the other end?
  */
 int
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	int sigval;
 
@@ -349,9 +344,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	struct trapframe *tf = &regs->db_tf;
 
@@ -380,9 +373,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	struct trapframe *tf = &regs->db_tf;
 
@@ -398,9 +389,7 @@ kgdb_setregs(regs, gdb_regs)
  * Determine if memory at [va..(va+len)] is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	int pte;
 	vaddr_t eva;

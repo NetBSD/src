@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.259 2005/10/26 23:21:47 uwe Exp $ */
+/*	$NetBSD: machdep.c,v 1.260 2005/11/14 03:30:49 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2005/10/26 23:21:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -159,14 +159,14 @@ int   safepri = 0;
  */
 struct extent *dvmamap24;
 
-void	dumpsys __P((void));
-void	stackdump __P((void));
+void	dumpsys(void);
+void	stackdump(void);
 
 /*
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -354,10 +354,7 @@ cpu_startup()
  */
 /* ARGSUSED */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf = l->l_md.md_tf;
 	struct fpstate *fs;
@@ -765,10 +762,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 /* ARGSUSED */
 int
-compat_16_sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -858,10 +852,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
 	__greg_t *r = mcp->__gregs;
@@ -945,10 +936,7 @@ cpu_getmcontext(l, mcp, flags)
  * This is almost like sigreturn() and it shows.
  */
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf;
 	__greg_t *r = mcp->__gregs;
@@ -1045,9 +1033,7 @@ cpu_setmcontext(l, mcp, flags)
 int	waittime = -1;
 
 void
-cpu_reboot(howto, user_boot_string)
-	int howto;
-	char *user_boot_string;
+cpu_reboot(int howto, char *user_boot_string)
 {
 	int i;
 	char opts[4];
@@ -1155,12 +1141,12 @@ cpu_reboot(howto, user_boot_string)
 	/*NOTREACHED*/
 }
 
-u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
+uint32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;
@@ -1196,8 +1182,7 @@ cpu_dumpconf()
 static vaddr_t dumpspace;
 
 caddr_t
-reserve_dumppages(p)
-	caddr_t p;
+reserve_dumppages(caddr_t p)
 {
 
 	dumpspace = (vaddr_t)p;
@@ -1208,12 +1193,12 @@ reserve_dumppages(p)
  * Write a crash dump.
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int psize;
 	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error = 0;
 	struct memarr *mp;
 	int nmem;
@@ -1322,7 +1307,7 @@ dumpsys()
  * current stack page
  */
 void
-stackdump()
+stackdump(void)
 {
 	struct frame *fp = getfp(), *sfp;
 
@@ -1339,17 +1324,15 @@ stackdump()
 }
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
+
 	return (ENOEXEC);
 }
 
 #if defined(SUN4)
 void
-oldmon_w_trace(va)
-	u_long va;
+oldmon_w_trace(u_long va)
 {
 	u_long stop;
 	struct frame *fp;
@@ -1383,9 +1366,7 @@ oldmon_w_trace(va)
 }
 
 void
-oldmon_w_cmd(va, ar)
-	u_long va;
-	char *ar;
+oldmon_w_cmd(u_long va, char *ar)
 {
 	switch (*ar) {
 	case '\0':
@@ -1410,8 +1391,7 @@ oldmon_w_cmd(va, ar)
 #endif /* SUN4 */
 
 int
-ldcontrolb(addr)
-caddr_t addr;
+ldcontrolb(caddr_t addr)
 {
 	struct pcb *xpcb;
 	extern struct user *proc0paddr;
@@ -1439,9 +1419,7 @@ caddr_t addr;
 }
 
 void
-wzero(vb, l)
-	void *vb;
-	u_int l;
+wzero(void *vb, u_int l)
 {
 	u_char *b = vb;
 	u_char *be = b + l;
@@ -1467,10 +1445,7 @@ wzero(vb, l)
 }
 
 void
-wcopy(vb1, vb2, l)
-	const void *vb1;
-	void *vb2;
-	u_int l;
+wcopy(const void *vb1, void *vb2, u_int l)
 {
 	const u_char *b1e, *b1 = vb1;
 	u_char *b2 = vb2;
@@ -1514,14 +1489,9 @@ wcopy(vb1, vb2, l)
  * DMA map creation functions.
  */
 int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
+		   bus_dmamap_t *dmamp)
 {
 	struct sparc_bus_dmamap *map;
 	void *mapstore;
@@ -1566,9 +1536,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * DMA map destruction functions.
  */
 void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	free(map, M_DMAMAP);
@@ -1578,11 +1546,8 @@ _bus_dmamap_destroy(t, map)
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
+		      struct mbuf *m, int flags)
 {
 
 	panic("_bus_dmamap_load_mbuf: not implemented");
@@ -1592,11 +1557,8 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
+		     struct uio *uio, int flags)
 {
 
 	panic("_bus_dmamap_load_uio: not implemented");
@@ -1607,13 +1569,9 @@ _bus_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+		     bus_dma_segment_t *segs, int nsegs, bus_size_t size,
+		     int flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
@@ -1624,12 +1582,8 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
+		 bus_addr_t offset, bus_size_t len, int ops)
 {
 }
 
@@ -1638,13 +1592,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
  * by bus-specific DMA memory allocation functions.
  */
 int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
+		  bus_size_t alignment, bus_size_t boundary,
+		  bus_dma_segment_t *segs, int nsegs, int *rsegs,
+		  int flags)
 {
 	vaddr_t low, high;
 	struct pglist *mlist;
@@ -1694,10 +1645,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 
 	if (nsegs != 1)
@@ -1715,10 +1663,7 @@ _bus_dmamem_free(t, segs, nsegs)
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -1737,12 +1682,8 @@ _bus_dmamem_unmap(t, kva, size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+		 off_t off, int prot, int flags)
 {
 
 	panic("_bus_dmamem_mmap: not implemented");
@@ -1752,11 +1693,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * Utility to allocate an aligned kernel virtual address range
  */
 vaddr_t
-_bus_dma_valloc_skewed(size, boundary, align, skew)
-	size_t size;
-	u_long boundary;
-	u_long align;
-	u_long skew;
+_bus_dma_valloc_skewed(size_t size, u_long boundary, u_long align, u_long skew)
 {
 	size_t oversize;
 	vaddr_t va, sva;
@@ -1821,26 +1758,21 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 }
 
 /* sun4/sun4c DMA map functions */
-int	sun4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-				bus_size_t, struct proc *, int));
-int	sun4_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-				bus_dma_segment_t *, int, bus_size_t, int));
-void	sun4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-int	sun4_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-				int nsegs, size_t size, caddr_t *kvap,
-				int flags));
+int	sun4_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+				bus_size_t, struct proc *, int);
+int	sun4_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+				bus_dma_segment_t *, int, bus_size_t, int);
+void	sun4_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+int	sun4_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
+				int, size_t, caddr_t *, int);
 
 /*
  * sun4/sun4c: load DMA map with a linear buffer.
  */
 int
-sun4_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+sun4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+		 void *buf, bus_size_t buflen,
+		 struct proc *p, int flags)
 {
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
@@ -1948,13 +1880,9 @@ no_fit:
  * bus_dmamem_alloc().
  */
 int
-sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+		     bus_dma_segment_t *segs, int nsegs, bus_size_t size, 
+		     int flags)
 {
 	struct vm_page *m;
 	paddr_t pa;
@@ -2018,9 +1946,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * sun4/sun4c function for unloading a DMA map.
  */
 void
-sun4_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+sun4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
@@ -2067,13 +1993,8 @@ sun4_dmamap_unload(t, map)
  * bus-specific DMA memory map functions.
  */
 int
-sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+		size_t size, caddr_t *kvap, int flags)
 {
 	struct vm_page *m;
 	vaddr_t va;
@@ -2132,31 +2053,29 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-static int	sparc_bus_map __P(( bus_space_tag_t, bus_addr_t,
+static int	sparc_bus_map(bus_space_tag_t, bus_addr_t,
 				    bus_size_t, int, vaddr_t,
-				    bus_space_handle_t *));
-static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
-				     bus_size_t));
-static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
+				    bus_space_handle_t *);
+static int	sparc_bus_unmap(bus_space_tag_t, bus_space_handle_t,
+				     bus_size_t);
+static int	sparc_bus_subregion(bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
-					 bus_space_handle_t *));
-static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
-				    int, int));
-static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int (*) __P((void *)),
+					 bus_space_handle_t *);
+static paddr_t	sparc_bus_mmap(bus_space_tag_t, bus_addr_t, off_t,
+				    int, int);
+static void	*sparc_mainbus_intr_establish(bus_space_tag_t, int, int,
+						   int (*)(void *),
 						   void *,
-						   void (*) __P((void)) ));
-static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
-					bus_size_t, bus_size_t, int));
+						   void (*)(void));
+static void     sparc_bus_barrier(bus_space_tag_t, bus_space_handle_t,
+					bus_size_t, bus_size_t, int);
 
 /*
  * Allocate a new bus tag and have it inherit the methods of the
  * given parent.
  */
 bus_space_tag_t
-bus_space_tag_alloc(parent, cookie)
-	bus_space_tag_t parent;
-	void *cookie;
+bus_space_tag_alloc(bus_space_tag_t parent, void *cookie)
 {
 	struct sparc_bus_space_tag *sbt;
 
@@ -2201,12 +2120,8 @@ bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
 }
 
 int
-sparc_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t	ba;
-	bus_size_t	size;
-	vaddr_t		va;
-	bus_space_handle_t *hp;
+sparc_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+	      vaddr_t va, bus_space_handle_t *hp)
 {
 	vaddr_t v;
 	paddr_t pa;
@@ -2272,10 +2187,7 @@ static	vaddr_t iobase;
 }
 
 int
-sparc_bus_unmap(t, bh, size)
-	bus_space_tag_t t;
-	bus_size_t	size;
-	bus_space_handle_t bh;
+sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 {
 	vaddr_t va = trunc_page((vaddr_t)bh);
 
@@ -2285,24 +2197,18 @@ sparc_bus_unmap(t, bh, size)
 }
 
 int
-sparc_bus_subregion(tag, handle, offset, size, nhandlep)
-	bus_space_tag_t		tag;
-	bus_space_handle_t	handle;
-	bus_size_t		offset;
-	bus_size_t		size;
-	bus_space_handle_t	*nhandlep;
+sparc_bus_subregion(bus_space_tag_t tag, bus_space_handle_t handle,
+		    bus_size_t offset, bus_size_t size,
+		    bus_space_handle_t *nhandlep)
 {
+
 	*nhandlep = handle + offset;
 	return (0);
 }
 
 paddr_t
-sparc_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t	ba;
-	off_t		off;
-	int		prot;
-	int		flags;
+sparc_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off,
+	       int prot, int flags)
 {
 	u_int pmtype;
 	paddr_t pa;
@@ -2334,14 +2240,9 @@ sparc_bus_mmap(t, ba, off, prot, flags)
  * Establish a temporary bus mapping for device probing.
  */
 int
-bus_space_probe(tag, paddr, size, offset, flags, callback, arg)
-	bus_space_tag_t tag;
-	bus_addr_t	paddr;
-	bus_size_t	size;
-	size_t		offset;
-	int		flags;
-	int		(*callback) __P((void *, void *));
-	void		*arg;
+bus_space_probe(bus_space_tag_t tag, bus_addr_t paddr, bus_size_t size,
+		size_t offset, int flags,
+		int (*callback)(void *, void *), void *arg)
 {
 	bus_space_handle_t bh;
 	caddr_t tmp;
@@ -2360,13 +2261,9 @@ bus_space_probe(tag, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(t, pil, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int	pil;
-	int	level;
-	int	(*handler)__P((void *));
-	void	*arg;
-	void	(*fastvec)__P((void));
+sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
+			     int (*handler)(void *), void *arg,
+			     void (*fastvec)(void))
 {
 	struct intrhand *ih;
 
@@ -2381,13 +2278,10 @@ sparc_mainbus_intr_establish(t, pil, level, handler, arg, fastvec)
 	return (ih);
 }
 
-void sparc_bus_barrier (t, h, offset, size, flags)
-	bus_space_tag_t	t;
-	bus_space_handle_t h;
-	bus_size_t	offset;
-	bus_size_t	size;
-	int		flags;
+void sparc_bus_barrier (bus_space_tag_t t, bus_space_handle_t h,
+			bus_size_t offset, bus_size_t size, int flags)
 {
+
 	/* No default barrier action defined */
 	return;
 }
@@ -2395,24 +2289,28 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 static u_int8_t
 sparc_bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
+
 	return bus_space_read_1_real(t, h, o);
 }
 
 static u_int16_t
 sparc_bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
+
 	return bus_space_read_2_real(t, h, o);
 }
 
 static u_int32_t
 sparc_bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
+
 	return bus_space_read_4_real(t, h, o);
 }
 
 static u_int64_t
 sparc_bus_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
+
 	return bus_space_read_8_real(t, h, o);
 }
 
@@ -2420,6 +2318,7 @@ static void
 sparc_bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			u_int8_t v)
 {
+
 	bus_space_write_1_real(t, h, o, v);
 }
 
@@ -2427,6 +2326,7 @@ static void
 sparc_bus_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			u_int16_t v)
 {
+
 	bus_space_write_2_real(t, h, o, v);
 }
 
@@ -2434,6 +2334,7 @@ static void
 sparc_bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			u_int32_t v)
 {
+
 	bus_space_write_4_real(t, h, o, v);
 }
 
@@ -2441,6 +2342,7 @@ static void
 sparc_bus_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			u_int64_t v)
 {
+
 	bus_space_write_8_real(t, h, o, v);
 }
 

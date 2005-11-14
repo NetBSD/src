@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.194 2005/11/01 22:49:17 bjh21 Exp $ */
+/*	$NetBSD: cpu.c,v 1.195 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.194 2005/11/01 22:49:17 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.195 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -108,8 +108,8 @@ static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
 /* The CPU configuration driver. */
-static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
-int  cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
+static void cpu_mainbus_attach(struct device *, struct device *, void *);
+int  cpu_mainbus_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cpu_mainbus, sizeof(struct cpu_softc),
     cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);
@@ -124,10 +124,10 @@ CFATTACH_DECL(cpu_cpuunit, sizeof(struct cpu_softc),
 
 static void cpu_attach(struct cpu_softc *, int, int);
 
-static const char *fsrtoname __P((int, int, int));
-void cache_print __P((struct cpu_softc *));
-void cpu_setup __P((void));
-void fpu_init __P((struct cpu_info *));
+static const char *fsrtoname(int, int, int);
+void cache_print(struct cpu_softc *);
+void cpu_setup(void);
+void fpu_init(struct cpu_info *);
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -137,9 +137,9 @@ void fpu_init __P((struct cpu_info *));
 
 int bootmid;		/* Module ID of boot CPU */
 #if defined(MULTIPROCESSOR)
-void cpu_spinup __P((struct cpu_info *));
-struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
-struct cpu_info	*alloc_cpuinfo __P((void));
+void cpu_spinup(struct cpu_info *);
+struct cpu_info *alloc_cpuinfo_global_va(int, vsize_t *);
+struct cpu_info	*alloc_cpuinfo(void);
 
 int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
 
@@ -147,9 +147,7 @@ int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
 
 struct cpu_info *
-alloc_cpuinfo_global_va(ismaster, sizep)
-	int ismaster;
-	vsize_t *sizep;
+alloc_cpuinfo_global_va(int ismaster, vsize_t *sizep)
 {
 	int align;
 	vaddr_t sva, va;
@@ -207,7 +205,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 }
 
 struct cpu_info *
-alloc_cpuinfo()
+alloc_cpuinfo(void)
 {
 	vaddr_t va;
 	vsize_t sz;
@@ -294,10 +292,7 @@ static char *iu_vendor[16] = {
  */
 
 int
-cpu_mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -305,10 +300,7 @@ cpu_mainbus_match(parent, cf, aux)
 }
 
 static void
-cpu_mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct { u_int32_t va; u_int32_t size; } *mbprop = NULL;
@@ -387,10 +379,7 @@ cpu_mainbus_attach(parent, self, aux)
 
 #if defined(SUN4D)
 static int
-cpu_cpuunit_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_cpuunit_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
@@ -550,7 +539,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
  * Start secondary processors in motion.
  */
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	int n;
 
@@ -595,7 +584,7 @@ cpu_boot_secondary_processors()
  * Must be run by the CPU which is being attached.
  */
 void
-cpu_setup()
+cpu_setup(void)
 {
 
 	if (cpuinfo.hotfix)
@@ -611,17 +600,18 @@ cpu_setup()
 }
 
 #if defined(MULTIPROCESSOR)
+
+extern void cpu_hatch(void); /* in locore.s */
+
 /*
  * Allocate per-CPU data, then start up this CPU using PROM.
  */
 void
-cpu_spinup(cpi)
-	struct cpu_info *cpi;
+cpu_spinup(struct cpu_info *cpi)
 {
-	int n;
-extern void cpu_hatch __P((void));	/* in locore.s */
-	caddr_t pc = (caddr_t)cpu_hatch;
 	struct openprom_addr oa;
+	caddr_t pc = (caddr_t)cpu_hatch;
+	int n;
 
 	/* Setup CPU-specific MMU tables */
 	pmap_alloc_cpu(cpi);
@@ -661,11 +651,8 @@ extern void cpu_hatch __P((void));	/* in locore.s */
  * to call every CPU, or `1 << cpi->ci_cpuid' for each CPU to call.
  */
 void
-xcall(func, trap, arg0, arg1, arg2, cpuset)
-	xcall_func_t func;
-	xcall_trap_t trap;
-	int	arg0, arg1, arg2;
-	u_int	cpuset;
+xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
+      u_int cpuset)
 {
 	int s, n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
@@ -776,7 +763,7 @@ xcall(func, trap, arg0, arg1, arg2, cpuset)
  * Tell all CPUs other than the current one to enter the PROM idle loop.
  */
 void
-mp_pause_cpus()
+mp_pause_cpus(void)
 {
 	int n;
 
@@ -803,7 +790,7 @@ mp_pause_cpus()
  * Resume all idling CPUs.
  */
 void
-mp_resume_cpus()
+mp_resume_cpus(void)
 {
 	int n;
 
@@ -829,7 +816,7 @@ mp_resume_cpus()
  * Tell all CPUs except the current one to hurry back into the prom
  */
 void
-mp_halt_cpus()
+mp_halt_cpus(void)
 {
 	int n;
 
@@ -856,7 +843,7 @@ mp_halt_cpus()
 
 #if defined(DDB)
 void
-mp_pause_cpus_ddb()
+mp_pause_cpus_ddb(void)
 {
 	int n;
 
@@ -875,7 +862,7 @@ mp_pause_cpus_ddb()
 }
 
 void
-mp_resume_cpus_ddb()
+mp_resume_cpus_ddb(void)
 {
 	int n;
 
@@ -899,8 +886,7 @@ mp_resume_cpus_ddb()
  * fpu_init() must be run on associated CPU.
  */
 void
-fpu_init(sc)
-	struct cpu_info *sc;
+fpu_init(struct cpu_info *sc)
 {
 	struct fpstate fpstate;
 	int fpuvers;
@@ -935,8 +921,7 @@ fpu_init(sc)
 }
 
 void
-cache_print(sc)
-	struct cpu_softc *sc;
+cache_print(struct cpu_softc *sc)
 {
 	struct cacheinfo *ci = &sc->sc_cpuinfo->cacheinfo;
 
@@ -991,48 +976,48 @@ cache_print(sc)
 /*------------*/
 
 
-void cpumatch_unknown __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_sun4 __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_sun4c __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_ms1 __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_viking __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_hypersparc __P((struct cpu_info *, struct module_info *, int));
-void cpumatch_turbosparc __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_unknown(struct cpu_info *, struct module_info *, int);
+void cpumatch_sun4(struct cpu_info *, struct module_info *, int);
+void cpumatch_sun4c(struct cpu_info *, struct module_info *, int);
+void cpumatch_ms1(struct cpu_info *, struct module_info *, int);
+void cpumatch_viking(struct cpu_info *, struct module_info *, int);
+void cpumatch_hypersparc(struct cpu_info *, struct module_info *, int);
+void cpumatch_turbosparc(struct cpu_info *, struct module_info *, int);
 
-void getcacheinfo_sun4 __P((struct cpu_info *, int node));
-void getcacheinfo_sun4c __P((struct cpu_info *, int node));
-void getcacheinfo_obp __P((struct cpu_info *, int node));
-void getcacheinfo_sun4d __P((struct cpu_info *, int node));
+void getcacheinfo_sun4(struct cpu_info *, int node);
+void getcacheinfo_sun4c(struct cpu_info *, int node);
+void getcacheinfo_obp(struct cpu_info *, int node);
+void getcacheinfo_sun4d(struct cpu_info *, int node);
 
-void sun4_hotfix __P((struct cpu_info *));
-void viking_hotfix __P((struct cpu_info *));
-void turbosparc_hotfix __P((struct cpu_info *));
-void swift_hotfix __P((struct cpu_info *));
+void sun4_hotfix(struct cpu_info *);
+void viking_hotfix(struct cpu_info *);
+void turbosparc_hotfix(struct cpu_info *);
+void swift_hotfix(struct cpu_info *);
 
-void ms1_mmu_enable __P((void));
-void viking_mmu_enable __P((void));
-void swift_mmu_enable __P((void));
-void hypersparc_mmu_enable __P((void));
+void ms1_mmu_enable(void);
+void viking_mmu_enable(void);
+void swift_mmu_enable(void);
+void hypersparc_mmu_enable(void);
 
-void srmmu_get_syncflt __P((void));
-void ms1_get_syncflt __P((void));
-void viking_get_syncflt __P((void));
-void swift_get_syncflt __P((void));
-void turbosparc_get_syncflt __P((void));
-void hypersparc_get_syncflt __P((void));
-void cypress_get_syncflt __P((void));
+void srmmu_get_syncflt(void);
+void ms1_get_syncflt(void);
+void viking_get_syncflt(void);
+void swift_get_syncflt(void);
+void turbosparc_get_syncflt(void);
+void hypersparc_get_syncflt(void);
+void cypress_get_syncflt(void);
 
-int srmmu_get_asyncflt __P((u_int *, u_int *));
-int hypersparc_get_asyncflt __P((u_int *, u_int *));
-int cypress_get_asyncflt __P((u_int *, u_int *));
-int no_asyncflt_regs __P((u_int *, u_int *));
+int srmmu_get_asyncflt(u_int *, u_int *);
+int hypersparc_get_asyncflt(u_int *, u_int *);
+int cypress_get_asyncflt(u_int *, u_int *);
+int no_asyncflt_regs(u_int *, u_int *);
 
 int hypersparc_getmid(void);
 /* cypress and hypersparc can share this function, see ctlreg.h */
 #define cypress_getmid	hypersparc_getmid
 int viking_getmid(void);
 
-int	(*moduleerr_handler) __P((void));
+int	(*moduleerr_handler)(void);
 int viking_module_error(void);
 
 struct module_info module_unknown = {
@@ -1043,11 +1028,9 @@ struct module_info module_unknown = {
 
 
 void
-cpumatch_unknown(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_unknown(struct cpu_info *sc, struct module_info *mp, int node)
 {
+
 	panic("Unknown CPU type: "
 	      "cpu: impl %d, vers %d; mmu: impl %d, vers %d",
 		sc->cpu_impl, sc->cpu_vers,
@@ -1082,9 +1065,7 @@ struct module_info module_sun4 = {
 };
 
 void
-getcacheinfo_sun4(sc, node)
-	struct cpu_info *sc;
-	int	node;
+getcacheinfo_sun4(struct cpu_info *sc, int node)
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
 
@@ -1137,10 +1118,7 @@ getcacheinfo_sun4(sc, node)
 }
 
 void
-cpumatch_sun4(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_sun4(struct cpu_info *sc, struct module_info *mp, int node)
 {
 	struct idprom *idp = prom_getidprom();
 
@@ -1208,10 +1186,7 @@ struct module_info module_sun4c = {
 };
 
 void
-cpumatch_sun4c(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_sun4c(struct cpu_info *sc, struct module_info *mp, int node)
 {
 	int	rnode;
 
@@ -1225,9 +1200,7 @@ cpumatch_sun4c(sc, mp, node)
 }
 
 void
-getcacheinfo_sun4c(sc, node)
-	struct cpu_info *sc;
-	int node;
+getcacheinfo_sun4c(struct cpu_info *sc, int node)
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
@@ -1269,8 +1242,7 @@ getcacheinfo_sun4c(sc, node)
 #endif /* SUN4C */
 
 void
-sun4_hotfix(sc)
-	struct cpu_info *sc;
+sun4_hotfix(struct cpu_info *sc)
 {
 
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0)
@@ -1283,9 +1255,7 @@ sun4_hotfix(sc)
 
 #if defined(SUN4M)
 void
-getcacheinfo_obp(sc, node)
-	struct	cpu_info *sc;
-	int	node;
+getcacheinfo_obp(struct cpu_info *sc, int node)
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
@@ -1415,10 +1385,7 @@ struct module_info module_ms1 = {
 };
 
 void
-cpumatch_ms1(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_ms1(struct cpu_info *sc, struct module_info *mp, int node)
 {
 
 	/*
@@ -1429,7 +1396,7 @@ cpumatch_ms1(sc, mp, node)
 }
 
 void
-ms1_mmu_enable()
+ms1_mmu_enable(void)
 {
 }
 
@@ -1488,8 +1455,7 @@ struct module_info module_swift = {
 };
 
 void
-swift_hotfix(sc)
-	struct cpu_info *sc;
+swift_hotfix(struct cpu_info *sc)
 {
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
@@ -1499,7 +1465,7 @@ swift_hotfix(sc)
 }
 
 void
-swift_mmu_enable()
+swift_mmu_enable(void)
 {
 }
 
@@ -1532,11 +1498,9 @@ struct module_info module_hypersparc = {
 };
 
 void
-cpumatch_hypersparc(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_hypersparc(struct cpu_info *sc, struct module_info *mp, int node)
 {
+
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
 
 	if (node == 0) {
@@ -1550,7 +1514,7 @@ cpumatch_hypersparc(sc, mp, node)
 }
 
 void
-hypersparc_mmu_enable()
+hypersparc_mmu_enable(void)
 {
 #if 0
 	int pcr;
@@ -1627,10 +1591,7 @@ struct module_info module_turbosparc = {
 };
 
 void
-cpumatch_turbosparc(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_turbosparc(struct cpu_info *sc, struct module_info *mp, int node)
 {
 	int i;
 
@@ -1662,8 +1623,7 @@ cpumatch_turbosparc(sc, mp, node)
 }
 
 void
-turbosparc_hotfix(sc)
-	struct cpu_info *sc;
+turbosparc_hotfix(struct cpu_info *sc)
 {
 	int pcf;
 
@@ -1707,18 +1667,15 @@ struct module_info module_viking = {
 
 #if defined(SUN4M) || defined(SUN4D)
 void
-cpumatch_viking(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
+cpumatch_viking(struct cpu_info *sc, struct module_info *mp, int node)
 {
+
 	if (node == 0)
 		viking_hotfix(sc);
 }
 
 void
-viking_hotfix(sc)
-	struct cpu_info *sc;
+viking_hotfix(struct cpu_info *sc)
 {
 static	int mxcc = -1;
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
@@ -1757,7 +1714,7 @@ static	int mxcc = -1;
 }
 
 void
-viking_mmu_enable()
+viking_mmu_enable(void)
 {
 	int pcr;
 
@@ -1777,6 +1734,7 @@ viking_mmu_enable()
 int
 viking_getmid(void)
 {
+
 	if (cpuinfo.mxcc) {
 		u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
 		return ((v >> 24) & 0xf);
@@ -1821,9 +1779,7 @@ viking_module_error(void)
 
 #if defined(SUN4D)
 void
-getcacheinfo_sun4d(sc, node)
-	struct	cpu_info *sc;
-	int	node;
+getcacheinfo_sun4d(struct cpu_info *sc, int node)
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
@@ -1956,9 +1912,7 @@ struct cpu_conf {
 };
 
 void
-getcpuinfo(sc, node)
-	struct cpu_info *sc;
-	int	node;
+getcpuinfo(struct cpu_info *sc, int node)
 {
 	struct cpu_conf *mp;
 	int i;
@@ -2169,8 +2123,7 @@ static struct info fpu_types[] = {
 };
 
 static const char *
-fsrtoname(impl, vers, fver)
-	int impl, vers, fver;
+fsrtoname(int impl, int vers, int fver)
 {
 	struct info *p;
 

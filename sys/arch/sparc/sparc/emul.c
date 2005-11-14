@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.10 2005/06/03 22:17:18 martin Exp $	*/
+/*	$NetBSD: emul.c,v 1.11 2005/11/14 03:30:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.10 2005/06/03 22:17:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.11 2005/11/14 03:30:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,22 +58,19 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.10 2005/06/03 22:17:18 martin Exp $");
 #define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
 #define FPR(l, i)	((int32_t) l->l_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe *, int, void *));
-static __inline int readfpreg __P((struct lwp *, int, void *));
-static __inline int writegpreg __P((struct trapframe *, int, const void *));
-static __inline int writefpreg __P((struct lwp *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe *, union instr *, void *));
-static int muldiv __P((struct trapframe *, union instr *, int32_t *, int32_t *,
-    int32_t *));
+static __inline int readgpreg(struct trapframe *, int, void *);
+static __inline int readfpreg(struct lwp *, int, void *);
+static __inline int writegpreg(struct trapframe *, int, const void *);
+static __inline int writefpreg(struct lwp *, int, const void *);
+static __inline int decodeaddr(struct trapframe *, union instr *, void *);
+static int muldiv(struct trapframe *, union instr *, int32_t *, int32_t *,
+    int32_t *);
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
 
 
 static __inline int
-readgpreg(tf, i, val)
-	struct trapframe *tf;
-	int i;
-	void *val;
+readgpreg(struct trapframe *tf, int i, void *val)
 {
 	int error = 0;
 	if (i == 0)
@@ -88,10 +85,7 @@ readgpreg(tf, i, val)
 
 		
 static __inline int
-writegpreg(tf, i, val)
-	struct trapframe *tf;
-	int i;
-	const void *val;
+writegpreg(struct trapframe *tf, int i, const void *val)
 {
 	int error = 0;
 
@@ -107,32 +101,26 @@ writegpreg(tf, i, val)
 	
 
 static __inline int
-readfpreg(l, i, val)
-	struct lwp *l;
-	int i;
-	void *val;
+readfpreg(struct lwp *l, int i, void *val)
 {
+
 	*(int32_t *) val = FPR(l, i);
 	return 0;
 }
 
 		
 static __inline int
-writefpreg(l, i, val)
-	struct lwp *l;
-	int i;
-	const void *val;
+writefpreg(struct lwp *l, int i, const void *val)
 {
+
 	FPR(l, i) = *(const int32_t *) val;
 	return 0;
 }
 
 static __inline int
-decodeaddr(tf, code, val)
-	struct trapframe *tf;
-	union instr *code;
-	void *val;
+decodeaddr(struct trapframe *tf, union instr *code, void *val)
 {
+
 	if (code->i_simm13.i_i)
 		*((int32_t *) val) = code->i_simm13.i_simm13;
 	else {
@@ -148,10 +136,8 @@ decodeaddr(tf, code, val)
 
 
 static int
-muldiv(tf, code, rd, rs1, rs2)
-	struct trapframe *tf;
-	union instr *code;
-	int32_t *rd, *rs1, *rs2;
+muldiv(struct trapframe *tf,
+       union instr *code, int32_t *rd, int32_t *rs1, int32_t *rs2)
 {
 	/*
 	 * We check for {S,U}{MUL,DIV}{,cc}
@@ -235,9 +221,7 @@ muldiv(tf, code, rd, rs1, rs2)
  */
 
 int
-fixalign(l, tf)
-	struct lwp *l;
-	struct trapframe *tf;
+fixalign(struct lwp *l, struct trapframe *tf)
 {
 	static u_char sizedef[] = { 0x4, 0xff, 0x2, 0x8 };
 
@@ -396,9 +380,7 @@ fixalign(l, tf)
  * Emulate unimplemented instructions on earlier sparc chips.
  */
 int
-emulinstr(pc, tf)
-	int pc;
-	struct trapframe *tf;
+emulinstr(int pc, struct trapframe *tf)
 {
 	union instr code;
 	int32_t rs1, rs2, rd;
