@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.303 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.304 2005/11/14 19:55:12 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2005/11/14 19:55:12 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7797,27 +7797,32 @@ pmap_writetext(unsigned char *dst, int ch)
 
 #ifdef EXTREME_DEBUG
 
+void debug_pagetables(void);
+void print_fe_map(void);
+
 static void test_region(int, int, int);
+
 
 void
 debug_pagetables(void)
 {
-	int i;
+	struct promvec *promvec = romp;
 	int *regtbl;
 	int te;
+	int i;
 
-	printf("\nncontext=%d. ",ncontext);
-	printf("Context table is at va 0x%x. Level 0 PTP: 0x%x\n",
+	printf("\nncontext=%d. ", ncontext);
+	printf("Context table is at va %p. Level 0 PTP: 0x%x\n",
 	       cpuinfo.ctx_tbl, cpuinfo.ctx_tbl[0]);
-	printf("Context 0 region table is at va 0x%x, pa 0x%x. Contents:\n",
+	printf("Context 0 region table is at va %p, pa 0x%x. Contents:\n",
 	       pmap_kernel()->pm_reg_ptps[0], pmap_kernel()->pm_reg_ptps_pa[0]);
 
 	regtbl = pmap_kernel()->pm_reg_ptps[0];
 
-	printf("PROM vector is at 0x%x\n",promvec);
-	printf("PROM reboot routine is at 0x%x\n",promvec->pv_reboot);
-	printf("PROM abort routine is at 0x%x\n",promvec->pv_abort);
-	printf("PROM halt routine is at 0x%x\n",promvec->pv_halt);
+	printf("PROM vector is at %p\n", promvec);
+	printf("PROM reboot routine is at %p\n", promvec->pv_reboot);
+	printf("PROM abort routine is at %p\n", promvec->pv_abort);
+	printf("PROM halt routine is at %p\n", promvec->pv_halt);
 
 	printf("Testing region 0xfe: ");
 	test_region(0xfe,0,16*1024*1024);
@@ -7831,7 +7836,7 @@ debug_pagetables(void)
 		te = regtbl[i];
 		if ((te & SRMMU_TETYPE) == SRMMU_TEINVALID)
 		    continue;
-		printf("Region 0x%x: PTE=0x%x <%s> L2PA=0x%x kernL2VA=0x%x\n",
+		printf("Region 0x%x: PTE=0x%x <%s> L2PA=0x%x kernL2VA=%p\n",
 		       i, te, ((te & SRMMU_TETYPE) == SRMMU_TEPTE ? "pte" :
 			       ((te & SRMMU_TETYPE) == SRMMU_TEPTD ? "ptd" :
 				((te & SRMMU_TETYPE) == SRMMU_TEINVALID ?
@@ -7868,7 +7873,7 @@ VA2PAsw(int ctx, caddr_t addr, int *pte)
 		return 0;
 	}
 	/* L1 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = (int *)(((curpte & ~0x3) << 4) | KERNBASE); /* correct for krn */
 	*pte = curpte = curtbl[VA_VREG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L1 table at 0x%x.\nGot L1 pte 0x%x\n",curtbl,curpte);
@@ -7882,7 +7887,7 @@ VA2PAsw(int ctx, caddr_t addr, int *pte)
 		return 0;
 	}
 	/* L2 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = (int *)(((curpte & ~0x3) << 4) | KERNBASE); /* correct for krn */
 	*pte = curpte = curtbl[VA_VSEG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L2 table at 0x%x.\nGot L2 pte 0x%x\n",curtbl,curpte);
@@ -7896,10 +7901,10 @@ VA2PAsw(int ctx, caddr_t addr, int *pte)
 		return 0;
 	}
 	/* L3 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = (int *)(((curpte & ~0x3) << 4) | KERNBASE); /* correct for krn */
 	*pte = curpte = curtbl[VA_VPG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
-	printf("L3 table at 0x%x.\nGot L3 pte 0x%x\n",curtbl,curpte);
+	printf("L3 table at %p.\nGot L3 pte 0x%x\n", curtbl, curpte);
 #endif
 	if ((curpte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((curpte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
@@ -7909,7 +7914,7 @@ VA2PAsw(int ctx, caddr_t addr, int *pte)
 		       curpte, VA_VREG(addr), VA_VSEG(addr), VA_VPG(addr));
 		return 0;
 	}
-	printf("Bizarreness with address 0x%x!\n",addr);
+	printf("Bizarreness with address %p!\n", addr);
 }
 
 static void
@@ -7922,28 +7927,30 @@ test_region(int reg, int start, int stop)
 /*	int cnt=0;
 */
 
-	for (i = start; i < stop; i+= NBPG) {
+	for (i = start; i < stop; i += NBPG) {
 		addr = (reg << RGSHIFT) | i;
-		pte=lda(((u_int)(addr)) | ASI_SRMMUFP_LN, ASI_SRMMUFP);
+		pte = lda(((u_int)(addr)) | ASI_SRMMUFP_LN, ASI_SRMMUFP);
 		if (pte) {
 /*			printf("Valid address 0x%x\n",addr);
 			if (++cnt == 20) {
 				cngetc();
-				cnt=0;
+				cnt = 0;
 			}
 */
-			if (VA2PA(addr) != VA2PAsw(0,addr,&ptesw)) {
-				printf("Mismatch at address 0x%x.\n",addr);
-				if (cngetc()=='q') break;
+			if (VA2PA((caddr_t)addr) != VA2PAsw(0, (caddr_t)addr, &ptesw)) {
+				printf("Mismatch at address 0x%x.\n", addr);
+				if (cngetc() == 'q')
+					break;
 			}
 			if (reg == VA_VREG(KERNBASE))
 				/* kernel permissions are different */
 				continue;
-			if ((pte&SRMMU_PROT_MASK)!=(ptesw&SRMMU_PROT_MASK)) {
+			if ((pte & SRMMU_PROT_MASK) != (ptesw & SRMMU_PROT_MASK)) {
 				printf("Mismatched protections at address "
 				       "0x%x; pte=0x%x, ptesw=0x%x\n",
-				       addr,pte,ptesw);
-				if (cngetc()=='q') break;
+				       addr, pte, ptesw);
+				if (cngetc() == 'q')
+					break;
 			}
 		}
 	}
