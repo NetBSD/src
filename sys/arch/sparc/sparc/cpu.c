@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.195 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: cpu.c,v 1.196 2005/11/14 16:04:47 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.195 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.196 2005/11/14 16:04:47 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -387,10 +387,7 @@ cpu_cpuunit_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpu_cpuunit_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_cpuunit_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
