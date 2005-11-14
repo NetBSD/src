@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.38 2004/03/22 12:37:43 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.39.2.2 2005/11/14 03:30:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.38 2004/03/22 12:37:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.39.2.2 2005/11/14 03:30:50 uwe Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -68,14 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.38 2004/03/22 12:37:43 pk Exp $");
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-static int	memregmatch_mainbus
-			__P((struct device *, struct cfdata *, void *));
-static int	memregmatch_obio
-			__P((struct device *, struct cfdata *, void *));
-static void	memregattach_mainbus
-			__P((struct device *, struct device *, void *));
-static void	memregattach_obio
-			__P((struct device *, struct device *, void *));
+static int	memregmatch_mainbus(struct device *, struct cfdata *, void *);
+static int	memregmatch_obio(struct device *, struct cfdata *, void *);
+static void	memregattach_mainbus(struct device *, struct device *, void *);
+static void	memregattach_obio(struct device *, struct device *, void *);
 
 CFATTACH_DECL(memreg_mainbus, sizeof(struct device),
     memregmatch_mainbus, memregattach_mainbus, NULL, NULL);
@@ -84,17 +80,14 @@ CFATTACH_DECL(memreg_obio, sizeof(struct device),
     memregmatch_obio, memregattach_obio, NULL, NULL);
 
 #if defined(SUN4M)
-static void hardmemerr4m __P((unsigned, u_int, u_int, u_int, u_int));
+static void hardmemerr4m(unsigned, u_int, u_int, u_int, u_int);
 #endif
 
 /*
  * The OPENPROM calls this "memory-error".
  */
 static int
-memregmatch_mainbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -102,10 +95,7 @@ memregmatch_mainbus(parent, cf, aux)
 }
 
 static int
-memregmatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -122,9 +112,7 @@ memregmatch_obio(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-memregattach_mainbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+memregattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -148,9 +136,7 @@ memregattach_mainbus(parent, self, aux)
 
 /* ARGSUSED */
 static void
-memregattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+memregattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	bus_space_handle_t bh;
@@ -187,10 +173,9 @@ memregattach_obio(parent, self, aux)
  */
 
 void
-memerr4_4c(issync, ser, sva, aer, ava, tf)
-	unsigned int issync;
-	u_int ser, sva, aer, ava;
-	struct trapframe *tf;	/* XXX - unused/invalid */
+memerr4_4c(unsigned int issync,
+	   u_int ser, u_int sva, u_int aer, u_int ava,
+	   struct trapframe *tf) /* XXX - unused/invalid */
 {
 	char bits[64];
 	u_int pte;
@@ -229,12 +214,7 @@ memerr4_4c(issync, ser, sva, aer, ava, tf)
  * hardmemerr4m: called upon fatal memory error. Print a message and panic.
  */
 static void
-hardmemerr4m(type, sfsr, sfva, afsr, afva)
-	unsigned type;
-	u_int sfsr;
-	u_int sfva;
-	u_int afsr;
-	u_int afva;
+hardmemerr4m(unsigned type, u_int sfsr, u_int sfva, u_int afsr, u_int afva)
 {
 	char *s, bits[64];
 
@@ -268,11 +248,7 @@ static int oldtype = -1;
 /* XXXSMP */
 
 void
-hypersparc_memerr(type, sfsr, sfva, tf)
-	unsigned type;
-	u_int sfsr;
-	u_int sfva;
-	struct trapframe *tf;
+hypersparc_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 {
 	u_int afsr;
 	u_int afva;
@@ -308,11 +284,7 @@ hard:
 }
 
 void
-viking_memerr(type, sfsr, sfva, tf)
-	unsigned type;
-	u_int sfsr;
-	u_int sfva;
-	struct trapframe *tf;
+viking_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 {
 	u_int afsr=0;	/* No Async fault registers on the viking */
 	u_int afva=0;
@@ -367,11 +339,7 @@ hard:
 }
 
 void
-memerr4m(type, sfsr, sfva, tf)
-	unsigned type;
-	u_int sfsr;
-	u_int sfva;
-	struct trapframe *tf;
+memerr4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 {
 	u_int afsr;
 	u_int afva;

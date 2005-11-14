@@ -1,3 +1,0 @@
-# $NetBSD: index,v 1.2 2005/02/22 16:53:11 peter Exp $
-ipv4table	ipv4table	Display the IPv4 routing table
-default		defroute	Modify the IPv4 default route

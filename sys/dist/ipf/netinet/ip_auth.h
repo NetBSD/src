@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.1 2004/12/31 11:30:42 martti Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1 2004/10/01 15:25:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.
@@ -8,8 +8,8 @@
  * Id: ip_auth.h,v 2.16 2003/07/25 12:29:56 darrenr Exp
  *
  */
-#ifndef	__IP_AUTH_H__
-#define	__IP_AUTH_H__
+#ifndef _NETINET_IP_AUTH_H_
+#define _NETINET_IP_AUTH_H_
 
 #define FR_NUMAUTH      32
 

@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.3 2002/11/18 12:39:55 lukem Exp $
-
-COPY	${DESTDIR}/usr/mdec/ofwboot		ofwboot
-COPY	${RAMDISKDIR}/netbsd-INSTALL.gz		netbsd

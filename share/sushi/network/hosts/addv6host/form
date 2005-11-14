@@ -1,4 +1,0 @@
-# $NetBSD: form,v 1.2 2005/02/22 16:53:11 peter Exp $
-req-entry:40	Hostname
-req-ipv6:	IPv6 address
-entry:40	Optional Aliases (space separated)

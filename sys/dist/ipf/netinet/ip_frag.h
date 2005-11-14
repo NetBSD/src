@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.1.1.1 2004/12/31 11:30:43 martti Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -9,8 +9,8 @@
  * Id: ip_frag.h,v 2.23.2.1 2004/03/29 16:21:56 darrenr Exp
  */
 
-#ifndef	__IP_FRAG_H__
-#define	__IP_FRAG_H__
+#ifndef _NETINET_IP_FRAG_H_
+#define _NETINET_IP_FRAG_H_
 
 #define	IPFT_SIZE	257
 
@@ -83,4 +83,4 @@ extern	void	fr_slowtimer __P((void *));
 extern	int	fr_slowtimer __P((void));
 #endif
 
-#endif	/* __IP_FRAG_H__ */
+#endif /* _NETINET_IP_FRAG_H_ */
