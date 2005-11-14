@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.96 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: INSTALL_TINY,v 1.97 2005/11/14 17:03:05 gdt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -481,7 +481,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices
