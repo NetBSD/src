@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.109 2005/11/12 22:29:53 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.109.2.1 2005/11/14 12:39:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.109 2005/11/12 22:29:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.109.2.1 2005/11/14 12:39:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -73,7 +73,7 @@ static int filt_genfsvnode(struct knote *, long);
 
 #define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
 int genfs_rapages = MAX_READ_AHEAD; /* # of pages in each chunk of readahead */
-int genfs_racount = 2;		/* # of page chunks to readahead */
+int genfs_racount = 0;		/* # of page chunks to readahead */
 int genfs_raskip = 2;		/* # of busy page chunks allowed to skip */
 
 int
