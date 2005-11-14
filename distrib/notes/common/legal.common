@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.40 2005/09/29 17:15:52 perry Exp $
+.\"	$NetBSD: legal.common,v 1.41 2005/11/14 01:57:12 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -529,7 +529,7 @@ This product includes software developed by the Harvard
 University and its contributors.
 .It
 This product includes software developed by the Kungliga Tekniska
-Högskolan and its contributors.
+H‹Èskolan and its contributors.
 .It
 This product includes software developed by the Network Research
 Group at Lawrence Berkeley Laboratory.
@@ -537,7 +537,7 @@ Group at Lawrence Berkeley Laboratory.
 This product includes software developed by the OpenSSL Project
 for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)
 .It
-his product includes software developed by the PocketBSD project
+This product includes software developed by the PocketBSD project
 and its contributors.
 .It
 This product includes software developed by the RiscBSD kernel team
