@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.11 2005/09/24 22:30:15 macallan Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.12 2005/11/14 19:11:24 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.11 2005/09/24 22:30:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.12 2005/11/14 19:11:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,8 +619,7 @@ OF_poweroff(void)
 }
 
 void
-(*OF_set_callback(newfunc))(void *)
-	void (*newfunc)(void *);
+(*OF_set_callback(void (*newfunc)(void *)))(void *)
 {
 	struct {
 		cell_t name;
@@ -743,8 +742,8 @@ OF_claim(void *virt, u_int size, u_int align)
 
 int obp_symbol_debug = 0;
 
-void OF_sym2val(cells)
-	void *cells;
+void
+OF_sym2val(void *cells)
 {
 	struct args {
 		cell_t service;
@@ -780,8 +779,8 @@ void OF_sym2val(cells)
 	args->value = ADR2CELL(value);
 }
 
-void OF_val2sym(cells)
-	void *cells;
+void
+OF_val2sym(void *cells)
 {
 	struct args {
 		cell_t service;
@@ -827,4 +826,4 @@ void OF_val2sym(cells)
 	args->offset = offset;
 	args->symbol = ADR2CELL(symbol);
 }
-#endif
+#endif /* DDB */
