@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.14 2003/08/07 16:29:45 agc Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.15 2005/11/14 03:11:38 uwe Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.14 2003/08/07 16:29:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2005/11/14 03:11:38 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -224,9 +224,10 @@ kgdb_suspend()
 {
 
 	while (cpuinfo.flags & CPUFLG_PAUSED)
-		cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+		cache_flush((caddr_t)__UNVOLATILE(&cpuinfo.flags),
+			    sizeof(cpuinfo.flags));
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 /*
  * Trap into kgdb to wait for debugger to connect,
@@ -430,4 +431,4 @@ kgdb_acc(va, len)
 
 	return (1);
 }
-#endif
+#endif /* KGDB */
