@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.35 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: kd.c,v 1.36 2005/11/14 22:48:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.35 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.36 2005/11/14 22:48:34 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -98,9 +98,14 @@ struct kd_softc {
  */
 static struct kd_softc kd_softc;
 
-static int kdparam(struct tty *, struct termios *);
-static void kdstart(struct tty *);
+/* For keyboard driver to register itself as console input */
+void kd_attach_input(struct cons_channel *);
+
 static void kd_init(struct kd_softc *);
+static void kdstart(struct tty *);
+static void kd_later(void *);
+static void kd_putfb(struct tty *);
+static int kdparam(struct tty *, struct termios *);
 static void kd_cons_input(int);
 
 dev_type_open(kdopen);
@@ -119,9 +124,8 @@ const struct cdevsw kd_cdevsw = {
 /*
  * Prepare the console tty; called on first open of /dev/console
  */
-void
-kd_init(kd)
-	struct kd_softc *kd;
+static void
+kd_init(struct kd_softc *kd)
 {
 	struct tty *tp;
 
@@ -175,8 +179,7 @@ kd_init(kd)
 }
 
 struct tty *
-kdtty(dev)
-	dev_t dev;
+kdtty(dev_t dev)
 {
 	struct kd_softc *kd;
 
@@ -185,10 +188,7 @@ kdtty(dev)
 }
 
 int
-kdopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+kdopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct kd_softc *kd;
 	int error, s, unit;
@@ -247,10 +247,7 @@ static	int firstopen = 1;
 }
 
 int
-kdclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+kdclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -273,10 +270,7 @@ kdclose(dev, flag, mode, p)
 }
 
 int
-kdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+kdread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -288,10 +282,7 @@ kdread(dev, uio, flag)
 }
 
 int
-kdwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+kdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -303,10 +294,7 @@ kdwrite(dev, uio, flag)
 }
 
 int
-kdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+kdpoll(dev_t dev, int events, struct proc *p)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -318,12 +306,7 @@ kdpoll(dev, events, p)
 }
 
 int
-kdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -348,10 +331,9 @@ kdioctl(dev, cmd, data, flag, p)
 }
 
 static int
-kdparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+kdparam(struct tty *tp, struct termios *t)
 {
+
 	/* XXX - These are ignored... */
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -359,13 +341,8 @@ kdparam(tp, t)
 	return 0;
 }
 
-
-static void kd_later(void*);
-static void kd_putfb(struct tty *);
-
 static void
-kdstart(tp)
-	struct tty *tp;
+kdstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s;
@@ -404,8 +381,7 @@ out:
  * Called at splsoftclock when requested by kdstart.
  */
 static void
-kd_later(arg)
-	void *arg;
+kd_later(void *arg)
 {
 	struct tty *tp = arg;
 	int s;
@@ -424,8 +400,7 @@ kd_later(arg)
  * interrupts, this is called at splsoftclock.
  */
 static void
-kd_putfb(tp)
-	struct tty *tp;
+kd_putfb(struct tty *tp)
 {
 	char buf[PUT_WSIZE];
 	struct clist *cl = &tp->t_outq;
@@ -448,9 +423,8 @@ kd_putfb(tp)
  * Our "interrupt" routine for input. This is called by
  * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
-void
-kd_cons_input(c)
-	int c;
+static void
+kd_cons_input(int c)
 {
 	struct kd_softc *kd = &kd_softc;
 	struct tty *tp;
@@ -466,9 +440,7 @@ kd_cons_input(c)
 }
 
 void
-cons_attach_input(cc, cn)
-	struct cons_channel *cc;
-	struct consdev *cn;
+cons_attach_input(struct cons_channel *cc, struct consdev *cn)
 {
 	struct kd_softc *kd = &kd_softc;
 
@@ -476,10 +448,8 @@ cons_attach_input(cc, cn)
 	cc->cc_upstream = kd_cons_input;
 }
 
-void kd_attach_input(struct cons_channel *);
 void
-kd_attach_input(cc)
-	struct cons_channel *cc;
+kd_attach_input(struct cons_channel *cc)
 {
 	struct kd_softc *kd = &kd_softc;
 
@@ -505,9 +475,8 @@ static struct cons_channel prom_cons_channel = {
 
 static struct callout prom_cons_callout = CALLOUT_INITIALIZER;
 
-int
-kd_rom_iopen(cc)
-	struct cons_channel *cc;
+static int
+kd_rom_iopen(struct cons_channel *cc)
 {
 
 	/* Poll for ROM input 4 times per second */
@@ -515,9 +484,8 @@ kd_rom_iopen(cc)
 	return (0);
 }
 
-int
-kd_rom_iclose(cc)
-	struct cons_channel *cc;
+static int
+kd_rom_iclose(struct cons_channel *cc)
 {
 
 	callout_stop(&prom_cons_callout);
@@ -527,9 +495,8 @@ kd_rom_iclose(cc)
 /*
  * "Interrupt" routine for input through ROM vectors
  */
-void
-kd_rom_intr(arg)
-	void *arg;
+static void
+kd_rom_intr(void *arg)
 {
 	struct cons_channel *cc = arg;
 	int s, c;
@@ -551,11 +518,11 @@ int prom_stdout_node;
 char prom_stdin_args[16];
 char prom_stdout_args[16];
 
-extern void prom_cnprobe(struct consdev *);
+static void prom_cnprobe(struct consdev *);
 static void prom_cninit(struct consdev *);
-int  prom_cngetc(dev_t);
+int  prom_cngetc(dev_t);	/* XXX: for sunkbd_wskbd_cngetc */
 static void prom_cnputc(dev_t, int);
-extern void prom_cnpollc(dev_t, int);
+static void prom_cnpollc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -577,22 +544,18 @@ struct consdev consdev_prom = {
  */
 struct consdev *cn_tab = &consdev_prom;
 
-void
-prom_cnprobe(cn)
-	struct consdev *cn;
+static void
+prom_cnprobe(struct consdev *cn)
 {
 }
 
 static void
-prom_cninit(cn)
-	struct consdev *cn;
+prom_cninit(struct consdev *cn)
 {
 }
 
-void
-prom_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+static void
+prom_cnpollc(dev_t dev, int on)
 {
 
 	if (on) {
@@ -610,8 +573,7 @@ prom_cnpollc(dev, on)
  * PROM console input putchar.
  */
 int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	int s, c;
 
@@ -625,9 +587,7 @@ prom_cngetc(dev)
  * PROM console output putchar.
  */
 static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+prom_cnputc(dev_t dev, int c)
 {
 
 	prom_putchar(c);
@@ -638,11 +598,8 @@ prom_cnputc(dev, c)
 
 static void prom_get_device_args(const char *, char *, unsigned int);
 
-void
-prom_get_device_args(prop, args, sz)
-	const char *prop;
-	char *args;
-	unsigned int sz;
+static void
+prom_get_device_args(const char *prop, char *args, unsigned int sz)
 {
 	const char *cp;
 	char buffer[128];
@@ -666,7 +623,7 @@ prom_get_device_args(prop, args, sz)
  *
  */
 void
-consinit()
+consinit(void)
 {
 	int inSource, outSink;
 
