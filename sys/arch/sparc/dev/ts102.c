@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.3 2005/07/13 01:42:06 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.4 2005/11/14 19:33:54 uwe Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -790,7 +790,7 @@ tslot_event_thread(void *v)
 		if (socket >= TS102_NUM_SLOTS) {
 #ifdef DEBUG
 			printf("%s: invalid slot number %d\n",
-			    sc->sc_dev.dv_xname, te->te_slot);
+			    sc->sc_dev.dv_xname, socket);
 #endif
 			continue;
 		}
