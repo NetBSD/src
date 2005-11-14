@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.8 2004/03/22 12:37:43 pk Exp $	*/
+/*	$NetBSD: memecc.c,v 1.9 2005/11/14 03:30:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.8 2004/03/22 12:37:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.9 2005/11/14 03:30:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,20 +60,17 @@ struct memecc_softc {
 struct memecc_softc *memecc_sc;
 
 /* autoconfiguration driver */
-static void	memecc_attach __P((struct device *, struct device *, void *));
-static int	memecc_match  __P((struct device *, struct cfdata *, void *));
-static int	memecc_error  __P((void));
+static void	memecc_attach(struct device *, struct device *, void *);
+static int	memecc_match(struct device *, struct cfdata *, void *);
+static int	memecc_error(void);
 
-int	(*memerr_handler) __P((void));
+int	(*memerr_handler)(void);
 
 CFATTACH_DECL(eccmemctl, sizeof(struct memecc_softc),
     memecc_match, memecc_attach, NULL, NULL);
 
 int
-memecc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memecc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -84,15 +81,12 @@ memecc_match(parent, cf, aux)
  * Attach the device.
  */
 void
-memecc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+memecc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct memecc_softc *sc = (struct memecc_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int node;
-	u_int32_t reg;
+	uint32_t reg;
 
 	sc->sc_bt = ma->ma_bustag;
 	node = ma->ma_node;
@@ -128,10 +122,10 @@ memecc_attach(parent, self, aux)
  * Called if the MEMORY ERROR bit is set after a level 25 interrupt.
  */
 int
-memecc_error()
+memecc_error(void)
 {
 	bus_space_handle_t bh = memecc_sc->sc_bh;
-	u_int32_t efsr, efar0, efar1;
+	uint32_t efsr, efar0, efar1;
 	char bits[64];
 
 	efsr = bus_space_read_4(memecc_sc->sc_bt, bh, ECC_FSR_REG);

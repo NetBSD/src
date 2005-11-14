@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.h,v 1.2 2000/03/14 21:18:27 jdc Exp $	*/
+/*	$NetBSD: auxiotwo.h,v 1.3 2005/11/14 03:30:49 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #ifndef _LOCORE
 volatile u_char *auxiotwo_reg;
 u_char auxiotwo_regval;
-unsigned int auxiotwobisc __P((int, int));
-void auxiotwoserialendis __P((int));
-void auxiotwoserialsetapm __P((int));
-int auxiotwoserialgetapm __P((void));
+unsigned int auxiotwobisc(int, int);
+void auxiotwoserialendis(int);
+void auxiotwoserialsetapm(int);
+int auxiotwoserialgetapm(void);
 #endif

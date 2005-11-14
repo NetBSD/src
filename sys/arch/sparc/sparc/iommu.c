@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.81 2005/04/01 11:59:34 yamt Exp $ */
+/*	$NetBSD: iommu.c,v 1.82 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.82 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -79,37 +79,37 @@ struct iommu_softc {
 };
 
 /* autoconfiguration driver */
-int	iommu_print __P((void *, const char *));
-void	iommu_attach __P((struct device *, struct device *, void *));
-int	iommu_match __P((struct device *, struct cfdata *, void *));
+int	iommu_print(void *, const char *);
+void	iommu_attach(struct device *, struct device *, void *);
+int	iommu_match(struct device *, struct cfdata *, void *);
 
 #if defined(SUN4M)
-static void iommu_copy_prom_entries __P((struct iommu_softc *));
+static void iommu_copy_prom_entries(struct iommu_softc *);
 #endif
 
 CFATTACH_DECL(iommu, sizeof(struct iommu_softc),
     iommu_match, iommu_attach, NULL, NULL);
 
 /* IOMMU DMA map functions */
-int	iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-			bus_size_t, int, bus_dmamap_t *));
-int	iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-			bus_size_t, struct proc *, int));
-int	iommu_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-			struct mbuf *, int));
-int	iommu_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-			struct uio *, int));
-int	iommu_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-			bus_dma_segment_t *, int, bus_size_t, int));
-void	iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-			bus_size_t, int));
+int	iommu_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+			bus_size_t, int, bus_dmamap_t *);
+int	iommu_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+			bus_size_t, struct proc *, int);
+int	iommu_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+			struct mbuf *, int);
+int	iommu_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+			struct uio *, int);
+int	iommu_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+			bus_dma_segment_t *, int, bus_size_t, int);
+void	iommu_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	iommu_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+			bus_size_t, int);
 
-int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			int nsegs, size_t size, caddr_t *kvap, int flags));
-void	iommu_dmamem_unmap __P((bus_dma_tag_t t, caddr_t kva, size_t size));
-paddr_t	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			int nsegs, off_t off, int prot, int flags));
+int	iommu_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
+			int, size_t, caddr_t *, int);
+void	iommu_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+paddr_t	iommu_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *,
+			int, off_t, int, int);
 int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
 			 bus_size_t, int, bus_addr_t *, bus_size_t *);
 
@@ -120,9 +120,7 @@ int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
  * Return UNCONF (config_find ignores this if the device was configured).
  */
 int
-iommu_print(args, iommu)
-	void *args;
-	const char *iommu;
+iommu_print(void *args, const char *iommu)
 {
 	struct iommu_attach_args *ia = args;
 
@@ -132,10 +130,7 @@ iommu_print(args, iommu)
 }
 
 int
-iommu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+iommu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -148,10 +143,7 @@ iommu_match(parent, cf, aux)
  * Attach the iommu.
  */
 void
-iommu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+iommu_attach(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4M)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
@@ -340,8 +332,7 @@ iommu_attach(parent, self, aux)
 
 #if defined(SUN4M)
 static void
-iommu_copy_prom_entries(sc)
-	struct iommu_softc *sc;
+iommu_copy_prom_entries(struct iommu_softc *sc)
 {
 	u_int pbase, pa;
 	u_int range;
@@ -447,7 +438,7 @@ iommu_remove(struct iommu_softc *sc, bus_addr_t dva, bus_size_t len)
 
 #if 0	/* These registers aren't there??? */
 void
-iommu_error()
+iommu_error(void)
 {
 	struct iommu_softc *sc = X;
 	struct iommureg *iop = sc->sc_reg;
@@ -455,9 +446,9 @@ iommu_error()
 	printf("iommu: afsr 0x%x, afar 0x%x\n", iop->io_afsr, iop->io_afar);
 	printf("iommu: mfsr 0x%x, mfar 0x%x\n", iop->io_mfsr, iop->io_mfar);
 }
+
 int
-iommu_alloc(va, len)
-	u_int va, len;
+iommu_alloc(u_int va, u_int len)
 {
 	struct iommu_softc *sc = X;
 	int off, tva, iovaddr, pte;
@@ -496,14 +487,9 @@ if ((int)sc->sc_dvmacur + len > 0)
  * IOMMU DMA map functions.
  */
 int
-iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+iommu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+		    bus_size_t maxsegsz, bus_size_t boundary, int flags,
+		    bus_dmamap_t *dmamp)
 {
 	struct iommu_softc *sc = t->_cookie;
 	bus_dmamap_t map;
@@ -531,14 +517,9 @@ iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * Internal routine to allocate space in the IOMMU map.
  */
 int
-iommu_dvma_alloc(sc, map, va, len, flags, dvap, sgsizep)
-	struct iommu_softc *sc;
-	bus_dmamap_t map;
-	vaddr_t va;
-	bus_size_t len;
-	int flags;
-	bus_addr_t *dvap;
-	bus_size_t *sgsizep;
+iommu_dvma_alloc(struct iommu_softc *sc, bus_dmamap_t map,
+		 vaddr_t va, bus_size_t len, int flags,
+		 bus_addr_t *dvap, bus_size_t *sgsizep)
 {
 	bus_size_t sgsize;
 	u_long align, voff, dvaddr;
@@ -576,13 +557,9 @@ iommu_dvma_alloc(sc, map, va, len, flags, dvap, sgsizep)
  * Prepare buffer for DMA transfer.
  */
 int
-iommu_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+		  void *buf, bus_size_t buflen,
+		  struct proc *p, int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	bus_size_t sgsize;
@@ -643,11 +620,8 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-iommu_dmamap_load_mbuf(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+iommu_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
+		       struct mbuf *m, int flags)
 {
 
 	panic("_bus_dmamap_load_mbuf: not implemented");
@@ -657,11 +631,8 @@ iommu_dmamap_load_mbuf(t, map, m, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-iommu_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+iommu_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
+		      struct uio *uio, int flags)
 {
 
 	panic("_bus_dmamap_load_uio: not implemented");
@@ -672,13 +643,9 @@ iommu_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+iommu_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+		      bus_dma_segment_t *segs, int nsegs, bus_size_t size,
+		      int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
@@ -729,9 +696,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * Unload an IOMMU DMA map.
  */
 void
-iommu_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+iommu_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct iommu_softc *sc = t->_cookie;
 	bus_dma_segment_t *segs = map->dm_segs;
@@ -761,12 +726,8 @@ iommu_dmamap_unload(t, map)
  * DMA map synchronization.
  */
 void
-iommu_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+iommu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
+		  bus_addr_t offset, bus_size_t len, int ops)
 {
 
 	/*
@@ -778,13 +739,8 @@ iommu_dmamap_sync(t, map, offset, len, ops)
  * Map DMA-safe memory.
  */
 int
-iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+		 size_t size, caddr_t *kvap, int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
@@ -841,10 +797,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 }
 
 void
-iommu_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+iommu_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -863,12 +816,8 @@ iommu_dmamem_unmap(t, kva, size)
  * mmap(2)'ing DMA-safe memory.
  */
 paddr_t
-iommu_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+iommu_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+		  off_t off, int prot, int flags)
 {
 
 	panic("_bus_dmamem_mmap: not implemented");
