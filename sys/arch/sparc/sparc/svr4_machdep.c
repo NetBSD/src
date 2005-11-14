@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.55 2005/03/12 16:29:59 dsl Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.56.2.2 2005/11/14 03:30:50 uwe Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55 2005/03/12 16:29:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.56.2.2 2005/11/14 03:30:50 uwe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -74,13 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55 2005/03/12 16:29:59 dsl Exp $"
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
 
 void
-svr4_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 
 	setregs(l, epp, stack);
@@ -95,12 +92,10 @@ extern int sigpid;
 #endif
 
 #ifdef DEBUG_SVR4
-static void svr4_printmcontext __P((const char *, struct svr4_mcontext *));
+static void svr4_printmcontext(const char *, struct svr4_mcontext *);
 
 static void
-svr4_printmcontext(fun, mc)
-	const char *fun;
-	struct svr4_mcontext *mc;
+svr4_printmcontext(const char *fun, struct svr4_mcontext *mc)
 {
 	svr4_greg_t *r = mc->greg;
 
@@ -131,10 +126,7 @@ svr4_printmcontext(fun, mc)
 #endif
 
 void *
-svr4_getmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_mcontext *mc;
-	u_long *flags;
+svr4_getmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long *flags)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
 	svr4_greg_t *r = mc->greg;
@@ -218,10 +210,7 @@ svr4_getmcontext(l, mc, flags)
  * This is almost like sigreturn() and it shows.
  */
 int
-svr4_setmcontext(l, mc, flags)
-	struct lwp *l;
-	struct svr4_mcontext *mc;
-	u_long flags;
+svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
 {
 	register struct trapframe *tf;
 	svr4_greg_t *r = mc->greg;
@@ -320,12 +309,9 @@ svr4_setmcontext(l, mc, flags)
  * map the trap code into the svr4 siginfo as best we can
  */
 static void
-svr4_getsiginfo(si, sig, code, addr)
-	union svr4_siginfo	*si;
-	int			 sig;
-	u_long			 code;
-	caddr_t			 addr;
+svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, caddr_t addr)
 {
+
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
@@ -536,10 +522,9 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
+
 int
-svr4_trap(type, l)
-	int	type;
-	struct lwp *l;
+svr4_trap(int type, struct lwp *l)
 {
 	int n;
 	struct trapframe *tf = l->l_md.md_tf;
@@ -632,10 +617,7 @@ svr4_trap(type, l)
 /*
  */
 int
-svr4_sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysarch_args *uap = v;
 

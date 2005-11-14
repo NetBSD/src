@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.c,v 1.7 2003/07/15 00:05:01 lukem Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.8.2.2 2005/11/14 03:30:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.7 2003/07/15 00:05:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.8.2.2 2005/11/14 03:30:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.7 2003/07/15 00:05:01 lukem Exp $");
 static int serial_refcount;
 static int serial_power;
 
-static int auxiotwomatch __P((struct device *, struct cfdata *, void *));
-
-static void auxiotwoattach
-		__P((struct device *, struct device *, void *));
+static int auxiotwomatch(struct device *, struct cfdata *, void *);
+static void auxiotwoattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(auxiotwo_obio, sizeof(struct device),
      auxiotwomatch, auxiotwoattach, NULL, NULL);
@@ -70,10 +68,7 @@ CFATTACH_DECL(auxiotwo_obio, sizeof(struct device),
  * The OPENPROM calls this "auxio2".
  */
 static int
-auxiotwomatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+auxiotwomatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -84,9 +79,7 @@ auxiotwomatch(parent, cf, aux)
 }
 
 static void
-auxiotwoattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxiotwoattach(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -108,8 +101,7 @@ auxiotwoattach(parent, self, aux)
 }
 
 unsigned int
-auxiotwobisc(bis, bic)
-	int bis, bic;
+auxiotwobisc(int bis, int bic)
 {
 	register int s;
 
@@ -131,8 +123,7 @@ auxiotwobisc(bis, bic)
  * Serial port state - called from zs_enable()/zs_disable()
  */
 void
-auxiotwoserialendis (state)
-	int state;
+auxiotwoserialendis(int state)
 {
 	switch (state) {
 
@@ -155,8 +146,7 @@ auxiotwoserialendis (state)
  * Set power management - called by tctrl
  */
 void
-auxiotwoserialsetapm (state)
-	int state;
+auxiotwoserialsetapm(int state)
 {
 	switch (state) {
 
@@ -191,7 +181,8 @@ auxiotwoserialsetapm (state)
  * Get power management - called by tctrl
  */
 int
-auxiotwoserialgetapm ()
+auxiotwoserialgetapm (void)
 {
+
 	return (serial_power);
 }
