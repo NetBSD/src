@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.1 2005/11/13 06:33:05 hamajima Exp $
+#	$NetBSD: ARMADILLO9,v 1.2 2005/11/14 05:09:31 hamajima Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -71,7 +71,6 @@ options 	INET6		# IPV6
 #options	IPFILTER_LOG	# ipmon(8) log support
 #options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-options		XCAST6		# Explicit Multicast over IPv6
 
 # These options control the verified exec feature
 #options	VERIFIED_EXEC
@@ -142,9 +141,9 @@ options 	SYMTAB_SPACE=450000
 #options 	PMAP_INCLUDE_PTE_SYNC
 #options 	LOCKDEBUG
 
-#config		netbsd		root on ? type ?
+config		netbsd		root on ? type ?
 #config		netbsd		root on epe0 type nfs
-config		netbsd		root on wd0 type ffs
+#config		netbsd		root on wd0 type ffs
 #config		netbsd		root on sd0 type ffs
 
 # The main bus device
@@ -296,7 +295,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	kttcp			# network loopback
-pseudo-device	xcst		1	# Explicit Multicast over IPv6
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
