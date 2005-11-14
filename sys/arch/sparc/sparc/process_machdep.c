@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.12 2005/06/03 22:17:18 martin Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.13 2005/11/14 19:11:24 uwe Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 2005/06/03 22:17:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2005/11/14 19:11:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,50 +110,44 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 2005/06/03 22:17:18 martin 
 #include <sys/ptrace.h>
 
 int
-process_read_regs(p, regs)
-	struct lwp *p;
-	struct reg *regs;
+process_read_regs(struct lwp *p, struct reg *regs)
 {
+
 	/* NOTE: struct reg == struct trapframe */
 	bcopy(p->l_md.md_tf, (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
 
 int
-process_write_regs(p, regs)
-	struct lwp *p;
-	const struct reg *regs;
+process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	int	psr = p->l_md.md_tf->tf_psr & ~PSR_ICC;
+
 	bcopy(regs, p->l_md.md_tf, sizeof(struct reg));
 	p->l_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return (0);
 }
 
 int
-process_sstep(p, sstep)
-	struct lwp *p;
-	int sstep;
+process_sstep(struct lwp *p, int sstep)
 {
+
 	if (sstep)
 		return (EINVAL);
 	return (0);
 }
 
 int
-process_set_pc(p, addr)
-	struct lwp *p;
-	caddr_t addr;
+process_set_pc(struct lwp *p, caddr_t addr)
 {
+
 	p->l_md.md_tf->tf_pc = (u_int)addr;
 	p->l_md.md_tf->tf_npc = (u_int)addr + 4;
 	return (0);
 }
 
 int
-process_read_fpregs(p, regs)
-	struct lwp	*p;
-	struct fpreg	*regs;
+process_read_fpregs(struct lwp *p, struct fpreg *regs)
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate		*statep = &initfpstate;
@@ -166,10 +160,9 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct lwp	*p;
-	const struct fpreg	*regs;
+process_write_fpregs(struct lwp *p, const struct fpreg *regs)
 {
+
 	if (p->l_md.md_fpstate == NULL)
 		return (EINVAL);
 
