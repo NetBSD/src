@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.12 2005/11/06 00:51:13 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.13 2005/11/14 22:34:55 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -199,4 +199,25 @@ sys/fs/msdosfs/msdosfs_vnops.c			1.22
 	PR/32003: Brian Buhrow: msdosfs doesn't properly zero out high
 	cluster data on non-FAT32 msdos filesystems.
 	[christos, ticket #5972]
+
+usr.bin/cap_mkdb/cap_mkdb.c			1.21-1.22
+
+	Write the database file into a temporary file first, because
+	otherwise if we don't specify an output filename, the database file
+	we create will end up being used during population as the database
+	file to find entries quickly.
+	[christos, ticket #5978]
+
+sys/kern/vfs_vnops.c				1.99
+
+	vput() -> vrele(). Vnode is already unlocked.
+	With much help from Pavel Cahyna.  PR#32005
+	[hannken, ticket #5983]
+
+sys/dev/usb/ulpt.c				1.70 via patch
+
+	Fix a long standing typo noticed by Alex Pivovarov on PR/32061.
+	When people use variables like 'flag' and 'flags' in the same function
+	(one local and one passed as a parameter) this is prone to happen..
+	[rpaulo, ticket #5988]
 
