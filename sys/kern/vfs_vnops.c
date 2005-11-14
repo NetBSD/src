@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.77.2.1 2005/11/14 22:16:32 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.77.2.1 2005/11/14 22:16:32 riz Exp $");
 
 #include "fs_union.h"
 
@@ -277,7 +277,7 @@ restart:
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
-			vput(vp);
+			vrele(vp);
 			return (error);
 		}
 		VOP_LEASE(vp, p, cred, LEASE_WRITE);
