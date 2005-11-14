@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.14 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.15 2005/11/14 02:52:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.14 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.15 2005/11/14 02:52:16 uwe Exp $");
 
 #include "opt_kgdb.h"
 
@@ -180,7 +180,7 @@ zs_kgdb_init()
 	zs_setparam(&cs, 0, kgdb_rate);
 
 	/* Store the getc/putc functions and arg. */
-	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
 }
 
 /*
@@ -348,7 +348,7 @@ findzs(zs)
 		 * Have the obio module figure out which virtual
 		 * address the device is mapped to.
 		 */
-		if (obio_find_rom_map(paddr, PMAP_OBIO, PAGE_SIZE, &bh) != 0)
+		if (obio_find_rom_map(paddr, PAGE_SIZE, &bh) != 0)
 			return (NULL);
 
 		return ((void *)bh);
