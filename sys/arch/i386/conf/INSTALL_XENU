@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XENU,v 1.6 2005/09/10 19:20:49 jmmv Exp $
+# $NetBSD: INSTALL_XENU,v 1.7 2005/11/14 17:03:05 gdt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -144,7 +144,7 @@ xbd*		at hypervisor?		# Xen virtual block device
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
 
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/i386/conf/INSTALL.local"
 
 # Pseudo-Devices
 
