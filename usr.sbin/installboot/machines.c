@@ -1,7 +1,7 @@
-/*	$NetBSD: machines.c,v 1.29 2005/11/11 21:09:50 dsl Exp $	*/
+/*	$NetBSD: machines.c,v 1.30 2005/11/14 00:04:34 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.29 2005/11/11 21:09:50 dsl Exp $");
+__RCSID("$NetBSD: machines.c,v 1.30 2005/11/14 00:04:34 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -51,16 +51,16 @@ __RCSID("$NetBSD: machines.c,v 1.29 2005/11/11 21:09:50 dsl Exp $");
 struct ib_mach machines[] = {
 	{ "alpha",	alpha_setboot,	alpha_clearboot, no_editboot,
 		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM },
-	{ "amd64",	i386_setboot,	no_clearboot, i386_editboot,
+	{ "amd64",	i386_setboot,	no_clearboot,	i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT },
-	{ "amiga",	amiga_setboot,	no_clearboot, no_editboot,
+	{ "amiga",	amiga_setboot,	no_clearboot,	no_editboot,
 		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
-	{ "hp300",	hp300_setboot,	no_clearboot, no_editboot,
+	{ "hp300",	hp300_setboot,	no_clearboot,	no_editboot,
 		IB_APPEND },
 	{ "hp700",	hp700_setboot,	hp700_clearboot, no_editboot,
 		0 },
-	{ "i386",	i386_setboot,	no_clearboot, i386_editboot,
+	{ "i386",	i386_setboot,	no_clearboot,	i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT },
 	{ "macppc",	macppc_setboot,	macppc_clearboot, no_editboot,
@@ -69,11 +69,11 @@ struct ib_mach machines[] = {
 		IB_STAGE2START },
 	{ "newsmips",	newsmips_setboot, newsmips_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "next68k",	next68k_setboot, no_clearboot, no_editboot,
+	{ "next68k",	next68k_setboot, no_clearboot,	no_editboot,
 		0 },
-	{ "pmax",	pmax_setboot,	pmax_clearboot, no_editboot,
+	{ "pmax",	pmax_setboot,	pmax_clearboot,	no_editboot,
 		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
-	{ "shark",	no_setboot,	no_clearboot, no_editboot,
+	{ "shark",	no_setboot,	no_clearboot,	no_editboot,
 		0 },
 	{ "sparc",	sparc_setboot,	sparc_clearboot, no_editboot,
 		IB_STAGE2START },
@@ -83,9 +83,9 @@ struct ib_mach machines[] = {
 		IB_STAGE2START },
 	{ "sun3",	sun68k_setboot,	sun68k_clearboot, no_editboot,
 		IB_STAGE2START },
-	{ "vax",	vax_setboot,	vax_clearboot, no_editboot,
+	{ "vax",	vax_setboot,	vax_clearboot,	no_editboot,
 		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
-	{ "x68k",	x68k_setboot,	x68k_clearboot, no_editboot,
+	{ "x68k",	x68k_setboot,	x68k_clearboot,	no_editboot,
 		IB_STAGE1START | IB_STAGE2START },
 	{ 0, 0, 0, 0 },
 };
