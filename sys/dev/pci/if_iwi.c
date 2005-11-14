@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.36 2005/11/14 11:58:52 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.37 2005/11/14 12:07:33 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.36 2005/11/14 11:58:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.37 2005/11/14 12:07:33 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2447,8 +2447,8 @@ iwi_error_log(struct iwi_softc *sc)
 
 		MEM_CPY(sc, &fw_error, b, sizeof(fw_error));
 
-		DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname,
-		    msg[fw_error.type]));
+		printf("%s: %s\n", sc->sc_dev.dv_xname,
+		    msg[fw_error.type]);
 
 		b += sizeof(fw_error);
 	}
