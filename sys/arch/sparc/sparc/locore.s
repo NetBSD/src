@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222 2005/10/26 01:30:20 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.223 2005/11/14 21:40:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2315,7 +2315,7 @@ _ENTRY(_C_LABEL(kgdb_trap_glue))
 	bg	1b
 	 inc	8, %l0
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	/* save old red zone and then turn it off */
 	sethi	%hi(_redzone), %l7
 	ld	[%l7 + %lo(_redzone)], %l6
@@ -2338,7 +2338,7 @@ _ENTRY(_C_LABEL(kgdb_trap_glue))
 	 * after we reset the stack pointer.
 	 */
 	mov	%l4, %sp
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	st	%l6, [%l7 + %lo(_redzone)]	! restore red zone
 #endif
 	ret
@@ -2367,7 +2367,7 @@ kgdb_rett:
 	ld	[%g1], %g2		! pick up new %psr
 	ld	[%g1 + 12], %g3		! set %y
 	wr	%g3, 0, %y
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	st	%l6, [%l7 + %lo(_redzone)] ! and restore red zone
 #endif
 	wr	%g0, 0, %wim		! enable window changes
