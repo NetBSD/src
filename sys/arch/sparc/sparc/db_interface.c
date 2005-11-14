@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.65 2005/10/29 21:18:28 jdc Exp $ */
+/*	$NetBSD: db_interface.c,v 1.66 2005/11/14 03:30:49 uwe Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2005/10/29 21:18:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2005/11/14 03:30:49 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,10 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2005/10/29 21:18:28 jdc Exp $"
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src;
 
@@ -92,10 +89,7 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	const char	*data;
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	extern char	etext[];
 	char	*dst;
@@ -120,7 +114,7 @@ db_regs_t *ddb_regp;
  */
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	asm("ta 0x81");
 	sparc_noop();	/* Force this function to allocate a stack frame */
@@ -134,7 +128,7 @@ static long nil;
 #define dbreg(xx) (long *)offsetof(db_regs_t, db_tf.tf_ ## xx)
 #define dbregfr(xx) (long *)offsetof(db_regs_t, db_fr.fr_ ## xx)
 
-static int db_sparc_regop (const struct db_variable *, db_expr_t *, int);
+static int db_sparc_regop(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
 	{ "psr",	dbreg(psr),		db_sparc_regop, },
@@ -201,24 +195,23 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap __P((struct trapframe *));
-void db_prom_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_proc_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_dump_pcb __P((db_expr_t, int, db_expr_t, const char *));
-void db_lock_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_simple_lock_cmd __P((db_expr_t, int, db_expr_t, const char *));
-void db_uvmhistdump __P((db_expr_t, int, db_expr_t, const char *));
+void kdb_kbd_trap(struct trapframe *);
+void db_prom_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_proc_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_dump_pcb(db_expr_t, int, db_expr_t, const char *);
+void db_lock_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_simple_lock_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_uvmhistdump(db_expr_t, int, db_expr_t, const char *);
 #ifdef MULTIPROCESSOR
-void db_cpu_cmd __P((db_expr_t, int, db_expr_t, const char *));
+void db_cpu_cmd(db_expr_t, int, db_expr_t, const char *);
 #endif
-void db_page_cmd __P((db_expr_t, int, db_expr_t, const char *));
+void db_page_cmd(db_expr_t, int, db_expr_t, const char *);
 
 /*
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kbd_trap(tf)
-	struct trapframe *tf;
+kdb_kbd_trap(struct trapframe *tf)
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
@@ -235,7 +228,7 @@ struct cpu_info *ddb_cpuinfo;
 
 static int db_suspend_others(void);
 static void db_resume_others(void);
-void ddb_suspend(struct trapframe *tf);
+void ddb_suspend(struct trapframe *);
 
 /* from cpu.c */
 void mp_pause_cpus_ddb(void);
@@ -295,9 +288,7 @@ ddb_suspend(struct trapframe *tf)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, tf)
-	int	type;
-	struct trapframe *tf;
+kdb_trap(int type, struct trapframe *tf)
 {
 	db_regs_t dbregs;
 	int s;
@@ -359,11 +350,7 @@ kdb_trap(type, tf)
 }
 
 void
-db_proc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -400,11 +387,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_dump_pcb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct pcb *pcb;
 	char bits[64];
@@ -447,22 +430,14 @@ db_dump_pcb(addr, have_addr, count, modif)
 }
 
 void
-db_prom_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_prom_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	prom_abort();
 }
 
 void
-db_page_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_page_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 
 	if (!have_addr) {
@@ -475,11 +450,7 @@ db_page_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_lock_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct lock *l;
 
@@ -497,11 +468,8 @@ db_lock_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_simple_lock_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_simple_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+		   const char *modif)
 {
 	struct simplelock *l;
 
@@ -525,11 +493,7 @@ db_simple_lock_cmd(addr, have_addr, count, modif)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_cpu_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	const char *	modif;
+db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {
@@ -565,15 +529,14 @@ db_cpu_cmd(addr, have_addr, count, modif)
 
 #include <uvm/uvm.h>
 
-extern void uvmhist_dump __P((struct uvm_history *));
+#ifdef UVMHIST
+extern void uvmhist_dump(struct uvm_history *);
+#endif
 extern struct uvm_history_head uvm_histories;
 
 void
-db_uvmhistdump(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_uvmhistdump(db_expr_t addr, int have_addr, db_expr_t count,
+	       const char *modif)
 {
 
 	uvmhist_dump(uvm_histories.lh_first);
@@ -607,10 +570,7 @@ const struct db_command db_machine_command_table[] = {
  * much simpler this way.
  */
 db_addr_t
-db_branch_taken(inst, pc, regs)
-	int inst;
-	db_addr_t pc;
-	db_regs_t *regs;
+db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
     union instr insn;
     db_addr_t npc = ddb_regp->db_tf.tf_npc;
@@ -651,8 +611,7 @@ db_branch_taken(inst, pc, regs)
 }
 
 boolean_t
-db_inst_branch(inst)
-	int inst;
+db_inst_branch(int inst)
 {
     union instr insn;
 
@@ -677,8 +636,7 @@ db_inst_branch(inst)
 
 
 boolean_t
-db_inst_call(inst)
-	int inst;
+db_inst_call(int inst)
 {
     union instr insn;
 
@@ -698,8 +656,7 @@ db_inst_call(inst)
 
 
 boolean_t
-db_inst_unconditional_flow_transfer(inst)
-	int inst;
+db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
 
@@ -727,16 +684,15 @@ db_inst_unconditional_flow_transfer(inst)
 
 
 boolean_t
-db_inst_return(inst)
-	int inst;
+db_inst_return(int inst)
 {
+
     return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
 boolean_t
-db_inst_trap_return(inst)
-	int inst;
+db_inst_trap_return(int inst)
 {
     union instr insn;
 
@@ -748,8 +704,7 @@ db_inst_trap_return(inst)
 
 
 int
-db_inst_load(inst)
-	int inst;
+db_inst_load(int inst)
 {
     union instr insn;
 
@@ -789,8 +744,7 @@ db_inst_load(inst)
 }
 
 int
-db_inst_store(inst)
-	int inst;
+db_inst_store(int inst)
 {
     union instr insn;
 
