@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.36 2005/06/19 20:00:28 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.37 2005/11/14 19:11:24 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.36 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.37 2005/11/14 19:11:24 uwe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -495,13 +495,7 @@ prom_boot(char *str)
  * This is not safe, but then what do you expect?
  */
 void
-#ifdef __STDC__
 prom_printf(const char *fmt, ...)
-#else
-prom_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 static	char buf[256];
 	int i, len;
@@ -1004,9 +998,7 @@ prom_getidprom(void)
 	return (&idprom);
 }
 
-void prom_getether(node, cp)
-	int node;
-	u_char *cp;
+void prom_getether(int node, u_char *cp)
 {
 	struct idprom *idp = prom_getidprom();
 	char buf[6+1], *bp;
@@ -1091,7 +1083,7 @@ static void prom_init_obp(void);
 static void prom_init_opf(void);
 
 static __inline__ void
-prom_init_oldmon()
+prom_init_oldmon(void)
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 	extern void sparc_noop(void);
@@ -1130,7 +1122,7 @@ prom_init_oldmon()
 }
 
 static __inline__ void
-prom_init_obp()
+prom_init_obp(void)
 {
 	struct nodeops *no;
 
@@ -1236,7 +1228,7 @@ prom_init_obp()
 }
 
 static __inline__ void
-prom_init_opf()
+prom_init_opf(void)
 {
 	int node;
 
@@ -1287,7 +1279,7 @@ prom_init_opf()
  * Initialize our PROM operations vector.
  */
 void
-prom_init()
+prom_init(void)
 {
 #ifdef _STANDALONE
 	int node;

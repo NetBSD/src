@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.19 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: timer.c,v 1.20 2005/11/14 19:11:24 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.19 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.20 2005/11/14 19:11:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,8 +81,7 @@ static struct intrhand level14;
  * sun4/sun4c/sun4m common timer attach code
  */
 void
-timerattach(cntreg, limreg)
-	volatile int *cntreg, *limreg;
+timerattach(volatile int *cntreg, volatile int *limreg)
 {
 
 	/*
@@ -222,6 +221,7 @@ timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 static void
 timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
+
 #if defined(SUN4C)
 	timerattach_mainbus_4c(parent, self, aux);
 #endif /* SUN4C */

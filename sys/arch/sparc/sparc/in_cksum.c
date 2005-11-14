@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.15 2003/10/13 14:22:20 agc Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.16 2005/11/14 19:11:24 uwe Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.15 2003/10/13 14:22:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.16 2005/11/14 19:11:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,19 +263,14 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 }
 
 int
-in_cksum(m, len)
-	struct mbuf *m;
-	int len;
+in_cksum(struct mbuf *m, int len)
 {
 
 	return (in_cksum_internal(m, 0, len, 0));
 }
 
 int
-in4_cksum(m, nxt, off, len)
-	struct mbuf *m;
-	u_int8_t nxt;
-	int off, len;
+in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 {
 	u_char *w;
 	u_int sum = 0;
