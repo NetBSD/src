@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.44 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.44.2.1 2005/11/15 05:36:49 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.44 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.44.2.1 2005/11/15 05:36:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ printf("coda_rdwr: Internally Opening %p\n", vp);
 			coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount)); )
 
     if (rw == UIO_READ) {
-	error = VOP_READ(cfvp, uiop, ioflag, cred);
+	error = VOP_READ(cfvp, uiop, NULL, ioflag, cred);
     } else {
 	error = VOP_WRITE(cfvp, uiop, ioflag, cred);
     }
