@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.2 2005/11/15 10:46:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.2 2005/11/15 10:46:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.1 2005/11/15 05:36:49 ya
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
+#include <uvm/uvm_readahead.h>
 
 #define doclusterread 0 /* XXX underway */
 #define doclusterwrite 0
