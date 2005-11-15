@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.137 2005/11/11 15:50:57 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.137.2.1 2005/11/15 03:48:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.137 2005/11/11 15:50:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.137.2.1 2005/11/15 03:48:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1602,7 +1602,7 @@ ufs_readdir(void *v)
 	cdbuf = malloc(rcount, M_TEMP, M_WAITOK);
 	aiov.iov_base = cdbuf;
 	aiov.iov_len = rcount;
-	error = VOP_READ(vp, &auio, 0, ap->a_cred);
+	error = VOP_READ(vp, &auio, NULL, 0, ap->a_cred);
 	if (error != 0) {
 		free(cdbuf, M_TEMP);
 		return error;
@@ -1703,7 +1703,7 @@ ufs_readlink(void *v)
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
-	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
+	return (VOP_READ(vp, ap->a_uio, NULL, 0, ap->a_cred));
 }
 
 /*

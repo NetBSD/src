@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.137 2005/11/04 19:39:30 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.137.2.1 2005/11/15 03:48:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137 2005/11/04 19:39:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137.2.1 2005/11/15 03:48:47 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137 2005/11/04 19:39:30 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_readahead.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -77,9 +78,10 @@ static int nfs_doio_phys __P((struct buf *, struct uio *));
  * Any similarity to readip() is purely coincidental
  */
 int
-nfs_bioread(vp, uio, ioflag, cred, cflag)
+nfs_bioread(vp, uio, ra, ioflag, cred, cflag)
 	struct vnode *vp;
 	struct uio *uio;
+	struct uvm_ractx *ra;
 	int ioflag, cflag;
 	struct ucred *cred;
 {
@@ -203,6 +205,8 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
+			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
+			    bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.109.2.1 2005/11/14 12:39:51 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.109.2.2 2005/11/15 03:48:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.109.2.1 2005/11/14 12:39:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.109.2.2 2005/11/15 03:48:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1708,7 +1708,7 @@ genfs_compat_getpages(void *v)
 		uio.uio_resid = PAGE_SIZE;
 		uio.uio_procp = NULL;
 		/* XXX vn_lock */
-		error = VOP_READ(vp, &uio, 0, cred);
+		error = VOP_READ(vp, &uio, NULL, 0, cred);
 		if (error) {
 			break;
 		}
