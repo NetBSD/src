@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.21 2005/10/30 07:55:46 tsutsui Exp $
+$NetBSD: TODO,v 1.22 2005/11/15 12:09:43 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -99,10 +99,6 @@ XXX some entries might be obsolete.
 	-   if (ipending & INT_MASK_REAL_DEV) == 0,
 	    softnet() and softclock() are handled with all interrupt disabled.
 		-> overblocking, possibly causes missing hardclock()
-
-	-   `netisr' handling in netintr() implies potential race condition.
-	    The access to `netisr' should be protected by splnet().
-	    Currently this is not real problem due to above overblocking.
 
 	-   INT_MASK_REAL_DEV should be removed
 
