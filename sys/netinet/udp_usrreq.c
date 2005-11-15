@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.142 2005/09/03 18:01:07 kleink Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.143 2005/11/15 18:39:46 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.142 2005/09/03 18:01:07 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.143 2005/11/15 18:39:46 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1226,7 +1226,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		error = in_pcbconnect(inp, nam);
+		error = in_pcbconnect(inp, nam, p);
 		if (error)
 			break;
 		soisconnected(so);
@@ -1268,7 +1268,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = in_pcbconnect(inp, nam);
+			error = in_pcbconnect(inp, nam, p);
 			if (error)
 				goto die;
 		} else {
