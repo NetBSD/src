@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.35 2005/07/10 00:18:52 thorpej Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.35.6.1 2005/11/15 03:48:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.35 2005/07/10 00:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.35.6.1 2005/11/15 03:48:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -765,7 +765,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
+	error = VOP_READ(dqvp, &auio, NULL, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset((caddr_t)&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
