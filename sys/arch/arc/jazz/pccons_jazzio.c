@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_jazzio.c,v 1.6 2005/11/05 09:50:51 tsutsui Exp $ */
+/* $NetBSD: pccons_jazzio.c,v 1.7 2005/11/15 12:12:21 tsutsui Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.6 2005/11/05 09:50:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.7 2005/11/15 12:12:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ pccons_jazzio_init(void)
 	/* nothing to do */
 }
 
-int	pccons_jazzio_init_tag(char*, bus_space_tag_t*,bus_space_tag_t*);
+int	pccons_jazzio_init_tag(const char *, bus_space_tag_t*,bus_space_tag_t*);
 
 int
-pccons_jazzio_init_tag(char *name, bus_space_tag_t *iotp,
+pccons_jazzio_init_tag(const char *name, bus_space_tag_t *iotp,
     bus_space_tag_t *memtp)
 {
 	static int initialized = 0;
