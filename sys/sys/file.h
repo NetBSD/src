@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.53 2005/02/12 23:14:03 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.53.12.1 2005/11/15 04:17:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,6 +50,7 @@ struct uio;
 struct iovec;
 struct stat;
 struct knote;
+struct uvm_ractx;
 
 /*
  * Kernel descriptor table.
@@ -90,6 +91,7 @@ struct file {
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	struct simplelock f_slock;
+	struct uvm_ractx *f_ractx;
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
