@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.17 2005/11/11 15:50:57 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.17.2.1 2005/11/15 10:47:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17 2005/11/11 15:50:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17.2.1 2005/11/15 10:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17 2005/11/11 15:50:57 yamt Exp $
 #include <fs/cd9660/cd9660_node.h>
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_mount.h>
+
+#include <uvm/uvm_readahead.h>
 
 /*
  * Structure for reading directories
@@ -246,11 +248,13 @@ cd9660_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
+		struct uvm_ractx *a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
+	struct uvm_ractx *ra = ap->a_ra;
 	struct iso_node *ip = VTOI(vp);
 	struct iso_mnt *imp;
 	struct buf *bp;
@@ -280,6 +284,8 @@ cd9660_read(v)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
+			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
+			    bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
