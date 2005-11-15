@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.2 2005/11/15 05:24:48 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.3 2005/11/15 11:28:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.2 2005/11/15 05:24:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.3 2005/11/15 11:28:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -81,10 +81,10 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 {
 	const off_t endoff = off + sz;
 
-#if 0
+#if defined(READAHEAD_DEBUG)
 	printf("%s: uobj=%p, off=%" PRIu64 ", endoff=%" PRIu64 "\n",
 	    __func__, uobj, off, endoff);
-#endif
+#endif /* defined(READAHEAD_DEBUG) */
 	off = trunc_page(off);
 	while (off < endoff) {
 		const size_t chunksize = MAXPHYS;
@@ -97,10 +97,10 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		KASSERT((chunksize & (chunksize - 1)) == 0);
 		KASSERT((off & PAGE_MASK) == 0);
 		bytelen = ((off + chunksize) & -(off_t)chunksize) - off;
-#if 0
+#if defined(READAHEAD_DEBUG)
 		printf("%s: off=%" PRIu64 ", bytelen=%zu\n",
 		    __func__, off, bytelen);
-#endif
+#endif /* defined(READAHEAD_DEBUG) */
 		KASSERT((bytelen & PAGE_MASK) == 0);
 		npages = orignpages = bytelen >> PAGE_SHIFT;
 		KASSERT(npages != 0);
@@ -108,22 +108,16 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, 0, 0);
 		if (error) {
-#if 1
+#if defined(READAHEAD_DEBUG)
 			if (error != EINVAL) {
 				printf("%s: error=%d\n", __func__, error);
 			}
-#endif
+#endif /* defined(READAHEAD_DEBUG) */
 			break;
 		}
+		KASSERT(orignpages != npages);
 		donebytes = orignpages << PAGE_SHIFT;
 		off += donebytes;
-		if (orignpages != npages) {
-#if 1
-			printf("%s: orignpages=%d, npages=%d\n",
-			    __func__, orignpages, npages);
-#endif
-			/* XXX */
-		}
 	}
 
 	return off;
