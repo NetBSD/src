@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.14 2005/08/30 19:11:43 xtraeme Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.14.6.1 2005/11/15 05:36:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.14 2005/08/30 19:11:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.14.6.1 2005/11/15 05:36:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,7 +660,7 @@ union_copyfile(fvp, tvp, cred, p)
 		iov.iov_len = MAXBSIZE;
 		uio.uio_resid = iov.iov_len;
 		uio.uio_rw = UIO_READ;
-		error = VOP_READ(fvp, &uio, 0, cred);
+		error = VOP_READ(fvp, &uio, NULL, 0, cred);
 
 		if (error == 0) {
 			uio.uio_iov = &iov;
