@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136.6.1 2005/11/15 03:46:15 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.2 2005/11/15 05:24:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.1 2005/11/15 03:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.2 2005/11/15 05:24:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,7 +1004,8 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	 */
 	nfiles++;
 	memset(fp, 0, sizeof(struct file));
-	/* fp->f_ractx = NULL */
+	fp->f_ractx = NULL;
+	fp->f_advice = POSIX_FADV_NORMAL;
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -1556,6 +1557,81 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
+}
+
+/* ARGSUSED */
+int
+sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
+{
+	const struct sys_posix_fadvise_args /* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(size_t) len;
+		syscallarg(int) advice;
+	} */ *uap = v;
+	const int fd = SCARG(uap, fd);
+	const int advice = SCARG(uap, advice);
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct uvm_ractx *ra;
+	int error = 0;
+
+	fp = fd_getfile(p->p_fd, fd);
+	if (fp == NULL) {
+		return EBADF;
+	}
+	FILE_USE(fp);
+
+	if (fp->f_type != DTYPE_VNODE) {
+		if (fp->f_type == DTYPE_PIPE || fp->f_type == DTYPE_SOCKET) {
+			error = ESPIPE;
+		} else {
+			error = EOPNOTSUPP;
+		}
+		goto out;
+	}
+
+	switch (advice) {
+	case POSIX_FADV_NORMAL:
+	case POSIX_FADV_SEQUENTIAL:
+	case POSIX_FADV_RANDOM:
+
+		/*
+		 * we ignore offset and size.
+		 */
+
+		if (fp->f_advice == advice) {
+			break;
+		}
+
+		fp->f_advice = advice;
+
+		simple_lock(&fp->f_slock);
+		ra = fp->f_ractx;
+		fp->f_ractx = NULL;
+		simple_unlock(&fp->f_slock);
+		if (ra != NULL) {
+			uvm_ra_freectx(ra);
+		}
+		break;
+
+	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_DONTNEED:
+	case POSIX_FADV_NOREUSE:
+
+		/*
+		 * not implemented yet.
+		 */
+
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+out:
+	FILE_UNUSE(fp, p);
+	*retval = error;
+	return 0;
 }
 
 /*

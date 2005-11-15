@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.53.12.1 2005/11/15 04:17:21 yamt Exp $	*/
+/*	$NetBSD: file.h,v 1.53.12.2 2005/11/15 05:24:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,6 +92,7 @@ struct file {
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	struct simplelock f_slock;
 	struct uvm_ractx *f_ractx;
+	int		f_advice;
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */

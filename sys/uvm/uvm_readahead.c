@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.1 2005/11/15 01:57:25 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.2 2005/11/15 05:24:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.1 2005/11/15 01:57:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.2 2005/11/15 05:24:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
+#include <sys/fcntl.h>	/* POSIX_FADV_* */
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -38,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.1 2005/11/15 01:57:25 yamt E
 struct uvm_ractx {
 	int ra_flags;
 #define	RA_VALID	1
+	int ra_advice;
 	off_t ra_winstart;
 	size_t ra_winsize;
 	off_t ra_next;
@@ -50,6 +52,7 @@ struct uvm_ractx {
 
 #define	RA_WINSIZE_INIT	MAXPHYS
 #define	RA_WINSIZE_MAX	(MAXPHYS * 8)
+#define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX
 #define	RA_MINSIZE	(MAXPHYS * 2)
 
 static off_t ra_startio(struct uvm_object *, off_t, size_t);
@@ -129,13 +132,19 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 /* ------------------------------------------------------------ */
 
 struct uvm_ractx *
-uvm_ra_allocctx(int hint)
+uvm_ra_allocctx(int advice)
 {
 	struct uvm_ractx *ra;
+
+	KASSERT(advice == POSIX_FADV_NORMAL ||
+	    advice == POSIX_FADV_SEQUENTIAL ||
+	    advice == POSIX_FADV_RANDOM);
 
 	ra = ra_allocctx();
 	if (ra != NULL) {
 		ra->ra_flags = 0;
+		ra->ra_winstart = 0;
+		ra->ra_advice = advice;
 	}
 
 	return ra;
@@ -156,6 +165,27 @@ uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
 
 	if (ra == NULL) {
 		return;
+	}
+
+	switch (ra->ra_advice) {
+	case POSIX_FADV_NORMAL:
+		break;
+
+	case POSIX_FADV_RANDOM:
+		return;
+
+	case POSIX_FADV_SEQUENTIAL:
+		if (reqoff <= ra->ra_winstart) {
+			ra->ra_next = reqoff;
+		}
+		ra->ra_winsize = RA_WINSIZE_SEQENTIAL;
+		goto do_readahead;
+
+	default:
+#if defined(DIAGNOSTIC)
+		panic("%s: unknown advice %d", __func__, ra->ra_advice);
+#endif /* defined(DIAGNOSTIC) */
+		break;
 	}
 
 	if ((ra->ra_flags & RA_VALID) == 0) {
@@ -180,6 +210,7 @@ initialize:
 	 * hit
 	 */
 
+do_readahead:
 	if (reqoff > ra->ra_next) {
 		ra->ra_next = reqoff;
 	}
