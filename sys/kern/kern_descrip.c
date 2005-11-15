@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.1 2005/11/15 03:46:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.1 2005/11/15 03:46:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_readahead.h>
 
 /*
  * Descriptor management.
@@ -1002,6 +1004,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	 */
 	nfiles++;
 	memset(fp, 0, sizeof(struct file));
+	/* fp->f_ractx = NULL */
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -1044,6 +1047,9 @@ ffree(struct file *fp)
 #endif
 	nfiles--;
 	simple_unlock(&filelist_slock);
+	if (fp->f_ractx != NULL) {
+		uvm_ra_freectx(fp->f_ractx);
+	}
 	pool_put(&file_pool, fp);
 }
 
