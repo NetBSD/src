@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.14 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.14.2.1 2005/11/15 10:47:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.14 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.14.2.1 2005/11/15 10:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.14 2005/11/02 12:38:58 yamt Exp
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
+
+#include <uvm/uvm_readahead.h>
 
 /*
  * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
@@ -175,11 +177,13 @@ filecore_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
+		struct uvm_ractx *a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
+	struct uvm_ractx *ra = ap->a_ra;
 	struct filecore_node *ip = VTOI(vp);
 	struct filecore_mnt *fcmp;
 	struct buf *bp;
@@ -210,6 +214,8 @@ filecore_read(v)
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
+			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
+			    bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
