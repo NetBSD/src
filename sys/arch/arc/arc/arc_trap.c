@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.30 2005/11/15 14:03:20 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.30 2005/11/15 14:03:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
-	if (ipending & MIPS_INT_MASK_CLOCK) {
+	if (ipending & MIPS_INT_MASK_5) {
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
@@ -173,7 +173,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	uvmexp.intrs++;
 	/* real device interrupt */
-	if (ipending & INT_MASK_REAL_DEV) {
+	if (ipending & MIPS3_HARD_INT_MASK) {
 		_splset(arc_hardware_intr(status, cause, pc, ipending));
 	}
 
