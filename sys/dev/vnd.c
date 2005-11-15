@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.123 2005/10/15 17:29:12 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.123.6.1 2005/11/15 04:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.123 2005/10/15 17:29:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.123.6.1 2005/11/15 04:12:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1350,7 +1350,7 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
+	error = VOP_READ(vnd->sc_vp, &auio, NULL, 0, vnd->sc_cred);
 	if (error == 0) {
 		/*
 		 * Because vnd does all IO directly through the vnode
