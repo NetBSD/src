@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.149 2005/09/26 03:02:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.149.6.1 2005/11/15 05:11:50 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -782,3 +782,5 @@
 388	STD		{ int sys___fstat30(int fd, struct stat *sb); }
 389	STD		{ int sys___lstat30(const char *path, struct stat *ub); }
 390	STD		{ int sys___getdents30(int fd, char *buf, size_t count); }
+391	STD		{ int sys_posix_fadvise(int fd, off_t offset, \
+			    size_t len, int advice); }
