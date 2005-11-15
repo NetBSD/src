@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.38 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ ext2fs_read(void *v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
+		struct uvm_ractx *a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
@@ -115,11 +116,13 @@ ext2fs_read(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error, flags;
+	struct uvm_ractx *ra;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	ump = ip->i_ump;
 	uio = ap->a_uio;
+	ra = ap->a_ra;
 	error = 0;
 
 #ifdef DIAGNOSTIC
@@ -150,6 +153,8 @@ ext2fs_read(void *v)
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
+			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
+			    bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
