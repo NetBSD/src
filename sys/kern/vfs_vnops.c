@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.99 2005/11/08 11:35:51 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.99.2.1 2005/11/15 03:46:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99 2005/11/08 11:35:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99.2.1 2005/11/15 03:46:15 yamt Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99 2005/11/08 11:35:51 hannken Exp $
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_readahead.h>
 
 #ifdef UNION
 #include <fs/union/union.h>
@@ -374,7 +375,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	auio.uio_rw = rw;
 	auio.uio_procp = p;
 	if (rw == UIO_READ) {
-		error = VOP_READ(vp, &auio, ioflg, cred);
+		error = VOP_READ(vp, &auio, NULL, ioflg, cred);
 	} else {
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
 	}
@@ -455,6 +456,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag = 0;
+	struct uvm_ractx *ra;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	if (fp->f_flag & FNONBLOCK)
@@ -463,13 +465,33 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
+
+	simple_lock(&fp->f_slock);
+	ra = fp->f_ractx;
+	fp->f_ractx = NULL;
+	simple_unlock(&fp->f_slock);
+	if (ra == NULL) {
+		ra = uvm_ra_allocctx(0);
+	}
+
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
-	error = VOP_READ(vp, uio, ioflag, cred);
+	error = VOP_READ(vp, uio, ra, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
 		*offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0);
+
+	simple_lock(&fp->f_slock);
+	if (fp->f_ractx == NULL) {
+		fp->f_ractx = ra;
+		ra = NULL;
+	}
+	simple_unlock(&fp->f_slock);
+	if (ra != NULL) {
+		uvm_ra_freectx(ra);
+	}
+
 	return (error);
 }
 
