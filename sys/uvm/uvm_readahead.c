@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.3 2005/11/15 11:28:39 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.4 2005/11/15 11:32:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.3 2005/11/15 11:28:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.4 2005/11/15 11:32:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -115,7 +115,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 #endif /* defined(READAHEAD_DEBUG) */
 			break;
 		}
-		KASSERT(orignpages != npages);
+		KASSERT(orignpages == npages);
 		donebytes = orignpages << PAGE_SHIFT;
 		off += donebytes;
 	}
