@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.36 2005/11/14 22:48:34 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.37 2005/11/16 02:15:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.36 2005/11/14 22:48:34 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.37 2005/11/16 02:15:08 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -301,7 +301,7 @@ kdpoll(dev_t dev, int events, struct proc *p)
 
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -648,7 +648,7 @@ consinit(void)
 		/*
 		 * Translate the STDIO package instance (`ihandle') -- that
 		 * the PROM has already opened for us -- to a device tree
-		 * node (i.e. a `phandle'). 
+		 * node (i.e. a `phandle').
 		 */
 
 		prom_stdin_node = prom_instance_to_package(prom_stdin());
