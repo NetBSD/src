@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.27 2005/07/06 11:31:16 macallan Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.28 2005/11/16 02:13:18 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.27 2005/07/06 11:31:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.28 2005/11/16 02:13:18 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,15 +112,15 @@ struct tctrl_softc {
 	volatile unsigned short	sc_lcdstate;
 	enum { TCTRL_IDLE, TCTRL_ARGS,
 		TCTRL_ACK, TCTRL_DATA } sc_state;
-	u_int8_t	sc_cmdbuf[16];
-	u_int8_t	sc_rspbuf[16];
-	u_int8_t	sc_bitport;
-	u_int8_t	sc_tft_on;
-	u_int8_t	sc_op;
-	u_int8_t	sc_cmdoff;
-	u_int8_t	sc_cmdlen;
-	u_int8_t	sc_rspoff;
-	u_int8_t	sc_rsplen;
+	uint8_t		sc_cmdbuf[16];
+	uint8_t		sc_rspbuf[16];
+	uint8_t		sc_bitport;
+	uint8_t		sc_tft_on;
+	uint8_t		sc_op;
+	uint8_t		sc_cmdoff;
+	uint8_t		sc_cmdlen;
+	uint8_t		sc_rspoff;
+	uint8_t		sc_rsplen;
 	/* APM stuff */
 #define APM_NEVENTS 16
 	struct	apm_event_info sc_event_list[APM_NEVENTS];
@@ -135,7 +135,7 @@ struct tctrl_softc {
 	struct	envsys_tre_data sc_tre[ENVSYS_NUMSENSORS];
 	struct	envsys_basic_info sc_binfo[ENVSYS_NUMSENSORS];
 	struct	envsys_range sc_range[ENVSYS_NUMSENSORS];
-	
+
 	struct	sysmon_pswitch sc_smcontext;
 	int	sc_powerpressed;
 };
@@ -145,23 +145,19 @@ struct tctrl_softc {
 
 static struct callout tctrl_event_ch = CALLOUT_INITIALIZER;
 
-static int tctrl_match __P((struct device *parent, struct cfdata *cf,
-	void *aux));
-static void tctrl_attach __P((struct device *parent, struct device *self,
-	void *aux));
-static void tctrl_write __P((struct tctrl_softc *sc, bus_size_t off,
-	u_int8_t v));
-static u_int8_t tctrl_read __P((struct tctrl_softc *sc, bus_size_t off));
-static void tctrl_write_data __P((struct tctrl_softc *sc, u_int8_t v));
-static u_int8_t tctrl_read_data __P((struct tctrl_softc *sc));
-static int tctrl_intr __P((void *arg));
-static void tctrl_setup_bitport __P((void));
-static void tctrl_setup_bitport_nop __P((void));
-static void tctrl_read_ext_status __P((void));
-static void tctrl_read_event_status __P((void *arg));
-static int tctrl_apm_record_event __P((struct tctrl_softc *sc,
-	u_int event_type));
-static void tctrl_init_lcd __P((void));
+static int tctrl_match(struct device *, struct cfdata *, void *);
+static void tctrl_attach(struct device *, struct device *, void *);
+static void tctrl_write(struct tctrl_softc *, bus_size_t, uint8_t);
+static uint8_t tctrl_read(struct tctrl_softc *, bus_size_t);
+static void tctrl_write_data(struct tctrl_softc *, uint8_t);
+static uint8_t tctrl_read_data(struct tctrl_softc *);
+static int tctrl_intr(void *);
+static void tctrl_setup_bitport(void);
+static void tctrl_setup_bitport_nop(void);
+static void tctrl_read_ext_status(void);
+static void tctrl_read_event_status(void *);
+static int tctrl_apm_record_event(struct tctrl_softc *, u_int);
+static void tctrl_init_lcd(void);
 
 static void tctrl_sensor_setup(struct tctrl_softc *);
 static int tctrl_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
@@ -173,15 +169,12 @@ static int tctrl_powerfail(void *);
 CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
     tctrl_match, tctrl_attach, NULL, NULL);
 
-extern struct cfdriver tctrl_cd;
+
 /* XXX wtf is this? see i386/apm.c */
 int tctrl_apm_evindex;
 
 static int
-tctrl_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tctrl_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -198,10 +191,7 @@ tctrl_match(parent, cf, aux)
 }
 
 static void
-tctrl_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tctrl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tctrl_softc *sc = (void *)self;
 	union obio_attach_args *uoba = aux;
@@ -270,7 +260,7 @@ tctrl_attach(parent, self, aux)
 
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
-	
+
 	/* initialize the LCD */
 	tctrl_init_lcd();
 
@@ -280,8 +270,7 @@ tctrl_attach(parent, self, aux)
 }
 
 static int
-tctrl_intr(arg)
-	void *arg;
+tctrl_intr(void *arg)
 {
 	struct tctrl_softc *sc = arg;
 	unsigned int v, d;
@@ -297,7 +286,7 @@ tctrl_intr(arg)
 	v &= ~(TS102_UCTRL_STS_RXO_STA|TS102_UCTRL_STS_TXE_STA);
 	if (sc->sc_cmdoff >= sc->sc_cmdlen) {
 		v &= ~TS102_UCTRL_STS_TXNF_STA;
-		if (tctrl_read(sc, TS102_REG_UCTRL_INT) & 
+		if (tctrl_read(sc, TS102_REG_UCTRL_INT) &
 		    TS102_UCTRL_INT_TXNF_REQ) {
 			tctrl_write(sc, TS102_REG_UCTRL_INT, 0);
 			progress = 1;
@@ -416,7 +405,7 @@ tctrl_setup_bitport_nop(void)
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 	int s;
-	
+
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	req.cmdbuf[0] = TS102_OP_CTL_BITPORT;
 	req.cmdbuf[1] = 0xff;
@@ -436,7 +425,7 @@ tctrl_setup_bitport(void)
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 	int s;
-	
+
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	s = splts102();
 	if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
@@ -595,9 +584,7 @@ tctrl_init_lcd(void)
  */
 
 void
-tctrl_set_lcd(what, which)
-	int what;
-	unsigned short which;
+tctrl_set_lcd(int what, unsigned short which)
 {
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
@@ -617,8 +604,8 @@ tctrl_set_lcd(what, which)
 	 * and totally undocumented.
 	 */
 	if ((what == 1) || (what == 2 && !(sc->sc_lcdstate & which))) {
-		req.cmdbuf[2] = (u_int8_t)(which&0xff);
-		req.cmdbuf[3] = (u_int8_t)((which&0x100)>>8);
+		req.cmdbuf[2] = (uint8_t)(which&0xff);
+		req.cmdbuf[3] = (uint8_t)((which&0x100)>>8);
 		sc->sc_lcdstate|=which;
 	} else {
 		req.cmdbuf[2] = 0;
@@ -626,14 +613,14 @@ tctrl_set_lcd(what, which)
 		sc->sc_lcdstate&=(~which);
 	}
 	req.cmdbuf[0] = TS102_OP_CTL_LCD;
-	req.cmdbuf[1] = (u_int8_t)((~which)&0xff);
-	req.cmdbuf[4] = (u_int8_t)((~which>>8)&1);
-	
+	req.cmdbuf[1] = (uint8_t)((~which)&0xff);
+	req.cmdbuf[4] = (uint8_t)((~which>>8)&1);
+
 
 	/* XXX this thing is weird.... */
 	req.cmdlen = 3;
 	req.rsplen = 2;
-	
+
 	/* below are the values one would expect but which won't work */
 #if 0
 	req.cmdlen = 5;
@@ -651,7 +638,7 @@ tctrl_read_ext_status(void)
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 	int s;
-	
+
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
 	req.cmdlen = 1;
@@ -674,9 +661,7 @@ tctrl_read_ext_status(void)
  * return 1 if the kernel driver should do so.
  */
 static int
-tctrl_apm_record_event(sc, event_type)
-	struct tctrl_softc *sc;
-	u_int event_type;
+tctrl_apm_record_event(struct tctrl_softc *sc, u_int event_type)
 {
 	struct apm_event_info *evp;
 
@@ -695,14 +680,13 @@ tctrl_apm_record_event(sc, event_type)
 }
 
 static void
-tctrl_read_event_status(arg)
-	void *arg;
+tctrl_read_event_status(void *arg)
 {
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 	int s;
 	unsigned int v;
-	
+
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	req.cmdbuf[0] = TS102_OP_RD_EVENT_STATUS;
 	req.cmdlen = 1;
@@ -714,7 +698,7 @@ tctrl_read_event_status(arg)
 #ifdef TCTRLDEBUG
 	printf("event: %x\n",v);
 #endif
-	if (v & TS102_EVENT_STATUS_POWERON_BTN_PRESSED) {	
+	if (v & TS102_EVENT_STATUS_POWERON_BTN_PRESSED) {
 		printf("%s: Power button pressed\n",sc->sc_dev.dv_xname);
 		tctrl_powerfail(sc);
 	}
@@ -725,7 +709,7 @@ tctrl_read_event_status(arg)
 /*printf("%s: VERY LOW POWER WARNING!\n", sc->sc_dev.dv_xname);*/
 /* according to a tadpole header, and observation */
 #ifdef TCTRLDEBUG
-		printf("%s: Battery charge level change\n", 
+		printf("%s: Battery charge level change\n",
 		    sc->sc_dev.dv_xname);
 #endif
 	}
@@ -757,9 +741,7 @@ tctrl_read_event_status(arg)
 }
 
 void
-tadpole_request(req, spin)
-	struct tctrl_req *req;
-	int spin;
+tadpole_request(struct tctrl_req *req, int spin)
 {
 	struct tctrl_softc *sc;
 	int i, s;
@@ -823,7 +805,7 @@ void
 tadpole_powerdown(void)
 {
 	struct tctrl_req req;
-	
+
 	req.cmdbuf[0] = TS102_OP_ADMIN_POWER_OFF;
 	req.cmdlen = 1;
 	req.rsplen = 1;
@@ -832,8 +814,7 @@ tadpole_powerdown(void)
 }
 
 void
-tadpole_set_video(enabled)
-	int enabled;
+tadpole_set_video(int enabled)
 {
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
@@ -869,28 +850,25 @@ tadpole_set_video(enabled)
 }
 
 static void
-tctrl_write_data(sc, v)
-	struct tctrl_softc *sc;
-	u_int8_t v;
+tctrl_write_data(struct tctrl_softc *sc, uint8_t v)
 {
 	unsigned int i;
 
 	for (i = 0; i < 100; i++)  {
-		if (TS102_UCTRL_STS_TXNF_STA & 
+		if (TS102_UCTRL_STS_TXNF_STA &
 		    tctrl_read(sc, TS102_REG_UCTRL_STS))
 			break;
 	}
 	tctrl_write(sc, TS102_REG_UCTRL_DATA, v);
 }
 
-static u_int8_t
-tctrl_read_data(sc)
-	struct tctrl_softc *sc;
+static uint8_t
+tctrl_read_data(struct tctrl_softc *sc)
 {
 	unsigned int i, v;
 
 	for (i = 0; i < 100000; i++) {
-		if (TS102_UCTRL_STS_RXNE_STA & 
+		if (TS102_UCTRL_STS_RXNE_STA &
 		    tctrl_read(sc, TS102_REG_UCTRL_STS))
 			break;
 		DELAY(1);
@@ -901,10 +879,8 @@ tctrl_read_data(sc)
 	return v;
 }
 
-static u_int8_t
-tctrl_read(sc, off)
-	struct tctrl_softc *sc;
-	bus_size_t off;
+static uint8_t
+tctrl_read(struct tctrl_softc *sc, bus_size_t off)
 {
 
 	sc->sc_junk = bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
@@ -912,10 +888,7 @@ tctrl_read(sc, off)
 }
 
 static void
-tctrl_write(sc, off, v)
-	struct tctrl_softc *sc;
-	bus_size_t off;
-	u_int8_t v;
+tctrl_write(struct tctrl_softc *sc, bus_size_t off, uint8_t v)
 {
 
 	sc->sc_junk = v;
@@ -923,10 +896,7 @@ tctrl_write(sc, off, v)
 }
 
 int
-tctrlopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+tctrlopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = (minor(dev)&0xf0);
 	int ctl = (minor(dev)&0x0f);
@@ -937,7 +907,7 @@ tctrlopen(dev, flags, mode, p)
 	sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	if (!sc)
 		return(ENXIO);
-	
+
 	switch (ctl) {
 	case TCTRL_STD_DEV:
 		break;
@@ -957,10 +927,7 @@ tctrlopen(dev, flags, mode, p)
 }
 
 int
-tctrlclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+tctrlclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int ctl = (minor(dev)&0x0f);
 	struct tctrl_softc *sc;
@@ -980,22 +947,17 @@ tctrlclose(dev, flags, mode, p)
 }
 
 int
-tctrlioctl(dev, cmd, data, flags, p)
-        dev_t dev;
-        u_long cmd;
-        caddr_t data;
-        int flags;
-        struct proc *p;
+tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct tctrl_req req, *reqn;
-	struct tctrl_pwr *pwrreq;  
+	struct tctrl_pwr *pwrreq;
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 	struct tctrl_softc *sc;
 	int i;
 	/*u_int j;*/
-	u_int16_t a;
-	u_int8_t c;
+	uint16_t a;
+	uint8_t c;
 
 	if (tctrl_cd.cd_devs == NULL
 	    || tctrl_cd.cd_ndevs == 0
@@ -1083,7 +1045,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 		break;
 	/* serial power mode (via auxiotwo) */
 	case TCTRL_SERIAL_PWR:
-		pwrreq = (struct tctrl_pwr *)data;  
+		pwrreq = (struct tctrl_pwr *)data;
 		if (pwrreq->rw)
 			pwrreq->state = auxiotwoserialgetapm();
 		else
@@ -1103,10 +1065,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 }
 
 int
-tctrlpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+tctrlpoll(dev_t dev, int events, struct proc *p)
 {
 	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	int revents = 0;
@@ -1173,8 +1132,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 /* DO NOT SET THIS OPTION */
 #ifdef TADPOLE_BLINK
 void
-cpu_disk_unbusy(busy)
-        int busy;
+cpu_disk_unbusy(int busy)
 {
 	static struct timeval tctrl_ds_timestamp;
         struct timeval dv_time, diff_time;
@@ -1201,7 +1159,7 @@ static void
 tctrl_sensor_setup(struct tctrl_softc *sc)
 {
 	int error;
-	
+
 	/* case temperature */
 	strcpy(sc->sc_binfo[0].desc, "Case temperature");
 	sc->sc_binfo[0].sensor = 0;
@@ -1214,7 +1172,7 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sc->sc_tre[0].warnflags = ENVSYS_WARN_OK;
 	sc->sc_tre[0].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 	sc->sc_tre[0].units = ENVSYS_STEMP;
-	
+
 	/* battery voltage */
 	strcpy(sc->sc_binfo[1].desc, "Internal battery voltage");
 	sc->sc_binfo[1].sensor = 1;
@@ -1227,7 +1185,7 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sc->sc_tre[1].warnflags = ENVSYS_WARN_OK;
 	sc->sc_tre[1].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 	sc->sc_tre[1].units = ENVSYS_SVOLTS_DC;
-	
+
 	/* DC voltage */
 	strcpy(sc->sc_binfo[2].desc, "DC-In voltage");
 	sc->sc_binfo[2].sensor = 2;
@@ -1240,7 +1198,7 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sc->sc_tre[2].warnflags = ENVSYS_WARN_OK;
 	sc->sc_tre[2].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 	sc->sc_tre[2].units = ENVSYS_SVOLTS_DC;
-	
+
 	sc->sc_sme.sme_nsensors = ENVSYS_NUMSENSORS;
 	sc->sc_sme.sme_envsys_version = 1000;
 	sc->sc_sme.sme_ranges = sc->sc_range;
@@ -1250,14 +1208,14 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sc->sc_sme.sme_gtredata = tctrl_gtredata;
 	sc->sc_sme.sme_streinfo = tctrl_streinfo;
 	sc->sc_sme.sme_flags = 0;
-	
+
 	if ((error = sysmon_envsys_register(&sc->sc_sme)) != 0) {
-		printf("%s: couldn't register sensors (%d)\n", 
+		printf("%s: couldn't register sensors (%d)\n",
 		    sc->sc_dev.dv_xname, error);
 	}
-	
+
 	/* now register the power button */
-	
+
 	sysmon_task_queue_init();
 
 	sc->sc_powerpressed = 0;
@@ -1265,7 +1223,7 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sc->sc_smcontext.smpsw_name = sc->sc_dev.dv_xname;
 	sc->sc_smcontext.smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(&sc->sc_smcontext) != 0)
-		printf("%s: unable to register power button with sysmon\n", 
+		printf("%s: unable to register power button with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -1278,7 +1236,7 @@ tctrl_power_button_pressed(void *arg)
 	sc->sc_powerpressed = 0;
 }
 
-static int 
+static int
 tctrl_powerfail(void *arg)
 {
 	struct tctrl_softc *sc = (struct tctrl_softc *)arg;
@@ -1303,12 +1261,12 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	struct tctrl_req req;
 	struct proc *p;
 	int i;
-	
+
 	i = tred->sensor;
 	cur_tre = &sme->sme_sensor_data[i];
 	cur_i = &sme->sme_sensor_info[i];
 	p = __curproc();
-	
+
 	switch (i)
 	{
 		case 0:	/* case temperature */
@@ -1318,7 +1276,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.p = p;
 			tadpole_request(&req, 0);
 			cur_tre->cur.data_us =             /* 273160? */
-			    (u_int32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
+			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
 			cur_tre->validflags |= ENVSYS_FCURVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
@@ -1327,7 +1285,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.p = p;
 			tadpole_request(&req, 0);
 			cur_tre->max.data_us =
-			    (u_int32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
+			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
 			cur_tre->validflags |= ENVSYS_FMAXVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MIN_TEMP;
@@ -1336,15 +1294,15 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.p = p;
 			tadpole_request(&req, 0);
 			cur_tre->min.data_us =
-			    (u_int32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
+			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
 			cur_tre->validflags |= ENVSYS_FMINVALID;
 			cur_tre->units = ENVSYS_STEMP;
 			break;
-			
+
 		case 1: /* battery voltage */
 			{
-				cur_tre->validflags = 
+				cur_tre->validflags =
 				    ENVSYS_FVALID|ENVSYS_FCURVALID;
 				cur_tre->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_INT_BATT_VLT;
@@ -1352,13 +1310,13 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 				req.rsplen = 2;
 				req.p = p;
 				tadpole_request(&req, 0);
-				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] * 
+				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}
 			break;
 		case 2: /* DC voltage */
 			{
-				cur_tre->validflags = 
+				cur_tre->validflags =
 				    ENVSYS_FVALID|ENVSYS_FCURVALID;
 				cur_tre->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_DC_IN_VLT;
@@ -1366,7 +1324,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 				req.rsplen = 2;
 				req.p = p;
 				tadpole_request(&req, 0);
-				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] * 
+				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}
 			break;
@@ -1380,7 +1338,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 static int
 tctrl_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
+
 	/* There is nothing to set here. */
 	return (EINVAL);
 }
-
