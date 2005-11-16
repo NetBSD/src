@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.66 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: db_interface.c,v 1.67 2005/11/16 03:00:23 uwe Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2005/11/16 03:00:23 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -177,7 +177,7 @@ db_sparc_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	db_expr_t *regaddr =
 	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-	
+
 	switch (opcode) {
 	case DB_VAR_GET:
 		*val = *regaddr;
@@ -356,7 +356,7 @@ db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	struct proc *p;
 
 	l = curlwp;
-	if (have_addr) 
+	if (have_addr)
 		l = (struct lwp *) addr;
 
 	if (l == NULL) {
@@ -374,10 +374,10 @@ db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
 	db_printf("\npmap:%p wchan:%p pri:%d upri:%d\n",
-		  p->p_vmspace->vm_map.pmap, 
+		  p->p_vmspace->vm_map.pmap,
 		  l->l_wchan, l->l_priority, l->l_usrpri);
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
-		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
+		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
@@ -393,18 +393,18 @@ db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	char bits[64];
 	int i;
 
-	if (have_addr) 
+	if (have_addr)
 		pcb = (struct pcb *) addr;
 	else
 		pcb = curcpu()->curpcb;
 
 	db_printf("pcb@%p sp:%p pc:%p psr:%s onfault:%p\nfull windows:\n",
-		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, 
+		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc,
 		  bitmask_snprintf(pcb->pcb_psr, PSR_BITS, bits, sizeof(bits)),
 		  (void *)pcb->pcb_onfault);
-	
+
 	for (i=0; i<pcb->pcb_nsaved; i++) {
-		db_printf("win %d: at %llx local, in\n", i, 
+		db_printf("win %d: at %llx local, in\n", i,
 			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
 		db_printf("%16llx %16llx %16llx %16llx\n",
 			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
@@ -500,7 +500,7 @@ db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		cpu_debug_dump();
 		return;
 	}
-	
+
 	if ((addr < 0) || (addr >= sparc_ncpus)) {
 		db_printf("%ld: CPU out of range\n", addr);
 		return;

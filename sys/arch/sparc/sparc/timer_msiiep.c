@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.16 2005/09/24 00:35:08 uwe Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.17 2005/11/16 03:00:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.16 2005/09/24 00:35:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17 2005/11/16 03:00:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.16 2005/09/24 00:35:08 uwe Exp $"
 
 #include <machine/bus.h>
 
-#include <sparc/sparc/msiiepreg.h> 
+#include <sparc/sparc/msiiepreg.h>
 #include <sparc/sparc/msiiepvar.h>
 
 #include <sparc/sparc/timervar.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.16 2005/09/24 00:35:08 uwe Exp $"
 static int	timermatch_msiiep(struct device *, struct cfdata *, void *);
 static void	timerattach_msiiep(struct device *, struct device *, void *);
 
-CFATTACH_DECL(timer_msiiep, sizeof(struct device), 
+CFATTACH_DECL(timer_msiiep, sizeof(struct device),
     timermatch_msiiep, timerattach_msiiep, NULL, NULL);
 
 

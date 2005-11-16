@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11 2005/11/14 03:30:49 uwe Exp $	*/
+/*	$NetBSD: emul.c,v 1.12 2005/11/16 03:00:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.11 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.12 2005/11/16 03:00:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ readgpreg(struct trapframe *tf, int i, void *val)
 	return error;
 }
 
-		
+
 static __inline int
 writegpreg(struct trapframe *tf, int i, const void *val)
 {
@@ -98,7 +98,7 @@ writegpreg(struct trapframe *tf, int i, const void *val)
 
 	return error;
 }
-	
+
 
 static __inline int
 readfpreg(struct lwp *l, int i, void *val)
@@ -108,7 +108,7 @@ readfpreg(struct lwp *l, int i, void *val)
 	return 0;
 }
 
-		
+
 static __inline int
 writefpreg(struct lwp *l, int i, const void *val)
 {

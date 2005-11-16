@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.82 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: iommu.c,v 1.83 2005/11/16 03:00:23 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.82 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.83 2005/11/16 03:00:23 uwe Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -175,7 +175,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = iommu_dmamem_mmap;
 
-	/* 
+	/*
 	 * JS1/OF device tree does not have an iommu node and sbus
 	 * node is directly under root.  mainbus_attach detects this
 	 * and calls us with sbus node instead so that we can attach
