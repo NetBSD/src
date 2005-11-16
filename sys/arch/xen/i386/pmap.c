@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2005/11/16 22:41:20 jld Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2005/11/07 11:42:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2005/11/16 22:41:20 jld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3644,7 +3644,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * wired count might change...
 		 */
 		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		npte |= (opte & PG_PVLIST);
 
@@ -3714,7 +3714,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * wired count might change...
 		 */
 		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		if (opte & PG_PVLIST) {
 			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
@@ -3897,7 +3897,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		 * wired count might change...
 		 */
 		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		XENPRINTK(("pmap update opte == pa"));
 		/* zap! */
@@ -3932,7 +3932,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 		 * wired count might change...
 		 */
 		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+		    ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
@@ -4120,7 +4120,7 @@ pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
 		 * change since we are replacing/changing a valid mapping.
 		 * wired count might change...
 		 */
-		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+		pmap->pm_stats.wired_count += 1 - ((opte & PG_W) ? 1 : 0);
 
 		//printf("pmap_remap_pages opte == pa");
 		/* zap! */
@@ -4159,7 +4159,7 @@ pmap_remap_pages(pmap, va, pa, npages, prot, flags, dom)
 		 * change since we are replacing/changing a valid mapping.
 		 * wired count might change...
 		 */
-		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+		pmap->pm_stats.wired_count += 1 - ((opte & PG_W) ? 1 : 0);
 
 		if (opte & PG_PVLIST) {
 			opte = xpmap_mtop(opte);
