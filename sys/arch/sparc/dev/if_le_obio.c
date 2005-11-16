@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.21 2004/03/15 23:51:12 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.22 2005/11/16 00:49:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.21 2004/03/15 23:51:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.22 2005/11/16 00:49:03 uwe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -80,8 +80,8 @@ struct	le_softc {
 
 #define MEMSIZE 0x4000		/* LANCE memory size */
 
-int	lematch_obio __P((struct device *, struct cfdata *, void *));
-void	leattach_obio __P((struct device *, struct device *, void *));
+int	lematch_obio(struct device *, struct cfdata *, void *);
+void	leattach_obio(struct device *, struct device *, void *);
 
 /*
  * Media types supported.
@@ -100,13 +100,11 @@ extern struct cfdriver le_cd;
 #include "opt_ddb.h"
 #endif
 
-static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
+static void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+static uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
 static void
-lewrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t t = lesc->sc_bustag;
@@ -116,10 +114,8 @@ lewrcsr(sc, port, val)
 	bus_space_write_2(t, h, LEREG1_RDP, val);
 }
 
-static u_int16_t
-lerdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+static uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t t = lesc->sc_bustag;
@@ -130,10 +126,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lematch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -150,9 +143,7 @@ lematch_obio(parent, cf, aux)
 }
 
 void
-leattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -167,7 +158,7 @@ leattach_obio(parent, self, aux)
 	lesc->sc_dmatag = dmatag = oba->oba_dmatag;
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
-			  2 * sizeof(u_int16_t),
+			  2 * sizeof(uint16_t),
 			  0, &lesc->sc_reg) != 0) {
 		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;

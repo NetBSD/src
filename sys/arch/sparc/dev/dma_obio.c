@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.8 2003/07/15 00:04:53 lukem Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.9 2005/11/16 00:49:03 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.8 2003/07/15 00:04:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.9 2005/11/16 00:49:03 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,17 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.8 2003/07/15 00:04:53 lukem Exp $");
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
 
-int	dmamatch_obio	__P((struct device *, struct cfdata *, void *));
-void	dmaattach_obio	__P((struct device *, struct device *, void *));
+int	dmamatch_obio(struct device *, struct cfdata *, void *);
+void	dmaattach_obio(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dma_obio, sizeof(struct lsi64854_softc),
     dmamatch_obio, dmaattach_obio, NULL, NULL);
 
 int
-dmamatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dmamatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -84,9 +81,7 @@ dmamatch_obio(parent, cf, aux)
 
 
 void
-dmaattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmaattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -96,7 +91,7 @@ dmaattach_obio(parent, self, aux)
 	sc->sc_dmatag = oba->oba_dmatag;
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
-			  4 * sizeof(u_int32_t),
+			  4 * sizeof(uint32_t),
 			  0, &sc->sc_regs) != 0) {
 		printf("dmaattach_obio: cannot map registers\n");
 		return;
