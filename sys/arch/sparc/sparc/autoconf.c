@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.213 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.213 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1419,7 +1419,7 @@ prom_getprop_address1(int node, void **vpp)
 	int error, n;
 	void **vp = NULL;
 
-	error = prom_getprop(node, "address", sizeof(u_int32_t), &n, &vp);
+	error = prom_getprop(node, "address", sizeof(uint32_t), &n, &vp);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*vpp = 0;
@@ -1634,8 +1634,8 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
 		    "want slot %#x offset %#x have slot %#x offset %#x\n",
 		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
-		if ((u_int32_t)bp->val[0] == sa->sa_slot &&
-		    (u_int32_t)bp->val[1] == sa->sa_offset)
+		if ((uint32_t)bp->val[0] == sa->sa_slot &&
+		    (uint32_t)bp->val[1] == sa->sa_offset)
 			return (1);
 		break;
 	case BUSCLASS_IOMMU:
@@ -1644,8 +1644,8 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 		    "want space %#x pa %#x have space %#x pa %#x\n",
 		     bp->val[0], bp->val[1], iom->iom_reg[0].oa_space,
 		     iom->iom_reg[0].oa_base));
-		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
-		    (u_int32_t)bp->val[1] == iom->iom_reg[0].oa_base)
+		if ((uint32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
+		    (uint32_t)bp->val[1] == iom->iom_reg[0].oa_base)
 			return (1);
 		break;
 	case BUSCLASS_XDC:
