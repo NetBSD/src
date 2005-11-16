@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.49 2003/08/25 17:50:25 uwe Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.50 2005/11/16 00:49:03 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.49 2003/08/25 17:50:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.50 2005/11/16 00:49:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,11 +89,11 @@ struct cgtwo_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgtwoattach __P((struct device *, struct device *, void *));
-static int	cgtwomatch __P((struct device *, struct cfdata *, void *));
-static void	cgtwounblank __P((struct device *));
-int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
-int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
+static int	cgtwomatch(struct device *, struct cfdata *, void *);
+static void	cgtwoattach(struct device *, struct device *, void *);
+static void	cgtwounblank(struct device *);
+int		cgtwogetcmap(struct cgtwo_softc *, struct fbcmap *);
+int		cgtwoputcmap(struct cgtwo_softc *, struct fbcmap *);
 
 CFATTACH_DECL(cgtwo, sizeof(struct cgtwo_softc),
     cgtwomatch, cgtwoattach, NULL, NULL);
@@ -118,11 +118,8 @@ static struct fbdriver cgtwofbdriver = {
 /*
  * Match a cgtwo.
  */
-int
-cgtwomatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+cgtwomatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -145,10 +142,8 @@ cgtwomatch(parent, cf, aux)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-void
-cgtwoattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+cgtwoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -226,10 +221,7 @@ cgtwoattach(parent, self, aux)
 }
 
 int
-cgtwoopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgtwoopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -239,12 +231,7 @@ cgtwoopen(dev, flags, mode, p)
 }
 
 int
-cgtwoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	register caddr_t data;
-	int flags;
-	struct proc *p;
+cgtwoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
@@ -291,8 +278,7 @@ cgtwoioctl(dev, cmd, data, flags, p)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgtwounblank(dev)
-	struct device *dev;
+cgtwounblank(struct device *dev)
 {
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)dev;
 	sc->sc_reg->video_enab = 1;
@@ -301,9 +287,7 @@ cgtwounblank(dev)
 /*
  */
 int
-cgtwogetcmap(sc, cmap)
-	register struct cgtwo_softc *sc;
-	register struct fbcmap *cmap;
+cgtwogetcmap(struct cgtwo_softc *sc, struct fbcmap *cmap)
 {
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
 	int error, start, count, ecount;
@@ -343,9 +327,7 @@ cgtwogetcmap(sc, cmap)
 /*
  */
 int
-cgtwoputcmap(sc, cmap)
-	register struct cgtwo_softc *sc;
-	register struct fbcmap *cmap;
+cgtwoputcmap(struct cgtwo_softc *sc, struct fbcmap *cmap)
 {
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
 	int error;
@@ -388,16 +370,14 @@ cgtwoputcmap(sc, cmap)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-cgtwommap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgtwommap(dev_t dev, off_t off, int prot)
 {
+	extern int sparc_vme_mmap_cookie(vme_addr_t, vme_am_t,
+					 bus_space_handle_t *);
+
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	vme_am_t mod;
 	bus_space_handle_t bh;
-	extern int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t,
-					      bus_space_handle_t *));
 
 	if (off & PGOFSET)
 		panic("cgtwommap");

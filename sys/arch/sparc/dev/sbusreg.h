@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.5 2003/08/07 16:29:36 agc Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.6 2005/11/16 00:49:03 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,14 +58,14 @@
 
 #if _sbus_for_your_eyes_only_
 struct sbusreg {
-	u_int32_t	sbus_afsr;	/* M-to-S Asynchronous Fault Status */
-	u_int32_t	sbus_afar;	/* M-to-S Asynchronous Fault Address */
-	u_int32_t	sbus_arbiter;	/* Arbiter Enable  */
-	u_int32_t	sbus_reserved1;
+	uint32_t	sbus_afsr;	/* M-to-S Asynchronous Fault Status */
+	uint32_t	sbus_afar;	/* M-to-S Asynchronous Fault Address */
+	uint32_t	sbus_arbiter;	/* Arbiter Enable  */
+	uint32_t	sbus_reserved1;
 
 #define NSBUSCFG	20
 	/* Actual number dependent on machine model */
-	u_int32_t	sbus_sbuscfg[NSBUSCFG];	/* Sbus configuration control */
+	uint32_t	sbus_sbuscfg[NSBUSCFG];	/* Sbus configuration control */
 };
 #endif
 
