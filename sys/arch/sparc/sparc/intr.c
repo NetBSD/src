@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.93 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.94 2005/11/16 21:42:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.93 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94 2005/11/16 21:42:50 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -221,7 +221,7 @@ nmi_hard(void)
 	 * A level 15 hard interrupt.
 	 */
 	int fatal = 0;
-	u_int32_t si;
+	uint32_t si;
 	char bits[64];
 	u_int afsr, afva;
 
@@ -263,7 +263,7 @@ nmi_hard(void)
 	/*
 	 * Examine pending system interrupts.
 	 */
-	si = *((u_int32_t *)ICR_SI_PEND);
+	si = *((uint32_t *)ICR_SI_PEND);
 	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(),
 		bitmask_snprintf(si, SINTR_BITS, bits, sizeof(bits)));
 
@@ -313,7 +313,7 @@ nmi_soft(struct trapframe *tf)
 {
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
-		u_int8_t msg = *(u_int8_t *)cpuinfo.mailbox;
+		uint8_t msg = *(uint8_t *)cpuinfo.mailbox;
 		switch (msg) {
 		case OPENPROM_MBX_STOP:
 		case OPENPROM_MBX_WD:
@@ -371,7 +371,7 @@ xcallintr(void *v)
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		if (p->func)
-			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2); 
+			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2);
 		break;
 	    }
 	}
@@ -493,7 +493,7 @@ struct intrhand *intrhand[15] = {
  * Soft interrupts use a separate set of handler chains.
  * This is necessary since soft interrupt handlers do not return a value
  * and therefore cannot be mixed with hardware interrupt handlers on a
- * shared handler chain. 
+ * shared handler chain.
  */
 struct intrhand *sintrhand[15] = { NULL };
 
@@ -679,8 +679,8 @@ intr_disestablish(int level, struct intrhand *ih)
  * This is a softintr cookie.  NB that sic_pilreq MUST be the
  * first element in the struct, because the softintr_schedule()
  * macro in intr.h casts cookies to int * to get it.  On a
- * sun4m, sic_pilreq is an actual processor interrupt level that 
- * is passed to raise(), and on a sun4 or sun4c sic_pilreq is a 
+ * sun4m, sic_pilreq is an actual processor interrupt level that
+ * is passed to raise(), and on a sun4 or sun4c sic_pilreq is a
  * bit to set in the interrupt enable register with ienab_bis().
  */
 struct softintr_cookie {
