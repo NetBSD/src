@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.11 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: oclock.c,v 1.12 2005/11/16 03:00:23 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.11 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.12 2005/11/16 03:00:23 uwe Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -146,8 +146,8 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 	i7_bt = bt;
 	i7_bh = bh;
 
-	/* 
-	 * calibrate delay() 
+	/*
+	 * calibrate delay()
 	 */
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
