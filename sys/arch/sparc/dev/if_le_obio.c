@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.22 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.23 2005/11/16 01:09:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,16 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.22 2005/11/16 00:49:03 uwe Exp $");
-
-#include "opt_inet.h"
-#include "bpfilter.h"
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.23 2005/11/16 01:09:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/socket.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -80,9 +75,6 @@ struct	le_softc {
 
 #define MEMSIZE 0x4000		/* LANCE memory size */
 
-int	lematch_obio(struct device *, struct cfdata *, void *);
-void	leattach_obio(struct device *, struct device *, void *);
-
 /*
  * Media types supported.
  */
@@ -91,14 +83,12 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
+static int	lematch_obio(struct device *, struct cfdata *, void *);
+static void	leattach_obio(struct device *, struct device *, void *);
+
 CFATTACH_DECL(le_obio, sizeof(struct le_softc),
     lematch_obio, leattach_obio, NULL, NULL);
 
-extern struct cfdriver le_cd;
-
-#if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#endif
 
 static void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
 static uint16_t lerdcsr(struct lance_softc *, uint16_t);
@@ -125,7 +115,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 	return (bus_space_read_2(t, h, LEREG1_RDP));
 }
 
-int
+static int
 lematch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
@@ -142,7 +132,7 @@ lematch_obio(struct device *parent, struct cfdata *cf, void *aux)
 				NULL, NULL));
 }
 
-void
+static void
 leattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
