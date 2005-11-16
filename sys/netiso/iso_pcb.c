@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.27 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.28 2005/11/16 20:44:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.27 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.28 2005/11/16 20:44:19 dsl Exp $");
 
 #include "opt_iso.h"
 
@@ -279,7 +279,7 @@ noname:
  * NOTES:
  */
 int
-iso_pcbconnect(void *v, struct mbuf *nam)
+iso_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
 {
 	struct isopcb *isop = v;
 	struct sockaddr_iso *siso = mtod(nam, struct sockaddr_iso *);
