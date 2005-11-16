@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.2 2005/11/16 01:39:27 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.2 2005/11/16 01:39:27 uwe Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port
@@ -39,10 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $"
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 #include <sys/proc.h>
-#include <sys/signalvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -82,21 +80,16 @@ static void	ms_pckbport_input(void *, int);
 
 
 static int
-ms_pckbport_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+ms_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
-	
+
 	return (pa->pa_slot == PCKBPORT_AUX_SLOT);
 }
 
 
 static void
-ms_pckbport_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+ms_pckbport_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	struct ms_softc *ms = &sc->sc_ms;
@@ -140,9 +133,7 @@ ms_pckbport_attach(parent, self, aux)
 
 
 static int
-ms_pckbport_iopen(self, flags)
-	struct device *self;
-	int flags;
+ms_pckbport_iopen(struct device *self, int flags)
 {
 	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	struct ms_softc *ms = &sc->sc_ms;
@@ -169,9 +160,7 @@ ms_pckbport_iopen(self, flags)
 
 
 static int
-ms_pckbport_iclose(self, flags)
-	struct device *self;
-	int flags;
+ms_pckbport_iclose(struct device *self, int flags)
 {
 	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	u_char cmd[1];
@@ -199,9 +188,7 @@ ms_pckbport_iclose(self, flags)
  * Got a receive interrupt - pckbport wants to give us a byte.
  */
 static void
-ms_pckbport_input(vsc, data)
-	void *vsc;
-	int data;
+ms_pckbport_input(void *vsc, int data)
 {
 	struct ms_pckbport_softc *sc = vsc;
 	struct ms_softc *ms = &sc->sc_ms;
@@ -223,7 +210,7 @@ ms_pckbport_input(vsc, data)
 
 	case 0:
 		if ((data & 0xc0) == 0) { /* no ovfl, bit 3 == 1 too? */
-			ms->ms_mb = 
+			ms->ms_mb =
 				((data & PS2LBUTMASK) ? 0x1 : 0) |
 				((data & PS2MBUTMASK) ? 0x2 : 0) |
 				((data & PS2RBUTMASK) ? 0x4 : 0) ;
