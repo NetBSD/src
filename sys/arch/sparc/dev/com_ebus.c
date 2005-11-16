@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.11 2003/07/15 00:04:53 lukem Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.12 2005/11/16 01:46:44 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.11 2003/07/15 00:04:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.12 2005/11/16 01:46:44 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,7 @@ CFATTACH_DECL(com_ebus, sizeof(struct com_ebus_softc),
     com_ebus_match, com_ebus_attach, NULL, NULL);
 
 static int
-com_ebus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	bus_space_handle_t ioh;
@@ -91,9 +88,7 @@ com_ebus_match(parent, cf, aux)
 }
 
 static void
-com_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_ebus_softc *ebsc = (void *)self;
 	struct com_softc *sc = &ebsc->ebsc_com;
