@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.196 2005/11/14 16:04:47 uwe Exp $ */
+/*	$NetBSD: cpu.c,v 1.197 2005/11/16 21:42:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.196 2005/11/14 16:04:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.197 2005/11/16 21:42:50 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -303,7 +303,7 @@ static void
 cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct { u_int32_t va; u_int32_t size; } *mbprop = NULL;
+	struct { uint32_t va; uint32_t size; } *mbprop = NULL;
 	struct openprom_addr *rrp = NULL;
 	struct cpu_info *cpi;
 	int mid, node;
@@ -337,7 +337,7 @@ cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_map(ma->ma_bustag,
 				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 				rrp[0].oa_size,
-				BUS_SPACE_MAP_LINEAR, 
+				BUS_SPACE_MAP_LINEAR,
 				&cpi->mailbox) != 0)
 			panic("%s: can't map CPU mailbox", self->dv_xname);
 		free(rrp, M_DEVBUF);
@@ -360,7 +360,7 @@ cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ma->ma_bustag,
 			BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 			rrp[0].oa_size,
-			BUS_SPACE_MAP_LINEAR, 
+			BUS_SPACE_MAP_LINEAR,
 			&cpi->ci_mbusport) != 0) {
 		panic("%s: can't map CPU regs", self->dv_xname);
 	}
@@ -368,7 +368,7 @@ cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ma->ma_bustag,
 			BUS_ADDR(rrp[1].oa_space, rrp[1].oa_base),
 			rrp[1].oa_size,
-			BUS_SPACE_MAP_LINEAR, 
+			BUS_SPACE_MAP_LINEAR,
 			&cpi->ci_mxccregs) != 0) {
 		panic("%s: can't map CPU regs", self->dv_xname);
 	}
@@ -620,7 +620,7 @@ cpu_spinup(struct cpu_info *cpi)
 	 * the PROM in a "physical address descriptor".
 	 */
 	oa.oa_space = 0;
-	oa.oa_base = (u_int32_t)cpi->ctx_tbl_pa;
+	oa.oa_base = (uint32_t)cpi->ctx_tbl_pa;
 	oa.oa_size = cpi->mmu_ncontext * sizeof(cpi->ctx_tbl[0]); /*???*/
 
 	/*
@@ -667,7 +667,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
 		if (callself)
-			p->retval = (*func)(arg0, arg1, arg2); 
+			p->retval = (*func)(arg0, arg1, arg2);
 		return;
 	}
 
@@ -717,7 +717,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
 	if (callself)
-		p->retval = (*func)(arg0, arg1, arg2); 
+		p->retval = (*func)(arg0, arg1, arg2);
 
 	/*
 	 * Lastly, start looping, waiting for all CPUs to register that they
@@ -1192,7 +1192,7 @@ cpumatch_sun4c(struct cpu_info *sc, struct module_info *mp, int node)
 		prom_getpropint(rnode, "mmu-npmg", 128);
 	sc->mmu_ncontext = prom_getpropint(rnode, "mmu-nctx", 8);
 
-	/* Get clock frequency */ 
+	/* Get clock frequency */
 	sc->hz = prom_getpropint(rnode, "clock-frequency", 0);
 }
 
@@ -1207,7 +1207,7 @@ getcacheinfo_sun4c(struct cpu_info *sc, int node)
 		return;
 
 	/* Sun4c's have only virtually-addressed caches */
-	ci->c_physical = 0; 
+	ci->c_physical = 0;
 	ci->c_totalsize = prom_getpropint(node, "vac-size", 65536);
 	/*
 	 * Note: vac-hwflush is spelled with an underscore
@@ -1272,7 +1272,7 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 		ci->c_split = 0;
 
 	/* hwflush is used only by sun4/4c code */
-	ci->c_hwflush = 0; 
+	ci->c_hwflush = 0;
 
 	if (node_has_property(node, "icache-nlines") &&
 	    node_has_property(node, "dcache-nlines") &&
@@ -1289,7 +1289,7 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 		ci->ic_associativity =
 			prom_getpropint(node, "icache-associativity", 1);
 		ci->ic_totalsize = l * ci->ic_nlines * ci->ic_associativity;
-	
+
 		ci->dc_nlines = prom_getpropint(node, "dcache-nlines", 0);
 		ci->dc_linesize = l =
 			prom_getpropint(node, "dcache-line-size",0);
@@ -1309,7 +1309,7 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 	} else {
 		/* unified I/D cache */
 		ci->c_nlines = prom_getpropint(node, "cache-nlines", 128);
-		ci->c_linesize = l = 
+		ci->c_linesize = l =
 			prom_getpropint(node, "cache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
@@ -1322,7 +1322,7 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 			ci->c_associativity;
 		ci->c_totalsize = l * ci->c_nlines * ci->c_associativity;
 	}
-	
+
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
 		ci->ec_nlines = prom_getpropint(node, "ecache-nlines", 32768);
@@ -1742,7 +1742,7 @@ viking_getmid(void)
 int
 viking_module_error(void)
 {
-	u_int64_t v;
+	uint64_t v;
 	int n, fatal = 0;
 
 	/* Report on MXCC error registers in each module */
@@ -1758,11 +1758,11 @@ viking_module_error(void)
 		}
 
 		printf("module%d:\n", cpi->ci_cpuid);
-		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xe00));
+		v = *((uint64_t *)(cpi->ci_mxccregs + 0xe00));
 		printf("\tmxcc error 0x%llx\n", v);
-		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xb00));
+		v = *((uint64_t *)(cpi->ci_mxccregs + 0xb00));
 		printf("\tmxcc status 0x%llx\n", v);
-		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xc00));
+		v = *((uint64_t *)(cpi->ci_mxccregs + 0xc00));
 		printf("\tmxcc reset 0x%llx", v);
 		if (v & MXCC_MRST_WD)
 			printf(" (WATCHDOG RESET)"), fatal = 1;
@@ -1794,7 +1794,7 @@ getcacheinfo_sun4d(struct cpu_info *sc, int node)
 	ci->c_split = 1;
 
 	/* hwflush is used only by sun4/4c code */
-	ci->c_hwflush = 0; 
+	ci->c_hwflush = 0;
 
 	ci->ic_nlines = 0x00000040;
 	ci->ic_linesize = 0x00000040;
@@ -2005,7 +2005,7 @@ getcpuinfo(struct cpu_info *sc, int node)
 			if (sc->hz == 0) {
 				/*
 				 * Try to find it in the OpenPROM root...
-				 */     
+				 */
 				sc->hz = prom_getpropint(findroot(),
 						    "clock-frequency", 0);
 			}
