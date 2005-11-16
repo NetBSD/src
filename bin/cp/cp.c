@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.39 2005/10/24 12:59:07 kleink Exp $ */
+/* $NetBSD: cp.c,v 1.40 2005/11/16 22:42:12 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.39 2005/10/24 12:59:07 kleink Exp $");
+__RCSID("$NetBSD: cp.c,v 1.40 2005/11/16 22:42:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,8 @@ main(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
-	int Hflag, Lflag, Pflag, ch, fts_options, r;
-	char *target;
+	int Hflag, Lflag, Pflag, ch, fts_options, r, have_trailing_slash;
+	char *target, **src;
 
 	(void)setlocale(LC_ALL, "");
 
@@ -188,13 +188,12 @@ main(int argc, char *argv[])
 
 	/* Save the target base in "to". */
 	target = argv[--argc];
-	if (strlen(target) > MAXPATHLEN) {
+	if (strlcpy(to.p_path, target, sizeof(to.p_path)) >= sizeof(to.p_path))
 		errx(EXIT_FAILURE, "%s: name too long", target);
-		/* NOTREACHED */
-	}
-	(void)strcpy(to.p_path, target);
 	to.p_end = to.p_path + strlen(to.p_path);
-        STRIP_TRAILING_SLASH(to);
+	have_trailing_slash = (to.p_end[-1] == '/');
+	if (have_trailing_slash)
+		STRIP_TRAILING_SLASH(to);
 	to.target_end = to.p_end;
 
 	/* Set end of argument list for fts(3). */
@@ -248,11 +247,29 @@ main(int argc, char *argv[])
 				type = FILE_TO_FILE;
 		} else
 			type = FILE_TO_FILE;
+
+		if (have_trailing_slash && type == FILE_TO_FILE) {
+			if (r == -1)
+				errx(1, "directory %s does not exist",
+				     to.p_path);
+			else
+				errx(1, "%s is not a directory", to.p_path);
+		}
 	} else {
 		/*
 		 * Case (2).  Target is a directory.
 		 */
 		type = FILE_TO_DIR;
+	}
+
+	/*
+	 * make "cp -rp src/ dst" behave like "cp -rp src dst" not
+	 * like "cp -rp src/. dst"
+	 */
+	for (src = argv; *src; src++) {
+		size_t len = strlen(*src);
+		while (len-- > 1 && (*src)[len] == '/')
+			(*src)[len] = '\0';
 	}
 
 	exit(copy(argv, type, fts_options));
@@ -267,7 +284,7 @@ copy(char *argv[], enum op type, int fts_options)
 	FTSENT *curr;
 	int base, dne, rval;
 	size_t nlen;
-	char *p, *tmp;
+	char *p, *target_mid;
 
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
@@ -336,14 +353,19 @@ copy(char *argv[], enum op type, int fts_options)
 
 			p = &curr->fts_path[base];
 			nlen = curr->fts_pathlen - base;
+			target_mid = to.target_end;
+			if (*p != '/' && target_mid[-1] != '/')
+				*target_mid++ = '/';
+			*target_mid = 0;
 
-			tmp = to.target_end;
-			if (*p != '/' && *(tmp - 1) != '/')
-				*tmp++ = '/';
-			*tmp = 0;
-
-			(void)strncat(tmp, p, nlen);
-			to.p_end = tmp + nlen;
+			if (target_mid - to.p_path + nlen >= PATH_MAX) {
+				warnx("%s%s: name too long (not copied)",
+				    to.p_path, p);
+				rval = 1;
+				continue;
+			}
+			(void)strncat(target_mid, p, nlen);
+			to.p_end = target_mid + nlen;
 			*to.p_end = 0;
 			STRIP_TRAILING_SLASH(to);
 		}
