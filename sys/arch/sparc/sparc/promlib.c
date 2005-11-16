@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.37 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: promlib.c,v 1.38 2005/11/16 22:10:58 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.37 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.38 2005/11/16 22:10:58 uwe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -597,10 +597,10 @@ obp_v2_peekchar(void)
 int
 obp_v2_seek(int handle, u_quad_t offset)
 {
-	u_int32_t hi, lo;
+	uint32_t hi, lo;
 
-	lo = offset & ((u_int32_t)-1);
-	hi = (offset >> 32) & ((u_int32_t)-1);
+	lo = offset & ((uint32_t)-1);
+	hi = (offset >> 32) & ((uint32_t)-1);
 	(*obpvec->pv_v2devops.v2_seek)(handle, hi, lo);
 	return (0);
 }
