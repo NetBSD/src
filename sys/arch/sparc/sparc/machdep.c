@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: machdep.c,v 1.261 2005/11/16 21:42:50 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2005/11/16 21:42:50 uwe Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1022,10 +1022,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 #endif
 
-	if (flags & _UC_SETSTACK)  
+	if (flags & _UC_SETSTACK)
 		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK; 
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }
@@ -1099,7 +1099,7 @@ cpu_reboot(int howto, char *user_boot_string)
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		prom_interpret("power-off");
 #if NPOWER > 0
-		/* Fall back on `power' device if the PROM can't do it */ 
+		/* Fall back on `power' device if the PROM can't do it */
 		powerdown();
 #endif
 		printf("WARNING: powerdown not supported\n");
@@ -1881,7 +1881,7 @@ no_fit:
  */
 int
 sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
-		     bus_dma_segment_t *segs, int nsegs, bus_size_t size, 
+		     bus_dma_segment_t *segs, int nsegs, bus_size_t size,
 		     int flags)
 {
 	struct vm_page *m;
@@ -2286,28 +2286,28 @@ void sparc_bus_barrier (bus_space_tag_t t, bus_space_handle_t h,
 	return;
 }
 
-static u_int8_t
+static uint8_t
 sparc_bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return bus_space_read_1_real(t, h, o);
 }
 
-static u_int16_t
+static uint16_t
 sparc_bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return bus_space_read_2_real(t, h, o);
 }
 
-static u_int32_t
+static uint32_t
 sparc_bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return bus_space_read_4_real(t, h, o);
 }
 
-static u_int64_t
+static uint64_t
 sparc_bus_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
@@ -2316,7 +2316,7 @@ sparc_bus_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 
 static void
 sparc_bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-			u_int8_t v)
+			uint8_t v)
 {
 
 	bus_space_write_1_real(t, h, o, v);
@@ -2324,7 +2324,7 @@ sparc_bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 static void
 sparc_bus_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-			u_int16_t v)
+			uint16_t v)
 {
 
 	bus_space_write_2_real(t, h, o, v);
@@ -2332,7 +2332,7 @@ sparc_bus_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 static void
 sparc_bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-			u_int32_t v)
+			uint32_t v)
 {
 
 	bus_space_write_4_real(t, h, o, v);
@@ -2340,7 +2340,7 @@ sparc_bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 static void
 sparc_bus_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-			u_int64_t v)
+			uint64_t v)
 {
 
 	bus_space_write_8_real(t, h, o, v);
