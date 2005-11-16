@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136.6.2 2005/11/15 05:24:48 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.3 2005/11/16 08:08:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.2 2005/11/15 05:24:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.3 2005/11/16 08:08:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1578,7 +1578,8 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 
 	fp = fd_getfile(p->p_fd, fd);
 	if (fp == NULL) {
-		return EBADF;
+		error = EBADF;
+		goto out;
 	}
 	FILE_USE(fp);
 
@@ -1629,7 +1630,9 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 out:
-	FILE_UNUSE(fp, p);
+	if (fp != NULL) {
+		FILE_UNUSE(fp, p);
+	}
 	*retval = error;
 	return 0;
 }
