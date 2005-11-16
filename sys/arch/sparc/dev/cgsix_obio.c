@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.16 2005/06/04 04:41:40 tsutsui Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.16 2005/06/04 04:41:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.16 2005/06/04 04:41:40 tsutsui Exp 
 #include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
-static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
-static void	cgsixattach __P((struct device *, struct device *, void *));
-static int	cg6_pfour_probe __P((void *, void *));
+static int	cgsixmatch(struct device *, struct cfdata *, void *);
+static void	cgsixattach(struct device *, struct device *, void *);
+static int	cg6_pfour_probe(void *, void *);
 
 CFATTACH_DECL(cgsix_obio, sizeof(struct cgsix_softc),
     cgsixmatch, cgsixattach, NULL, NULL);
@@ -82,10 +82,7 @@ CFATTACH_DECL(cgsix_obio, sizeof(struct cgsix_softc),
  * Match a cgsix.
  */
 static int
-cgsixmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cgsixmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -103,9 +100,7 @@ cgsixmatch(parent, cf, aux)
 }
 
 static int
-cg6_pfour_probe(vaddr, arg)
-	void *vaddr;
-	void *arg;
+cg6_pfour_probe(void *vaddr, void *arg)
 {
 
 	return (fb_pfour_id(vaddr) == PFOUR_ID_FASTCOLOR);
@@ -116,9 +111,7 @@ cg6_pfour_probe(vaddr, arg)
  * Attach a display.
  */
 static void
-cgsixattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cgsixattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	union obio_attach_args *uoba = aux;
