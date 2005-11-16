@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.4 2003/08/07 16:29:37 agc Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.5 2005/11/16 23:24:44 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.4 2003/08/07 16:29:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.5 2005/11/16 23:24:44 uwe Exp $");
 
 #include <sys/types.h>
 
@@ -186,8 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.4 2003/08/07 16:29:37 agc Exp $");
  * this, so we have some justification in assuming it.
  */
 struct fpn *
-fpu_sqrt(fe)
-	struct fpemu *fe;
+fpu_sqrt(struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1;
 	register u_int bit, q, tt;
