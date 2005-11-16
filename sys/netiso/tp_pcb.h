@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.17 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.18 2005/11/16 20:44:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -138,7 +138,7 @@ struct nl_protosw {
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */
 				(void *, struct mbuf *, struct proc *);
 	int		(*nlp_pcbconn)		/* connect for net level */
-				(void *, struct mbuf *);
+				(void *, struct mbuf *, struct proc *);
 	void		(*nlp_pcbdisc)		/* disconnect net level */
 				(void *);
 	void		(*nlp_pcbdetach)	/* detach net level pcb */
