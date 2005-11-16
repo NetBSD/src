@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.23 2005/11/15 15:00:15 tsutsui Exp $
+$NetBSD: TODO,v 1.24 2005/11/16 14:25:15 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -95,10 +95,6 @@ XXX some entries might be obsolete.
 		   but currently this may make hardclock() latency better
 		   due to above SR_INT_IE problem.
 	    s/MIPS_INT_MASK/MIPS3_INT_MASK/ makes this work, although tricky.
-
-	-   if (ipending & INT_MASK_REAL_DEV) == 0,
-	    softnet() and softclock() are handled with all interrupt disabled.
-		-> overblocking, possibly causes missing hardclock()
 
 	-   make CLKF_INTR() work.
 
