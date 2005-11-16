@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.8 2003/01/06 20:30:34 wiz Exp $ */
+/*	$NetBSD: iommureg.h,v 1.9 2005/11/16 22:10:58 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -38,11 +38,11 @@
 
 /* IOMMU registers */
 struct iommureg {
-	u_int32_t	io_cr;		/* IOMMU control register */
-	u_int32_t	io_bar;		/* IOMMU PTE base register */
-	u_int32_t	io_fill1[3];
-	u_int32_t	io_flashclear;	/* Flush all TLB entries */
-	u_int32_t	io_flushpage;	/* Flush page from TLB */
+	uint32_t	io_cr;		/* IOMMU control register */
+	uint32_t	io_bar;		/* IOMMU PTE base register */
+	uint32_t	io_fill1[3];
+	uint32_t	io_flashclear;	/* Flush all TLB entries */
+	uint32_t	io_flushpage;	/* Flush page from TLB */
 };
 
 /* Control register bits */
@@ -76,7 +76,7 @@ struct iommureg {
 	__asm("nop;nop;nop;nop;nop;nop;");			\
 } while (0)
 
-typedef u_int32_t iopte_t;
+typedef uint32_t iopte_t;
 
 /* IOMMU PTE bits */
 #define IOPTE_PPN	0xffffff00	/* PA<35:12> */
