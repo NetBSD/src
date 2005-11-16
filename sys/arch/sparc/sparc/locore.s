@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.223 2005/11/14 21:40:25 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.224 2005/11/16 03:00:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2122,7 +2122,7 @@ illinst4m:
 	mov	%l0, %psr			! and return from trap
 	 add	%l2, 4, %l2
 	RETT
-	
+
 
 /*
  * fp_exception has to check to see if we are trying to save
@@ -2631,7 +2631,7 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	mov	1, %l4
 	xor	%l3, 0x18, %l7	! change endianness of the resulting bit mask
 	ld	[%l6 + PCIC_PROC_IPR_REG], %l5 ! get pending interrupts
-	sll	%l4, %l7, %l4	! hw intr bits are in the upper halfword 
+	sll	%l4, %l7, %l4	! hw intr bits are in the upper halfword
 				! because the register is little-endian
 	btst	%l4, %l5	! has pending hw intr at this level?
 	bnz	sparc_interrupt_common
@@ -2688,7 +2688,7 @@ sparc_interrupt4m_bogus:
 	tst	%o0			! if (cold) {
 	bnz,a	1f			!	splhigh();
 	 or	%l0, 0xf00, %l0		! } else
-	
+
 	call	_C_LABEL(bogusintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
@@ -2763,7 +2763,7 @@ sparc_interrupt_common:
 	tst	%o0			! if (cold) {
 	bnz,a	4f			!	splhigh();
 	 or	%l0, 0xf00, %l0		! } else
-	
+
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
@@ -5030,21 +5030,21 @@ idle_enter:
 
 	call	_C_LABEL(uvm_pageidlezero)
 	 nop
-	
+
 ispin:
 	! check if we're still idle, if so we'll spin in cpu_idlespin()
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
 	bnz,a	idle_leave
 	 wr	%l1, (IPL_SCHED << 8), %psr	! (void) splsched();
-	 
+
 ispin2:
 	sethi	%hi(CPUINFO_VA), %o0
 	ld	[%o0 + CPUINFO_IDLESPIN], %o3
 	tst	%o3
 	bz	1b
 	 nop
-	
+
 	call	%o3
 	 nop	! CPUINFO_VA is already in %o0
 	b,a	ispin
@@ -6656,7 +6656,7 @@ ENTRY(microtime)
 	andn	%o4, %g5, %o4	! %o4 now contains byte 1 and 3
 	srl	%o4, 8, %o4	! shift them so they swap positions
 	sll	%g3, 8, %g3
-	or	%g3, %o4, %o4	! put them back together. 
+	or	%g3, %o4, %o4	! put them back together.
 
 	inc	-1, %o4				! timer is 1-based, adjust
 	!! divide by 25 magic stolen from a gcc output
@@ -6665,7 +6665,7 @@ ENTRY(microtime)
 	rd	%y, %o4
 	srl	%o4, 3, %o4
 	add	%o4, %g4, %o4			! may be bump usec by tick
-	
+
 !!! END ms-IIep specific code
 
 	add	%o3, %o4, %o3			! add timer to time.tv_usec

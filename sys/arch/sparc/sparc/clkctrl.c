@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.c,v 1.2 2005/11/14 19:11:24 uwe Exp $	*/
+/*	$NetBSD: clkctrl.c,v 1.3 2005/11/16 03:00:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.2 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.3 2005/11/16 03:00:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ clkctrl_attach(struct device *parent, struct device *self, void *aux)
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 	bus_space_handle_t bh;
 	struct cpu_info *cur;
-	
+
 	if (clkctrl_reg != NULL) {
 		aprint_error("unable to attach more than once\n");
 		return;
@@ -87,17 +87,17 @@ clkctrl_attach(struct device *parent, struct device *self, void *aux)
 
 	clkctrl_reg = (volatile uint8_t *)bus_space_vaddr(sa->sa_bustag, bh);
 
-#ifdef DEBUG	
+#ifdef DEBUG
 	printf(" reg: %x", (uint32_t)clkctrl_reg);
 #endif
 	cur = curcpu();
 	cur->idlespin = tadpole_cpu_sleep;
-		
+
 	printf("\n");
 }
 
 /* ARGSUSED */
-static void 
+static void
 tadpole_cpu_sleep(struct cpu_info *ci)
 {
 	if (clkctrl_reg == 0)

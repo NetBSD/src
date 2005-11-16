@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.20 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: timer.c,v 1.21 2005/11/16 03:00:23 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.20 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.21 2005/11/16 03:00:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -145,7 +145,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 static int
 timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
-#if defined(SUN4) || defined(SUN4M) 
+#if defined(SUN4) || defined(SUN4M)
 	union obio_attach_args *uoba = aux;
 #endif
 #if defined(SUN4)

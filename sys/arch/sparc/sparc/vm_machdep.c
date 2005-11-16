@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85 2005/11/14 03:30:50 uwe Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.86 2005/11/16 03:00:23 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2005/11/14 03:30:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2005/11/16 03:00:23 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2005/11/14 03:30:50 uwe Exp $");
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(struct buf *bp, vsize_t len)
@@ -166,7 +166,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 /*
  * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
