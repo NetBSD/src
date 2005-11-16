@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136.6.3 2005/11/16 08:08:20 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.4 2005/11/16 10:58:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.3 2005/11/16 08:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.4 2005/11/16 10:58:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1566,7 +1566,7 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 	const struct sys_posix_fadvise_args /* {
 		syscallarg(int) fd;
 		syscallarg(off_t) offset;
-		syscallarg(size_t) len;
+		syscallarg(off_t) len;
 		syscallarg(int) advice;
 	} */ *uap = v;
 	const int fd = SCARG(uap, fd);
