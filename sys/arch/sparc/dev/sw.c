@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.15 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: sw.c,v 1.16 2005/11/16 01:14:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.15 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.16 2005/11/16 01:14:35 uwe Exp $");
 
 #include "opt_ddb.h"
 
@@ -861,10 +861,11 @@ sw_dma_stop(struct ncr5380_softc *ncr_sc)
 	 * in the VME controller.)
 	 */
 #if 0
-	if (csr & (SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR)) {
+	if (csr & (SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR))
 #else
-	if (csr & (SW_CSR_DMA_CONFLICT)) {
+	if (csr & (SW_CSR_DMA_CONFLICT))
 #endif
+	{
 		printf("sw: DMA error, csr=0x%x, reset\n", csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
