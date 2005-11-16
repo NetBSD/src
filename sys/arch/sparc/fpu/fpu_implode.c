@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.12 2003/08/07 16:29:37 agc Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.13 2005/11/16 23:24:44 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2003/08/07 16:29:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.13 2005/11/16 23:24:44 uwe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2003/08/07 16:29:37 agc Exp $")
 #include <sparc/fpu/fpu_emu.h>
 #include <sparc/fpu/fpu_extern.h>
 
-static int round __P((register struct fpemu *, register struct fpn *));
-static int toinf __P((struct fpemu *, int));
+static int round(struct fpemu *, struct fpn *);
+static int toinf(struct fpemu *, int);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for
@@ -79,7 +79,7 @@ static int toinf __P((struct fpemu *, int));
  * responsibility to fix this if necessary.
  */
 static int
-round(register struct fpemu *fe, register struct fpn *fp)
+round(struct fpemu *fe, struct fpn *fp)
 {
 	register u_int m0, m1, m2, m3;
 	register int gr, s;
@@ -194,9 +194,7 @@ toinf(struct fpemu *fe, int sign)
  * of the SPARC instruction set).
  */
 u_int
-fpu_ftoi(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 {
 	register u_int i;
 	register int sign, exp;
@@ -244,12 +242,9 @@ fpu_ftoi(fe, fp)
  * of the SPARC instruction set).
  */
 u_int
-fpu_ftox(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int64_t i;
+	register uint64_t i;
 	register int sign, exp;
 
 	sign = fp->fp_sign;
@@ -275,8 +270,8 @@ fpu_ftox(fe, fp, res)
 		/* NB: the following includes exp < 0 cases */
 		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
 			fe->fe_cx |= FSR_NX;
-		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
-		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
+		i = ((uint64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		if (i >= ((uint64_t)0x8000000000000000LL + sign))
 			break;
 		if (sign) i = -i;
 		res[1] = (int)i;
@@ -296,9 +291,7 @@ fpu_ftox(fe, fp, res)
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
 u_int
-fpu_ftos(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+fpu_ftos(struct fpemu *fe, struct fpn *fp)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -380,10 +373,7 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 u_int
-fpu_ftod(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -441,10 +431,7 @@ done:
  * so we can avoid a small bit of work.
  */
 u_int
-fpu_ftoq(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+fpu_ftoq(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -501,11 +488,7 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(fe, fp, type, space)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	int type;
-	register u_int *space;
+fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 {
 
 	DPRINTF(FPE_REG, ("\n imploding: "));
@@ -541,10 +524,10 @@ fpu_implode(fe, fp, type, space)
 		panic("fpu_implode");
 	}
 #ifdef SUN4U
-	DPRINTF(FPE_REG, ("fpu_implode: %x %x %x %x\n", 
+	DPRINTF(FPE_REG, ("fpu_implode: %x %x %x %x\n",
 		space[0], space[1], space[2], space[3]));
 #else
-	DPRINTF(FPE_REG, ("fpu_implode: %x %x\n", 
+	DPRINTF(FPE_REG, ("fpu_implode: %x %x\n",
 		space[0], space[1]));
 #endif
 }
