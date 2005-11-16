@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.40 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.41 2005/11/16 00:49:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.40 2003/12/10 12:06:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.41 2005/11/16 00:49:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,10 +147,10 @@ struct cgeight_softc {
 static void	cgeightattach(struct device *, struct device *, void *);
 static int	cgeightmatch(struct device *, struct cfdata *, void *);
 #if defined(SUN4)
-static void	cgeightunblank __P((struct device *));
+static void	cgeightunblank(struct device *);
 #endif
 
-static int	cg8_pfour_probe __P((void *, void *));
+static int	cg8_pfour_probe(void *, void *);
 
 CFATTACH_DECL(cgeight, sizeof(struct cgeight_softc),
     cgeightmatch, cgeightattach, NULL, NULL);
@@ -169,23 +169,20 @@ const struct cdevsw cgeight_cdevsw = {
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
-	cgeightunblank, cgeightopen, nullclose, cgeightioctl, 
+	cgeightunblank, cgeightopen, nullclose, cgeightioctl,
 	nopoll, cgeightmmap, nokqfilter
 };
 
-static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
-static int cgeight_get_video __P((struct cgeight_softc *));
-static void cgeight_set_video __P((struct cgeight_softc *, int));
+static void cgeightloadcmap(struct cgeight_softc *, int, int);
+static int cgeight_get_video(struct cgeight_softc *);
+static void cgeight_set_video(struct cgeight_softc *, int);
 #endif
 
 /*
  * Match a cgeight.
  */
-int
-cgeightmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+cgeightmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -201,10 +198,8 @@ cgeightmatch(parent, cf, aux)
 				cg8_pfour_probe, NULL));
 }
 
-int
-cg8_pfour_probe(vaddr, arg)
-	void *vaddr;
-	void *arg;
+static int
+cg8_pfour_probe(void *vaddr, void *arg)
 {
 
 	return (fb_pfour_id(vaddr) == PFOUR_ID_COLOR24);
@@ -213,10 +208,8 @@ cg8_pfour_probe(vaddr, arg)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-void
-cgeightattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+cgeightattach(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;
@@ -232,13 +225,13 @@ cgeightattach(parent, self, aux)
 
 	/* Map the pfour register. */
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
-			  sizeof(u_int32_t),
+			  sizeof(uint32_t),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
 		printf("%s: cannot map pfour register\n", self->dv_xname);
 		return;
 	}
-	fb->fb_pfour = (volatile u_int32_t *)bh;
+	fb->fb_pfour = (volatile uint32_t *)bh;
 
 	fb->fb_driver = &cgeightfbdriver;
 	fb->fb_device = &sc->sc_dev;
@@ -337,10 +330,7 @@ cgeightattach(parent, self, aux)
 }
 
 int
-cgeightopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgeightopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -350,12 +340,7 @@ cgeightopen(dev, flags, mode, p)
 }
 
 int
-cgeightioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgeightioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 #if defined(SUN4)
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
@@ -406,7 +391,8 @@ cgeightioctl(dev, cmd, data, flags, p)
 	default:
 		return (ENOTTY);
 	}
-#endif
+#endif /* SUN4 */
+
 	return (0);
 }
 
@@ -420,10 +406,7 @@ cgeightioctl(dev, cmd, data, flags, p)
  * register for PAGE_SIZE, then the bootrom for 0x40000.
  */
 paddr_t
-cgeightmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgeightmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	off_t poff;
@@ -503,25 +486,21 @@ cgeightmmap(dev, off, prot)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgeightunblank(dev)
-	struct device *dev;
+cgeightunblank(struct device *dev)
 {
 
 	cgeight_set_video((struct cgeight_softc *)dev, 1);
 }
 
 static int
-cgeight_get_video(sc)
-	struct cgeight_softc *sc;
+cgeight_get_video(struct cgeight_softc *sc)
 {
 
 	return (fb_pfour_get_video(&sc->sc_fb));
 }
 
 static void
-cgeight_set_video(sc, enable)
-	struct cgeight_softc *sc;
-	int enable;
+cgeight_set_video(struct cgeight_softc *sc, int enable)
 {
 
 	fb_pfour_set_video(&sc->sc_fb, enable);
@@ -531,9 +510,7 @@ cgeight_set_video(sc, enable)
  * Load a subset of the current (new) colormap into the Brooktree DAC.
  */
 static void
-cgeightloadcmap(sc, start, ncolors)
-	register struct cgeight_softc *sc;
-	register int start, ncolors;
+cgeightloadcmap(struct cgeight_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip;
@@ -546,4 +523,4 @@ cgeightloadcmap(sc, start, ncolors)
 	while (--count >= 0)
 		bt->bt_cmap = *ip++;
 }
-#endif
+#endif /* SUN4 */

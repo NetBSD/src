@@ -1,4 +1,4 @@
-/*	$NetBSD: vmereg.h,v 1.5 1998/09/19 16:44:59 pk Exp $ */
+/*	$NetBSD: vmereg.h,v 1.6 2005/11/16 00:49:03 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 struct vmebusreg {
-	volatile u_int32_t	vmebus_cr;	/* VMEbus control register */
-	volatile u_int32_t	vmebus_afar;	/* VMEbus async fault address */
-	volatile u_int32_t	vmebus_afsr;	/* VMEbus async fault status */
+	volatile uint32_t	vmebus_cr;	/* VMEbus control register */
+	volatile uint32_t	vmebus_afar;	/* VMEbus async fault address */
+	volatile uint32_t	vmebus_afsr;	/* VMEbus async fault status */
 };
 
 /* VME bus Register offsets */
@@ -75,7 +75,7 @@ struct vmebusreg {
 			 "b\27ME\0b\30S\0b\31ERR\0b\32WB\0\33TO\0f\34\3SZ\0"
 
 struct vmebusvec {
-	volatile u_int8_t	vmebusvec[16];
+	volatile uint8_t	vmebusvec[16];
 };
 
 /*
@@ -114,4 +114,3 @@ struct vmebusvec {
 #define VME_IOC_TAGOFFSET	0x0f000000
 #define VME_IOC_DATAOFFSET	0x0f008000
 #define VME_IOC_FLUSHOFFSET	0x0f020000
-
