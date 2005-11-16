@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.304 2005/11/14 19:55:12 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.305 2005/11/16 21:42:51 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2005/11/14 19:55:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2005/11/16 21:42:51 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2576,7 +2576,7 @@ pv_link4_4c(struct vm_page *pg, struct pmap *pm, vaddr_t va,
 	}
 
 	/*
-	 * Allocate the new PV entry now, and, if that fails, bail out 
+	 * Allocate the new PV entry now, and, if that fails, bail out
 	 * before changing the cacheable state of the existing mappings.
 	 */
 	npv = pool_get(&pv_pool, PR_NOWAIT);
@@ -2855,7 +2855,7 @@ pv_link4m(struct vm_page *pg, struct pmap *pm, vaddr_t va,
 	}
 
 	/*
-	 * Allocate the new PV entry now, and, if that fails, bail out 
+	 * Allocate the new PV entry now, and, if that fails, bail out
 	 * before changing the cacheable state of the existing mappings.
 	 */
 	npv = pool_get(&pv_pool, PR_NOWAIT);
@@ -6859,7 +6859,7 @@ pmap_clear_modify4_4c(struct vm_page *pg)
 	(void) pv_syncflags4_4c(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_MOD;
 	VM_MDPAGE_PVHEAD(pg)->pv_flags &= ~PV_MOD;
-	return (rv);		
+	return (rv);
 }
 
 /*
@@ -6884,7 +6884,7 @@ pmap_clear_reference4_4c(struct vm_page *pg)
 	(void) pv_syncflags4_4c(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_REF;
 	VM_MDPAGE_PVHEAD(pg)->pv_flags &= ~PV_REF;
-	return (rv);		
+	return (rv);
 }
 
 /*
@@ -7084,7 +7084,7 @@ pmap_zero_page_viking_mxcc(paddr_t pa)
 {
 	u_int offset;
 	u_int stream_data_addr = MXCC_STREAM_DATA;
-	u_int64_t v = (u_int64_t)pa;
+	uint64_t v = (uint64_t)pa;
 
 	/* Load MXCC stream data register with 0 (bottom 32 bytes only) */
 	stda(stream_data_addr+0, ASI_CONTROL, 0);
@@ -7193,8 +7193,8 @@ void
 pmap_copy_page_viking_mxcc(paddr_t src, paddr_t dst)
 {
 	u_int offset;
-	u_int64_t v1 = (u_int64_t)src;
-	u_int64_t v2 = (u_int64_t)dst;
+	uint64_t v1 = (uint64_t)src;
+	uint64_t v2 = (uint64_t)dst;
 
 	/* Enable cache-coherency */
 	v1 |= MXCC_STREAM_C;
