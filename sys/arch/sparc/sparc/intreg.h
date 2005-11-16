@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.12 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: intreg.h,v 1.13 2005/11/16 22:10:58 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,9 +93,9 @@ void	ienab_bic(int);		/* clear given bits */
  */
 #ifndef _LOCORE
 struct icr_pi {
-	u_int32_t	pi_pend;	/* Pending interrupts (read-only) */
-	u_int32_t	pi_clr;		/* Clear interrupts (write-only) */
-	u_int32_t	pi_set;		/* Raise interrupts (write-only) */
+	uint32_t	pi_pend;	/* Pending interrupts (read-only) */
+	uint32_t	pi_clr;		/* Clear interrupts (write-only) */
+	uint32_t	pi_set;		/* Raise interrupts (write-only) */
 };
 #endif
 #define ICR_PI_PEND_OFFSET	0
@@ -151,9 +151,9 @@ struct icr_pi {
  * Set & clear bits in the system interrupt register
  */
 #define	icr_si_bis(bis) do {			\
-	*((u_int32_t *)ICR_SI_SET) = (bis);	\
+	*((uint32_t *)ICR_SI_SET) = (bis);	\
 } while (0)
 
 #define	icr_si_bic(bic) do {			\
-	*((u_int32_t *)ICR_SI_CLR) = (bic);	\
+	*((uint32_t *)ICR_SI_CLR) = (bic);	\
 } while (0)

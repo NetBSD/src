@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.94 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: cache.c,v 1.95 2005/11/16 22:10:58 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.94 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.95 2005/11/16 22:10:58 uwe Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -945,7 +945,7 @@ viking_pcache_flush_page(paddr_t pa, int invalidate_only)
 	if (invalidate_only) {
 		u_int pa_tag = (pa >> 12);
 		u_int tagaddr;
-		u_int64_t tag;
+		uint64_t tag;
 
 		/*
 		 * Loop over all sets and invalidate all entries tagged
