@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136.6.4 2005/11/16 10:58:29 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.5 2005/11/17 06:42:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.4 2005/11/16 10:58:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.5 2005/11/17 06:42:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,7 +1005,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	nfiles++;
 	memset(fp, 0, sizeof(struct file));
 	fp->f_ractx = NULL;
-	fp->f_advice = POSIX_FADV_NORMAL;
+	fp->f_advice = UVM_ADV_NORMAL;
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -1594,8 +1594,11 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 
 	switch (advice) {
 	case POSIX_FADV_NORMAL:
-	case POSIX_FADV_SEQUENTIAL:
 	case POSIX_FADV_RANDOM:
+	case POSIX_FADV_SEQUENTIAL:
+		KASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
+		KASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
+		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 		/*
 		 * we ignore offset and size.
