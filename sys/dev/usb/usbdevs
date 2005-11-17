@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.416 2005/10/29 17:18:08 rpaulo Exp $
+$NetBSD: usbdevs,v 1.417 2005/11/17 18:12:08 hira Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1273,7 +1273,7 @@ product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
-product MELCO KG54AI		0x006d	WLI-U2-KG54-AI WLAN
+product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
