@@ -1,4 +1,4 @@
-.\" 	$NetBSD: kcont.9,v 1.6 2004/03/24 06:03:26 snj Exp $
+.\" 	$NetBSD: kcont.9,v 1.7 2005/11/17 21:30:00 jld Exp $
 .\"
 .\" The author of this man page is Jonathan Stone (jonathan@dsg.stanford.edu)
 .\"
@@ -156,21 +156,21 @@ Arguments shown above with the name
 .Ar desired_ipl
 are drawn from the following namespace:
 .Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIALXX
-.It Dv KCL_IPL_IMMEDIATE
+.It Dv KC_IPL_IMMED
 Execute the continuation as soon as possible, without regard to current IPL.
-.It Dv KCL_IPL_DEFER_SOFTSERIAL
+.It Dv KC_IPL_DEFER_SOFTSERIAL
 Execute the continuation once IPL falls to
 .Dv IPL_SOFTSERIAL
 or below.
-.It Dv KCL_IPL_DEFER_SOFTCLOCK
+.It Dv KC_IPL_DEFER_SOFTCLOCK
 Execute the continuation once IPL falls to
 .Dv IPL_SOFTCLOCK
 or below.
-.It Dv KCL_IPL_DEFER_SOFTNET
+.It Dv KC_IPL_DEFER_SOFTNET
 Execute the continuation once IPL falls to
 .Dv IPL_SOFTNET
 or below.
-.It Dv KCL_IPL_DEFER_PROCESS
+.It Dv KC_IPL_DEFER_PROCESS
 Defer execution of the continuation to process context.
 .El
 .Sh NOTES
