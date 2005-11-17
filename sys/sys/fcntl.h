@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.32.8.1 2005/11/15 05:24:48 yamt Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.32.8.2 2005/11/17 03:55:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -258,8 +258,8 @@ struct flock {
 #endif
 
 #define	POSIX_FADV_NORMAL	0
-#define	POSIX_FADV_SEQUENTIAL	1
-#define	POSIX_FADV_RANDOM	2
+#define	POSIX_FADV_RANDOM	1
+#define	POSIX_FADV_SEQUENTIAL	2
 #define	POSIX_FADV_WILLNEED	3
 #define	POSIX_FADV_DONTNEED	4
 #define	POSIX_FADV_NOREUSE	5
