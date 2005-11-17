@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.4 2005/11/15 11:32:01 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.5 2005/11/17 03:51:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.4 2005/11/15 11:32:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.5 2005/11/17 03:51:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -36,24 +36,31 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.4 2005/11/15 11:32:01 yamt E
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
 
+/*
+ * uvm_ractx: read-ahead context.
+ */
+
 struct uvm_ractx {
 	int ra_flags;
 #define	RA_VALID	1
-	int ra_advice;
-	off_t ra_winstart;
-	size_t ra_winsize;
-	off_t ra_next;
+	int ra_advice;		/* hint from posix_fadvise */
+	off_t ra_winstart;	/* window start offset */
+	size_t ra_winsize;	/* window size */
+	off_t ra_next;		/* next offset to read-ahead */
 };
 
 /*
  * XXX tune
- * XXX should consider the amount of memory in the system
+ * XXX should consider the amount of memory in the system.
+ * XXX should consider the speed of the underlying device.
  */
 
-#define	RA_WINSIZE_INIT	MAXPHYS
-#define	RA_WINSIZE_MAX	(MAXPHYS * 8)
-#define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX
-#define	RA_MINSIZE	(MAXPHYS * 2)
+#define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
+#define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */
+#define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX	/* fixed window size used for
+						   SEQUENTIAL hint */
+#define	RA_MINSIZE	(MAXPHYS * 2)		/* min size to start i/o */
+#define	RA_IOCHUNK	MAXPHYS			/* read-ahead i/o chunk size */
 
 static off_t ra_startio(struct uvm_object *, off_t, size_t);
 static struct uvm_ractx *ra_allocctx(void);
@@ -76,6 +83,13 @@ ra_freectx(struct uvm_ractx *ra)
 	pool_put(&ractx_pool, ra);
 }
 
+/*
+ * ra_startio: start i/o for read-ahead.
+ *
+ * => start i/o for each RA_IOCHUNK sized chunk.
+ * => return offset to which we started i/o.
+ */
+
 static off_t
 ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 {
@@ -87,7 +101,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 #endif /* defined(READAHEAD_DEBUG) */
 	off = trunc_page(off);
 	while (off < endoff) {
-		const size_t chunksize = MAXPHYS;
+		const size_t chunksize = RA_IOCHUNK;
 		int error;
 		size_t donebytes;
 		int npages;
@@ -109,7 +123,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		    &npages, 0, VM_PROT_READ, 0, 0);
 		if (error) {
 #if defined(READAHEAD_DEBUG)
-			if (error != EINVAL) {
+			if (error != EINVAL) { /* maybe past EOF */
 				printf("%s: error=%d\n", __func__, error);
 			}
 #endif /* defined(READAHEAD_DEBUG) */
@@ -152,6 +166,12 @@ uvm_ra_freectx(struct uvm_ractx *ra)
 	ra_freectx(ra);
 }
 
+/*
+ * uvm_ra_request: start i/o for read-ahead if appropriate.
+ *
+ * => called by filesystems when [reqoff, reqoff+reqsize) is requested.
+ */
+
 void
 uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
     off_t reqoff, size_t reqsize)
@@ -166,9 +186,19 @@ uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
 		break;
 
 	case POSIX_FADV_RANDOM:
+
+		/*
+		 * no read-ahead.
+		 */
+
 		return;
 
 	case POSIX_FADV_SEQUENTIAL:
+
+		/*
+		 * always do read-ahead with a large window.
+		 */
+
 		if (reqoff <= ra->ra_winstart) {
 			ra->ra_next = reqoff;
 		}
@@ -182,6 +212,19 @@ uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
 		break;
 	}
 
+	/*
+	 * a request with NORMAL hint.  (ie. no hint)
+	 *
+	 * we keep a sliding window in order to determine:
+	 *	- if the previous read-ahead was successful or not.
+	 *	- how many bytes to read-ahead.
+	 */
+
+	/*
+	 * if it's the first request for this context,
+	 * initialize context and return.
+	 */
+
 	if ((ra->ra_flags & RA_VALID) == 0) {
 initialize:
 		ra->ra_winstart = ra->ra_next = reqoff + reqsize;
@@ -190,28 +233,46 @@ initialize:
 		return;
 	}
 
+	/*
+	 * if it isn't in our window,
+	 * initialize context and return.
+	 * (read-ahead miss)
+	 */
+
 	if (reqoff < ra->ra_winstart ||
 	    ra->ra_winstart + ra->ra_winsize < reqoff) {
-
-		/*
-		 * miss
-		 */
-
 		goto initialize;
 	}
 
 	/*
-	 * hit
+	 * it's in our window. (read-ahead hit)
+	 *	- start read-ahead i/o if appropriate.
+	 *	- advance and enlarge window.
 	 */
 
 do_readahead:
+
+	/*
+	 * don't bother to read-ahead behind current request.
+	 */
+
 	if (reqoff > ra->ra_next) {
 		ra->ra_next = reqoff;
 	}
 
+	/*
+	 * try to make [reqoff, reqoff+ra_winsize) in-core.
+	 * note that [ra_next, reqoff) is considered already done.
+	 */
+
 	if (reqoff + ra->ra_winsize > ra->ra_next) {
 		off_t raoff = MAX(reqoff, ra->ra_next);
 		size_t rasize = reqoff + ra->ra_winsize - ra->ra_next;
+
+		/*
+		 * issue read-ahead only if we can start big enough i/o.
+		 * otherwise we end up with a stream of small i/o.
+		 */
 
 		if (rasize >= RA_MINSIZE) {
 			ra->ra_next = ra_startio(uobj, raoff, rasize);
@@ -219,7 +280,10 @@ do_readahead:
 	}
 
 	/*
-	 * update window
+	 * update window.
+	 *
+	 * enlarge window by reqsize, so that it grows in a predictable manner
+	 * regardless of the size of each read(2).
 	 */
 
 	ra->ra_winstart = reqoff + reqsize;
