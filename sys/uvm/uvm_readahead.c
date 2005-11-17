@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.7 2005/11/17 06:42:31 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.8 2005/11/17 08:05:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.7 2005/11/17 06:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.8 2005/11/17 08:05:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -261,7 +261,7 @@ do_readahead:
 
 	/*
 	 * try to make [reqoff, reqoff+ra_winsize) in-core.
-	 * note that [ra_next, reqoff) is considered already done.
+	 * note that [reqoff, ra_next) is considered already done.
 	 */
 
 	if (reqoff + ra->ra_winsize > ra->ra_next) {
