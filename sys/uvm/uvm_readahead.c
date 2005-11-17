@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.6 2005/11/17 04:28:10 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.7 2005/11/17 06:42:31 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.6 2005/11/17 04:28:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.7 2005/11/17 06:42:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
-#include <sys/fcntl.h>	/* POSIX_FADV_* */
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -49,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.6 2005/11/17 04:28:10 yamt E
 struct uvm_ractx {
 	int ra_flags;
 #define	RA_VALID	1
-	int ra_advice;		/* hint from posix_fadvise */
+	int ra_advice;		/* hint from posix_fadvise; UVM_ADV_* */
 	off_t ra_winstart;	/* window start offset */
 	size_t ra_winsize;	/* window size */
 	off_t ra_next;		/* next offset to read-ahead */
@@ -144,9 +143,9 @@ uvm_ra_allocctx(int advice)
 {
 	struct uvm_ractx *ra;
 
-	KASSERT(advice == POSIX_FADV_NORMAL ||
-	    advice == POSIX_FADV_SEQUENTIAL ||
-	    advice == POSIX_FADV_RANDOM);
+	KASSERT(advice == UVM_ADV_NORMAL ||
+	    advice == UVM_ADV_RANDOM ||
+	    advice == UVM_ADV_SEQUENTIAL);
 
 	ra = ra_allocctx();
 	if (ra != NULL) {
@@ -182,10 +181,10 @@ uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
 	}
 
 	switch (ra->ra_advice) {
-	case POSIX_FADV_NORMAL:
+	case UVM_ADV_NORMAL:
 		break;
 
-	case POSIX_FADV_RANDOM:
+	case UVM_ADV_RANDOM:
 
 		/*
 		 * no read-ahead.
@@ -193,7 +192,7 @@ uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
 
 		return;
 
-	case POSIX_FADV_SEQUENTIAL:
+	case UVM_ADV_SEQUENTIAL:
 
 		/*
 		 * always do read-ahead with a large window.
