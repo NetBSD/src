@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2005/10/01 20:46:43 christos Exp $
+# $NetBSD: Makefile,v 1.3 2005/11/17 13:55:29 rpaulo Exp $
 
 PROG=	wpa_supplicant
 SRCS=	config.c eloop.c common.c md5.c rc4.c sha1.c aes_wrap.c \
@@ -34,8 +34,8 @@ SRCS+=	eap_ttls.c eap_md5.c
 #CFLAGS+= -DEAP_FAST
 #SRCS+=	eap_fast.c
 
-DPADD+= ${LIBCRYPTO}
-LDADD+= -lssl -lcrypto
+DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
+LDADD+= -lssl -lcrypto -ldes
 .else
 SRCS+=	tls_none.c
 .endif
