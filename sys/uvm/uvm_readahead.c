@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.5 2005/11/17 03:51:39 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.6 2005/11/17 04:28:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.5 2005/11/17 03:51:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.6 2005/11/17 04:28:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -35,6 +35,12 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.5 2005/11/17 03:51:39 yamt E
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
+
+#if defined(READAHEAD_DEBUG)
+#define	DPRINTF(a)	printf a
+#else /* defined(READAHEAD_DEBUG) */
+#define	DPRINTF(a)	/* nothing */
+#endif /* defined(READAHEAD_DEBUG) */
 
 /*
  * uvm_ractx: read-ahead context.
@@ -95,10 +101,8 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 {
 	const off_t endoff = off + sz;
 
-#if defined(READAHEAD_DEBUG)
-	printf("%s: uobj=%p, off=%" PRIu64 ", endoff=%" PRIu64 "\n",
-	    __func__, uobj, off, endoff);
-#endif /* defined(READAHEAD_DEBUG) */
+	DPRINTF(("%s: uobj=%p, off=%" PRIu64 ", endoff=%" PRIu64 "\n",
+	    __func__, uobj, off, endoff));
 	off = trunc_page(off);
 	while (off < endoff) {
 		const size_t chunksize = RA_IOCHUNK;
@@ -111,10 +115,8 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		KASSERT((chunksize & (chunksize - 1)) == 0);
 		KASSERT((off & PAGE_MASK) == 0);
 		bytelen = ((off + chunksize) & -(off_t)chunksize) - off;
-#if defined(READAHEAD_DEBUG)
-		printf("%s: off=%" PRIu64 ", bytelen=%zu\n",
-		    __func__, off, bytelen);
-#endif /* defined(READAHEAD_DEBUG) */
+		DPRINTF(("%s: off=%" PRIu64 ", bytelen=%zu\n",
+		    __func__, off, bytelen));
 		KASSERT((bytelen & PAGE_MASK) == 0);
 		npages = orignpages = bytelen >> PAGE_SHIFT;
 		KASSERT(npages != 0);
@@ -122,11 +124,9 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, 0, 0);
 		if (error) {
-#if defined(READAHEAD_DEBUG)
 			if (error != EINVAL) { /* maybe past EOF */
-				printf("%s: error=%d\n", __func__, error);
+				DPRINTF(("%s: error=%d\n", __func__, error));
 			}
-#endif /* defined(READAHEAD_DEBUG) */
 			break;
 		}
 		KASSERT(orignpages == npages);
