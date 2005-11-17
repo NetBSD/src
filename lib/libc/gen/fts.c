@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.26 2005/10/22 20:55:13 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.27 2005/11/17 19:13:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.26 2005/10/22 20:55:13 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.27 2005/11/17 19:13:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -241,7 +241,7 @@ fts_close(sp)
 	FTS *sp;
 {
 	FTSENT *freep, *p;
-	int saved_errno = 0;
+	int saved_errno;
 
 	_DIAGASSERT(sp != NULL);
 
@@ -270,20 +270,19 @@ fts_close(sp)
 
 	/* Return to original directory, save errno if necessary. */
 	if (!ISSET(FTS_NOCHDIR)) {
-		if (fchdir(sp->fts_rfd))
-			saved_errno = errno;
+		saved_errno = fchdir(sp->fts_rfd) ? errno : 0;
 		(void)close(sp->fts_rfd);
+		/* Set errno and return. */
+		if (saved_errno) {
+			errno = saved_errno;
+			return (-1);
+		}
 	}
 
 	/* Free up the stream pointer. */
 	free(sp);
 	/* ISSET() is illegal after this, since the macro touches sp */
 
-	/* Set errno and return. */
-	if (saved_errno) {
-		errno = saved_errno;
-		return (-1);
-	}
 	return (0);
 }
 
@@ -613,7 +612,9 @@ fts_build(sp, type)
 	size_t nitems;
 	FTSENT *cur, *tail;
 	DIR *dirp;
-	int adjust, cderrno, descend, len, level, nlinks, saved_errno, nostat;
+	void *oldaddr;
+	size_t dnamlen;
+	int cderrno, descend, len, level, nlinks, saved_errno, nostat, doadjust;
 	size_t maxlen;
 #ifdef FTS_WHITEOUT
 	int oflag;
@@ -715,22 +716,22 @@ fts_build(sp, type)
 	level = cur->fts_level + 1;
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
-	adjust = 0;
+	doadjust = 0;
 	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
-		size_t dlen;
 
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
 #if HAVE_STRUCT_DIRENT_D_NAMLEN
-		dlen = dp->d_namlen;
+		dnamlen = dp->d_namlen;
 #else
-		dlen = strlen(dp->d_name);
+		dnamlen = strlen(dp->d_name);
 #endif
-		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
+		if ((p = fts_alloc(sp, dp->d_name, dnamlen)) == NULL)
 			goto mem1;
-		if (dlen >= maxlen) {	/* include space for NUL */
-			if (fts_palloc(sp, len + dlen + 1)) {
+		if (dnamlen >= maxlen) {	/* include space for NUL */
+			oldaddr = sp->fts_path;
+			if (fts_palloc(sp, dnamlen + len + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -746,15 +747,33 @@ mem1:				saved_errno = errno;
 				SET(FTS_STOP);
 				return (NULL);
 			}
-			adjust = 1;
-			if (ISSET(FTS_NOCHDIR))
-				cp = sp->fts_path + len;
+			/* Did realloc() change the pointer? */
+			if (oldaddr != sp->fts_path) {
+				doadjust = 1;
+				if (ISSET(FTS_NOCHDIR))
+					cp = sp->fts_path + len;
+			}
 			maxlen = sp->fts_pathlen - len;
 		}
 
-		p->fts_pathlen = len + dlen;
-		p->fts_parent = sp->fts_cur;
+		if (len + dnamlen >= USHRT_MAX) {
+			/*
+			 * In an FTSENT, fts_pathlen is a u_short so it is
+			 * possible to wraparound here.  If we do, free up
+			 * the current structure and the structures already
+			 * allocated, then error out with ENAMETOOLONG.
+			 */
+			free(p);
+			fts_lfree(head);
+			(void)closedir(dirp);
+			cur->fts_info = FTS_ERR;
+			SET(FTS_STOP);
+			errno = ENAMETOOLONG;
+			return (NULL);
+		}
 		p->fts_level = level;
+		p->fts_pathlen = len + dnamlen;
+		p->fts_parent = sp->fts_cur;
 
 #ifdef FTS_WHITEOUT
 		if (dp->d_type == DT_WHT)
@@ -810,7 +829,7 @@ mem1:				saved_errno = errno;
 	 * If had to realloc the path, adjust the addresses for the rest
 	 * of the tree.
 	 */
-	if (adjust)
+	if (doadjust)
 		fts_padjust(sp, head);
 
 	/*
@@ -818,7 +837,7 @@ mem1:				saved_errno = errno;
 	 * state.
 	 */
 	if (ISSET(FTS_NOCHDIR)) {
-		if (cp - 1 > sp->fts_path)
+		if (len == sp->fts_pathlen || nitems == 0)
 			--cp;
 		*cp = '\0';
 	}
@@ -1088,7 +1107,7 @@ fts_palloc(sp, size)
 #if 1
 	/* Protect against fts_pathlen overflow. */
 	if (size > USHRT_MAX + 1) {
-		errno = ENOMEM;
+		errno = ENAMETOOLONG;
 		return (1);
 	}
 #endif
