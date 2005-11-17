@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.106 2005/09/01 02:21:12 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.106.6.1 2005/11/17 03:56:00 yamt Exp $	*/
 
 /*
  *
@@ -128,7 +128,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /* bits 0x700: max protection, 0x800: not used */
 
 /* bits 0x7000: advice, 0x8000: not used */
-/* advice: matches MADV_* from sys/mman.h */
+/* advice: matches MADV_* from sys/mman.h and POSIX_FADV_* from sys/fcntl.h */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
 #define UVM_ADV_RANDOM	0x1	/* 'random' */
 #define UVM_ADV_SEQUENTIAL 0x2	/* 'sequential' */
