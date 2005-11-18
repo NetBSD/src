@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.8 2005/11/17 08:05:01 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.9 2005/11/18 08:44:55 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.8 2005/11/17 08:05:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.9 2005/11/18 08:44:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.8 2005/11/17 08:05:01 yamt E
 struct uvm_ractx {
 	int ra_flags;
 #define	RA_VALID	1
-	int ra_advice;		/* hint from posix_fadvise; UVM_ADV_* */
 	off_t ra_winstart;	/* window start offset */
 	size_t ra_winsize;	/* window size */
 	off_t ra_next;		/* next offset to read-ahead */
@@ -139,19 +138,13 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 /* ------------------------------------------------------------ */
 
 struct uvm_ractx *
-uvm_ra_allocctx(int advice)
+uvm_ra_allocctx(void)
 {
 	struct uvm_ractx *ra;
-
-	KASSERT(advice == UVM_ADV_NORMAL ||
-	    advice == UVM_ADV_RANDOM ||
-	    advice == UVM_ADV_SEQUENTIAL);
 
 	ra = ra_allocctx();
 	if (ra != NULL) {
 		ra->ra_flags = 0;
-		ra->ra_winstart = 0;
-		ra->ra_advice = advice;
 	}
 
 	return ra;
@@ -172,47 +165,38 @@ uvm_ra_freectx(struct uvm_ractx *ra)
  */
 
 void
-uvm_ra_request(struct uvm_ractx *ra, struct uvm_object *uobj,
+uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
     off_t reqoff, size_t reqsize)
 {
 
-	if (ra == NULL) {
+	if (ra == NULL || advice == UVM_ADV_RANDOM) {
 		return;
 	}
 
-	switch (ra->ra_advice) {
-	case UVM_ADV_NORMAL:
-		break;
+	/*
+	 * XXX needs locking?  maybe.
+	 * but the worst effect is merely a bad read-ahead.
+	 */
 
-	case UVM_ADV_RANDOM:
-
-		/*
-		 * no read-ahead.
-		 */
-
-		return;
-
-	case UVM_ADV_SEQUENTIAL:
+	if (advice == UVM_ADV_SEQUENTIAL) {
 
 		/*
 		 * always do read-ahead with a large window.
 		 */
 
+		if ((ra->ra_flags & RA_VALID) == 0) {
+			ra->ra_winstart = ra->ra_next = 0;
+			ra->ra_flags |= RA_VALID;
+		}
 		if (reqoff <= ra->ra_winstart) {
 			ra->ra_next = reqoff;
 		}
 		ra->ra_winsize = RA_WINSIZE_SEQENTIAL;
 		goto do_readahead;
-
-	default:
-#if defined(DIAGNOSTIC)
-		panic("%s: unknown advice %d", __func__, ra->ra_advice);
-#endif /* defined(DIAGNOSTIC) */
-		break;
 	}
 
 	/*
-	 * a request with NORMAL hint.  (ie. no hint)
+	 * a request with UVM_ADV_NORMAL hint.  (ie. no hint)
 	 *
 	 * we keep a sliding window in order to determine:
 	 *	- if the previous read-ahead was successful or not.
@@ -229,7 +213,7 @@ initialize:
 		ra->ra_winstart = ra->ra_next = reqoff + reqsize;
 		ra->ra_winsize = RA_WINSIZE_INIT;
 		ra->ra_flags |= RA_VALID;
-		return;
+		goto done;
 	}
 
 	/*
@@ -268,6 +252,19 @@ do_readahead:
 		off_t raoff = MAX(reqoff, ra->ra_next);
 		size_t rasize = reqoff + ra->ra_winsize - ra->ra_next;
 
+#if defined(DIAGNOSTIC)
+		if (rasize > RA_WINSIZE_MAX) {
+
+			/*
+			 * shouldn't happen as far as we're protected by
+			 * kernel_lock.
+			 */
+
+			printf("%s: corrupted context", __func__);
+			rasize = RA_WINSIZE_MAX;
+		}
+#endif /* defined(DIAGNOSTIC) */
+
 		/*
 		 * issue read-ahead only if we can start big enough i/o.
 		 * otherwise we end up with a stream of small i/o.
@@ -287,4 +284,6 @@ do_readahead:
 
 	ra->ra_winstart = reqoff + reqsize;
 	ra->ra_winsize = MIN(RA_WINSIZE_MAX, ra->ra_winsize + reqsize);
+
+done:;
 }

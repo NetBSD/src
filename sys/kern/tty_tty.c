@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.24.10.1 2005/11/15 03:46:15 yamt Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.24.10.2 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.10.1 2005/11/15 03:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.10.2 2005/11/18 08:44:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ cttyread(dev, uio, flag)
 	if (ttyvp == NULL)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_READ(ttyvp, uio, NULL, flag, NOCRED);
+	error = VOP_READ(ttyvp, uio, flag, NOCRED);
 	VOP_UNLOCK(ttyvp, 0);
 	return (error);
 }
