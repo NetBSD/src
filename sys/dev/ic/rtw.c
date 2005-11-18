@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.56 2005/09/22 16:15:20 gdt Exp $ */
+/* $NetBSD: rtw.c,v 1.57 2005/11/18 16:53:56 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.56 2005/09/22 16:15:20 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.57 2005/11/18 16:53:56 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -99,7 +99,6 @@ static struct ieee80211_cipher rtw_cipher_wep;
 static void rtw_start(struct ifnet *);
 
 static void rtw_io_enable(struct rtw_regs *, uint8_t, int);
-static int rtw_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
 static int rtw_key_delete(struct ieee80211com *, const struct ieee80211_key *);
 static int rtw_key_set(struct ieee80211com *, const struct ieee80211_key *,
     const u_int8_t[IEEE80211_ADDR_LEN]);
@@ -541,24 +540,6 @@ rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m, int force)
 	keycopy.wk_flags &= ~IEEE80211_KEY_SWCRYPT;
 
 	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m, force);
-}
-
-static int
-rtw_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
-{
-	int keyix;
-#ifdef RTW_DEBUG
-	struct rtw_softc *sc = ic->ic_ifp->if_softc;
-#endif
-
-	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
-		keyix = k - ic->ic_nw_keys;
-	else
-		keyix = IEEE80211_KEYIX_NONE;
-
-	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: alloc key %u\n", __func__, keyix));
-
-	return keyix;
 }
 
 static int
@@ -1585,10 +1566,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 			rr->rr_flags = 0;
 			rr->rr_rate = rate;
-			rr->rr_chan_freq =
-			    htole16(ic->ic_bss->ni_chan->ic_freq);
-			rr->rr_chan_flags =
-			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			rr->rr_chan_freq = htole16(ic->ic_curchan->ic_freq);
+			rr->rr_chan_flags = htole16(ic->ic_curchan->ic_flags);
 			rr->rr_antsignal = rssi;
 			rr->rr_barker_lock = htole16(sq);
 
@@ -2285,9 +2264,7 @@ rtw_tune(struct rtw_softc *sc)
 	int antdiv = sc->sc_flags & RTW_F_ANTDIV,
 	    dflantb = sc->sc_flags & RTW_F_DFLANTB;
 
-	KASSERT(ic->ic_bss->ni_chan != NULL);
-
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 	if (chan == IEEE80211_CHAN_ANY)
 		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
 
@@ -2306,9 +2283,8 @@ rtw_tune(struct rtw_softc *sc)
 	KASSERT((sc->sc_flags & RTW_F_ENABLED) != 0);
 
 	if ((rc = rtw_phy_init(&sc->sc_regs, sc->sc_rf,
-	    rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_bss->ni_chan),
-	    sc->sc_csthr, ic->ic_bss->ni_chan->ic_freq, antdiv,
-	    dflantb, RTW_ON)) != 0) {
+	    rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_curchan), sc->sc_csthr,
+	        ic->ic_curchan->ic_freq, antdiv, dflantb, RTW_ON)) != 0) {
 		/* XXX condition on powersaving */
 		printf("%s: phy init failed\n", sc->sc_dev.dv_xname);
 	}
@@ -2564,10 +2540,9 @@ rtw_init(struct ifnet *ifp)
 	/* Cancel pending I/O and reset. */
 	rtw_stop(ifp, 0);
 
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	DPRINTF(sc, RTW_DEBUG_TUNE, ("%s: channel %d freq %d flags 0x%04x\n",
-	    __func__, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
-	    ic->ic_bss->ni_chan->ic_freq, ic->ic_bss->ni_chan->ic_flags));
+	    __func__, ieee80211_chan2ieee(ic, ic->ic_curchan),
+	    ic->ic_curchan->ic_freq, ic->ic_curchan->ic_flags));
 
 	if ((rc = rtw_pwrstate(sc, RTW_OFF)) != 0)
 		goto out;
@@ -3219,10 +3194,8 @@ rtw_start(struct ifnet *ifp)
 
 			rt->rt_flags = 0;
 			rt->rt_rate = rate;
-			rt->rt_chan_freq =
-			    htole16(ic->ic_bss->ni_chan->ic_freq);
-			rt->rt_chan_flags =
-			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			rt->rt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+			rt->rt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rt,
 			    sizeof(sc->sc_txtapu), m0);
@@ -3492,11 +3465,10 @@ static void
 rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni, uint32_t rstamp)
 {
 	uint8_t tppoll;
-	struct ieee80211com *ic = &sc->sc_ic;
 
 	if (le64toh(ni->ni_tstamp.tsf) < rtw_tsf_extend(&sc->sc_regs, rstamp))
 		return;
-	if (ieee80211_ibss_merge(ic, ni) == ENETRESET) {
+	if (ieee80211_ibss_merge(ni) == ENETRESET) {
 		/* Stop beacon queue.  Kick state machine to synchronize
 		 * with the new IBSS.
 		 */
@@ -3676,7 +3648,6 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 	mtbl->mt_node_alloc = ic->ic_node_alloc;
 	ic->ic_node_alloc = rtw_node_alloc;
 
-	ic->ic_crypto.cs_key_alloc = rtw_key_alloc;
 	ic->ic_crypto.cs_key_delete = rtw_key_delete;
 	ic->ic_crypto.cs_key_set = rtw_key_set;
 	ic->ic_crypto.cs_key_update_begin = rtw_key_update_begin;

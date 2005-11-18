@@ -414,7 +414,7 @@ ath_sysctlattach(struct ath_softc *sc)
 	if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, rxantenna,
 	    "default/rx antenna")) != 0)
 		goto err;
-	if (sc->sc_hasdiversity) {
+	if (ath_hal_hasdiversity(sc->sc_ah)) {
 		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, diversity,
 		    "antenna diversity")) != 0)
 			goto err;
@@ -428,7 +428,7 @@ ath_sysctlattach(struct ath_softc *sc)
 	if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, tpscale,
 	    "tx power scaling")) != 0)
 		goto err;
-	if (sc->sc_hastpc) {
+	if (ath_hal_hastpc(sc->sc_ah)) {
 		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, tpc,
 		    "enable/disable per-packet TPC")) != 0)
 			goto err;
