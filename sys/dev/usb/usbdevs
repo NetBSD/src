@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.417 2005/11/17 18:12:08 hira Exp $
+$NetBSD: usbdevs,v 1.418 2005/11/18 11:29:47 hira Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
 vendor ACDC		0x0d7e	American Computer & Digital Components
-vendor ABC		0x0d8c	ABC
+vendor CMEDIA		0x0d8c	C-Media Electronics Inc.
 vendor MSI		0x0db0	Micro Star
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
