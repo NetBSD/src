@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.33 2005/05/28 13:11:14 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.34 2005/11/18 08:32:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.33 2005/05/28 13:11:14 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.34 2005/11/18 08:32:46 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -100,8 +100,9 @@ __weak_alias(vis,_vis)
 #define MAXEXTRAS	5
 
 
-#define MAKEEXTRALIST(flag, extra, orig)				      \
+#define MAKEEXTRALIST(flag, extra, orig_str)				      \
 do {									      \
+	const char *orig = orig_str;					      \
 	const char *o = orig;						      \
 	char *e;							      \
 	while (*o++)							      \
