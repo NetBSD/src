@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.8 2005/04/02 18:56:50 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 
 /*
  * John Bicket's SampleRate control algorithm.
@@ -684,7 +684,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, struct ieee80211_node *ni)
 
 	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
         sn->static_rate_ndx = -1;
-	if (ic->ic_fixed_rate != -1) {
+	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * A fixed rate is to be used; ic_fixed_rate is an
 		 * index into the supported rate set.  Convert this
