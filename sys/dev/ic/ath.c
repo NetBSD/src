@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.60 2005/10/14 00:26:45 gdt Exp $	*/
+/*	$NetBSD: ath.c,v 1.61 2005/11/18 16:48:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -38,10 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.94 2005/07/07 00:04:50 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.60 2005/10/14 00:26:45 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.61 2005/11/18 16:48:31 skrll Exp $");
 #endif
 
 /*
@@ -129,7 +129,8 @@ static void	ath_fatal_proc(void *, int);
 static void	ath_rxorn_proc(void *, int);
 static void	ath_bmiss_proc(void *, int);
 static int	ath_key_alloc(struct ieee80211com *,
-			const struct ieee80211_key *);
+			const struct ieee80211_key *,
+			ieee80211_keyix *, ieee80211_keyix *);
 static int	ath_key_delete(struct ieee80211com *,
 			const struct ieee80211_key *);
 static int	ath_key_set(struct ieee80211com *, const struct ieee80211_key *,
@@ -178,8 +179,7 @@ static void	ath_next_scan(void *);
 static void	ath_calibrate(void *);
 static int	ath_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void	ath_setup_stationkey(struct ieee80211_node *);
-static void	ath_newassoc(struct ieee80211com *,
-			struct ieee80211_node *, int);
+static void	ath_newassoc(struct ieee80211_node *, int);
 static int	ath_getchannels(struct ath_softc *, u_int cc,
 			HAL_BOOL outdoor, HAL_BOOL xchanmode);
 static void	ath_led_event(struct ath_softc *, int);
@@ -381,30 +381,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 			ath_outdoor, ath_xchanmode);
 	if (error != 0)
 		goto bad;
-	/*
-	 * TPC support can be done either with a global cap or
-	 * per-packet support.  The latter is not available on
-	 * all parts.  We're a bit pedantic here as all parts
-	 * support a global cap.
-	 */
-	sc->sc_hastpc = ath_hal_hastpc(ah);
-	if (sc->sc_hastpc || ath_hal_hastxpowlimit(ah))
-		ic->ic_caps |= IEEE80211_C_TXPMGT;
-	/*
-	 * Query the hal about antenna support.
-	 */
-	if (ath_hal_hasdiversity(ah)) {
-		sc->sc_hasdiversity = 1;
-		sc->sc_diversity = ath_hal_getdiversity(ah);
-	}
-	sc->sc_defant = ath_hal_getdefantenna(ah);
-
-	/*
-	 * Setup dynamic sysctl's now that country code and regdomain
-	 * are available from the hal, and both TPC and diversity
-	 * capabilities are known.
-	 */
-	ath_sysctlattach(sc);
 
 	/*
 	 * Setup rate tables for all potential media types.
@@ -577,6 +553,14 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	}
 	sc->sc_hasclrkey = ath_hal_ciphersupported(ah, HAL_CIPHER_CLR);
 	sc->sc_mcastkey = ath_hal_getmcastkeysearch(ah);
+	/*
+	 * TPC support can be done either with a global cap or
+	 * per-packet support.  The latter is not available on
+	 * all parts.  We're a bit pedantic here as all parts
+	 * support a global cap.
+	 */
+	if (ath_hal_hastpc(ah) || ath_hal_hastxpowlimit(ah))
+		ic->ic_caps |= IEEE80211_C_TXPMGT;
 
 	/*
 	 * Mark WME capability only if we have sufficient
@@ -595,6 +579,11 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * 32-bit boundary for 4-address and QoS frames.
 	 */
 	ic->ic_flags |= IEEE80211_F_DATAPAD;
+
+	/*
+	 * Query the hal about antenna support.
+	 */
+	sc->sc_defant = ath_hal_getdefantenna(ah);
 
 	/*
 	 * Not all chips have the VEOL support we want to
@@ -617,6 +606,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_recv_mgmt = ath_recv_mgmt;
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ath_newstate;
+	ic->ic_crypto.cs_max_keyix = sc->sc_keymax;
 	ic->ic_crypto.cs_key_alloc = ath_key_alloc;
 	ic->ic_crypto.cs_key_delete = ath_key_delete;
 	ic->ic_crypto.cs_key_set = ath_key_set;
@@ -641,6 +631,13 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
 #endif
+
+	/*
+	 * Setup dynamic sysctl's now that country code and
+	 * regdomain are available from the hal.
+	 */
+	ath_sysctlattach(sc);
+
 	ieee80211_announce(ic);
 	ath_announce(sc);
 	return 0;
@@ -947,7 +944,6 @@ ath_init(struct ath_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni;
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_STATUS status;
 	int error = 0;
@@ -973,8 +969,8 @@ ath_init(struct ath_softc *sc)
 	 * be followed by initialization of the appropriate bits
 	 * and then setup of the interrupt mask.
 	 */
-	sc->sc_curchan.channel = ic->ic_ibss_chan->ic_freq;
-	sc->sc_curchan.channelFlags = ath_chan2flags(ic, ic->ic_ibss_chan);
+	sc->sc_curchan.channel = ic->ic_curchan->ic_freq;
+	sc->sc_curchan.channelFlags = ath_chan2flags(ic, ic->ic_curchan);
 	if (!ath_hal_reset(ah, ic->ic_opmode, &sc->sc_curchan, AH_FALSE, &status)) {
 		if_printf(ifp, "unable to reset hardware; hal status %u\n",
 			status);
@@ -987,6 +983,11 @@ ath_init(struct ath_softc *sc)
 	 * but it's best done after a reset.
 	 */
 	ath_update_txpow(sc);
+	/*
+	 * Likewise this is set during reset so update
+	 * state cached in the driver.
+	 */
+	sc->sc_diversity = ath_hal_getdiversity(ah);
 
 	/*
 	 * Setup the hardware after reset: the key cache
@@ -1022,9 +1023,7 @@ ath_init(struct ath_softc *sc)
 	 * to kick the 802.11 state machine as it's likely to
 	 * immediately call back to us to send mgmt frames.
 	 */
-	ni = ic->ic_bss;
-	ni->ni_chan = ic->ic_ibss_chan;
-	ath_chan_change(sc, ni->ni_chan);
+	ath_chan_change(sc, ic->ic_curchan);
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
@@ -1129,7 +1128,7 @@ ath_reset(struct ifnet *ifp)
 	 * Convert to a HAL channel description with the flags
 	 * constrained to reflect the current operating mode.
 	 */
-	c = ic->ic_ibss_chan;
+	c = ic->ic_curchan;
 	sc->sc_curchan.channel = c->ic_freq;
 	sc->sc_curchan.channelFlags = ath_chan2flags(ic, c);
 
@@ -1141,6 +1140,7 @@ ath_reset(struct ifnet *ifp)
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	ath_update_txpow(sc);		/* update tx power state */
+	sc->sc_diversity = ath_hal_getdiversity(ah);
 	if (ath_startrecv(sc) != 0)	/* restart recv */
 		if_printf(ifp, "%s: unable to start recv logic\n", __func__);
 	/*
@@ -1316,7 +1316,7 @@ static int
 ath_media_change(struct ifnet *ifp)
 {
 #define	IS_UP(ifp) \
-	((ifp->if_flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
+	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
 	int error;
 
 	error = ieee80211_media_change(ifp);
@@ -1375,7 +1375,7 @@ ath_keyset_tkip(struct ath_softc *sc, const struct ieee80211_key *k,
 	KASSERT(sc->sc_splitmic, ("key cache !split"));
 	if ((k->wk_flags & IEEE80211_KEY_XR) == IEEE80211_KEY_XR) {
 		/*
-		 * TX key goes at first index, RX key at +32.
+		 * TX key goes at first index, RX key at the rx index.
 		 * The hal handles the MIC keys at index+64.
 		 */
 		memcpy(hk->kv_mic, k->wk_txmic, sizeof(hk->kv_mic));
@@ -1470,7 +1470,8 @@ ath_keyset(struct ath_softc *sc, const struct ieee80211_key *k,
  * each key, one for decrypt/encrypt and the other for the MIC.
  */
 static u_int16_t
-key_alloc_2pair(struct ath_softc *sc)
+key_alloc_2pair(struct ath_softc *sc,
+	ieee80211_keyix *txkeyix, ieee80211_keyix *rxkeyix)
 {
 #define	N(a)	(sizeof(a)/sizeof(a[0]))
 	u_int i, keyix;
@@ -1509,19 +1510,22 @@ key_alloc_2pair(struct ath_softc *sc)
 				"%s: key pair %u,%u %u,%u\n",
 				__func__, keyix, keyix+64,
 				keyix+32, keyix+32+64);
-			return keyix;
+			*txkeyix = keyix;
+			*rxkeyix = keyix+32;
+			return 1;
 		}
 	}
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: out of pair space\n", __func__);
-	return IEEE80211_KEYIX_NONE;
+	return 0;
 #undef N
 }
 
 /*
  * Allocate a single key cache slot.
  */
-static u_int16_t
-key_alloc_single(struct ath_softc *sc)
+static int
+key_alloc_single(struct ath_softc *sc,
+	ieee80211_keyix *txkeyix, ieee80211_keyix *rxkeyix)
 {
 #define	N(a)	(sizeof(a)/sizeof(a[0]))
 	u_int i, keyix;
@@ -1539,11 +1543,12 @@ key_alloc_single(struct ath_softc *sc)
 			setbit(sc->sc_keymap, keyix);
 			DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: key %u\n",
 				__func__, keyix);
-			return keyix;
+			*txkeyix = *rxkeyix = keyix;
+			return 1;
 		}
 	}
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: out of space\n", __func__);
-	return IEEE80211_KEYIX_NONE;
+	return 0;
 #undef N
 }
 
@@ -1557,7 +1562,8 @@ key_alloc_single(struct ath_softc *sc)
  * 64 entries.
  */
 static int
-ath_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
+ath_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k,
+	ieee80211_keyix *keyix, ieee80211_keyix *rxkeyix)
 {
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
 
@@ -1573,21 +1579,19 @@ ath_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 	 * multi-station operation.
 	 */
 	if ((k->wk_flags & IEEE80211_KEY_GROUP) && !sc->sc_mcastkey) {
-		u_int keyix;
-
 		if (!(&ic->ic_nw_keys[0] <= k &&
 		      k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])) {
 			/* should not happen */
 			DPRINTF(sc, ATH_DEBUG_KEYCACHE,
 				"%s: bogus group key\n", __func__);
-			return IEEE80211_KEYIX_NONE;
+			return 0;
 		}
-		keyix = k - ic->ic_nw_keys;
 		/*
 		 * XXX we pre-allocate the global keys so
 		 * have no way to check if they've already been allocated.
 		 */
-		return keyix;
+		*keyix = *rxkeyix = k - ic->ic_nw_keys;
+		return 1;
 	}
 
 	/*
@@ -1599,12 +1603,12 @@ ath_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
 	 * those requests to slot 0.
 	 */
 	if (k->wk_flags & IEEE80211_KEY_SWCRYPT) {
-		return key_alloc_single(sc);
+		return key_alloc_single(sc, keyix, rxkeyix);
 	} else if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP &&
 	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0 && sc->sc_splitmic) {
-		return key_alloc_2pair(sc);
+		return key_alloc_2pair(sc, keyix, rxkeyix);
 	} else {
-		return key_alloc_single(sc);
+		return key_alloc_single(sc, keyix, rxkeyix);
 	}
 }
 
@@ -1617,32 +1621,17 @@ ath_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
 	struct ath_hal *ah = sc->sc_ah;
 	const struct ieee80211_cipher *cip = k->wk_cipher;
-	struct ieee80211_node *ni;
 	u_int keyix = k->wk_keyix;
 
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: delete key %u\n", __func__, keyix);
 
 	ath_hal_keyreset(ah, keyix);
 	/*
-	 * Check the key->node map and flush any ref.
-	 */
-	ni = sc->sc_keyixmap[keyix];
-	if (ni != NULL) {
-		ieee80211_free_node(ni);
-		sc->sc_keyixmap[keyix] = NULL;
-	}
-	/*
 	 * Handle split tx/rx keying required for TKIP with h/w MIC.
 	 */
 	if (cip->ic_cipher == IEEE80211_CIPHER_TKIP &&
-	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0 && sc->sc_splitmic) {
+	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0 && sc->sc_splitmic)
 		ath_hal_keyreset(ah, keyix+32);		/* RX key */
-		ni = sc->sc_keyixmap[keyix+32];
-		if (ni != NULL) {			/* as above... */
-			ieee80211_free_node(ni);
-			sc->sc_keyixmap[keyix+32] = NULL;
-		}
-	}
 	if (keyix >= IEEE80211_WEP_NKID) {
 		/*
 		 * Don't touch keymap entries for global keys so
@@ -1818,9 +1807,23 @@ ath_mode_init(struct ath_softc *sc)
 
 	/* calculate and install multicast filter */
 #ifdef __FreeBSD__
-	if ((sc->sc_if.if_flags & IFF_ALLMULTI) == 0)
-		ath_mcastfilter_compute(sc, mfilt);
-	else
+	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
+		mfilt[0] = mfilt[1] = 0;
+		IF_ADDR_LOCK(ifp);
+		TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
+			caddr_t dl;
+
+			/* calculate XOR of eight 6bit values */
+			dl = LLADDR((struct sockaddr_dl *) ifma->ifma_addr);
+			val = LE_READ_4(dl + 0);
+			pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+			val = LE_READ_4(dl + 3);
+			pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+			pos &= 0x3f;
+			mfilt[pos / 32] |= (1 << (pos % 32));
+		}
+		IF_ADDR_UNLOCK(ifp);
+	} else {
 		mfilt[0] = mfilt[1] = ~0;
 #endif
 #ifdef __NetBSD__
@@ -2745,7 +2748,7 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 				    "ibss merge, rstamp %u tsf %ju "
 				    "tstamp %ju\n", rstamp, (uintmax_t)tsf,
 				    (uintmax_t)ni->ni_tstamp.tsf);
-				(void) ieee80211_ibss_merge(ic, ni);
+				(void) ieee80211_ibss_merge(ni);
 			}
 		}
 		break;
@@ -2967,50 +2970,22 @@ rx_accept:
 		/*
 		 * Locate the node for sender, track state, and then
 		 * pass the (referenced) node up to the 802.11 layer
-		 * for its use.  If the sender is unknown spam the
-		 * frame; it'll be dropped where it's not wanted.
+		 * for its use.
 		 */
-		if (ds->ds_rxstat.rs_keyix != HAL_RXKEYIX_INVALID &&
-		    (ni = sc->sc_keyixmap[ds->ds_rxstat.rs_keyix]) != NULL) {
-			/*
-			 * Fast path: node is present in the key map;
-			 * grab a reference for processing the frame.
-			 */
-			an = ATH_NODE(ieee80211_ref_node(ni));
-			ATH_RSSI_LPF(an->an_avgrssi, ds->ds_rxstat.rs_rssi);
-			type = ieee80211_input(ic, m, ni,
-				ds->ds_rxstat.rs_rssi, ds->ds_rxstat.rs_tstamp);
-		} else {
-			/*
-			 * Locate the node for sender, track state, and then
-			 * pass the (referenced) node up to the 802.11 layer
-			 * for its use.
-			 */
-			ni = ieee80211_find_rxnode(ic,
-				mtod(m, const struct ieee80211_frame_min *));
-			/*
-			 * Track rx rssi and do any rx antenna management.
-			 */
-			an = ATH_NODE(ni);
-			ATH_RSSI_LPF(an->an_avgrssi, ds->ds_rxstat.rs_rssi);
-			/*
-			 * Send frame up for processing.
-			 */
-			type = ieee80211_input(ic, m, ni,
-				ds->ds_rxstat.rs_rssi, ds->ds_rxstat.rs_tstamp);
-			if (ni != ic->ic_bss) {
-				u_int16_t keyix;
-				/*
-				 * If the station has a key cache slot assigned
-				 * update the key->node mapping table.
-				 */
-				keyix = ni->ni_ucastkey.wk_keyix;
-				if (keyix != IEEE80211_KEYIX_NONE &&
-				    sc->sc_keyixmap[keyix] == NULL)
-					sc->sc_keyixmap[keyix] =
-						ieee80211_ref_node(ni);
-			}
-		}
+		ni = ieee80211_find_rxnode_withkey(ic,
+			mtod(m, const struct ieee80211_frame_min *),
+			ds->ds_rxstat.rs_keyix == HAL_RXKEYIX_INVALID ?
+				IEEE80211_KEYIX_NONE : ds->ds_rxstat.rs_keyix);
+		/*
+		 * Track rx rssi and do any rx antenna management.
+		 */
+		an = ATH_NODE(ni);
+		ATH_RSSI_LPF(an->an_avgrssi, ds->ds_rxstat.rs_rssi);
+		/*
+		 * Send frame up for processing.
+		 */
+		type = ieee80211_input(ic, m, ni,
+			ds->ds_rxstat.rs_rssi, ds->ds_rxstat.rs_tstamp);
 		ieee80211_free_node(ni);
 		if (sc->sc_diversity) {
 			/*
@@ -3623,14 +3598,14 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			ctsduration += ath_hal_computetxtime(ah,
 				rt, pktlen, rix, AH_TRUE);
 			if ((flags & HAL_TXDESC_NOACK) == 0)	/* SIFS + ACK */
-				ctsduration += rt->info[cix].spAckDuration;
+				ctsduration += rt->info[rix].spAckDuration;
 		} else {
 			if (flags & HAL_TXDESC_RTSENA)		/* SIFS + CTS */
 				ctsduration += rt->info[cix].lpAckDuration;
 			ctsduration += ath_hal_computetxtime(ah,
 				rt, pktlen, rix, AH_FALSE);
 			if ((flags & HAL_TXDESC_NOACK) == 0)	/* SIFS + ACK */
-				ctsduration += rt->info[cix].lpAckDuration;
+				ctsduration += rt->info[rix].lpAckDuration;
 		}
 		/*
 		 * Must disable multi-rate retry when using RTS/CTS.
@@ -4202,6 +4177,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		}
 		sc->sc_curchan = hchan;
 		ath_update_txpow(sc);		/* update tx power state */
+		sc->sc_diversity = ath_hal_getdiversity(ah);
 
 		/*
 		 * Re-enable rx framework.
@@ -4315,7 +4291,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		goto done;
 	}
 	ni = ic->ic_bss;
-	error = ath_chan_set(sc, ni->ni_chan);
+	error = ath_chan_set(sc, ic->ic_curchan);
 	if (error != 0)
 		goto bad;
 	rfilt = ath_calcrxfilter(sc, nstate);
@@ -4354,7 +4330,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			 , ni->ni_intval
 			 , ether_sprintf(ni->ni_bssid)
 			 , ni->ni_capinfo
-			 , ieee80211_chan2ieee(ic, ni->ni_chan));
+			 , ieee80211_chan2ieee(ic, ic->ic_curchan));
 
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_HOSTAP:
@@ -4430,10 +4406,9 @@ ath_setup_stationkey(struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = ni->ni_ic;
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
-	u_int16_t keyix;
+	ieee80211_keyix keyix, rxkeyix;
 
-	keyix = ath_key_alloc(ic, &ni->ni_ucastkey);
-	if (keyix == IEEE80211_KEYIX_NONE) {
+	if (!ath_key_alloc(ic, &ni->ni_ucastkey, &keyix, &rxkeyix)) {
 		/*
 		 * Key cache is full; we'll fall back to doing
 		 * the more expensive lookup in software.  Note
@@ -4441,7 +4416,9 @@ ath_setup_stationkey(struct ieee80211_node *ni)
 		 */
 		/* XXX msg+statistic */
 	} else {
+		/* XXX locking? */
 		ni->ni_ucastkey.wk_keyix = keyix;
+		ni->ni_ucastkey.wk_rxkeyix = rxkeyix;
 		/* NB: this will create a pass-thru key entry */
 		ath_keyset(sc, &ni->ni_ucastkey, ni->ni_macaddr, ic->ic_bss);
 	}
@@ -4453,8 +4430,9 @@ ath_setup_stationkey(struct ieee80211_node *ni)
  * param tells us if this is the first time or not.
  */
 static void
-ath_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+ath_newassoc(struct ieee80211_node *ni, int isnew)
 {
+	struct ieee80211com *ic = ni->ni_ic;
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
 
 	ath_rate_newassoc(sc, ATH_NODE(ni), isnew);
@@ -4838,7 +4816,7 @@ static int
 ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 #define	IS_RUNNING(ifp) \
-	((ifp->if_flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
+	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
 	struct ath_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;

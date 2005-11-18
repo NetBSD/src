@@ -36,10 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.8 2005/04/02 18:56:50 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.4 2005/10/25 19:59:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.5 2005/11/18 16:48:31 skrll Exp $");
 #endif
 
 
@@ -686,7 +686,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, struct ieee80211_node *ni)
 
 	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
         sn->static_rate_ndx = -1;
-	if (ic->ic_fixed_rate != -1) {
+	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * A fixed rate is to be used; ic_fixed_rate is an
 		 * index into the supported rate set.  Convert this
