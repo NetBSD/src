@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.9 2005/06/10 16:11:24 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 
 /*
  * IEEE 802.11i TKIP crypto support.
@@ -339,7 +339,9 @@ tkip_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 			tkip.ic_miclen, mic0);
 		if (memcmp(mic, mic0, tkip.ic_miclen)) {
 			/* NB: 802.11 layer handles statistic and debug msg */
-			ieee80211_notify_michael_failure(ic, wh, k->wk_keyix);
+			ieee80211_notify_michael_failure(ic, wh,
+				k->wk_rxkeyix != IEEE80211_KEYIX_NONE ?
+					k->wk_rxkeyix : k->wk_keyix);
 			return 0;
 		}
 	}

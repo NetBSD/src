@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.5 2005/07/06 01:55:17 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_freebsd.h,v 1.6 2005/08/08 18:46:36 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_FREEBSD_H_
 #define _NET80211_IEEE80211_FREEBSD_H_
@@ -43,12 +43,15 @@ typedef struct mtx ieee80211_beacon_lock_t;
 
 /*
  * Node locking definitions.
+ * NB: MTX_DUPOK is because we don't generate per-interface strings.
  */
 typedef struct mtx ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_INIT(_nt, _name) \
-	mtx_init(&(_nt)->nt_nodelock, _name, "802.11 node table", MTX_DEF)
+	mtx_init(&(_nt)->nt_nodelock, _name, "802.11 node table", \
+		MTX_DEF | MTX_DUPOK)
 #define	IEEE80211_NODE_LOCK_DESTROY(_nt)	mtx_destroy(&(_nt)->nt_nodelock)
 #define	IEEE80211_NODE_LOCK(_nt)		mtx_lock(&(_nt)->nt_nodelock)
+#define	IEEE80211_NODE_IS_LOCKED(_nt)		mtx_owned(&(_nt)->nt_nodelock)
 #define	IEEE80211_NODE_UNLOCK(_nt)		mtx_unlock(&(_nt)->nt_nodelock)
 #define	IEEE80211_NODE_LOCK_ASSERT(_nt) \
 	mtx_assert(&(_nt)->nt_nodelock, MA_OWNED)
