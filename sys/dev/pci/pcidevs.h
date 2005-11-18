@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.737 2005/11/18 21:46:11 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.738 2005/11/18 21:58:20 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.735 2005/11/18 21:40:14 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.736 2005/11/18 21:55:14 rpaulo Exp
  */
 
 /*
@@ -2809,7 +2809,7 @@
 #define	PCI_PRODUCT_TI_PCI4510LYNX	0x8029		/* PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI4520LYNX	0x802A		/* PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI7410LYNX	0x802B		/* PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
-#define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCIxx21/x515 Cardbus Controller */
+#define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCI7x21/7x11 Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI72111FW	0x8032		/* PCI7x21/7x11 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_PCI1121FM	0x8033		/* PCIxx11/21 Integrated FlashMedia Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
