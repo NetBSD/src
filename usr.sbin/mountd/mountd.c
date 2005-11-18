@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.98 2005/09/23 12:10:35 jmmv Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.99 2005/11/18 13:19:48 yamt Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.98 2005/09/23 12:10:35 jmmv Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.99 2005/11/18 13:19:48 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -588,6 +588,9 @@ mntsrv(rqstp, transp)
 		   chk_host(dp, saddr, &defset, &hostset)) ||
 		   (defset && scan_tree(ep->ex_defdir, saddr) == 0 &&
 		   scan_tree(ep->ex_dirl, saddr) == 0))) {
+			if ((hostset & DP_HOSTSET) == 0) {
+				hostset = defset;
+			}
 			if (sport >= IPPORT_RESERVED &&
 			    !(hostset & DP_NORESMNT)) {
 				syslog(LOG_NOTICE,
@@ -596,10 +599,7 @@ mntsrv(rqstp, transp)
 				svcerr_weakauth(transp);
 				goto out;
 			}
-			if (hostset & DP_HOSTSET)
-				fhr.fhr_flag = hostset;
-			else
-				fhr.fhr_flag = defset;
+			fhr.fhr_flag = hostset;
 			fhr.fhr_vers = rqstp->rq_vers;
 			/* Get the file handle */
 			(void)memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
