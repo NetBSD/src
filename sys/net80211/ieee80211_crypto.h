@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.6 2005/07/26 22:57:26 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.7 2005/11/18 16:40:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.9 2005/06/10 16:11:24 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_crypto.h,v 1.10 2005/08/08 18:46:35 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_CRYPTO_H_
 #define _NET80211_IEEE80211_CRYPTO_H_
@@ -67,18 +67,19 @@ struct ieee80211_cipher;
  * Ciphers such as TKIP may also support mixed hardware/software
  * encrypt/decrypt and MIC processing.
  */
-/* XXX need key index typedef */
-/* XXX pack better? */
-/* XXX 48-bit rsc/tsc */
+typedef u_int16_t ieee80211_keyix;	/* h/w key index */
+
 struct ieee80211_key {
 	u_int8_t	wk_keylen;	/* key length in bytes */
-	u_int8_t	wk_flags;
+	u_int8_t	wk_pad;
+	u_int16_t	wk_flags;
 #define	IEEE80211_KEY_XMIT	0x01	/* key used for xmit */
 #define	IEEE80211_KEY_RECV	0x02	/* key used for recv */
 #define	IEEE80211_KEY_GROUP	0x04	/* key used for WPA group operation */
 #define	IEEE80211_KEY_SWCRYPT	0x10	/* host-based encrypt/decrypt */
 #define	IEEE80211_KEY_SWMIC	0x20	/* host-based enmic/demic */
-	u_int16_t	wk_keyix;	/* key index */
+	ieee80211_keyix	wk_keyix;	/* h/w key index */
+	ieee80211_keyix	wk_rxkeyix;	/* optional h/w rx key index */
 	u_int8_t	wk_key[IEEE80211_KEYBUF_SIZE+IEEE80211_MICBUF_SIZE];
 #define	wk_txmic	wk_key+IEEE80211_KEYBUF_SIZE+0	/* XXX can't () right */
 #define	wk_rxmic	wk_key+IEEE80211_KEYBUF_SIZE+8	/* XXX can't () right */
@@ -104,7 +105,7 @@ struct ieee80211_key {
 
 #define	IEEE80211_CIPHER_MAX		(IEEE80211_CIPHER_NONE+1)
 
-#define	IEEE80211_KEYIX_NONE	((u_int16_t) -1)
+#define	IEEE80211_KEYIX_NONE	((ieee80211_keyix) -1)
 #define	IEEE80211_KEY_UNDEFINED(k)	((k).wk_cipher == &ieee80211_cipher_none)
 
 #if defined(__KERNEL__) || defined(_KERNEL)
@@ -122,10 +123,12 @@ struct mbuf;
  */
 struct ieee80211_crypto_state {
 	struct ieee80211_key	cs_nw_keys[IEEE80211_WEP_NKID];
-	u_int16_t		cs_def_txkey;	/* default/group tx key index */
+	ieee80211_keyix		cs_def_txkey;	/* default/group tx key index */
+	u_int16_t		cs_max_keyix;	/* max h/w key index */
 
 	int			(*cs_key_alloc)(struct ieee80211com *,
-					const struct ieee80211_key *);
+					const struct ieee80211_key *,
+					ieee80211_keyix *, ieee80211_keyix *);
 	int			(*cs_key_delete)(struct ieee80211com *, 
 					const struct ieee80211_key *);
 	int			(*cs_key_set)(struct ieee80211com *,
@@ -209,11 +212,11 @@ ieee80211_crypto_enmic(struct ieee80211com *ic,
  */
 static __inline void
 ieee80211_crypto_resetkey(struct ieee80211com *ic,
-	struct ieee80211_key *k, u_int16_t ix)
+	struct ieee80211_key *k, ieee80211_keyix ix)
 {
 	k->wk_cipher = &ieee80211_cipher_none;;
 	k->wk_private = k->wk_cipher->ic_attach(ic, k);
-	k->wk_keyix = ix;
+	k->wk_keyix = k->wk_rxkeyix = ix;
 	k->wk_flags = IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV;
 }
 
