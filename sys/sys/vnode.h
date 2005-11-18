@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.144 2005/09/20 09:49:01 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.144.6.1 2005/11/18 08:44:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <uvm/uvm_extern.h>	/* XXX */
 
 struct namecache;
+struct uvm_ractx;
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -115,6 +116,7 @@ struct vnode {
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* VREG */
 	} v_un;
 	struct nqlease	*v_lease;		/* Soft reference to lease */
 	enum vtype	v_type;			/* vnode type */
@@ -128,6 +130,7 @@ struct vnode {
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+#define	v_ractx		v_un.vu_ractx
 
 /*
  * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
@@ -218,15 +221,20 @@ struct vattr {
 /*
  * Flags for ioflag.
  */
-#define	IO_UNIT		0x001		/* do I/O as atomic unit */
-#define	IO_APPEND	0x002		/* append write to end */
+#define	IO_UNIT		0x0001		/* do I/O as atomic unit */
+#define	IO_APPEND	0x0002		/* append write to end */
 #define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
-#define	IO_NODELOCKED	0x008		/* underlying node already locked */
-#define	IO_NDELAY	0x010		/* FNDELAY flag set in file table */
-#define	IO_DSYNC	0x020		/* sync I/O data integrity completion */
-#define	IO_ALTSEMANTICS	0x040		/* use alternate i/o semantics */
-#define	IO_NORMAL	0x080		/* operate on regular data */
-#define	IO_EXT		0x100		/* operate on extended attributes */
+#define	IO_NODELOCKED	0x0008		/* underlying node already locked */
+#define	IO_NDELAY	0x0010		/* FNDELAY flag set in file table */
+#define	IO_DSYNC	0x0020		/* sync I/O data integrity completion */
+#define	IO_ALTSEMANTICS	0x0040		/* use alternate i/o semantics */
+#define	IO_NORMAL	0x0080		/* operate on regular data */
+#define	IO_EXT		0x0100		/* operate on extended attributes */
+#define	IO_ADV_MASK	0x3000		/* access pattern hint */
+
+#define	IO_ADV_SHIFT	24
+#define	IO_ADV_ENCODE(adv)	(((adv) << IO_ADV_SHIFT) & IO_ADV_MASK)
+#define	IO_ADV_DECODE(ioflag)	(((ioflag) & IO_ADV_MASK) >> IO_ADV_SHIFT)
 
 /*
  *  Modes.
@@ -624,6 +632,7 @@ int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
             void *);
 int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
             void *);
+void	vn_ra_allocctx(struct vnode *);
 
 /* initialise global vnode management */
 void	vntblinit(void);

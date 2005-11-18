@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.53.12.2 2005/11/15 05:24:48 yamt Exp $	*/
+/*	$NetBSD: file.h,v 1.53.12.3 2005/11/18 08:44:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,7 +50,6 @@ struct uio;
 struct iovec;
 struct stat;
 struct knote;
-struct uvm_ractx;
 
 /*
  * Kernel descriptor table.
@@ -60,6 +59,7 @@ struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
 	int		f_iflags;	/* internal flags */
+	int		f_advice;
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -91,8 +91,6 @@ struct file {
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	struct simplelock f_slock;
-	struct uvm_ractx *f_ractx;
-	int		f_advice;
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.229.2.1 2005/11/15 03:48:47 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.229.2.2 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.229.2.1 2005/11/15 03:48:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.229.2.2 2005/11/18 08:44:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1132,16 +1132,14 @@ nfs_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct uvm_ractx *a_ra;
-		int  a_ioflag;
+		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type != VREG)
 		return EISDIR;
-	return (nfs_bioread(vp, ap->a_uio, ap->a_ra, ap->a_ioflag,
-	    ap->a_cred, 0));
+	return (nfs_bioread(vp, ap->a_uio, ap->a_ioflag, ap->a_cred, 0));
 }
 
 /*
@@ -1168,7 +1166,7 @@ nfs_readlink(v)
 	np->n_rcred = ap->a_cred;
 	crhold(np->n_rcred);
 
-	return (nfs_bioread(vp, ap->a_uio, NULL, 0, ap->a_cred, 0));
+	return (nfs_bioread(vp, ap->a_uio, 0, ap->a_cred, 0));
 }
 
 /*
@@ -2470,7 +2468,7 @@ nfs_readdir(v)
 	 * Call nfs_bioread() to do the real work.
 	 */
 	tresid = uio->uio_resid = count;
-	error = nfs_bioread(vp, uio, NULL, 0, ap->a_cred,
+	error = nfs_bioread(vp, uio, 0, ap->a_cred,
 		    ap->a_cookies ? NFSBIO_CACHECOOKIES : 0);
 
 	if (!error && ap->a_cookies) {
