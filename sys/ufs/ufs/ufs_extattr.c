@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.4.8.1 2005/11/15 05:36:49 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.4.8.2 2005/11/18 08:44:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.4.8.1 2005/11/15 05:36:49 yamt Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.4.8.2 2005/11/18 08:44:55 yamt Exp $");
 
 #include "opt_ffs.h"
 
@@ -639,7 +639,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 
 	VOP_LEASE(backing_vnode, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(backing_vnode, LK_SHARED | LK_RETRY);
-	error = VOP_READ(backing_vnode, &auio, NULL, IO_NODELOCKED,
+	error = VOP_READ(backing_vnode, &auio, IO_NODELOCKED,
 	    ump->um_extattr.uepm_ucred);
 
 	if (error)
@@ -908,7 +908,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 		vn_lock(attribute->uele_backing_vnode, LK_SHARED |
 		    LK_RETRY);
 
-	error = VOP_READ(attribute->uele_backing_vnode, &local_aio, NULL,
+	error = VOP_READ(attribute->uele_backing_vnode, &local_aio,
 	    IO_NODELOCKED, ump->um_extattr.uepm_ucred);
 	if (error)
 		goto vopunlock_exit;
@@ -966,7 +966,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 		old_len = uio->uio_resid;
 		uio->uio_resid = len;
 
-		error = VOP_READ(attribute->uele_backing_vnode, uio, NULL,
+		error = VOP_READ(attribute->uele_backing_vnode, uio,
 		    IO_NODELOCKED, ump->um_extattr.uepm_ucred);
 		if (error)
 			goto vopunlock_exit;
@@ -1231,7 +1231,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 		vn_lock(attribute->uele_backing_vnode,
 		    LK_EXCLUSIVE | LK_RETRY);
 
-	error = VOP_READ(attribute->uele_backing_vnode, &local_aio, NULL,
+	error = VOP_READ(attribute->uele_backing_vnode, &local_aio,
 	    IO_NODELOCKED, ump->um_extattr.uepm_ucred);
 	if (error)
 		goto vopunlock_exit;

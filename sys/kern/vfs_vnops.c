@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.99.2.2 2005/11/15 05:24:48 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.99.2.3 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99.2.2 2005/11/15 05:24:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.99.2.3 2005/11/18 08:44:54 yamt Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -375,7 +375,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	auio.uio_rw = rw;
 	auio.uio_procp = p;
 	if (rw == UIO_READ) {
-		error = VOP_READ(vp, &auio, NULL, ioflg, cred);
+		error = VOP_READ(vp, &auio, ioflg, cred);
 	} else {
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
 	}
@@ -455,43 +455,24 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag = 0;
-	struct uvm_ractx *ra;
+	int count, error, ioflag;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
+	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
 	if ((fp->f_flag & (FFSYNC | FRSYNC)) == (FFSYNC | FRSYNC))
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
-
-	simple_lock(&fp->f_slock);
-	ra = fp->f_ractx;
-	fp->f_ractx = NULL;
-	simple_unlock(&fp->f_slock);
-	if (ra == NULL) {
-		ra = uvm_ra_allocctx(fp->f_advice);
-	}
-
 	vn_lock(vp, LK_SHARED | LK_RETRY);
+	vn_ra_allocctx(vp);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
-	error = VOP_READ(vp, uio, ra, ioflag, cred);
+	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
 		*offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0);
-
-	simple_lock(&fp->f_slock);
-	if (fp->f_ractx == NULL) {
-		fp->f_ractx = ra;
-		ra = NULL;
-	}
-	simple_unlock(&fp->f_slock);
-	if (ra != NULL) {
-		uvm_ra_freectx(ra);
-	}
-
 	return (error);
 }
 
@@ -1031,4 +1012,31 @@ vn_finished_write(struct mount *mp, int flags)
 			wakeup(&mp->mnt_writeopcountlower);
 	}
 	simple_unlock(&mp->mnt_slock);
+}
+
+void
+vn_ra_allocctx(struct vnode *vp)
+{
+	struct uvm_ractx *ra = NULL;
+
+	if (vp->v_type != VREG) {
+		return;
+	}
+	if (vp->v_ractx != NULL) {
+		return;
+	}
+	simple_lock(&vp->v_interlock);
+	if (vp->v_ractx == NULL) {
+		simple_unlock(&vp->v_interlock);
+		ra = uvm_ra_allocctx();
+		simple_lock(&vp->v_interlock);
+		if (ra != NULL && vp->v_ractx == NULL) {
+			vp->v_ractx = ra;
+			ra = NULL;
+		}
+	}
+	simple_unlock(&vp->v_interlock);
+	if (ra != NULL) {
+		uvm_ra_freectx(ra);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.64.2.1 2005/11/15 03:48:47 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.64.2.2 2005/11/18 08:44:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.64.2.1 2005/11/15 03:48:47 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.64.2.2 2005/11/18 08:44:55 yamt Exp $");
 
 #include <uvm/uvm_readahead.h>
 
@@ -66,7 +66,6 @@ READ(void *v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct uvm_ractx **a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
@@ -83,13 +82,11 @@ READ(void *v)
 	long size, xfersize, blkoffset;
 	int error, flags;
 	boolean_t usepc = FALSE;
-	struct uvm_ractx *ra;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	ump = ip->i_ump;
 	uio = ap->a_uio;
-	ra = ap->a_ra;
 	error = 0;
 
 #ifdef DIAGNOSTIC
@@ -117,6 +114,8 @@ READ(void *v)
 	usepc = vp->v_type == VREG;
 #endif /* !LFS_READWRITE */
 	if (usepc) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_size - uio->uio_offset,
 			    uio->uio_resid);
@@ -125,8 +124,8 @@ READ(void *v)
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
-			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
-			    bytelen);
+			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
+			    uio->uio_offset, bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

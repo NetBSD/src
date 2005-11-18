@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.46.2.1 2005/11/15 03:41:02 yamt Exp $
+#	$NetBSD: vnode_if.src,v 1.46.2.2 2005/11/18 08:44:54 yamt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -180,7 +180,6 @@ vop_setattr {
 vop_read {
 	IN LOCKED=YES struct vnode *vp;
 	INOUT struct uio *uio;
-	INOUT struct uvm_ractx *ra;
 	IN int ioflag;
 	IN struct ucred *cred;
 };

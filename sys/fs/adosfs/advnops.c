@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.16.2.1 2005/11/15 10:47:32 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.16.2.2 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.16.2.1 2005/11/15 10:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.16.2.2 2005/11/18 08:44:54 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -221,12 +221,10 @@ adosfs_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct uvm_ractx *a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct uvm_ractx *ra = sp->a_ra;
 	struct adosfsmount *amp;
 	struct anode *ap;
 	struct uio *uio;
@@ -268,7 +266,9 @@ adosfs_read(v)
 	 */
 
 	if (vp->v_type == VREG && IS_FFS(amp)) {
+		const int advice = IO_ADV_DECODE(sp->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -280,8 +280,8 @@ adosfs_read(v)
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
-			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
-			    bytelen);
+			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
+			    uio->uio_offset, bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

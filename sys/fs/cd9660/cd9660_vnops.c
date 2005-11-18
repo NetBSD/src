@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.17.2.1 2005/11/15 10:47:32 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.17.2.2 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17.2.1 2005/11/15 10:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17.2.2 2005/11/18 08:44:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,13 +248,11 @@ cd9660_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct uvm_ractx *a_ra;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct uvm_ractx *ra = ap->a_ra;
 	struct iso_node *ip = VTOI(vp);
 	struct iso_mnt *imp;
 	struct buf *bp;
@@ -273,7 +271,9 @@ cd9660_read(v)
 	imp = ip->i_mnt;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -284,8 +284,8 @@ cd9660_read(v)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
-			uvm_ra_request(ra, &vp->v_uobj, uio->uio_offset,
-			    bytelen);
+			uvm_ra_request(&vp->v_ractx, advice, &vp->v_uobj,
+			    uio->uio_offset, bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

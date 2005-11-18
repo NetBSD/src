@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.53.6.1 2005/11/15 03:48:47 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.53.6.2 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,8 +84,7 @@ union nethostaddr;
 struct uvm_ractx;
 
 /* nfs_bio.c */
-int nfs_bioread __P((struct vnode *, struct uio *, struct uvm_ractx *ra,
-    int, struct ucred *, int));
+int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));

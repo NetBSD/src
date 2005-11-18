@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136.6.5 2005/11/17 06:42:31 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.136.6.6 2005/11/18 08:44:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.5 2005/11/17 06:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.6 2005/11/18 08:44:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136.6.5 2005/11/17 06:42:31 yamt 
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_readahead.h>
 
 /*
  * Descriptor management.
@@ -1004,8 +1002,6 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	 */
 	nfiles++;
 	memset(fp, 0, sizeof(struct file));
-	fp->f_ractx = NULL;
-	fp->f_advice = UVM_ADV_NORMAL;
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -1048,9 +1044,6 @@ ffree(struct file *fp)
 #endif
 	nfiles--;
 	simple_unlock(&filelist_slock);
-	if (fp->f_ractx != NULL) {
-		uvm_ra_freectx(fp->f_ractx);
-	}
 	pool_put(&file_pool, fp);
 }
 
@@ -1573,7 +1566,6 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 	const int advice = SCARG(uap, advice);
 	struct proc *p = l->l_proc;
 	struct file *fp;
-	struct uvm_ractx *ra;
 	int error = 0;
 
 	fp = fd_getfile(p->p_fd, fd);
@@ -1604,19 +1596,7 @@ sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
 		 * we ignore offset and size.
 		 */
 
-		if (fp->f_advice == advice) {
-			break;
-		}
-
 		fp->f_advice = advice;
-
-		simple_lock(&fp->f_slock);
-		ra = fp->f_ractx;
-		fp->f_ractx = NULL;
-		simple_unlock(&fp->f_slock);
-		if (ra != NULL) {
-			uvm_ra_freectx(ra);
-		}
 		break;
 
 	case POSIX_FADV_WILLNEED:
