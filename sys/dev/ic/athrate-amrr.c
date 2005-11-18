@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.8 2005/06/10 16:49:04 brooks Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 
 /*
  * AMRR rate control. See:
@@ -279,7 +279,7 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 	int srate;
 
 	KASSERT(ni->ni_rates.rs_nrates > 0, ("no rates"));
-	if (ic->ic_fixed_rate == -1) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * No fixed rate is requested. For 11b start with
 		 * the highest negotiated rate; otherwise, for 11g
@@ -361,7 +361,8 @@ ath_rate_newstate(struct ath_softc *sc, enum ieee80211_state state)
 		ieee80211_iterate_nodes(&ic->ic_sta, ath_rate_cb, sc);
 		ath_rate_update(sc, ic->ic_bss, 0);
 	}
-	if (ic->ic_fixed_rate == -1 && state == IEEE80211_S_RUN) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE &&
+	    state == IEEE80211_S_RUN) {
 		int interval;
 		/*
 		 * Start the background rate control thread if we
@@ -458,7 +459,7 @@ ath_ratectl(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int interval;
 
-	if (ifp->if_flags & IFF_RUNNING) {
+	if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
 		sc->sc_stats.ast_rate_calls++;
 
 		if (ic->ic_opmode == IEEE80211_M_STA)
