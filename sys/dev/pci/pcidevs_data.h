@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.734 2005/11/01 22:01:45 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.735 2005/11/18 21:46:11 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.734 2005/11/01 22:00:56 abs Exp
+ *	NetBSD: pcidevs,v 1.735 2005/11/18 21:40:14 rpaulo Exp
  */
 
 /*
@@ -6464,6 +6464,10 @@ static const struct pci_product pci_products[] = {
 	    "82801FB LPC Interface Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC,
+	    "82801FBM ICH6M LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
 	    "82801FB Serial ATA Controller",
 	},
@@ -6502,6 +6506,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_1,
 	    "82801FB/FR PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_2,
+	    "82801FB/FR PCI Express Port #2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_HDA,
@@ -9372,6 +9380,18 @@ static const struct pci_product pci_products[] = {
 	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111CB,
+	    "PCIxx21/x515 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FW,
+	    "PCI7x21/7x11 IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1121FM,
+	    "PCIxx11/21 Integrated FlashMedia Controller",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,
 	    "PCI6515A Cardbus Controller",
 	},
@@ -10552,4 +10572,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2056;
+const int pci_nproducts = 2061;
