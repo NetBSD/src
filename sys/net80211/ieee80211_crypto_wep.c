@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.3 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.4 2005/11/18 16:57:22 skrll Exp $");
 #endif
 
 /*
@@ -473,4 +473,9 @@ wep_decrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	}
 	return 1;
 #undef S_SWAP
+}
+
+IEEE80211_CRYPTO_SETUP(wep_register)
+{
+	ieee80211_crypto_register(&wep);
 }
