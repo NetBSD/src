@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.735 2005/11/18 21:46:11 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.736 2005/11/18 21:58:20 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.735 2005/11/18 21:40:14 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.736 2005/11/18 21:55:14 rpaulo Exp
  */
 
 /*
@@ -9381,7 +9381,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111CB,
-	    "PCIxx21/x515 Cardbus Controller",
+	    "PCI7x21/7x11 Cardbus Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FW,
