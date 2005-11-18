@@ -1,4 +1,4 @@
-/*	$NetBSD: yes.c,v 1.6 2003/08/07 11:17:56 agc Exp $	*/
+/*	$NetBSD: yes.c,v 1.7 2005/11/18 22:16:49 jld Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,18 +39,15 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)yes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: yes.c,v 1.6 2003/08/07 11:17:56 agc Exp $");
+__RCSID("$NetBSD: yes.c,v 1.7 2005/11/18 22:16:49 jld Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 
-int main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
+
 	if (argc > 1)
 		for(;;)
 			(void)puts(argv[1]);
