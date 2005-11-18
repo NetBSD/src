@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.37 2005/09/15 14:20:01 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.38 2005/11/18 17:12:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.37 2005/09/15 14:20:01 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.38 2005/11/18 17:12:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -300,11 +300,30 @@ makewhatis(char * const * manpath)
 		case FTS_DC:
 		case FTS_DEFAULT:
 		case FTS_DP:
+		case FTS_SL:
+		case FTS_DOT:
+		case FTS_W:
+		case FTS_NSOK:
+		case FTS_INIT:
+			break;
 		case FTS_SLNONE:
+			warnx("Symbolic link with no target: `%s'",
+			    fe->fts_path);
+			break;
+		case FTS_DNR:
+			warnx("Unreadable directory: `%s'", fe->fts_path);
+			break;
+		case FTS_NS:
+			errno = fe->fts_errno;
+			warn("Cannot stat `%s'", fe->fts_path);
+			break;
+		case FTS_ERR:
+			errno = fe->fts_errno;
+			warn("Error reading `%s'", fe->fts_path);
 			break;
 		default:
-			errno = fe->fts_errno;
-			err(EXIT_FAILURE, "Error reading `%s'", fe->fts_path);
+			errx(EXIT_FAILURE, "Unknown info %d returned from fts "
+			    " for path: `%s'", fe->fts_info, fe->fts_path);
 		}
 	}
 
