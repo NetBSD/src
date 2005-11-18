@@ -36,10 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.8 2005/06/10 16:49:04 brooks Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.5 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.6 2005/11/18 16:48:31 skrll Exp $");
 #endif
 
 /*
@@ -270,7 +270,7 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 	int srate;
 
 	KASSERT(ni->ni_rates.rs_nrates > 0, ("no rates"));
-	if (ic->ic_fixed_rate == -1) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * No fixed rate is requested. For 11b start with
 		 * the highest negotiated rate; otherwise, for 11g
@@ -352,7 +352,8 @@ ath_rate_newstate(struct ath_softc *sc, enum ieee80211_state state)
 		ieee80211_iterate_nodes(&ic->ic_sta, ath_rate_cb, sc);
 		ath_rate_update(sc, ic->ic_bss, 0);
 	}
-	if (ic->ic_fixed_rate == -1 && state == IEEE80211_S_RUN) {
+	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE &&
+	    state == IEEE80211_S_RUN) {
 		int interval;
 		/*
 		 * Start the background rate control thread if we
