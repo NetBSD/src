@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.22 2005/10/24 13:17:22 christos Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.23 2005/11/18 05:11:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.22 2005/10/24 13:17:22 christos Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.23 2005/11/18 05:11:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 
 	pathv[0] = path_dev;
 	pathv[1] = NULL;
-	dlen = strlen(path_dev);
+	dlen = strlen(path_dev) - 1;
 	ftsp = fts_open(pathv, FTS_PHYSICAL, NULL);
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
