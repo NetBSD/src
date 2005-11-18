@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.7 2005/09/24 23:57:12 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.8 2005/11/18 16:40:09 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7 2005/09/24 23:57:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.8 2005/11/18 16:40:09 skrll Exp $");
 #endif
 
 /*
@@ -69,6 +69,21 @@ static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
 #endif
+
+typedef void (*ieee80211_setup_func)(void);
+
+__link_set_decl(ieee80211_funcs, ieee80211_setup_func);
+
+void
+ieee80211_init(void)
+{
+	ieee80211_setup_func * const *ieee80211_setup, f;
+
+        __link_set_foreach(ieee80211_setup, ieee80211_funcs) {
+		f = (void*)*ieee80211_setup;
+		(*f)();
+	}
+}
 
 static int
 ieee80211_sysctl_inact(SYSCTLFN_ARGS)
@@ -661,9 +676,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 	struct ifnet *ifp = ic->ic_ifp;
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
-		"[%s] %s replay detected <rsc %ju, csc %ju, keyix %u>\n",
-		ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
-		(intmax_t) rsc, (intmax_t) k->wk_keyrsc, k->wk_keyix);
+	    "[%s] %s replay detected <rsc %ju, csc %ju, keyix %u rxkeyix %u>\n",
+	    ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
+	    (intmax_t) rsc, (intmax_t) k->wk_keyrsc,
+	    k->wk_keyix, k->wk_rxkeyix);
 
 	if (ifp != NULL) {		/* NB: for cipher test modules */
 		struct ieee80211_replay_event iev;
@@ -671,7 +687,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 		IEEE80211_ADDR_COPY(iev.iev_dst, wh->i_addr1);
 		IEEE80211_ADDR_COPY(iev.iev_src, wh->i_addr2);
 		iev.iev_cipher = k->wk_cipher->ic_cipher;
-		iev.iev_keyix = k->wk_keyix;
+		if (k->wk_rxkeyix != IEEE80211_KEYIX_NONE)
+			iev.iev_keyix = k->wk_rxkeyix;
+		else
+			iev.iev_keyix = k->wk_keyix;
 		iev.iev_keyrsc = k->wk_keyrsc;
 		iev.iev_rsc = rsc;
 		rt_ieee80211msg(ifp, RTM_IEEE80211_REPLAY, &iev, sizeof(iev));
