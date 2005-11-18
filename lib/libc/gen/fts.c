@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.27 2005/11/17 19:13:20 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.28 2005/11/18 16:48:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.27 2005/11/17 19:13:20 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.28 2005/11/18 16:48:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,18 +59,18 @@ __RCSID("$NetBSD: fts.c,v 1.27 2005/11/17 19:13:20 christos Exp $");
 #define HAVE_STRUCT_DIRENT_D_NAMLEN 1
 #endif
 
-static FTSENT	*fts_alloc __P((FTS *, const char *, size_t));
-static FTSENT	*fts_build __P((FTS *, int));
-static void	 fts_lfree __P((FTSENT *));
-static void	 fts_load __P((FTS *, FTSENT *));
-static size_t	 fts_maxarglen __P((char * const *));
-static size_t	 fts_pow2 __P((size_t));
-static int	 fts_palloc __P((FTS *, size_t));
-static void	 fts_padjust __P((FTS *, FTSENT *));
-static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
-static u_short	 fts_stat __P((FTS *, FTSENT *, int));
-static int	 fts_safe_changedir __P((const FTS *, const FTSENT *, int,
-    const char *));
+static FTSENT	*fts_alloc(FTS *, const char *, size_t);
+static FTSENT	*fts_build(FTS *, int);
+static void	 fts_lfree(FTSENT *);
+static void	 fts_load(FTS *, FTSENT *);
+static size_t	 fts_maxarglen(char * const *);
+static size_t	 fts_pow2(size_t);
+static int	 fts_palloc(FTS *, size_t);
+static void	 fts_padjust(FTS *, FTSENT *);
+static FTSENT	*fts_sort(FTS *, FTSENT *, size_t);
+static u_short	 fts_stat(FTS *, FTSENT *, int);
+static int	 fts_safe_changedir(const FTS *, const FTSENT *, int,
+    const char *);
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -91,10 +91,8 @@ static int	 fts_safe_changedir __P((const FTS *, const FTSENT *, int,
 #endif
 
 FTS *
-fts_open(argv, options, compar)
-	char * const *argv;
-	int options;
-	int (*compar) __P((const FTSENT **, const FTSENT **));
+fts_open(char * const *argv, int options,
+    int (*compar)(const FTSENT **, const FTSENT **))
 {
 	FTS *sp;
 	FTSENT *p, *root;
@@ -208,9 +206,7 @@ mem1:	free(sp);
 }
 
 static void
-fts_load(sp, p)
-	FTS *sp;
-	FTSENT *p;
+fts_load(FTS *sp, FTSENT *p)
 {
 	size_t len;
 	char *cp;
@@ -237,8 +233,7 @@ fts_load(sp, p)
 }
 
 int
-fts_close(sp)
-	FTS *sp;
+fts_close(FTS *sp)
 {
 	FTSENT *freep, *p;
 	int saved_errno;
@@ -295,8 +290,7 @@ fts_close(sp)
 	    ? p->fts_pathlen - 1 : p->fts_pathlen)
 
 FTSENT *
-fts_read(sp)
-	FTS *sp;
+fts_read(FTS *sp)
 {
 	FTSENT *p, *tmp;
 	int instr;
@@ -498,10 +492,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
  */
 /* ARGSUSED */
 int
-fts_set(sp, p, instr)
-	FTS *sp;
-	FTSENT *p;
-	int instr;
+fts_set(FTS *sp, FTSENT *p, int instr)
 {
 
 	_DIAGASSERT(sp != NULL);
@@ -517,9 +508,7 @@ fts_set(sp, p, instr)
 }
 
 FTSENT *
-fts_children(sp, instr)
-	FTS *sp;
-	int instr;
+fts_children(FTS *sp, int instr)
 {
 	FTSENT *p;
 	int fd;
@@ -603,9 +592,7 @@ fts_children(sp, instr)
  * been found, cutting the stat calls by about 2/3.
  */
 static FTSENT *
-fts_build(sp, type)
-	FTS *sp;
-	int type;
+fts_build(FTS *sp, int type)
 {
 	struct dirent *dp;
 	FTSENT *p, *head;
@@ -872,10 +859,7 @@ mem1:				saved_errno = errno;
 }
 
 static u_short
-fts_stat(sp, p, follow)
-	FTS *sp;
-	FTSENT *p;
-	int follow;
+fts_stat(FTS *sp, FTSENT *p, int follow)
 {
 	FTSENT *t;
 	dev_t dev;
@@ -958,10 +942,7 @@ err:		memset(sbp, 0, sizeof(*sbp));
 }
 
 static FTSENT *
-fts_sort(sp, head, nitems)
-	FTS *sp;
-	FTSENT *head;
-	size_t nitems;
+fts_sort(FTS *sp, FTSENT *head, size_t nitems)
 {
 	FTSENT **ap, *p;
 
@@ -987,7 +968,7 @@ fts_sort(sp, head, nitems)
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
 	qsort((void *)sp->fts_array, nitems, sizeof(FTSENT *), 
-		(int (*) __P((const void *, const void *)))sp->fts_compar);
+		(int (*)(const void *, const void *))sp->fts_compar);
 	for (head = *(ap = sp->fts_array); --nitems; ++ap)
 		ap[0]->fts_link = ap[1];
 	ap[0]->fts_link = NULL;
@@ -995,10 +976,7 @@ fts_sort(sp, head, nitems)
 }
 
 static FTSENT *
-fts_alloc(sp, name, namelen)
-	FTS *sp;
-	const char *name;
-	size_t namelen;
+fts_alloc(FTS *sp, const char *name, size_t namelen)
 {
 	FTSENT *p;
 	size_t len;
@@ -1049,8 +1027,7 @@ fts_alloc(sp, name, namelen)
 }
 
 static void
-fts_lfree(head)
-	FTSENT *head;
+fts_lfree(FTSENT *head)
 {
 	FTSENT *p;
 
@@ -1069,8 +1046,7 @@ fts_lfree(head)
 }
 
 static size_t
-fts_pow2(x)
-	size_t x;
+fts_pow2(size_t x)
 {
 
 	x--;
@@ -1096,9 +1072,7 @@ fts_pow2(x)
  * so we don't realloc the path 2 bytes at a time. 
  */
 static int
-fts_palloc(sp, size)
-	FTS *sp;
-	size_t size;
+fts_palloc(FTS *sp, size_t size)
 {
 	char *new;
 
@@ -1125,9 +1099,7 @@ fts_palloc(sp, size)
  * already returned.
  */
 static void
-fts_padjust(sp, head)
-	FTS *sp;
-	FTSENT *head;
+fts_padjust(FTS *sp, FTSENT *head)
 {
 	FTSENT *p;
 	char *addr;
@@ -1155,8 +1127,7 @@ fts_padjust(sp, head)
 }
 
 static size_t
-fts_maxarglen(argv)
-	char * const *argv;
+fts_maxarglen(char * const *argv)
 {
 	size_t len, max;
 
@@ -1174,11 +1145,7 @@ fts_maxarglen(argv)
  * Assumes p->fts_dev and p->fts_ino are filled in.
  */
 static int
-fts_safe_changedir(sp, p, fd, path)
-	const FTS *sp;
-	const FTSENT *p;
-	int fd;
-	const char *path;
+fts_safe_changedir(const FTS *sp, const FTSENT *p, int fd, const char *path)
 {
 	int oldfd = fd, ret = -1;
 	__fts_stat_t sb;
