@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.106.6.1 2005/11/17 03:56:00 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.106.6.2 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*
  *
@@ -556,7 +556,8 @@ void			uao_reference_locked(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
-void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int);
+void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
+			    int);
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 

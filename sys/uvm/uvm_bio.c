@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.41 2005/07/23 12:18:41 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.41.6.1 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.41 2005/07/23 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.41.6.1 2005/11/19 17:37:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -84,6 +84,7 @@ struct ubc_map
 	vsize_t			writelen;	/* write len */
 	int			refcount;	/* refcount on mapping */
 	int			flags;		/* extra state */
+	int			advice;
 
 	LIST_ENTRY(ubc_map)	hash;		/* hash table */
 	TAILQ_ENTRY(ubc_map)	inactive;	/* inactive queue */
@@ -276,7 +277,7 @@ again:
 	    uobj, umap->offset + slot_offset, npages, 0);
 
 	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
-	    &npages, 0, access_type, 0, flags | PGO_NOBLOCKALLOC |
+	    &npages, 0, access_type, umap->advice, flags | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP);
 	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
 	    0);
@@ -395,7 +396,8 @@ ubc_find_mapping(struct uvm_object *uobj, voff_t offset)
  */
 
 void *
-ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int flags)
+ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
+    int flags)
 {
 	vaddr_t slot_offset, va;
 	struct ubc_map *umap;
@@ -462,6 +464,7 @@ again:
 	}
 
 	umap->refcount++;
+	umap->advice = advice;
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 	UVMHIST_LOG(ubchist, "umap %p refs %d va %p flags 0x%x",
 	    umap, umap->refcount, va, flags);
@@ -482,7 +485,7 @@ again:
 		memset(pgs, 0, sizeof(pgs));
 		simple_lock(&uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
-		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0, gpflags);
+		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
 		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
 		if (error) {
 			goto out;

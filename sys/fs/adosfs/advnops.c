@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.16.2.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.16.2.3 2005/11/19 17:36:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.16.2.2 2005/11/18 08:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.16.2.3 2005/11/19 17:36:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.16.2.2 2005/11/18 08:44:54 yamt Exp $"
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <fs/adosfs/adosfs.h>
-
-#include <uvm/uvm_readahead.h>
 
 extern struct vnodeops adosfs_vnodeops;
 
@@ -279,9 +277,7 @@ adosfs_read(v)
 				break;
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
-			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
-			    uio->uio_offset, bytelen);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

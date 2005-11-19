@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.10 2005/11/19 05:46:21 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.11 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.10 2005/11/19 05:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.11 2005/11/19 17:37:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -113,14 +113,19 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		KASSERT((chunksize & (chunksize - 1)) == 0);
 		KASSERT((off & PAGE_MASK) == 0);
 		bytelen = ((off + chunksize) & -(off_t)chunksize) - off;
-		DPRINTF(("%s: off=%" PRIu64 ", bytelen=%zu\n",
-		    __func__, off, bytelen));
 		KASSERT((bytelen & PAGE_MASK) == 0);
 		npages = orignpages = bytelen >> PAGE_SHIFT;
 		KASSERT(npages != 0);
+
+		/*
+		 * use UVM_ADV_RANDOM to avoid recursion.
+		 */
+
 		simple_lock(&uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
-		    &npages, 0, VM_PROT_READ, 0, 0);
+		    &npages, 0, VM_PROT_READ, UVM_ADV_RANDOM, 0);
+		DPRINTF(("%s:  off=%" PRIu64 ", bytelen=%zu -> %d\n",
+		    __func__, off, bytelen, error));
 		if (error != 0 && error != EBUSY) {
 			if (error != EINVAL) { /* maybe past EOF */
 				DPRINTF(("%s: error=%d\n", __func__, error));

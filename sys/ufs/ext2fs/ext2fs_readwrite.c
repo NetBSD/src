@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.4 2005/11/19 11:03:44 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.5 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.4 2005/11/19 11:03:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.5 2005/11/19 17:37:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.4 2005/11/19 11:03:44 ya
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
-
-#include <uvm/uvm_readahead.h>
 
 #define doclusterread 0 /* XXX underway */
 #define doclusterwrite 0
@@ -152,9 +150,7 @@ ext2fs_read(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
-			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
-			    uio->uio_offset, bytelen);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -310,7 +306,7 @@ ext2fs_write(void *v)
 			if (error)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_WRITE);
+			    &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
