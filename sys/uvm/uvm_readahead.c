@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.9 2005/11/18 08:44:55 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.10 2005/11/19 05:46:21 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.9 2005/11/18 08:44:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.10 2005/11/19 05:46:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -121,7 +121,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		simple_lock(&uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, 0, 0);
-		if (error) {
+		if (error != 0 && error != EBUSY) {
 			if (error != EINVAL) { /* maybe past EOF */
 				DPRINTF(("%s: error=%d\n", __func__, error));
 			}
