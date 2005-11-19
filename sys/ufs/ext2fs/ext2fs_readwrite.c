@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.3 2005/11/18 08:44:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.38.2.4 2005/11/19 11:03:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.3 2005/11/18 08:44:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.38.2.4 2005/11/19 11:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ ext2fs_read(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error, flags;
-	struct uvm_ractx *ra;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
