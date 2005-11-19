@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.47 2005/11/18 16:40:08 skrll Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.48 2005/11/19 01:06:21 riz Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.47 2005/11/18 16:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.48 2005/11/19 01:06:21 riz Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -171,7 +171,6 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	u_int8_t dir, type, subtype;
 	u_int8_t *bssid;
 	u_int16_t rxseq;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	IASSERT(ni != NULL, ("null node"));
 	ni->ni_inact = ni->ni_inact_reload;
@@ -706,6 +705,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 {
 	struct ether_header *eh = mtod(m, struct ether_header *);
 	struct ifnet *ifp = ic->ic_ifp;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/* perform as a bridge within the AP */
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
