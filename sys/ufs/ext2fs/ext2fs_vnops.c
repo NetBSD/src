@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.63.2.1 2005/11/15 05:36:49 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.63.2.2 2005/11/19 11:03:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.63.2.1 2005/11/15 05:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.63.2.2 2005/11/19 11:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1280,7 +1280,7 @@ ext2fs_readlink(void *v)
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
-	return (VOP_READ(vp, ap->a_uio, NULL, 0, ap->a_cred));
+	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
 }
 
 /*

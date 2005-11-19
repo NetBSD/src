@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.17.2.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.17.2.3 2005/11/19 11:03:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17.2.2 2005/11/18 08:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17.2.3 2005/11/19 11:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ cd9660_read(v)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
-			uvm_ra_request(&vp->v_ractx, advice, &vp->v_uobj,
+			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
 			    uio->uio_offset, bytelen);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;

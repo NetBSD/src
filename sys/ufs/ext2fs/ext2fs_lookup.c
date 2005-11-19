@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.38.2.2 2005/11/19 11:03:44 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.38.2.1 2005/11/15 05:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.38.2.2 2005/11/19 11:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ ext2fs_readdir(void *v)
 	memset(dirbuf, 0, e2fs_count);
 	aiov.iov_base = dirbuf;
 
-	error = VOP_READ(ap->a_vp, &auio, NULL, 0, ap->a_cred);
+	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	if (error == 0) {
 		readcnt = e2fs_count - auio.uio_resid;
 		for (dp = (struct ext2fs_direct *)dirbuf;
