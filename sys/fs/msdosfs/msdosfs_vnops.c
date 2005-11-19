@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.22.2.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.22.2.3 2005/11/19 17:36:59 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.22.2.2 2005/11/18 08:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.22.2.3 2005/11/19 17:36:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.22.2.2 2005/11/18 08:44:54 yamt 
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_readahead.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>
@@ -491,9 +490,7 @@ msdosfs_read(v)
 			if (bytelen == 0)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
-			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
-			    uio->uio_offset, bytelen);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -649,7 +646,8 @@ msdosfs_write(v)
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
-		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
+		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UVM_ADV_NORMAL,
+		    UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);
