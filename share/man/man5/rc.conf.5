@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.94 2005/09/17 19:39:48 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.95 2005/11/19 19:59:24 elad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 17, 2005
+.Dd November 19, 2005
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -344,7 +344,7 @@ See
 .Sq YES
 or
 .Sq NO .
-Load verified exec fingerprints during startup.
+Load Veriexec fingerprints during startup.
 Read
 .Xr veriexecctl 8
 for more information.
@@ -382,6 +382,22 @@ completes.
 .It Sy permit_nonalpha
 Allow passwords to include non-alpha characters, usually to allow
 NIS/YP netgroups.
+.It Sy veriexec_strict
+A number.
+Controls the strict level of Veriexec.
+Level 0 is learning mode, used when building the signatures file.
+It will only output messages but will not enforce anything.
+Level 1 will only prevent access to files with a fingerprint
+mismatch. Level 2 will also deny writing to and removing of
+monitored files, as well as enforce access type (as specified in
+the signatures file). Level 3 will take a step further and prevent
+access to files that are not monitored.
+.It Sy veriexec_verbose
+A number.
+Controls the verbosity of Veriexec.
+Recommended operation is at level 0, verbose output (mostly used when
+building the signatures file) is at level 1.
+Level 2 is for debugging only and should not be used.
 .El
 .Ss Networking startup
 .Bl -tag -width net_interfaces
