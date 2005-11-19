@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.66 2005/06/27 02:29:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.66.8.1 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66 2005/06/27 02:29:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66.8.1 2005/11/19 17:37:00 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66 2005/06/27 02:29:32 thorpej Exp $
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_readahead.h>
 
 /*
  * functions
@@ -297,8 +298,18 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
+
+	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
+		simple_unlock(&vp->v_interlock);
+		vn_ra_allocctx(vp);
+		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
+		    *npagesp << PAGE_SHIFT);
+		simple_lock(&vp->v_interlock);
+	}
+
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
+
 	return error;
 }
 
@@ -477,7 +488,8 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	while (len) {
 		vsize_t bytelen = len;
 
-		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UBC_WRITE);
+		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UVM_ADV_NORMAL,
+		    UBC_WRITE);
 		memset(win, 0, bytelen);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);

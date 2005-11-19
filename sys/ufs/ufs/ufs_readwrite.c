@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.64.2.2 2005/11/18 08:44:55 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.64.2.3 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.64.2.2 2005/11/18 08:44:55 yamt Exp $");
-
-#include <uvm/uvm_readahead.h>
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.64.2.3 2005/11/19 17:37:00 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -123,9 +121,7 @@ READ(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
-			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
-			    uio->uio_offset, bytelen);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -358,7 +354,7 @@ WRITE(void *v)
 		 */
 
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    ubc_alloc_flags);
+		    UVM_ADV_NORMAL, ubc_alloc_flags);
 		error = uiomove(win, bytelen, uio);
 		if (error && extending) {
 			/*

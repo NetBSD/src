@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.137.2.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.137.2.3 2005/11/19 17:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137.2.2 2005/11/18 08:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137.2.3 2005/11/19 17:37:00 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.137.2.2 2005/11/18 08:44:54 yamt Exp $
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
-#include <uvm/uvm_readahead.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -205,9 +204,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			bytelen =
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
-			uvm_ra_request(vp->v_ractx, advice, &vp->v_uobj,
-			    uio->uio_offset, bytelen);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -610,7 +607,8 @@ nfs_write(v)
 		    (bytelen & PAGE_MASK) == 0 &&
 		    uio->uio_offset >= vp->v_size);
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-			    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
+		    UVM_ADV_NORMAL,
+		    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
 		error = uiomove(win, bytelen, uio);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);
