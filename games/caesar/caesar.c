@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.20 2005/11/19 14:22:21 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.21 2005/11/19 18:01:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.20 2005/11/19 14:22:21 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.21 2005/11/19 18:01:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,11 +129,13 @@ get_rotation(const char *arg)
 
 	errno = 0;
 	rot = strtol(arg, &endp, 10);
-	if (!(errno == 0 && *endp == '\0' && 0 <= rot && rot <= INT_MAX)) {
-		errx(EXIT_FAILURE, "bad rotation value: %s", arg);
-		/* NOTREACHED */
-	}
-	return (int) rot;
+	if (errno == 0 && (arg[0] == '\0' || *endp != '\0'))
+		errno = EINVAL;
+	if (errno == 0 && (rot < 0 || rot > INT_MAX))
+		errno = ERANGE;
+	if (errno)
+		err(EXIT_FAILURE, "Bad rotation value `%s'", arg);
+	return (int)rot;
 }
 
 static void
