@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.13.2.1 2005/11/15 05:36:49 yamt Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.13.2.2 2005/11/19 11:03:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.13.2.1 2005/11/15 05:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.13.2.2 2005/11/19 11:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,7 +996,6 @@ union_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct uvm_ractx *a_ra;
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
@@ -1008,7 +1007,7 @@ union_read(v)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	else
 		FIXUP(VTOUNION(ap->a_vp));
-	error = VOP_READ(vp, ap->a_uio, ap->a_ra, ap->a_ioflag, ap->a_cred);
+	error = VOP_READ(vp, ap->a_uio, ap->a_ioflag, ap->a_cred);
 	if (dolock)
 		VOP_UNLOCK(vp, 0);
 
