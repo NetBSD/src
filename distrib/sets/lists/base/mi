@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.578 2005/11/10 16:58:18 christos Exp $
+# $NetBSD: mi,v 1.579 2005/11/19 02:03:43 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -956,6 +956,10 @@
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
+./usr/sbin/dnssec-keygen			base-bind-bin
+./usr/sbin/dnssec-makekeyset			base-bind-bin
+./usr/sbin/dnssec-signkey			base-bind-bin
+./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumplfs				base-sysutil-bin
@@ -1054,6 +1058,8 @@
 ./usr/sbin/mtree				base-sysutil-bin
 ./usr/sbin/named				base-bind-bin
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
+./usr/sbin/named-checkconf			base-bind-bin
+./usr/sbin/named-checkzone			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root
