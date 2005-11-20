@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.4 2005/11/20 06:23:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.4 2005/11/20 06:23:44 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -305,7 +305,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 out_locked:
 	vput(vp);
 
-	return 0;
+	return error;
 }
 
 /*
@@ -376,7 +376,7 @@ nfs_update_exports_30(struct mount *mp, const char *path, void *data,
 	if (args.fspec != NULL)
 		return EJUSTRETURN;
 
-	if (mp->mnt_flag & 0x00020000) {
+	if (args.eargs.ex_flags & 0x00020000) {
 		/* Request to delete exports.  The mask above holds the
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
