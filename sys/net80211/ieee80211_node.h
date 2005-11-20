@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.19 2005/11/18 16:40:09 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.20 2005/11/20 10:04:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -331,6 +331,9 @@ void	ieee80211_add_scan(struct ieee80211com *,
 		const struct ieee80211_scanparams *,
 		const struct ieee80211_frame *,
 		int subtype, int rssi, int rstamp);
+void ieee80211_init_neighbor(struct ieee80211com *, struct ieee80211_node *,
+		const struct ieee80211_frame *,
+		const struct ieee80211_scanparams *, int);
 struct ieee80211_node *ieee80211_add_neighbor(struct ieee80211com *,
 		const struct ieee80211_frame *,
 		const struct ieee80211_scanparams *);
