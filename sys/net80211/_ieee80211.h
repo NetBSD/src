@@ -111,7 +111,7 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_BYTES	32	/* howmany(IEEE80211_CHAN_MAX, NBBY) */
 #define	IEEE80211_CHAN_ANY	0xffff	/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+	((struct ieee80211_channel *) 0x1)
 
 /* bits 0-3 are for private use by drivers */
 /* channel attributes */
