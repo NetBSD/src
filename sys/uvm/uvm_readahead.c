@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.12 2005/11/20 04:59:36 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.13 2005/11/20 05:00:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.12 2005/11/20 04:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.13 2005/11/20 05:00:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -193,7 +193,7 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
 			ra->ra_winstart = ra->ra_next = 0;
 			ra->ra_flags |= RA_VALID;
 		}
-		if (reqoff <= ra->ra_winstart) {
+		if (reqoff < ra->ra_winstart) {
 			ra->ra_next = reqoff;
 		}
 		ra->ra_winsize = RA_WINSIZE_SEQENTIAL;
