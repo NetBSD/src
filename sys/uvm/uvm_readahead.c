@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.11 2005/11/19 17:37:00 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.12 2005/11/20 04:59:36 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.11 2005/11/19 17:37:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.12 2005/11/20 04:59:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -229,6 +229,17 @@ initialize:
 
 	if (reqoff < ra->ra_winstart ||
 	    ra->ra_winstart + ra->ra_winsize < reqoff) {
+
+		/*
+		 * ... unless we seem to be reading the same chunk repeatedly.
+		 */
+
+		if (reqoff + reqsize == ra->ra_winstart) {
+			DPRINTF(("%s: %p: same block: off=%" PRIu64
+			    ", size=%zd, winstart=%" PRIu64 "\n",
+			    __func__, ra, reqoff, reqsize, ra->ra_winstart));
+			goto done;
+		}
 		goto initialize;
 	}
 
