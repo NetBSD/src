@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.2 2005/06/22 06:16:16 dyoung Exp $ */
+/* $NetBSD: wlanctl.c,v 1.3 2005/11/20 09:41:39 dyoung Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -117,7 +117,9 @@ static void
 print_node_flags(u_int32_t flags)
 {
 	const static struct flagname nodeflags[] = {
-		{IEEE80211_NODE_SYSCTL_F_BSS, "bss"}
+		  {IEEE80211_NODE_SYSCTL_F_BSS, "bss"}
+		, {IEEE80211_NODE_SYSCTL_F_STA, "sta"}
+		, {IEEE80211_NODE_SYSCTL_F_SCAN, "scan"}
 	};
 	printf("\tnode flags %04x", flags);
 
@@ -220,7 +222,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	vname[IEEE80211_SYSCTL_NODENAME_ARG] = 0;
 	vname[IEEE80211_SYSCTL_NODENAME_TYPE] = hdr_type;
 	vname[IEEE80211_SYSCTL_NODENAME_ELTSIZE] = sizeof(*ns);
-	vname[IEEE80211_SYSCTL_NODENAME_ELTCOUNT] = 1;
+	vname[IEEE80211_SYSCTL_NODENAME_ELTCOUNT] = INT_MAX;
 
 	/* how many? */
 	if (sysctl(name, namelen + IEEE80211_SYSCTL_NODENAMELEN,
