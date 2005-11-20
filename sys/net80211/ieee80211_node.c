@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.45 2005/11/18 16:40:09 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.46 2005/11/20 10:04:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.45 2005/11/18 16:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.46 2005/11/20 10:04:21 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1259,6 +1259,35 @@ ieee80211_add_scan(struct ieee80211com *ic,
 #undef ISPROBE
 }
 
+void
+ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const struct ieee80211_frame *wh, const struct ieee80211_scanparams *sp,
+    int isnew)
+{
+	ni->ni_esslen = sp->ssid[1];
+	memcpy(ni->ni_essid, sp->ssid + 2, sp->ssid[1]);
+	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
+	memcpy(ni->ni_tstamp.data, sp->tstamp, sizeof(ni->ni_tstamp));
+	ni->ni_intval = sp->bintval;
+	ni->ni_capinfo = sp->capinfo;
+	ni->ni_chan = ic->ic_bss->ni_chan;
+	ni->ni_fhdwell = sp->fhdwell;
+	ni->ni_fhindex = sp->fhindex;
+	ni->ni_erp = sp->erp;
+	ni->ni_timoff = sp->timoff;
+	if (sp->wme != NULL)
+		ieee80211_saveie(&ni->ni_wme_ie, sp->wme);
+	if (sp->wpa != NULL)
+		ieee80211_saveie(&ni->ni_wpa_ie, sp->wpa);
+
+	/* NB: must be after ni_chan is setup */
+	ieee80211_setup_rates(ni, sp->rates, sp->xrates,
+	    IEEE80211_F_DONEGO | IEEE80211_F_DOSORT);
+
+	if (ic->ic_newassoc != NULL)
+		ic->ic_newassoc(ni, isnew);
+}
+
 /*
  * Do node discovery in adhoc mode on receipt of a beacon
  * or probe response frame.  Note that for the driver's
@@ -1274,27 +1303,7 @@ ieee80211_add_neighbor(struct ieee80211com *ic,
 
 	ni = ieee80211_dup_bss(&ic->ic_sta, wh->i_addr2);/* XXX alloc_node? */
 	if (ni != NULL) {
-		ni->ni_esslen = sp->ssid[1];
-		memcpy(ni->ni_essid, sp->ssid + 2, sp->ssid[1]);
-		IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-		memcpy(ni->ni_tstamp.data, sp->tstamp, sizeof(ni->ni_tstamp));
-		ni->ni_intval = sp->bintval;
-		ni->ni_capinfo = sp->capinfo;
-		ni->ni_chan = ic->ic_bss->ni_chan;
-		ni->ni_fhdwell = sp->fhdwell;
-		ni->ni_fhindex = sp->fhindex;
-		ni->ni_erp = sp->erp;
-		ni->ni_timoff = sp->timoff;
-		if (sp->wme != NULL)
-			ieee80211_saveie(&ni->ni_wme_ie, sp->wme);
-		if (sp->wpa != NULL)
-			ieee80211_saveie(&ni->ni_wpa_ie, sp->wpa);
-
-		/* NB: must be after ni_chan is setup */
-		ieee80211_setup_rates(ni, sp->rates, sp->xrates, IEEE80211_F_DOSORT);
-
-		if (ic->ic_newassoc != NULL)
-			ic->ic_newassoc(ni, 1);
+		ieee80211_init_neighbor(ic, ni, wh, sp, 1);
 		/* XXX not right for 802.1x/WPA */
 		ieee80211_node_authorize(ni);
 	}
