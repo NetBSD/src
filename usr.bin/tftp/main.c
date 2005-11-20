@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2003/10/02 23:31:52 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2005/11/20 19:28:23 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2003/10/02 23:31:52 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2005/11/20 19:28:23 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ char	mode[32];
 char	line[LBUFLEN];
 int	margc;
 char	*margv[20];
-char	*prompt = "tftp";
+const	char *prompt = "tftp";
 jmp_buf	toplevel;
 
 void	get __P((int, char **));
@@ -93,7 +93,7 @@ void	put __P((int, char **));
 void	quit __P((int, char **));
 void	setascii __P((int, char **));
 void	setbinary __P((int, char **));
-void	setpeer0 __P((char *, char *));
+void	setpeer0 __P((const char *, const char *));
 void	setpeer __P((int, char **));
 void	setrexmt __P((int, char **));
 void	settimeout __P((int, char **));
@@ -106,41 +106,41 @@ void	status __P((int, char **));
 char	*tail __P((char *));
 int	main __P((int, char *[]));
 void	intr __P((int));
-struct cmd *getcmd __P((char *));
+const	struct cmd *getcmd __P((char *));
 
 static __dead void command __P((void));
 
 static void getusage __P((char *));
 static void makeargv __P((void));
 static void putusage __P((char *));
-static void settftpmode __P((char *));
+static void settftpmode __P((const char *));
 
 #define HELPINDENT (sizeof("connect"))
 
 struct cmd {
-	char	*name;
-	char	*help;
+	const char *name;
+	const char *help;
 	void	(*handler) __P((int, char **));
 };
 
-char	vhelp[] = "toggle verbose mode";
-char	thelp[] = "toggle packet tracing";
-char	tshelp[] = "toggle extended tsize option";
-char	tohelp[] = "toggle extended timeout option";
-char	blhelp[] = "set an alternative blocksize (def. 512)";
-char	chelp[] = "connect to remote tftp";
-char	qhelp[] = "exit tftp";
-char	hhelp[] = "print help information";
-char	shelp[] = "send file";
-char	rhelp[] = "receive file";
-char	mhelp[] = "set file transfer mode";
-char	sthelp[] = "show current status";
-char	xhelp[] = "set per-packet retransmission timeout";
-char	ihelp[] = "set total retransmission timeout";
-char    ashelp[] = "set mode to netascii";
-char    bnhelp[] = "set mode to octet";
+const char vhelp[] = "toggle verbose mode";
+const char thelp[] = "toggle packet tracing";
+const char tshelp[] = "toggle extended tsize option";
+const char tohelp[] = "toggle extended timeout option";
+const char blhelp[] = "set an alternative blocksize (def. 512)";
+const char chelp[] = "connect to remote tftp";
+const char qhelp[] = "exit tftp";
+const char hhelp[] = "print help information";
+const char shelp[] = "send file";
+const char rhelp[] = "receive file";
+const char mhelp[] = "set file transfer mode";
+const char sthelp[] = "show current status";
+const char xhelp[] = "set per-packet retransmission timeout";
+const char ihelp[] = "set total retransmission timeout";
+const char ashelp[] = "set mode to netascii";
+const char bnhelp[] = "set mode to octet";
 
-struct cmd cmdtab[] = {
+const struct cmd cmdtab[] = {
 	{ "connect",	chelp,		setpeer },
 	{ "mode",       mhelp,          modecmd },
 	{ "put",	shelp,		put },
@@ -206,13 +206,13 @@ char    hostname[100];
 
 void
 setpeer0(host, port)
-	char *host;
-	char *port;
+	const char *host;
+	const char *port;
 {
 	struct addrinfo hints, *res0, *res;
 	int error, soopt;
 	struct sockaddr_storage ss;
-	char *cause = "unknown";
+	const char *cause = "unknown";
 
 	if (connected) {
 		close(f);
@@ -312,8 +312,8 @@ setpeer(argc, argv)
 }
 
 struct	modes {
-	char *m_name;
-	char *m_mode;
+	const char *m_name;
+	const char *m_mode;
 } modes[] = {
 	{ "ascii",	"netascii" },
 	{ "netascii",   "netascii" },
@@ -330,7 +330,7 @@ modecmd(argc, argv)
 	char *argv[];
 {
 	struct modes *p;
-	char *sep;
+	const char *sep;
 
 	if (argc < 2) {
 		printf("Using %s mode to transfer files.\n", mode);
@@ -379,7 +379,7 @@ setascii(argc, argv)
 
 static void
 settftpmode(newmode)
-	char *newmode;
+	const char *newmode;
 {
 	strcpy(mode, newmode);
 	if (verbose)
@@ -397,7 +397,7 @@ put(argc, argv)
 {
 	int fd;
 	int n;
-	char *cp, *targ;
+	char *targ, *p;
 
 	if (argc < 2) {
 		strcpy(line, "send ");
@@ -434,7 +434,7 @@ put(argc, argv)
 		return;
 	}
 	if (argc < 4) {
-		cp = argc == 2 ? tail(targ) : argv[1];
+		char *cp = argc == 2 ? tail(targ) : argv[1];
 		fd = open(cp, O_RDONLY);
 		if (fd < 0) {
 			warn("%s", cp);
@@ -448,10 +448,10 @@ put(argc, argv)
 	}
 				/* this assumes the target is a directory */
 				/* on a remote unix system.  hmmmm.  */
-	cp = strchr(targ, '\0'); 
-	*cp++ = '/';
+	p = strchr(targ, '\0'); 
+	*p++ = '/';
 	for (n = 1; n < argc - 1; n++) {
-		strcpy(cp, tail(argv[n]));
+		strcpy(p, tail(argv[n]));
 		fd = open(argv[n], O_RDONLY);
 		if (fd < 0) {
 			warn("%s", argv[n]);
@@ -482,7 +482,7 @@ get(argc, argv)
 {
 	int fd;
 	int n;
-	char *cp;
+	char *p;
 	char *src;
 
 	if (argc < 2) {
@@ -521,7 +521,7 @@ get(argc, argv)
 				continue;
 		}
 		if (argc < 4) {
-			cp = argc == 3 ? argv[2] : tail(src);
+			char *cp = argc == 3 ? argv[2] : tail(src);
 			fd = creat(cp, 0644);
 			if (fd < 0) {
 				warn("%s", cp);
@@ -533,15 +533,15 @@ get(argc, argv)
 			recvfile(fd, src, mode);
 			break;
 		}
-		cp = tail(src);         /* new .. jdg */
-		fd = creat(cp, 0644);
+		p = tail(src);         /* new .. jdg */
+		fd = creat(p, 0644);
 		if (fd < 0) {
-			warn("%s", cp);
+			warn("%s", p);
 			continue;
 		}
 		if (verbose)
 			printf("getting from %s:%s to %s [%s]\n",
-				hostname, src, cp, mode);
+				hostname, src, p, mode);
 		recvfile(fd, src, mode);
 	}
 }
@@ -685,7 +685,7 @@ tail(filename)
 static __dead void
 command()
 {
-	struct cmd *c;
+	const struct cmd *c;
 
 	for (;;) {
 		printf("%s> ", prompt);
@@ -714,12 +714,12 @@ command()
 	}
 }
 
-struct cmd *
+const struct cmd *
 getcmd(name)
 	char *name;
 {
-	char *p, *q;
-	struct cmd *c, *found;
+	const char *p, *q;
+	const struct cmd *c, *found;
 	int nmatches, longest;
 
 	longest = 0;
@@ -786,7 +786,7 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct cmd *c;
+	const struct cmd *c;
 
 	if (argc == 1) {
 		printf("Commands may be abbreviated.  Commands are:\n\n");
