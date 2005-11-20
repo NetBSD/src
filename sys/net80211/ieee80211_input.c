@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.49 2005/11/19 21:09:17 he Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.50 2005/11/20 10:04:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.49 2005/11/19 21:09:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.50 2005/11/20 10:04:21 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -262,7 +262,8 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			 * exist. This should probably done after an ACL check.
 			 */
 			if (ni == ic->ic_bss &&
-			    ic->ic_opmode != IEEE80211_M_HOSTAP) {
+			    ic->ic_opmode != IEEE80211_M_HOSTAP &&
+			    !IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr)) {
 				/*
 				 * Fake up a node for this newly
 				 * discovered member of the IBSS.
@@ -2035,6 +2036,12 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				 * Create a new entry in the neighbor table.
 				 */
 				ni = ieee80211_add_neighbor(ic, wh, &scan);
+			} else if (ni->ni_capinfo == 0) {
+				/*
+                                 * Initialize a node that was "faked
+                                 * up."  This updates the TSF, too.
+				 */
+				ieee80211_init_neighbor(ic, ni, wh, &scan, 0);
 			} else {
 				/*
 				 * Record tsf for potential resync.
@@ -2096,7 +2103,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 
 		if (ni == ic->ic_bss) {
-			if (ic->ic_opmode == IEEE80211_M_IBSS) {
+			if (ic->ic_opmode != IEEE80211_M_IBSS)
+				ni = ieee80211_tmp_node(ic, wh->i_addr2);
+			else if (IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr))
+				;
+			else {
 				/*
 				 * XXX Cannot tell if the sender is operating
 				 * in ibss mode.  But we need a new node to
@@ -2105,8 +2116,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				 */
 				ni = ieee80211_fakeup_adhoc_node(&ic->ic_sta,
 					wh->i_addr2);
-			} else
-				ni = ieee80211_tmp_node(ic, wh->i_addr2);
+			}
 			if (ni == NULL)
 				return;
 			allocbs = 1;
