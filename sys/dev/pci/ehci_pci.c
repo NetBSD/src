@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.20 2005/11/20 18:42:43 augustss Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.21 2005/11/20 18:44:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.20 2005/11/20 18:42:43 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.21 2005/11/20 18:44:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,11 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		cap = pci_conf_read(pc, tag, addr);
 		if (EHCI_CAP_GET_ID(cap) == EHCI_CAP_ID_LEGACY)
 			break;
-		if (--maxcap < 0)
+		if (--maxcap < 0) {
+			aprint_normal("%s: broken extended capabilities "
+				      "ignored\n", devname);
 			return;
+		}
 		addr = EHCI_CAP_GET_NEXT(cap);
 	}
 
