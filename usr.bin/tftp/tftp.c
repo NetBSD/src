@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.21 2005/06/02 03:11:23 lukem Exp $	*/
+/*	$NetBSD: tftp.c,v 1.22 2005/11/20 19:28:23 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.21 2005/06/02 03:11:23 lukem Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.22 2005/11/20 19:28:23 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,18 +65,6 @@ __RCSID("$NetBSD: tftp.c,v 1.21 2005/06/02 03:11:23 lukem Exp $");
 
 #include "extern.h"
 #include "tftpsubs.h"
-
-extern  struct sockaddr_storage peeraddr; /* filled in by main */
-extern  int     f;			/* the opened socket */
-extern  int     trace;
-extern  int     verbose;
-extern  int     def_rexmtval;
-extern  int     rexmtval;
-extern  int     maxtimeout;
-extern	int	tsize;
-extern	int	tout;
-extern	int	def_blksize;
-extern	int	blksize;
 
 char    ackbuf[PKTSIZE];
 int	timeout;
@@ -539,9 +527,10 @@ tpacket(s, tp, n)
 	struct tftphdr *tp;
 	int n;
 {
-	static char *opcodes[] =
+	static const char *opcodes[] =
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR", "OACK" };
-	char *cp, *file, *endp, *opt = NULL, *spc;
+	char *cp, *file, *endp, *opt = NULL;
+	const char *spc;
 	u_short op = ntohs(tp->th_opcode);
 	int i, o;
 
