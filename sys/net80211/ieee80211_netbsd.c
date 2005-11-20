@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.8 2005/11/18 16:40:09 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.9 2005/11/20 09:39:04 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.8 2005/11/18 16:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.9 2005/11/20 09:39:04 dyoung Exp $");
 #endif
 
 /*
@@ -59,7 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.8 2005/11/18 16:40:09 skrll E
 #define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
 
 static void ieee80211_sysctl_fill_node(struct ieee80211_node *,
-    struct ieee80211_node_sysctl *, int, struct ieee80211_channel *, int);
+    struct ieee80211_node_sysctl *, int, const struct ieee80211_channel *,
+    uint32_t);
 static struct ieee80211_node *ieee80211_node_walknext(
     struct ieee80211_node_walk *);
 static struct ieee80211_node *ieee80211_node_walkfirst(
@@ -310,11 +311,11 @@ ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 static void
 ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
     struct ieee80211_node_sysctl *ns, int ifindex,
-    struct ieee80211_channel *chan0, int is_bss)
+    const struct ieee80211_channel *chan0, uint32_t flags)
 {
 	ns->ns_ifindex = ifindex;
 	ns->ns_capinfo = ni->ni_capinfo;
-	ns->ns_flags = (is_bss) ? IEEE80211_NODE_SYSCTL_F_BSS : 0;
+	ns->ns_flags = flags;
 	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
 	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
 	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
@@ -356,6 +357,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 	struct ieee80211_node_sysctl ns;
 	char *dp;
 	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
+	uint32_t flags;
 	size_t len, needed, eltsize, out_size;
 	int error, s, saw_bss = 0, nelt;
 
@@ -405,11 +407,18 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 
 		if (saw_bss && ni == ic->ic_bss)
 			continue;
-		else if (ni == ic->ic_bss)
+		else if (ni == ic->ic_bss) {
 			saw_bss = 1;
+			flags = IEEE80211_NODE_SYSCTL_F_BSS;
+		} else
+			flags = 0;
+		if (ni->ni_table == &ic->ic_scan)
+			flags |= IEEE80211_NODE_SYSCTL_F_SCAN;
+		else if (ni->ni_table == &ic->ic_sta)
+			flags |= IEEE80211_NODE_SYSCTL_F_STA;
 		if (len >= eltsize) {
 			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
-			    &ic->ic_channels[0], ni == ic->ic_bss);
+			    &ic->ic_channels[0], flags);
 			error = copyout(&ns, dp, out_size);
 			if (error)
 				goto cleanup;
@@ -594,6 +603,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 	if (m != NULL) {
 		m->m_data += sizeof(struct ieee80211_frame);
 		*frm = m->m_data;
+		IASSERT((uintptr_t)*frm % 4 == 0, ("bad beacon boundary"));
 	}
 	return m;
 }
