@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.19 2005/11/20 14:46:23 augustss Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.20 2005/11/20 18:42:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.19 2005/11/20 14:46:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.20 2005/11/20 18:42:43 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,11 +243,11 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		case EHCI_CAP_ID_LEGACY:
 			legctlsts = pci_conf_read(pc, tag,
 						  addr + PCI_EHCI_USBLEGCTLSTS);
-			printf("ehci_dump_caps: 0x%08x 0x%08x\n",
-			       cap, legctlsts);
+			printf("ehci_dump_caps: legsup=0x%08x "
+			       "legctlsts=0x%08x\n", cap, legctlsts);
 			break;
 		default:
-			printf("ehci_dump_caps: 0x%08x\n", cap);
+			printf("ehci_dump_caps: cap=0x%08x\n", cap);
 			break;
 		}
 		if (--maxdump < 0)
@@ -266,7 +266,8 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	int ms;
 
 #ifdef EHCI_DEBUG
-	ehci_dump_caps(sc, pc, tag);
+	if (ehcidebug)
+		ehci_dump_caps(sc, pc, tag);
 #endif
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	addr = EHCI_HCC_EECP(cparams);
