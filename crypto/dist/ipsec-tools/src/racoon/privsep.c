@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
 
 /* Id: privsep.c,v 1.6.2.7 2005/08/08 11:25:01 vanhu Exp */
 
