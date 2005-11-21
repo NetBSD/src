@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.21 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.21.2.1 2005/11/21 20:55:44 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -56,6 +56,7 @@ struct siop_cmd {
 	struct siop_common_cmd cmd_c;
 	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
 	int reselslot;
+	u_int32_t saved_offset; /* offset in table after disc without sdp */
 };
 #define cmd_tables cmd_c.siop_tables
 
