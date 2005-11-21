@@ -1,5 +1,48 @@
 ---------------------------------------------
 
+	0.6.3 released
+
+2005-11-21  Yvan Vanhullebus  <vanhu@netasq.com>
+
+	* src/racoon/isakmp_[ident|agg].c: Check if natt is available when
+	  receiving a NAT_D payload from initiator. It saves a crash,
+	  reported by Dave Huang to NetBSD.
+
+2005-11-20  Yvan Vanhullebus  <vanhu@netasq.com>
+
+	* src/racoon/isakmp_agg.c: Check that we got some needed payloads
+	  from peer (could cause a DoS). Crash reported by Adrian Portelli
+	  using IKE test suite from 
+	  http://www.ee.oulu.fi/research/ouspg/protos/testing/c09/isakmp/
+
+2005-11-06  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	* src/racoon/main.c, src/racoon/session.c: moved .pid file writing
+	  just before main loop. Thanks Stephen Thorne
+	* src/racoon/localconf.h, src/racoon/cftoken.l: introduced 
+	  path pidfile directive
+	* src/racoon/racoon.conf.5: documented above
+	* configure.ac: OpenSSL 0.9.8 compilation fix. Thank Ganesan 
+	  Rajagopal
+	* configure.ac: added check for strlcat function
+	* src/racoon/misc.h: define strlcat function for systems without one
+	* src/racoon/remoteconf.c: strncat -> strlcat
+
+2005-10-17  Aidas Kasparas  <a.kasparas@gmc.lt>
+
+	Introduced subnet sainfo type.
+	* src/racoon/cftoken.l: new token "subnet"
+	* src/racoon/cfparse.y: added address/subnet diferentiation logic
+	* src/racoon/ipsec-doi.h: new constant
+	* src/racoon/ipsec-doi.c: adopted to above
+	* src/racoon/racoon.conf.5: documented above
+	
+2005-10-14  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	* src/libipsec/pfkey.c: One forgotten cast caddr_t -> void *
+
+---------------------------------------------
+
 	0.6.2 released
 
 2005-10-14  Yvan Vanhullebus  <vanhu@netasq.com>
