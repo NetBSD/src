@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.24 2003/10/03 21:29:16 christos Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.24.6.1 2005/11/21 20:15:20 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.24 2003/10/03 21:29:16 christos Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.24.6.1 2005/11/21 20:15:20 tron Exp $");
 #endif
 #endif
 
@@ -194,7 +194,7 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	}
 
 	rstrm->sendsize = sendsize = fix_buf_size(sendsize);
-	rstrm->out_base = mem_alloc(rstrm->sendsize);
+	rstrm->out_base = malloc(rstrm->sendsize);
 	if (rstrm->out_base == NULL) {
 		warnx("xdrrec_create: out of memory");
 		mem_free(rstrm, sizeof(RECSTREAM));
@@ -202,7 +202,7 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	}
 
 	rstrm->recvsize = recvsize = fix_buf_size(recvsize);
-	rstrm->in_base = mem_alloc(recvsize);
+	rstrm->in_base = malloc(recvsize);
 	if (rstrm->in_base == NULL) {
 		warnx("xdrrec_create: out of memory");
 		mem_free(rstrm->out_base, sendsize);
