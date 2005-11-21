@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.7 2005/10/21 17:08:17 riz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.1.1.4.2.8 2005/11/21 21:12:31 tron Exp $
 .\"
-.\" Id: racoon.conf.5,v 1.41 2005/09/21 14:35:16 manubsd Exp
+.\" Id: racoon.conf.5,v 1.27.2.11 2005/11/06 17:18:26 monas Exp
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -203,12 +203,19 @@ The file is growing because
 .Xr racoon 8
 simply adds SAs to it.
 You should maintain the file manually.
-.It Ic path script Ar path
+.It Ic path script Ar path ;
 .Xr racoon 8
 will search this directory for scripts hooks.
 If you run with privilege separation,
 .Xr racoon 8
 will refuse to execute a script stored outside of this directory.
+.It Ic path pidfile Ar file ;
+specifies file where to store PID of process. If path starts with 
+.Ic / 
+it is treated as
+an absolute path, otherwise relative to VARRUN directory specified at
+compilation time. Default is 
+.Ic racoon.pid 
 .El
 .\"
 .Ss File Inclusion
@@ -807,6 +814,13 @@ are constructed like:
 .Pp
 or
 .Pp
+.Ic subnet Ar address
+.Bq Ic / Ar prefix
+.Bq Ic [ Ar port ]
+.Ar ul_proto
+.Pp
+or
+.Pp
 .Ar idtype Ar string
 .Pp
 It means exactly the content of ID payload.
@@ -814,6 +828,12 @@ This is not like a filter rule.
 For example, if you define 3ffe:501:4819::/48 as
 .Ar source_id .
 3ffe:501:4819:1000:/64 will not match.
+.Pp
+In case of longest prefix (selecting single host) 
+.Ar address
+instructs to send ID type of ADDRESS, while
+.Ar subnet
+instructs to send ID type of SUBNET. Otherwise these instructions are identical.
 .Pp
 .Bl -tag -width Ds -compact
 .\"

@@ -1,6 +1,6 @@
-/*	$NetBSD: oakley.c,v 1.1.1.3.2.4 2005/10/21 17:08:17 riz Exp $	*/
+/*	$NetBSD: oakley.c,v 1.1.1.3.2.5 2005/11/21 21:12:30 tron Exp $	*/
 
-/* Id: oakley.c,v 1.17.2.4 2005/07/12 11:50:15 manubsd Exp */
+/* Id: oakley.c,v 1.17.2.5 2005/10/04 09:54:27 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

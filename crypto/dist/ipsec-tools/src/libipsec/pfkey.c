@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2.2.3 2005/10/21 17:08:17 riz Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.4 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 

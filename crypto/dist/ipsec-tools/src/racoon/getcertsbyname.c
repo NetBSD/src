@@ -1,4 +1,4 @@
-/*	$NetBSD: getcertsbyname.c,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: getcertsbyname.c,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 

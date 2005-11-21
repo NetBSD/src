@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.1.1.2.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.1.1.2.2.3 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: isakmp_var.h,v 1.9.2.1 2005/05/07 17:26:06 manubsd Exp */
 

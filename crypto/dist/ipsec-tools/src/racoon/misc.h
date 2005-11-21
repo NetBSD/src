@@ -1,6 +1,6 @@
-/*	$NetBSD: misc.h,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: misc.h,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
-/* Id: misc.h,v 1.6 2004/06/11 16:00:17 ludvigm Exp */
+/* Id: misc.h,v 1.6.10.1 2005/11/06 17:18:26 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -52,6 +52,10 @@ extern double timedelta __P((struct timeval *, struct timeval *));
 
 #ifndef HAVE_STRLCPY
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
+#endif
+
+#ifndef HAVE_STRLCAT
+#define strlcat(d,s,l) strncat(d,s,(l)-strlen(d)-1)
 #endif
 
 #include "libpfkey.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.1.1.3.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.1.1.3.2.3 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME$ */
 

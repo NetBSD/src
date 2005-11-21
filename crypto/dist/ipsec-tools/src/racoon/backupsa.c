@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 

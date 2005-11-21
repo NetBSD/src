@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.4.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.4.2.3 2005/11/21 21:12:30 tron Exp $	*/
 
-/* Id: cftoken.l,v 1.31.2.5 2005/06/28 22:38:02 manubsd Exp */
+/* Id: cftoken.l,v 1.31.2.7 2005/11/06 17:18:26 monas Exp */
 
 %{
 /*
@@ -168,6 +168,8 @@ hexstring	0x{hexdigit}+
 <S_PTH>script 		{ YYD; yylval.num = LC_PATHTYPE_SCRIPT;
 				return(PATHTYPE); }
 <S_PTH>backupsa		{ YYD; yylval.num = LC_PATHTYPE_BACKUPSA;
+				return(PATHTYPE); }
+<S_PTH>pidfile		{ YYD; yylval.num = LC_PATHTYPE_PIDFILE;
 				return(PATHTYPE); }
 <S_PTH>{semi}		{ BEGIN S_INI; YYDB; return(EOS); }
 
@@ -471,6 +473,7 @@ user_fqdn	{ YYD; yylval.num = IDTYPE_USERFQDN; return(IDENTIFIERTYPE); }
 fqdn		{ YYD; yylval.num = IDTYPE_FQDN; return(IDENTIFIERTYPE); }
 keyid		{ YYD; yylval.num = IDTYPE_KEYID; return(IDENTIFIERTYPE); }
 address		{ YYD; yylval.num = IDTYPE_ADDRESS; return(IDENTIFIERTYPE); }
+subnet		{ YYD; yylval.num = IDTYPE_SUBNET; return(IDENTIFIERTYPE); }
 asn1dn		{ YYD; yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
 certname	{ YYD; yywarn("certname will be obsoleted in near future."); yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
 

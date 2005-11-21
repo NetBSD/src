@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy.c,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: test-policy.c,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: test-policy.c,v 1.16 2003/08/26 03:24:08 itojun Exp $	*/
 

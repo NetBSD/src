@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.23.4.2 2005/07/16 04:41:01 monas Exp */
 

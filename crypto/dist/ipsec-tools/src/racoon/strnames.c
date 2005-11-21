@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: strnames.c,v 1.1.1.2.2.2 2005/11/21 21:12:31 tron Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
