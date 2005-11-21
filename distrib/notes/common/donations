@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.26 2004/08/24 21:57:04 hubertf Exp $
+.\"	$NetBSD: donations,v 1.26.2.1 2005/11/21 21:39:45 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,118 +32,280 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Bd -unfilled -offset indent
+AMD - Advanced Micro Devices, Inc.
+ASA Computers
+Aaron Wall
+ABE Masayuki
 AboveNet Communications, Inc.
+Achim Grolms
+Adam Kasper
+Adaptec
 Advanced System Products, Inc.
+Akihiro IIJIMA
 Alex Poylisher
+Algorithmics, Ltd.
 Alistair Crooks
+Allegro Networks
+Aloys Keller
+Andreas Berg
+Andreas Jellinghaus
 Andrew Brown
+Andrew Gillham
+Andy Hagans
+Antonio Larripa
+Arend Harrewijne
+Armijn Hemel
 Atsushi YOKOYAMA
 Avalon Computer Systems
 Bay Area Internet Solutions
 Ben Collver
+Benoit Lepage
+Bernhard Moellemann
 Bill Coldwell
 Bill Sommerfeld
+Bill Squier
 Brad Salai
 Brains Corporation, Japan
 Brian Carlstrom
 Brian McGroarty
+Brian Mitchell
 Canada Connect Corporation
+Carl Shapiro
 Castor Fu
 Central Iowa (Model) Railroad
 Charles Conn
 Charles D. Cranor
 Charles M. Hannum
 Chris Legrow
+Chris Townsend
 Christer O. Andersson
-Christopher g. Demetriou
+Christopher G. Demetriou
 Christos Zoulas
 Chuck Silvers
+Cologne Chip AG
+Computer und Literatur Verlag
+Computertechnik Krienke & Nolte
+Computing Services Department, The University of Liverpool
+Convert Tools
 Co-operative Research Centre for Enterprise Distributed
 Curt Sampson
+DAYOMON from Japan
+Damicon Kraa, Finland
+Daniel de Kok
 Dave Burgess
 Dave Rand
+Dave Tyson
 David Brownlee
+Dayton Clark
 Demon Internet, UK
 Derek Fellion
 Digital Equipment Corporation
 Distributed Processing Technology
+Distro Jockey
 Douglas J. Trainor
+Dr.ir. F.W. Dillema
 Easynet, UK
 Ed Braaten
 Edward Richley
+emuty
 Eric and Rosemary Spahr
+Erik Berls
+Erik E. Fair
+Erkki Ruohtula
+Ernst Lehmann
+Espen Randen
+Ewald Kicker
+Florent Parent
+Frank Kardel
 Free Hardware Foundation
+Front Range *BSD User Group
+FUKAUMI Naoki
+Gan Uesli Starling
+Garth R. Patil
+Geert Hendrickx (ghen)
+Geert Jan de Groot
+GK Meier
+Gordon Zaft
+Grant Beattie
 Greg Gingerich
+Greg Girczyc
 Guenther Grau
+HP Sweden
+Hanno Wagner
+Hans Huebner
 Harald Koerfgen
+Haroon Khalid
 Harry McDonald
+Hauke Fath
 Heiko W. Rupp
 Herb Peyerl
+Hernani Marques Madeira
+Hidekichi Ookubo
+Hideyuki Kido
+Hisashi Fujinaka
+Holger Weiss
 Hubert Feyrer
+IBM Corporation
+IMAI Kiyoshi
 Innovation Development Enterprises of America
+Intel
 Internet Software Consortium
+Internet Users Forever IKI
+Interoute Telecommunications, UK
+JNUG (raised at JNUG meeting & BOF August 2005)
+James Bursa
 James Chacon
 Jan Joris Vereijken
 Jason Birnschein
 Jason Brazile
 Jason R. Thorpe
+Jeff Rizzo
+Jeff Woodall - Portland, OR
+Jens Schoenfeld
 Jim Wise
+Joachim Nink
+Joachim Thiemann
+Joel CARNAT
+John Heasley
 John Kohl
+John P. Refling
 Jonathan P. Kay
 Jordan K. Hubbard
+Jorgen Lundman
+Karl Wagner
+Kenji Hisazumi
 Kenneth Alan Hornstein
+Kenneth P. Stox
 Kevin Keith Woo
+Kevin Sullivan
+Klaus Lichti
 Kimmo Suominen
+Korea BSD User Forum
 Krister Waldfridsson
+Kwok Ng
+Lars Mathiassen
+Lehmanns Fachbochhandlung
 Lex Wennmacher
 LinuxFest Northwest
+Luke Maurits
 Luke Mewburn
 MS Macro System GmbH, Germany
+Maki Kato
+Marc Tooley
+Marcus Wyremblewski
 Mark Brinicombe
+Mark Houde
+Mark Perkins
 Mark S. Thomas
 Mason Loring Bliss
+Martin Cernohorsky
+Martin J. Ekendahl
+Matt Dainty
+Matt Thomas
+Matthew Jacob
+Matthew Sporleder
+Matthias Scheler
 Mattias Karlsson
+Mel Kravitz
 Michael Graff
+Michael "Kvedulv" Moll
 Michael L. Hitch
 Michael Richardson
 Michael Thompson
 Michael W. James
 Mike Price
+Mirko Thiesen (Thiesi)
+Murphy Software BV, Netherlands
 Neil J. McRae
 Noah M. Keiserman
 Norman R. McBride
 Numerical Aerospace Simulation Facility, NASA Ames Research
+Olaf "Rhialto" Seibert
 Oliver Cahagne
+Oppedahl & Larson LLP
+Palle Lyckegaard
+Paul Ripke
+Paul Southworth
+Pawel Rogocz
+Pearson Education
 Perry E. Metzger
+Petar Bogdanovic
+Peter C. Wallace
+Peter J. Bui
+Peter Postma
 Petri T. Koistinen
+Phil Thomas
 Piermont Information Systems Inc.
+Pierre-Philipp Braun
 Precedence Technologies Ltd
+Public Access Networks Corporation
 Ralph Campbell
+Randy Ray
+Real Weasel
 Reinoud Zandijk
+Renewed Health Company
 Richard Nelson
 Rob Windsor
+Robert Pankratz
+Robert Thille
+Roland Lichti
 Ross Harvey
+Ryan Campbell
 SDF Public Access Unix, Inc. 501(c)(7)
+SMC Networks Inc.
 Salient Systems Inc.
+Sander van Dijk
 Scott Ellis
 Scott Kaplan
+Scott Walters
+Sean Davis
 Simon Burge
 Soren Jacobsen
 Soren Jorvang
+Stephen Borrill
+Stephen Early
 Steve Allen
 Steve Wadlow
+Steven M. Bellovin
 SunROOT# Project
+Sylvain Schmitz
+Takahiro Kambe
+TAKEUCHI Yoji
+Tamotsu Kanoh
+Tasis Michalakopoulos (Athens, Greece)
+Tatoku Ogaito
 Ted Lemon
 Ted Spradley
+The Names Database
+The NetBSD Mission
+The People's Republic of Ames
+Thierry Lacoste
+Thierry Laronde
+Thomas Runge
 Thor Lancelot Simon
 Tim Law
+Timo Scholer
+Tino Hanich
+Tino Wildenhain
 Tom Coulter
+Tom Ivar Helbekkmo
+Tom Lyon
+Tomas Dabasinskas
+Torsten Harenberg
 Toru Nishimura
+Toshiba
+Turbocat's Development
+Tyler Sarna
+UTN Web Directory
 VMC Harald Frank, Germany
 Warped Communications, Inc.
-Wasabi Systems
+Wasabi Systems, Inc.
 Whitecross Database Systems Ltd.
 William Gnadt
+Worria Affordable Web Hosting
 Worria Web Hosting
+wwwTrace Traceroute Server Directory
+Yusuke Yokota
+Zach Metzinger
 .Ed
 .Pp
