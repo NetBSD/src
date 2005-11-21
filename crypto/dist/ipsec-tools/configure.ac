@@ -1,8 +1,8 @@
 dnl -*- mode: m4 -*-
-dnl Id: configure.ac,v 1.47.2.29 2005/10/14 09:24:43 manubsd Exp
+dnl Id: configure.ac,v 1.47.2.31 2005/11/21 11:11:41 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, 0.6.2)
+AC_INIT(ipsec-tools, 0.6.3)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
@@ -108,7 +108,7 @@ AC_STRUCT_TM
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(gettimeofday select socket strerror strtol strtoul strlcpy)
+AC_CHECK_FUNCS(gettimeofday select socket strerror strtol strtoul strlcpy strlcat)
 AC_REPLACE_FUNCS(strdup)
 RACOON_CHECK_VA_COPY
 
@@ -210,13 +210,13 @@ AC_CHECK_HEADER(openssl/sha2.h, [], [
 	AC_TRY_COMPILE([
 		#include <openssl/sha.h>
 	], [
-		typedef int SHA256_CTX;
-	], [AC_MSG_RESULT(no)
-	    AC_LIBOBJ([sha2])
-	    CRYPTOBJS="$CRYPTOBJS sha2.o"
+		SHA256_CTX ctx;
 	], [
 	    AC_MSG_RESULT(yes)
 	    AC_DEFINE([HAVE_SHA2_IN_SHA_H], [], [sha2 is defined in sha.h])
+	], [AC_MSG_RESULT(no)
+	    AC_LIBOBJ([sha2])
+	    CRYPTOBJS="$CRYPTOBJS sha2.o"
 	])
 
 	CPPFLAGS_ADD="$CPPFLAGS_ADD -I./\${top_srcdir}/src/racoon/missing"
