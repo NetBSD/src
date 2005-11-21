@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.4 2005/09/02 22:52:24 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.5 2005/11/21 22:43:34 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -117,9 +117,8 @@ bpf_dump(char *interface)
 
 		dpe = v;
 
-		printf("Active BPF peers\n");
-		printf("PID\tInt\tRecv     Drop     Capt");
-		printf("     Flags  Bufsize  Comm\n");
+		puts("Active BPF peers\nPID\tInt\tRecv     Drop     Capt" \
+		    "     Flags  Bufsize  Comm");
 
 #define BPFEXT(entry) dpe->entry
 
