@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.377 2005/11/13 10:08:36 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.378 2005/11/21 14:20:40 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -837,7 +837,8 @@ Mailing List:
 Responsible:	gwr, tron
 Notes:
 The sources were integrated into src/lib/libz as usual on *nix,
-and partially duplicated under src/sys/lib/libz for the kernel.
+and partially duplicated under src/sys/lib/libz and
+src/sys/net/zlib.[ch] for the kernel.
 The header zconf.h was "boiled down" to the minimum for *BSD.
 The Makefile is completely new (*BSD style, of course).  Lastly,
 the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
