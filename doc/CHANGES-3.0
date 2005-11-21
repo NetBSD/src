@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.313 2005/11/13 16:04:15 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.314 2005/11/21 21:18:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14041,4 +14041,328 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC1.
+
+sys/dev/usb/ulpt.c				1.70 via patch
+
+	Avoid panics in ulpt(4). Fixes PR kern/32061.
+	[rpaulo, ticket #955]
+
+usr.sbin/pkg_install/lib/dewey.c		1.4
+usr.sbin/pkg_install/lib/str.c			1.57
+
+	- Do not use errx in dewey_match, return -1 instead.
+	- Handle -1 return value from dewey_match.
+	[wiz, ticket #956]
+
+sys/dev/pci/if_fxp_pci.c			1.42
+sys/dev/pci/pcidevs				1.727
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for the fxp(4) variant in the 802801G* family.
+	[cube, ticket #957]
+
+gnu/dist/binutils/opcodes/sparc-opc.c		1.2
+
+	Avoid issue with -O3 using the wrong registers with some opcodes.
+	[martin, ticket #958]
+
+gnu/dist/gcc/gcc/config.gcc			1.10
+gnu/dist/gcc/gcc/configure.in			1.5
+gnu/usr.bin/gcc3/arch/sparc64/hconfig.h		1.3
+
+	Switch gcc's default for sparc64 from cpu=v9 to cpu=ultrasparc.
+	[martin, ticket #959]
+
+sys/arch/mips/include/cache.h			1.8
+sys/arch/mips/include/pmap.h			1.47
+sys/arch/mips/mips/cache.c			1.27,1.30-1.31
+sys/arch/mips/mips/mem.c			1.30
+sys/arch/mips/mips/pmap.c			1.158
+sys/arch/mips/mips/vm_machdep.c			1.106
+sys/arch/sgimips/sgimips/machdep.c		1.91
+
+	Work arround memory corruption problem on some
+	R41xx/R4600/R5000/Rm52xx machines.
+	[tsutsui, ticket #961]
+
+usr.sbin/pkg_install/info/perform.c		1.66
+usr.sbin/pkg_install/lib/version.h		1.72
+
+	Fix first part of PR bin/32068:
+	pkg_info -Q broken for local binary packages.
+	[dillo, ticket #963]
+
+lib/libc/rpc/clnt_dg.c				1.15-1.16
+lib/libc/rpc/clnt_raw.c				1.26
+lib/libc/rpc/svc_dg.c				1.11
+lib/libc/rpc/svc_raw.c				1.18
+lib/libc/rpc/xdr_rec.c				1.25
+
+	Fix PR bin/31264: rup not interruptable.
+	[chs, ticket #964]
+
+sys/arch/x86/pci/pci_machdep.c			1.12
+
+	PR port-i386/31885: Force pci mode 1 on SIS 741.
+	[christos, ticket #966]
+
+include/ieeefp.h				1.7
+
+	PR port-macppc/32108: fpgetmask() linking failure with g++ on macppc
+	Add missing __{BEGIN,END}_DECLS.
+	[oster, ticket #967]
+
+sys/arch/sgimips/sgimips/machdep.c		1.94
+
+	Enable L2 cache of R5k O2.
+	[tsutsui, ticket #970]
+
+sys/arch/mips/sibyte/dev/sbobio.c		1.16
+
+	Don't hide the panic if the CPU devices present can't be figured out
+	in sbobio_attach(). We really want to know if this is the case all
+	the time, and also fixes GCC warnings about possibly uninitialised
+	variables.
+	[simonb, ticket #971]
+
+distrib/sets/lists/base/mi			1.579
+distrib/sets/lists/man/mi			1.838
+usr.sbin/bind/Makefile				1.15
+usr.sbin/bind/check/Makefile			1.1
+usr.sbin/bind/check/Makefile.inc		1.1
+usr.sbin/bind/check/named-checkconf/Makefile	1.1
+usr.sbin/bind/check/named-checkzone/Makefile	1.1
+usr.sbin/bind/dnssec/Makefile			1.1
+usr.sbin/bind/dnssec/Makefile.inc		1.1
+usr.sbin/bind/dnssec/dnssec-keygen/Makefile	1.1
+usr.sbin/bind/dnssec/dnssec-makekeyset/Makefile	1.1
+usr.sbin/bind/dnssec/dnssec-signkey/Makefile	1.1
+usr.sbin/bind/dnssec/dnssec-signzone/Makefile	1.1
+
+	Add the dnssec and namedb check tools.
+	[christos, ticket #972]
+
+sys/dev/ic/esiop.c				1.34
+sys/dev/ic/esiopvar.h				1.13
+sys/dev/ic/siop.c				1.79
+sys/dev/ic/siopvar.h				1.22
+sys/dev/ic/siopvar_common.h			1.33
+sys/dev/microcode/siop/esiop.out		regen
+sys/dev/microcode/siop/esiop.ss			1.20
+sys/dev/microcode/siop/siop.out			regen
+sys/dev/microcode/siop/siop.ss			1.20
+
+	Some drives disconnect after the last data phase without a save data
+	pointer message. In such case we would not update resid with the
+	proper value (eventually resid would not be updated at all if there
+	was only one data phase). To fix this, have the script save the offset
+	in the data tables at disconnect time if there was a transfer, and use
+	this to compute the resid if the current offset is 0.
+	Fixes PR kern/31990.
+	[bouyer, ticket #973]
+
+distrib/utils/sysinst/bsddisklabel.c		1.36
+
+	Fix check for root being entirely inside the area that can be read on
+	systems where the bios doesn't support LBA reads.
+	[dsl, ticket #975]
+
+sys/arch/amd64/conf/INSTALL_ACPI		1.29 via patch
+
+	Include "INSTALL" then modify it - so we get the same device.
+	[dsl, ticket #977]
+
+sys/arch/amd64/conf/INSTALL			1.40
+
+	Add sk ethernet as found on ASUS A8V.
+	Increase ramdisk to 5MB, costs virtually nothing.
+	[dsl, ticket #978]
+
+sys/dev/pci/if_sk.c				1.17
+
+	Fix occasional "sk0: watchdog timeout" from the on-board ethernet on
+	an Asus A8V motherboard.
+	[riz, ticket #979]
+
+sys/nfs/nfs_bio.c				1.136-1.137
+
+	nfs_bioread:
+	- Handle file truncation on the server a little more gracefully.
+	- Push delayed truncation and tweak loop accordingly.
+	  Fixes PR kern/31926.
+	[yamt, ticket #980]
+
+crypto/dist/ipsec-tools/ChangeLog		patch
+crypto/dist/ipsec-tools/NEWS			patch
+crypto/dist/ipsec-tools/configure.ac		patch
+crypto/dist/ipsec-tools/netbsd-import.sh	patch
+crypto/dist/ipsec-tools/rpm/suse/ipsec-tools.spec new file
+crypto/dist/ipsec-tools/src/include-glibc/glibc-bugs.h patch
+crypto/dist/ipsec-tools/src/include-glibc/net/pfkeyv2.h patch
+crypto/dist/ipsec-tools/src/include-glibc/netinet/ipsec.h patch
+crypto/dist/ipsec-tools/src/include-glibc/sys/queue.h patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_dump_policy.c patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_get_policylen.c patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_set_policy.3 patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.3 patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.c patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.h patch
+crypto/dist/ipsec-tools/src/libipsec/key_debug.c patch
+crypto/dist/ipsec-tools/src/libipsec/libpfkey.h patch
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c	patch
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c patch
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.c new file
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.h new file
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y patch
+crypto/dist/ipsec-tools/src/libipsec/policy_token.c new file
+crypto/dist/ipsec-tools/src/libipsec/policy_token.l patch
+crypto/dist/ipsec-tools/src/libipsec/test-policy-priority.c patch
+crypto/dist/ipsec-tools/src/libipsec/test-policy.c patch
+crypto/dist/ipsec-tools/src/racoon/admin.c	patch
+crypto/dist/ipsec-tools/src/racoon/admin.h	patch
+crypto/dist/ipsec-tools/src/racoon/admin_var.h	patch
+crypto/dist/ipsec-tools/src/racoon/algorithm.c	patch
+crypto/dist/ipsec-tools/src/racoon/algorithm.h	patch
+crypto/dist/ipsec-tools/src/racoon/backupsa.c	patch
+crypto/dist/ipsec-tools/src/racoon/backupsa.h	patch
+crypto/dist/ipsec-tools/src/racoon/cfparse.c	new file
+crypto/dist/ipsec-tools/src/racoon/cfparse.y	patch
+crypto/dist/ipsec-tools/src/racoon/cfparse_proto.h patch
+crypto/dist/ipsec-tools/src/racoon/cftoken.c	new file
+crypto/dist/ipsec-tools/src/racoon/cftoken.l	patch
+crypto/dist/ipsec-tools/src/racoon/cftoken_proto.h patch
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c patch
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.h patch
+crypto/dist/ipsec-tools/src/racoon/debug.h	patch
+crypto/dist/ipsec-tools/src/racoon/debugrm.c	patch
+crypto/dist/ipsec-tools/src/racoon/debugrm.h	patch
+crypto/dist/ipsec-tools/src/racoon/dhgroup.h	patch
+crypto/dist/ipsec-tools/src/racoon/dnssec.c	patch
+crypto/dist/ipsec-tools/src/racoon/dnssec.h	patch
+crypto/dist/ipsec-tools/src/racoon/dump.c	patch
+crypto/dist/ipsec-tools/src/racoon/dump.h	patch
+crypto/dist/ipsec-tools/src/racoon/eaytest.c	patch
+crypto/dist/ipsec-tools/src/racoon/evt.c	patch
+crypto/dist/ipsec-tools/src/racoon/evt.h	patch
+crypto/dist/ipsec-tools/src/racoon/gcmalloc.h	patch
+crypto/dist/ipsec-tools/src/racoon/genlist.c	patch
+crypto/dist/ipsec-tools/src/racoon/genlist.h	patch
+crypto/dist/ipsec-tools/src/racoon/getcertsbyname.c patch
+crypto/dist/ipsec-tools/src/racoon/gnuc.h	patch
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.c patch
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.h patch
+crypto/dist/ipsec-tools/src/racoon/gssapi.c	patch
+crypto/dist/ipsec-tools/src/racoon/gssapi.h	patch
+crypto/dist/ipsec-tools/src/racoon/handler.c	patch
+crypto/dist/ipsec-tools/src/racoon/handler.h	patch
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c	patch
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.h	patch
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	patch
+crypto/dist/ipsec-tools/src/racoon/isakmp.h	patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_agg.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_agg.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_base.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_base.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_frag.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_frag.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_ident.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_ident.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_newg.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_newg.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_unity.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_unity.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_var.h patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.h patch
+crypto/dist/ipsec-tools/src/racoon/kmpstat.c	patch
+crypto/dist/ipsec-tools/src/racoon/localconf.c	patch
+crypto/dist/ipsec-tools/src/racoon/localconf.h	patch
+crypto/dist/ipsec-tools/src/racoon/logger.c	patch
+crypto/dist/ipsec-tools/src/racoon/logger.h	patch
+crypto/dist/ipsec-tools/src/racoon/main.c	patch
+crypto/dist/ipsec-tools/src/racoon/misc.c	patch
+crypto/dist/ipsec-tools/src/racoon/misc.h	patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael-alg-fst.c patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael-alg-fst.h patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael-api-fst.c patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael-api-fst.h patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael.h patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/rijndael/rijndael_local.h patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/sha2/sha2.c patch
+crypto/dist/ipsec-tools/src/racoon/missing/crypto/sha2/sha2.h patch
+crypto/dist/ipsec-tools/src/racoon/missing/strdup.c patch
+crypto/dist/ipsec-tools/src/racoon/nattraversal.c patch
+crypto/dist/ipsec-tools/src/racoon/nattraversal.h patch
+crypto/dist/ipsec-tools/src/racoon/netdb_dnssec.h patch
+crypto/dist/ipsec-tools/src/racoon/oakley.c	patch
+crypto/dist/ipsec-tools/src/racoon/oakley.h	patch
+crypto/dist/ipsec-tools/src/racoon/pfkey.c	patch
+crypto/dist/ipsec-tools/src/racoon/pfkey.h	patch
+crypto/dist/ipsec-tools/src/racoon/plainrsa-gen.8 patch
+crypto/dist/ipsec-tools/src/racoon/plainrsa-gen.c patch
+crypto/dist/ipsec-tools/src/racoon/plog.c	patch
+crypto/dist/ipsec-tools/src/racoon/plog.h	patch
+crypto/dist/ipsec-tools/src/racoon/policy.c	patch
+crypto/dist/ipsec-tools/src/racoon/policy.h	patch
+crypto/dist/ipsec-tools/src/racoon/privsep.c	patch
+crypto/dist/ipsec-tools/src/racoon/privsep.h	patch
+crypto/dist/ipsec-tools/src/racoon/proposal.c	patch
+crypto/dist/ipsec-tools/src/racoon/proposal.h	patch
+crypto/dist/ipsec-tools/src/racoon/prsa_par.c	new file
+crypto/dist/ipsec-tools/src/racoon/prsa_par.y	patch
+crypto/dist/ipsec-tools/src/racoon/prsa_tok.c	new file
+crypto/dist/ipsec-tools/src/racoon/prsa_tok.l	patch
+crypto/dist/ipsec-tools/src/racoon/racoon.8	patch
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 patch
+crypto/dist/ipsec-tools/src/racoon/racoonctl.8	patch
+crypto/dist/ipsec-tools/src/racoon/racoonctl.c	patch
+crypto/dist/ipsec-tools/src/racoon/racoonctl.h	patch
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c patch
+crypto/dist/ipsec-tools/src/racoon/remoteconf.h patch
+crypto/dist/ipsec-tools/src/racoon/rsalist.c	patch
+crypto/dist/ipsec-tools/src/racoon/rsalist.h	patch
+crypto/dist/ipsec-tools/src/racoon/safefile.c	patch
+crypto/dist/ipsec-tools/src/racoon/safefile.h	patch
+crypto/dist/ipsec-tools/src/racoon/sainfo.c	patch
+crypto/dist/ipsec-tools/src/racoon/sainfo.h	patch
+crypto/dist/ipsec-tools/src/racoon/schedule.c	patch
+crypto/dist/ipsec-tools/src/racoon/schedule.h	patch
+crypto/dist/ipsec-tools/src/racoon/session.c	patch
+crypto/dist/ipsec-tools/src/racoon/session.h	patch
+crypto/dist/ipsec-tools/src/racoon/sockmisc.c	patch
+crypto/dist/ipsec-tools/src/racoon/sockmisc.h	patch
+crypto/dist/ipsec-tools/src/racoon/str2val.c	patch
+crypto/dist/ipsec-tools/src/racoon/str2val.h	patch
+crypto/dist/ipsec-tools/src/racoon/strnames.c	patch
+crypto/dist/ipsec-tools/src/racoon/strnames.h	patch
+crypto/dist/ipsec-tools/src/racoon/throttle.c	patch
+crypto/dist/ipsec-tools/src/racoon/throttle.h	patch
+crypto/dist/ipsec-tools/src/racoon/var.h	patch
+crypto/dist/ipsec-tools/src/racoon/vendorid.c	patch
+crypto/dist/ipsec-tools/src/racoon/vendorid.h	patch
+crypto/dist/ipsec-tools/src/racoon/vmbuf.c	patch
+crypto/dist/ipsec-tools/src/racoon/vmbuf.h	patch
+crypto/dist/ipsec-tools/src/setkey/extern.h	patch
+crypto/dist/ipsec-tools/src/setkey/parse.c	new file
+crypto/dist/ipsec-tools/src/setkey/parse.h	new file
+crypto/dist/ipsec-tools/src/setkey/parse.y	patch
+crypto/dist/ipsec-tools/src/setkey/setkey.8	patch
+crypto/dist/ipsec-tools/src/setkey/setkey.c	patch
+crypto/dist/ipsec-tools/src/setkey/test-pfkey.c patch
+crypto/dist/ipsec-tools/src/setkey/token.c	new file
+crypto/dist/ipsec-tools/src/setkey/token.l	patch
+crypto/dist/ipsec-tools/src/setkey/vchar.h	patch
+lib/libipsec/Makefile				patch
+lib/libipsec/config.h				patch
+lib/libipsec/package_version.h			patch
+
+	Update to ipsec-tools 0.6.3
+	[manu, ticket #981]
 
