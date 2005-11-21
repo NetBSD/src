@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.23 2005/10/28 23:52:11 riz Exp $
+# $NetBSD: mi,v 1.768.2.24 2005/11/21 20:30:23 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1693,6 +1693,10 @@
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-makekeyset.0	man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-signkey.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dreamcast/makedev.0	man-obsolete		obsolete
@@ -1918,6 +1922,8 @@
 ./usr/share/man/cat8/mvmeppc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mvmeppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named-bootconf.0		man-obsolete		obsolete
+./usr/share/man/cat8/named-checkconf.0		man-bind-catman		.cat
+./usr/share/man/cat8/named-checkzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/named-xfer.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named.0			man-bind-catman		.cat
 ./usr/share/man/cat8/named.reload.0		man-obsolete		obsolete
@@ -3912,6 +3918,10 @@
 ./usr/share/man/man8/diskpart.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
+./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-makekeyset.8	man-bind-man		.man
+./usr/share/man/man8/dnssec-signkey.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete
@@ -4138,6 +4148,8 @@
 ./usr/share/man/man8/mvmeppc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mvmeppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/named-bootconf.8		man-obsolete		obsolete
+./usr/share/man/man8/named-checkconf.8		man-bind-man		.man
+./usr/share/man/man8/named-checkzone.8		man-bind-man		.man
 ./usr/share/man/man8/named-xfer.8		man-obsolete		obsolete
 ./usr/share/man/man8/named.8			man-bind-man		.man
 ./usr/share/man/man8/named.reload.8		man-obsolete		obsolete
