@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -61,6 +61,8 @@
 #include <unistd.h>
 #endif
 #include <signal.h>
+#include <sys/stat.h>
+#include <paths.h>
 
 #include "libpfkey.h"
 
@@ -112,6 +114,9 @@ session(void)
 	struct timeval *timeout;
 	int error;
 	struct myaddrs *p;
+	char pid_file[MAXPATHLEN];
+	FILE *fp;
+	pid_t racoon_pid = 0;
 
 	/* initialize schedular */
 	sched_init();
@@ -138,6 +143,32 @@ session(void)
 		exit(1);
 
 	sigreq = 0;
+
+	/* write .pid file */
+	racoon_pid = getpid();
+	if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE] == NULL) 
+		strlcpy(pid_file, _PATH_VARRUN "racoon.pid", MAXPATHLEN);
+	else if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE][0] == '/') 
+		strlcpy(pid_file, lcconf->pathinfo[LC_PATHTYPE_PIDFILE], MAXPATHLEN);
+	else {
+		strlcat(pid_file, _PATH_VARRUN, MAXPATHLEN);
+		strlcat(pid_file, lcconf->pathinfo[LC_PATHTYPE_PIDFILE], MAXPATHLEN);
+	} 
+	fp = fopen(pid_file, "w");
+	if (fp) {
+		if (fchmod(fileno(fp),
+			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1) {
+			syslog(LOG_ERR, "%s", strerror(errno));
+			fclose(fp);
+			exit(1);
+		}
+		fprintf(fp, "%ld\n", (long)racoon_pid);
+		fclose(fp);
+	} else {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"cannot open %s", pid_file);
+	}
+
 	while (1) {
 		if (dying)
 			rfds = maskdying;
