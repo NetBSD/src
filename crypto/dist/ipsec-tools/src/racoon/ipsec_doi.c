@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.c,v 1.1.1.4 2005/10/14 13:21:46 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.1.1.5 2005/11/21 14:12:13 manu Exp $	*/
 
-/* Id: ipsec_doi.c,v 1.26.2.14 2005/10/14 08:48:00 vanhu Exp */
+/* Id: ipsec_doi.c,v 1.26.2.15 2005/10/17 16:23:50 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3744,7 +3744,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 	switch (saddr->sa_family) {
 	case AF_INET:
 		len1 = sizeof(struct in_addr);
-		if (prefixlen == (sizeof(struct in_addr) << 3)) {
+		if (prefixlen == ~0) {
 			type = IPSECDOI_ID_IPV4_ADDR;
 			len2 = 0;
 		} else {
@@ -3757,7 +3757,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 #ifdef INET6
 	case AF_INET6:
 		len1 = sizeof(struct in6_addr);
-		if (prefixlen == (sizeof(struct in6_addr) << 3)) {
+		if (prefixlen == ~0) {
 			type = IPSECDOI_ID_IPV6_ADDR;
 			len2 = 0;
 		} else {

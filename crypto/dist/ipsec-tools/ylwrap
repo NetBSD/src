@@ -1,9 +1,9 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2004-09-10.20
+scriptversion=2005-02-02.22
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004
+# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005
 #   Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
@@ -56,11 +56,11 @@ Any number of OUTPUT,DESIRED pairs may be used.
 
 Report bugs to <bug-automake@gnu.org>.
 EOF
-    exit 0
+    exit $?
     ;;
   -v|--v*)
     echo "ylwrap $scriptversion"
-    exit 0
+    exit $?
     ;;
 esac
 
