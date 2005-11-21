@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.117 2005/09/25 12:49:09 tron Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.118 2005/11/21 09:39:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.117 2005/09/25 12:49:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.118 2005/11/21 09:39:02 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -123,8 +123,32 @@ extern int nfs_ticks;
  * 4 - write
  */
 static const int proct[NFS_NPROCS] = {
-	0, 1, 0, 2, 1, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
-	0, 0, 0,
+	[NFSPROC_NULL] = 0,
+	[NFSPROC_GETATTR] = 1,
+	[NFSPROC_SETATTR] = 0,
+	[NFSPROC_LOOKUP] = 2,
+	[NFSPROC_ACCESS] = 1,
+	[NFSPROC_READLINK] = 3,
+	[NFSPROC_READ] = 3,
+	[NFSPROC_WRITE] = 4,
+	[NFSPROC_CREATE] = 0,
+	[NFSPROC_MKDIR] = 0,
+	[NFSPROC_SYMLINK] = 0,
+	[NFSPROC_MKNOD] = 0,
+	[NFSPROC_REMOVE] = 0,
+	[NFSPROC_RMDIR] = 0,
+	[NFSPROC_RENAME] = 0,
+	[NFSPROC_LINK] = 0,
+	[NFSPROC_READDIR] = 3,
+	[NFSPROC_READDIRPLUS] = 3,
+	[NFSPROC_FSSTAT] = 0,
+	[NFSPROC_FSINFO] = 0,
+	[NFSPROC_PATHCONF] = 0,
+	[NFSPROC_COMMIT] = 0,
+	[NQNFSPROC_GETLEASE] = 0,
+	[NQNFSPROC_VACATED] = 0,
+	[NQNFSPROC_EVICTED] = 0,
+	[NFSPROC_NOOP] = 0,
 };
 
 /*
