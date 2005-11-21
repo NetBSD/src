@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.c,v 1.1.1.3.2.8 2005/10/21 17:08:17 riz Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.1.1.3.2.9 2005/11/21 21:12:30 tron Exp $	*/
 
-/* Id: isakmp.c,v 1.34.2.19 2005/08/11 14:58:51 vanhu Exp */
+/* Id: isakmp.c,v 1.34.2.20 2005/09/26 16:12:20 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

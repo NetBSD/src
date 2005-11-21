@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.1.1.2.2.3 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: admin.c,v 1.1.1.2.2.4 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: admin.c,v 1.17.2.4 2005/07/12 11:49:44 manubsd Exp */
 

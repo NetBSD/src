@@ -1,4 +1,4 @@
-/*	$NetBSD: gcmalloc.h,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: gcmalloc.h,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: gcmalloc.h,v 1.4 2001/11/16 04:34:57 sakane Exp $	*/
 

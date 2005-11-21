@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.1.1.2.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.1.1.2.2.3 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: policy_token.l,v 1.10.4.1 2005/05/07 14:30:38 manubsd Exp */
 

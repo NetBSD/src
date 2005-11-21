@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.1.1.3.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: localconf.c,v 1.1.1.3.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 

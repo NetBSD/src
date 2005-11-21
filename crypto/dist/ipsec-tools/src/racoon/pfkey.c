@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.1.1.2.2.7 2005/10/21 17:08:17 riz Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.1.2.2.8 2005/11/21 21:12:30 tron Exp $	*/
 
-/* Id: pfkey.c,v 1.31.2.9 2005/07/28 05:05:52 manubsd Exp */
+/* Id: pfkey.c,v 1.31.2.10 2005/10/03 14:52:19 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
