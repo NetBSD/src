@@ -1,4 +1,4 @@
-/*	$NetBSD: dhgroup.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: dhgroup.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
 
 /* Id: dhgroup.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 

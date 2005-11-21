@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.h,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
 
-/* Id: ipsec_doi.h,v 1.9.2.1 2005/06/28 22:38:03 manubsd Exp */
+/* Id: ipsec_doi.h,v 1.9.2.2 2005/10/17 16:23:50 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,6 +182,7 @@ struct ipsecdoi_pl_id {
 #define IDTYPE_ADDRESS		4
 #define IDTYPE_ASN1DN		5
 #define IDTYPE_LOGIN		6
+#define IDTYPE_SUBNET		7
 
 /* The use for checking proposal payload. This is not exchange type. */
 #define IPSECDOI_TYPE_PH1	0

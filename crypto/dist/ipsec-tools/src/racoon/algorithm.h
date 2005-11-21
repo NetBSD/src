@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: algorithm.h,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
 
 /* Id: algorithm.h,v 1.8 2004/11/18 15:14:44 ludvigm Exp */
 
