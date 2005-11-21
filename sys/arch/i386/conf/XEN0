@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.18 2005/11/21 22:15:13 bouyer Exp $
+# $NetBSD: XEN0,v 1.19 2005/11/21 22:16:59 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -17,8 +17,8 @@ options 	DOM0OPS
 # do a domU, at the expense of a highter memory usage by the network stack.
 #options 	MCLSHIFT=12
 
-#options 	I586_CPU
 options 	I686_CPU
+makeoptions	COPTS="-O2 -mcpu=i686 -march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
