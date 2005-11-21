@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.6 2005/09/08 18:18:10 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.7 2005/11/21 20:25:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.6 2005/09/08 18:18:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.7 2005/11/21 20:25:15 martin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -897,7 +897,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	if (0 != pci_mapreg_map(pa, VGE_PCI_LOMEM,
-	    PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
+	    PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->vge_btag, &sc->vge_bhandle, NULL, NULL)) {
 		aprint_error("%s: couldn't map memory\n",
 			sc->sc_dev.dv_xname);
