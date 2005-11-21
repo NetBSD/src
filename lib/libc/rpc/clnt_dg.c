@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.14 2004/12/30 05:06:33 christos Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.14.2.1 2005/11/21 20:15:20 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.14 2004/12/30 05:06:33 christos Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.14.2.1 2005/11/21 20:15:20 tron Exp $");
 #endif
 #endif
 
@@ -241,9 +241,10 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	 */
 	sendsz = ((sendsz + 3) / 4) * 4;
 	recvsz = ((recvsz + 3) / 4) * 4;
-	cu = mem_alloc(sizeof (*cu) + sendsz + recvsz);
+	cu = malloc(sizeof (*cu) + sendsz + recvsz);
 	if (cu == NULL)
 		goto err1;
+	memset(cu, 0, sizeof(*cu));
 	(void) memcpy(&cu->cu_raddr, svcaddr->buf, (size_t)svcaddr->len);
 	cu->cu_rlen = svcaddr->len;
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
