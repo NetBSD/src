@@ -1,4 +1,4 @@
-/*	$NetBSD: dewey.c,v 1.1.2.4 2005/11/10 10:46:29 tron Exp $	*/
+/*	$NetBSD: dewey.c,v 1.1.2.5 2005/11/21 18:39:16 tron Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -227,7 +227,7 @@ dewey_cmp(const char *lhs, int op, const char *rhs)
 
 /*
  * Perform dewey match on "pkg" against "pattern".
- * Return 1 on match, 0 otherwise
+ * Return 1 on match, 0 on non-match, -1 on error.
  */
 int
 dewey_match(const char *pattern, const char *pkg)
@@ -242,7 +242,7 @@ dewey_match(const char *pattern, const char *pkg)
 		return 0;
 	}
 	if ((sep = strpbrk(pattern, "<>")) == NULL)
-		errx(EXIT_FAILURE, "dewey_match: '<' or '>' expected in `%s'", pattern);
+		return -1;
 	/* compare name lengths */
 	if ((sep-pattern != version-pkg) ||
 	    strncmp(pkg, pattern, (size_t)(version-pkg)) != 0)
