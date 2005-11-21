@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2005/03/01 04:23:44 sekiya Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157.2.1 2005/11/21 20:02:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2005/03/01 04:23:44 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.2.1 2005/11/21 20:02:26 tron Exp $");
 
 /*
  *	Manages physical address maps.
@@ -641,10 +641,10 @@ pmap_destroy(pmap)
 			 * were being accessed by KSEG0 (cached) addresses and
 			 * may cause cache coherency problems when the page
 			 * is reused with KSEG2 (mapped) addresses.  This may
-			 * cause problems on machines without secondary caches.
+			 * cause problems on machines without VCED/VCEI.
 			 */
-			if (MIPS_HAS_R4K_MMU)
-				mips_dcache_wbinv_range((vaddr_t) pte,
+			if (mips_cache_virtual_alias)
+				mips_dcache_inv_range((vaddr_t)pte,
 				    PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
 			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
@@ -1577,6 +1577,11 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
+	vaddr_t va;
+#if defined(MIPS3_PLUS)
+	pv_entry_t pv;
+#endif
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", (u_long)phys);
@@ -1585,8 +1590,18 @@ pmap_zero_page(phys)
 	if (! (phys < MIPS_MAX_MEM_ADDR))
 		printf("pmap_zero_page(%lx) nonphys\n", (u_long)phys);
 #endif
+	va = MIPS_PHYS_TO_KSEG0(phys);
 
-	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
+#if defined(MIPS3_PLUS)	/* XXX mmu XXX */
+	if (mips_cache_virtual_alias) {
+		pv = pa_to_pvh(phys);
+		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
+		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
+			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
+	}
+#endif
+
+	mips_pagezero((caddr_t)va);
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	/*
@@ -1598,9 +1613,8 @@ pmap_zero_page(phys)
 	 *
 	 * XXXJRT This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU &&
-		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv) ) )
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+	if (MIPS_HAS_R4K_MMU)	/* XXX VCED on kernel stack is not allowed */
+		mips_dcache_wbinv_range(va, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
 }
 
@@ -1636,11 +1650,12 @@ pmap_copy_page(src, dst)
 	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
-	if (MIPS_HAS_R4K_MMU &&
-		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv)) ) {
+	if (mips_cache_virtual_alias) {
 		/*XXX FIXME Not very sophisticated */
 		mips_flushcache_allpvh(src);
-/*		mips_flushcache_allpvh(dst); */
+#if 0
+		mips_flushcache_allpvh(dst);
+#endif
 	}
 #endif	/* MIPS3_PLUS */
 
@@ -1659,10 +1674,9 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU &&
-		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv)) ) {
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
+	if (mips_cache_virtual_alias) {
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), PAGE_SIZE);
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), PAGE_SIZE);
 	}
 #endif	/* MIPS3_PLUS */
 }
@@ -1891,7 +1905,7 @@ again:
 		pv->pv_next = NULL;
 	} else {
 #if defined(MIPS3_PLUS) /* XXX mmu XXX */
-		if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
+		if (mips_cache_virtual_alias) {
 			/*
 			 * There is at least one other VA mapping this page.
 			 * Check if they are cache index compatible.
@@ -2103,12 +2117,27 @@ void *
 pmap_pv_page_alloc(struct pool *pp, int flags)
 {
 	struct vm_page *pg;
+	paddr_t phys;
+#if defined(MIPS3_PLUS)
+	pv_entry_t pv;
+#endif
+	vaddr_t va;
 
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL) {
 		return NULL;
 	}
-	return ((void *)MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)));
+	phys = VM_PAGE_TO_PHYS(pg);
+	va = MIPS_PHYS_TO_KSEG0(phys);
+#if defined(MIPS3_PLUS)
+	if (mips_cache_virtual_alias) {
+		pv = pa_to_pvh(phys);
+		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
+		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
+			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
+	}
+#endif
+	return ((void *)va);
 }
 
 /*
@@ -2119,6 +2148,11 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 void
 pmap_pv_page_free(struct pool *pp, void *v)
 {
+
+#ifdef MIPS3_PLUS
+	if (mips_cache_virtual_alias)
+		mips_dcache_inv_range((vaddr_t)v, PAGE_SIZE);
+#endif
 	uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS((vaddr_t)v)));
 }
 
@@ -2161,6 +2195,40 @@ pmap_prefer(foff, vap, td)
 	}
 }
 #endif	/* MIPS3_PLUS */
+
+vaddr_t
+mips_pmap_map_poolpage(paddr_t pa)
+{
+	vaddr_t va;
+#if defined(MIPS3_PLUS)
+	pv_entry_t pv;
+#endif
+
+	va = MIPS_PHYS_TO_KSEG0(pa);
+#if defined(MIPS3_PLUS)
+	if (mips_cache_virtual_alias) {
+		pv = pa_to_pvh(pa);
+		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
+		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
+			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
+	}
+#endif
+	return va;
+}
+
+paddr_t
+mips_pmap_unmap_poolpage(vaddr_t va)
+{
+	paddr_t pa;
+
+	pa = MIPS_KSEG0_TO_PHYS(va);
+#if defined(MIPS3_PLUS)
+	if (mips_cache_virtual_alias) {
+		mips_dcache_inv_range(va, PAGE_SIZE);
+	}
+#endif
+	return pa;
+}
 
 /******************** page table page management ********************/
 
