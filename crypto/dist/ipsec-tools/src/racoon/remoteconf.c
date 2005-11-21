@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.c,v 1.1.1.3.2.3 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.1.1.3.2.4 2005/11/21 21:12:31 tron Exp $	*/
 
-/* Id: remoteconf.c,v 1.26.2.4 2005/05/20 00:37:41 manubsd Exp */
+/* Id: remoteconf.c,v 1.26.2.5 2005/11/06 17:18:26 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -638,9 +638,9 @@ script_path_add(path)
 		}
 
 		new_path->v[0] = '\0';
-		(void)strncat(new_path->v, script_dir, len);
-		(void)strncat(new_path->v, "/", len);
-		(void)strncat(new_path->v, path->v, len);
+		(void)strlcat(new_path->v, script_dir, len);
+		(void)strlcat(new_path->v, "/", len);
+		(void)strlcat(new_path->v, path->v, len);
 
 		vfree(path);
 		path = new_path;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.1.1.2.2.2 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.1.1.2.2.3 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.5.4.1 2005/05/10 09:45:46 manubsd Exp */
 

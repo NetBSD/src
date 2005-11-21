@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.1.1.2.2.1 2005/09/03 07:03:50 snj Exp $	*/
+/*	$NetBSD: schedule.h,v 1.1.1.2.2.2 2005/11/21 21:12:31 tron Exp $	*/
 
 /* Id: schedule.h,v 1.4 2004/11/18 15:14:44 ludvigm Exp */
 

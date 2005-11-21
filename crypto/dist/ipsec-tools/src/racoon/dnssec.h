@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.1.1.2.2.1 2005/09/03 07:03:49 snj Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.1.1.2.2.2 2005/11/21 21:12:30 tron Exp $	*/
 
 /* Id: dnssec.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 
