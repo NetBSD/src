@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.17 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.17.6.1 2005/11/21 20:15:20 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.17 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.17.6.1 2005/11/21 20:15:20 tron Exp $");
 #endif
 #endif
 
@@ -107,7 +107,7 @@ svc_raw_create()
 			return (NULL);
 		}
 		if (__rpc_rawcombuf == NULL)
-			__rpc_rawcombuf = calloc(UDPMSGSIZE, sizeof (char));
+			__rpc_rawcombuf = malloc(UDPMSGSIZE);
 		srp->raw_buf = __rpc_rawcombuf; /* Share it with the client */
 		svc_raw_private = srp;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.10 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.10.6.1 2005/11/21 20:15:20 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.10 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.10.6.1 2005/11/21 20:15:20 tron Exp $");
 #endif
 
 #include "namespace.h"
@@ -138,7 +138,7 @@ svc_dg_create(fd, sendsize, recvsize)
 	if (su == NULL)
 		goto freedata;
 	su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
-	if ((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL)
+	if ((rpc_buffer(xprt) = malloc(su->su_iosz)) == NULL)
 		goto freedata;
 	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz,
 		XDR_DECODE);
