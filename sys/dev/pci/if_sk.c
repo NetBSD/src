@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.14.2.1 2005/09/13 20:51:22 tron Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.14.2.2 2005/11/21 20:48:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1759,11 +1759,13 @@ sk_start(struct ifnet *ifp)
 		return;
 
 	/* Transmit */
-	sc_if->sk_cdata.sk_tx_prod = idx;
-	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
+	if (idx != sc_if->sk_cdata.sk_tx_prod) {
+		sc_if->sk_cdata.sk_tx_prod = idx;
+		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
 
-	/* Set a timeout in case the chip goes out to lunch. */
-	ifp->if_timer = 5;
+		/* Set a timeout in case the chip goes out to lunch. */
+		ifp->if_timer = 5;
+	}
 }
 
 
@@ -1888,7 +1890,7 @@ void
 sk_txeof(struct sk_if_softc *sc_if)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
-	struct sk_tx_desc	*cur_tx = NULL;
+	struct sk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
 	u_int32_t		idx;
 	struct sk_txmap_entry	*entry;
@@ -1937,10 +1939,10 @@ sk_txeof(struct sk_if_softc *sc_if)
 	else /* nudge chip to keep tx ring moving */
 		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
 
-	sc_if->sk_cdata.sk_tx_cons = idx;
-
-	if (cur_tx != NULL)
+	if (sc_if->sk_cdata.sk_tx_cnt < SK_TX_RING_CNT - 2)
 		ifp->if_flags &= ~IFF_OACTIVE;
+
+	sc_if->sk_cdata.sk_tx_cons = idx;
 }
 
 void
