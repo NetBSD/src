@@ -880,7 +880,9 @@ host_exeext=
 # For the host machine, we save the xm_file variable as host_xm_file;
 # then we decode the target machine and forget everything else
 # that came from the host machine.
+arg_with_cpu="$with_cpu"
 for machine in $build $host $target; do
+	with_cpu="$arg_with_cpu"
 	. ${srcdir}/config.gcc
 done
 
