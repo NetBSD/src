@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9.14.1 2005/04/21 18:40:40 tron Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9.14.2 2005/11/21 20:19:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9.14.1 2005/04/21 18:40:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9.14.2 2005/11/21 20:19:52 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -164,6 +164,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
 	/* Connectix Virtual PC 5 has a 440BX */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
+	/* SIS 741 */
+	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag
