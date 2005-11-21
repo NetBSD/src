@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
 
 /* Id: vendorid.c,v 1.7 2005/01/29 16:34:25 vanhu Exp */
 

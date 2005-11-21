@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.c,v 1.1.1.1 2005/11/21 14:12:10 manu Exp $	*/
+/*	$NetBSD: prsa_par.c,v 1.2 2005/11/21 14:20:29 manu Exp $	*/
 
 
 /*  A Bison parser, made from ./prsa_par.y
