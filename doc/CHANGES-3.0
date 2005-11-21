@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.314 2005/11/21 21:18:00 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.315 2005/11/21 21:51:46 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14093,7 +14093,7 @@ usr.sbin/pkg_install/lib/version.h		1.72
 	pkg_info -Q broken for local binary packages.
 	[dillo, ticket #963]
 
-lib/libc/rpc/clnt_dg.c				1.15-1.16
+lib/libc/rpc/clnt_dg.c				1.15-1.17
 lib/libc/rpc/clnt_raw.c				1.26
 lib/libc/rpc/svc_dg.c				1.11
 lib/libc/rpc/svc_raw.c				1.18
