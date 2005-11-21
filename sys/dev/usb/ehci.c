@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.106 2005/11/20 14:27:25 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.107 2005/11/21 10:15:41 augustss Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.106 2005/11/20 14:27:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.107 2005/11/21 10:15:41 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -218,7 +218,7 @@ Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
 Static void		ehci_dump_regs(ehci_softc_t *);
-Static void		ehci_dump(void);
+void			ehci_dump(void);
 Static ehci_softc_t 	*theehci;
 Static void		ehci_dump_link(ehci_link_t, int);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
