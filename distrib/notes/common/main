@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.13 2005/11/13 15:56:51 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.14 2005/11/21 21:40:07 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -539,6 +539,9 @@ driver for Sun SUNW,spif multi-port Sbus card.
 .Xr viaide 4
 now supports nForce2 Ultra 400, nForce3 250 IDE and SATA, and
 nForce4 IDE and SATA controllers.
+.Xr viaide 4
+also supports VIA VT6421 STAT RAID controller though drives on the
+controller need to be configured into RAID/JOBS sets via its BIOS.
 .It
 .Xr siside 4
 now supports SiS 180 and 741 SATA controllers.
@@ -551,8 +554,13 @@ now supports DPA mode.
 now supports Silicon Image 3512 SATA.
 .It
 .Xr piixide 4
-now supports i6300ESB IDE and SATA controller, and
-82801FB/FR (ICH6/6R) IDE and STAT controllers.
+now supports Intel 82801FB/FR (ICH6/6R) IDE and SATA, 82801FBM SATA,
+82801G (ICH7) IDE and SATA, and i6300ESB IDE and SATA controllers.
+Also added basic support for RAID0 and RAID1 for the Adaptec HostRAID format
+as found on the Intel 6300ESB on-board RAID.
+.It
+.Xr stge 4
+now works on big-endian machines including sparc64 with hardware checksums.
 .It
 .Xr aac 4
 now supports Adaptec SATA RAID 2810SA.
@@ -564,7 +572,7 @@ now supports LSI Logic FC919x SCSI controllers.
 now has support for Fujitsu MB87030-based PCMCIA SCSI controller.
 .It
 .Xr bge 4
-now supports Broadcom BCM5788, BCM5705K, and BCM5721 Gigabit Ethernet
+now supports Broadcom BCM5788, BCM5705K, BCM5721, and BCM5751M Gigabit Ethernet
 controllers, and has 802.3x flow control support.
 .It
 .Xr gem 4
@@ -578,17 +586,32 @@ and
 now supports TCPv4 hardware transmit segment offload.
 .It
 .Xr wm 4
-now supports 64bit PCI DMA transfer.
+now supports more Intel Gigabit Ethernet chips and 64bit PCI DMA transfer,
 .It
 .Xr re 4
-now supports RTL8169 based CardBus Ethernet interfaces, including
-NetGear GA-511.
+now supports Corega CG-LAPCIGT Gigabit Ethernet, and
+RTL8169 based CardBus Ethernet interfaces, including NetGear GA-511.
 .It
 .Xr ex 4
 now supports 3Com 3c920B-EMB-WNM Integrated Fast Ethernet.
 .It
 .Xr sk 4
 now supports Belkin Gigabit Desktop Network card.
+.It
+.Xr bce 4
+now supports Broadcom BCM4401-B0 Ethernet.
+.It
+.Xr tl 4
+now supports Compaq Netelligent 10 T/2 PCI UTP/Coax Controller.
+.It
+.Xr wi 4
+now supports SMC2531W-B EliteConnect Wireless Adapter.
+.It
+.Xr fxp 4
+now supports Intel 82801FB (ICH6) 10/100 Ethernet.
+.It tlp 4
+now supports LinkSys PCMPC200 Cardbus Ethernet and
+ASIX AX88140A/AX88141 chipsets.
 .It
 Many improvements for
 .Xr atw 4 
@@ -607,6 +630,9 @@ ADDI-DATA APCI-7800 8-port serial adapter.
 .It
 .Xr uftdi 4
 now supports Sealevel Systems' uftdi-based USB-Serial adapter.
+.It
+.Xr uvscom 4
+now supports SUNTAC U-Cable type A4 USB serial adapter.
 .It
 .Xr pms 4
 now supports synaptics touchpad.
@@ -629,7 +655,7 @@ driver derived from
 .Fx .
 .It
 .Xr vnd 4
-now support compressed image.
+pseudo-device now support compressed image.
 .bullet)
 .
 .Ss2 Kernel
@@ -657,6 +683,26 @@ emulation now supports MacOS X.3 binaries.
 sparc64 and shark ports have switched to
 .Xr wscons 9 ,
 the machine-independent console framework.
+Additionally sparc64 port switched to a XFree86 based X server and now
+supports the cg6, mach64 and ffb/afb framebuffers with acceleration.
+.It
+Added new
+.Xr pselect 2
+and
+.Xr pollts 2
+synchronous I/O multiplexing system calls.
+.It
+Added another experimental buffer queue strategy, BUFQ_PRIOCSCAN,
+Per-priority cyclical scan. Note the existing strategy NEW_BUFQ_STRATEGY
+is renamed to BUFQ_READPRIO, since that gives priority to issuing
+read requests over write requests.
+
+.It
+The way to allocate a kernel structure, map entry, was improved so that
+it doesn't need preliminary knowledge of system load, i.e. users no longer
+have to define
+.Dq options MAX_KMAPENT
+in their kernel configurations even on busy servers.
 .bullet)
 .
 .Ss2 Networking
@@ -686,6 +732,10 @@ ipsec-tools 0.6.2 provide IKE support for ESP over NAT connections (RFC 3947),
 user authentification via XAuth and automatic network configurations of VPN
 clients via Mode Config.
 .It
+Added RFC 3378 EtherIP support, which makes it possible to add
+.Xr gif 4
+interface to bridges.
+.It
 Added
 .Xr tap 4 ,
 the virtual Ethernet device.
@@ -712,6 +762,10 @@ Added ptyfs, pseudo-terminal file system.
 .It
 CD9660 file system now supports UTF-8 filename on Joliet extension.
 .It
+Ext2fs now supports large files (larger than 2G bytes).
+.Xr fsck_ext2fs 8
+also handles them and supports conversion from old file systems.
+.It
 The stability of the LFS file system has been improved.
 .bullet)
 .
@@ -725,6 +779,15 @@ Support wide strings in C++
 Re-entrant library functions like
 .Xr getpwent_r 4
 have been added.
+.It
+Some libc string functions for i386 are replaced with optimized version.
+.It
+Added DCE 1.1 RPC compatible UUID (Universally Unique Identifier) routines
+to libc.
+.It
+Added
+.Xr memmem 3
+to libc, which is API compatible with the functions in FreeBSD and Linux.
 .bullet)
 .
 .Ss2 Security
@@ -742,6 +805,10 @@ cksum(1) and mtree(8) support them.
 .Ss2 System administration and user tools
 .
 .(bullet
+Various improvements for the
+.Dq sysinst
+installation program, including Spanish language translation.
+.It
 Numerous improvements for
 .Xr syslogd 8 ,
 mostly from
@@ -752,6 +819,14 @@ now has a progress meter option.
 .It 
 .Xr dump 8
 now supports file system snapshots.
+.It
+Added
+.Xr sockstat 1 ,
+which lists open sockets.
+.It
+Added
+.Xr seq 1 ,
+a utility which prints a sequence of numbers, derived from Plan 9.
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -788,6 +863,8 @@ sendmail 8.13.3
 tcpdump 3.8.3
 .It
 texinfo 4.7
+.It
+tzdata2005n
 .It
 XFree86 4.5.0
 .bullet)
