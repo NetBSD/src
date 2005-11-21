@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.34.2.1 2005/09/18 18:15:38 riz Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.34.2.2 2005/11/21 20:40:27 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -397,6 +397,8 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		/* Make size of root include default size of /usr */
 		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
 
+		sm = MEG / sectorsize;
+
 		if (root_limit != 0) {
 			/* Bah - bios can not read all the disk, limit root */
 			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
@@ -404,7 +406,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 			 * everything except swap.
 			 */
 			if (pi.ptn_sizes[PI_ROOT].limit
-			    + pi.ptn_sizes[PI_SWAP].size > sectors) {
+			    < sectors - pi.ptn_sizes[PI_SWAP].size * sm) {
 				/* Root won't be able to access all the space */
 				/* Claw back space for /usr */
 				pi.ptn_sizes[PI_USR].size =
@@ -418,7 +420,6 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		}
 
 		/* Change preset sizes from MB to sectors */
-		sm = MEG / sectorsize;
 		pi.free_space = sectors;
 		for (p = pi.ptn_sizes; p->mount[0]; p++) {
 			p->size = NUMSEC(p->size, sm, dlcylsize);
