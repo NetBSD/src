@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
 
 /* Id: eaytest.c,v 1.20.4.2 2005/06/28 22:38:02 manubsd Exp */
 

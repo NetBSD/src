@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.c,v 1.1.1.1 2005/11/21 14:12:17 manu Exp $	*/
+/*	$NetBSD: policy_parse.c,v 1.2 2005/11/21 14:20:28 manu Exp $	*/
 
 
 /*  A Bison parser, made from policy_parse.y

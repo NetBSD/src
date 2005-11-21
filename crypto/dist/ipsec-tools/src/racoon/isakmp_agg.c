@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_agg.c,v 1.6 2005/09/26 16:24:57 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.7 2005/11/21 14:20:29 manu Exp $	*/
 
-/* Id: isakmp_agg.c,v 1.20.2.1 2005/04/09 22:32:06 manubsd Exp */
+/* Id: isakmp_agg.c,v 1.20.2.5 2005/11/21 09:46:23 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -459,7 +459,7 @@ agg_i2recv(iph1, msg)
 #ifdef ENABLE_NATT
 		case ISAKMP_NPTYPE_NATD_DRAFT:
 		case ISAKMP_NPTYPE_NATD_RFC:
-			if (NATT_AVAILABLE(iph1) && iph1->natt_options &&
+			if (NATT_AVAILABLE(iph1) && iph1->natt_options != NULL &&
 			    pa->type == iph1->natt_options->payload_nat_d) {
 				struct natd_payload *natd;
 				natd = (struct natd_payload *)racoon_malloc(sizeof(*natd));
@@ -490,7 +490,11 @@ agg_i2recv(iph1, msg)
 	}
 
 	/* payload existency check */
-	/* XXX to be checked each authentication method. */
+	if (iph1->dhpub_p == NULL || iph1->nonce_p == NULL) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+			"few isakmp message received.\n");
+		goto end;
+	}
 
 	/* verify identifier */
 	if (ipsecdoi_checkid1(iph1) != 0) {
@@ -890,7 +894,11 @@ agg_r1recv(iph1, msg)
 	}
 
 	/* payload existency check */
-	/* XXX to be checked each authentication method. */
+	if (iph1->dhpub_p == NULL || iph1->nonce_p == NULL) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+			"few isakmp message received.\n");
+		goto end;
+	}
 
 	/* verify identifier */
 	if (ipsecdoi_checkid1(iph1) != 0) {
@@ -1358,7 +1366,8 @@ agg_r2recv(iph1, msg0)
 #ifdef ENABLE_NATT
 		case ISAKMP_NPTYPE_NATD_DRAFT:
 		case ISAKMP_NPTYPE_NATD_RFC:
-			if (pa->type == iph1->natt_options->payload_nat_d)
+			if (NATT_AVAILABLE(iph1) && iph1->natt_options != NULL &&
+				pa->type == iph1->natt_options->payload_nat_d)
 			{
 				vchar_t *natd_received = NULL;
 				int natd_verified;

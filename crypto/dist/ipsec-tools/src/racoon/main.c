@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
 
-/* Id: main.c,v 1.14.2.2 2005/02/23 12:18:40 manubsd Exp */
+/* Id: main.c,v 1.14.2.3 2005/11/06 17:18:26 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,6 @@ static char version[] = "@(#)" TOP_PACKAGE_STRING " (" TOP_PACKAGE_URL ")";
 #else /* TOP_PACKAGE */
 static char version[] = "@(#) racoon / IPsec-tools";
 #endif /* TOP_PACKAGE */
-static pid_t racoon_pid = 0;
 
 int main __P((int, char **));
 static void usage __P((void));
@@ -221,9 +220,6 @@ main(ac, av)
 	if (f_foreground)
 		close(0);
 	else {
-		const char *pid_file = _PATH_VARRUN "racoon.pid";
-		FILE *fp;
-
 		if (daemon(0, 0) < 0) {
 			errx(1, "failed to be daemon. (%s)",
 				strerror(errno));
@@ -240,21 +236,6 @@ main(ac, av)
 			/* no big deal if it fails.. */
 		}
 #endif
-		racoon_pid = getpid();
-		fp = fopen(pid_file, "w");
-		if (fp) {
-			if (fchmod(fileno(fp),
-				S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1) {
-				syslog(LOG_ERR, "%s", strerror(errno));
-				fclose(fp);
-				exit(1);
-			}
-			fprintf(fp, "%ld\n", (long)racoon_pid);
-			fclose(fp);
-		} else {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"cannot open %s", pid_file);
-		}
 		if (!f_local) {
 #if 0
 			if (atexit(cleanup_pidfile) < 0) {

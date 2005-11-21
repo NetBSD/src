@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.4 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.5 2005/11/21 14:20:28 manu Exp $	*/
 
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
