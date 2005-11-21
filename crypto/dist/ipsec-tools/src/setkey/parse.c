@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.1 2005/11/21 14:12:18 manu Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2005/11/21 14:20:36 manu Exp $	*/
 
 
 /*  A Bison parser, made from parse.y

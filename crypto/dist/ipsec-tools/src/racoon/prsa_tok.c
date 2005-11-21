@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_tok.c,v 1.1.1.1 2005/11/21 14:12:10 manu Exp $	*/
+/*	$NetBSD: prsa_tok.c,v 1.2 2005/11/21 14:20:29 manu Exp $	*/
 
 #define yy_create_buffer prsa_create_buffer
 #define yy_delete_buffer prsa_delete_buffer
