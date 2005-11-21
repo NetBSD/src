@@ -2642,6 +2642,7 @@ sparc64-*-netbsd*)
 	tmake_file="${tmake_file} sparc/t-netbsd64"
 	tm_file="sparc/biarch64.h ${tm_file}"
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h netbsd.h netbsd-elf.h sparc/netbsd-elf.h"
+	with_cpu=ultrasparc
 	;;
 strongarm-*-elf*)
 	tm_file="arm/strongarm-elf.h dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
