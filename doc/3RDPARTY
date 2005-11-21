@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.378 2005/11/21 14:20:40 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.379 2005/11/21 16:54:43 manu Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -333,8 +333,8 @@ Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
 
 Package:	ipsec-tools
-Version:	0.6.1
-Current Vers:	0.6.1
+Version:	0.6.3
+Current Vers:	0.6.3
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
