@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.7 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.8 2005/11/21 14:20:28 manu Exp $	*/
 
 /* Id: libpfkey.h,v 1.8.2.3 2005/06/29 13:01:28 manubsd Exp */
 

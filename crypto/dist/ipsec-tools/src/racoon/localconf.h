@@ -1,6 +1,6 @@
-/*	$NetBSD: localconf.h,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: localconf.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
 
-/* Id: localconf.h,v 1.9.2.2 2005/03/16 23:18:43 manubsd Exp */
+/* Id: localconf.h,v 1.9.2.3 2005/11/06 17:18:26 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -43,7 +43,8 @@
 #define LC_PATHTYPE_CERT	2
 #define LC_PATHTYPE_BACKUPSA	3
 #define LC_PATHTYPE_SCRIPT	4
-#define LC_PATHTYPE_MAX		5
+#define LC_PATHTYPE_PIDFILE	5
+#define LC_PATHTYPE_MAX		6
 
 #define LC_DEFAULT_PAD_MAXSIZE		20
 #define LC_DEFAULT_PAD_RANDOM		TRUE

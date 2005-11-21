@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.c,v 1.1.1.1 2005/11/21 14:12:17 manu Exp $	*/
+/*	$NetBSD: policy_token.c,v 1.2 2005/11/21 14:20:28 manu Exp $	*/
 
 #define yy_create_buffer __libipsec_create_buffer
 #define yy_delete_buffer __libipsec_delete_buffer
