@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.315 2005/11/21 21:51:46 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.316 2005/11/21 21:58:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14365,4 +14365,9 @@ lib/libipsec/package_version.h			patch
 
 	Update to ipsec-tools 0.6.3
 	[manu, ticket #981]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC2.
 
