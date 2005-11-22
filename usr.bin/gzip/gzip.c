@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.77 2005/09/20 05:12:15 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.78 2005/11/22 09:05:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.77 2005/09/20 05:12:15 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.78 2005/11/22 09:05:29 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -729,10 +729,6 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			    BUFLEN - z.avail_in);
 
 			if (in_size == -1) {
-#ifndef SMALL
-				if (tflag && vflag)
-					print_test(filename, 0);
-#endif
 				maybe_warn("failed to read stdin");
 				goto stop_and_fail;
 			} else if (in_size == 0) {
@@ -984,17 +980,12 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		}
 		continue;
 stop_and_fail:
-		out_tot = 1;
+		out_tot = -1;
 stop:
 		break;
 	}
 	if (state > GZSTATE_INIT)
 		inflateEnd(&z);
-
-#ifndef SMALL
-	if (tflag && vflag)
-		print_test(filename, out_tot != -1);
-#endif
 
 	free(inbufp);
 out1:
@@ -1616,6 +1607,8 @@ handle_stdin(void)
 #ifndef SMALL
         if (vflag && !tflag && usize != -1 && gsize != -1)
 		print_verbage(NULL, NULL, usize, gsize);
+	if (vflag && tflag)
+		print_test("(stdin)", usize != -1);
 #endif 
 
 }
@@ -1731,6 +1724,8 @@ handle_file(char *file, struct stat *sbp)
 	infile = file;
 	if (dflag) {
 		usize = file_uncompress(file, outfile, sizeof(outfile));
+		if (vflag && tflag)
+			print_test(file, usize != -1);
 		if (usize == -1)
 			return;
 		gsize = sbp->st_size;
