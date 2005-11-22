@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.316 2005/11/21 21:58:35 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.317 2005/11/22 15:26:43 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14370,4 +14370,15 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC2.
+
+lib/libc/hash/sha2/sha2.3			1.3
+
+	SHA2 support appeared in NetBSD 3.0.
+	[tron, ticket #986]
+
+sys/arch/amd64/conf/INSTALL			1.33
+
+	Remove 'isp' driver (support for Qlogic ISP [12]0x0 SCSI/FibreChannel).
+	Compensates for the recent bloat of the ath driver and 802.11 support.
+	[tron, ticket #987]
 
