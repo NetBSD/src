@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.318 2005/11/22 20:50:56 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.319 2005/11/22 21:11:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14412,4 +14412,9 @@ src/distrib/notes/common/main			patch
 
 	Correction for various typing errors mostly from Igor Sobrado.
 	[uwe, ticket #990]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC3.
 
