@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.32.8.2 2005/11/17 03:55:09 yamt Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.32.8.3 2005/11/22 11:22:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -274,7 +274,7 @@ int	fcntl(int, int, ...);
 #if defined(_NETBSD_SOURCE)
 int	flock(int, int);
 #endif /* _NETBSD_SOURCE */
-int	posix_fadvise(int, off_t, size_t, int);
+int	posix_fadvise(int, off_t, off_t, int);
 __END_DECLS
 #endif /* !_KERNEL */
 
