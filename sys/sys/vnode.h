@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.144.6.1 2005/11/18 08:44:55 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.144.6.2 2005/11/22 15:33:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -116,7 +116,7 @@ struct vnode {
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
-		struct uvm_ractx *vu_ractx;	/* VREG */
+		struct uvm_ractx *vu_ractx;	/* read-ahead context (VREG) */
 	} v_un;
 	struct nqlease	*v_lease;		/* Soft reference to lease */
 	enum vtype	v_type;			/* vnode type */
