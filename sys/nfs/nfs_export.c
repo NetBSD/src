@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.3.8.1 2005/11/22 16:08:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.3 2005/09/25 21:57:40 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.3.8.1 2005/11/22 16:08:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -124,21 +124,13 @@ struct netcred {
  * Network export information.
  */
 struct netexport {
-	struct	netcred ne_defexported;		      /* Default export */
-	struct	radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
+	CIRCLEQ_ENTRY(netexport) ne_list;
+	struct mount *ne_mount;
+	struct netcred ne_defexported;		      /* Default export */
+	struct radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
 };
-
-/*
- * Structures to map between standard mount points to their corresponding
- * network export information.
- */
-struct mount_netexport_pair {
-	CIRCLEQ_ENTRY(mount_netexport_pair) mnp_entries;
-	const struct mount *mnp_mount;
-	struct netexport mnp_netexport;
-};
-CIRCLEQ_HEAD(mount_netexport_map, mount_netexport_pair)
-    mount_netexport_map = CIRCLEQ_HEAD_INITIALIZER(mount_netexport_map);
+CIRCLEQ_HEAD(, netexport) netexport_list =
+    CIRCLEQ_HEAD_INITIALIZER(netexport_list);
 
 /* Malloc type used by the mount<->netexport map. */
 MALLOC_DEFINE(M_NFS_EXPORT, "nfs_export", "NFS export data");
@@ -149,18 +141,20 @@ struct nfs_public nfs_pub;
 /*
  * Local prototypes.
  */
-static int init_exports(struct mount *, struct mount_netexport_pair **);
+static int init_exports(struct mount *, struct netexport **);
 static int hang_addrlist(struct mount *, struct netexport *,
     const struct export_args *);
 static int sacheck(struct sockaddr *);
 static int free_netcred(struct radix_node *, void *);
-static void clear_exports(struct mount *, struct netexport *);
-static int export(struct mount *, struct netexport *,
-    const struct export_args *);
+static void clear_exports(struct netexport *);
+static int export(struct netexport *, const struct export_args *);
 static int setpublicfs(struct mount *, struct netexport *,
     const struct export_args *);
-static struct netcred *export_lookup(struct mount *, struct netexport *,
-    struct mbuf *);
+static struct netcred *netcred_lookup(struct netexport *, struct mbuf *);
+static struct netexport *netexport_lookup(const struct mount *);
+static struct netexport *netexport_lookup_byfsid(const fsid_t *);
+static void netexport_insert(struct netexport *);
+static void netexport_remove(struct netexport *);
 
 /*
  * PUBLIC INTERFACE
@@ -186,29 +180,24 @@ VFS_HOOKS_ATTACH(nfs_export_hooks);
 static void
 nfs_export_unmount(struct mount *mp)
 {
-	boolean_t found;
-	struct mount_netexport_pair *mnp;
+	struct netexport *ne;
 
 	KASSERT(mp != NULL);
 
-	found = FALSE;
-	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
-		if (mnp->mnp_mount == mp) {
-			found = TRUE;
-			break;
-		}
+	ne = netexport_lookup(mp);
+	if (ne == NULL) {
+		return;
 	}
 
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL)
-		KASSERT(!found);
-	else if (found) {
-		if (mp->mnt_flag & MNT_EXPUBLIC)
-			setpublicfs(NULL, NULL, NULL);
+	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
+	    mp->mnt_op->vfs_fhtovp != NULL);
 
-		CIRCLEQ_REMOVE(&mount_netexport_map, mnp, mnp_entries);
-
-		free(mnp, M_NFS_EXPORT);
+	if (mp->mnt_flag & MNT_EXPUBLIC) {
+		setpublicfs(NULL, NULL, NULL);
 	}
+
+	netexport_remove(ne);
+	free(ne, M_NFS_EXPORT);
 }
 
 /*
@@ -223,14 +212,13 @@ nfs_export_unmount(struct mount *mp)
 int
 mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 {
-	boolean_t found;
 	int error;
 #ifdef notyet
 	/* XXX: See below to see the reason why this is disabled. */
 	size_t i;
 #endif
 	struct mount *mp;
-	struct mount_netexport_pair *mnp;
+	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
 
@@ -242,8 +230,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 	error = namei(&nd);
 	if (error != 0)
 		return error;
-	vp = (struct vnode *)nd.ni_vp;
-	mp = (struct mount *)vp->v_mount;
+	vp = nd.ni_vp;
+	mp = vp->v_mount;
 
 	/* The selected file system may not support NFS exports, so ensure
 	 * it does. */
@@ -259,20 +247,17 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 	if (error != 0)
 		goto out_locked;
 
-	found = FALSE;
-	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
-		if (mnp->mnp_mount == mp) {
-			found = TRUE;
-			break;
-		}
-	}
-	if (!found) {
-		error = init_exports(mp, &mnp);
+	ne = netexport_lookup(mp);
+	if (ne == NULL) {
+		error = init_exports(mp, &ne);
 		if (error != 0) {
 			vfs_unbusy(mp);
 			goto out_locked;
 		}
 	}
+
+	KASSERT(ne != NULL);
+	KASSERT(ne->ne_mount == mp);
 
 	/*
 	 * XXX: The part marked as 'notyet' works fine from the kernel's
@@ -285,14 +270,14 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 	 * preprocessor conditional and enable the first one.
 	 */
 #ifdef notyet
-	clear_exports(mp, &mnp->mnp_netexport);
+	clear_exports(ne);
 	for (i = 0; error == 0 && i < mel->mel_nexports; i++)
-		error = export(mp, &mnp->mnp_netexport, &mel->mel_exports[i]);
+		error = export(ne, &mel->mel_exports[i]);
 #else
 	if (mel->mel_nexports == 0)
-		clear_exports(mp, &mnp->mnp_netexport);
+		clear_exports(ne);
 	else if (mel->mel_nexports == 1)
-		error = export(mp, &mnp->mnp_netexport, &mel->mel_exports[0]);
+		error = export(ne, &mel->mel_exports[0]);
 	else {
 		printf("mountd_set_exports_list: Cannot set more than one "
 		    "entry at once (unimplemented)\n");
@@ -305,7 +290,55 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct proc *p)
 out_locked:
 	vput(vp);
 
-	return 0;
+	return error;
+}
+
+static void
+netexport_insert(struct netexport *ne)
+{
+
+	CIRCLEQ_INSERT_HEAD(&netexport_list, ne, ne_list);
+}
+
+static void
+netexport_remove(struct netexport *ne)
+{
+
+	CIRCLEQ_REMOVE(&netexport_list, ne, ne_list);
+}
+
+static struct netexport *
+netexport_lookup(const struct mount *mp)
+{
+	struct netexport *ne;
+
+	CIRCLEQ_FOREACH(ne, &netexport_list, ne_list) {
+		if (ne->ne_mount == mp) {
+			goto done;
+		}
+	}
+	ne = NULL;
+done:
+	return ne;
+}
+
+static struct netexport *
+netexport_lookup_byfsid(const fsid_t *fsid)
+{
+	struct netexport *ne;
+
+	CIRCLEQ_FOREACH(ne, &netexport_list, ne_list) {
+		const struct mount *mp = ne->ne_mount;
+
+		if (mp->mnt_stat.f_fsidx.__fsid_val[0] == fsid->__fsid_val[0] &&
+		    mp->mnt_stat.f_fsidx.__fsid_val[1] == fsid->__fsid_val[1]) {
+			goto done;
+		}
+	}
+	ne = NULL;
+done:
+
+	return ne;
 }
 
 /*
@@ -319,31 +352,28 @@ out_locked:
  * invoked before VFS_FHTOVP to validate that client has access to the
  * file system.
  */
+
 int
-nfs_check_export(struct mount *mp, struct mbuf *mb, int *wh,
-    struct ucred **anon)
+netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
+    int *wh, struct ucred **anon)
 {
-	boolean_t found;
-	struct mount_netexport_pair *mnp;
+	struct netexport *ne;
 	struct netcred *np;
 
-	found = FALSE;
-	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
-		if (mnp->mnp_mount == mp) {
-			found = TRUE;
-			break;
-		}
-	}
-	if (!found)
+	ne = netexport_lookup_byfsid(fsid);
+	if (ne == NULL) {
 		return EACCES;
-
-	np = export_lookup(mp, &mnp->mnp_netexport, mb);
-	if (np != NULL) {
-		*wh = np->netc_exflags;
-		*anon = &np->netc_anon;
+	}
+	np = netcred_lookup(ne, mb);
+	if (np == NULL) {
+		return EACCES;
 	}
 
-	return np == NULL ? EACCES : 0;
+	*mpp = ne->ne_mount;
+	*wh = np->netc_exflags;
+	*anon = &np->netc_anon;
+
+	return 0;
 }
 
 #ifdef COMPAT_30
@@ -376,7 +406,7 @@ nfs_update_exports_30(struct mount *mp, const char *path, void *data,
 	if (args.fspec != NULL)
 		return EJUSTRETURN;
 
-	if (mp->mnt_flag & 0x00020000) {
+	if (args.eargs.ex_flags & 0x00020000) {
 		/* Request to delete exports.  The mask above holds the
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
@@ -409,29 +439,21 @@ nfs_update_exports_30(struct mount *mp, const char *path, void *data,
  * and *mnpp remains unmodified.
  */
 static int
-init_exports(struct mount *mp, struct mount_netexport_pair **mnpp)
+init_exports(struct mount *mp, struct netexport **nep)
 {
 	int error;
 	struct export_args ea;
-	struct mount_netexport_pair *mnp;
+	struct netexport *ne;
 
 	KASSERT(mp != NULL);
 	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
 	    mp->mnt_op->vfs_fhtovp != NULL);
 
-#ifdef DIAGNOSTIC
 	/* Ensure that we do not already have this mount point. */
-	CIRCLEQ_FOREACH(mnp, &mount_netexport_map, mnp_entries) {
-		if (mnp->mnp_mount == mp)
-			KASSERT(0);
-	}
-#endif
+	KASSERT(netexport_lookup(mp) == NULL);
 
-	mnp = (struct mount_netexport_pair *)
-	    malloc(sizeof(struct mount_netexport_pair), M_NFS_EXPORT, M_WAITOK);
-	KASSERT(mnp != NULL);
-	mnp->mnp_mount = mp;
-	memset(&mnp->mnp_netexport, 0, sizeof(mnp->mnp_netexport));
+	ne = malloc(sizeof(*ne), M_NFS_EXPORT, M_WAITOK | M_ZERO);
+	ne->ne_mount = mp;
 
 	/* Set the default export entry.  Handled internally by export upon
 	 * first call. */
@@ -439,12 +461,12 @@ init_exports(struct mount *mp, struct mount_netexport_pair **mnpp)
 	ea.ex_root = -2;
 	if (mp->mnt_flag & MNT_RDONLY)
 		ea.ex_flags |= MNT_EXRDONLY;
-	error = export(mp, &mnp->mnp_netexport, &ea);
-	if (error != 0)
-		free(mnp, M_NFS_EXPORT);
-	else {
-		CIRCLEQ_INSERT_TAIL(&mount_netexport_map, mnp, mnp_entries);
-		*mnpp = mnp;
+	error = export(ne, &ea);
+	if (error != 0) {
+		free(ne, M_NFS_EXPORT);
+	} else {
+		netexport_insert(ne);
+		*nep = ne;
 	}
 
 	return error;
@@ -482,10 +504,9 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		return EINVAL;
 
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
-	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
-	memset((caddr_t)np, 0, i);
+	np = malloc(i, M_NETADDR, M_WAITOK | M_ZERO);
 	saddr = (struct sockaddr *)(np + 1);
-	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
+	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
@@ -494,7 +515,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		return EINVAL;
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
-		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
+		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
 		if (error)
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
@@ -616,10 +637,11 @@ free_netcred(struct radix_node *rn, void *w)
  * Clears the exports list for a given file system.
  */
 static void
-clear_exports(struct mount *mp, struct netexport *nep)
+clear_exports(struct netexport *ne)
 {
-	int i;
 	struct radix_node_head *rnh;
+	struct mount *mp = ne->ne_mount;
+	int i;
 
 	if (mp->mnt_flag & MNT_EXPUBLIC) {
 		setpublicfs(NULL, NULL, NULL);
@@ -627,10 +649,10 @@ clear_exports(struct mount *mp, struct netexport *nep)
 	}
 
 	for (i = 0; i <= AF_MAX; i++) {
-		if ((rnh = nep->ne_rtable[i]) != NULL) {
+		if ((rnh = ne->ne_rtable[i]) != NULL) {
 			(*rnh->rnh_walktree)(rnh, free_netcred, rnh);
-			free((caddr_t)rnh, M_RTABLE);
-			nep->ne_rtable[i] = 0;
+			free(rnh, M_RTABLE);
+			ne->ne_rtable[i] = NULL;
 		}
 	}
 
@@ -642,8 +664,9 @@ clear_exports(struct mount *mp, struct netexport *nep)
  * given file system.
  */
 static int
-export(struct mount *mp, struct netexport *nep, const struct export_args *argp)
+export(struct netexport *nep, const struct export_args *argp)
 {
+	struct mount *mp = nep->ne_mount;
 	int error;
 
 	if (argp->ex_flags & MNT_EXPORTED) {
@@ -743,33 +766,34 @@ setpublicfs(struct mount *mp, struct netexport *nep,
  * (if available).
  */
 static struct netcred *
-export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
+netcred_lookup(struct netexport *ne, struct mbuf *nam)
 {
 	struct netcred *np;
 	struct radix_node_head *rnh;
 	struct sockaddr *saddr;
 
+	KASSERT((ne->ne_mount->mnt_flag & MNT_EXPORTED) != 0);
+
+	/*
+	 * Lookup in the export list first.
+	 */
 	np = NULL;
-	if (mp->mnt_flag & MNT_EXPORTED) {
-		/*
-		 * Lookup in the export list first.
-		 */
-		if (nam != NULL) {
-			saddr = mtod(nam, struct sockaddr *);
-			rnh = nep->ne_rtable[saddr->sa_family];
-			if (rnh != NULL) {
-				np = (struct netcred *)
-					(*rnh->rnh_matchaddr)((caddr_t)saddr,
-							      rnh);
-				if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
-					np = NULL;
-			}
+	if (nam != NULL) {
+		saddr = mtod(nam, struct sockaddr *);
+		rnh = ne->ne_rtable[saddr->sa_family];
+		if (rnh != NULL) {
+			np = (struct netcred *)
+				(*rnh->rnh_matchaddr)((caddr_t)saddr,
+						      rnh);
+			if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
+				np = NULL;
 		}
-		/*
-		 * If no address match, use the default if it exists.
-		 */
-		if (np == NULL && mp->mnt_flag & MNT_DEFEXPORTED)
-			np = &nep->ne_defexported;
 	}
+	/*
+	 * If no address match, use the default if it exists.
+	 */
+	if (np == NULL && ne->ne_mount->mnt_flag & MNT_DEFEXPORTED)
+		np = &ne->ne_defexported;
+
 	return np;
 }

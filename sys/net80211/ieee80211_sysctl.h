@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.5 2005/07/26 22:52:48 dyoung Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.5.6.1 2005/11/22 16:08:16 yamt Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -121,5 +121,12 @@ struct ieee80211_node_walk {
 
 #define	IEEE80211_NODE_SYSCTL_F_BSS	0x00000001	/* this node is the
 							 * ic->ic_bss
+							 */
+#define	IEEE80211_NODE_SYSCTL_F_STA	0x00000002	/* this node is in
+							 * the neighbor/sta
+							 * table
+							 */
+#define	IEEE80211_NODE_SYSCTL_F_SCAN	0x00000004	/* this node is in
+							 * the scan table
 							 */
 #endif /* _NET80211_IEEE80211_SYSCTL_H_ */

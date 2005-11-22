@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.18 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.18.8.1 2005/11/22 16:08:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18.8.1 2005/11/22 16:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,12 +66,17 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
+static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
+			       pcitag_t tag);
+
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
+
+#define EHCI_MAX_BIOS_WAIT		1000 /* ms */
 
 static int
 ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -186,6 +191,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc.sc_ncomp = ncomp;
 
+	ehci_get_ownership(&sc->sc, pc, tag);
+
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n", devname, r);
@@ -219,3 +226,79 @@ ehci_pci_detach(device_ptr_t self, int flags)
 
 CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
     ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);
+
+#ifdef EHCI_DEBUG
+static void
+ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	u_int32_t cparams, legctlsts, addr, cap, id;
+	int maxdump = 10;
+
+	cparams = EREAD4(sc, EHCI_HCCPARAMS);
+	addr = EHCI_HCC_EECP(cparams);
+	while (addr != 0) {
+		cap = pci_conf_read(pc, tag, addr);
+		id = EHCI_CAP_GET_ID(cap);
+		switch (id) {
+		case EHCI_CAP_ID_LEGACY:
+			legctlsts = pci_conf_read(pc, tag,
+						  addr + PCI_EHCI_USBLEGCTLSTS);
+			printf("ehci_dump_caps: legsup=0x%08x "
+			       "legctlsts=0x%08x\n", cap, legctlsts);
+			break;
+		default:
+			printf("ehci_dump_caps: cap=0x%08x\n", cap);
+			break;
+		}
+		if (--maxdump < 0)
+			break;
+		addr = EHCI_CAP_GET_NEXT(cap);
+	}
+}
+#endif
+
+static void
+ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	const char *devname = sc->sc_bus.bdev.dv_xname;
+	u_int32_t cparams, addr, cap, legsup;
+	int maxcap = 10;
+	int ms;
+
+#ifdef EHCI_DEBUG
+	if (ehcidebug)
+		ehci_dump_caps(sc, pc, tag);
+#endif
+	cparams = EREAD4(sc, EHCI_HCCPARAMS);
+	addr = EHCI_HCC_EECP(cparams);
+	while (addr != 0) {
+		cap = pci_conf_read(pc, tag, addr);
+		if (EHCI_CAP_GET_ID(cap) == EHCI_CAP_ID_LEGACY)
+			break;
+		if (--maxcap < 0) {
+			aprint_normal("%s: broken extended capabilities "
+				      "ignored\n", devname);
+			return;
+		}
+		addr = EHCI_CAP_GET_NEXT(cap);
+	}
+
+	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+	/* Ask BIOS to give up ownership */
+	legsup |= EHCI_LEG_HC_OS_OWNED;
+	pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, legsup);
+	for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
+		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+		if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
+			break;
+		delay(1000);
+	}
+	if (ms == EHCI_MAX_BIOS_WAIT) {
+		aprint_normal("%s: BIOS refuses to give up ownership, "
+			      "using force\n", devname);
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
+	} else {
+		aprint_normal("%s: BIOS has given up ownership\n", devname);
+	}
+}

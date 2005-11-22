@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.12 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.12.6.1 2005/11/22 16:08:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_proto.h,v 1.9 2005/01/24 20:38:26 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_proto.h,v 1.16 2005/08/13 17:31:48 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_PROTO_H_
 #define _NET80211_IEEE80211_PROTO_H_
@@ -60,9 +60,18 @@ void	ieee80211_proto_detach(struct ieee80211com *);
 struct ieee80211_node;
 int	ieee80211_input(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *, int, u_int32_t);
+int	ieee80211_setup_rates(struct ieee80211_node *ni,
+		const u_int8_t *rates, const u_int8_t *xrates, int flags);
+void	ieee80211_saveie(u_int8_t **, const u_int8_t *);
 void	ieee80211_recv_mgmt(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *, int, int, u_int32_t);
-int	ieee80211_send_nulldata(struct ieee80211com *, struct ieee80211_node *);
+int	ieee80211_send_nulldata(struct ieee80211_node *);
+int	ieee80211_send_probereq(struct ieee80211_node *ni,
+		const u_int8_t sa[IEEE80211_ADDR_LEN],
+		const u_int8_t da[IEEE80211_ADDR_LEN],
+		const u_int8_t bssid[IEEE80211_ADDR_LEN],
+		const u_int8_t *ssid, size_t ssidlen,
+		const void *optie, size_t optielen);
 int	ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
 		int, int);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *,
@@ -136,6 +145,7 @@ void	ieee80211_authenticator_register(int type,
 void	ieee80211_authenticator_unregister(int type);
 const struct ieee80211_authenticator *ieee80211_authenticator_get(int auth);
 
+struct ieee80211req;
 /*
  * Template for an MAC ACL policy module.  Such modules
  * register with the protocol code and are passed the sender's
@@ -154,6 +164,8 @@ struct ieee80211_aclator {
 	int	(*iac_flush)(struct ieee80211com *);
 	int	(*iac_setpolicy)(struct ieee80211com *, int);
 	int	(*iac_getpolicy)(struct ieee80211com *);
+	int	(*iac_setioctl)(struct ieee80211com *, struct ieee80211req *);
+	int	(*iac_getioctl)(struct ieee80211com *, struct ieee80211req *);
 };
 void	ieee80211_aclator_register(const struct ieee80211_aclator *);
 void	ieee80211_aclator_unregister(const struct ieee80211_aclator *);
@@ -164,7 +176,7 @@ const struct ieee80211_aclator *ieee80211_aclator_get(const char *name);
 #define	IEEE80211_F_DOFRATE	0x00000002	/* use fixed rate */
 #define	IEEE80211_F_DONEGO	0x00000004	/* calc negotiated rate */
 #define	IEEE80211_F_DODEL	0x00000008	/* delete ignore rate */
-int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
+int	ieee80211_fix_rate(struct ieee80211_node *, int);
 
 /*
  * WME/WMM support.

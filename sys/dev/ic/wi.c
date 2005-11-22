@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.209 2005/08/10 13:20:42 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.209.6.1 2005/11/22 16:08:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.209 2005/08/10 13:20:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.209.6.1 2005/11/22 16:08:07 yamt Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -181,7 +181,6 @@ STATIC void wi_tx_intr(struct wi_softc *);
 STATIC void wi_tx_ex_intr(struct wi_softc *);
 STATIC void wi_info_intr(struct wi_softc *);
 
-STATIC int wi_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
 STATIC int wi_key_delete(struct ieee80211com *, const struct ieee80211_key *);
 STATIC int wi_key_set(struct ieee80211com *, const struct ieee80211_key *,
     const u_int8_t[IEEE80211_ADDR_LEN]);
@@ -210,7 +209,7 @@ STATIC int  wi_read_rid(struct wi_softc *, int, void *, int *);
 STATIC int  wi_write_rid(struct wi_softc *, int, void *, int);
 
 STATIC int  wi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-STATIC void  wi_set_tim(struct ieee80211com *, struct ieee80211_node *, int);
+STATIC void  wi_set_tim(struct ieee80211_node *, int);
 
 STATIC int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
 STATIC void wi_scan_result(struct wi_softc *, int, int);
@@ -562,7 +561,6 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	ic->ic_node_free = wi_node_free;
 	ic->ic_set_tim = wi_set_tim;
 
-	ic->ic_crypto.cs_key_alloc = wi_key_alloc;
 	ic->ic_crypto.cs_key_delete = wi_key_delete;
 	ic->ic_crypto.cs_key_set = wi_key_set;
 	ic->ic_crypto.cs_key_update_begin = wi_key_update_begin;
@@ -2519,21 +2517,6 @@ wi_cfg_txrate(struct wi_softc *sc)
 }
 
 STATIC int
-wi_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
-{
-	int keyix;
-
-	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
-		keyix = k - ic->ic_nw_keys;
-	else
-		keyix = IEEE80211_KEYIX_NONE;
-
-	DPRINTF(("%s: alloc key %u\n", __func__, keyix));
-
-	return keyix;
-}
-
-STATIC int
 wi_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
 	struct wi_softc *sc = ic->ic_ifp->if_softc;
@@ -3190,11 +3173,12 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 STATIC void
-wi_set_tim(struct ieee80211com *ic, struct ieee80211_node *ni, int set)
+wi_set_tim(struct ieee80211_node *ni, int set)
 {
+	struct ieee80211com *ic = ni->ni_ic;
 	struct wi_softc *sc = ic->ic_ifp->if_softc;
 
-	(*sc->sc_set_tim)(ic, ni, set);
+	(*sc->sc_set_tim)(ni, set);
 
 	if ((ic->ic_flags & IEEE80211_F_TIMUPDATE) == 0)
 		return;

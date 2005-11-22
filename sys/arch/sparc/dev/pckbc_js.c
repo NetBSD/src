@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.12 2004/03/17 08:48:58 martin Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.12.24.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12 2004/03/17 08:48:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12.24.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12 2004/03/17 08:48:58 martin Exp $")
 #include <machine/intr.h>
 
 #include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h> 
+#include <dev/ic/pckbcvar.h>
 #include <dev/pckbport/pckbportvar.h>
 
 #include <dev/ebus/ebusreg.h>
@@ -57,7 +57,7 @@ struct pckbc_js_softc {
 	struct pckbc_softc jsc_pckbc;	/* real "pckbc" softc */
 
 	/* kbd and mouse share interrupt in both mr.coffee and krups */
-	u_int32_t jsc_intr;
+	uint32_t jsc_intr;
 	int jsc_establised;
 	void *jsc_int_cookie;
 };
@@ -69,10 +69,10 @@ static void	pckbc_obio_attach(struct device *, struct device *, void *);
 static int	pckbc_ebus_match(struct device *, struct cfdata *, void *);
 static void	pckbc_ebus_attach(struct device *, struct device *, void *);
 
-static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
-					bus_space_tag_t, bus_addr_t, int, int);
+static void	pckbc_js_attach_common(struct pckbc_js_softc *,
+				       bus_space_tag_t, bus_addr_t, int, int);
 static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbport_slot_t);
-static int	jsc_pckbdintr(void *vsc);
+static int	jsc_pckbdintr(void *);
 
 /* Mr.Coffee */
 CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
@@ -85,10 +85,7 @@ CFATTACH_DECL(pckbc_ebus, sizeof(struct pckbc_js_softc),
 #define PCKBC_PROM_DEVICE_NAME "8042"
 
 static int
-pckbc_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pckbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -97,10 +94,7 @@ pckbc_obio_match(parent, cf, aux)
 }
 
 static int
-pckbc_ebus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pckbc_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -109,9 +103,7 @@ pckbc_ebus_match(parent, cf, aux)
 
 
 static void
-pckbc_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)self;
 	union obio_attach_args *uoba = aux;
@@ -138,9 +130,7 @@ pckbc_obio_attach(parent, self, aux)
 }
 
 static void
-pckbc_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)self;
 	struct ebus_attach_args *ea = aux;
@@ -170,12 +160,9 @@ pckbc_ebus_attach(parent, self, aux)
 
 
 static void
-pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
-	struct pckbc_js_softc *jsc;
-	bus_space_tag_t iot;
-	bus_addr_t ioaddr;
-	int intr;
-	int isconsole;
+pckbc_js_attach_common(struct pckbc_js_softc *jsc,
+		       bus_space_tag_t iot, bus_addr_t ioaddr, int intr,
+		       int isconsole)
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)jsc;
 	struct pckbc_internal *t;
@@ -250,9 +237,7 @@ pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
  * so don't install interrupt handler twice.
  */
 static void
-pckbc_js_intr_establish(sc, slot)
-	struct pckbc_softc *sc;
-	pckbport_slot_t slot;
+pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 {
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)sc;
 	void *res;
@@ -292,6 +277,7 @@ jsc_pckbdintr(void *vsc)
 
 	softintr_schedule(jsc->jsc_int_cookie);
 	pckbcintr_hard(&jsc->jsc_pckbc);
+
 	/*
 	 * This interrupt is not shared on javastations, avoid "stray"
 	 * warnings. XXX - why do "stray interrupt" warnings happen if
@@ -305,9 +291,7 @@ jsc_pckbdintr(void *vsc)
  * Called by pckbc_cnattach().
  */
 int
-pckbport_machdep_cnattach(constag, slot)
-    pckbport_tag_t constag;
-    pckbport_slot_t slot;
+pckbport_machdep_cnattach(pckbport_tag_t constag, pckbport_slot_t slot)
 {
 
 	return (0);

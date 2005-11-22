@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.14 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.14.6.1 2005/11/22 16:08:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.9 2005/06/10 04:42:34 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.10 2005/07/22 16:55:27 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
@@ -626,11 +626,19 @@ enum {
 
 /* 
  * RTS frame length parameters.  The default is specified in
- * the 802.11 spec.  The max may be wrong for jumbo frames.
+ * the 802.11 spec as 512; we treat it as implementation-dependent
+ * so it's defined in ieee80211_var.h.  The max may be wrong
+ * for jumbo frames.
  */
-#define	IEEE80211_RTS_DEFAULT		512
 #define	IEEE80211_RTS_MIN		1
-#define	IEEE80211_RTS_MAX		IEEE80211_MAX_LEN
+#define	IEEE80211_RTS_MAX		2346
+
+/* 
+ * TX fragmentation parameters.  As above for RTS, we treat
+ * default as implementation-dependent so define it elsewhere.
+ */
+#define	IEEE80211_FRAG_MIN		256
+#define	IEEE80211_FRAG_MAX		2346
 
 /*
  * 802.11 frame duration definitions.

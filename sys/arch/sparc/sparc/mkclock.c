@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.12 2004/04/03 17:42:07 chs Exp $ */
+/*	$NetBSD: mkclock.c,v 1.12.18.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2004/04/03 17:42:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12.18.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -99,10 +99,7 @@ extern int (*eeprom_nvram_wenable)(int);
  * own special match function to call it the "clock".
  */
 static int
-clockmatch_mainbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -110,10 +107,7 @@ clockmatch_mainbus(parent, cf, aux)
 }
 
 static int
-clockmatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -141,10 +135,7 @@ clockmatch_obio(parent, cf, aux)
 }
 
 static int
-clockmatch_bootbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch_bootbus(struct device *parent, struct cfdata *cf, void *aux)
 {
         struct bootbus_attach_args *baa = aux;
 
@@ -153,9 +144,7 @@ clockmatch_bootbus(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-clockattach_mainbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
 	struct mk48txx_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -183,9 +172,7 @@ clockattach_mainbus(parent, self, aux)
 }
 
 static void
-clockattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	struct mk48txx_softc *sc = (void *)self;
 	union obio_attach_args *uoba = aux;
@@ -227,9 +214,7 @@ clockattach_obio(parent, self, aux)
 }
 
 static void
-clockattach_bootbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_bootbus(struct device *parent, struct device *self, void *aux)
 {
 	struct mk48txx_softc *sc = (void *)self;
 	struct bootbus_attach_args *baa = aux;
@@ -249,9 +234,7 @@ clockattach_bootbus(parent, self, aux)
 }
 
 static void
-clockattach(sc, node)
-	struct mk48txx_softc *sc;
-	int node;
+clockattach(struct mk48txx_softc *sc, int node)
 {
 
 	if (CPU_ISSUN4)
@@ -299,16 +282,15 @@ clockattach(sc, node)
  * can run simultaneously.
  */
 int
-mk_clk_wenable(handle, onoff)
-	todr_chip_handle_t handle;
-	int onoff;
+mk_clk_wenable(todr_chip_handle_t handle, int onoff)
 {
+
 	/* XXX - we ignore `handle' here... */
 	return (mk_nvram_wenable(onoff));
 }
 
 int
-mk_nvram_wenable(onoff)
+mk_nvram_wenable(int onoff)
 {
 	int s;
 	vm_prot_t prot;/* nonzero => change prot */

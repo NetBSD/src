@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.c,v 1.1 2005/09/25 00:06:14 macallan Exp $	*/
+/*	$NetBSD: clkctrl.c,v 1.1.8.1 2005/11/22 16:08:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.1 2005/09/25 00:06:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.1.8.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,11 @@ static void clkctrl_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(clkctrl, sizeof(struct device),
      clkctrl_match, clkctrl_attach, NULL, NULL);
 
-void tadpole_cpu_sleep(struct cpu_info *);
+static void tadpole_cpu_sleep(struct cpu_info *);
 volatile uint8_t *clkctrl_reg = NULL;
 
 static int
-clkctrl_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clkctrl_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -69,15 +66,13 @@ clkctrl_match(parent, cf, aux)
 }
 
 static void
-clkctrl_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clkctrl_attach(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 	bus_space_handle_t bh;
 	struct cpu_info *cur;
-	
+
 	if (clkctrl_reg != NULL) {
 		aprint_error("unable to attach more than once\n");
 		return;
@@ -92,17 +87,17 @@ clkctrl_attach(parent, self, aux)
 
 	clkctrl_reg = (volatile uint8_t *)bus_space_vaddr(sa->sa_bustag, bh);
 
-#ifdef DEBUG	
+#ifdef DEBUG
 	printf(" reg: %x", (uint32_t)clkctrl_reg);
 #endif
 	cur = curcpu();
 	cur->idlespin = tadpole_cpu_sleep;
-		
+
 	printf("\n");
 }
 
 /* ARGSUSED */
-void 
+static void
 tadpole_cpu_sleep(struct cpu_info *ci)
 {
 	if (clkctrl_reg == 0)

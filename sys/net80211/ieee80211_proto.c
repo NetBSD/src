@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.22 2005/08/15 23:37:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.22.6.1 2005/11/22 16:08:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.17 2005/07/04 01:29:41 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.22 2005/08/15 23:37:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.22.6.1 2005/11/22 16:08:16 yamt Exp $");
 #endif
 
 /*
@@ -116,13 +116,9 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 	/* XXX room for crypto  */
 	ifp->if_hdrlen = sizeof(struct ieee80211_qosframe_addr4);
 
-#ifdef notdef
 	ic->ic_rtsthreshold = IEEE80211_RTS_DEFAULT;
-#else
-	ic->ic_rtsthreshold = IEEE80211_RTS_MAX;
-#endif
-	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
-	ic->ic_fixed_rate = -1;			/* no fixed rate */
+	ic->ic_fragthreshold = IEEE80211_FRAG_DEFAULT;
+	ic->ic_fixed_rate = IEEE80211_FIXED_RATE_NONE;
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 	ic->ic_roaming = IEEE80211_ROAMING_AUTO;
 
@@ -345,9 +341,10 @@ ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 }
 
 int
-ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags)
+ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 {
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
+	struct ieee80211com *ic = ni->ni_ic;
 	int i, j, ignore, error;
 	int okrate, badrate, fixedrate;
 	struct ieee80211_rateset *srs, *nrs;
@@ -357,7 +354,8 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	 * If the fixed rate check was requested but no
 	 * fixed has been defined then just remove it.
 	 */
-	if ((flags & IEEE80211_F_DOFRATE) && ic->ic_fixed_rate < 0)
+	if ((flags & IEEE80211_F_DOFRATE) &&
+	    ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
 		flags &= ~IEEE80211_F_DOFRATE;
 	error = 0;
 	okrate = badrate = fixedrate = 0;
@@ -958,9 +956,12 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			 * beacons on the channel.
 			 */
 			if ((ic->ic_flags & IEEE80211_F_ASCAN) &&
-			    (ni->ni_chan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
+			    (ic->ic_curchan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
+				ieee80211_send_probereq(ni,
+					ic->ic_myaddr, ifp->if_broadcastaddr,
+					ifp->if_broadcastaddr,
+					ic->ic_des_essid, ic->ic_des_esslen,
+					ic->ic_opt_ie, ic->ic_opt_ie_len);
 			}
 			break;
 		case IEEE80211_S_RUN:
@@ -1076,7 +1077,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
 				printf(" channel %d start %uMb\n",
-					ieee80211_chan2ieee(ic, ni->ni_chan),
+					ieee80211_chan2ieee(ic, ic->ic_curchan),
 					IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
 			}
 #endif
@@ -1104,7 +1105,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 		 * at this point so traffic can flow.
 		 */
 		if (ni->ni_authmode != IEEE80211_AUTH_8021X)
-			ieee80211_node_authorize(ic, ni);
+			ieee80211_node_authorize(ni);
 		/*
 		 * Enable inactivity processing.
 		 * XXX

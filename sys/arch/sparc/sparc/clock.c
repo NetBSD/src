@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: clock.c,v 1.95.8.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.8.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -149,7 +149,7 @@ todr_chip_handle_t todr_handle;
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int minint;
 
@@ -190,8 +190,7 @@ cpu_initclocks()
  */
 /* ARGSUSED */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -201,7 +200,8 @@ setstatclockrate(newhz)
  * Scheduler pseudo-clock interrupt handler.
  * Runs off a soft interrupt at IPL_SCHED, scheduled by statintr().
  */
-void schedintr(void *v)
+void
+schedintr(void *v)
 {
 	struct lwp *l = curlwp;
 
@@ -221,8 +221,7 @@ int sparc_clock_time_is_ok;
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase = 0, waszero = base == 0;
 
@@ -271,7 +270,7 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)
@@ -294,8 +293,7 @@ resettodr()
  * obtained by a previous call.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s;
 	static struct timeval lasttime;
@@ -323,8 +321,7 @@ microtime(tvp)
  * it needs to stay here...
  */
 int
-eeprom_uio(uio)
-	struct uio *uio;
+eeprom_uio(struct uio *uio)
 {
 #if defined(SUN4)
 	int error;
@@ -388,9 +385,7 @@ eeprom_uio(uio)
  * Update the EEPROM from the passed buf.
  */
 static int
-eeprom_update(buf, off, cnt)
-	char *buf;
-	int off, cnt;
+eeprom_update(char *buf, int off, int cnt)
 {
 	int error = 0;
 	volatile char *ep;
@@ -439,7 +434,7 @@ eeprom_update(buf, off, cnt)
 
 /* Take a lock on the eeprom. */
 static int
-eeprom_take()
+eeprom_take(void)
 {
 	int error = 0;
 
@@ -457,7 +452,7 @@ eeprom_take()
 
 /* Give a lock on the eeprom away. */
 static void
-eeprom_give()
+eeprom_give(void)
 {
 
 	eeprom_busy = 0;

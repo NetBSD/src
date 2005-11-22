@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.21 2005/10/30 07:55:46 tsutsui Exp $
+$NetBSD: TODO,v 1.21.2.1 2005/11/22 16:08:01 yamt Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -96,26 +96,15 @@ XXX some entries might be obsolete.
 		   due to above SR_INT_IE problem.
 	    s/MIPS_INT_MASK/MIPS3_INT_MASK/ makes this work, although tricky.
 
-	-   if (ipending & INT_MASK_REAL_DEV) == 0,
-	    softnet() and softclock() are handled with all interrupt disabled.
-		-> overblocking, possibly causes missing hardclock()
-
-	-   `netisr' handling in netintr() implies potential race condition.
-	    The access to `netisr' should be protected by splnet().
-	    Currently this is not real problem due to above overblocking.
-
-	-   INT_MASK_REAL_DEV should be removed
-
 	-   make CLKF_INTR() work.
 
-    o	it is better to always disable MIPS_INT_MASK_CLOCK.
+    o	it is better to always disable the MIPS3 internal timer interrupts
+	(i.e. MIPS_INT_MASK_5) if it is not needed for the system.
 	those are the points which should be fixed:
 	mips_idle: li t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	machdep.c: curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE;
 	spl0()
 	splnone()
-
-	-   MIPS_INT_MASK_CLOCK should be removed in someway
 
     o	XXX at least 2000/06/07 version is already quite unstable
 	on PICA and NEC Image RISCstation. (but almost OK on Magnum)

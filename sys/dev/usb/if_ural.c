@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.8 2005/09/16 23:55:14 jmcneill Exp $ */
+/*	$NetBSD: if_ural.c,v 1.8.8.1 2005/11/22 16:08:15 yamt Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.8 2005/09/16 23:55:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.8.8.1 2005/11/22 16:08:15 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -729,20 +729,20 @@ ural_task(void *arg)
 		break;
 
 	case IEEE80211_S_SCAN:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		callout_reset(&sc->scan_ch, hz / 5, ural_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_ASSOC:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_RUN:
-		ural_set_chan(sc, ic->ic_bss->ni_chan);
+		ural_set_chan(sc, ic->ic_curchan);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ural_set_bssid(sc, ic->ic_bss->ni_bssid);
@@ -1103,6 +1103,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 Static int
 ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ural_tx_desc *desc;
 	usbd_xfer_handle xfer;
 	usbd_status error;
@@ -1110,7 +1111,7 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	uint8_t *buf;
 	int xferlen, rate;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (xfer == NULL)
@@ -1167,7 +1168,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->tx_data[0];
 	desc = (struct ural_tx_desc *)data->buf;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 	data->m = m0;
 	data->ni = ni;
 
@@ -1192,8 +1193,8 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
@@ -1270,8 +1271,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
@@ -2014,8 +2015,8 @@ ural_init(struct ifnet *ifp)
 		goto fail;
 
 	/* set default BSS channel */
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	ural_set_chan(sc, ic->ic_bss->ni_chan);
+	ic->ic_curchan = ic->ic_ibss_chan;
+	ural_set_chan(sc, ic->ic_curchan);
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
 	ural_read_multi(sc, RAL_STA_CSR0, sta, sizeof sta);

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.20 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.20.14.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20.14.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -467,5 +467,5 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 #endif
 	}
 
-	return ~0;
+	return ~MIPS_INT_MASK_2;
 }

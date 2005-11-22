@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.38 2005/09/25 00:04:01 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.38.6.1 2005/11/22 16:08:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,10 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.26 2005/07/06 01:55:17 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.38 2005/09/25 00:04:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.38.6.1 2005/11/22 16:08:16 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -96,6 +96,62 @@ doprint(struct ieee80211com *ic, int subtype)
 #endif
 
 /*
+ * Set the direction field and address fields of an outgoing
+ * non-QoS frame.  Note this should be called early on in
+ * constructing a frame as it sets i_fc[1]; other bits can
+ * then be or'd in.
+ */
+static void
+ieee80211_send_setup(struct ieee80211com *ic,
+	struct ieee80211_node *ni,
+	struct ieee80211_frame *wh,
+	int type,
+	const u_int8_t sa[IEEE80211_ADDR_LEN],
+	const u_int8_t da[IEEE80211_ADDR_LEN],
+	const u_int8_t bssid[IEEE80211_ADDR_LEN])
+{
+#define	WH4(wh)	((struct ieee80211_frame_addr4 *)wh)
+
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | type;
+	if ((type & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_DATA) {
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_STA:
+			wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
+			IEEE80211_ADDR_COPY(wh->i_addr1, bssid);
+			IEEE80211_ADDR_COPY(wh->i_addr2, sa);
+			IEEE80211_ADDR_COPY(wh->i_addr3, da);
+			break;
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
+			wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+			IEEE80211_ADDR_COPY(wh->i_addr1, da);
+			IEEE80211_ADDR_COPY(wh->i_addr2, sa);
+			IEEE80211_ADDR_COPY(wh->i_addr3, bssid);
+			break;
+		case IEEE80211_M_HOSTAP:
+			wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
+			IEEE80211_ADDR_COPY(wh->i_addr1, da);
+			IEEE80211_ADDR_COPY(wh->i_addr2, bssid);
+			IEEE80211_ADDR_COPY(wh->i_addr3, sa);
+			break;
+		case IEEE80211_M_MONITOR:	/* NB: to quiet compiler */
+			break;
+		}
+	} else {
+		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+		IEEE80211_ADDR_COPY(wh->i_addr1, da);
+		IEEE80211_ADDR_COPY(wh->i_addr2, sa);
+		IEEE80211_ADDR_COPY(wh->i_addr3, bssid);
+	}
+	*(u_int16_t *)&wh->i_dur[0] = 0;
+	/* NB: use non-QoS tid */
+	*(u_int16_t *)&wh->i_seq[0] =
+	    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
+	ni->ni_txseqs[0]++;
+#undef WH4
+}
+
+/*
  * Send a management frame to the specified node.  The node pointer
  * must have a reference as the pointer will be passed to the driver
  * and potentially held for a long time.  If the frame is successfully
@@ -132,30 +188,9 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	m->m_pkthdr.rcvif = (void *)ni;
 
 	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT | type;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	*(u_int16_t *)wh->i_seq =
-	    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
-	ni->ni_txseqs[0]++;
-	/*
-	 * Hack.  When sending PROBE_REQ frames while scanning we
-	 * explicitly force a broadcast rather than (as before) clobber
-	 * ni_macaddr and ni_bssid.  This is stopgap, we need a way
-	 * to communicate this directly rather than do something
-	 * implicit based on surrounding state.
-	 */
-	if (type == IEEE80211_FC0_SUBTYPE_PROBE_REQ &&
-	    (ic->ic_flags & IEEE80211_F_SCAN)) {
-		IEEE80211_ADDR_COPY(wh->i_addr1, ifp->if_broadcastaddr);
-		IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-		IEEE80211_ADDR_COPY(wh->i_addr3, ifp->if_broadcastaddr);
-	} else {
-		IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
-		IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-		IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
-	}
-
+	ieee80211_send_setup(ic, ni, wh, 
+		IEEE80211_FC0_TYPE_MGT | type,
+		ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
 	if ((m->m_flags & M_LINK0) != 0 && ni->ni_challenge != NULL) {
 		m->m_flags &= ~M_LINK0;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
@@ -172,7 +207,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    ieee80211_mgt_subtype_name[
 			(type & IEEE80211_FC0_SUBTYPE_MASK) >>
 				IEEE80211_FC0_SUBTYPE_SHIFT],
-		    ieee80211_chan2ieee(ic, ni->ni_chan));
+		    ieee80211_chan2ieee(ic, ic->ic_curchan));
 	}
 #endif
 	IEEE80211_NODE_STAT(ni, tx_mgmt);
@@ -184,10 +219,15 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 /*
  * Send a null data frame to the specified node.
+ *
+ * NB: the caller is assumed to have setup a node reference
+ *     for use; this is necessary to deal with a race condition
+ *     when probing for inactive stations.
  */
 int
-ieee80211_send_nulldata(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_send_nulldata(struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = ni->ni_ic;
 	struct ifnet *ifp = ic->ic_ifp;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
@@ -196,26 +236,28 @@ ieee80211_send_nulldata(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (m == NULL) {
 		/* XXX debug msg */
 		ic->ic_stats.is_tx_nobuf++;
+		ieee80211_unref_node(&ni);
 		return ENOMEM;
 	}
-	m->m_pkthdr.rcvif = (void *) ieee80211_ref_node(ni);
+	m->m_pkthdr.rcvif = (void *) ni;
 
 	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA |
-		IEEE80211_FC0_SUBTYPE_NODATA;
-	*(u_int16_t *)wh->i_dur = 0;
-	*(u_int16_t *)wh->i_seq =
-	    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
-	ni->ni_txseqs[0]++;
-
-	/* XXX WDS */
-	wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
-	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ni->ni_bssid);
-	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
+	ieee80211_send_setup(ic, ni, wh,
+		IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_NODATA,
+		ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
+	/* NB: power management bit is never sent by an AP */
+	if ((ni->ni_flags & IEEE80211_NODE_PWR_MGT) &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP)
+		wh->i_fc[1] |= IEEE80211_FC1_PWR_MGT;
 	m->m_len = m->m_pkthdr.len = sizeof(struct ieee80211_frame);
 
 	IEEE80211_NODE_STAT(ni, tx_data);
+
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_DUMPPKTS,
+	    "[%s] send null data frame on channel %u, pwr mgt %s\n",
+	    ether_sprintf(ni->ni_macaddr),
+	    ieee80211_chan2ieee(ic, ic->ic_curchan),
+	    wh->i_fc[1] & IEEE80211_FC1_PWR_MGT ? "ena" : "dis");
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);		/* cheat */
 	(*ifp->if_start)(ifp);
@@ -1117,6 +1159,91 @@ ieee80211_add_wme_param(u_int8_t *frm, struct ieee80211_wme_state *wme)
 #undef WME_OUI_BYTES
 
 /*
+ * Send a probe request frame with the specified ssid
+ * and any optional information element data.
+ */
+int
+ieee80211_send_probereq(struct ieee80211_node *ni,
+	const u_int8_t sa[IEEE80211_ADDR_LEN],
+	const u_int8_t da[IEEE80211_ADDR_LEN],
+	const u_int8_t bssid[IEEE80211_ADDR_LEN],
+	const u_int8_t *ssid, size_t ssidlen,
+	const void *optie, size_t optielen)
+{
+	struct ieee80211com *ic = ni->ni_ic;
+	enum ieee80211_phymode mode;
+	struct ieee80211_frame *wh;
+	struct mbuf *m;
+	u_int8_t *frm;
+
+	/*
+	 * Hold a reference on the node so it doesn't go away until after
+	 * the xmit is complete all the way in the driver.  On error we
+	 * will remove our reference.
+	 */
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+		"ieee80211_ref_node (%s:%u) %p<%s> refcnt %d\n",
+		__func__, __LINE__,
+		ni, ether_sprintf(ni->ni_macaddr),
+		ieee80211_node_refcnt(ni)+1);
+	ieee80211_ref_node(ni);
+
+	/*
+	 * prreq frame format
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[tlv] extended supported rates
+	 *	[tlv] user-specified ie's
+	 */
+	m = ieee80211_getmgtframe(&frm,
+		 2 + IEEE80211_NWID_LEN
+	       + 2 + IEEE80211_RATE_SIZE
+	       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE)
+	       + (optie != NULL ? optielen : 0)
+	);
+	if (m == NULL) {
+		ic->ic_stats.is_tx_nobuf++;
+		ieee80211_free_node(ni);
+		return ENOMEM;
+	}
+
+	frm = ieee80211_add_ssid(frm, ssid, ssidlen);
+	mode = ieee80211_chan2mode(ic, ic->ic_curchan);
+	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[mode]);
+	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[mode]);
+
+	if (optie != NULL) {
+		memcpy(frm, optie, optielen);
+		frm += optielen;
+	}
+	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+
+	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	if (m == NULL)
+		return ENOMEM;
+	IASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
+	m->m_pkthdr.rcvif = (void *)ni;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	ieee80211_send_setup(ic, ni, wh,
+		IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_REQ,
+		sa, da, bssid);
+	/* XXX power management? */
+
+	IEEE80211_NODE_STAT(ni, tx_probereq);
+	IEEE80211_NODE_STAT(ni, tx_mgmt);
+
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_DUMPPKTS,
+	    "[%s] send probe req on channel %u\n",
+	    ether_sprintf(wh->i_addr1),
+	    ieee80211_chan2ieee(ic, ic->ic_curchan));
+
+	IF_ENQUEUE(&ic->ic_mgtq, m);
+	(*ic->ic_ifp->if_start)(ic->ic_ifp);
+	return 0;
+}
+
+/*
  * Send a management frame.  The node is for the destination (or ic_bss
  * when in station mode).  Nodes other than ic_bss have their reference
  * count bumped to reflect our use for an indeterminant time.
@@ -1128,7 +1255,6 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 #define	senderr(_x, _v)	do { ic->ic_stats._v++; ret = _x; goto bad; } while (0)
 	struct mbuf *m;
 	u_int8_t *frm;
-	enum ieee80211_phymode mode;
 	u_int16_t capinfo;
 	int has_challenge, is_shared_key, ret, timer, status;
 
@@ -1148,38 +1274,6 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	timer = 0;
 	switch (type) {
-	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-		/*
-		 * prreq frame format
-		 *	[tlv] ssid
-		 *	[tlv] supported rates
-		 *	[tlv] extended supported rates
-		 *	[tlv] user-specified ie's
-		 */
-		m = ieee80211_getmgtframe(&frm,
-			 2 + IEEE80211_NWID_LEN
-		       + 2 + IEEE80211_RATE_SIZE
-		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE)
-		       + (ic->ic_opt_ie != NULL ? ic->ic_opt_ie_len : 0)
-		);
-		if (m == NULL)
-			senderr(ENOMEM, is_tx_nobuf);
-
-		frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
-		mode = ieee80211_chan2mode(ic, ni->ni_chan);
-		frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[mode]);
-		frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[mode]);
-		if (ic->ic_opt_ie != NULL) {
-			memcpy(frm, ic->ic_opt_ie, ic->ic_opt_ie_len);
-			frm += ic->ic_opt_ie_len;
-		}
-		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-
-		IEEE80211_NODE_STAT(ni, tx_probereq);
-		if (ic->ic_opmode == IEEE80211_M_STA)
-			timer = IEEE80211_TRANS_WAIT;
-		break;
-
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 		/*
 		 * probe response frame format
@@ -1224,7 +1318,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		    IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		if (ic->ic_flags & IEEE80211_F_SHSLOT)
 			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
@@ -1241,14 +1335,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
                         *frm++ = ni->ni_fhdwell & 0x00ff;
                         *frm++ = (ni->ni_fhdwell >> 8) & 0x00ff;
                         *frm++ = IEEE80211_FH_CHANSET(
-			    ieee80211_chan2ieee(ic, ni->ni_chan));
+			    ieee80211_chan2ieee(ic, ic->ic_curchan));
                         *frm++ = IEEE80211_FH_CHANPAT(
-			    ieee80211_chan2ieee(ic, ni->ni_chan));
+			    ieee80211_chan2ieee(ic, ic->ic_curchan));
                         *frm++ = ni->ni_fhindex;
 		} else {
 			*frm++ = IEEE80211_ELEMID_DSPARMS;
 			*frm++ = 1;
-			*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
+			*frm++ = ieee80211_chan2ieee(ic, ic->ic_curchan);
 		}
 
 		if (ic->ic_opmode == IEEE80211_M_IBSS) {
@@ -1339,7 +1433,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		IEEE80211_NODE_STAT(ni, tx_deauth);
 		IEEE80211_NODE_STAT_SET(ni, tx_deauth_code, arg);
 
-		ieee80211_node_unauthorize(ic, ni);	/* port closed */
+		ieee80211_node_unauthorize(ni);		/* port closed */
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
@@ -1380,7 +1474,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *     short premable is set.
 		 */
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		    IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME) &&
 		    (ic->ic_caps & IEEE80211_C_SHSLOT))
@@ -1436,7 +1530,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		    IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		if (ic->ic_flags & IEEE80211_F_SHSLOT)
 			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
@@ -1803,14 +1897,14 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 	 * using this information.
 	 */
 	/* XXX handle overflow? */
-	age = ((ni->ni_intval * ic->ic_lintval) << 2) / 1024; /* TU -> secs */
+	age = ((ni->ni_intval * ic->ic_bintval) << 2) / 1024; /* TU -> secs */
 	_IEEE80211_NODE_SAVEQ_ENQUEUE(ni, m, qlen, age);
 	IEEE80211_NODE_SAVEQ_UNLOCK(ni);
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
-		"[%s] save frame, %u now queued\n",
-		ether_sprintf(ni->ni_macaddr), qlen);
+		"[%s] save frame with age %d, %u now queued\n",
+		ether_sprintf(ni->ni_macaddr), age, qlen);
 
 	if (qlen == 1)
-		ic->ic_set_tim(ic, ni, 1);
+		ic->ic_set_tim(ni, 1);
 }

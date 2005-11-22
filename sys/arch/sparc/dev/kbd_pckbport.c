@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbport.c,v 1.2 2005/06/16 17:04:53 jmc Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.2.8.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -97,7 +97,7 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.2 2005/06/16 17:04:53 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.2.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.2 2005/06/16 17:04:53 jmc Exp $")
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/select.h>
-#include <sys/syslog.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -141,7 +140,7 @@ struct kbd_pckbport_softc {
 
 	/*
 	 * Middle layer data.
-	 */ 
+	 */
 	int sc_isopen;
 	int sc_pcleds;
 
@@ -149,7 +148,6 @@ struct kbd_pckbport_softc {
 	int sc_lastchar;
 	int sc_extended;
 	int sc_extended1;
-	
 };
 
 static int	kbd_pckbport_match(struct device *, struct cfdata *, void *);
@@ -177,7 +175,7 @@ static const struct kbd_ops kbd_ops_pckbport = {
 };
 
 
-static const u_int8_t	kbd_pckbport_xt_to_sun[];
+static const uint8_t	kbd_pckbport_xt_to_sun[];
 
 static int	kbd_pckbport_set_xtscancode(pckbport_tag_t, pckbport_slot_t);
 static void	kbd_pckbport_input(void *, int);
@@ -188,11 +186,8 @@ static int	kbd_pckbport_decode(struct kbd_pckbport_softc *, int, int *);
  *			  Autoconfiguration
  */
 
-int 
-kbd_pckbport_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+static int
+kbd_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 
@@ -203,11 +198,8 @@ kbd_pckbport_match(parent, cf, aux)
 }
 
 
-void
-kbd_pckbport_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+static void
+kbd_pckbport_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kbd_pckbport_softc *sc = (void *)self;
 	struct pckbport_attach_args *pa = aux;
@@ -266,9 +258,7 @@ kbd_pckbport_attach(parent, self, aux)
 
 
 static int
-kbd_pckbport_set_xtscancode(kbctag, kbcslot)
-	pckbport_tag_t kbctag;
-	pckbport_slot_t kbcslot;
+kbd_pckbport_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 {
 	u_char cmd[2];
 	int res;
@@ -303,7 +293,7 @@ kbd_pckbport_set_xtscancode(kbctag, kbcslot)
 			 * default anyway.
 			 */
 			resetcmd[0] = KBC_RESET;
-			(void)pckbport_poll_cmd(kbctag, kbcslot, resetcmd, 
+			(void)pckbport_poll_cmd(kbctag, kbcslot, resetcmd,
 			    1, 1, 0, 1);
 			pckbport_flush(kbctag, kbcslot);
 			res = 0;
@@ -332,8 +322,7 @@ kbd_pckbport_set_xtscancode(kbctag, kbcslot)
  * Called with user context.
  */
 static int
-kbd_pckbport_open(kbd)
-	struct kbd_softc *kbd;
+kbd_pckbport_open(struct kbd_softc *kbd)
 {
 	struct kbd_pckbport_softc *sc = (struct kbd_pckbport_softc *)kbd;
 	struct kbd_state *ks;
@@ -367,8 +356,7 @@ kbd_pckbport_open(kbd)
 
 
 static int
-kbd_pckbport_close(kbd)
-	struct kbd_softc *kbd;
+kbd_pckbport_close(struct kbd_softc *kbd)
 {
 #if 0
 	struct kbd_pckbport_softc *k = (struct kbd_pckbport_softc *)kbd;
@@ -382,10 +370,7 @@ kbd_pckbport_close(kbd)
  */
 /* ARGSUSED2 */
 static int
-kbd_pckbport_do_cmd(kbd, suncmd, isioctl)
-	struct kbd_softc *kbd;
-	int suncmd;
-	int isioctl;
+kbd_pckbport_do_cmd(struct kbd_softc *kbd, int suncmd, int isioctl)
 {
 	int error = 0;
 
@@ -410,10 +395,7 @@ kbd_pckbport_do_cmd(kbd, suncmd, isioctl)
 
 /* ARGSUSED2 */
 static int
-kbd_pckbport_set_leds(kbd, sunleds, isioctl)
-	struct kbd_softc *kbd;
-	int sunleds;
-	int isioctl;
+kbd_pckbport_set_leds(struct kbd_softc *kbd, int sunleds, int isioctl)
 {
 	struct kbd_pckbport_softc *sc = (struct kbd_pckbport_softc *)kbd;
 	u_char pcleds;
@@ -456,9 +438,7 @@ kbd_pckbport_set_leds(kbd, sunleds, isioctl)
  * Got a receive interrupt - pckbport wants to give us a byte.
  */
 static void
-kbd_pckbport_input(vsc, data)
-	void *vsc;
-	int data;
+kbd_pckbport_input(void *vsc, int data)
 {
 	struct kbd_pckbport_softc *sc = vsc;
 	struct kbd_softc *kbd = &sc->sc_kbd;
@@ -476,10 +456,7 @@ kbd_pckbport_input(vsc, data)
  * Plagiarized from pckbd_decode
  */
 static int
-kbd_pckbport_decode(sc, data, sundata)
-    	struct kbd_pckbport_softc *sc;
-	int data;
-	int *sundata;
+kbd_pckbport_decode(struct kbd_pckbport_softc *sc, int data, int *sundata)
 {
 	int key, up;
 	int sunkey;
@@ -530,7 +507,6 @@ kbd_pckbport_decode(sc, data, sundata)
 		up = 0;
 	}
 
-	
 	sunkey = kbd_pckbport_xt_to_sun[key];
 
 	DPRINTF((" -> xt 0x%02x %s -> %d\n",
@@ -543,7 +519,7 @@ kbd_pckbport_decode(sc, data, sundata)
 	return (1);
 }
 
-static const u_int8_t kbd_pckbport_xt_to_sun[256] = {
+static const uint8_t kbd_pckbport_xt_to_sun[256] = {
 /* 0x00 */   0,	/*             */
 /* 0x01 */  29,	/* Esc         */
 /* 0x02 */  30,	/* 1           */
