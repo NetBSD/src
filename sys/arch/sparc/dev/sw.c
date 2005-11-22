@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.14 2003/12/04 12:42:54 keihan Exp $	*/
+/*	$NetBSD: sw.c,v 1.14.24.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.14 2003/12/04 12:42:54 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.14.24.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -196,23 +196,23 @@ struct sw_softc {
 #define SW_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int sw_options = SW_ENABLE_DMA;
 
-static int	sw_match __P((struct device *, struct cfdata *, void *));
-static void	sw_attach __P((struct device *, struct device *, void *));
-static int	sw_intr __P((void *));
-static void	sw_reset_adapter __P((struct ncr5380_softc *));
-static void	sw_minphys __P((struct buf *));
+static int	sw_match(struct device *, struct cfdata *, void *);
+static void	sw_attach(struct device *, struct device *, void *);
+static int	sw_intr(void *);
+static void	sw_reset_adapter(struct ncr5380_softc *);
+static void	sw_minphys(struct buf *);
 
-void	sw_dma_alloc __P((struct ncr5380_softc *));
-void	sw_dma_free __P((struct ncr5380_softc *));
-void	sw_dma_poll __P((struct ncr5380_softc *));
+void	sw_dma_alloc(struct ncr5380_softc *);
+void	sw_dma_free(struct ncr5380_softc *);
+void	sw_dma_poll(struct ncr5380_softc *);
 
-void	sw_dma_setup __P((struct ncr5380_softc *));
-void	sw_dma_start __P((struct ncr5380_softc *));
-void	sw_dma_eop __P((struct ncr5380_softc *));
-void	sw_dma_stop __P((struct ncr5380_softc *));
+void	sw_dma_setup(struct ncr5380_softc *);
+void	sw_dma_start(struct ncr5380_softc *);
+void	sw_dma_eop(struct ncr5380_softc *);
+void	sw_dma_stop(struct ncr5380_softc *);
 
-void	sw_intr_on __P((struct ncr5380_softc *));
-void	sw_intr_off __P((struct ncr5380_softc *));
+void	sw_intr_on(struct ncr5380_softc *);
+void	sw_intr_off(struct ncr5380_softc *);
 
 /* Shorthand bus space access */
 #define SWREG_READ(sc, index) \
@@ -226,10 +226,7 @@ CFATTACH_DECL(sw, sizeof(struct sw_softc),
     sw_match, sw_attach, NULL, NULL);
 
 static int
-sw_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata *cf;
-	void *aux;
+sw_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -251,9 +248,7 @@ sw_match(parent, cf, aux)
 }
 
 static void
-sw_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+sw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sw_softc *sc = (struct sw_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -485,8 +480,7 @@ sw_reset_adapter(struct ncr5380_softc *ncr_sc)
  * into DVMA space.
  */
 void
-sw_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct sw_softc *sc = (struct sw_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -564,8 +558,7 @@ found:
 
 
 void
-sw_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sw_softc *sc = (struct sw_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -600,8 +593,7 @@ sw_dma_free(ncr_sc)
  * Same for either VME or OBIO.
  */
 void
-sw_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	int tmo, csr_mask, csr;
@@ -646,10 +638,9 @@ sw_dma_poll(ncr_sc)
  * XXX THIS MIGHT NOT WORK RIGHT!
  */
 void
-sw_intr_on(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_intr_on(struct ncr5380_softc *ncr_sc)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	sw_dma_setup(ncr_sc);
 	csr = SWREG_READ(ncr_sc, SWREG_CSR);
@@ -664,10 +655,9 @@ sw_intr_on(ncr_sc)
  * XXX THIS MIGHT NOT WORK RIGHT!
  */
 void
-sw_intr_off(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_intr_off(struct ncr5380_softc *ncr_sc)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	csr = SWREG_READ(ncr_sc, SWREG_CSR);
 	csr &= ~SW_CSR_DMA_EN;
@@ -685,10 +675,9 @@ sw_intr_off(ncr_sc)
  * later, in dma_start.
  */
 void
-sw_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_setup(struct ncr5380_softc *ncr_sc)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	/* No FIFO to reset on "sw". */
 
@@ -703,8 +692,7 @@ sw_dma_setup(ncr_sc)
 
 
 void
-sw_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct sw_softc *sc = (struct sw_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -712,7 +700,7 @@ sw_dma_start(ncr_sc)
 	u_long dva;
 	int xlen, adj, adjlen;
 	u_int mode;
-	u_int32_t csr;
+	uint32_t csr;
 
 	/*
 	 * Get the DVMA mapping for this segment.
@@ -818,8 +806,7 @@ sw_dma_start(ncr_sc)
 
 
 void
-sw_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 
 	/* Not needed - DMA was stopped prior to examining sci_csr */
@@ -840,14 +827,13 @@ int	sw_0_leftover = 0;
 #endif
 
 void
-sw_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sw_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sw_dma_handle *dh = sr->sr_dma_hand;
 	int ntrans = 0, dva;
 	u_int mode;
-	u_int32_t csr;
+	uint32_t csr;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
@@ -875,10 +861,11 @@ sw_dma_stop(ncr_sc)
 	 * in the VME controller.)
 	 */
 #if 0
-	if (csr & (SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR)) {
+	if (csr & (SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR))
 #else
-	if (csr & (SW_CSR_DMA_CONFLICT)) {
+	if (csr & (SW_CSR_DMA_CONFLICT))
 #endif
+	{
 		printf("sw: DMA error, csr=0x%x, reset\n", csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
@@ -921,7 +908,7 @@ sw_dma_stop(ncr_sc)
 	 */
 	if ((dh->dh_flags & SIDH_OUT) == 0) {
 		char *cp = ncr_sc->sc_dataptr;
-		u_int32_t bpr;
+		uint32_t bpr;
 
 		bpr = SWREG_READ(ncr_sc, SWREG_BPR);
 

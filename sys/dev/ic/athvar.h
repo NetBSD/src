@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.13 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.13.6.1 2005/11/22 16:08:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.27 2005/07/07 00:04:50 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.29 2005/08/08 18:46:36 sam Exp $
  */
 
 /*
@@ -197,10 +197,8 @@ struct ath_softc {
 				sc_softled : 1,	/* enable LED gpio status */
 				sc_splitmic: 1,	/* split TKIP MIC keys */
 				sc_needmib : 1,	/* enable MIB stats intr */
-				sc_hasdiversity : 1,/* rx diversity available */
 				sc_diversity : 1,/* enable rx diversity */
 				sc_hasveol : 1,	/* tx VEOL support */
-				sc_hastpc  : 1,	/* per-packet TPC support */
 				sc_ledstate: 1,	/* LED on/off state */
 				sc_blinking: 1,	/* LED blink operation active */
 				sc_mcastkey: 1,	/* mcast key cache search */
@@ -224,7 +222,6 @@ struct ath_softc {
 	HAL_INT			sc_imask;	/* interrupt mask copy */
 	u_int			sc_keymax;	/* size of key cache */
 	u_int8_t		sc_keymap[ATH_KEYBYTES];/* key use bit map */
-	struct ieee80211_node	*sc_keyixmap[ATH_KEYMAX];/* key ix->node map */
 
 	u_int			sc_ledpin;	/* GPIO pin for driving LED */
 	u_int			sc_ledon;	/* pin setting for LED on */

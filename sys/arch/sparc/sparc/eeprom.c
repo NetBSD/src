@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.5 2003/07/15 00:05:04 lukem Exp $ */
+/*	$NetBSD: eeprom.c,v 1.5.24.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.5 2003/07/15 00:05:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.5.24.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -78,10 +78,7 @@ static int eeprom_attached;
  * Sun 4/100, 4/200 EEPROM match routine.
  */
 static int
-eeprom_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+eeprom_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -109,9 +106,7 @@ eeprom_match(parent, cf, aux)
 }
 
 static void
-eeprom_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+eeprom_attach(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;

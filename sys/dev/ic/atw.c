@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.89 2005/07/07 00:12:22 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.89.6.1 2005/11/22 16:08:07 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.89 2005/07/07 00:12:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.89.6.1 2005/11/22 16:08:07 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -241,7 +241,6 @@ static void	atw_txlmt_init(struct atw_softc *);
 static void	atw_wcsr_init(struct atw_softc *);
 
 /* Key management */
-static int atw_key_alloc(struct ieee80211com *, const struct ieee80211_key *);
 static int atw_key_delete(struct ieee80211com *, const struct ieee80211_key *);
 static int atw_key_set(struct ieee80211com *, const struct ieee80211_key *,
 	const u_int8_t[IEEE80211_ADDR_LEN]);
@@ -834,7 +833,6 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_node_alloc = ic->ic_node_alloc;
 	ic->ic_node_alloc = atw_node_alloc;
 
-	ic->ic_crypto.cs_key_alloc = atw_key_alloc;
 	ic->ic_crypto.cs_key_delete = atw_key_delete;
 	ic->ic_crypto.cs_key_set = atw_key_set;
 	ic->ic_crypto.cs_key_update_begin = atw_key_update_begin;
@@ -1255,10 +1253,9 @@ atw_init(struct ifnet *ifp)
 	 */
 	atw_stop(ifp, 0);
 
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	DPRINTF(sc, ("%s: channel %d freq %d flags 0x%04x\n",
-	    __func__, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
-	    ic->ic_bss->ni_chan->ic_freq, ic->ic_bss->ni_chan->ic_flags));
+	    __func__, ieee80211_chan2ieee(ic, ic->ic_curchan),
+	    ic->ic_curchan->ic_freq, ic->ic_curchan->ic_flags));
 
 	atw_wcsr_init(sc);
 
@@ -1497,7 +1494,7 @@ atw_tune(struct atw_softc *sc)
 	u_int chan;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 	if (chan == IEEE80211_CHAN_ANY)
 		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
 
@@ -2143,24 +2140,6 @@ atw_write_sram(struct atw_softc *sc, u_int ofs, u_int8_t *buf, u_int buflen)
 }
 
 static int
-atw_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k)
-{
-	int keyix;
-#ifdef ATW_DEBUG
-	struct atw_softc *sc = ic->ic_ifp->if_softc;
-#endif
-
-	if (&ic->ic_nw_keys[0] <= k && k < &ic->ic_nw_keys[IEEE80211_WEP_NKID])
-		keyix = k - ic->ic_nw_keys;
-	else
-		keyix = IEEE80211_KEYIX_NONE;
-
-	DPRINTF(sc, ("%s: alloc key %u\n", __func__, keyix));
-
-	return keyix;
-}
-
-static int
 atw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
 	struct atw_softc *sc = ic->ic_ifp->if_softc;
@@ -2302,7 +2281,7 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
 		if (le64toh(ni->ni_tstamp.tsf) >= atw_get_tsft(sc) &&
-		    ieee80211_ibss_merge(ic, ni) == ENETRESET)
+		    ieee80211_ibss_merge(ni) == ENETRESET)
 			atw_change_ibss(sc);
 		break;
 	default:
@@ -2416,7 +2395,7 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	bpli = LSHIFT(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
 	    LSHIFT(ic->ic_lintval / ic->ic_bss->ni_intval, ATW_BPLI_LI_MASK);
 
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 
 	bcnt |= LSHIFT(len, ATW_BCNT_BCNT_MASK);
 	cap0 |= LSHIFT(chan, ATW_CAP0_CHN_MASK);
@@ -2541,36 +2520,30 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct atw_softc *sc = ifp->if_softc;
 	enum ieee80211_state ostate;
-	int error;
+	int error = 0;
 
 	ostate = ic->ic_state;
-
-	if (nstate == IEEE80211_S_INIT) {
-		callout_stop(&sc->sc_scan_ch);
-		sc->sc_cur_chan = IEEE80211_CHAN_ANY;
-		atw_start_beacon(sc, 0);
-		return (*sc->sc_newstate)(ic, nstate, arg);
-	}
-
-	if ((error = atw_tune(sc)) != 0)
-		return error;
+	callout_stop(&sc->sc_scan_ch);
+	atw_start_beacon(sc, 0);
 
 	switch (nstate) {
 	case IEEE80211_S_ASSOC:
+		error = atw_tune(sc);
 		break;
 	case IEEE80211_S_INIT:
-		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
+		callout_stop(&sc->sc_scan_ch);
+		sc->sc_cur_chan = IEEE80211_CHAN_ANY;
 		break;
 	case IEEE80211_S_SCAN:
+		error = atw_tune(sc);
 		callout_reset(&sc->sc_scan_ch, atw_dwelltime * hz / 1000,
 		    atw_next_scan, sc);
-
+		break;
+	case IEEE80211_S_AUTH:
+		error = atw_tune(sc);
 		break;
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode == IEEE80211_M_STA)
-			break;
-		/*FALLTHROUGH*/
-	case IEEE80211_S_AUTH:
+		error = atw_tune(sc);
 		atw_write_bssid(sc);
 		atw_write_ssid(sc);
 		atw_write_sup_rates(sc);
@@ -2591,25 +2564,12 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_BPLI)));
 
 		atw_predict_beacon(sc);
+		atw_start_beacon(sc,
+		    ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS);
 		break;
 	}
-
-	if (nstate != IEEE80211_S_SCAN)
-		callout_stop(&sc->sc_scan_ch);
-
-	if (nstate == IEEE80211_S_RUN &&
-	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
-	     ic->ic_opmode == IEEE80211_M_IBSS))
-		atw_start_beacon(sc, 1);
-	else
-		atw_start_beacon(sc, 0);
-
-	error = (*sc->sc_newstate)(ic, nstate, arg);
-
-	if (ostate == IEEE80211_S_INIT && nstate == IEEE80211_S_SCAN)
-		atw_write_bssid(sc);
-
-	return error;
+	return (error != 0) ? error : (*sc->sc_newstate)(ic, nstate, arg);
 }
 
 /*
@@ -3212,8 +3172,8 @@ atw_rxintr(struct atw_softc *sc)
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 			tap->ar_rate = rate;
-			tap->ar_chan_freq = ic->ic_bss->ni_chan->ic_freq;
-			tap->ar_chan_flags = ic->ic_bss->ni_chan->ic_flags;
+			tap->ar_chan_freq = ic->ic_curchan->ic_freq;
+			tap->ar_chan_flags = ic->ic_curchan->ic_flags;
 
 			/* TBD verify units are dB */
 			tap->ar_antsignal = (int)rssi;
@@ -3583,8 +3543,8 @@ atw_start(struct ifnet *ifp)
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
-			tap->at_chan_freq = ic->ic_bss->ni_chan->ic_freq;
-			tap->at_chan_flags = ic->ic_bss->ni_chan->ic_flags;
+			tap->at_chan_freq = ic->ic_curchan->ic_freq;
+			tap->at_chan_flags = ic->ic_curchan->ic_flags;
 
 			/* TBD tap->at_flags */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.67 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.67.8.1 2005/11/22 16:08:22 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67.8.1 2005/11/22 16:08:22 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -344,9 +344,10 @@ in6_pcbbind(v, nam, p)
  * then pick one.
  */
 int
-in6_pcbconnect(v, nam)
+in6_pcbconnect(v, nam, p)
 	void *v;
 	struct mbuf *nam;
+	struct proc *p;
 {
 	struct in6pcb *in6p = v;
 	struct in6_addr *in6a = NULL;
@@ -449,8 +450,9 @@ in6_pcbconnect(v, nam)
 	     in6p->in6p_laddr.s6_addr32[3] == 0))
 	{
 		if (in6p->in6p_lport == 0) {
-			(void)in6_pcbbind(in6p, (struct mbuf *)0,
-			    (struct proc *)0);
+			error = in6_pcbbind(in6p, (struct mbuf *)0, p);
+			if (error != 0)
+				return error;
 		}
 		in6p->in6p_laddr = *in6a;
 	}

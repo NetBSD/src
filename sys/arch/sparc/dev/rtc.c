@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2005/06/05 21:31:30 jdc Exp $ */
+/*	$NetBSD: rtc.c,v 1.11.8.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2005/06/05 21:31:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,10 +71,10 @@ CFATTACH_DECL(rtc_ebus, sizeof(struct rtc_ebus_softc),
 extern todr_chip_handle_t todr_handle;
 
 /* todr(9) methods */
-int rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
-int rtc_settime(todr_chip_handle_t, volatile struct timeval *);
-int rtc_getcal(todr_chip_handle_t, int *);
-int rtc_setcal(todr_chip_handle_t, int);
+static int rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int rtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int rtc_getcal(todr_chip_handle_t, int *);
+static int rtc_setcal(todr_chip_handle_t, int);
 
 int rtc_auto_century_adjust = 1; /* XXX: do we ever want not to? */
 
@@ -86,9 +86,7 @@ int rtc_auto_century_adjust = 1; /* XXX: do we ever want not to? */
 #define	RTC_DATA	1
 
 u_int
-mc146818_read(cookie, reg)
-	void *cookie;
-	u_int reg;
+mc146818_read(void *cookie, u_int reg)
 {
 	struct rtc_ebus_softc *sc = cookie;
 
@@ -97,10 +95,7 @@ mc146818_read(cookie, reg)
 }
 
 void
-mc146818_write(cookie, reg, datum)
-	void *cookie;
-	u_int reg;
-	u_int datum;
+mc146818_write(void *cookie, u_int reg, u_int datum)
 {
 	struct rtc_ebus_softc *sc = cookie;
 
@@ -110,10 +105,7 @@ mc146818_write(cookie, reg, datum)
 
 
 static int
-rtcmatch_ebus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rtcmatch_ebus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -121,10 +113,7 @@ rtcmatch_ebus(parent, cf, aux)
 }
 
 static void
-rtcattach_ebus(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+rtcattach_ebus(struct device *parent, struct device *self, void *aux)
 {
 	struct rtc_ebus_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
@@ -169,10 +158,8 @@ rtcattach_ebus(parent, self, aux)
  * Get time-of-day and convert to a `struct timeval'
  * Return 0 on success; an error number otherwise.
  */
-int
-rtc_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+static int
+rtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
 	struct clock_ymdhms dt;
@@ -218,10 +205,8 @@ rtc_gettime(handle, tv)
  * Set the time-of-day clock based on the value of the `struct timeval' arg.
  * Return 0 on success; an error number otherwise.
  */
-int
-rtc_settime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+static int
+rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
 	struct clock_ymdhms dt;
@@ -257,19 +242,17 @@ rtc_settime(handle, tv)
  */
 
 /* ARGSUSED */
-int
-rtc_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
+static int
+rtc_getcal(todr_chip_handle_t handle, int *vp)
 {
+
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
-int
-rtc_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
+static int
+rtc_setcal(todr_chip_handle_t handle, int v)
 {
+
 	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.12 2004/07/01 10:23:41 pk Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.12.18.1 2005/11/22 16:08:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.12 2004/07/01 10:23:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.12.18.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,7 +177,7 @@ void
 timerattach_mainbus_4c(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t bh; 
+	bus_space_handle_t bh;
 
 	/*
 	 * This time we ignore any existing virtual address because

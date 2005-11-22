@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.153 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.153.6.1 2005/11/22 16:08:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153.6.1 2005/11/22 16:08:22 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2545,12 +2545,11 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 		fhp = &nfs_pub.np_handle;
 	}
 
-	mp = vfs_getvfs(&fhp->fh_fsid);
-	if (!mp)
-		return (ESTALE);
-	error = nfs_check_export(mp, nam, &exflags, &credanon);
-	if (error)
-		return (error);
+	error = netexport_check(&fhp->fh_fsid, nam, &mp, &exflags, &credanon);
+	if (error) {
+		return error;
+	}
+
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.13 2005/06/16 04:17:50 briggs Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.13.8.1 2005/11/22 16:08:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,14 +58,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.13 2005/06/16 04:17:50 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.13.8.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/autoconf.h> 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 
 #include <sparc/sparc/vaddrs.h>
@@ -203,7 +203,7 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 		}
 		if (cpi == NULL)
 			continue;
-		
+
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_reg[i].oa_space,
 				 sa->sa_reg[i].oa_base,

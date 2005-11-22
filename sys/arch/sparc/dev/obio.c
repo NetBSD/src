@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.68 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.68.6.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.68 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.68.6.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include "locators.h"
 
@@ -77,8 +77,8 @@ union obio_softc {
 
 
 /* autoconfiguration driver */
-static	int obiomatch  __P((struct device *, struct cfdata *, void *));
-static	void obioattach __P((struct device *, struct device *, void *));
+static	int obiomatch(struct device *, struct cfdata *, void *);
+static	void obioattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(obio, sizeof(union obio_softc),
     obiomatch, obioattach, NULL, NULL);
@@ -95,14 +95,11 @@ struct obio4_busattachargs {
 };
 
 #if defined(SUN4)
-static	int obioprint  __P((void *, const char *));
-static	int obiosearch   __P((struct device *, struct cfdata *,
-			      const int *, void *));
-static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
-			       int, int));
-static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
-			       bus_size_t, int,
-			       vaddr_t, bus_space_handle_t *));
+static	int obioprint(void *, const char *);
+static	int obiosearch(struct device *, struct cfdata *, const int *, void *);
+static	paddr_t obio_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static	int _obio_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+			  vaddr_t, bus_space_handle_t *);
 
 /* There's at most one obio bus, so we can allocate the bus tag statically */
 static struct sparc_bus_space_tag obio_space_tag;
@@ -117,11 +114,8 @@ static int intr_obio2ipl[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 };
 
-int
-obiomatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+obiomatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -131,10 +125,8 @@ obiomatch(parent, cf, aux)
 	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
-void
-obioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+obioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -207,10 +199,8 @@ obioattach(parent, self, aux)
 }
 
 #if defined(SUN4)
-int
-obioprint(args, busname)
-	void *args;
-	const char *busname;
+static int
+obioprint(void *args, const char *busname)
 {
 	union obio_attach_args *uoba = args;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -222,14 +212,9 @@ obioprint(args, busname)
 	return (UNCONF);
 }
 
-int
-_obio_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
+static int
+_obio_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+	      vaddr_t va, bus_space_handle_t *hp)
 {
 
 	if ((flags & OBIO_BUS_MAP_USE_ROM) != 0 &&
@@ -239,24 +224,16 @@ _obio_bus_map(t, ba, size, flags, va, hp)
 	return (bus_space_map2(t->parent, ba, size, flags, va, hp));
 }
 
-paddr_t
-obio_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	off_t off;
-	int prot;
-	int flags;
+static paddr_t
+obio_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off, int prot, int flags)
 {
 
 	return (bus_space_mmap(t->parent, ba, off, prot, flags));
 }
 
-int
-obiosearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+static int
+obiosearch(struct device *parent, struct cfdata *cf, const int *ldesc,
+	   void *aux)
 {
 	struct obio4_busattachargs *oap = aux;
 	union obio_attach_args uoba;
@@ -269,7 +246,7 @@ obiosearch(parent, cf, ldesc, aux)
 
 	/*
 	 * Avoid sun4m entries which don't have valid PAs.
-	 * no point in even probing them. 
+	 * no point in even probing them.
 	 */
 	addr = cf->cf_loc[OBIOCF_ADDR];
 	if (addr == -1)
@@ -306,10 +283,7 @@ obiosearch(parent, cf, ldesc, aux)
  * Else, create a new mapping.
  */
 int
-obio_find_rom_map(ba, len, hp)
-	bus_addr_t	ba;
-	int		len;
-	bus_space_handle_t *hp;
+obio_find_rom_map(bus_addr_t ba, int len, bus_space_handle_t *hp)
 {
 #define	getpte(va)		lda(va, ASI_PTE)
 

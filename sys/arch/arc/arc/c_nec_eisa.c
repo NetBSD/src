@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.9 2005/11/05 09:50:50 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.9.2.1 2005/11/22 16:08:01 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.9 2005/11/05 09:50:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.9.2.1 2005/11/22 16:08:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,8 @@ c_nec_eisa_init(void)
 	    RD94_S_LOCAL_IO_BASE);
 
 	arc_wired_enter_page(RD94_V_EISA_IO, RD94_P_EISA_IO, RD94_S_EISA_IO);
-	arc_wired_enter_page(RD94_V_EISA_MEM, RD94_P_EISA_MEM, RD94_S_EISA_MEM);
+	arc_wired_enter_page(RD94_V_EISA_MEM, RD94_P_EISA_MEM,
+	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_16M));
 
 	/*
 	 * Initialize interrupt priority

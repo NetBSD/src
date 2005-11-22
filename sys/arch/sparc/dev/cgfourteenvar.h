@@ -1,7 +1,7 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.4 2002/08/23 02:53:11 thorpej Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.4.30.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
- * Copyright (c) 1996 
+ * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  */
 union cg14cmap {
 	u_char  	cm_map[256][4];	/* 256 R/G/B/A entries (B is high)*/
-	u_int32_t   	cm_chip[256];	/* the way the chip gets loaded */
+	uint32_t   	cm_chip[256];	/* the way the chip gets loaded */
 };
 
 /*
@@ -46,7 +46,7 @@ union cg14cmap {
  */
 union cg14cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char		cm_map[2][4];	/* 2 R/G/B/A entries */
-	u_int32_t	cm_chip[2];	/* 2 chip equivalents */
+	uint32_t	cm_chip[2];	/* 2 chip equivalents */
 };
 
 /*
@@ -62,7 +62,7 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 	union	cg14cursor_cmap cc_color; /* cursor colormap */
 };
 
-/* 
+/*
  * per-cg14 variables/state
  */
 struct cgfourteen_softc {
@@ -76,9 +76,9 @@ struct cgfourteen_softc {
 	union	cg14cmap sc_cmap;	/* current colormap */
 	struct	cg14_cursor sc_cursor;	/* Hardware cursor state */
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
-	u_int8_t	sc_savexlut[256];
-	u_int8_t	sc_savectl;
-	u_int8_t	sc_savehwc;
+	uint8_t		sc_savexlut[256];
+	uint8_t		sc_savectl;
+	uint8_t		sc_savehwc;
 
 	struct	cg14ctl  *sc_ctl; 	/* various registers */
 	struct	cg14curs *sc_hwc;

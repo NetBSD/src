@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.105 2005/07/18 11:08:00 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.105.6.1 2005/11/22 16:08:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.105 2005/07/18 11:08:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.105.6.1 2005/11/22 16:08:15 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -113,7 +113,6 @@ struct ehci_pipe {
 		struct {
 			usb_dma_t reqdma;
 			u_int length;
-			/*ehci_soft_qtd_t *setup, *data, *stat;*/
 		} ctl;
 		/* Interrupt pipe */
 		struct {
@@ -219,7 +218,7 @@ Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
 Static void		ehci_dump_regs(ehci_softc_t *);
-Static void		ehci_dump(void);
+void			ehci_dump(void);
 Static ehci_softc_t 	*theehci;
 Static void		ehci_dump_link(ehci_link_t, int);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
@@ -366,6 +365,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF(("ehci_init: cparams=0x%x\n", cparams));
+	sc->sc_hasppc = EHCI_HCS_PPC(sparams);
 
 	if (EHCI_HCC_64BIT(cparams)) {
 		/* MUST clear segment register if 64 bit capable. */
@@ -1831,7 +1831,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(8, ("ehci_root_ctrl_start: UR_CLEAR_PORT_FEATURE "
+		DPRINTFN(4, ("ehci_root_ctrl_start: UR_CLEAR_PORT_FEATURE "
 			     "port=%d feature=%d\n",
 			     index, value));
 		if (index < 1 || index > sc->sc_noport) {
@@ -1839,7 +1839,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			goto ret;
 		}
 		port = EHCI_PORTSC(index);
-		v = EOREAD4(sc, port) &~ EHCI_PS_CLEAR;
+		v = EOREAD4(sc, port);
+		DPRINTFN(4, ("ehci_root_ctrl_start: portsc=0x%08x\n", v));
+		v &= ~EHCI_PS_CLEAR;
 		switch(value) {
 		case UHF_PORT_ENABLE:
 			EOWRITE4(sc, port, v &~ EHCI_PS_PE);
@@ -1848,7 +1850,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v &~ EHCI_PS_SUSP);
 			break;
 		case UHF_PORT_POWER:
-			EOWRITE4(sc, port, v &~ EHCI_PS_PP);
+			if (sc->sc_hasppc)
+				EOWRITE4(sc, port, v &~ EHCI_PS_PP);
 			break;
 		case UHF_PORT_TEST:
 			DPRINTFN(2,("ehci_root_ctrl_start: clear port test "
@@ -1872,7 +1875,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v | EHCI_PS_OCC);
 			break;
 		case UHF_C_PORT_RESET:
-			sc->sc_isreset = 0;
+			sc->sc_isreset[index] = 0;
 			break;
 		default:
 			err = USBD_IOERROR;
@@ -1948,7 +1951,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		if (v & EHCI_PS_CSC)	i |= UPS_C_CONNECT_STATUS;
 		if (v & EHCI_PS_PEC)	i |= UPS_C_PORT_ENABLED;
 		if (v & EHCI_PS_OCC)	i |= UPS_C_OVERCURRENT_INDICATOR;
-		if (sc->sc_isreset)	i |= UPS_C_PORT_RESET;
+		if (sc->sc_isreset[index]) i |= UPS_C_PORT_RESET;
 		USETW(ps.wPortChange, i);
 		l = min(len, sizeof ps);
 		memcpy(buf, &ps, l);
@@ -1965,7 +1968,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			goto ret;
 		}
 		port = EHCI_PORTSC(index);
-		v = EOREAD4(sc, port) &~ EHCI_PS_CLEAR;
+		v = EOREAD4(sc, port);
+		DPRINTFN(4, ("ehci_root_ctrl_start: portsc=0x%08x\n", v));
+		v &= ~EHCI_PS_CLEAR;
 		switch(value) {
 		case UHF_PORT_ENABLE:
 			EOWRITE4(sc, port, v | EHCI_PS_PE);
@@ -2010,14 +2015,16 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				ehci_disown(sc, index, 0);
 				break;
 			}
-			sc->sc_isreset = 1;
+			sc->sc_isreset[index] = 1;
 			DPRINTF(("ehci port %d reset, status = 0x%08x\n",
 				 index, v));
 			break;
 		case UHF_PORT_POWER:
 			DPRINTFN(2,("ehci_root_ctrl_start: set port power "
-				    "%d\n", index));
-			EOWRITE4(sc, port, v | EHCI_PS_PP);
+				    "%d (has PPC = %d)\n", index,
+				    sc->sc_hasppc));
+			if (sc->sc_hasppc)
+				EOWRITE4(sc, port, v | EHCI_PS_PP);
 			break;
 		case UHF_PORT_TEST:
 			DPRINTFN(2,("ehci_root_ctrl_start: set port test "

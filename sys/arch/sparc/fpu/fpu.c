@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.24 2005/05/31 00:57:40 christos Exp $ */
+/*	$NetBSD: fpu.c,v 1.24.8.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2005/05/31 00:57:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24.8.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,7 +72,7 @@ fpu_dumpfpn(struct fpn *fp)
 	printf("%s %c.%x %x %x %xE%d", class[fp->fp_class + 2],
 		fp->fp_sign ? '-' : ' ',
 		fp->fp_mant[0],	fp->fp_mant[1],
-		fp->fp_mant[2], fp->fp_mant[3], 
+		fp->fp_mant[2], fp->fp_mant[3],
 		fp->fp_exp);
 }
 #endif
@@ -294,9 +294,7 @@ fpu_emulate(l, tf, fs)
  * multiply two integers this way.
  */
 int
-fpu_execute(fe, instr)
-	struct fpemu *fe;
-	union instr instr;
+fpu_execute(struct fpemu *fe, union instr instr)
 {
 	struct fpn *fp;
 #ifndef SUN4U
@@ -349,7 +347,7 @@ fpu_execute(fe, instr)
 #ifdef SUN4U
 	/*
 	 * Check to see if we're dealing with a fancy cmove and handle
-	 * it first.  
+	 * it first.
 	 */
 	if (instr.i_op3.i_op3 == IOP3_FPop2 && (opf&0xff0) != (FCMP&0xff0)) {
 		switch (opf >>= 2) {
@@ -383,14 +381,14 @@ fpu_execute(fe, instr)
 			cond = (curlwp->l_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVXC >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVXC\n"));
 			cond = (curlwp->l_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRZ\n"));
@@ -398,7 +396,7 @@ fpu_execute(fe, instr)
 			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] != 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRLEZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLEZ\n"));
@@ -406,7 +404,7 @@ fpu_execute(fe, instr)
 			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] > 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRLZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLZ\n"));
@@ -414,7 +412,7 @@ fpu_execute(fe, instr)
 			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] >= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRNZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRNZ\n"));
@@ -422,7 +420,7 @@ fpu_execute(fe, instr)
 			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] == 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRGZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGZ\n"));
@@ -430,7 +428,7 @@ fpu_execute(fe, instr)
 			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] <= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;			
+			goto mov;
 		case FMVRGEZ >> 2:
 			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGEZ\n"));
@@ -438,10 +436,10 @@ fpu_execute(fe, instr)
 			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] < 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
-			goto mov;		
+			goto mov;
 		default:
-			DPRINTF(FPE_INSN, 
-				("fpu_execute: unknown v9 FP inst %x opf %x\n", 
+			DPRINTF(FPE_INSN,
+				("fpu_execute: unknown v9 FP inst %x opf %x\n",
 					instr.i_int, opf));
 			return (NOTFPU);
 		}
@@ -450,7 +448,7 @@ fpu_execute(fe, instr)
 	switch (opf >>= 2) {
 
 	default:
-		DPRINTF(FPE_INSN, 
+		DPRINTF(FPE_INSN,
 			("fpu_execute: unknown basic FP inst %x opf %x\n",
 				instr.i_int, opf));
 		return (NOTFPU);
@@ -474,7 +472,7 @@ fpu_execute(fe, instr)
 #else /* SUN4U */
 		i = 1<<(type-1);
 		fs->fs_regs[rd++] = rs1;
-		while (--i > 0) 
+		while (--i > 0)
 			fs->fs_regs[rd++] = fs->fs_regs[++rs2];
 #endif /* SUN4U */
 		fs->fs_fsr = fe->fe_fsr;

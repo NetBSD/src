@@ -1,4 +1,4 @@
-/*	$NetBSD: ral.c,v 1.5 2005/08/16 17:02:34 christos Exp $ */
+/*	$NetBSD: ral.c,v 1.5.8.1 2005/11/22 16:08:07 yamt Exp $ */
 /*	$OpenBSD: ral.c,v 1.56 2005/07/02 23:14:42 brad Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/ral/if_ral.c,v 1.10 2005/07/10 22:25:44 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.5 2005/08/16 17:02:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ral.c,v 1.5.8.1 2005/11/22 16:08:07 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -890,20 +890,20 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_SCAN:
-		ral_set_chan(sc, ic->ic_bss->ni_chan);
+		ral_set_chan(sc, ic->ic_curchan);
 		callout_reset(&sc->scan_ch, hz / 5, ral_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
-		ral_set_chan(sc, ic->ic_bss->ni_chan);
+		ral_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_ASSOC:
-		ral_set_chan(sc, ic->ic_bss->ni_chan);
+		ral_set_chan(sc, ic->ic_curchan);
 		break;
 
 	case IEEE80211_S_RUN:
-		ral_set_chan(sc, ic->ic_bss->ni_chan);
+		ral_set_chan(sc, ic->ic_curchan);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
@@ -1625,7 +1625,7 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = &sc->bcnq.desc[sc->bcnq.cur];
 	data = &sc->bcnq.data[sc->bcnq.cur];
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1681,7 +1681,7 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = &sc->prioq.desc[sc->prioq.cur];
 	data = &sc->prioq.data[sc->prioq.cur];
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1830,7 +1830,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		struct mbuf *m;
 		int rtsrate, ackrate;
 
-		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+		rtsrate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 4;
 		ackrate = ral_ack_rate(rate);
 
 		dur = ral_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
@@ -2681,8 +2681,7 @@ ral_init(struct ifnet *ifp)
 	}
 
 	/* set default BSS channel */
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	ral_set_chan(sc, ic->ic_bss->ni_chan);
+	ral_set_chan(sc, ic->ic_curchan);
 
 	/* kick Rx */
 	tmp = RAL_DROP_PHY_ERROR | RAL_DROP_CRC_ERROR;

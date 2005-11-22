@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.93 2005/06/16 04:17:49 briggs Exp $ */
+/*	$NetBSD: cache.c,v 1.93.8.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.93 2005/06/16 04:17:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.93.8.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -102,7 +102,7 @@ u_long dvma_cachealign;
  * We need to clear out the valid bits first.
  */
 void
-sun4_cache_enable()
+sun4_cache_enable(void)
 {
 	u_int i, lim, ls, ts;
 
@@ -137,7 +137,7 @@ sun4_cache_enable()
  */
 #if defined(SUN4M) || defined(SUN4D)
 void
-ms1_cache_enable()
+ms1_cache_enable(void)
 {
 	u_int pcr;
 
@@ -170,7 +170,7 @@ ms1_cache_enable()
 }
 
 void
-viking_cache_enable()
+viking_cache_enable(void)
 {
 	u_int pcr;
 
@@ -203,7 +203,7 @@ viking_cache_enable()
 }
 
 void
-hypersparc_cache_enable()
+hypersparc_cache_enable(void)
 {
 	int i, ls, ts;
 	u_int pcr, v;
@@ -253,7 +253,7 @@ hypersparc_cache_enable()
 
 
 void
-swift_cache_enable()
+swift_cache_enable(void)
 {
 	int i, ls, ts;
 	u_int pcr;
@@ -284,7 +284,7 @@ swift_cache_enable()
 }
 
 void
-cypress_cache_enable()
+cypress_cache_enable(void)
 {
 	int i, ls, ts;
 	u_int pcr;
@@ -316,7 +316,7 @@ cypress_cache_enable()
 }
 
 void
-turbosparc_cache_enable()
+turbosparc_cache_enable(void)
 {
 	int i, ls, ts;
 	u_int pcr, pcf;
@@ -381,8 +381,7 @@ turbosparc_cache_enable()
  * hardware flush space, for all cache pages).
  */
 void
-sun4_vcache_flush_context(ctx)
-	int ctx;
+sun4_vcache_flush_context(int ctx)
 {
 	char *p;
 	int i, ls;
@@ -413,9 +412,7 @@ sun4_vcache_flush_context(ctx)
  * no hw-flush space.
  */
 void
-sun4_vcache_flush_region(vreg, ctx)
-	int vreg;
-	int ctx;
+sun4_vcache_flush_region(int vreg, int ctx)
 {
 	int i, ls;
 	char *p;
@@ -438,9 +435,7 @@ sun4_vcache_flush_region(vreg, ctx)
  * Again, for hardware, we just write each page (in hw-flush space).
  */
 void
-sun4_vcache_flush_segment(vreg, vseg, ctx)
-	int vreg, vseg;
-	int ctx;
+sun4_vcache_flush_segment(int vreg, int vseg, int ctx)
 {
 	int i, ls;
 	char *p;
@@ -466,9 +461,7 @@ sun4_vcache_flush_segment(vreg, vseg, ctx)
  * Again we write to each cache line.
  */
 void
-sun4_vcache_flush_page(va, ctx)
-	int va;
-	int ctx;
+sun4_vcache_flush_page(int va, int ctx)
 {
 	int i, ls;
 	char *p;
@@ -493,9 +486,7 @@ sun4_vcache_flush_page(va, ctx)
  * one write into ASI_HWFLUSHPG space to flush all cache lines.
  */
 void
-sun4_vcache_flush_page_hw(va, ctx)
-	int va;
-	int ctx;
+sun4_vcache_flush_page_hw(int va, int ctx)
 {
 	char *p;
 
@@ -520,9 +511,7 @@ sun4_vcache_flush_page_hw(va, ctx)
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
-sun4_cache_flush(base, len)
-	caddr_t base;
-	u_int len;
+sun4_cache_flush(caddr_t base, u_int len)
 {
 	int i, ls, baseoff;
 	char *p;
@@ -597,8 +586,7 @@ sun4_cache_flush(base, len)
  * address space.
  */
 void
-srmmu_vcache_flush_context(ctx)
-	int ctx;
+srmmu_vcache_flush_context(int ctx)
 {
 	int i, ls, octx;
 	char *p;
@@ -624,9 +612,7 @@ srmmu_vcache_flush_context(ctx)
  * we use the `flush region' space.
  */
 void
-srmmu_vcache_flush_region(vreg, ctx)
-	int vreg;
-	int ctx;
+srmmu_vcache_flush_region(int vreg, int ctx)
 {
 	int i, ls, octx;
 	char *p;
@@ -654,9 +640,7 @@ srmmu_vcache_flush_region(vreg, ctx)
  * Again, for hardware, we just write each page (in hw-flush space).
  */
 void
-srmmu_vcache_flush_segment(vreg, vseg, ctx)
-	int vreg, vseg;
-	int ctx;
+srmmu_vcache_flush_segment(int vreg, int vseg, int ctx)
 {
 	int i, ls, octx;
 	char *p;
@@ -680,9 +664,7 @@ srmmu_vcache_flush_segment(vreg, vseg, ctx)
  * Again we write to each cache line.
  */
 void
-srmmu_vcache_flush_page(va, ctx)
-	int va;
-	int ctx;
+srmmu_vcache_flush_page(int va, int ctx)
 {
 	int i, ls, octx;
 	char *p;
@@ -726,8 +708,9 @@ srmmu_vcache_flush_page(va, ctx)
  * Flush entire cache.
  */
 void
-srmmu_cache_flush_all()
+srmmu_cache_flush_all(void)
 {
+
 	srmmu_vcache_flush_context(0);
 }
 
@@ -783,9 +766,7 @@ srmmu_vcache_flush_range(int va, int len, int ctx)
  */
 
 void
-srmmu_cache_flush(base, len)
-	caddr_t base;
-	u_int len;
+srmmu_cache_flush(caddr_t base, u_int len)
 {
 	int ctx = getcontext4m();
 	int i, baseoff;
@@ -849,11 +830,11 @@ srmmu_cache_flush(base, len)
 
 int ms1_cacheflush_magic = 0;
 #define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
+
 void
-ms1_cache_flush(base, len)
-	caddr_t base;
-	u_int len;
+ms1_cache_flush(caddr_t base, u_int len)
 {
+
 	/*
 	 * Although physically tagged, we still need to flush the
 	 * data cache after (if we have a write-through cache) or before
@@ -911,7 +892,7 @@ ms1_cache_flush(base, len)
  * Flush entire cache.
  */
 void
-ms1_cache_flush_all()
+ms1_cache_flush_all(void)
 {
 
 	/* Flash-clear both caches */
@@ -920,7 +901,7 @@ ms1_cache_flush_all()
 }
 
 void
-hypersparc_cache_flush_all()
+hypersparc_cache_flush_all(void)
 {
 
 	srmmu_vcache_flush_context(getcontext4m());
@@ -929,10 +910,10 @@ hypersparc_cache_flush_all()
 }
 
 void
-cypress_cache_flush_all()
+cypress_cache_flush_all(void)
 {
-
 	extern char kernel_text[];
+
 	char *p;
 	int i, ls;
 
@@ -946,16 +927,12 @@ cypress_cache_flush_all()
 
 
 void
-viking_cache_flush(base, len)
-	caddr_t base;
-	u_int len;
+viking_cache_flush(caddr_t base, u_int len)
 {
 }
 
 void
-viking_pcache_flush_page(pa, invalidate_only)
-	paddr_t pa;
-	int invalidate_only;
+viking_pcache_flush_page(paddr_t pa, int invalidate_only)
 {
 	int set, i;
 
@@ -968,7 +945,7 @@ viking_pcache_flush_page(pa, invalidate_only)
 	if (invalidate_only) {
 		u_int pa_tag = (pa >> 12);
 		u_int tagaddr;
-		u_int64_t tag;
+		uint64_t tag;
 
 		/*
 		 * Loop over all sets and invalidate all entries tagged
@@ -1066,36 +1043,33 @@ viking_pcache_flush_page(pa, invalidate_only)
  */
 
 void
-smp_vcache_flush_page(va, ctx)
-	int va;
-	int ctx;
+smp_vcache_flush_page(int va, int ctx)
 {
+
 	FXCALL2(cpuinfo.sp_vcache_flush_page, cpuinfo.ft_vcache_flush_page,
 		va, ctx, CPUSET_ALL);
 }
 
 void
-smp_vcache_flush_segment(vr, vs, ctx)
-	int vr, vs;
-	int ctx;
+smp_vcache_flush_segment(int vr, int vs, int ctx)
 {
+
 	FXCALL3(cpuinfo.sp_vcache_flush_segment, cpuinfo.ft_vcache_flush_segment,
 		vr, vs, ctx, CPUSET_ALL);
 }
 
 void
-smp_vcache_flush_region(vr, ctx)
-	int vr;
-	int ctx;
+smp_vcache_flush_region(int vr, int ctx)
 {
+
 	FXCALL2(cpuinfo.sp_vcache_flush_region, cpuinfo.ft_vcache_flush_region,
 		vr, ctx, CPUSET_ALL);
 }
 
 void
-smp_vcache_flush_context(ctx)
-	int ctx;
+smp_vcache_flush_context(int ctx)
 {
+
 	FXCALL1(cpuinfo.sp_vcache_flush_context, cpuinfo.ft_vcache_flush_context,
 		ctx, CPUSET_ALL);
 }

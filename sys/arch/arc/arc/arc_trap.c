@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.29.14.1 2005/11/22 16:08:01 yamt Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.29.14.1 2005/11/22 16:08:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ arc_hardware_intr(uint32_t status, uint32_t cause, uint32_t pc,
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	return (status & ~cause & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE;
+	return cause;
 }
 
 /*
@@ -162,8 +162,9 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+	uint32_t handled;
 
-	if (ipending & MIPS_INT_MASK_CLOCK) {
+	if (ipending & MIPS_INT_MASK_5) {
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
@@ -172,10 +173,12 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	}
 
 	uvmexp.intrs++;
+	handled = cause;
 	/* real device interrupt */
-	if (ipending & INT_MASK_REAL_DEV) {
-		_splset(arc_hardware_intr(status, cause, pc, ipending));
+	if (ipending & MIPS3_HARD_INT_MASK) {
+		handled = arc_hardware_intr(status, cause, pc, ipending);
 	}
+	_splset((status & ~handled & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* software interrupts */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);

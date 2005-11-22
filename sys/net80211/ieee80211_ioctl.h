@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.14 2005/07/27 20:31:25 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.14.6.1 2005/11/22 16:08:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.10 2005/07/06 15:38:27 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.14 2005/08/13 17:31:48 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_IOCTL_H_
 #define _NET80211_IEEE80211_IOCTL_H_
@@ -196,6 +196,8 @@ struct ieee80211_stats {
 	u_int32_t	is_tx_badcipher;	/* tx failed 'cuz key type */
 	u_int32_t	is_tx_nodefkey;		/* tx failed 'cuz no defkey */
 	u_int32_t	is_tx_noheadroom;	/* tx failed 'cuz no space */
+	u_int32_t	is_tx_fragframes;	/* tx frames fragmented */
+	u_int32_t	is_tx_frags;		/* tx fragments created */
 	u_int32_t	is_scan_active;		/* active scans started */
 	u_int32_t	is_scan_passive;	/* passive scans started */
 	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
@@ -220,6 +222,13 @@ struct ieee80211_stats {
 	u_int32_t	is_ps_unassoc;		/* ps-poll for unassoc. sta */
 	u_int32_t	is_ps_badaid;		/* ps-poll w/ incorrect aid */
 	u_int32_t	is_ps_qempty;		/* ps-poll w/ nothing to send */
+	u_int32_t	is_ff_badhdr;		/* fast frame rx'd w/ bad hdr */
+	u_int32_t	is_ff_tooshort;		/* fast frame rx decap error */
+	u_int32_t	is_ff_split;		/* fast frame rx split error */
+	u_int32_t	is_ff_decap;		/* fast frames decap'd */
+	u_int32_t	is_ff_encap;		/* fast frames encap'd for tx */
+	u_int32_t	is_rx_badbintval;	/* rx frame w/ bogus bintval */
+	u_int32_t	is_spare[9];
 };
 
 /*
@@ -290,6 +299,12 @@ enum {
 	IEEE80211_MACCMD_POLICY_DENY	= 2,	/* set policy: deny traffic */
 	IEEE80211_MACCMD_FLUSH		= 3,	/* flush ACL database */
 	IEEE80211_MACCMD_DETACH		= 4,	/* detach ACL policy */
+	IEEE80211_MACCMD_POLICY		= 5,	/* get ACL policy */
+	IEEE80211_MACCMD_LIST		= 6,	/* get ACL database */
+};
+
+struct ieee80211req_maclist {
+	u_int8_t	ml_macaddr[IEEE80211_ADDR_LEN];
 };
 
 /*
@@ -487,6 +502,7 @@ struct ieee80211req {
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
 #define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */
+#define	IEEE80211_IOC_FRAGTHRESHOLD	73	/* tx fragmentation threshold */
 
 /*
  * Scan result data returned for IEEE80211_IOC_SCAN_RESULTS.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.11 2003/08/07 16:29:37 agc Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.11.24.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2003/08/07 16:29:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11.24.1 2005/11/22 16:08:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -86,9 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2003/08/07 16:29:37 agc Exp $")
  * int -> fpn.
  */
 int
-fpu_itof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_itof(struct fpn *fp, u_int i)
 {
 
 	if (i == 0)
@@ -113,9 +111,7 @@ fpu_itof(fp, i)
  * 64-bit int -> fpn.
  */
 int
-fpu_xtof(fp, i)
-	register struct fpn *fp;
-	register u_int64_t i;
+fpu_xtof(struct fpn *fp, uint64_t i)
 {
 
 	if (i == 0)
@@ -175,9 +171,7 @@ fpu_xtof(fp, i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 int
-fpu_stof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_stof(struct fpn *fp, u_int i)
 {
 	register int exp;
 	register u_int frac, f0, f1;
@@ -195,9 +189,7 @@ fpu_stof(fp, i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 int
-fpu_dtof(fp, i, j)
-	register struct fpn *fp;
-	register u_int i, j;
+fpu_dtof(struct fpn *fp, u_int i, u_int j)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2;
@@ -216,9 +208,7 @@ fpu_dtof(fp, i, j)
  * 128-bit extended -> fpn.
  */
 int
-fpu_qtof(fp, i, j, k, l)
-	register struct fpn *fp;
-	register u_int i, j, k, l;
+fpu_qtof(register struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2, f3;
@@ -244,16 +234,13 @@ fpu_qtof(fp, i, j, k, l)
  * operations are performed.)
  */
 void
-fpu_explode(fe, fp, type, reg)
-	register struct fpemu *fe;
-	register struct fpn *fp;
-	int type, reg;
+fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 {
 	register u_int s, *space;
 #ifdef SUN4U
-	u_int64_t l, *xspace;
+	uint64_t l, *xspace;
 
-	xspace = (u_int64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];
+	xspace = (uint64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];
 	l = xspace[0];
 #endif /* SUN4U */
 	space = &fe->fe_fpstate->fs_regs[reg];
@@ -301,10 +288,10 @@ fpu_explode(fe, fp, type, reg)
 	}
 	fp->fp_class = s;
 	DPRINTF(FPE_REG, ("fpu_explode: %%%c%d => ", (type == FTYPE_LNG) ? 'x' :
-		((type == FTYPE_INT) ? 'i' : 
+		((type == FTYPE_INT) ? 'i' :
 			((type == FTYPE_SNG) ? 's' :
 				((type == FTYPE_DBL) ? 'd' :
-					((type == FTYPE_EXT) ? 'q' : '?')))), 
+					((type == FTYPE_EXT) ? 'q' : '?')))),
 		reg));
 #ifdef DEBUG
 	if (fpe_debug & FPE_REG) {

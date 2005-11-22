@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.52 2005/06/04 04:59:18 tsutsui Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.52.8.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.52 2005/06/04 04:59:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.52.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -76,47 +76,48 @@ struct sparcvme_softc {
 	struct vmebusvec *sc_vec;	/* VME interrupt vector */
 	struct rom_range *sc_range;	/* ROM range property */
 	int		 sc_nrange;
-	volatile u_int32_t *sc_ioctags;	/* VME IO-cache tag registers */
-	volatile u_int32_t *sc_iocflush;/* VME IO-cache flush registers */
-	int 		 (*sc_vmeintr) __P((void *));
+	volatile uint32_t *sc_ioctags;	/* VME IO-cache tag registers */
+	volatile uint32_t *sc_iocflush;/* VME IO-cache flush registers */
+	int 		 (*sc_vmeintr)(void *);
 };
 struct  sparcvme_softc *sparcvme_sc;/*XXX*/
 
 /* autoconfiguration driver */
-static int	vmematch_iommu  __P((struct device *, struct cfdata *, void *));
-static void	vmeattach_iommu __P((struct device *, struct device *, void *));
-static int	vmematch_mainbus  __P((struct device *, struct cfdata *, void *));
-static void	vmeattach_mainbus __P((struct device *, struct device *, void *));
+static int	vmematch_iommu(struct device *, struct cfdata *, void *);
+static void	vmeattach_iommu(struct device *, struct device *, void *);
+static int	vmematch_mainbus(struct device *, struct cfdata *, void *);
+static void	vmeattach_mainbus(struct device *, struct device *, void *);
 #if defined(SUN4)
-int 		vmeintr4  __P((void *));
+int 		vmeintr4(void *);
 #endif
 #if defined(SUN4M)
-int 		vmeintr4m __P((void *));
-static int	sparc_vme_error __P((void));
+int 		vmeintr4m(void *);
+static int	sparc_vme_error(void);
 #endif
 
 
-static int	sparc_vme_probe __P((void *, vme_addr_t, vme_size_t,
+static int	sparc_vme_probe(void *, vme_addr_t, vme_size_t,
 				vme_am_t, vme_datasize_t,
-	int (*) __P((void *, bus_space_tag_t, bus_space_handle_t)), void *));
-static int	sparc_vme_map __P((void *, vme_addr_t, vme_size_t, vme_am_t,
-				   vme_datasize_t, vme_swap_t,
-				   bus_space_tag_t *, bus_space_handle_t *,
-				   vme_mapresc_t *));
-static void	sparc_vme_unmap __P((void *, vme_mapresc_t));
-static int	sparc_vme_intr_map __P((void *, int, int, vme_intr_handle_t *));
-static const struct evcnt *sparc_vme_intr_evcnt __P((void *,
-						     vme_intr_handle_t));
-static void *	sparc_vme_intr_establish __P((void *, vme_intr_handle_t, int,
-					      int (*) __P((void *)), void *));
-static void	sparc_vme_intr_disestablish __P((void *, void *));
+				int (*)(void *,
+					bus_space_tag_t, bus_space_handle_t),
+				void *);
+static int	sparc_vme_map(void *, vme_addr_t, vme_size_t, vme_am_t,
+			      vme_datasize_t, vme_swap_t,
+			      bus_space_tag_t *, bus_space_handle_t *,
+			      vme_mapresc_t *);
+static void	sparc_vme_unmap(void *, vme_mapresc_t);
+static int	sparc_vme_intr_map(void *, int, int, vme_intr_handle_t *);
+static const struct evcnt *sparc_vme_intr_evcnt(void *, vme_intr_handle_t);
+static void *	sparc_vme_intr_establish(void *, vme_intr_handle_t, int,
+					 int (*)(void *), void *);
+static void	sparc_vme_intr_disestablish(void *, void *);
 
-static int	vmebus_translate __P((struct sparcvme_softc *, vme_am_t,
-				      vme_addr_t, bus_addr_t *));
+static int	vmebus_translate(struct sparcvme_softc *, vme_am_t,
+				 vme_addr_t, bus_addr_t *);
 #ifdef notyet
 #if defined(SUN4M)
-static void	sparc_vme_iommu_barrier __P(( bus_space_tag_t, bus_space_handle_t,
-					  bus_size_t, bus_size_t, int));
+static void	sparc_vme_iommu_barrier(bus_space_tag_t, bus_space_handle_t,
+					bus_size_t, bus_size_t, int);
 
 #endif /* SUN4M */
 #endif
@@ -125,47 +126,47 @@ static void	sparc_vme_iommu_barrier __P(( bus_space_tag_t, bus_space_handle_t,
  * DMA functions.
  */
 #if defined(SUN4) || defined(SUN4M)
-static void	sparc_vct_dmamap_destroy __P((void *, bus_dmamap_t));
+static void	sparc_vct_dmamap_destroy(void *, bus_dmamap_t);
 #endif
 
 #if defined(SUN4)
-static int	sparc_vct4_dmamap_create __P((void *, vme_size_t, vme_am_t,
+static int	sparc_vct4_dmamap_create(void *, vme_size_t, vme_am_t,
 		    vme_datasize_t, vme_swap_t, int, vme_size_t, vme_addr_t,
-		    int, bus_dmamap_t *));
-static int	sparc_vme4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-static void	sparc_vme4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static void	sparc_vme4_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+		    int, bus_dmamap_t *);
+static int	sparc_vme4_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+static void	sparc_vme4_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+static void	sparc_vme4_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 #endif /* SUN4 */
 
 #if defined(SUN4M)
-static int	sparc_vct_iommu_dmamap_create __P((void *, vme_size_t, vme_am_t,
+static int	sparc_vct_iommu_dmamap_create(void *, vme_size_t, vme_am_t,
 		    vme_datasize_t, vme_swap_t, int, vme_size_t, vme_addr_t,
-		    int, bus_dmamap_t *));
-static int	sparc_vme_iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t,
-		    int, bus_size_t, bus_size_t, int, bus_dmamap_t *));
+		    int, bus_dmamap_t *);
+static int	sparc_vme_iommu_dmamap_create(bus_dma_tag_t, bus_size_t,
+		    int, bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-static int	sparc_vme_iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t,
-		    void *, bus_size_t, struct proc *, int));
-static void	sparc_vme_iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static void	sparc_vme_iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+static int	sparc_vme_iommu_dmamap_load(bus_dma_tag_t, bus_dmamap_t,
+		    void *, bus_size_t, struct proc *, int);
+static void	sparc_vme_iommu_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+static void	sparc_vme_iommu_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4M)
-static int	sparc_vme_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
+static int	sparc_vme_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
 #endif
 
 #if 0
-static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-static void	sparc_vme_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
-static paddr_t	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int, off_t, int, int));
+static void	sparc_vme_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+static void	sparc_vme_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+static paddr_t	sparc_vme_dmamem_mmap(bus_dma_tag_t,
+		    bus_dma_segment_t *, int, off_t, int, int);
 #endif
 
-int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
+int sparc_vme_mmap_cookie(vme_addr_t, vme_am_t, bus_space_handle_t *);
 
 CFATTACH_DECL(vme_mainbus, sizeof(struct sparcvme_softc),
     vmematch_mainbus, vmeattach_mainbus, NULL, NULL);
@@ -175,7 +176,7 @@ CFATTACH_DECL(vme_iommu, sizeof(struct sparcvme_softc),
 
 static int vme_attached;
 
-int	(*vmeerr_handler) __P((void));
+int	(*vmeerr_handler)(void);
 
 #define VMEMOD_D32 0x40 /* ??? */
 
@@ -268,11 +269,8 @@ struct sparc_bus_dma_tag sparc_vme_iommu_dma_tag = {
 #endif
 
 
-int
-vmematch_mainbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+vmematch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -282,11 +280,8 @@ vmematch_mainbus(parent, cf, aux)
 	return (strcmp("vme", ma->ma_name) == 0);
 }
 
-int
-vmematch_iommu(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+vmematch_iommu(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iommu_attach_args *ia = aux;
 
@@ -297,10 +292,8 @@ vmematch_iommu(parent, cf, aux)
 }
 
 
-void
-vmeattach_mainbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+vmeattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4)
 	struct mainbus_attach_args *ma = aux;
@@ -337,15 +330,13 @@ vmeattach_mainbus(parent, self, aux)
 	printf("\n");
 	(void)config_found(self, &vba, 0);
 
-#endif
+#endif /* SUN4 */
 	return;
 }
 
 /* sun4m vmebus */
-void
-vmeattach_iommu(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+vmeattach_iommu(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4M)
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)self;
@@ -413,7 +404,7 @@ vmeattach_iommu(parent, self, aux)
 			  &bh) != 0) {
 		panic("%s: can't map IOC tags", self->dv_xname);
 	}
-	sc->sc_ioctags = (u_int32_t *)bh;
+	sc->sc_ioctags = (uint32_t *)bh;
 
 	if (bus_space_map(ia->iom_bustag,
 			  (bus_addr_t) BUS_ADDR(
@@ -424,7 +415,7 @@ vmeattach_iommu(parent, self, aux)
 			  &bh) != 0) {
 		panic("%s: can't map IOC flush registers", self->dv_xname);
 	}
-	sc->sc_iocflush = (u_int32_t *)bh;
+	sc->sc_iocflush = (uint32_t *)bh;
 
 	/*
 	 * Get "range" property.
@@ -456,10 +447,10 @@ vmeattach_iommu(parent, self, aux)
 
 #if defined(SUN4M)
 static int
-sparc_vme_error()
+sparc_vme_error(void)
 {
 	struct sparcvme_softc *sc = sparcvme_sc;
-	u_int32_t afsr, afpa;
+	uint32_t afsr, afpa;
 	char bits[64];
 
 	afsr = sc->sc_reg->vmebus_afsr;
@@ -471,12 +462,9 @@ sparc_vme_error()
 }
 #endif
 
-int
-vmebus_translate(sc, mod, addr, bap)
-	struct sparcvme_softc *sc;
-	vme_am_t	mod;
-	vme_addr_t	addr;
-	bus_addr_t	*bap;
+static int
+vmebus_translate(struct sparcvme_softc *sc, vme_am_t mod, vme_addr_t addr,
+		 bus_addr_t *bap)
 {
 	int i;
 
@@ -494,16 +482,16 @@ vmebus_translate(sc, mod, addr, bap)
 }
 
 struct vmeprobe_myarg {
-	int (*cb) __P((void *, bus_space_tag_t, bus_space_handle_t));
+	int (*cb)(void *, bus_space_tag_t, bus_space_handle_t);
 	void *cbarg;
 	bus_space_tag_t tag;
 	int res; /* backwards */
 };
 
-static int vmeprobe_mycb __P((void *, void *));
+static int vmeprobe_mycb(void *, void *);
+
 static int
-vmeprobe_mycb(bh, arg)
-	void *bh, *arg;
+vmeprobe_mycb(void *bh, void *arg)
 {
 	struct vmeprobe_myarg *a = arg;
 
@@ -511,15 +499,11 @@ vmeprobe_mycb(bh, arg)
 	return (!a->res);
 }
 
-int
-sparc_vme_probe(cookie, addr, len, mod, datasize, callback, arg)
-	void *cookie;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t mod;
-	vme_datasize_t datasize;
-	int (*callback) __P((void *, bus_space_tag_t, bus_space_handle_t));
-	void *arg;
+static int
+sparc_vme_probe(void *cookie, vme_addr_t addr, vme_size_t len, vme_am_t mod,
+		vme_datasize_t datasize,
+		int (*callback)(void *, bus_space_tag_t, bus_space_handle_t),
+		void *arg)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
 	bus_addr_t paddr;
@@ -553,17 +537,10 @@ sparc_vme_probe(cookie, addr, len, mod, datasize, callback, arg)
 	return (0);
 }
 
-int
-sparc_vme_map(cookie, addr, size, mod, datasize, swap, tp, hp, rp)
-	void *cookie;
-	vme_addr_t addr;
-	vme_size_t size;
-	vme_am_t mod;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	bus_space_tag_t *tp;
-	bus_space_handle_t *hp;
-	vme_mapresc_t *rp;
+static int
+sparc_vme_map(void *cookie, vme_addr_t addr, vme_size_t size, vme_am_t mod,
+	      vme_datasize_t datasize, vme_swap_t swap,
+	      bus_space_tag_t *tp, bus_space_handle_t *hp, vme_mapresc_t *rp)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
 	bus_addr_t paddr;
@@ -578,10 +555,7 @@ sparc_vme_map(cookie, addr, size, mod, datasize, swap, tp, hp, rp)
 }
 
 int
-sparc_vme_mmap_cookie(addr, mod, hp)
-	vme_addr_t addr;
-	vme_am_t mod;
-	bus_space_handle_t *hp;
+sparc_vme_mmap_cookie(vme_addr_t addr, vme_am_t mod, bus_space_handle_t *hp)
 {
 	struct sparcvme_softc *sc = sparcvme_sc;
 	bus_addr_t paddr;
@@ -591,19 +565,16 @@ sparc_vme_mmap_cookie(addr, mod, hp)
 	if (error != 0)
 		return (error);
 
-	return (bus_space_mmap(sc->sc_bustag, paddr, 0, 
+	return (bus_space_mmap(sc->sc_bustag, paddr, 0,
 		0/*prot is ignored*/, 0));
 }
 
 #ifdef notyet
 #if defined(SUN4M)
-void
-sparc_vme_iommu_barrier(t, h, offset, size, flags)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t offset;
-	bus_size_t size;
-	int flags;
+static void
+sparc_vme_iommu_barrier(bus_space_tag_t t, bus_space_handle_t h,
+			bus_size_t offset, bus_size_t size.
+			int flags)
 {
 	struct vmebusreg *vbp = (struct vmebusreg *)t->cookie;
 
@@ -648,8 +619,7 @@ struct sparc_vme_intr_handle {
 
 #if defined(SUN4)
 int
-vmeintr4(arg)
-	void *arg;
+vmeintr4(void *arg)
 {
 	struct sparc_vme_intr_handle *ihp = (vme_intr_handle_t)arg;
 	int level, vec;
@@ -682,8 +652,7 @@ vmeintr4(arg)
 
 #if defined(SUN4M)
 int
-vmeintr4m(arg)
-	void *arg;
+vmeintr4m(void *arg)
 {
 	struct sparc_vme_intr_handle *ihp = (vme_intr_handle_t)arg;
 	int level, vec;
@@ -711,7 +680,7 @@ vmeintr4m(arg)
 	/* so, arrange to catch the fault... */
 	{
 	extern struct user *proc0paddr;
-	extern int fkbyte __P((volatile char *, struct pcb *));
+	extern int fkbyte(volatile char *, struct pcb *);
 	volatile char *addr = &ihp->sc->sc_vec->vmebusvec[level];
 	struct pcb *xpcb;
 	u_long saveonfault;
@@ -754,14 +723,11 @@ vmeintr4m(arg)
 
 	return (rv);
 }
-#endif
+#endif /* SUN4M */
 
-int
-sparc_vme_intr_map(cookie, level, vec, ihp)
-	void *cookie;
-	int level;
-	int vec;
-	vme_intr_handle_t *ihp;
+static int
+sparc_vme_intr_map(void *cookie, int level, int vec,
+		   vme_intr_handle_t *ihp)
 {
 	struct sparc_vme_intr_handle *ih;
 
@@ -774,23 +740,17 @@ sparc_vme_intr_map(cookie, level, vec, ihp)
 	return (0);
 }
 
-const struct evcnt *
-sparc_vme_intr_evcnt(cookie, vih)
-	void *cookie;
-	vme_intr_handle_t vih;
+static const struct evcnt *
+sparc_vme_intr_evcnt(void *cookie, vme_intr_handle_t vih)
 {
 
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
 }
 
-void *
-sparc_vme_intr_establish(cookie, vih, level, func, arg)
-	void *cookie;
-	vme_intr_handle_t vih;
-	int level;
-	int (*func) __P((void *));
-	void *arg;
+static void *
+sparc_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int level,
+			 int (*func)(void *), void *arg)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
 	struct sparc_vme_intr_handle *svih =
@@ -832,20 +792,18 @@ sparc_vme_intr_establish(cookie, vih, level, func, arg)
 	return (NULL);
 }
 
-void
-sparc_vme_unmap(cookie, resc)
-	void * cookie;
-	vme_mapresc_t resc;
+static void
+sparc_vme_unmap(void *cookie, vme_mapresc_t resc)
 {
+
 	/* Not implemented */
 	panic("sparc_vme_unmap");
 }
 
-void
-sparc_vme_intr_disestablish(cookie, a)
-	void *cookie;
-	void *a;
+static void
+sparc_vme_intr_disestablish(void *cookie, void *a)
 {
+
 	/* Not implemented */
 	panic("sparc_vme_intr_disestablish");
 }
@@ -858,29 +816,21 @@ sparc_vme_intr_disestablish(cookie, a)
 
 #if defined(SUN4) || defined(SUN4M)
 static void
-sparc_vct_dmamap_destroy(cookie, map)
-	void *cookie;
-	bus_dmamap_t map;
+sparc_vct_dmamap_destroy(void *cookie, bus_dmamap_t map)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
+
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 }
 #endif
 
 #if defined(SUN4)
 static int
-sparc_vct4_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
-			  boundary, flags, dmamp)
-	void *cookie;
-	vme_size_t size;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	int nsegments;
-	vme_size_t maxsegsz;
-	vme_addr_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+sparc_vct4_dmamap_create(void *cookie, vme_size_t size, vme_am_t am,
+			 vme_datasize_t datasize, vme_swap_t swap,
+			 int nsegments, vme_size_t maxsegsz,
+			 vme_addr_t boundary, int flags,
+			 bus_dmamap_t *dmamp)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
 
@@ -889,14 +839,10 @@ sparc_vct4_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
 				  boundary, flags, dmamp));
 }
 
-int
-sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+static int
+sparc_vme4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+		       void *buf, bus_size_t buflen,
+		       struct proc *p, int flags)
 {
 	bus_addr_t dva;
 	bus_size_t sgsize;
@@ -960,10 +906,8 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	return (0);
 }
 
-void
-sparc_vme4_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+static void
+sparc_vme4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
@@ -994,13 +938,9 @@ sparc_vme4_dmamap_unload(t, map)
 	map->dm_nsegs = 0;
 }
 
-void
-sparc_vme4_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+static void
+sparc_vme4_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
+		       bus_addr_t offset, bus_size_t len, int ops)
 {
 
 	/*
@@ -1012,15 +952,10 @@ sparc_vme4_dmamap_sync(t, map, offset, len, ops)
 
 #if defined(SUN4M)
 static int
-sparc_vme_iommu_dmamap_create (t, size, nsegments, maxsegsz,
-				boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+sparc_vme_iommu_dmamap_create(bus_dma_tag_t t, bus_size_t size,
+			      int nsegments, bus_size_t maxsegsz,
+			      bus_size_t boundary, int flags,
+			      bus_dmamap_t *dmamp)
 {
 
 	printf("sparc_vme_dmamap_create: please use `vme_dmamap_create'\n");
@@ -1028,18 +963,11 @@ sparc_vme_iommu_dmamap_create (t, size, nsegments, maxsegsz,
 }
 
 static int
-sparc_vct_iommu_dmamap_create(cookie, size, am, datasize, swap, nsegments,
-			      maxsegsz, boundary, flags, dmamp)
-	void *cookie;
-	vme_size_t size;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	int nsegments;
-	vme_size_t maxsegsz;
-	vme_addr_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+sparc_vct_iommu_dmamap_create(void *cookie, vme_size_t size, vme_am_t am,
+			      vme_datasize_t datasize, vme_swap_t swap,
+			      int nsegments, vme_size_t maxsegsz,
+			      vme_addr_t boundary, int flags,
+			      bus_dmamap_t *dmamp)
 {
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
 	bus_dmamap_t map;
@@ -1076,17 +1004,13 @@ sparc_vct_iommu_dmamap_create(cookie, size, am, datasize, swap, nsegments,
 	return (0);
 }
 
-int
-sparc_vme_iommu_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+static int
+sparc_vme_iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+			    void *buf, bus_size_t buflen,
+			    struct proc *p, int flags)
 {
 	struct sparcvme_softc	*sc = (struct sparcvme_softc *)t->_cookie;
-	volatile u_int32_t	*ioctags;
+	volatile uint32_t	*ioctags;
 	int			error;
 
 	/* Round request to a multiple of the I/O cache size */
@@ -1113,13 +1037,11 @@ sparc_vme_iommu_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 
-void
-sparc_vme_iommu_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+static void
+sparc_vme_iommu_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct sparcvme_softc	*sc = (struct sparcvme_softc *)t->_cookie;
-	volatile u_int32_t	*flushregs;
+	volatile uint32_t	*flushregs;
 	int			len;
 
 	/* Go from VME to CPU view */
@@ -1143,13 +1065,9 @@ sparc_vme_iommu_dmamap_unload(t, map)
 	bus_dmamap_unload(sc->sc_dmatag, map);
 }
 
-void
-sparc_vme_iommu_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+static void
+sparc_vme_iommu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
+			    bus_addr_t offset, bus_size_t len, int ops)
 {
 
 	/*
@@ -1159,14 +1077,9 @@ sparc_vme_iommu_dmamap_sync(t, map, offset, len, ops)
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4M)
-int
-sparc_vme_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+static int
+sparc_vme_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+		     size_t size, caddr_t *kvap, int flags)
 {
 	struct sparcvme_softc	*sc = (struct sparcvme_softc *)t->_cookie;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 2005/09/24 22:30:15 macallan Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.11.6.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2005/09/24 22:30:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.6.1 2005/11/22 16:08:03 yamt Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -87,7 +87,7 @@ int sparc_pci_debug = 0;
 
 /*
  * Footnote 1 in Table 9-1 (p. 129):
- * 
+ *
  *   Three least significant bits of the configuration data space
  *   access must match those of the configuration address space access.
  */
@@ -226,8 +226,8 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 #endif
 		}
 
-		/* 
-		 * We only really need the first `reg' property. 
+		/*
+		 * We only really need the first `reg' property.
 		 *
 		 * For simplicity, we'll query the `reg' when we
 		 * need it.  Otherwise we could malloc() it, but

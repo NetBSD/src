@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.39 2005/06/04 04:32:11 tsutsui Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.39.8.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,7 +78,7 @@
 #undef CG14_CG8
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.39 2005/06/04 04:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.39.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.39 2005/06/04 04:32:11 tsutsui Exp 
 #include <sparc/dev/cgfourteenvar.h>
 
 /* autoconfiguration driver */
-static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
+static void	cgfourteenattach(struct device *, struct device *, void *);
 static void	cgfourteenunblank(struct device *);
 
 CFATTACH_DECL(cgfourteen, sizeof(struct cgfourteen_softc),
@@ -129,16 +129,16 @@ static struct fbdriver cgfourteenfbdriver = {
 	nopoll, cgfourteenmmap, nokqfilter
 };
 
-static void cg14_set_video __P((struct cgfourteen_softc *, int));
-static int  cg14_get_video __P((struct cgfourteen_softc *));
-static int  cg14_get_cmap __P((struct fbcmap *, union cg14cmap *, int));
-static int  cg14_put_cmap __P((struct fbcmap *, union cg14cmap *, int));
-static void cg14_load_hwcmap __P((struct cgfourteen_softc *, int, int));
-static void cg14_init __P((struct cgfourteen_softc *));
-static void cg14_reset __P((struct cgfourteen_softc *));
-static void cg14_loadomap __P((struct cgfourteen_softc *));/* cursor overlay */
-static void cg14_setcursor __P((struct cgfourteen_softc *));/* set position */
-static void cg14_loadcursor __P((struct cgfourteen_softc *));/* set shape */
+static void cg14_set_video(struct cgfourteen_softc *, int);
+static int  cg14_get_video(struct cgfourteen_softc *);
+static int  cg14_get_cmap(struct fbcmap *, union cg14cmap *, int);
+static int  cg14_put_cmap(struct fbcmap *, union cg14cmap *, int);
+static void cg14_load_hwcmap(struct cgfourteen_softc *, int, int);
+static void cg14_init(struct cgfourteen_softc *);
+static void cg14_reset(struct cgfourteen_softc *);
+static void cg14_loadomap(struct cgfourteen_softc *);	/* cursor overlay */
+static void cg14_setcursor(struct cgfourteen_softc *);	/* set position */
+static void cg14_loadcursor(struct cgfourteen_softc *);	/* set shape */
 
 /*
  * We map the display memory with an offset of 256K when emulating the cg3 or
@@ -153,11 +153,8 @@ static void cg14_loadcursor __P((struct cgfourteen_softc *));/* set shape */
 /*
  * Match a cgfourteen.
  */
-int
-cgfourteenmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+cgfourteenmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -179,10 +176,8 @@ cgfourteenmatch(parent, cf, aux)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-void
-cgfourteenattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+cgfourteenattach(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -190,7 +185,7 @@ cgfourteenattach(parent, self, aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int node, ramsize;
-	volatile u_int32_t *lut;
+	volatile uint32_t *lut;
 	int i, isconsole;
 
 	node = sa->sa_node;
@@ -318,10 +313,7 @@ cgfourteenattach(parent, self, aux)
 static int cg14_opens = 0;
 
 int
-cgfourteenopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgfourteenopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int unit = minor(dev);
@@ -343,10 +335,7 @@ cgfourteenopen(dev, flags, mode, p)
 }
 
 int
-cgfourteenclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgfourteenclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int s, opens;
@@ -367,12 +356,7 @@ cgfourteenclose(dev, flags, mode, p)
 }
 
 int
-cgfourteenioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgfourteenioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;
@@ -542,8 +526,7 @@ cgfourteenioctl(dev, cmd, data, flags, p)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgfourteenunblank(dev)
-	struct device *dev;
+cgfourteenunblank(struct device *dev)
 {
 
 	cg14_set_video((struct cgfourteen_softc *)dev, 1);
@@ -566,10 +549,7 @@ cgfourteenunblank(dev)
  * to use?
  */
 paddr_t
-cgfourteenmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgfourteenmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 
@@ -592,7 +572,7 @@ cgfourteenmmap(dev, off, prot)
 			off, prot, BUS_SPACE_MAP_LINEAR));
 	}
 #endif
-	
+
 	if ((u_int)off >= NOOVERLAY)
 		off -= NOOVERLAY;
 	else if ((u_int)off >= START)
@@ -629,11 +609,10 @@ cgfourteenmmap(dev, off, prot)
 
 /* Initialize the framebuffer, storing away useful state for later reset */
 static void
-cg14_init(sc)
-	struct cgfourteen_softc *sc;
+cg14_init(struct cgfourteen_softc *sc)
 {
-	volatile u_int32_t *clut;
-	volatile u_int8_t  *xlut;
+	volatile uint32_t *clut;
+	volatile uint8_t  *xlut;
 	int i;
 
 	/*
@@ -674,12 +653,12 @@ cg14_init(sc)
 #endif
 }
 
+/* Restore the state saved on cg14_init */
 static void
-cg14_reset(sc)	/* Restore the state saved on cg14_init */
-	struct cgfourteen_softc *sc;
+cg14_reset(struct cgfourteen_softc *sc)
 {
-	volatile u_int32_t *clut;
-	volatile u_int8_t  *xlut;
+	volatile uint32_t *clut;
+	volatile uint8_t  *xlut;
 	int i;
 
 	/*
@@ -709,10 +688,9 @@ cg14_reset(sc)	/* Restore the state saved on cg14_init */
 
 /* Enable/disable video display; power down monitor if DPMS-capable */
 static void
-cg14_set_video(sc, enable)
-	struct cgfourteen_softc *sc;
-	int enable;
+cg14_set_video(struct cgfourteen_softc *sc, int enable)
 {
+
 	/*
 	 * We can only use DPMS to power down the display if the chip revision
 	 * is greater than 0.
@@ -734,18 +712,15 @@ cg14_set_video(sc, enable)
 
 /* Get status of video display */
 static int
-cg14_get_video(sc)
-	struct cgfourteen_softc *sc;
+cg14_get_video(struct cgfourteen_softc *sc)
 {
+
 	return ((sc->sc_ctl->ctl_mctl & CG14_MCTL_ENABLEVID) != 0);
 }
 
 /* Read the software shadow colormap */
 static int
-cg14_get_cmap(p, cm, cmsize)
-	struct fbcmap *p;
-	union cg14cmap *cm;
-	int cmsize;
+cg14_get_cmap(struct fbcmap *p, union cg14cmap *cm, int cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;
@@ -772,10 +747,7 @@ cg14_get_cmap(p, cm, cmsize)
 
 /* Write the software shadow colormap */
 static int
-cg14_put_cmap(p, cm, cmsize)
-	struct fbcmap *p;
-	union cg14cmap *cm;
-	int cmsize;
+cg14_put_cmap(struct fbcmap *p, union cg14cmap *cm, int cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;
@@ -805,15 +777,14 @@ cg14_put_cmap(p, cm, cmsize)
 }
 
 static void
-cg14_load_hwcmap(sc, start, ncolors)
-	struct cgfourteen_softc *sc;
-	int start, ncolors;
+cg14_load_hwcmap(struct cgfourteen_softc *sc, int start, int ncolors)
 {
+
 	/* XXX switch to auto-increment, and on retrace intr */
-	
+
 	/* Setup pointers to source and dest */
-	u_int32_t *colp = &sc->sc_cmap.cm_chip[start];
-	volatile u_int32_t *lutp = &sc->sc_clut1->clut_lut[start];
+	uint32_t *colp = &sc->sc_cmap.cm_chip[start];
+	volatile uint32_t *lutp = &sc->sc_clut1->clut_lut[start];
 
 	/* Copy by words */
 	while (--ncolors >= 0)
@@ -824,9 +795,9 @@ cg14_load_hwcmap(sc, start, ncolors)
  * Load the cursor (overlay `foreground' and `background') colors.
  */
 static void
-cg14_setcursor(sc)
-	struct cgfourteen_softc *sc;
+cg14_setcursor(struct cgfourteen_softc *sc)
 {
+
 	/* we need to subtract the hot-spot value here */
 #define COORD(f) (sc->sc_cursor.cc_pos.f - sc->sc_cursor.cc_hot.f)
 
@@ -838,8 +809,7 @@ cg14_setcursor(sc)
 }
 
 static void
-cg14_loadcursor(sc)
-	struct cgfourteen_softc *sc;
+cg14_loadcursor(struct cgfourteen_softc *sc)
 {
 	volatile struct cg14curs *hwc;
 	u_int edgemask, m;
@@ -865,9 +835,9 @@ cg14_loadcursor(sc)
 }
 
 static void
-cg14_loadomap(sc)
-	struct cgfourteen_softc *sc;
+cg14_loadomap(struct cgfourteen_softc *sc)
 {
+
 	/* set background color */
 	sc->sc_hwc->curs_color1 = sc->sc_cursor.cc_color.cm_chip[0];
 	/* set foreground color */
