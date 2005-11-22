@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.21 2005/05/01 19:24:39 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.21.8.1 2005/11/22 16:08:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -63,9 +63,15 @@
 
 #define PCI_EHCI_PORTWAKECAP	0x62	/* RW Port wake caps (opt)  */
 
-/* Regs ar EECP + offset */
+/* Regs at EECP + offset */
 #define PCI_EHCI_USBLEGSUP	0x00
+#define  EHCI_LEG_HC_OS_OWNED		0x01000000
+#define  EHCI_LEG_HC_BIOS_OWNED		0x00010000
 #define PCI_EHCI_USBLEGCTLSTS	0x04
+
+#define EHCI_CAP_GET_ID(cap) ((cap) & 0xff)
+#define EHCI_CAP_GET_NEXT(cap) (((cap) >> 8) & 0xff)
+#define EHCI_CAP_ID_LEGACY 1
 
 /*** EHCI capability registers ***/
 
@@ -168,6 +174,7 @@
 #define EHCI_PORT_RESET_COMPLETE 2 /* ms */
 
 #define EHCI_FLALIGN_ALIGN	0x1000
+#define EHCI_MAX_PORTS		16 /* only 4 bits available in EHCI_HCS_N_PORTS */
 
 /* No data structure may cross a page boundary. */
 #define EHCI_PAGE_SIZE 0x1000

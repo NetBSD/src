@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.16 2003/07/15 00:04:56 lukem Exp $ */
+/*	$NetBSD: power.c,v 1.16.24.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.16 2003/07/15 00:04:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.16.24.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: power.c,v 1.16 2003/07/15 00:04:56 lukem Exp $");
 
 #include <sparc/dev/power.h>
 
-static int powermatch __P((struct device *, struct cfdata *, void *));
-static void powerattach __P((struct device *, struct device *, void *));
+static int powermatch(struct device *, struct cfdata *, void *);
+static void powerattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(power, sizeof(struct device),
     powermatch, powerattach, NULL, NULL);
@@ -64,10 +64,7 @@ CFATTACH_DECL(power, sizeof(struct device),
  */
 
 static int
-powermatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+powermatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -80,9 +77,7 @@ powermatch(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-powerattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+powerattach(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -90,18 +85,18 @@ powerattach(parent, self, aux)
 
 	/* Map the power configuration register. */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot, sa->sa_offset, sizeof(u_int8_t),
+			 sa->sa_slot, sa->sa_offset, sizeof(uint8_t),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map register\n", self->dv_xname);
 		return;
 	}
-	power_reg = (volatile u_int8_t *)bh;
+	power_reg = (volatile uint8_t *)bh;
 
 	printf("\n");
 }
 
 void
-powerdown()
+powerdown(void)
 {
 	/* Only try if the power node was attached. */
 	if (power_reg != NULL)

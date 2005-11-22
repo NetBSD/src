@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.36 2005/01/21 00:04:54 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.36.14.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -95,6 +95,7 @@
 #define   MPC7448		  0x8004
 #define MPC745X_P(v)		  ((v & 0xFFF8) == 0x8000)
 #define	  MPC7410		  0x800c
+#define	  MPC5200		  0x8011
 #define	  MPC8245		  0x8081
 
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.8.14.1 2005/11/22 16:08:01 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.8.14.1 2005/11/22 16:08:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 #include "pckbc.h"
 #if NPCKBC > 0
 #include <dev/ic/pckbcvar.h>
-#include <machine/kbdreg.h>
+#include <dev/ic/i8042reg.h>
 #endif
 
 #include "com.h"

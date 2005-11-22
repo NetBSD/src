@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.236 2005/08/12 14:41:00 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.236.6.1 2005/11/22 16:08:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.236 2005/08/12 14:41:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.236.6.1 2005/11/22 16:08:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3735,7 +3735,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, caddr_t), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am)) {
+		if (in_pcbconnect(inp, am, NULL)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -3756,7 +3756,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 				&sin6->sin6_addr.s6_addr32[3],
 				sizeof(sin6->sin6_addr.s6_addr32[3]));
 		}
-		if (in6_pcbconnect(in6p, am)) {
+		if (in6_pcbconnect(in6p, am, NULL)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}

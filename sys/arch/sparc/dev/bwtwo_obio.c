@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.13 2005/06/03 22:06:24 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.13.8.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.13 2005/06/03 22:06:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.13.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,10 +123,7 @@ static void	bwtwo_set_video_sun4(struct bwtwo_softc *, int);
 extern int fbnode;
 
 static int
-bwtwomatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+bwtwomatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -143,12 +140,10 @@ bwtwomatch_obio(parent, cf, aux)
 }
 
 static void
-bwtwoattach_obio(parent, self, uax)
-	struct device *parent, *self;
-	void *uax;
+bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
-	union obio_attach_args *uoba = uax;
+	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
 	struct fbdevice *fb = &sc->sc_fb;
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -181,14 +176,14 @@ bwtwoattach_obio(parent, self, uax)
 
 		if (bus_space_map(oba->oba_bustag,
 				  oba->oba_paddr,
-				  sizeof(u_int32_t),
+				  sizeof(uint32_t),
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
 			printf("%s: cannot map pfour register\n",
 				self->dv_xname);
 			return;
 		}
-		fb->fb_pfour = (u_int32_t *)bh;
+		fb->fb_pfour = (uint32_t *)bh;
 		sc->sc_reg = NULL;
 
 		/*
@@ -251,9 +246,7 @@ bwtwoattach_obio(parent, self, uax)
 }
 
 static void
-bwtwo_set_video_sun4(sc, enable)
-	struct bwtwo_softc *sc;
-	int enable;
+bwtwo_set_video_sun4(struct bwtwo_softc *sc, int enable)
 {
 
 	if (sc->sc_fb.fb_flags & FB_PFOUR) {
@@ -274,8 +267,7 @@ bwtwo_set_video_sun4(sc, enable)
 }
 
 static int
-bwtwo_get_video_sun4(sc)
-	struct bwtwo_softc *sc;
+bwtwo_get_video_sun4(struct bwtwo_softc *sc)
 {
 
 	if (sc->sc_fb.fb_flags & FB_PFOUR) {

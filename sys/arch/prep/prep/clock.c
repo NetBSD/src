@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2005/06/05 17:56:31 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.8.1 2005/11/22 16:08:02 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,12 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/06/05 17:56:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/clock_subr.h>
 
@@ -48,9 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2005/06/05 17:56:31 he Exp $");
 
 void decr_intr __P((struct clockframe *));
 
-/*
- * Initially we assume a processor with a bus frequency of 12.5 MHz.
- */
 u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
@@ -188,37 +187,38 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	if ((mfpvr() >> 16) == MPC601) {
-		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
-	} else {
-		asm volatile ("mftb %0" : "=r"(tb));
-	}
 	asm ("mfdec %0" : "=r"(ticks));
 	for (nticks = 0; ticks < 0; nticks++)
 		ticks += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(ticks));
 
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + ticks - ticks_per_intr;
-
+	uvmexp.intrs++;
 	intrcnt[CNT_CLOCK]++;
 
 	pri = splclock();
-	if (pri & SPL_CLOCK)
+	if (pri & SPL_CLOCK) {
 		tickspending += nticks;
-	else {
+	} else {
 		nticks += tickspending;
 		tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		if ((mfpvr() >> 16) == MPC601) {
+			asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+		} else {
+			asm volatile ("mftb %0" : "=r"(tb));
+		}
+		lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
 		 */
 		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
-		
+
 		/*
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.

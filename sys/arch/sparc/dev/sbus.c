@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.64 2005/06/04 04:40:57 tsutsui Exp $ */
+/*	$NetBSD: sbus.c,v 1.64.8.1 2005/11/22 16:08:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.64 2005/06/04 04:40:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.64.8.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -99,29 +99,29 @@ __KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.64 2005/06/04 04:40:57 tsutsui Exp $");
 
 #include <sparc/sparc/iommuvar.h>
 
-void sbusreset __P((int));
+void sbusreset(int);
 
-static int sbus_get_intr __P((struct sbus_softc *, int,
-			      struct openprom_intr **, int *));
-static void *sbus_intr_establish __P((
+static int sbus_get_intr(struct sbus_softc *, int,
+			 struct openprom_intr **, int *);
+static void *sbus_intr_establish(
 		bus_space_tag_t,
-		int,			/*Sbus interrupt level*/
-		int,			/*`device class' priority*/
-		int (*) __P((void *)),	/*handler*/
-		void *,			/*handler arg*/
-		void (*) __P((void))));	/*fast handler*/
+		int,			/* Sbus interrupt level */
+		int,			/* `device class' priority */
+		int (*)(void *),	/* handler */
+		void *,			/* handler arg */
+		void (*)(void));	/* fast handler */
 
 
 /* autoconfiguration driver */
-int	sbus_match_mainbus __P((struct device *, struct cfdata *, void *));
-int	sbus_match_iommu __P((struct device *, struct cfdata *, void *));
-int	sbus_match_xbox __P((struct device *, struct cfdata *, void *));
-void	sbus_attach_mainbus __P((struct device *, struct device *, void *));
-void	sbus_attach_iommu __P((struct device *, struct device *, void *));
-void	sbus_attach_xbox __P((struct device *, struct device *, void *));
+int	sbus_match_mainbus(struct device *, struct cfdata *, void *);
+int	sbus_match_iommu(struct device *, struct cfdata *, void *);
+int	sbus_match_xbox(struct device *, struct cfdata *, void *);
+void	sbus_attach_mainbus(struct device *, struct device *, void *);
+void	sbus_attach_iommu(struct device *, struct device *, void *);
+void	sbus_attach_xbox(struct device *, struct device *, void *);
 
-static	int sbus_error __P((void));
-int	(*sbuserr_handler) __P((void));
+static	int sbus_error(void);
+int	(*sbuserr_handler)(void);
 
 CFATTACH_DECL(sbus_mainbus, sizeof(struct sbus_softc),
     sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL);
@@ -182,9 +182,7 @@ static int intr_sbus2ipl_4m[] = {
  * Return UNCONF (config_find ignores this if the device was configured).
  */
 int
-sbus_print(args, busname)
-	void *args;
-	const char *busname;
+sbus_print(void *args, const char *busname)
 {
 	struct sbus_attach_args *sa = args;
 	int i;
@@ -193,7 +191,7 @@ sbus_print(args, busname)
 		aprint_normal("%s at %s", sa->sa_name, busname);
 	aprint_normal(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
 	for (i = 0; i < sa->sa_nintr; i++) {
-		u_int32_t level = sa->sa_intr[i].oi_pri;
+		uint32_t level = sa->sa_intr[i].oi_pri;
 		struct sbus_softc *sc =
 			(struct sbus_softc *) sa->sa_bustag->cookie;
 
@@ -208,10 +206,7 @@ sbus_print(args, busname)
 }
 
 int
-sbus_match_mainbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sbus_match_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -222,10 +217,7 @@ sbus_match_mainbus(parent, cf, aux)
 }
 
 int
-sbus_match_iommu(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sbus_match_iommu(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iommu_attach_args *ia = aux;
 
@@ -236,10 +228,7 @@ sbus_match_iommu(parent, cf, aux)
 }
 
 int
-sbus_match_xbox(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sbus_match_xbox(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xbox_attach_args *xa = aux;
 
@@ -253,10 +242,7 @@ sbus_match_xbox(parent, cf, aux)
  * Attach an Sbus.
  */
 void
-sbus_attach_mainbus(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sbus_attach_mainbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -298,10 +284,7 @@ sbus_attach_mainbus(parent, self, aux)
 
 
 void
-sbus_attach_iommu(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sbus_attach_iommu(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct iommu_attach_args *ia = aux;
@@ -338,10 +321,7 @@ sbus_attach_iommu(parent, self, aux)
 }
 
 void
-sbus_attach_xbox(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sbus_attach_xbox(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct xbox_attach_args *xa = aux;
@@ -364,11 +344,8 @@ sbus_attach_xbox(parent, self, aux)
 }
 
 void
-sbus_attach_common(sc, busname, busnode, specials)
-	struct sbus_softc *sc;
-	const char *busname;
-	int busnode;
-	const char * const *specials;
+sbus_attach_common(struct sbus_softc *sc, const char *busname, int busnode,
+		   const char * const *specials)
 {
 	int node0, node, error;
 	const char *sp;
@@ -460,12 +437,9 @@ sbus_attach_common(sc, busname, busnode, specials)
 }
 
 int
-sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
-	struct sbus_softc	*sc;
-	bus_space_tag_t		bustag;
-	bus_dma_tag_t		dmatag;
-	int			node;
-	struct sbus_attach_args	*sa;
+sbus_setup_attach_args(struct sbus_softc *sc,
+		       bus_space_tag_t bustag, bus_dma_tag_t dmatag, int node,
+		       struct sbus_attach_args *sa)
 {
 	int n, error;
 
@@ -492,7 +466,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	}
 	for (n = 0; n < sa->sa_nreg; n++) {
 		/* Convert to relative addressing, if necessary */
-		u_int32_t base = sa->sa_reg[n].oa_base;
+		uint32_t base = sa->sa_reg[n].oa_base;
 		if (SBUS_ABS(base)) {
 			sa->sa_reg[n].oa_space = SBUS_ABS_TO_SLOT(base);
 			sa->sa_reg[n].oa_base = SBUS_ABS_TO_OFFSET(base);
@@ -502,7 +476,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	error = prom_getprop(node, "address", sizeof(u_int32_t),
+	error = prom_getprop(node, "address", sizeof(uint32_t),
 			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -511,9 +485,9 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 }
 
 void
-sbus_destroy_attach_args(sa)
-	struct sbus_attach_args	*sa;
+sbus_destroy_attach_args(struct sbus_attach_args *sa)
 {
+
 	if (sa->sa_name != NULL)
 		free(sa->sa_name, M_DEVBUF);
 
@@ -530,10 +504,7 @@ sbus_destroy_attach_args(sa)
 }
 
 bus_addr_t
-sbus_bus_addr(t, btype, offset)
-	bus_space_tag_t t;
-	u_int btype;
-	u_int offset;
+sbus_bus_addr(bus_space_tag_t t, u_int btype, u_int offset)
 {
 
 	/* XXX: sbus_bus_addr should be g/c'ed */
@@ -546,9 +517,7 @@ sbus_bus_addr(t, btype, offset)
  * its sbusdev portion.
  */
 void
-sbus_establish(sd, dev)
-	register struct sbusdev *sd;
-	register struct device *dev;
+sbus_establish(struct sbusdev *sd, struct device *dev)
 {
 	register struct sbus_softc *sc;
 	register struct device *curdev;
@@ -580,8 +549,7 @@ sbus_establish(sd, dev)
  * Reset the given sbus. (???)
  */
 void
-sbusreset(sbus)
-	int sbus;
+sbusreset(int sbus)
 {
 	register struct sbusdev *sd;
 	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
@@ -601,15 +569,12 @@ sbusreset(sbus)
 /*
  * Get interrupt attributes for an Sbus device.
  */
-int
-sbus_get_intr(sc, node, ipp, np)
-	struct sbus_softc *sc;
-	int node;
-	struct openprom_intr **ipp;
-	int *np;
+static int
+sbus_get_intr(struct sbus_softc *sc, int node,
+	      struct openprom_intr **ipp, int *np)
 {
 	int error, n;
-	u_int32_t *ipl = NULL;
+	uint32_t *ipl = NULL;
 
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
@@ -658,14 +623,10 @@ sbus_get_intr(sc, node, ipp, np)
 /*
  * Install an interrupt handler for an Sbus device.
  */
-void *
-sbus_intr_establish(t, pri, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
-	void (*fastvec) __P((void));
+static void *
+sbus_intr_establish(bus_space_tag_t t, int pri, int level,
+		    int (*handler)(void *), void *arg,
+		    void (*fastvec)(void))
 {
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
@@ -690,12 +651,12 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	return (ih);
 }
 
-int
-sbus_error()
+static int
+sbus_error(void)
 {
 	struct sbus_softc *sc = sbus_sc;
 	bus_space_handle_t bh = sc->sc_bh;
-	u_int32_t afsr, afva;
+	uint32_t afsr, afva;
 	char bits[64];
 static	int straytime, nstray;
 	int timesince;

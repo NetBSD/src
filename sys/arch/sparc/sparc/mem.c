@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.37 2003/08/07 16:29:45 agc Exp $ */
+/*	$NetBSD: mem.c,v 1.37.24.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2003/08/07 16:29:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.24.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -108,10 +108,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t va;
 	paddr_t pa;

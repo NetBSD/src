@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.272 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.272.6.1 2005/11/22 16:08:02 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -744,7 +744,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices

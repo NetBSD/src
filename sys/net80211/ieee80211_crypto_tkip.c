@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.9 2005/06/10 16:11:24 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.3 2005/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.3.8.1 2005/11/22 16:08:16 yamt Exp $");
 #endif
 
 /*
@@ -343,7 +343,9 @@ tkip_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 			tkip.ic_miclen, mic0);
 		if (memcmp(mic, mic0, tkip.ic_miclen)) {
 			/* NB: 802.11 layer handles statistic and debug msg */
-			ieee80211_notify_michael_failure(ic, wh, k->wk_keyix);
+			ieee80211_notify_michael_failure(ic, wh,
+				k->wk_rxkeyix != IEEE80211_KEYIX_NONE ?
+					k->wk_rxkeyix : k->wk_keyix);
 			return 0;
 		}
 	}
@@ -967,4 +969,9 @@ tkip_decrypt(struct tkip_ctx *ctx, struct ieee80211_key *key,
 		return 0;
 	}
 	return 1;
+}
+
+IEEE80211_CRYPTO_SETUP(tkip_register)
+{
+	ieee80211_crypto_register(&tkip);
 }

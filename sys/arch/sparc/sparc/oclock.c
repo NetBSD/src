@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.10 2004/07/01 10:23:41 pk Exp $ */
+/*	$NetBSD: oclock.c,v 1.10.18.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.10 2004/07/01 10:23:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.10.18.1 2005/11/22 16:08:03 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -100,10 +100,7 @@ void oclock_init(void);
  * old clock match routine
  */
 static int
-oclockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+oclockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -128,9 +125,7 @@ oclockmatch(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-oclockattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+oclockattach(struct device *parent, struct device *self, void *aux)
 {
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;
@@ -151,8 +146,8 @@ oclockattach(parent, self, aux)
 	i7_bt = bt;
 	i7_bh = bh;
 
-	/* 
-	 * calibrate delay() 
+	/*
+	 * calibrate delay()
 	 */
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
@@ -211,7 +206,7 @@ oclockattach(parent, self, aux)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-oclock_init()
+oclock_init(void)
 {
 
 	profhz = hz = 100;
@@ -234,8 +229,7 @@ oclock_init()
  * for that here as well, and generate a software interrupt to read it.
  */
 int
-oclockintr(cap)
-	void *cap;
+oclockintr(void *cap)
 {
 	int s;
 

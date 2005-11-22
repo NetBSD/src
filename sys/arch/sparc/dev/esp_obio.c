@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.16 2003/07/15 00:04:54 lukem Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.16.24.1 2005/11/22 16:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.16 2003/07/15 00:04:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.16.24.1 2005/11/22 16:08:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,8 +74,8 @@ struct esp_softc {
 };
 
 
-void	espattach_obio	__P((struct device *, struct device *, void *));
-int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
+int	espmatch_obio(struct device *, struct cfdata *, void *);
+void	espattach_obio(struct device *, struct device *, void *);
 
 /* Linkup to the rest of the kernel */
 CFATTACH_DECL(esp_obio, sizeof(struct esp_softc),
@@ -84,16 +84,16 @@ CFATTACH_DECL(esp_obio, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-static void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-static int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-static void	esp_dma_reset __P((struct ncr53c9x_softc *));
-static int	esp_dma_intr __P((struct ncr53c9x_softc *));
-static int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-				    size_t *, int, size_t *));
-static void	esp_dma_go __P((struct ncr53c9x_softc *));
-static void	esp_dma_stop __P((struct ncr53c9x_softc *));
-static int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+static u_char	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static int	esp_dma_isintr(struct ncr53c9x_softc *);
+static void	esp_dma_reset(struct ncr53c9x_softc *);
+static int	esp_dma_intr(struct ncr53c9x_softc *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+				    size_t *, int, size_t *);
+static void	esp_dma_go(struct ncr53c9x_softc *);
+static void	esp_dma_stop(struct ncr53c9x_softc *);
+static int	esp_dma_isactive(struct ncr53c9x_softc *);
 
 static struct ncr53c9x_glue esp_obio_glue = {
 	esp_read_reg,
@@ -109,10 +109,7 @@ static struct ncr53c9x_glue esp_obio_glue = {
 };
 
 int
-espmatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+espmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -129,9 +126,7 @@ espmatch_obio(parent, cf, aux)
 }
 
 void
-espattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+espattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -233,8 +228,8 @@ espattach_obio(parent, self, aux)
 
 	/*
 	 * Alas, we must now modify the value a bit, because it's
-	 * only valid when can switch on FASTCLK and FASTSCSI bits  
-	 * in config register 3... 
+	 * only valid when can switch on FASTCLK and FASTSCSI bits
+	 * in config register 3...
 	 */
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP100:
@@ -273,91 +268,76 @@ espattach_obio(parent, self, aux)
  * Glue functions.
  */
 
-u_char
-esp_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+static u_char
+esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	return (bus_space_read_1(esc->sc_bustag, esc->sc_reg, reg * 4));
 }
 
-void
-esp_write_reg(sc, reg, v)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char v;
+static void
+esp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char v)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	bus_space_write_1(esc->sc_bustag, esc->sc_reg, reg * 4, v);
 }
 
-int
-esp_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+static int
+esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	return (DMA_ISINTR(esc->sc_dma));
 }
 
-void
-esp_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+static void
+esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	DMA_RESET(esc->sc_dma);
 }
 
-int
-esp_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+static int
+esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	return (DMA_INTR(esc->sc_dma));
 }
 
-int
-esp_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+static int
+esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+	      int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	return (DMA_SETUP(esc->sc_dma, addr, len, datain, dmasize));
 }
 
-void
-esp_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+static void
+esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	DMA_GO(esc->sc_dma);
 }
 
-void
-esp_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+static void
+esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_int32_t csr;
+	uint32_t csr;
 
 	csr = L64854_GCSR(esc->sc_dma);
 	csr &= ~D_EN_DMA;
 	L64854_SCSR(esc->sc_dma, csr);
 }
 
-int
-esp_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+static int
+esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 

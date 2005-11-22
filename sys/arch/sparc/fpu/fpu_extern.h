@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.7 2003/10/12 19:48:52 pk Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.7.24.1 2005/11/22 16:08:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -54,50 +54,50 @@ struct fpn;
 
 /* fpu.c */
 #ifndef SUN4U
-int fpu_cleanup __P((struct lwp *, struct fpstate *));
-int fpu_emulate __P((struct lwp *, struct trapframe *, struct fpstate *));
+int fpu_cleanup(struct lwp *, struct fpstate *);
+int fpu_emulate(struct lwp *, struct trapframe *, struct fpstate *);
 #else /* SUN4U */
-int fpu_cleanup __P((struct lwp *, struct fpstate64 *));
-int fpu_emulate __P((struct lwp *, struct trapframe64 *, struct fpstate64 *));
+int fpu_cleanup(struct lwp *, struct fpstate64 *);
+int fpu_emulate(struct lwp *, struct trapframe64 *, struct fpstate64 *);
 #endif /* SUN4U */
-int fpu_execute __P((struct fpemu *, union instr));
+int fpu_execute(struct fpemu *, union instr);
 
 /* fpu_add.c */
-struct fpn *fpu_add __P((struct fpemu *));
+struct fpn *fpu_add(struct fpemu *);
 
 /* fpu_compare.c */
-void fpu_compare __P((struct fpemu *, int));
+void fpu_compare(struct fpemu *, int);
 
 /* fpu_div.c */
-struct fpn *fpu_div __P((struct fpemu *));
+struct fpn *fpu_div(struct fpemu *);
 
 /* fpu_explode.c */
-int fpu_itof __P((struct fpn *, u_int));
+int fpu_itof(struct fpn *, u_int);
 #ifdef SUN4U
-int fpu_xtof __P((struct fpn *, u_int64_t));
+int fpu_xtof(struct fpn *, uint64_t);
 #endif /* SUN4U */
-int fpu_stof __P((struct fpn *, u_int));
-int fpu_dtof __P((struct fpn *, u_int, u_int ));
-int fpu_qtof __P((struct fpn *, u_int, u_int , u_int , u_int ));
-void fpu_explode __P((struct fpemu *, struct fpn *, int, int ));
+int fpu_stof(struct fpn *, u_int);
+int fpu_dtof(struct fpn *, u_int, u_int );
+int fpu_qtof(struct fpn *, u_int, u_int , u_int , u_int );
+void fpu_explode(struct fpemu *, struct fpn *, int, int );
 
 /* fpu_implode.c */
-u_int fpu_ftoi __P((struct fpemu *, struct fpn *));
+u_int fpu_ftoi(struct fpemu *, struct fpn *);
 #ifdef SUN4U
-u_int fpu_ftox __P((struct fpemu *, struct fpn *, u_int *));
+u_int fpu_ftox(struct fpemu *, struct fpn *, u_int *);
 #endif /* SUN4U */
-u_int fpu_ftos __P((struct fpemu *, struct fpn *));
-u_int fpu_ftod __P((struct fpemu *, struct fpn *, u_int *));
-u_int fpu_ftoq __P((struct fpemu *, struct fpn *, u_int *));
-void fpu_implode __P((struct fpemu *, struct fpn *, int, u_int *));
+u_int fpu_ftos(struct fpemu *, struct fpn *);
+u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *);
+u_int fpu_ftoq(struct fpemu *, struct fpn *, u_int *);
+void fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
 
 /* fpu_mul.c */
-struct fpn *fpu_mul __P((struct fpemu *));
+struct fpn *fpu_mul(struct fpemu *);
 
 /* fpu_sqrt.c */
-struct fpn *fpu_sqrt __P((struct fpemu *));
+struct fpn *fpu_sqrt(struct fpemu *);
 
 /* fpu_subr.c */
-int fpu_shr __P((register struct fpn *, register int));
-void fpu_norm __P((register struct fpn *));
-struct fpn *fpu_newnan __P((register struct fpemu *));
+int fpu_shr(register struct fpn *, register int);
+void fpu_norm(register struct fpn *);
+struct fpn *fpu_newnan(register struct fpemu *);

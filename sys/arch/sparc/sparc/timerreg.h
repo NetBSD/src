@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.8 2003/08/07 16:29:46 agc Exp $ */
+/*	$NetBSD: timerreg.h,v 1.8.24.1 2005/11/22 16:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@ struct counter_4m {		/* counter that interrupts at ipl 14 */
 #define	TMR_SHIFT	10		/* shift to obtain microseconds */
 #define	TMR_MASK	0x1fffff	/* 21 bits */
 
-/* 
+/*
  * Compute a limit that causes the timer to fire every n microseconds.
  * The Sun4c requires that the timer register be initialized for n+1
  * microseconds, while the Sun4m requires it be initialized for n. Thus
@@ -116,7 +116,7 @@ struct counter_4m {		/* counter that interrupts at ipl 14 */
  *
  * Note that the manual for the chipset used in the Sun4m suggests that
  * the timer be set at n+0.5 microseconds; in practice, this produces
- * a 50 ppm clock skew, which means that the 0.5 should not be there... 
+ * a 50 ppm clock skew, which means that the 0.5 should not be there...
  */
 #define	tmr_ustolim(n)	(((n) + 1) << TMR_SHIFT)
 
