@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.317 2005/11/22 15:26:43 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.318 2005/11/22 20:50:56 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14381,4 +14381,35 @@ sys/arch/amd64/conf/INSTALL			1.33
 	Remove 'isp' driver (support for Qlogic ISP [12]0x0 SCSI/FibreChannel).
 	Compensates for the recent bloat of the ath driver and 802.11 support.
 	[tron, ticket #987]
+
+src/distrib/notes/common/main			patch
+
+	- Fix superfluous empty bullet at the beginning of the supproted
+	  devices list.
+	- Xref audio(9) properly.
+	- Add back the text before the list of imported software, that got lost
+	  accidentaly.
+	[uwe, ticket #982]
+
+gnu/usr.bin/groff/tmac/mdoc.local		1.25
+
+	Add NetBSD-4.0.
+	[wiz, ticket #983]
+
+distrib/notes/hpcsh/whatis			patch
+
+	NetBSD-hpcsh specific update list for NetBSD 3.0.
+	[uwe, ticket #984]
+
+sys/dev/pci/if_bge.c				1.94
+sys/dev/pci/if_bgereg.h				1.27
+
+	Correct a performance bug from Bill Paul's original FreeBSD bge(4)
+	driver.
+	[jonathan, ticket #985]
+
+src/distrib/notes/common/main			patch
+
+	Correction for various typing errors mostly from Igor Sobrado.
+	[uwe, ticket #990]
 
