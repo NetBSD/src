@@ -1,23 +1,25 @@
-.\"	$NetBSD: whatis,v 1.4 2002/07/08 14:51:52 lukem Exp $
+.\"	$NetBSD: whatis,v 1.4.6.1 2005/11/22 20:43:00 tron Exp $
 .
-This is the first major release of
-.Nx*M .
+.Nx \*V
+is the third major release for the \*M.
 .Pp
-.Nx*M
-brings the
-.Nx
-operating system to
-Hitachi SH-3/4 based
-.Tn "Windows CE"
-PDA machines.
-Currently, the
-SH7709, SH7709R, SH7709A and SH7750V processors are supported.
+Some notable \*M-specific improvements include:
+.(bullet
+Long standing bug in colormap handling code that resulted in very dim
+console colors is fixed.
+.It
+.Xr j6x0lcd 4
+and
+.Xr j6x0tp 4
+now support HP 620LX machines.
+.It
+.Xr j6x0pwr 4
+supports very minimal power saving mode when On/Off button is pressed.
+.bullet)
 .Pp
-The port name
-.Dq \*M
-comes from the name for some of the hardware that
+.Nx \*V
+on \*M is, as usual, also fully backward compatible with old
 .Nx*M
-runs on: SH-3/4 based systems in
-.Tn Microsoft Ns 's
-H/PC (Handheld PC) form factor.
-The palm sized units are also supported, but lack an input method.
+binaries, so you don't need to recompile all your local programs
+provided you set the appropriate binary compatibility options in your
+kernel configuration.
