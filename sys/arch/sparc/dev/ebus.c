@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.21 2005/11/16 02:10:31 uwe Exp $ */
+/*	$NetBSD: ebus.c,v 1.22 2005/11/22 20:13:34 macallan Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.21 2005/11/16 02:10:31 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.22 2005/11/22 20:13:34 macallan Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -58,6 +58,8 @@ int ebus_debug = 0;
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -72,6 +74,15 @@ int ebus_debug = 0;
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+#include "opt_blink.h"
+
+volatile uint32_t *ebus_LED = NULL;
+
+#ifdef BLINK
+static struct callout ebus_blink_ch = CALLOUT_INITIALIZER;
+
+static void ebus_blink(void *);
+#endif
 
 struct ebus_softc {
 	struct device			sc_dev;
@@ -232,6 +243,8 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	struct ebus_attach_args ea;
 	bus_space_tag_t sbt;
 	bus_dma_tag_t dmatag;
+	bus_space_handle_t hLED;
+	pcireg_t base14, reg;
 	int node, error;
 	char devinfo[256];
 
@@ -245,6 +258,18 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ebus_init_wiring_table(sc) == 0)
 		return;
+
+	/* map the LED register */
+	base14 = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x14);
+	printf("base14: %08x\n", (uint32_t)base14);
+	if (bus_space_map(pa->pa_memt, base14 + 0x726000, 4, 0, &hLED) == 0) {
+		ebus_LED = bus_space_vaddr(pa->pa_memt, hLED);
+#ifdef BLINK
+		ebus_blink((caddr_t)0);
+#endif
+	} else {
+		printf("unable to map the LED register\n");
+	}
 
 	sc->sc_node = node;
 	sc->sc_parent = parent;	/* XXX: unused so far */
@@ -497,3 +522,25 @@ ebus_intr_establish(bus_space_tag_t t, int pri, int level,
 
 	return (bus_intr_establish(t->parent, pri, level, handler, arg));
 }
+
+#ifdef BLINK
+
+static void
+ebus_blink(void *zero)
+{
+	register int s;
+
+	s = splhigh();
+	*ebus_LED = ~*ebus_LED;
+	splx(s);
+	/*
+	 * Blink rate is:
+	 *	full cycle every second if completely idle (loadav = 0)
+	 *	full cycle every 2 seconds if loadav = 1
+	 *	full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_reset(&ebus_blink_ch, s, ebus_blink, NULL);
+}
+#endif
