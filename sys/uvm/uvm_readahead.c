@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.13 2005/11/20 05:00:38 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.14 2005/11/22 07:19:51 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -26,8 +26,21 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * uvm_object read-ahead
+ *
+ * TODO:
+ *	- tune.
+ *	- handle multiple streams.
+ *	- find a better way to deal with PGO_LOCKED pager requests.
+ *	  (currently just ignored)
+ *	- consider the amount of memory in the system.
+ *	- consider the speed of the underlying device.
+ *	- consider filesystem block size / block layout.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.13 2005/11/20 05:00:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.14 2005/11/22 07:19:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -52,12 +65,6 @@ struct uvm_ractx {
 	size_t ra_winsize;	/* window size */
 	off_t ra_next;		/* next offset to read-ahead */
 };
-
-/*
- * XXX tune
- * XXX should consider the amount of memory in the system.
- * XXX should consider the speed of the underlying device.
- */
 
 #define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
 #define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */
