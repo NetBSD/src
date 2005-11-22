@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.32 2005/10/08 01:49:40 uwe Exp $
+# $NetBSD: KRUPS,v 1.33 2005/11/22 20:16:23 macallan Exp $
 # From: NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.32 $"
+#ident 		"KRUPS-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -31,9 +31,8 @@ makeoptions	TEXTADDR=E8004000
 
 ## System options specific to the sparc machine type
 
-# XXX: uwe: to do
 # Blink the power LED on some machines to indicate the system load.
-#options 	BLINK
+options 	BLINK
 
 
 #### System options that are the same for all ports
