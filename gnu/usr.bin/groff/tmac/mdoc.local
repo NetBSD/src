@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.22.2.3 2005/11/21 21:58:35 tron Exp $
+.\" $NetBSD: mdoc.local,v 1.22.2.4 2005/11/22 20:40:33 tron Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,3 +62,4 @@
 .ds doc-operating-system-NetBSD-2.0.1  2.0.1
 .ds doc-operating-system-NetBSD-2.0.2  2.0.2
 .ds doc-operating-system-NetBSD-3.0    3.0
+.ds doc-operating-system-NetBSD-4.0    4.0
