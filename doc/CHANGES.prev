@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.34 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.35 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7971,3 +7971,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	sysinst: Added Spanish language translation. [xtraeme 20050826]
 	xge(4): Add driver for the Neterion Xframe-I 10 gigabit ethernet
 		controller [ragge 20050909]
+	racoon(8): ipsec-tools 0.6.2 imported [manu 20051014]
+	racoon(8): ipsec-tools 0.6.3 imported [manu 20051121]
