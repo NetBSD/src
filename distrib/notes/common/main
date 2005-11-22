@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.14 2005/11/21 21:40:07 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.15 2005/11/22 20:38:13 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -470,7 +470,6 @@ IBM RS/6000 60P 7020-011.
 .Ss2 Supported devices
 .
 .(bullet
-.It
 Added
 .Xr iteide 4 :
 driver for ITE 8212 IDE controller.
@@ -696,7 +695,6 @@ Added another experimental buffer queue strategy, BUFQ_PRIOCSCAN,
 Per-priority cyclical scan. Note the existing strategy NEW_BUFQ_STRATEGY
 is renamed to BUFQ_READPRIO, since that gives priority to issuing
 read requests over write requests.
-
 .It
 The way to allocate a kernel structure, map entry, was improved so that
 it doesn't need preliminary knowledge of system load, i.e. users no longer
@@ -832,11 +830,13 @@ a utility which prints a sequence of numbers, derived from Plan 9.
 .Ss2 Miscellaneous
 .
 .(bullet
-.Xr
-audio 9
+.Xr audio 9
 interface is improved. Added capability of audio software filter pipeline,
 which makes it easy for hardware drivers to add encoding support or
 sample rates support.
+.It
+Updates of most third party packages that are shipped in the base
+system to the following latest stable releases:
 .(bullet -compact -offset indent
 am-utils 6.1-rc2
 .It
