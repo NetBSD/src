@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.53.6.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.53.6.3 2005/11/22 15:39:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@ struct nfsrv_descript;
 struct nfs_fattr;
 struct nfsdircache;
 union nethostaddr;
-struct uvm_ractx;
 
 /* nfs_bio.c */
 int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
