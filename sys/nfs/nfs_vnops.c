@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.229.2.2 2005/11/18 08:44:54 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.229.2.3 2005/11/22 15:40:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.229.2.2 2005/11/18 08:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.229.2.3 2005/11/22 15:40:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1132,7 +1132,7 @@ nfs_read(v)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		int a_ioflag;
+		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
