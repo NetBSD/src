@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.12 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.13 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -275,3 +275,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	sysinst: Added Spanish language translation. [xtraeme 20050826]
 	xge(4): Add driver for the Neterion Xframe-I 10 gigabit ethernet
 		controller [ragge 20050909]
+	racoon(8): ipsec-tools 0.6.3 imported [manu 20051121]
