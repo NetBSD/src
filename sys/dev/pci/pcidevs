@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.736 2005/11/18 21:55:14 rpaulo Exp $
+$NetBSD: pcidevs,v 1.737 2005/11/22 22:55:30 rpaulo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2804,7 +2804,7 @@ product TI	PCI4520LYNX	0x802A	PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus B
 product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product	TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
 product	TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
-product	TI	PCI1121FM	0x8033	PCIxx11/21 Integrated FlashMedia Controller
+product	TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	ACX100		0x8400	ACX100 802.11b
