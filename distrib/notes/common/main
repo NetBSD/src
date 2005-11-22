@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.15 2005/11/22 20:38:13 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.16 2005/11/22 20:48:34 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -496,7 +496,7 @@ driver for Realtek RTL8180L IEEE 802.11b wireless network.
 .It
 Added
 .Xr vge 4 :
-driver for VIA VT612X Gigabit Ethernet contoroller.
+driver for VIA VT612X Gigabit Ethernet controller.
 .It
 Added
 .Xr xge 4 :
@@ -539,7 +539,7 @@ driver for Sun SUNW,spif multi-port Sbus card.
 now supports nForce2 Ultra 400, nForce3 250 IDE and SATA, and
 nForce4 IDE and SATA controllers.
 .Xr viaide 4
-also supports VIA VT6421 STAT RAID controller though drives on the
+also supports VIA VT6421 SATA RAID controller though drives on the
 controller need to be configured into RAID/JOBS sets via its BIOS.
 .It
 .Xr siside 4
@@ -577,7 +577,7 @@ controllers, and has 802.3x flow control support.
 .Xr gem 4
 and
 .Xr hme 4
-now have hardware cksum support.
+now have hardware checksums support.
 .It
 .Xr re 4
 and
@@ -708,7 +708,7 @@ in their kernel configurations even on busy servers.
 .(bullet
 TCP now supports TCP Selective Acknowledgement Options (RFC 2018) for
 enhanced performance especially on long distance connections and
-TCP MD5 signatures (RFC 2385) for enhanced protection agains attacks.
+TCP MD5 signatures (RFC 2385) for enhanced protection against attacks.
 .It
 TCP can take advantage of hardware-assisted TCP/IPv4 segmentation on
 .Xr re 4 ,
@@ -727,7 +727,7 @@ The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
 IPv4 Protocol Independent Multicast (PIM) routing support is added.
 .It
 ipsec-tools 0.6.2 provide IKE support for ESP over NAT connections (RFC 3947),
-user authentification via XAuth and automatic network configurations of VPN
+user authentication via XAuth and automatic network configurations of VPN
 clients via Mode Config.
 .It
 Added RFC 3378 EtherIP support, which makes it possible to add
@@ -792,7 +792,7 @@ to libc, which is API compatible with the functions in FreeBSD and Linux.
 .
 .(bullet
 The Veriexec framework is now using hash tables to store per-file data,
-resulting in much faster operation. It supprots four different enforcement
+resulting in much faster operation. It supports four different enforcement
 levels and full control over verbosity. Signature files are easier
 to generate and are more flexible than in the previous version.
 .It
@@ -1381,7 +1381,7 @@ backup CVS and backup server.
 SSH Communications Security in Finland for operating
 the backup server. 
 .It
-The many organisations that provide
+The many organizations that provide
 .Nx
 mirror sites.
 .It
