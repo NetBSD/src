@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.1.2.15 2005/11/22 07:25:41 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.1.2.16 2005/11/22 14:55:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.15 2005/11/22 07:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.1.2.16 2005/11/22 14:55:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -149,6 +149,10 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 
 /* ------------------------------------------------------------ */
 
+/*
+ * uvm_ra_allocctx: allocate a context.
+ */
+
 struct uvm_ractx *
 uvm_ra_allocctx(void)
 {
@@ -162,6 +166,10 @@ uvm_ra_allocctx(void)
 	return ra;
 }
 
+/*
+ * uvm_ra_freectx: free a context.
+ */
+
 void
 uvm_ra_freectx(struct uvm_ractx *ra)
 {
@@ -171,9 +179,9 @@ uvm_ra_freectx(struct uvm_ractx *ra)
 }
 
 /*
- * uvm_ra_request: start i/o for read-ahead if appropriate.
+ * uvm_ra_request: update a read-ahead context and start i/o if appropriate.
  *
- * => called by filesystems when [reqoff, reqoff+reqsize) is requested.
+ * => called when [reqoff, reqoff+reqsize) is requested.
  */
 
 void
@@ -239,6 +247,8 @@ initialize:
 
 		/*
 		 * ... unless we seem to be reading the same chunk repeatedly.
+		 *
+		 * XXX should have some margin?
 		 */
 
 		if (reqoff + reqsize == ra->ra_winstart) {
