@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.24.2.1 2005/09/08 21:24:31 tron Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.24.2.2 2005/11/22 20:44:22 tron Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2328,6 +2328,7 @@ struct bge_softc {
     	u_int8_t		bge_rx_alignment_bug;
 	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
+	u_int32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
 	u_int32_t		bge_quirks;
