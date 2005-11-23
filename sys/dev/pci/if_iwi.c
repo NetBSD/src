@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.39 2005/11/23 20:08:29 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.40 2005/11/23 20:35:54 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.39 2005/11/23 20:08:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.40 2005/11/23 20:35:54 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1898,7 +1898,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 	}
 
-	if (error == ENETRESET && cmd != SIOCADDMULTI) {
+	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING) &&
 		    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
