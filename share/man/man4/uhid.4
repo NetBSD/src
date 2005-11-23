@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.18 2004/05/11 23:23:20 wiz Exp $
+.\" $NetBSD: uhid.4,v 1.19 2005/11/23 08:56:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,19 +34,37 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2004
+.Dd November 22, 2005
 .Dt UHID 4
 .Os
 .Sh NAME
 .Nm uhid
 .Nd USB generic HID support
 .Sh SYNOPSIS
-.Cd "uhid* at uhidev? reportid ?"
+.Cd "uhid* at uhidev? reportid ? flags N"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for all HID (Human Interface Device) interfaces
 in USB devices that do not have a special driver.
+.Pp
+Normally the
+.Nm
+driver is used when no other HID driver attaches to a device.
+If
+.Dq flags 1
+is specified, the
+.Nm
+driver will instead attach with a very high priority and always be used.
+Together with the
+.Cd vendor
+and
+.Cd product
+locators on the
+.Xr uhidev 4
+driver this can be used to force the
+.Nm
+driver to be used for a certain device.
 .Pp
 The device handles the following
 .Xr ioctl 2
