@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.61 2005/11/18 16:48:31 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.62 2005/11/23 01:04:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.61 2005/11/18 16:48:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.62 2005/11/23 01:04:37 dyoung Exp $");
 #endif
 
 /*
@@ -1825,6 +1825,7 @@ ath_mode_init(struct ath_softc *sc)
 		IF_ADDR_UNLOCK(ifp);
 	} else {
 		mfilt[0] = mfilt[1] = ~0;
+	}
 #endif
 #ifdef __NetBSD__
 	ath_mcastfilter_compute(sc, mfilt);
