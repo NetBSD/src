@@ -1,4 +1,4 @@
-/*	$NetBSD: futil.c,v 1.16 2005/11/23 04:59:14 ben Exp $	*/
+/*	$NetBSD: futil.c,v 1.17 2005/11/23 12:01:30 tron Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.16 2005/11/23 04:59:14 ben Exp $");
+__RCSID("$NetBSD: futil.c,v 1.17 2005/11/23 12:01:30 tron Exp $");
 #endif
 #endif
 
@@ -87,7 +87,6 @@ apply_perms(char *dir, char **args, int nargs)
 	char   *cd_to;
 	char	owner_group[128];
 	const char	**argv;
-	int	argc = 0;
 	int	i;
 
 	argv = malloc((nargs + 4) * sizeof(char *));
