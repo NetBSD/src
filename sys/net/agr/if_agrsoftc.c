@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsoftc.c,v 1.2 2005/08/12 10:02:31 yamt Exp $	*/
+/*	$NetBSD: if_agrsoftc.c,v 1.3 2005/11/23 09:43:37 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.2 2005/08/12 10:02:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.3 2005/11/23 09:43:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.2 2005/08/12 10:02:31 yamt Exp $")
 #include <net/agr/if_agrvar_impl.h>
 
 /*
- * there functions are isolated from if_agr.c to avoid inclusion of if_ether.h.
+ * these functions are isolated from if_agr.c to avoid inclusion of if_ether.h.
  */
 
 struct agr_softc *
