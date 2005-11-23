@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.8 2005/11/05 08:11:30 manu Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.9 2005/11/23 16:14:57 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.8 2005/11/05 08:11:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.9 2005/11/23 16:14:57 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -435,8 +435,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_lremovexattr },		/* 198 = lremovexattr */
 	{ 2, s(struct linux_sys_fremovexattr_args), 0,
 	    linux_sys_fremovexattr },		/* 199 = fremovexattr */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 200 = unimplemented tkill */
+	{ 2, s(struct linux_sys_tkill_args), 0,
+	    linux_sys_tkill },			/* 200 = tkill */
 	{ 1, s(struct linux_sys_time_args), 0,
 	    linux_sys_time },			/* 201 = time */
 	{ 6, s(struct linux_sys_futex_args), 0,
@@ -503,8 +503,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 232 = unimplemented epoll_wait */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 233 = unimplemented epoll_ctl */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 234 = unimplemented tgkill */
+	{ 3, s(struct linux_sys_tgkill_args), 0,
+	    linux_sys_tgkill },			/* 234 = tgkill */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 235 = unimplemented utimes */
 	{ 0, 0, 0,

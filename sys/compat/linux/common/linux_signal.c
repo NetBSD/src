@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.48 2005/09/19 02:46:49 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.49 2005/11/23 16:14:57 manu Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.48 2005/09/19 02:46:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49 2005/11/23 16:14:57 manu Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.48 2005/09/19 02:46:49 christos E
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_exec.h> /* For emul_linux */
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+#include <compat/linux/common/linux_emuldata.h> /* for linux_emuldata */
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_util.h>
@@ -655,3 +658,60 @@ linux_sys_sigaltstack(l, v, retval)
 	return 0;
 }
 #endif /* LINUX_SS_ONSTACK */
+
+#ifdef LINUX_NPTL
+int
+linux_sys_tkill(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_tkill_args /* {
+		syscallarg(int) tid;
+		syscallarg(int) sig;
+	} */ *uap = v;
+	struct linux_sys_kill_args cup;
+
+	/* We use the PID as the TID ... */
+	SCARG(&cup, pid) = SCARG(uap, tid);
+	SCARG(&cup, signum) = SCARG(uap, sig);
+
+	return linux_sys_kill(l, &cup, retval);
+}
+
+int
+linux_sys_tgkill(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_tgkill_args /* {
+		syscallarg(int) tgid;
+		syscallarg(int) tid;
+		syscallarg(int) sig;
+	} */ *uap = v;
+	struct linux_sys_kill_args cup;
+	struct linux_emuldata *led;
+	struct proc *p;
+
+	SCARG(&cup, pid) = SCARG(uap, tid);
+	SCARG(&cup, signum) = SCARG(uap, sig);
+
+	if (SCARG(uap, tgid) == -1)
+		return linux_sys_kill(l, &cup, retval);
+
+	/* We use the PID as the TID, but make sure the group ID is right */
+	if ((p = pfind(SCARG(uap, tid))) == NULL)
+		return ESRCH;
+
+	if (p->p_emul != &emul_linux)
+		return ESRCH;
+
+	led = p->p_emuldata;
+
+	if (led->s->group_pid != SCARG(uap, tgid))
+		return ESRCH;
+
+	return linux_sys_kill(l, &cup, retval);
+}
+#endif /* LINUX_NPTL */

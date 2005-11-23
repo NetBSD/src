@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2005/11/05 08:06:58 manu Exp $
+	$NetBSD: syscalls.master,v 1.9 2005/11/23 16:14:57 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -209,7 +209,7 @@
 96	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 97	STD		{ int linux_sys_getrlimit(int which, \
-			    struct orlimit *rlp); }
+			    struct rlimit *rlp); }
 98	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 99	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 100	STD		{ int linux_sys_times(struct times *tms); }
@@ -297,7 +297,7 @@
 			    unsigned long addr); }
 159	UNIMPL		adjtimex
 160	STD		{ int linux_sys_setrlimit(u_int which, \
-			    struct orlimit *rlp); }
+			    struct rlimit *rlp); }
 161	NOARGS		{ int sys_chroot(char *path); }
 162	NOARGS		{ int sys_sync(void); }
 163	NOARGS		{ int sys_acct(char *path); }
@@ -351,7 +351,7 @@
 197	STD		{ int linux_sys_removexattr(char *path, char *name); }
 198	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
 199	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
-200	UNIMPL		tkill
+200	STD		{ int linux_sys_tkill(int tid, int sig); }
 201	STD		{ int linux_sys_time(linux_time_t *t); }
 202	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
 			    const struct timespec *timeout, int *uaddr2, \
@@ -395,7 +395,7 @@
 231	STD		{ int linux_sys_exit_group(int error_code); }
 232	UNIMPL		epoll_wait
 233	UNIMPL		epoll_ctl
-234	UNIMPL		tgkill
+234	STD		{ int linux_sys_tgkill(int tgid, int tid, int sig); }
 235	UNIMPL		utimes
 236	UNIMPL		vserver
 ; Not really syscall 237, but we need it to be defined somewhere
