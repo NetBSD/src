@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2005/11/23 13:00:51 nonaka Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/11/23 13:00:51 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,16 +76,10 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(decrtick));
+	asm ("mfdec %0" : "=r"(decrtick));
 	for (nticks = 0; decrtick < 0; nticks++)
 		decrtick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(decrtick));
-
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + decrtick - ticks_per_intr;
 
 	intrcnt[CNT_CLOCK]++;
 
@@ -95,6 +89,13 @@ decr_intr(frame)
 	else {
 		nticks += tickspending;
 		tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		asm ("mftb %0" : "=r"(tb));
+		lasttb = tb + decrtick - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts

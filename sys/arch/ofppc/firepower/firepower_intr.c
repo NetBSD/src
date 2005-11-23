@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.7 2005/11/23 13:00:51 nonaka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.7 2005/11/23 13:00:51 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	firepower_splraise(int);
 int	firepower_spllower(int);
 void	firepower_splx(int);
 void	firepower_setsoft(int);
-void	firepower_clock_return(struct clockframe *, int);
+void	firepower_clock_return(struct clockframe *, int, long);
 void	*firepower_intr_establish(int, int, int, int (*)(void *), void *);
 void	firepower_intr_disestablish(void *);
 void	firepower_do_softnet(void);
@@ -524,7 +524,7 @@ firepower_intr_disestablish(void *cookie)
 }
 
 void
-firepower_clock_return(struct clockframe *frame, int nticks)
+firepower_clock_return(struct clockframe *frame, int nticks, long ticks)
 {
 	int pri, msr;
 
@@ -534,6 +534,12 @@ firepower_clock_return(struct clockframe *frame, int nticks)
 		clockpending += nticks;
 	else {
 		cpl = pri | imask[IPL_CLOCK];
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		lasttb = mftb() + ticks - ticks_per_intr;
 
 		/* Reenable interrupts. */
 		msr = mfmsr();
