@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.57 2005/11/18 16:53:56 skrll Exp $ */
+/* $NetBSD: rtw.c,v 1.58 2005/11/23 04:12:33 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.57 2005/11/18 16:53:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.58 2005/11/23 04:12:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -79,12 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.57 2005/11/18 16:53:56 skrll Exp $");
 			panic __msg ;	\
 	} while (0)
 
-int rtw_rfprog_fallback = 0;
-int rtw_host_rfio = 0;
+static int rtw_rfprog_fallback = 0;
+static int rtw_host_rfio = 0;
 
 #ifdef RTW_DEBUG
 int rtw_debug = 0;
-int rtw_rxbufs_limit = RTW_RXQLEN;
+static int rtw_rxbufs_limit = RTW_RXQLEN;
 #endif /* RTW_DEBUG */
 
 #define NEXT_ATTACH_STATE(sc, state) do {			\
@@ -93,10 +93,18 @@ int rtw_rxbufs_limit = RTW_RXQLEN;
 	sc->sc_attach_state = state;				\
 } while (0)
 
+static int rtw_xmtr_restart = 0;
+static int rtw_do_chip_reset = 0;
+static int rtw_ring_reset = 0;
+
 int rtw_dwelltime = 200;	/* milliseconds */
 static struct ieee80211_cipher rtw_cipher_wep;
 
 static void rtw_start(struct ifnet *);
+static void rtw_reset_oactive(struct rtw_softc *);
+static struct mbuf *rtw_beacon_alloc(struct rtw_softc *,
+    struct ieee80211_node *);
+static u_int rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
 
 static void rtw_io_enable(struct rtw_regs *, uint8_t, int);
 static int rtw_key_delete(struct ieee80211com *, const struct ieee80211_key *);
@@ -141,6 +149,28 @@ SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rtw",
 	    "Realtek RTL818x 802.11 controls",
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "chip_reset", SYSCTL_DESCR("Gratuitously reset chip on rcvr error"),
+	    NULL, 0, &rtw_do_chip_reset, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "ring_reset", SYSCTL_DESCR("Reset ring pointers on rcvr error"),
+	    NULL, 0, &rtw_ring_reset, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "xmtr_restart",
+	    SYSCTL_DESCR("Gratuitously reset xmtr on rcvr error"),
+	    NULL, 0, &rtw_xmtr_restart, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef RTW_DEBUG
@@ -530,7 +560,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 }
 
 static int
-rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m, int force)
+rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 {
 	struct ieee80211_key keycopy;
 
@@ -539,7 +569,7 @@ rtw_wep_decap(struct ieee80211_key *k, struct mbuf *m, int force)
 	keycopy = *k;
 	keycopy.wk_flags &= ~IEEE80211_KEY_SWCRYPT;
 
-	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m, force);
+	return (*ieee80211_cipher_wep.ic_decap)(&keycopy, m, hdrlen);
 }
 
 static int
@@ -569,11 +599,6 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 	if (k->wk_keyix >= IEEE80211_WEP_NKID)
 		return 0;
 
-	if (k->wk_cipher == &ieee80211_cipher_wep) {
-		rtw_cipher_wep = ieee80211_cipher_wep;
-		rtw_cipher_wep.ic_decap = rtw_wep_decap;
-		ic->ic_nw_keys[k->wk_keyix].wk_cipher = &rtw_cipher_wep;
-	}
 	sc->sc_flags &= ~RTW_F_DK_VALID;
 
 	return 1;
@@ -598,9 +623,9 @@ rtw_key_update_end(struct ieee80211com *ic)
 
 	DPRINTF(sc, RTW_DEBUG_KEY, ("%s:\n", __func__));
 
-	if ((sc->sc_flags & RTW_F_DK_VALID) != 0)
-		return;
-	if ((sc->sc_flags & RTW_F_ENABLED) == 0)
+	if ((sc->sc_flags & RTW_F_DK_VALID) != 0 ||
+	    (sc->sc_flags & RTW_F_ENABLED) == 0 ||
+	    (sc->sc_flags & RTW_F_INVALID) != 0)
 		return;
 
 	rtw_io_enable(&sc->sc_regs, RTW_CR_RE | RTW_CR_TE, 0);
@@ -609,10 +634,20 @@ rtw_key_update_end(struct ieee80211com *ic)
 	    (ifp->if_flags & IFF_RUNNING) != 0);
 }
 
+static __inline int
+rtw_key_hwsupp(uint32_t flags, const struct ieee80211_key *k)
+{
+	if (k->wk_cipher->ic_cipher != IEEE80211_CIPHER_WEP)
+		return 0;
+
+	return	((flags & RTW_C_RXWEP_40) != 0 && k->wk_keylen == 5) ||
+		((flags & RTW_C_RXWEP_104) != 0 && k->wk_keylen == 13);
+}
+
 static void
 rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 {
-	uint8_t cfg0, psr, scr;
+	uint8_t psr, scr;
 	int i, tx_key_len;
 	struct rtw_regs *regs;
 	union rtw_keys *rk;
@@ -622,35 +657,45 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 
 	(void)memset(rk->rk_keys, 0, sizeof(rk->rk_keys));
 
+	/* Temporarily use software crypto for all keys. */
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (wk[i].wk_cipher == &rtw_cipher_wep)
+			wk[i].wk_cipher = &ieee80211_cipher_wep;
+	}
+
 	rtw_set_access(regs, RTW_ACCESS_CONFIG);
 
 	psr = RTW_READ8(regs, RTW_PSR);
 	scr = RTW_READ8(regs, RTW_SCR);
-	cfg0 = RTW_READ8(regs, RTW_CONFIG0);
 	scr &= ~(RTW_SCR_KM_MASK | RTW_SCR_TXSECON | RTW_SCR_RXSECON);
-	cfg0 &= ~(RTW_CONFIG0_WEP104 | RTW_CONFIG0_WEP40);
 
 	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)
+		goto out;
+
+	if (!rtw_key_hwsupp(sc->sc_flags, &wk[txkey]))
 		goto out;
 
 	tx_key_len = wk[txkey].wk_keylen;
 
 	switch (tx_key_len) {
 	case 5:
-		scr |= RTW_SCR_RXSECON | RTW_SCR_KM_WEP40;
+		scr |= RTW_SCR_KM_WEP40;
 		break;
 	case 13:
-		scr |= RTW_SCR_RXSECON | RTW_SCR_KM_WEP104;
+		scr |= RTW_SCR_KM_WEP104;
 		break;
 	default:
 		goto out;
 	}
 
-	cfg0 |= RTW_CONFIG0_WEP104 | RTW_CONFIG0_WEP40;
+	scr |= RTW_SCR_RXSECON;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		if (wk[i].wk_keylen != tx_key_len)
+		if (wk[i].wk_keylen != tx_key_len ||
+		    wk[i].wk_cipher->ic_cipher != IEEE80211_CIPHER_WEP)
 			continue;
+		/* h/w will decrypt, s/w still strips headers */
+		wk[i].wk_cipher = &rtw_cipher_wep;
 		(void)memcpy(rk->rk_keys[i], wk[i].wk_key, wk[i].wk_keylen);
 	}
 
@@ -664,12 +709,9 @@ out:
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
 	    BUS_SPACE_BARRIER_SYNC);
 
-	printf("%s: psr = %#" PRIx8, sc->sc_dev.dv_xname, psr);
-
+	RTW_WBW(regs, RTW_DK0, RTW_PSR);
 	RTW_WRITE8(regs, RTW_PSR, psr);
-
-	RTW_WRITE8(regs, RTW_CONFIG0, cfg0);
-	RTW_WBW(regs, RTW_CONFIG0, RTW_SCR);
+	RTW_WBW(regs, RTW_PSR, RTW_SCR);
 	RTW_WRITE8(regs, RTW_SCR, scr);
 	RTW_SYNC(regs, RTW_SCR, RTW_SCR);
 	rtw_set_access(regs, RTW_ACCESS_NONE);
@@ -840,6 +882,11 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 
 	*rcr |= LSHIFT(MASK_AND_RSHIFT(RTW_SR_GET(sr, RTW_SR_RFPARM),
 	    RTW_SR_RFPARM_CS_MASK), RTW_RCR_ENCS1);
+
+	if ((RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_WEP104) != 0)
+		*flags |= RTW_C_RXWEP_104;
+
+	*flags |= RTW_C_RXWEP_40;	/* XXX */
 
 	*rfchipid = RTW_SR_GET(sr, RTW_SR_RFCHIPID);
 	switch (*rfchipid) {
@@ -1062,9 +1109,9 @@ rtw_init_channels(enum rtw_locale locale,
 #undef ADD_CHANNEL
 }
 
+
 static __inline void
-rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
-    const char *dvname)
+rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale)
 {
 	uint8_t cfg0 = RTW_READ8(regs, RTW_CONFIG0);
 
@@ -1129,11 +1176,32 @@ static void
 rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *tdb)
 {
 	int pri;
-	u_int ndesc[RTW_NTXPRI] =
-	    {RTW_NTXDESCLO, RTW_NTXDESCMD, RTW_NTXDESCHI, RTW_NTXDESCBCN};
+	/* nfree: the number of free descriptors in each ring.
+	 * The beacon ring is a special case: I do not let the
+	 * driver use all of the descriptors on the beacon ring.
+	 * The reasons are two-fold:
+	 *
+	 * (1) A BEACON descriptor's OWN bit is (apparently) not
+	 * updated, so the driver cannot easily know if the descriptor
+	 * belongs to it, or if it is racing the NIC.  If the NIC
+	 * does not OWN every descriptor, then the driver can safely
+	 * update the descriptors when RTW_TBDA points at tdb_next.
+	 *
+	 * (2) I hope that the NIC will process more than one BEACON
+	 * descriptor in a single beacon interval, since that will
+	 * enable multiple-BSS support.  Since the NIC does not
+	 * clear the OWN bit, there is no natural place for it to
+	 * stop processing BEACON desciptors.  Maybe it will *not*
+	 * stop processing them!  I do not want to chance the NIC
+	 * looping around and around a saturated beacon ring, so
+	 * I will leave one descriptor unOWNed at all times.
+	 */
+	u_int nfree[RTW_NTXPRI] =
+	    {RTW_NTXDESCLO, RTW_NTXDESCMD, RTW_NTXDESCHI,
+	     RTW_NTXDESCBCN - 1};
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		tdb[pri].tdb_nfree = ndesc[pri];
+		tdb[pri].tdb_nfree = nfree[pri];
 		tdb[pri].tdb_next = 0;
 	}
 }
@@ -1151,6 +1219,7 @@ rtw_txsoft_blk_init(struct rtw_txsoft_blk *tsb)
 		ts->ts_mbuf = NULL;
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
+	tsb->tsb_tx_timer = 0;
 	return 0;
 }
 
@@ -1343,7 +1412,6 @@ rtw_rxdesc_init_all(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *ctl, int kick
 		rs = &ctl[i];
 		rtw_rxdesc_init(rdb, rs, i, kick);
 	}
-	rdb->rdb_next = 0;
 }
 
 static void
@@ -1621,6 +1689,7 @@ rtw_txsofts_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
+	tsb->tsb_tx_timer = 0;
 }
 
 static __inline void
@@ -1658,14 +1727,33 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 	    condstring, rts_retry, data_retry));
 }
 
+static void
+rtw_reset_oactive(struct rtw_softc *sc)
+{
+	short oflags;
+	int pri;
+	struct rtw_txsoft_blk *tsb;
+	struct rtw_txdesc_blk *tdb;
+	oflags = sc->sc_if.if_flags;
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tsb = &sc->sc_txsoft_blk[pri];
+		tdb = &sc->sc_txdesc_blk[pri];
+		if (!SIMPLEQ_EMPTY(&tsb->tsb_freeq) && tdb->tdb_nfree > 0)
+			sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	}
+	if (oflags != sc->sc_if.if_flags) {
+		DPRINTF(sc, RTW_DEBUG_OACTIVE,
+		    ("%s: reset OACTIVE\n", __func__));
+	}
+}
+
 /* Collect transmitted packets. */
 static __inline void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
-    struct rtw_txdesc_blk *tdb)
+    struct rtw_txdesc_blk *tdb, int force)
 {
 	int ndesc;
 	struct rtw_txsoft *ts;
-	struct ifnet *ifp = &sc->sc_if;
 
 	while ((ts = SIMPLEQ_FIRST(&tsb->tsb_dirtyq)) != NULL) {
 		ndesc = 1 + ts->ts_last - ts->ts_first;
@@ -1677,22 +1765,28 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		rtw_txdescs_sync(tdb, ts->ts_first, ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if ((tdb->tdb_desc[ts->ts_last].td_stat &
+		if (force) {
+			int i;
+			for (i = ts->ts_first; ; i = RTW_NEXT_IDX(tdb, i)) {
+				tdb->tdb_desc[i].td_stat &=
+				    ~htole32(RTW_TXSTAT_OWN);
+				if (i == ts->ts_last)
+					break;
+			}
+			rtw_txdescs_sync(tdb, ts->ts_first, ndesc,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		} else if ((tdb->tdb_desc[ts->ts_last].td_stat &
 		    htole32(RTW_TXSTAT_OWN)) != 0)
 			break;
-
-		if (&sc->sc_txdesc_blk[RTW_TXPRIBCN] == tdb) {
-			RTW_DPRINTF(RTW_DEBUG_BEACON,
-			    ("%s: collected beacon\n", __func__));
-		}
 
 		rtw_collect_txpkt(sc, tdb, ts, ndesc);
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
-		ifp->if_flags &= ~IFF_OACTIVE;
 	}
+	/* no more pending transmissions, cancel watchdog */ 
 	if (ts == NULL)
 		tsb->tsb_tx_timer = 0;
+	rtw_reset_oactive(sc);
 }
 
 static void
@@ -1707,21 +1801,61 @@ rtw_intr_tx(struct rtw_softc *sc, uint16_t isr)
 		tsb = &sc->sc_txsoft_blk[pri];
 		tdb = &sc->sc_txdesc_blk[pri];
 
-		rtw_collect_txring(sc, tsb, tdb);
-
-		if ((isr & RTW_INTR_TX) != 0)
-			rtw_start(ifp);
+		rtw_collect_txring(sc, tsb, tdb, 0);
 	}
 
-	/* TBD */
+	if ((isr & RTW_INTR_TX) != 0)
+		rtw_start(ifp);
+
 	return;
 }
 
 static void
 rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 {
-	/* TBD */
-	return;
+	u_int next;
+	uint32_t tsfth, tsftl;
+	struct ieee80211com *ic;
+	struct rtw_txdesc_blk *tdb = &sc->sc_txdesc_blk[RTW_TXPRIBCN];
+	struct rtw_txsoft_blk *tsb = &sc->sc_txsoft_blk[RTW_TXPRIBCN];
+	struct mbuf *m;
+
+	tsfth = RTW_READ(&sc->sc_regs, RTW_TSFTRH);
+	tsftl = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
+
+	if ((isr & (RTW_INTR_TBDOK|RTW_INTR_TBDER)) != 0) {
+		next = rtw_txring_next(&sc->sc_regs, tdb);
+		RTW_DPRINTF(RTW_DEBUG_BEACON,
+		    ("%s: beacon ring %sprocessed, isr = %#04" PRIx16
+		     ", next %u expected %u, %" PRIu64 "\n", __func__,
+		     (next == tdb->tdb_next) ? "" : "un", isr, next,
+		     tdb->tdb_next, (uint64_t)tsfth << 32 | tsftl));
+		if ((RTW_READ8(&sc->sc_regs, RTW_TPPOLL) & RTW_TPPOLL_BQ) == 0){
+			rtw_collect_txring(sc, tsb, tdb, 1);
+			tdb->tdb_next = 0;
+		}
+	}
+	/* Start beacon transmission. */
+
+	if ((isr & RTW_INTR_BCNINT) != 0 &&
+	    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
+	    SIMPLEQ_EMPTY(&tsb->tsb_dirtyq)) {
+		RTW_DPRINTF(RTW_DEBUG_BEACON,
+		    ("%s: beacon prep. time, isr = %#04" PRIx16
+		     ", %16" PRIu64 "\n", __func__, isr,
+		     (uint64_t)tsfth << 32 | tsftl));
+		ic = &sc->sc_ic;
+		m = rtw_beacon_alloc(sc, ic->ic_bss);
+
+		if (m == NULL) {
+			printf("%s: could not allocate beacon\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
+		IF_ENQUEUE(&sc->sc_beaconq, m);
+		rtw_start(&sc->sc_if);
+	}
 }
 
 static void
@@ -1767,28 +1901,35 @@ rtw_dump_rings(struct rtw_softc *sc)
 static void
 rtw_hwring_setup(struct rtw_softc *sc)
 {
+	int pri;
 	struct rtw_regs *regs = &sc->sc_regs;
+	struct rtw_txdesc_blk *tdb;
+
+	sc->sc_txdesc_blk[RTW_TXPRILO].tdb_basereg = RTW_TLPDA;
+	sc->sc_txdesc_blk[RTW_TXPRILO].tdb_base = RTW_RING_BASE(sc, hd_txlo);
+	sc->sc_txdesc_blk[RTW_TXPRIMD].tdb_basereg = RTW_TNPDA;
+	sc->sc_txdesc_blk[RTW_TXPRIMD].tdb_base = RTW_RING_BASE(sc, hd_txmd);
+	sc->sc_txdesc_blk[RTW_TXPRIHI].tdb_basereg = RTW_THPDA;
+	sc->sc_txdesc_blk[RTW_TXPRIHI].tdb_base = RTW_RING_BASE(sc, hd_txhi);
+	sc->sc_txdesc_blk[RTW_TXPRIBCN].tdb_basereg = RTW_TBDA;
+	sc->sc_txdesc_blk[RTW_TXPRIBCN].tdb_base = RTW_RING_BASE(sc, hd_bcn);
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tdb = &sc->sc_txdesc_blk[pri];
+		RTW_WRITE(regs, tdb->tdb_basereg, tdb->tdb_base);
+		RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+		    ("%s: reg[tdb->tdb_basereg] <- %" PRIxPTR "\n", __func__,
+		     (uintptr_t)tdb->tdb_base));
+	}
+
 	RTW_WRITE(regs, RTW_RDSAR, RTW_RING_BASE(sc, hd_rx));
-	RTW_WRITE(regs, RTW_TLPDA, RTW_RING_BASE(sc, hd_txlo));
-	RTW_WRITE(regs, RTW_TNPDA, RTW_RING_BASE(sc, hd_txmd));
-	RTW_WRITE(regs, RTW_THPDA, RTW_RING_BASE(sc, hd_txhi));
-	RTW_WRITE(regs, RTW_TBDA, RTW_RING_BASE(sc, hd_bcn));
-	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TLPDA] <- %" PRIxPTR "\n", __func__,
-	     (uintptr_t)RTW_RING_BASE(sc, hd_txlo)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TNPDA] <- %" PRIxPTR "\n", __func__,
-	     (uintptr_t)RTW_RING_BASE(sc, hd_txmd)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[THPDA] <- %" PRIxPTR "\n", __func__,
-	     (uintptr_t)RTW_RING_BASE(sc, hd_txhi)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TBDA] <- %" PRIxPTR "\n", __func__,
-	     (uintptr_t)RTW_RING_BASE(sc, hd_bcn)));
+
 	RTW_DPRINTF(RTW_DEBUG_RECV_DESC,
 	    ("%s: reg[RDSAR] <- %" PRIxPTR "\n", __func__,
 	     (uintptr_t)RTW_RING_BASE(sc, hd_rx)));
+
+	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
+
 }
 
 static int
@@ -1813,13 +1954,14 @@ rtw_swring_setup(struct rtw_softc *sc)
 	rtw_rxdescs_sync(rdb, 0, rdb->rdb_ndesc,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	rtw_rxdesc_init_all(rdb, sc->sc_rxsoft, 1);
+	rdb->rdb_next = 0;
 
 	rtw_txdescs_sync_all(&sc->sc_txdesc_blk[0]);
 	return 0;
 }
 
 static void
-rtw_txdesc_blk_reset(struct rtw_txdesc_blk *tdb)
+rtw_txdesc_blk_init(struct rtw_txdesc_blk *tdb)
 {
 	int i;
 
@@ -1827,43 +1969,81 @@ rtw_txdesc_blk_reset(struct rtw_txdesc_blk *tdb)
 	    sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 	for (i = 0; i < tdb->tdb_ndesc; i++)
 		tdb->tdb_desc[i].td_next = htole32(RTW_NEXT_DESC(tdb, i));
-	tdb->tdb_nfree = tdb->tdb_ndesc;
-	tdb->tdb_next = 0;
+}
+
+static u_int
+rtw_txring_next(struct rtw_regs *regs, struct rtw_txdesc_blk *tdb)
+{
+	return (le32toh(RTW_READ(regs, tdb->tdb_basereg)) - tdb->tdb_base) /
+	    sizeof(struct rtw_txdesc);
+}
+
+static void
+rtw_txring_fixup(struct rtw_softc *sc)
+{
+	int pri;
+	u_int next;
+	struct rtw_txdesc_blk *tdb;
+	struct rtw_regs *regs = &sc->sc_regs;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tdb = &sc->sc_txdesc_blk[pri];
+		next = rtw_txring_next(regs, tdb);
+		if (tdb->tdb_next == next)
+			continue;
+		printf("%s: tx-ring %d expected next %u, read %u\n", __func__,
+		    pri, tdb->tdb_next, next);
+		tdb->tdb_next = next;
+	}
+}
+
+static void
+rtw_rxring_fixup(struct rtw_softc *sc)
+{
+	u_int next;
+	uint32_t rdsar;
+	struct rtw_rxdesc_blk *rdb;
+
+	rdsar = le32toh(RTW_READ(&sc->sc_regs, RTW_RDSAR));
+	next = (rdsar - RTW_RING_BASE(sc, hd_rx)) / sizeof(struct rtw_rxdesc);
+
+	rdb = &sc->sc_rxdesc_blk;
+	if (rdb->rdb_next != next) {
+		printf("%s: rx-ring expected next %u, read %u\n", __func__,
+		    rdb->rdb_next, next);
+		rdb->rdb_next = next;
+	}
 }
 
 static void
 rtw_txdescs_reset(struct rtw_softc *sc)
 {
 	int pri;
-	struct rtw_txdesc_blk *tdb;
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		tdb = &sc->sc_txdesc_blk[pri];
-		rtw_txsofts_release(sc->sc_dmat, &sc->sc_ic,
-		    &sc->sc_txsoft_blk[pri]);
-		rtw_txdesc_blk_reset(tdb);
-		rtw_txdescs_sync(tdb, 0, tdb->tdb_ndesc,
-		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		rtw_collect_txring(sc, &sc->sc_txsoft_blk[pri],
+		    &sc->sc_txdesc_blk[pri], 1);
 	}
-}
-
-static void
-rtw_rxdescs_reset(struct rtw_softc *sc)
-{
-	rtw_rxdesc_init_all(&sc->sc_rxdesc_blk, &sc->sc_rxsoft[0], 1);
 }
 
 static void
 rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	uint8_t cr = 0;
+	int xmtr = 0, rcvr = 0;
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	if ((isr & RTW_INTR_TXFOVW) != 0)
+	if ((isr & RTW_INTR_TXFOVW) != 0) {
 		printf("%s: tx fifo overflow\n", sc->sc_dev.dv_xname);
+		xmtr = 1;
+		cr |= RTW_CR_TE;
+	}
 
-	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) == 0)
+	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0) {
+		cr = RTW_CR_RE;
+		rcvr = 1;
 		return;
+	}
 
 	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv, isr %" PRIx16
 	    "\n", sc->sc_dev.dv_xname, isr));
@@ -1872,23 +2052,27 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 	rtw_dump_rings(sc);
 #endif /* RTW_DEBUG */
 
-	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
+	rtw_io_enable(regs, cr, 0);
 
 	/* Collect rx'd packets.  Refresh rx buffers. */
-	rtw_intr_rx(sc, 0);
-	/* Collect tx'd packets. */
-	rtw_intr_tx(sc, 0);
+	if (rcvr)
+		rtw_intr_rx(sc, 0);
+	/* Collect tx'd packets.  XXX let's hope this stops the transmit
+	 * timeouts.
+	 */
+	if (xmtr)
+		rtw_txdescs_reset(sc);
 
 	RTW_WRITE16(regs, RTW_IMR, 0);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 
-	rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
-	rtw_wep_setkeys(sc, sc->sc_ic.ic_nw_keys, sc->sc_ic.ic_def_txkey);
+	if (rtw_do_chip_reset) {
+		rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
+		rtw_wep_setkeys(sc, sc->sc_ic.ic_nw_keys,
+		    sc->sc_ic.ic_def_txkey);
+	}
 
-	rtw_rxdescs_reset(sc);
-	rtw_txdescs_reset(sc);
-
-	rtw_hwring_setup(sc);
+	rtw_rxdesc_init_all(&sc->sc_rxdesc_blk, &sc->sc_rxsoft[0], 1);
 
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
@@ -1896,8 +2080,11 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
-	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
-	ifp->if_flags &= ~IFF_OACTIVE;
+	if (rcvr)
+		rtw_rxring_fixup(sc);
+	rtw_io_enable(regs, cr, 1);
+	if (xmtr)
+		rtw_txring_fixup(sc);
 }
 
 static __inline void
@@ -2497,19 +2684,6 @@ allmulti:
 	return;
 }
 
-#define	IEEE80211_BEACON_TIMESTAMP_LEN		8
-#define	IEEE80211_BEACON_BINTVL_LEN		2
-#define	IEEE80211_BEACON_CAPINFO_LEN		2
-#define	IEEE80211_TLV_SSID_LEN(__esslen)	(2 + (__esslen))
-#define	IEEE80211_TLV_SUPRATES_LEN(__nrates)	(2 + (__nrates))
-#define	IEEE80211_TLV_XSUPRATES_LEN(__nrates)	(2 + (__nrates))
-#define	IEEE80211_TLV_DSPARMS_LEN		3
-#define	IEEE80211_TLV_IBSSPARMS			4
-#define	IEEE80211_TLV_MIN_TIM			6
-
-#define	IEEE80211_TLV_ALLRATES_LEN(__nrates)	\
-	(((__nrates) > IEEE80211_RATE_SIZE) ? 4 + (__nrates) : 2 + (__nrates))
-
 static struct mbuf *
 rtw_beacon_alloc(struct rtw_softc *sc, struct ieee80211_node *ni)
 {
@@ -2517,11 +2691,10 @@ rtw_beacon_alloc(struct rtw_softc *sc, struct ieee80211_node *ni)
 	struct mbuf *m;
 	struct ieee80211_beacon_offsets	boff;
 
-	m = ieee80211_beacon_alloc(ic, ni, &boff);
-
-	RTW_DPRINTF(RTW_DEBUG_BEACON,
-	    ("%s: m %p len %u\n", __func__, m, m->m_len));
-
+	if ((m = ieee80211_beacon_alloc(ic, ni, &boff)) != NULL) {
+		RTW_DPRINTF(RTW_DEBUG_BEACON,
+		    ("%s: m %p len %u\n", __func__, m, m->m_len));
+	}
 	return m;
 }
 
@@ -2831,6 +3004,8 @@ rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
 	tdb = &sc->sc_txdesc_blk[pri];
 
 	if (SIMPLEQ_EMPTY(&tsb->tsb_freeq) || tdb->tdb_nfree == 0) {
+		if (tsb->tsb_tx_timer == 0)
+			tsb->tsb_tx_timer = 5;
 		*tsbp = NULL;
 		*tdbp = NULL;
 		return -1;
@@ -2850,7 +3025,10 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 	if (IF_IS_EMPTY(ifq))
 		return NULL;
 	if (rtw_txring_choose(sc, tsbp, tdbp, pri) == -1) {
+		DPRINTF(sc, RTW_DEBUG_XMIT_RSRC, ("%s: no ring %d descriptor\n",
+		    __func__, pri));
 		*if_flagsp |= IFF_OACTIVE;
+		sc->sc_if.if_timer = 1;
 		return NULL;
 	}
 	IF_DEQUEUE(ifq, m);
@@ -2913,8 +3091,10 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	pri = ((m0->m_flags & M_PWR_SAV) != 0) ? RTW_TXPRIHI : RTW_TXPRIMD;
 
 	if (rtw_txring_choose(sc, tsbp, tdbp, pri) == -1) {
-		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no descriptor\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT_RSRC, ("%s: no ring %d descriptor\n",
+		    __func__, pri));
 		*if_flagsp |= IFF_OACTIVE;
+		sc->sc_if.if_timer = 1;
 		return 0;
 	}
 
@@ -3014,7 +3194,6 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		return NULL;
 	} else if (dmam->dm_nsegs > ndescfree) {
 		printf("%s: too many tx segments\n", dvname);
-		*ifflagsp |= IFF_OACTIVE;
 		bus_dmamap_unload(dmat, dmam);
 		m_freem(m0);
 		return NULL;
@@ -3028,11 +3207,11 @@ rtw_print_txdesc(struct rtw_softc *sc, const char *action,
     struct rtw_txsoft *ts, struct rtw_txdesc_blk *tdb, int desc)
 {
 	struct rtw_txdesc *td = &tdb->tdb_desc[desc];
-	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] ctl0 %#08x "
-	    "ctl1 %#08x buf %#08x len %#08x\n",
+	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] next %#08x "
+	    "buf %#08x ctl0 %#08x ctl1 %#08x len %#08x\n",
 	    sc->sc_dev.dv_xname, ts, action, desc,
-	    le32toh(td->td_ctl0),
-	    le32toh(td->td_ctl1), le32toh(td->td_buf),
+	    le32toh(td->td_buf), le32toh(td->td_next),
+	    le32toh(td->td_ctl0), le32toh(td->td_ctl1),
 	    le32toh(td->td_len)));
 }
 #endif /* RTW_DEBUG */
@@ -3257,11 +3436,10 @@ rtw_start(struct ifnet *ifp)
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_freeq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_dirtyq, ts, ts_q);
 
-		if (tsb != &sc->sc_txsoft_blk[RTW_TXPRIBCN]) {
+		if (tsb != &sc->sc_txsoft_blk[RTW_TXPRIBCN])
 			sc->sc_led_state.ls_event |= RTW_LED_S_TX;
-			tsb->tsb_tx_timer = 5;
-			ifp->if_timer = 1;
-		}
+		tsb->tsb_tx_timer = 5;
+		ifp->if_timer = 1;
 		tppoll = RTW_READ8(&sc->sc_regs, RTW_TPPOLL);
 		tppoll &= ~RTW_TPPOLL_SALL;
 		tppoll |= tsb->tsb_poll & RTW_TPPOLL_ALL;
@@ -3280,9 +3458,25 @@ post_dequeue_err:
 }
 
 static void
+rtw_idle(struct rtw_regs *regs)
+{
+	int active;
+
+	/* request stop DMA; wait for packets to stop transmitting. */
+
+	RTW_WRITE8(regs, RTW_TPPOLL, RTW_TPPOLL_SALL);
+	RTW_WBR(regs, RTW_TPPOLL, RTW_TPPOLL);
+
+	for (active = 0; active < 300 &&
+	     (RTW_READ8(regs, RTW_TPPOLL) & RTW_TPPOLL_ACTIVE) != 0; active++)
+		DELAY(10);
+	printf("%s: transmit DMA idle in %dus\n", __func__, active * 10);
+}
+
+static void
 rtw_watchdog(struct ifnet *ifp)
 {
-	int pri;
+	int pri, tx_timeouts = 0;
 	struct rtw_softc *sc;
 	struct rtw_txsoft_blk *tsb;
 
@@ -3298,27 +3492,29 @@ rtw_watchdog(struct ifnet *ifp)
 
 		if (tsb->tsb_tx_timer == 0)
 			continue;
-
-		if (--tsb->tsb_tx_timer == 0) {
+		else if (--tsb->tsb_tx_timer == 0) {
 			if (SIMPLEQ_EMPTY(&tsb->tsb_dirtyq))
 				continue;
 			printf("%s: transmit timeout, priority %d\n",
 			    ifp->if_xname, pri);
 			ifp->if_oerrors++;
-			/* Stop Tx DMA, disable transmitter, clear
-			 * Tx rings, and restart.
-			 *
-			 * TBD Stop/restart just the broken ring?
-			 */
-			RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL_SALL);
-			RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
-			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 0);
-			rtw_txdescs_reset(sc);
-			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 1);
-			ifp->if_flags &= ~IFF_OACTIVE;
-			rtw_start(ifp);
+			tx_timeouts++;
 		} else
 			ifp->if_timer = 1;
+	}
+
+	if (tx_timeouts > 0) {
+		/* Stop Tx DMA, disable xmtr, flush Tx rings, enable xmtr,
+		 * reset s/w tx-ring pointers, and start transmission.
+		 *
+		 * TBD Stop/restart just the broken rings?
+		 */
+		rtw_idle(&sc->sc_regs);
+		rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 0);
+		rtw_txdescs_reset(sc);
+		rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 1);
+		rtw_txring_fixup(sc);
+		rtw_start(ifp);
 	}
 	ieee80211_watchdog(&sc->sc_ic);
 	return;
@@ -3340,7 +3536,7 @@ rtw_next_scan(void *arg)
 static void
 rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, uint16_t intval0)
 {
-	uint16_t bcnitv, intval;
+	uint16_t bcnitv, bintritv, intval;
 	int i;
 	struct rtw_regs *regs = &sc->sc_regs;
 
@@ -3356,10 +3552,13 @@ rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, uint16_t intval0)
 	bcnitv = RTW_READ16(regs, RTW_BCNITV) & ~RTW_BCNITV_BCNITV_MASK;
 	bcnitv |= LSHIFT(intval, RTW_BCNITV_BCNITV_MASK);
 	RTW_WRITE16(regs, RTW_BCNITV, bcnitv);
+	/* interrupt host 1ms before the TBTT */
+	bintritv = RTW_READ16(regs, RTW_BINTRITV) & ~RTW_BINTRITV_BINTRITV;
+	bintritv |= LSHIFT(1000, RTW_BINTRITV_BINTRITV);
+	RTW_WRITE16(regs, RTW_BINTRITV, bintritv);
 	/* magic from Linux */
 	RTW_WRITE16(regs, RTW_ATIMWND, LSHIFT(1, RTW_ATIMWND_ATIMWND));
 	RTW_WRITE16(regs, RTW_ATIMTRITV, LSHIFT(2, RTW_ATIMTRITV_ATIMTRITV));
-
 	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
@@ -3371,7 +3570,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct rtw_softc *sc = (struct rtw_softc *)ifp->if_softc;
-	struct mbuf *m;
 	enum ieee80211_state ostate;
 	int error;
 
@@ -3411,15 +3609,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		case IEEE80211_M_HOSTAP:
 		case IEEE80211_M_IBSS:
 			rtw_set_nettype(sc, IEEE80211_M_MONITOR);
-			m = rtw_beacon_alloc(sc, ic->ic_bss);
-			if (m == NULL) {
-				printf("%s: could not allocate beacon\n",
-				    sc->sc_dev.dv_xname);
-			} else {
-				IF_ENQUEUE(&sc->sc_beaconq, m);
-				m->m_pkthdr.rcvif =
-				    (void *)ieee80211_ref_node(ic->ic_bss);
-			}
 			/*FALLTHROUGH*/
 		case IEEE80211_M_AHDEMO:
 		case IEEE80211_M_STA:
@@ -3438,12 +3627,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (nstate != IEEE80211_S_SCAN)
 		callout_stop(&sc->sc_scan_ch);
-
-	/* Start beacon transmission. */
-	if (nstate == IEEE80211_S_RUN &&
-	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
-	     ic->ic_opmode == IEEE80211_M_IBSS))
-		rtw_start(ifp);
 
 	return (*sc->sc_mtbl.mt_newstate)(ic, nstate, arg);
 }
@@ -3759,7 +3942,8 @@ rtw_txdesc_blk_setup(struct rtw_txdesc_blk *tdb, struct rtw_txdesc *desc,
 	(void)memset(tdb->tdb_desc, 0,
 	    sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 
-	rtw_txdesc_blk_reset(tdb);
+	rtw_txdesc_blk_init(tdb);
+	tdb->tdb_next = 0;
 }
 
 static void
@@ -3855,6 +4039,9 @@ rtw_attach(struct rtw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_txsoft_blk *tsb;
 	int pri, rc;
+
+	rtw_cipher_wep = ieee80211_cipher_wep;
+	rtw_cipher_wep.ic_decap = rtw_wep_decap;
 
 	NEXT_ATTACH_STATE(sc, DETACHED);
 
@@ -4002,8 +4189,7 @@ rtw_attach(struct rtw_softc *sc)
 	    ("%s: PHY delay %d\n", sc->sc_dev.dv_xname, sc->sc_phydelay));
 
 	if (sc->sc_locale == RTW_LOCALE_UNKNOWN)
-		rtw_identify_country(&sc->sc_regs, &sc->sc_locale,
-		    sc->sc_dev.dv_xname);
+		rtw_identify_country(&sc->sc_regs, &sc->sc_locale);
 
 	rtw_init_channels(sc->sc_locale, &sc->sc_ic.ic_channels,
 	    sc->sc_dev.dv_xname);
