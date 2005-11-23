@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.46 2005/11/20 10:04:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.47 2005/11/23 04:24:00 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.46 2005/11/20 10:04:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.47 2005/11/23 04:24:00 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1282,7 +1282,7 @@ ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ni, sp->rates, sp->xrates,
-	    IEEE80211_F_DONEGO | IEEE80211_F_DOSORT);
+	    IEEE80211_F_DODEL | IEEE80211_F_DONEGO | IEEE80211_F_DOSORT);
 
 	if (ic->ic_newassoc != NULL)
 		ic->ic_newassoc(ni, isnew);
