@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.66 2005/11/14 09:39:44 dillo Exp $	*/
+/*	$NetBSD: perform.c,v 1.67 2005/11/23 04:59:14 ben Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,11 +7,14 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
+#if HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.66 2005/11/14 09:39:44 dillo Exp $");
+__RCSID("$NetBSD: perform.c,v 1.67 2005/11/23 04:59:14 ben Exp $");
 #endif
 #endif
 
@@ -60,6 +63,8 @@ __RCSID("$NetBSD: perform.c,v 1.66 2005/11/14 09:39:44 dillo Exp $");
 
 static char *Home;
 
+static lfile_head_t files;
+
 static int
 pkg_do(char *pkg)
 {
@@ -69,7 +74,8 @@ pkg_do(char *pkg)
 	struct stat sb;
 	char   *cp = NULL;
 	int     code = 0;
-	char flist[sizeof(ALL_FNAMES)] = "\0";
+	lfile_t	*lfp;
+	int	result;
 
 	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(pkg)) != NULL) {
@@ -117,23 +123,30 @@ pkg_do(char *pkg)
 				 */
 
 				/* Determine which +-files to unpack - not all may be present! */
-				strcat(flist, CONTENTS_FNAME); strcat(flist, " ");
-				strcat(flist, COMMENT_FNAME); strcat(flist, " ");
-				strcat(flist, DESC_FNAME); strcat(flist, " ");
-				if (Flags & SHOW_MTREE)		{ strcat(flist, MTREE_FNAME); 		strcat(flist, " "); }
-				if (Flags & SHOW_BUILD_VERSION)	{ strcat(flist, BUILD_VERSION_FNAME);	strcat(flist, " "); }
-				if (Flags & (SHOW_BUILD_INFO|SHOW_BI_VAR)) {
-					strcat(flist, BUILD_INFO_FNAME);
-					strcat(flist, " ");
-				}
-				if (Flags & SHOW_PKG_SIZE)	{ strcat(flist, SIZE_PKG_FNAME); 	strcat(flist, " "); }
-				if (Flags & SHOW_ALL_SIZE)	{ strcat(flist, SIZE_ALL_FNAME); 	strcat(flist, " "); }
+				LFILE_ADD(&files, lfp, CONTENTS_FNAME);
+				LFILE_ADD(&files, lfp, COMMENT_FNAME);
+				LFILE_ADD(&files, lfp, DESC_FNAME);
+				if (Flags & SHOW_MTREE)
+					LFILE_ADD(&files, lfp, MTREE_FNAME);
+				if (Flags & SHOW_BUILD_VERSION)
+					LFILE_ADD(&files, lfp, BUILD_VERSION_FNAME);
+				if (Flags & SHOW_BUILD_INFO)
+					LFILE_ADD(&files, lfp, BUILD_INFO_FNAME);
+				if (Flags & SHOW_PKG_SIZE)
+					LFILE_ADD(&files, lfp, SIZE_PKG_FNAME);
+				if (Flags & SHOW_ALL_SIZE)
+					LFILE_ADD(&files, lfp, SIZE_ALL_FNAME);
 #if 0
-				if (Flags & SHOW_REQBY)		{ strcat(flist, REQUIRED_BY_FNAME); 	strcat(flist, " "); }
-				if (Flags & SHOW_DISPLAY)	{ strcat(flist, DISPLAY_FNAME); 	strcat(flist, " "); }
-				if (Flags & SHOW_INSTALL)	{ strcat(flist, INSTALL_FNAME); 	strcat(flist, " "); }
-				if (Flags & SHOW_DEINSTALL)	{ strcat(flist, DEINSTALL_FNAME); 	strcat(flist, " "); }
-				if (Flags & SHOW_REQUIRE)	{ strcat(flist, REQUIRE_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_REQBY)
+					LFILE_ADD(&files, lfp, REQUIRED_BY_FNAME);
+				if (Flags & SHOW_DISPLAY)
+					LFILE_ADD(&files, lfp, DISPLAY_FNAME);
+				if (Flags & SHOW_INSTALL)
+					LFILE_ADD(&files, lfp, INSTALL_FNAME);
+				if (Flags & SHOW_DEINSTALL)
+					LFILE_ADD(&files, lfp, DEINSTALL_FNAME);
+				if (Flags & SHOW_REQUIRE)
+					LFILE_ADD(&files, lfp, REQUIRE_FNAME);
 				/* PRESERVE_FNAME? */
 #endif				
 
@@ -143,7 +156,12 @@ pkg_do(char *pkg)
 					goto bail;
 				}
 				Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
-				if (unpack(fname, flist)) {
+				result = unpack(fname, &files);
+				while ((lfp = TAILQ_FIRST(&files)) != NULL) {
+					TAILQ_REMOVE(&files, lfp, lf_link);
+					free(lfp);
+				}
+				if (result) {
 					warnx("error during unpacking, no info for '%s' available", pkg);
 					code = 1;
 					goto bail;
@@ -377,6 +395,8 @@ pkg_perform(lpkg_head_t *pkghead)
 	int     err_cnt = 0;
 
 	signal(SIGINT, cleanup);
+
+	TAILQ_INIT(&files);
 
 	dbdir = _pkgdb_getPKGDB_DIR();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.42 2005/11/07 22:57:07 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.43 2005/11/23 04:59:14 ben Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.42 2005/11/07 22:57:07 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.43 2005/11/23 04:59:14 ben Exp $");
 #endif
 #endif
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: perform.c,v 1.42 2005/11/07 22:57:07 wiz Exp $");
 #endif
 
 static char *Home;
+void cleanup_callback(void);
 
 static void
 make_dist(const char *home, const char *pkg, const char *suffix, const package_t *plist)
@@ -61,9 +62,8 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	int     ret;
 	char   *args[50];	/* Much more than enough. */
 	int     nargs = 1;
-	int     pipefds[2];
 	FILE   *totar;
-	pid_t   pid;
+	pipe_to_system_t	*to_pipe;
 
 	if ((args[0] = strrchr(TAR_CMD, '/')) == NULL)
 		args[0] = TAR_CMD;
@@ -93,30 +93,8 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	args[nargs++] = "-";	/* Use stdin for the file. */
 	args[nargs] = NULL;
 
-	/* Set up a pipe for passing the filenames, and fork off a tar process. */
-	if (pipe(pipefds) == -1) {
-		cleanup(0);
-		errx(2, "cannot create pipe");
-	}
-	if ((pid = fork()) == -1) {
-		cleanup(0);
-		errx(2, "cannot fork process for %s", TAR_CMD);
-	}
-	if (pid == 0) {		/* The child */
-		dup2(pipefds[0], 0);
-		close(pipefds[0]);
-		close(pipefds[1]);
-		execvp(TAR_CMD, args);
-		cleanup(0);
-		errx(2, "failed to execute %s command", TAR_CMD);
-	}
-
-	/* Meanwhile, back in the parent process ... */
-	close(pipefds[0]);
-	if ((totar = fdopen(pipefds[1], "w")) == NULL) {
-		cleanup(0);
-		errx(2, "fdopen failed");
-	}
+	to_pipe = pipe_to_system_begin(TAR_CMD, args, cleanup_callback);
+	totar = to_pipe->fp;
 
 	fprintf(totar, "%s\n", CONTENTS_FNAME);
 	fprintf(totar, "%s\n", COMMENT_FNAME);
@@ -173,8 +151,7 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 		}
 	}
 
-	fclose(totar);
-	waitpid(-1, &ret, 0);
+	ret = pipe_to_system_end(to_pipe);
 	/* assume either signal or bad exit is enough for us */
 	if (ret) {
 		cleanup(0);
@@ -199,6 +176,14 @@ sanity_check(void)
 	}
 }
 
+/*
+ * Clean up callback for pipe_to_system()
+ */
+void
+cleanup_callback(void)
+{
+	cleanup(0);
+}
 
 /*
  * Clean up those things that would otherwise hang around
