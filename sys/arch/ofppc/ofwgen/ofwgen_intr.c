@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.7 2003/07/15 02:46:33 lukem Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.8 2005/11/23 13:00:51 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7 2003/07/15 02:46:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.8 2005/11/23 13:00:51 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ int	ofwgen_splraise(int);
 int	ofwgen_spllower(int);
 void	ofwgen_splx(int);
 void	ofwgen_setsoft(int);
-void	ofwgen_clock_return(struct clockframe *, int);
+void	ofwgen_clock_return(struct clockframe *, int, long);
 void	*ofwgen_intr_establish(int, int, int, int (*)(void *), void *);
 void	ofwgen_intr_disestablish(void *);
 
@@ -351,7 +351,7 @@ intr_return(struct clockframe *frame, int level)
 }
 
 void
-ofwgen_clock_return(struct clockframe *frame, int nticks)
+ofwgen_clock_return(struct clockframe *frame, int nticks, long ticks)
 {
 	int pri;
 
@@ -361,6 +361,12 @@ ofwgen_clock_return(struct clockframe *frame, int nticks)
 		clockpending += nticks;
 	else {
 		cpl = pri | imask[IPL_CLOCK];
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		lasttb = mftb() + ticks - ticks_per_intr;
 
 		/* Reenable interrupts. */
 		mtmsr(mfmsr() | PSL_EE);
