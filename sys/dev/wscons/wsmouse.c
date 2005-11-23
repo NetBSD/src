@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.36 2005/06/21 14:01:13 ws Exp $ */
+/* $NetBSD: wsmouse.c,v 1.37 2005/11/23 09:38:02 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.36 2005/06/21 14:01:13 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.37 2005/11/23 09:38:02 augustss Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -124,9 +124,11 @@ struct wsmouse_softc {
 	int		sc_dx;		/* delta-x */
 	int		sc_dy;		/* delta-y */
 	int		sc_dz;		/* delta-z */
+	int		sc_dw;		/* delta-w */
 	int		sc_x;		/* absolute-x */
 	int		sc_y;		/* absolute-y */
 	int		sc_z;		/* absolute-z */
+	int		sc_w;		/* absolute-w */
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
@@ -283,8 +285,8 @@ wsmouse_detach(struct device  *self, int flags)
 }
 
 void
-wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
-	int x, int y, int z, u_int flags)
+wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
+	int x, int y, int z, int w, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
@@ -317,6 +319,8 @@ wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 		sc->sc_dy += y;
 	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Z))
 		sc->sc_dz += z;
+	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_W))
+		sc->sc_dw += w;
 
 	/*
 	 * We have at least one event (mouse button, delta-X, or
@@ -409,6 +413,25 @@ wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 			TIMESTAMP;
 			ADVANCE;
 			sc->sc_dz = 0;
+		}
+	}
+	if (flags & WSMOUSE_INPUT_ABSOLUTE_W) {
+		if (sc->sc_w != w) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_W;
+			ev->value = w;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_w = w;
+		}
+	} else {
+		if (sc->sc_dw) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_DELTA_W;
+			ev->value = sc->sc_dw;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_dw = 0;
 		}
 	}
 
