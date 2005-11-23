@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.50 2005/11/20 10:04:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.51 2005/11/23 04:32:12 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.50 2005/11/20 10:04:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.51 2005/11/23 04:32:12 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2042,6 +2042,21 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
                                  * up."  This updates the TSF, too.
 				 */
 				ieee80211_init_neighbor(ic, ni, wh, &scan, 0);
+			} else if (ni == ic->ic_bss &&
+			           !IEEE80211_ADDR_EQ(wh->i_addr3,
+				                      ni->ni_bssid)) {
+				/* Mark a change of BSSID.  If
+				 * ic_des_bssid is set, ni does
+				 * not now represent a network we
+				 * want to belong to, so start a
+				 * scan.
+				 */
+				if (ic->ic_flags & IEEE80211_F_DESBSSID) {
+					ieee80211_new_state(ic,
+					    IEEE80211_S_SCAN, 0);
+					return;
+				}
+				IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 			} else {
 				/*
 				 * Record tsf for potential resync.
