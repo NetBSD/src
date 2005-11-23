@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.38 2005/11/18 16:42:22 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.39 2005/11/23 20:08:29 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.38 2005/11/18 16:42:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.39 2005/11/23 20:08:29 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1741,11 +1741,6 @@ iwi_start(struct ifnet *ifp)
 			continue;
 		}
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
-
 		eh = mtod(m0, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -1772,9 +1767,12 @@ iwi_start(struct ifnet *ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-#ifdef XXXNH
-		BPF_MTAP(ifp, m0);
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
+
 		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL) {
 			ieee80211_free_node(ni);
