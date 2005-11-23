@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/09/03 21:33:33 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2005/11/23 13:00:51 nonaka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -99,13 +99,15 @@
 struct clockframe;
 
 extern int imask[];
+extern long ticks_per_intr;
+extern volatile u_long lasttb;
 
 struct machvec {
 	int (*mvec_splraise)(int);
 	int (*mvec_spllower)(int);
 	void (*mvec_splx)(int);
 	void (*mvec_setsoft)(int);
-	void (*mvec_clock_return)(struct clockframe *, int);
+	void (*mvec_clock_return)(struct clockframe *, int, long);
 	void *(*mvec_intr_establish)(int, int, int, int (*)(void *), void *);
 	void (*mvec_intr_disestablish)(void *);
 };
@@ -116,7 +118,7 @@ extern struct machvec machine_interface;
 #define	_spllower(x)	((*machine_interface.mvec_spllower)(x))
 #define	splx(x)		((*machine_interface.mvec_splx)(x))
 #define	setsoftintr(x)	((*machine_interface.mvec_setsoft)(x))
-#define	clock_return(x, y) ((*machine_interface.mvec_clock_return)(x, y))
+#define	clock_return(x, y, z) ((*machine_interface.mvec_clock_return)(x, y, z))
 #define	intr_establish(irq, lvl, ist, func, arg)			\
 	((*machine_interface.mvec_intr_establish)((irq), (lvl), (ist),	\
 	    (func), (arg)))
