@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.90 2005/11/18 16:53:56 skrll Exp $  */
+/*	$NetBSD: atw.c,v 1.91 2005/11/23 01:11:23 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.90 2005/11/18 16:53:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.91 2005/11/23 01:11:23 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1457,6 +1457,7 @@ atw_init(struct ifnet *ifp)
  out:
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		sc->sc_tx_timer = 0;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
 	}
@@ -2020,6 +2021,7 @@ atw_filter_setup(struct atw_softc *sc)
 		atw_idle(sc, ATW_NAR_SR);
 
 	sc->sc_opmode &= ~(ATW_NAR_PR|ATW_NAR_MM);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* XXX in scan mode, do not filter packets.  Maybe this is
 	 * unnecessary.
@@ -2632,7 +2634,9 @@ atw_txdrain(struct atw_softc *sc)
 			txs->txs_mbuf = NULL;
 		}
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+		sc->sc_txfree += txs->txs_ndescs;
 	}
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
 }
 
@@ -2671,6 +2675,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 
 	if (!disable)
@@ -3219,8 +3224,6 @@ atw_txintr(struct atw_softc *sc)
 	DPRINTF3(sc, ("%s: atw_txintr: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
@@ -3268,6 +3271,8 @@ atw_txintr(struct atw_softc *sc)
 		txs->txs_mbuf = NULL;
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    (txstat & TXSTAT_ERRMASK) != 0) {
@@ -3702,7 +3707,6 @@ atw_start(struct ifnet *ifp)
 			 * XXX We could allocate an mbuf and copy, but
 			 * XXX it is worth it?
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			m_freem(m0);
 			break;
