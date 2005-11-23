@@ -1,9 +1,25 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <nbcompat.h>
+#if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+#if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#if HAVE_STDLIB_H
 #include <stdlib.h>
-#include <stdio.h>
+#endif
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_STDIO_H
+#include <stdio.h>
+#endif
 
 #include "lib.h"
 
