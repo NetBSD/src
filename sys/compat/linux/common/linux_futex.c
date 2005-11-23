@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.4 2005/11/09 14:52:18 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.5 2005/11/23 16:14:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.4 2005/11/09 14:52:18 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.5 2005/11/23 16:14:57 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -187,7 +187,6 @@ linux_sys_futex(l, v, retval)
 		/* FALLTHROUGH */
 
 	case LINUX_FUTEX_REQUEUE:
-
 		f = futex_get(SCARG(uap, uaddr));
 		newf = futex_get(SCARG(uap, uaddr2));
 		*retval = futex_wake(f, SCARG(uap, val), newf);
@@ -267,6 +266,10 @@ futex_sleep(f, l, timeout)
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 	FUTEX_UNLOCK;
 
+#ifdef DEBUG_LINUX_FUTEX
+	printf("FUTEX --> %d.%d tlseep timeout = %ld\n", l->l_proc->p_pid,
+	    l->l_lid, timeout);
+#endif
 	ret = tsleep(wp, PCATCH|PZERO, "linuxfutex", timeout);
 
 	FUTEX_LOCK;
