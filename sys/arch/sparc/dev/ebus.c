@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.22 2005/11/22 20:13:34 macallan Exp $ */
+/*	$NetBSD: ebus.c,v 1.23 2005/11/24 12:11:32 he Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.22 2005/11/22 20:13:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.23 2005/11/24 12:11:32 he Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
