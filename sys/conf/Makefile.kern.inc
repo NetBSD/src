@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.70 2005/11/24 12:54:29 dbj Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.71 2005/11/24 13:01:42 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -301,13 +301,32 @@ depend: .depend
 dependall: depend all
 
 .if !target(.depend)
-SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
+.SUFFIXES: .d .c .s .S
+.c.d:
+	${_MKTARGET_CREATE}
+	@${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.s.d .S.d:
+	${_MKTARGET_CREATE}
+	@${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+
+SSRCS=${MD_SFILES} ${SFILES}
+CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
+SRCS=${SSRCS} ${CSRCS}
+DEPS=	${SRCS:T:R:S/$/.d/g}
+
+.for _s in ${SSRCS}
+${_s:T:R}.d: ${_s} assym.h config_time.h
+.endfor
+.for _s in ${CSRCS}
+${_s:T:R}.d: ${_s} config_time.h
+.endfor
+
 # We have to assume that we'll eventually run out of command line.
 # We already hit that on non-NetBSD hosts.
-_SFILES=${MD_SFILES} ${SFILES}
-_CFILES=${MD_CFILES} ${MI_CFILES} ${CFILES}
 .if ${MAKEVERBOSE} == 2
 _T=-t
 .else
@@ -317,17 +336,15 @@ _XargsMKDEP=${MKDEP:M*=*} xargs ${_T} ${MKDEP:N*=*}
 _SubMake=${.MAKE} -f ${MAKEFILE} -DnoBEGIN
 
 # This dance is necessary to avoid long command lines.
-${SRCS:S,^,list-,}:
+${DEPS:S,^,list-,}:
 	@echo ${.TARGET:S,^list-,,}
 
-_sfiles: ${_SFILES:S,^,list-,}
-_cfiles: ${_CFILES:S,^,list-,}
+_depfiles: ${DEPS:S,^,list-,}
 
-.depend: ${SRCS} assym.h config_time.h
+.depend: ${DEPS}
 	${_MKTARGET_CREATE}
 	@> $@
-	@${_SubMake} _sfiles | ${_XargsMKDEP} -a -- ${MKDEP_AFLAGS} ${CPPFLAGS} 
-	@${_SubMake} _cfiles | ${_XargsMKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS}
+	@${_SubMake} _depfiles | ${_XargsMKDEP} -a -d --
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
