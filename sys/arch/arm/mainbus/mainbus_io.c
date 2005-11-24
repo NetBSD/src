@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.16 2005/04/01 11:59:25 yamt Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.17 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.16 2005/04/01 11:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.17 2005/11/24 13:08:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,8 @@ mainbus_bs_map(t, bpa, size, flags, bshp)
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (! va)
 		return(ENOMEM);
 
