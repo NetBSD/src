@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.7 2002/10/13 00:46:59 wiz Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.8 2005/11/24 17:28:46 rpaulo Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 5, 2002
+.Dd November 24, 2005
 .Dt IFCONFIG.IF 5
 .Os
 .Sh NAME
@@ -71,9 +71,9 @@ For example, the following illustrates static interface configuration:
 inet 10.0.1.12 netmask 255.255.255.0 media 100baseTX
 inet 10.0.1.13 netmask 255.255.255.255 alias
 # let us have IPv6 address on this interface
-inet6 fec0::1 prefixlen 64 alias
+inet6 2001:db8::1 prefixlen 64 alias
 # have subnet router anycast address too
-inet6 fec0:: prefixlen 64 alias anycast
+inet6 2001:db8:: prefixlen 64 alias anycast
 .Ed
 .Pp
 The following illustrates dynamic configuration setup with

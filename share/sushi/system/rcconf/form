@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.14 2005/01/11 23:00:59 peter Exp $
+# $NetBSD: form,v 1.15 2005/11/24 17:28:46 rpaulo Exp $
 escript:30,script2,rc_rcorder_flags	Flags to rcorder at boot
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 escript:30,script2,rcshutdown_rcorder_flags	Flags to rcorder at shutdown
@@ -46,7 +46,7 @@ script:script1,ntpdate		Run ntpdate at boot?
 escript:30,script2,ntpdate_flags	Flags for ntpdate
 escript:30,script2,ppp_peers	/etc/ppp/peers to call
 script:script4,ip6mode		IPv6 mode
-script:script1,ip6sitelocal	IPv6 sitelocal addresses
+script:script1,ip6uniquelocal	IPv6 unique-local forwarding on routers
 script:script1,rtsol		IPv6 autoconfig on non routers (rtsol)
 escript:30,script2,rtsol_flags	Flags to pass to rtsol
 script:script1,ifwatchd		Run ifwatchd daemon?
