@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40 2005/10/10 17:24:38 dsl Exp $
+# $NetBSD: INSTALL,v 1.41 2005/11/24 20:06:53 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.40 $"
+#ident 		"INSTALL-$Revision: 1.41 $"
 
 maxusers	32		# estimated number of users
 
@@ -417,7 +417,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
