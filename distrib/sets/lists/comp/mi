@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.829 2005/11/24 08:16:21 yamt Exp $
+#	$NetBSD: mi,v 1.830 2005/11/24 08:22:47 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5827,6 +5827,9 @@
 ./usr/share/man/cat9/vwakeup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wakeup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wdc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/workqueue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/workqueue_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/workqueue_enqueue.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/writedisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wscons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsdisplay.0		comp-sys-catman		.cat
@@ -9745,6 +9748,9 @@
 ./usr/share/man/man9/vwakeup.9			comp-sys-man		.man
 ./usr/share/man/man9/wakeup.9			comp-sys-man		.man
 ./usr/share/man/man9/wdc.9			comp-sys-man		.man
+./usr/share/man/man9/workqueue.9		comp-sys-man		.man
+./usr/share/man/man9/workqueue_create.9		comp-sys-man		.man
+./usr/share/man/man9/workqueue_enqueue.9	comp-sys-man		.man
 ./usr/share/man/man9/writedisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/wscons.9			comp-sys-man		.man
 ./usr/share/man/man9/wsdisplay.9		comp-sys-man		.man
