@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.49 2005/06/28 13:36:40 symka Exp $
+# $NetBSD: network,v 1.50 2005/11/24 17:28:45 rpaulo Exp $
 #
 
 # PROVIDE: network
@@ -76,14 +76,15 @@ network_start()
 		#
 		route -q add -inet6 fe80:: -prefixlen 10 ::1 -reject
 
-		# disallow site-local unicast dest without outgoing scope
-		# identifiers.
-		# If you configure site-locals without scope id (it is
-		# permissible config for routers that are not on scope
-		# boundary), you may want to comment the following one out.
+		# disallow the use of the RFC3849 documentation address
 		#
-		if ! checkyesno ip6sitelocal; then
-			route -q add -inet6 fec0:: -prefixlen 10 ::1 -reject
+		route -q add -inet6 2001:db8:: -prefixlen 32 ::1 -reject
+
+		# IPv6 site-local scoped address prefix (fec0::/10)
+		# has been deprecated by RFC3879.
+		#
+		if [ -n "$ip6sitelocal" ]; then
+			warn "\$ip6sitelocal is no longer valid"
 		fi
 
 		# disallow "internal" addresses to appear on the wire.
@@ -127,6 +128,13 @@ network_start()
 		router)
 			echo 'IPv6 mode: router'
 			sysctl -qw net.inet6.ip6.forwarding=1
+
+			# disallow unique-local unicast forwarding without
+			# explicit configuration.
+			if ! checkyesno ip6uniquelocal; then
+				route -q add -inet6 fc00:: -prefixlen 7 \
+				    ::1 -reject
+			fi
 			;;
 
 		autohost)
@@ -165,7 +173,7 @@ network_start()
 	# configuration is possible:
 	#	inet 10.1.1.1 netmask 0xffffff00
 	#	inet 10.1.1.2 netmask 0xffffff00 alias
-	#	inet6 fec0::1 prefixlen 64 alias
+	#	inet6 2001:db8::1 prefixlen 64 alias
 	#
 	# You can put shell script fragment into /etc/ifconfig.xxN by
 	# starting a line with "!".  Refer to ifconfig.if(5) for details.
