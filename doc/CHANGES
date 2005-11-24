@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.536 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.537 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -125,3 +125,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	file(1): update to 4.16.  [pooka 20051018]
 	evbarm: Add support for the Atmark Techno Armadillo-9.
 		[hamajima 20051113]
+	ipv6: rc.conf(5) $ip6sitelocal variable has been removed. You
+	      should use Local IPv6 Unicast Addresses defined by RFC 4193
+	      and control how they are routed with the $ip6uniquelocal
+	      variable. [rpaulo 20051124]
