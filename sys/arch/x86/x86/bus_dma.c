@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24 2005/09/20 04:48:10 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25 2005/11/24 13:08:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2005/09/20 04:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2005/11/24 13:08:34 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1034,13 +1034,15 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int nocache;
 	int marked;
 	pt_entry_t *pte;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
 	cpumask = 0;
 	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
 	marked = 0;
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);

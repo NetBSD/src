@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2005/06/05 13:49:26 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2005/11/24 13:08:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/06/05 13:49:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2005/11/24 13:08:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,7 +441,8 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 		panic("sh3_pcmcia_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0){
 		printf("shpcmcia_add_mapping: nomem \n");
 		return (ENOMEM);

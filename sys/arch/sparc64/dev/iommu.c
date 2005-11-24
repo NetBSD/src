@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.76 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: iommu.c,v 1.77 2005/11/24 13:08:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.76 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.77 2005/11/24 13:08:34 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1050,6 +1050,8 @@ iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
 	bus_addr_t addr;
 	struct pglist *pglist;
 	int cbit;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: segp %p nsegs %d size %lx\n",
 	    segs, nsegs, size));
@@ -1059,7 +1061,7 @@ iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
 	 * into this space.
 	 */
 	size = round_page(size);
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 	if (va == 0)
 		return (ENOMEM);
 
