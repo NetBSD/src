@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.320 2005/11/23 18:19:48 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.321 2005/11/24 22:28:27 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14427,4 +14427,29 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC3.
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.114 via patch
+
+	Fix 64 bit truncation problem allowing to read arbitrary kernel memory.
+	[christos, ticket #992]
+
+sys/dev/pci/if_re_pci.c				1.11
+sys/dev/pci/if_sk.c				1.18
+
+	Special-case the Linksys EG1032 cards using PCI subsystem ID; 
+	rev. 2 uses the sk(4) driver, while rev. 3 needs re(4).
+	[riz, ticket #993]
+
+sys/dev/pci/if_re_pci.c				1.10
+sys/dev/pci/pcidevs				1.710
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Two re(4) candidates.
+	[riz, ticket #994, #995]
+
+distrib/notes/common/main			patch
+
+	Update ipsec-tools version number in list of changes in NetBSD 3.0.
+	[tsutsui, ticket #1002]
 
