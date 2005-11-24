@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.181 2005/11/02 14:22:36 yamt Exp $
+#       $NetBSD: Makefile,v 1.182 2005/11/24 08:14:13 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -31,7 +31,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	properties.9 preempt.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
-	rt_timer.9 \
+	rt_timer.9 RUN_ONCE.9 \
 	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
