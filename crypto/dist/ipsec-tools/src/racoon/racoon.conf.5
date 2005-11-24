@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.24 2005/11/21 14:20:29 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.25 2005/11/24 20:23:02 wiz Exp $
 .\"
 .\" Id: racoon.conf.5,v 1.27.2.11 2005/11/06 17:18:26 monas Exp
 .\"
@@ -210,12 +210,14 @@ If you run with privilege separation,
 .Xr racoon 8
 will refuse to execute a script stored outside of this directory.
 .It Ic path pidfile Ar file ;
-specifies file where to store PID of process. If path starts with 
-.Ic / 
+specifies file where to store PID of process.
+If path starts with
+.Pa /
 it is treated as
 an absolute path, otherwise relative to VARRUN directory specified at
-compilation time. Default is 
-.Ic racoon.pid 
+compilation time.
+Default is
+.Pa racoon.pid .
 .El
 .\"
 .Ss File Inclusion
@@ -829,11 +831,12 @@ For example, if you define 3ffe:501:4819::/48 as
 .Ar source_id .
 3ffe:501:4819:1000:/64 will not match.
 .Pp
-In case of longest prefix (selecting single host) 
+In case of longest prefix (selecting single host)
 .Ar address
 instructs to send ID type of ADDRESS, while
 .Ar subnet
-instructs to send ID type of SUBNET. Otherwise these instructions are identical.
+instructs to send ID type of SUBNET.
+Otherwise these instructions are identical.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
@@ -978,7 +981,7 @@ It works only if
 was built with libpam support.
 .It Ic conf_source (local \(ba radius) ;
 Specify the source for IP addresses and netmask allocated through ISAKMP
-mode config. 
+mode config.
 .Ar local
 means to use the local IP pool defined by the
 .Ic network4
