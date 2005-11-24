@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.8 2005/06/01 15:12:18 lukem Exp $ */
+/* $NetBSD: dbsym.c,v 1.9 2005/11/24 12:54:29 dbj Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
-__RCSID("$NetBSD: dbsym.c,v 1.8 2005/06/01 15:12:18 lukem Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.9 2005/11/24 12:54:29 dbj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -151,7 +151,8 @@ main(int argc, char **argv)
 	    &mappedkfile[db_symtab_symbols[X_DB_SYMTABSIZE].offset]);
 
 	if (symtabsize > symtab_space)
-		errx(1, "symbol table (%u bytes) too big for buffer (%u bytes)",
+		errx(1, "symbol table (%u bytes) too big for buffer (%u bytes)\n"
+		    "Increase options SYMTAB_SPACE in your kernel config",
 		    symtabsize, symtab_space);
 
 	if (verbose)

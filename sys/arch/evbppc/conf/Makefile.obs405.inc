@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.2 2005/03/17 16:45:50 jmc Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.3 2005/11/24 12:54:29 dbj Exp $
 
 MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 
@@ -8,12 +8,6 @@ TEXTADDR?=	25000
 
 SYSTEM_FIRST_OBJ=	locore.o
 SYSTEM_FIRST_SFILE=	${POWERPC}/${PPCDIR}/openbios/locore.S
-
-.ifdef DBSYM
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true
-.endif
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} netbsd netbsd.img ; \
