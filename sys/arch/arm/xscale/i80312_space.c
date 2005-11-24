@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_space.c,v 1.8 2005/04/01 11:59:25 yamt Exp $	*/
+/*	$NetBSD: i80312_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_space.c,v 1.8 2005/04/01 11:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,8 @@ i80312_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	pa = trunc_page((bpa - busbase) + physbase);
 	endpa = round_page(((bpa - busbase) + physbase) + size);
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return (ENOMEM);
 

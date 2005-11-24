@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.11 2005/07/30 15:14:29 chris Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.12 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.11 2005/07/30 15:14:29 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.12 2005/11/24 13:08:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,8 @@ footbridge_mem_bs_map(t, bpa, size, flags, bshp)
 	 * multiple mappings
 	 */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return ENOMEM;
 
