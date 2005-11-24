@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.1 2005/11/24 08:14:13 yamt Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.2 2005/11/24 19:36:43 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -56,7 +56,7 @@ It can sleep if it's called concurrently.
 The following example shows how
 .Fn RUN_ONCE
 is used.
-Regardless to how many times
+Regardless of how many times
 .Fn some_func
 is executed,
 .Fn init_func
@@ -76,7 +76,7 @@ some_func(void)
 {
 	static DECL_ONCE(control);
 
-	RUN_ONCE(&control, init_func);
+	RUN_ONCE(\*[Am]control, init_func);
 
 	/*
 	 * we are sure that init_func has already been completed here.
@@ -85,6 +85,6 @@ some_func(void)
 .Ed
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
+.Xr pthread_once 3 ,
 .Xr intro 9 ,
-.Xr ltsleep 9 ,
-.Xr pthread_once 3
+.Xr ltsleep 9
