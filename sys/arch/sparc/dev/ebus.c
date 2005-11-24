@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.23 2005/11/24 12:11:32 he Exp $ */
+/*	$NetBSD: ebus.c,v 1.24 2005/11/24 13:33:33 he Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.23 2005/11/24 12:11:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.24 2005/11/24 13:33:33 he Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -244,7 +244,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t sbt;
 	bus_dma_tag_t dmatag;
 	bus_space_handle_t hLED;
-	pcireg_t base14, reg;
+	pcireg_t base14;
 	int node, error;
 	char devinfo[256];
 
