@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2004/07/03 12:55:47 uch Exp $
+#	$NetBSD: Makefile,v 1.14 2005/11/24 15:47:09 macallan Exp $
 
 .include <bsd.own.mk>
 
-.if (${MACHINE} == "i386" || ${MACHINE} == "macppc" || ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh")
+.if (${MACHINE} == "i386" || ${MACHINE} == "macppc" || ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh" || ${MACHINE} == "sparc")
 PROG=	apm
 SRCS=	apm.c apmsubr.c
 .PATH:	${NETBSDSRCDIR}/usr.sbin/apmd
