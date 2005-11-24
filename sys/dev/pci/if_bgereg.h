@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.27 2005/11/15 06:05:44 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.28 2005/11/24 03:27:59 jonathan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -192,9 +192,17 @@
 #define BGE_PCI_UNDI_TX_BD_PRODIDX_LO	0xAC
 #define BGE_PCI_ISR_MBX_HI		0xB0
 #define BGE_PCI_ISR_MBX_LO		0xB4
-/* XXX: used in PCI-Express code for 575x chips */
+
 #define BGE_PCI_UNKNOWN0		0xC4
-#define BGE_PCI_UNKNOWN1		0xD8
+/* XXX:
+ * Used in PCI-Express code for 575x chips.
+ * Should be replaced with checking  for a PCI config-space
+ * capability for PCI-Express, and PCI-Express standard 
+ * offsets  into that capability block.
+ */
+#define BGE_PCI_CONF_DEV_CTRL		0xD8
+#define BGE_PCI_CONF_DEV_STUS		0xDA
+
 
 /* PCI Misc. Host control register */
 #define BGE_PCIMISCCTL_CLEAR_INTA	0x00000001
@@ -283,6 +291,9 @@
 #define BGE_PCIDMARWCTL_DFLT_PCI_WR_CMD	0xF0000000
 # define  BGE_PCIDMA_RWCTL_PCI_WR_CMD_SHIFT	 28
 
+/* PCI DMA Read/Write Control register, alternate usage for PCI-Express */
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000 
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256	0x00380000
 
 #define BGE_PCI_READ_BNDRY_DISABLE	0x00000000
 #define BGE_PCI_READ_BNDRY_16BYTES	0x00000100
@@ -1289,6 +1300,10 @@
 #define BGE_RDMAMODE_LOCWRITE_TOOBIG	0x00000200
 #define BGE_RDMAMODE_ALL_ATTNS		0x000003FC
 
+/* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
+#define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) || (1 << 16))
+#define BGE_RDMA_MODE_FIFO_SIZE_128     (1 << 17)
+
 /* Read DMA status register */
 #define BGE_RDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
 #define BGE_RDMASTAT_PCI_MSTR_ABRT_ATTN	0x00000008
@@ -1621,6 +1636,22 @@
  */
 #define BGE_PCIE_CTL0			0x7c00
 #define BGE_PCIE_CTL1			0x7e2c
+/*
+ * TLP Control Register
+ * Applicable to BCM5721 and BCM5751 only
+ */
+#define	BGE_TLP_CONTROL_REG		0x7c00
+#define	BGE_TLP_DATA_FIFO_PROTECT	0x02000000
+
+/*
+ * PHY Test Control Register
+ * Applicable to BCM5721 and BCM5751 only
+ */
+#define	BGE_PHY_TEST_CTRL_REG		0x7e2c
+#define	BGE_PHY_PCIE_SCRAM_MODE		0x0020
+#define	BGE_PHY_PCIE_LTASS_MODE		0x0040
+
+
 
 /* Mode control register */
 #define BGE_MODECTL_INT_SNDCOAL_ONLY	0x00000001
@@ -2252,11 +2283,22 @@ struct bge_ring_data {
  * no attempt is made to allocate physically contiguous memory.
  *
  */
+#if 0	/* pre-TSO values */
+#define BGE_TXDMA_MAX	ETHER_MAX_LEN_JUMBO
 #ifdef _LP64
 #define BGE_NTXSEG      30
 #else
 #define BGE_NTXSEG      31
 #endif
+#else	/* TSO values */
+#define BGE_TXDMA_MAX	(round_page(IP_MAXPACKET))	/* for TSO */
+#ifdef _LP64
+#define BGE_NTXSEG      120	/* XXX just a guess */
+#else
+#define BGE_NTXSEG      124	/* XXX just a guess */
+#endif
+#endif	/* TSO values */
+
 
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
