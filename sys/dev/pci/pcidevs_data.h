@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.15 2005/11/21 18:43:40 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.16 2005/11/24 22:16:48 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.15 2005/11/21 18:42:20 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.16 2005/11/24 22:14:20 tron Exp
  */
 
 /*
@@ -4852,6 +4852,10 @@ const struct pci_product pci_products[] = {
 	    "DL-4000 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
+	    "DGE-528T Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
 	    "DGE-530T Gigabit Ethernet",
 	},
@@ -9540,6 +9544,10 @@ const struct pci_product pci_products[] = {
 	    "3CP5609 PCI 16550 Modem",
 	},
 	{
+	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
+	    "USR997902 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_2415,
 	    "Wireless PCI-PCMCIA adapter",
 	},
@@ -10288,4 +10296,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1993;
+const int pci_nproducts = 1995;
