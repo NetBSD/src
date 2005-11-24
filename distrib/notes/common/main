@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.16 2005/11/22 20:48:34 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.17 2005/11/24 22:25:44 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -726,7 +726,7 @@ The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
 .It
 IPv4 Protocol Independent Multicast (PIM) routing support is added.
 .It
-ipsec-tools 0.6.2 provide IKE support for ESP over NAT connections (RFC 3947),
+ipsec-tools 0.6.3 provide IKE support for ESP over NAT connections (RFC 3947),
 user authentication via XAuth and automatic network configurations of VPN
 clients via Mode Config.
 .It
