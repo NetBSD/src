@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.95 2005/11/24 03:27:59 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.96 2005/11/24 13:47:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.95 2005/11/24 03:27:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.96 2005/11/24 13:47:46 martin Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3559,7 +3559,7 @@ doit:
 				    (hlen + sizeof(struct tcphdr)))) {
 
 			  printf("TSO: hard case m0->m_len == %d <"
-				 " ip/tcp hlen%d, not handled yet\n",
+				 " ip/tcp hlen %zd, not handled yet\n",
 				 m0->m_len, hlen+ sizeof(struct tcphdr));
 #ifdef NOTYET
 			/*
