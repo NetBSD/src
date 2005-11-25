@@ -1,0 +1,5 @@
+enum markers { Nomatch, Author, Date, Header, Id,
+#ifdef LOCALID
+	       LocalId,
+#endif
+	       Locker, Log, Name, RCSfile, Revision, Source, State };

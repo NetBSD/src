@@ -28,6 +28,7 @@ $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
 $!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
+$!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
 $!
 $!
 $! P2 is ignored (it was used to denote if RSAref should be used or not,
@@ -138,6 +139,10 @@ $!  Build The [.xxx.EXE.APPS] OpenSSL Application Utilities.
 $!
 $   GOSUB APPS
 $!
+$!  Build The [.xxx.EXE.ENGINES] OpenSSL Shareable Engines.
+$!
+$   GOSUB ENGINES
+$!
 $! Else...
 $!
 $ ELSE
@@ -178,7 +183,7 @@ $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
 $ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
 	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
-	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2,FIPS
+	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP:
 $   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
@@ -214,6 +219,9 @@ $     ENDIF
 $   ENDIF
 $   GOTO CONFIG_LOG_LOOP
 $ CONFIG_LOG_LOOP_END:
+$ WRITE H_FILE "#ifndef OPENSSL_NO_STATIC_ENGINE"
+$ WRITE H_FILE "# define OPENSSL_NO_STATIC_ENGINE"
+$ WRITE H_FILE "#endif"
 $ WRITE H_FILE "#ifndef OPENSSL_THREADS"
 $ WRITE H_FILE "# define OPENSSL_THREADS"
 $ WRITE H_FILE "#endif"
@@ -266,6 +274,7 @@ $   WRITE H_FILE "#define DES_UNROLL"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_BN_H)"
+$   WRITE H_FILE "#undef BN_LLONG"	! Never define with SIXTY_FOUR_BIT
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
 $   WRITE H_FILE "#define SIXTY_FOUR_BIT"
@@ -300,6 +309,7 @@ $   WRITE H_FILE "#undef DES_UNROLL"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_BN_H)"
+$   WRITE H_FILE "#undef BN_LLONG"	! VAX C/DEC C doesn't have long long
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
 $   WRITE H_FILE "#undef THIRTY_TWO_BIT"
@@ -388,6 +398,7 @@ $!
 $! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
 $!
 $ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
+$ COPY SYS$DISK:[.CRYPTO.SHA]SHA%%%T.C SYS$DISK:[.TEST]
 $ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
 $!
 $! Copy all the *TEST.C files from [.SSL...] into [.TEST]
@@ -410,13 +421,17 @@ $ COPY 'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
-$ SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
+$ SDIRS := ,-
+   OBJECTS,-
+   MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,RC2,RC4,RC5,IDEA,BF,CAST,-
-   BN,EC,RSA,DSA,DH,DSO,ENGINE,AES,-
-   BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
-   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5
+   BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
+   BUFFER,BIO,STACK,LHASH,RAND,ERR,-
+   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
+   STORE,PQUEUE
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
 		ossl_typ.h
+$ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
 $ EXHEADER_MD5 := md5.h
@@ -435,7 +450,9 @@ $ EXHEADER_BN := bn.h
 $ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
 $ EXHEADER_DSA := dsa.h
+$ EXHEADER_ECDSA := ecdsa.h
 $ EXHEADER_DH := dh.h
+$ EXHEADER_ECDH := ecdh.h
 $ EXHEADER_DSO := dso.h
 $ EXHEADER_ENGINE := engine.h
 $ EXHEADER_AES := aes.h
@@ -445,7 +462,6 @@ $ EXHEADER_STACK := stack.h,safestack.h
 $ EXHEADER_LHASH := lhash.h
 $ EXHEADER_RAND := rand.h
 $ EXHEADER_ERR := err.h
-$ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_EVP := evp.h
 $ EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
 $ EXHEADER_PEM := pem.h,pem2.h
@@ -459,6 +475,9 @@ $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
 $ EXHEADER_UI := ui.h,ui_compat.h
 $ EXHEADER_KRB5 := krb5_asn.h
+$!EXHEADER_STORE := store.h,str_compat.h
+$ EXHEADER_STORE := store.h
+$ EXHEADER_PQUEUE := pqueue.h,pq_compat.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
@@ -477,35 +496,8 @@ $ LOOP_SDIRS_END:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,dtls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
-$!
-$! Copy All The ".H" Files From The [.FIPS] Directories.
-$!
-$ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
-$ EXHEADER_ := fips.h
-$ EXHEADER_SHA1 :=
-$ EXHEADER_RAND := fips_rand.h
-$ EXHEADER_DES :=
-$ EXHEADER_AES :=
-$ EXHEADER_DSA :=
-$ EXHEADER_RSA :=
-$
-$ I = 0
-$ LOOP_FDIRS: 
-$ D = F$EDIT(F$ELEMENT(I, ",", FDIRS),"TRIM")
-$ I = I + 1
-$ IF D .EQS. "," THEN GOTO LOOP_FDIRS_END
-$ tmp = EXHEADER_'D'
-$ IF tmp .EQS. "" THEN GOTO LOOP_FDIRS
-$ IF D .EQS. ""
-$ THEN
-$   COPY [.FIPS]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
-$ ELSE
-$   COPY [.FIPS.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
-$ ENDIF
-$ GOTO LOOP_FDIRS
-$ LOOP_FDIRS_END:
 $!
 $! Purge all doubles
 $!
@@ -532,21 +524,9 @@ $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
-$! Go Back To The Main Directory.
-$!
-$ SET DEFAULT [-]
-$!
-$! Go To The [.FIPS] Directory.
-$!
-$ SET DEFAULT SYS$DISK:[.FIPS]
-$!
-$! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
-$!  
-$ @FIPS-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
-$!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @FIPS-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -647,6 +627,31 @@ $!
 $! Build The Application Programs.
 $!
 $ @MAKEAPPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$!
+$! Go Back To The Main Directory.
+$!
+$ SET DEFAULT [-]
+$!
+$! That's All, Time To RETURN.
+$!
+$ RETURN
+$!
+$! Build The OpenSSL Application Programs.
+$!
+$ ENGINES:
+$!
+$! Tell The User What We Are Doing.
+$!
+$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "Building OpenSSL [.",ARCH,".EXE.ENGINES] Engines."
+$!
+$! Go To The [.ENGINES] Directory.
+$!
+$ SET DEFAULT SYS$DISK:[.ENGINES]
+$!
+$! Build The Application Programs.
+$!
+$ @MAKEENGINES ENGINES 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
 $!
 $! Go Back To The Main Directory.
 $!

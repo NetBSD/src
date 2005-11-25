@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,12 +58,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 
 #include "charmap.h"
-#include "cryptlib.h"
 
 /* ASN1_STRING_print_ex() and X509_NAME_print_ex().
  * Enhanced string and name printing routines handling
@@ -223,7 +223,7 @@ static int do_buf(unsigned char *buf, int buflen,
 
 static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf, int buflen)
 {
-	const static char hexdig[] = "0123456789ABCDEF";
+	static const char hexdig[] = "0123456789ABCDEF";
 	unsigned char *p, *q;
 	char hextmp[2];
 	if(arg) {
@@ -279,7 +279,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING 
  * otherwise it is the number of bytes per character
  */
 
-const static signed char tag2nbyte[] = {
+static const signed char tag2nbyte[] = {
 	-1, -1, -1, -1, -1,	/* 0-4 */
 	-1, -1, -1, -1, -1,	/* 5-9 */
 	-1, -1, 0, -1,		/* 10-13 */
@@ -513,7 +513,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
 	return do_name_ex(send_bio_chars, out, nm, indent, flags);
 }
 
-
+#ifndef OPENSSL_NO_FP_API
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
 {
 	if(flags == XN_FLAG_COMPAT)
@@ -528,17 +528,19 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long fla
 		}
 	return do_name_ex(send_fp_chars, fp, nm, indent, flags);
 }
+#endif
 
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_bio_chars, out, flags, str);
 }
 
-
+#ifndef OPENSSL_NO_FP_API
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_fp_chars, fp, flags, str);
 }
+#endif
 
 /* Utility function: convert any string type to UTF8, returns number of bytes
  * in output string or a negative error code
@@ -553,12 +555,7 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
 	if((type < 0) || (type > 30)) return -1;
 	mbflag = tag2nbyte[type];
 	if(mbflag == -1) return -1;
-	if (mbflag == 0)
-		mbflag = MBSTRING_UTF8;
-	else if (mbflag == 4)
-		mbflag = MBSTRING_UNIV;
-	else		
-		mbflag |= MBSTRING_FLAG;
+	mbflag |= MBSTRING_FLAG;
 	stmp.data = NULL;
 	ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag, B_ASN1_UTF8STRING);
 	if(ret < 0) return ret;
