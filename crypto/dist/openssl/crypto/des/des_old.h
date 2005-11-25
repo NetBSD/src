@@ -91,6 +91,11 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
+#include <openssl/e_os2.h>	/* OPENSSL_EXTERN, OPENSSL_NO_DES, DES_LONG */
+
+#ifdef OPENSSL_NO_DES
+#error DES is disabled.
+#endif
 
 #ifndef HEADER_NEW_DES_H
 #error You must include des.h, not des_old.h directly.
@@ -100,8 +105,6 @@
 #error <openssl/des_old.h> replaces <kerberos/des.h>.
 #endif
 
-#include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 #include <openssl/symhacks.h>
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
@@ -111,6 +114,10 @@
 
 #ifdef  __cplusplus
 extern "C" {
+#endif
+
+#ifdef _
+#undef _
 #endif
 
 typedef unsigned char _ossl_old_des_cblock[8];
@@ -168,9 +175,9 @@ typedef struct _ossl_old_des_ks_struct
 	DES_enc_write((f),(b),(l),&(k),(iv))
 #define des_fcrypt(b,s,r)\
 	DES_fcrypt((b),(s),(r))
+#if 0
 #define des_crypt(b,s)\
 	DES_crypt((b),(s))
-#if 0
 #if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(__OpenBSD__)
 #define crypt(b,s)\
 	DES_crypt((b),(s))
