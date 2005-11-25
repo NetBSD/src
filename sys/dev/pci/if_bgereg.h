@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.28 2005/11/24 03:27:59 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.29 2005/11/25 15:30:34 tsutsui Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1771,17 +1771,10 @@
  */
 #define BGE_MAGIC_NUMBER                0x4B657654
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 typedef struct {
 	u_int32_t		bge_addr_hi;
 	u_int32_t		bge_addr_lo;
 } bge_hostaddr;
-#else
-typedef struct {
-	u_int32_t		bge_addr_hi;
-	u_int32_t		bge_addr_lo;
-} bge_hostaddr;
-#endif
 
 static __inline void
 bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
@@ -1800,11 +1793,7 @@ struct bge_rcb {
 	u_int32_t		bge_nicaddr;
 };
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((flags) << 16 | (maxlen))
-#else
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
-#endif
 
 #define RCB_WRITE_4(sc, rcb, offset, val) \
 	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
