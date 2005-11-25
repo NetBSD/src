@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.45 2005/10/12 14:26:47 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.46 2005/11/25 12:02:09 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.45 2005/10/12 14:26:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.46 2005/11/25 12:02:09 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -414,7 +414,6 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		return (0);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
-	/* XXX: va_fsid is long, dev_t is uint32_t. */
 	vhe = veriexec_lookup((dev_t)va->va_fsid, (ino_t)va->va_fileid);
 	if (ret != NULL)
 		*ret = vhe;
@@ -666,7 +665,6 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 		return (EPERM);
 	}
 
-	/* XXX: dev_t is 32bit, long can be 64bit. */
 	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
 	if (vhe != NULL) {
 		if (veriexec_strict >= 2) {
