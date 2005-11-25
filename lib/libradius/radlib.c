@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.6 2005/03/31 14:29:32 christos Exp $ */
+/* $NetBSD: radlib.c,v 1.7 2005/11/25 21:07:11 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.6 2005/03/31 14:29:32 christos Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.7 2005/11/25 21:07:11 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: radlib.c,v 1.6 2005/03/31 14:29:32 christos Exp $");
 #define MD5Init MD5_Init
 #define MD5Update MD5_Update
 #define MD5Final MD5_Final
-#define MD5Len unsigned long
+#define MD5Len size_t
 #define MD5Buf const void *
 #else
 #define MD5_DIGEST_LENGTH 16
@@ -187,7 +187,7 @@ insert_message_authenticator(struct rad_handle *h, int srv)
 		HMAC_Update(&ctx, &h->request[POS_CODE], POS_AUTH - POS_CODE);
 		HMAC_Update(&ctx, &h->request[POS_AUTH], LEN_AUTH);
 		HMAC_Update(&ctx, &h->request[POS_ATTRS],
-		    (int)(h->req_len - POS_ATTRS));
+		    (size_t)(h->req_len - POS_ATTRS));
 		HMAC_Final(&ctx, md, &md_len);
 		HMAC_CTX_cleanup(&ctx);
 		HMAC_cleanup(&ctx);
@@ -271,7 +271,7 @@ is_valid_response(struct rad_handle *h, int srv,
 				HMAC_Update(&hctx, &h->request[POS_AUTH],
 				    LEN_AUTH);
 				HMAC_Update(&hctx, &resp[POS_ATTRS],
-				    (int)(h->resp_len - POS_ATTRS));
+				    (size_t)(h->resp_len - POS_ATTRS));
 				HMAC_Final(&hctx, md, &md_len);
 				HMAC_CTX_cleanup(&hctx);
 				HMAC_cleanup(&hctx);
