@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.c,v 1.4 2003/07/15 02:43:37 lukem Exp $	*/
+/*	$NetBSD: cache_r5900.c,v 1.5 2005/11/25 14:10:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.4 2003/07/15 02:43:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.5 2005/11/25 14:10:35 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.4 2003/07/15 02:43:37 lukem Exp $"
 #define	trunc_line(x)		((x) & ~63)
 
 void
-r5900_icache_sync_all_64()
+r5900_icache_sync_all_64(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
 	vaddr_t eva = va + (CACHE_R5900_SIZE_I >> 1); /* 2way */
@@ -125,7 +125,7 @@ r5900_icache_sync_range_index_64(vaddr_t va, vsize_t size)
 }
 
 void
-r5900_pdcache_wbinv_all_64()
+r5900_pdcache_wbinv_all_64(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
 	vaddr_t eva = va + (CACHE_R5900_SIZE_D >> 1); /* 2way */
