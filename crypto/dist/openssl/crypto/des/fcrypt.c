@@ -17,7 +17,7 @@
 /* Modification by Jens Kupferschmidt (Cu)
  * I have included directive PARA for shared memory computers.
  * I have included a directive LONGCRYPT to using this routine to cipher
- * passwords with more than 8 bytes like HP-UX 10.x it used. The MAXPLEN
+ * passwords with more then 8 bytes like HP-UX 10.x it used. The MAXPLEN
  * definition is the maximum of length of password and can changed. I have
  * defined 24.
  */
@@ -57,9 +57,6 @@ static unsigned const char cov_2char[64]={
 0x6B,0x6C,0x6D,0x6E,0x6F,0x70,0x71,0x72,
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
-
-void fcrypt_body(DES_LONG *out,DES_key_schedule *ks,
-		 DES_LONG Eswap0, DES_LONG Eswap1);
 
 char *DES_crypt(const char *buf, const char *salt)
 	{

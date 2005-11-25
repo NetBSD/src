@@ -70,7 +70,7 @@ const char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (MD5_LONG)0x98badcfeL
 #define INIT_DATA_D (MD5_LONG)0x10325476L
 
-FIPS_NON_FIPS_MD_Init(MD5)
+int MD5_Init(MD5_CTX *c)
 	{
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;
@@ -83,7 +83,7 @@ FIPS_NON_FIPS_MD_Init(MD5)
 	}
 
 #ifndef md5_block_host_order
-void md5_block_host_order (MD5_CTX *c, const void *data, int num)
+void md5_block_host_order (MD5_CTX *c, const void *data, size_t num)
 	{
 	const MD5_LONG *X=data;
 	register MD32_REG_T A,B,C,D;
@@ -176,7 +176,7 @@ void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 #ifdef X
 #undef X
 #endif
-void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
+void md5_block_data_order (MD5_CTX *c, const void *data_, size_t num)
 	{
 	const unsigned char *data=data_;
 	register MD32_REG_T A,B,C,D,l;

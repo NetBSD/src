@@ -126,6 +126,13 @@ SSL_SESSION *SSL_SESSION_new(void)
 	return(ss);
 	}
 
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
+	{
+	if(len)
+		*len = s->session_id_length;
+	return s->session_id;
+	}
+
 /* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1
  * has 32 bytes (256 bits). As such, filling the ID with random gunk repeatedly
  * until we have no conflict is going to complete in one iteration pretty much
@@ -141,7 +148,7 @@ static int def_generate_session_id(const SSL *ssl, unsigned char *id,
 {
 	unsigned int retry = 0;
 	do
-		if(RAND_pseudo_bytes(id, *id_len) <= 0)
+		if (RAND_pseudo_bytes(id, *id_len) <= 0)
 			return 0;
 	while(SSL_has_matching_session_id(ssl, id, *id_len) &&
 		(++retry < MAX_SESS_ID_ATTEMPTS));
@@ -196,6 +203,11 @@ int ssl_get_new_session(SSL *s, int session)
 		else if (s->version == TLS1_VERSION)
 			{
 			ss->ssl_version=TLS1_VERSION;
+			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+			}
+		else if (s->version == DTLS1_VERSION)
+			{
+			ss->ssl_version=DTLS1_VERSION;
 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
 			}
 		else

@@ -108,14 +108,22 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
+#include <openssl/pq_compat.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -238,10 +246,19 @@ extern "C" {
 #define SSL3_RT_HEADER_LENGTH			5
 
 /* Due to MS stuffing up, this can change.... */
+#if defined(OPENSSL_SYS_WIN16) || \
+	(defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32))
+#define SSL3_RT_MAX_EXTRA			(14000)
+#else
 #define SSL3_RT_MAX_EXTRA			(16384)
+#endif
 
 #define SSL3_RT_MAX_PLAIN_LENGTH		16384
+#ifdef OPENSSL_NO_COMP
+#define SSL3_RT_MAX_COMPRESSED_LENGTH	SSL3_RT_MAX_PLAIN_LENGTH
+#else
 #define SSL3_RT_MAX_COMPRESSED_LENGTH	(1024+SSL3_RT_MAX_PLAIN_LENGTH)
+#endif
 #define SSL3_RT_MAX_ENCRYPTED_LENGTH	(1024+SSL3_RT_MAX_COMPRESSED_LENGTH)
 #define SSL3_RT_MAX_PACKET_SIZE		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 #define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
@@ -282,6 +299,8 @@ typedef struct ssl3_record_st
 /*rw*/	unsigned char *data;    /* pointer to the record data */
 /*rw*/	unsigned char *input;   /* where the decode bytes are */
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
+/*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
+/*r */  PQ_64BIT seq_num;       /* sequence number, needed by DTLS1 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -300,7 +319,12 @@ typedef struct ssl3_buffer_st
 #define SSL3_CT_RSA_EPHEMERAL_DH		5
 #define SSL3_CT_DSS_EPHEMERAL_DH		6
 #define SSL3_CT_FORTEZZA_DMS			20
-#define SSL3_CT_NUMBER				7
+/* SSL3_CT_NUMBER is used to size arrays and it must be large
+ * enough to contain all of the cert types defined either for
+ * SSLv3 and TLSv1.
+ */
+#define SSL3_CT_NUMBER			7
+
 
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define SSL3_FLAGS_DELAY_CLIENT_FINISHED	0x0002
@@ -382,7 +406,14 @@ typedef struct ssl3_state_st
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
+#ifndef OPENSSL_NO_DH
 		DH *dh;
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+		EC_KEY *ecdh; /* holds short lived ECDH key */
+#endif
+
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 
@@ -401,11 +432,16 @@ typedef struct ssl3_state_st
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_MD *new_hash;
+#ifndef OPENSSL_NO_COMP
 		const SSL_COMP *new_compression;
+#else
+		char *new_compression;
+#endif
 		int cert_request;
 		} tmp;
 
 	} SSL3_STATE;
+
 
 /* SSLv3 */
 /*client */
@@ -417,6 +453,8 @@ typedef struct ssl3_state_st
 /* read from server */
 #define SSL3_ST_CR_SRVR_HELLO_A		(0x120|SSL_ST_CONNECT)
 #define SSL3_ST_CR_SRVR_HELLO_B		(0x121|SSL_ST_CONNECT)
+#define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A (0x126|SSL_ST_CONNECT)
+#define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B (0x127|SSL_ST_CONNECT)
 #define SSL3_ST_CR_CERT_A		(0x130|SSL_ST_CONNECT)
 #define SSL3_ST_CR_CERT_B		(0x131|SSL_ST_CONNECT)
 #define SSL3_ST_CR_KEY_EXCH_A		(0x140|SSL_ST_CONNECT)
@@ -453,6 +491,8 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
 /* write to client */
+#define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
+#define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_A		(0x120|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_B		(0x121|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_C		(0x122|SSL_ST_ACCEPT)
@@ -493,6 +533,8 @@ typedef struct ssl3_state_st
 #define SSL3_MT_CERTIFICATE_VERIFY		15
 #define SSL3_MT_CLIENT_KEY_EXCHANGE		16
 #define SSL3_MT_FINISHED			20
+#define DTLS1_MT_HELLO_VERIFY_REQUEST    3
+
 
 #define SSL3_MT_CCS				1
 

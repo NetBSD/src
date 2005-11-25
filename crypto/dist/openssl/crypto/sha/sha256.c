@@ -157,7 +157,7 @@ static const SHA_LONG K256[64] = {
 
 static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	{
-	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1,T2;
+	MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG	X[16];
 	int i;
 	const unsigned char *data=in;
@@ -229,7 +229,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 
 static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	{
-	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1;
+	MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG	X[16];
 	int i;
 	const unsigned char *data=in;

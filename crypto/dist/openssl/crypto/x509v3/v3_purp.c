@@ -139,7 +139,7 @@ int X509_PURPOSE_get_count(void)
 X509_PURPOSE * X509_PURPOSE_get0(int idx)
 {
 	if(idx < 0) return NULL;
-	if(idx < X509_PURPOSE_COUNT) return xstandard + idx;
+	if(idx < (int)X509_PURPOSE_COUNT) return xstandard + idx;
 	return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
@@ -239,7 +239,7 @@ static void xptable_free(X509_PURPOSE *p)
 
 void X509_PURPOSE_cleanup(void)
 {
-	int i;
+	unsigned int i;
 	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
 	for(i = 0; i < X509_PURPOSE_COUNT; i++) xptable_free(xstandard + i);
 	xptable = NULL;
@@ -343,6 +343,10 @@ static void x509v3_cache_extensions(X509 *x)
 		    || X509_get_ext_by_NID(x, NID_issuer_alt_name, 0) >= 0) {
 			x->ex_flags |= EXFLAG_INVALID;
 		}
+		if (pci->pcPathLengthConstraint) {
+			x->ex_pcpathlen =
+				ASN1_INTEGER_get(pci->pcPathLengthConstraint);
+		} else x->ex_pcpathlen = -1;
 		PROXY_CERT_INFO_EXTENSION_free(pci);
 		x->ex_flags |= EXFLAG_PROXY;
 	}

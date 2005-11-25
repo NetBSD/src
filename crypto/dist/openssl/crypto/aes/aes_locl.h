@@ -54,12 +54,15 @@
 
 #include <openssl/e_os2.h>
 
-#include <sys/types.h>
+#ifdef OPENSSL_NO_AES
+#error AES is disabled.
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER) && !defined(_M_IA64) && !defined(OPENSSL_SYS_WINCE)
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
 # define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
 # define GETU32(p) SWAP(*((u32 *)(p)))
 # define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
@@ -68,9 +71,19 @@
 # define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 #endif
 
+#ifndef __NetBSD__
+#ifdef AES_LONG
+typedef unsigned long u32;
+#else
+typedef unsigned int u32;
+#endif
+typedef unsigned short u16;
+typedef unsigned char u8;
+#else
 typedef u_int32_t u32;
 typedef u_int16_t u16;
 typedef u_int8_t u8;
+#endif
 
 #define MAXKC   (256/32)
 #define MAXKB   (256/8)

@@ -116,7 +116,17 @@
 
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #define USE_SHA1_RAND
+#elif !defined(OPENSSL_NO_MD5)
+#define USE_MD5_RAND
+#elif !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DES)
+#define USE_MDC2_RAND
+#elif !defined(OPENSSL_NO_MD2)
+#define USE_MD2_RAND
+#else
+#error No message digest algorithm available
+#endif
 #endif
 
 #include <openssl/evp.h>
