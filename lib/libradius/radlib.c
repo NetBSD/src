@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.7 2005/11/25 21:07:11 christos Exp $ */
+/* $NetBSD: radlib.c,v 1.8 2005/11/25 23:20:00 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.7 2005/11/25 21:07:11 christos Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.8 2005/11/25 23:20:00 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -184,8 +184,8 @@ insert_message_authenticator(struct rad_handle *h, int srv)
 		HMAC_CTX_init(&ctx);
 		HMAC_Init(&ctx, srvp->secret,
 		    (int)strlen(srvp->secret), EVP_md5());
-		HMAC_Update(&ctx, &h->request[POS_CODE], POS_AUTH - POS_CODE);
-		HMAC_Update(&ctx, &h->request[POS_AUTH], LEN_AUTH);
+		HMAC_Update(&ctx, &h->request[POS_CODE], (size_t)(POS_AUTH - POS_CODE));
+		HMAC_Update(&ctx, &h->request[POS_AUTH], (size_t)LEN_AUTH);
 		HMAC_Update(&ctx, &h->request[POS_ATTRS],
 		    (size_t)(h->req_len - POS_ATTRS));
 		HMAC_Final(&ctx, md, &md_len);
@@ -267,9 +267,9 @@ is_valid_response(struct rad_handle *h, int srv,
 				HMAC_Init(&hctx, srvp->secret,
 				    (int)strlen(srvp->secret), EVP_md5());
 				HMAC_Update(&hctx, &h->response[POS_CODE],
-				    POS_AUTH - POS_CODE);
+				    (size_t)(POS_AUTH - POS_CODE));
 				HMAC_Update(&hctx, &h->request[POS_AUTH],
-				    LEN_AUTH);
+				    (size_t)LEN_AUTH);
 				HMAC_Update(&hctx, &resp[POS_ATTRS],
 				    (size_t)(h->resp_len - POS_ATTRS));
 				HMAC_Final(&hctx, md, &md_len);
