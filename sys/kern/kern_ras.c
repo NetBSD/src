@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.11 2005/11/24 18:36:50 thorpej Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.12 2005/11/25 11:29:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.11 2005/11/24 18:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.12 2005/11/25 11:29:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -185,6 +185,8 @@ ras_purgeall(struct proc *p)
 	return (0);
 }
 
+#if defined(__HAVE_RAS)
+
 /*
  * Install the new sequence.  If it already exists, return
  * an error.
@@ -252,6 +254,8 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 
 	return (error);
 }
+
+#endif /* defined(__HAVE_RAS) */
 
 /*ARGSUSED*/
 int
