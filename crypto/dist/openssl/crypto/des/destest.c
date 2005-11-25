@@ -433,8 +433,8 @@ int main(int argc, char *argv[])
 		memcpy(in,plain_data[i],8);
 		memset(out,0,8);
 		memset(outin,0,8);
-		DES_ecb2_encrypt(in,out,&ks,&ks2,DES_ENCRYPT);
-		DES_ecb2_encrypt(out,outin,&ks,&ks2,DES_DECRYPT);
+		DES_ecb2_encrypt((const_DES_cblock *)in,(DES_cblock *)out,&ks,&ks2,DES_ENCRYPT);
+		DES_ecb2_encrypt((const_DES_cblock *)out,(DES_cblock *)outin,&ks,&ks2,DES_DECRYPT);
 
 		if (memcmp(out,cipher_ecb2[i],8) != 0)
 			{
