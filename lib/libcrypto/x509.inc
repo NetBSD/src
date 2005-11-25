@@ -1,4 +1,4 @@
-#	$NetBSD: x509.inc,v 1.4 2003/07/24 14:16:33 itojun Exp $
+#	$NetBSD: x509.inc,v 1.5 2005/11/25 19:15:08 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -14,4 +14,4 @@ SRCS+=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
 	x509_set.c x509cset.c x509rset.c x509_err.c \
 	x509name.c x509_v3.c x509_ext.c x509_att.c \
 	x509type.c x509_lu.c x_all.c x509_txt.c \
-	x509_trs.c by_file.c by_dir.c 
+	x509_trs.c x509_vpm.c by_file.c by_dir.c 
