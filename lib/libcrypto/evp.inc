@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.5 2003/07/24 14:16:32 itojun Exp $
+#	$NetBSD: evp.inc,v 1.6 2005/11/25 19:15:08 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -18,4 +18,4 @@ SRCS+=	encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c \
-	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
+	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c m_ecdsa.c
