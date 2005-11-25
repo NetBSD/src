@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.119 2005/11/25 16:30:23 thorpej Exp $
+# 	$NetBSD: GENERIC32,v 1.120 2005/11/25 16:35:12 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 maxusers	64
 
@@ -804,7 +804,7 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 
 ### Other pseudo-devices
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcr			# software crypto implementation
 
 ## Pseudo ttys, required for network logins and programs like screen.
