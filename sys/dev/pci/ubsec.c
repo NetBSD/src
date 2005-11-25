@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.7 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.8 2005/11/25 16:16:46 thorpej Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -59,7 +59,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <opencrypto/cryptodev.h>
-#include <opencrypto/cryptosoft.h>
+#include <opencrypto/xform.h>
 #ifdef __OpenBSD__
  #include <dev/rndvar.h>
  #include <sys/md5k.h>

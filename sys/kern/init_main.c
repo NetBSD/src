@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.253 2005/11/18 21:55:14 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.254 2005/11/25 16:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.253 2005/11/18 21:55:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.254 2005/11/25 16:16:46 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.253 2005/11/18 21:55:14 martin Exp $
 #include "opt_rootfs_magiclinks.h"
 #include "opt_verified_exec.h"
 
-#include "opencrypto.h"
 #include "rnd.h"
 #include "wlan.h"
 
@@ -139,9 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.253 2005/11/18 21:55:14 martin Exp $
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
-#if NOPENCRYPTO > 0
-#include <opencrypto/cryptodev.h>	/* XXX really the framework */
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -267,10 +263,6 @@ main(void)
 	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
-#endif
-#if NOPENCRYPTO > 0
-	/* Initialize crypto subsystem before configuring crypto hardware. */
-	(void)crypto_init();
 #endif
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();

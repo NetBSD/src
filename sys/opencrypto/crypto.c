@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.10 2005/02/26 22:39:52 perry Exp $ */
+/*	$NetBSD: crypto.c,v 1.11 2005/11/25 16:16:46 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.10 2005/02/26 22:39:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.11 2005/11/25 16:16:46 thorpej Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -36,11 +36,10 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.10 2005/02/26 22:39:52 perry Exp $");
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <opencrypto/cryptodev.h>
-#include <opencrypto/cryptosoft.h>		/* swcr_init() */
 #include <sys/kthread.h>
+#include <sys/once.h>
 
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
-
 
 #ifdef __NetBSD__
   #define splcrypto splnet
@@ -69,8 +68,8 @@ nanouptime(struct timespec *tp)
  * crypto_drivers table with crypto_get_driverid() and then registering
  * each algorithm they support with crypto_register() and crypto_kregister().
  */
-static	struct cryptocap *crypto_drivers = NULL;
-static	int crypto_drivers_num = 0;
+static	struct cryptocap *crypto_drivers;
+static	int crypto_drivers_num;
 static	void* softintr_cookie;
 
 /*
@@ -78,8 +77,10 @@ static	void* softintr_cookie;
  * cipher) operations and one for asymmetric (e.g. MOD) operations.
  * See below for how synchronization is handled.
  */
-static	TAILQ_HEAD(,cryptop) crp_q;		/* request queues */
-static	TAILQ_HEAD(,cryptkop) crp_kq;
+static	TAILQ_HEAD(,cryptop) crp_q =		/* request queues */
+		TAILQ_HEAD_INITIALIZER(crp_q);
+static	TAILQ_HEAD(,cryptkop) crp_kq =
+		TAILQ_HEAD_INITIALIZER(crp_kq);
 
 /*
  * There are two queues for processing completed crypto requests; one
@@ -87,8 +88,10 @@ static	TAILQ_HEAD(,cryptkop) crp_kq;
  * but have two to avoid type futzing (cryptop vs. cryptkop).  See below
  * for how synchronization is handled.
  */
-static	TAILQ_HEAD(,cryptop) crp_ret_q;		/* callback queues */
-static	TAILQ_HEAD(,cryptkop) crp_ret_kq;
+static	TAILQ_HEAD(,cryptop) crp_ret_q =	/* callback queues */
+		TAILQ_HEAD_INITIALIZER(crp_ret_q);
+static	TAILQ_HEAD(,cryptkop) crp_ret_kq =
+		TAILQ_HEAD_INITIALIZER(crp_ret_kq);
 
 /*
  * Crypto op and desciptor data structures are allocated
@@ -99,7 +102,6 @@ struct pool cryptodesc_pool;
 int crypto_pool_initialized = 0;
 
 #ifdef __NetBSD__
-void	cryptoattach(int);
 static void deferred_crypto_thread(void *arg);
 #endif
 
@@ -176,35 +178,28 @@ SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
 	    cryptostats, "Crypto system statistics");
 #endif /* __FreeBSD__ */
 
-int
-crypto_init(void)
+static void
+crypto_init0(void)
 {
-	int error;
-
 #ifdef __FreeBSD__
+	int error;
 
 	cryptop_zone = zinit("cryptop", sizeof (struct cryptop), 0, 0, 1);
 	cryptodesc_zone = zinit("cryptodesc", sizeof (struct cryptodesc),
 				0, 0, 1);
 	if (cryptodesc_zone == NULL || cryptop_zone == NULL) {
 		printf("crypto_init: cannot setup crypto zones\n");
-		return ENOMEM;
+		return;
 	}
 #endif
 
-	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
-	crypto_drivers = malloc(crypto_drivers_num *
+	crypto_drivers = malloc(CRYPTO_DRIVERS_INITIAL *
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 	if (crypto_drivers == NULL) {
 		printf("crypto_init: cannot malloc driver table\n");
-		return ENOMEM;
+		return;
 	}
-
-	TAILQ_INIT(&crp_q);
-	TAILQ_INIT(&crp_kq);
-
-	TAILQ_INIT(&crp_ret_q);
-	TAILQ_INIT(&crp_ret_kq);
+	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
 #ifdef __FreeBSD__
@@ -218,9 +213,15 @@ crypto_init(void)
 #else
 	/* defer thread creation until after boot */
 	kthread_create( deferred_crypto_thread, NULL);
-	error = 0;
 #endif
-	return error;
+}
+
+void
+crypto_init(void)
+{
+	ONCE_DECL(crypto_init_once);
+
+	RUN_ONCE(&crypto_init_once, crypto_init0);
 }
 
 static void
@@ -366,6 +367,8 @@ crypto_get_driverid(u_int32_t flags)
 {
 	struct cryptocap *newdrv;
 	int i, s;
+
+	crypto_init();
 
 	s = splcrypto();
 	for (i = 0; i < crypto_drivers_num; i++)
@@ -1206,18 +1209,6 @@ deferred_crypto_thread(void *arg)
 		    error);
 		crypto_destroy();
 	}
-
-	/*
-	 * XXX in absence of FreeBSD mod_init(), call init hooks here,
-	 * now that the thread used by software crypto is up and running.
-	 */
-	swcr_init();
-}
-
-void
-cryptoattach(int n)
-{
-	/* Nothing to do. */
 }
 
 #ifdef __FreeBSD__
