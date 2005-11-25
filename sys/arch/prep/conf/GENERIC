@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2005/11/25 16:30:23 thorpej Exp $
+# $NetBSD: GENERIC,v 1.104 2005/11/25 16:35:12 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.103 $"
+#ident		"GENERIC-$Revision: 1.104 $"
 
 maxusers	32
 
@@ -509,7 +509,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Pseudo-Devices
 
 # Not yet ready -- prep lacks generic soft interrupts
-#pseudo-device 	crypto		# opencrypto framework
+#pseudo-device 	crypto		# /dev/crypto device
 #pseudo-device	swcr		# software crypto implementation
 
 # disk/mass storage pseudo-devices

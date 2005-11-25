@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2005/11/25 16:30:23 thorpej Exp $
+# $NetBSD: GENERIC,v 1.85 2005/11/25 16:35:11 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 maxusers	32
 
@@ -300,7 +300,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Pseudo-devices
 
-pseudo-device 	crypto				# opencrypto framework
+pseudo-device 	crypto				# /dev/crypto device
 pseudo-device	swcr				# software crypto implementation
 
 # Disk/mass storage pseudo-devices
