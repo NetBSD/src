@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2005/11/03 16:48:29 chs Exp $
+# $NetBSD: GENERIC,v 1.90 2005/11/25 16:30:23 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 maxusers	32
 
@@ -112,6 +112,7 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 config		netbsd	root on ? type ?
 
 #pseudo-device 	crypto			# opencrypto framework
+#pseudo-device	swcr			# software crypto implementation
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	vnd		4
 #options 	VND_COMPRESSION		# compressed vnd(4)
