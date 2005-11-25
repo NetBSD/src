@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.254 2005/11/25 16:16:46 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.255 2005/11/25 17:33:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.254 2005/11/25 16:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.255 2005/11/25 17:33:56 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.254 2005/11/25 16:16:46 thorpej Exp 
 #include "opt_verified_exec.h"
 
 #include "rnd.h"
-#include "wlan.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -277,11 +276,6 @@ main(void)
 
 	/* Initialize signal-related data structures. */
 	signal_init();
-
-#if NWLAN > 0
-	/* Initialize the net80211 layer */
-	ieee80211_init();
-#endif
 
 	/* Create process 0 (the swapper). */
 	proc0_init();
