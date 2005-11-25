@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.830 2005/11/24 08:22:47 yamt Exp $
+#	$NetBSD: mi,v 1.831 2005/11/25 20:38:23 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1129,15 +1129,18 @@
 ./usr/include/openssl/dh.h			comp-c-include		crypto
 ./usr/include/openssl/dsa.h			comp-c-include		crypto
 ./usr/include/openssl/dso.h			comp-c-include		crypto
+./usr/include/openssl/dtls1.h			comp-c-include		crypto
 ./usr/include/openssl/e_os.h			comp-obsolete		obsolete
 ./usr/include/openssl/e_os2.h			comp-c-include		crypto
 ./usr/include/openssl/ebcdic.h			comp-c-include		crypto
 ./usr/include/openssl/ec.h			comp-c-include		crypto
+./usr/include/openssl/ecdh.h			comp-c-include		crypto
+./usr/include/openssl/ecdsa.h			comp-c-include		crypto
 ./usr/include/openssl/engine.h			comp-c-include		crypto
 ./usr/include/openssl/err.h			comp-c-include		crypto
 ./usr/include/openssl/evp.h			comp-c-include		crypto
-./usr/include/openssl/fips.h			comp-c-include		crypto
-./usr/include/openssl/fips_rand.h		comp-c-include		crypto
+./usr/include/openssl/fips.h			comp-obsolete		crypto
+./usr/include/openssl/fips_rand.h		comp-obsolete		crypto
 ./usr/include/openssl/hmac.h			comp-c-include		crypto
 ./usr/include/openssl/idea.h			comp-c-include		crypto
 ./usr/include/openssl/krb5_asn.h		comp-c-include		crypto
@@ -1157,6 +1160,8 @@
 ./usr/include/openssl/pem2.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs12.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs7.h			comp-c-include		crypto
+./usr/include/openssl/pqueue.h			comp-c-include		crypto
+./usr/include/openssl/pq_compat.h		comp-c-include		crypto
 ./usr/include/openssl/rand.h			comp-c-include		crypto
 ./usr/include/openssl/rc2.h			comp-c-include		crypto
 ./usr/include/openssl/rc4.h			comp-c-include		crypto
@@ -1171,6 +1176,7 @@
 ./usr/include/openssl/ssl23.h			comp-c-include		crypto
 ./usr/include/openssl/ssl3.h			comp-c-include		crypto
 ./usr/include/openssl/stack.h			comp-c-include		crypto
+./usr/include/openssl/store.h			comp-c-include		crypto
 ./usr/include/openssl/symhacks.h		comp-c-include		crypto
 ./usr/include/openssl/tls1.h			comp-c-include		crypto
 ./usr/include/openssl/tmdiff.h			comp-c-include		crypto
