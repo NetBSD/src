@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.838 2005/11/19 02:07:16 christos Exp $
+# $NetBSD: mi,v 1.839 2005/11/25 21:19:05 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -286,6 +286,8 @@
 ./usr/share/man/cat1/openssl_dhparam.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_dsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_dsaparam.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_ec.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_ecparam.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_enc.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_errstr.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_gendsa.0		man-crypto-catman	crypto,.cat
@@ -309,6 +311,7 @@
 ./usr/share/man/cat1/openssl_verify.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_version.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_x509.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_x509v3_config.0	man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/page.0			man-util-catman		.cat
 ./usr/share/man/cat1/pagesize.0			man-util-catman		.cat
 ./usr/share/man/cat1/passwd.0			man-util-catman		.cat
@@ -2569,6 +2572,8 @@
 ./usr/share/man/man1/openssl_dhparam.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_dsa.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_dsaparam.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_ec.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_ecparam.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_enc.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_errstr.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_gendsa.1		man-crypto-man		crypto,.man
@@ -2592,6 +2597,7 @@
 ./usr/share/man/man1/openssl_verify.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_version.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_x509.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_x509v3_config.1	man-crypto-man		crypto,.man
 ./usr/share/man/man1/page.1			man-util-man		.man
 ./usr/share/man/man1/pagesize.1			man-util-man		.man
 ./usr/share/man/man1/passwd.1			man-util-man		.man
