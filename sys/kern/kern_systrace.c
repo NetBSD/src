@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.46 2005/06/27 17:11:21 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.47 2005/11/25 20:32:33 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46 2005/06/27 17:11:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.47 2005/11/25 20:32:33 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -202,14 +202,17 @@ POOL_INIT(systr_policy_pl, sizeof(struct str_policy), 0, 0, 0, "strpolpl",
     NULL);
 POOL_INIT(systr_msgcontainer_pl, sizeof(struct str_msgcontainer), 0, 0, 0,
     "strmsgpl", NULL);
-#else
+
+struct lock systrace_lck = LOCK_INITIALIZER(PLOCK, "systrace", 0, 0);
+#else /* ! __NetBSD__ */
 struct pool systr_proc_pl;
 struct pool systr_policy_pl;
 struct pool systr_msgcontainer_pl;
-#endif
+
+struct lock systrace_lck;
+#endif /* __NetBSD__ */
 
 int systrace_debug = 0;
-struct lock systrace_lck;
 
 #ifdef __NetBSD__
 const struct cdevsw systrace_cdevsw = {
@@ -546,20 +549,21 @@ systrace_unlock(void)
 #endif
 }
 
+#ifndef __NetBSD__
 void
 systrace_init(void)
 {
 
-#ifndef __NetBSD__
 	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
 	    "strprocpl", NULL);
 	pool_init(&systr_policy_pl, sizeof(struct str_policy), 0, 0, 0,
 	    "strpolpl", NULL);
 	pool_init(&systr_msgcontainer_pl, sizeof(struct str_msgcontainer),
 	    0, 0, 0, "strmsgpl", NULL);
-#endif
+
 	lockinit(&systrace_lck, PLOCK, "systrace", 0, 0);
 }
+#endif /* ! __NetBSD__ */
 
 int
 systraceopen(dev_t dev, int flag, int mode, struct proc *p)

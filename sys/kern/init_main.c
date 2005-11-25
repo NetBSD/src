@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.257 2005/11/25 20:13:54 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.258 2005/11/25 20:32:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.257 2005/11/25 20:13:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.258 2005/11/25 20:32:32 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
@@ -352,10 +352,6 @@ main(void)
 
 	/* Initialize system accouting. */
 	acct_init();
-
-#ifdef SYSTRACE
-	systrace_init();
-#endif
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);
