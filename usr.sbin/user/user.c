@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.97 2005/11/07 21:58:12 christos Exp $ */
+/* $NetBSD: user.c,v 1.98 2005/11/25 08:00:18 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair G. Crooks.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -36,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.97 2005/11/07 21:58:12 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.98 2005/11/25 08:00:18 agc Exp $");
 #endif
 
 #include <sys/types.h>
