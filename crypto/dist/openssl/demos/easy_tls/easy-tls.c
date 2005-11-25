@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-file-style: "bsd" -*- */
 /*
  * easy-tls.c -- generic TLS proxy.
- * Id: easy-tls.c,v 1.2.2.2 2002/03/05 09:06:57 bodo Exp 
+ * $Id: easy-tls.c,v 1.1.1.3 2005/11/25 03:07:45 christos Exp $
  */
 /*
  (c) Copyright 1999 Bodo Moeller.  All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 static char const rcsid[] =
-"Id: easy-tls.c,v 1.2.2.2 2002/03/05 09:06:57 bodo Exp ";
+"$Id: easy-tls.c,v 1.1.1.3 2005/11/25 03:07:45 christos Exp $";
 
 #include <assert.h>
 #include <errno.h>

@@ -3,6 +3,7 @@
  ----------------------------------
 
  [Instructions for building for Windows CE can be found in INSTALL.WCE]
+ [Instructions for building for Win64 can be found in INSTALL.W64]
 
  Heres a few comments about building OpenSSL in Windows environments.  Most
  of this is tested on Win32 but it may also work in Win 3.1 with some
@@ -46,13 +47,12 @@
  http://www.kernel.org/pub/software/devel/nasm/binaries/win32/
  The NASM binary nasmw.exe needs to be installed anywhere on your PATH.
 
- Firstly you should run Configure (to build a FIPS-certified variant of
- OpenSSL, add the option "fips"):
+ Firstly you should run Configure:
 
  > perl Configure VC-WIN32
 
  Next you need to build the Makefiles and optionally the assembly language
- files (to build a FIPS-certified variant of OpenSSL, add the argument "fips"):
+ files:
 
  - If you are using MASM then run:
 
@@ -101,12 +101,10 @@
  Borland C++ builder 5
  ---------------------
 
- * Configure for building with Borland Builder (to build a FIPS-certified
-   variant of OpenSSL, add the option "fips"):
+ * Configure for building with Borland Builder:
    > perl Configure BC-32
 
- * Create the appropriate makefile (to build a FIPS-certified variant of
-   OpenSSL, add the argument "fips")
+ * Create the appropriate makefile
    > ms\do_nasm
 
  * Build
@@ -197,8 +195,6 @@
    occur, try
    > ms\mingw32 no-asm
    instead.
-   If you want to build a FIPS-certified variant of OpenSSL, add the argument
-   "fips"
 
    libcrypto.a and libssl.a are the static libraries. To use the DLLs,
    link with libeay32.a and libssl32.a instead.
@@ -291,3 +287,21 @@
  (e.g. fopen()), and OpenSSL cannot change these; so in general you cannot
  rely on CRYPTO_malloc_init() solving your problem, and you should
  consistently use the multithreaded library.
+
+ Linking your application
+ ------------------------
+
+ If you link with static OpenSSL libraries [those built with ms/nt.mak],
+ then you're expected to additionally link your application with
+ WSOCK32.LIB, ADVAPI32.LIB, GDI32.LIB and USER32.LIB. Those developing
+ non-interactive service applications might feel concerned about linking
+ with latter two, as they are justly associated with interactive desktop,
+ which is not available to service processes. The toolkit is designed
+ to detect in which context it's currently executed, GUI, console app
+ or service, and act accordingly, namely whether or not to actually make
+ GUI calls.
+
+ If you link with OpenSSL .DLLs, then you're expected to include into
+ your application code small "shim" snippet, which provides glue between
+ OpenSSL BIO layer and your compiler run-time. Look up OPENSSL_Applink
+ reference page for further details.

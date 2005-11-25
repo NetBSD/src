@@ -1,5 +1,5 @@
 /* test.c */
-/* Id: test.c,v 1.1 2001/09/17 19:06:59 bodo Exp */
+/* $Id: test.c,v 1.1.1.3 2005/11/25 03:07:45 christos Exp $ */
 
 #define L_PORT 9999
 #define C_PORT 443

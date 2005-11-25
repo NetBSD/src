@@ -24,25 +24,25 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
+	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
-	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
-	"VC-WIN16",   "Alias for VC-W31-32",
-	"VC-W31-32",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 386+",
-	"VC-MSDOS","Microsoft Visual C++ 1.52 - MSDOS",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
 	"Mingw32-files", "Create files with DOS copy ...",
 	"BC-NT",   "Borland C++ 4.5 - Windows NT",
-	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
-	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
 	"linux-elf","Linux elf",
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
 	"OS2-EMX", "EMX GCC OS/2",
+	"netware-clib", "CodeWarrior for NetWare - CLib - with WinSock Sockets",
+	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
+	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
 	);
 
 $platform="";
+my $xcflags="";
 foreach (@ARGV)
 	{
 	if (!&read_options && !defined($ops{$_}))
@@ -64,9 +64,13 @@ and [options] can be one of
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
 	no-ec					- No EC
+	no-ecdsa				- No ECDSA
+	no-ecdh					- No ECDH
 	no-engine				- No engine
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
+	nw-nasm					- Use NASM x86 asm for NetWare
+	nw-mwasm					- Use Metrowerks x86 asm for NetWare
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
@@ -114,35 +118,15 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 
 # $bin_dir.=$o causes a core dump on my sparc :-(
 
+
 $NT=0;
 
 push(@INC,"util/pl","pl");
-if ($platform eq "VC-MSDOS")
+if (($platform =~ /VC-(.+)/))
 	{
-	$asmbits=16;
-	$msdos=1;
-	require 'VC-16.pl';
-	}
-elsif ($platform eq "VC-W31-16")
-	{
-	$asmbits=16;
-	$msdos=1; $win16=1;
-	require 'VC-16.pl';
-	}
-elsif (($platform eq "VC-W31-32") || ($platform eq "VC-WIN16"))
-	{
-	$asmbits=32;
-	$msdos=1; $win16=1;
-	require 'VC-16.pl';
-	}
-elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
-	{
-	$NT = 1 if $platform eq "VC-NT";
+	$FLAVOR=$1;
+	$NT = 1 if $1 eq "NT";
 	require 'VC-32.pl';
-	}
-elsif ($platform eq "VC-CE")
-	{
-	require 'VC-CE.pl';
 	}
 elsif ($platform eq "Mingw32")
 	{
@@ -156,23 +140,6 @@ elsif ($platform eq "BC-NT")
 	{
 	$bc=1;
 	require 'BC-32.pl';
-	}
-elsif ($platform eq "BC-W31")
-	{
-	$bc=1;
-	$msdos=1; $w16=1;
-	require 'BC-16.pl';
-	}
-elsif ($platform eq "BC-Q16")
-	{
-	$msdos=1; $w16=1; $shlib=0; $qw=1;
-	require 'BC-16.pl';
-	}
-elsif ($platform eq "BC-MSDOS")
-	{
-	$asmbits=16;
-	$msdos=1;
-	require 'BC-16.pl';
 	}
 elsif ($platform eq "FreeBSD")
 	{
@@ -196,6 +163,13 @@ elsif ($platform eq "OS2-EMX")
 	$wc=1;
 	require 'OS2-EMX.pl';
 	}
+elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
+       ($platform eq "netware-libc-bsdsock"))
+	{
+	$LIBC=1 if $platform eq "netware-libc" || $platform eq "netware-libc-bsdsock";
+	$BSDSOCK=1 if $platform eq "netware-libc-bsdsock";
+	require 'netware.pl';
+	}
 else
 	{
 	require "unix.pl";
@@ -210,6 +184,8 @@ $inc_dir=(defined($VARS{'INC'}))?$VARS{'INC'}:$inc_def;
 
 $bin_dir=$bin_dir.$o unless ((substr($bin_dir,-1,1) eq $o) || ($bin_dir eq ''));
 
+$cflags= "$xcflags$cflags" if $xcflags ne "";
+
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
 $cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
 $cflags.=" -DOPENSSL_NO_RC2"  if $no_rc2;
@@ -222,7 +198,7 @@ $cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
 $cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
 $cflags.=" -DOPENSSL_NO_RIPEMD" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
-$cflags.=" -DOPENSSL_NO_BF"   if $no_bf;
+$cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
 $cflags.=" -DOPENSSL_NO_DES"  if $no_des;
 $cflags.=" -DOPENSSL_NO_RSA"  if $no_rsa;
@@ -234,9 +210,10 @@ $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
+$cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
+$cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
-$cflags.=" -DOPENSSL_FIPS"    if $fips;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -262,6 +239,63 @@ $link="$bin_dir$link" if ($link !~ /^\$/);
 
 $INSTALLTOP =~ s|/|$o|g;
 
+#############################################
+# We parse in input file and 'store' info for later printing.
+open(IN,"<$infile") || die "unable to open $infile:$!\n";
+$_=<IN>;
+for (;;)
+	{
+	chop;
+
+	($key,$val)=/^([^=]+)=(.*)/;
+	if ($key eq "RELATIVE_DIRECTORY")
+		{
+		if ($lib ne "")
+			{
+			$uc=$lib;
+			$uc =~ s/^lib(.*)\.a/$1/;
+			$uc =~ tr/a-z/A-Z/;
+			$lib_nam{$uc}=$uc;
+			$lib_obj{$uc}.=$libobj." ";
+			}
+		last if ($val eq "FINISHED");
+		$lib="";
+		$libobj="";
+		$dir=$val;
+		}
+
+	if ($key eq "KRB5_INCLUDES")
+		{ $cflags .= " $val";}
+
+	if ($key eq "LIBKRB5")
+		{ $ex_libs .= " $val";}
+
+	if ($key eq "TEST")
+		{ $test.=&var_add($dir,$val, 0); }
+
+	if (($key eq "PROGS") || ($key eq "E_OBJ"))
+		{ $e_exe.=&var_add($dir,$val, 0); }
+
+	if ($key eq "LIB")
+		{
+		$lib=$val;
+		$lib =~ s/^.*\/([^\/]+)$/$1/;
+		}
+
+	if ($key eq "EXHEADER")
+		{ $exheader.=&var_add($dir,$val, 1); }
+
+	if ($key eq "HEADER")
+		{ $header.=&var_add($dir,$val, 1); }
+
+	if ($key eq "LIBOBJ")
+		{ $libobj=&var_add($dir,$val, 0); }
+
+	if (!($_=<IN>))
+		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
+	}
+close(IN);
+
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
 # This single makefile will build the complete OpenSSL distribution and
@@ -279,14 +313,6 @@ $defs= <<"EOF";
 EOF
 
 $defs .= $preamble if defined $preamble;
-
-if ($platform eq "VC-CE")
-	{
-	$defs.= <<"EOF";
-!INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
-
-EOF
-	}
 
 $defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
@@ -309,6 +335,7 @@ SRC_D=$src_dir
 
 LINK=$link
 LFLAGS=$lflags
+RSC=$rsc
 
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
@@ -479,57 +506,6 @@ printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
 printf OUT "#endif\n";
 close(OUT);
 
-#############################################
-# We parse in input file and 'store' info for later printing.
-open(IN,"<$infile") || die "unable to open $infile:$!\n";
-$_=<IN>;
-for (;;)
-	{
-	chop;
-
-	($key,$val)=/^([^=]+)=(.*)/;
-	if ($key eq "RELATIVE_DIRECTORY")
-		{
-		if ($lib ne "")
-			{
-			$uc=$lib;
-			$uc =~ s/^lib(.*)\.a/$1/;
-			$uc =~ tr/a-z/A-Z/;
-			$lib_nam{$uc}=$uc;
-			$lib_obj{$uc}.=$libobj." ";
-			}
-		last if ($val eq "FINISHED");
-		$lib="";
-		$libobj="";
-		$dir=$val;
-		}
-
-	if ($key eq "TEST")
-		{ $test.=&var_add($dir,$val); }
-
-	if (($key eq "PROGS") || ($key eq "E_OBJ"))
-		{ $e_exe.=&var_add($dir,$val); }
-
-	if ($key eq "LIB")
-		{
-		$lib=$val;
-		$lib =~ s/^.*\/([^\/]+)$/$1/;
-		}
-
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
-
-	if ($key eq "HEADER")
-		{ $header.=&var_add($dir,$val); }
-
-	if ($key eq "LIBOBJ")
-		{ $libobj=&var_add($dir,$val); }
-
-	if (!($_=<IN>))
-		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
-	}
-close(IN);
-
 # Strip of trailing ' '
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
 $test=&clean_up_ws($test);
@@ -542,11 +518,11 @@ foreach (split(/\s+/,$exheader)){ $h{$_}=1; }
 foreach (split(/\s+/,$header))	{ $h.=$_." " unless $h{$_}; }
 chop($h); $header=$h;
 
-$defs.=&do_defs("HEADER",$header,"\$(INCL_D)",".h");
-$rules.=&do_copy_rule("\$(INCL_D)",$header,".h");
+$defs.=&do_defs("HEADER",$header,"\$(INCL_D)","");
+$rules.=&do_copy_rule("\$(INCL_D)",$header,"");
 
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)",".h");
-$rules.=&do_copy_rule("\$(INCO_D)",$exheader,".h");
+$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
+$rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
@@ -621,6 +597,18 @@ foreach (values %lib_nam)
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
+# hack to add version info on MSVC
+if (($platform eq "VC-WIN32") || ($platform eq "VC-NT")) {
+    $rules.= <<"EOF";
+\$(OBJ_D)\\\$(CRYPTO).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(CRYPTO).res" /d CRYPTO ms\\version32.rc
+
+\$(OBJ_D)\\\$(SSL).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(SSL).res" /d SSL ms\\version32.rc
+
+EOF
+}
+
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
 foreach (split(/\s+/,$test))
 	{
@@ -632,14 +620,8 @@ foreach (split(/\s+/,$test))
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
 $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
 
-if ($fips)
-	{
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)","\$(BIN_D)$o.sha1","\$(BIN_D)$o\$(E_EXE)$exep");
-	}
-else
-	{
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
-	}
+$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
+
 print $defs;
 
 if ($platform eq "linux-elf") {
@@ -658,7 +640,7 @@ print $rules;
 # directories
 sub var_add
 	{
-	local($dir,$val)=@_;
+	local($dir,$val,$keepext)=@_;
 	local(@a,$_,$ret);
 
 	return("") if $no_engine && $dir =~ /\/engine/;
@@ -687,7 +669,7 @@ sub var_add
 
 	$val =~ s/^\s*(.*)\s*$/$1/;
 	@a=split(/\s+/,$val);
-	grep(s/\.[och]$//,@a);
+	grep(s/\.[och]$//,@a) unless $keepext;
 
 	@a=grep(!/^e_.*_3d$/,@a) if $no_des;
 	@a=grep(!/^e_.*_d$/,@a) if $no_des;
@@ -786,6 +768,14 @@ sub do_defs
 
 		$Vars{$var}.="$t ";
 		$ret.=$t;
+		}
+	# hack to add version info on MSVC
+	if ($shlib && ($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+		{
+		if ($var eq "CRYPTOOBJ")
+			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
+		elsif ($var eq "SSLOBJ")
+			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
 	chop($ret);
 	$ret.="\n\n";
@@ -889,52 +879,114 @@ sub do_copy_rule
 
 sub read_options
 	{
-	if    (/^no-rc2$/)	{ $no_rc2=1; }
-	elsif (/^no-rc4$/)	{ $no_rc4=1; }
-	elsif (/^no-rc5$/)	{ $no_rc5=1; }
-	elsif (/^no-idea$/)	{ $no_idea=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-des$/)	{ $no_des=1; }
-	elsif (/^no-bf$/)	{ $no_bf=1; }
-	elsif (/^no-cast$/)	{ $no_cast=1; }
-	elsif (/^no-md2$/)  	{ $no_md2=1; }
-	elsif (/^no-md4$/)	{ $no_md4=1; }
-	elsif (/^no-md5$/)	{ $no_md5=1; }
-	elsif (/^no-sha$/)	{ $no_sha=1; }
-	elsif (/^no-sha1$/)	{ $no_sha1=1; }
-	elsif (/^no-ripemd$/)	{ $no_ripemd=1; }
-	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
-	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
-	elsif (/^no-rsa$/)	{ $no_rsa=1; }
-	elsif (/^no-dsa$/)	{ $no_dsa=1; }
-	elsif (/^no-dh$/)	{ $no_dh=1; }
-	elsif (/^no-hmac$/)	{ $no_hmac=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-asm$/)	{ $no_asm=1; }
-	elsif (/^nasm$/)	{ $nasm=1; }
-	elsif (/^gaswin$/)	{ $gaswin=1; }
-	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
-	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
-	elsif (/^no-err$/)	{ $no_err=1; }
-	elsif (/^no-sock$/)	{ $no_sock=1; }
-	elsif (/^no-krb5$/)	{ $no_krb5=1; }
-	elsif (/^no-ec$/)	{ $no_ec=1; }
-	elsif (/^no-engine$/)	{ $no_engine=1; }
-	elsif (/^no-hw$/)	{ $no_hw=1; }
+	# Many options are handled in a similar way. In particular
+	# no-xxx sets zero or more scalars to 1.
+	# Process these using a hash containing the option name and
+	# reference to the scalars to set.
 
-	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
-				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_ripemd=$no_rc5=1;
-				  $no_aes=1; }
+	my %valid_options = (
+		"no-rc2" => \$no_rc2,
+		"no-rc4" => \$no_rc4,
+		"no-rc5" => \$no_rc5,
+		"no-idea" => \$no_idea,
+		"no-aes" => \$no_aes,
+		"no-des" => \$no_des,
+		"no-bf" => \$no_bf,
+		"no-cast" => \$no_cast,
+		"no-md2" => \$no_md2,
+		"no-md4" => \$no_md4,
+		"no-md5" => \$no_md5,
+		"no-sha" => \$no_sha,
+		"no-sha1" => \$no_sha1,
+		"no-ripemd" => \$no_ripemd,
+		"no-mdc2" => \$no_mdc2,
+		"no-patents" => 
+			[\$no_rc2, \$no_rc4, \$no_rc5, \$no_idea, \$no_rsa],
+		"no-rsa" => \$no_rsa,
+		"no-dsa" => \$no_dsa,
+		"no-dh" => \$no_dh,
+		"no-hmac" => \$no_hmac,
+		"no-aes" => \$no_aes,
+		"no-asm" => \$no_asm,
+		"nasm" => \$nasm,
+		"nw-nasm" => \$nw_nasm,
+		"nw-mwasm" => \$nw_mwasm,
+		"gaswin" => \$gaswin,
+		"no-ssl2" => \$no_ssl2,
+		"no-ssl3" => \$no_ssl3,
+		"no-err" => \$no_err,
+		"no-sock" => \$no_sock,
+		"no-krb5" => \$no_krb5,
+		"no-ec" => \$no_ec,
+		"no-ecdsa" => \$no_ecdsa,
+		"no-ecdh" => \$no_ecdh,
+		"no-engine" => \$no_engine,
+		"no-hw" => \$no_hw,
+		"just-ssl" =>
+			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
+			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
+			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
+			  \$no_aes],
+		"rsaref" => 0,
+		"gcc" => \$gcc,
+		"debug" => \$debug,
+		"profile" => \$profile,
+		"shlib" => \$shlib,
+		"dll" => \$shlib,
+		"shared" => 0,
+		"no-gmp" => 0,
+		"no-shared" => 0,
+		"no-zlib" => 0,
+		"no-zlib-dynamic" => 0,
+		);
 
-	elsif (/^rsaref$/)	{ }
-	elsif (/^fips$/)	{ $fips=1; }
-	elsif (/^gcc$/)		{ $gcc=1; }
-	elsif (/^debug$/)	{ $debug=1; }
-	elsif (/^profile$/)	{ $profile=1; }
-	elsif (/^shlib$/)	{ $shlib=1; }
-	elsif (/^dll$/)		{ $shlib=1; }
-	elsif (/^shared$/)	{ } # We just need to ignore it for now...
+	if (exists $valid_options{$_})
+		{
+		my $r = $valid_options{$_};
+		if ( ref $r eq "SCALAR")
+			{ $$r = 1;}
+		elsif ( ref $r eq "ARRAY")
+			{
+			my $r2;
+			foreach $r2 (@$r)
+				{
+				$$r2 = 1;
+				}
+			}
+		}
+	elsif (/^no-comp$/) { $xcflags = "-DOPENSSL_NO_COMP $xcflags"; }
+	elsif (/^enable-zlib$/) { $xcflags = "-DZLIB $xcflags"; }
+	elsif (/^enable-zlib-dynamic$/)
+		{
+		$xcflags = "-DZLIB_SHARED -DZLIB $xcflags";
+		}
+	# There are also enable-xxx options which correspond to
+	# the no-xxx. Since the scalars are enabled by default
+	# these can be ignored.
+	elsif (/^enable-/)
+		{
+		my $t = $_;
+		$t =~ s/^enable/no/;
+		if (exists $valid_options{$t})
+			{return 1;}
+		return 0;
+		}
+	elsif (/^--with-krb5-flavor=(.*)$/)
+		{
+		my $krb5_flavor = $1;
+		if ($krb5_flavor =~ /^force-[Hh]eimdal$/)
+			{
+			$xcflags="-DKRB5_HEIMDAL $xcflags";
+			}
+		elsif ($krb5_flavor =~ /^MIT/i)
+			{
+			$xcflags="-DKRB5_MIT $xcflags";
+		 	if ($krb5_flavor =~ /^MIT[._-]*1[._-]*[01]/i)
+				{
+				$xcflags="-DKRB5_MIT_OLD11 $xcflags"
+				}
+			}
+		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
 	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
