@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.160 2005/11/05 10:57:49 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.161 2005/11/25 11:50:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2005/11/05 10:57:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2005/11/25 11:50:55 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -294,7 +294,7 @@ mips_flushcache_allpvh(paddr_t pa)
  *	firstaddr is the first unused kseg0 address (not page aligned).
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	vsize_t bufsz;
 
@@ -489,7 +489,7 @@ pmap_steal_memory(size, vstartp, vendp)
  *	system needs to map virtual memory.
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	vsize_t		s;
 	int		bank;
@@ -538,7 +538,7 @@ pmap_init()
  *	is bounded by that size.
  */
 pmap_t
-pmap_create()
+pmap_create(void)
 {
 	pmap_t pmap;
 	int i;
