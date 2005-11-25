@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2005/11/25 16:35:11 thorpej Exp $
+# $NetBSD: GENERIC,v 1.128 2005/11/25 16:41:31 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.127 $"
+#ident		"GENERIC-$Revision: 1.128 $"
 
 maxusers	32		# estimated number of users
 
@@ -400,7 +400,7 @@ wsmouse*	at pms?
 #### Pseudo devices
 
 pseudo-device 	crypto			# /dev/crypto device
-pseudo-device	swcr			# software crypto implementation
+pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.12 2005/11/25 16:35:11 thorpej Exp $
+# $NetBSD: XENU,v 1.13 2005/11/25 16:41:31 thorpej Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -193,7 +193,7 @@ include	"arch/i386/conf/GENERIC.local"
 # Pseudo-Devices
 
 pseudo-device 	crypto		# /dev/crypto device
-pseudo-device	swcr		# software crypto implementation
+pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.13 2005/11/25 16:35:11 thorpej Exp $
+# $NetBSD: INSTALL,v 1.14 2005/11/25 16:41:31 thorpej Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.13 $"
+#ident 		"INSTALL-$Revision: 1.14 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 
@@ -281,7 +281,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # Pseudo-devices
 
 #pseudo-device 	crypto				# /dev/crypto device
-#pseudo-device	swcr				# software crypto implementation
+#pseudo-device	swcrypto			# software crypto implementation
 
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd		4		# concatenated disk devices
