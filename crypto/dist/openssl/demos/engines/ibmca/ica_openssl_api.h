@@ -158,13 +158,31 @@ icaRandomNumberGenerate( ICA_ADAPTER_HANDLE  hAdapterHandle,
 
 #if (_AIX)
 static const char *IBMCA_LIBNAME = "/lib/libica.a(shr.o)";
+#elif (WIN32)
+static const char *IBMCA_LIBNAME = "cryptica";
 #else
 static const char *IBMCA_LIBNAME = "ica";
 #endif
 
+#if (WIN32)
+/*
+ The ICA_KEY_RSA_MODEXPO & ICA_KEY_RSA_CRT lengths and
+ offsets must be in big-endian format.
+
+*/
+#define CORRECT_ENDIANNESS(b) (  \
+                             (((unsigned long) (b) & 0x000000ff) << 24) |  \
+                             (((unsigned long) (b) & 0x0000ff00) <<  8) |  \
+                             (((unsigned long) (b) & 0x00ff0000) >>  8) |  \
+                             (((unsigned long) (b) & 0xff000000) >> 24)    \
+                             )
+#define CRT_KEY_TYPE   RSA_PKCS_PRIVATE_CHINESE_REMAINDER
+#define ME_KEY_TYPE    RSA_PUBLIC_MODULUS_EXPONENT
+#else
 #define CORRECT_ENDIANNESS(b) (b)
 #define CRT_KEY_TYPE       KEYTYPE_PKCSCRT
 #define ME_KEY_TYPE        KEYTYPE_MODEXPO
+#endif
 
 
 

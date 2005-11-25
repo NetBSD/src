@@ -59,18 +59,16 @@
 
 #include "e_os.h"
 
-
-
-#ifdef OPENSSL_BUILD_SHLIBCRYPTO
-# undef OPENSSL_EXTERN
-# define OPENSSL_EXTERN OPENSSL_EXPORT
+#ifdef OPENSSL_SYS_WIN32
+#include <stdlib.h>
 #endif
 
+
 #undef c2l
-#define c2l(c,l)	(l =((CAST_LONG)(*((c)++)))    , \
-			 l|=((CAST_LONG)(*((c)++)))<< 8L, \
-			 l|=((CAST_LONG)(*((c)++)))<<16L, \
-			 l|=((CAST_LONG)(*((c)++)))<<24L)
+#define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
+			 l|=((unsigned long)(*((c)++)))<< 8L, \
+			 l|=((unsigned long)(*((c)++)))<<16L, \
+			 l|=((unsigned long)(*((c)++)))<<24L)
 
 /* NOTE - c is not incremented as per c2l */
 #undef c2ln
@@ -78,14 +76,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((CAST_LONG)(*(--(c))))<<24L; \
-			case 7: l2|=((CAST_LONG)(*(--(c))))<<16L; \
-			case 6: l2|=((CAST_LONG)(*(--(c))))<< 8L; \
-			case 5: l2|=((CAST_LONG)(*(--(c))));     \
-			case 4: l1 =((CAST_LONG)(*(--(c))))<<24L; \
-			case 3: l1|=((CAST_LONG)(*(--(c))))<<16L; \
-			case 2: l1|=((CAST_LONG)(*(--(c))))<< 8L; \
-			case 1: l1|=((CAST_LONG)(*(--(c))));     \
+			case 8: l2 =((unsigned long)(*(--(c))))<<24L; \
+			case 7: l2|=((unsigned long)(*(--(c))))<<16L; \
+			case 6: l2|=((unsigned long)(*(--(c))))<< 8L; \
+			case 5: l2|=((unsigned long)(*(--(c))));     \
+			case 4: l1 =((unsigned long)(*(--(c))))<<24L; \
+			case 3: l1|=((unsigned long)(*(--(c))))<<16L; \
+			case 2: l1|=((unsigned long)(*(--(c))))<< 8L; \
+			case 1: l1|=((unsigned long)(*(--(c))));     \
 				} \
 			}
 
@@ -116,14 +114,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((CAST_LONG)(*(--(c))))    ; \
-			case 7: l2|=((CAST_LONG)(*(--(c))))<< 8; \
-			case 6: l2|=((CAST_LONG)(*(--(c))))<<16; \
-			case 5: l2|=((CAST_LONG)(*(--(c))))<<24; \
-			case 4: l1 =((CAST_LONG)(*(--(c))))    ; \
-			case 3: l1|=((CAST_LONG)(*(--(c))))<< 8; \
-			case 2: l1|=((CAST_LONG)(*(--(c))))<<16; \
-			case 1: l1|=((CAST_LONG)(*(--(c))))<<24; \
+			case 8: l2 =((unsigned long)(*(--(c))))    ; \
+			case 7: l2|=((unsigned long)(*(--(c))))<< 8; \
+			case 6: l2|=((unsigned long)(*(--(c))))<<16; \
+			case 5: l2|=((unsigned long)(*(--(c))))<<24; \
+			case 4: l1 =((unsigned long)(*(--(c))))    ; \
+			case 3: l1|=((unsigned long)(*(--(c))))<< 8; \
+			case 2: l1|=((unsigned long)(*(--(c))))<<16; \
+			case 1: l1|=((unsigned long)(*(--(c))))<<24; \
 				} \
 			}
 
@@ -143,10 +141,10 @@
 			}
 
 #undef n2l
-#define n2l(c,l)        (l =((CAST_LONG)(*((c)++)))<<24L, \
-                         l|=((CAST_LONG)(*((c)++)))<<16L, \
-                         l|=((CAST_LONG)(*((c)++)))<< 8L, \
-                         l|=((CAST_LONG)(*((c)++))))
+#define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24L, \
+                         l|=((unsigned long)(*((c)++)))<<16L, \
+                         l|=((unsigned long)(*((c)++)))<< 8L, \
+                         l|=((unsigned long)(*((c)++))))
 
 #undef l2n
 #define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
@@ -219,11 +217,11 @@
 	}
 #endif
 
-OPENSSL_EXTERN const CAST_LONG CAST_S_table0[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table1[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table2[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table3[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table4[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table5[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table6[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table7[256];
+extern const CAST_LONG CAST_S_table0[256];
+extern const CAST_LONG CAST_S_table1[256];
+extern const CAST_LONG CAST_S_table2[256];
+extern const CAST_LONG CAST_S_table3[256];
+extern const CAST_LONG CAST_S_table4[256];
+extern const CAST_LONG CAST_S_table5[256];
+extern const CAST_LONG CAST_S_table6[256];
+extern const CAST_LONG CAST_S_table7[256];
