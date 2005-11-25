@@ -1,11 +1,11 @@
-# $NetBSD: shl.elf,v 1.100 2005/04/17 07:20:00 provos Exp $
+# $NetBSD: shl.elf,v 1.101 2005/11/25 20:38:22 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
 ./lib/libcrypt.so				base-sys-shlib
 ./lib/libcrypt.so.0				base-sys-shlib
 ./lib/libcrypto.so				base-crypto-shlib	crypto
-./lib/libcrypto.so.2				base-crypto-shlib	crypto
+./lib/libcrypto.so.3				base-crypto-shlib	crypto
 ./lib/libedit.so				base-sys-shlib
 ./lib/libedit.so.2				base-sys-shlib
 ./lib/libevent.so				base-sys-shlib
@@ -77,7 +77,7 @@
 ./usr/lib/libcrypt.so				base-sys-shlib
 ./usr/lib/libcrypt.so.0				base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.2			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.3			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so				base-sys-shlib
 ./usr/lib/libcurses.so.6			base-sys-shlib
 ./usr/lib/libdes.so				base-crypto-shlib	crypto
@@ -153,9 +153,9 @@
 ./usr/lib/libss.so				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.4				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
-./usr/lib/libssh.so.1				base-secsh-shlib	crypto
+./usr/lib/libssh.so.2				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
-./usr/lib/libssl.so.3				base-crypto-shlib	crypto
+./usr/lib/libssl.so.4				base-crypto-shlib	crypto
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so				base-sys-shlib
