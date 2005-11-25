@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.255 2005/11/25 17:33:56 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.256 2005/11/25 20:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.255 2005/11/25 17:33:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.256 2005/11/25 20:01:38 thorpej Exp $");
 
-#include "fs_nfs.h"
-#include "opt_nfsserver.h"
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
@@ -205,9 +203,6 @@ main(void)
 	int s, error;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
-#if defined(NFSSERVER) || defined(NFS)
-	extern void nfs_init(void);
-#endif
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -288,9 +283,6 @@ main(void)
 	rqinit();
 
 	/* Initialize the file systems. */
-#if defined(NFSSERVER) || defined(NFS)
-	nfs_init();			/* initialize server/shared data */
-#endif
 #ifdef NVNODE_IMPLICIT
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly

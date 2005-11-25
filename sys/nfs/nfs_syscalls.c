@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.82 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.83 2005/11/25 20:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.82 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.83 2005/11/25 20:01:38 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -179,6 +179,10 @@ sys_nfssvc(l, v, retval)
 	error = suser(p->p_ucred, &p->p_acflag);
 	if (error)
 		return (error);
+
+	/* Initialize NFS server / client shared data. */
+	nfs_init();
+
 #ifdef NFSSERVER
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
