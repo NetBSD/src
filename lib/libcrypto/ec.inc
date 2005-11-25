@@ -1,4 +1,4 @@
-#	$NetBSD: ec.inc,v 1.1 2003/07/24 14:16:32 itojun Exp $
+#	$NetBSD: ec.inc,v 1.2 2005/11/25 19:15:08 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,5 +9,6 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/ec
 
-SRCS+=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_recp.c ecp_nist.c ec_cvt.c ec_mult.c \
-	ec_err.c
+SRCS+=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
+	ec_err.c ec_asn1.c ec_key.c ec_print.c ec_curve.c ec2_smpl.c \
+	ec2_mult.c ec_check.c

@@ -1,4 +1,4 @@
-#	$NetBSD: asn1.inc,v 1.5 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: asn1.inc,v 1.6 2005/11/25 19:15:08 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -20,4 +20,5 @@ SRCS+=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	f_int.c f_string.c n_pkey.c \
 	f_enum.c a_hdr.c x_pkey.c a_bool.c x_exten.c \
 	asn1_par.c asn1_lib.c asn1_err.c a_meth.c a_bytes.c a_strnid.c \
-	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
+	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
+	asn1_gen.c
