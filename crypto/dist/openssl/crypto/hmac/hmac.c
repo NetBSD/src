@@ -58,8 +58,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/hmac.h>
 #include "cryptlib.h"
+#include <openssl/hmac.h>
 
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl)
@@ -77,18 +77,9 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 
 	if (key != NULL)
 		{
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode() && !(md->flags & EVP_MD_FLAG_FIPS)
-		&& (!(ctx->md_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
-		 || !(ctx->i_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
-		 || !(ctx->o_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)))
-		OpenSSLDie(__FILE__,__LINE__,
-			"HMAC: digest not allowed in FIPS mode");
-#endif
-		
 		reset=1;
 		j=EVP_MD_block_size(md);
-		OPENSSL_assert(j <= sizeof ctx->key);
+		OPENSSL_assert(j <= (int)sizeof(ctx->key));
 		if (j < len)
 			{
 			EVP_DigestInit_ex(&ctx->md_ctx,md, impl);
@@ -98,7 +89,7 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 			}
 		else
 			{
-			OPENSSL_assert(len <= sizeof ctx->key);
+			OPENSSL_assert(len>=0 && len<=(int)sizeof(ctx->key));
 			memcpy(ctx->key,key,len);
 			ctx->key_length=len;
 			}
@@ -130,7 +121,7 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	HMAC_Init_ex(ctx,key,len,md, NULL);
 	}
 
-void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
+void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len)
 	{
 	EVP_DigestUpdate(&ctx->md_ctx,data,len);
 	}
@@ -165,7 +156,7 @@ void HMAC_CTX_cleanup(HMAC_CTX *ctx)
 	}
 
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-		    const unsigned char *d, int n, unsigned char *md,
+		    const unsigned char *d, size_t n, unsigned char *md,
 		    unsigned int *md_len)
 	{
 	HMAC_CTX c;
@@ -178,12 +169,5 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 	HMAC_Final(&c,md,md_len);
 	HMAC_CTX_cleanup(&c);
 	return(md);
-	}
-
-void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
-	{
-	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
 	}
 

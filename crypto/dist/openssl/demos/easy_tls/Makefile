@@ -1,5 +1,5 @@
 # Makefile for easy-tls example application (rudimentary client and server)
-# Id: Makefile,v 1.2 2001/09/18 09:15:40 bodo Exp 
+# $Id: Makefile,v 1.1.1.3 2005/11/25 03:07:45 christos Exp $
 
 SOLARIS_CFLAGS=-Wall -pedantic -g -O2
 SOLARIS_LIBS=-lxnet
