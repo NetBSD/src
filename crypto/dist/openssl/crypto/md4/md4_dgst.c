@@ -70,7 +70,7 @@ const char *MD4_version="MD4" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-FIPS_NON_FIPS_MD_Init(MD4)
+int MD4_Init(MD4_CTX *c)
 	{
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;
@@ -83,7 +83,7 @@ FIPS_NON_FIPS_MD_Init(MD4)
 	}
 
 #ifndef md4_block_host_order
-void md4_block_host_order (MD4_CTX *c, const void *data, int num)
+void md4_block_host_order (MD4_CTX *c, const void *data, size_t num)
 	{
 	const MD4_LONG *X=data;
 	register MD32_REG_T A,B,C,D;
@@ -159,7 +159,7 @@ void md4_block_host_order (MD4_CTX *c, const void *data, int num)
 #ifdef X
 #undef X
 #endif
-void md4_block_data_order (MD4_CTX *c, const void *data_, int num)
+void md4_block_data_order (MD4_CTX *c, const void *data_, size_t num)
 	{
 	const unsigned char *data=data_;
 	register MD32_REG_T A,B,C,D,l;

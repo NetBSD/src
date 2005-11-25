@@ -59,10 +59,12 @@
 #ifndef HEADER_NEW_DES_H
 #define HEADER_NEW_DES_H
 
-#include <sys/types.h>
-#define	DES_LONG	u_int32_t
-#include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
+#include <openssl/e_os2.h>	/* OPENSSL_EXTERN, OPENSSL_NO_DES,
+				   DES_LONG (via openssl/opensslconf.h */
+
+#ifdef OPENSSL_NO_DES
+#error DES is disabled.
+#endif
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
@@ -89,8 +91,25 @@ typedef struct DES_ks
 	} ks[16];
     } DES_key_schedule;
 
-#define DES_KEY_SZ 	8	/*(sizeof(DES_cblock))*/
-#define DES_SCHEDULE_SZ 128	/*(sizeof(DES_key_schedule))*/
+#ifndef __NetBSD__
+#ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
+# ifndef OPENSSL_ENABLE_OLD_DES_SUPPORT
+#  define OPENSSL_ENABLE_OLD_DES_SUPPORT
+# endif
+#endif
+
+#ifdef OPENSSL_ENABLE_OLD_DES_SUPPORT
+# include <openssl/des_old.h>
+#endif
+
+#define DES_KEY_SZ 	(sizeof(DES_cblock))
+#define DES_SCHEDULE_SZ (sizeof(DES_key_schedule))
+#else
+#include <sys/types.h>
+#define DES_LONG u_int32_t
+#define DES_KEY_SZ 	8 /* (sizeof(DES_cblock)) */
+#define DES_SCHEDULE_SZ 128 /* (sizeof(DES_key_schedule)) */
+#endif
 
 #define DES_ENCRYPT	1
 #define DES_DECRYPT	0

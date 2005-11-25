@@ -65,6 +65,8 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 
+#include <openssl/ossl_typ.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -81,7 +83,6 @@ DECLARE_STACK_OF(CONF_MODULE)
 DECLARE_STACK_OF(CONF_IMODULE)
 
 struct conf_st;
-typedef struct conf_st CONF;
 struct conf_method_st;
 typedef struct conf_method_st CONF_METHOD;
 
@@ -117,7 +118,9 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf,LHASH *hash);
 LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
+#ifndef OPENSSL_NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
+#endif
 LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline);
 STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,const char *section);
 char *CONF_get_string(LHASH *conf,const char *group,const char *name);
@@ -149,7 +152,9 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf,const char *file,long *eline);
+#ifndef OPENSSL_NO_FP_API
 int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
+#endif
 int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,const char *section);
 char *NCONF_get_string(const CONF *conf,const char *group,const char *name);
@@ -208,6 +213,8 @@ void ERR_load_CONF_strings(void);
 #define CONF_F_CONF_LOAD_BIO				 102
 #define CONF_F_CONF_LOAD_FP				 103
 #define CONF_F_CONF_MODULES_LOAD			 116
+#define CONF_F_DEF_LOAD					 120
+#define CONF_F_DEF_LOAD_BIO				 121
 #define CONF_F_MODULE_INIT				 115
 #define CONF_F_MODULE_LOAD_DSO				 117
 #define CONF_F_MODULE_RUN				 118

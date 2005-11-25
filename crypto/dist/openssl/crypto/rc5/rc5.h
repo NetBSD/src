@@ -59,16 +59,26 @@
 #ifndef HEADER_RC5_H
 #define HEADER_RC5_H
 
+#include <openssl/opensslconf.h> /* OPENSSL_NO_RC5 */
+
 #ifdef  __cplusplus
 extern "C" {
+#endif
+
+#ifdef OPENSSL_NO_RC5
+#error RC5 is disabled.
 #endif
 
 #define RC5_ENCRYPT	1
 #define RC5_DECRYPT	0
 
+#ifndef __NetBSD__
 /* 32 bit.  For Alpha, things may get weird */
+#define RC5_32_INT unsigned long
+#else
 #include <sys/types.h>
 #define RC5_32_INT u_int32_t
+#endif
 
 #define RC5_32_BLOCK		8
 #define RC5_32_KEY_LENGTH	16 /* This is a default, max is 255 */
@@ -89,10 +99,7 @@ typedef struct rc5_key_st
 	RC5_32_INT data[2*(RC5_16_ROUNDS+1)];
 	} RC5_32_KEY;
 
-#ifdef OPENSSL_FIPS 
-void private_RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
-	int rounds);
-#endif
+ 
 void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
 	int rounds);
 void RC5_32_ecb_encrypt(const unsigned char *in,unsigned char *out,RC5_32_KEY *key,

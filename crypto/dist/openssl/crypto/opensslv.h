@@ -12,7 +12,7 @@
  * 0.9.3-beta2    0x00903002 (same as ...beta2-dev)
  * 0.9.3	  0x0090300f
  * 0.9.3a	  0x0090301f
- * 0.9.4 	  0x0090400f
+ * 0.9.4	  0x0090400f
  * 1.2.3z	  0x102031af
  *
  * For continuity reasons (because 0.9.5 is already out, and is coded
@@ -25,11 +25,11 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x0090707fL
+#define OPENSSL_VERSION_NUMBER	0x0090801fL
 #ifdef OPENSSL_FIPS
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.7g-fips 11 Apr 2005"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8a-fips 11 Oct 2005"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.7g 11 Apr 2005"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8a 11 Oct 2005"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
@@ -83,7 +83,7 @@
  * should only keep the versions that are binary compatible with the current.
  */
 #define SHLIB_VERSION_HISTORY ""
-#define SHLIB_VERSION_NUMBER "0.9.7"
+#define SHLIB_VERSION_NUMBER "0.9.8"
 
 /* The following macro indicates that this version of OpenSSL
  * contains the security related patch from
