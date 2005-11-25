@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70 2005/11/03 16:48:30 chs Exp $
+# $NetBSD: GENERIC,v 1.71 2005/11/25 16:30:23 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -287,6 +287,7 @@ audio*		at sb?
 # Pseudo-Devices
 
 pseudo-device 	crypto		# opencrypto framework
+pseudo-device	swcr		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
