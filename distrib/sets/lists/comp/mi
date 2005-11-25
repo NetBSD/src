@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.831 2005/11/25 20:38:23 christos Exp $
+#	$NetBSD: mi,v 1.832 2005/11/25 21:18:04 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2259,6 +2259,7 @@
 ./usr/share/man/cat2/x86_64_iopl.0		comp-c-catman		.cat
 ./usr/share/man/cat2/x86_64_set_mtrr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ASN1_OBJECT_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/ASN1_generate_nconf.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_length.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_new.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ASN1_STRING_print_ex.0	comp-c-catman		crypto,.cat
@@ -2284,6 +2285,7 @@
 ./usr/share/man/cat3/BIO_s_socket.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_set_callback.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_should_retry.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/BN_BLINDING_new.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BN_CTX_new.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BN_CTX_start.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BN_add.0			comp-c-catman		crypto,.cat
@@ -2345,6 +2347,7 @@
 ./usr/share/man/cat3/ERR_print_errors.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ERR_put_error.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ERR_remove_state.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/ERR_set_mark.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_DigestInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
@@ -2389,7 +2392,9 @@
 ./usr/share/man/cat3/MD5_Init.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/OPENSSL_Applink.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_config.0		comp-c-man		crypto,.cat
+./usr/share/man/cat3/OPENSSL_ia32cap.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_create.0		comp-c-catman		crypto,.cat
@@ -3970,6 +3975,7 @@
 ./usr/share/man/cat3/openssl_des.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_dh.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_dsa.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/openssl_ecdsa.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_engine.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_err.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_evp.0		comp-c-catman		crypto,.cat
@@ -3986,6 +3992,7 @@
 ./usr/share/man/cat3/openssl_threads.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_ui.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_ui_compat.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/openssl_x509.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/orcmd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/orcmd_af.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ossaudio.0			comp-c-catman		.cat
@@ -6189,6 +6196,7 @@
 ./usr/share/man/man3/ASN1_STRING_length.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/ASN1_STRING_new.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/ASN1_STRING_print_ex.3	comp-c-man		crypto,.man
+./usr/share/man/man3/ASN1_generate_nconf.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_ctrl.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_f_base64.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_f_buffer.3		comp-c-man		crypto,.man
@@ -6211,6 +6219,7 @@
 ./usr/share/man/man3/BIO_s_socket.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_set_callback.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_should_retry.3		comp-c-man		crypto,.man
+./usr/share/man/man3/BN_BLINDING_new.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BN_CTX_new.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BN_CTX_start.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BN_add.3			comp-c-man		crypto,.man
@@ -6272,6 +6281,7 @@
 ./usr/share/man/man3/ERR_print_errors.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/ERR_put_error.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/ERR_remove_state.3		comp-c-man		crypto,.man
+./usr/share/man/man3/ERR_set_mark.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_BytesToKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_DigestInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_EncryptInit.3		comp-c-man		crypto,.man
@@ -6315,8 +6325,10 @@
 ./usr/share/man/man3/MD5Update.3		comp-c-man		.man
 ./usr/share/man/man3/MD5_Init.3			comp-obsolete		obsolete
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man		crypto,.man
+./usr/share/man/man3/OPENSSL_Applink.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_config.3		comp-c-man		crypto,.man
+./usr/share/man/man3/OPENSSL_ia32cap.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_create.3		comp-c-man		crypto,.man
@@ -7897,6 +7909,7 @@
 ./usr/share/man/man3/openssl_des.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_dh.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_dsa.3		comp-c-man		crypto,.man
+./usr/share/man/man3/openssl_ecdsa.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_engine.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_err.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_evp.3		comp-c-man		crypto,.man
@@ -7913,6 +7926,7 @@
 ./usr/share/man/man3/openssl_threads.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_ui.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_ui_compat.3	comp-c-man		crypto,.man
+./usr/share/man/man3/openssl_x509.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/orcmd.3			comp-c-man		.man
 ./usr/share/man/man3/orcmd_af.3			comp-c-man		.man
 ./usr/share/man/man3/ossaudio.3			comp-c-man		.man
