@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.279 $"
+#ident 		"GENERIC-$Revision: 1.280 $"
 
 maxusers 32
 
@@ -612,7 +612,7 @@ wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
 pseudo-device 	crypto			# /dev/crypto device
-pseudo-device	swcr			# software crypto implementation
+pseudo-device	swcrypto		# software crypto implementation
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4

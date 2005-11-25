@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.4 2005/11/25 16:35:11 thorpej Exp $
+#	$NetBSD: ARMADILLO9,v 1.5 2005/11/25 16:41:31 thorpej Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -303,7 +303,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	crypto			# /dev/crypto device
-#pseudo-device	swcr			# software crypto implementation
+#pseudo-device	swcrypto		# software crypto implementation
 #pseudo-device	sequencer	1	# MIDI sequencer
 
 #
