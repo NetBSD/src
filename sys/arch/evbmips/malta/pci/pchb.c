@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7 2004/04/24 15:49:00 kleink Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8 2005/11/25 13:55:14 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2005/11/25 13:55:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
