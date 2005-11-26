@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: aac.c,v 1.24 2005/11/26 21:29:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.24 2005/11/26 21:29:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
 
 #ifdef AAC_DEBUG
-static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
+static void	aac_print_fib(struct aac_softc *, struct aac_fib *, const char *);
 #endif
 
 /*
@@ -1292,7 +1292,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
  * Print a FIB
  */
 static void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
+aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
 {
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;
@@ -1369,8 +1369,11 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 		break;
 	}
 	default:
-		printf("   %16D\n", fib->data, " ");
-		printf("   %16D\n", fib->data + 16, " ");
+		// dump first 32 bytes of fib->data
+		printf("  Raw data:");
+		for (i = 0; i < 32; i++)
+			printf(" %02x", fib->data[i]);
+		printf("\n");
 		break;
 	}
 }
