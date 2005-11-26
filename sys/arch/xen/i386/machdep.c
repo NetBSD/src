@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2005/11/26 12:19:53 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/11/07 11:42:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2005/11/26 12:19:53 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2058,9 +2058,6 @@ init386(paddr_t first_avail)
 #if !defined(XEN)
 	cpu_init_idt();
 #else
-#ifdef DDB
-	db_trap_callback = ddb_trap_hook;
-#endif
 	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
@@ -2531,41 +2528,3 @@ cpu_maxproc(void)
 	return (MAXGDTSIZ - NGDT);
 #endif
 }
-
-#if defined(DDB) || defined(KGDB)
-
-/* 
- * Callback to output a backtrace when entering ddb.
- */
-void
-ddb_trap_hook(int where)
-{
-	static int once = 0;
-	db_addr_t db_dot;
-
-	if (once != 0 || where != 1)
-		return;
-	once = 1;
-
-	if (curlwp != NULL) {
-		db_printf("Stopped");
-		if (curproc == NULL)
-			db_printf("; curlwp = %p,"
-			    " curproc is NULL at\t", curlwp);
-		else
-			db_printf(" in pid %d.%d (%s) at\t", 
-			    curproc->p_pid, curlwp->l_lid,
-			    curproc->p_comm);
-	} else
-		db_printf("Stopped at\t");
-	db_dot = PC_REGS(DDB_REGS);
-	db_print_loc_and_inst(db_dot);
-
-	db_stack_trace_print((db_expr_t) db_dot, FALSE, 65535,
-	    "", db_printf);
-#ifdef DEBUG
-	db_show_regs((db_expr_t) db_dot, FALSE, 65535, "");
-#endif
-}
-
-#endif /* DDB || KGDB */
