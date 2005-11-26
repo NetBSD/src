@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.4 2003/12/04 17:06:12 drochner Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.5 2005/11/26 01:10:42 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -377,7 +377,7 @@ crypto_recv(
 	char	statstr[NTP_MAXSTRLEN]; /* statistics for filegen */
 	keyid_t	cookie;		/* crumbles */
 	int	rval = XEVNT_OK;
-	u_char	*ptr;
+	const u_char	*ptr;
 	u_int32 temp32;
 #ifdef KERNEL_PLL
 #if NTP_API > 3
@@ -1576,7 +1576,7 @@ crypto_encrypt(
 	tstamp_t tstamp;	/* NTP timestamp */
 	u_int32	temp32;
 	u_int	len;
-	u_char	*ptr;
+	const u_char	*ptr;
 
 	/*
 	 * Extract the public key from the request.
@@ -2910,7 +2910,7 @@ cert_parse(
 	BIO	*bp;
 	X509V3_EXT_METHOD *method;
 	char	pathbuf[MAXFILENAME];
-	u_char	*uptr;
+	const u_char	*uptr;
 	char	*ptr;
 	int	temp, cnt, i;
 
@@ -3097,7 +3097,7 @@ cert_sign(
 	EVP_MD_CTX ctx;		/* message digest context */
 	tstamp_t tstamp;	/* NTP timestamp */
 	u_int	len;
-	u_char	*ptr;
+	const u_char	*ptr;
 	int	i, temp;
 
 	/*
@@ -3172,7 +3172,7 @@ cert_sign(
 	vp->vallen = htonl(len);
 	vp->ptr = emalloc(len);
 	ptr = vp->ptr;
-	i2d_X509(cert, &ptr);
+	i2d_X509(cert, (unsigned char **)&ptr);
 	vp->siglen = 0;
 	vp->sig = emalloc(sign_siglen);
 	EVP_SignInit(&ctx, sign_digest);
@@ -3207,7 +3207,7 @@ cert_valid(
 	)
 {
 	X509	*cert;		/* X509 certificate */
-	u_char	*ptr;
+	const u_char	*ptr;
 
 	if (cinf->flags & CERT_SIGN)
 		return (XEVNT_OK);
