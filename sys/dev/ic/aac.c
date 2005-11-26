@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.24 2005/11/26 21:29:48 jdolecek Exp $	*/
+/*	$NetBSD: aac.c,v 1.25 2005/11/26 21:33:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.24 2005/11/26 21:29:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.25 2005/11/26 21:33:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
 	 */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP54*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 #endif
 
@@ -1143,7 +1143,7 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
 	/* Fix up the address values. */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
@@ -1269,7 +1269,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = (void *)(intptr_t) le32toh((struct aac_fib *)
+	*fib_addr = (void *)(intptr_t) le32toh(
 	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
 
 	/* Update consumer index. */
