@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.79 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_command.c,v 1.80 2005/11/26 12:16:44 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.79 2005/06/01 12:25:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.80 2005/11/26 12:16:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +202,10 @@ static const struct db_command db_command_table[] = {
 };
 
 static const struct db_command	*db_last_command = NULL;
+#if defined(DDB_COMMANDONENTER)
+const char *db_cmd_on_enter = ___STRING(DDB_COMMANDONENTER);
+#endif /* defined(DDB_COMMANDONENTER) */
+#define	DB_LINE_SEP	';'
 
 /*
  * Utility routine - discard tokens through end-of-line.
@@ -243,6 +248,27 @@ db_command_loop(void)
 	savejmp = db_recover;
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
+
+#if defined(DDB_COMMANDONENTER)
+	if (db_cmd_on_enter != NULL) {
+		const struct db_command	*dummy = NULL;
+		const char *cmd = db_cmd_on_enter;
+
+		while (*cmd != '\0') {
+			const char *ep = cmd;
+
+			while (*ep != '\0' && *ep != DB_LINE_SEP) {
+				ep++;
+			}
+			db_set_line(cmd, ep);
+			db_command(&dummy, db_command_table);
+			cmd = ep;
+			if (*cmd == DB_LINE_SEP) {
+				cmd++;
+			}
+		}
+	}
+#endif /* defined(DDB_COMMANDONENTER) */
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)
