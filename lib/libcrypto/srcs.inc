@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.12 2005/11/25 19:15:08 christos Exp $
+#	$NetBSD: srcs.inc,v 1.13 2005/11/26 00:35:58 christos Exp $
 
 CRYPTOINCS= \
 	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc \
@@ -6,7 +6,7 @@ CRYPTOINCS= \
 	ec.inc ecdh.inc ecdsa.inc engine.inc err.inc evp.inc hmac.inc \
 	krb5.inc lhash.inc \
 	md2.inc md4.inc md5.inc objects.inc ocsp.inc pem.inc \
-	pkcs12.inc pkcs7.inc rand.inc rc2.inc rc4.inc ripemd.inc \
+	pkcs12.inc pkcs7.inc pqueue.inc rand.inc rc2.inc rc4.inc ripemd.inc \
 	rsa.inc sha.inc stack.inc store.inc txt_db.inc ui.inc x509.inc \
 	x509v3.inc
 
