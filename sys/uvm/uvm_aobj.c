@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.75 2005/11/08 23:02:22 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.75.2.1 2005/11/26 12:42:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.75 2005/11/08 23:02:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.75.2.1 2005/11/26 12:42:30 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1012,6 +1012,10 @@ gotpage:
  	 * object is locked.   data structures are unlocked.
  	 */
 
+	if ((flags & PGO_SYNCIO) == 0) {
+		goto done;
+	}
+
 	for (lcv = 0, current_offset = offset ; lcv < maxpages ;
 	    lcv++, current_offset += PAGE_SIZE) {
 
@@ -1198,6 +1202,7 @@ gotpage:
  	 * finally, unlock object and return.
  	 */
 
+done:
 	simple_unlock(&uobj->vmobjlock);
 	UVMHIST_LOG(pdhist, "<- done (OK)",0,0,0,0);
 	return 0;
