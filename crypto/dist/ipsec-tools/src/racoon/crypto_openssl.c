@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.6 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.7 2005/11/26 02:32:58 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.40.4.5 2005/07/12 11:50:15 manubsd Exp */
 
@@ -80,10 +80,17 @@
 #include "crypto/rijndael/rijndael-api-fst.h"
 #endif
 #ifdef WITH_SHA2
+#ifdef notdef
 #ifdef HAVE_OPENSSL_SHA2_H
 #include <openssl/sha2.h>
 #else
 #include "crypto/sha2/sha2.h"
+#endif
+#else
+#define SHA384_CTX SHA512_CTX
+#define EVP_sha2_256 EVP_sha256
+#define EVP_sha2_384 EVP_sha384
+#define EVP_sha2_512 EVP_sha512
 #endif
 #endif
 
