@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.40 2005/11/23 20:35:54 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.41 2005/11/26 07:42:10 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.40 2005/11/23 20:35:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.41 2005/11/26 07:42:10 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -123,6 +123,7 @@ static void	iwi_fix_channel(struct ieee80211com *, struct mbuf *);
 static void	iwi_frame_intr(struct iwi_softc *, struct iwi_rx_data *, int,
     struct iwi_frame *);
 static void	iwi_notification_intr(struct iwi_softc *, struct iwi_notif *);
+static void	iwi_cmd_intr(struct iwi_softc *);
 static void	iwi_rx_intr(struct iwi_softc *);
 static void	iwi_tx_intr(struct iwi_softc *, struct iwi_tx_ring *);
 static int	iwi_intr(void *);
@@ -559,6 +560,17 @@ fail:	iwi_free_cmd_ring(sc, ring);
 static void
 iwi_reset_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 {
+	int i;
+
+	for (i = ring->next; i != ring->cur;) {
+		bus_dmamap_sync(sc->sc_dmat, sc->cmdq.desc_map,
+		    i * IWI_CMD_DESC_SIZE, IWI_CMD_DESC_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
+
+		wakeup(&ring->desc[i]);
+		i = (i + 1) % ring->count;
+	}
+
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
 }
@@ -752,6 +764,9 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, ring->data[i].map, 0,
+		    ring->data[i].map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
 
 	return 0;
@@ -1379,6 +1394,23 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 }
 
 static void
+iwi_cmd_intr(struct iwi_softc *sc)
+{
+	uint32_t hw;
+
+	hw = CSR_READ_4(sc, IWI_CSR_CMD_RIDX);
+
+	for (; sc->cmdq.next != hw;) {
+		bus_dmamap_sync(sc->sc_dmat, sc->cmdq.desc_map,
+		    sc->cmdq.next * IWI_CMD_DESC_SIZE, IWI_CMD_DESC_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
+
+		wakeup(&sc->cmdq.desc[sc->cmdq.next]);
+		sc->cmdq.next = (sc->cmdq.next + 1) % sc->cmdq.count;
+	}
+}
+
+static void
 iwi_rx_intr(struct iwi_softc *sc)
 {
 	struct iwi_rx_data *data;
@@ -1410,6 +1442,9 @@ iwi_rx_intr(struct iwi_softc *sc)
 			aprint_error("%s: unknown hdr type %u\n",
 			    sc->sc_dev.dv_xname, hdr->type);
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 		DPRINTFN(15, ("rx done idx=%u\n", sc->rxq.cur));
 
@@ -1475,6 +1510,7 @@ iwi_intr(void *arg)
 			iwi_error_log(sc);
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
+		return (1);
 	}
 
 	if (r & IWI_INTR_FW_INITED) {
@@ -1486,10 +1522,11 @@ iwi_intr(void *arg)
 		DPRINTF(("radio transmitter off\n"));
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
+		return (1);
 	}
 
 	if (r & IWI_INTR_CMD_DONE)
-		wakeup(sc);
+		iwi_cmd_intr(sc);
 
 	if (r & IWI_INTR_TX1_DONE)
 		iwi_tx_intr(sc, &sc->txq[0]);
@@ -1533,7 +1570,7 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len,
 	sc->cmdq.cur = (sc->cmdq.cur + 1) % sc->cmdq.count;
 	CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.cur);
 
-	return async ? 0 : tsleep(sc, 0, "iwicmd", hz);
+	return async ? 0 : tsleep(desc, 0, "iwicmd", hz);
 }
 
 static void
@@ -2143,7 +2180,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 		aprint_error("%s: timeout processing cb\n",
 		    sc->sc_dev.dv_xname);
 		error = EIO;
-		goto fail2;
+		goto fail3;
 	}
 
 	/* We're done with command blocks processing */
