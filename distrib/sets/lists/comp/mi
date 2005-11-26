@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.832 2005/11/25 21:18:04 christos Exp $
+#	$NetBSD: mi,v 1.833 2005/11/26 22:42:10 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1139,8 +1139,8 @@
 ./usr/include/openssl/engine.h			comp-c-include		crypto
 ./usr/include/openssl/err.h			comp-c-include		crypto
 ./usr/include/openssl/evp.h			comp-c-include		crypto
-./usr/include/openssl/fips.h			comp-obsolete		crypto
-./usr/include/openssl/fips_rand.h		comp-obsolete		crypto
+./usr/include/openssl/fips.h			comp-obsolete		obsolete
+./usr/include/openssl/fips_rand.h		comp-obsolete		obsolete
 ./usr/include/openssl/hmac.h			comp-c-include		crypto
 ./usr/include/openssl/idea.h			comp-c-include		crypto
 ./usr/include/openssl/krb5_asn.h		comp-c-include		crypto
