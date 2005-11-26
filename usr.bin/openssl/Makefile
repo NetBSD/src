@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.22 2005/03/26 00:32:35 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2005/11/26 00:36:40 christos Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.22 2005/03/26 00:32:35 christos Exp $
+#	$Id: Makefile,v 1.23 2005/11/26 00:36:40 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -26,7 +26,7 @@ WARNS=0
 PROG=	openssl
 
 SRCS=	openssl.c
-SRCS+=	apps.c
+SRCS+=	apps.c ecparam.c ec.c
 SRCS+=	s_cb.c s_socket.c
 SRCS+=	app_rand.c
 SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c errstr.c ca.c \
