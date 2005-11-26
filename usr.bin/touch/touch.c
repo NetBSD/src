@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.24 2003/08/07 11:16:45 agc Exp $	*/
+/*	$NetBSD: touch.c,v 1.25 2005/11/26 13:57:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.24 2003/08/07 11:16:45 agc Exp $");
+__RCSID("$NetBSD: touch.c,v 1.25 2005/11/26 13:57:27 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -227,7 +227,7 @@ stime_arg1(arg, tvp)
 	case 12:			/* CCYYMMDDhhmm */
 		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			t->tm_year += ATOI2(arg);
