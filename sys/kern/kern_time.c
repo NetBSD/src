@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.97 2005/11/26 05:26:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.97 2005/11/26 05:26:33 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $"
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -100,6 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.96 2005/11/11 07:07:42 simonb Exp $"
 #endif
 
 #include <machine/cpu.h>
+
+POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
+    &pool_allocator_nointr);
+POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
+    &pool_allocator_nointr);
 
 static void timerupcall(struct lwp *, void *);
 
@@ -1089,7 +1093,7 @@ timers_alloc(struct proc *p)
 	int i;
 	struct ptimers *pts;
 
-	pts = malloc(sizeof (struct ptimers), M_SUBPROC, 0);
+	pts = pool_get(&ptimers_pool, 0);
 	LIST_INIT(&pts->pts_virtual);
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
@@ -1158,7 +1162,7 @@ timers_free(struct proc *p, int which)
 		    (pts->pts_timers[1] == NULL) &&
 		    (pts->pts_timers[2] == NULL)) {
 			p->p_timers = NULL;
-			free(pts, M_SUBPROC);
+			pool_put(&ptimers_pool, pts);
 		}
 	}
 }
