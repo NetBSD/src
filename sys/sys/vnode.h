@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.144.6.2 2005/11/22 15:33:15 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.144.6.3 2005/11/26 12:24:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,21 +218,23 @@ struct vattr {
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
 #define	VA_EXCLUSIVE	0x02		/* exclusive create request */
 
+#ifdef _KERNEL
+
 /*
  * Flags for ioflag.
  */
-#define	IO_UNIT		0x0001		/* do I/O as atomic unit */
-#define	IO_APPEND	0x0002		/* append write to end */
+#define	IO_UNIT		0x00010		/* do I/O as atomic unit */
+#define	IO_APPEND	0x00020		/* append write to end */
 #define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
-#define	IO_NODELOCKED	0x0008		/* underlying node already locked */
-#define	IO_NDELAY	0x0010		/* FNDELAY flag set in file table */
-#define	IO_DSYNC	0x0020		/* sync I/O data integrity completion */
-#define	IO_ALTSEMANTICS	0x0040		/* use alternate i/o semantics */
-#define	IO_NORMAL	0x0080		/* operate on regular data */
-#define	IO_EXT		0x0100		/* operate on extended attributes */
-#define	IO_ADV_MASK	0x3000		/* access pattern hint */
+#define	IO_NODELOCKED	0x00080		/* underlying node already locked */
+#define	IO_NDELAY	0x00100		/* FNDELAY flag set in file table */
+#define	IO_DSYNC	0x00200		/* sync I/O data integrity completion */
+#define	IO_ALTSEMANTICS	0x00400		/* use alternate i/o semantics */
+#define	IO_NORMAL	0x00800		/* operate on regular data */
+#define	IO_EXT		0x01000		/* operate on extended attributes */
+#define	IO_ADV_MASK	0x00003		/* access pattern hint */
 
-#define	IO_ADV_SHIFT	24
+#define	IO_ADV_SHIFT	0
 #define	IO_ADV_ENCODE(adv)	(((adv) << IO_ADV_SHIFT) & IO_ADV_MASK)
 #define	IO_ADV_DECODE(ioflag)	(((ioflag) & IO_ADV_MASK) >> IO_ADV_SHIFT)
 
@@ -248,7 +250,6 @@ struct vattr {
  */
 #define	VNOVAL	(-1)
 
-#ifdef _KERNEL
 /*
  * Convert between vnode types and inode formats (since POSIX.1
  * defines mode word of stat structure in terms of inode formats).
