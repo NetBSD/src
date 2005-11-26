@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.81 2005/02/14 18:14:27 fredb Exp $
+.\"	$NetBSD: ddb.4,v 1.82 2005/11/26 12:17:08 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 14, 2005
+.Dd November 26, 2005
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -86,6 +86,11 @@ To enable teeing all
 .Ic ddb
 output to the kernel msgbuf:
 .Cd options DDB_TEE_MSGBUF=1
+.Pp
+To specify commands which will be executed on each entry to
+.Ic ddb :
+.Cd options DDB_COMMANDONENTER="trace;show registers"
+In this case, "trace" and then "show register" will be executed automatically.
 .Sh DESCRIPTION
 .Nm
 is the in-kernel debugger.
