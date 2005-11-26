@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2005/03/09 03:11:23 christos Exp $
+# $NetBSD: Makefile,v 1.13 2005/11/26 02:32:32 christos Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -17,14 +17,12 @@ SRCS=	main.c session.c isakmp.c handler.c 			\
 	genlist.c rsalist.c cftoken.l cfparse.y 		\
 	prsa_tok.l prsa_par.y isakmp_xauth.c isakmp_cfg.c 	\
 	isakmp_unity.c throttle.c isakmp_frag.c 		\
-	nattraversal.c vmbuf.c sockmisc.c misc.c		\
-	sha2.c
+	nattraversal.c vmbuf.c sockmisc.c misc.c
 MAN=	racoon.8 racoon.conf.5
 
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/libipsec
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
-CPPFLAGS+= -I${DIST}/src/racoon/missing
 CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
@@ -65,8 +63,7 @@ CPPFLAGS+=-DINET6
 LDADD+= -lcrypto -lcrypt
 DPADD+= ${LIBIPSEC} ${LIBCRYPT}
 
-.PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon		\
-	${DIST}/src/racoon/missing/crypto/sha2
+.PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon
 
 prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
 	${LEX} -Pprsa -o${.TARGET} ${.ALLSRC}
