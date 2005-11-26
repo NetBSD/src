@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.15 2005/04/24 00:13:50 wiz Exp $
+#	$NetBSD: man.inc,v 1.16 2005/11/26 22:39:15 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -11,7 +11,8 @@ MAN+=	openssl_pkcs12.1 openssl_crl2pkcs7.1 openssl_pkcs7.1 \
 	openssl_dsaparam.1 openssl_dhparam.1 openssl_version.1 \
 	openssl_ocsp.1 openssl_req.1 openssl_nseq.1 openssl_s_server.1 \
 	openssl_ciphers.1 openssl_s_client.1 openssl_dgst.1 \
-	openssl_verify.1 openssl_s_time.1 openssl_errstr.1
+	openssl_verify.1 openssl_s_time.1 openssl_errstr.1 \
+	openssl_ec.1 openssl_ecparam.1 openssl_x509v3_config.1
 
 MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	openssl_rc4.3 openssl_md5.3 SMIME_read_PKCS7.3 SMIME_write_PKCS7.3 \
@@ -87,7 +88,9 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	DH_generate_key.3 RSA_check_key.3 PKCS7_verify.3 \
 	SSL_CTX_set_verify.3 BN_copy.3 BN_mod_mul_montgomery.3 \
 	BIO_should_retry.3 CONF_modules_free.3 CONF_modules_load_file.3 \
-	OPENSSL_config.3 OPENSSL_load_builtin_modules.3
+	OPENSSL_config.3 OPENSSL_load_builtin_modules.3 \
+	ASN1_generate_nconf.3 BN_BLINDING_new.3 ERR_set_mark.3 \
+	OPENSSL_Applink.3 OPENSSL_ia32cap.3 openssl_ecdsa.3 openssl_x509.3
 
 MAN+=	openssl.cnf.5
 
