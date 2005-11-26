@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.13 2002/02/15 07:33:51 simonb Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.14 2005/11/26 12:16:45 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,6 +35,7 @@
 void	db_flush_lex(void);
 char   *db_num_to_str(db_expr_t);
 int	db_read_line(void);
+void	db_set_line(const char *, const char *);
 int	db_read_token(void);
 void	db_unread_token(int);
 

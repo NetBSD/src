@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.741 2005/11/25 17:33:56 thorpej Exp $
+#	$NetBSD: files,v 1.742 2005/11/26 12:16:44 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -202,6 +202,7 @@ defflag	opt_mbr.h		COMPAT_386BSD_MBRPART
 defflag	opt_ddb.h		DDB
 defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
+				DDB_COMMANDONENTER
 defflag	opt_kgdb.h		KGDB
 defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME KGDB_DEVPORT
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
