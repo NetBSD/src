@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.71.2.4 2005/11/27 23:06:18 riz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.71.2.5 2005/11/27 23:09:46 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.71.2.4 2005/11/27 23:06:18 riz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.71.2.5 2005/11/27 23:09:46 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -1705,8 +1705,10 @@ handle_file(char *file, struct stat *sbp)
 	infile = file;
 	if (dflag) {
 		usize = file_uncompress(file, outfile, sizeof(outfile));
+#ifndef SMALL
 		if (vflag && tflag)
 			print_test(file, usize != -1);
+#endif
 		if (usize == -1)
 			return;
 		gsize = sbp->st_size;
