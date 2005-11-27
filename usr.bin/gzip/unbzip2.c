@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.6.2.1 2005/06/15 06:06:01 snj Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.6.2.2 2005/11/27 23:05:41 riz Exp $	*/
 
 /* This file is #included by gzip.c */
 
@@ -34,7 +34,7 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	if (bytes_in)
 		*bytes_in = prelen;
 
-	while (ret != BZ_STREAM_END) {
+	while (ret >= BZ_OK && ret != BZ_STREAM_END) {
 	        if (bzs.avail_in == 0 && !end_of_file) {
 	                n = read(in, inbuf, BUFLEN);
 	                if (n < 0)
