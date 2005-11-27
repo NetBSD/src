@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.64.2.8 2005/11/21 20:10:34 tron Exp $	*/
+/*	$NetBSD: version.h,v 1.64.2.9 2005/11/27 15:46:04 riz Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
@@ -33,6 +33,6 @@
 #ifndef _INST_LIB_VERSION_H_
 #define _INST_LIB_VERSION_H_
 
-#define PKGTOOLS_VERSION "20051114"
+#define PKGTOOLS_VERSION "20051122"
 
 #endif /* _INST_LIB_VERSION_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.74.2.4 2005/11/06 13:43:17 tron Exp $ */
+/* $NetBSD: lib.h,v 1.74.2.5 2005/11/27 15:46:04 riz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -95,6 +95,11 @@
 /* Define tar as a string, in case it's called gtar or something */
 #ifndef TAR_CMD
 #define TAR_CMD	"tar"
+#endif
+
+/* Define pax as a string, used to copy files from staging area */              
+#ifndef PAX_CMD        
+#define PAX_CMD "tar"
 #endif
 
 /* Define gzip and bzip2, used to unpack binary packages */
@@ -255,6 +260,19 @@ enum {
 	LegibleChecksumLen = 33
 };
 
+/* List of files */
+typedef struct _lfile_t {
+        TAILQ_ENTRY(_lfile_t) lf_link;
+        char *lf_name;
+} lfile_t;
+TAILQ_HEAD(_lfile_head_t, _lfile_t);
+typedef struct _lfile_head_t lfile_head_t;
+#define	LFILE_ADD(lfhead,lfp,str) do {		\
+	lfp = malloc(sizeof(lfile_t));		\
+	lfp->lf_name = str;			\
+	TAILQ_INSERT_TAIL(lfhead,lfp,lf_link);	\
+	} while(0)
+
 /* List of packages */
 typedef struct _lpkg_t {
 	TAILQ_ENTRY(_lpkg_t) lp_link;
@@ -266,6 +284,14 @@ typedef struct _lpkg_head_t lpkg_head_t;
 /* Type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
 typedef int (*matchfn) (const char *, void *);
+
+/* This structure describes a pipe to a child process */
+typedef struct {
+	int fds[2];	/* pipe, 0=child stdin, 1=parent output */
+	FILE *fp;	/* output from parent process */
+	pid_t pid;	/* process id of child process */
+	void (*cleanup)(void);	/* called on non-zero child exit status */
+} pipe_to_system_t;
 
 /* If URLlength()>0, then there is a ftp:// or http:// in the string,
  * and this must be an URL. Hide this behind a more obvious name. */
@@ -287,6 +313,9 @@ void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
 int	fcexec(const char *, const char *, ...);
+int	pfcexec(const char *path, const char **argv);
+pipe_to_system_t	*pipe_to_system_begin(const char *, char *const *, void (*)(void));
+int	pipe_to_system_end(pipe_to_system_t *);
 
 /* variables file handling */
 
@@ -337,7 +366,7 @@ void    move_file(char *, char *, char *);
 void    move_files(const char *, const char *, const char *);
 void    remove_files(const char *, const char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
-int     unpack(const char *, const char *);
+int     unpack(const char *, const lfile_head_t *);
 void    format_cmd(char *, size_t, char *, char *, char *);
 
 /* ftpio.c: FTP handling */
