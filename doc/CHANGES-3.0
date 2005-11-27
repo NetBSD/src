@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.323 2005/11/27 21:02:25 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.324 2005/11/27 23:12:08 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14488,4 +14488,60 @@ crypto/dist/openssl/apps/apps.c			patch
 		openssl ca -h
 	with openssl0.9.7d. Fixes PR 28851.
 	[mlelstv, ticket #999]
+
+distrib/notes/common/main			patch
+
+	Fix up some Xrefs.  From Igor Sobrado.
+	[uwe, ticket #1003]
+
+sys/dev/pci/if_bgereg.h				1.29
+
+	Remove unnecessary byteswap code so that bge(4) should work
+	at least on macppc.
+	[tsutsui, ticket #1004]
+
+distrib/common/buildfloppies.sh			1.11-1.12
+
+	Report the exact number of free bytes in the install floppy images.
+	The 'padded by' number displayed for multi-floppy images has been
+	out by 8k per floppy for a while.  (The rest of the sums are ok).
+	Change the 'padded' size to include all the space in the last 8k block
+	of the tar file.
+	Similarly if the image doesn't fit, report the exact amount of overflow.
+	[dsl, ticket #1005]
+
+gnu/dist/gcc/gcc/config/i386/i386.c		1.5
+
+	When compiling with -Os put all strings into .rodata.str1.1 (ie
+	byte aligned) rather than putting those longer than 30 chars into
+	.rodata.str1.32.  Apparantly gcc 3.4.4 has this change...
+	In spite of everything being compressed, this saves over 13k in the
+	boot floppies.
+	[dsl, ticket #1006]
+
+usr.sbin/rpc.statd/statd.c			1.25
+
+	We can't call db->put() with key or data pointing back to db(3)'s memory
+	space, or the database will be corrupted (noticed when the database is
+	updated in reset_host()). Change change_host() to copy hostname and
+	HostInfo to local storage before calling db->put().
+	Change notify_one() to use change_host() instead of calling db->put()
+	directly.
+	[bouyer, ticket #1007]
+
+distrib/amd64/floppies/ramdisk/Makefile		1.8
+
+	Increase the size of the ramdisk filesystem to that of the (recently
+	increased) hole in the kernel image
+	[dsl, ticket #1008]
+
+usr.bin/gzip/gzip.c				1.78-1.80
+usr.bin/gzip/unbzip2.c				1.9
+usr.bin/gzip/zuncompress.c			1.6
+
+	Fix some relatively severe problems in gzip, as well
+	as back out a change that caused problems with amanda and
+	other programs that compressed >4GB of data.
+	PR#32070, PR#32105.
+	[mrg, ticket #1009]
 
