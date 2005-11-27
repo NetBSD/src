@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.737 2005/11/22 22:55:30 rpaulo Exp $
+$NetBSD: pcidevs,v 1.738 2005/11/27 10:17:26 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -698,9 +698,9 @@ product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
 product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 
 /* 3ware products */
-product 3WARE ESCALADE		0x1000	Escalade IDE RAID
-product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID 7000/8000 series
-product 3WARE ESCALADE_9K	0x1001	Escalade IDE RAID 9000 series
+product 3WARE ESCALADE		0x1000	Escalade ATA RAID Controller
+product 3WARE ESCALADE_ASIC	0x1001	Escalade ATA RAID 7000/8000 series Controller
+product 3WARE ATARAID_9K	0x1002	ATA RAID 9000 series Controller
 
 /* AboCom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100 Ethernet
