@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.322 2005/11/27 15:58:11 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.323 2005/11/27 21:02:25 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14455,7 +14455,7 @@ distrib/notes/common/main			patch
 
 usr.sbin/pkg_install/add/add.h			1.9
 usr.sbin/pkg_install/add/extract.c		1.37
-usr.sbin/pkg_install/add/futil.c		1.16
+usr.sbin/pkg_install/add/futil.c		1.16-1.17
 usr.sbin/pkg_install/add/perform.c		1.114
 usr.sbin/pkg_install/create/perform.c		1.43
 usr.sbin/pkg_install/info/perform.c		1.67
@@ -14463,7 +14463,7 @@ usr.sbin/pkg_install/lib/Makefile		1.26
 usr.sbin/pkg_install/lib/fexec.c		1.9
 usr.sbin/pkg_install/lib/file.c			1.75
 usr.sbin/pkg_install/lib/lib.h			1.79
-usr.sbin/pkg_install/lib/pexec.c		1.1
+usr.sbin/pkg_install/lib/pexec.c		1.1-1.2
 usr.sbin/pkg_install/lib/version.h		1.73
 
 	Reduce the use of the system() function in pkg_install to avoid quoting
