@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.9.2.2 2005/11/27 22:45:09 riz Exp $
+# $NetBSD: buildfloppies.sh,v 1.9.2.3 2005/11/27 22:45:32 riz Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,22 +101,6 @@ floppy=floppy.$$.tar
 trap "rm -f ${floppy}" 0 1 2 3			# EXIT HUP INT QUIT
 rm -f ${floppybase}?${suffix}
 
-#	Try to accurately summarise free space
-#
-[ "$files" = "boot netbsd" ] && {
-	set -- $(ls -ln boot)
-	boot_size=$5
-	boot_pad=$(($(roundup $boot_size 512) * 512 - $boot_size))
-	set -- $(ls -ln netbsd)
-	netbsd_size=$5
-	netbsd_pad=$(($(roundup $netbsd_size 512) * 512 - $netbsd_size))
-	echo Free space: boot $boot_pad, netbsd $netbsd_pad, \
-		at end $(($maxdisks * ($floppysize - 16) * 512 \
-		- 512 - $boot_size - $boot_pad \
-		- 512 - $netbsd_size - $netbsd_pad \
-		- 512 * 2))
-}
-
 #	create tar file
 #
 dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
@@ -130,7 +114,8 @@ fi
 
 #	check size against available number of disks
 #
-bytes=$( ls -ln "${floppy}" | awk '{print $5}' )
+set -- $(ls -ln $floppy)
+bytes=$5
 blocks=$(roundup ${bytes} 512)
 	# when calculating numdisks, take into account:
 	#	a) the image already has an 8K tar header prepended
@@ -140,27 +125,45 @@ if [ -z "${maxdisks}" ]; then
 	maxdisks=${numdisks}
 fi
 
+#	Try to accurately summarise free space
+#
+msg=
+# First floppy has 8k boot code, the rest an 8k 'multivolume header'
+# Each file has a 512 byte header and is rounded to a multiple of 512
+# The archive ends with two 512 byte blocks of zeros
+# The output file is then rounded up to a multiple of 8k
+free_space=$(($maxdisks * ($floppysize - 16) * 512 - 512 * 2))
+for file in $files; do
+	set -- $(ls -ln $file)
+	file_bytes=$5
+	pad_bytes=$(($(roundup $file_bytes 512) * 512 - $file_bytes))
+	[ "$file_bytes" != 0 -o "$file" = "${file#USTAR.volsize.}" ] &&
+		msg="$msg $file $pad_bytes,"
+	free_space=$(($free_space - 512 - $file_bytes - $pad_bytes))
+done
+echo "Free space in last tar block:$msg"
+
 if [ ${numdisks} -gt ${maxdisks} ]; then
-	excess=$(( (${blocks}-16 - (${floppysize}-16) * ${maxdisks}) * 512 ))
+	# Add in the size of the last item (we really want the kernel) ...
+	excess=$(( 0 - $free_space + $pad_bytes))
 	echo 1>&2 \
 	    "$prog: Image is ${excess} bytes ($(( ${excess} / 1024 )) KB)"\
 	    "too big to fit on ${maxdisks} disk"$(plural ${maxdisks})
 	exit 1
 fi
 
-padsize=$(( ${floppysize} * ${maxdisks} ))
-padcount=$(( ${padsize} - ${blocks} ))
+padto=$(( ${floppysize} * ${maxdisks} ))
 if [ -n "${pad}" ]; then
 	echo \
-	    "Writing $(( ${padsize} * 512 )) bytes ($(( ${padsize} / 2 )) KB)" \
+	    "Writing $(( ${padto} * 512 )) bytes ($(( ${padto} / 2 )) KB)" \
 	    "on ${numdisks} disk"$(plural ${numdisks})"," \
-	    "padded by $(( ${padcount} * 512 )) bytes" \
-	    "($(( ${padcount} / 2 )) KB)"
+	    "padded by ${free_space} bytes" \
+	    "($(( ${free_space} / 1024 )) KB)"
 else
 	echo "Writing ${bytes} bytes ($(( ${blocks} / 2 )) KB)"\
 	    "on ${numdisks} disk"$(plural ${numdisks})"," \
-	    "free space $(( ${padcount} * 512 )) bytes" \
-	    "($(( ${padcount} / 2 )) KB)"
+	    "free space ${free_space} bytes" \
+	    "($(( ${free_space} / 1024 )) KB)"
 fi
 
 #	write disks
