@@ -65,10 +65,45 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.7.6.1 2005/11/06 13:43:17 tron Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.7.6.2 2005/11/27 15:46:04 riz Exp $");
 #endif
 
 static int	vfcexec(const char *, int, const char *, va_list);
+
+/*
+ * fork, then change current working directory to path and
+ * execute the command and arguments in the argv array.
+ * wait for the command to finish, then return the exit status.
+ */
+int
+pfcexec(const char *path, const char **argv)
+{
+	pid_t			child;
+	int			status;
+
+	child = vfork();
+	switch (child) {
+	case 0:
+		if ((path != NULL) && (chdir(path) < 0))
+			_exit(127);
+
+		(void) execvp(argv[0], (char ** const)argv);
+		_exit(127);
+		/* NOTREACHED */
+	case -1:
+		return -1;
+	}
+
+	while (waitpid(child, &status, 0) < 0) {
+		if (errno != EINTR)
+			return -1;
+	}
+
+	if (!WIFEXITED(status))
+		return -1;
+
+	return WEXITSTATUS(status);
+}
 
 static int
 vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
@@ -76,8 +111,6 @@ vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 	static unsigned int	max = 4;
 	static const char	**argv = NULL;
 	unsigned int		argc;
-	pid_t			child;
-	int			status;
 
 	if (argv == NULL) {
 		argv = malloc(max * sizeof(const char *));
@@ -113,28 +146,7 @@ vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 		argv[argc++] = arg;
 	} while (arg != NULL);
 
-	child = vfork();
-	switch (child) {
-	case 0:
-		if ((path != NULL) && (chdir(path) < 0))
-			_exit(127);
-
-		(void) execvp(argv[0], (char ** const)argv);
-		_exit(127);
-		/* NOTREACHED */
-	case -1:
-		return -1;
-	}
-
-	while (waitpid(child, &status, 0) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-
-	if (!WIFEXITED(status))
-		return -1;
-
-	return WEXITSTATUS(status);
+	return pfcexec(path, argv);
 }
 
 int
