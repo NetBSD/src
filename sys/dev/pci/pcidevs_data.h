@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.737 2005/11/22 22:57:45 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.738 2005/11/27 10:19:03 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.737 2005/11/22 22:55:30 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.738 2005/11/27 10:17:26 jdolecek Exp
  */
 
 /*
@@ -2589,15 +2589,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
-	    "Escalade IDE RAID",
+	    "Escalade ATA RAID Controller",
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
-	    "Escalade IDE RAID 7000/8000 series",
+	    "Escalade ATA RAID 7000/8000 series Controller",
 	},
 	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_9K,
-	    "Escalade IDE RAID 9000 series",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ATARAID_9K,
+	    "ATA RAID 9000 series Controller",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
