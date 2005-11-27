@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.7 2004/06/01 00:49:41 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.8 2005/11/27 14:01:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #define IPL_SOFTI2C	6	/* i2c */
 #define	IPL_SOFTSERIAL	7	/* serial */
 #define	IPL_TTY		8	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define IPL_AUDIO       9       /* boom box */
 #define IPL_EJECT	10	/* card eject */
 #define IPL_GTERR	10	/* GT-64260 errors */
@@ -58,6 +59,7 @@
 #define	IPL_VM		12	/* memory allocation */
 #define	IPL_SERIAL	13	/* serial */
 #define	IPL_CLOCK	14	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_SCHED	14	/* schedular */
 #define	IPL_LOCK	14	/* same as high for now */
 #define	IPL_HIGH	15	/* everything */
@@ -310,10 +312,8 @@ extern unsigned int spl_stats_enb;
 
 void setsoftclock __P((void));
 void clearsoftclock __P((void));
-int  splsoftclock __P((void));
 void setsoftnet   __P((void));
 void clearsoftnet __P((void));
-int  splsoftnet   __P((void));
 
 void intr_dispatch __P((void));
 #ifdef SPL_INLINE
@@ -452,29 +452,12 @@ spllower(int ncpl)
 			  SIBIT(SIR_HWCLOCK))
 
 /*
- * standard hardware interrupt spl's
- */
-#define splbio()	splraise(IPL_BIO)
-#define splnet()	splraise(IPL_NET)
-#define spltty()	splraise(IPL_TTY)
-#define	splaudio()	splraise(IPL_AUDIO)
-#define splsched()	splraise(IPL_SCHED)
-#define splclock()	splraise(IPL_CLOCK)
-#define splstatclock()	splclock()
-#define	splserial()	splraise(IPL_SERIAL)
-
-#define spllpt()	spltty()
-
-/*
  * Software interrupt spl's
  *
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
 #define	spllowersoftclock()	spllower(IPL_SOFTCLOCK)
-#define	splsoftclock()		splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()		splraise(IPL_SOFTNET)
-#define	splsoftserial()		splraise(IPL_SOFTSERIAL)
 
 struct intrhand;
 extern struct intrhand *softnet_handlers[];
@@ -489,10 +472,11 @@ void softintr_schedule(void *cookie);
 /*
  * Miscellaneous
  */
-#define splvm()		splraise(IPL_VM)
-#define spllock()	splraise(IPL_LOCK)
-#define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
+
+#define	splraiseipl(x)	splraise(x)
+
+#include <sys/spl.h>
 
 #define SIBIT(ipl)	(1 << ((ipl) - SIR_BASE))
 #if 0
