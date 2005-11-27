@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.1 2005/11/05 09:46:07 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.2 2005/11/27 16:49:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.1 2005/11/05 09:46:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.2 2005/11/27 16:49:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 
 	/* map it */
 	tlb.tlb_mask = mips3_wired_map[index].pgmask;
-	tlb.tlb_hi = mips3_vad_to_vpn(va);
+	tlb.tlb_hi = mips3_vad_to_vpn(va0);
 	if (mips3_wired_map[index].pa0 == 0)
 		tlb.tlb_lo0 = MIPS3_PG_G;
 	else
