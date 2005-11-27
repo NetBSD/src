@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.71.2.3 2005/11/27 23:05:41 riz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.71.2.4 2005/11/27 23:06:18 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.71.2.3 2005/11/27 23:05:41 riz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.71.2.4 2005/11/27 23:06:18 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -637,8 +637,10 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		 (int)(in_tot >> 24) & 0xff);
 	if (i != 8)
 		maybe_err("snprintf");
+#if 0
 	if (in_tot > 0xffffffff)
 		maybe_warn("input file size >= 4GB cannot be saved");
+#endif
 	if (write(out, outbufp, i) != i) {
 		maybe_warn("write");
 		in_tot = -1;
