@@ -1970,6 +1970,6 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 
 void free_index(CA_DB *db)
 	{
-	TXT_DB_free(db->db);
+	if (db) TXT_DB_free(db->db);
 	OPENSSL_free(db);
 	}
