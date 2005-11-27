@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.258 2005/11/25 20:32:32 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.259 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.258 2005/11/25 20:32:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.259 2005/11/27 05:35:52 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
@@ -254,7 +254,6 @@ main(void)
 	 * The following things must be done before autoconfiguration.
 	 */
 	evcnt_init();		/* initialize event counters */
-	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
