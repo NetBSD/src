@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.120 2005/11/27 05:35:52 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.121 2005/11/27 20:56:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,6 +42,8 @@
 /*
  * Definitions of device driver entry switches
  */
+
+#include <sys/queue.h>
 
 struct buf;
 struct knote;
