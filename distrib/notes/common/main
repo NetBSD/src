@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.17 2005/11/24 22:25:44 tron Exp $
+.\"	$NetBSD: main,v 1.278.2.18 2005/11/27 22:36:51 riz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -528,7 +528,7 @@ Added
 driver for ALi M5455 audio controller.
 .It
 Added
-.azalia 4 :
+.Xr azalia 4 :
 driver for High Definition Audio controller.
 .It
 Added
@@ -671,7 +671,7 @@ Added
 pty/98 pty multiplexor device.
 .It
 Added
-swwdog 4 ,
+.Xr swwdog 4 ,
 a software watchdog timer facility.
 .It
 Autoconfiguration framework is rewritten for device driver LKMs.
