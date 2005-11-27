@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.7 2005/09/04 15:23:55 kiyohara Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.8 2005/11/27 14:01:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,10 +47,14 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* software serial interrupt */
 #define	IPL_TTY		3	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -77,9 +81,7 @@ struct intrhand {
 };
 
 void setsoftclock(void);
-int  splsoftclock(void);
 void setsoftnet(void);
-int  splsoftnet(void);
 
 void do_pending_int(void);
 void ext_intr(void);
@@ -178,30 +180,17 @@ set_sint(pending)
 #define	SPL_CLOCK	IRQ_TO_MASK(CNT_CLOCK)
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
 
-#define splbio()	splraise(imask[IPL_BIO])
-#define splnet()	splraise(imask[IPL_NET])
-#define spltty()	splraise(imask[IPL_TTY])
-#define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_VM])
-#define	splaudio()	splraise(imask[IPL_AUDIO])
-#define	splserial()	splraise(imask[IPL_SERIAL])
-#define splstatclock()	splclock()
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
-#define spllpt()	spltty()
+#define	splraiseipl(x)	splraise(x)
+
+#include <sys/spl.h>
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
 #define	setsoftserial()	set_sint(SINT_SERIAL);
 
-#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
 
 void softnet(void);
 void softserial(void);

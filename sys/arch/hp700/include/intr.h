@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2003/06/16 20:01:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2005/11/27 14:01:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,10 +49,14 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* serial */
 #define	IPL_TTY		3	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -94,38 +98,21 @@ splraise(ncpl)
 void spllower __P((int));
  
 /*
- * Hardware interrupt masks
- */
-#define	splbio()	splraise(imask[IPL_BIO])
-#define	splnet()	splraise(imask[IPL_NET])
-#define	spltty()	splraise(imask[IPL_TTY])
-#define	splaudio()	splraise(imask[IPL_AUDIO])
-#define	splclock()	splraise(imask[IPL_CLOCK])
-#define	splstatclock()	splclock()
-#define	splserial()	splraise(imask[IPL_SERIAL])
-
-#define spllpt()	spltty()
-
-/*
  * Software interrupt masks
  *
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
 /*
  * Miscellaneous
  */
-#define	splvm()		splraise(imask[IPL_VM])
-#define	splhigh()	splraise(imask[IPL_HIGH])
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
 #define	spl0()		spllower(0)
 #define	splx(x)		spllower(x)
+#define	splraiseipl(x)	splraise(imask[x])
+
+#include <sys/spl.h>
 
 #define	setsoftast()	(astpending = 1)
 #define	setsoftnet()	hp700_intr_schedule(softnetmask)

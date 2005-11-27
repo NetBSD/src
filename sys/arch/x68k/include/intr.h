@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2005/11/27 14:01:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,23 +46,29 @@
 /* spl0 requires checking for software interrupts */
 void	spl0(void);
 
-#define splnone()       spl0()
-#define spllowersoftclock()  spl1()  /* disallow softclock */
-#define splsoftclock()  splraise1()  /* disallow softclock */
-#define splsoftnet()	splraise1()	/* disallow softnet */
-#define splnet()        _splraise(PSL_S|PSL_IPL4) /* disallow network */
-#define splbio()        _splraise(PSL_S|PSL_IPL3) /* disallow block I/O */
-#define spltty()        _splraise(PSL_S|PSL_IPL4) /* disallow tty interrupts */
-#define splvm()         _splraise(PSL_S|PSL_IPL4) /* disallow vm */
-#define splzs()         splraise5()	/* disallow serial interrupts */
-#define splclock()      splraise6()	/* disallow clock interrupt */
-#define splstatclock()  splraise6()	/* disallow clock interrupt */
-#define splhigh()       spl7()	/* disallow everything */
-#define splsched()      spl7()	/* disallow scheduling */
-#define spllock()	spl7()	/* disallow scheduling */
+#define	splnone()	spl0()
+#define	spllowersoftclock() spl1()	/* disallow softclock */
+#define	splzs()		splraise5()	/* disallow serial interrupts */
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	(PSL_S|PSL_IPL1)
+#define	IPL_SOFTNET	(PSL_S|PSL_IPL1)
+#define	IPL_BIO		(PSL_S|PSL_IPL3)
+#define	IPL_NET		(PSL_S|PSL_IPL4)
+#define	IPL_TTY		(PSL_S|PSL_IPL4)
+#define	IPL_VM		(PSL_S|PSL_IPL4)
+#define	IPL_CLOCK	(PSL_S|PSL_IPL6)
+#define	IPL_STATCLOCK	(PSL_S|PSL_IPL6)
+#define	IPL_SCHED	(PSL_S|PSL_IPL7)
+#define	IPL_HIGH	(PSL_S|PSL_IPL7)
+#define	IPL_LOCK	(PSL_S|PSL_IPL7)
+
+#define	splraiseipl(x)	_splraise(x)
+
+#include <sys/spl.h>
 
 /*
  * simulated software interrupt register

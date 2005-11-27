@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.16 2005/06/03 11:44:39 ragge Exp $	*/
+/* 	$NetBSD: intr.h,v 1.17 2005/11/27 14:01:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -42,6 +42,7 @@
  */
 #define IPL_HIGH	0x1f	/* high -- blocks all interrupts */
 #define IPL_CLOCK	0x18	/* clock */
+#define IPL_STATCLOCK	IPL_CLOCK
 #define IPL_UBA		0x17	/* unibus adapters */
 #define IPL_VM		0x17	/* memory allocation */
 #define IPL_NET		0x16	/* network */
@@ -58,6 +59,12 @@
 #define IPL_SOFTNET	0x0c	/* soft network */
 #define IPL_SOFTCLOCK	0x08
 #define IPL_NONE	0x00
+
+/* Misc
+ */
+
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 
 #define IPL_LEVELS	32
 
@@ -108,23 +115,10 @@ do {								\
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
 #define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
-#define splsoftclock()	_splraise(IPL_SOFTCLOCK)	/* IPL08 */
-#define splsoftnet()	_splraise(IPL_SOFTNET)		/* IPL0C */
-#define splsoftserial()	_splraise(IPL_SOFTSERIAL)	/* IPL0D */
 #define splddb()	_splraise(IPL_SOFTDDB)		/* IPL0F */
 #define splconsmedia()	_splraise(IPL_CONSMEDIA)	/* IPL14 */
-#define	splipi()	_splraise(IPL_IPI)		/* IPL14 */
-#define splbio()	_splraise(IPL_BIO)		/* IPL15 */
-#define spltty()	_splraise(IPL_TTY)		/* IPL15 */
-#define splaudio()	_splraise(IPL_AUDIO)		/* IPL15 */
-#define splnet()	_splraise(IPL_NET)		/* IPL16 */
-#define splvm()		_splraise(IPL_VM)		/* IPL17 */
-#define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
-#define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */
-#define splstatclock()	splclock()
 
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
+#include <sys/spl.h>
 
 /* These are better to use when playing with VAX buses */
 #define	spluba()	_splraise(IPL_UBA)		/* IPL17 */
