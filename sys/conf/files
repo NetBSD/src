@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.744 2005/11/27 22:18:41 thorpej Exp $
+#	$NetBSD: files,v 1.745 2005/11/27 22:44:35 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -192,12 +192,11 @@ defflag opt_sysctl.h		SYSCTL_DISALLOW_CREATE SYSCTL_DISALLOW_KWRITE
 #
 defflag	opt_mbr.h		COMPAT_386BSD_MBRPART
 
+#
 # debugging options
 #
-defflag	opt_ddb.h		DDB
-defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
-				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
-				DDB_COMMANDONENTER
+include "ddb/files.ddb"		# in-kernel dynamic debugger
+
 defflag	opt_kgdb.h		KGDB
 defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME KGDB_DEVPORT
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
@@ -1157,23 +1156,6 @@ include "uvm/files.uvm"
 #
 # kernel sources
 #
-file	ddb/db_access.c			ddb | kgdb
-file	ddb/db_aout.c			ddb
-file	ddb/db_break.c			ddb
-file	ddb/db_command.c		ddb
-file	ddb/db_examine.c		ddb
-file	ddb/db_expr.c			ddb
-file	ddb/db_input.c			ddb
-file	ddb/db_lex.c			ddb
-file	ddb/db_output.c			ddb
-file	ddb/db_print.c			ddb
-file	ddb/db_run.c			ddb | kgdb
-file	ddb/db_sym.c			ddb
-file	ddb/db_trap.c			ddb
-file	ddb/db_variables.c		ddb
-file	ddb/db_watch.c			ddb
-file	ddb/db_write_cmd.c		ddb
-file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
