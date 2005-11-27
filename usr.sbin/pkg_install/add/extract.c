@@ -1,4 +1,4 @@
-/*	$NetBSD: extract.c,v 1.34.2.2 2005/11/06 13:43:18 tron Exp $	*/
+/*	$NetBSD: extract.c,v 1.34.2.3 2005/11/27 15:46:04 riz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,11 +7,14 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
+#if HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.34.2.2 2005/11/06 13:43:18 tron Exp $");
+__RCSID("$NetBSD: extract.c,v 1.34.2.3 2005/11/27 15:46:04 riz Exp $");
 #endif
 #endif
 
@@ -41,41 +44,70 @@ __RCSID("$NetBSD: extract.c,v 1.34.2.2 2005/11/06 13:43:18 tron Exp $");
 #include "lib.h"
 #include "add.h"
 
-#define TAR_ARGS	" cf - "
-#define TARX_CMD	"|" TAR_CMD " xpf - -C "
+lfile_head_t files;
+lfile_head_t perms;
 
 /* 
- * This macro is used to determine if the 'where_args'  buffer is big enough to add the
- * current string (usually a filename) plus some extra commands (the contents of TARX_CMD, and
- * the directory name stored in 'Directory').
- * 
- * The string " 'str'" will be added so we need room for the string plus 3 chars plus the other arguments.
- * 
- * In addition, we will add " 'srt'" to the perm_args buffer so we need to ensure that there is room
- * for that.
+ * Copy files from staging area to todir.
+ * This is only used when the files cannot be directory rename()ed.
  */
-#define TOOBIG(str) ((strlen(str) + 3 + strlen(TARX_CMD) + strlen(Directory) + where_count  >= maxargs) \
-		|| (strlen(str) + 3 + perm_count >= maxargs))
+static void
+pushout(char *todir)
+{
+	pipe_to_system_t	*pipe_to;
+	char			*file_args[4];
+	char			**perm_argv;
+	int			perm_argc = 1;
+	lfile_t			*lfp;
+	int			count;
 
-#define PUSHOUT(todir) /* push out string */				\
-        if (where_count > sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1) {		\
-		    strlcat(where_args, TARX_CMD, maxargs);		\
-		    strlcat(where_args, todir, maxargs);		\
-		    if (system(where_args)) {				\
-			cleanup(0);					\
-			errx(2, "can not invoke %lu byte %s pipeline: %s", \
-				(u_long)strlen(where_args), TAR_CMD,	\
-				where_args);				\
-		    }							\
-		    strlcpy(where_args, TAR_CMD TAR_ARGS, maxargs);	\
-		    where_count = strlen(where_args);			\
-	}								\
-	if (perm_count) {						\
-		    apply_perms(todir, perm_args);			\
-		    perm_args[0] = 0;					\
-		    perm_count = 0;					\
+	/* set up arguments to run "pax -r -w -p e" */
+	file_args[0] = strrchr(PAX_CMD, '/');
+	if (file_args[0] == NULL)
+		file_args[0] = PAX_CMD;
+	else
+		file_args[0]++;
+	file_args[1] = "-rwpe";
+	file_args[2] = todir;
+	file_args[3] = NULL;
+
+	/* count entries for files */
+	count = 0;
+	TAILQ_FOREACH(lfp, &files, lf_link)
+		count++;
+
+	if (count > 0)  {
+		/* open pipe, feed it files, close pipe */
+		pipe_to = pipe_to_system_begin(PAX_CMD, file_args, NULL);
+		while ((lfp = TAILQ_FIRST(&files)) != NULL) {
+			fprintf(pipe_to->fp, "%s\n", lfp->lf_name);
+			TAILQ_REMOVE(&files, lfp, lf_link);
+			free(lfp);
+		}
+		pipe_to_system_end(pipe_to);
+        }
+ 
+	/* count entries for permissions */
+	count = 0;
+	TAILQ_FOREACH(lfp, &perms, lf_link)
+		count++;
+
+	if (count > 0) {
+		perm_argv = malloc((count + 1) * sizeof(char *));
+		perm_argc = 0;
+		TAILQ_FOREACH(lfp, &perms, lf_link)
+			perm_argv[perm_argc++] = lfp->lf_name;
+		perm_argv[perm_argc] = NULL;
+		apply_perms(todir, perm_argv, perm_argc);
+
+		/* empty the perm list */
+		while ((lfp = TAILQ_FIRST(&perms)) != NULL) {
+			TAILQ_REMOVE(&perms, lfp, lf_link);
+			free(lfp);
+		}
+		free(perm_argv);
 	}
-
+}
 
 static void
 rollback(char *name, char *home, plist_t *start, plist_t *stop)
@@ -113,34 +145,12 @@ extract_plist(char *home, package_t *pkg)
 {
 	plist_t *p = pkg->head;
 	char   *last_file;
-	char   *where_args, *perm_args, *last_chdir;
-	int     maxargs, where_count = 0, perm_count = 0, add_count;
+	char	*last_chdir;
 	Boolean preserve;
+	lfile_t	*lfp;
 
-	maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
-	where_args = malloc(maxargs);
-	if (!where_args) {
-		cleanup(0);
-		errx(2, "can't get argument list space");
-	}
-	perm_args = malloc(maxargs);
-	if (!perm_args) {
-		cleanup(0);
-		errx(2, "can't get argument list space");
-	}
-	strlcpy(where_args, TAR_CMD TAR_ARGS, maxargs);
-	/*
-	 * we keep track of how many characters are stored in 'where_args' with 'where_count'.
-	 * Note this doesn't include the trailing null character.
-	 */
-	where_count = strlen(where_args);
-
-	perm_args[0] = 0;
-	/*
-	 * we keep track of how many characters are stored in 'perm__args' with 'perm_count'.
-	 * Note this doesn't include the trailing null character.
-	 */
-	perm_count = 0;
+	TAILQ_INIT(&files);
+	TAILQ_INIT(&perms);
 
 	last_chdir = 0;
 	preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
@@ -197,8 +207,6 @@ extract_plist(char *home, package_t *pkg)
 								    "unable to back up %s to %s, aborting pkg_add",
 								    try, pf);
 								rollback(PkgName, home, pkg->head, p);
-								free(perm_args);
-								free(where_args);
 								return 0;
 							}
 						}
@@ -228,40 +236,18 @@ extract_plist(char *home, package_t *pkg)
 					}
 
 					/* try to add to list of perms to be changed and run in bulk. */
-					if (p->name[0] == '/' || TOOBIG(p->name)) {
-						PUSHOUT(Directory);
-					}
-					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
-					add_count = snprintf(&perm_args[perm_count], maxargs - perm_count, "'%s' ", p->name);
-					if (add_count > maxargs - perm_count) {
-						cleanup(0);
-						errx(2, "oops, miscounted strings!");
-					}
-					perm_count += add_count;
+					if (p->name[0] == '/')
+						pushout(Directory);
+
+					LFILE_ADD(&perms, lfp, p->name);
 				} else {
 					/* rename failed, try copying with a big tar command */
 					if (last_chdir != Directory) {
-						PUSHOUT(last_chdir);
+						pushout(last_chdir);
 						last_chdir = Directory;
-					} else if (p->name[0] == '/' || TOOBIG(p->name)) {
-						PUSHOUT(Directory);
+					} else if (p->name[0] == '/') {
+						pushout(Directory);
 					}
-					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
-					add_count = snprintf(&where_args[where_count], maxargs - where_count, " '%s'", p->name);
-					if (add_count > maxargs - where_count) {
-						cleanup(0);
-						errx(2, "oops, miscounted strings!");
-					}
-					where_count += add_count;
-					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
-					add_count = snprintf(&perm_args[perm_count],
-					    maxargs - perm_count,
-					    "'%s' ", p->name);
-					if (add_count > maxargs - perm_count) {
-						cleanup(0);
-						errx(2, "oops, miscounted strings!");
-					}
-					perm_count += add_count;
 
 					if (!NoRecord) {
 						/* note in pkgdb */
@@ -272,6 +258,8 @@ extract_plist(char *home, package_t *pkg)
 						char   *s, t[MaxPathSize], *u;
 						int     rc;
 
+						LFILE_ADD(&files, lfp, p->name);
+						LFILE_ADD(&perms, lfp, p->name);
 						if (p->name[0] == '/')
 							u = p->name;
 						else {
@@ -299,7 +287,7 @@ extract_plist(char *home, package_t *pkg)
 		case PLIST_CWD:
 			if (Verbose)
 				printf("extract: CWD to %s\n", p->name);
-			PUSHOUT(Directory);
+			pushout(Directory);
 			if (strcmp(p->name, ".")) {
 				if (!Fake && make_hierarchy(p->name) == FAIL) {
 					cleanup(0);
@@ -312,24 +300,24 @@ extract_plist(char *home, package_t *pkg)
 
 		case PLIST_CMD:
 			format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
-			PUSHOUT(Directory);
+			pushout(Directory);
 			printf("Executing '%s'\n", cmd);
 			if (!Fake && system(cmd))
 				warnx("command '%s' failed", cmd);
 			break;
 
 		case PLIST_CHMOD:
-			PUSHOUT(Directory);
+			pushout(Directory);
 			Mode = p->name;
 			break;
 
 		case PLIST_CHOWN:
-			PUSHOUT(Directory);
+			pushout(Directory);
 			Owner = p->name;
 			break;
 
 		case PLIST_CHGRP:
-			PUSHOUT(Directory);
+			pushout(Directory);
 			Group = p->name;
 			break;
 
@@ -345,10 +333,8 @@ extract_plist(char *home, package_t *pkg)
 		}
 		p = p->next;
 	}
-	PUSHOUT(Directory);
+	pushout(Directory);
 	if (!NoRecord)
 		pkgdb_close();
-	free(perm_args);
-	free(where_args);
 	return 1;
 }
