@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.19 2005/11/26 12:16:45 yamt Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.20 2005/11/27 13:05:28 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.19 2005/11/26 12:16:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.20 2005/11/27 13:05:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.19 2005/11/26 12:16:45 yamt Exp $");
 db_expr_t	db_tok_number;
 char		db_tok_string[TOK_STRING_SIZE];
 
-static char	db_line[120];
+static char	db_line[DB_LINE_MAXLEN];
 static const char *db_lp;
 static const char *db_endlp;
 

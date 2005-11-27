@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.14 2005/11/26 12:16:45 yamt Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.15 2005/11/27 13:05:28 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,8 +39,10 @@ void	db_set_line(const char *, const char *);
 int	db_read_token(void);
 void	db_unread_token(int);
 
+#define	DB_LINE_MAXLEN		120
+
 extern db_expr_t db_tok_number;
-#define	TOK_STRING_SIZE		120
+#define	TOK_STRING_SIZE		DB_LINE_MAXLEN
 extern char	db_tok_string[];
 
 #define	tEOF		(-1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.80 2005/11/26 12:16:44 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.81 2005/11/27 13:05:28 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.80 2005/11/26 12:16:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.81 2005/11/27 13:05:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -203,7 +203,9 @@ static const struct db_command db_command_table[] = {
 
 static const struct db_command	*db_last_command = NULL;
 #if defined(DDB_COMMANDONENTER)
-const char *db_cmd_on_enter = ___STRING(DDB_COMMANDONENTER);
+char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = ___STRING(DDB_COMMANDONENTER);
+#else /* defined(DDB_COMMANDONENTER) */
+char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = "";
 #endif /* defined(DDB_COMMANDONENTER) */
 #define	DB_LINE_SEP	';'
 
@@ -231,6 +233,27 @@ db_error(s)
 	longjmp(db_recover);
 }
 
+static void
+db_execute_commandlist(const char *cmdlist)
+{
+	const char *cmd = cmdlist;
+	const struct db_command	*dummy = NULL;
+
+	while (*cmd != '\0') {
+		const char *ep = cmd;
+
+		while (*ep != '\0' && *ep != DB_LINE_SEP) {
+			ep++;
+		}
+		db_set_line(cmd, ep);
+		db_command(&dummy, db_command_table);
+		cmd = ep;
+		if (*cmd == DB_LINE_SEP) {
+			cmd++;
+		}
+	}
+}
+
 void
 db_command_loop(void)
 {
@@ -249,26 +272,7 @@ db_command_loop(void)
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
 
-#if defined(DDB_COMMANDONENTER)
-	if (db_cmd_on_enter != NULL) {
-		const struct db_command	*dummy = NULL;
-		const char *cmd = db_cmd_on_enter;
-
-		while (*cmd != '\0') {
-			const char *ep = cmd;
-
-			while (*ep != '\0' && *ep != DB_LINE_SEP) {
-				ep++;
-			}
-			db_set_line(cmd, ep);
-			db_command(&dummy, db_command_table);
-			cmd = ep;
-			if (*cmd == DB_LINE_SEP) {
-				cmd++;
-			}
-		}
-	}
-#endif /* defined(DDB_COMMANDONENTER) */
+	db_execute_commandlist(db_cmd_on_enter);
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)

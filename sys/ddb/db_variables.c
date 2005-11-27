@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.33 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.34 2005/11/27 13:05:28 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.33 2005/06/01 12:25:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.34 2005/11/27 13:05:28 yamt Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -165,6 +165,13 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 		       CTLTYPE_INT, "tee_msgbuf",
 		       SYSCTL_DESCR("Whether to tee ddb output to the msgbuf"),
 		       NULL, 0, &db_tee_msgbuf, 0,
+		       CTL_DDB, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "commandonenter",
+		       SYSCTL_DESCR("Command to be executed on each ddb enter"),
+		       NULL, 0, &db_cmd_on_enter, DB_LINE_MAXLEN,
 		       CTL_DDB, CTL_CREATE, CTL_EOL);
 }
 
