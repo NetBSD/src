@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.742 2005/11/26 12:16:44 yamt Exp $
+#	$NetBSD: files,v 1.743 2005/11/27 21:14:26 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -134,6 +134,7 @@ include "dev/sysmon/files.sysmon"
 #
 # Networking protocols
 #
+include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netccitt/files.netccitt"
 include "netinet/files.netinet"
@@ -1356,21 +1357,6 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
-file	net80211/ieee80211.c			wlan
-file	net80211/ieee80211_acl.c		wlan
-file	net80211/ieee80211_crypto.c		wlan
-file	net80211/ieee80211_crypto_ccmp.c	wlan
-file	net80211/ieee80211_crypto_none.c	wlan
-file	net80211/ieee80211_crypto_tkip.c	wlan
-file	net80211/ieee80211_crypto_wep.c		wlan
-file	net80211/ieee80211_input.c		wlan
-file	net80211/ieee80211_ioctl.c		wlan
-file	net80211/ieee80211_netbsd.c		wlan
-file	net80211/ieee80211_node.c		wlan
-file	net80211/ieee80211_output.c		wlan
-file	net80211/ieee80211_proto.c		wlan
-file	net80211/ieee80211_rssadapt.c		wlan
-file	net80211/ieee80211_xauth.c		wlan
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
