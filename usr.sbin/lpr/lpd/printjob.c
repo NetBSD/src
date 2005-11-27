@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.41 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: printjob.c,v 1.42 2005/11/27 12:52:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.41 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.42 2005/11/27 12:52:30 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,8 @@ printjob(void)
 	signal(SIGQUIT, abortpr);
 	signal(SIGTERM, abortpr);
 
-	(void)mktemp(tempfile);		/* OK */
-	(void)mktemp(tempremote);	/* OK */
+	(void)mktemp(tempfile);		/* XXX */
+	(void)mktemp(tempremote);	/* XXX */
 
 	/*
 	 * uses short form file names
