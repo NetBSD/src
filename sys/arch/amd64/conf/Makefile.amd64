@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.7 2005/07/12 20:22:45 sekiya Exp $
+#	$NetBSD: Makefile.amd64,v 1.8 2005/11/27 13:30:27 dsl Exp $
 
 # Makefile for NetBSD
 #
@@ -115,8 +115,17 @@ ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${UUDECODE} -p $> \> ${.TARGET}; \
 		rm -f ${.TARGET}; \
 		${UUDECODE} -p $> > ${.TARGET}
+
 athhal-x86_64-elf.hal.o: athhal-x86_64-elf.hal.o.uue
 	${ATH_UUDEC}
+.if !empty(COPTS:M-fno-asynchronous-unwind-tables)
+	mv $@ $@.eh_frame
+	${_MKSHECHO}\
+	${OBJCOPY} -R .eh_frame $@.eh_frame $@
+	${OBJCOPY} -R .eh_frame $@.eh_frame $@
+	rm -f $@.eh_frame
+.endif
+
 all depend:	opt_ah.h
 opt_ah.h:	athhal-x86_64-elf.opt_ah.h
 	ln -s ${.ALLSRC} ${.TARGET}
