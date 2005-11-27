@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.19 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.18 2004/04/25 06:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.19 2005/11/27 05:35:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,8 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	case OTIOCGETD:
-		*(int *)data = (tp->t_linesw != NULL) ? tp->t_linesw->l_no : 2;
+		*(int *)data = (tp->t_linesw == NULL) ?
+		    2 /* XXX old NTTYDISC */ : tp->t_linesw->l_no;
 		break;
 
 	case OTIOCSETD: {

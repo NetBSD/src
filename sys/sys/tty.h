@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.67 2005/03/17 20:39:18 kleink Exp $	*/
+/*	$NetBSD: tty.h,v 1.68 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -250,7 +250,6 @@ int	 ttysleep(struct tty *, void *, int, const char *, int);
 int	 ttywait(struct tty *);
 int	 ttywflush(struct tty *);
 
-void	 tty_init(void);
 void	 tty_attach(struct tty *);
 void	 tty_detach(struct tty *);
 struct tty

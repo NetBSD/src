@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.13 2004/12/05 05:43:04 christos Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.14 2005/11/27 05:35:52 thorpej Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -57,14 +57,14 @@ struct strip_softc {
 
 #ifdef _KERNEL
 void	stripattach __P((void));
-void	stripclose __P((struct tty *));
-void	stripinput __P((int, struct tty *));
+int	stripclose __P((struct tty *, int));
+int	stripinput __P((int, struct tty *));
 int	stripioctl __P((struct ifnet *, u_long, caddr_t));
 int	stripopen __P((dev_t, struct tty *));
 int	stripoutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
-void	stripstart __P((struct tty *));
-int	striptioctl __P((struct tty *, u_long, caddr_t, int));
+int	stripstart __P((struct tty *));
+int	striptioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_STRIPVAR_H_ */

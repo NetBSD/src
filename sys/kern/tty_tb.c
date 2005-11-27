@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.32 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.33 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.32 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.33 2005/11/27 05:35:52 thorpej Exp $");
 
 #include "tb.h"
 
@@ -109,11 +109,24 @@ struct tb {
 
 
 int	tbopen(dev_t, struct tty *);
-void	tbclose(struct tty *);
-int	tbread(struct tty *, struct uio *);
-void	tbinput(int, struct tty *);
+int	tbclose(struct tty *, int);
+int	tbread(struct tty *, struct uio *, int);
+int	tbinput(int, struct tty *);
 int	tbtioctl(struct tty *, u_long, caddr_t, int, struct proc *);
 void	tbattach(int);
+
+static struct linesw tablet_disc = {
+	.l_name = "tablet",
+	.l_open = tbopen,
+	.l_close = tbclose,
+	.l_read = tbread,
+	.l_write = ttyerrio,
+	.l_ioctl = tbtioctl,
+	.l_rint = tbinput,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttyerrpoll
+};
 
 /*
  * Open as tablet discipline; called on discipline change.
@@ -126,7 +139,7 @@ tbopen(dev, tp)
 {
 	struct tb *tbp;
 
-	if (tp->t_linesw->l_no == TABLDISC)
+	if (tp->t_linesw == &tablet_disc)
 		return (ENODEV);
 	ttywflush(tp);
 	for (tbp = tb; tbp < &tb[NTB]; tbp++)
@@ -146,13 +159,14 @@ tbopen(dev, tp)
 /*
  * Line discipline change or last device close.
  */
-void
-tbclose(tp)
+int
+tbclose(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc);
+	return (tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc));
 }
 
 /*
@@ -160,9 +174,10 @@ tbclose(tp)
  * Characters have been buffered in a buffer and decoded.
  */
 int
-tbread(tp, uio)
+tbread(tp, uio, flag)
 	struct tty *tp;
 	struct uio *uio;
+	int flag;
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
@@ -184,7 +199,7 @@ tbread(tp, uio)
  * This routine could be expanded in-line in the receiver
  * interrupt routine to make it run as fast as possible.
  */
-void
+int
 tbinput(c, tp)
 	int c;
 	struct tty *tp;
@@ -193,7 +208,7 @@ tbinput(c, tp)
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 
 	if (tc->tbc_recsize == 0 || tc->tbc_decode == 0)	/* paranoid? */
-		return;
+		return (0);
 	/*
 	 * Locate sync bit/byte or reset input buffer.
 	 */
@@ -207,6 +222,8 @@ tbinput(c, tp)
 	 */
 	if (++tbp->tbinbuf == tc->tbc_recsize)
 		(*tc->tbc_decode)(tc, tbp->cbuf, &tbp->tbpos);
+
+	return (0);
 }
 
 /*
@@ -401,5 +418,7 @@ void
 tbattach(dummy)
        int dummy;
 {
-    /* stub to handle side effect of new config */
+
+	if (ttyldisc_attach(&tablet_disc) != 0)
+		panic("tbattach");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.61 2005/08/18 00:30:58 yamt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.62 2005/11/27 05:35:52 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.61 2005/08/18 00:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.62 2005/11/27 05:35:52 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -330,11 +330,24 @@ void	strip_timeout __P((void *x));
 #define RADIO_PROBE_TIMEOUT(sc) \
 	 ((sc)-> sc_statetimo > time.tv_sec)
 
-
+static struct linesw strip_disc = {
+	.l_name = "strip",
+	.l_open = stripopen,
+	.l_close = stripclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = striptioctl,
+	.l_rint = stripinput,
+	.l_start = stripstart,
+	.l_modem = nullmodem,
+	.l_poll = ttyerrpoll
+};
 
 void
 stripattach(void)
 {
+	if (ttyldisc_attach(&strip_disc) != 0)
+		panic("stripattach");
 	LIST_INIT(&strip_softc_list);
 	if_clone_attach(&strip_cloner);
 }
@@ -465,7 +478,7 @@ stripopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw->l_no == STRIPDISC)
+	if (tp->t_linesw == &strip_disc)
 		return (0);
 
 	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
@@ -536,9 +549,10 @@ stripopen(dev, tp)
  * Line specific close routine.
  * Detach the tty from the strip unit.
  */
-void
-stripclose(tp)
+int
+stripclose(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	struct strip_softc *sc;
 	int s;
@@ -561,7 +575,8 @@ stripclose(tp)
 		splx(s);
 
 		s = spltty();
-		tp->t_linesw = linesw[0];	/* default line disc. */
+		ttyldisc_release(tp->t_linesw);
+		tp->t_linesw = ttyldisc_default();
 		tp->t_state = 0;
 
 		sc->sc_ttyp = NULL;
@@ -596,6 +611,8 @@ stripclose(tp)
 		}
 		splx(s);
 	}
+
+	return (0);
 }
 
 /*
@@ -604,11 +621,12 @@ stripclose(tp)
  */
 /* ARGSUSED */
 int
-striptioctl(tp, cmd, data, flag)
+striptioctl(tp, cmd, data, flag, p)
 	struct tty *tp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 
@@ -891,7 +909,7 @@ stripoutput(ifp, m, dst, rt)
  * the interface before starting output.
  *
  */
-void
+int
 stripstart(tp)
 	struct tty *tp;
 {
@@ -905,14 +923,14 @@ stripstart(tp)
 	if (tp->t_outq.c_cc != 0) {
 		(*tp->t_oproc)(tp);
 		if (tp->t_outq.c_cc > SLIP_HIWAT)
-			return;
+			return (0);
 	}
 
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
 	if (sc == NULL)
-		return;
+		return (0);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
@@ -922,6 +940,7 @@ stripstart(tp)
 	splx(s);
     }
 #endif
+	return (0);
 }
 
 /*
@@ -967,7 +986,7 @@ strip_btom(sc, len)
  * char is a packet delimiter, decapsulate the packet, wrap it in
  * an mbuf, and put it on the protocol input queue.
 */
-void
+int
 stripinput(c, tp)
 	int c;
 	struct tty *tp;
@@ -979,12 +998,12 @@ stripinput(c, tp)
 	tk_nin++;
 	sc = (struct strip_softc *)tp->t_sc;
 	if (sc == NULL)
-		return;
+		return (0);
 	if (c & TTY_ERRORMASK || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
 		DPRINTF(("strip: input, error %x\n", c));	 /* XXX */
-		return;
+		return (0);
 	}
 	c &= TTY_CHARMASK;
 
@@ -1014,7 +1033,7 @@ stripinput(c, tp)
 			sc->sc_flags |= SC_ERROR;
 			goto error;
 		}
-		return;
+		return (0);
 
 	case STRIP_FRAME_END:
 		break;
@@ -1072,6 +1091,8 @@ error:
 newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
+
+	return (0);
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $	*/
+/*	$NetBSD: sunms.c,v 1.20 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.20 2005/11/27 05:35:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +97,18 @@ int	sunmsinput(int, struct tty *);
 CFATTACH_DECL(ms_tty, sizeof(struct ms_softc),
     sunms_match, sunms_attach, NULL, NULL);
 
-struct  linesw sunms_disc =
-	{ "sunms", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunmsinput, ttstart, nullmodem, ttpoll };
+struct linesw sunms_disc = {
+	.l_name = "sunms",
+	.l_open = ttylopen,
+	.l_close = ttylclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = ttynullioctl,
+	.l_rint = sunmsinput,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttpoll
+};
 
 int	sunms_enable(void *);
 int	sunms_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -157,9 +166,11 @@ sunms_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	if (ttyldisc_add(&sunms_disc, -1) == -1)
+	if (ttyldisc_attach(&sunms_disc) != 0)
 		panic("sunms_attach: sunms_disc");
-	tp->t_linesw = &sunms_disc;
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_lookup(sunms_disc.l_name);
+	KASSERT(tp->t_linesw == &sunms_disc);
 	tp->t_oflag &= ~OPOST;
 
 	/* Initialize translator. */

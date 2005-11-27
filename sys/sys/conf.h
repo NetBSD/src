@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.119 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: conf.h,v 1.120 2005/11/27 05:35:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -155,7 +155,10 @@ extern	const char devioc[], devcls[];
  */
 struct linesw {
 	const char *l_name;	/* Linesw name */
-	int	l_no;		/* Linesw number (compatibility) */
+
+	LIST_ENTRY(linesw) l_list;
+	u_int	l_refcnt;	/* locked by ttyldisc_list_slock */
+	int	l_no;		/* legacy discipline number (for TIOCGETD) */
 
 	int	(*l_open)	(dev_t, struct tty *);
 	int	(*l_close)	(struct tty *, int);
@@ -170,12 +173,12 @@ struct linesw {
 };
 
 #ifdef _KERNEL
-extern struct linesw **linesw;
-extern int nlinesw;
-extern void ttyldisc_init(void);
-int ttyldisc_add(struct linesw *, int);
-struct linesw *ttyldisc_remove(const char *);
+int	       ttyldisc_attach(struct linesw *);
+int	       ttyldisc_detach(struct linesw *);
 struct linesw *ttyldisc_lookup(const char *);
+struct linesw *ttyldisc_lookup_bynum(int);
+struct linesw *ttyldisc_default(void);
+void	       ttyldisc_release(struct linesw *);
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
