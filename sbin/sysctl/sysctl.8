@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.130 2005/10/15 23:05:45 xtraeme Exp $
+.\"	$NetBSD: sysctl.8,v 1.131 2005/11/27 13:12:03 yamt Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,6 +256,7 @@ The changeable column indicates whether a process with appropriate
 privilege can change the value.
 .Bl -column proc.xpidx.rlimit.coredumpsize.hardxxxxxx integerxxx
 .It Sy Name	Type	Changeable
+.It ddb.commandonenter	string	yes
 .It ddb.fromconsole	integer 	yes
 .It ddb.lines	integer	yes
 .It ddb.maxoff	integer	yes
