@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.42 2005/11/27 12:52:30 jdolecek Exp $	*/
+/*	$NetBSD: printjob.c,v 1.43 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.42 2005/11/27 12:52:30 jdolecek Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.43 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -529,8 +529,9 @@ print(int format, char *file)
 	FILE *fp;
 	int status;
 	struct stat stb;
-	char *prog, *av[15], buf[BUFSIZ];
-	int n, fi, fo, pid, p[2], stopped = 0, nofile;
+	const char *prog, *av[15];
+	char buf[BUFSIZ];
+	int n, fi, fo, child_pid, p[2], stopped = 0, nofile;
 
 	if (lstat(file, &stb) < 0 || (fi = open(file, O_RDONLY)) < 0)
 		return(ERROR);
@@ -677,8 +678,8 @@ print(int format, char *file)
 	fo = pfd;
 	if (ofilter > 0) {		/* stop output filter */
 		write(ofd, "\031\1", 2);
-		while ((pid =
-		    wait3(&status, WUNTRACED, 0)) > 0 && pid != ofilter)
+		while ((child_pid =
+		    wait3(&status, WUNTRACED, 0)) > 0 && child_pid != ofilter)
 			;
 		if (WIFSTOPPED(status) == 0) {
 			(void)close(fi);
@@ -701,7 +702,7 @@ start:
 		nofile = sysconf(_SC_OPEN_MAX);
 		for (n = 3; n < nofile; n++)
 			(void)close(n);
-		execv(prog, av);
+		execv(prog, __UNCONST(av));
 		syslog(LOG_ERR, "cannot execv %s", prog);
 		exit(2);
 	}
@@ -713,7 +714,7 @@ start:
 		return (ERROR);
 	}
 	(void)close(fi);
-	while ((pid = wait(&status)) > 0 && pid != child)
+	while ((child_pid = wait(&status)) > 0 && child_pid != child)
 		;
 	child = 0;
 	prchild = 0;
@@ -735,7 +736,7 @@ start:
 	if (!WIFEXITED(status)) {
 		syslog(LOG_WARNING,
 		    "%s: Daemon filter '%c' terminated (pid=%d) (termsig=%d)",
-			printer, format, (int)pid, WTERMSIG(status));
+			printer, format, (int)child_pid, WTERMSIG(status));
 		return(ERROR);
 	}
 	switch (WEXITSTATUS(status)) {
@@ -1084,7 +1085,7 @@ static void
 sendmail(char *user, int bombed)
 {
 	int i, p[2], s, nofile;
-	char *cp = NULL; /* XXX gcc */
+	const char *cp = NULL; /* XXX gcc */
 	struct stat stb;
 	FILE *fp;
 
@@ -1163,18 +1164,18 @@ sendmail(char *user, int bombed)
 static int
 dofork(int action)
 {
-	int i, pid;
+	int i, child_pid;
 	struct passwd *pw;
 
 	for (i = 0; i < 20; i++) {
-		if ((pid = fork()) < 0) {
+		if ((child_pid = fork()) < 0) {
 			sleep((unsigned)(i*i));
 			continue;
 		}
 		/*
 		 * Child should run as daemon instead of root
 		 */
-		if (pid == 0) {
+		if (child_pid == 0) {
 			pw = getpwuid(DU);
 			if (pw == 0) {
 				syslog(LOG_ERR, "uid %ld not in password file",
@@ -1186,7 +1187,7 @@ dofork(int action)
 			setuid(DU);
 			signal(SIGCHLD, SIG_DFL);
 		}
-		return (pid);
+		return (child_pid);
 	}
 	syslog(LOG_ERR, "can't fork");
 
@@ -1221,34 +1222,14 @@ abortpr(int signo)
 static void
 init(void)
 {
-	int status;
 	char *s;
 
-	if ((status = cgetent(&bp, printcapdb, printer)) == -2) {
-		syslog(LOG_ERR, "can't open printer description file");
-		exit(1);
-	} else if (status == -1) {
-		syslog(LOG_ERR, "unknown printer: %s", printer);
-		exit(1);
-	} else if (status == -3)
-		fatal("potential reference loop detected in printcap file");
+	getprintcap(printer);
 
-	if (cgetstr(bp, DEFLP, &LP) == -1)
-		LP = _PATH_DEFDEVLP;
-	if (cgetstr(bp, "rp", &RP) == -1)
-		RP = DEFLP;
-	if (cgetstr(bp, "lo", &LO) == -1)
-		LO = DEFLOCK;
-	if (cgetstr(bp, "st", &ST) == -1)
-		ST = DEFSTAT;
-	if (cgetstr(bp, "lf", &LF) == -1)
-		LF = _PATH_CONSOLE;
-	if (cgetstr(bp, "sd", &SD) == -1)
-		SD = _PATH_DEFSPOOL;
+	FF = cgetstr(bp, "ff", &s) == -1 ? DEFFF : s;
+
 	if (cgetnum(bp, "du", &DU) < 0)
 		DU = DEFUID;
-	if (cgetstr(bp,"ff", &FF) == -1)
-		FF = DEFFF;
 	if (cgetnum(bp, "pw", &PW) < 0)
 		PW = DEFWIDTH;
 	(void)snprintf(&width[2], sizeof(width) - 2, "%ld", PW);
@@ -1261,21 +1242,18 @@ init(void)
 	if (cgetnum(bp, "py", &PY) < 0)
 		PY = 0;
 	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%ld", PY);
-	cgetstr(bp, "rm", &RM);
-	if ((s = checkremote()) != NULL)
-		syslog(LOG_WARNING, "%s", s);
 
-	cgetstr(bp, "af", &AF);
-	cgetstr(bp, "of", &OF);
-	cgetstr(bp, "if", &IF);
-	cgetstr(bp, "rf", &RF);
-	cgetstr(bp, "tf", &TF);
-	cgetstr(bp, "nf", &NF);
-	cgetstr(bp, "df", &DF);
-	cgetstr(bp, "gf", &GF);
-	cgetstr(bp, "vf", &VF);
-	cgetstr(bp, "cf", &CF);
-	cgetstr(bp, "tr", &TR);
+	AF = cgetstr(bp, "af", &s) == -1 ? NULL : s;
+	OF = cgetstr(bp, "of", &s) == -1 ? NULL : s;
+	IF = cgetstr(bp, "if", &s) == -1 ? NULL : s;
+	RF = cgetstr(bp, "rf", &s) == -1 ? NULL : s;
+	TF = cgetstr(bp, "tf", &s) == -1 ? NULL : s;
+	NF = cgetstr(bp, "nf", &s) == -1 ? NULL : s;
+	DF = cgetstr(bp, "df", &s) == -1 ? NULL : s;
+	GF = cgetstr(bp, "gf", &s) == -1 ? NULL : s;
+	VF = cgetstr(bp, "vf", &s) == -1 ? NULL : s;
+	CF = cgetstr(bp, "cf", &s) == -1 ? NULL : s;
+	TR = cgetstr(bp, "tr", &s) == -1 ? NULL : s;
 
 	RS = (cgetcap(bp, "rs", ':') != NULL);
 	SF = (cgetcap(bp, "sf", ':') != NULL);
@@ -1293,7 +1271,7 @@ init(void)
 		XC = 0;
 	if (cgetnum(bp, "xs", &XS) < 0)
 		XS = 0;
-	cgetstr(bp, "ms", &MS);
+	MS = cgetstr(bp, "ms", &s) == -1 ? NULL : s;
 
 	tof = (cgetcap(bp, "fo", ':') == NULL);
 }
@@ -1310,7 +1288,7 @@ setup_ofilter(int check_rflag)
 	if (OF && (!remote || (check_rflag && rflag))) {
 		int p[2];
 		int i, nofile;
-		char *cp;
+		const char *cp;
 
 		pipe(p);
 		if ((ofilter = dofork(DOABORT)) == 0) {	/* child */
@@ -1633,7 +1611,7 @@ pstatus(const char *msg, ...)
 
 	iov[0].iov_base = buf;
 	iov[0].iov_len = strlen(buf);
-	iov[1].iov_base = "\n";
+	iov[1].iov_base = __UNCONST("\n");
 	iov[1].iov_len = 1;
 	(void)writev(fd, iov, 2);
 	(void)close(fd);

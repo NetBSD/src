@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.6 2003/08/07 11:25:26 agc Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.7 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.6 2003/08/07 11:25:26 agc Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.7 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,19 +46,19 @@ __RCSID("$NetBSD: cmdtab.c,v 1.6 2003/08/07 11:25:26 agc Exp $");
 /*
  * lpc -- command tables
  */
-char	aborthelp[] =	"terminate a spooling daemon immediately and disable printing";
-char	cleanhelp[] =	"remove cruft files from a queue";
-char	enablehelp[] =	"turn a spooling queue on";
-char	disablehelp[] =	"turn a spooling queue off";
-char	downhelp[] =	"do a 'stop' followed by 'disable' and put a message in status";
-char	helphelp[] =	"get help on commands";
-char	quithelp[] =	"exit lpc";
-char	restarthelp[] =	"kill (if possible) and restart a spooling daemon";
-char	starthelp[] =	"enable printing and start a spooling daemon";
-char	statushelp[] =	"show status of daemon and queue";
-char	stophelp[] =	"stop a spooling daemon after current job completes and disable printing";
-char	topqhelp[] =	"put job at top of printer queue";
-char	uphelp[] =	"enable everything and restart spooling daemon";
+#define aborthelp	"terminate a spooling daemon immediately and disable printing"
+#define cleanhelp	"remove cruft files from a queue"
+#define enablehelp	"turn a spooling queue on"
+#define disablehelp	"turn a spooling queue off"
+#define downhelp	"do a 'stop' followed by 'disable' and put a message in status"
+#define helphelp	"get help on commands"
+#define quithelp	"exit lpc"
+#define restarthelp	"kill (if possible) and restart a spooling daemon"
+#define starthelp	"enable printing and start a spooling daemon"
+#define statushelp	"show status of daemon and queue"
+#define stophelp	"stop a spooling daemon after current job completes and disable printing"
+#define topqhelp	"put job at top of printer queue"
+#define uphelp		"enable everything and restart spooling daemon"
 
 struct cmd cmdtab[] = {
 	{ "abort",	aborthelp,	doabort,	1 },

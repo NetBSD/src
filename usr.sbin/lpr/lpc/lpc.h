@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.h,v 1.5 2003/08/07 11:25:27 agc Exp $	*/
+/*	$NetBSD: lpc.h,v 1.6 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,8 @@
  * Line printer control program.
  */
 struct	cmd {
-	char	*c_name;		/* command name */
-	char	*c_help;		/* help message */
+	const char *c_name;		/* command name */
+	const char *c_help;		/* help message */
 					/* routine to do the work */
 	void	(*c_handler)(int, char *[]);
 	int	c_priv;			/* privileged command */
