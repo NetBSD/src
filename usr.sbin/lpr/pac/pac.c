@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.19 2003/08/07 11:25:32 agc Exp $	*/
+/*	$NetBSD: pac.c,v 1.20 2005/11/28 03:26:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.19 2003/08/07 11:25:32 agc Exp $");
+__RCSID("$NetBSD: pac.c,v 1.20 2005/11/28 03:26:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ int		main(int, char * const []);
 int
 main(int argc, char *const argv[])
 {
-	FILE *acct;
+	FILE *acf;
 	int opt;
 
 	while ((opt = getopt(argc, argv, "P:p:scmr")) != -1) {
@@ -177,13 +177,13 @@ main(int argc, char *const argv[])
 		exit(2);
 	}
 
-	if ((acct = fopen(acctfile, "r")) == NULL)
+	if ((acf = fopen(acctfile, "r")) == NULL)
 		err(1, "%s", acctfile);
-	account(acct);
-	fclose(acct);
-	if ((acct = fopen(sumfile, "r")) != NULL) {
-		account(acct);
-		fclose(acct);
+	account(acf);
+	fclose(acf);
+	if ((acf = fopen(sumfile, "r")) != NULL) {
+		account(acf);
+		fclose(acf);
 	}
 	if (summarize)
 		rewrite();
@@ -206,7 +206,7 @@ main(int argc, char *const argv[])
  * Host names are ignored if the -m flag is present.
  */
 static void
-account(FILE *acct)
+account(FILE *acf)
 {
 	char who[BUFSIZ];
 	char linebuf[BUFSIZ];
@@ -215,7 +215,7 @@ account(FILE *acct)
 	struct hent *hp;
 	int ic;
 
-	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
+	while (fgets(linebuf, BUFSIZ, acf) != NULL) {
 		/* XXX sizeof(who) == 1024 */
 		if (sscanf(linebuf, "%f %d%1023s", &t, &ic, who) == 0) {
 			sscanf(linebuf, "%f %1023s", &t, who);
@@ -295,9 +295,9 @@ rewrite(void)
 {
 	struct hent *hp;
 	int i;
-	FILE *acctf;
+	FILE *acf;
 
-	if ((acctf = fopen(sumfile, "w")) == NULL) {
+	if ((acf = fopen(sumfile, "w")) == NULL) {
 		warn("%s", sumfile);
 		errs++;
 		return;
@@ -305,21 +305,21 @@ rewrite(void)
 	for (i = 0; i < HSHSIZE; i++) {
 		hp = hashtab[i];
 		while (hp != NULL) {
-			fprintf(acctf, "%7.2f\t%s\t%d\n", hp->h_feetpages,
+			fprintf(acf, "%7.2f\t%s\t%d\n", hp->h_feetpages,
 			    hp->h_name, hp->h_count);
 			hp = hp->h_link;
 		}
 	}
-	fflush(acctf);
-	if (ferror(acctf)) {
+	fflush(acf);
+	if (ferror(acf)) {
 		warn("%s", sumfile);
 		errs++;
 	}
-	fclose(acctf);
-	if ((acctf = fopen(acctfile, "w")) == NULL)
+	fclose(acf);
+	if ((acf = fopen(acctfile, "w")) == NULL)
 		warn("%s", acctfile);
 	else
-		fclose(acctf);
+		fclose(acf);
 }
 
 /*
@@ -394,11 +394,11 @@ hash(const char *name)
 static int
 qucmp(const void *a, const void *b)
 {
-	struct hent *h1, *h2;
+	const struct hent *h1, *h2;
 	int r;
 
-	h1 = *(struct hent **)a;
-	h2 = *(struct hent **)b;
+	h1 = *(const struct hent *const *)a;
+	h2 = *(const struct hent *const *)b;
 	if (sort)
 		r = h1->h_feetpages < h2->h_feetpages ?
 		    -1 : h1->h_feetpages > h2->h_feetpages;

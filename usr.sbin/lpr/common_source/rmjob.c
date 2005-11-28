@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.20 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.21 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.20 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.21 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static char	current[40];		/* active control file name */
 
 extern uid_t	uid, euid;		/* real and effective user id's */
 
-static	void	do_unlink(char *);
+static	void	do_unlink(const char *);
 static	void	alarmer(int);
 
 void
@@ -81,25 +81,8 @@ rmjob(void)
 	int i, nitems;
 	int assasinated = 0;
 	struct dirent **files;
-	char *cp;
 
-	if ((i = cgetent(&bp, printcapdb, printer)) == -2)
-		fatal("can't open printer description file");
-	else if (i == -1)
-		fatal("unknown printer");
-	else if (i == -3)
-		fatal("potential reference loop detected in printcap file");
-	if (cgetstr(bp, DEFLP, &LP) < 0)
-		LP = _PATH_DEFDEVLP;
-	if (cgetstr(bp, "rp", &RP) < 0)
-		RP = DEFLP;
-	if (cgetstr(bp, "sd", &SD) < 0)
-		SD = _PATH_DEFSPOOL;
-	if (cgetstr(bp,"lo", &LO) < 0)
-		LO = DEFLOCK;
-	cgetstr(bp, "rm", &RM);
-	if ((cp = checkremote()) != NULL)
-		printf("Warning: %s\n", cp);
+	getprintcap(printer);
 
 	/*
 	 * If the format was `lprm -' and the user isn't the super-user,
@@ -161,7 +144,7 @@ rmjob(void)
  * Return boolean indicating existence of a lock file.
  */
 int
-lockchk(char *s)
+lockchk(const char *s)
 {
 	FILE *fp;
 	int i, n;
@@ -199,7 +182,7 @@ lockchk(char *s)
  * Process a control file.
  */
 void
-process(char *file)
+process(const char *file)
 {
 	FILE *cfp;
 
@@ -222,7 +205,7 @@ process(char *file)
 }
 
 static void
-do_unlink(char *file)
+do_unlink(const char *file)
 {
 	int	ret;
 
@@ -238,10 +221,11 @@ do_unlink(char *file)
  * Do the dirty work in checking
  */
 int
-chk(char *file)
+chk(const char *file)
 {
 	int *r, n;
-	char **u, *cp;
+	char **u;
+	const char *cp;
 	FILE *cfp;
 
 	/*
@@ -294,7 +278,7 @@ chk(char *file)
  * Normal users can only remove the file from where it was sent.
  */
 int
-isowner(char *owner, char *file)
+isowner(const char *owner, const char *file)
 {
 	if (!strcmp(person, root) && (from == host || !strcmp(from, file+6)))
 		return(1);

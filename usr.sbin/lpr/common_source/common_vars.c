@@ -1,4 +1,4 @@
-/*	$NetBSD: common_vars.c,v 1.3 2004/04/24 02:59:19 christos Exp $	*/
+/*	$NetBSD: common_vars.c,v 1.4 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,14 +36,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: common_vars.c,v 1.3 2004/04/24 02:59:19 christos Exp $");
+__RCSID("$NetBSD: common_vars.c,v 1.4 2005/11/28 03:26:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 
 #include "pathnames.h"
 
-char	*name;			/* program name */
 char	*printer;		/* printer name */
 char	host[MAXHOSTNAMELEN+1];	/* host machine name */
 char	*from = host;		/* client's machine name */

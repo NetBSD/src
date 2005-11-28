@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.51 2005/06/02 05:57:03 lukem Exp $	*/
+/*	$NetBSD: lpd.c,v 1.52 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.51 2005/06/02 05:57:03 lukem Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.52 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,6 @@ static void		mcleanup(int);
 static void		doit(void);
 static void		startup(void);
 static void		chkhost(struct sockaddr *, int);
-static int		ckqueue(char *);
 static void		usage(void);
 static struct pollfd	*socksetup(int, int, const char *, int *);
 
@@ -143,8 +142,8 @@ int child_count;
 int
 main(int argc, char **argv)
 {
-	struct sockaddr_storage from;
-	socklen_t fromlen;
+	struct sockaddr_storage frm;
+	socklen_t frmlen;
 	sigset_t nmask, omask;
 	int lfd, errs, i, f, nfds;
 	struct pollfd *socks;
@@ -158,7 +157,7 @@ main(int argc, char **argv)
 	uid = getuid();
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
-	name = argv[0];
+	setprogname(*argv);
 
 	errs = 0;
 	while ((i = getopt(argc, argv, "b:dln:srw:W")) != -1)
@@ -295,7 +294,7 @@ main(int argc, char **argv)
 	/*
 	 * Main loop: accept, do a request, continue.
 	 */
-	memset(&from, 0, sizeof(from));
+	memset(&frm, 0, sizeof(frm));
 	for (;;) {
 		int rv, s;
 		/* "short" so it overflows in about 2 hours */
@@ -322,9 +321,9 @@ main(int argc, char **argv)
 		s = -1;
                 for (i = 0; i < nfds; i++) 
 			if (socks[i].revents & POLLIN) {
-				fromlen = sizeof(from);
+				frmlen = sizeof(frm);
 				s = accept(socks[i].fd,
-				    (struct sockaddr *)&from, &fromlen);
+				    (struct sockaddr *)&frm, &frmlen);
 				break;
 			}
 		if (s < 0) {
@@ -344,10 +343,10 @@ main(int argc, char **argv)
 				(void)close(socks[i].fd);
 			dup2(s, STDOUT_FILENO);
 			(void)close(s);
-			if (from.ss_family != AF_LOCAL) {
+			if (frm.ss_family != AF_LOCAL) {
 				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost((struct sockaddr *)&from, check_options);
+				chkhost((struct sockaddr *)&frm, check_options);
 			} else
 				from_remote = 0;
 			doit();
@@ -392,7 +391,7 @@ char	*person;		/* name of person doing lprm */
 
 char	fromb[NI_MAXHOST];	/* buffer for client's machine name */
 char	cbuf[BUFSIZ];		/* command line buffer */
-char	*cmdnames[] = {
+const char *cmdnames[] = {
 	"null",
 	"printjob",
 	"recvjob",
@@ -558,37 +557,6 @@ startup(void)
 	}
 }
 
-/*
- * Make sure there's some work to do before forking off a child
- */
-static int
-ckqueue(char *cap)
-{
-	struct dirent *d;
-	DIR *dirp;
-	char *spooldir;
-
-	if (cgetstr(cap, "sd", &spooldir) == -1)
-		spooldir = _PATH_DEFSPOOL;
-	if ((dirp = opendir(spooldir)) == NULL) {
-		if (spooldir != _PATH_DEFSPOOL)
-			free(spooldir);
-		return (-1);
-	}
-	while ((d = readdir(dirp)) != NULL) {
-		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
-			continue;	/* daemon control files only */
-		closedir(dirp);
-		if (spooldir != _PATH_DEFSPOOL)
-			free(spooldir);
-		return (1);		/* found something */
-	}
-	closedir(dirp);
-	if (spooldir != _PATH_DEFSPOOL)
-		free(spooldir);
-	return (0);
-}
-
 #define DUMMY ":nobody::"
 
 /*
@@ -600,7 +568,7 @@ chkhost(struct sockaddr *f, int check_opts)
 	struct addrinfo hints, *res, *r;
 	FILE *hostf;
 	int good = 0;
-	char host[NI_MAXHOST], ip[NI_MAXHOST];
+	char hst[NI_MAXHOST], ip[NI_MAXHOST];
 	char serv[NI_MAXSERV];
 	int error;
 #ifdef LIBWRAP
@@ -617,22 +585,22 @@ chkhost(struct sockaddr *f, int check_opts)
 		fatal("Connect from invalid port (%s)", serv);
 
 	/* Need real hostname for temporary filenames */
-	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+	error = getnameinfo(f, f->sa_len, hst, sizeof(hst), NULL, 0,
 			    NI_NAMEREQD);
 	if (error) {
-		error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+		error = getnameinfo(f, f->sa_len, hst, sizeof(hst), NULL, 0,
 				    NI_NUMERICHOST);
 		if (error)
 			fatal("Host name for your address unknown");
 		else
-			fatal("Host name for your address (%s) unknown", host);
+			fatal("Host name for your address (%s) unknown", hst);
 	}
 
-	(void)strlcpy(fromb, host, sizeof(fromb));
+	(void)strlcpy(fromb, hst, sizeof(fromb));
 	from = fromb;
 
 	/* need address in stringform for comparison (no DNS lookup here) */
-	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+	error = getnameinfo(f, f->sa_len, hst, sizeof(hst), NULL, 0,
 			    NI_NUMERICHOST);
 	if (error)
 		fatal("Cannot print address");
@@ -643,20 +611,20 @@ chkhost(struct sockaddr *f, int check_opts)
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	error = getaddrinfo(fromb, NULL, &hints, &res);
 	if (error) {
-		fatal("hostname for your address (%s) unknown: %s", host,
+		fatal("hostname for your address (%s) unknown: %s", hst,
 		    gai_strerror(error));
 	}
 	good = 0;
 	for (r = res; good == 0 && r; r = r->ai_next) {
 		error = getnameinfo(r->ai_addr, r->ai_addrlen, ip, sizeof(ip),
 				    NULL, 0, NI_NUMERICHOST);
-		if (!error && !strcmp(host, ip))
+		if (!error && !strcmp(hst, ip))
 			good = 1;
 	}
 	if (res)
 		freeaddrinfo(res);
 	if (good == 0)
-		fatal("address for your hostname (%s) not matched", host);
+		fatal("address for your hostname (%s) not matched", hst);
 
 	setproctitle("serving %s", from);
 
@@ -696,7 +664,8 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-dlrsW] [-b bind-address] [-n maxchild] "
+	(void)fprintf(stderr,
+	    "Usage: %s [-dlrsW] [-b bind-address] [-n maxchild] "
 	    "[-w maxwait] [port]\n", getprogname());
 	exit(1);
 }
