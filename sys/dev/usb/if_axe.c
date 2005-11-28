@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.11 2005/11/10 12:05:01 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.12 2005/11/28 13:31:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.11 2005/11/10 12:05:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.12 2005/11/28 13:31:09 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -839,7 +839,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    USBDEVNAME(sc->axe_dev), usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -926,7 +926,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->axe_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_TX]);
 		splx(s);
 		return;
 	}
