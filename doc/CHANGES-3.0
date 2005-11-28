@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.324 2005/11/27 23:12:08 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.325 2005/11/28 01:16:24 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14544,4 +14544,9 @@ usr.bin/gzip/zuncompress.c			1.6
 	other programs that compressed >4GB of data.
 	PR#32070, PR#32105.
 	[mrg, ticket #1009]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC4.
 
