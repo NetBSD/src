@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.15 2005/11/28 22:06:20 dan Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.16 2005/11/28 22:28:36 dan Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.15 2005/11/28 22:06:20 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.16 2005/11/28 22:28:36 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -931,6 +931,12 @@ tmpfs_mem_info(boolean_t total)
 		size -= uvmexp.swpgonly;
 	}
 	size += uvmexp.free;
+	size += uvmexp.filepages;
+	if (size > uvmexp.wired) {
+		size -= uvmexp.wired;
+	} else {
+		size = 0;
+	}
 
 	return size;
 }
