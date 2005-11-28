@@ -1,4 +1,4 @@
-/*	$NetBSD: fatal.c,v 1.4 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: fatal.c,v 1.5 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fatal.c,v 1.4 2003/08/07 11:25:25 agc Exp $");
+__RCSID("$NetBSD: fatal.c,v 1.5 2005/11/28 03:26:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ fatal(const char *msg, ...)
 	va_start(ap, msg);
 	if (from != host)
 		(void)printf("%s: ", host);
-	(void)printf("%s: ", name);
+	(void)printf("%s: ", getprogname());
 	if (printer)
 		(void)printf("%s: ", printer);
 	(void)vprintf(msg, ap);

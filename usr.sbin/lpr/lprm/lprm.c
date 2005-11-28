@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.16 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: lprm.c,v 1.17 2005/11/28 03:26:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.16 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.17 2005/11/28 03:26:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,7 @@ uid_t	 uid, euid;		/* real and effective user id's */
 
 static char	luser[16];	/* buffer for person */
 
-static void usage(void);
-int main(int, char *[]);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -91,7 +90,7 @@ main(int argc, char *argv[])
 	uid = getuid();
 	euid = geteuid();
 	seteuid(uid);	/* be safe */
-	name = argv[0];
+	setprogname(*argv);
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
 	openlog("lpd", 0, LOG_LPR);
@@ -157,7 +156,8 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr,
-		"usage: lprm [-] [-Pprinter] [-w maxwait] [[job #] [user] ...]\n");
+	(void)fprintf(stderr,
+	    "Usage: %s [-] [-Pprinter] [-w maxwait] [[job #] [user] ...]\n",
+	    getprogname());
 	exit(2);
 }

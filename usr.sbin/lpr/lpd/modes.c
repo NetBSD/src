@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.5 2003/08/07 11:25:28 agc Exp $	*/
+/*	$NetBSD: modes.c,v 1.6 2005/11/28 03:26:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: modes.c,v 1.5 2003/08/07 11:25:28 agc Exp $");
+__RCSID("$NetBSD: modes.c,v 1.6 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: modes.c,v 1.5 2003/08/07 11:25:28 agc Exp $");
 #include "extern.h"
 
 struct modes {
-	char *name;
+	const char *name;
 	long set;
 	long unset;
 };

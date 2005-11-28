@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.18 2004/04/24 02:59:19 christos Exp $	*/
+/*	$NetBSD: lp.h,v 1.19 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,51 +36,50 @@
  * Global definitions for the line printer system.
  */
 
-extern char	*AF;		/* accounting file */
-extern long	 BR;		/* baud rate if lp is a tty */
-extern char	*CF;		/* name of cifplot filter (per job) */
-extern char	*DF;		/* name of tex filter (per job) */
-extern long	 DU;		/* daemon user-id */
-extern long	 FC;		/* flags to clear if lp is a tty */
-extern char	*FF;		/* form feed string */
-extern long	 FS;		/* flags to set if lp is a tty */
-extern char	*GF;		/* name of graph(1G) filter (per job) */
-extern long	 HL;		/* print header last */
-extern char	*IF;		/* name of input filter (created per job) */
-extern char	*LF;		/* log file for error messages */
-extern char	*LO;		/* lock file name */
-extern char	*LP;		/* line printer device name */
-extern long	 MC;		/* maximum number of copies allowed */
-extern char	*MS;		/* stty flags to set if lp is a tty */
-extern long	 MX;		/* maximum number of blocks to copy */
-extern char	*NF;		/* name of ditroff(1) filter (per job) */
-extern char	*OF;		/* name of output filter (created once) */
-extern long	 PL;		/* page length */
-extern long	 PW;		/* page width */
-extern long	 PX;		/* page width in pixels */
-extern long	 PY;		/* page length in pixels */
-extern char	*RF;		/* name of fortran text filter (per job) */
-extern char	*RG;		/* restricted group */
-extern char	*RM;		/* remote machine name */
-extern char	*RP;		/* remote printer name */
-extern long	 RS;		/* restricted to those with local accounts */
-extern long	 RW;		/* open LP for reading and writing */
-extern long	 SB;		/* short banner instead of normal header */
-extern long	 SC;		/* suppress multiple copies */
-extern char	*SD;		/* spool directory */
-extern long	 SF;		/* suppress FF on each print job */
-extern long	 SH;		/* suppress header page */
-extern char	*ST;		/* status file name */
-extern char	*TF;		/* name of troff(1) filter (per job) */
-extern char	*TR;		/* trailer string to be output when Q empties */
-extern char	*VF;		/* name of raster filter (per job) */
-extern long	 XC;		/* flags to clear for local mode */
-extern long	 XS;		/* flags to set for local mode */
+extern const char	*AF;	/* accounting file */
+extern long		 BR;	/* baud rate if lp is a tty */
+extern const char	*CF;	/* name of cifplot filter (per job) */
+extern const char	*DF;	/* name of tex filter (per job) */
+extern long		 DU;	/* daemon user-id */
+extern long		 FC;	/* flags to clear if lp is a tty */
+extern const char	*FF;	/* form feed string */
+extern long		 FS;	/* flags to set if lp is a tty */
+extern const char	*GF;	/* name of graph(1G) filter (per job) */
+extern long		 HL;	/* print header last */
+extern const char	*IF;	/* name of input filter (created per job) */
+extern const char	*LF;	/* log file for error messages */
+extern const char	*LO;	/* lock file name */
+extern const char	*LP;	/* line printer device name */
+extern long		 MC;	/* maximum number of copies allowed */
+extern const char	*MS;	/* stty flags to set if lp is a tty */
+extern long		 MX;	/* maximum number of blocks to copy */
+extern const char	*NF;	/* name of ditroff(1) filter (per job) */
+extern const char	*OF;	/* name of output filter (created once) */
+extern long		 PL;	/* page length */
+extern long		 PW;	/* page width */
+extern long		 PX;	/* page width in pixels */
+extern long		 PY;	/* page length in pixels */
+extern const char	*RF;	/* name of fortran text filter (per job) */
+extern const char	*RG;	/* restricted group */
+extern const char	*RM;	/* remote machine name */
+extern const char	*RP;	/* remote printer name */
+extern long		 RS;	/* restricted to those with local accounts */
+extern long		 RW;	/* open LP for reading and writing */
+extern long		 SB;	/* short banner instead of normal header */
+extern long		 SC;	/* suppress multiple copies */
+extern const char	*SD;	/* spool directory */
+extern long		 SF;	/* suppress FF on each print job */
+extern long		 SH;	/* suppress header page */
+extern const char	*ST;	/* status file name */
+extern const char	*TF;	/* name of troff(1) filter (per job) */
+extern const char	*TR;	/* trailer string to be output when Q empties */
+extern const char	*VF;	/* name of raster filter (per job) */
+extern long		 XC;	/* flags to clear for local mode */
+extern long		 XS;	/* flags to set for local mode */
 
 extern char	line[BUFSIZ];
 extern char	*bp;		/* pointer into printcap buffer */
-extern char	*name;		/* program name */
-extern char	*printer;	/* printer name */
+extern const char *printer;	/* printer name */
 				/* host machine name */
 extern char	host[MAXHOSTNAMELEN + 1];
 extern char	*from;		/* client's machine name */
@@ -101,28 +100,30 @@ __BEGIN_DECLS
 struct dirent;
 
 void     blankfill(int);
-char	*checkremote(void);
-int      chk(char *);
+const char *checkremote(void);
+int      chk(const char *);
 void     displayq(int);
-void     dump(char *, char *, int);
+void     dump(const char *, const char *, int);
 void	 fatal(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 int	 getline(FILE *);
-int	 getport(char *, int);
+int	 getport(const char *, int);
 int	 getq(struct queue *(*[]));
 void     header(void);
-void     inform(char *);
-int      inlist(char *, char *);
+void     inform(const char *);
+int      inlist(const char *, const char *);
 int      iscf(const struct dirent *);
-int      isowner(char *, char *);
-void     ldump(char *, char *, int);
-int      lockchk(char *);
+int      isowner(const char *, const char *);
+void     ldump(const char *, const char *, int);
+int      lockchk(const char *);
 void     prank(int);
-void     process(char *);
+void     process(const char *);
 void     rmjob(void);
 void     rmremote(void);
-void     show(char *, char *, int);
-int      startdaemon(char *);
+void     show(const char *, const char *, int);
+int      startdaemon(const char *);
 void     nodaemon(void);
 void     delay(int);
+void	 getprintcap(const char *);
+int	 ckqueue(char *);
 __END_DECLS

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/01/07 08:00:58 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2005/11/28 03:26:06 christos Exp $
 
 .include <bsd.own.mk>
 
+WARNS=4
 LIBCOMMON != cd ${.CURDIR}/../common_source && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common_source
 DPADD+=	${LIBCOMMON}/libcommon.a

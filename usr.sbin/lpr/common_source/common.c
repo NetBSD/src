@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.27 2004/11/16 06:00:37 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.28 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.27 2004/11/16 06:00:37 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.28 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,53 +60,54 @@ __RCSID("$NetBSD: common.c,v 1.27 2004/11/16 06:00:37 itojun Exp $");
 #include <string.h>
 #include <ifaddrs.h>
 #include "lp.h"
+#include "lp.local.h"
 #include "pathnames.h"
 
 /*
  * Routines and data common to all the line printer functions.
  */
 
-char	*AF;		/* accounting file */
-long	 BR;		/* baud rate if lp is a tty */
-char	*CF;		/* name of cifplot filter (per job) */
-char	*DF;		/* name of tex filter (per job) */
-long	 DU;		/* daeomon user-id */
-long	 FC;		/* flags to clear if lp is a tty */
-char	*FF;		/* form feed string */
-long	 FS;		/* flags to set if lp is a tty */
-char	*GF;		/* name of graph(1G) filter (per job) */
-long	 HL;		/* print header last */
-char	*IF;		/* name of input filter (created per job) */
-char	*LF;		/* log file for error messages */
-char	*LO;		/* lock file name */
-char	*LP;		/* line printer device name */
-long	 MC;		/* maximum number of copies allowed */
-char	*MS;		/* stty flags to set if lp is a tty */
-long	 MX;		/* maximum number of blocks to copy */
-char	*NF;		/* name of ditroff filter (per job) */
-char	*OF;		/* name of output filter (created once) */
-char	*PF;		/* name of vrast filter (per job) */
-long	 PL;		/* page length */
-long	 PW;		/* page width */
-long	 PX;		/* page width in pixels */
-long	 PY;		/* page length in pixels */
-char	*RF;		/* name of fortran text filter (per job) */
-char    *RG;		/* resricted group */
-char	*RM;		/* remote machine name */
-char	*RP;		/* remote printer name */
-long	 RS;		/* restricted to those with local accounts */
-long	 RW;		/* open LP for reading and writing */
-long	 SB;		/* short banner instead of normal header */
-long	 SC;		/* suppress multiple copies */
-char	*SD;		/* spool directory */
-long	 SF;		/* suppress FF on each print job */
-long	 SH;		/* suppress header page */
-char	*ST;		/* status file name */
-char	*TF;		/* name of troff filter (per job) */
-char	*TR;		/* trailer string to be output when Q empties */
-char	*VF;		/* name of vplot filter (per job) */
-long	 XC;		/* flags to clear for local mode */
-long	 XS;		/* flags to set for local mode */
+const char	*AF;		/* accounting file */
+long		 BR;		/* baud rate if lp is a tty */
+const char	*CF;		/* name of cifplot filter (per job) */
+const char	*DF;		/* name of tex filter (per job) */
+long		 DU;		/* daeomon user-id */
+long		 FC;		/* flags to clear if lp is a tty */
+const char	*FF;		/* form feed string */
+long		 FS;		/* flags to set if lp is a tty */
+const char	*GF;		/* name of graph(1G) filter (per job) */
+long		 HL;		/* print header last */
+const char	*IF;		/* name of input filter (created per job) */
+const char	*LF;		/* log file for error messages */
+const char	*LO;		/* lock file name */
+const char	*LP;		/* line printer device name */
+long		 MC;		/* maximum number of copies allowed */
+const char	*MS;		/* stty flags to set if lp is a tty */
+long		 MX;		/* maximum number of blocks to copy */
+const char	*NF;		/* name of ditroff filter (per job) */
+const char	*OF;		/* name of output filter (created once) */
+const char	*PF;		/* name of vrast filter (per job) */
+long		 PL;		/* page length */
+long		 PW;		/* page width */
+long		 PX;		/* page width in pixels */
+long		 PY;		/* page length in pixels */
+const char	*RF;		/* name of fortran text filter (per job) */
+const char	*RG;		/* resricted group */
+const char	*RM;		/* remote machine name */
+const char	*RP;		/* remote printer name */
+long		 RS;		/* restricted to those with local accounts */
+long		 RW;		/* open LP for reading and writing */
+long		 SB;		/* short banner instead of normal header */
+long		 SC;		/* suppress multiple copies */
+const char	*SD;		/* spool directory */
+long		 SF;		/* suppress FF on each print job */
+long		 SH;		/* suppress header page */
+const char	*ST;		/* status file name */
+const char	*TF;		/* name of troff filter (per job) */
+const char	*TR;		/* trailer string to be output when Q empties */
+const char	*VF;		/* name of vplot filter (per job) */
+long		 XC;		/* flags to clear for local mode */
+long		 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
 int	remote;		/* true if sending files to a remote host */
@@ -121,7 +122,7 @@ static int compar(const void *, const void *);
  * Most of this code comes from rcmd.c.
  */
 int
-getport(char *rhost, int rport)
+getport(const char *rhost, int rport)
 {
 	struct addrinfo hints, *res, *r;
 	u_int timo = 1;
@@ -289,18 +290,21 @@ errdone:
 static int
 compar(const void *p1, const void *p2)
 {
-	if ((*(struct queue **)p1)->q_time < (*(struct queue **)p2)->q_time)
-		return(-1);
-	if ((*(struct queue **)p1)->q_time > (*(struct queue **)p2)->q_time)
-		return(1);
-	return(0);
+	const struct queue *const *q1 = p1;
+	const struct queue *const *q2 = p2;
+
+	if ((*q1)->q_time < (*q2)->q_time)
+		return -1;
+	if ((*q1)->q_time > (*q2)->q_time)
+		return 1;
+	return 0;
 }
 
 /*
  * Figure out whether the local machine is the same
  * as the remote machine (RM) entry (if it exists).
  */
-char *
+const char *
 checkremote(void)
 {
 	char lname[NI_MAXHOST], rname[NI_MAXHOST];
@@ -394,4 +398,60 @@ delay(int n)
 	tdelay.tv_sec = n / 1000;
 	tdelay.tv_nsec = (n % 1000) * 1000000;
 	nanosleep(&tdelay, NULL);
+}
+
+void
+getprintcap(const char *pr)
+{
+	char *cp;
+	const char *dp;
+	int i;
+
+	if ((i = cgetent(&bp, printcapdb, pr)) == -2)
+		fatal("can't open printer description file");
+	else if (i == -1)
+		fatal("unknown printer: %s", pr);
+	else if (i == -3)
+		fatal("potential reference loop detected in printcap file");
+
+	LP = cgetstr(bp, DEFLP, &cp) == -1 ? _PATH_DEFDEVLP : cp;
+	RP = cgetstr(bp, "rp", &cp) == -1 ? DEFLP : cp;
+	SD = cgetstr(bp, "sd", &cp) == -1 ? _PATH_DEFSPOOL : cp;
+	LO = cgetstr(bp, "lo", &cp) == -1 ? DEFLOCK : cp;
+	ST = cgetstr(bp, "st", &cp) == -1 ? DEFSTAT : cp;
+	RM = cgetstr(bp, "rm", &cp) == -1 ? NULL : cp;
+	if ((dp = checkremote()) != NULL)
+		printf("Warning: %s\n", dp);
+	LF = cgetstr(bp, "lf", &cp) == -1 ? _PATH_CONSOLE : cp;
+}
+
+/*
+ * Make sure there's some work to do before forking off a child
+ */
+int
+ckqueue(char *cap)
+{
+	struct dirent *d;
+	DIR *dirp;
+	const char *spooldir;
+	char *sd;
+	int rv = 0;
+
+	spooldir = cgetstr(cap, "sd", &sd) == -1 ? _PATH_DEFSPOOL : sd;
+	if ((dirp = opendir(spooldir)) == NULL) {
+		rv = -1;
+		goto out;
+	}
+	while ((d = readdir(dirp)) != NULL) {
+		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
+			continue;	/* daemon control files only */
+		rv = 1;
+		break;
+	}
+out:
+	if (dirp != NULL)
+		closedir(dirp);
+	if (spooldir != sd)
+		free(sd);
+	return (0);
 }
