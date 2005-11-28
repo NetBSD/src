@@ -169,11 +169,11 @@ extern "C" {
 # if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
 #  define BN_ULLONG	unsigned __int64
 # else
-#  define BN_ULLONG	unsigned long long
+#  define BN_ULLONG	u_int64_t
 # endif
 #endif
-#define BN_ULONG	unsigned long
-#define BN_LONG		long
+#define BN_ULONG	u_int32_t
+#define BN_LONG		int32_t
 #define BN_BITS		64
 #define BN_BYTES	4
 #define BN_BITS2	32
