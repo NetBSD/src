@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.82 2005/11/26 12:17:08 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.83 2005/11/28 20:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ output to the kernel msgbuf:
 To specify commands which will be executed on each entry to
 .Ic ddb :
 .Cd options DDB_COMMANDONENTER="trace;show registers"
-In this case, "trace" and then "show register" will be executed automatically.
+In this case, "trace" and then "show registers" will be executed automatically.
 .Sh DESCRIPTION
 .Nm
 is the in-kernel debugger.
@@ -1238,8 +1238,8 @@ It may be followed by a
 and modifiers as described above.
 .El
 .Sh SEE ALSO
-.Xr options 4 ,
 .Xr reboot 2 ,
+.Xr options 4 ,
 .Xr reboot 8 ,
 .Xr sysctl 8 ,
 .Xr cnmagic 9
