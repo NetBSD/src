@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.52 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.53 2005/11/28 19:00:49 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.52 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.53 2005/11/28 19:00:49 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
 
 /* VIA VT823xx revision number */
+#define VIA_REV_8233PRE	0x10
 #define VIA_REV_8233C	0x20
 #define VIA_REV_8233	0x30
 #define VIA_REV_8233A	0x40
@@ -321,6 +322,10 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		snprintf(sc->sc_revision, sizeof(sc->sc_revision), "0x%02X", r);
 		switch(r) {
+		case VIA_REV_8233PRE:
+			/* same as 8233, but should not be in the market */
+			revnum = "3-Pre";
+			break;
 		case VIA_REV_8233C:
 			/* 2 rec, 4 pb, 1 multi-pb */
 			revnum = "3C";
