@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.325 2005/11/28 01:16:24 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.326 2005/11/28 15:39:29 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14549,4 +14549,9 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC4.
+
+usr.sbin/pkg_install/lib/lib.h			1.80
+
+	Correct PAX_CMD to be pax.
+	[ben, ticket #1010]
 
