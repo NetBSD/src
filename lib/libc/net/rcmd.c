@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.60 2005/04/19 03:20:50 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.61 2005/11/28 14:18:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.60 2005/04/19 03:20:50 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.61 2005/11/28 14:18:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -581,7 +581,7 @@ rresvport_af(alport, family)
 }
 
 int	__check_rhosts_file = 1;
-char	*__rcmd_errstr;
+const char *__rcmd_errstr;
 
 int
 ruserok(rhost, superuser, ruser, luser)
@@ -666,7 +666,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	_DIAGASSERT(luser != NULL);
 
 	/*LINTED const castaway*/
-	sa = (struct sockaddr *)(void *)raddr;
+	sa = __UNCONST(raddr);
 
 	__rcmd_errstr = NULL;
 
