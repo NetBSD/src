@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.66 2005/11/23 10:03:56 tron Exp $	*/
+/*	$NetBSD: uhid.c,v 1.67 2005/11/28 13:14:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.66 2005/11/23 10:03:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.67 2005/11/28 13:14:48 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,9 @@ uhid_match(struct device *parent, struct cfdata *match, void *aux)
 	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
 
 	if (match->cf_flags & 1)
-		return (UMATCH_VENDOR_PRODUCT_REV);
-	return (UMATCH_IFACECLASS_GENERIC);
+		return (UMATCH_HIGHEST);
+	else
+		return (UMATCH_IFACECLASS_GENERIC);
 }
 
 void
