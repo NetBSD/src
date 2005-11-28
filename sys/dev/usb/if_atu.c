@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $ */
+/*	$NetBSD: if_atu.c,v 1.13 2005/11/28 13:31:09 augustss Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.12 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.13 2005/11/28 13:31:09 augustss Exp $");
 
 #include "bpfilter.h"
 
@@ -1600,7 +1600,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    USBDEVNAME(sc->atu_dev), usbd_errstr(status)));
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->atu_ep[ATU_ENDPT_RX]);
 		goto done;
 	}
@@ -1682,7 +1682,7 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		DPRINTF(("%s: usb error on tx: %s\n", USBDEVNAME(sc->atu_dev),
 		    usbd_errstr(status)));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->atu_ep[ATU_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->atu_ep[ATU_ENDPT_TX]);
 		return;
 	}
 

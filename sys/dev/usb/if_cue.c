@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.43 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.44 2005/11/28 13:31:09 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.44 2005/11/28 13:31:09 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -798,7 +798,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->cue_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->cue_ep[CUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->cue_ep[CUE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -891,7 +891,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->cue_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->cue_ep[CUE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->cue_ep[CUE_ENDPT_TX]);
 		splx(s);
 		return;
 	}
