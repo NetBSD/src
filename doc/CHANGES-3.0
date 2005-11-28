@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.327 2005/11/28 15:48:42 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.328 2005/11/28 20:11:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14560,4 +14560,11 @@ etc/etc.cobalt/Makefile.inc			1.2
 	Build small INSTALL kernel for bootstrap with the cobalt native
 	bootloader.
 	[tsutsui, ticket #1011]
+
+distrib/amd64/floppies/common/Makefile.ramdisk	1.4
+sys/arch/amd64/conf/INSTALL			1.41-1.42
+
+	Remove some exotic network drivers, restore isp(4), and
+	reduce the size of the installation kernel for amd64.
+	[tron, ticket #1013]
 
