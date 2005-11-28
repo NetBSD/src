@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.6 2003/08/07 11:25:27 agc Exp $	*/
+/*	$NetBSD: key.c,v 1.7 2005/11/28 03:26:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: key.c,v 1.6 2003/08/07 11:25:27 agc Exp $");
+__RCSID("$NetBSD: key.c,v 1.7 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ void	f_tty(struct info *);
 __END_DECLS
 
 static struct key {
-	char *name;				/* name */
+	const char *name;			/* name */
 	void (*f)(struct info *);		/* function */
 #define	F_NEEDARG	0x01			/* needs an argument */
 #define	F_OFFOK		0x02			/* can turn off */
@@ -96,7 +96,8 @@ static int
 c_key(const void *a, const void *b)
 {
 
-        return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
+        return (strcmp(((const struct key *)a)->name,
+	    ((const struct key *)b)->name));
 }
 
 int

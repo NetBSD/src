@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.19 2004/04/21 01:05:48 christos Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.20 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.19 2004/04/21 01:05:48 christos Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.20 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: recvjob.c,v 1.19 2004/04/21 01:05:48 christos Exp $");
 
 static char	 dfname[NAME_MAX];	/* data files */
 static int	 minfree;       /* keep at least minfree blocks available */
-static char	*sp = "";
+static const char *sp = "";
 static char	 tfname[NAME_MAX];	/* tmp copy of cf before linking */
 
 static int        chksize(int);
@@ -78,7 +78,7 @@ static void       frecverr(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 static int        noresponse(void);
 static void       rcleanup(int);
-static int        read_number(char *);
+static int        read_number(const char *);
 static int        readfile(char *, int);
 static int        readjob(void);
 
@@ -87,25 +87,9 @@ void
 recvjob(void)
 {
 	struct stat stb;
-	int status, fd;
+	int fd;
 
-	/*
-	 * Perform lookup for printer name or abbreviation
-	 */
-	if ((status = cgetent(&bp, printcapdb, printer)) == -2)
-		frecverr("cannot open printer description file");
-	else if (status == -1)
-		frecverr("unknown printer %s", printer);
-	else if (status == -3)
-		fatal("potential reference loop detected in printcap file");
-	
-	if (cgetstr(bp, "lf", &LF) == -1)
-		LF = _PATH_CONSOLE;
-	if (cgetstr(bp, "sd", &SD) == -1)
-		SD = _PATH_DEFSPOOL;
-	if (cgetstr(bp, "lo", &LO) == -1)
-		LO = DEFLOCK;
-
+	getprintcap(printer);
 	/* Set up the log file. */
 	if ((fd = open(LF, O_WRONLY|O_APPEND, 0664)) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
@@ -303,7 +287,7 @@ chksize(int size)
 }
 
 static int
-read_number(char *fn)
+read_number(const char *fn)
 {
 	char lin[80];
 	FILE *fp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.16 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: lpc.c,v 1.17 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.16 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.17 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,10 @@ uid_t	uid, euid;
 jmp_buf	toplevel;
 
 static void		 cmdscanner(int);
-static struct cmd	*getcmd(char *);
+static struct cmd	*getcmd(const char *);
 static void		 intr(int);
 static void		 makeargv(void);
-static int		 ingroup(char *);
+static int		 ingroup(const char *);
 int			 main(int, char *p[]);
 
 int
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 	euid = geteuid();
 	uid = getuid();
 	seteuid(uid);
-	name = argv[0];
+	setprogname(argv[0]);
 	openlog("lpd", 0, LOG_LPR);
 
 	if (--argc > 0) {
@@ -135,11 +135,11 @@ intr(int signo)
  * Command parser.
  */
 static void
-cmdscanner(int top)
+cmdscanner(int tp)
 {
 	struct cmd *c;
 
-	if (!top)
+	if (!tp)
 		putchar('\n');
 	for (;;) {
 		if (fromatty) {
@@ -170,9 +170,9 @@ cmdscanner(int top)
 }
 
 static struct cmd *
-getcmd(char *name)
+getcmd(const char *name)
 {
-	char *p, *q;
+	const char *p, *q;
 	struct cmd *c, *found;
 	int nmatches, longest;
 
@@ -287,9 +287,9 @@ help(int argc, char *argv[])
  * return non-zero if the user is a member of the given group
  */
 static int
-ingroup(char *grname)
+ingroup(const char *grname)
 {
-	static struct group *gptr=NULL;
+	static struct group *gptr = NULL;
 	static gid_t groups[NGROUPS];
 	static int ngroups;
 	gid_t gid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.15 2004/10/30 08:44:26 dsl Exp $	*/
+/*	$NetBSD: lpq.c,v 1.16 2005/11/28 03:26:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.15 2004/10/30 08:44:26 dsl Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.16 2005/11/28 03:26:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,7 @@ char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 uid_t	uid, euid;
 
-static int ckqueue(char *);
-static void usage(void);
-int main(int, char *[]);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -81,10 +79,10 @@ main(int argc, char *argv[])
 	int	ch, aflag, lflag;
 	char	*buf, *cp;
 
+	setprogname(*argv);
 	euid = geteuid();
 	uid = getuid();
 	seteuid(uid);
-	name = *argv;
 	if (gethostname(host, sizeof(host)))
 		err(1, "lpq: gethostname");
 	host[sizeof(host) - 1] = '\0';
@@ -149,40 +147,12 @@ main(int argc, char *argv[])
 		}
 	} else
 		displayq(lflag);
-	exit(0);
-}
-
-static int
-ckqueue(char *cap)
-{
-	struct dirent *d;
-	DIR *dirp;
-	char *spooldir;
-
-	if (cgetstr(cap, "sd", &spooldir) == -1)
-		spooldir = _PATH_DEFSPOOL;
-	if ((dirp = opendir(spooldir)) == NULL) {
-		if (spooldir != _PATH_DEFSPOOL)
-			free(spooldir);
-		return (-1);
-	}
-	while ((d = readdir(dirp)) != NULL) {
-		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
-			continue;	/* daemon control files only */
-		closedir(dirp);
-		if (spooldir != _PATH_DEFSPOOL)
-			free(spooldir);
-		return (1);		/* found something */
-	}
-	closedir(dirp);
-	if (spooldir != _PATH_DEFSPOOL)
-		free(spooldir);
-	return (0);
+	return 0;
 }
 
 static void
 usage(void)
 {
-	puts("usage: lpq [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]");
+	(void)fprintf(stderr, "Usage: %s [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]", getprogname());
 	exit(1);
 }
