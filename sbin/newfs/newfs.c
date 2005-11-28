@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.86 2005/09/23 12:10:35 jmmv Exp $	*/
+/*	$NetBSD: newfs.c,v 1.87 2005/11/28 22:35:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.86 2005/09/23 12:10:35 jmmv Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.87 2005/11/28 22:35:06 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,8 +514,9 @@ main(int argc, char *argv[])
 	}
 
 	if (pp != NULL && fssize > pp->p_size)
-		errx(1, "maximum file system size on `%s' is %d sectors",
-		    special, pp->p_size);
+		errx(1, "size %" PRIu64 " exceeds maximum file system size on "
+		    "`%s' of %u sectors",
+		    fssize, special, pp->p_size);
 
 	/* XXXLUKEM: only ftruncate() regular files ? (dsl: or at all?) */
 	if (Fflag && fso != -1
