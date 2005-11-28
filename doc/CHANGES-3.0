@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.326 2005/11/28 15:39:29 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.327 2005/11/28 15:48:42 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14554,4 +14554,10 @@ usr.sbin/pkg_install/lib/lib.h			1.80
 
 	Correct PAX_CMD to be pax.
 	[ben, ticket #1010]
+
+etc/etc.cobalt/Makefile.inc			1.2
+
+	Build small INSTALL kernel for bootstrap with the cobalt native
+	bootloader.
+	[tsutsui, ticket #1011]
 
