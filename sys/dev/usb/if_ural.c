@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.8.8.1 2005/11/22 16:08:15 yamt Exp $ */
+/*	$NetBSD: if_ural.c,v 1.8.8.2 2005/11/29 21:23:16 yamt Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.8.8.1 2005/11/22 16:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.8.8.2 2005/11/29 21:23:16 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -816,7 +816,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(status));
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_tx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
 
 		ifp->if_oerrors++;
 		return;
@@ -859,7 +859,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_rx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_rx_pipeh);
 		goto skip;
 	}
 

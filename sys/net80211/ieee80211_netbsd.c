@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.7.8.1 2005/11/22 16:08:16 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.7.8.2 2005/11/29 21:23:30 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,11 +30,11 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.8.1 2005/11/22 16:08:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.8.2 2005/11/29 21:23:30 yamt Exp $");
 #endif
 
 /*
- * IEEE 802.11 support (FreeBSD-specific code)
+ * IEEE 802.11 support (NetBSD-specific code)
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.8.1 2005/11/22 16:08:16 yam
 #include <sys/mbuf.h>   
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
 
 #include <machine/stdarg.h>
 
@@ -75,8 +76,8 @@ typedef void (*ieee80211_setup_func)(void);
 
 __link_set_decl(ieee80211_funcs, ieee80211_setup_func);
 
-void
-ieee80211_init(void)
+static void
+ieee80211_init0(void)
 {
 	ieee80211_setup_func * const *ieee80211_setup, f;
 
@@ -84,6 +85,14 @@ ieee80211_init(void)
 		f = (void*)*ieee80211_setup;
 		(*f)();
 	}
+}
+
+void
+ieee80211_init(void)
+{
+	static ONCE_DECL(ieee80211_init_once);
+
+	RUN_ONCE(&ieee80211_init_once, ieee80211_init0);
 }
 
 static int

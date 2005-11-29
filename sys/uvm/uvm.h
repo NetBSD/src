@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.41 2005/10/30 11:56:51 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.41.2.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  *
@@ -151,6 +151,10 @@ UVMHIST_DECL(pdhist);
 UVMHIST_DECL(ubchist);
 UVMHIST_DECL(loanhist);
 #endif
+
+extern struct evcnt uvm_ra_total;
+extern struct evcnt uvm_ra_hit;
+extern struct evcnt uvm_ra_miss;
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the

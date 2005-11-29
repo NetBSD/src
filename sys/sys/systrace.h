@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15 2005/06/30 18:20:24 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15.8.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -228,7 +228,9 @@ void systrace_namei(struct nameidata *);
 void systrace_exit(struct proc *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);
+#ifndef __NetBSD__
 void systrace_init(void);
+#endif /* ! __NetBSD__ */
 void systrace_execve0(struct proc *);
 void systrace_execve1(char *, struct proc *);
 int systrace_scriptname(struct proc *, char *);

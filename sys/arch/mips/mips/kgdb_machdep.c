@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9.24.1 2005/11/29 21:22:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9.24.1 2005/11/29 21:22:59 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -285,7 +285,7 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.37 2005/11/06 10:35:13 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.37.2.1 2005/11/29 21:23:03 yamt Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.37 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.37.2.1 $"
 
 maxusers	32
 
@@ -257,6 +257,7 @@ urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 # O2 SCSI
 ahc* 		at pci? dev ? function ?
 esiop*		at pci? dev ? function ?
+njs*		at pci? dev ? function ?
 pcscp*		at pci? dev ? function ?
 scsibus* 	at scsi?
 
@@ -402,7 +403,8 @@ midi*   at midibus?
 
 # Pseudo-Devices
 
-pseudo-device	crypto			# opencrypto framework
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

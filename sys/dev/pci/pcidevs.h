@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.736.2.1 2005/11/22 16:08:11 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.736.2.2 2005/11/29 21:23:15 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.736 2005/11/18 21:55:14 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.738 2005/11/27 10:17:26 jdolecek Exp
  */
 
 /*
@@ -705,9 +705,9 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x000a		/* GLINT Permedia 3 */
 
 /* 3ware products */
-#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
-#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID 7000/8000 series */
-#define	PCI_PRODUCT_3WARE_ESCALADE_9K	0x1001		/* Escalade IDE RAID 9000 series */
+#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade ATA RAID Controller */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade ATA RAID 7000/8000 series Controller */
+#define	PCI_PRODUCT_3WARE_ATARAID_9K	0x1002		/* ATA RAID 9000 series Controller */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
@@ -2811,7 +2811,7 @@
 #define	PCI_PRODUCT_TI_PCI7410LYNX	0x802B		/* PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCI7x21/7x11 Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI72111FW	0x8032		/* PCI7x21/7x11 IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_TI_PCI1121FM	0x8033		/* PCIxx11/21 Integrated FlashMedia Controller */
+#define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
 #define	PCI_PRODUCT_TI_ACX100	0x8400		/* ACX100 802.11b */

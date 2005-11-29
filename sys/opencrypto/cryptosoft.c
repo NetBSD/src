@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.9 2005/02/26 22:39:52 perry Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.9.10.1 2005/11/29 21:23:33 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.9 2005/02/26 22:39:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.9.10.1 2005/11/29 21:23:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,28 +37,16 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.9 2005/02/26 22:39:52 perry Exp $")
 #include <opencrypto/cryptosoft.h>
 #include <opencrypto/xform.h>
 
-const u_int8_t hmac_ipad_buffer[64] = {
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-};
+#include <opencrypto/cryptosoft_xform.c>
 
-const u_int8_t hmac_opad_buffer[64] = {
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C
+union authctx {
+	MD5_CTX md5ctx;
+	SHA1_CTX sha1ctx;
+	RMD160_CTX rmd160ctx;
+	SHA256_CTX sha256ctx;
+	SHA384_CTX sha384ctx;
+	SHA512_CTX sha512ctx;
 };
-
 
 struct swcr_data **swcr_sessions = NULL;
 u_int32_t swcr_sesnum = 0;
@@ -88,12 +76,12 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 {
 	unsigned char iv[EALG_MAX_BLOCK_LEN], blk[EALG_MAX_BLOCK_LEN], *idat;
 	unsigned char *ivp, piv[EALG_MAX_BLOCK_LEN];
-	struct enc_xform *exf;
+	const struct swcr_enc_xform *exf;
 	int i, k, j, blks;
 	int count, ind;
 
 	exf = sw->sw_exf;
-	blks = exf->blocksize;
+	blks = exf->enc_xform->blocksize;
 
 	/* Check for non-padded data */
 	if (crd->crd_len % blks)
@@ -547,7 +535,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
     struct swcr_data *sw, caddr_t buf, int outtype)
 {
 	unsigned char aalg[AALG_MAX_RESULT_LEN];
-	struct auth_hash *axf;
+	const struct swcr_auth_hash *axf;
 	union authctx ctx;
 	int err;
 
@@ -556,7 +544,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 
 	axf = sw->sw_axf;
 
-	bcopy(sw->sw_ictx, &ctx, axf->ctxsize);
+	bcopy(sw->sw_ictx, &ctx, axf->auth_hash->ctxsize);
 
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
@@ -596,8 +584,8 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 			return EINVAL;
 
 		axf->Final(aalg, &ctx);
-		bcopy(sw->sw_octx, &ctx, axf->ctxsize);
-		axf->Update(&ctx, aalg, axf->hashsize);
+		bcopy(sw->sw_octx, &ctx, axf->auth_hash->ctxsize);
+		axf->Update(&ctx, aalg, axf->auth_hash->hashsize);
 		axf->Final(aalg, &ctx);
 		break;
 
@@ -620,14 +608,14 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	/* Inject the authentication data */
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
-		bcopy(aalg, buf + crd->crd_inject, axf->authsize);
+		bcopy(aalg, buf + crd->crd_inject, axf->auth_hash->authsize);
 		break;
 	case CRYPTO_BUF_MBUF:
 		m_copyback((struct mbuf *) buf, crd->crd_inject,
-		    axf->authsize, aalg);
+		    axf->auth_hash->authsize, aalg);
 		break;
 	case CRYPTO_BUF_IOV:
-		bcopy(aalg, crp->crp_mac, axf->authsize);
+		bcopy(aalg, crp->crp_mac, axf->auth_hash->authsize);
 		break;
 	default:
 		return EINVAL;
@@ -643,7 +631,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
     caddr_t buf, int outtype)
 {
 	u_int8_t *data, *out;
-	struct comp_algo *cxf;
+	const struct swcr_comp_algo *cxf;
 	int adj;
 	u_int32_t result;
 
@@ -718,9 +706,9 @@ static int
 swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 {
 	struct swcr_data **swd;
-	struct auth_hash *axf;
-	struct enc_xform *txf;
-	struct comp_algo *cxf;
+	const struct swcr_auth_hash *axf;
+	const struct swcr_enc_xform *txf;
+	const struct swcr_comp_algo *cxf;
 	u_int32_t i;
 	int k, error;
 
@@ -778,25 +766,25 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 
 		switch (cri->cri_alg) {
 		case CRYPTO_DES_CBC:
-			txf = &enc_xform_des;
+			txf = &swcr_enc_xform_des;
 			goto enccommon;
 		case CRYPTO_3DES_CBC:
-			txf = &enc_xform_3des;
+			txf = &swcr_enc_xform_3des;
 			goto enccommon;
 		case CRYPTO_BLF_CBC:
-			txf = &enc_xform_blf;
+			txf = &swcr_enc_xform_blf;
 			goto enccommon;
 		case CRYPTO_CAST_CBC:
-			txf = &enc_xform_cast5;
+			txf = &swcr_enc_xform_cast5;
 			goto enccommon;
 		case CRYPTO_SKIPJACK_CBC:
-			txf = &enc_xform_skipjack;
+			txf = &swcr_enc_xform_skipjack;
 			goto enccommon;
 		case CRYPTO_RIJNDAEL128_CBC:
-			txf = &enc_xform_rijndael128;
+			txf = &swcr_enc_xform_rijndael128;
 			goto enccommon;
 		case CRYPTO_NULL_CBC:
-			txf = &enc_xform_null;
+			txf = &swcr_enc_xform_null;
 			goto enccommon;
 		enccommon:
 			error = txf->setkey(&((*swd)->sw_kschedule),
@@ -809,38 +797,38 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			break;
 
 		case CRYPTO_MD5_HMAC:
-			axf = &auth_hash_hmac_md5_96;
+			axf = &swcr_auth_hash_hmac_md5_96;
 			goto authcommon;
 		case CRYPTO_SHA1_HMAC:
-			axf = &auth_hash_hmac_sha1_96;
+			axf = &swcr_auth_hash_hmac_sha1_96;
 			goto authcommon;
 		case CRYPTO_SHA2_HMAC:
 			if (cri->cri_klen == 256)
-				axf = &auth_hash_hmac_sha2_256;
+				axf = &swcr_auth_hash_hmac_sha2_256;
 			else if (cri->cri_klen == 384)
-				axf = &auth_hash_hmac_sha2_384;
+				axf = &swcr_auth_hash_hmac_sha2_384;
 			else if (cri->cri_klen == 512)
-				axf = &auth_hash_hmac_sha2_512;
+				axf = &swcr_auth_hash_hmac_sha2_512;
 			else {
 				swcr_freesession(NULL, i);
 				return EINVAL;
 			}
 			goto authcommon;
 		case CRYPTO_NULL_HMAC:
-			axf = &auth_hash_null;
+			axf = &swcr_auth_hash_null;
 			goto authcommon;
 		case CRYPTO_RIPEMD160_HMAC:
-			axf = &auth_hash_hmac_ripemd_160_96;
+			axf = &swcr_auth_hash_hmac_ripemd_160_96;
 		authcommon:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
-			    M_NOWAIT);
+			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
 				return ENOBUFS;
 			}
 
-			(*swd)->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
-			    M_NOWAIT);
+			(*swd)->sw_octx = malloc(axf->auth_hash->ctxsize,
+			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_octx == NULL) {
 				swcr_freesession(NULL, i);
 				return ENOBUFS;
@@ -870,14 +858,14 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			break;
 
 		case CRYPTO_MD5_KPDK:
-			axf = &auth_hash_key_md5;
+			axf = &swcr_auth_hash_key_md5;
 			goto auth2common;
 
 		case CRYPTO_SHA1_KPDK:
-			axf = &auth_hash_key_sha1;
+			axf = &swcr_auth_hash_key_sha1;
 		auth2common:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
-			    M_NOWAIT);
+			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
 				return ENOBUFS;
@@ -901,14 +889,14 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			break;
 
 		case CRYPTO_MD5:
-			axf = &auth_hash_md5;
+			axf = &swcr_auth_hash_md5;
 			goto auth3common;
 
 		case CRYPTO_SHA1:
-			axf = &auth_hash_sha1;
+			axf = &swcr_auth_hash_sha1;
 		auth3common:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
-			    M_NOWAIT);
+			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
 				return ENOBUFS;
@@ -919,7 +907,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
-			cxf = &comp_algo_deflate;
+			cxf = &swcr_comp_algo_deflate;
 			(*swd)->sw_cxf = cxf;
 			break;
 		default:
@@ -941,9 +929,9 @@ static int
 swcr_freesession(void *arg, u_int64_t tid)
 {
 	struct swcr_data *swd;
-	struct enc_xform *txf;
-	struct auth_hash *axf;
-	struct comp_algo *cxf;
+	const struct swcr_enc_xform *txf;
+	const struct swcr_auth_hash *axf;
+	const struct swcr_comp_algo *cxf;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
 	if (sid > swcr_sesnum || swcr_sessions == NULL ||
@@ -979,11 +967,11 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->ctxsize);
+				bzero(swd->sw_ictx, axf->auth_hash->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				bzero(swd->sw_octx, axf->ctxsize);
+				bzero(swd->sw_octx, axf->auth_hash->ctxsize);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -993,7 +981,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->ctxsize);
+				bzero(swd->sw_ictx, axf->auth_hash->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
@@ -1125,11 +1113,7 @@ done:
 	return 0;
 }
 
-/*
- * Initialize the driver, called from the kernel main().
- */
-/*static*/
-void
+static void
 swcr_init(void)
 {
 	swcr_id = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
@@ -1165,3 +1149,17 @@ swcr_init(void)
 #ifdef __FreeBSD__
 SYSINIT(cryptosoft_init, SI_SUB_PSEUDO, SI_ORDER_ANY, swcr_init, NULL)
 #endif
+
+#ifdef __NetBSD__
+/*
+ * Pseudo-device init routine for software crypto.
+ */
+void	swcryptoattach(int);
+
+void
+swcryptoattach(int num)
+{
+
+	swcr_init();
+}
+#endif /* __NetBSD__ */

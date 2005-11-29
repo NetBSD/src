@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.38 2005/06/11 22:26:42 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.38.8.1 2005/11/29 21:23:29 yamt Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.38 2005/06/11 22:26:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.38.8.1 2005/11/29 21:23:29 yamt Exp $");
 
 #include "ppp.h"
 
@@ -140,6 +140,19 @@ int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data, int flag,
 		       struct proc *));
 int	pppinput __P((int c, struct tty *tp));
 int	pppstart __P((struct tty *tp));
+
+struct linesw ppp_disc = {
+	.l_name = "ppp",
+	.l_open = pppopen,
+	.l_close = pppclose,
+	.l_read = pppread,
+	.l_write = pppwrite,
+	.l_ioctl = ppptioctl,
+	.l_rint = pppinput,
+	.l_start = pppstart,
+	.l_modem = ttymodem,
+	.l_poll = ttpoll
+};
 
 static void	ppprcvframe __P((struct ppp_softc *sc, struct mbuf *m));
 static u_int16_t pppfcs __P((u_int16_t fcs, u_char *cp, int len));
@@ -202,7 +215,7 @@ pppopen(dev, tp)
 
     s = spltty();
 
-    if (tp->t_linesw->l_no == PPPDISC) {
+    if (tp->t_linesw == &ppp_disc) {
 	sc = (struct ppp_softc *) tp->t_sc;
 	if (sc != NULL && sc->sc_devp == (void *) tp) {
 	    splx(s);
@@ -261,7 +274,8 @@ pppclose(tp, flag)
 
     s = spltty();
     ttyflush(tp, FREAD|FWRITE);
-    tp->t_linesw = linesw[0]; /* default line discipline */
+    ttyldisc_release(tp->t_linesw);
+    tp->t_linesw = ttyldisc_default();
     sc = (struct ppp_softc *) tp->t_sc;
     if (sc != NULL) {
 	tp->t_sc = NULL;
@@ -327,7 +341,7 @@ pppread(tp, uio, flag)
     s = spltty();
     for (;;) {
 	if (tp != (struct tty *) sc->sc_devp ||
-	    tp->t_linesw->l_no != PPPDISC) {
+	    tp->t_linesw != &ppp_disc) {
 	    splx(s);
 	    return 0;
 	}
@@ -379,7 +393,7 @@ pppwrite(tp, uio, flag)
 
     if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	return 0;		/* wrote 0 bytes */
-    if (tp->t_linesw->l_no != PPPDISC)
+    if (tp->t_linesw != &ppp_disc)
 	return (EINVAL);
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return EIO;

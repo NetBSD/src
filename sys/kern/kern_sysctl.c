@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.187 2005/10/29 12:26:37 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.187.2.1 2005/11/29 21:23:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.187 2005/10/29 12:26:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.187.2.1 2005/11/29 21:23:29 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -382,24 +382,22 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 	fn = NULL;
 	error = sysctl_locate(l, name, namelen, &rnode, &ni);
 
-	/*
-	 * the node we ended up at has a function, so call it.  it can
-	 * hand off to query or create if it wants to.
-	 */
-	if (rnode->sysctl_func != NULL)
+	if (rnode->sysctl_func != NULL) {
+		/*
+		 * the node we ended up at has a function, so call it.  it can
+		 * hand off to query or create if it wants to.
+		 */
 		fn = rnode->sysctl_func;
-
-	/*
-	 * we found the node they were looking for, so do a lookup.
-	 */
-	else if (error == 0)
+	} else if (error == 0) {
+		/*
+		 * we found the node they were looking for, so do a lookup.
+		 */
 		fn = (sysctlfn)sysctl_lookup; /* XXX may write to rnode */
-
-	/*
-	 * prospective parent node found, but the terminal node was
-	 * not.  generic operations associate with the parent.
-	 */
-	else if (error == ENOENT && (ni + 1) == namelen && name[ni] < 0) {
+	} else if (error == ENOENT && (ni + 1) == namelen && name[ni] < 0) {
+		/*
+		 * prospective parent node found, but the terminal node was
+		 * not.  generic operations associate with the parent.
+		 */
 		switch (name[ni]) {
 		case CTL_QUERY:
 			fn = sysctl_query;
@@ -432,7 +430,6 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 	if (fn != NULL)
 		error = (*fn)(name + ni, namelen - ni, oldp, oldlenp,
 			      newp, newlen, name, l, rnode);
-
 	else if (error == 0)
 		error = EOPNOTSUPP;
 
@@ -552,8 +549,7 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 						tn = node[si].sysctl_alias;
 						si = -1;
 					}
-				}
-				else
+				} else
 					goto foundit;
 			}
 		}
@@ -637,8 +633,7 @@ sysctl_query(SYSCTLFN_ARGS)
 			/* ah, found parent in overlay */
 			elim = enode->sysctl_clen;
 			enode = enode->sysctl_child;
-		}
-		else {
+		} else {
 			error = 0;
 			elim = 0;
 			enode = NULL;
@@ -914,12 +909,10 @@ sysctl_create(SYSCTLFN_ARGS)
 						sz = strlen(nnode.sysctl_data) +
 						    1;
 				}
-			}
-			else if (nnode.sysctl_data == NULL &&
+			} else if (nnode.sysctl_data == NULL &&
 				 flags & CTLFLAG_OWNDATA) {
 				return (EINVAL);
-			}
-			else {
+			} else {
 				char *vp, *e;
 				size_t s;
 
@@ -1000,8 +993,7 @@ sysctl_create(SYSCTLFN_ARGS)
 						return (error);
 					}
 				}
-			}
-			else if ((nnode.sysctl_data != NULL) &&
+			} else if ((nnode.sysctl_data != NULL) &&
 				 !(flags & CTLFLAG_IMMEDIATE)) {
 #if NKSYMS > 0
 				if (name[namelen - 1] == CTL_CREATESYM) {
@@ -1040,8 +1032,7 @@ sysctl_create(SYSCTLFN_ARGS)
 				 * lookups.
 				 */
 			}
-		}
-		else if (nnode.sysctl_func == NULL)
+		} else if (nnode.sysctl_func == NULL)
 			return (EINVAL);
 	}
 
@@ -1091,8 +1082,7 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (nm == node[ni].sysctl_num) {
 				nm++;
 				ni = -1;
-			}
-			else if (nm > node[ni].sysctl_num)
+			} else if (nm > node[ni].sysctl_num)
 				at = ni + 1;
 		}
 	}
@@ -1142,11 +1132,9 @@ sysctl_create(SYSCTLFN_ARGS)
 	if (own) {
 		node->sysctl_data = own;
 		node->sysctl_flags |= CTLFLAG_OWNDATA;
-	}
-	else if (flags & CTLFLAG_ALIAS) {
+	} else if (flags & CTLFLAG_ALIAS) {
 		node->sysctl_alias = anum;
-	}
-	else if (flags & CTLFLAG_IMMEDIATE) {
+	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			node->sysctl_idata = nnode.sysctl_idata;
@@ -1155,8 +1143,7 @@ sysctl_create(SYSCTLFN_ARGS)
 			node->sysctl_qdata = nnode.sysctl_qdata;
 			break;
 		}
-	}
-	else {
+	} else {
 		node->sysctl_data = nnode.sysctl_data;
 		node->sysctl_flags &= ~CTLFLAG_OWNDATA;
 	}
@@ -1471,8 +1458,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		default:
 			return (EINVAL);
 		}
-	}
-	else
+	} else
 		d = rnode->sysctl_data;
 	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
 		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
@@ -1915,8 +1901,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		nnode.sysctl_child = NULL;
 		if (flags & CTLFLAG_ALIAS)
 			nnode.sysctl_alias = qv;
-	}
-	else if (flags & CTLFLAG_IMMEDIATE) {
+	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_INT:
 			nnode.sysctl_idata = qv;
@@ -1927,8 +1912,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		default:
 			return (EINVAL);
 		}
-	}
-	else {
+	} else {
 		nnode.sysctl_data = newp;
 	}
 	nnode.sysctl_func = func;
@@ -2045,12 +2029,10 @@ sysctl_createv(struct sysctllog **log, int cflags,
 						dnode->sysctl_flags |=
 						    CTLFLAG_OWNDESC;
 					}
-				}
-				else
+				} else
 					dnode->sysctl_desc = descr;
 			}
-		}
-		else {
+		} else {
 			printf("sysctl_create succeeded but node not found?!\n");
 			/*
 			 *  confusing, but the create said it
@@ -2177,8 +2159,7 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 				onode = __UNCONST(node);
 				onode->sysctl_desc = d;
 				onode->sysctl_flags |= CTLFLAG_OWNDESC;
-			}
-			else {
+			} else {
 				/*
 				 * XXX drop the description?  be
 				 * afraid?  don't care?
@@ -2307,8 +2288,7 @@ sysctl_dump(const struct sysctlnode *d)
 			       d->sysctl_clen);
 			printf("%*s\t\tsysctl_child  %p\n",   indent, "",
 			       d->sysctl_child);
-		}
-		else
+		} else
 			printf("%*s\t\tsysctl_data   %p\n",   indent, "",
 			       d->sysctl_data);
 		printf("%*s\t\tsysctl_func   %p\n",   indent, "",
@@ -2384,8 +2364,7 @@ sysctl_free(struct sysctlnode *rnode)
 			if (node < &pnode->sysctl_child[pnode->sysctl_clen]) {
 				pnode = node;
 				node = node->sysctl_child;
-			}
-			else
+			} else
 				break;
 		}
 		if (pnode->sysctl_child != NULL)
@@ -2430,8 +2409,7 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 		log->log_size = 16;
 		log->log_left = 16;
 		*logp = log;
-	}
-	else
+	} else
 		log = *logp;
 
 	/*
@@ -2654,8 +2632,7 @@ sysctl_alloc(struct sysctlnode *p, int x)
 	if (x == 1) {
 		memset(n, 0, sizeof(struct sysctlnode));
 		p->sysctl_csize = 1;
-	}
-	else {
+	} else {
 		memset(n, 0, SYSCTL_DEFSIZE * sizeof(struct sysctlnode));
 		p->sysctl_csize = SYSCTL_DEFSIZE;
 	}

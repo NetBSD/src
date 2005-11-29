@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.16.6.1 2005/11/22 16:08:11 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.16.6.2 2005/11/29 21:23:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -250,7 +250,6 @@ static const struct sk_product {
 } sk_products[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, },
-	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
@@ -258,6 +257,8 @@ static const struct sk_product {
 	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN, },
 	{ 0, 0, }
 };
+
+#define SK_LINKSYS_EG1032_SUBID	0x00151737
 
 static inline u_int32_t
 sk_win_read_4(struct sk_softc *sc, u_int32_t reg)
@@ -974,6 +975,15 @@ skc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	const struct sk_product *psk;
+	pcireg_t subid;
+
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	/* special-case Linksys EG1032, since rev 3 uses re(4) */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
+	    subid == SK_LINKSYS_EG1032_SUBID)
+		return(1);
 
 	if ((psk = sk_lookup(pa))) {
 		return(1);

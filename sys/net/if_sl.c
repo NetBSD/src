@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.92 2005/08/18 00:30:58 yamt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.92.6.1 2005/11/29 21:23:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.92 2005/08/18 00:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.92.6.1 2005/11/29 21:23:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -192,9 +192,24 @@ void	slintr(void *);
 static int slinit __P((struct sl_softc *));
 static struct mbuf *sl_btom __P((struct sl_softc *, int));
 
+static struct linesw slip_disc = {
+	.l_name = "slip",
+	.l_open = slopen,
+	.l_close = slclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = sltioctl,
+	.l_rint = slinput,
+	.l_start = slstart,
+	.l_modem = nullmodem,
+	.l_poll = ttyerrpoll
+};
+
 void
 slattach(void)
 {
+	if (ttyldisc_attach(&slip_disc) != 0)
+		panic("slattach");
 	LIST_INIT(&sl_softc_list);
 	if_clone_attach(&sl_cloner);
 }
@@ -284,7 +299,7 @@ slopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw->l_no == SLIPDISC)
+	if (tp->t_linesw == &slip_disc)
 		return (0);
 
 	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
@@ -349,9 +364,10 @@ slopen(dev, tp)
  * Line specific close routine.
  * Detach the tty from the sl unit.
  */
-void
-slclose(tp)
+int
+slclose(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	struct sl_softc *sc;
 	int s;
@@ -369,7 +385,8 @@ slclose(tp)
 		splx(s);
 
 		s = spltty();
-		tp->t_linesw = linesw[0];	/* default line disc. */
+		ttyldisc_release(tp->t_linesw);
+		tp->t_linesw = ttyldisc_default();
 		tp->t_state = 0;
 
 		sc->sc_ttyp = NULL;
@@ -391,6 +408,8 @@ slclose(tp)
 		}
 		splx(s);
 	}
+
+	return (0);
 }
 
 /*
@@ -399,11 +418,12 @@ slclose(tp)
  */
 /* ARGSUSED */
 int
-sltioctl(tp, cmd, data, flag)
+sltioctl(tp, cmd, data, flag, p)
 	struct tty *tp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
 
@@ -508,7 +528,7 @@ sloutput(ifp, m, dst, rtp)
  * to send from the interface queue and map it to
  * the interface before starting output.
  */
-void
+int
 slstart(tp)
 	struct tty *tp;
 {
@@ -522,14 +542,14 @@ slstart(tp)
 	if (tp->t_outq.c_cc != 0) {
 		(*tp->t_oproc)(tp);
 		if (tp->t_outq.c_cc > SLIP_HIWAT)
-			return;
+			return (0);
 	}
 
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
 	if (sc == NULL)
-		return;
+		return (0);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
@@ -539,6 +559,7 @@ slstart(tp)
 	splx(s);
     }
 #endif
+	return (0);
 }
 
 /*
@@ -579,7 +600,7 @@ sl_btom(sc, len)
 /*
  * tty interface receiver interrupt.
  */
-void
+int
 slinput(c, tp)
 	int c;
 	struct tty *tp;
@@ -591,11 +612,11 @@ slinput(c, tp)
 	tk_nin++;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc == NULL)
-		return;
+		return (0);
 	if ((c & TTY_ERRORMASK) || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
-		return;
+		return (0);
 	}
 	c &= TTY_CHARMASK;
 
@@ -618,8 +639,8 @@ slinput(c, tp)
 				if (++sc->sc_abortcount == 1)
 					sc->sc_starttime = time.tv_sec;
 				if (sc->sc_abortcount >= ABT_COUNT) {
-					slclose(tp);
-					return;
+					slclose(tp, 0);
+					return (0);
 				}
 			}
 		} else
@@ -641,7 +662,7 @@ slinput(c, tp)
 
 	case FRAME_ESCAPE:
 		sc->sc_escape = 1;
-		return;
+		return (0);
 
 	case FRAME_END:
 		if(sc->sc_flags & SC_ERROR) {
@@ -672,7 +693,7 @@ slinput(c, tp)
 	if (sc->sc_mp < sc->sc_ep) {
 		*sc->sc_mp++ = c;
 		sc->sc_escape = 0;
-		return;
+		return (0);
 	}
 
 	/* can't put lower; would miss an extra frame */
@@ -684,6 +705,8 @@ newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 	sc->sc_escape = 0;
+
+	return (0);
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS

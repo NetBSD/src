@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.24 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_command.h,v 1.24.8.1 2005/11/29 21:23:07 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,6 +44,8 @@ extern db_addr_t db_prev;	/* last address examined
 				   or written */
 extern db_addr_t db_next;	/* next address to be examined
 				   or written */
+
+extern char db_cmd_on_enter[];
 
 /*
  * Command table

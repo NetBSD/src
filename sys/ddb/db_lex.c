@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.18 2003/05/17 09:58:03 scw Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.18.26.1 2005/11/29 21:23:07 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.18 2003/05/17 09:58:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.18.26.1 2005/11/29 21:23:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.18 2003/05/17 09:58:03 scw Exp $");
 db_expr_t	db_tok_number;
 char		db_tok_string[TOK_STRING_SIZE];
 
-static char	db_line[120];
-static char    *db_lp, *db_endlp;
+static char	db_line[DB_LINE_MAXLEN];
+static const char *db_lp;
+static const char *db_endlp;
 
 static int	db_look_char = 0;
 static int	db_look_token = 0;
@@ -70,9 +71,16 @@ db_read_line(void)
 	i = db_readline(db_line, sizeof(db_line));
 	if (i == 0)
 		return (0);	/* EOI */
-	db_lp = db_line;
-	db_endlp = db_lp + i;
+	db_set_line(db_line, db_line + i);
 	return (i);
+}
+
+void
+db_set_line(const char *sp, const char *ep)
+{
+
+	db_lp = sp;
+	db_endlp = ep;
 }
 
 static void

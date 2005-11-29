@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.67 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.67.8.1 2005/11/29 21:23:16 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -223,7 +223,6 @@ struct usb_attach_arg {
 	int			vendor;
 	int			product;
 	int			release;
-	int			matchlvl;
 	usbd_device_handle	device;	/* current device */
 	usbd_interface_handle	iface; /* current interface */
 	int			usegeneric;
@@ -233,6 +232,7 @@ struct usb_attach_arg {
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
+#define UMATCH_HIGHEST					15
 /* First five codes is for a whole device. */
 #define UMATCH_VENDOR_PRODUCT_REV			14
 #define UMATCH_VENDOR_PRODUCT				13

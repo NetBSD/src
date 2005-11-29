@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.76 2005/09/24 15:52:03 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.76.6.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -474,6 +474,9 @@ struct cmsghdr {
 /* given pointer to struct cmsghdr, return pointer to data */
 #define	CMSG_DATA(cmsg) \
 	((u_char *)(void *)(cmsg) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define	CCMSG_DATA(cmsg) \
+	((const u_char *)(const void *)(cmsg) + \
+	__CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 /*
  * Alignment requirement for CMSG struct manipulation.

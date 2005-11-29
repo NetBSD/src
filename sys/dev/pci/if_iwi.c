@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.37.2.2 2005/11/22 16:08:11 yamt Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.37.2.3 2005/11/29 21:23:14 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.37.2.2 2005/11/22 16:08:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.37.2.3 2005/11/29 21:23:14 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -123,6 +123,7 @@ static void	iwi_fix_channel(struct ieee80211com *, struct mbuf *);
 static void	iwi_frame_intr(struct iwi_softc *, struct iwi_rx_data *, int,
     struct iwi_frame *);
 static void	iwi_notification_intr(struct iwi_softc *, struct iwi_notif *);
+static void	iwi_cmd_intr(struct iwi_softc *);
 static void	iwi_rx_intr(struct iwi_softc *);
 static void	iwi_tx_intr(struct iwi_softc *, struct iwi_tx_ring *);
 static int	iwi_intr(void *);
@@ -152,6 +153,7 @@ static int	iwi_scan(struct iwi_softc *);
 static int	iwi_auth_and_assoc(struct iwi_softc *);
 static int	iwi_init(struct ifnet *);
 static void	iwi_stop(struct ifnet *, int);
+static void	iwi_led_set(struct iwi_softc *, uint32_t, int);
 static void	iwi_error_log(struct iwi_softc *);
 
 /*
@@ -368,6 +370,11 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
 
+	/* read the NIC type from EEPROM */
+	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE); 
+	sc->nictype = val & 0xff;
+
+	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2) {
@@ -559,6 +566,17 @@ fail:	iwi_free_cmd_ring(sc, ring);
 static void
 iwi_reset_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 {
+	int i;
+
+	for (i = ring->next; i != ring->cur;) {
+		bus_dmamap_sync(sc->sc_dmat, sc->cmdq.desc_map,
+		    i * IWI_CMD_DESC_SIZE, IWI_CMD_DESC_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
+
+		wakeup(&ring->desc[i]);
+		i = (i + 1) % ring->count;
+	}
+
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
 }
@@ -752,6 +770,9 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, ring->data[i].map, 0,
+		    ring->data[i].map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
 
 	return 0;
@@ -981,6 +1002,8 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ieee80211_node_table_reset(&ic->ic_scan);
 		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
 		sc->flags |= IWI_FLAG_SCANNING;
+		/* blink the led while scanning */
+		iwi_led_set(sc, IWI_LED_ASSOCIATED, 1);
 		iwi_scan(sc);
 		break;
 
@@ -998,6 +1021,7 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 
 	case IEEE80211_S_ASSOC:
+		iwi_led_set(sc, IWI_LED_ASSOCIATED, 0);
 		break;
 
 	case IEEE80211_S_INIT:
@@ -1379,6 +1403,23 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 }
 
 static void
+iwi_cmd_intr(struct iwi_softc *sc)
+{
+	uint32_t hw;
+
+	hw = CSR_READ_4(sc, IWI_CSR_CMD_RIDX);
+
+	for (; sc->cmdq.next != hw;) {
+		bus_dmamap_sync(sc->sc_dmat, sc->cmdq.desc_map,
+		    sc->cmdq.next * IWI_CMD_DESC_SIZE, IWI_CMD_DESC_SIZE,
+		    BUS_DMASYNC_POSTWRITE);
+
+		wakeup(&sc->cmdq.desc[sc->cmdq.next]);
+		sc->cmdq.next = (sc->cmdq.next + 1) % sc->cmdq.count;
+	}
+}
+
+static void
 iwi_rx_intr(struct iwi_softc *sc)
 {
 	struct iwi_rx_data *data;
@@ -1410,6 +1451,9 @@ iwi_rx_intr(struct iwi_softc *sc)
 			aprint_error("%s: unknown hdr type %u\n",
 			    sc->sc_dev.dv_xname, hdr->type);
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 		DPRINTFN(15, ("rx done idx=%u\n", sc->rxq.cur));
 
@@ -1475,6 +1519,7 @@ iwi_intr(void *arg)
 			iwi_error_log(sc);
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
+		return (1);
 	}
 
 	if (r & IWI_INTR_FW_INITED) {
@@ -1486,10 +1531,11 @@ iwi_intr(void *arg)
 		DPRINTF(("radio transmitter off\n"));
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
+		return (1);
 	}
 
 	if (r & IWI_INTR_CMD_DONE)
-		wakeup(sc);
+		iwi_cmd_intr(sc);
 
 	if (r & IWI_INTR_TX1_DONE)
 		iwi_tx_intr(sc, &sc->txq[0]);
@@ -1533,7 +1579,7 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len,
 	sc->cmdq.cur = (sc->cmdq.cur + 1) % sc->cmdq.count;
 	CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.cur);
 
-	return async ? 0 : tsleep(sc, 0, "iwicmd", hz);
+	return async ? 0 : tsleep(desc, 0, "iwicmd", hz);
 }
 
 static void
@@ -1741,11 +1787,6 @@ iwi_start(struct ifnet *ifp)
 			continue;
 		}
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
-
 		eh = mtod(m0, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -1772,9 +1813,12 @@ iwi_start(struct ifnet *ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-#ifdef XXXNH
-		BPF_MTAP(ifp, m0);
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
+
 		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL) {
 			ieee80211_free_node(ni);
@@ -1900,7 +1944,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 	}
 
-	if (error == ENETRESET && cmd != SIOCADDMULTI) {
+	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING) &&
 		    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
@@ -2145,7 +2189,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 		aprint_error("%s: timeout processing cb\n",
 		    sc->sc_dev.dv_xname);
 		error = EIO;
-		goto fail2;
+		goto fail3;
 	}
 
 	/* We're done with command blocks processing */
@@ -2690,6 +2734,8 @@ iwi_stop(struct ifnet *ifp, int disable)
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	IWI_LED_OFF(sc);
+
 	iwi_stop_master(sc);
 	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
 
@@ -2705,6 +2751,44 @@ iwi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+}
+
+static void
+iwi_led_set(struct iwi_softc *sc, uint32_t state, int toggle)
+{
+	uint32_t val;
+
+	val = MEM_READ_4(sc, IWI_MEM_EVENT_CTL);
+
+	switch (sc->nictype) {
+	case 1:
+		/* special NIC type: reversed leds */
+		if (state == IWI_LED_ACTIVITY) {
+			state &= ~IWI_LED_ACTIVITY;
+			state |= IWI_LED_ASSOCIATED;
+		} else if (state == IWI_LED_ASSOCIATED) {
+			state &= ~IWI_LED_ASSOCIATED;
+			state |= IWI_LED_ACTIVITY;
+		}
+		/* and ignore toggle effect */
+		val |= state;
+		break;
+	case 0:
+	case 2:
+	case 3:
+	case 4:
+		val = (toggle && (val & state)) ? val & ~state : val | state;
+		break;
+	default:
+		aprint_normal("%s: unknown NIC type %d\n",
+		    sc->sc_dev.dv_xname, sc->nictype);
+		return;
+		break;
+	}
+
+	MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, val);
+
+	return;
 }
 
 static void

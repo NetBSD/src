@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.8 2005/11/05 08:11:30 manu Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.8.4.1 2005/11/29 21:23:05 yamt Exp $ */
 
 /*
  * System call numbers.
@@ -262,7 +262,7 @@
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
 #define	LINUX_SYS_gettimeofday	96
 
-/* syscall: "getrlimit" ret: "int" args: "int" "struct orlimit *" */
+/* syscall: "getrlimit" ret: "int" args: "int" "struct rlimit *" */
 #define	LINUX_SYS_getrlimit	97
 
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
@@ -421,7 +421,7 @@
 /* syscall: "arch_prctl" ret: "int" args: "int" "unsigned long" */
 #define	LINUX_SYS_arch_prctl	158
 
-/* syscall: "setrlimit" ret: "int" args: "u_int" "struct orlimit *" */
+/* syscall: "setrlimit" ret: "int" args: "u_int" "struct rlimit *" */
 #define	LINUX_SYS_setrlimit	160
 
 /* syscall: "chroot" ret: "int" args: "char *" */
@@ -496,6 +496,9 @@
 /* syscall: "fremovexattr" ret: "int" args: "int" "char *" */
 #define	LINUX_SYS_fremovexattr	199
 
+/* syscall: "tkill" ret: "int" args: "int" "int" */
+#define	LINUX_SYS_tkill	200
+
 /* syscall: "time" ret: "int" args: "linux_time_t *" */
 #define	LINUX_SYS_time	201
 
@@ -528,6 +531,9 @@
 
 /* syscall: "exit_group" ret: "int" args: "int" */
 #define	LINUX_SYS_exit_group	231
+
+/* syscall: "tgkill" ret: "int" args: "int" "int" "int" */
+#define	LINUX_SYS_tgkill	234
 
 /* syscall: "nosys" ret: "int" args: */
 #define	LINUX_SYS_nosys	237

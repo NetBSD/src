@@ -1,4 +1,40 @@
-/*	$NetBSD: tty_conf.c,v 1.47 2005/06/21 14:01:13 ws Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.47.8.1 2005/11/29 21:23:29 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,126 +73,79 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.47 2005/06/21 14:01:13 ws Exp $");
-
-#include "opt_compat_freebsd.h"
-#include "opt_compat_43.h"
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.47.8.1 2005/11/29 21:23:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
-#include <sys/ioctl.h>
 #include <sys/ttycom.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/once.h>
+#include <sys/lock.h>
+#include <sys/queue.h>
 
-#include "tb.h"
-#if NTB > 0
-int	tbopen(dev_t dev, struct tty *tp);
-int	tbclose(struct tty *tp, int flags);
-int	tbread(struct tty *tp, struct uio *uio, int flags);
-int	tbtioctl(struct tty *tp, u_long cmd, caddr_t data,
-		 int flag, struct proc *p);
-int	tbinput(int c, struct tty *tp);
-#endif
-
-#include "sl.h"
-#if NSL > 0
-int	slopen(dev_t dev, struct tty *tp);
-int	slclose(struct tty *tp, int flags);
-int	sltioctl(struct tty *tp, u_long cmd, caddr_t data,
-		 int flag, struct proc *p);
-int	slinput(int c, struct tty *tp);
-int	slstart(struct tty *tp);
-#endif
-
-#include "ppp.h"
-#if NPPP > 0
-int	pppopen(dev_t dev, struct tty *tp);
-int	pppclose(struct tty *tp, int flags);
-int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data,
-		  int flag, struct proc *p);
-int	pppinput(int c, struct tty *tp);
-int	pppstart(struct tty *tp);
-int	pppread(struct tty *tp, struct uio *uio, int flag);
-int	pppwrite(struct tty *tp, struct uio *uio, int flag);
-#endif
-
-#include "strip.h"
-#if NSTRIP > 0
-int	stripopen(dev_t dev, struct tty *tp);
-int	stripclose(struct tty *tp, int flags);
-int	striptioctl(struct tty *tp, u_long cmd, caddr_t data,
-		    int flag, struct proc *p);
-int	stripinput(int c, struct tty *tp);
-int	stripstart(struct tty *tp);
-#endif
-
-#include "irframetty.h"
-#if NIRFRAMETTY > 0
-int	irframetopen(dev_t dev, struct tty *tp);
-int	irframetclose(struct tty *tp, int flags);
-int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data,
-		      int flag, struct proc *p);
-int	irframetinput(int c, struct tty *tp);
-int	irframetstart(struct tty *tp);
-int	irframetread(struct tty *tp, struct uio *uio, int flag);
-int	irframetwrite(struct tty *tp, struct uio *uio, int flag);
-int	irframetpoll(struct tty *tp, int events, struct proc *p);
-#endif
-
-
-struct  linesw termios_disc =
-	{ "termios", TTYDISC, ttylopen, ttylclose, ttread, ttwrite,
-	  ttynullioctl, ttyinput, ttstart, ttymodem, ttpoll };	/* 0- termios */
-struct  linesw defunct_disc =
-	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio,
-	  ttynullioctl, ttyerrinput, ttyerrstart, nullmodem, ttyerrpoll }; /* 1- defunct */
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
-struct  linesw ntty_disc =
-	{ "ntty", 2, ttylopen, ttylclose, ttread, ttwrite, ttynullioctl,
-	  ttyinput, ttstart, ttymodem, ttpoll };	/* 2- old NTTYDISC */
-#endif
-#if NTB > 0
-struct  linesw table_disc =
-	{ "tablet", TABLDISC, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
-	  tbinput, ttstart, nullmodem, ttyerrpoll };	/* 3- TABLDISC */
-#endif
-#if NSL > 0
-struct  linesw slip_disc =
-	{ "slip", SLIPDISC, slopen, slclose, ttyerrio, ttyerrio, sltioctl,
-	  slinput, slstart, nullmodem, ttyerrpoll };	/* 4- SLIPDISC */
-#endif
-#if NPPP > 0
-struct  linesw ppp_disc =
-	{ "ppp", PPPDISC, pppopen, pppclose, pppread, pppwrite, ppptioctl,
-	  pppinput, pppstart, ttymodem, ttpoll };	/* 5- PPPDISC */
-#endif
-#if NSTRIP > 0
-struct  linesw strip_disc =
-	{ "strip", STRIPDISC, stripopen, stripclose, ttyerrio, ttyerrio,
-	  striptioctl, stripinput, stripstart, nullmodem, ttyerrpoll };
-							/* 6- STRIPDISC */
-#endif
-#if NIRFRAMETTY > 0
-struct  linesw irframet_disc =
-	{ "irframe", -1, irframetopen, irframetclose, ttyerrio,
-	  ttyerrio, irframetioctl, irframetinput, irframetstart,
-	  ttymodem, ttyerrpoll };			/* irframe */
-#endif
+static struct linesw termios_disc = {
+	.l_name = "termios",
+	.l_open = ttylopen,
+	.l_close = ttylclose,
+	.l_read = ttread,
+	.l_write = ttwrite,
+	.l_ioctl = ttynullioctl,
+	.l_rint = ttyinput,
+	.l_start = ttstart,
+	.l_modem = ttymodem,
+	.l_poll = ttpoll
+};
 
 /*
- * Registered line disciplines.  Don't use this
- * it will go away.
+ * This is for the benefit of old BSD TTY compatbility, but since it is
+ * identical to termios (except for the name), don't bother conditionalizing
+ * it.
  */
-#define LSWITCHBRK	20
-struct	linesw **linesw = NULL;
-int	nlinesw = 0;
-int	slinesw = 0;
+static struct linesw ntty_disc = {	/* old NTTYDISC */
+	.l_name = "ntty",
+	.l_open = ttylopen,
+	.l_close = ttylclose,
+	.l_read = ttread,
+	.l_write = ttwrite,
+	.l_ioctl = ttynullioctl,
+	.l_rint = ttyinput,
+	.l_start = ttstart,
+	.l_modem = ttymodem,
+	.l_poll = ttpoll
+};
+
+static LIST_HEAD(, linesw) ttyldisc_list = LIST_HEAD_INITIALIZER(ttyldisc_head);
+static struct simplelock ttyldisc_list_slock = SIMPLELOCK_INITIALIZER;
+
+/*
+ * Note: We don't bother refcounting termios_disc and ntty_disc; they can't
+ * be removed from the list, and termios_disc is likely to have very many
+ * references (could we overflow the count?).
+ */
+#define	TTYLDISC_ISSTATIC(disc)					\
+	((disc) == &termios_disc || (disc) == &ntty_disc)
+
+#define	TTYLDISC_HOLD(disc)					\
+do {								\
+	if (! TTYLDISC_ISSTATIC(disc)) {			\
+		KASSERT((disc)->l_refcnt != UINT_MAX);		\
+		(disc)->l_refcnt++;				\
+	}							\
+} while (/*CONSTCOND*/0)
+
+#define	TTYLDISC_RELE(disc)					\
+do {								\
+	if (! TTYLDISC_ISSTATIC(disc)) {			\
+		KASSERT((disc)->l_refcnt != 0);			\
+		(disc)->l_refcnt--;				\
+	}							\
+} while (/*CONSTCOND*/0)
+
+#define	TTYLDISC_ISINUSE(disc)					\
+	(TTYLDISC_ISSTATIC(disc) || (disc)->l_refcnt != 0)
 
 /*
  * Do nothing specific version of line
@@ -164,12 +153,7 @@ int	slinesw = 0;
  */
 /*ARGSUSED*/
 int
-ttynullioctl(tp, cmd, data, flags, p)
-	struct tty *tp;
-	u_long cmd;
-	char *data;
-	int flags;
-	struct proc *p;
+ttynullioctl(struct tty *tp, u_long cmd, char *data, int flags, struct proc *p)
 {
 
 #ifdef lint
@@ -184,10 +168,7 @@ ttynullioctl(tp, cmd, data, flags, p)
  */
 /*ARGSUSED*/
 int
-ttyerrpoll(tp, events, p)
-	struct tty *tp;
-	int events;
-	struct proc *p;
+ttyerrpoll(struct tty *tp, int events, struct proc *p)
 {
 
 #ifdef lint
@@ -196,158 +177,202 @@ ttyerrpoll(tp, events, p)
 	return (POLLERR);
 }
 
-/*
- * Register a line discipline, optionally providing a
- * specific discipline number for compatibility, -1 allocates
- * a new one.  Returns a discipline number, or -1 on
- * failure.
- */
-int
-ttyldisc_add(disc, no)
-	struct linesw *disc;
-	int no;
+static ONCE_DECL(ttyldisc_init_once);
+
+static void
+ttyldisc_init(void)
 {
 
-	/* You are not allowed to exceed TTLINEDNAMELEN */
-	if (strlen(disc->l_name) >= TTLINEDNAMELEN)
-		return (-1);
+	if (ttyldisc_attach(&termios_disc) != 0)
+		panic("ttyldisc_init: termios_disc");
+	if (ttyldisc_attach(&ntty_disc) != 0)
+		panic("ttyldisc_init: ntty_disc");
+}
 
-	/*
-	 * You are not allowed to specify a line switch
-	 * compatibility number greater than 10.
-	 */
-	if (no > 10)
-		return (-1);
+static struct linesw *
+ttyldisc_lookup_locked(const char *name)
+{
+	struct linesw *disc;
 
-	if (linesw == NULL)
-		panic("adding uninitialized linesw");
-
-#ifdef DEBUG
-	/*
-	 * XXX: For the benefit of LKMs
-	 */
-	if (disc->l_poll == NULL)
-		panic("line discipline must now provide l_poll() entry point");
-#endif
-
-	if (no == -1) {
-		/* Hunt for any slot */
-
-		for (no = slinesw; no-- > 0;)
-			if (linesw[no] == NULL)
-				break;
-		/* if no == -1 we should realloc linesw, but for now... */
-		if (no == -1)
-			return (-1);
+	LIST_FOREACH(disc, &ttyldisc_list, l_list) {
+		if (strcmp(name, disc->l_name) == 0)
+			return (disc);
 	}
 
-	/* Need a specific slot */
-	if (linesw[no] != NULL)
-		return (-1);
-
-	linesw[no] = disc;
-	disc->l_no = no;
-
-	/* Define size of table */
-	if (no >= nlinesw)
-		nlinesw = no + 1;
-
-	return (no);
+	return (NULL);
 }
 
 /*
- * Remove a line discipline by its name.  Returns the
- * discipline on success or NULL on failure.
+ * Look up a line discipline by its name.  Caller holds a reference on
+ * the returned line discipline.
  */
 struct linesw *
-ttyldisc_remove(name)
-	const char *name;
+ttyldisc_lookup(const char *name)
 {
 	struct linesw *disc;
-	int i;
 
-	if (linesw == NULL)
-		panic("removing uninitialized linesw");
+	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
 
-	for (i = 0; i < nlinesw; i++) {
-		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0)) {
-			disc = linesw[i];
-			linesw[i] = NULL;
+	simple_lock(&ttyldisc_list_slock);
+	disc = ttyldisc_lookup_locked(name);
+	if (disc != NULL)
+		TTYLDISC_HOLD(disc);
+	simple_unlock(&ttyldisc_list_slock);
 
-			if (nlinesw == i + 1) {
-				/* Need to fix up array sizing */
-				while (i-- > 0 && linesw[i] == NULL)
-					continue;
-				nlinesw = i + 1;
-			}
+	return (disc);
+}
+
+/*
+ * Look up a line discipline by its legacy number.  Caller holds a
+ * reference on the returned line discipline.
+ */
+struct linesw *
+ttyldisc_lookup_bynum(int num)
+{
+	struct linesw *disc;
+
+	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
+
+	simple_lock(&ttyldisc_list_slock);
+
+	LIST_FOREACH(disc, &ttyldisc_list, l_list) {
+		if (disc->l_no == num) {
+			TTYLDISC_HOLD(disc);
+			simple_unlock(&ttyldisc_list_slock);
 			return (disc);
 		}
 	}
+
+	simple_unlock(&ttyldisc_list_slock);
 	return (NULL);
 }
 
 /*
- * Look up a line discipline by its name.
- */
-struct linesw *
-ttyldisc_lookup(name)
-	const char *name;
-{
-	int i;
-
-	for (i = 0; i < nlinesw; i++)
-		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0))
-			return (linesw[i]);
-	return (NULL);
-}
-
-#define TTYLDISCINIT(s, v) \
-	do { \
-		if (ttyldisc_add(&(s), (v)) != (v)) \
-			panic("ttyldisc_init: " __STRING(s)); \
-	} while (/*CONSTCOND*/ 0)
-
-/*
- * Register the basic line disciplines.
+ * Release a reference on a line discipline previously added by
+ * ttyldisc_lookup() or ttyldisc_lookup_bynum().
  */
 void
-ttyldisc_init()
+ttyldisc_release(struct linesw *disc)
 {
 
-	/* Only initialize once */
-	if (linesw)
+	if (disc == NULL)
 		return;
 
-	slinesw = LSWITCHBRK;
-	linesw = malloc(slinesw * sizeof(struct linesw *),
-	    M_TTYS, M_WAITOK);
-	memset(linesw, 0, slinesw * sizeof(struct linesw *));
+	simple_lock(&ttyldisc_list_slock);
+	TTYLDISC_RELE(disc);
+	simple_unlock(&ttyldisc_list_slock);
+}
 
-	TTYLDISCINIT(termios_disc, 0);
-	/* Do we really need this one? */
-	TTYLDISCINIT(defunct_disc, 1);
+#define	TTYLDISC_LEGACY_NUMBER_MIN	10
+#define	TTYLDISC_LEGACY_NUMBER_MAX	INT_MAX
 
-	/*
-	 * The following should really be moved to
-	 * initialization code for each module.
-	 */
+static void
+ttyldisc_assign_legacy_number(struct linesw *disc)
+{
+	static const struct {
+		const char *name;
+		int num;
+	} table[] = {
+		{ "termios",		TTYDISC },
+		{ "ntty",		2 /* XXX old NTTYDISC */ },
+		{ "tablet",		TABLDISC },
+		{ "slip",		SLIPDISC },
+		{ "ppp",		PPPDISC },
+		{ "strip",		STRIPDISC },
+		{ "hdlc",		HDLCDISC },
+		{ NULL,			0 }
+	};
+	struct linesw *ldisc;
+	int i;
 
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
-	TTYLDISCINIT(ntty_disc, 2);
+	for (i = 0; table[i].name != NULL; i++) {
+		if (strcmp(disc->l_name, table[i].name) == 0) {
+			disc->l_no = table[i].num;
+			return;
+		}
+	}
+
+	disc->l_no = TTYLDISC_LEGACY_NUMBER_MIN;
+
+	LIST_FOREACH(ldisc, &ttyldisc_list, l_list) {
+		if (disc->l_no == ldisc->l_no) {
+			KASSERT(disc->l_no < TTYLDISC_LEGACY_NUMBER_MAX);
+			disc->l_no++;
+		}
+	}
+}
+
+/*
+ * Register a line discipline.
+ */
+int
+ttyldisc_attach(struct linesw *disc)
+{
+
+	KASSERT(disc->l_name != NULL);
+	KASSERT(disc->l_open != NULL);
+	KASSERT(disc->l_close != NULL);
+	KASSERT(disc->l_read != NULL);
+	KASSERT(disc->l_write != NULL);
+	KASSERT(disc->l_ioctl != NULL);
+	KASSERT(disc->l_rint != NULL);
+	KASSERT(disc->l_start != NULL);
+	KASSERT(disc->l_modem != NULL);
+	KASSERT(disc->l_poll != NULL);
+
+	/* You are not allowed to exceed TTLINEDNAMELEN */
+	if (strlen(disc->l_name) >= TTLINEDNAMELEN)
+		return (ENAMETOOLONG);
+
+	simple_lock(&ttyldisc_list_slock);
+
+	if (ttyldisc_lookup_locked(disc->l_name) != NULL) {
+		simple_unlock(&ttyldisc_list_slock);
+		return (EEXIST);
+	}
+
+	ttyldisc_assign_legacy_number(disc);
+	LIST_INSERT_HEAD(&ttyldisc_list, disc, l_list);
+
+	simple_unlock(&ttyldisc_list_slock);
+
+	return (0);
+}
+
+/*
+ * Remove a line discipline.
+ */
+int
+ttyldisc_detach(struct linesw *disc)
+{
+#ifdef DIAGNOSTIC
+	struct linesw *ldisc = ttyldisc_lookup(disc->l_name);
+
+	KASSERT(ldisc != NULL);
+	KASSERT(ldisc == disc);
+	ttyldisc_release(ldisc);
 #endif
-#if NTB > 0
-	TTYLDISCINIT(table_disc, 3);
-#endif
-#if NSL > 0
-	TTYLDISCINIT(slip_disc, 4);
-#endif
-#if NPPP > 0
-	TTYLDISCINIT(ppp_disc, 5);
-#endif
-#if NSTRIP > 0
-	TTYLDISCINIT(strip_disc, 6);
-#endif
-#if NIRFRAMETTY > 0
-	ttyldisc_add(&irframet_disc, -1);
-#endif
+
+	simple_lock(&ttyldisc_list_slock);
+
+	if (TTYLDISC_ISINUSE(disc)) {
+		simple_unlock(&ttyldisc_list_slock);
+		return (EBUSY);
+	}
+
+	LIST_REMOVE(disc, l_list);
+
+	simple_unlock(&ttyldisc_list_slock);
+
+	return (0);
+}
+
+/*
+ * Return the default line discipline.
+ */
+struct linesw *
+ttyldisc_default(void)
+{
+
+	return (&termios_disc);
 }

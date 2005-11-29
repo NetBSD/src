@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.101 2005/05/29 21:22:52 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.101.8.1 2005/11/29 21:23:29 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101 2005/05/29 21:22:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.8.1 2005/11/29 21:23:29 yamt Exp $");
 
 #include "ppp.h"
 
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101 2005/05/29 21:22:52 christos Exp $"
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -242,6 +243,10 @@ struct compressor *ppp_compressors[PPP_COMPRESSORS_MAX] = {
 void
 pppattach(void)
 {
+    extern struct linesw ppp_disc;
+
+    if (ttyldisc_attach(&ppp_disc) != 0)
+    	panic("pppattach");
     LIST_INIT(&ppp_softc_list);
     if_clone_attach(&ppp_cloner);
 }

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40 2005/10/10 17:24:38 dsl Exp $
+# $NetBSD: INSTALL,v 1.40.6.1 2005/11/29 21:22:56 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,13 +20,13 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.40 $"
+#ident 		"INSTALL-$Revision: 1.40.6.1 $"
 
 maxusers	32		# estimated number of users
 
 # Standard system options
 
-makeoptions 	COPTS="-Os"
+makeoptions 	COPTS="-Os -fno-asynchronous-unwind-tables"
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
@@ -286,7 +286,7 @@ ahd*	at pci? dev ? function ?	# Adaptec aic790x SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-# isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -411,17 +411,17 @@ bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card
+#esh*	at pci? dev ? function ?	# Essential HIPPI card
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+#ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139

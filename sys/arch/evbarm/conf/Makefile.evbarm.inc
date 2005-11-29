@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.16 2003/01/03 02:16:26 thorpej Exp $
-
-SYSTEM_LD_TAIL_EXTRA=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true
+#	$NetBSD: Makefile.evbarm.inc,v 1.16.24.1 2005/11/29 21:22:57 yamt Exp $
 
 .if defined(BOARDMKFRAG)	# Must be a full pathname.
 .include "${BOARDMKFRAG}"

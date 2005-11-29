@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.61 2005/09/06 21:40:38 kleink Exp $	*/
+/*	$NetBSD: rcons.c,v 1.61.6.1 2005/11/29 21:23:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.61 2005/09/06 21:40:38 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.61.6.1 2005/11/29 21:23:03 yamt Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -282,7 +282,7 @@ rasterconsoleattach (n)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
-	tp->t_linesw = linesw[0];
+	tp->t_linesw = ttyldisc_default();
 #ifdef DEBUG
 	printf("rconsattach: %d raster consoles\n", n);
 #endif

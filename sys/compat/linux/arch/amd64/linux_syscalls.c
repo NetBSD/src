@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.8 2005/11/05 08:11:30 manu Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.8.4.1 2005/11/29 21:23:05 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.8 2005/11/05 08:11:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.8.4.1 2005/11/29 21:23:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -234,7 +234,7 @@ const char *const linux_syscallnames[] = {
 	"removexattr",			/* 197 = removexattr */
 	"lremovexattr",			/* 198 = lremovexattr */
 	"fremovexattr",			/* 199 = fremovexattr */
-	"#200 (unimplemented tkill)",		/* 200 = unimplemented tkill */
+	"tkill",			/* 200 = tkill */
 	"time",			/* 201 = time */
 	"futex",			/* 202 = futex */
 	"sched_setaffinity",			/* 203 = sched_setaffinity */
@@ -268,7 +268,7 @@ const char *const linux_syscallnames[] = {
 	"exit_group",			/* 231 = exit_group */
 	"#232 (unimplemented epoll_wait)",		/* 232 = unimplemented epoll_wait */
 	"#233 (unimplemented epoll_ctl)",		/* 233 = unimplemented epoll_ctl */
-	"#234 (unimplemented tgkill)",		/* 234 = unimplemented tgkill */
+	"tgkill",			/* 234 = tgkill */
 	"#235 (unimplemented utimes)",		/* 235 = unimplemented utimes */
 	"#236 (unimplemented vserver)",		/* 236 = unimplemented vserver */
 	"nosys",			/* 237 = nosys */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2005/11/03 23:12:16 rpaulo Exp $
+# $NetBSD: GENERIC,v 1.72.2.1 2005/11/29 21:22:56 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.72.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -805,7 +805,8 @@ include	"arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

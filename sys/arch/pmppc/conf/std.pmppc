@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmppc,v 1.6 2005/09/17 09:44:08 yamt Exp $
+#	$NetBSD: std.pmppc,v 1.6.6.1 2005/11/29 21:23:03 yamt Exp $
 #
 # standard, required NetBSD/pmppc 'options'
 
@@ -16,5 +16,4 @@ options 	INTSTK=0x2000
 
 makeoptions	TEXTADDR=0x40000
 
-makeoptions 	NEED_SYMTAB=1
 makeoptions 	NEED_BINARY=1

@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.9.24.1 2005/11/29 21:22:58 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9.24.1 2005/11/29 21:22:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <mips/locore.h>
 

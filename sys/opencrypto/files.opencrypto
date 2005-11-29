@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.15 2005/02/26 22:39:52 perry Exp $
+#	$NetBSD: files.opencrypto,v 1.15.10.1 2005/11/29 21:23:33 yamt Exp $
 #
 #
 
@@ -7,21 +7,19 @@
 # that use the opencrypto framework, should list opencrypto as a dependency
 # to pull in the framework.
 
-define	opencrypto: blowfish, des, cast128, rijndael, ripemd160, sha2, skipjack
-
-
-file	opencrypto/criov.c		opencrypto	needs-flag
-file	opencrypto/cryptosoft.c		opencrypto
+define	opencrypto
+file	opencrypto/criov.c		opencrypto
 file	opencrypto/xform.c		opencrypto
 file	opencrypto/crypto.c		opencrypto
 
-# wrapper around zlib functions
-file	opencrypto/deflate.c		opencrypto
-
+# Pseudo-device that provides software implementations of various cryptographic
+# algorithms.
+defpseudo swcrypto: opencrypto,
+		blowfish, des, cast128, rijndael, ripemd160, sha2, skipjack
+file	opencrypto/cryptosoft.c		swcrypto
+file	opencrypto/deflate.c		swcrypto	# wrapper around zlib
 
 # Pseudo-device for userspace access to opencrypto
 # (and thus crypto hardware accelerators).
-
-defpseudo crypto:  opencrypto
-
+defpseudo crypto: opencrypto
 file	opencrypto/cryptodev.c		crypto

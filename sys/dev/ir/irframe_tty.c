@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.29 2005/05/29 22:15:25 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.29.8.1 2005/11/29 21:23:13 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29 2005/05/29 22:15:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29.8.1 2005/11/29 21:23:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -191,9 +191,24 @@ static const struct dongle {
 	{ irts_girbil, IRDA_SPEEDS_SIR, IRDA_TURNT_10000 | IRDA_TURNT_5000 },
 };
 
+static struct linesw irframet_disc = {
+	.l_name = "irframe",
+	.l_open = irframetopen,
+	.l_close = irframetclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = irframetioctl,
+	.l_rint = irframetinput,
+	.l_start = irframetstart,
+	.l_modem = ttymodem,
+	.l_poll = ttyerrpoll
+};
+
 void
 irframettyattach(int n)
 {
+
+	(void) ttyldisc_attach(&irframet_disc);
 }
 
 /*
@@ -218,7 +233,7 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	DPRINTF(("%s: linesw=%p disc=%s\n", __FUNCTION__, tp->t_linesw,
 		 tp->t_linesw->l_name));
-	if (strcmp(tp->t_linesw->l_name, "irframe") == 0) { /* XXX */
+	if (tp->t_linesw == &irframet_disc) {
 		sc = (struct irframet_softc *)tp->t_sc;
 		DPRINTF(("%s: sc=%p sc_tp=%p\n", __FUNCTION__, sc, sc->sc_tp));
 		if (sc != NULL) {
@@ -262,7 +277,8 @@ irframetclose(struct tty *tp, int flag)
 
 	s = spltty();
 	ttyflush(tp, FREAD | FWRITE);
-	tp->t_linesw = linesw[0]; /* default line discipline */
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
 		tp->t_sc = NULL;
 		printf("%s detached from tty%02d\n", sc->sc_irp.sc_dev.dv_xname,

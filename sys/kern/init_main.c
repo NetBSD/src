@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.251.6.1 2005/11/22 16:08:15 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.251.6.2 2005/11/29 21:23:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.251.6.1 2005/11/22 16:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.251.6.2 2005/11/29 21:23:29 yamt Exp $");
 
-#include "fs_nfs.h"
-#include "opt_nfsserver.h"
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
@@ -87,9 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.251.6.1 2005/11/22 16:08:15 yamt Exp
 #include "opt_rootfs_magiclinks.h"
 #include "opt_verified_exec.h"
 
-#include "opencrypto.h"
 #include "rnd.h"
-#include "wlan.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -139,9 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.251.6.1 2005/11/22 16:08:15 yamt Exp
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
-#if NOPENCRYPTO > 0
-#include <opencrypto/cryptodev.h>	/* XXX really the framework */
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -210,9 +203,6 @@ main(void)
 	int s, error;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
-#if defined(NFSSERVER) || defined(NFS)
-	extern void nfs_init(void);
-#endif
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -264,13 +254,8 @@ main(void)
 	 * The following things must be done before autoconfiguration.
 	 */
 	evcnt_init();		/* initialize event counters */
-	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
-#endif
-#if NOPENCRYPTO > 0
-	/* Initialize crypto subsystem before configuring crypto hardware. */
-	(void)crypto_init();
 #endif
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -278,18 +263,8 @@ main(void)
 	/* Initialize process and pgrp structures. */
 	procinit();
 
-#ifdef LKM
-	/* Initialize the LKM system. */
-	lkm_init();
-#endif
-
 	/* Initialize signal-related data structures. */
 	signal_init();
-
-#if NWLAN > 0
-	/* Initialize the net80211 layer */
-	ieee80211_init();
-#endif
 
 	/* Create process 0 (the swapper). */
 	proc0_init();
@@ -302,9 +277,6 @@ main(void)
 	rqinit();
 
 	/* Initialize the file systems. */
-#if defined(NFSSERVER) || defined(NFS)
-	nfs_init();			/* initialize server/shared data */
-#endif
 #ifdef NVNODE_IMPLICIT
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
@@ -379,10 +351,6 @@ main(void)
 
 	/* Initialize system accouting. */
 	acct_init();
-
-#ifdef SYSTRACE
-	systrace_init();
-#endif
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);

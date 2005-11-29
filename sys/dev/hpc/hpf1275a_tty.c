@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.2 2004/10/15 04:38:37 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.2.18.1 2005/11/29 21:23:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.2 2004/10/15 04:38:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.2.18.1 2005/11/29 21:23:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,9 +90,16 @@ CFATTACH_DECL(hpf1275a, sizeof(struct hpf1275a_softc),
 
 
 static struct linesw hpf1275a_disc = {
-	"hpf1275a", -1, hpf1275a_open, hpf1275a_close,
-	ttyerrio, ttyerrio, ttynullioctl,
-	hpf1275a_input, ttstart, nullmodem, ttpoll,
+	.l_name = "hpf1275a",
+	.l_open = hpf1275a_open,
+	.l_close = hpf1275a_close,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = ttynullioctl,
+	.l_rint = hpf1275a_input,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttpoll
 };
 
 
@@ -206,13 +213,12 @@ static uint8_t hpf1275a_to_xtscan[128] = {
 void
 hpf1275aattach(int n)
 {
-	int discno;
 	int error;
 
-	discno = ttyldisc_add(&hpf1275a_disc, -1);
-	if (discno < 0) {
-		printf("%s: unable to register line discipline\n",
-		       hpf1275a_cd.cd_name);
+	error = ttyldisc_attach(&hpf1275a_disc);
+	if (error) {
+		printf("%s: unable to register line discipline, error = %d\n",
+		       hpf1275a_cd.cd_name, error);
 		return;
 	}
 
@@ -221,7 +227,7 @@ hpf1275aattach(int n)
 		printf("%s: unable to register cfattach, error = %d\n",
 		       hpf1275a_cd.cd_name, error);
 		config_cfdriver_detach(&hpf1275a_cd);
-		ttyldisc_remove(hpf1275a_disc.l_name);
+		(void) ttyldisc_detach(hpf1275a_disc.l_name);
 	}
 }
 
@@ -324,7 +330,8 @@ hpf1275a_close(struct tty *tp, int flag)
 
 	s = spltty();
 	ttyflush(tp, FREAD | FWRITE);
-	tp->t_linesw = linesw[0]; /* default line discipline */
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
 		tp->t_sc = NULL;
 		if (sc->sc_tp == tp)

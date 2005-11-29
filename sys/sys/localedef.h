@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.6 2002/11/19 09:53:16 junyoung Exp $	*/
+/*	$NetBSD: localedef.h,v 1.6.30.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -34,10 +34,10 @@
 #define _SYS_LOCALEDEF_H_
 
 typedef struct {
-	char *yesexpr;
-	char *noexpr;
-	char *yesstr;
-	char *nostr;
+	const char *yesexpr;
+	const char *noexpr;
+	const char *yesstr;
+	const char *nostr;
 } _MessagesLocale;
 
 extern const _MessagesLocale *_CurrentMessagesLocale;
@@ -45,13 +45,13 @@ extern const _MessagesLocale  _DefaultMessagesLocale;
 
 
 typedef struct {
-	char *int_curr_symbol;
-	char *currency_symbol;
-	char *mon_decimal_point;
-	char *mon_thousands_sep;
-	char *mon_grouping;
-	char *positive_sign;
-	char *negative_sign;
+	const char *int_curr_symbol;
+	const char *currency_symbol;
+	const char *mon_decimal_point;
+	const char *mon_thousands_sep;
+	const char *mon_grouping;
+	const char *positive_sign;
+	const char *negative_sign;
 	char int_frac_digits;
 	char frac_digits;
 	char p_cs_precedes;

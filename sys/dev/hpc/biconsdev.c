@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.11 2005/09/06 21:40:39 kleink Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.11.6.1 2005/11/29 21:23:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.11 2005/09/06 21:40:39 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.11.6.1 2005/11/29 21:23:08 yamt Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -115,7 +115,7 @@ biconsdevattach(int n)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
-	tp->t_linesw = linesw[0];
+	tp->t_linesw = ttyldisc_default();
 
 
 	tp->t_dev = makedev(maj, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmousevar.h,v 1.5 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wsmousevar.h,v 1.5.42.1 2005/11/29 21:23:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -72,5 +72,9 @@ int	wsmousedevprint(void *, const char *);
 #define WSMOUSE_INPUT_ABSOLUTE_X	(1<<0)
 #define WSMOUSE_INPUT_ABSOLUTE_Y	(1<<1)
 #define WSMOUSE_INPUT_ABSOLUTE_Z	(1<<2)
-void	wsmouse_input(struct device *kbddev, u_int btns,
-		      int x, int y, int z, u_int flags);
+#define WSMOUSE_INPUT_ABSOLUTE_W	(1<<3)
+void	wsmouse_input_xyzw(struct device *kbddev, u_int btns,
+			   int x, int y, int z, int w, u_int flags);
+/* Provide a define all the old mouse drivers that don't want w. */
+#define wsmouse_input(kbddev, btns, x, y, z, flags) \
+	wsmouse_input_xyzw(kbddev, btns, x, y, z, 0, flags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.9 2005/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.9.6.1 2005/11/29 21:23:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -130,6 +130,7 @@ struct ath_diag {
  * Radio capture format.
  */
 #define ATH_RX_RADIOTAP_PRESENT (		\
+	(1 << IEEE80211_RADIOTAP_TSFT)		| \
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
@@ -139,6 +140,7 @@ struct ath_diag {
 
 struct ath_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
+	uint64_t	wr_tsf;
 	u_int8_t	wr_flags;		/* XXX for padding */
 	u_int8_t	wr_rate;
 	u_int16_t	wr_chan_freq;
