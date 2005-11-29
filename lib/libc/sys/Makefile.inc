@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.160 2005/09/13 01:44:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.161 2005/11/29 23:06:45 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -79,6 +79,7 @@ ASM=	access.S acct.S \
 		munlock.S munlockall.S munmap.S \
 	nfssvc.S ntp_gettime.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
+		posix_fadvise.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
 	quotactl.S \
 	rasctl.S readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
