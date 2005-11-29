@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.329 2005/11/29 10:25:57 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.330 2005/11/29 10:36:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14578,4 +14578,9 @@ sys/dev/ic/aic7xxxvar.h				1.50
 
 	Fix a panic in UVM under NetBSD-xen.
 	[bouyer, ticket #1014]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC5.
 
