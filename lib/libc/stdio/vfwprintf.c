@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.3 2005/06/15 09:31:27 he Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.4 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.3 2005/06/15 09:31:27 he Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.4 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -486,6 +486,11 @@ static wchar_t *cvt(double, int, int, char *, int *, int, int *);
 int
 __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 {
+	static wchar_t linf[] = L"inf";
+	static wchar_t lINF[] = L"INF";
+	static wchar_t lnan[] = L"nan";
+	static wchar_t lNAN[] = L"NAN";
+	static wchar_t lnull[] = L"(null)";
 	wchar_t *fmt;		/* format string */
 	wchar_t ch;		/* character from fmt */
 	int n, n2, n3;		/* handy integer (short term usage) */
@@ -925,7 +930,7 @@ fp_common:
 					cp = (ch >= 'a') ? L"nan" : L"NAN";
 					sign = '\0';
 				} else
-					cp = (ch >= 'a') ? L"inf" : L"INF";
+					cp = (ch >= 'a') ? linf : lINF;
 				size = 3;
 				break;
 			}
@@ -953,17 +958,17 @@ fp_common:
 				if (_double < 0)
 					sign = '-';
 				if (ch == 'E' || ch == 'F' || ch == 'G')
-					cp = L"INF";
+					cp = lINF;
 				else
-					cp = L"inf";
+					cp = linf;
 				size = 3;
 				break;
 			}
 			if (isnan(_double)) {
 				if (ch == 'E' || ch == 'F' || ch == 'G')
-					cp = L"NAN";
+					cp = lNAN;
 				else
-					cp = L"nan";
+					cp = lnan;
 				size = 3;
 				break;
 			}
@@ -1081,14 +1086,14 @@ fp_common:
 		case 's':
 			if (flags & LONGINT) {
 				if ((cp = GETARG(wchar_t *)) == NULL)
-					cp = L"(null)";
+					cp = lnull;
 			} else {
 				char *mbp;
 
 				if (convbuf != NULL)
 					free(convbuf);
 				if ((mbp = GETARG(char *)) == NULL)
-					cp = L"(null)";
+					cp = lnull;
 				else {
 					convbuf = __mbsconv(mbp, prec);
 					if (convbuf == NULL) {

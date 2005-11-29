@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_timezone.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_timezone.c,v 1.2 2005/11/29 03:11:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_timezone.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_timezone.c,v 1.2 2005/11/29 03:11:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,9 +87,9 @@ timezone(zone, dst)
 }
 
 static const struct zone {
-	int	offset;
-	char	*stdzone;
-	char	*dlzone;
+	int		offset;
+	const char	*stdzone;
+	const char	*dlzone;
 } zonetab[] = {
 	{ -1*60,	"MET",	"MET DST" },	/* Middle European */
 	{ -2*60,	"EET",	"EET DST" },	/* Eastern European */
@@ -127,9 +127,9 @@ _tztab(zone,dst)
 	for (zp = zonetab; zp->offset != -1;++zp)	/* static tables */
 		if (zp->offset == zone) {
 			if (dst && zp->dlzone)
-				return(zp->dlzone);
+				return __UNCONST(zp->dlzone);
 			if (!dst && zp->stdzone)
-				return(zp->stdzone);
+				return __UNCONST(zp->stdzone);
 		}
 
 	if (zone < 0) {					/* create one */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.14 2003/06/06 08:13:45 itojun Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.15 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rthdr.c,v 1.14 2003/06/06 08:13:45 itojun Exp $");
+__RCSID("$NetBSD: rthdr.c,v 1.15 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -180,8 +180,7 @@ inet6_rthdr_segments(cmsg)
 
 	_DIAGASSERT(cmsg != NULL);
 
-	/*LINTED const castaway*/
-	rthdr = (const struct ip6_rthdr *)(const void *)CMSG_DATA(cmsg);
+	rthdr = __UNCONST(CCMSG_DATA(cmsg));
 
 	switch (rthdr->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
@@ -239,8 +238,7 @@ inet6_rthdr_getflags(cmsg, idx)
 
 	_DIAGASSERT(cmsg != NULL);
 
-	/*LINTED const castaway*/
-	rthdr = (const struct ip6_rthdr *)(const void *)CMSG_DATA(cmsg);
+	rthdr = __UNCONST(CCMSG_DATA(cmsg));
 
 	switch (rthdr->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:

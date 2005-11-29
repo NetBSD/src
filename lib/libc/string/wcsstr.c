@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsstr.c,v 1.3 2003/03/05 20:18:17 tshiozak Exp $	*/
+/*	$NetBSD: wcsstr.c,v 1.4 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsstr.c,v 1.3 2003/03/05 20:18:17 tshiozak Exp $");
+__RCSID("$NetBSD: wcsstr.c,v 1.4 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -52,10 +52,8 @@ wcsstr(big, little)
 	_DIAGASSERT(big != NULL);
 	_DIAGASSERT(little != NULL);
 
-	if (!*little) {
-		/* LINTED interface specification */
-		return (wchar_t *)big;
-	}
+	if (!*little)
+		return __UNCONST(big);
 	if (wcslen(big) < wcslen(little))
 		return NULL;
 
@@ -70,10 +68,8 @@ wcsstr(big, little)
 			q++;
 			r++;
 		}
-		if (!*q) {
-			/* LINTED interface specification */
-			return (wchar_t *)p;
-		}
+		if (!*q)
+			return __UNCONST(p);
 		p++;
 	}
 	return NULL;

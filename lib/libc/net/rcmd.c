@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.61 2005/11/28 14:18:20 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.62 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.61 2005/11/28 14:18:20 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.62 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -665,7 +665,6 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	_DIAGASSERT(ruser != NULL);
 	_DIAGASSERT(luser != NULL);
 
-	/*LINTED const castaway*/
 	sa = __UNCONST(raddr);
 
 	__rcmd_errstr = NULL;

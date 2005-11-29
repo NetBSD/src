@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
+/*	$NetBSD: runetype.h,v 1.19 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -150,7 +150,7 @@ typedef struct {
  * wctrans stuffs.
  */
 typedef struct _WCTransEntry {
-	char		*te_name;
+	const char	*te_name;
 	__nbrune_t	*te_cached;
 	_NBRuneRange	*te_extmap;
 } _WCTransEntry;
@@ -162,7 +162,7 @@ typedef struct _WCTransEntry {
  * wctype stuffs.
  */
 typedef struct _WCTypeEntry {
-	char		*te_name;
+	const char	*te_name;
 	_RuneType	te_mask;
 } _WCTypeEntry;
 #define _WCTYPE_INDEX_ALNUM	0
@@ -203,7 +203,7 @@ typedef struct _NBRuneLocale {
 	/*
 	 * the following portion is generated on the fly
 	 */
-	char				*rl_codeset;
+	const char			*rl_codeset;
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
 	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];

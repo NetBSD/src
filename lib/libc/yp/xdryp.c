@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.28 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.29 2005/11/29 03:12:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.28 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.29 2005/11/29 03:12:01 christos Exp $");
 #endif
 
 /*
@@ -210,7 +210,7 @@ xdr_datum(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	return xdr_bytes(xdrs, (char **)&objp->dptr,
+	return xdr_bytes(xdrs, __UNCONST(&objp->dptr),
 	    (u_int *)&objp->dsize, YPMAXRECORD);
 }
 
@@ -223,10 +223,10 @@ xdr_ypreq_key(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
+	if (!xdr_ypdomain_wrap_string(xdrs, __UNCONST(&objp->domain)))
 		return FALSE;
 
-	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
+	if (!xdr_ypmap_wrap_string(xdrs, __UNCONST(&objp->map)))
 		return FALSE;
 
 	if (!xdr_datum(xdrs, &objp->keydat))
@@ -244,10 +244,10 @@ xdr_ypreq_nokey(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
+	if (!xdr_ypdomain_wrap_string(xdrs, __UNCONST(&objp->domain)))
 		return FALSE;
 
-	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
+	if (!xdr_ypmap_wrap_string(xdrs, __UNCONST(&objp->map)))
 		return FALSE;
 
 	return TRUE;
@@ -437,10 +437,9 @@ xdr_ypall(xdrs, incallback)
 		 * error.
 		 */
 		if (status) {
-			/* LINTED const dropouts */
 			if ((*incallback->foreach)((int)out.status,
-			    (char *)out.keydat.dptr, out.keydat.dsize,
-			    (char *)out.valdat.dptr, out.valdat.dsize,
+			    __UNCONST(out.keydat.dptr), out.keydat.dsize,
+			    __UNCONST(out.valdat.dptr), out.valdat.dsize,
 			    incallback->data))
 				return TRUE;
 		} else
@@ -567,10 +566,10 @@ xdr_ypmap_parms(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
+	if (!xdr_ypdomain_wrap_string(xdrs, __UNCONST(&objp->domain)))
 		return FALSE;
 
-	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
+	if (!xdr_ypmap_wrap_string(xdrs, __UNCONST(&objp->map)))
 		return FALSE;
 
 	if (!xdr_u_int(xdrs, &objp->ordernum))

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasestr.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: strcasestr.c,v 1.3 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strcasestr.c,v 1.2 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: strcasestr.c,v 1.3 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -65,6 +65,5 @@ strcasestr(const char *s, const char *find)
 		} while (strncasecmp(s, find, len) != 0);
 		s--;
 	}
-	/* LINTED interface specification */
-	return ((char *)s);
+	return __UNCONST(s);
 }

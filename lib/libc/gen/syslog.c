@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.30 2003/08/07 16:42:57 agc Exp $	*/
+/*	$NetBSD: syslog.c,v 1.31 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.30 2003/08/07 16:42:57 agc Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.31 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -219,7 +219,7 @@ vsyslog(pri, fmt, ap)
 
 		iov[0].iov_base = stdp;
 		iov[0].iov_len = cnt - (stdp - tbuf);
-		iov[1].iov_base = "\n";
+		iov[1].iov_base = __UNCONST("\n");
 		iov[1].iov_len = 1;
 		(void)writev(STDERR_FILENO, iov, 2);
 	}
@@ -258,7 +258,7 @@ vsyslog(pri, fmt, ap)
 		p = strchr(tbuf, '>') + 1;
 		iov[0].iov_base = p;
 		iov[0].iov_len = cnt - (p - tbuf);
-		iov[1].iov_base = "\r\n";
+		iov[1].iov_base = __UNCONST("\r\n");
 		iov[1].iov_len = 2;
 		(void)writev(fd, iov, 2);
 		(void)close(fd);

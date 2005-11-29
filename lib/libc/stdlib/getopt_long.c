@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.17 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.18 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.17 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.18 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -100,7 +100,7 @@ static int getopt_internal __P((int, char * const *, const char *));
 static int gcd __P((int, int));
 static void permute_args __P((int, int, int, char * const *));
 
-static char *place = EMSG; /* option letter processing */
+static const char *place = EMSG; /* option letter processing */
 
 /* XXX: set optreset to 1 rather than these two */
 static int nonopt_start = -1; /* first non option argument (for permute) */
@@ -169,10 +169,8 @@ permute_args(panonopt_start, panonopt_end, opt_end, nargv)
 			else
 				pos += nopts;
 			swap = nargv[pos];
-			/* LINTED const cast */
-			((char **) nargv)[pos] = nargv[cstart];
-			/* LINTED const cast */
-			((char **)nargv)[cstart] = swap;
+			((char **)__UNCONST(nargv))[pos] = nargv[cstart];
+			((char **)__UNCONST(nargv))[cstart] = swap;
 		}
 	}
 }
@@ -301,7 +299,7 @@ start:
 	} else {				/* takes (optional) argument */
 		optarg = NULL;
 		if (*place)			/* no white space */
-			optarg = place;
+			optarg = __UNCONST(place);
 		/* XXX: disable test for :: if PC? (GNU doesn't) */
 		else if (oli[1] != ':') {	/* arg not optional */
 			if (++optind >= nargc) {	/* no arg */
@@ -380,7 +378,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 		size_t current_argv_len;
 		int i, match;
 
-		current_argv = place;
+		current_argv = __UNCONST(place);
 		match = -1;
 
 		optind++;
