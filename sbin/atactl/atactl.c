@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.39 2005/06/27 01:00:05 christos Exp $	*/
+/*	$NetBSD: atactl.c,v 1.40 2005/11/29 08:06:13 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.39 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.40 2005/11/29 08:06:13 dbj Exp $");
 #endif
 
 
@@ -641,7 +641,7 @@ print_error(void *buf)
 	}
 
 	if (erlog->data_structure_revision != 1) {
-		fprintf(stderr, "Log revision not 1");
+		fprintf(stderr, "Log revision not 1\n");
 		return;
 	}
 
@@ -710,7 +710,7 @@ print_selftest(void *buf)
 	}
 
 	if (le16toh(stlog->data_structure_revision != 1)) {
-		fprintf(stderr, "Log revision not 1");
+		fprintf(stderr, "Log revision not 1\n");
 		return;
 	}
 
