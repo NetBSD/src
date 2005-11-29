@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.734.2.1 2005/11/22 16:08:11 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.734.2.2 2005/11/29 21:23:15 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.736 2005/11/18 21:55:14 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.738 2005/11/27 10:17:26 jdolecek Exp
  */
 
 /*
@@ -2589,15 +2589,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
-	    "Escalade IDE RAID",
+	    "Escalade ATA RAID Controller",
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
-	    "Escalade IDE RAID 7000/8000 series",
+	    "Escalade ATA RAID 7000/8000 series Controller",
 	},
 	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_9K,
-	    "Escalade IDE RAID 9000 series",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ATARAID_9K,
+	    "ATA RAID 9000 series Controller",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -9388,8 +9388,8 @@ static const struct pci_product pci_products[] = {
 	    "PCI7x21/7x11 IEEE 1394 Host Controller",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1121FM,
-	    "PCIxx11/21 Integrated FlashMedia Controller",
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FM,
+	    "PCI7x21/7x11 Integrated FlashMedia Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,

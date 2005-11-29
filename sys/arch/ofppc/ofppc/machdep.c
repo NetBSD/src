@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87.24.1 2005/11/29 21:23:03 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2003/10/20 00:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.24.1 2005/11/29 21:23:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -85,7 +85,7 @@ int lcsplx(int);			/* called from locore.S */
 static int fake_spl __P((int));
 static void fake_splx __P((int));
 static void fake_setsoft __P((int));
-static void fake_clock_return __P((struct clockframe *, int));
+static void fake_clock_return __P((struct clockframe *, int, long));
 static void *fake_intr_establish __P((int, int, int, int (*)(void *), void *));
 static void fake_intr_disestablish __P((void *));
 
@@ -369,11 +369,17 @@ fake_splx(new)
 }
 
 static void
-fake_clock_return(frame, nticks)
+fake_clock_return(frame, nticks, ticks)
 	struct clockframe *frame;
 	int nticks;
+	long ticks;
 {
-	/* Do nothing */
+
+	/*
+	 * lasttb is used during microtime. Set it to the virtual
+	 * start of this tick interval.
+	 */
+	lasttb = mftb() + ticks - ticks_per_intr;
 }
 
 static void *

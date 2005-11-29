@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.75 2005/06/21 14:01:12 ws Exp $	*/
+/*	$NetBSD: ugen.c,v 1.75.8.1 2005/11/29 21:23:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.75 2005/06/21 14:01:12 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.75.8.1 2005/11/29 21:23:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,9 @@ USB_MATCH(ugen)
 {
 	USB_MATCH_START(ugen, uaa);
 
-#if 0
-	if (uaa->matchlvl)
-		return (uaa->matchlvl);
-#endif
-	if (uaa->usegeneric)
+	if (match->cf_flags & 1)
+		return (UMATCH_HIGHEST);
+	else if (uaa->usegeneric)
 		return (UMATCH_GENERIC);
 	else
 		return (UMATCH_NONE);

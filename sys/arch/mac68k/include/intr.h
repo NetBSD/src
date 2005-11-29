@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.16.1 2005/11/29 21:22:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -42,19 +42,20 @@
  */
 extern unsigned short mac68k_ipls[];
 
-#define	MAC68K_IPL_SOFT		0
-#define	MAC68K_IPL_BIO		1
-#define	MAC68K_IPL_NET		2
-#define	MAC68K_IPL_TTY		3
-#define	MAC68K_IPL_IMP		4
-#define	MAC68K_IPL_AUDIO	5
-#define	MAC68K_IPL_SERIAL	6
-#define	MAC68K_IPL_ADB		7
-#define	MAC68K_IPL_CLOCK	8
-#define	MAC68K_IPL_STATCLOCK	9
-#define	MAC68K_IPL_SCHED	10
-#define	MAC68K_IPL_HIGH		11
-#define	MAC68K_NIPLS		12
+#define	MAC68K_IPL_NONE		0
+#define	MAC68K_IPL_SOFT		1
+#define	MAC68K_IPL_BIO		2
+#define	MAC68K_IPL_NET		3
+#define	MAC68K_IPL_TTY		4
+#define	MAC68K_IPL_IMP		5
+#define	MAC68K_IPL_AUDIO	6
+#define	MAC68K_IPL_SERIAL	7
+#define	MAC68K_IPL_ADB		8
+#define	MAC68K_IPL_CLOCK	9
+#define	MAC68K_IPL_STATCLOCK	10
+#define	MAC68K_IPL_SCHED	11
+#define	MAC68K_IPL_HIGH		12
+#define	MAC68K_NIPLS		13
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	spladb()	_splraise(mac68k_ipls[MAC68K_IPL_ADB])
@@ -66,22 +67,28 @@ extern unsigned short mac68k_ipls[];
  * 2) allowing faster devices to take priority
  */
 #define	spllowersoftclock() spl1()
-#define	splsoftclock()	_splraise(mac68k_ipls[MAC68K_IPL_SOFT])
-#define	splsoftnet()	_splraise(mac68k_ipls[MAC68K_IPL_SOFT])
-#define	spltty()	_splraise(mac68k_ipls[MAC68K_IPL_TTY])
-#define	splbio()	_splraise(mac68k_ipls[MAC68K_IPL_BIO])
-#define	splnet()	_splraise(mac68k_ipls[MAC68K_IPL_NET])
-#define	splvm()		_splraise(mac68k_ipls[MAC68K_IPL_IMP])
-#define	splaudio()	_splraise(mac68k_ipls[MAC68K_IPL_AUDIO])
-#define	splclock()	_splraise(mac68k_ipls[MAC68K_IPL_CLOCK])
-#define	splstatclock()	_splraise(mac68k_ipls[MAC68K_IPL_STATCLOCK])
-#define	splsched()	_splraise(mac68k_ipls[MAC68K_IPL_SCHED])
-#define	splserial()	_splraise(mac68k_ipls[MAC68K_IPL_SERIAL])
-#define	splhigh()	spl7()
-#define	spllock()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+#define	IPL_NONE	MAC68K_IPL_NONE
+#define	IPL_SOFTCLOCK	MAC68K_IPL_SOFT
+#define	IPL_SOFTNET	MAC68K_IPL_SOFT
+#define	IPL_BIO		MAC68K_IPL_BIO
+#define	IPL_NET		MAC68K_IPL_NET
+#define	IPL_TTY		MAC68K_IPL_TTY
+#define	IPL_VM		MAC68K_IPL_IMP
+#define	IPL_AUDIO	MAC68K_IPL_AUDIO
+#define	IPL_CLOCK	MAC68K_IPL_CLOCK
+#define	IPL_STATCLOCK	MAC68K_IPL_STATCLOCK
+#define	IPL_SCHED	MAC68K_IPL_SCHED
+#define	IPL_HIGH	MAC68K_IPL_HIGH
+#define	IPL_LOCK	MAC68K_IPL_HIGH
+#define	IPL_SERIAL	MAC68K_IPL_SERIAL
+
+#define	splraiseipl(x)	_splraise(mac68k_ipls[x])
+
+#include <sys/spl.h>
 
 /*
  * simulated software interrupt register

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.2 2003/08/27 00:20:56 thorpej Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.2.26.1 2005/11/29 21:23:33 yamt Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -33,15 +33,15 @@ struct swcr_data {
 			u_int8_t	 *SW_ictx;
 			u_int8_t	 *SW_octx;
 			u_int32_t	 SW_klen;
-			struct auth_hash *SW_axf;
+			const struct swcr_auth_hash *SW_axf;
 		} SWCR_AUTH;
 		struct {
 			u_int8_t	 *SW_kschedule;
-			struct enc_xform *SW_exf;
+			const struct swcr_enc_xform *SW_exf;
 		} SWCR_ENC;
 		struct {
 			u_int32_t	 SW_size;
-			struct comp_algo *SW_cxf;
+			const struct swcr_comp_algo *SW_cxf;
 		} SWCR_COMP;
 	} SWCR_UN;
 
@@ -56,11 +56,5 @@ struct swcr_data {
 
 	struct swcr_data *sw_next;
 };
-
-#ifdef _KERNEL
-extern const u_int8_t hmac_ipad_buffer[64];
-extern const u_int8_t hmac_opad_buffer[64];
-void	swcr_init(void);
-#endif /* _KERNEL */
 
 #endif /* _CRYPTO_CRYPTO_H_ */

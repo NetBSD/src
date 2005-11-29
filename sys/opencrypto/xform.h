@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.6 2005/05/29 21:23:17 christos Exp $ */
+/*	$NetBSD: xform.h,v 1.6.8.1 2005/11/29 21:23:33 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -39,9 +39,6 @@ struct auth_hash {
 	u_int16_t hashsize;
 	u_int16_t authsize;
 	u_int16_t ctxsize;
-	void (*Init) (void *);
-	int  (*Update) (void *, const u_int8_t *, u_int16_t);
-	void (*Final) (u_int8_t *, void *);
 };
 
 /* Provide array-limit for clients (e.g., netipsec) */
@@ -52,28 +49,16 @@ struct enc_xform {
 	const char *name;
 	u_int16_t blocksize;
 	u_int16_t minkey, maxkey;
-	void (*encrypt) (caddr_t, u_int8_t *);
-	void (*decrypt) (caddr_t, u_int8_t *);
-	int (*setkey) (u_int8_t **, const u_int8_t *, int len);
-	void (*zerokey) (u_int8_t **);
 };
 
 struct comp_algo {
 	int type;
 	const char *name;
 	size_t minlen;
-	u_int32_t (*compress) (u_int8_t *, u_int32_t, u_int8_t **);
-	u_int32_t (*decompress) (u_int8_t *, u_int32_t, u_int8_t **);
 };
 
-union authctx {
-	MD5_CTX md5ctx;
-	SHA1_CTX sha1ctx;
-	RMD160_CTX rmd160ctx;
-	SHA256_CTX sha256ctx;
-	SHA384_CTX sha384ctx;
-	SHA512_CTX sha512ctx;
-};
+extern const u_int8_t hmac_ipad_buffer[64];
+extern const u_int8_t hmac_opad_buffer[64];
 
 extern struct enc_xform enc_xform_null;
 extern struct enc_xform enc_xform_des;

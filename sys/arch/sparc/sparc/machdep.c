@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260.2.2 2005/11/22 16:08:03 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.260.2.3 2005/11/29 21:23:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260.2.2 2005/11/22 16:08:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260.2.3 2005/11/29 21:23:04 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1999,13 +1999,15 @@ sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	struct vm_page *m;
 	vaddr_t va;
 	struct pglist *mlist;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	if (nsegs != 1)
 		panic("sun4_dmamem_map: nsegs = %d", nsegs);
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 	if (va == 0)
 		return (ENOMEM);
 

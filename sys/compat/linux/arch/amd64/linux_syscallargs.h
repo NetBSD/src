@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.8 2005/11/05 08:11:30 manu Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.8.4.1 2005/11/29 21:23:05 yamt Exp $ */
 
 /*
  * System call argument lists.
@@ -337,7 +337,7 @@ struct linux_sys_gettimeofday_args {
 
 struct linux_sys_getrlimit_args {
 	syscallarg(int) which;
-	syscallarg(struct orlimit *) rlp;
+	syscallarg(struct rlimit *) rlp;
 };
 
 struct linux_sys_sysinfo_args {
@@ -487,7 +487,7 @@ struct linux_sys_arch_prctl_args {
 
 struct linux_sys_setrlimit_args {
 	syscallarg(u_int) which;
-	syscallarg(struct orlimit *) rlp;
+	syscallarg(struct rlimit *) rlp;
 };
 
 struct linux_sys_settimeofday_args {
@@ -603,6 +603,11 @@ struct linux_sys_fremovexattr_args {
 	syscallarg(char *) name;
 };
 
+struct linux_sys_tkill_args {
+	syscallarg(int) tid;
+	syscallarg(int) sig;
+};
+
 struct linux_sys_time_args {
 	syscallarg(linux_time_t *) t;
 };
@@ -662,6 +667,12 @@ struct linux_sys_clock_nanosleep_args {
 
 struct linux_sys_exit_group_args {
 	syscallarg(int) error_code;
+};
+
+struct linux_sys_tgkill_args {
+	syscallarg(int) tgid;
+	syscallarg(int) tid;
+	syscallarg(int) sig;
 };
 
 /*
@@ -995,6 +1006,8 @@ int	linux_sys_lremovexattr(struct lwp *, void *, register_t *);
 
 int	linux_sys_fremovexattr(struct lwp *, void *, register_t *);
 
+int	linux_sys_tkill(struct lwp *, void *, register_t *);
+
 int	linux_sys_time(struct lwp *, void *, register_t *);
 
 int	linux_sys_futex(struct lwp *, void *, register_t *);
@@ -1016,6 +1029,8 @@ int	linux_sys_clock_getres(struct lwp *, void *, register_t *);
 int	linux_sys_clock_nanosleep(struct lwp *, void *, register_t *);
 
 int	linux_sys_exit_group(struct lwp *, void *, register_t *);
+
+int	linux_sys_tgkill(struct lwp *, void *, register_t *);
 
 int	linux_sys_nosys(struct lwp *, void *, register_t *);
 

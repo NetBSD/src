@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2005/11/03 16:48:29 chs Exp $
+# $NetBSD: GENERIC,v 1.92.2.1 2005/11/29 21:22:57 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -556,7 +556,8 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # Pseudo-Devices
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices

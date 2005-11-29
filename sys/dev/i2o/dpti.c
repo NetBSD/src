@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.19 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: dpti.c,v 1.19.10.1 2005/11/29 21:23:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19.10.1 2005/11/29 21:23:08 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -547,6 +547,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	 * we allocate a temporary buffer for it; otherwise, the buffer will
 	 * be mapped directly.
 	 */
+	mapped = 0;
 	if ((sgoff = ((mh.msgflags >> 4) & 15)) != 0) {
 		if ((sgoff + 2) > (msgsize >> 2)) {
 			DPRINTF(("%s: invalid message size fields\n",
@@ -676,7 +677,6 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	 * Allocate a wrapper, and adjust the message header fields to
 	 * indicate that no scatter-gather list is currently present.
 	 */
-	mapped = 0;
 
 	im = iop_msg_alloc(iop, IM_WAIT | IM_NOSTATUS);
 	im->im_rb = (struct i2o_reply *)rbtmp;

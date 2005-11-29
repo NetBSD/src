@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.6 2005/02/26 22:39:52 perry Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.6.10.1 2005/11/29 21:23:33 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -387,7 +387,7 @@ extern	int crypto_devallowsoft;	/* only use hardware crypto */
  * (This declaration doesnt really belong here but there's no header
  * for the raw framework.)
  */
-int	crypto_init(void);
+void	crypto_init(void);
 
 /*
  * Crypto-related utility routines used mainly by drivers.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2005/09/10 19:20:49 jmmv Exp $
+# $NetBSD: GENERIC,v 1.54.6.1 2005/11/29 21:22:58 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.54.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -521,7 +521,8 @@ audio*	at audiobus?
 
 # Pseudo-Devices
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
