@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.79.10.2 2002/10/14 00:06:29 lukem Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.79.10.3 2005/11/29 12:40:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79.10.2 2002/10/14 00:06:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79.10.3 2005/11/29 12:40:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,7 +549,7 @@ kernfs_read(v)
 	struct uio *uio = ap->a_uio;
 	const struct kern_target *kt;
 	char strbuf[KSTRING], *buf;
-	off_t off;
+	int off;
 	size_t len;
 	int error;
 
@@ -562,7 +562,11 @@ kernfs_read(v)
 	printf("kern_read %s\n", kt->kt_name);
 #endif
 
-	off = uio->uio_offset;
+	off = (int)uio->uio_offset;
+	/* Don't allow negative offsets */
+	if (off < 0)
+		return EINVAL;
+
 	buf = strbuf;
 	if ((error = kernfs_xread(kt, off, &buf, sizeof(strbuf), &len)) == 0)
 		error = uiomove(buf, len, uio);
