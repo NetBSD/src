@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.13 2005/05/15 20:54:41 dsl Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.14 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.13 2005/05/15 20:54:41 dsl Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.14 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif
 
@@ -631,8 +631,7 @@ nc_sperror()
 	default:
 		message = "Unknown network selection error";
 	}
-	/* LINTED const castaway */
-	return ((char *)message);
+	return __UNCONST(message);
 }
 
 /*

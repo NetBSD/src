@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.11 2003/08/07 16:43:11 agc Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.12 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.11 2003/08/07 16:43:11 agc Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.12 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,10 +106,10 @@ iso_ntoa(isoa)
 	const struct iso_addr *isoa;
 {
 	static char obuf[64];
-	register char *out = obuf; 
-	register size_t i;
-	register u_char *in = (u_char *)isoa->isoa_genaddr;
-	u_char *inlim = in + isoa->isoa_len;
+	char *out = obuf; 
+	size_t i;
+	const u_char *in = (const u_char *)isoa->isoa_genaddr;
+	const u_char *inlim = in + isoa->isoa_len;
 
 	_DIAGASSERT(isoa != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.22 2004/05/10 22:16:42 thorpej Exp $	*/
+/*	$NetBSD: gmon.c,v 1.23 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.22 2004/05/10 22:16:42 thorpej Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.23 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif
 
@@ -377,7 +377,7 @@ _mcleanup()
 	int mib[2];
 	size_t size;
 	char *profdir;
-	char *proffile;
+	const char *proffile;
 	char  buf[PATH_MAX];
 #ifdef DEBUG
 	int log, len;

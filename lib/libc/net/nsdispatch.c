@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.29 2005/06/26 16:27:36 thorpej Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.30 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.29 2005/06/26 16:27:36 thorpej Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.30 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -281,8 +281,7 @@ static void
 _nsmodfree(ns_mod *mod)
 {
 
-	/*LINTED const cast*/
-	free((void *)mod->name);
+	free(__UNCONST(mod->name));
 	if (mod->handle == NULL)
 		return;
 	if (mod->unregister != NULL)
@@ -441,10 +440,8 @@ _nssrclist_free(ns_src **src, u_int srclistsize)
 	u_int	i;
 
 	for (i = 0; i < srclistsize; i++) {
-		if ((*src)[i].name != NULL) {
-			/*LINTED const cast*/
-			free((void *)(*src)[i].name);
-		}
+		if ((*src)[i].name != NULL)
+			free(__UNCONST((*src)[i].name));
 	}
 	free(*src);
 	*src = NULL;
@@ -455,10 +452,8 @@ _nsdbtfree(ns_dbt *dbt)
 {
 
 	_nssrclist_free(&dbt->srclist, dbt->srclistsize);
-	if (dbt->name != NULL) {
-		/*LINTED const cast*/
-		free((void *)dbt->name);
-	}
+	if (dbt->name != NULL)
+		free(__UNCONST(dbt->name));
 }
 
 int

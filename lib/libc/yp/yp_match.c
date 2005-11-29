@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.16 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.16 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -219,8 +219,7 @@ again:
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	/* LINTED const castaway */
-	yprk.keydat.dptr = (char *)(void *)inkey;
+	yprk.keydat.dptr = __UNCONST(inkey);
 	yprk.keydat.dsize = inkeylen;
 
 	memset(&yprv, 0, sizeof yprv);

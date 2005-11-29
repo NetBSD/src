@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.24 2005/02/28 02:56:28 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.25 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2005 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.24 2005/02/28 02:56:28 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.25 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -521,8 +521,7 @@ getusershell(void)
 		shellsfound++;
 	} else if (shellsfound == 0) {	/* no shells; fall back to okshells */
 		if (curokshell != NULL) {
-			/*LINTED*/
-			retval = (__aconst char *)*curokshell;
+			retval = __UNCONST(*curokshell);
 			curokshell++;
 			rv = NS_SUCCESS;
 		}

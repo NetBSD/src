@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.6 2003/12/10 12:06:25 agc Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.7 2005/11/29 03:12:01 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yperr_string.c,v 1.6 2003/12/10 12:06:25 agc Exp $");
+__RCSID("$NetBSD: yperr_string.c,v 1.7 2005/11/29 03:12:01 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -49,40 +49,42 @@ yperr_string(incode)
 
 	switch (incode) {
 	case 0:
-		return "Success";
+		return __UNCONST("Success");
 	case YPERR_BADARGS:
-		return "Request arguments bad";
+		return __UNCONST("Request arguments bad");
 	case YPERR_RPC:
-		return "RPC failure";
+		return __UNCONST("RPC failure");
 	case YPERR_DOMAIN:
-		return "Can't bind to server which serves this domain";
+		return __UNCONST(
+		    "Can't bind to server which serves this domain");
 	case YPERR_MAP:
-		return "No such map in server's domain";
+		return __UNCONST("No such map in server's domain");
 	case YPERR_KEY:
-		return "No such key in map";
+		return __UNCONST("No such key in map");
 	case YPERR_YPERR:
-		return "YP server error";
+		return __UNCONST("YP server error");
 	case YPERR_RESRC:
-		return "Local resource allocation failure";
+		return __UNCONST("Local resource allocation failure");
 	case YPERR_NOMORE:
-		return "No more records in map database";
+		return __UNCONST("No more records in map database");
 	case YPERR_PMAP:
-		return "Can't communicate with portmapper";
+		return __UNCONST("Can't communicate with portmapper");
 	case YPERR_YPBIND:
-		return "Can't communicate with ypbind";
+		return __UNCONST("Can't communicate with ypbind");
 	case YPERR_YPSERV:
-		return "Can't communicate with ypserv";
+		return __UNCONST("Can't communicate with ypserv");
 	case YPERR_NODOM:
-		return "Local domain name not set";
+		return __UNCONST("Local domain name not set");
 	case YPERR_BADDB:
-		return "Server data base is bad";
+		return __UNCONST("Server data base is bad");
 	case YPERR_VERS:
-		return
-		    "YP server version mismatch - server can't supply service.";
+		return __UNCONST(
+		    "YP server version mismatch - server can't supply service."
+		    );
 	case YPERR_ACCESS:
-		return "Access violation";
+		return __UNCONST("Access violation");
 	case YPERR_BUSY:
-		return "Database is busy";
+		return __UNCONST("Database is busy");
 	}
 	(void) snprintf(err, sizeof(err), "YP unknown error %d\n", incode);
 	return err;

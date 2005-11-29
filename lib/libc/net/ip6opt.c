@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.9 2002/05/05 08:28:47 simonb Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.10 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.9 2002/05/05 08:28:47 simonb Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.10 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -286,8 +286,7 @@ inet6_option_next(cmsg, tptrp)
 	/* message length validation */
 	if (cmsg->cmsg_len < CMSG_SPACE(sizeof(struct ip6_ext)))
 		return(-1);
-	/* LINTED const castaway */
-	ip6e = (struct ip6_ext *)(void *)CMSG_DATA(cmsg);
+	ip6e = __UNCONST(CCMSG_DATA(cmsg));
 	hdrlen = (ip6e->ip6e_len + 1) << 3;
 	if (cmsg->cmsg_len < CMSG_SPACE(hdrlen))
 		return(-1);
@@ -349,8 +348,7 @@ inet6_option_find(cmsg, tptrp, type)
 	/* message length validation */
 	if (cmsg->cmsg_len < CMSG_SPACE(sizeof(struct ip6_ext)))
 		return(-1);
-	/* LINTED const castaway */
-	ip6e = (struct ip6_ext *)(void *)CMSG_DATA(cmsg);
+	ip6e = __UNCONST(CCMSG_DATA(cmsg));
 	hdrlen = (ip6e->ip6e_len + 1) << 3;
 	if (cmsg->cmsg_len < CMSG_SPACE(hdrlen))
 		return(-1);	

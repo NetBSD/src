@@ -1,4 +1,4 @@
-/*	$NetBSD: wcspbrk.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wcspbrk.c,v 1.3 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcspbrk.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wcspbrk.c,v 1.3 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -51,10 +51,8 @@ wcspbrk(s, set)
 	while (*p) {
 		q = set;
 		while (*q) {
-			if (*p == *q) {
-				/* LINTED interface specification */
-				return (wchar_t *)p;
-			}
+			if (*p == *q)
+				return __UNCONST(p);
 			q++;
 		}
 		p++;

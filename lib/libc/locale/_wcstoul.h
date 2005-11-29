@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstoul.h,v 1.2 2003/08/07 16:43:03 agc Exp $ */
+/* $NetBSD: _wcstoul.h,v 1.3 2005/11/29 03:11:59 christos Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -115,7 +115,6 @@ _FUNCNAME(nptr, endptr, base)
 	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
-		/* LINTED interface specification */
-		*endptr = (wchar_t *)(any ? s - 1 : nptr);
+		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return (acc);
 }

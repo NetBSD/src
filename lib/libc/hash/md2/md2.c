@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.2 2005/09/25 22:20:59 elad Exp $	*/
+/*	$NetBSD: md2.c,v 1.3 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md2.c,v 1.2 2005/09/25 22:20:59 elad Exp $");
+__RCSID("$NetBSD: md2.c,v 1.3 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -78,27 +78,28 @@ static unsigned char S[256] = {
 };
 
 /* cut-n-pasted from rfc1319 */
-static unsigned char *pad[] = {
-	(unsigned char *)"",
-	(unsigned char *)"\001",
-	(unsigned char *)"\002\002",
-	(unsigned char *)"\003\003\003",
-	(unsigned char *)"\004\004\004\004",
-	(unsigned char *)"\005\005\005\005\005",
-	(unsigned char *)"\006\006\006\006\006\006",
-	(unsigned char *)"\007\007\007\007\007\007\007",
-	(unsigned char *)"\010\010\010\010\010\010\010\010",
-	(unsigned char *)"\011\011\011\011\011\011\011\011\011",
-	(unsigned char *)"\012\012\012\012\012\012\012\012\012\012",
-	(unsigned char *)"\013\013\013\013\013\013\013\013\013\013\013",
-	(unsigned char *)"\014\014\014\014\014\014\014\014\014\014\014\014",
-	(unsigned char *)
+static const unsigned char *pad[] = {
+	(const unsigned char *)"",
+	(const unsigned char *)"\001",
+	(const unsigned char *)"\002\002",
+	(const unsigned char *)"\003\003\003",
+	(const unsigned char *)"\004\004\004\004",
+	(const unsigned char *)"\005\005\005\005\005",
+	(const unsigned char *)"\006\006\006\006\006\006",
+	(const unsigned char *)"\007\007\007\007\007\007\007",
+	(const unsigned char *)"\010\010\010\010\010\010\010\010",
+	(const unsigned char *)"\011\011\011\011\011\011\011\011\011",
+	(const unsigned char *)"\012\012\012\012\012\012\012\012\012\012",
+	(const unsigned char *)"\013\013\013\013\013\013\013\013\013\013\013",
+	(const unsigned char *)
+	"\014\014\014\014\014\014\014\014\014\014\014\014",
+	(const unsigned char *)
 	"\015\015\015\015\015\015\015\015\015\015\015\015\015",
-	(unsigned char *)
+	(const unsigned char *)
 	"\016\016\016\016\016\016\016\016\016\016\016\016\016\016",
-	(unsigned char *)
+	(const unsigned char *)
 	"\017\017\017\017\017\017\017\017\017\017\017\017\017\017\017",
-	(unsigned char *)
+	(const unsigned char *)
 	"\020\020\020\020\020\020\020\020\020\020\020\020\020\020\020\020"
 };
 

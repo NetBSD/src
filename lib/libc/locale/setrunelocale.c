@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.15 2005/10/19 22:57:03 christos Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.16 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.15 2005/10/19 22:57:03 christos Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.16 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -237,7 +237,7 @@ delrunelocale(path)
 
 int
 _xpg4_setrunelocale(encoding)
-	char *encoding;
+	const char *encoding;
 {
 	char path[PATH_MAX];
 	_RuneLocale *rl;
