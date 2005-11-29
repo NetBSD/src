@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.57 2005/11/29 21:59:37 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.58 2005/11/29 23:08:31 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -838,9 +838,9 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2005/09/27/0000.html
 
 Branch:		yamt-readahead
 Description:	play with file readahead
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	Mon Nov 14 2005
-End Date:	
+End Date:	Wed Nov 30 2005
 Base Tag:	yamt-readahead-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
