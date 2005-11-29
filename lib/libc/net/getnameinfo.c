@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.41 2002/11/11 17:10:11 thorpej Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.42 2005/11/29 03:11:59 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.41 2002/11/11 17:10:11 thorpej Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.42 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -454,11 +454,11 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 	case IFT_ECONET:
 		if (sdl->sdl_alen < 2)
 			return EAI_FAMILY;
-		if (LLADDR(sdl)[1] == 0)
-			n = snprintf(host, hostlen, "%u", LLADDR(sdl)[0]);
+		if (CLLADDR(sdl)[1] == 0)
+			n = snprintf(host, hostlen, "%u", CLLADDR(sdl)[0]);
 		else
 			n = snprintf(host, hostlen, "%u.%u",
-			    LLADDR(sdl)[1], LLADDR(sdl)[0]);
+			    CLLADDR(sdl)[1], CLLADDR(sdl)[0]);
 		if (n < 0 || (socklen_t) n >= hostlen) {
 			*host = '\0';
 			return EAI_MEMORY;
@@ -469,7 +469,7 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		if (sdl->sdl_alen < sizeof(iha->iha_uid))
 			return EAI_FAMILY;
 		iha =
-		    (const struct ieee1394_hwaddr *)(const void *)LLADDR(sdl);
+		    (const struct ieee1394_hwaddr *)(const void *)CLLADDR(sdl);
 		return hexname(iha->iha_uid, sizeof(iha->iha_uid),
 		    host, hostlen);
 	/*
@@ -494,8 +494,8 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 	case IFT_HIPPI:
 	case IFT_ISO88025:
 	default:
-		return hexname((u_int8_t *)LLADDR(sdl), (size_t)sdl->sdl_alen,
-		    host, hostlen);
+		return hexname((const u_int8_t *)CLLADDR(sdl),
+		    (size_t)sdl->sdl_alen, host, hostlen);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.11 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.12 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.11 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.12 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif
 
@@ -98,8 +98,8 @@ extern mutex_t	rpcsoc_lock;
 #endif
 
 static CLIENT *clnt_com_create __P((struct sockaddr_in *, rpcprog_t, rpcvers_t,
-				    int *, u_int, u_int, char *));
-static SVCXPRT *svc_com_create __P((int, u_int, u_int, char *));
+				    int *, u_int, u_int, const char *));
+static SVCXPRT *svc_com_create __P((int, u_int, u_int, const char *));
 static bool_t rpc_wrap_bcast __P((char *, struct netbuf *, struct netconfig *));
 
 /*
@@ -113,7 +113,7 @@ clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, tp)
 	int *sockp;
 	u_int sendsz;
 	u_int recvsz;
-	char *tp;
+	const char *tp;
 {
 	CLIENT *cl;
 	int madefd = FALSE;
@@ -252,7 +252,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 	int fd;
 	u_int sendsize;
 	u_int recvsize;
-	char *netid;
+	const char *netid;
 {
 	struct netconfig *nconf;
 	SVCXPRT *svc;
@@ -371,7 +371,7 @@ registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
 	xdrproc_t inproc, outproc;
 {
 	return rpc_reg((rpcprog_t)prognum, (rpcvers_t)versnum,
-	    (rpcproc_t)procnum, progname, inproc, outproc, "udp");
+	    (rpcproc_t)procnum, progname, inproc, outproc, __UNCONST("udp"));
 }
 
 /*

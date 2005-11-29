@@ -1,4 +1,4 @@
-/*	$NetBSD: strsignal.c,v 1.12 2003/08/07 16:43:52 agc Exp $	*/
+/*	$NetBSD: strsignal.c,v 1.13 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strsignal.c,v 1.12 2003/08/07 16:43:52 agc Exp $");
+__RCSID("$NetBSD: strsignal.c,v 1.13 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,5 @@ strsignal(sig)
 {
 	static char buf[NL_TEXTMAX];
 
-	/* LINTED interface specification */
-	return (__aconst char *)__strsignal(sig, buf, NL_TEXTMAX);
+	return __UNCONST(__strsignal(sig, buf, NL_TEXTMAX));
 }

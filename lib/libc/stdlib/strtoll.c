@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.6 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.7 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.6 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.7 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -178,8 +178,7 @@ strtoll(nptr, endptr, base)
 		}
 	}
 	if (endptr != 0)
-		/* LINTED interface specification */
-		*endptr = (char *)(any ? s - 1 : nptr);
+		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return (acc);
 }
 #endif

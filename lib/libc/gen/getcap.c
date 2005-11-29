@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.41 2004/04/25 06:45:29 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.42 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.41 2004/04/25 06:45:29 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.42 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -656,8 +656,7 @@ cdbget(DB *capdbp, char **bp, const char *name)
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
 
-	/* LINTED key is not modified */
-	key.data = (char *)name;
+	key.data = __UNCONST(name);
 	key.size = strlen(name);
 
 	for (;;) {

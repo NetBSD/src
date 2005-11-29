@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.19 2004/09/18 11:47:37 jdolecek Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.20 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.19 2004/09/18 11:47:37 jdolecek Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.20 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -269,8 +269,7 @@ int cflags;
 
 	/* set things up */
 	p->g = g;
-	/* LINTED convenience; we do not modify it */
-	p->next = (char *)pattern;
+	p->next = __UNCONST(pattern);
 	p->end = p->next + len;
 	p->error = 0;
 	p->ncsalloc = 0;

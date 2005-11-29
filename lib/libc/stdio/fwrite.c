@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.15 2003/08/07 16:43:26 agc Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.16 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.15 2003/08/07 16:43:26 agc Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.16 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,8 +70,7 @@ fwrite(buf, size, count, fp)
 		return (0);
 	_DIAGASSERT(buf != NULL);
 
-	/* LINTED we don't play with buf */
-	iov.iov_base = (void *)buf;
+	iov.iov_base = __UNCONST(buf);
 	uio.uio_resid = iov.iov_len = n;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;

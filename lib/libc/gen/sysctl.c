@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.27 2004/09/07 13:20:39 jrf Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.28 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.27 2004/09/07 13:20:39 jrf Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.28 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,10 +79,8 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int error;
 
 	if (name[0] != CTL_USER)
-		/* LINTED will fix when sysctl interface gets corrected */
-		/* XXX when will that be? */
 		return (__sysctl(name, namelen, oldp, oldlenp,
-				 (void *)newp, newlen));
+				 __UNCONST(newp), newlen));
 
 	oldlen = (oldlenp == NULL) ? 0 : *oldlenp;
 	savelen = oldlen;
@@ -147,7 +145,8 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			 *	.sysctl_desc = NULL,
 			 */
 			.sysctl_un = { .scu_data = { 
-				sysc_init_field(_sud_data, _PATH_STDPATH),
+				sysc_init_field(_sud_data,
+				__UNCONST(_PATH_STDPATH)),
 				}, },
 			sysc_init_field(_sysctl_desc,
 				"A value for the PATH environment variable "

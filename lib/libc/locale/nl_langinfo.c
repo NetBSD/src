@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_langinfo.c,v 1.10 2004/07/21 20:27:46 tshiozak Exp $	*/
+/*	$NetBSD: nl_langinfo.c,v 1.11 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nl_langinfo.c,v 1.10 2004/07/21 20:27:46 tshiozak Exp $");
+__RCSID("$NetBSD: nl_langinfo.c,v 1.11 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -122,6 +122,5 @@ nl_langinfo(item)
 	}
 
 	/* The return value should be really const, but the interface says OW */
-	/* LINTED const castaway. */
-	return (char *) s;
+	return __UNCONST(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: localeconv.c,v 1.12 2004/01/02 21:53:49 itojun Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.13 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.12 2004/01/02 21:53:49 itojun Exp $");
+__RCSID("$NetBSD: localeconv.c,v 1.13 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -35,15 +35,20 @@ localeconv()
 
 	if (__mlocale_changed) {
 		/* LC_MONETARY */
-		ret.int_curr_symbol = _CurrentMonetaryLocale->int_curr_symbol;
-		ret.currency_symbol = _CurrentMonetaryLocale->currency_symbol;
+		ret.int_curr_symbol =
+		    __UNCONST(_CurrentMonetaryLocale->int_curr_symbol);
+		ret.currency_symbol = 
+		    __UNCONST(_CurrentMonetaryLocale->currency_symbol);
 		ret.mon_decimal_point =
-		    _CurrentMonetaryLocale->mon_decimal_point;
+		    __UNCONST(_CurrentMonetaryLocale->mon_decimal_point);
 		ret.mon_thousands_sep =
-		    _CurrentMonetaryLocale->mon_thousands_sep;
-		ret.mon_grouping = _CurrentMonetaryLocale->mon_grouping;
-		ret.positive_sign = _CurrentMonetaryLocale->positive_sign;
-		ret.negative_sign = _CurrentMonetaryLocale->negative_sign;
+		    __UNCONST(_CurrentMonetaryLocale->mon_thousands_sep);
+		ret.mon_grouping =
+		    __UNCONST(_CurrentMonetaryLocale->mon_grouping);
+		ret.positive_sign =
+		    __UNCONST(_CurrentMonetaryLocale->positive_sign);
+		ret.negative_sign =
+		    __UNCONST(_CurrentMonetaryLocale->negative_sign);
 		ret.int_frac_digits = _CurrentMonetaryLocale->int_frac_digits;
 		ret.frac_digits = _CurrentMonetaryLocale->frac_digits;
 		ret.p_cs_precedes = _CurrentMonetaryLocale->p_cs_precedes;
@@ -67,14 +72,12 @@ localeconv()
 
 	if (__nlocale_changed) {
 		/* LC_NUMERIC */
-		/* LINTED const castaway */
 		ret.decimal_point =
-		    (char *)_CurrentNumericLocale->decimal_point;
-		/* LINTED const castaway */
+		    __UNCONST(_CurrentNumericLocale->decimal_point);
 		ret.thousands_sep =
-		    (char *)_CurrentNumericLocale->thousands_sep;
-		/* LINTED const castaway */
-		ret.grouping = (char *) _CurrentNumericLocale->grouping;
+		    __UNCONST(_CurrentNumericLocale->thousands_sep);
+		ret.grouping = 
+		    __UNCONST(_CurrentNumericLocale->grouping);
 		__nlocale_changed = 0;
 	}
 

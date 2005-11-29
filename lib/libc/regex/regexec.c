@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.17 2003/08/07 16:43:21 agc Exp $	*/
+/*	$NetBSD: regexec.c,v 1.18 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.17 2003/08/07 16:43:21 agc Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.18 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -225,8 +225,7 @@ int eflags;
 		return(REG_BADPAT);
 	eflags = GOODFLAGS(eflags);
 
-	/* LINTED we believe that the regex routines do not change the string */
-	s = (char *)string;
+	s = __UNCONST(string);
 
 	if (g->nstates <= CHAR_BIT*sizeof(states1) && !(eflags&REG_LARGE))
 		return(smatcher(g, s, nmatch, pmatch, eflags));

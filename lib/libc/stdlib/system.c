@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.19 2003/08/07 16:43:45 agc Exp $	*/
+/*	$NetBSD: system.c,v 1.20 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.19 2003/08/07 16:43:45 agc Exp $");
+__RCSID("$NetBSD: system.c,v 1.20 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,8 @@ system(command)
 	struct sigaction intsa, quitsa, sa;
 	sigset_t nmask, omask;
 	int pstat;
-	char *argp[] = {"sh", "-c", /* LINTED */(char *)command, NULL};
+	const char *argp[] = {"sh", "-c", NULL, NULL};
+	argp[2] = command;
 
 	if (command == NULL)		/* just checking... */
 		return(1);
@@ -92,7 +93,7 @@ system(command)
 		sigaction(SIGINT, &intsa, NULL);
 		sigaction(SIGQUIT, &quitsa, NULL);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-		execve(_PATH_BSHELL, argp, environ);
+		execve(_PATH_BSHELL, __UNCONST(argp), environ);
 		_exit(127);
 	}
 	rwlock_unlock(&__environ_lock);

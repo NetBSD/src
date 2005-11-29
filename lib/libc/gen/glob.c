@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.13 2005/09/13 21:38:03 elad Exp $	*/
+/*	$NetBSD: glob.c,v 1.14 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.13 2005/09/13 21:38:03 elad Exp $");
+__RCSID("$NetBSD: glob.c,v 1.14 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -982,8 +982,7 @@ g_strchr(str, ch)
 
 	do {
 		if (*str == ch)
-			/* LINTED this is libc's definition! */
-			return (Char *)str;
+			return __UNCONST(str);
 	} while (*str++);
 	return NULL;
 }

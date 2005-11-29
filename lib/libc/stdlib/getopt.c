@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.26 2003/08/07 16:43:40 agc Exp $	*/
+/*	$NetBSD: getopt.c,v 1.27 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.26 2003/08/07 16:43:40 agc Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.27 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ getopt(nargc, nargv, ostr)
 	char * const nargv[];
 	const char *ostr;
 {
-	static char *place = EMSG;		/* option letter processing */
+	static const char *place = EMSG;	/* option letter processing */
 	char *oli;				/* option letter list index */
 
 	_DIAGASSERT(nargv != NULL);
@@ -124,7 +124,7 @@ getopt(nargc, nargv, ostr)
 		/* Option-argument is either the rest of this argument or the
 		   entire next argument. */
 		if (*place)
-			optarg = place;
+			optarg = __UNCONST(place);
 		else if (nargc > ++optind)
 			optarg = nargv[optind];
 		else {

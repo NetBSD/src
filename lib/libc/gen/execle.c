@@ -1,4 +1,4 @@
-/*	$NetBSD: execle.c,v 1.8 2003/08/07 16:42:47 agc Exp $	*/
+/*	$NetBSD: execle.c,v 1.9 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execle.c,v 1.8 2003/08/07 16:42:47 agc Exp $");
+__RCSID("$NetBSD: execle.c,v 1.9 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ execle(const char *name, const char *arg, ...)
 	envp = va_arg(ap, char **);
 	va_end(ap);
 
-	return execve(name, (char **) &arg, envp);
+	return execve(name, __UNCONST(&arg), envp);
 #else
 	va_list ap;
 	char **argv, **envp;

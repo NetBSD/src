@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.1 2005/09/24 19:04:52 elad Exp $	*/
+/*	$NetBSD: sha1.c,v 1.2 2005/11/29 03:11:59 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.1 2005/09/24 19:04:52 elad Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.2 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
@@ -282,9 +282,9 @@ void SHA1Final(digest, context)
 	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
 	 >> ((3-(i & 3)) * 8) ) & 255);	 /* Endian independent */
     }
-    SHA1Update(context, (u_char *)"\200", 1);
+    SHA1Update(context, (const u_char *)"\200", 1);
     while ((context->count[0] & 504) != 448)
-	SHA1Update(context, (u_char *)"\0", 1);
+	SHA1Update(context, (const u_char *)"\0", 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest) {

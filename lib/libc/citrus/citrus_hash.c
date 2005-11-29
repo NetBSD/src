@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_hash.c,v 1.1 2003/06/25 09:51:32 tshiozak Exp $	*/
+/*	$NetBSD: citrus_hash.c,v 1.2 2005/11/29 03:11:58 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hash.c,v 1.1 2003/06/25 09:51:32 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_hash.c,v 1.2 2005/11/29 03:11:58 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,8 +48,7 @@ _citrus_string_hash_func(const char *key, int hashsize)
 {
 	struct _region r;
 
-	/* LINTED: discard const */
-	_region_init(&r, (char *)key, strlen(key));
+	_region_init(&r, __UNCONST(key), strlen(key));
 
 	return (int)(_db_hash_std(NULL, &r) % (u_int32_t)hashsize);
 }

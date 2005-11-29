@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.c,v 1.6 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: ctypeio.c,v 1.7 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.6 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.7 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -106,20 +106,14 @@ __loadctype(name)
 #endif
 
 	(void) fclose(fp);
-	if (_ctype_ != _C_ctype_) {
-		/* LINTED const castaway ok */
-		free((void *) _ctype_);
-	}
+	if (_ctype_ != _C_ctype_)
+		free(__UNCONST(_ctype_));
 	_ctype_ = new_ctype;
-	if (_toupper_tab_ != _C_toupper_) {
-		/* LINTED const castaway ok */
-		free((void *) _toupper_tab_);
-	}
+	if (_toupper_tab_ != _C_toupper_)
+		free(__UNCONST(_toupper_tab_));
 	_toupper_tab_ = new_toupper;
-	if (_tolower_tab_ != _C_tolower_) {
-		/* LINTED const castaway ok */
-		free((void *) _tolower_tab_);
-	}
+	if (_tolower_tab_ != _C_tolower_)
+		free(__UNCONST(_tolower_tab_));
 	_tolower_tab_ = new_tolower;
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.22 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: catopen.c,v 1.23 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.22 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.23 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -83,10 +83,10 @@ _catopen(name, oflag)
 	int oflag;
 {
 	char tmppath[PATH_MAX+1];
-	char *nlspath;
+	const char *nlspath;
 	const char *lang;
-	char *s, *t;
-	const char *u;
+	char *t;
+	const char *s, *u;
 	nl_catd catd;
 	char langbuf[PATH_MAX];
 

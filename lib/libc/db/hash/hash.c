@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.22 2005/10/16 02:39:20 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.23 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.22 2005/10/16 02:39:20 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.23 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -551,8 +551,7 @@ hash_get(dbp, key, data, flag)
 		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
-	/* LINTED const castaway */
-	return (hash_access(hashp, HASH_GET, (DBT *)key, data));
+	return (hash_access(hashp, HASH_GET, __UNCONST(key), data));
 }
 
 static int
@@ -575,7 +574,7 @@ hash_put(dbp, key, data, flag)
 	}
 	/* LINTED const castaway */
 	return (hash_access(hashp, flag == R_NOOVERWRITE ?
-	    HASH_PUTNEW : HASH_PUT, (DBT *)key, (DBT *)data));
+	    HASH_PUTNEW : HASH_PUT, __UNCONST(key), __UNCONST(data)));
 }
 
 static int
@@ -595,8 +594,7 @@ hash_delete(dbp, key, flag)
 		hashp->err = errno = EPERM;
 		return (ERROR);
 	}
-	/* LINTED const castaway */
-	return (hash_access(hashp, HASH_DELETE, (DBT *)key, NULL));
+	return hash_access(hashp, HASH_DELETE, __UNCONST(key), NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wordexp.c,v 1.1 2004/07/13 15:42:03 seb Exp $	*/
+/*	$NetBSD: wordexp.c,v 1.2 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -43,7 +43,7 @@
 #if 0
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/gen/wordexp.c,v 1.5 2004/04/09 11:32:32 tjr Exp $");
 #else
-__RCSID("$NetBSD: wordexp.c,v 1.1 2004/07/13 15:42:03 seb Exp $");
+__RCSID("$NetBSD: wordexp.c,v 1.2 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ we_askshell(const char *words, wordexp_t *we, int flags)
 	size_t vofs;			/* Offset into we->we_wordv */
 	pid_t pid;			/* Process ID of child */
 	int status;			/* Child exit status */
-	char *ifs;			/* IFS env. var. */
+	const char *ifs;		/* IFS env. var. */
 	char *np, *p;			/* Handy pointers */
 	char *nstrings;			/* Temporary for realloc() */
 	char **nwv;			/* Temporary for realloc() */

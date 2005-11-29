@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.20 2003/08/07 16:42:55 agc Exp $	*/
+/*	$NetBSD: psignal.c,v 1.21 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.20 2003/08/07 16:42:55 agc Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.21 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,19 +65,17 @@ psignal(sig, s)
 
 	v = iov;
 	if (s && *s) {
-		/* LINTED iov_base is not written to */
-		v->iov_base = (void *)s;
+		v->iov_base = __UNCONST(s);
 		v->iov_len = strlen(s);
 		v++;
-		v->iov_base = ": ";
+		v->iov_base = __UNCONST(": ");
 		v->iov_len = 2;
 		v++;
 	}
-	/* LINTED iov_base is not written to */
-	v->iov_base = (void *)__strsignal((int)sig, buf, sizeof(buf));
+	v->iov_base = __UNCONST(__strsignal((int)sig, buf, sizeof(buf)));
 	v->iov_len = strlen(v->iov_base);
 	v++;
-	v->iov_base = "\n";
+	v->iov_base = __UNCONST("\n");
 	v->iov_len = 1;
 	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
 }

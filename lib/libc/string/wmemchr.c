@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemchr.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wmemchr.c,v 1.3 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemchr.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wmemchr.c,v 1.3 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -47,10 +47,8 @@ wmemchr(s, c, n)
 	_DIAGASSERT(s != NULL);
 
 	for (i = 0; i < n; i++) {
-		if (*s == c) {
-			/* LINTED const castaway */
-			return (wchar_t *)s;
-		}
+		if (*s == c)
+			return __UNCONST(s);
 		s++;
 	}
 	return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.73 2005/09/15 23:33:41 tsarna Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.74 2005/11/29 03:11:59 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.73 2005/09/15 23:33:41 tsarna Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.74 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -894,8 +894,7 @@ get_portmatch(const struct addrinfo *ai, const char *servname)
 	/* servname may be NULL */
 
 	/* get_port does not touch first argument when matchonly == 1. */
-	/* LINTED const cast */
-	return get_port((struct addrinfo *)ai, servname, 1);
+	return get_port(__UNCONST(ai), servname, 1);
 }
 
 static int

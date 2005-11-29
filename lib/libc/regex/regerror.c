@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.18 2003/08/07 16:43:20 agc Exp $	*/
+/*	$NetBSD: regerror.c,v 1.19 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.18 2003/08/07 16:43:20 agc Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.19 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -215,8 +215,8 @@ size_t buflen;
 		if (strcmp(r->name, preg->re_endp) == 0)
 			break;
 	if (r->code == 0)
-		return("0");
+		return __UNCONST("0");
 
 	(void)snprintf(localbuf, buflen, "%d", r->code);
-	return(localbuf);
+	return localbuf;
 }

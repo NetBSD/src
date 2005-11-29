@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.1 2005/04/03 20:09:29 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.1 2005/04/03 20:09:29 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -405,14 +405,14 @@ end_error:
 static void
 __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 		char *sign_posn, char **signstr) {
-
+	static char minus[] = "-";
 	struct lconv *lc = localeconv();
 
 	if ((flags & IS_NEGATIVE) && (flags & USE_INTL_CURRENCY)) {
 		*cs_precedes = lc->int_n_cs_precedes;
 		*sep_by_space = lc->int_n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->int_n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? "-"
+		*signstr = (lc->negative_sign == '\0') ? minus
 		    : lc->negative_sign;
 	} else if (flags & USE_INTL_CURRENCY) {
 		*cs_precedes = lc->int_p_cs_precedes;
@@ -423,7 +423,7 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->n_cs_precedes;
 		*sep_by_space = lc->n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? "-"
+		*signstr = (lc->negative_sign == '\0') ? minus
 		    : lc->negative_sign;
 	} else {
 		*cs_precedes = lc->p_cs_precedes;

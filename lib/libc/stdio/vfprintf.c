@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.48 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.49 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.48 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.49 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -234,7 +234,7 @@ __vfprintf_unlocked(fp, fmt0, ap)
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
-	char *xdigs = NULL;	/* digits for [xX] conversion */
+	const char *xdigs = NULL;/* digits for [xX] conversion */
 #define NIOV 8
 	struct __suio uio;	/* output information: summary */
 	struct __siov iov[NIOV];/* ... and individual io vectors */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.13 2003/08/07 16:43:11 agc Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.14 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.13 2003/08/07 16:43:11 agc Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.14 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,8 +138,8 @@ link_ntoa(sdl)
 	static char obuf[64];
 	register char *out = obuf; 
 	register size_t i;
-	register u_char *in = (u_char *)LLADDR(sdl);
-	u_char *inlim = in + sdl->sdl_alen;
+	const u_char *in = (const u_char *)CLLADDR(sdl);
+	const u_char *inlim = in + sdl->sdl_alen;
 	int firsttime = 1;
 
 	_DIAGASSERT(sdl != NULL);

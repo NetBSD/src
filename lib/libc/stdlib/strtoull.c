@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoull.c,v 1.5 2003/08/07 16:43:45 agc Exp $	*/
+/*	$NetBSD: strtoull.c,v 1.6 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoull.c,v 1.5 2003/08/07 16:43:45 agc Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.6 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,6 @@ strtoull(nptr, endptr, base)
 	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
-		/* LINTED interface specification */
-		*endptr = (char *)(any ? s - 1 : nptr);
+		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return (acc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.8 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -35,7 +35,7 @@ extern _RuneLocale *_Read_CTypeAsRune __P((FILE *fp));
 extern void _NukeRune __P((_RuneLocale *));
 
 /* setrunelocale.c */
-extern int _xpg4_setrunelocale __P((char *));
+extern int _xpg4_setrunelocale __P((const char *));
 extern _RuneLocale *_findrunelocale __P((char *));
 extern int _newrunelocale __P((char *));
 
