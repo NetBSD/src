@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.5 2005/06/12 05:21:27 lukem Exp $ */
+/* $NetBSD: wcstod.c,v 1.6 2005/11/29 03:11:59 christos Exp $ */
 
 /*-
  * Copyright (c)1999, 2000, 2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstod.c,v 1.5 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: wcstod.c,v 1.6 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -122,15 +122,14 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 		free(buf);
 
 		if (endptr)
-			/* LINTED bad interface */
-			*endptr = (wchar_t*)start + (end - buf);
+			*endptr = __UNCONST(
+			    (const wchar_t*)start + (end - buf));
 
 		return result;
 	}
 
 	if (endptr)
-		/* LINTED bad interface */
-		*endptr = (wchar_t*)start;
+		*endptr = __UNCONST(start);
 
 	return 0;
 }

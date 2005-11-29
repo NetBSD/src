@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup.c,v 1.3 2004/07/21 14:16:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_lookup.c,v 1.4 2005/11/29 03:11:58 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup.c,v 1.3 2004/07/21 14:16:34 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_lookup.c,v 1.4 2005/11/29 03:11:58 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -199,12 +199,10 @@ retry:
 
 	/* found a entry */
 	if (key)
-		/* LINTED: discard const */
-		_region_init(key, (char *)p, q-p);
+		_region_init(key, __UNCONST(p), (size_t)(q-p));
 	p = _bcs_skip_ws_len(q, &len);
 	if (data)
-		/* LINTED: discard const */
-		_region_init(data, len ? (char *)p : NULL, len);
+		_region_init(data, len ? __UNCONST(p) : NULL, len);
 
 	return 0;
 }
@@ -239,8 +237,7 @@ seq_lookup_plain(struct _citrus_lookup *cl, const char *key,
 	if (p == NULL)
 		return ENOENT;
 	if (data)
-		/* LINTED: discard const */
-		_region_init(data, (char *)p, len);
+		_region_init(data, __UNCONST(p), len);
 
 	return 0;
 }

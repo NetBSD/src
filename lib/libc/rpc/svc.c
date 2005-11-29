@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.25 2005/09/09 15:41:27 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.26 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.25 2005/09/09 15:41:27 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.26 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif
 
@@ -262,8 +262,7 @@ rpcb_it:
 	rwlock_unlock(&svc_lock);
 	/* now register the information with the local binder service */
 	if (nconf) {
-		/*LINTED const castaway*/
-		dummy = rpcb_set(prog, vers, (struct netconfig *) nconf,
+		dummy = rpcb_set(prog, vers, __UNCONST(nconf),
 		&((SVCXPRT *) xprt)->xp_ltaddr);
 		return (dummy);
 	}

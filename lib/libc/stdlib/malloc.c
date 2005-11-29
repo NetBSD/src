@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.44 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: malloc.c,v 1.45 2005/11/29 03:12:00 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void utrace(struct ut *, int);
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.44 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.45 2005/11/29 03:12:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include <sys/types.h>
 int utrace(const char *, void *, size_t);
@@ -267,7 +267,7 @@ static struct pgfree *px;
 char *malloc_options;
 
 /* Name of the current public function */
-static char *malloc_func;
+static const char *malloc_func;
 
 /* Macro for mmap */
 #define MMAP(size) \
@@ -283,10 +283,10 @@ static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
 
 static void
-wrterror(char *p)
+wrterror(const char *p)
 {
     const char *progname = getprogname();
-    char *q = " error: ";
+    const char *q = " error: ";
     write(STDERR_FILENO, progname, strlen(progname));
     write(STDERR_FILENO, malloc_func, strlen(malloc_func));
     write(STDERR_FILENO, q, strlen(q));
@@ -296,10 +296,10 @@ wrterror(char *p)
 }
 
 static void
-wrtwarning(char *p)
+wrtwarning(const char *p)
 {
     const char *progname = getprogname();
-    char *q = " warning: ";
+    const char *q = " warning: ";
     if (malloc_abort)
 	wrterror(p);
     write(STDERR_FILENO, progname, strlen(progname));

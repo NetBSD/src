@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.25 2003/08/07 16:42:48 agc Exp $	*/
+/*	$NetBSD: fstab.c,v 1.26 2005/11/29 03:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.25 2003/08/07 16:42:48 agc Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.26 2005/11/29 03:11:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ fstabscan()
 	char subline[MAXLINELENGTH];
 	static const char sep[] = ":\n";
 	static const char ws[] = " \t\n";
-	static char *fstab_type[] = {
+	static const char *fstab_type[] = {
 	    FSTAB_RW, FSTAB_RQ, FSTAB_RO, FSTAB_SW, FSTAB_DP, FSTAB_XX, NULL 
 	};
 
@@ -114,8 +114,9 @@ fstabscan()
 					continue;
 				_fs_fstab.fs_mntops = _fs_fstab.fs_type;
 				_fs_fstab.fs_vfstype =
+				    __UNCONST(
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
-				    "ufs" : "swap";
+				    "ufs" : "swap");
 				if ((cp = nextfld(&lp, sep)) != NULL) {
 					_fs_fstab.fs_freq = atoi(cp);
 					if ((cp = nextfld(&lp, sep)) != NULL) {
@@ -148,14 +149,14 @@ fstabscan()
 		sp = subline;
 
 		while ((cp = nextfld(&sp, ",")) != NULL) {
-			char **tp;
+			const char **tp;
 
 			if (strlen(cp) != 2)
 				continue;
 
 			for (tp = fstab_type; *tp; tp++)
 				if (strcmp(cp, *tp) == 0) {
-					_fs_fstab.fs_type = *tp;
+					_fs_fstab.fs_type = __UNCONST(*tp);
 					break;
 				}
 			if (*tp)

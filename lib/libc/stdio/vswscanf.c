@@ -1,4 +1,4 @@
-/*	$NetBSD: vswscanf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: vswscanf.c,v 1.2 2005/11/29 03:12:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswscanf.c,v 1.3 2004/04/07 09:55:05 tjr Exp $");
 #else
-__RCSID("$NetBSD: vswscanf.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: vswscanf.c,v 1.2 2005/11/29 03:12:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	char *mbstr;
 	size_t mlen;
 	int r;
+	const wchar_t *rstr = str;
 	struct __sfileext fext;
 
 	/*
@@ -84,7 +85,7 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	if ((mbstr = malloc(wcslen(str) * MB_CUR_MAX + 1)) == NULL)
 		return (EOF);
 	mbs = initial;
-	if ((mlen = wcsrtombs(mbstr, (const wchar_t ** __restrict)&str,
+	if ((mlen = wcsrtombs(mbstr, __UNCONST(&rstr),
 	    SIZE_T_MAX, &mbs)) == (size_t)-1) {
 		free(mbstr);
 		return (EOF);

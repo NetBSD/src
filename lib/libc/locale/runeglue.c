@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.10 2003/03/10 21:18:49 tshiozak Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.10 2003/03/10 21:18:49 tshiozak Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _CTYPE_PRIVATE
@@ -69,18 +69,15 @@ __runetable_to_netbsd_ctype(locale)
 
 	/* set to C locale, to ease failure case handling */
 	if (_ctype_ != _C_ctype_) {
-		/* LINTED const castaway */
-		free((void *)_ctype_);
+		free(__UNCONST(_ctype_));
 		_ctype_ = _C_ctype_;
 	}
 	if (_toupper_tab_ != _C_toupper_) {
-		/* LINTED const castaway */
-		free((void *)_toupper_tab_);
+		free(__UNCONST(_toupper_tab_));
 		_toupper_tab_ = _C_toupper_;
 	}
 	if (_tolower_tab_ != _C_tolower_) {
-		/* LINTED const castaway */
-		free((void *)_tolower_tab_);
+		free(__UNCONST(_tolower_tab_));
 		_tolower_tab_ = _C_tolower_;
 	}
 
