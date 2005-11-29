@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.12 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: execl.c,v 1.13 2005/11/29 13:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.12 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: execl.c,v 1.13 2005/11/29 13:30:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ execl(const char *name, const char *arg, ...)
 	int r;
 #if defined(__i386__) || defined(__m68k__) || defined(__ns32k__)
 	r = execve(name, __UNCONST(&arg), environ);
-	return (r);
+	return r;
 #else
 	va_list ap;
 	char **argv;
@@ -65,18 +65,18 @@ execl(const char *name, const char *arg, ...)
 
 	va_start(ap, arg);
 	for (i = 2; va_arg(ap, char *) != NULL; i++)
-		;
+		continue;
 	va_end(ap);
 
-	argv = alloca (i * sizeof (char *));
+	argv = alloca(i * sizeof (char *));
 	
 	va_start(ap, arg);
-	argv[0] = (char *) arg;
-	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
-		;
+	argv[0] = __UNCONST(arg);
+	for (i = 1; (argv[i] = va_arg(ap, char *)) != NULL; i++) 
+		continue;
 	va_end(ap);
 	
 	r = execve(name, argv, environ);
-	return (r);
+	return r;
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: execv.c,v 1.8 2003/08/07 16:42:47 agc Exp $	*/
+/*	$NetBSD: execv.c,v 1.9 2005/11/29 13:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execv.c,v 1.8 2003/08/07 16:42:47 agc Exp $");
+__RCSID("$NetBSD: execv.c,v 1.9 2005/11/29 13:30:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,5 @@ execv(name, argv)
 	const char *name;
 	char * const *argv;
 {
-	int r;
-
-	r = execve(name, argv, environ);
-	return (r);
+	return execve(name, argv, environ);
 }
