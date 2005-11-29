@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.71 2005/09/13 22:00:05 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.72 2005/11/29 15:45:28 yamt Exp $	*/
 
 /*
  *
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.71 2005/09/13 22:00:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.72 2005/11/29 15:45:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,6 +410,10 @@ uvm_aio_aiodone(struct buf *bp)
 		if (pg->flags & PG_FAKE) {
 			KASSERT(!write);
 			pg->flags &= ~PG_FAKE;
+#if defined(READAHEAD_STATS)
+			pg->flags |= PG_SPECULATIVE;
+			uvm_ra_total.ev_count++;
+#endif /* defined(READAHEAD_STATS) */
 			uvm_pageactivate(pg);
 			pmap_clear_modify(pg);
 		}
