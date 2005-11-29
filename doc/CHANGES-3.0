@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.328 2005/11/28 20:11:52 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.329 2005/11/29 10:25:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14567,4 +14567,15 @@ sys/arch/amd64/conf/INSTALL			1.41-1.42
 	Remove some exotic network drivers, restore isp(4), and
 	reduce the size of the installation kernel for amd64.
 	[tron, ticket #1013]
+
+sys/dev/ic/aic79xx.c				1.32
+sys/dev/ic/aic79xx_osm.c			1.13
+sys/dev/ic/aic79xxvar.h				1.20
+sys/dev/ic/aic7xxx.c				1.117
+sys/dev/ic/aic7xxx_inline.h			1.7
+sys/dev/ic/aic7xxx_osm.c			1.19
+sys/dev/ic/aic7xxxvar.h				1.50
+
+	Fix a panic in UVM under NetBSD-xen.
+	[bouyer, ticket #1014]
 
