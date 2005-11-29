@@ -223,7 +223,7 @@ It was developed and tested under Red Hat Linux 9.0 using PERL 5.8.0.
 Additionally, it was built and tested under Red Hat Linux 7.3 using 
 PERL 5.6.1.
 
-$Id: cvs_acls.in,v 1.2 2005/04/20 01:52:11 christos Exp $
+$Id: cvs_acls.in,v 1.3 2005/11/29 15:31:41 skrll Exp $
 
 This version is based on the 1.11.13 version of cvs_acls
 peter.connolly@cnet.com (Peter Connolly) 
@@ -591,38 +591,6 @@ close(ENTRIES);
 open (CVSACL, $cvsaclfile) || exit(0);	# It is ok for cvsacl file not to exist
 while (<CVSACL>) {
     chop;
-<<<<<<< cvs_acls.in
-    next if /^\s*\#/;
-    next if /^\s*$/;
-    ($flagstr, $u, $m, $b) = split(/[\s,]*\|[\s,]*/, $_);
-
-    # Skip anything not starting with "avail" or "unavail" and complain.
-    (print "Bad avail line: $_\n"), next
-	if ($flagstr !~ /^avail/ && $flagstr !~ /^unavail/);
-
-    # Set which bit we are playing with. ('0' is OK == Available).
-    $flag = (($& eq "avail") ? 0 : 1);
-
-    # If we find a "universal off" flag (i.e. a simple "unavail") remember it
-    $universal_off = 1 if ($flag && !$u && !$m && !$b);
-
-    # $myname considered "in user list" if actually in list or is NULL
-    $in_user = (!$u || grep ($_ eq $myname, split(/[\s,]+/,$u)));
-    print "$$ \$myname($myname) in user list: $_\n" if $debug && $in_user;
-
-    # Module matches if it is a NULL module list in the avail line.  If module
-    # list is not null, we check every argument combination.
-    if (!($in_repo = !$m)) {
-	@tmp = split(/[\s,]+/,$m);
-	for $j (@tmp) {
-	    # If the repos from avail is a parent(or equal) dir of $repos, OK
-	    $in_repo = 1, last if ($repos eq $j || $repos =~ /^$j\//);
-	}
-	if (!$in_repo) {
-	    $in_repo = 1;
-	    for $j (@ARGV) {
-		last if !($in_repo = grep ($_ eq $j, @tmp));
-=======
     next if /^\s*\#/;                               # skip comments
     next if /^\s*$/;                                # skip blank lines
     # --------------------------------------------- parse current 'cvsacl' line
@@ -712,7 +680,6 @@ while (<CVSACL>) {
 	    foreach $commitFile (keys %repository_matches) {
 		print("$$ Adding \%repository_matches entry: $commitFile.\n") if $debug;
 		$restricted_entries{$commitFile} = $repository_matches{$commitFile}[0];
->>>>>>> 1.1.1.3
 	    }
 	}
 	else {
