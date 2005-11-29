@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.27 2005/11/23 16:14:57 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.28 2005/11/29 16:24:41 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.27 2005/11/23 16:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.28 2005/11/29 16:24:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -117,10 +117,15 @@ linux_sys_clone(l, v, retval)
 	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
 		flags |= FORK_PPWAIT;
 
-	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX__NSIG)
-		return (EINVAL);
-	sig = linux_to_native_signo[sig];
+	/* Thread should not issue a SIGCHLD on termination */
+	if (SCARG(uap, flags) & LINUX_CLONE_THREAD) {
+		sig = 0;
+	} else {
+		sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+		if (sig < 0 || sig >= LINUX__NSIG)
+			return (EINVAL);
+		sig = linux_to_native_signo[sig];
+	}
 
 #ifdef LINUX_NPTL
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
