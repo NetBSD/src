@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.17 2005/07/17 21:28:45 christos Exp $
+# $NetBSD: named,v 1.18 2005/11/29 21:07:25 christos Exp $
 #
 
 # PROVIDE: named
@@ -37,13 +37,13 @@ named_migrate()
 			;;
 		esac
 		mkdir -p $d
-		if [ -r "$dst$f" ]
+		if [ -r "$dst/$f" ]
 		then
-			if ! cmp $f $dst$f; then
+			if ! cmp $f $dst/$f; then
 				diff=true
 			fi
 		else
-			cp -p $f $dst$f
+			cp -p $f $dst/$f
 		fi
 	done
 	if $diff; then
@@ -98,6 +98,12 @@ named_precmd()
 
 	if [ ! -h /etc/namedb ]; then
 		named_migrate /etc/namedb ${named_chrootdir}
+	fi
+	if [ \( -r /etc/named.conf \) -a \( ! -h /etc/named.conf \) -a \
+	     \( ! -r ${named_chrootdir}/etc/named.conf \) ]
+	then
+		mv /etc/named.conf ${named_chrootdir}/etc/named.conf
+		ln -s ${named_chrootdir}/etc/named.conf /etc/named.conf
 	fi
 	if [ \( ! -r ${named_chrootdir}/etc/named.conf \) -a \
 	    \( -r ${named_chrootdir}/etc/namedb/named.conf \) ]; then
