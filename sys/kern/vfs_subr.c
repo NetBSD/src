@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.254 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.255 2005/11/29 22:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.254 2005/09/23 12:10:33 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.255 2005/11/29 22:52:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.254 2005/09/23 12:10:33 jmmv Exp $");
 #include <miscfs/syncfs/syncfs.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_readahead.h>
 #include <uvm/uvm_ddb.h>
 
 #include <sys/sysctl.h>
@@ -1659,6 +1660,10 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	}
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
+	if (vp->v_type == VREG && vp->v_ractx != NULL) {
+		uvm_ra_freectx(vp->v_ractx);
+		vp->v_ractx = NULL;
+	}
 	cache_purge(vp);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.137 2005/11/29 22:52:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.136 2005/10/03 02:06:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.137 2005/11/29 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1550,6 +1550,74 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
+}
+
+/* ARGSUSED */
+int
+sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
+{
+	const struct sys_posix_fadvise_args /* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */ *uap = v;
+	const int fd = SCARG(uap, fd);
+	const int advice = SCARG(uap, advice);
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	int error = 0;
+
+	fp = fd_getfile(p->p_fd, fd);
+	if (fp == NULL) {
+		error = EBADF;
+		goto out;
+	}
+	FILE_USE(fp);
+
+	if (fp->f_type != DTYPE_VNODE) {
+		if (fp->f_type == DTYPE_PIPE || fp->f_type == DTYPE_SOCKET) {
+			error = ESPIPE;
+		} else {
+			error = EOPNOTSUPP;
+		}
+		goto out;
+	}
+
+	switch (advice) {
+	case POSIX_FADV_NORMAL:
+	case POSIX_FADV_RANDOM:
+	case POSIX_FADV_SEQUENTIAL:
+		KASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
+		KASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
+		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
+
+		/*
+		 * we ignore offset and size.
+		 */
+
+		fp->f_advice = advice;
+		break;
+
+	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_DONTNEED:
+	case POSIX_FADV_NOREUSE:
+
+		/*
+		 * not implemented yet.
+		 */
+
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+out:
+	if (fp != NULL) {
+		FILE_UNUSE(fp, p);
+	}
+	*retval = error;
+	return 0;
 }
 
 /*
