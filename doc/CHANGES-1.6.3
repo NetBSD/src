@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.167 2005/11/06 02:35:18 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.168 2005/11/29 12:40:41 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2079,4 +2079,9 @@ usr.sbin/rpc.statd/stat_proc.c			1.7
 	will still have a reference to the db, but won't try to write it
 	on exit.
 	[bouyer, ticket #5930]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.114 via patch
+
+	Fix 64 bit truncation problem allowing to read arbitrary kernel memory.
+	[christos, ticket #5952]
 
