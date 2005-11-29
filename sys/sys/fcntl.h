@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.32 2005/03/30 13:15:13 skrll Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.33 2005/11/29 22:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -257,6 +257,17 @@ struct flock {
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 #endif
 
+/*
+ * posix_advise advisories.
+ */
+
+#define	POSIX_FADV_NORMAL	0	/* default advice / no advice */
+#define	POSIX_FADV_RANDOM	1	/* random access */
+#define	POSIX_FADV_SEQUENTIAL	2	/* sequential access(lower to higher) */
+#define	POSIX_FADV_WILLNEED	3	/* be needed in near future */
+#define	POSIX_FADV_DONTNEED	4	/* not be needed in near future */
+#define	POSIX_FADV_NOREUSE	5	/* be accessed once */
+
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
@@ -267,6 +278,7 @@ int	fcntl(int, int, ...);
 #if defined(_NETBSD_SOURCE)
 int	flock(int, int);
 #endif /* _NETBSD_SOURCE */
+int	posix_fadvise(int, off_t, off_t, int);
 __END_DECLS
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.64 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.65 2005/11/29 22:52:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.64 2005/11/02 12:39:14 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.65 2005/11/29 22:52:03 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -112,6 +112,8 @@ READ(void *v)
 	usepc = vp->v_type == VREG;
 #endif /* !LFS_READWRITE */
 	if (usepc) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_size - uio->uio_offset,
 			    uio->uio_resid);
@@ -119,7 +121,7 @@ READ(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -352,7 +354,7 @@ WRITE(void *v)
 		 */
 
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    ubc_alloc_flags);
+		    UVM_ADV_NORMAL, ubc_alloc_flags);
 		error = uiomove(win, bytelen, uio);
 		if (error && extending) {
 			/*
