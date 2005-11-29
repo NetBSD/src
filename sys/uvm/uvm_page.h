@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.40 2005/06/04 13:48:35 chs Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.41 2005/11/29 15:45:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,6 +169,7 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
+#define	PG_SPECULATIVE	0x0200		/* page has been read speculatively */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 

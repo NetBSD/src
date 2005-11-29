@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.28 2005/06/27 02:19:48 thorpej Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.29 2005/11/29 15:45:28 yamt Exp $	 */
 
 /*
  *
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.28 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.29 2005/11/29 15:45:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -247,3 +248,16 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 }
 #endif
+
+#if defined(READAHEAD_STATS)
+
+#define	UVM_RA_EVCNT_DEFINE(name) \
+struct evcnt uvm_ra_##name = \
+EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "readahead", #name); \
+EVCNT_ATTACH_STATIC(uvm_ra_##name);
+
+UVM_RA_EVCNT_DEFINE(total);
+UVM_RA_EVCNT_DEFINE(hit);
+UVM_RA_EVCNT_DEFINE(miss);
+
+#endif /* defined(READAHEAD_STATS) */
