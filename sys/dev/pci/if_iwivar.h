@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.8 2005/11/18 16:42:22 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.9 2005/11/29 13:57:00 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -148,6 +148,7 @@ struct iwi_softc {
 	int			antenna;
 	int			dwelltime;
 	int			bluetooth;
+	int			nictype;
 
 	int			sc_tx_timer;
 
