@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.17 2005/11/11 15:50:57 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.18 2005/11/29 22:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.17 2005/11/11 15:50:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.18 2005/11/29 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,9 @@ cd9660_read(v)
 	imp = ip->i_mnt;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -279,7 +281,7 @@ cd9660_read(v)
 			if (bytelen == 0)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

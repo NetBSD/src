@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.14 2005/11/02 12:38:58 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.15 2005/11/29 22:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.14 2005/11/02 12:38:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.15 2005/11/29 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,9 @@ filecore_read(v)
 	fcmp = ip->i_mnt;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -209,7 +211,7 @@ filecore_read(v)
 				break;
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

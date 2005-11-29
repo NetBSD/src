@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.106 2005/09/01 02:21:12 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.107 2005/11/29 22:52:03 yamt Exp $	*/
 
 /*
  *
@@ -128,7 +128,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /* bits 0x700: max protection, 0x800: not used */
 
 /* bits 0x7000: advice, 0x8000: not used */
-/* advice: matches MADV_* from sys/mman.h */
+/* advice: matches MADV_* from sys/mman.h and POSIX_FADV_* from sys/fcntl.h */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
 #define UVM_ADV_RANDOM	0x1	/* 'random' */
 #define UVM_ADV_SEQUENTIAL 0x2	/* 'sequential' */
@@ -556,7 +556,8 @@ void			uao_reference_locked(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
-void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int);
+void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
+			    int);
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 
