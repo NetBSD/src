@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.98.2.6 2005/09/01 17:53:25 riz Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.98.2.7 2005/11/29 12:36:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.98.2.6 2005/09/01 17:53:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.98.2.7 2005/11/29 12:36:19 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -931,18 +931,18 @@ kernfs_read(v)
 	struct uio *uio = ap->a_uio;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	char strbuf[KSTRING], *buf;
-	off_t off;
+	int off;
 	size_t len;
 	int error;
 
 	if (ap->a_vp->v_type == VDIR)
 		return (EOPNOTSUPP);
 
+	off = (int)uio->uio_offset;
 	/* Don't allow negative offsets */
-	if (uio->uio_offset < 0)
+	if (off < 0)
 		return EINVAL;
 
-	off = uio->uio_offset;
 	buf = strbuf;
 	if ((error = kernfs_xread(kfs, off, &buf, sizeof(strbuf), &len)) == 0)
 		error = uiomove(buf, len, uio);
