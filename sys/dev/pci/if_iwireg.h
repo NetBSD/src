@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.14 2005/11/18 16:42:22 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.15 2005/11/29 13:57:00 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -433,9 +433,30 @@ struct iwi_wme_params {
 	uint16_t	burst[WME_NUM_AC];
 } __packed;
 
-#define IWI_MEM_EEPROM_CTL	0x00300040
+#define IWI_MEM_START_ADDR	0x00300000
 
-#define IWI_EEPROM_MAC	0x21
+#define IWI_MEM_EEPROM_CTL	(IWI_MEM_START_ADDR + 0x40)
+#define IWI_MEM_EVENT_CTL	(IWI_MEM_START_ADDR + 0x04)
+
+/*
+ * led control bits
+ */
+#define IWI_LED_ACTIVITY	0x00000010
+#define IWI_LED_ASSOCIATED	0x00000020
+#define IWI_LED_OFDM		0x00000040
+
+#define IWI_LED_MASK    (IWI_LED_ACTIVITY | \
+			       IWI_LED_ASSOCIATED | \
+			       IWI_LED_OFDM)
+
+#define IWI_LED_OFF(sc) 						 \
+	do { 								 \
+		MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, ~IWI_LED_MASK); \
+	} while (/* CONSTCOND */ 0)
+
+
+#define IWI_EEPROM_MAC		0x21
+#define IWI_EEPROM_NIC_TYPE	0x25
 
 #define IWI_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
 

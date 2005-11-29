@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.41 2005/11/26 07:42:10 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.42 2005/11/29 13:57:00 rpaulo Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.41 2005/11/26 07:42:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.42 2005/11/29 13:57:00 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -153,6 +153,7 @@ static int	iwi_scan(struct iwi_softc *);
 static int	iwi_auth_and_assoc(struct iwi_softc *);
 static int	iwi_init(struct ifnet *);
 static void	iwi_stop(struct ifnet *, int);
+static void	iwi_led_set(struct iwi_softc *, uint32_t, int);
 static void	iwi_error_log(struct iwi_softc *);
 
 /*
@@ -369,6 +370,11 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
 
+	/* read the NIC type from EEPROM */
+	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE); 
+	sc->nictype = val & 0xff;
+
+	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2) {
@@ -996,6 +1002,8 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ieee80211_node_table_reset(&ic->ic_scan);
 		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
 		sc->flags |= IWI_FLAG_SCANNING;
+		/* blink the led while scanning */
+		iwi_led_set(sc, IWI_LED_ASSOCIATED, 1);
 		iwi_scan(sc);
 		break;
 
@@ -1013,6 +1021,7 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 
 	case IEEE80211_S_ASSOC:
+		iwi_led_set(sc, IWI_LED_ASSOCIATED, 0);
 		break;
 
 	case IEEE80211_S_INIT:
@@ -2725,6 +2734,8 @@ iwi_stop(struct ifnet *ifp, int disable)
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	IWI_LED_OFF(sc);
+
 	iwi_stop_master(sc);
 	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
 
@@ -2740,6 +2751,44 @@ iwi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+}
+
+static void
+iwi_led_set(struct iwi_softc *sc, uint32_t state, int toggle)
+{
+	uint32_t val;
+
+	val = MEM_READ_4(sc, IWI_MEM_EVENT_CTL);
+
+	switch (sc->nictype) {
+	case 1:
+		/* special NIC type: reversed leds */
+		if (state == IWI_LED_ACTIVITY) {
+			state &= ~IWI_LED_ACTIVITY;
+			state |= IWI_LED_ASSOCIATED;
+		} else if (state == IWI_LED_ASSOCIATED) {
+			state &= ~IWI_LED_ASSOCIATED;
+			state |= IWI_LED_ACTIVITY;
+		}
+		/* and ignore toggle effect */
+		val |= state;
+		break;
+	case 0:
+	case 2:
+	case 3:
+	case 4:
+		val = (toggle && (val & state)) ? val & ~state : val | state;
+		break;
+	default:
+		aprint_normal("%s: unknown NIC type %d\n",
+		    sc->sc_dev.dv_xname, sc->nictype);
+		return;
+		break;
+	}
+
+	MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, val);
+
+	return;
 }
 
 static void
