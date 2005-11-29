@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.81 2005/11/05 08:07:44 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.81.2.1 2005/11/29 21:23:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.81 2005/11/05 08:07:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.81.2.1 2005/11/29 21:23:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ linux_e_proc_exit(p)
 		l = proc_representative_lwp(p);
 		SCARG(&cup, uaddr) = e->clear_tid;
 		SCARG(&cup, op) = LINUX_FUTEX_WAKE;
-		SCARG(&cup, val) = -1; /* Awake everyone */
+		SCARG(&cup, val) = 0x7fffffff; /* Awake everyone */
 		SCARG(&cup, timeout) = NULL;
 		SCARG(&cup, uaddr2) = NULL;
 		SCARG(&cup, val3) = 0;

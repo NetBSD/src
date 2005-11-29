@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.32 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: sci.c,v 1.32.8.1 2005/11/29 21:22:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.32 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.32.8.1 2005/11/29 21:22:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ sci_scsidone(struct sci_softc *dev, int stat)
 		switch(stat) {
 		case SCSI_CHECK:
 			xs->resid = 0;
-			/* FALLTHOUGH */
+			/* FALLTHROUGH */
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
 			break;

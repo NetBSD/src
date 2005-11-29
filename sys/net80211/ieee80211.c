@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.40.6.1 2005/11/22 16:08:15 yamt Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.40.6.2 2005/11/29 21:23:29 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.40.6.1 2005/11/22 16:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.40.6.2 2005/11/29 21:23:29 yamt Exp $");
 #endif
 
 /*
@@ -151,6 +151,10 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_channel *c;
 	int i;
+
+#ifdef __NetBSD__
+	ieee80211_init();
+#endif /* __NetBSD__ */
 
 	ether_ifattach(ifp, ic->ic_myaddr);
 #if NBPFILTER > 0

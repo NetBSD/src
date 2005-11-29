@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.72 2005/05/06 04:28:37 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.72.8.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -177,8 +177,6 @@ struct ipflow {
 #include "opt_gateway.h"
 #include "opt_mbuftrace.h"
 #endif
-
-#include <sys/protosw.h>
 
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */

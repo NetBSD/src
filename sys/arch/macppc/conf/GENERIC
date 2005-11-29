@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214 2005/11/03 16:48:30 chs Exp $
+# $NetBSD: GENERIC,v 1.214.2.1 2005/11/29 21:22:59 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214 $"
+#ident 		"GENERIC-$Revision: 1.214.2.1 $"
 
 maxusers	32
 
@@ -492,8 +492,9 @@ audio*	at uaudio?
 midi*	at eap?			# 137[01] MIDI port
 #midi*	at mpu?			# MPU 401
 
-#pseudo-device 	crypto			# opencrypto framework
+#pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)
+#pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices

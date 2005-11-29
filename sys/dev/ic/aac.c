@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $	*/
+/*	$NetBSD: aac.c,v 1.23.6.1 2005/11/29 21:23:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.23 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.23.6.1 2005/11/29 21:23:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
 
 #ifdef AAC_DEBUG
-static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
+static void	aac_print_fib(struct aac_softc *, struct aac_fib *, const char *);
 #endif
 
 /*
@@ -1051,7 +1051,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
 	 */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP54*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 #endif
 
@@ -1143,7 +1143,7 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
 	/* Fix up the address values. */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
@@ -1269,7 +1269,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = (void *)(intptr_t) le32toh((struct aac_fib *)
+	*fib_addr = (void *)(intptr_t) le32toh(
 	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
 
 	/* Update consumer index. */
@@ -1292,7 +1292,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
  * Print a FIB
  */
 static void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
+aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
 {
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;
@@ -1369,8 +1369,11 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 		break;
 	}
 	default:
-		printf("   %16D\n", fib->data, " ");
-		printf("   %16D\n", fib->data + 16, " ");
+		// dump first 32 bytes of fib->data
+		printf("  Raw data:");
+		for (i = 0; i < 32; i++)
+			printf(" %02x", fib->data[i]);
+		printf("\n");
 		break;
 	}
 }

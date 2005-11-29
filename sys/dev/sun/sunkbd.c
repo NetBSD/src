@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.21 2005/02/21 22:43:07 heas Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.21.10.1 2005/11/29 21:23:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.21 2005/02/21 22:43:07 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.21.10.1 2005/11/29 21:23:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,18 @@ int	sunkbd_bps = KBD_DEFAULT_BPS;
 CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
     sunkbd_match, sunkbd_attach, NULL, NULL);
 
-struct  linesw sunkbd_disc =
-	{ "sunkbd", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunkbdinput, sunkbdstart, nullmodem, ttpoll };
+struct linesw sunkbd_disc = {
+	.l_name = "sunkbd",
+	.l_open = ttylopen,
+	.l_close = ttylclose,
+	.l_read = ttyerrio,
+	.l_write = ttyerrio,
+	.l_ioctl = ttynullioctl,
+	.l_rint = sunkbdinput,
+	.l_start = sunkbdstart,
+	.l_modem = nullmodem,
+	.l_poll = ttpoll
+};
 
 
 /*
@@ -132,10 +141,11 @@ sunkbd_attach(parent, self, aux)
 	struct cons_channel *cc;
 
 	/* Set up the proper line discipline. */
-	ttyldisc_init();
-	if (ttyldisc_add(&sunkbd_disc, -1) == -1)
+	if (ttyldisc_attach(&sunkbd_disc) != 0)
 		panic("sunkbd_attach: sunkbd_disc");
-	tp->t_linesw = &sunkbd_disc;
+	ttyldisc_release(tp->t_linesw);
+	tp->t_linesw = ttyldisc_lookup(sunkbd_disc.l_name);
+	KASSERT(tp->t_linesw == &sunkbd_disc);
 	tp->t_oflag &= ~OPOST;
 	tp->t_dev = args->kmta_dev;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.93.6.1 2005/11/22 16:08:11 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.93.6.2 2005/11/29 21:23:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.93.6.1 2005/11/22 16:08:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.93.6.2 2005/11/29 21:23:14 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -106,6 +106,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.93.6.1 2005/11/22 16:08:11 yamt Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
+
+/* Headers for TCP  Segmentation Offload (TSO) */
+#include <netinet/in_systm.h>		/* n_time for <netinet/ip.h>... */
+#include <netinet/in.h>			/* ip_{src,dst}, for <netinet/ip.h> */
+#include <netinet/ip.h>			/* for struct ip */
+#include <netinet/tcp.h>		/* for struct tcphdr */
+
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -247,14 +254,18 @@ void	bge_update_all_threshes(int /*lvl*/);
 void bge_dump_status(struct bge_softc *);
 void bge_dump_rxbd(struct bge_rx_bd *);
 
+
 #define BGE_DEBUG
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
 #define DPRINTFN(n,x)	if (bgedebug >= (n)) printf x
+#define BGE_TSO_PRINTF(x)  do { if (bge_tso_debug) printf x ;} while (0)
 int	bgedebug = 0;
+int	bge_tso_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#define BGE_TSO_PRINTF(x)
 #endif
 
 #ifdef BGE_EVENT_COUNTERS
@@ -277,6 +288,22 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
 #define	BGE_QUIRK_5705_CORE		0x00000080
 #define	BGE_QUIRK_FEWER_MBUFS		0x00000100
+
+/*
+ * XXX: how to handle variants based on 5750 and derivatives:
+ * 5750 5751, 5721, possibly 5714, 5752, and 5708?, which 
+ * in general behave like a 5705, except with additional quirks.
+ * This driver's current handling of the 5721 is wrong;
+ * how we map ASIC revision to "quirks" needs more thought.
+ * (defined here until the thought is done).
+ */
+#define BGE_IS_5750_OR_BEYOND(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
+
+#define BGE_IS_5705_OR_BEYOND(sc)  \
+	( ((sc)->bge_quirks & BGE_QUIRK_5705_CORE) || \
+	  BGE_IS_5750_OR_BEYOND(sc) )
+
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -1142,7 +1169,7 @@ bge_init_tx_ring(sc)
 
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_RSLOTS; i++) {
-		if (bus_dmamap_create(sc->bge_dmatag, ETHER_MAX_LEN_JUMBO,
+		if (bus_dmamap_create(sc->bge_dmatag, BGE_TXDMA_MAX,
 		    BGE_NTXSEG, ETHER_MAX_LEN_JUMBO, 0, BUS_DMA_NOWAIT,
 		    &dmamap))
 			return(ENOBUFS);
@@ -1294,12 +1321,36 @@ bge_chipinit(sc)
 
 	/* Set up the PCI DMA control register. */
 	if (sc->bge_pcie) {
+	  u_int32_t device_ctl;
+
 		/* From FreeBSD */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
 		    sc->bge_dev.dv_xname));
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
+
+		/* jonathan: alternative from Linux driver */
+#define DMA_CTRL_WRITE_PCIE_H20MARK_128         0x00180000 
+#define DMA_CTRL_WRITE_PCIE_H20MARK_256         0x00380000
+
+		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
+		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag, 
+					   BGE_PCI_CONF_DEV_CTRL);
+		printf("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl);
+
+		if ((device_ctl & 0x00e0) && 0) {
+			/*
+			 * XXX jonathan@NetBSD.org:
+			 * This clause is exactly what the Broadcom-supplied
+			 * Linux does; but given overall register programming
+			 * by if_bge(4), this larger DMA-write watermark
+			 * value causes bcm5721 chips to totally wedge.
+			 */
+			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256;
+		} else {
+			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128;
+		}
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
 	    BGE_PCISTATE_PCI_BUSMODE) {
 		/* Conventional PCI bus */
@@ -1783,8 +1834,30 @@ bge_blockinit(sc)
 	    BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS);
 
 	/* Turn on read DMA state machine */
-	CSR_WRITE_4(sc, BGE_RDMA_MODE,
-	    BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS);
+	{
+		uint32_t dma_read_modebits;
+
+		dma_read_modebits =
+		  BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
+
+		if (sc->bge_pcie && 0) {
+			dma_read_modebits |= BGE_RDMA_MODE_FIFO_LONG_BURST;
+		} else if ((sc->bge_quirks & BGE_QUIRK_5705_CORE)) {
+			dma_read_modebits |= BGE_RDMA_MODE_FIFO_SIZE_128;
+		}
+
+		/* XXX broadcom-supplied linux driver; undocumented */
+		if (BGE_IS_5750_OR_BEYOND(sc)) {
+ 			/*
+			 * XXX: magic values.
+			 * From Broadcom-supplied Linux driver;  apparently
+			 * required to workaround a DMA bug affecting TSO
+			 * on bcm575x/bcm5721?
+			 */
+			dma_read_modebits |= (1 << 27);
+		}
+		CSR_WRITE_4(sc, BGE_RDMA_MODE, dma_read_modebits);
+	}
 
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
@@ -1807,7 +1880,12 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
 
 	/* Turn on send data initiator state machine */
-	CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
+	if (BGE_IS_5750_OR_BEYOND(sc)) {
+		/* XXX: magic value from Linux driver */
+		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE | 0x08);
+	} else {
+		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
+	}
 
 	/* Turn on send BD initiator state machine */
 	CSR_WRITE_4(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
@@ -2468,6 +2546,12 @@ bge_attach(parent, self, aux)
 	sc->bge_tx_coal_ticks = 300;
 	sc->bge_tx_max_coal_bds = 400;
 #endif
+	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) {
+		sc->bge_tx_coal_ticks = (12 * 5);
+		sc->bge_rx_max_coal_bds = (12 * 5);
+			aprint_error("%s: setting short Tx thresholds\n",
+			    sc->bge_dev.dv_xname);
+	}
 
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
@@ -2489,6 +2573,9 @@ bge_attach(parent, self, aux)
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
+
+	if (sc->bge_pcie)
+		sc->ethercom.ec_if.if_capabilities |= IFCAP_TSOv4;
 
 	/*
 	 * Do MII setup.
@@ -2662,8 +2749,15 @@ bge_reset(sc)
 			pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN0,
 			    reg | (1 << 15));
 		}
-		/* XXX: Magic Numbers */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN1, 0xf5000);
+		/*
+		 * XXX: Magic Numbers.
+		 * Sets maximal PCI-e payload and clears any PCI-e errors.
+		 * Should be replaced with references to PCI config-space
+		 * capability block for PCI-Express.
+		 */
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    BGE_PCI_CONF_DEV_CTRL, 0xf5000);
+
 	}
 
 	/* Reset some of the PCI state that got zapped by reset */
@@ -2691,17 +2785,23 @@ bge_reset(sc)
 	 * This indicates that the firmware initialization
 	 * is complete.
 	 */
-	for (i = 0; i < 750; i++) {
+	for (i = 0; i < BGE_TIMEOUT; i++) {
 		val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
 		if (val == ~BGE_MAGIC_NUMBER)
 			break;
 		DELAY(1000);
 	}
 
-	if (i == 750) {
+	if (i >= BGE_TIMEOUT) {
 		printf("%s: firmware handshake timed out, val = %x\n",
 		    sc->bge_dev.dv_xname, val);
-		return;
+		/*
+		 * XXX: occasionally fired on bcm5721, but without
+		 * apparent harm.  For now, keep going if we timeout
+		 * against PCI-E devices.
+		 */
+		 if (!sc->bge_pcie)
+		  return;
 	}
 
 	/*
@@ -3361,11 +3461,13 @@ bge_encap(sc, m_head, txidx)
 	struct bge_tx_bd	*f = NULL;
 	u_int32_t		frag, cur, cnt = 0;
 	u_int16_t		csum_flags = 0;
+	u_int16_t		txbd_tso_flags = 0;
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int			i = 0;
 	struct m_tag		*mtag;
-
+	int			use_tso, maxsegsize, error;
+ 
 	cur = frag = *txidx;
 
 	if (m_head->m_pkthdr.csum_flags) {
@@ -3389,8 +3491,9 @@ bge_encap(sc, m_head, txidx)
 	    m_head->m_pkthdr.len >= ETHER_MIN_NOPAD)
 		goto check_dma_bug;
 
-	if (bge_cksum_pad(m_head) != 0)
+	if (bge_cksum_pad(m_head) != 0) {
 	    return ENOBUFS;
+	}
 
 check_dma_bug:
 	if (!(sc->bge_quirks & BGE_QUIRK_5700_SMALLDMA))
@@ -3410,23 +3513,183 @@ doit:
 	dmamap = dma->dmamap;
 
 	/*
+	 * Set up any necessary TSO state before we start packing...
+	 */
+	use_tso = (m_head->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+	if (!use_tso) {
+		maxsegsize = 0;
+	} else {	/* TSO setup */
+		unsigned  mss;
+		struct ether_header *eh;
+		unsigned ip_tcp_hlen, iptcp_opt_words, tcp_seg_flags, offset;
+		struct mbuf * m0 = m_head;
+		struct ip *ip;
+		struct tcphdr *th;
+		int iphl, hlen;
+
+		/*
+		 * XXX It would be nice if the mbuf pkthdr had offset
+		 * fields for the protocol headers.
+		 */
+
+		eh = mtod(m0, struct ether_header *);
+		switch (htons(eh->ether_type)) {
+		case ETHERTYPE_IP:
+			offset = ETHER_HDR_LEN;
+			break;
+
+		case ETHERTYPE_VLAN:
+			offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+			break;
+
+		default:
+			/*
+			 * Don't support this protocol or encapsulation.
+			 */
+			return (ENOBUFS);
+		}
+
+		/*
+		 * TCP/IP headers are in the first mbuf; we can do
+		 * this the easy way.
+		 */
+		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+		hlen = iphl + offset;
+		if (__predict_false(m0->m_len <
+				    (hlen + sizeof(struct tcphdr)))) {
+
+			  printf("TSO: hard case m0->m_len == %d <"
+				 " ip/tcp hlen %zd, not handled yet\n",
+				 m0->m_len, hlen+ sizeof(struct tcphdr));
+#ifdef NOTYET
+			/*
+			 * XXX jonathan@NetBSD.org: untested.
+			 * how to force  this branch to be taken?
+			 */
+			BGE_EVCNT_INCR(&sc->sc_ev_txtsopain);
+
+			m_copydata(m0, offset, sizeof(ip), &ip);
+			m_copydata(m0, hlen, sizeof(th), &th);
+
+			ip.ip_len = 0;
+
+			m_copyback(m0, hlen + offsetof(struct ip, ip_len),
+			    sizeof(ip.ip_len), &ip.ip_len);
+
+			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+			    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+
+			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
+
+			hlen += th.th_off << 2;
+			iptcp_opt_words	= hlen;
+#else
+			/*
+			 * if_wm "hard" case not yet supported, can we not
+			 * mandate it out of existence?
+			 */
+			(void) ip; (void)th; (void) ip_tcp_hlen;
+
+			return ENOBUFS;
+#endif
+		} else {
+			ip = (struct ip *) (mtod(m0, caddr_t) + offset);
+			th = (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
+			ip_tcp_hlen = iphl +  (th->th_off << 2);
+
+			/* Total IP/TCP options, in 32-bit words */
+			iptcp_opt_words = (ip_tcp_hlen
+					   - sizeof(struct tcphdr)
+					   - sizeof(struct ip)) >> 2;
+		}
+		if (BGE_IS_5750_OR_BEYOND(sc)) {
+			th->th_sum = 0;
+			csum_flags &= ~(BGE_TXBDFLAG_TCP_UDP_CSUM);
+		} else {
+			/*
+			 * XXX jonathan@NetBSD.org: 5705 untested. 
+			 * Requires TSO firmware patch for 5701/5703/5704.
+			 */
+			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+		}
+
+		mss = m_head->m_pkthdr.segsz;
+		txbd_tso_flags |= 	
+		    BGE_TXBDFLAG_CPU_PRE_DMA |
+		    BGE_TXBDFLAG_CPU_POST_DMA;
+
+		/*
+		 * Our NIC TSO-assist assumes TSO has standard, optionless
+		 * IPv4 and TCP headers, which total 40 bytes. By default,
+		 * the NIC copies 40 bytes of IP/TCP header from the
+		 * supplied header into the IP/TCP header portion of
+		 * each post-TSO-segment. If the supplied packet has IP or
+		 * TCP options, we need to tell the NIC to copy those extra
+		 * bytes into each  post-TSO header, in addition to the normal
+		 * 40-byte IP/TCP header (and to leave space accordingly).
+		 * Unfortunately, the driver encoding of option length
+		 * varies across different ASIC families.
+		 */
+		tcp_seg_flags = 0;
+		if (iptcp_opt_words) {
+			if ( BGE_IS_5705_OR_BEYOND(sc)) {
+				tcp_seg_flags =
+					iptcp_opt_words << 11;
+			} else {
+				txbd_tso_flags |=
+					iptcp_opt_words << 12;
+			}
+		}
+		maxsegsize = mss | tcp_seg_flags;
+		ip->ip_len = htons(mss + ip_tcp_hlen);
+
+	}	/* TSO setup */
+
+	/*
 	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
 	 * of fragments or hit the end of the mbuf chain.
 	 */
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
-	    BUS_DMA_NOWAIT))
+	error = bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
+	    BUS_DMA_NOWAIT);
+	if (error) {
 		return(ENOBUFS);
+	}
 
-	mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head);
+	mtag = sc->ethercom.ec_nvlans ?
+	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
 
+
+	/* Iterate over dmap-map fragments. */
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
 		if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
 			break;
+	
 		bge_set_hostaddr(&f->bge_addr, dmamap->dm_segs[i].ds_addr);
 		f->bge_len = dmamap->dm_segs[i].ds_len;
-		f->bge_flags = csum_flags;
+
+		/*
+		 * For 5751 and follow-ons, for TSO we must turn
+		 * off checksum-assist flag in the tx-descr, and
+		 * supply the ASIC-revision-specific encoding
+		 * of TSO flags and segsize.
+		 */
+		if (use_tso) {
+			if (BGE_IS_5750_OR_BEYOND(sc) || i == 0) {
+				f->bge_rsvd = maxsegsize;
+				f->bge_flags = csum_flags | txbd_tso_flags;
+			} else {
+				f->bge_rsvd = 0;
+				f->bge_flags =
+				  (csum_flags | txbd_tso_flags) & 0x0fff;
+			}
+		} else {
+			f->bge_rsvd = 0;
+			f->bge_flags = csum_flags;
+		}
 
 		if (mtag != NULL) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
@@ -3438,21 +3701,32 @@ doit:
 		 * Sanity check: avoid coming within 16 descriptors
 		 * of the end of the ring.
 		 */
-		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16)
+		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16) {
+			BGE_TSO_PRINTF(("%s: "
+			    " dmamap_load_mbuf too close to ring wrap\n",
+			    sc->bge_dev.dv_xname));
 			return(ENOBUFS);
+		}
 		cur = frag;
 		BGE_INC(frag, BGE_TX_RING_CNT);
 		cnt++;
 	}
 
-	if (i < dmamap->dm_nsegs)
+	if (i < dmamap->dm_nsegs) {
+		BGE_TSO_PRINTF(("%s: reached %d < dm_nsegs %d\n",
+		    sc->bge_dev.dv_xname, i, dmamap->dm_nsegs));
 		return ENOBUFS;
+	}
 
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	if (frag == sc->bge_tx_saved_considx)
+	if (frag == sc->bge_tx_saved_considx) {
+		BGE_TSO_PRINTF(("%s: frag %d = wrapped id %d?\n",
+		    sc->bge_dev.dv_xname, frag, sc->bge_tx_saved_considx));
+
 		return(ENOBUFS);
+	}
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
@@ -3515,6 +3789,7 @@ bge_start(ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (bge_encap(sc, m_head, &prodidx)) {
+			printf("bge: failed on len %d?\n", m_head->m_pkthdr.len);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -3827,6 +4102,8 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		if ((CSR_READ_4(sc, reg) & bit) == 0)
 			return;
 		delay(100);
+		if (sc->bge_pcie)
+		  DELAY(1000);
 	}
 
 	printf("%s: block failed to stop: reg 0x%lx, bit 0x%08x\n",

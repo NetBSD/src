@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.153.6.1 2005/11/22 16:08:22 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.153.6.2 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153.6.1 2005/11/22 16:08:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153.6.2 2005/11/29 21:23:33 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.153.6.1 2005/11/22 16:08:22 yamt Exp 
 #include <sys/filedesc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
+#include <sys/once.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1549,8 +1550,8 @@ nfs_invaldircache(vp, flags)
  * Called once before VFS init to initialize shared and
  * server-specific data structures.
  */
-void
-nfs_init()
+static void
+nfs_init0(void)
 {
 	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
@@ -1608,6 +1609,14 @@ nfs_init()
 #endif
 }
 
+void
+nfs_init(void)
+{
+	static ONCE_DECL(nfs_init_once);
+
+	RUN_ONCE(&nfs_init_once, nfs_init0);
+}
+
 #ifdef NFS
 /*
  * Called once at VFS init to initialize client-specific data structures.
@@ -1615,6 +1624,9 @@ nfs_init()
 void
 nfs_vfs_init()
 {
+	/* Initialize NFS server / client shared data. */
+	nfs_init();
+
 	nfs_nhinit();			/* Init the nfsnode table */
 	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
 }

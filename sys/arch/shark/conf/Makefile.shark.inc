@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.5 2004/09/13 09:39:40 chs Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.5.18.1 2005/11/29 21:23:04 yamt Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -17,8 +17,6 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true; \
 	echo \
 	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout

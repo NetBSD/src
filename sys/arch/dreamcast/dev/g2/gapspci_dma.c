@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.11 2005/04/01 11:59:26 yamt Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.11.8.1 2005/11/29 21:22:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.11 2005/04/01 11:59:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.11.8.1 2005/11/29 21:22:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -573,6 +573,8 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	/*
 	 * If we're only mapping 1 segment, use P2SEG, to avoid
@@ -585,7 +587,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return ENOMEM;

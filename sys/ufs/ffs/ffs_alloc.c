@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.88 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.88.2.1 2005/11/29 21:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.88 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.88.2.1 2005/11/29 21:23:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -748,8 +748,8 @@ ffs_dirpref(struct inode *pip)
 {
 	register struct fs *fs;
 	int cg, prefcg;
-	int64_t dirsize, cgsize;
-	int avgifree, avgbfree, avgndir, curdirsize;
+	int64_t dirsize, cgsize, curdsz;
+	int avgifree, avgbfree, avgndir;
 	int minifree, minbfree, maxndir;
 	int mincg, minndir;
 	int maxcontigdirs;
@@ -795,12 +795,17 @@ ffs_dirpref(struct inode *pip)
 	minbfree = avgbfree - fragstoblks(fs, fs->fs_fpg) / 4;
 	if (minbfree < 0)
 		minbfree = 0;
-	cgsize = fs->fs_fsize * fs->fs_fpg;
-	dirsize = fs->fs_avgfilesize * fs->fs_avgfpdir;
-	curdirsize = avgndir ? (cgsize - avgbfree * fs->fs_bsize) / avgndir : 0;
-	if (dirsize < curdirsize)
-		dirsize = curdirsize;
-	maxcontigdirs = min(cgsize / dirsize, 255);
+	cgsize = (int64_t)fs->fs_fsize * fs->fs_fpg;
+	dirsize = (int64_t)fs->fs_avgfilesize * fs->fs_avgfpdir;
+	if (avgndir != 0) {
+		curdsz = (cgsize - (int64_t)avgbfree * fs->fs_bsize) / avgndir;
+		if (dirsize < curdsz)
+			dirsize = curdsz;
+	}
+	if (cgsize < dirsize * 255)
+		maxcontigdirs = cgsize / dirsize;
+	else
+		maxcontigdirs = 255;
 	if (fs->fs_avgfpdir > 0)
 		maxcontigdirs = min(maxcontigdirs,
 				    fs->fs_ipg / fs->fs_avgfpdir);

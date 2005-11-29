@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.12.8.1 2005/11/29 21:23:03 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12.8.1 2005/11/29 21:23:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2005/06/03 11:54:48 scw Exp $");
 static u_long ticks_per_sec;
 static u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
+static volatile u_long lasttb, lasttb2;
 static u_long ticksmissed;
 static volatile int tickspending;
 
@@ -93,14 +93,11 @@ decr_intr(struct clockframe *frame)
 
 	tbtick = mftbl();
 	mtspr(SPR_TSR, TSR_PIS);	/* Clear TSR[PIS] */
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	xticks = tbtick - lasttb;	/* Number of TLB cycles since last exception */
+
+	xticks = tbtick - lasttb2;	/* Number of TLB cycles since last exception */
 	for (nticks = 0; xticks > ticks_per_intr; nticks++)
 		xticks -= ticks_per_intr;
-	lasttb = tbtick - xticks;
+	lasttb2 = tbtick - xticks;
 
 	intrcnt[CNT_CLOCK]++;
 	pri = splclock();
@@ -110,6 +107,12 @@ decr_intr(struct clockframe *frame)
 	} else {
 		nticks += tickspending;
 		tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		lasttb = lasttb2;
 
 		/*
 		 * Reenable interrupts
@@ -136,7 +139,7 @@ cpu_initclocks(void)
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
-	lasttb = mftbl();
+	lasttb2 = lasttb = mftbl();
 	mtspr(SPR_PIT, ticks_per_intr);
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13 2002/10/14 05:11:23 chs Exp $	*/
+/*	$NetBSD: pte.h,v 1.13.30.1 2005/11/29 21:22:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ mips_pg_wired(entry)
 }
 
 static __inline unsigned int
-mips_pg_m_bit()
+mips_pg_m_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_D);
@@ -168,7 +168,7 @@ mips_pg_m_bit()
 }
 
 static __inline unsigned int
-mips_pg_ro_bit()
+mips_pg_ro_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_RO);
@@ -176,7 +176,7 @@ mips_pg_ro_bit()
 }
 
 static __inline unsigned int
-mips_pg_rw_bit()
+mips_pg_rw_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_D);
@@ -184,7 +184,7 @@ mips_pg_rw_bit()
 }
 
 static __inline unsigned int
-mips_pg_ropage_bit()
+mips_pg_ropage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_ROPAGE);
@@ -192,7 +192,7 @@ mips_pg_ropage_bit()
 }
 
 static __inline unsigned int
-mips_pg_rwpage_bit()
+mips_pg_rwpage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_RWPAGE);
@@ -200,7 +200,7 @@ mips_pg_rwpage_bit()
 }
 
 static __inline unsigned int
-mips_pg_cwpage_bit()
+mips_pg_cwpage_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_CWPAGE);
@@ -209,7 +209,7 @@ mips_pg_cwpage_bit()
 
 
 static __inline unsigned int
-mips_pg_global_bit()
+mips_pg_global_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_G);
@@ -217,7 +217,7 @@ mips_pg_global_bit()
 }
 
 static __inline unsigned int
-mips_pg_wired_bit()
+mips_pg_wired_bit(void)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_WIRED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.60.6.1 2005/11/22 16:08:06 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.60.6.2 2005/11/29 21:23:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.60.6.1 2005/11/22 16:08:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.60.6.2 2005/11/29 21:23:08 yamt Exp $");
 #endif
 
 /*
@@ -1825,6 +1825,7 @@ ath_mode_init(struct ath_softc *sc)
 		IF_ADDR_UNLOCK(ifp);
 	} else {
 		mfilt[0] = mfilt[1] = ~0;
+	}
 #endif
 #ifdef __NetBSD__
 	ath_mcastfilter_compute(sc, mfilt);
@@ -2936,11 +2937,12 @@ rx_accept:
 				goto rx_next;
 			}
 			rix = ds->ds_rxstat.rs_rate;
+			sc->sc_rx_th.wr_tsf = ath_extend_tsf(sc->sc_ah,
+			    ds->ds_rxstat.rs_tstamp);
 			sc->sc_rx_th.wr_flags = sc->sc_hwmap[rix].rxflags;
 			sc->sc_rx_th.wr_rate = sc->sc_hwmap[rix].ieeerate;
 			sc->sc_rx_th.wr_antsignal = ds->ds_rxstat.rs_rssi;
 			sc->sc_rx_th.wr_antenna = ds->ds_rxstat.rs_antenna;
-			/* XXX TSF */
 
 			bpf_mtap2(sc->sc_drvbpf,
 				&sc->sc_rx_th, sc->sc_rx_th_len, m);
