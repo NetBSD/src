@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.13 2005/11/14 22:34:55 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.14 2005/11/29 12:35:03 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -220,4 +220,9 @@ sys/dev/usb/ulpt.c				1.70 via patch
 	When people use variables like 'flag' and 'flags' in the same function
 	(one local and one passed as a parameter) this is prone to happen..
 	[rpaulo, ticket #5988]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.114 via patch
+
+	Fix 64 bit truncation problem allowing to read arbitrary kernel memory.
+	[christos, ticket #10155]
 
