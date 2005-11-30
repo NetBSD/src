@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.13 2003/08/07 16:43:48 agc Exp $	*/
+/*	$NetBSD: index.c,v 1.14 2005/11/30 09:35:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)index.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: index.c,v 1.13 2003/08/07 16:43:48 agc Exp $");
+__RCSID("$NetBSD: index.c,v 1.14 2005/11/30 09:35:58 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ index(p, ch)
 	for (;; ++p) {
 		if (*p == ch) {
 			/* LINTED const cast-away */
-			return((char *)p);
+			return(__UNCONST(p));
 		}
 		if (!*p)
 			return((char *)NULL);
