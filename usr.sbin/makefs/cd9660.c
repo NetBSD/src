@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.10 2005/10/31 23:19:06 dyoung Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.11 2005/11/30 00:26:11 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.10 2005/10/31 23:19:06 dyoung Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.11 2005/11/30 00:26:11 dyoung Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1197,7 +1197,7 @@ cd9660_sort_nodes(cd9660node *node)
 				        cn->isoDirRecord->name) >= 0)
 				continue;
 			TAILQ_REMOVE(&node->cn_children, next, cn_next_child);
-			TAILQ_INSERT_BEFORE(node, next, cn_next_child);
+			TAILQ_INSERT_BEFORE(cn, next, cn_next_child);
 			break;
 		}
 	} while (cn != NULL);
