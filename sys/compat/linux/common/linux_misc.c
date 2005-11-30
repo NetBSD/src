@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.145 2005/11/23 22:23:30 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.146 2005/11/30 11:36:22 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.145 2005/11/23 22:23:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.146 2005/11/30 11:36:22 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1701,7 +1701,7 @@ linux_sys_getrlimit(l, v, retval)
 	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
 		return error;
 	bsd_to_linux_rlimit(&orl, &rl);
-	printf("               %lx\n", (unsigned long)orl.rlim_max);
+
 	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
 }
 
