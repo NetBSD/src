@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.43 2005/08/04 19:30:47 rpaulo Exp $	*/
+/*	$NetBSD: bpf.h,v 1.44 2005/11/30 12:54:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -167,7 +167,7 @@ struct bpf_hdr {
 #include <net/dlt.h>
 
 /*
- * The instruction encondings.
+ * The instruction encodings.
  */
 /* instruction classes */
 #define BPF_CLASS(code) ((code) & 0x07)
