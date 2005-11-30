@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.45 2005/11/30 16:47:58 rpaulo Exp $	*/
+/*	$NetBSD: bpf.h,v 1.46 2005/11/30 23:14:38 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -229,7 +229,7 @@ struct bpf_insn {
 	uint16_t  code;
 	u_char 	  jt;
 	u_char 	  jf;
-	int32_t	  k;
+	uint32_t  k;
 };
 
 /*
@@ -260,6 +260,9 @@ void	 bpfattach2(struct ifnet *, u_int, u_int, void *);
 void	 bpfdetach(struct ifnet *);
 void	 bpf_change_type(struct ifnet *, u_int, u_int);
 void	 bpfilterattach(int);
+
+extern int bpf_maxbufsize;	/* needed by bpf_filter.c */
+
 #endif
 
 u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
