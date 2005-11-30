@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.22 2005/11/30 12:52:23 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.23 2005/11/30 22:40:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.22 2005/11/30 12:52:23 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.23 2005/11/30 22:40:59 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -54,18 +54,18 @@ static const char rcsid[] =
 #endif
 
 #ifndef BPF_ALIGN
-#define EXTRACT_SHORT(p)	((u_int16_t)ntohs(*(u_int16_t *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32_t *)p))
+#define EXTRACT_SHORT(p)	((uint16_t)ntohs(*(uint16_t *)p))
+#define EXTRACT_LONG(p)		(ntohl(*(uint32_t *)p))
 #else
-#define EXTRACT_SHORT(p)\
-	((u_int16_t)\
-		((u_int16_t)*((u_char *)p+0)<<8|\
-		 (u_int16_t)*((u_char *)p+1)<<0))
-#define EXTRACT_LONG(p)\
-		((u_int32_t)*((u_char *)p+0)<<24|\
-		 (u_int32_t)*((u_char *)p+1)<<16|\
-		 (u_int32_t)*((u_char *)p+2)<<8|\
-		 (u_int32_t)*((u_char *)p+3)<<0)
+#define EXTRACT_SHORT(p)			\
+	((uint16_t)				\
+		((uint16_t)*((u_char *)p+0)<<8|	\
+		 (uint16_t)*((u_char *)p+1)<<0))
+#define EXTRACT_LONG(p)				\
+		((uint32_t)*((u_char *)p+0)<<24|\
+		 (uint32_t)*((u_char *)p+1)<<16|\
+		 (uint32_t)*((u_char *)p+2)<<8|	\
+		 (uint32_t)*((u_char *)p+3)<<0)
 #endif
 
 #ifdef _KERNEL
@@ -157,7 +157,7 @@ m_xhalf(struct mbuf *m, int k, int *err)
 u_int
 bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 {
-	u_int32_t A, X;
+	uint32_t A, X;
 	int k;
 	int32_t mem[BPF_MEMWORDS];
 
