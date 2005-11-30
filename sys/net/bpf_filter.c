@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.21 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.22 2005/11/30 12:52:23 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.21 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.22 2005/11/30 12:52:23 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -70,25 +70,23 @@ static const char rcsid[] =
 
 #ifdef _KERNEL
 #include <sys/mbuf.h>
-#define MINDEX(len, m, k) \
-{ \
-	len = m->m_len; \
-	while (k >= len) { \
-		k -= len; \
-		m = m->m_next; \
-		if (m == 0) \
-			return 0; \
-		len = m->m_len; \
-	} \
+#define MINDEX(len, m, k) 		\
+{ 					\
+	len = m->m_len; 		\
+	while (k >= len) { 		\
+		k -= len; 		\
+		m = m->m_next; 		\
+		if (m == 0) 		\
+			return 0; 	\
+		len = m->m_len; 	\
+	} 				\
 }
 
-static int m_xword __P((struct mbuf *, int, int *));
-static int m_xhalf __P((struct mbuf *, int, int *));
+static int m_xword (struct mbuf *, int, int *);
+static int m_xhalf (struct mbuf *, int, int *);
 
 static int
-m_xword(m, k, err)
-	struct mbuf *m;
-	int k, *err;
+m_xword(struct mbuf *m, int k, int *err)
 {
 	int len;
 	u_char *cp, *np;
@@ -118,13 +116,12 @@ m_xword(m, k, err)
 	}
     bad:
 	*err = 1;
+
 	return 0;
 }
 
 static int
-m_xhalf(m, k, err)
-	struct mbuf *m;
-	int k, *err;
+m_xhalf(struct mbuf *m, int k, int *err)
 {
 	int len;
 	u_char *cp;
@@ -143,6 +140,7 @@ m_xhalf(m, k, err)
 	return (cp[0] << 8) | mtod(m0, u_char *)[0];
  bad:
 	*err = 1;
+
 	return 0;
 }
 #else /* _KERNEL */
@@ -157,11 +155,7 @@ m_xhalf(m, k, err)
  * buflen is the amount of data present
  */
 u_int
-bpf_filter(pc, p, wirelen, buflen)
-	struct bpf_insn *pc;
-	u_char *p;
-	u_int wirelen;
-	u_int buflen;
+bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 {
 	u_int32_t A, X;
 	int k;
@@ -486,9 +480,7 @@ bpf_filter(pc, p, wirelen, buflen)
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(f, len)
-	struct bpf_insn *f;
-	int len;
+bpf_validate(struct bpf_insn *f, int len)
 {
 	int i;
 	struct bpf_insn *p;
@@ -525,6 +517,7 @@ bpf_validate(f, len)
 		if (p->code == (BPF_ALU|BPF_DIV|BPF_K) && p->k == 0)
 			return 0;
 	}
+
 	return BPF_CLASS(f[len - 1].code) == BPF_RET;
 }
 #endif
