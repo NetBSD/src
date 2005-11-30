@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.111 2005/11/30 01:46:06 reinoud Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.112 2005/11/30 03:45:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.111 2005/11/30 01:46:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.112 2005/11/30 03:45:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -813,7 +813,7 @@ genfs_getpages(void *v)
 			bp->b_vp = vp;
 			bp->b_proc = NULL;
 		}
-		bp->b_lblkno = lbn;
+		bp->b_lblkno = 0;
 		bp->b_private = mbp;
 
 		/* adjust physical blkno for partial blocks */
