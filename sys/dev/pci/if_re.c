@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.2.5.2.1 2005/12/01 22:13:55 tron Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.2.5.2.2 2005/12/01 22:31:11 tron Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -170,6 +170,10 @@ static struct rtk_type re_devs[] = {
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
 		"RealTek 8110S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T, RTK_HWREV_8169S,
+		"D-Link DGE-528T Gigabit Ethernet" },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902, RTK_HWREV_8169S,
+		"US Robotics (3Com) USR997902 Gigabit Ethernet" },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, RTK_HWREV_8169S,
 		"Linksys EG1032 rev. 3 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
