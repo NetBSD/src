@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.84 2005/12/01 14:20:47 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.85 2005/12/01 18:07:18 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -248,9 +248,9 @@ displays
 .Dq "--db more--"
 and waits for a response, which may be one of:
 .Bl -tag -offset indent -width "\*[Lt]return\*[Gt]"
-.It \*[Lt]return\*[Gt]
+.It Aq return
 one more line.
-.It \*[Lt]space\*[Gt]
+.It Aq space
 one more page.
 .It Ic q
 abort the current command, and return to the command input mode.
@@ -535,7 +535,7 @@ ecx = yyyyyy
 .Sm on
 .Xc
 A synonym for
-.Ic "show all procs" .
+.Ic show all procs .
 .It Ic reboot Op Ar flags
 Reboot, using the optionally supplied boot
 .Ar flags ,
@@ -595,10 +595,10 @@ Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
 .Sx VARIABLES .
-.It Ic "show\ all\ pools" Ns Op Cm /clp
+.It Ic show all pools Ns Op Cm /clp
 Display all pool information.
 Modifiers are the same as 
-.Ic "show pool" .
+.Ic show pool .
 .It Xo
 .Sm off
 .Ic "show\ all\ procs"
@@ -622,16 +622,16 @@ show the kernel virtual addresses of each process'
 proc structure, u-area, and vmspace structure.
 The vmspace address is also the address of the process'
 vm_map structure, and can be used in the
-.Ic "show map"
+.Ic show map
 command.
 .It Cm /w
 show each process' PID, command, system call emulation, wait channel
 address, and wait channel message.
 .El
-.It Ic "show breaks"
+.It Ic show breaks
 Display all breakpoints.
 .It Xo
-.Ic "show buf" Ns Op Cm /f
+.Ic show buf Ns Op Cm /f
 .Ar address
 .Xc
 Print the struct buf at
@@ -640,7 +640,7 @@ The
 .Cm /f
 does nothing at this time.
 .It Xo
-.Ic "show event" Ns Op Cm /f
+.Ic show event Ns Op Cm /f
 .Xc
 Print all the non-zero
 .Xr evcnt 9
@@ -649,7 +649,7 @@ If
 .Cm /f
 is specified, all event counters with a count of zero are printed as well.
 .It Xo
-.Ic "show map" Ns Op Cm /f
+.Ic show map Ns Op Cm /f
 .Ar address
 .Xc
 Print the vm_map at
@@ -658,7 +658,7 @@ If
 .Cm /f
 is specified, the complete map is printed.
 .It Xo
-.Ic "show mount" Ns Op Cm /f
+.Ic show mount Ns Op Cm /f
 .Ar address
 .Xc
 Print the mount structure at
@@ -666,11 +666,11 @@ Print the mount structure at
 If
 .Cm /f
 is specified, the complete vnode list is printed.
-.It Ic "show ncache" Ar address
+.It Ic show ncache Ar address
 Dump the namecache list associated with vnode at
 .Ar address .
 .It Xo
-.Ic "show object" Ns Op Cm /f
+.Ic show object Ns Op Cm /f
 .Ar address
 .Xc
 Print the vm_object at
@@ -679,7 +679,7 @@ If
 .Cm /f
 is specified, the complete object is printed.
 .It Xo
-.Ic "show page" Ns Op Cm /f
+.Ic show page Ns Op Cm /f
 .Ar address
 .Xc
 Print the vm_page at
@@ -688,7 +688,7 @@ If
 .Cm /f
 is specified, the complete page is printed.
 .It Xo
-.Ic "show pool" Ns Op Cm /clp
+.Ic show pool Ns Op Cm /clp
 .Ar address
 .Xc
 Print the pool at
@@ -702,7 +702,7 @@ Print the log entries for this pool.
 .It Cm /p
 Print the pagelist for this pool.
 .El
-.It Ic "show registers" Ns Op Cm /u
+.It Ic show registers Ns Op Cm /u
 Display the register set.
 If
 .Cm /u
@@ -713,17 +713,17 @@ Warning: support for
 .Cm /u
 is machine dependent.
 If not supported, incorrect information will be displayed.
-.It Ic "show sched_qs"
+.It Ic show sched_qs
 Print the state of the scheduler's run queues.
 For each run queue that has an LWP, the run queue index and the list
 of LWPs will be shown.
 If the run queue has LWPs, but the sched_whichqs bit is not set for that
 queue, the queue index will be prefixed with a
 .Sq \&! .
-.It Ic "show uvmexp"
+.It Ic show uvmexp
 Print a selection of UVM counters and statistics.
 .It Xo
-.Ic "show vnode" Ns Op Cm /f
+.Ic show vnode Ns Op Cm /f
 .Ar address
 .Xc
 Print the vnode at
@@ -731,7 +731,7 @@ Print the vnode at
 If
 .Cm /f
 is specified, the complete vnode is printed.
-.It Ic "show watches"
+.It Ic show watches
 Display all watchpoints.
 .It Xo
 .Ic sifting Ns Op Cm /F
@@ -939,7 +939,7 @@ All of these commands are preceded by the command word
 .Em machine
 to indicate that they are part of the machine-specific command
 set (e.g.
-.Ic "machine reboot" ) .
+.Ic machine reboot ) .
 Some of these commands are:
 .Ss ALPHA
 .Bl -tag -width "intrchain" -compact
@@ -1085,7 +1085,7 @@ Page Table Entry (PTE).
 accesses registers and variables as
 .Cm $ Ns Ar name .
 Register names are as per the
-.Ic "show registers"
+.Ic show registers
 command.
 Some variables are suffixed with numbers, and may have a modifier
 following a colon immediately after the variable name.
