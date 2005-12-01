@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.16 2005/12/01 20:16:43 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.17 2005/12/01 22:33:40 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -294,4 +294,25 @@ sys/dev/pci/if_bgereg.h				1.29
 	Remove unnecessary byteswap code so that bge(4) should work
 	at least on macppc.
 	[tsutsui, ticket #10169]
+
+sys/dev/pci/if_sk.c                             1.17
+
+	Fix occasional "sk0: watchdog timeout" from the on-board ethernet on
+	an Asus A8V motherboard.
+	[riz, ticket #10154]
+
+sys/dev/pci/if_re.c				patch
+sys/dev/pci/if_sk.c				1.18 via patch
+
+	Special-case the Linksys EG1032 cards using PCI subsystem ID;
+	rev. 2 uses the sk(4) driver, while rev. 3 needs re(4).
+	[riz, ticket #10156]
+
+sys/dev/pci/if_re.c				patch
+sys/dev/pci/pcidevs				1.710
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Two re(4) candidates.
+	[riz, ticket #10158, #10160]
 
