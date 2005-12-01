@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.13 2005/08/18 22:08:21 rpaulo Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.14 2005/12/01 21:56:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -1495,8 +1495,9 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	&& anvil_clnt_mail(anvil_clnt, state->service, state->addr,
 			   &rate) == ANVIL_STAT_OK
 	&& rate > var_smtpd_cmail_limit) {
-	smtpd_chat_reply(state, "421 %s Error: too much mail from %s",
-			 var_myhostname, state->addr);
+	state->error_mask |= MAIL_ERROR_POLICY;
+	smtpd_chat_reply(state, "450 Error: too much mail from %s",
+			 state->addr);
 	msg_warn("Message delivery request rate limit exceeded: %d from %s for service %s",
 		 rate, state->namaddr, state->service);
 	return (-1);
@@ -1704,8 +1705,9 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	&& anvil_clnt_rcpt(anvil_clnt, state->service, state->addr,
 			   &rate) == ANVIL_STAT_OK
 	&& rate > var_smtpd_crcpt_limit) {
-	smtpd_chat_reply(state, "421 %s Error: too many recipients from %s",
-			 var_myhostname, state->addr);
+	state->error_mask |= MAIL_ERROR_POLICY;
+	smtpd_chat_reply(state, "450 Error: too many recipients from %s",
+			 state->addr);
 	msg_warn("Recipient address rate limit exceeded: %d from %s for service %s",
 		 rate, state->namaddr, state->service);
 	return (-1);
@@ -1921,17 +1923,13 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     /*
      * Flush out any access table actions that are delegated to the cleanup
      * server, and that may trigger before we accept the first valid
-     * recipient.
+     * recipient. There will be more after end-of-data.
      * 
      * Terminate the message envelope segment. Start the message content
      * segment, and prepend our own Received: header. If there is only one
      * recipient, list the recipient address.
      */
     if (state->cleanup) {
-	if (state->saved_filter)
-	    rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", state->saved_filter);
-	if (state->saved_redirect)
-	    rec_fprintf(state->cleanup, REC_TYPE_RDR, "%s", state->saved_redirect);
 	if (state->saved_flags)
 	    rec_fprintf(state->cleanup, REC_TYPE_FLGS, "%d", state->saved_flags);
 	rec_fputs(state->cleanup, REC_TYPE_MESG, "");
@@ -2044,13 +2042,18 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	if (prev_rec_type != REC_TYPE_CONT && *start == '.'
 	    && (state->proxy == 0 ? (++start, --len) == 0 : len == 1))
 	    break;
-	state->act_size += len + 2;
-	if (state->err == CLEANUP_STAT_OK
-	    && out_record(out_stream, curr_rec_type, start, len) < 0)
-	    state->err = out_error;
+	if (state->err == CLEANUP_STAT_OK) {
+	    state->act_size += len + 2;
+	    if (var_message_limit > 0 && state->act_size > var_message_limit)
+		state->err = CLEANUP_STAT_SIZE;
+	    else if (out_record(out_stream, curr_rec_type, start, len) < 0)
+		state->err = out_error;
+	}
     }
     state->where = SMTPD_AFTER_DOT;
-    if (SMTPD_STAND_ALONE(state) == 0 && (err = smtpd_check_eod(state)) != 0) {
+    if (state->err == CLEANUP_STAT_OK
+	&& SMTPD_STAND_ALONE(state) == 0
+	&& (err = smtpd_check_eod(state)) != 0) {
 	smtpd_chat_reply(state, "%s", err);
 	if (state->proxy) {
 	    smtpd_proxy_close(state);
@@ -2076,8 +2079,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	    if (state->err == CLEANUP_STAT_OK &&
 		*STR(state->proxy_buffer) != '2')
 		state->err = CLEANUP_STAT_CONT;
-	} else {
-	    state->error_mask |= MAIL_ERROR_SOFTWARE;
+	} else if (state->err != CLEANUP_STAT_SIZE) {
 	    state->err |= CLEANUP_STAT_PROXY;
 	    vstring_sprintf(state->proxy_buffer,
 			    "451 Error: queue file write error");
@@ -2085,13 +2087,28 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     }
 
     /*
-     * Send the end-of-segment markers and finish the queue file record
-     * stream.
+     * Flush out access table actions that are delegated to the cleanup
+     * server. There is similar code at the beginning of the DATA command.
+     * 
+     * Send the end-of-segment markers and finish the queue file record stream.
      */
     else {
+	if (state->err == CLEANUP_STAT_OK) {
+	    rec_fputs(state->cleanup, REC_TYPE_XTRA, "");
+	    if (state->saved_filter)
+		rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s",
+			    state->saved_filter);
+	    if (state->saved_redirect)
+		rec_fprintf(state->cleanup, REC_TYPE_RDR, "%s",
+			    state->saved_redirect);
+	    if (state->saved_flags)
+		rec_fprintf(state->cleanup, REC_TYPE_FLGS, "%d",
+			    state->saved_flags);
+	    if (vstream_ferror(state->cleanup))
+		state->err = CLEANUP_STAT_WRITE;
+	}
 	if (state->err == CLEANUP_STAT_OK)
-	    if (rec_fputs(state->cleanup, REC_TYPE_XTRA, "") < 0
-		|| rec_fputs(state->cleanup, REC_TYPE_END, "") < 0
+	    if (rec_fputs(state->cleanup, REC_TYPE_END, "") < 0
 		|| vstream_fflush(state->cleanup))
 		state->err = CLEANUP_STAT_WRITE;
 	if (state->err == 0) {
@@ -2981,6 +2998,7 @@ static void smtpd_proto(SMTPD_STATE *state, const char *service)
 	    && anvil_clnt_connect(anvil_clnt, service, state->addr,
 				  &count, &crate) == ANVIL_STAT_OK) {
 	    if (var_smtpd_cconn_limit > 0 && count > var_smtpd_cconn_limit) {
+		state->error_mask |= MAIL_ERROR_POLICY;
 		smtpd_chat_reply(state, "421 %s Error: too many connections from %s",
 				 var_myhostname, state->addr);
 		msg_warn("Connection concurrency limit exceeded: %d from %s for service %s",
