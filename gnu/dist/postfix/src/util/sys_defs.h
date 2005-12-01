@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.16 2005/08/18 22:11:17 rpaulo Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.17 2005/12/01 21:56:55 rpaulo Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -52,7 +52,7 @@
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
-#if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 200040000)
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 299000900)
 # define USE_STATVFS
 # define STATVFS_IN_SYS_STATVFS_H
 #else
@@ -124,7 +124,7 @@
 #define SOCKOPT_SIZE	socklen_t
 #endif
 
-#if __NetBSD_Version__ >= 200060000	/* 2.0F */
+#if __NetBSD_Version__ >= 299000900	/* 2.99.9 */
 #define HAS_CLOSEFROM
 #endif
 
@@ -157,6 +157,7 @@
 #define DEF_DB_TYPE	"hash"
 #define ALIAS_DB_MAP	"hash:/etc/aliases"
 #define GETTIMEOFDAY(t) gettimeofday(t,(struct timezone *) 0)
+#define RESOLVE_H_NEEDS_NAMESER8_COMPAT_H
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H

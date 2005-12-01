@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.17 2005/08/18 22:08:21 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.18 2005/12/01 21:56:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -1750,6 +1750,15 @@ static int can_delegate_action(SMTPD_STATE *state, const char *table,
 		 table, VAR_SMTPD_PROXY_FILT, action);
 	return (0);
     }
+
+    /*
+     * ETRN does not receive mail so we can't store queue file records.
+     */
+    if (strcmp(state->where, "ETRN") == 0) {
+	msg_warn("access table %s: action %s is unavailable in %s",
+		 table, action, VAR_ETRN_CHECKS);
+	return (0);
+    }
     return (not_in_client_helo(state, table, action, reply_class));
 }
 
@@ -1957,6 +1966,11 @@ static int check_table_result(SMTPD_STATE *state, const char *table,
 	if (not_in_client_helo(state, table, "PREPEND", reply_class) == 0)
 	    return (SMTPD_CHECK_DUNNO);
 #endif
+	if (strcmp(state->where, SMTPD_AFTER_DOT) == 0) {
+	    msg_warn("access table %s: action PREPEND must be used before %s",
+		     table, VAR_EOD_CHECKS);
+	    return (SMTPD_CHECK_DUNNO);
+	}
 	if (*cmd_text == 0 || is_header(cmd_text) == 0) {
 	    msg_warn("access map %s entry \"%s\" requires header: text",
 		     table, datum);
