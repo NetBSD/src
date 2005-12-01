@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.46 2005/10/02 17:29:31 chs Exp $	*/
+/*	$NetBSD: pool.h,v 1.47 2005/12/01 13:21:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -271,6 +271,7 @@ void		pool_drain(void *);
 void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
 		    void (*)(const char *, ...));
+void		pool_printall(const char *, void (*)(const char *, ...));
 int		pool_chk(struct pool *, const char *);
 
 /*
