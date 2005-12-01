@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.116.2.2 2004/09/18 19:21:23 he Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.116.2.3 2005/12/01 16:20:34 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116.2.2 2004/09/18 19:21:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116.2.3 2005/12/01 16:20:34 riz Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -220,25 +220,34 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
-		if (uio->uio_offset >= np->n_size) {
-			break;
-		}
 		while (uio->uio_resid > 0) {
 			void *win;
-			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
-					      uio->uio_resid);
+			vsize_t bytelen;
 
-			if (bytelen == 0)
+			nfs_delayedtruncate(vp);
+			if (np->n_size <= uio->uio_offset) {
 				break;
+			}
+			bytelen =
+			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
 			if (error) {
-				break;
+				/*
+				 * XXXkludge
+				 * the file has been truncated on the server.
+				 * there isn't much we can do.
+				 */
+				if (uio->uio_offset >= np->n_size) {
+					/* end of file */
+					error = 0;
+				} else {
+					break;
+				}
 			}
 		}
-		n = 0;
 		break;
 
 	    case VLNK:
