@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.380 2005/11/25 21:09:46 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.381 2005/12/01 07:00:19 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -595,7 +595,7 @@ reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	postfix
 Version:	2.2.5
-Current Vers:	2.3-20050829
+Current Vers:	2.2.6/2.3-20051128
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
