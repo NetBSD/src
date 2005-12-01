@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.10 2005/11/29 12:35:59 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.11 2005/12/01 16:28:56 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -114,4 +114,11 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.114 via patch
 
 	Fix 64 bit truncation problem allowing to read arbitrary kernel memory.
 	[christos, ticket #10155]
+
+sys/nfs/nfs_bio.c				1.136-1.137 via patch
+
+	The problem (kern/31926): under certain conditions, which could be
+	reliably reproduced, NFS reads would occasionally return zeroes instead
+	of some of the file data, or fail with EINVAL.
+	[jld, ticket #8826]
 
