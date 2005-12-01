@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.27.4.2 2005/05/11 03:59:14 snj Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.27.4.3 2005/12/01 20:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -56,7 +56,7 @@ struct siop_common_xfer {
 	u_int8_t msg_out[16];	/* 0 */
 	u_int8_t msg_in[16];	/* 16 */
 	u_int32_t status;	/* 32 */
-	u_int32_t pad1;		/* 36 */
+	u_int32_t pad1; 	/* 36 */
 	u_int32_t id;		/* 40 */
 	u_int32_t pad2;		/* 44 */
 	scr_table_t t_msgin;	/* 48 */
@@ -71,6 +71,9 @@ struct siop_common_xfer {
 /* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
+
+/* offset is initialised to SIOP_NOOFFSET, used to check if it was updated */
+#define SIOP_NOOFFSET 0xffffffff
 
 /*
  * This describes a command handled by the SCSI controller
