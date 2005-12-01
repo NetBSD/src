@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.12 2005/12/01 20:18:17 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.13 2005/12/01 22:23:18 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -152,4 +152,14 @@ sys/dev/microcode/siop/siop.out			regen
 	is 0.  Problem reported and patch tested by edwin, Roy Bixler and
 	YAMAMOTO Takashi.  Fix kern/31990 by YAMAMOTO Takashi.
 	[bouyer, ticket #10168]
+
+sys/dev/ic/an.c					1.33 via patch
+sys/dev/ic/anvar.h				1.9 via patch
+
+	Fix two bugs: frames were bogusly discarded with the complaint
+	"oversize frame."  Also, some an(4) instances (esp. w/ firmware
+	version 5+) would not reliably interoperate with some Cisco APs.
+	Thanks to Jim Miller for his valuable bug reports and testing, and
+	to Dheeraj Reddy for RID-length patches.
+	[jnemeth, ticket #10159]
 
