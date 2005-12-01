@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.29 2004/01/28 15:07:52 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.29.4.1 2005/12/01 19:39:26 riz Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.29 2004/01/28 15:07:52 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.29.4.1 2005/12/01 19:39:26 riz Exp $");
 
 #include "bpfilter.h"
 
@@ -1225,7 +1225,8 @@ an_rx_intr(struct an_softc *sc)
 	struct an_rxframe frmhdr;
 	struct mbuf *m;
 	u_int16_t status;
-	int fid, off, len;
+	int fid, gaplen, off, len;
+	uint8_t *gap;
 
 	fid = CSR_READ_2(sc, AN_RX_FID);
 
@@ -1261,7 +1262,8 @@ an_rx_intr(struct an_softc *sc)
 		return;
 	}
 
-	len = le16toh(frmhdr.an_rx_payload_len);
+	/* the payload length field includes a 16-bit "mystery field" */
+	len = le16toh(frmhdr.an_rx_payload_len) - sizeof(uint16_t);
 	off = ALIGN(sizeof(struct ieee80211_frame));
 
 	if (off + len > MCLBYTES) {
@@ -1281,7 +1283,7 @@ an_rx_intr(struct an_softc *sc)
 		DPRINTF(("an_rx_intr: MGET failed\n"));
 		return;
 	}
-	if (off + len > MHLEN) {
+	if (off + len + AN_GAPLEN_MAX > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
@@ -1294,29 +1296,45 @@ an_rx_intr(struct an_softc *sc)
 	m->m_data += off - sizeof(struct ieee80211_frame);
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		gaplen = le16toh(frmhdr.an_gaplen);
+		if (gaplen > AN_GAPLEN_MAX) {
+			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
+			m_freem(m);
+			ifp->if_ierrors++;
+			DPRINTF(("%s: gap too long\n", __func__));
+			return;
+		}
 		/*
-		 * The gap and the payload length should be skipped.
-		 * Make dummy read to avoid seek.
+		 * We don't need the 16-bit mystery field (payload length?),
+		 * so read it into the region reserved for the 802.11 header.
+		 *
+		 * When Cisco Aironet 350 cards w/ firmware version 5 or
+		 * greater operate with certain Cisco 350 APs,
+		 * the "gap" is filled with the SNAP header.  Read
+		 * it in after the 802.11 header.
 		 */
-		an_read_bap(sc, fid, -1, m->m_data,
-		    le16toh(frmhdr.an_gaplen) + sizeof(u_int16_t));
+		gap = m->m_data + sizeof(struct ieee80211_frame) -
+		    sizeof(uint16_t);
+		an_read_bap(sc, fid, -1, gap, gaplen + sizeof(uint16_t));
 #ifdef AN_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
 		    (IFF_DEBUG|IFF_LINK2)) {
 			int i;
 			printf(" gap&len");
-			for (i = 0;
-			    i < le16toh(frmhdr.an_gaplen) + sizeof(u_int16_t);
-			    i++)
-				printf(" %02x", mtod(m, u_int8_t *)[i]);
+			for (i = 0; i < gaplen + sizeof(uint16_t); i++)
+				printf(" %02x", gap[i]);
 			printf("\n");
 		}
 #endif
-	}
+	} else
+		gaplen = 0;
+
+	an_read_bap(sc, fid, -1,
+	    m->m_data + sizeof(struct ieee80211_frame) + gaplen, len);
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + gaplen +
+	    len;
+
 	memcpy(m->m_data, &frmhdr.an_whdr, sizeof(struct ieee80211_frame));
-	an_read_bap(sc, fid, -1, m->m_data + sizeof(struct ieee80211_frame),
-	    len);
-	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + len;
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
