@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.h,v 1.1.1.4 2005/08/18 21:07:02 rpaulo Exp $	*/
+/*	$NetBSD: smtp_stream.h,v 1.1.1.5 2005/12/01 21:44:08 rpaulo Exp $	*/
 
 #ifndef _SMTP_STREAM_H_INCLUDED_
 #define _SMTP_STREAM_H_INCLUDED_
@@ -30,6 +30,7 @@
   */
 #define SMTP_ERR_EOF	1		/* unexpected client disconnect */
 #define SMTP_ERR_TIME	2		/* time out */
+#define SMTP_ERR_PROTO	3		/* protocol (application) */
 
 extern void smtp_timeout_setup(VSTREAM *, int);
 extern void PRINTFLIKE(2, 3) smtp_printf(VSTREAM *, const char *,...);

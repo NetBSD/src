@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.3 2005/08/18 21:06:16 rpaulo Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.1.1.4 2005/12/01 21:43:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -395,12 +395,8 @@ static HOST *dict_mysql_find_host(PLMYSQL *PLDB, unsigned stat, unsigned type)
     }
 
     if (count) {
-	/*
-	 * Calling myrand() can deplete the random pool.
-	 * Don't rely on the optimizer to weed out the call
-	 * when count == 1.
-	 */
-	idx = (count > 1) ? 1 + (count - 1) * (double) myrand() / RAND_MAX : 1;
+	idx = (count > 1) ?
+	    1 + count * (double) myrand() / (1.0 + RAND_MAX) : 1;
 
 	for (i = 0; i < PLDB->len_hosts; i++) {
 	    if (dict_mysql_check_stat(PLDB->db_hosts[i], stat, type, t) &&

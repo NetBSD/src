@@ -10618,11 +10618,11 @@ Apologies for any names omitted.
 
 20050706
 
-	Robustness: the SMTP client now disables caching when it
-	is unable to communicate with the scache(8) connection
-	caching server, instead of looping forever and not delivering
-	mail. File: global/scache_clnt.c.  This code is back-ported
-	from the Postfix 2.3 snapshot release.
+	Robustness: the SMTP client now disables connection caching
+	when it is unable to communicate with the scache(8) server,
+	instead of looping forever and not delivering mail.  File:
+	global/scache_clnt.c.  This code is back-ported from the
+	Postfix 2.3 snapshot release.
 
 	Portability: after sending a socket, the scache(8) server
 	now waits for an ACK from the connection cache client before
@@ -10639,3 +10639,94 @@ Apologies for any names omitted.
 	modules, but that results in too much change, and is not
 	allowed in the stable release).  Files: tls/tls_scache.c,
 	util/clean_env.c, util/vstring.h, smtpstone/qmqp-source.c.
+
+20050806
+
+	Workaround: accept(2) fails with EPROTO when the client
+	already disconnected (SunOS 5.5.1). File: sane_accept.c.
+
+20050815
+
+	Workaround: old Solaris compilers can't link an archive
+	without globally visible symbols. File: tls/tls_misc.c.
+
+20050922
+
+	Bugfix: the *SQL clients did not uniformly choose the
+	database host from the available pool of servers due to an
+	off-by-one error, so that the "last" available server was
+	not selected. Leandro Santi. Files: dict_mysql.c, dict_pgsql.c.
+
+20050929
+
+	Paranoia: don't ignore garbage in SMTP or LMTP server replies
+	when ESMTP command pipelining is turned on. For example,
+	after sending ".<CR><LF>QUIT<CR><LF>", Postfix could recognize
+	the server's 2XX QUIT reply as a 2XX END-OF-DATA reply after
+	garbage, causing mail to be lost. The SMTP and LMTP clients
+	now report a remote protocol error and defer delivery.
+	Files: smtp/smtp_chat.c, smtp/smtp_trouble.c, lmtp/lmtp_chat.c,
+	lmtp/lmtp_trouble.c.
+
+20051011
+
+	Bugfix: raise the "policy violation" flag when a client
+	request exceeds a concurrency or rate limit.  File:
+	smtpd/smtpd.c.
+
+	Bugfix (cut-and-paste error): don't reply with 421 (too
+	many MAIL FROM or RCPT TO commands) when we aren't closing
+	the connection.  File: smtpd/smtpd.c.
+
+20051013
+
+	Bugfix: don't do smtpd_end_of_data_restrictions after the
+	transaction failed due to, e.g., a write error.  File:
+	smtpd/smtpd.c.
+
+	Cleanup: the SMTP server now enforces the message_size_limit
+	even when the client did not send SIZE information with the
+	MAIL FROM command.  This protects before-queue content
+	filters against over-size messages.  File: smtpd/smtpd.c.
+
+20051105
+
+	Workaround: the next-hop logical destination information
+	for connection caching was reset only after a good non-TLS
+	connection, so that cached connections to non-TLS backup
+	servers could suck away traffic from TLS primary servers
+	(the Postfix SMTP client cannot cache an open TLS connection).
+	Found during code review. Fixing this requires more change
+	than is allowed in a stable release.  File: smtp/smtp_connect.c.
+
+20051108
+
+	Bugfix: two messages could get the same message ID due to
+	a race condition. This time window was increased when queue
+	file creation was postponed from MAIL FROM until the first
+	accepted RCPT TO.  The window is closed again. Found by
+	Victor. Files: global/mail_stream.c, global/mail_queue.c,
+	cleanup/cleanup_message.c. This code is back-ported from
+	the Postfix 2.3 snapshot release.
+
+20051119
+
+	Bugfix: the queue manager did not write a per-recipient
+	defer logfile record when the delivery agent crashed after
+	the initial handshake with the queue manager, and before
+	reporting the delivery status to the queue manager.  Files:
+	*qmgr/qmgr_deliver.c.
+
+20051126
+
+	Log warning when REDIRECT, FILTER, HOLD and DISCARD are
+	used in smtpd_etrn_restrictions. File: smtpd/smtpd_check.c.
+
+20051128
+
+	Bugfix: moved code around from one place to another to make
+	REDIRECT, FILTER, HOLD and DISCARD access(5) table actions
+	work in smtpd_end_of_data_restrictions.  PREPEND will not
+	be fixed; it must be specified before the message content
+	is received.  Files: smtpd/smtpd.c, smtpd/smtpd_check.c,
+	cleanup/cleanup_extracted.c, pickup/pickup.c.

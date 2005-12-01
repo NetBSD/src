@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.1.1.4 2005/08/18 21:05:56 rpaulo Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.5 2005/12/01 21:42:42 rpaulo Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -20,6 +20,9 @@
 #include <arpa/nameser.h>
 #ifdef RESOLVE_H_NEEDS_STDIO_H
 #include <stdio.h>
+#endif
+#ifdef RESOLVE_H_NEEDS_NAMESER8_COMPAT_H
+#include <nameser8_compat.h>
 #endif
 #include <resolv.h>
 

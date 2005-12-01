@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.1.1.12 2005/08/18 21:03:51 rpaulo Exp $
+.\"	$NetBSD: access.5,v 1.1.1.13 2005/12/01 21:40:08 rpaulo Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -247,6 +247,9 @@ When this action is used multiple times, the first prepended
 header appears before the second etc. prepended header.
 .sp
 Note: this action does not support multi-line message headers.
+.sp
+Note: this action must be used before the message content
+is received; it cannot be used in \fBsmtpd_end_of_data_restrictions\fR.
 .sp
 This feature is available in Postfix 2.1 and later.
 .IP "\fBREDIRECT \fIuser@domain\fR"

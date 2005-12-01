@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.10 2005/08/18 21:08:01 rpaulo Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.11 2005/12/01 21:45:05 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -232,9 +232,25 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	 * XXX Workaround: REC_TYPE_FILT (used in envelopes) == REC_TYPE_CONT
 	 * (used in message content).
 	 */
-	if (type == REC_TYPE_FILT && *expected != REC_TYPE_CONTENT[0])
-	    /* Use our own content filter settings instead. */
-	    continue;
+	if (*expected != REC_TYPE_CONTENT[0]) {
+	    if (type == REC_TYPE_FILT)
+		/* Discard FILTER record after "postsuper -r". */
+		continue;
+	    if (type == REC_TYPE_RDR)
+		/* Discard REDIRECT record after "postsuper -r". */
+		continue;
+	}
+	if (*expected == REC_TYPE_EXTRACT[0]) {
+	    if (type == REC_TYPE_RRTO)
+		/* Discard return-receipt record after "postsuper -r". */
+		continue;
+	    if (type == REC_TYPE_ERTO)
+		/* Discard errors-to record after "postsuper -r". */
+		continue;
+	    if (type == REC_TYPE_ATTR)
+		/* Discard other/header/body action after "postsuper -r". */
+		continue;
+	}
 
 	/*
 	 * XXX Force an empty record when the queue file content begins with

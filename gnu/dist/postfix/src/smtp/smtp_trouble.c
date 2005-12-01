@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.5 2005/08/18 21:08:58 rpaulo Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.6 2005/12/01 21:46:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -386,6 +386,10 @@ int     smtp_stream_except(SMTP_STATE *state, int code, char *description)
 	break;
     case SMTP_ERR_TIME:
 	vstring_sprintf(why, "conversation with %s timed out while %s",
+			session->namaddr, description);
+	break;
+    case SMTP_ERR_PROTO:
+	vstring_sprintf(why, "remote protocol error in reply from %s while %s",
 			session->namaddr, description);
 	break;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_extracted.c,v 1.1.1.7 2004/05/31 00:24:27 heas Exp $	*/
+/*	$NetBSD: cleanup_extracted.c,v 1.1.1.8 2005/12/01 21:42:36 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -97,13 +97,21 @@ void    cleanup_extracted_process(CLEANUP_STATE *state, int type,
 				          const char *buf, int len)
 {
     const char *encoding;
-    const char generated_by_cleanup[] = {
-	REC_TYPE_FILT, REC_TYPE_RDR, REC_TYPE_ATTR,
-	REC_TYPE_RRTO, REC_TYPE_ERTO, 0,
-    };
+    int     extra_opts;
 
     if (msg_verbose)
 	msg_info("extracted envelope %c %.*s", type, len, buf);
+
+    if (type == REC_TYPE_FLGS) {
+	/* Not part of queue file format. */
+	extra_opts = atol(buf);
+	if (extra_opts & ~CLEANUP_FLAG_MASK_EXTRA)
+	    msg_warn("%s: ignoring bad extra flags: 0x%x",
+		     state->queue_id, extra_opts);
+	else
+	    state->flags |= extra_opts;
+	return;
+    }
 
     if (strchr(REC_TYPE_EXTRACT, type) == 0) {
 	msg_warn("%s: message rejected: "
@@ -181,14 +189,8 @@ void    cleanup_extracted_process(CLEANUP_STATE *state, int type,
     if (state->flags & CLEANUP_FLAG_INRCPT)
 	/* Tell qmgr that recipient records are mixed with other information. */
 	state->qmgr_opts |= QMGR_READ_FLAG_MIXED_RCPT_OTHER;
-    if (strchr(generated_by_cleanup, type) != 0) {
-	/* Use our own header/body info instead. */
-	return;
-    } else {
-	/* Pass on other non-recipient record. */
-	cleanup_out(state, type, buf, len);
-	return;
-    }
+    cleanup_out(state, type, buf, len);
+    return;
 }
 
 /* cleanup_extracted_finish - process one extracted envelope record */

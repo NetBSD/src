@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.1.1.4 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.1.1.5 2005/12/01 21:43:30 rpaulo Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -12,6 +12,11 @@
 /*	#include <mail_queue.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <sys/time.h>
 
  /*
   * Utility library.
@@ -39,7 +44,7 @@
 #define MAIL_QUEUE_STAT_READY	(S_IRUSR | S_IWUSR | S_IXUSR)
 #define MAIL_QUEUE_STAT_CORRUPT	(S_IRUSR)
 
-extern struct VSTREAM *mail_queue_enter(const char *, int);
+extern struct VSTREAM *mail_queue_enter(const char *, int, struct timeval *);
 extern struct VSTREAM *mail_queue_open(const char *, const char *, int, int);
 extern int mail_queue_rename(const char *, const char *, const char *);
 extern int mail_queue_remove(const char *, const char *);
