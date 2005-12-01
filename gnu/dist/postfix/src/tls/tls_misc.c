@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.1 2005/08/18 21:11:06 rpaulo Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.2 2005/12/01 21:46:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -228,5 +228,12 @@ long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
     }
     return (ret);
 }
+
+#else
+
+ /*
+  * Broken linker workaround.
+  */
+int     tls_dummy_for_broken_linkers;
 
 #endif
