@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $ */
+/* $NetBSD: ciphy.c,v 1.4 2005/12/01 04:59:53 riz Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.4 2005/12/01 04:59:53 riz Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -81,6 +81,12 @@ static const struct mii_phydesc ciphys[] = {
 
 	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
 	  MII_STR_CICADA_CS8201B },
+
+	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201,
+	  MII_STR_CICADA_CS8201 },
+
+	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201A,
+	  MII_STR_CICADA_CS8201A },
 
 	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
 	  MII_STR_xxCICADA_CS8201B },
