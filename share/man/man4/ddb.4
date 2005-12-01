@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.83 2005/11/28 20:05:49 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.84 2005/12/01 14:20:47 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd November 26, 2005
+.Dd December 1, 2005
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -595,6 +595,10 @@ Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
 .Sx VARIABLES .
+.It Ic "show\ all\ pools" Ns Op Cm /clp
+Display all pool information.
+Modifiers are the same as 
+.Ic "show pool" .
 .It Xo
 .Sm off
 .Ic "show\ all\ procs"
