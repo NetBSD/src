@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.2.5 2004/06/21 17:20:08 tron Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.2.5.2.1 2005/12/01 22:13:55 tron Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -170,6 +170,8 @@ static struct rtk_type re_devs[] = {
 		"RealTek 8169S Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
 		"RealTek 8110S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, RTK_HWREV_8169S,
+		"Linksys EG1032 rev. 3 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
 };
 
@@ -189,6 +191,8 @@ static struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8101, RTK_8139, "8101"},
 	{ 0, 0, NULL }
 };
+
+#define RE_LINKSYS_EG1032_SUBID       0x00241737
 
 int re_probe(struct device *, struct cfdata *, void *);
 void re_attach(struct device *, struct device *, void *);
@@ -621,6 +625,15 @@ re_probe(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_handle_t	rtk_bhandle;
 	bus_size_t		bsize;
 	u_int32_t		hwrev;
+	pcireg_t subid;
+
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	/* special-case Linksys EG1032, since rev 2 uses sk(4) */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
+	    subid == RE_LINKSYS_EG1032_SUBID)
+		return 1;
 
 	t = re_devs;
 
