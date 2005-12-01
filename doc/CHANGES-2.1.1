@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.11 2005/12/01 16:28:56 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.12 2005/12/01 20:18:17 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -121,4 +121,35 @@ sys/nfs/nfs_bio.c				1.136-1.137 via patch
 	reliably reproduced, NFS reads would occasionally return zeroes instead
 	of some of the file data, or fail with EINVAL.
 	[jld, ticket #8826]
+
+sys/arch/sgimips/stand/sgivol/sgivol.c		1.10
+
+	0 is a success code for ioctl().  Fixes install problem introduced by
+	revision 1.9 last November.
+	[tsutsui, ticket #10164]
+
+sbin/fdisk/fdisk.c				1.82 via patch
+
+	Fix intuit_translated_geometry() calculation. PR#26917.
+	[tsutsui, ticket #10165]
+
+sys/dev/ic/esiop.c				1.34 via patch
+sys/dev/ic/esiopvar.h				1.13 via patch
+sys/dev/ic/siop.c				1.79 via patch
+sys/dev/ic/siopvar.h				1.22 via patch
+sys/dev/ic/siopvar_common.h			1.33 via patch
+sys/dev/microcode/siop/esiop.ss			1.20 via patch
+sys/dev/microcode/siop/esiop.out		regen
+sys/dev/microcode/siop/siop.ss			1.20 via patch
+sys/dev/microcode/siop/siop.out			regen
+
+	Some drives disconnect after the last data phase without a save
+	data pointer message. In such case we would not update resid with
+	the proper value (eventually resid would not be updated at all if
+	there was only one data phase). To fix this, have the script save
+	the offset in the data tables at disconnect time if there was a
+	transfer, and use this to compute the resid if the current offset
+	is 0.  Problem reported and patch tested by edwin, Roy Bixler and
+	YAMAMOTO Takashi.  Fix kern/31990 by YAMAMOTO Takashi.
+	[bouyer, ticket #10168]
 
