@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.8 2005/08/18 21:08:34 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.1.1.9 2005/12/01 21:45:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -217,6 +217,8 @@ static void qmgr_deliver_update(int unused_event, char *context)
     QMGR_MESSAGE *message = entry->message;
     VSTRING *reason = vstring_alloc(1);
     int     status;
+    QMGR_RCPT *recipient;
+    int     nrcpt;
 
     /*
      * The message transport has responded. Stop the watchdog timer.
@@ -246,6 +248,21 @@ static void qmgr_deliver_update(int unused_event, char *context)
 	qmgr_transport_throttle(transport, "unknown mail transport error");
 	msg_warn("transport %s failure -- see a previous warning/fatal/panic logfile record for the problem description",
 		 transport->name);
+
+	/*
+	 * Assume the worst and write a defer logfile record for each
+	 * recipient. This omission was already present in the first queue
+	 * manager implementation of 199703, and was fixed 200511.
+	 * 
+	 * Don't move this queue entry back to the todo queue so that
+	 * qmgr_defer_transport() can update the defer log. The queue entry
+	 * is still hot, and making it cold would involve duplicating most
+	 * but not all code at the end of this routine. That's too tricky.
+	 */
+	for (nrcpt = 0; nrcpt < entry->rcpt_list.len; nrcpt++) {
+	    recipient = entry->rcpt_list.info + nrcpt;
+	    qmgr_defer_recipient(message, recipient, transport->reason);
+	}
 	qmgr_defer_transport(transport, transport->reason);
     }
 
@@ -271,7 +288,7 @@ static void qmgr_deliver_update(int unused_event, char *context)
      * No problems detected. Mark the transport and queue as alive. The queue
      * itself won't go away before we dispose of the current queue entry.
      */
-    if (VSTRING_LEN(reason) == 0) {
+    if (status != DELIVER_STAT_CRASH && VSTRING_LEN(reason) == 0) {
 	qmgr_transport_unthrottle(transport);
 	qmgr_queue_unthrottle(queue);
     }

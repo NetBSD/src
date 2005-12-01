@@ -154,9 +154,9 @@ If you want the Postfix SMTP server to accept remote SMTP client certificates
 issued by these CAs, append the root certificate to $smtpd_tls_CAfile or
 install it in the $smtpd_tls_CApath directory. When you configure trust in a
 root CA, it is not necessary to explicitly trust intermediary CAs signed by the
-root CA, unless $smtpd_tls_verify_depth is less than the number of CAs in the
-certificate chain for the clients of interest. With a verify depth of 1 you can
-only verify certificates directly signed by a trusted CA, and all trusted
+root CA, unless $smtpd_tls_ccert_verifydepth is less than the number of CAs in
+the certificate chain for the clients of interest. With a verify depth of 1 you
+can only verify certificates directly signed by a trusted CA, and all trusted
 intermediary CAs need to be configured explicitly. With a verify depth of 2 you
 can verify clients signed by a root CA or a direct intermediary CA (so long as
 the client is correctly configured to supply its intermediate CA certificate).
@@ -192,7 +192,7 @@ $smtpd_tls_CApath directory needs to be accessible inside the optional chroot
 jail.
 
 When you configure Postfix to request client certificates (by setting
-$smtpd_tls_asck_ccert = yes), any certificates in $smtpd_tls_CAfile are sent to
+$smtpd_tls_ask_ccert = yes), any certificates in $smtpd_tls_CAfile are sent to
 the client, in order to allow it to choose an identity signed by a CA you
 trust. If no $smtpd_tls_CAfile is specified, no preferred CA list is sent, and
 the client is free to choose an identity signed by any CA. Many clients use a

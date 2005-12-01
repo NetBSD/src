@@ -1,4 +1,4 @@
-# ACCESS(5)                                               ACCESS(5)
+# ACCESS(5)                                                            ACCESS(5)
 # 
 # NAME
 #        access - Postfix access table format
@@ -263,6 +263,10 @@
 #               Note:  this action does not support multi-line mes-
 #               sage headers.
 # 
+#               Note: this action must be used before  the  message
+#               content   is   received;   it  cannot  be  used  in
+#               smtpd_end_of_data_restrictions.
+# 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        REDIRECT user@domain
@@ -297,8 +301,8 @@
 #        user@ and domain constituent parts, nor is user+foo broken
 #        up into user and foo.
 # 
-#        Patterns are applied in the  order  as  specified  in  the
-#        table,  until  a  pattern is found that matches the search
+#        Patterns are applied in the order as specified in the  ta-
+#        ble,  until  a  pattern  is  found that matches the search
 #        string.
 # 
 #        Actions are the same as with indexed  file  lookups,  with
@@ -308,9 +312,9 @@
 # TCP-BASED TABLES
 #        This section describes how the table lookups  change  when
 #        lookups are directed to a TCP-based server. For a descrip-
-#        tion  of  the  TCP  client/server  lookup  protocol,   see
-#        tcp_table(5).   This  feature  is  not available up to and
-#        including Postfix version 2.2.
+#        tion of the TCP client/server lookup protocol, see tcp_ta-
+#        ble(5).  This feature is not available up to and including
+#        Postfix version 2.2.
 # 
 #        Each lookup operation uses the entire query  string  once.
 #        Depending  on  the  application,  that string is an entire
@@ -367,4 +371,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                         ACCESS(5)
+#                                                                      ACCESS(5)
