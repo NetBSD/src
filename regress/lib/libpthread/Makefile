@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2005/07/26 20:44:47 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2005/12/01 16:03:36 is Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ SUBDIR+= atexit \
          cond1 cond2 cond3 cond4 cond5 cond6 condcancel1 conddestroy1 \
 	 exit1 \
 	 fork \
+	 fpu \
 	 kill1 \
 	 mutex1 mutex2 mutex3 mutex4 \
 	 name \
