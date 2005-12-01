@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.32 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.33 2005/12/01 13:21:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.32 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.33 2005/12/01 13:21:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,6 +225,13 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 			}
 		}
 	}
+}
+
+void
+db_show_all_pools(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+{
+
+	pool_printall(modif, db_printf);
 }
 
 void
