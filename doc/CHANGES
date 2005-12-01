@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.540 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.541 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -133,3 +133,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel:	Switch to a stateful read-ahead algorithm. [yamt 20051130]
 	posix_fadvise(2): Add.  (Only POSIX_FADV_NORMAL, POSIX_FADV_RANDOM,
 		and POSIX_FADV_SEQUENTIAL are implemented.) [yamt 20051130]
+	postfix: Updated to 2.2.6. [rpaulo 20051201]
