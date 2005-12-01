@@ -367,7 +367,7 @@ Example:
 
     /etc/postfix/master.cf:
         :10026      inet  n       -       n       -       -       smtpd
-            -o receive_override_options=no_address_mapping
+            -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
 
@@ -440,7 +440,7 @@ Example:
 
     /etc/postfix/master.cf:
         :10026      inet  n       -       n       -       -       smtpd
-            -o receive_override_options=no_address_mapping
+            -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
 
@@ -476,7 +476,7 @@ Example:
 
     /etc/postfix/master.cf:
         :10026      inet  n       -       n       -       -       smtpd
-            -o receive_override_options=no_address_mapping
+            -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
 
@@ -525,7 +525,7 @@ Example:
 
     /etc/postfix/master.cf:
         :10026      inet  n       -       n       -       -       smtpd
-            -o receive_override_options=no_address_mapping
+            -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
 

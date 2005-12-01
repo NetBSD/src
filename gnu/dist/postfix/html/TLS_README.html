@@ -262,7 +262,7 @@ the overhead of the TLS exchange. </p>
 certificates issued by these CAs, append the root certificate to
 $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> or install it in the $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> directory.  When
 you configure trust in a root CA, it is not necessary to explicitly trust
-intermediary CAs signed by the root CA, unless $smtpd_tls_verify_depth
+intermediary CAs signed by the root CA, unless $<a href="postconf.5.html#smtpd_tls_ccert_verifydepth">smtpd_tls_ccert_verifydepth</a>
 is less than the number of CAs in the certificate chain for the clients
 of interest. With a verify depth of 1 you can only verify certificates
 directly signed by a trusted CA, and all trusted intermediary CAs need to
@@ -315,7 +315,7 @@ is needed. Thus, the $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApat
 accessible inside the optional chroot jail. </p>
 
 <p> When you configure Postfix to request client certificates (by
-setting $smtpd_tls_asck_ccert = yes), any certificates in
+setting $<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes), any certificates in
 $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> are sent to the client, in order to allow it to
 choose an identity signed by a CA you trust. If no $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>
 is specified, no preferred CA list is sent, and the client is free
