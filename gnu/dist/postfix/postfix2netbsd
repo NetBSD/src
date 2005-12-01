@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: postfix2netbsd,v 1.1.1.1 2005/08/18 21:00:57 rpaulo Exp $
+#	$NetBSD: postfix2netbsd,v 1.1.1.2 2005/12/01 21:36:48 rpaulo Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.

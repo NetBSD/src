@@ -149,7 +149,7 @@ use the Postfix local(8) delivery agent's mailbox_command_maps feature:
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
-    mailbox_command_maps = /etc/postfix/mailbox_commands
+    mailbox_command_maps = hash:/etc/postfix/mailbox_commands
 
 /etc/postfix/mailbox_commands:
     you    /path/to/maildrop -d ${USER}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_stream.c,v 1.1.1.6 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_stream.c,v 1.1.1.7 2005/12/01 21:43:31 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -12,6 +12,7 @@
 /* .in +4
 /*		VSTREAM	*stream;
 /*		char	*id;
+/*		struct timeval ctime;
 /*		private members...
 /* .in -4
 /*	} MAIL_STREAM;
@@ -266,10 +267,11 @@ int     mail_stream_finish(MAIL_STREAM *info, VSTRING *why)
 MAIL_STREAM *mail_stream_file(const char *queue, const char *class,
 			              const char *service, int mode)
 {
+    struct timeval tv;
     MAIL_STREAM *info;
     VSTREAM *stream;
 
-    stream = mail_queue_enter(queue, 0600 | mode);
+    stream = mail_queue_enter(queue, 0600 | mode, &tv);
     if (msg_verbose)
 	msg_info("open %s", VSTREAM_PATH(stream));
 
@@ -282,6 +284,7 @@ MAIL_STREAM *mail_stream_file(const char *queue, const char *class,
     info->class = mystrdup(class);
     info->service = mystrdup(service);
     info->mode = mode;
+    info->ctime = tv;
     return (info);
 }
 
