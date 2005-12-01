@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.81 2005/11/27 13:05:28 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.82 2005/12/01 13:21:05 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.81 2005/11/27 13:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.82 2005/12/01 13:21:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,6 +128,7 @@ static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static const struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "procs",	db_show_all_procs,	0, NULL },
+	{ "pools",	db_show_all_pools,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
