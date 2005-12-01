@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.13 2005/08/18 22:07:14 rpaulo Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.14 2005/12/01 21:56:55 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -360,12 +360,36 @@ static void smtp_cleanup_session(SMTP_STATE *state)
      * XXX Should not cache TLS sessions unless we are using a single-session,
      * in-process, cache. And if we did, we should passivate VSTREAM objects
      * in addition to passivating SMTP_SESSION objects.
+     * 
+     * XXX Workaround. If this host spoke TLS, connection caching was already
+     * turned off for this session by smtp_tls_start(). However, this alone
+     * does not distinguish between "good TLS connection" and "bad
+     * connection".
+     * 
+     * In the case of "bad connection" to a primary host we want to store the
+     * first good alternate connection under the logical next-hop destination
+     * name name. In the case of a good primary TLS connection that would not
+     * make sense: the Postfix cache would prefer non-TLS secondary hosts
+     * over TLS-enabled primary hosts!
+     * 
+     * The real fix is to have three-valued connection caching state: "do
+     * cache", "don't cache", and "bad connection", but that involves more
+     * change than is allowed in a stable release.
+     * 
+     * To distinguish good TLS connections from bad connections we reset the
+     * logical next-hop state, so that we won't cache connections to
+     * less-preferred MX hosts under the logical next-hop destination.
      */
     if (session->reuse_count > 0) {
 	smtp_save_session(state);
 	if (HAVE_NEXTHOP_STATE(state))
 	    FREE_NEXTHOP_STATE(state);
     } else {
+#ifdef USE_TLS
+	if (session->tls_context)
+	    if (HAVE_NEXTHOP_STATE(state))
+		FREE_NEXTHOP_STATE(state);
+#endif
 	smtp_session_free(session);
     }
     state->session = 0;
