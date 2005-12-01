@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.12 2005/07/21 21:10:05 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.13 2005/12/01 15:59:16 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.12 2005/07/21 21:09:09 snj Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.13 2005/12/01 15:58:26 riz Exp 
  */
 
 /*
@@ -5570,6 +5570,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82915G/GL IGD Companion",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LAN,
+	    0,
+	    "Intel",
+	    "82801GB/GR LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
