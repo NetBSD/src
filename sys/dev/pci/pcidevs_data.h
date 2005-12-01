@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.13 2005/12/01 15:59:16 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.14 2005/12/01 22:18:12 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.13 2005/12/01 15:58:26 riz Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.14 2005/12/01 22:16:38 tron Exp 
  */
 
 /*
@@ -3422,6 +3422,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "D-Link Systems",
 	    "DL-4000 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
+	    0,
+	    "D-Link Systems",
+	    "DGE-528T Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -9974,6 +9980,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "US Robotics (3Com)",
 	    "3CP5609 PCI 16550 Modem",
+	},
+	{
+	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
+	    0,
+	    "US Robotics",
+	    "USR997902 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_2415,
