@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.71 2005/11/24 13:01:42 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.72 2005/12/01 06:01:18 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -291,7 +291,7 @@ kernelnames:
 
 .if !target(__CLEANDEPEND)
 __CLEANDEPEND: .USE
-	rm -f .depend
+	rm -f .depend ${DEPS}
 .endif
 
 # do not !target these, the kern and compat Makefiles augment them
