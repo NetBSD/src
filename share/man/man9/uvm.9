@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.68 2005/09/25 09:01:21 jmmv Exp $
+.\"	$NetBSD: uvm.9,v 1.69 2005/12/01 13:01:39 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 1, 2005
+.Dd December 1, 2005
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -445,7 +445,8 @@ returns a standard UVM return value.
 .Pp
 .Ft void *
 .br
-.Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" "int flags" ;
+.Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" \
+"int advice" "int flags" ;
 .Pp
 .Ft void
 .br
@@ -475,6 +476,18 @@ The desired length of the mapping is pointed to by
 but the actual mapping may be smaller than this.
 .Fa lenp
 is updated to contain the actual length mapped.
+.Fa advice
+is the access pattern hint, which must be one of
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UVM_ADV_NORMAL
+No hint
+.It UVM_ADV_RANDOM
+Random access hint
+.It UVM_ADV_SEQUENTIAL
+Sequential access hint (from lower offset to higher offset)
+.El
+.Pp
 The flags must be one of
 .Bd -literal
 #define UBC_READ        0x01    /* mapping will be accessed for read */
