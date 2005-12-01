@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.10 2005/12/01 16:28:46 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.11 2005/12/01 20:17:11 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -86,4 +86,9 @@ sys/nfs/nfs_bio.c				1.136-1.137 via patch
 	reliably reproduced, NFS reads would occasionally return zeroes instead
 	of some of the file data, or fail with EINVAL.
 	[jld, ticket #8826]
+
+sbin/fdisk/fdisk.c				1.82 via patch
+
+	Fix intuit_translated_geometry() calculation. PR#26917.
+	[tsutsui, ticket #10165]
 
