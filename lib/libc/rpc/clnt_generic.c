@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.24 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.25 2005/12/02 12:19:16 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.24 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.25 2005/12/02 12:19:16 yamt Exp $");
 #endif
 #endif
 
@@ -351,9 +351,8 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		cl->cl_netid = strdup(nconf->nc_netid);
 		cl->cl_tp = strdup(nconf->nc_device);
 	} else {
-		static char empty[] = "";
-		cl->cl_netid = empty;
-		cl->cl_tp = empty;
+		cl->cl_netid = __UNCONST("");
+		cl->cl_tp = __UNCONST("");
 	}
 	if (madefd) {
 		(void) CLNT_CONTROL(cl, CLSET_FD_CLOSE, NULL);
