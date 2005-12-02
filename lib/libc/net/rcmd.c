@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.62 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.63 2005/12/02 11:33:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.62 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.63 2005/12/02 11:33:26 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,14 +75,15 @@ int	orcmd __P((char **, u_int, const char *, const char *, const char *,
 int	orcmd_af __P((char **, u_int, const char *, const char *, const char *,
 	    int *, int));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-int	__ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t, const char *,
-	    const char *));
+int	__ivaliduser_sa __P((FILE *, const struct sockaddr *, socklen_t,
+	    const char *, const char *));
 static	int rshrcmd __P((char **, u_int32_t, const char *, const char *,
 	    const char *, int *, const char *));
 static	int resrcmd __P((struct addrinfo *, char **, u_int32_t, const char *,
 	    const char *, const char *, int *));
-static	int __icheckhost __P((struct sockaddr *, socklen_t, const char *));
-static	char *__gethostloop __P((struct sockaddr *, socklen_t));
+static	int __icheckhost __P((const struct sockaddr *, socklen_t,
+	    const char *));
+static	char *__gethostloop __P((const struct sockaddr *, socklen_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -651,7 +652,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	int superuser;
 	const char *ruser, *luser;
 {
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 	struct stat sbuf;
 	struct passwd *pwd, pwres;
 	FILE *hostf;
@@ -665,7 +666,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	_DIAGASSERT(ruser != NULL);
 	_DIAGASSERT(luser != NULL);
 
-	sa = __UNCONST(raddr);
+	sa = raddr;
 
 	__rcmd_errstr = NULL;
 
@@ -766,7 +767,7 @@ static
 int
 __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 	FILE *hostf;
-	struct sockaddr *raddr;
+	const struct sockaddr *raddr;
 	socklen_t salen;
 	const char *luser, *ruser;
 {
@@ -918,7 +919,7 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
  */
 static int
 __icheckhost(raddr, salen, lhost)
-	struct sockaddr *raddr;
+	const struct sockaddr *raddr;
 	socklen_t salen;
 	const char *lhost;
 {
@@ -970,7 +971,7 @@ __icheckhost(raddr, salen, lhost)
  */
 static char *
 __gethostloop(raddr, salen)
-	struct sockaddr *raddr;
+	const struct sockaddr *raddr;
 	socklen_t salen;
 {
 	static char remotehost[NI_MAXHOST];
