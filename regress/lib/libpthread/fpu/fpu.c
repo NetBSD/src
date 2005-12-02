@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.1 2005/12/01 16:03:36 is Exp $ */
+/* $NetBSD: fpu.c,v 1.2 2005/12/02 16:44:54 is Exp $ */
 
 /*
  * This is adapted from part of csw/cstest of the MPD implementation by
@@ -50,8 +50,10 @@ main(int argc, char *argv[]) {
 
 	int rc;
 
+	printf("Testing threaded floating point computations...");
 	if (argc > 1  && argv[1][0] == '-' && argv[1][1] == 'v') {
 		verbose = 1;
+		printf("\n");
 	}
 	rc = pthread_mutex_init(&recursion_depth_lock, 0);
 	if (0 != rc) {
@@ -72,7 +74,7 @@ stir(void *p) {
 	double y = *q++;
 	double z = *q++;
 	for (;;) {
-		Dprintf("\nstirring...");
+		Dprintf("stirring...");
 		x = sin ((y = cos (x + y + .4)) - (z = cos (x + z + .6)));
 		YIELD();
 	}
@@ -89,12 +91,11 @@ void *bar(void *p) {
 	double d;
 	int rc;
 
-	puts("====== checking floating point =====");
 	d = mul3(mul3(2., 3., 5.), mul3(7., 11., 13.),
 	    mul3(17., 19., 23.));
 
 	if (d != 223092870.) {
-		printf("oops - product returned was %.20g\n", d);
+		printf("\noops - product returned was %.20g\nFAILED\n", d);
 		exit(1);
 	}
 
@@ -105,12 +106,13 @@ void *bar(void *p) {
 		dotest();
 	}
 	Dprintf("\n");
+	printf("OK\n");
 	exit(0);
 }
 
 void dotest() {
 	pthread_t s2;
-	Dprintf("\nrecursing...");
+	Dprintf("recursing...");
 	pthread_create(&s2, 0, bar, 0);
 	sleep(20); /* XXX must be long enough for our slowest machine */
 }
