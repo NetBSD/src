@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.52 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: lpd.c,v 1.53 2005/12/02 11:33:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.52 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.53 2005/12/02 11:33:39 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ __RCSID("$NetBSD: lpd.c,v 1.52 2005/11/28 03:26:06 christos Exp $");
 #include "extern.h"
 
 /* XXX from libc/net/rcmd.c */
-extern int __ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
+extern int __ivaliduser_sa(FILE *, const struct sockaddr *, socklen_t,
 			   const char *, const char *);
 
 #ifdef LIBWRAP
