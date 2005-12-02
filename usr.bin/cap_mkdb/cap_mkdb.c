@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.20.4.2 2005/11/14 22:00:54 riz Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.20.4.3 2005/12/02 11:32:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.20.4.2 2005/11/14 22:00:54 riz Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.20.4.3 2005/12/02 11:32:19 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.20.4.2 2005/11/14 22:00:54 riz Exp $");
 #include <unistd.h>
 #include <ctype.h>
 
-static void	db_build(const char **);
+static void	db_build(char **);
 static void	dounlink(void);
 static void	usage(void) __attribute__((__unused__));
 static int	count_records(char **);
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	if (atexit(dounlink))
 		err(1, "atexit");
 
-	db_build((const char **)argv);
+	db_build(argv);
 
 	if (capdbp->close(capdbp) < 0)
 		err(1, "%s", capname);
@@ -167,7 +167,7 @@ dounlink(void)
  * details above.
  */
 static void
-db_build(const char **ifiles)
+db_build(char **ifiles)
 {
 	DBT key, data;
 	recno_t reccnt;
