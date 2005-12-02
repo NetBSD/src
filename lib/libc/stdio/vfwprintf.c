@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.4 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.5 2005/12/02 14:45:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.4 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.5 2005/12/02 14:45:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -486,11 +486,6 @@ static wchar_t *cvt(double, int, int, char *, int *, int, int *);
 int
 __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 {
-	static wchar_t linf[] = L"inf";
-	static wchar_t lINF[] = L"INF";
-	static wchar_t lnan[] = L"nan";
-	static wchar_t lNAN[] = L"NAN";
-	static wchar_t lnull[] = L"(null)";
 	wchar_t *fmt;		/* format string */
 	wchar_t ch;		/* character from fmt */
 	int n, n2, n3;		/* handy integer (short term usage) */
@@ -684,6 +679,8 @@ __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
+		const wchar_t *result;
+
 		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
 			/* void */;
 		if ((n = fmt - cp) != 0) {
@@ -821,9 +818,10 @@ reswitch:	switch (ch) {
 			/*FALLTHROUGH*/
 		case 'c':
 			if (flags & LONGINT)
-				*(cp = buf) = (wchar_t)GETARG(wint_t);
+				*buf = (wchar_t)GETARG(wint_t);
 			else
-				*(cp = buf) = (wchar_t)btowc(GETARG(int));
+				*buf = (wchar_t)btowc(GETARG(int));
+			result = buf;
 			size = 1;
 			sign = '\0';
 			break;
@@ -881,7 +879,7 @@ reswitch:	switch (ch) {
 			if (convbuf != NULL)
 				free(convbuf);
 			ndig = dtoaend - dtoaresult;
-			cp = convbuf = __mbsconv(dtoaresult, -1);
+			result = convbuf = __mbsconv(dtoaresult, -1);
 			freedtoa(dtoaresult);
 			goto fp_common;
 		case 'e':
@@ -920,17 +918,17 @@ fp_begin:
 					expt = INT_MAX;
 			}
 			ndig = dtoaend - dtoaresult;
-			cp = convbuf = __mbsconv(dtoaresult, -1);
+			result = convbuf = __mbsconv(dtoaresult, -1);
 			freedtoa(dtoaresult);
 fp_common:
 			if (signflag)
 				sign = '-';
 			if (expt == INT_MAX) {	/* inf or nan */
-				if (*cp == 'N') {
-					cp = (ch >= 'a') ? L"nan" : L"NAN";
+				if (*result == 'N') {
+					result = (ch >= 'a') ? L"nan" : L"NAN";
 					sign = '\0';
 				} else
-					cp = (ch >= 'a') ? linf : lINF;
+					result = (ch >= 'a') ? L"inf" : L"INF";
 				size = 3;
 				break;
 			}
@@ -958,23 +956,23 @@ fp_common:
 				if (_double < 0)
 					sign = '-';
 				if (ch == 'E' || ch == 'F' || ch == 'G')
-					cp = lINF;
+					result = L"INF";
 				else
-					cp = linf;
+					result = L"inf";
 				size = 3;
 				break;
 			}
 			if (isnan(_double)) {
 				if (ch == 'E' || ch == 'F' || ch == 'G')
-					cp = lNAN;
+					result = L"NAN";
 				else
-					cp = lnan;
+					result = L"nan";
 				size = 3;
 				break;
 			}
 
 			flags |= FPT;
-			cp = cvt(_double, prec, flags, &softsign,
+			result = cvt(_double, prec, flags, &softsign,
 				&expt, ch, &ndig);
 			if (softsign)
 				sign = '-';
@@ -1085,22 +1083,22 @@ fp_common:
 			/*FALLTHROUGH*/
 		case 's':
 			if (flags & LONGINT) {
-				if ((cp = GETARG(wchar_t *)) == NULL)
-					cp = lnull;
+				if ((result = GETARG(wchar_t *)) == NULL)
+					result = L"(null)";
 			} else {
 				char *mbp;
 
 				if (convbuf != NULL)
 					free(convbuf);
 				if ((mbp = GETARG(char *)) == NULL)
-					cp = lnull;
+					result = L"(null)";
 				else {
 					convbuf = __mbsconv(mbp, prec);
 					if (convbuf == NULL) {
 						fp->_flags |= __SERR;
 						goto error;
 					}
-					cp = convbuf;
+					result = convbuf;
 				}
 			}
 
@@ -1110,16 +1108,16 @@ fp_common:
 				 * NUL in the first `prec' characters, and
 				 * wcslen() will go further.
 				 */
-				wchar_t *p = wmemchr(cp, 0, (size_t)prec);
+				wchar_t *p = wmemchr(result, 0, (size_t)prec);
 
 				if (p != NULL) {
-					size = p - cp;
+					size = p - result;
 					if (size > prec)
 						size = prec;
 				} else
 					size = prec;
 			} else
-				size = wcslen(cp);
+				size = wcslen(result);
 			sign = '\0';
 			break;
 		case 'U':
@@ -1168,23 +1166,23 @@ number:			if ((dprec = prec) >= 0)
 			 * printf("%#.0o", 0) should print 0.''
 			 *	-- Defect Report #151
 			 */
-			cp = buf + BUF;
+			result = cp = buf + BUF;
 			if (flags & INTMAX_SIZE) {
 				if (ujval != 0 || prec != 0 ||
 				    (flags & ALT && base == 8))
-					cp = __ujtoa(ujval, cp, base,
+					result = __ujtoa(ujval, cp, base,
 					    flags & ALT, xdigs,
 					    flags & GROUPING, thousands_sep,
 					    grouping);
 			} else {
 				if (ulval != 0 || prec != 0 ||
 				    (flags & ALT && base == 8))
-					cp = __ultoa(ulval, cp, base,
+					result = __ultoa(ulval, cp, base,
 					    flags & ALT, xdigs,
 					    flags & GROUPING, thousands_sep,
 					    grouping);
 			}
-			size = buf + BUF - cp;
+			size = buf + BUF - result;
 			if (size > BUF)	/* should never happen */
 				abort();
 			break;
@@ -1192,15 +1190,15 @@ number:			if ((dprec = prec) >= 0)
 			if (ch == '\0')
 				goto done;
 			/* pretend it was %c with argument ch */
-			cp = buf;
-			*cp = ch;
+			*buf = ch;
+			result = buf;
 			size = 1;
 			sign = '\0';
 			break;
 		}
 
 		/*
-		 * All reasonable formats wind up here.  At this point, `cp'
+		 * All reasonable formats wind up here.  At this point, `result'
 		 * points to a string which (if not flags&LADJUST) should be
 		 * padded out to `width' places.  If flags&ZEROPAD, it should
 		 * first be prefixed by any sign or other prefix; otherwise,
@@ -1248,7 +1246,7 @@ number:			if ((dprec = prec) >= 0)
 		/* the string or number proper */
 #ifndef NO_FLOATING_POINT
 		if ((flags & FPT) == 0) {
-			PRINT(cp, size);
+			PRINT(result, size);
 		} else {	/* glue together f_p fragments */
 			if (!expchar) {	/* %[fF] or sufficiently short %[gG] */
 				if (expt <= 0) {
@@ -1259,8 +1257,9 @@ number:			if ((dprec = prec) >= 0)
 					/* already handled initial 0's */
 					prec += expt;
 				} else {
-					PRINTANDPAD(cp, convbuf + ndig, lead, zeroes);
-					cp += lead;
+					PRINTANDPAD(result, convbuf + ndig,
+					    lead, zeroes);
+					result += lead;
 					if (grouping) {
 						while (nseps>0 || nrepeats>0) {
 							if (nrepeats > 0)
@@ -1271,34 +1270,35 @@ number:			if ((dprec = prec) >= 0)
 							}
 							PRINT(&thousands_sep,
 							    1);
-							PRINTANDPAD(cp,
+							PRINTANDPAD(result,
 							    convbuf + ndig,
 							    *grouping, zeroes);
-							cp += *grouping;
+							result += *grouping;
 						}
-						if (cp > convbuf + ndig)
-							cp = convbuf + ndig;
+						if (result > convbuf + ndig)
+							result = convbuf + ndig;
 					}
 					if (prec || flags & ALT) {
 						buf[0] = *decimal_point;
 						PRINT(buf, 1);
 					}
 				}
-				PRINTANDPAD(cp, convbuf + ndig, prec, zeroes);
+				PRINTANDPAD(result, convbuf + ndig, prec,
+				    zeroes);
 			} else {	/* %[eE] or sufficiently long %[gG] */
 				if (prec > 1 || flags & ALT) {
-					buf[0] = *cp++;
+					buf[0] = *result++;
 					buf[1] = *decimal_point;
 					PRINT(buf, 2);
-					PRINT(cp, ndig-1);
+					PRINT(result, ndig-1);
 					PAD(prec - ndig, zeroes);
 				} else	/* XeYYY */
-					PRINT(cp, 1);
+					PRINT(result, 1);
 				PRINT(expstr, expsize);
 			}
 		}
 #else
-		PRINT(cp, size);
+		PRINT(result, size);
 #endif
 		/* left-adjusting padding (always blank) */
 		if (flags & LADJUST)
