@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.19 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: regerror.c,v 1.20 2005/12/02 12:12:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.19 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.20 2005/12/02 12:12:29 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,7 +103,8 @@ extern "C" {
 #endif
 
 /* === regerror.c === */
-static char *regatoi __P((const regex_t *preg, char *localbuf, size_t buflen));
+static const char *regatoi __P((const regex_t *preg, char *localbuf,
+    size_t buflen));
 
 #ifdef __cplusplus
 }
@@ -201,9 +202,10 @@ size_t errbuf_size;
 
 /*
  * regatoi - internal routine to implement REG_ATOI
- * static char *regatoi(const regex_t *preg, char *localbuf, size_t buflen);
+ * static const char *regatoi(const regex_t *preg, char *localbuf,
+ * size_t buflen);
  */
-static char *
+static const char *
 regatoi(preg, localbuf, buflen)
 const regex_t *preg;
 char *localbuf;
@@ -215,7 +217,7 @@ size_t buflen;
 		if (strcmp(r->name, preg->re_endp) == 0)
 			break;
 	if (r->code == 0)
-		return __UNCONST("0");
+		return "0";
 
 	(void)snprintf(localbuf, buflen, "%d", r->code);
 	return localbuf;

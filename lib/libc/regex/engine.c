@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.18 2004/04/03 17:00:00 christos Exp $	*/
+/*	$NetBSD: engine.c,v 1.19 2005/12/02 12:12:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -108,11 +108,11 @@ struct match {
 	struct re_guts *g;
 	int eflags;
 	regmatch_t *pmatch;	/* [nsub+1] (0 element unused) */
-	char *offp;		/* offsets work from here */
-	char *beginp;		/* start of string -- virtual NUL precedes */
-	char *endp;		/* end of string -- virtual NUL here */
-	char *coldp;		/* can be no match starting before here */
-	char **lastpos;		/* [nplus+1] */
+	const char *offp;	/* offsets work from here */
+	const char *beginp;	/* start of string -- virtual NUL precedes */
+	const char *endp;	/* end of string -- virtual NUL here */
+	const char *coldp;	/* can be no match starting before here */
+	const char **lastpos;	/* [nplus+1] */
 	STATEVARS;
 	states st;		/* current states */
 	states fresh;		/* states for a fresh start */
@@ -126,11 +126,11 @@ extern "C" {
 #endif
 
 /* === engine.c === */
-static int matcher __P((struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[], int eflags));
-static char *dissect __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static char *backref __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst, sopno lev));
-static char *fast __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
-static char *slow __P((struct match *m, char *start, char *stop, sopno startst, sopno stopst));
+static int matcher __P((struct re_guts *g, const char *string, size_t nmatch, regmatch_t pmatch[], int eflags));
+static const char *dissect __P((struct match *m, const char *start, const char *stop, sopno startst, sopno stopst));
+static const char *backref __P((struct match *m, const char *start, const char *stop, sopno startst, sopno stopst, sopno lev));
+static const char *fast __P((struct match *m, const char *start, const char *stop, sopno startst, sopno stopst));
+static const char *slow __P((struct match *m, const char *start, const char *stop, sopno startst, sopno stopst));
 static states step __P((struct re_guts *g, sopno start, sopno stop, states bef, int ch, states aft));
 #define	BOL	(OUT+1)
 #define	EOL	(BOL+1)
@@ -175,20 +175,20 @@ static int nope = 0;
 static int			/* 0 success, REG_NOMATCH failure */
 matcher(g, string, nmatch, pmatch, eflags)
 struct re_guts *g;
-char *string;
+const char *string;
 size_t nmatch;
 regmatch_t pmatch[];
 int eflags;
 {
-	char *endp;
+	const char *endp;
 	int i;
 	struct match mv;
 	struct match *m = &mv;
-	char *dp;
+	const char *dp;
 	const sopno gf = g->firststate+1;	/* +1 for OEND */
 	const sopno gl = g->laststate;
-	char *start;
-	char *stop;
+	const char *start;
+	const char *stop;
 	int error = 0;
 
 	_DIAGASSERT(g != NULL);
@@ -272,8 +272,8 @@ int eflags;
 			dp = dissect(m, m->coldp, endp, gf, gl);
 		} else {
 			if (g->nplus > 0 && m->lastpos == NULL)
-				m->lastpos = (char **)malloc((g->nplus+1) *
-							sizeof(char *));
+				m->lastpos = malloc((g->nplus+1) *
+							sizeof(const char *));
 			if (g->nplus > 0 && m->lastpos == NULL) {
 				error = REG_ESPACE;
 				goto done;
@@ -346,31 +346,31 @@ done:
 
 /*
  - dissect - figure out what matched what, no back references
- == static char *dissect(struct match *m, char *start, \
- ==	char *stop, sopno startst, sopno stopst);
+ == static const char *dissect(struct match *m, const char *start, \
+ ==	const char *stop, sopno startst, sopno stopst);
  */
-static char *			/* == stop (success) always */
+static const char *			/* == stop (success) always */
 dissect(m, start, stop, startst, stopst)
 struct match *m;
-char *start;
-char *stop;
+const char *start;
+const char *stop;
 sopno startst;
 sopno stopst;
 {
 	int i;
 	sopno ss;	/* start sop of current subRE */
 	sopno es;	/* end sop of current subRE */
-	char *sp;	/* start of string matched by it */
-	char *stp;	/* string matched by it cannot pass here */
-	char *rest;	/* start of rest of string */
-	char *tail;	/* string unmatched by rest of RE */
+	const char *sp;	/* start of string matched by it */
+	const char *stp; /* string matched by it cannot pass here */
+	const char *rest; /* start of rest of string */
+	const char *tail; /* string unmatched by rest of RE */
 	sopno ssub;	/* start sop of subsubRE */
 	sopno esub;	/* end sop of subsubRE */
-	char *ssp;	/* start of string matched by subsubRE */
-	char *sep;	/* end of string matched by subsubRE */
-	char *oldssp;	/* previous ssp */
+	const char *ssp; /* start of string matched by subsubRE */
+	const char *sep; /* end of string matched by subsubRE */
+	const char *oldssp; /* previous ssp */
 #ifndef NDEBUG
-	char *dp;
+	const char *dp;
 #endif
 
 	_DIAGASSERT(m != NULL);
@@ -555,25 +555,25 @@ sopno stopst;
 
 /*
  - backref - figure out what matched what, figuring in back references
- == static char *backref(struct match *m, char *start, \
- ==	char *stop, sopno startst, sopno stopst, sopno lev);
+ == static const char *backref(struct match *m, const char *start, \
+ ==	const char *stop, sopno startst, sopno stopst, sopno lev);
  */
-static char *			/* == stop (success) or NULL (failure) */
+static const char *		/* == stop (success) or NULL (failure) */
 backref(m, start, stop, startst, stopst, lev)
 struct match *m;
-char *start;
-char *stop;
+const char *start;
+const char *stop;
 sopno startst;
 sopno stopst;
 sopno lev;			/* PLUS nesting level */
 {
 	int i;
 	sopno ss;	/* start sop of current subRE */
-	char *sp;	/* start of string matched by it */
+	const char *sp;	/* start of string matched by it */
 	sopno ssub;	/* start sop of subsubRE */
 	sopno esub;	/* end sop of subsubRE */
-	char *ssp;	/* start of string matched by subsubRE */
-	char *dp;
+	const char *ssp; /* start of string matched by subsubRE */
+	const char *dp;
 	size_t len;
 	int hard;
 	sop s;
@@ -765,26 +765,26 @@ sopno lev;			/* PLUS nesting level */
 
 /*
  - fast - step through the string at top speed
- == static char *fast(struct match *m, char *start, \
- ==	char *stop, sopno startst, sopno stopst);
+ == static const char *fast(struct match *m, const char *start, \
+ ==	const char *stop, sopno startst, sopno stopst);
  */
-static char *			/* where tentative match ended, or NULL */
+static const char *		/* where tentative match ended, or NULL */
 fast(m, start, stop, startst, stopst)
 struct match *m;
-char *start;
-char *stop;
+const char *start;
+const char *stop;
 sopno startst;
 sopno stopst;
 {
 	states st = m->st;
 	states fresh = m->fresh;
 	states tmp = m->tmp;
-	char *p = start;
+	const char *p = start;
 	int c = (start == m->beginp) ? OUT : *(start-1);
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
-	char *coldp;	/* last p after which no match was underway */
+	const char *coldp; /* last p after which no match was underway */
 
 	_DIAGASSERT(m != NULL);
 	_DIAGASSERT(start != NULL);
@@ -860,26 +860,26 @@ sopno stopst;
 
 /*
  - slow - step through the string more deliberately
- == static char *slow(struct match *m, char *start, \
- ==	char *stop, sopno startst, sopno stopst);
+ == static const char *slow(struct match *m, const char *start, \
+ ==	const char *stop, sopno startst, sopno stopst);
  */
-static char *			/* where it ended */
+static const char *			/* where it ended */
 slow(m, start, stop, startst, stopst)
 struct match *m;
-char *start;
-char *stop;
+const char *start;
+const char *stop;
 sopno startst;
 sopno stopst;
 {
 	states st = m->st;
 	states empty = m->empty;
 	states tmp = m->tmp;
-	char *p = start;
+	const char *p = start;
 	int c = (start == m->beginp) ? OUT : *(start-1);
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
-	char *matchp;	/* last p at which a match ended */
+	const char *matchp;	/* last p at which a match ended */
 
 	_DIAGASSERT(m != NULL);
 	_DIAGASSERT(start != NULL);
