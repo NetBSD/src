@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.3 2005/12/02 14:19:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.3 2005/12/02 14:19:43 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $");
 } while (/* CONSTCOND */ 0)
 
 #define PRINTS(STR) do {					\
-	char *tmps = STR;					\
+	const char *tmps = STR;					\
 	while (*tmps != '\0')					\
 		PRINT(*tmps++);					\
 } while (/* CONSTCOND */ 0)
@@ -96,7 +96,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.2 2005/11/29 03:12:00 christos Exp $");
 	groups++;						\
 } while (/* CONSTCOND */ 0)
 
-static void __setup_vars(int, char *, char *, char *, char **);
+static void __setup_vars(int, char *, char *, char *, const char **);
 static int __calc_left_pad(int, char *);
 static char *__format_grouped_double(double, int *, int, int, int);
 
@@ -122,8 +122,8 @@ strfmon(char * __restrict s, size_t maxsize, const char * __restrict format,
 	char		cs_precedes,	/* values gathered from struct lconv */
 			sep_by_space,
 			sign_posn,
-			*signstr,
 			*currency_symbol;
+	const char	*signstr;
 
 	char		*tmpptr;	/* temporary vars */
 	int		sverrno;
@@ -404,15 +404,14 @@ end_error:
 
 static void
 __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
-		char *sign_posn, char **signstr) {
-	static char minus[] = "-";
+		char *sign_posn, const char **signstr) {
 	struct lconv *lc = localeconv();
 
 	if ((flags & IS_NEGATIVE) && (flags & USE_INTL_CURRENCY)) {
 		*cs_precedes = lc->int_n_cs_precedes;
 		*sep_by_space = lc->int_n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->int_n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? minus
+		*signstr = (lc->negative_sign == '\0') ? "-"
 		    : lc->negative_sign;
 	} else if (flags & USE_INTL_CURRENCY) {
 		*cs_precedes = lc->int_p_cs_precedes;
@@ -423,7 +422,7 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->n_cs_precedes;
 		*sep_by_space = lc->n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? minus
+		*signstr = (lc->negative_sign == '\0') ? "-"
 		    : lc->negative_sign;
 	} else {
 		*cs_precedes = lc->p_cs_precedes;
@@ -444,7 +443,8 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 static int
 __calc_left_pad(int flags, char *cur_symb) {
 
-	char cs_precedes, sep_by_space, sign_posn, *signstr;
+	char cs_precedes, sep_by_space, sign_posn;
+	const char *signstr;
 	int left_chars = 0;
 
 	__setup_vars(flags, &cs_precedes, &sep_by_space, &sign_posn, &signstr);
