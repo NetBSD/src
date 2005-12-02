@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.124 2005/09/02 03:57:10 jwise Exp $
+#	$NetBSD: bsd.sys.mk,v 1.125 2005/12/02 21:34:50 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -36,7 +36,7 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
 .endif
 .if ${WARNS} > 3 && ${MACHINE_ARCH} != "vax"
-CFLAGS+=	-std=c99
+CFLAGS+=	-std=gnu99
 .endif
 .endif
 
