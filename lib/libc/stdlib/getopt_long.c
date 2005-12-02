@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.18 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.19 2005/12/02 14:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.18 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.19 2005/12/02 14:08:51 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -96,9 +96,9 @@ __weak_alias(getopt_long,_getopt_long)
 
 #define	EMSG	""
 
-static int getopt_internal __P((int, char * const *, const char *));
+static int getopt_internal __P((int, char **, const char *));
 static int gcd __P((int, int));
-static void permute_args __P((int, int, int, char * const *));
+static void permute_args __P((int, int, int, char **));
 
 static const char *place = EMSG; /* option letter processing */
 
@@ -145,7 +145,7 @@ permute_args(panonopt_start, panonopt_end, opt_end, nargv)
 	int panonopt_start;
 	int panonopt_end;
 	int opt_end;
-	char * const *nargv;
+	char **nargv;
 {
 	int cstart, cyclelen, i, j, ncycle, nnonopts, nopts, pos;
 	char *swap;
@@ -169,8 +169,8 @@ permute_args(panonopt_start, panonopt_end, opt_end, nargv)
 			else
 				pos += nopts;
 			swap = nargv[pos];
-			((char **)__UNCONST(nargv))[pos] = nargv[cstart];
-			((char **)__UNCONST(nargv))[cstart] = swap;
+			nargv[pos] = nargv[cstart];
+			nargv[cstart] = swap;
 		}
 	}
 }
@@ -183,7 +183,7 @@ permute_args(panonopt_start, panonopt_end, opt_end, nargv)
 static int
 getopt_internal(nargc, nargv, options)
 	int nargc;
-	char * const *nargv;
+	char **nargv;
 	const char *options;
 {
 	char *oli;				/* option letter list index */
@@ -336,7 +336,8 @@ getopt(nargc, nargv, options)
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(options != NULL);
 
-	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
+	retval = getopt_internal(nargc, __UNCONST(nargv), options);
+	if (retval == -2) {
 		++optind;
 		/*
 		 * We found an option (--), so if we skipped non-options,
@@ -373,7 +374,8 @@ getopt_long(nargc, nargv, options, long_options, idx)
 	_DIAGASSERT(long_options != NULL);
 	/* idx may be NULL */
 
-	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
+	retval = getopt_internal(nargc, __UNCONST(nargv), options);
+	if (retval == -2) {
 		char *current_argv, *has_equal;
 		size_t current_argv_len;
 		int i, match;
@@ -391,7 +393,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			 */
 			if (nonopt_end != -1) {
 				permute_args(nonopt_start, nonopt_end,
-				    optind, nargv);
+				    optind, __UNCONST(nargv));
 				optind -= nonopt_end - nonopt_start;
 			}
 			nonopt_start = nonopt_end = -1;
