@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.113 2005/12/02 00:43:51 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.114 2005/12/02 00:47:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.113 2005/12/02 00:43:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.114 2005/12/02 00:47:54 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1526,9 +1526,6 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
-		if (devvp->v_type == VBLK) {
-			bp->b_dev = devvp->v_rdev;
-		}
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
@@ -1542,7 +1539,8 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			BIO_SETPRIO(bp, BPRIO_TIMENONCRITICAL);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp->b_vp, bp);
+
+		VOP_STRATEGY(devvp, bp);
 	}
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
