@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.112 2005/11/30 03:45:16 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.113 2005/12/02 00:43:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.112 2005/11/30 03:45:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.113 2005/12/02 00:43:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1111,13 +1111,13 @@ genfs_putpages(void *v)
 	    (vp->v_flag & VONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
-	curmp.uobject = uobj;
-	curmp.offset = (voff_t)-1;
-	curmp.flags = PG_BUSY;
-	endmp.uobject = uobj;
-	endmp.offset = (voff_t)-1;
-	endmp.flags = PG_BUSY;
 	if (by_list) {
+		curmp.uobject = uobj;
+		curmp.offset = (voff_t)-1;
+		curmp.flags = PG_BUSY;
+		endmp.uobject = uobj;
+		endmp.offset = (voff_t)-1;
+		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
 		PHOLD(l);
