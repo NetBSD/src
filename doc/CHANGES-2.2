@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.17 2005/12/01 22:33:40 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.18 2005/12/02 11:32:45 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -315,4 +315,9 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Two re(4) candidates.
 	[riz, ticket #10158, #10160]
+
+usr.bin/cap_mkdb/cap_mkdb.c			patch
+
+	PR bin/32142: Fix build problem caused by ticket #5978.
+	[christos, ticket #10182]
 
