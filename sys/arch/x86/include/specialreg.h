@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.8 2005/02/21 15:10:51 he Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.9 2005/12/02 17:11:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -150,7 +150,7 @@
 
 #define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
 				    "\24MPC\25NOX\26B21\27MMXX\30MMX"
-#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35B28\36LONG" \
+#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35HTT\36LONG" \
 				    "\0373DNOW2\0403DNOW"
 
 /*
