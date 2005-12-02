@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.74 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.75 2005/12/02 11:22:09 yamt Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.74 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.75 2005/12/02 11:22:09 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -226,7 +226,7 @@ static int get_canonname(const struct addrinfo *,
 static struct addrinfo *get_ai(const struct addrinfo *,
 	const struct afd *, const char *);
 static int get_portmatch(const struct addrinfo *, const char *);
-static int get_port(struct addrinfo *, const char *, int);
+static int get_port(const struct addrinfo *, const char *, int);
 static const struct afd *find_afd(int);
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
@@ -893,12 +893,11 @@ get_portmatch(const struct addrinfo *ai, const char *servname)
 	_DIAGASSERT(ai != NULL);
 	/* servname may be NULL */
 
-	/* get_port does not touch first argument when matchonly == 1. */
-	return get_port(__UNCONST(ai), servname, 1);
+	return get_port(ai, servname, 1);
 }
 
 static int
-get_port(struct addrinfo *ai, const char *servname, int matchonly)
+get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 {
 	const char *proto;
 	struct servent *sp;
