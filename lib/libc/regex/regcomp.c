@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.20 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.21 2005/12/02 12:12:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.20 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.21 2005/12/02 12:12:29 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,8 +106,8 @@ __weak_alias(regcomp,_regcomp)
  * other clumsinesses
  */
 struct parse {
-	char *next;		/* next character in RE */
-	char *end;		/* end of string (-> NUL normally) */
+	const char *next;	/* next character in RE */
+	const char *end;	/* end of string (-> NUL normally) */
 	int error;		/* has an error been seen? */
 	sop *strip;		/* malloced strip */
 	sopno ssize;		/* malloced strip size (allocated) */
@@ -269,7 +269,7 @@ int cflags;
 
 	/* set things up */
 	p->g = g;
-	p->next = __UNCONST(pattern);
+	p->next = pattern;
 	p->end = p->next + len;
 	p->error = 0;
 	p->ncsalloc = 0;
@@ -890,7 +890,7 @@ p_b_cclass(p, cs)
 struct parse *p;
 cset *cs;
 {
-	char *sp;
+	const char *sp;
 	const struct cclass *cp;
 	size_t len;
 	const char *u;
@@ -971,7 +971,7 @@ p_b_coll_elem(p, endc)
 struct parse *p;
 int endc;			/* name ended by endc,']' */
 {
-	char *sp;
+	const char *sp;
 	const struct cname *cp;
 	size_t len;
 
@@ -1023,8 +1023,8 @@ bothcases(p, ch)
 struct parse *p;
 int ch;
 {
-	char *oldnext;
-	char *oldend;
+	const char *oldnext;
+	const char *oldend;
 	char bracket[3];
 
 	_DIAGASSERT(p != NULL);
@@ -1078,8 +1078,8 @@ static void
 nonnewline(p)
 struct parse *p;
 {
-	char *oldnext;
-	char *oldend;
+	const char *oldnext;
+	const char *oldend;
 	char bracket[4];
 
 	_DIAGASSERT(p != NULL);
