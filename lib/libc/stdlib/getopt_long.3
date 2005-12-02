@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.15 2005/04/18 10:56:33 wiz Exp $
+.\"	$NetBSD: getopt_long.3,v 1.16 2005/12/02 14:11:01 yamt Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd April 18, 2005
+.Dd December 2, 2005
 .Dt GETOPT_LONG 3
 .Os
 .Sh NAME
@@ -299,3 +299,7 @@ implementation appeared in 1.5.
 The implementation can completely replace
 .Xr getopt 3 ,
 but right now we are using separate code.
+.Pp
+The
+.Fa argv
+argument is not really const.
