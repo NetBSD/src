@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigvec.3,v 1.23 2003/08/07 16:42:40 agc Exp $
+.\"	$NetBSD: sigvec.3,v 1.24 2005/12/03 21:01:53 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)sigvec.2	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 1, 1997
+.Dd December 3, 2004
 .Dt SIGVEC 3
 .Os
 .Sh NAME
@@ -52,6 +52,9 @@ struct sigvec {
 .Bf -symbolic
 This interface is made obsolete by
 .Xr sigaction 2 .
+The structure, flags, and function declaration have been removed from
+the header files but the function is kept in the c library for binary
+compatibility.
 .Ef
 .Pp
 The system defines a set of signals that may be delivered to a process.
