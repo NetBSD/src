@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.h,v 1.4 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: tmpfs_specops.h,v 1.5 2005/12/03 17:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_TMPFS_SPECOPS_H_)
-#define _TMPFS_SPECOPS_H_
+#ifndef _FS_TMPFS_TMPFS_SPECOPS_H_
+#define _FS_TMPFS_TMPFS_SPECOPS_H_
 
 #if !defined(_KERNEL)
-#  error "This file is not meant to be included by userland."
+#error not supposed to be exposed to userland.
 #endif
 
 #include <miscfs/specfs/specdev.h>
@@ -99,4 +99,4 @@ int	tmpfs_spec_write	(void *);
 
 /* --------------------------------------------------------------------- */
 
-#endif /* !defined(_TMPFS_SPECOPS_H_) */
+#endif /* _FS_TMPFS_TMPFS_SPECOPS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.5 2005/09/25 21:17:05 jmmv Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.6 2005/12/03 17:34:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 The Regents of the University of California.
@@ -64,6 +64,8 @@
  *
  *	filecore_mount.h	1.1	1998/6/26
  */
+#ifndef _FILECOREFS_FILECOREFS_MOUNT_H_
+#define _FILECOREFS_FILECOREFS_MOUNT_H_
 
 /*
  * Arguments to mount Acorn Filecore filesystems.
@@ -86,3 +88,5 @@ struct filecore_args {
 #define FILECOREMNT_BITS "\177\20" \
     "b\00root\0b\01ownaccess\0b\02allaccess\0b\03ownread\0" \
     "b\04useuid\0b\05filetype\0"
+
+#endif /* _FILECOREFS_FILECOREFS_MOUNT_H_ */

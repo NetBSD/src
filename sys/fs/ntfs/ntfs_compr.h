@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.h,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_compr.h,v 1.2 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,6 +27,9 @@
  *
  *	Id: ntfs_compr.h,v 1.4 1999/05/12 09:42:55 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #define NTFS_COMPBLOCK_SIZE	0x1000
 #define NTFS_COMPUNIT_CL	16

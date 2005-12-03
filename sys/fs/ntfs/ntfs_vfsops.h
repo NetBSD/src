@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.h,v 1.4 2004/05/20 06:34:26 atatat Exp $	*/
+/*	$NetBSD: ntfs_vfsops.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -27,6 +27,10 @@
  *
  *	Id: ntfs_vfsops.h,v 1.3 1999/05/12 09:43:06 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
+
 #define VG_DONTLOADIN	0x0001	/* Tells ntfs_vgetex to do not call */
 				/* ntfs_loadntnode() on ntnode, even if */
 				/* ntnode not loaded */

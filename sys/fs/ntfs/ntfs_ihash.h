@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.h,v 1.2 2005/08/30 19:01:29 xtraeme Exp $	*/
+/*	$NetBSD: ntfs_ihash.h,v 1.3 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,6 +27,9 @@
  *
  *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 extern struct lock ntfs_hashlock;
 void ntfs_nthashinit(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.11 2005/08/30 19:11:43 xtraeme Exp $	*/
+/*	$NetBSD: union.h,v 1.12 2005/12/03 17:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -71,6 +71,9 @@
  *
  *	@(#)union.h	8.9 (Berkeley) 12/10/94
  */
+
+#ifndef _MISCFS_UNION_H_
+#define _MISCFS_UNION_H_
 
 struct union_args {
 	char		*target;	/* Target of loopback  */
@@ -174,3 +177,4 @@ int union_freevp(struct vnode *);
 SYSCTL_SETUP_PROTO(sysctl_vfs_union_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _MISCFS_UNION_H_ */
