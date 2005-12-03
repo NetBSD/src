@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.145 2005/11/29 23:01:19 yamt Exp $ */
+/* $NetBSD: syscallargs.h,v 1.146 2005/12/03 17:07:12 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
  */
 
-#ifndef _SYS__SYSCALLARGS_H_
-#define	_SYS__SYSCALLARGS_H_
+#ifndef _SYS_SYSCALLARGS_H_
+#define	_SYS_SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
@@ -2391,4 +2391,4 @@ int	sys___getdents30(struct lwp *, void *, register_t *);
 
 int	sys_posix_fadvise(struct lwp *, void *, register_t *);
 
-#endif /* _SYS__SYSCALLARGS_H_ */
+#endif /* _SYS_SYSCALLARGS_H_ */
