@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.58 2005/02/26 23:32:31 perry Exp $
+#	$NetBSD: makesyscalls.sh,v 1.59 2005/12/03 17:04:36 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -192,8 +192,10 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
-	printf "#ifndef _" constprefix "_SYSCALLARGS_H_\n" > sysarghdr
-	printf "#define	_" constprefix "_SYSCALLARGS_H_\n\n" > sysarghdr
+	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
+	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
+	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
+	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
 	printf "#ifdef\tsyscallarg\n" > sysarghdr
 	printf "#undef\tsyscallarg\n" > sysarghdr
 	printf "#endif\n\n" > sysarghdr
@@ -540,7 +542,8 @@ END {
 } '
 
 cat $sysprotos >> $sysarghdr
-echo "#endif /* _${constprefix}_SYSCALLARGS_H_ */" >> $sysarghdr
+echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
+echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 
