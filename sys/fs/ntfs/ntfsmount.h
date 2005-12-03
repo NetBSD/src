@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.4 2005/09/25 21:17:05 jmmv Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,8 @@
  *	Id: ntfsmount.h,v 1.4 1999/05/12 09:43:09 semenu Exp
  */
 
+#ifndef _NTFS_NTFSMOUNT_H_
+#define _NTFS_NTFSMOUNT_H_
 #define	NTFS_MFLAG_CASEINS	0x00000001
 #define	NTFS_MFLAG_ALLNAMES	0x00000002
 
@@ -42,3 +44,4 @@ struct ntfs_args {
 
 #define NTFS_MFLAG_BITS	"\177\20" \
     "b\00caseins\0b\01allnames\0"
+#endif /* _NTFS_NTFSMOUNT_H_ */

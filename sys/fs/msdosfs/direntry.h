@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.4 2005/09/12 16:24:41 christos Exp $	*/
+/*	$NetBSD: direntry.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,8 @@
  *
  * October 1992
  */
+#ifndef _MSDOSFS_DIRENTRY_H_
+#define _MSDOSFS_DIRENTRY_H_
 
 /*
  * Structure of a dos directory entry.
@@ -134,3 +136,4 @@ int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum);
 u_int8_t winChksum(u_int8_t *name);
 int	winSlotCnt(const u_char *un, int unlen);
 #endif	/* _KERNEL */
+#endif /* _MSDOSFS_DIRENTRY_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.9 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.10 2005/12/03 17:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,11 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_TMPFS_H_)
-#  define _TMPFS_H_
-#else
-#  error "tmpfs.h cannot be included multiple times."
-#endif
+#ifndef _FS_TMPFS_TMPFS_H_
+#define _FS_TMPFS_TMPFS_H_
 
 /* ---------------------------------------------------------------------
  * KERNEL-SPECIFIC DEFINITIONS
@@ -481,3 +478,4 @@ struct tmpfs_args {
 	gid_t			ta_root_gid;
 	mode_t			ta_root_mode;
 };
+#endif /* _FS_TMPFS_TMPFS_H_ */

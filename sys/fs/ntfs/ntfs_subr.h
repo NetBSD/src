@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.4 2005/08/30 19:01:30 xtraeme Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,6 +27,9 @@
  *
  *	Id: ntfs_subr.h,v 1.4 1999/05/12 09:43:02 semenu Exp
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #define	VA_LOADED		0x0001
 #define	VA_PRELOADED		0x0002

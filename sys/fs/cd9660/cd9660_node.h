@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.10 2005/11/11 15:50:57 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.11 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -35,6 +35,10 @@
  *
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  */
+
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #include <miscfs/genfs/genfs_node.h>
 

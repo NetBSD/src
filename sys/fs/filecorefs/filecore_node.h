@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.3 2005/08/19 04:47:55 christos Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.4 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -64,6 +64,10 @@
  *
  *	filecore_node.h		1.1	1998/6/26
  */
+
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #include <miscfs/genfs/genfs_node.h>
 

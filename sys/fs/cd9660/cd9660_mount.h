@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.5 2005/09/25 21:17:05 jmmv Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.6 2005/12/03 17:34:43 christos Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,9 @@
  *	@(#)cd9660_mount.h	8.1 (Berkeley) 5/24/95
  */
 
+#ifndef _ISOFS_CD9660_CD9660_MOUNT_H_
+#define _ISOFS_CD9660_CD9660_MOUNT_H_
+
 /*
  * Arguments to mount ISO 9660 filesystems.
  */
@@ -53,3 +56,4 @@ struct iso_args {
 #define ISOFSMNT_BITS "\177\20" \
     "b\00norrip\0b\01gens\0b\02extatt\0b\03nojoliet\0" \
     "b\04nocasetrans\0b\05rrcaseins\0"
+#endif /* _ISOFS_CD9660_CD9660_MOUNT_H_ */

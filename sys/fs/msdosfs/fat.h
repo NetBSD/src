@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.3 2005/08/29 23:57:35 xtraeme Exp $	*/
+/*	$NetBSD: fat.h,v 1.4 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -47,6 +47,8 @@
  * October 1992
  */
 
+#ifndef _MSDOSFS_FAT_H_
+#define _MSDOSFS_FAT_H_
 /*
  * Some useful cluster numbers.
  */
@@ -114,3 +116,4 @@ void fc_lookup(struct denode *, u_long, u_long *, u_long *);
 int fillinusemap(struct msdosfsmount *);
 int freeclusterchain(struct msdosfsmount *, u_long);
 #endif	/* _KERNEL */
+#endif /* _MSDOSFS_FAT_H_ */
