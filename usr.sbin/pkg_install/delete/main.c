@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2005/12/03 01:08:38 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2005/12/03 01:08:38 hubertf Exp $");
 #endif
 #endif
 
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 		usage();
 	}
 #ifndef __INTERIX
-	if (!Fake && getuid() != 0) {
+	if (!Fake && Verbose && getuid() != 0) {
 		warnx("not running as root - trying to delete anyways");
 	}
 #endif
