@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.h,v 1.8 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: pmap_rmt.h,v 1.9 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,7 +45,7 @@
 
 struct rmtcallargs {
 	u_long prog, vers, proc, arglen;
-	caddr_t args_ptr;
+	const char *args_ptr;
 	xdrproc_t xdr_args;
 };
 
