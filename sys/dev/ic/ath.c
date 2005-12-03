@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.64 2005/12/03 21:18:32 rpaulo Exp $	*/
+/*	$NetBSD: ath.c,v 1.65 2005/12/03 21:20:07 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.64 2005/12/03 21:18:32 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.65 2005/12/03 21:20:07 rpaulo Exp $");
 #endif
 
 /*
@@ -4899,7 +4899,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #undef IS_RUNNING
 }
 
-#if NBFILTER > 0
+#if NBPFILTER > 0
 static void
 ath_bpfattach(struct ath_softc *sc)
 {
