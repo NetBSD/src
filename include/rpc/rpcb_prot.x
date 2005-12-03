@@ -208,7 +208,7 @@ struct rpcb_rmtcallargs {
 %	rpcproc_t proc;
 %	struct {
 %		u_int args_len;
-%		char *args_val;
+%		const char *args_val;
 %	} args;
 %	xdrproc_t	xdr_args;	/* encodes args */
 %};

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.27 2005/07/30 11:11:46 wiz Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.28 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.27 2005/07/30 11:11:46 wiz Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.28 2005/12/03 15:16:19 yamt Exp $");
 #endif
 #endif
 
@@ -86,7 +86,7 @@ static struct clntraw_private {
 } *clntraw_private;
 
 static enum clnt_stat clnt_raw_call __P((CLIENT *, rpcproc_t, xdrproc_t,
-    caddr_t, xdrproc_t, caddr_t, struct timeval));
+    const char *, xdrproc_t, caddr_t, struct timeval));
 static void clnt_raw_geterr __P((CLIENT *, struct rpc_err *));
 static bool_t clnt_raw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clnt_raw_abort __P((CLIENT *));
@@ -154,7 +154,7 @@ clnt_raw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	CLIENT *h;
 	rpcproc_t proc;
 	xdrproc_t xargs;
-	caddr_t argsp;
+	const char *argsp;
 	xdrproc_t xresults;
 	caddr_t resultsp;
 	struct timeval timeout;
@@ -184,7 +184,7 @@ call_again:
 	if ((! XDR_PUTBYTES(xdrs, clp->u.mashl_callmsg, clp->mcnt)) ||
 	    (! XDR_PUTINT32(xdrs, (int32_t *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
-	    (! (*xargs)(xdrs, argsp))) {
+	    (! (*xargs)(xdrs, __UNCONST(argsp)))) {
 		return (RPC_CANTENCODEARGS);
 	}
 	(void)XDR_GETPOS(xdrs);  /* called just to cause overhead */

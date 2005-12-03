@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.13 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -93,7 +93,7 @@ struct accepted_reply {
 			rpcvers_t high;
 		} AR_versions;
 		struct {
-			caddr_t	where;
+			const char *where;
 			xdrproc_t proc;
 		} AR_results;
 		/* and many other null cases */
