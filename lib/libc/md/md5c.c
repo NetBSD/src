@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.22 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: md5c.c,v 1.23 2005/12/03 15:13:04 yamt Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -37,7 +37,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md5c.c,v 1.22 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: md5c.c,v 1.23 2005/12/03 15:13:04 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
@@ -222,8 +222,7 @@ MD5Update(context, input, inputLen)
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
-		memcpy((POINTER)&context->buffer[idx],
-		    (POINTER)__UNCONST(input), partLen);
+		memcpy((POINTER)&context->buffer[idx], input, partLen);
 		MD5Transform(context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
@@ -234,8 +233,7 @@ MD5Update(context, input, inputLen)
 		i = 0;
 
 	/* Buffer remaining input */
-	memcpy(&context->buffer[idx], __UNCONST(&input[i]),
-	    inputLen - i);
+	memcpy(&context->buffer[idx], &input[i], inputLen - i);
 }
 
 /*
