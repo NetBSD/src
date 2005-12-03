@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.8 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: timex.h,v 1.9 2005/12/03 17:10:46 christos Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -67,7 +67,7 @@
  *
  */
 #ifndef _SYS_TIMEX_H_
-#define _SYS_TIMEX_H_ 1
+#define _SYS_TIMEX_H_
 
 #ifndef MSDOS			/* Microsoft specific */
 #include <sys/syscall.h>

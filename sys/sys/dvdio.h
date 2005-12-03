@@ -1,4 +1,7 @@
-/*	$NetBSD: dvdio.h,v 1.6 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: dvdio.h,v 1.7 2005/12/03 17:10:46 christos Exp $	*/
+
+#ifndef _SYS_DVDIO_H_
+#define _SYS_DVDIO_H_
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
@@ -200,3 +203,4 @@ typedef struct {
 	u_int8_t reserved2;
 } dvd_rpc_state_t;
 
+#endif /* _SYS_DVDIO_H_ */

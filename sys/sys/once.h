@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.1 2005/10/29 11:13:21 yamt Exp $	*/
+/*	$NetBSD: once.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_SYS_ONCE_H_)
+#ifndef _SYS_ONCE_H_
 #define	_SYS_ONCE_H_
 
 #include <sys/lock.h>
@@ -53,4 +53,4 @@ void _run_once(once_t *, void (*)(void));
 		} \
 	} while (0 /* CONSTCOND */)
 
-#endif /* !defined(_SYS_ONCE_H_) */
+#endif /* _SYS_ONCE_H_ */

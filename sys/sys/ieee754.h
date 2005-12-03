@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.5 2005/04/15 22:39:12 kleink Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.6 2005/12/03 17:10:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)ieee.h	8.1 (Berkeley) 6/11/93
  */
+#ifndef _SYS_IEEE754_H_
+#define _SYS_IEEE754_H_
 
 /*
  * NOTICE: This is not a standalone file.  To use it, #include it in
@@ -145,3 +147,4 @@ union ieee_double_u {
 	double			dblu_d;
 	struct ieee_double	dblu_dbl;
 };
+#endif /* _SYS_IEEE754_H_ */

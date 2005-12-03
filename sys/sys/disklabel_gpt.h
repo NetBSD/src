@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.1 2004/09/25 03:29:32 thorpej Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -28,8 +28,8 @@
  * $FreeBSD: src/sys/sys/gpt.h,v 1.7 2004/08/02 18:46:52 marcel Exp $
  */
 
-#ifndef _SYS_GPT_H_
-#define	_SYS_GPT_H_
+#ifndef _SYS_DISKLABEL_GPT_H_
+#define	_SYS_DISKLABEL_GPT_H_
 
 /*
  * Definitions for the EFI GUID Partition Table disk partitioning scheme.
@@ -132,4 +132,4 @@ struct gpt_ent {
 #define	GPT_ENT_TYPE_LINUX_LVM		\
 	{0xe6d6d379,0xf507,0x44c2,0xa2,0x3c,{0x23,0x8f,0x2a,0x3d,0xf9,0x28}}
 
-#endif /* _SYS_GPT_H_ */
+#endif /* _SYS_DISKLABEL_GPT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1 2005/10/29 11:10:37 yamt Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_SYS_WORKQUEUE_H_)
+#ifndef _SYS_WORKQUEUE_H_
 #define	_SYS_WORKQUEUE_H_
 
 #include <sys/queue.h>
@@ -50,4 +50,4 @@ int workqueue_create(struct workqueue **, const char *,
 
 void workqueue_enqueue(struct workqueue *, struct work *);
 
-#endif /* !defined(_SYS_WORKQUEUE_H_) */
+#endif /* _SYS_WORKQUEUE_H_ */
