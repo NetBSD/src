@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.16 2005/02/26 16:19:08 wiz Exp $
+.\"	$NetBSD: ypbind.8,v 1.17 2005/12/03 11:24:02 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,7 +140,11 @@ options are inherently insecure and should be avoided.
 .Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 - explicit list of servers to bind to for \*[Lt]domain\*[Gt].
 .Sh DIAGNOSTICS
-Messages are send to syslog daemon using facility LOG_DAEMON.
+Messages are sent to
+.Xr syslogd 8
+using the
+.Dv LOG_DAEMON
+facility.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
