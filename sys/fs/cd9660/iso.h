@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.5 2005/06/22 17:34:30 junyoung Exp $	*/
+/*	$NetBSD: iso.h,v 1.6 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,6 +41,9 @@
  * the functions necessary to access fields of ISO9660 file system
  * structures.
  */
+
+#ifndef _ISOFS_CD9660_ISO_H_
+#define _ISOFS_CD9660_ISO_H_
 
 #define ISODCL(from, to) (to - from + 1)
 
@@ -271,3 +274,5 @@ isonum_733(u_char *p)
  * Associated files have a leading '='.
  */
 #define	ASSOCCHAR	'='
+
+#endif /* _ISOFS_CD9660_ISO_H_ */

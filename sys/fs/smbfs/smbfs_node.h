@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.9 2004/02/29 11:47:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.10 2005/12/03 17:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,8 +33,8 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_node.h,v 1.1 2001/04/10 07:59:05 bp Exp
  */
-#ifndef _FS_SMBFS_NODE_H_
-#define _FS_SMBFS_NODE_H_
+#ifndef _FS_SMBFS_SMBFS_NODE_H_
+#define _FS_SMBFS_SMBFS_NODE_H_
 
 #include <sys/hash.h>			/* for hash32_strn() */
 #include <miscfs/genfs/genfs_node.h>	/* for struct genfs_node */
@@ -95,4 +95,4 @@ int  smbfs_attr_cachelookup(struct vnode *vp ,struct vattr *va);
 
 #define smbfs_attr_cacheremove(vp)	VTOSMB(vp)->n_attrage = 0
 
-#endif /* _FS_SMBFS_NODE_H_ */
+#endif /* _FS_SMBFS_SMBFS_NODE_H_ */

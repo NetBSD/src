@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.h,v 1.2 2003/08/07 16:31:35 agc Exp $	*/
+/*	$NetBSD: cd9660_rrip.h,v 1.3 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -35,6 +35,9 @@
  *
  *	@(#)cd9660_rrip.h	8.2 (Berkeley) 12/5/94
  */
+
+#ifndef _ISOFS_CD9660_CD9660_RRIP_H_
+#define _ISOFS_CD9660_CD9660_RRIP_H_
 
 typedef struct {
 	char   type			[ISODCL (  0,    1)];
@@ -136,3 +139,5 @@ typedef struct {
 	char offset			[ISODCL ( 12,	19)];
 	char length			[ISODCL ( 20,	27)];
 } ISO_RRIP_CONT;
+
+#endif /* _ISOFS_CD9660_CD9660_RRIP_H_ */
