@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.63 2005/11/24 09:58:39 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.64 2005/12/03 21:18:32 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.63 2005/11/24 09:58:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.64 2005/12/03 21:18:32 rpaulo Exp $");
 #endif
 
 /*
@@ -194,7 +194,9 @@ void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 #endif
 
+#if NBPFILTER > 0
 static void	ath_bpfattach(struct ath_softc *);
+#endif
 static void	ath_announce(struct ath_softc *);
 
 int ath_dwelltime = 200;		/* 5 channels/second */
@@ -615,7 +617,9 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/* complete initialization */
 	ieee80211_media_init(ic, ath_media_change, ieee80211_media_status);
 
+#if NBPFILTER > 0
 	ath_bpfattach(sc);
+#endif
 
 #ifdef __NetBSD__
 	sc->sc_flags |= ATH_ATTACHED;
@@ -3619,7 +3623,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (IFF_DUMPPKTS(sc, ATH_DEBUG_XMIT))
 		ieee80211_dump_pkt(mtod(m0, caddr_t), m0->m_len,
 			sc->sc_hwmap[txrate].ieeerate, -1);
-
+#if NBPFILTER > 0
 	if (ic->ic_rawbpf)
 		bpf_mtap(ic->ic_rawbpf, m0);
 	if (sc->sc_drvbpf) {
@@ -3633,6 +3637,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		bpf_mtap2(sc->sc_drvbpf,
 			&sc->sc_tx_th, sc->sc_tx_th_len, m0);
 	}
+#endif
 
 	/* 
 	 * Determine if a tx interrupt should be generated for
@@ -4894,6 +4899,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #undef IS_RUNNING
 }
 
+#if NBFILTER > 0
 static void
 ath_bpfattach(struct ath_softc *sc)
 {
@@ -4919,6 +4925,7 @@ ath_bpfattach(struct ath_softc *sc)
 	sc->sc_rx_th.wr_ihdr.it_len = htole16(sc->sc_rx_th_len);
 	sc->sc_rx_th.wr_ihdr.it_present = htole32(ATH_RX_RADIOTAP_PRESENT);
 }
+#endif
 
 /*
  * Announce various information on device/driver attach.
