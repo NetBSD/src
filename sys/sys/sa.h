@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.5 2005/05/29 21:18:53 christos Exp $	*/
+/*	$NetBSD: sa.h,v 1.6 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_SA_H
-#define _SYS_SA_H
+#ifndef _SYS_SA_H_
+#define _SYS_SA_H_
 
 #include <sys/ucontext.h>
 
@@ -67,4 +67,4 @@ typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 
 #define	SA_FLAG_STACKINFO 0x010000 /* Use stackinfo for upcall stack return */
 
-#endif /* !_SYS_SA_H */
+#endif /* !_SYS_SA_H_ */

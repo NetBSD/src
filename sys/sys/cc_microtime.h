@@ -1,4 +1,4 @@
-/*	$NetBSD: cc_microtime.h,v 1.1 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cc_microtime.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CC_MICROTIME_H_
-#define	_CC_MICROTIME_H_
+#ifndef _SYS_CC_MICROTIME_H_
+#define	_SYS_CC_MICROTIME_H_
 
 extern struct timeval cc_microset_time;
 void cc_microtime(struct timeval *);
@@ -50,4 +50,4 @@ struct cc_microtime_state {
 	int64_t cc_denom;
 };
 
-#endif /* _CC_MICROTIME_H_ */
+#endif /* _SYS_CC_MICROTIME_H_ */

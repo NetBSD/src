@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.16 2005/09/19 03:16:16 simonb Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.17 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,8 +31,8 @@
  *	@(#)tprintf.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _SYS_TPRINF_H_
-#define _SYS_TPRINF_H_
+#ifndef _SYS_TPRINTF_H_
+#define _SYS_TPRINTF_H_
 
 typedef struct session *tpr_t;
 
@@ -42,4 +42,4 @@ void	tprintf_close(tpr_t);
 void	tprintf(tpr_t, const char *fmt, ...)
     __attribute__((__format__(__printf__,2,3)));
 
-#endif /* _SYS_TPRINF_H_ */
+#endif /* _SYS_TPRINTF_H_ */

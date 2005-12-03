@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.16 2005/11/25 20:32:33 thorpej Exp $	*/
+/*	$NetBSD: systrace.h,v 1.17 2005/12/03 17:10:46 christos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYSTRACE_H_
-#define _SYSTRACE_H_
+#ifndef _SYS_SYSTRACE_H_
+#define _SYS_SYSTRACE_H_
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
@@ -236,4 +236,4 @@ void systrace_execve1(char *, struct proc *);
 int systrace_scriptname(struct proc *, char *);
 
 #endif /* _KERNEL */
-#endif /* !_SYSTRACE_H_ */
+#endif /* !_SYS_SYSTRACE_H_ */
