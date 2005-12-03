@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2005/10/22 15:56:16 riz Exp $
+# $NetBSD: Makefile,v 1.27 2005/12/03 01:23:23 riz Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -434,9 +434,9 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	cp $@ $@.tmp
 	dd if=/dev/zero bs=512 count=${SGIVOLHDR.size:sh} >> $@
 	${TOOLDIR}/bin/nbsgivol -f -i $@
-	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${STAGEDIR}/sgimipscd/aoutboot $@
-	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${STAGEDIR}/sgimipscd/ip2xboot $@
-	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${STAGEDIR}/sgimipscd/ip3xboot $@
+	${TOOLDIR}/bin/nbsgivol -f -w aoutboot ${STAGEDIR}/${image}/aoutboot $@
+	${TOOLDIR}/bin/nbsgivol -f -w ip2xboot ${STAGEDIR}/${image}/ip2xboot $@
+	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${STAGEDIR}/${image}/ip3xboot $@
 	dd if=$@.tmp of=$@ bs=512 seek=${SGIVOLHDR.size:sh}
 	rm -f $@.tmp
 .endif
