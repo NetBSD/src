@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: rpcb_clnt.h,v 1.3 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -69,8 +69,8 @@ extern rpcblist	*rpcb_getmaps(const struct netconfig *, const char *);
 extern enum clnt_stat rpcb_rmtcall(const struct netconfig *,
 				   const char *, const rpcprog_t,
 				   const rpcvers_t, const rpcproc_t,
-				   const xdrproc_t, const caddr_t,
-				   const xdrproc_t, const caddr_t,
+				   const xdrproc_t, const char *,
+				   const xdrproc_t, caddr_t,
 				   const struct timeval,
 				   const struct netbuf *);
 extern bool_t rpcb_getaddr(const rpcprog_t, const rpcvers_t,

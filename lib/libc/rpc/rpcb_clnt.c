@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.18 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.19 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.18 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.19 2005/12/03 15:16:19 yamt Exp $");
 #endif
 #endif
 
@@ -1091,7 +1091,8 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	rpcvers_t vers;
 	rpcproc_t proc;			/* Remote proc identifiers */
 	xdrproc_t xdrargs, xdrres;	/* XDR routines */
-	caddr_t argsp, resp;		/* Argument and Result */
+	const char *argsp;		/* Argument */
+	caddr_t resp;			/* Result */
 	struct timeval tout;		/* Timeout value for this call */
 	const struct netbuf *addr_ptr;	/* Preallocated netbuf address */
 {

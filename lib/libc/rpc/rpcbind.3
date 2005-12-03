@@ -1,8 +1,8 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.9 2003/04/16 13:34:43 wiz Exp $
-.Dd May 7, 1993
+.\"	$NetBSD: rpcbind.3,v 1.10 2005/12/03 15:16:19 yamt Exp $
+.Dd December 4, 2005
 .Dt RPCBIND 3
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Ft bool_t
 .Fn rpcb_gettime "const char *host" "time_t * timep"
 .Ft "enum clnt_stat"
-.Fn rpcb_rmtcall "const struct netconfig *netconf" "const char *host" "const rpcprog_t prognum, const rpcvers_t versnum" "const rpcproc_t procnum, const xdrproc_t inproc" "const caddr_t in" "const xdrproc_t outproc" "caddr_t out" "const struct timeval tout, struct netbuf  *svcaddr"
+.Fn rpcb_rmtcall "const struct netconfig *netconf" "const char *host" "const rpcprog_t prognum, const rpcvers_t versnum" "const rpcproc_t procnum, const xdrproc_t inproc" "const char *in" "const xdrproc_t outproc" "caddr_t out" "const struct timeval tout, struct netbuf  *svcaddr"
 .Ft bool_t
 .Fn rpcb_set "const rpcprog_t prognum" "const rpcvers_t versnum" "const struct netconfig *netconf" "const struct netbuf *svcaddr"
 .Ft bool_t

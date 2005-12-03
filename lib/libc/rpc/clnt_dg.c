@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.19 2005/11/07 18:12:33 christos Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.20 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.19 2005/11/07 18:12:33 christos Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.20 2005/12/03 15:16:19 yamt Exp $");
 #endif
 #endif
 
@@ -73,8 +73,8 @@ __weak_alias(clnt_dg_create,_clnt_dg_create)
 
 static struct clnt_ops *clnt_dg_ops __P((void));
 static bool_t time_not_ok __P((struct timeval *));
-static enum clnt_stat clnt_dg_call __P((CLIENT *, rpcproc_t, xdrproc_t, caddr_t,
-					xdrproc_t, caddr_t, struct timeval));
+static enum clnt_stat clnt_dg_call __P((CLIENT *, rpcproc_t, xdrproc_t,
+    const char *, xdrproc_t, caddr_t, struct timeval));
 static void clnt_dg_geterr __P((CLIENT *, struct rpc_err *));
 static bool_t clnt_dg_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clnt_dg_abort __P((CLIENT *));
@@ -305,7 +305,7 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	CLIENT	*cl;			/* client handle */
 	rpcproc_t	proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
-	caddr_t		argsp;		/* pointer to args */
+	const char *	argsp;		/* pointer to args */
 	xdrproc_t	xresults;	/* xdr routine for results */
 	caddr_t		resultsp;	/* pointer to results */
 	struct timeval	utimeout;	/* seconds to wait before giving up */
@@ -372,7 +372,7 @@ call_again:
 	(*(u_int32_t *)(void *)(cu->cu_outbuf))++;
 	if ((! XDR_PUTINT32(xdrs, (int32_t *)&proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
-	    (! (*xargs)(xdrs, argsp))) {
+	    (! (*xargs)(xdrs, __UNCONST(argsp)))) {
 		cu->cu_error.re_status = RPC_CANTENCODEARGS;
 		goto out;
 	}

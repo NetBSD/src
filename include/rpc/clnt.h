@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.19 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: clnt.h,v 1.20 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -143,8 +143,8 @@ typedef struct __rpc_client {
 	const struct clnt_ops {
 		/* call remote procedure */
 		enum clnt_stat	(*cl_call)(struct __rpc_client *,
-				    rpcproc_t, xdrproc_t, caddr_t, xdrproc_t,
-				    caddr_t, struct timeval);
+				    rpcproc_t, xdrproc_t, const char *,
+				    xdrproc_t, caddr_t, struct timeval);
 		/* abort a call */
 		void		(*cl_abort)(struct __rpc_client *);
 		/* get specific error code */
@@ -207,10 +207,10 @@ struct rpc_timers {
  */
 #define	CLNT_CALL(rh, proc, xargs, argsp, xres, resp, secs)		\
 	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, 			\
-	(caddr_t)(void *)argsp,	xres, (caddr_t)(void *)resp, secs))
+	(const char *)(const void *)(argsp), xres, (caddr_t)(void *)resp, secs))
 #define	clnt_call(rh, proc, xargs, argsp, xres, resp, secs)		\
 	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, 			\
-	 (caddr_t)(void *)argsp, xres, (caddr_t)(void *)resp, secs))
+	(const char *)(const void *)(argsp), xres, (caddr_t)(void *)resp, secs))
 
 /*
  * void
@@ -526,14 +526,11 @@ typedef bool_t (*resultproc_t)(caddr_t, ...);
 
 __BEGIN_DECLS
 extern enum clnt_stat rpc_broadcast(const rpcprog_t, const rpcvers_t,
-					 const rpcproc_t, const xdrproc_t,
-					 caddr_t, const xdrproc_t, caddr_t,
-					 const resultproc_t, const char *);
+    const rpcproc_t, const xdrproc_t, const char *, const xdrproc_t, caddr_t,
+    const resultproc_t, const char *);
 extern enum clnt_stat rpc_broadcast_exp(const rpcprog_t, const rpcvers_t,
-					     const rpcproc_t, const xdrproc_t,
-					     caddr_t, const xdrproc_t, caddr_t,
-					     const resultproc_t, const int,
-					     const int, const char *);
+    const rpcproc_t, const xdrproc_t, const char *, const xdrproc_t, caddr_t,
+    const resultproc_t, const int, const int, const char *);
 __END_DECLS
 
 /* For backward compatibility */

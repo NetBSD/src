@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.14 2005/09/09 15:41:27 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.15 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.14 2005/09/09 15:41:27 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.15 2005/12/03 15:16:19 yamt Exp $");
 #endif
 #endif
 
@@ -246,7 +246,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	rpcvers_t	vers;		/* version number */
 	rpcproc_t	proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
-	caddr_t		argsp;		/* pointer to args */
+	const char *	argsp;		/* pointer to args */
 	xdrproc_t	xresults;	/* xdr routine for results */
 	caddr_t		resultsp;	/* pointer to results */
 	resultproc_t	eachresult;	/* call with each result obtained */
@@ -669,7 +669,7 @@ rpc_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	rpcvers_t	vers;		/* version number */
 	rpcproc_t	proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
-	caddr_t		argsp;		/* pointer to args */
+	const char *	argsp;		/* pointer to args */
 	xdrproc_t	xresults;	/* xdr routine for results */
 	caddr_t		resultsp;	/* pointer to results */
 	resultproc_t	eachresult;	/* call with each result obtained */

@@ -2,8 +2,8 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_calls 1.4 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_calls.3,v 1.6 2003/04/16 13:34:43 wiz Exp $
-.Dd May 7, 1993
+.\"	$NetBSD: rpc_clnt_calls.3,v 1.7 2005/12/03 15:16:19 yamt Exp $
+.Dd December 4, 2005
 .Dt RPC_CLNT_CALLS 3
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .In rpc/rpc.h
 .Ft "enum clnt_stat"
-.Fn clnt_call "CLIENT *clnt" "const rpcproc_t procnum" "const xdrproc_t inproc" "const caddr_t in" "const xdrproc_t outproc" "caddr_t out" "const struct timeval tout"
+.Fn clnt_call "CLIENT *clnt" "const rpcproc_t procnum" "const xdrproc_t inproc" "const char *in" "const xdrproc_t outproc" "caddr_t out" "const struct timeval tout"
 .Ft bool_t
 .Fn clnt_freeres "CLIENT *clnt" "const xdrproc_t outproc" "caddr_t out"
 .Ft void
@@ -39,7 +39,7 @@
 .Fn clnt_sperror "const CLIENT *clnt" "const char * s"
 .\" Note the clustered Fn arguments. It can't take more than 9. XXX
 .Ft "enum clnt_stat"
-.Fn rpc_broadcast "const rpcprog_t prognum, const rpcvers_t versnum" "const rpcproc_t procnum" "const xdrproc_t inproc" "const caddr_t in" "const xdrproc_t outproc" "caddr_t out" "const resultproc_t eachresult" "const char *nettype"
+.Fn rpc_broadcast "const rpcprog_t prognum, const rpcvers_t versnum" "const rpcproc_t procnum" "const xdrproc_t inproc" "const char *in" "const xdrproc_t outproc" "caddr_t out" "const resultproc_t eachresult" "const char *nettype"
 .Ft "enum clnt_stat"
 .Fn rpc_broadcast_exp "rpcprog_t prognum, const rpcvers_t versnum" "const rpcproc_t procnum, const xdrproc_t xargs" "caddr_t argsp, const xdrproc_t xresults" "caddr_t resultsp" "const int inittime" "const int waittime" "const resultproc_t eachresult" "const char * nettype"
 .Ft "enum clnt_stat"
