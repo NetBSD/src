@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.11 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.12 2005/12/03 17:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,8 +33,8 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs.h,v 1.3 2001/12/02 08:56:58 bp Exp
  */
-#ifndef _SMBFS_SMBFS_H_
-#define _SMBFS_SMBFS_H_
+#ifndef _FS_SMBFS_SMBFS_H_
+#define _FS_SMBFS_SMBFS_H_
 
 #define SMBFS_VERMAJ	1
 #define SMBFS_VERMIN	1013
@@ -98,4 +98,4 @@ int smbfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred,
 int smbfs_kqfilter(void *);
 #endif	/* KERNEL */
 
-#endif /* _SMBFS_SMBFS_H_ */
+#endif /* _FS_SMBFS_SMBFS_H_ */

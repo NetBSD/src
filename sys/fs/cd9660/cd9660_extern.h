@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.15 2005/09/23 12:10:32 jmmv Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.16 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,9 @@
 /*
  * Definitions used in the kernel for cd9660 file system support.
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_ISOFSMNT);

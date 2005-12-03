@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.10 2005/09/25 21:17:05 jmmv Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.11 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,9 @@
  *
  * October 1992
  */
+
+#ifndef _MSDOSFS_MSDOSFSMOUNT_H_
+#define _MSDOSFS_MSDOSFSMOUNT_H_
 
 /*
  *  Arguments to mount MSDOS filesystems.
@@ -233,3 +236,4 @@ void msdosfs_done(void);
 SYSCTL_SETUP_PROTO(sysctl_vfs_msdosfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _MSDOSFS_MSDOSFSMOUNT_H_ */

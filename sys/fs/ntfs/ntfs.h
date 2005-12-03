@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.11 2005/10/23 04:28:53 christos Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.12 2005/12/03 17:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,6 +27,9 @@
  *
  *	Id: ntfs.h,v 1.5 1999/05/12 09:42:51 semenu Exp
  */
+
+#ifndef _NTFS_NTFS_H_
+#define _NTFS_NTFS_H_
 
 #if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
@@ -332,3 +335,4 @@ extern int ntfs_debug;
 #endif
 
 extern vop_t  **ntfs_vnodeop_p;
+#endif /* _NTFS_NTFS_H_ */
