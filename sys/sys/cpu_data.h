@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.3 2004/10/26 00:14:46 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.4 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
  *	NetBSD: cpu.h,v 1.115 2004/05/16 12:32:53 yamt Exp
  */
 
-#ifndef _CPU_DATA_H_
-#define	_CPU_DATA_H_
+#ifndef _SYS_CPU_DATA_H_
+#define	_SYS_CPU_DATA_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -82,4 +82,4 @@ struct cpu_data {
 #define	ci_simple_locks	ci_data.cpu_simple_locks
 #endif /* defined(DIAGNOSTIC) || defined(LOCKDEBUG) */
 
-#endif /* _CPU_DATA_H_ */
+#endif /* _SYS_CPU_DATA_H_ */
