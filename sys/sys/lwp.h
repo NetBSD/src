@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.30 2005/10/01 06:12:44 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.31 2005/12/03 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_LWP_H
-#define _SYS_LWP_H
+#ifndef _SYS_LWP_H_
+#define _SYS_LWP_H_
 
 
 #if defined(_KERNEL)

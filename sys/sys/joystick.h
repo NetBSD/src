@@ -1,7 +1,7 @@
-/*	$NetBSD: joystick.h,v 1.1 2004/07/02 17:00:31 drochner Exp $	*/
+/*	$NetBSD: joystick.h,v 1.2 2005/12/03 17:10:46 christos Exp $	*/
 
-#ifndef _JOY_IOCTL_H_
-#define _JOY_IOCTL_H_
+#ifndef _SYS_JOYSTICK_H_
+#define _SYS_JOYSTICK_H_
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -20,4 +20,4 @@ struct joystick {
 #define JOY_GET_X_OFFSET  _IOR('J', 5, int)    /* get offset on X-axis */
 #define JOY_GET_Y_OFFSET  _IOR('J', 6, int)    /* get offset on Y-axis */
 
-#endif /* _JOY_IOCTL_H_ */
+#endif /* _SYS_JOYSTICK_H_ */
