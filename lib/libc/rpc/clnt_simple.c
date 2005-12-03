@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.26 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.27 2005/12/03 15:16:19 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_simple.c 1.49 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.26 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.27 2005/12/03 15:16:19 yamt Exp $");
 #endif
 #endif
 
@@ -206,7 +206,7 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 	} /* else reuse old client */
 	tottimeout.tv_sec = 25;
 	tottimeout.tv_usec = 0;
-	clnt_stat = CLNT_CALL(rcp->client, procnum, inproc, __UNCONST(in),
+	clnt_stat = CLNT_CALL(rcp->client, procnum, inproc, in,
 	    outproc, out, tottimeout);
 	/*
 	 * if call failed, empty cache
