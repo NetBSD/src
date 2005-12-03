@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.11 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.12 2005/12/03 22:16:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -36,9 +36,8 @@
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  */
 
-#if !defined(_KERNEL)
-#error not supposed to be exposed to userland.
-#endif
+#ifndef _ISOFS_CD9660_CD9660_NODE_H_
+#define _ISOFS_CD9660_CD9660_NODE_H_
 
 #include <miscfs/genfs/genfs_node.h>
 
@@ -106,6 +105,7 @@ struct iso_node {
 #define VTOI(vp) ((struct iso_node *)(vp)->v_data)
 #define ITOV(ip) ((ip)->i_vnode)
 
+#ifdef _KERNEL
 /*
  * Prototypes for ISOFS vnode operations
  */
@@ -151,3 +151,5 @@ int	cd9660_vget_internal(struct mount *, ino_t, struct vnode **, int,
 struct iso_dnode *iso_dmap(dev_t, ino_t, int);
 void iso_dunmap(dev_t);
 #endif
+#endif /* _KERNEL */
+#endif /* _ISOFS_CD9660_CD9660_NODE_H_ */

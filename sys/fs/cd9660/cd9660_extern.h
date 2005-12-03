@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.16 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.17 2005/12/03 22:16:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,12 +39,8 @@
 /*
  * Definitions used in the kernel for cd9660 file system support.
  */
-#if !defined(_KERNEL)
-#error not supposed to be exposed to userland.
-#endif
-
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_ISOFSMNT);
+#ifndef _ISOFS_CD9660_CD9660_EXTERN_H_
+#define _ISOFS_CD9660_CD9660_EXTERN_H_
 
 /*
  * Sysctl values for the cd9660 filesystem.
@@ -94,6 +90,11 @@ struct iso_mnt {
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
+#ifdef _KERNEL
+
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_ISOFSMNT);
+
 extern struct pool cd9660_node_pool;
 extern int cd9660_utf8_joliet;
 
@@ -126,3 +127,6 @@ int isochar(const u_char *, const u_char *, int, u_int16_t *);
 int isofncmp(const u_char *, size_t, const u_char *, size_t, int);
 void isofntrans(u_char *, int, u_char *, u_short *, int, int, int, int);
 ino_t isodirino(struct iso_directory_record *, struct iso_mnt *);
+#endif /* _KERNEL */
+
+#endif /* _ISOFS_CD9660_CD9660_EXTERN_H_ */
