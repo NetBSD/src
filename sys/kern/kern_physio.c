@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.66 2005/11/04 08:39:33 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.67 2005/12/04 23:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.66 2005/11/04 08:39:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.67 2005/12/04 23:34:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,16 +173,15 @@ physio_done(struct work *wk, void *dummy)
 	 */
 
 	if (__predict_false((bp->b_flags & B_ERROR) != 0 &&
-	    ((mbp->b_flags & B_ERROR) == 0 || mbp->b_error == EINVAL))) {
+	    (mbp->b_error == 0 || mbp->b_error == EINVAL))) {
 		if (bp->b_error == 0) {
 			mbp->b_error = EIO; /* XXX */
 		} else {
 			mbp->b_error = bp->b_error;
 		}
 		mbp->b_flags |= B_ERROR;
-		goto done;
 	}
-done:
+
 	mbp->b_running--;
 	if ((mbp->b_flags & B_WANTED) != 0) {
 		mbp->b_flags &= ~B_WANTED;
