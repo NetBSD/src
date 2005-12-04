@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.8 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.9 2005/12/04 20:46:40 manu Exp $	*/
 
 /* Id: libpfkey.h,v 1.8.2.3 2005/06/29 13:01:28 manubsd Exp */
 
@@ -46,6 +46,7 @@
 
 struct sadb_msg;
 extern void pfkey_sadump __P((struct sadb_msg *));
+extern void pfkey_sadump_withports __P((struct sadb_msg *));
 extern void pfkey_spdump __P((struct sadb_msg *));
 extern void pfkey_spdump_withports __P((struct sadb_msg *));
 
