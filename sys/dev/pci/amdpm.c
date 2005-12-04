@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.9 2005/12/04 17:47:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.8 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.9 2005/12/04 17:47:33 christos Exp $");
 
 #include "opt_amdpm.h"
 
@@ -126,6 +126,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg | AMDPM_RNGEN);
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if (reg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */
