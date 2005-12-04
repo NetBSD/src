@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.49 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strtod.c,v 1.50 2005/12/04 17:57:25 christos Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.49 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.50 2005/12/04 17:57:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -2006,11 +2006,12 @@ __dtoa
 		{
 		/* Infinity or NaN */
 		*decpt = 9999;
-		s = __UNCONST(
+		s =
 #ifdef IEEE_Arith
-			!word1(d) && !(word0(d) & 0xfffff) ? "Infinity" :
+			!word1(d) && !(word0(d) & 0xfffff) ?
+			    __UNCONST("Infinity") :
 #endif
-				"NaN");
+			    __UNCONST("NaN");
 		if (rve)
 			*rve =
 #ifdef IEEE_Arith
