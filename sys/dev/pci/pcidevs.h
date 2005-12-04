@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.740 2005/11/27 10:19:03 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.741 2005/12/04 17:39:28 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.738 2005/11/27 10:17:26 jdolecek Exp
+ *	NetBSD: pcidevs,v 1.739 2005/12/04 17:39:03 christos Exp
  */
 
 /*
@@ -2470,6 +2470,8 @@
 #define	PCI_PRODUCT_PROMISE_PDC20619	0x6629		/* PDC20619 dual Ultra/133 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20620	0x6620		/* PDC20620 dual Ultra/133 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20621	0x6621		/* PDC20621 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC40718	0x3d17		/* PDC40718 SATA/300 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC40719	0x3515		/* PDC40719 SATA/300 IDE controller */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
