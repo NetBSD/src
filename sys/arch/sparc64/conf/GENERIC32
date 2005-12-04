@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.121 2005/11/25 16:41:32 thorpej Exp $
+# 	$NetBSD: GENERIC32,v 1.122 2005/12/04 07:53:29 sekiya Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 maxusers	64
 
@@ -490,14 +490,16 @@ tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Lucent/Intersil WaveLAN/IEEE
+wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
-# XXX: only nsphy "tested"
+# XXX: only nsphy and igphy "tested"
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
