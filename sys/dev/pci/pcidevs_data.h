@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.739 2005/12/04 17:39:28 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.740 2005/12/04 17:44:25 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.739 2005/12/04 17:39:03 christos Exp
+ *	NetBSD: pcidevs,v 1.740 2005/12/04 17:44:02 christos Exp
  */
 
 /*
@@ -4126,6 +4126,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001,
+	    "F5D6001",
 	},
 	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
@@ -10580,4 +10584,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2063;
+const int pci_nproducts = 2064;

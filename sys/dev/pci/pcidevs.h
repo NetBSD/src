@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.741 2005/12/04 17:39:28 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.742 2005/12/04 17:44:25 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.739 2005/12/04 17:39:03 christos Exp
+ *	NetBSD: pcidevs,v 1.740 2005/12/04 17:44:02 christos Exp
  */
 
 /*
@@ -1160,6 +1160,7 @@
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
 /* Belkin products */
+#define	PCI_PRODUCT_BELKIN_F5D6001	0x6001		/* F5D6001 */
 #define	PCI_PRODUCT_BELKIN_F5D6020V3	0x6020		/* F5D6020v3 802.11b */
 
 /* Stallion products */
