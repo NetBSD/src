@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.17 2005/11/27 14:01:45 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.18 2005/12/04 19:26:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -93,7 +93,7 @@
 				: "g" (reg));			\
 }))
 
-#define _splraise(reg)						\
+#define splraiseipl(reg)						\
 ({								\
 	register int __val;					\
 	__asm __volatile ("mfpr $0x12,%0"			\
@@ -115,13 +115,13 @@ do {								\
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
 #define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
-#define splddb()	_splraise(IPL_SOFTDDB)		/* IPL0F */
-#define splconsmedia()	_splraise(IPL_CONSMEDIA)	/* IPL14 */
+#define splddb()	splraiseipl(IPL_SOFTDDB)	/* IPL0F */
+#define splconsmedia()	splraiseipl(IPL_CONSMEDIA)	/* IPL14 */
 
 #include <sys/spl.h>
 
 /* These are better to use when playing with VAX buses */
-#define	spluba()	_splraise(IPL_UBA)		/* IPL17 */
+#define	spluba()	splraiseipl(IPL_UBA)		/* IPL17 */
 #define spl4()		splx(0x14)
 #define spl5()		splx(0x15)
 #define spl6()		splx(0x16)
