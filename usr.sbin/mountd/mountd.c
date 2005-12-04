@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.99 2005/11/18 13:19:48 yamt Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.100 2005/12/04 18:01:53 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.99 2005/11/18 13:19:48 yamt Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.100 2005/12/04 18:01:53 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1011,8 +1011,9 @@ get_exportlist(n)
 		/* Delete all entries from the export list. */
 		mel.mel_path = fsp->f_mntonname;
 		mel.mel_nexports = 0;
-		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1)
-			syslog(LOG_ERR, "Can't delete exports for %s",
+		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1 &&
+		    errno != EOPNOTSUPP)
+			syslog(LOG_ERR, "Can't delete exports for %s (%m)",
 			    fsp->f_mntonname);
 
 		fsp++;
