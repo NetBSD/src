@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.17 2005/09/15 08:42:09 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.18 2005/12/04 20:46:40 manu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -97,9 +97,7 @@ If
 is also specified, the SPD entries are dumped.
 If
 .Fl p
-is specified with
-.FL P ,
-the ports that can be used for ESP over UDP are displayed.
+is specified, the ports are displayed.
 .It Fl F
 Flush the SAD entries.
 If
@@ -266,7 +264,8 @@ Meta-arguments are as follows:
 .It Ar src
 .It Ar dst
 Source/destination of the secure communication is specified as
-an IPv4/v6 address.
+an IPv4/v6 address, and an optional port number between square
+brackets.
 .Nm
 can resolve a FQDN into numeric addresses.
 If the FQDN resolves into multiple addresses,

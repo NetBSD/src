@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.11 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.12 2005/12/04 20:46:40 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -107,10 +107,12 @@ do { \
 } while (/*CONSTCOND*/0)
 
 static char *str_ipaddr __P((struct sockaddr *));
+static char *str_ipport __P((struct sockaddr *));
 static char *str_prefport __P((u_int, u_int, u_int, u_int));
 static void str_upperspec __P((u_int, u_int, u_int));
 static char *str_time __P((time_t));
 static void str_lifetime_byte __P((struct sadb_lifetime *, char *));
+static void pfkey_sadump1(struct sadb_msg *, int);
 static void pfkey_spdump1(struct sadb_msg *, int);
 
 struct val2str {
@@ -210,9 +212,25 @@ static struct val2str str_alg_comp[] = {
 /*
  * dump SADB_MSG formated.  For debugging, you should use kdebug_sadb().
  */
+
 void
 pfkey_sadump(m)
 	struct sadb_msg *m;
+{
+	pfkey_sadump1(m, 0);
+}
+
+void
+pfkey_sadump_withports(m)
+	struct sadb_msg *m;
+{
+	pfkey_sadump1(m, 1);
+}
+
+void
+pfkey_sadump1(m, withports)
+	struct sadb_msg *m;
+	int withports;
 {
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_sa *m_sa;
@@ -231,6 +249,7 @@ pfkey_sadump(m)
 	struct sadb_x_nat_t_type *natt_type;
 	struct sadb_x_nat_t_port *natt_sport, *natt_dport;
 	struct sadb_address *natt_oa;
+	struct sockaddr *sa;
 
 	int use_natt = 0;
 #endif
@@ -276,7 +295,11 @@ pfkey_sadump(m)
 		printf("no ADDRESS_SRC extension.\n");
 		return;
 	}
-	printf("%s", str_ipaddr((void *)(m_saddr + 1)));
+	sa = (void *)(m_saddr + 1);
+	if (withports)
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+	else
+		printf("%s", str_ipaddr(sa));
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_sport)
 		printf("[%u]", ntohs(natt_sport->sadb_x_nat_t_port_port));
@@ -288,7 +311,11 @@ pfkey_sadump(m)
 		printf(" no ADDRESS_DST extension.\n");
 		return;
 	}
-	printf("%s", str_ipaddr((void *)(m_daddr + 1)));
+	sa = (void *)(m_daddr + 1);
+	if (withports)
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+	else
+		printf("%s", str_ipaddr(sa));
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_dport)
 		printf("[%u]", ntohs(natt_dport->sadb_x_nat_t_port_port));
@@ -601,6 +628,26 @@ str_ipaddr(sa)
 		return buf;
 	return NULL;
 }
+
+/*
+ * set "port" to buffer.
+ */
+static char *
+str_ipport(sa)
+	struct sockaddr *sa;
+{
+	static char buf[NI_MAXHOST];
+	const int niflag = NI_NUMERICSERV;
+
+	if (sa == NULL)
+		return "";
+
+	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), NULL, 0, 
+	    buf, sizeof(buf), niflag) == 0)
+		return buf;
+	return NULL;
+}
+
 
 /*
  * set "/prefix[port number]" to buffer.
