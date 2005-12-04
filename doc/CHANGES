@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.541 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.542 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -134,3 +134,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	posix_fadvise(2): Add.  (Only POSIX_FADV_NORMAL, POSIX_FADV_RANDOM,
 		and POSIX_FADV_SEQUENTIAL are implemented.) [yamt 20051130]
 	postfix: Updated to 2.2.6. [rpaulo 20051201]
+	auich(4): Now it supports ICH7 and Intel 6300ESB audio controllers.
+		[xtraeme 20051204]
