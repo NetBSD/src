@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.10 2005/11/25 17:33:56 thorpej Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.11 2005/12/04 19:15:21 christos Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.10 2005/11/25 17:33:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.11 2005/12/04 19:15:21 christos Exp $");
 #endif
 
 /*
@@ -505,28 +505,6 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 
 	va_end(ap);
 	return;
-}
-
-struct mbuf *
-m_getcl(int how, int type, int flags)
-{
-	struct mbuf *m;
-
-	if ((flags & M_PKTHDR) != 0)
-		MGETHDR(m, how, type);
-	else
-		MGET(m, how, type);
-
-	if (m == NULL)
-		return NULL;
-
-	MCLGET(m, flags);
-
-	if ((m->m_flags & M_EXT) == 0) {
-		m_free(m);
-		return NULL;
-	}
-	return m;
 }
 
 /*
