@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.7 2005/11/18 16:40:09 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.8 2005/12/04 19:15:21 christos Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -259,7 +259,6 @@ struct ieee80211_michael_event {
 	     var = nextvar)
 
 void	if_printf(struct ifnet *, const char *, ...);
-struct mbuf *m_getcl(int, int, int);
 int	m_append(struct mbuf *, int, const caddr_t);
 void	get_random_bytes(void *, size_t);
 

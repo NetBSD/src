@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.4 2005/08/26 11:20:33 drochner Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.5 2005/12/04 19:15:21 christos Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1110,18 +1110,6 @@ struct fw_hwaddr {
 				m_tag_get((type), (len), (wait))
 #define m_tag_locate(m, cookie, type, t) \
 				m_tag_find((m), (type), (t))
-
-static __inline struct mbuf *
-m_getcl(int how, short type, int flags)
-{
-	struct mbuf *m;
-
-	m = m_gethdr(how, type);
-	if (m != NULL)
-		m_clget(m, how);
-
-	return (m);
-}
 
 /*
  * bus_dma macros for NetBSD
