@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.26 2005/01/02 15:43:49 martin Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.27 2005/12/04 14:03:42 macallan Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.26 2005/01/02 15:43:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.27 2005/12/04 14:03:42 macallan Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -300,12 +300,21 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		*(int *)data = idx + 1;
 		return (0);
 	    case VT_ACTIVATE:
-		idx = *(int *)data - 1;
+	    	/*
+	    	 * a gross and disgusting hack to make this abused up ioctl, 
+		 * which is a gross and disgusting hack on its own, work on
+		 * LP64/BE - we want the lower 32bit so we simply dereference
+		 * the argument pointer as long. May cause problems with 32bit
+		 * kernels on sparc64?
+		 */
+
+		idx = *(long *)data - 1;
+		printf("VT_ACTIVATE %d\n", idx);
 		if (idx < 0)
 			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
-		idx = *(int *)data - 1;
+		idx = *(long *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
 		return (wsscreen_switchwait(sc, idx));
@@ -379,7 +388,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef cmode
 		return (0);
 	    case VT_RELDISP:
-#define d (*(int *)data)
+#define d (*(long *)data)
 		sd = usl_sync_get(scr);
 		if (!sd)
 			return (EINVAL);
