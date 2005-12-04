@@ -1,4 +1,4 @@
-.\"	$NetBSD: spell.1,v 1.3 2005/07/05 15:28:44 wiz Exp $
+.\"	$NetBSD: spell.1,v 1.4 2005/12/04 09:14:58 wiz Exp $
 .\"
 .\" derived from: OpenBSD: spell.1,v 1.6 2003/06/10 09:12:11 jmc Exp
 .\"
@@ -129,7 +129,7 @@ Site administrators may add words to the local word list,
 or the local stop list,
 .Pa /usr/local/share/dict/stop .
 .Pp
-All word (and stop) lists must be sorted in lexigraphical order
+All word (and stop) lists must be sorted in lexicographical order
 with case folded.
 The simplest way to achieve this is to use
 .Dq sort -df .
@@ -240,7 +240,7 @@ Unlike historic versions, the
 .Nx
 .Nm
 command does not use hashed word files.
-Instead, it uses lexigraphically sorted files and the same technique
+Instead, it uses lexicographically sorted files and the same technique
 as
 .Xr look 1 .
 .Sh BUGS
