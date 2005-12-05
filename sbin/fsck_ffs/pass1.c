@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.39 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.40 2005/12/05 23:59:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.39 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.40 2005/12/05 23:59:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			}
 		}
 	}
-	for (j = ndb; j < NDADDR; j++)
+	if (ndb < NDADDR) {
+	    for (j = ndb; j < NDADDR; j++)
 		if (DIP(dp, db[j]) != 0) {
 		    if (debug) {
 			if (!is_ufs2)
@@ -335,6 +336,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    }
 		    goto unknown;
 		}
+	}
 
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
 		ndb /= NINDIR(sblock);
