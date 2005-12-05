@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.14 2005/11/11 07:07:42 simonb Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.15 2005/12/05 10:31:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.14 2005/11/11 07:07:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.15 2005/12/05 10:31:00 kleink Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -386,6 +386,7 @@ netbsd32_settimeofday(l, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timeval atv32;
 	struct timeval atv;
+	struct timespec ts;
 	int error;
 	struct proc *p = l->l_proc;
 
@@ -396,10 +397,12 @@ netbsd32_settimeofday(l, v, retval)
 	    (error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)), &atv32,
 	    sizeof(atv32))))
 		return (error);
-	netbsd32_to_timeval(&atv32, &atv);
-	if (SCARG(uap, tv))
-		if ((error = settime(&atv)))
+	if (SCARG(uap, tv)) {
+		netbsd32_to_timeval(&atv32, &atv);
+		TIMEVAL_TO_TIMESPEC(&atv, &ts);
+		if ((error = settime(p, &ts)))
 			return (error);
+	}
 	/* don't bother copying the tz in, we don't use it. */
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
@@ -509,7 +512,6 @@ netbsd32_clock_settime(l, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timespec ts32;
 	clockid_t clock_id;
-	struct timeval atv;
 	struct timespec ats;
 	int error;
 	struct proc *p = l->l_proc;
@@ -526,8 +528,7 @@ netbsd32_clock_settime(l, v, retval)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &ats);
-	TIMESPEC_TO_TIMEVAL(&atv,&ats);
-	if ((error = settime(&atv)))
+	if ((error = settime(p, &ats)))
 		return (error);
 
 	return 0;
