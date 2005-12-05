@@ -32,19 +32,17 @@
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 2003/08/07 16:45:01 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2005/12/05 01:50:28 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 
-extern int yyparse __P((void));
-int main __P((int, char *[]));
+int yyparse(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+/*ARGSUSED*/
+main(int argc, char *argv[])
 {
-	exit(yyparse());
+	return yyparse();
 }
