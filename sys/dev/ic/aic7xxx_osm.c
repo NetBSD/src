@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.19 2005/11/28 21:03:20 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.20 2005/12/05 18:29:45 bouyer Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.19 2005/11/28 21:03:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.20 2005/12/05 18:29:45 bouyer Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -329,7 +329,9 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		break;
 	  }
 	case ADAPTER_REQ_GROW_RESOURCES:
+#ifdef AHC_DEBUG
 		printf("%s: ADAPTER_REQ_GROW_RESOURCES\n", ahc_name(ahc));
+#endif
   		chan->chan_adapter->adapt_openings += ahc_alloc_scbs(ahc);
 		if (ahc->scb_data->numscbs >= AHC_SCB_MAX_ALLOC)
 			chan->chan_flags &= ~SCSIPI_CHAN_CANGROW;
