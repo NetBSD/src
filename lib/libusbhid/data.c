@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.3 2003/07/26 19:25:08 salo Exp $	*/
+/*	$NetBSD: data.c,v 1.4 2005/12/05 02:09:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.3 2003/07/26 19:25:08 salo Exp $");
+__RCSID("$NetBSD: data.c,v 1.4 2005/12/05 02:09:17 christos Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -39,7 +39,7 @@ hid_get_data(const void *p, const hid_item_t *h)
 	const unsigned char *buf;
 	unsigned int hpos;
 	unsigned int hsize;
-	int data;
+	uint32_t data;
 	int i, end, offs;
 
 	_DIAGASSERT(p != NULL);
@@ -63,7 +63,7 @@ hid_get_data(const void *p, const hid_item_t *h)
 		hsize = sizeof data * 8 - hsize;
 		data = (data << hsize) >> hsize;
 	}
-	return (data);
+	return (int)(data);
 }
 
 void
@@ -95,6 +95,6 @@ hid_set_data(void *p, const hid_item_t *h, int data)
 	end = (hpos + hsize) / 8 - offs;
 
 	for (i = 0; i <= end; i++)
-		buf[offs + i] = (buf[offs + i] & (mask >> (i*8))) |
-			((data >> (i*8)) & 0xff);
+		buf[offs + i] = (buf[offs + i] & ((uint32_t)mask >> (i*8))) |
+			(((uint32_t)data >> (i*8)) & 0xff);
 }
