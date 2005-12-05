@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.76 2005/11/29 22:52:03 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.77 2005/12/05 01:24:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.76 2005/11/29 22:52:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.77 2005/12/05 01:24:07 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1398,7 +1398,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	npages = 1;
 	/* locked: aobj */
 	rv = uao_get(&aobj->u_obj, pageidx << PAGE_SHIFT,
-		     &pg, &npages, 0, VM_PROT_READ|VM_PROT_WRITE, 0, 0);
+	    &pg, &npages, 0, VM_PROT_READ|VM_PROT_WRITE, 0, PGO_SYNCIO);
 	/* unlocked: aobj */
 
 	/*
