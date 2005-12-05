@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.19 2003/03/08 07:47:49 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.20 2005/12/05 02:04:16 christos Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.19 2003/03/08 07:47:49 lukem Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.20 2005/12/05 02:04:16 christos Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -248,6 +248,7 @@ _rmt_rexec(const char *host, const char *user)
 #define MAXHOSTLEN	257	/* BSD allows very long host names... */
 
 static int
+/*ARGSUSED*/
 _rmt_open(const char *path, int oflag, int mode)
 {
 	int i, rc;
@@ -412,27 +413,30 @@ _rmt_close(int fildes)
 static ssize_t
 _rmt_read(int fildes, void *buf, size_t nbyte)
 {
-	size_t rc, i;
+	size_t rc;
+	int rv;
+	ssize_t nread;
 	char *p;
 	char buffer[BUFMAGIC];
 
 	_DIAGASSERT(buf != NULL);
 
 	(void)snprintf(buffer, sizeof buffer, "R%lu\n", (u_long)nbyte);
-	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
+	if (command(fildes, buffer) == -1 || (rv = status(fildes)) == -1)
 		return (-1);
 
-	p = buf;
-	for (i = 0; i < rc; i += nbyte, p += nbyte) {
-		nbyte = read(READ(fildes), p, rc);
-		if (nbyte <= 0) {
+	if (rv > nbyte)
+		rv = nbyte;
+
+	for (rc = rv, p = buf; rc > 0; rc -= nread, p += nread) {
+		if ((nread = read(READ(fildes), p, rc)) <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
 			return (-1);
 		}
 	}
 
-	return (rc);
+	return rv;
 }
 
 
@@ -472,6 +476,7 @@ _rmt_lseek(int fildes, off_t offset, int whence)
 {
 	char buffer[BUFMAGIC];
 
+	/*LONGLONG*/
 	(void)snprintf(buffer, sizeof buffer, "L%lld\n%d\n", (long long)offset,
 	    whence);
 	if (command(fildes, buffer) == -1)
@@ -489,7 +494,9 @@ static int
 _rmt_ioctl(int fildes, unsigned long op, void *arg)
 {
 	char c;
-	size_t rc, cnt;
+	int rv;
+	size_t rc;
+	ssize_t cnt;
 	char buffer[BUFMAGIC], *p;
 
 	_DIAGASSERT(arg != NULL);
@@ -524,13 +531,11 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  *	NOTE - this is probably NOT a good assumption.
  */
 
-	if (command(fildes, "S") == -1 || (rc = status(fildes)) == -1)
+	if (command(fildes, "S") == -1 || (rv = status(fildes)) == -1)
 		return (-1);
 
-	p = arg;
-	for (; rc > 0; rc -= cnt, p += cnt) {
-		cnt = read(READ(fildes), p, rc);
-		if (cnt <= 0) {
+	for (rc = rv, p = arg; rc > 0; rc -= cnt, p += cnt) {
+		if ((cnt = read(READ(fildes), p, rc)) <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
 			return (-1);
@@ -544,7 +549,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  *	and reverse all the bytes
  */
 
-	if (((struct mtget *) p)->mt_type < 256)
+	if (((struct mtget *)(void *)p)->mt_type < 256)
 		return (0);
 
 	for (cnt = 0; cnt < rc; cnt += 2) {
@@ -634,7 +639,7 @@ rmtopen(const char *path, int oflag, ...)
 	_DIAGASSERT(path != NULL);
 
 	if (remdev(path)) {
-		fd = _rmt_open(path, oflag, mode);
+		fd = _rmt_open(path, oflag, (int)mode);
 
 		return ((fd == -1) ? -1 : (fd + REM_BIAS));
 	} else {
