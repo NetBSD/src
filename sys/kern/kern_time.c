@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.97 2005/11/26 05:26:33 simonb Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.97 2005/11/26 05:26:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -118,15 +118,38 @@ static void timerupcall(struct lwp *, void *);
 
 /* This function is used by clock_settime and settimeofday */
 int
-settime(struct timeval *tv)
+settime(struct proc *p, struct timespec *ts)
 {
-	struct timeval delta;
+	struct timeval delta, tv;
 	struct cpu_info *ci;
 	int s;
 
+	/*
+	 * Don't allow the time to be set forward so far it will wrap
+	 * and become negative, thus allowing an attacker to bypass
+	 * the next check below.  The cutoff is 1 year before rollover
+	 * occurs, so even if the attacker uses adjtime(2) to move
+	 * the time past the cutoff, it will take a very long time
+	 * to get to the wrap point.
+	 *
+	 * XXX: we check against INT_MAX since on 64-bit
+	 *	platforms, sizeof(int) != sizeof(long) and
+	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
+	 */
+	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
+		struct proc *pp = p->p_pptr;
+		log(LOG_WARNING, "pid %d (%s) "
+		    "invoked by uid %d ppid %d (%s) "
+		    "tried to set clock forward to %ld\n",
+		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
+		return (EPERM);
+	}
+	TIMESPEC_TO_TIMEVAL(&tv, ts);
+
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	s = splclock();
-	timersub(tv, &time, &delta);
+	timersub(&tv, &time, &delta);
 	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1) {
 		splx(s);
 		return (EPERM);
@@ -137,7 +160,7 @@ settime(struct timeval *tv)
 		return (EPERM);
 	}
 #endif
-	time = *tv;
+	time = tv;
 	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	/*
@@ -203,15 +226,14 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	return (clock_settime1(SCARG(uap, clock_id), SCARG(uap, tp)));
+	return (clock_settime1(p, SCARG(uap, clock_id), SCARG(uap, tp)));
 }
 
 
 int
-clock_settime1(clockid_t clock_id, const struct timespec *tp)
+clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp)
 {
 	struct timespec ats;
-	struct timeval atv;
 	int error;
 
 	if ((error = copyin(tp, &ats, sizeof(ats))) != 0)
@@ -219,8 +241,7 @@ clock_settime1(clockid_t clock_id, const struct timespec *tp)
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:
-		TIMESPEC_TO_TIMEVAL(&atv, &ats);
-		if ((error = settime(&atv)) != 0)
+		if ((error = settime(p, &ats)) != 0)
 			return (error);
 		break;
 	case CLOCK_MONOTONIC:
@@ -371,35 +392,25 @@ settimeofday1(const struct timeval *utv, const struct timezone *utzp,
     struct proc *p)
 {
 	struct timeval atv;
-	struct timezone atz;
-	struct timeval *tv = NULL;
-	struct timezone *tzp = NULL;
+	struct timespec ts;
 	int error;
 
 	/* Verify all parameters before changing time. */
-	if (utv) {
-		if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
-			return (error);
-		tv = &atv;
-	}
-	/* XXX since we don't use tz, probably no point in doing copyin. */
-	if (utzp) {
-		if ((error = copyin(utzp, &atz, sizeof(atz))) != 0)
-			return (error);
-		tzp = &atz;
-	}
-
-	if (tv)
-		if ((error = settime(tv)) != 0)
-			return (error);
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
-	if (tzp)
+	if (utzp)
 		log(LOG_WARNING, "pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", p->p_pid);
-	return (0);
+
+	if (utv == NULL) 
+		return 0;
+
+	if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
+		return error;
+	TIMEVAL_TO_TIMESPEC(&atv, &ts);
+	return settime(p, &ts);
 }
 
 int	tickdelta;			/* current clock skew, us. per tick */
