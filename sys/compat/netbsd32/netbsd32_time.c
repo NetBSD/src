@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.16 2005/12/05 15:16:51 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.17 2005/12/05 15:17:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.16 2005/12/05 15:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.17 2005/12/05 15:17:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -528,14 +528,7 @@ netbsd32_clock_settime(l, v, retval)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &ats);
-<<<<<<< netbsd32_time.c
 	return settime(p, &ats);
-=======
-	if ((error = settime(p, &ats)))
-		return (error);
-
-	return 0;
->>>>>>> 1.15
 }
 
 int
