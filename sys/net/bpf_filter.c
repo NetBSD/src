@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.24 2005/11/30 23:14:38 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.25 2005/12/05 21:46:00 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,13 +37,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.24 2005/11/30 23:14:38 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.25 2005/12/05 21:46:00 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
 static const char rcsid[] =
     "@(#) Header: bpf_filter.c,v 1.33 97/04/26 13:37:18 leres Exp  (LBL)";
 #endif
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "bpfilter.h"  
+#endif
+
+#ifdef NBPFILTER
+extern int bpf_maxbufsize;
+#else
+#define bpf_maxbufsize BPF_MAXBUFSIZE
 #endif
 
 #include <sys/param.h>
