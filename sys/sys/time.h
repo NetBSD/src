@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.51 2005/10/23 00:09:14 cube Exp $	*/
+/*	$NetBSD: time.h,v 1.52 2005/12/05 00:16:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -214,13 +214,13 @@ int	itimerdecr(struct ptimer *, int);
 void	itimerfire(struct ptimer *);
 void	microtime(struct timeval *);
 struct timespec	*nanotime(struct timespec *);
-int	settime(struct timeval *);
+int	settime(struct proc *p, struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
 int	settimeofday1(const struct timeval *, const struct timezone *,
 	    struct proc *);
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
-int	clock_settime1(clockid_t, const struct timespec *);
+int	clock_settime1(struct proc *, clockid_t, const struct timespec *);
 void	timer_settime(struct ptimer *);
 void	timer_gettime(struct ptimer *, struct itimerval *);
 void	timers_alloc(struct proc *);
