@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.13 2005/02/27 00:26:58 perry Exp $ */
+/*      $NetBSD: clockctl.c,v 1.14 2005/12/05 00:16:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.14 2005/12/05 00:16:34 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -103,7 +103,7 @@ clockctlioctl(dev, cmd, data, flags, p)
 			struct sys_clock_settime_args *args =
 			    (struct sys_clock_settime_args *)data;
 
-			error = clock_settime1(SCARG(args, clock_id),
+			error = clock_settime1(p, SCARG(args, clock_id),
 			    SCARG(args, tp));
 			if (error)
 				return (error);

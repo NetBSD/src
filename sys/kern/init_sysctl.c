@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.56 2005/10/08 06:35:56 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.57 2005/12/05 00:16:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.56 2005/10/08 06:35:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.57 2005/12/05 00:16:34 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1075,8 +1075,8 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 static int
 sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 {
-	struct timeval tv, delta;
-	int s, error, new_rtc_offset;
+	struct timespec ts, delta;
+	int error, new_rtc_offset;
 	struct sysctlnode node;
 
 	new_rtc_offset = rtc_offset;
@@ -1092,14 +1092,12 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 		return (0);
 
 	/* if we change the offset, adjust the time */
-	s = splclock();
-	tv = time;
-	splx(s);
-	delta.tv_sec = 60*(new_rtc_offset - rtc_offset);
-	delta.tv_usec = 0;
-	timeradd(&tv, &delta, &tv);
+	nanotime(&ts);
+	delta.tv_sec = 60 * (new_rtc_offset - rtc_offset);
+	delta.tv_nsec = 0;
+	timespecadd(&ts, &delta, &ts);
 	rtc_offset = new_rtc_offset;
-	settime(&tv);
+	settime(l->l_proc, &ts);
 
 	return (0);
 }
