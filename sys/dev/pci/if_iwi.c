@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.42 2005/11/29 13:57:00 rpaulo Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.43 2005/12/05 09:24:54 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.42 2005/11/29 13:57:00 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.43 2005/12/05 09:24:54 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1893,9 +1893,12 @@ iwi_get_radio(struct iwi_softc *sc, int *ret)
 static int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+#define	IS_RUNNING(ifp) \
+	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
+
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1911,13 +1914,22 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
+		if (error == ENETRESET) {
+			/* setup multicast filter, etc */
+			error = 0;
+		}
+		break;
+
 	case SIOCGTABLE0:
-		ifr = (struct ifreq *)data;
 		error = iwi_get_table0(sc, (uint32_t *)ifr->ifr_data);
 		break;
 
 	case SIOCGRADIO:
-		ifr = (struct ifreq *)data;
 		error = iwi_get_radio(sc, (int *)ifr->ifr_data);
 		break;
 
@@ -1926,7 +1938,6 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
 			break;
 
-		ifr = (struct ifreq *)data;
 		error = iwi_cache_firmware(sc, ifr->ifr_data);
 		break;
 
@@ -1942,18 +1953,18 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
-	}
 
-	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING) &&
-		    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
-			iwi_init(ifp);
-		error = 0;
+		if (error == ENETRESET) {
+			if (IS_RUNNING(ifp) &&
+			    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
+				iwi_init(ifp);
+			error = 0;
+		}
 	}
 
 	splx(s);
 	return error;
+#undef IS_RUNNING
 }
 
 static void
@@ -2711,14 +2722,16 @@ iwi_init(struct ifnet *ifp)
 		goto fail;
 	}
 
+	ic->ic_state = IEEE80211_S_INIT;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	} else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_flags |= IFF_RUNNING;
 
 	return 0;
 
