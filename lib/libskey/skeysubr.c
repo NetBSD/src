@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.24 2005/09/25 14:34:54 elad Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.25 2005/12/05 02:07:07 christos Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.24 2005/09/25 14:34:54 elad Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.25 2005/12/05 02:07:07 christos Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -493,7 +493,7 @@ static void skey_echo(int action)
 	if (action == 0) {
 		/* Turn echo off */
 		(void) tcgetattr(fileno(stdin), &term);
-		if ((echo = (term.c_lflag & ECHO))) {
+		if ((echo = (term.c_lflag & ECHO)) != 0) {
 			term.c_lflag &= ~ECHO;
 			(void) tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
 		}
