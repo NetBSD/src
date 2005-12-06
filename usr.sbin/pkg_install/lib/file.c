@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.75 2005/11/23 04:59:14 ben Exp $	*/
+/*	$NetBSD: file.c,v 1.76 2005/12/06 01:07:30 ben Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -17,7 +17,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.75 2005/11/23 04:59:14 ben Exp $");
+__RCSID("$NetBSD: file.c,v 1.76 2005/12/06 01:07:30 ben Exp $");
 #endif
 #endif
 
@@ -676,7 +676,7 @@ unpack(const char *pkg, const lfile_head_t *filesp)
 		printf("\n");
 	}
 
-	result = pfcexec(NULL, (const char **)up_argv);
+	result = pfcexec(NULL, TAR_CMD, (const char **)up_argv);
 	free(up_argv);
 	if (result != 0) {
 		warnx("extract of %s failed", pkg);
