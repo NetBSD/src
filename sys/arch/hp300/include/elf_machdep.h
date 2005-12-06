@@ -1,8 +1,3 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 1998/07/12 01:17:59 thorpej Exp $	*/
-
-#ifndef _MACHINE_ELF_MACHDEP_H_
-#define _MACHINE_ELF_MACHDEP_H_
+/*	$NetBSD: elf_machdep.h,v 1.2 2005/12/06 17:02:53 tsutsui Exp $	*/
 
 #include <m68k/elf_machdep.h>
-
-#endif
