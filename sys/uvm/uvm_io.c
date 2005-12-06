@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.21 2005/06/27 02:19:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.22 2005/12/06 16:01:13 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.21 2005/06/27 02:19:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.22 2005/12/06 16:01:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,6 @@ uvm_io(struct vm_map *map, struct uio *uio)
 		if (sz > togo)
 			sz = togo;
 		error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
-		if (error)
-			break;
 		togo -= sz;
 		baseva += chunksz;
 
@@ -145,6 +143,9 @@ uvm_io(struct vm_map *map, struct uio *uio)
 		vm_map_unlock(kernel_map);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, AMAP_REFALL);
+
+		if (error)
+			break;
 	}
 	return (error);
 }
