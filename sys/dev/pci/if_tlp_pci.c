@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.83 2005/12/06 15:40:16 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.84 2005/12/06 18:37:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.83 2005/12/06 15:40:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.84 2005/12/06 18:37:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,11 +255,6 @@ static const struct tulip_pci_product *
 tlp_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct tulip_pci_product *tpp;
-
-	/* Don't match lmc cards */
-	if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
-				     PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
-		return 0;
 
 	for (tpp = tlp_pci_products;
 	     tlp_chip_names[tpp->tpp_chip] != NULL;
