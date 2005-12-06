@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.579 2005/11/19 02:03:43 christos Exp $
+# $NetBSD: mi,v 1.580 2005/12/06 03:19:02 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -135,7 +135,7 @@
 ./sbin/ipf					base-netutil-root	ipfilter
 ./sbin/ipppctl					base-netutil-root
 ./sbin/ispppcontrol				base-obsolete		obsolete
-./sbin/lmcctl					base-netutil-root
+./sbin/lmcctl					base-obsolete		obsolete
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
 ./sbin/modload					base-sysutil-root
@@ -1023,6 +1023,7 @@
 ./usr/sbin/lastlogin				base-sysutil-bin
 ./usr/sbin/link					base-sysutil-bin
 ./usr/sbin/linkfarm				base-pkgutil-bin
+./usr/sbin/lmcconfig				base-netutil-bin
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
