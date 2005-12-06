@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.833 2005/11/26 22:42:10 christos Exp $
+#	$NetBSD: mi,v 1.834 2005/12/06 11:53:57 skrll Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -373,8 +373,9 @@
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_levar.h		comp-obsolete		obsolete
-./usr/include/dev/pci/if_lmc_types.h		comp-c-include
-./usr/include/dev/pci/if_lmcioctl.h		comp-c-include
+./usr/include/dev/pci/if_lmc.h			comp-c-include
+./usr/include/dev/pci/if_lmc_types.h		comp-c-include		obsolete
+./usr/include/dev/pci/if_lmcioctl.h		comp-c-include		obsolete
 ./usr/include/dev/pci/if_lmcvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_tlregs.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/mlyio.h			comp-c-include
