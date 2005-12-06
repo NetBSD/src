@@ -1,8 +1,3 @@
-/*	$NetBSD: reg.h,v 1.1 1999/12/09 14:53:12 tsutsui Exp $	*/
-
-#ifndef _MACHINE_REG_H_
-#define	_MACHINE_REG_H_
+/*	$NetBSD: reg.h,v 1.2 2005/12/06 16:51:17 tsutsui Exp $	*/
 
 #include <m68k/reg.h>
-
-#endif /* _MACHINE_REG_H_ */
