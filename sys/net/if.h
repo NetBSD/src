@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.111 2005/07/27 06:36:15 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.112 2005/12/06 02:56:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -384,7 +384,7 @@ struct ifnet {				/* and the entries */
  */
 #define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)
-#define	IF_ENQUEUE(ifq, m) { \
+#define	IF_ENQUEUE(ifq, m) do { \
 	(m)->m_nextpkt = 0; \
 	if ((ifq)->ifq_tail == 0) \
 		(ifq)->ifq_head = m; \
@@ -392,15 +392,15 @@ struct ifnet {				/* and the entries */
 		(ifq)->ifq_tail->m_nextpkt = m; \
 	(ifq)->ifq_tail = m; \
 	(ifq)->ifq_len++; \
-}
-#define	IF_PREPEND(ifq, m) { \
+} while (/*CONSTCOND*/0)
+#define	IF_PREPEND(ifq, m) do { \
 	(m)->m_nextpkt = (ifq)->ifq_head; \
 	if ((ifq)->ifq_tail == 0) \
 		(ifq)->ifq_tail = (m); \
 	(ifq)->ifq_head = (m); \
 	(ifq)->ifq_len++; \
-}
-#define	IF_DEQUEUE(ifq, m) { \
+} while (/*CONSTCOND*/0)
+#define	IF_DEQUEUE(ifq, m) do { \
 	(m) = (ifq)->ifq_head; \
 	if (m) { \
 		if (((ifq)->ifq_head = (m)->m_nextpkt) == 0) \
@@ -408,7 +408,7 @@ struct ifnet {				/* and the entries */
 		(m)->m_nextpkt = 0; \
 		(ifq)->ifq_len--; \
 	} \
-}
+} while (/*CONSTCOND*/0) 
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
 do {									\
