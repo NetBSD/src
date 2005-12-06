@@ -1,4 +1,4 @@
-.\" $NetBSD: lmc.4,v 1.6 2005/12/06 21:57:09 wiz Exp $
+.\" $NetBSD: lmc.4,v 1.7 2005/12/06 21:58:49 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2005 David Boggs. (boggs@boggs.palo-alto.ca.us)
 .\" All rights reserved.
@@ -326,30 +326,30 @@ To patch an Ethernet device driver:
 .if \n[fbsd] \{\
 .Pp
 add this line to
-.Ic "tulip_pci_probe()"
+.Fn tulip_pci_probe
 in
 .Pa sys/pci/if_de.c : \}
 .if (\n[nbsd] : \n[obsd]) \{\
 .Pp
 add this line to
-.Ic "tulip_pci_probe()"
+.Fn tulip_pci_probe
 in
 .Pa /sys/dev/pci/if_de.c :
 .Pp
 add this line to
-.Ic "dc_pci_match()   "
+.Fn dc_pci_match
 in
 .Pa sys/dev/pci/if_dc_pci.c :
 .if \n[nbsd] \{\
 .Pp
 add this line to
-.Ic "tlp_pci_match()  "
+.Fn tlp_pci_match
 in
 .Pa sys/dev/pci/if_tlp_pci.c : \} \}
 .if \n[bsdi] \{\
 .Pp
 add this line to
-.Ic "tulip_pci_match()"
+.Fn tulip_pci_match
 in
 .Pa sys/i386/pci/if_de.c : \}
 .Pp
