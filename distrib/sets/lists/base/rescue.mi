@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.16 2005/09/23 00:31:42 christos Exp $
+# $NetBSD: rescue.mi,v 1.17 2005/12/06 14:02:58 skrll Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -55,7 +55,8 @@
 ./rescue/ktruss					base-rescue-root
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
-./rescue/lmcctl					base-rescue-root
+./rescue/lmcctl					base-rescue-root	obsolete
+./rescue/lmcconfig				base-rescue-root
 ./rescue/ln					base-rescue-root
 ./rescue/ls					base-rescue-root
 ./rescue/mbrlabel				base-rescue-root
