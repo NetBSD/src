@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.330 2005/11/29 10:36:48 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.331 2005/12/06 20:13:27 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14583,4 +14583,34 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.0_RC5.
+
+lib/libc/gen/sysctl.3				1.158
+
+	Change the entry from "foobar" to "not applicable" in the "Changeable"
+	field of kern.veriexec.count.
+	[elad, ticket #1016]
+
+sys/uvm/uvm_glue.c				patch
+sys/uvm/uvm_km.c				patch
+
+	Correct a return value of uvm_km_valloc1 in the case of failure.
+	Do waitok allocation for uvm_uarea_alloc so that it won't fail on
+	temporary memory shortage.
+	[yamt, ticket #1015]
+
+sys/dev/tc/bba.c				1.26
+
+	Fix AUDIO_DEBUG printf formatting of size_t; from Pavel Cahyna in
+	PR kern/32207.
+	[kleink, ticket #1019]
+
+share/man/man4/options.4			1.294
+
+	Add a bit more data on where to go with option PIM.
+	[hubertf, ticket #1021]
+
+share/man/man4/options.4			1.295 via patch
+
+	bump date for previous (PIM)
+	[hubertf, ticket #1022]
 
