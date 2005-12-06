@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.77 2005/02/26 22:31:44 perry Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.77.2.1 2005/12/06 20:00:12 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.77 2005/02/26 22:31:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.77.2.1 2005/12/06 20:00:12 riz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -762,6 +762,10 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 	    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flags));
 
 	KASSERT(error == 0 || (flags & UVM_KMF_NOWAIT) != 0);
+
+	if (error) {
+		return 0;
+	}
 
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 
