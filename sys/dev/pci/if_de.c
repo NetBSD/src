@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.115 2005/12/06 03:30:12 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.116 2005/12/06 15:40:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.115 2005/12/06 03:30:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.116 2005/12/06 15:40:16 thorpej Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5581,7 +5581,8 @@ tulip_pci_probe(
     if (PCI_VENDORID(pa->pa_id) != DEC_VENDORID)
 	return 0;
     /* Don't match lmc cards */
-    if ((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x2C) & 0xFFFF) == 0x1376)
+    if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
+				 PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
 	return 0;
     if (PCI_CHIPID(pa->pa_id) == CHIPID_21040
 	    || PCI_CHIPID(pa->pa_id) == CHIPID_21041
