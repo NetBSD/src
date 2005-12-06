@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.332 2005/12/06 22:11:07 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.333 2005/12/06 23:45:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14640,4 +14640,35 @@ share/man/man4/auich.4				1.19-1.21
 	Intel ICH7 and 6300ESB are supported by this driver.  Some
 	cosmetic fixes, too.
 	[xtraeme, ticket #1028]
+
+share/man/man5/rc.conf.5			1.95 via patch
+
+	Add information about recently added veriexec_strict and
+	veriexec_verbose rc.conf variables.
+	[elad, ticket #974]
+
+libexec/ld.elf_so/symbol.c			1.39
+
+	In _rtld_is_exported(), use a function pointer type instead of Elf_Addr
+	so that hppa knows to do the plabel thang.
+	[oster, ticket #1012]
+
+distrib/amd64/floppies/ramdisk/list.inet6	1.2
+distrib/cats/ramdisk/list.inet6			1.2
+distrib/ibmnws/netboot/ramdisk/list.inet6	1.2
+distrib/macppc/floppies/ramdisk/list.inet6	1.2
+distrib/x68k/floppies/ramdisk/list.inet6	1.2
+
+	Fix path of ping6 and rtsol. Fixes PR install/32240.
+	[dsl, ticket #1030]
+
+sys/kern/kern_time.c				patch
+
+	Avoid time wrap when setting the system time.
+	[christos, ticket #1031]
+
+src/distrib/notes/common/postinstall		patch
+
+	Fix ".end-preformat" problem reported by Pavel Cahyna in private mail.
+	[wiz, ticket #1032]
 
