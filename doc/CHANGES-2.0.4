@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.12 2005/12/01 22:23:25 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.13 2005/12/06 16:51:04 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -101,4 +101,9 @@ sys/dev/ic/anvar.h				1.9 via patch
 	Thanks to Jim Miller for his valuable bug reports and testing, and
 	to Dheeraj Reddy for RID-length patches.
 	[jnemeth, ticket #10159]
+
+sys/kern/kern_time.c				patch
+
+	Avoid time wrap when setting the system time.
+	[christos, ticket #10184]
 
