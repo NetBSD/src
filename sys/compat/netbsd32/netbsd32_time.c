@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.17 2005/12/05 15:17:18 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.18 2005/12/06 13:37:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.17 2005/12/05 15:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18 2005/12/06 13:37:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -402,7 +402,7 @@ netbsd32_settimeofday(l, v, retval)
 		printf("pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", p->p_pid);
 
-	if (SCARG(uap, tv) == NULL)
+	if (SCARG(uap, tv) == 0)
 		return 0;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)), &atv32,
