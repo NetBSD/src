@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lmcconfig.c,v 1.1 2005/12/06 03:12:35 christos Exp $");
+__RCSID("$NetBSD: lmcconfig.c,v 1.2 2005/12/06 16:32:49 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -1087,23 +1087,28 @@ void print_hssi_sigs()
 
 void print_events()
   {
-  char *time;
+  const char *time;
   struct timeval tv;
   struct timezone tz;
+  time_t tsec;
 
-  gettimeofday(&tv, &tz);
-  time = (char *)ctime((time_t *)&tv);
+  (void)gettimeofday(&tv, &tz);
+  tsec = tv.tv_sec;
+  time = ctime(&tsec);
   printf("Current time:\t\t%s", time);
   if (status.cntrs.reset_time.tv_sec < 1000)
     time = "Never\n";
-  else
-    time = (char *)ctime((time_t *)&status.cntrs.reset_time.tv_sec);
+  else 
+    {
+    tsec = status.cntrs.reset_time.tv_sec;
+    time = ctime(&tsec);
+    }
   printf("Cntrs reset:\t\t%s", time);
 
-  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%qu\n",    status.cntrs.ibytes);
-  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%qu\n",    status.cntrs.obytes);
-  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%qu\n",  status.cntrs.ipackets);
-  if (status.cntrs.opackets)   printf("Tx packets:\t\t%qu\n",  status.cntrs.opackets);
+  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",    (uint64_t)status.cntrs.ibytes);
+  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",    (uint64_t)status.cntrs.obytes);
+  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n",  (uint64_t)status.cntrs.ipackets);
+  if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n",  status.cntrs.opackets);
   if (status.cntrs.ierrors)    printf("Rx errors:\t\t%u\n",    status.cntrs.ierrors);
   if (status.cntrs.oerrors)    printf("Tx errors:\t\t%u\n",    status.cntrs.oerrors);
   if (status.cntrs.idrops)     printf("Rx drops:\t\t%u\n",     status.cntrs.idrops);
