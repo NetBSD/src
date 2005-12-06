@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lmcconfig.c,v 1.3 2005/12/06 21:05:36 abs Exp $");
+__RCSID("$NetBSD: lmcconfig.c,v 1.4 2005/12/06 22:48:05 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -1105,9 +1105,9 @@ void print_events()
     }
   printf("Cntrs reset:\t\t%s", time);
 
-  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",    (uint64_t)status.cntrs.ibytes);
-  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",    (uint64_t)status.cntrs.obytes);
-  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n",  (uint64_t)status.cntrs.ipackets);
+  if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.ibytes);
+  if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.obytes);
+  if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n",  (unsigned long long)status.cntrs.ipackets);
   if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n",  status.cntrs.opackets);
   if (status.cntrs.ierrors)    printf("Rx errors:\t\t%u\n",    status.cntrs.ierrors);
   if (status.cntrs.oerrors)    printf("Tx errors:\t\t%u\n",    status.cntrs.oerrors);
