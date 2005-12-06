@@ -1,5 +1,5 @@
 .\"
-.\" $Id: lmc.4,v 1.4 2005/12/06 03:02:35 christos Exp $
+.\" $Id: lmc.4,v 1.5 2005/12/06 21:39:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2005 David Boggs. (boggs@boggs.palo-alto.ca.us)
 .\" All rights reserved.
@@ -29,18 +29,18 @@
 .\"
 .\" GNU General Public License:
 .\"
-.\" This program is free software; you can redistribute it and/or modify it 
-.\" under the terms of the GNU General Public License as published by the Free 
-.\" Software Foundation; either version 2 of the License, or (at your option) 
+.\" This program is free software; you can redistribute it and/or modify it
+.\" under the terms of the GNU General Public License as published by the Free
+.\" Software Foundation; either version 2 of the License, or (at your option)
 .\" any later version.
-.\" 
-.\" This program is distributed in the hope that it will be useful, but WITHOUT 
-.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
+.\"
+.\" This program is distributed in the hope that it will be useful, but WITHOUT
+.\" ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+.\" FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 .\" more details.
 .\"
 .\" You should have received a copy of the GNU General Public License along with
-.\" this program; if not, write to the Free Software Foundation, Inc., 59 
+.\" this program; if not, write to the Free Software Foundation, Inc., 59
 .\" Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 .\"
 .\" I forget these things:
@@ -843,7 +843,7 @@ excludes it.
 .Pp
 The driver can send and receive raw IP packets even if
 Generic-HDLC is not configured into the kernel.
-The device name will be 
+The device name will be
 .Ic "hdlc<n>"
 if the generic HDLC code is used, or
 .Ic "lmc<n>"
@@ -915,7 +915,7 @@ must be run before
 and the generic-hdlc kernel code are documented in
 .Ic "/usr/src/linux/Documentation/networking/generic-hdlc.txt"
 and at
-.Ic "http://hq.pm.waw.pl/hdlc" 
+.Ic "http://hq.pm.waw.pl/hdlc"
 .Pp
 Activate a PPP link with:
 .br
@@ -1217,7 +1217,7 @@ The output from tcpdump should look like this:
 .br
 .Ic "03:54:35.981423 10.0.0.1 > 10.0.0.2: icmp: echo reply"
 .br
-Line protocol control packets will appear among the 
+Line protocol control packets will appear among the
 ping packets occasionally. \}
 .if (\n[fbsd] : \n[linux]) \{\
 .Sp
