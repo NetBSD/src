@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.h,v 1.20 2004/08/28 19:46:41 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.21 2005/12/06 17:06:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_HPUX_MACHDEP_H_
-#define _MACHINE_HPUX_MACHDEP_H_
+#ifndef _HP300_HPUX_MACHDEP_H_
+#define _HP300_HPUX_MACHDEP_H_
 
 /*
  * Information pushed on stack when a signal is delivered.
@@ -78,4 +78,4 @@ void	hpux_sendsig(const ksiginfo_t *, const sigset_t *);
 void	hpux_setregs(struct lwp *, struct exec_package *, u_long);
 #endif /* _KERNEL */
 
-#endif /* ! _MACHINE_HPUX_MACHDEP_H_ */
+#endif /* ! _HP300_HPUX_MACHDEP_H_ */
