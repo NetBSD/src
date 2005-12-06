@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.168 2005/11/29 12:40:41 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.169 2005/12/06 16:45:10 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2084,4 +2084,9 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.114 via patch
 
 	Fix 64 bit truncation problem allowing to read arbitrary kernel memory.
 	[christos, ticket #5952]
+
+sys/kern/kern_time.c				patch
+
+	Avoid time wrap when setting the system time.
+	[christos, ticket #5966]
 
