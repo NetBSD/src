@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.18 2005/12/02 11:32:45 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.19 2005/12/06 16:52:39 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -320,4 +320,14 @@ usr.bin/cap_mkdb/cap_mkdb.c			patch
 
 	PR bin/32142: Fix build problem caused by ticket #5978.
 	[christos, ticket #10182]
+
+sys/kern/kern_time.c				patch
+
+	Avoid time wrap when setting the system time.
+	[christos, ticket #10184]
+
+sys/kern/kern_time.c				patch
+
+	Avoid time wrap when setting the system time.
+	[christos, ticket #10184]
 
