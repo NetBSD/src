@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2003/08/07 16:28:50 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2005/12/06 16:52:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,8 +76,8 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PARAM_H_
-#define	_MACHINE_PARAM_H_
+#ifndef	_NEWS68K_PARAM_H_
+#define	_NEWS68K_PARAM_H_
 
 /*
  * Interrupt glue.
@@ -143,4 +143,4 @@ void	_delay(u_int);
 	((unsigned)(v) & ~HPMMMASK)
 #endif
 
-#endif	/* !_MACHINE_PARAM_H_ */
+#endif	/* !_NEWS68K_PARAM_H_ */
