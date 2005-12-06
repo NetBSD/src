@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.82 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.82.2.1 2005/12/06 16:50:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.82 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.82.2.1 2005/12/06 16:50:39 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -119,6 +119,28 @@ settime(struct timeval *tv)
 	struct cpu_info *ci;
 	int s;
 
+	/*
+	 * Don't allow the time to be set forward so far it will wrap
+	 * and become negative, thus allowing an attacker to bypass
+	 * the next check below.  The cutoff is 1 year before rollover
+	 * occurs, so even if the attacker uses adjtime(2) to move
+	 * the time past the cutoff, it will take a very long time
+	 * to get to the wrap point.
+	 *
+	 * XXX: we check against INT_MAX since on 64-bit
+	 *	platforms, sizeof(int) != sizeof(long) and
+	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
+	 */
+	if (tv->tv_sec > INT_MAX - 365*24*60*60) {
+		struct proc *p = curproc();
+		struct proc *pp = p->p_pptr;
+		log(LOG_WARNING, "pid %d (%s) "
+		    "invoked by uid %d ppid %d (%s) "
+		    "tried to set clock forward to %ld\n",
+		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    pp->p_pid, pp->p_comm, (long)tv->tv_sec);
+		return (EPERM);
+	}
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	s = splclock();
 	timersub(tv, &time, &delta);
