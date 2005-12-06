@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2002/09/25 19:30:23 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 2005/12/06 17:15:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HP300_AUTOCONF_H_
+#define _HP300_AUTOCONF_H_
+
 #ifdef _KERNEL
 void	hp300_cninit(void);
 void	iomap_init(void);
@@ -45,3 +48,5 @@ void	iounmap(caddr_t, int);
 extern struct extent *extio_ex;
 extern int extio_ex_malloc_safe;
 #endif /* _KERNEL */
+
+#endif /* !_HP300_AUTOCONF_H_ */
