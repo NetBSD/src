@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.10 2005/12/03 17:34:44 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.11 2005/12/06 21:46:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -424,7 +424,6 @@ VFS_TO_TMPFS(struct mount *mp)
 
 	KASSERT((mp) != NULL && (mp)->mnt_data != NULL);
 	tmp = (struct tmpfs_mount *)(mp)->mnt_data;
-	KASSERT(TMPFS_PAGES_MAX(tmp) >= tmp->tm_pages_used);
 	return tmp;
 }
 
