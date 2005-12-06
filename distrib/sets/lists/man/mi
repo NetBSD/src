@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.839 2005/11/25 21:19:05 christos Exp $
+# $NetBSD: mi,v 1.840 2005/12/06 03:20:27 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1891,7 +1891,8 @@
 ./usr/share/man/cat8/ldconfig.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/link.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/lmcctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/lmcconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/lmcctl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/lmtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/local.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/locate.updatedb.0		man-sysutil-catman	.cat
@@ -4181,7 +4182,8 @@
 ./usr/share/man/man8/ldconfig.8			man-sysutil-man		.man
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man		.man
 ./usr/share/man/man8/link.8			man-sysutil-man		.man
-./usr/share/man/man8/lmcctl.8			man-sysutil-man		.man
+./usr/share/man/man8/lmcconfig.8		man-sysutil-man		.man
+./usr/share/man/man8/lmcctl.8			man-obsolete		obsolete
 ./usr/share/man/man8/lmtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/local.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/locate.updatedb.8		man-sysutil-man 	.man
