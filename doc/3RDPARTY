@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.383 2005/12/01 22:06:53 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.384 2005/12/06 22:46:10 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -531,6 +531,7 @@ markus is very cooperative about it):
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
+- always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
 Version:	0.9.8a
