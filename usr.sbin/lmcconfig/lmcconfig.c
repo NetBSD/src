@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lmcconfig.c,v 1.2 2005/12/06 16:32:49 christos Exp $");
+__RCSID("$NetBSD: lmcconfig.c,v 1.3 2005/12/06 21:05:36 abs Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -2014,7 +2014,7 @@ static void load_xilinx(char *name)
   FILE *f;
   char *ucode;
   int i, length;
-  char c;
+  int c;
 
   if (verbose) printf("Load firmware from file %s...\n", name);
   if ((f = fopen(name, "r")) == 0)
