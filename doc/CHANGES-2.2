@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.19 2005/12/06 16:52:39 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.20 2005/12/06 16:57:04 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -330,4 +330,14 @@ sys/kern/kern_time.c				patch
 
 	Avoid time wrap when setting the system time.
 	[christos, ticket #10184]
+
+sys/dev/usb/usb_subr.c				1.130
+
+	usbd_setup_pipe(): Don't call usbd_clear_endpoint_stall(). It's not
+	necessary for normal devices, and it prevents some common (but
+	apparantly buggy) devices from working, including the Apple iPod (mini
+	and photo) and certain M-Systems DiskOnKey flash devices.
+	If (also buggy) devices resurface that need this when they are
+	attached, they can be addressed, ideally in each device's driver.
+	[riz, ticket #10181]
 
