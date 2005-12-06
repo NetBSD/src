@@ -1,4 +1,4 @@
-.\" $NetBSD: lmc.4,v 1.7 2005/12/06 21:58:49 wiz Exp $
+.\" $NetBSD: lmc.4,v 1.8 2005/12/06 22:06:27 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2005 David Boggs. (boggs@boggs.palo-alto.ca.us)
 .\" All rights reserved.
@@ -250,11 +250,11 @@ displays interface configuration and status.
 .if \n[obsd] \{\
 .Pp
 Some configuration options are available through
-.Ic "ifconfig"
+.Xr ifconfig 8
 as well as
-.Ic "lmcconfig" .
+.Xr lmcconfig 8 .
 .Pp
-.Ic "ifconfig lmc0 media e1 timeslot all
+.Ic "ifconfig lmc0 media e1 timeslot all"
 .Pp
 selects E1 format using all 32 timeslots.
 .Pp
@@ -352,60 +352,71 @@ add this line to
 .Fn tulip_pci_match
 in
 .Pa sys/i386/pci/if_de.c : \}
-.Pp
 .if \n[fbsd] \{\
-.Ic "if (pci_get_subvendor(dev)==0x1376)"
-.Pp
-.Ic "   return ENXIO;"
+.Bd -literal -offset indent
+if (pci_get_subvendor(dev)==0x1376)
+   return ENXIO;
+.Ed
 .Pp
 This driver should already be patched. \}
 .if (\n[nbsd] : \n[obsd]) \{\
-.Ic "if ((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x2C) & 0xFFFF)==0x1376)"
-.Pp
-.Ic "	return 0;"
+.Bd -literal -offset indent
+if ((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x2C) & 0xFFFF)==0x1376)
+	return 0;
+.Ed
 .Pp \}
 .if \n[bsdi] \{\
-.Ic "if ((pci_inl(pa, 0x2C) & 0xFFFF)==0x1376)"
-.Pp
-.Ic "	return 0;"
+.Bd -literal -offset indent
+if ((pci_inl(pa, 0x2C) & 0xFFFF)==0x1376)
+	return 0;
+.Ed
 .Pp \}
 Make sure you patch the correct routine: many Ethernet drivers
 contain probe/match routines for several operating systems inside
 .Ic "#ifdefs" .
 .Pp
-.Ic "/var/log/messages"
+.Pa /var/log/messages
 should contain a boot message like this:
 .Pp
 .if \n[fbsd] \{\
-.Ic "freebsd-4: pci0: <unknown card> (vendor=0x1011, dev=0x0009) at 18.0 irq 9"
-.Pp
-.Ic "freebsd-5: pci0: <network, ethernet> at device 18.0 (no driver attached)" \}
+.Bd -literal -offset indent
+freebsd-4: pci0: <unknown card> (vendor=0x1011, dev=0x0009) at 18.0 irq 9
+freebsd-5: pci0: <network, ethernet> at device 18.0 (no driver attached)
+.Ed \}
 .if \n[nbsd] \{\
-.Ic "vendor 0x1011 product 0x0009 (ethernet network, revision 0x22)
-.Pp
-.Ic "at pci0 dev 18 function 0 not configured" \}
+.Bd -literal -offset indent
+vendor 0x1011 product 0x0009 (ethernet network, revision 0x22)
+at pci0 dev 18 function 0 not configured
+.Ed \}
 .if \n[obsd] \{\
-.Ic "DEC 21140 rev 0x22 at pci0 dev 18 function 0 not configured" \}
+.Bd -literal -offset indent
+DEC 21140 rev 0x22 at pci0 dev 18 function 0 not configured
+.Ed \}
 .if \n[bsdi] \{\
-.Ic "lmc0 at pci0 iobase 0xe880 irq 10 maddr 0xfebeff00-0xfebeff7f" \}
+.Bd -literal -offset indent
+lmc0 at pci0 iobase 0xe880 irq 10 maddr 0xfebeff00-0xfebeff7f
+.Ed \}
 .if (\n[nbsd] : \n[obsd] : \n[bsdi]) \{\
 .Pp
 If the boot message looks like this:
 .Pp
 .if \n[obsd] \{\
-.Ic "de1 at pci0 dev 18 function 0 DEC 21140 rev 0x22:"
-.Pp
-.Ic "de1: can't read ENET ROM (why=-4) (76130600000 ..."
-.Pp
-.Ic "de1: 21140A [10-100Mb/s] pass 2.2 address unknown"
+.Bd -literal -offset indent
+de1 at pci0 dev 18 function 0 DEC 21140 rev 0x22:
+de1: can't read ENET ROM (why=-4) (76130600000 ...
+de1: 21140A [10-100Mb/s] pass 2.2 address unknown
+.Ed
 .Pp \}
 .if \n[nbsd] \{\
-.Ic "tlp0 at pci0 dev 18 function 0: DECchip 21140A Ethernet, pass 2.2"
-.Pp
-.Ic "tlp0: sorry, unable to handle your board"
+.Bd -literal -offset indent
+tlp0 at pci0 dev 18 function 0: DECchip 21140A Ethernet, pass 2.2
+tlp0: sorry, unable to handle your board
+.Ed
 .Pp \}
 .if \n[bsdi] \{\
-.Ic "stray interrupt on irq 9"
+.Bd -literal -offset indent
+stray interrupt on irq 9
+.Ed
 .Pp \}
 then the Ethernet driver needs patching. \} \}
 .if \n[fbsd] \{\
@@ -527,7 +538,8 @@ To load this module at boot time, add
 .Ic "if_lmc_load=""YES"""
 .Pp
 to
-.Ic "/boot/loader.conf"; see
+.Pa /boot/loader.conf ;
+see
 .Xr loader.conf 5 . \}
 .if \n[fbsd] \{\
 .Sp
