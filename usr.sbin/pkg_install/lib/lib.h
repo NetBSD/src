@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.80 2005/11/28 01:49:39 ben Exp $ */
+/* $NetBSD: lib.h,v 1.81 2005/12/06 01:07:30 ben Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -313,7 +313,7 @@ void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
 int	fcexec(const char *, const char *, ...);
-int	pfcexec(const char *path, const char **argv);
+int	pfcexec(const char *, const char *, const char **);
 pipe_to_system_t	*pipe_to_system_begin(const char *, char *const *, void (*)(void));
 int	pipe_to_system_end(pipe_to_system_t *);
 

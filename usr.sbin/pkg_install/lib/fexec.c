@@ -65,7 +65,7 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.9 2005/11/23 04:59:14 ben Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.10 2005/12/06 01:07:30 ben Exp $");
 #endif
 
 static int	vfcexec(const char *, int, const char *, va_list);
@@ -76,7 +76,7 @@ static int	vfcexec(const char *, int, const char *, va_list);
  * wait for the command to finish, then return the exit status.
  */
 int
-pfcexec(const char *path, const char **argv)
+pfcexec(const char *path, const char *file, const char **argv)
 {
 	pid_t			child;
 	int			status;
@@ -87,7 +87,7 @@ pfcexec(const char *path, const char **argv)
 		if ((path != NULL) && (chdir(path) < 0))
 			_exit(127);
 
-		(void) execvp(argv[0], (char ** const)argv);
+		(void)execvp(file, (char ** const)argv);
 		_exit(127);
 		/* NOTREACHED */
 	case -1:
@@ -146,7 +146,7 @@ vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 		argv[argc++] = arg;
 	} while (arg != NULL);
 
-	return pfcexec(path, argv);
+	return pfcexec(path, argv[0], argv);
 }
 
 int
