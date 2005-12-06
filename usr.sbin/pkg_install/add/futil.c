@@ -1,4 +1,4 @@
-/*	$NetBSD: futil.c,v 1.17 2005/11/23 12:01:30 tron Exp $	*/
+/*	$NetBSD: futil.c,v 1.18 2005/12/06 01:07:30 ben Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.17 2005/11/23 12:01:30 tron Exp $");
+__RCSID("$NetBSD: futil.c,v 1.18 2005/12/06 01:07:30 ben Exp $");
 #endif
 #endif
 
@@ -107,7 +107,7 @@ apply_perms(char *dir, char **args, int nargs)
 		argv[0] = CHMOD_CMD;
 		argv[1] = "-R";
 		argv[2] = Mode;
-		if (pfcexec(cd_to, argv))
+		if (pfcexec(cd_to, argv[0], argv))
 			warnx("couldn't change modes of '%s' ... to '%s'",
 			    args[0], Mode);
 	}
@@ -122,7 +122,7 @@ apply_perms(char *dir, char **args, int nargs)
 		argv[0] = CHOWN_CMD;
 		argv[1] = "-R";
 		argv[2] = owner_group;
-		if (pfcexec(cd_to, argv))
+		if (pfcexec(cd_to, argv[0], argv))
 			warnx("couldn't change owner/group of '%s' ... to '%s:%s'",
 				args[0], Owner, Group);
 		free(argv);
@@ -132,7 +132,7 @@ apply_perms(char *dir, char **args, int nargs)
 		argv[0] = CHOWN_CMD;
 		argv[1] = "-R";
 		argv[2] = Owner;
-		if (pfcexec(cd_to, argv))
+		if (pfcexec(cd_to, argv[0], argv))
 			warnx("couldn't change owner of '%s' ... to '%s'",
 				args[0], Owner);
 		free(argv);
@@ -143,7 +143,7 @@ apply_perms(char *dir, char **args, int nargs)
 		argv[0] = CHGRP_CMD;
 		argv[1] = "-R";
 		argv[2] = Group;
-		if (pfcexec(cd_to, argv))
+		if (pfcexec(cd_to, argv[0], argv))
 			warnx("couldn't change group of '%s' ... to '%s'",
 				args[0], Group);
 	}
