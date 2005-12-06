@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.90.2.1 2005/10/30 02:33:15 jmc Exp $	*/
+/*	$NetBSD: auich.c,v 1.90.2.2 2005/12/06 22:03:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.90.2.1 2005/10/30 02:33:15 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.90.2.2 2005/12/06 22:03:08 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,8 @@ static const struct audio_format auich_formats[AUICH_NFORMATS] = {
 #define PCIID_ICH4		PCI_ID_CODE0(INTEL, 82801DB_AC)
 #define PCIID_ICH5		PCI_ID_CODE0(INTEL, 82801EB_AC)
 #define PCIID_ICH6		PCI_ID_CODE0(INTEL, 82801FB_AC)
+#define PCIID_ICH7		PCI_ID_CODE0(INTEL, 82801G_ACA)
+#define PCIID_I6300ESB		PCI_ID_CODE0(INTEL, 6300ESB_ACA)
 #define PCIID_SIS7012		PCI_ID_CODE0(SIS, 7012_AC)
 #define PCIID_NFORCE		PCI_ID_CODE0(NVIDIA, NFORCE_MCP_AC)
 #define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
@@ -361,6 +363,8 @@ static const struct auich_devtype {
 	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio", "ICH4" },
 	{ PCIID_ICH5,	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
 	{ PCIID_ICH6,	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_ICH7,	"i82801GB/GR (ICH7) AC-97 Audio",	"ICH7" },
+	{ PCIID_I6300ESB,	"Intel 6300ESB AC-97 Audio",	"I6300ESB" },
 	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",	"SiS7012" },
 	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
@@ -423,9 +427,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %s\n", d->name);
 
-	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6) {
+	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6 ||
+	    d->id == PCIID_ICH7 || d->id == PCIID_I6300ESB ) {
 		/*
-		 * Use native mode for ICH4/ICH5/ICH6
+		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
