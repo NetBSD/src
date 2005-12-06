@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2002/09/27 20:06:44 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 2005/12/06 17:17:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Izumi Tsutsui.  All rights reserved.
@@ -26,6 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NEWS68K_AUTOCONF_H_
+#define _NEWS68K_AUTOCONF_H_
+
 /* Shorthand for locators. */
 #include "locators.h"
 #define cf_systype cf_loc[MAINBUSCF_SYSTYPE]
@@ -35,3 +38,4 @@ struct mainbus_attach_args {
 	int		ma_systype;	/* system type */
 };
 
+#endif /* !_NEWS68K_AUTOCONF_H_ */

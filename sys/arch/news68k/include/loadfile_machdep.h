@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2001/10/31 17:20:47 thorpej Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.5 2005/12/06 17:17:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NEWS68K_LOADFILE_MACHDEP_H_
+#define _NEWS68K_LOADFILE_MACHDEP_H_
+
 #define BOOT_AOUT
 #define BOOT_ELF32
 
@@ -67,3 +70,5 @@
 #define OKMAGIC(a)		((a) == NMAGIC || (a) == OMAGIC)
 
 #endif
+
+#endif /* !_NEWS68K_LOADFILE_MACHDEP_H_ */
