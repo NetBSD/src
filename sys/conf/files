@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.745 2005/11/27 22:44:35 thorpej Exp $
+#	$NetBSD: files,v 1.746 2005/12/07 00:42:03 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -166,7 +166,6 @@ defparam			SB_MAX
 #
 defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
-defflag				VNODE_OP_NOINLINE
 defflag				VNODE_LOCKDEBUG
 defflag				ROOTFS_MAGICLINKS
 
