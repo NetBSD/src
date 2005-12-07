@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.18 2005/11/27 22:36:51 riz Exp $
+.\"	$NetBSD: main,v 1.278.2.19 2005/12/07 19:33:08 riz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -617,8 +617,8 @@ Many improvements for
 ADMtek ADM8211 802.11 wireless network driver.
 .It
 .Xr auich 4
-now supports nForce2 Ultra 400, nForce3 250 MCP-T AC-97, and
-nForce4 audio controllers.
+now supports nForce2 Ultra 400, nForce3 250 MCP-T AC-97,
+nForce4, Intel ICH7, and Intel 6300ESB audio controllers.
 .It
 .Xr auvia 4
 now supports suspend and resume.
@@ -864,7 +864,7 @@ tcpdump 3.8.3
 .It
 texinfo 4.7
 .It
-tzdata2005n
+tzdata2005o
 .It
 XFree86 4.5.0
 .bullet)
