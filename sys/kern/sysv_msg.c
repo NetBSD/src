@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.39 2005/04/01 11:59:37 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $");
 
 #define SYSVMSG
 
@@ -89,7 +89,7 @@ struct	msqid_ds *msqids;		/* MSGMNI msqid_ds struct's */
 static void msg_freehdr(struct __msg *);
 
 void
-msginit()
+msginit(void)
 {
 	int i, sz;
 	vaddr_t v;
@@ -157,8 +157,7 @@ msginit()
 }
 
 static void
-msg_freehdr(msghdr)
-	struct __msg *msghdr;
+msg_freehdr(struct __msg *msghdr)
 {
 	while (msghdr->msg_ts > 0) {
 		short next;
@@ -181,10 +180,7 @@ msg_freehdr(msghdr)
 }
 
 int
-sys___msgctl13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___msgctl13_args /* {
 		syscallarg(int) msqid;
@@ -213,11 +209,7 @@ sys___msgctl13(l, v, retval)
 }
 
 int
-msgctl1(p, msqid, cmd, msqbuf)
-	struct proc *p;
-	int msqid;
-	int cmd;
-	struct msqid_ds *msqbuf;
+msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 {
 	struct ucred *cred = p->p_ucred;
 	struct msqid_ds *msqptr;
@@ -314,10 +306,7 @@ msgctl1(p, msqid, cmd, msqbuf)
 }
 
 int
-sys_msgget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_msgget(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_msgget_args /* {
 		syscallarg(key_t) key;
@@ -404,10 +393,7 @@ sys_msgget(l, v, retval)
 }
 
 int
-sys_msgsnd(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
@@ -680,10 +666,7 @@ sys_msgsnd(l, v, retval)
 }
 
 int
-sys_msgrcv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_msgrcv_args /* {
 		syscallarg(int) msqid;
