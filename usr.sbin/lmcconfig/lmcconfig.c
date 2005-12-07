@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lmcconfig.c,v 1.4 2005/12/06 22:48:05 christos Exp $");
+__RCSID("$NetBSD: lmcconfig.c,v 1.5 2005/12/07 13:59:12 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -1108,7 +1108,7 @@ void print_events()
   if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.ibytes);
   if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",    (unsigned long long)status.cntrs.obytes);
   if (status.cntrs.ipackets)   printf("Rx packets:\t\t%llu\n",  (unsigned long long)status.cntrs.ipackets);
-  if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n",  status.cntrs.opackets);
+  if (status.cntrs.opackets)   printf("Tx packets:\t\t%llu\n",  (unsigned long long)status.cntrs.opackets);
   if (status.cntrs.ierrors)    printf("Rx errors:\t\t%u\n",    status.cntrs.ierrors);
   if (status.cntrs.oerrors)    printf("Tx errors:\t\t%u\n",    status.cntrs.oerrors);
   if (status.cntrs.idrops)     printf("Rx drops:\t\t%u\n",     status.cntrs.idrops);
