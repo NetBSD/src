@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.67 2005/10/29 12:31:07 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.68 2005/12/07 06:05:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.67 2005/10/29 12:31:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.68 2005/12/07 06:05:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,10 +208,7 @@ static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
 
 /* ARGSUSED */
 int
-sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_pipe(struct lwp *l, void *v, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
@@ -278,9 +275,7 @@ free2:
  * If it fails it will return ENOMEM.
  */
 static int
-pipespace(pipe, size)
-	struct pipe *pipe;
-	int size;
+pipespace(struct pipe *pipe, int size)
 {
 	caddr_t buffer;
 	/*
@@ -307,9 +302,7 @@ pipespace(pipe, size)
  * Initialize and allocate VM and memory for pipe.
  */
 static int
-pipe_create(pipep, allockva)
-	struct pipe **pipep;
-	int allockva;
+pipe_create(struct pipe **pipep, int allockva)
 {
 	struct pipe *pipe;
 	int error;
@@ -338,9 +331,7 @@ pipe_create(pipep, allockva)
  * Return with pipe spin lock released on success.
  */
 static int
-pipelock(pipe, catch)
-	struct pipe *pipe;
-	int catch;
+pipelock(struct pipe *pipe, int catch)
 {
 
 	LOCK_ASSERT(simple_lock_held(&pipe->pipe_slock));
@@ -366,8 +357,7 @@ pipelock(pipe, catch)
  * unlock a pipe I/O lock
  */
 static __inline void
-pipeunlock(pipe)
-	struct pipe *pipe;
+pipeunlock(struct pipe *pipe)
 {
 
 	KASSERT(pipe->pipe_state & PIPE_LOCKFL);
@@ -384,9 +374,7 @@ pipeunlock(pipe)
  * 'sigpipe' side of pipe.
  */
 static void
-pipeselwakeup(selp, sigp, code)
-	struct pipe *selp, *sigp;
-	int code;
+pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 {
 	int band;
 
@@ -423,12 +411,8 @@ pipeselwakeup(selp, sigp, code)
 
 /* ARGSUSED */
 static int
-pipe_read(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+pipe_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
@@ -615,9 +599,7 @@ unlocked_error:
  * Allocate structure for loan transfer.
  */
 static int
-pipe_loan_alloc(wpipe, npages)
-	struct pipe *wpipe;
-	int npages;
+pipe_loan_alloc(struct pipe *wpipe, int npages)
 {
 	vsize_t len;
 
@@ -638,8 +620,7 @@ pipe_loan_alloc(wpipe, npages)
  * Free resources allocated for loan transfer.
  */
 static void
-pipe_loan_free(wpipe)
-	struct pipe *wpipe;
+pipe_loan_free(struct pipe *wpipe)
 {
 	vsize_t len;
 
@@ -662,10 +643,7 @@ pipe_loan_free(wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(fp, wpipe, uio)
-	struct file *fp;
-	struct pipe *wpipe;
-	struct uio *uio;
+pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 {
 	int error, npages, j;
 	struct vm_page **pgs;
@@ -812,12 +790,8 @@ pipe_direct_write(fp, wpipe, uio)
 #endif /* !PIPE_NODIRECT */
 
 static int
-pipe_write(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+pipe_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct pipe *wpipe, *rpipe;
 	struct pipebuf *bp;
@@ -1092,11 +1066,7 @@ retry:
  * we implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	void *data;
-	struct proc *p;
+pipe_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1171,10 +1141,7 @@ pipe_ioctl(fp, cmd, data, p)
 }
 
 int
-pipe_poll(fp, events, td)
-	struct file *fp;
-	int events;
-	struct proc *td;
+pipe_poll(struct file *fp, int events, struct proc *td)
 {
 	struct pipe *rpipe = (struct pipe *)fp->f_data;
 	struct pipe *wpipe;
@@ -1231,10 +1198,7 @@ retry:
 }
 
 static int
-pipe_stat(fp, ub, td)
-	struct file *fp;
-	struct stat *ub;
-	struct proc *td;
+pipe_stat(struct file *fp, struct stat *ub, struct proc *td)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1259,9 +1223,7 @@ pipe_stat(fp, ub, td)
 
 /* ARGSUSED */
 static int
-pipe_close(fp, td)
-	struct file *fp;
-	struct proc *td;
+pipe_close(struct file *fp, struct proc *td)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1271,8 +1233,7 @@ pipe_close(fp, td)
 }
 
 static void
-pipe_free_kmem(pipe)
-	struct pipe *pipe;
+pipe_free_kmem(struct pipe *pipe)
 {
 
 	if (pipe->pipe_buffer.buffer != NULL) {
@@ -1299,9 +1260,7 @@ pipe_free_kmem(pipe)
  * shutdown the pipe
  */
 static void
-pipeclose(fp, pipe)
-	struct file *fp;
-	struct pipe *pipe;
+pipeclose(struct file *fp, struct pipe *pipe)
 {
 	struct pipe *ppipe;
 
