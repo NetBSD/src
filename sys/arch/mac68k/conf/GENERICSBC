@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.48 2005/08/19 05:19:53 christos Exp $
+#	$NetBSD: GENERICSBC,v 1.49 2005/12/07 09:10:16 tsutsui Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.48 $"
+#ident 		"GENERICSBC-$Revision: 1.49 $"
 
 maxusers	16		# estimated number of users
 
@@ -105,7 +105,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
