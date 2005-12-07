@@ -1,5 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2005/10/20 20:08:33 dsl Exp $	*/
-#define USE_ACORN
+/*	$NetBSD: main.c,v 1.8 2005/12/07 04:38:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -48,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.7 2005/10/20 20:08:33 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2005/12/07 04:38:32 jmc Exp $");
 #endif
 #endif	/* not lint */
 
