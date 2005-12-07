@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.334 2005/12/07 18:21:36 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.335 2005/12/07 20:13:55 riz Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14689,4 +14689,63 @@ sys/dev/ic/aic7xxx_osm.c			1.20
 
 	Wrap debug printf in AHC_DEBUG.
 	[bouyer, ticket #1033]
+
+sys/dev/pci/ehci_pci.c				1.18-1.21
+sys/dev/usb/ehcireg.h				1.22-1.23
+
+	Go through the prescribed process to get ownership of the controller
+	from BIOS before we start using it.  This seems to fix the problems
+	some people have been experiencing with keyboards not working.
+	[gendalia, ticket #1034]
+
+sys/dev/pci/bktr/bktr_audio.c			1.14
+
+	Handle MSP3435G the same as MSP3430G. From Scott Presnell in PR 28682.
+	[wiz, ticket #1035]
+
+distrib/notes/common/main			patch
+
+	Update install notes to match recent pullups.
+	[tsutsui, ticket #1036]
+
+sbin/fsck_ffs/pass1.c				1.40
+
+	ndb is daddr_t which is 64 bits, by truncating it to j which is an
+	int, it can get negative causing segmentation faults. Check against
+	this.
+	[christos, ticket #1037]
+
+distrib/notes/acorn26/whatis			patch
+distrib/notes/acorn32/whatis			patch
+distrib/notes/alpha/whatis			patch
+distrib/notes/amiga/whatis			patch
+distrib/notes/atari/whatis			patch
+distrib/notes/cats/whatis			patch
+distrib/notes/evbarm/whatis			patch
+distrib/notes/evbppc/whatis			patch
+distrib/notes/hp300/whatis			patch
+distrib/notes/hp700/whatis			patch
+distrib/notes/hpcmips/whatis			patch
+distrib/notes/mac68k/whatis			patch
+distrib/notes/macppc/whatis			patch
+distrib/notes/mvme68k/whatis			patch
+distrib/notes/news68k/whatis			patch
+distrib/notes/newsmips/whatis			patch
+distrib/notes/next68k/whatis			patch
+distrib/notes/pc532/whatis			patch
+distrib/notes/pmax/whatis			patch
+distrib/notes/sandpoint/whatis			patch
+distrib/notes/sgimips/prep			patch
+distrib/notes/sgimips/whatis			patch
+distrib/notes/shark/whatis			patch
+distrib/notes/sparc/whatis			patch
+distrib/notes/sun2/whatis			patch
+distrib/notes/sun3/whatis			patch
+distrib/notes/vax/whatis			patch
+distrib/notes/x68k/whatis			patch
+distrib/notes/xen/whatis			patch
+
+	Update the port-specific install notes to correct egregious
+	out-of-dateness.
+	[tsutsui, ticket #1038]
 
