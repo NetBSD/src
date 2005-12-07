@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2005/12/07 09:10:20 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.33 2005/12/07 12:40:48 tsutsui Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -81,7 +81,6 @@ file-system	KERNFS		# /kern
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.43 2005/12/07 09:10:15 tsutsui Exp $
+# $NetBSD: NET4501,v 1.44 2005/12/07 12:40:47 tsutsui Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.43 $"
+#ident 		"NET4501-$Revision: 1.44 $"
 
 maxusers	32		# estimated number of users
 
@@ -24,7 +24,6 @@ options 	I486_CPU
 options 	TIMER_FREQ=1189200
 
 makeoptions	COPTS="-Os -mcpu=i486"
-options 	VNODE_OP_NOINLINE
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
