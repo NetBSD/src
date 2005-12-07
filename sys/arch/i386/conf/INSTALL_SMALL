@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.121 2005/12/07 09:10:15 tsutsui Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.122 2005/12/07 12:40:47 tsutsui Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -127,7 +127,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.46 2005/12/07 09:10:12 tsutsui Exp $
+# $NetBSD: GENERIC.in,v 1.47 2005/12/07 12:40:46 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -170,9 +170,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 #options 	FFS_EI		# FFS Endian Independant support
 
-m4_ifdef(`INSTALL_CONFIGURATION', `
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-', `m4_dnl
+m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

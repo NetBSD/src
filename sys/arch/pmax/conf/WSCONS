@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.19 2005/12/07 09:10:18 tsutsui Exp $
+# $NetBSD: WSCONS,v 1.20 2005/12/07 12:40:47 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.19 $"
+#ident		"GENERIC-$Revision: 1.20 $"
 
 maxusers	64
 
@@ -118,8 +118,6 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-# VNODE_OP_NOINLINE will produce smaller and possibly slightly faster kernels
-#options 	VNODE_OP_NOINLINE	# don't inline vnode op calls
 
 # Networking options
 options 	INET		# Internet protocols

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2005/12/07 09:10:19 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.51 2005/12/07 12:40:48 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -103,7 +103,6 @@ options 	QUOTA		# FFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
