@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.82.6.1 2005/12/06 16:51:35 tron Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.82.6.2 2005/12/07 10:25:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.82.6.1 2005/12/06 16:51:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.82.6.2 2005/12/07 10:25:02 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -132,7 +132,7 @@ settime(struct timeval *tv)
 	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
 	 */
 	if (tv->tv_sec > INT_MAX - 365*24*60*60) {
-		struct proc *p = curproc();
+		struct proc *p = curproc;
 		struct proc *pp = p->p_pptr;
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
