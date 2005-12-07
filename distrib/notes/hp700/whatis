@@ -1,5 +1,5 @@
-.\"	$NetBSD: whatis,v 1.1 2003/10/10 23:53:21 mbw Exp $
+.\"	$NetBSD: whatis,v 1.1.6.1 2005/12/07 20:09:45 riz Exp $
 .
-This is the first major release of
+This is the second major release of
 .Nx
 for the HP 9000/700 series of computers.

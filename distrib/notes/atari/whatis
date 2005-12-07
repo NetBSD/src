@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.14 2002/07/08 14:51:51 lukem Exp $
+.\"	$NetBSD: whatis,v 1.14.6.1 2005/12/07 20:09:45 riz Exp $
 .
 The \*M release was imported into
 .Nx
@@ -18,9 +18,14 @@ release.
 In this release, support was added for the Medusa Hades, Riebl
 ethernet and Falcon IDE support.
 .Nx 1.4
-was released a couple of years later, and added support for various
+was released in 1999, and added support for various
 devices.
-.Nx 1.5 was released in late 2000. and add
+.Nx 1.5
+was released in late 2000,
+.Nx 1.6
+was released in 2002,
+.Nx 2.0
+was released in 2004.
 And now,
 .Nx \*V
 is emerging!

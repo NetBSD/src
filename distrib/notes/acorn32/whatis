@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.2 2002/07/08 14:42:47 lukem Exp $
+.\"	$NetBSD: whatis,v 1.2.6.1 2005/12/07 20:09:45 riz Exp $
 .
-This is the fourth major release of
+This is the sixth major release of
 .Nx
 for the \*M ,
 although it was known as
@@ -14,8 +14,3 @@ on \*M is, as usual, also fully backward compatible with old
 \*M binaries, so you don't need to recompile all your local programs
 provided you set the appropriate binary compatibility options in your
 kernel configuration.
-.Pp
-New port-specific features include:
-.(bullet
-Addition of Xarm32VIDC Xserver for RiscPC and ARM7500 based systems.
-.bullet)
