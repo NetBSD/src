@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.5 2002/07/08 14:42:50 lukem Exp $
+.\"	$NetBSD: whatis,v 1.5.6.1 2005/12/07 20:09:46 riz Exp $
 .
-This is the second major release of
+This is the fourth major release of
 .Nx
 for the Sony's \*M based
 .Dq "NET WORK STATION"

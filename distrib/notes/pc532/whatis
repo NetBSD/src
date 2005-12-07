@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.9 2002/07/08 14:42:50 lukem Exp $
+.\"	$NetBSD: whatis,v 1.9.6.1 2005/12/07 20:09:46 riz Exp $
 .
-This is the seventh major release of
+This is the ninth major release of
 .Nx*M .
 .Pp
 There are a few known problems in the \*M port.
