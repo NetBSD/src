@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2005/10/06 15:12:01 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.126 2005/12/07 09:10:20 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.125 $"
+#ident		"GENERIC-$Revision: 1.126 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -110,7 +110,7 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# IP protocol stack support

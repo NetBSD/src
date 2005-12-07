@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.120 2005/11/14 17:03:05 gdt Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.121 2005/12/07 09:10:15 tsutsui Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -128,7 +128,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 				# immutable) behave as system flags.
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

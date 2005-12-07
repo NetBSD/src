@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.20 2005/12/05 22:30:38 he Exp $
+#	$NetBSD: IXM1200,v 1.21 2005/12/07 09:10:13 tsutsui Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -49,7 +49,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 
