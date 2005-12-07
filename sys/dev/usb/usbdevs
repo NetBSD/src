@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.419 2005/11/28 19:32:07 augustss Exp $
+$NetBSD: usbdevs,v 1.420 2005/12/07 10:17:53 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ vendor TATUNG		0x04cd	Tatung Co. Of America
 vendor SCANLOGIC	0x04ce	ScanLogic
 vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
+vendor HOLTEK		0x04d9	Holtek Semiconductor
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
@@ -959,6 +960,9 @@ product HAWKING UF100		0x400c	10/100 USB Ethernet
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
 product HITACHI DVDCAM_USB	0x001e	DVDCAM USB HS Interface
+
+/* Holtek Semiconductor products */
+product HOLTEK MOP35		0x0499	MOP-35
 
 /* Hosiden Corporation products */
 product	HOSIDEN PPP		0x0011	ParaParaParadise Controller
