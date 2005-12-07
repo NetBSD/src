@@ -1,19 +1,8 @@
-.\"	$NetBSD: whatis,v 1.2 2002/06/29 10:49:52 lukem Exp $
+.\"	$NetBSD: whatis,v 1.2.6.1 2005/12/07 20:09:45 riz Exp $
 .
-This is the first major release of
-.Nx*M .
-Previous versions of
-.Nx
-supported the \*M platform as part of
-.Nx Ns /arm32 .
-.Pp
-Unlike previous releases of
-.Nx
-for the ARM architecture, the \*M port uses the ELF binary format.
-However,
-.Nx \*V
-on \*M is, as usual, fully backward compatible with old
-.Nx
-a.out binaries, so you don't need to recompile all your local programs
-provided you set the appropriate binary compatibility options in your
-kernel configuration.
+This is the third major release of
+.Nx*M ,
+although the \*M platform was supported as part of
+.Nx Ns /arm32
+prior to
+.Nx 1.6 .
