@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.16 2005/12/07 06:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.16 2005/12/07 06:14:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15 2001/11/12 15:25:25 lukem Exp $");
  */
 
 int
-ipcperm(cred, perm, mode)
-	struct ucred *cred;
-	struct ipc_perm *perm;
-	int mode;
+ipcperm(struct ucred *cred, struct ipc_perm *perm, int mode)
 {
 	mode_t mask;
 
