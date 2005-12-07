@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.212 2005/08/19 05:19:49 christos Exp $
+# $NetBSD: ALPHA,v 1.213 2005/12/07 09:10:11 tsutsui Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.212 $"
+ident		"ALPHA-$Revision: 1.213 $"
 
 maxusers 32
 
@@ -81,7 +81,7 @@ options 	QUOTA		# User and group quotas for the FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible file system server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocol suite

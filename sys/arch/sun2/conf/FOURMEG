@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.29 2005/09/04 10:40:51 isaki Exp $
+# $NetBSD: FOURMEG,v 1.30 2005/12/07 09:10:19 tsutsui Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.29 $"
+#ident 		"FOURMEG-$Revision: 1.30 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -74,7 +74,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# IP protocol stack support

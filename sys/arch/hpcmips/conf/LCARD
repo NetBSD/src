@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.7 2005/07/31 04:04:31 yamt Exp $
+# 	$NetBSD: LCARD,v 1.8 2005/12/07 09:10:13 tsutsui Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -31,7 +31,7 @@ options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
 #makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

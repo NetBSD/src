@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.75 2005/10/07 08:18:13 abs Exp $
+#	$NetBSD: SWINGER,v 1.76 2005/12/07 09:10:15 tsutsui Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.75 $"
+#ident 		"SWINGER-$Revision: 1.76 $"
 
 maxusers	64		# estimated number of users
 
@@ -119,7 +119,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

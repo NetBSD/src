@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.57 2005/09/10 19:20:49 jmmv Exp $
+#	$NetBSD: LAMB,v 1.58 2005/12/07 09:10:15 tsutsui Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -132,7 +132,7 @@ options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

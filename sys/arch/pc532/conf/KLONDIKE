@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.35 2005/08/19 05:19:54 christos Exp $
+#	$NetBSD: KLONDIKE,v 1.36 2005/12/07 09:10:18 tsutsui Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -57,7 +57,7 @@ file-system	PTYFS			# /dev/pts/N support
 
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 # networking options
 #options 	GATEWAY			# packet forwarding

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.57 2005/10/07 18:01:39 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.58 2005/12/07 09:10:18 tsutsui Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -57,7 +57,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 
 # Networking options
