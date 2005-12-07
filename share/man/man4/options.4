@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.296 2005/12/07 12:08:37 tsutsui Exp $
+.\"	$NetBSD: options.4,v 1.297 2005/12/07 12:46:32 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1129,12 +1129,6 @@ disk, to be populated with
 Do not include the interface to a userland memory disk server process.
 Per default, this options is set to 1, including the support code.
 Useful for install media kernels.
-.It Cd options VNODE_OP_NOINLINE
-Do not inline the
-.Fn VOP_*
-calls in the kernel.
-On i386 GENERIC, this saves 36k of kernel text.
-Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4
