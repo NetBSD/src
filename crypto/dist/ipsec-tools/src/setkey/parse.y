@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.1.1.2.2.3 2005/11/21 21:12:34 tron Exp $	*/
+/*	$NetBSD: parse.y,v 1.1.1.2.2.4 2005/12/07 18:18:47 tron Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -180,7 +180,7 @@ add_command
 
 	/* delete */
 delete_command
-	:	DELETE ipaddropts ipaddr ipaddr protocol_spec spi extension_spec EOT
+	:	DELETE ipaddropts ipandport ipandport protocol_spec spi extension_spec EOT
 		{
 			int status;
 
@@ -211,7 +211,7 @@ deleteall_command
 
 	/* get command */
 get_command
-	:	GET ipaddropts ipaddr ipaddr protocol_spec spi extension_spec EOT
+	:	GET ipaddropts ipandport ipandport protocol_spec spi extension_spec EOT
 		{
 			int status;
 
@@ -708,7 +708,6 @@ ipandport
 			}
 		}
 	;
-
 
 prefix
 	:	/*NOTHING*/ { $$ = -1; }

@@ -1,3 +1,11 @@
+2005-12-04  Frederic Senault  <fred@lacave.net>
+
+	* src/libipsec/{libpfkey.h|pfkey_dump.c}: add a sadump_withports
+	  function to display SAD entries with their associated ports.
+	* src/setkey/{parse.y|setkey.c|setkey.8}: allow to use setkey -p flag
+	  in conjunction with -D to show SADs with the port, allow both get and
+	  delete commands to use bracketed ports if needed.
+
 ---------------------------------------------
 
 	0.6.3 released
