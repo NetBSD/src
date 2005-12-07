@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.25 2005/08/19 05:19:53 christos Exp $
+#	$NetBSD: INSTALLSBC,v 1.26 2005/12/07 09:10:16 tsutsui Exp $
 #
 # INSTALLSBC
 
@@ -62,7 +62,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

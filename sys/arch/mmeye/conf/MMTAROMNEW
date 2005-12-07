@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.32 2005/08/19 05:19:53 christos Exp $
+#	$NetBSD: MMTAROMNEW,v 1.33 2005/12/07 09:10:16 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -90,7 +90,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

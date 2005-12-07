@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.52 2005/08/28 13:23:22 tsutsui Exp $
+#	$NetBSD: PICA,v 1.53 2005/12/07 09:10:12 tsutsui Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -84,7 +84,7 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
