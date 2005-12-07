@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.39 2005/12/07 00:42:03 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.40 2005/12/07 00:45:57 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -340,13 +340,10 @@ function doit() {
 	# Define function.
 	printf("int\n%s(", toupper(name));
 	for (i=0; i<argc; i++) {
-		printf("%s", argname[i]);
-		if (i < (argc-1)) printf(", ");
+		printf("%s %s", argtype[i], argname[i]);
+		if (i < (argc-1)) printf(",\n    ");
 	}
 	printf(")\n");
-	for (i=0; i<argc; i++) {
-		printf("\t%s %s;\n", argtype[i], argname[i]);
-	}
 	printf("{\n\tstruct %s_args a;\n", name);
 	printf("#ifdef VNODE_LOCKDEBUG\n");
 	for (i=0; i<argc; i++) {
