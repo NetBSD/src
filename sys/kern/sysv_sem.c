@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.58 2005/11/10 18:45:36 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.58 2005/11/10 18:45:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $");
 
 #define SYSVSEM
 
@@ -81,7 +81,7 @@ void semundo_clear(int, int);
  */
 
 void
-seminit()
+seminit(void)
 {
 	int i, sz;
 	vaddr_t v;
@@ -115,10 +115,7 @@ seminit()
  */
 
 int
-sys_semconfig(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_semconfig(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = 0;
@@ -131,8 +128,7 @@ sys_semconfig(l, v, retval)
  */
 
 struct sem_undo *
-semu_alloc(p)
-	struct proc *p;
+semu_alloc(struct proc *p)
 {
 	int i;
 	struct sem_undo *suptr;
@@ -201,11 +197,8 @@ semu_alloc(p)
  */
 
 int
-semundo_adjust(p, supptr, semid, semnum, adjval)
-	struct proc *p;
-	struct sem_undo **supptr;
-	int semid, semnum;
-	int adjval;
+semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
+    int adjval)
 {
 	struct sem_undo *suptr;
 	struct undo *sunptr;
@@ -261,8 +254,7 @@ semundo_adjust(p, supptr, semid, semnum, adjval)
 }
 
 void
-semundo_clear(semid, semnum)
-	int semid, semnum;
+semundo_clear(int semid, int semnum)
 {
 	struct sem_undo *suptr;
 	struct undo *sunptr, *sunend;
@@ -287,10 +279,7 @@ semundo_clear(semid, semnum)
 }
 
 int
-sys_____semctl13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_____semctl13_args /* {
 		syscallarg(int) semid;
@@ -343,11 +332,8 @@ sys_____semctl13(l, v, retval)
 }
 
 int
-semctl1(p, semid, semnum, cmd, v, retval)
-	struct proc *p;
-	int semid, semnum, cmd;
-	void *v;
-	register_t *retval;
+semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
+    register_t *retval)
 {
 	struct ucred *cred = p->p_ucred;
 	union __semun *arg = v;
@@ -476,10 +462,7 @@ semctl1(p, semid, semnum, cmd, v, retval)
 }
 
 int
-sys_semget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_semget(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_semget_args /* {
 		syscallarg(key_t) key;
@@ -569,10 +552,7 @@ found:
 #define SMALL_SOPS 8
 
 int
-sys_semop(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_semop(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_semop_args /* {
 		syscallarg(int) semid;
@@ -835,9 +815,7 @@ out:
  */
 /*ARGSUSED*/
 void
-semexit(p, v)
-	struct proc *p;
-	void *v;
+semexit(struct proc *p, void *v)
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;

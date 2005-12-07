@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.85 2005/11/10 18:45:20 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.86 2005/12/07 06:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.85 2005/11/10 18:45:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.86 2005/12/07 06:14:13 thorpej Exp $");
 
 #define SYSVSHM
 
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.85 2005/11/10 18:45:20 christos Exp $
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
-
-struct shmid_ds *shm_find_segment_by_shmid(int);
 
 static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 
@@ -136,8 +134,7 @@ static struct shmmap_state *shmmap_getprivate(struct proc *);
 static struct shmmap_entry *shm_find_mapping(struct shmmap_state *, vaddr_t);
 
 static int
-shm_find_segment_by_key(key)
-	key_t key;
+shm_find_segment_by_key(key_t key)
 {
 	int i;
 
@@ -148,9 +145,8 @@ shm_find_segment_by_key(key)
 	return -1;
 }
 
-struct shmid_ds *
-shm_find_segment_by_shmid(shmid)
-	int shmid;
+static struct shmid_ds *
+shm_find_segment_by_shmid(int shmid)
 {
 	int segnum;
 	struct shmid_ds *shmseg;
@@ -169,8 +165,7 @@ shm_find_segment_by_shmid(shmid)
 }
 
 static void
-shm_deallocate_segment(shmseg)
-	struct shmid_ds *shmseg;
+shm_deallocate_segment(struct shmid_ds *shmseg)
 {
 	struct uvm_object *uobj = shmseg->_shm_internal;
 	size_t size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
@@ -188,10 +183,8 @@ shm_deallocate_segment(shmseg)
 }
 
 static void
-shm_delete_mapping(vm, shmmap_s, shmmap_se)
-	struct vmspace *vm;
-	struct shmmap_state *shmmap_s;
-	struct shmmap_entry *shmmap_se;
+shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s,
+    struct shmmap_entry *shmmap_se)
 {
 	struct shmid_ds *shmseg;
 	int segnum;
@@ -260,9 +253,7 @@ shmmap_getprivate(struct proc *p)
 }
 
 static struct shmmap_entry *
-shm_find_mapping(map, va)
-	struct shmmap_state *map;
-	vaddr_t va;
+shm_find_mapping(struct shmmap_state *map, vaddr_t va)
 {
 	struct shmmap_entry *shmmap_se;
 
@@ -274,10 +265,7 @@ shm_find_mapping(map, va)
 }
 
 int
-sys_shmdt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_shmdt(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_shmdt_args /* {
 		syscallarg(const void *) shmaddr;
@@ -310,10 +298,7 @@ sys_shmdt(l, v, retval)
 }
 
 int
-sys_shmat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_shmat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
@@ -389,10 +374,7 @@ sys_shmat(l, v, retval)
 }
 
 int
-sys___shmctl13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___shmctl13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___shmctl13_args /* {
 		syscallarg(int) shmid;
@@ -421,11 +403,7 @@ sys___shmctl13(l, v, retval)
 }
 
 int
-shmctl1(p, shmid, cmd, shmbuf)
-	struct proc *p;
-	int shmid;
-	int cmd;
-	struct shmid_ds *shmbuf;
+shmctl1(struct proc *p, int shmid, int cmd, struct shmid_ds *shmbuf)
 {
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
@@ -469,16 +447,8 @@ shmctl1(p, shmid, cmd, shmbuf)
 }
 
 static int
-shmget_existing(p, uap, mode, segnum, retval)
-	struct proc *p;
-	struct sys_shmget_args /* {
-		syscallarg(key_t) key;
-		syscallarg(size_t) size;
-		syscallarg(int) shmflg;
-	} */ *uap;
-	int mode;
-	int segnum;
-	register_t *retval;
+shmget_existing(struct proc *p, struct sys_shmget_args *uap, int mode,
+    int segnum, register_t *retval)
 {
 	struct shmid_ds *shmseg;
 	struct ucred *cred = p->p_ucred;
@@ -509,15 +479,8 @@ shmget_existing(p, uap, mode, segnum, retval)
 }
 
 static int
-shmget_allocate_segment(p, uap, mode, retval)
-	struct proc *p;
-	struct sys_shmget_args /* {
-		syscallarg(key_t) key;
-		syscallarg(size_t) size;
-		syscallarg(int) shmflg;
-	} */ *uap;
-	int mode;
-	register_t *retval;
+shmget_allocate_segment(struct proc *p, struct sys_shmget_args *uap, int mode,
+    register_t *retval)
 {
 	int i, segnum, shmid, size;
 	struct ucred *cred = p->p_ucred;
@@ -580,10 +543,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 }
 
 int
-sys_shmget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_shmget(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_shmget_args /* {
 		syscallarg(key_t) key;
@@ -618,8 +578,7 @@ again:
 }
 
 void
-shmfork(vm1, vm2)
-	struct vmspace *vm1, *vm2;
+shmfork(struct vmspace *vm1, struct vmspace *vm2)
 {
 	struct shmmap_state *shmmap_s;
 	struct shmmap_entry *shmmap_se;
@@ -641,8 +600,7 @@ shmfork(vm1, vm2)
 }
 
 void
-shmexit(vm)
-	struct vmspace *vm;
+shmexit(struct vmspace *vm)
 {
 	struct shmmap_state *shmmap_s;
 	struct shmmap_entry *shmmap_se;
@@ -675,7 +633,7 @@ shmexit(vm)
 }
 
 void
-shminit()
+shminit(void)
 {
 	int i, sz;
 	vaddr_t v;
