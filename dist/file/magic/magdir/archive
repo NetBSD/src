@@ -637,3 +637,9 @@
 # EET archive
 # From: Tilman Sauerbeck <tilman@code-monkey.de>
 0	belong	0x1ee7ff00	EET archive
+
+# rzip archives
+0	string	RZIP		rzip compressed data
+>4	byte	x		- version %d
+>5	byte	x		\b.%d
+>6	belong	x		(%d bytes)
