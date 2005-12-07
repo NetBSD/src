@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.22 2005/08/19 05:19:49 christos Exp $
+#	$NetBSD: MDINSTALL,v 1.23 2005/12/07 12:22:29 tsutsui Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -50,7 +50,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 file-system	PTYFS		# /dev/pts/N support
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 #
 # Support for various kernel options
