@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2005/07/04 00:42:37 bsh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2005/12/08 22:41:44 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2005/07/04 00:42:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2005/12/08 22:41:44 yamt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1540,7 +1540,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 
 	NPDEBUG(PDB_BITS,
 	    printf("pmap_clearbit: pg %p (0x%08lx) mask 0x%x\n",
-	    pg, pg->phys_addr, maskbits));
+	    pg, VM_PAGE_TO_PHYS(pg), maskbits));
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pvh_slock);
@@ -1804,7 +1804,8 @@ pmap_page_remove(struct vm_page *pg)
 	u_int flags;
 
 	NPDEBUG(PDB_FOLLOW,
-	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg, pg->phys_addr));
+	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg,
+	    VM_PAGE_TO_PHYS(pg)));
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pvh_slock);
@@ -2672,7 +2673,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	NPDEBUG(PDB_PROTECT,
 	    printf("pmap_page_protect: pg %p (0x%08lx), prot 0x%x\n",
-	    pg, pg->phys_addr, prot));
+	    pg, VM_PAGE_TO_PHYS(pg), prot));
 
 	switch(prot) {
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
@@ -2827,7 +2828,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		NPDEBUG(PDB_FOLLOW,
 		    printf("pmap_fault_fixup: mod emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, pg->phys_addr));
+		    pm, va, VM_PAGE_TO_PHYS(pg)));
 
 		pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 		pv->pv_flags |= PVF_REF | PVF_MOD;
@@ -2871,7 +2872,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		NPDEBUG(PDB_FOLLOW,
 		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, pg->phys_addr));
+		    pm, va, VM_PAGE_TO_PHYS(pg)));
 
 		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO;
 		PTE_SYNC(ptep);
@@ -5104,7 +5105,7 @@ pmap_dump_ncpg(pmap_t pm)
 			continue;
 
 		printf(" pa 0x%08lx: krw %d kro %d urw %d uro %d\n",
-		    pg->phys_addr,
+		    VM_PAGE_TO_PHYS(pg),
 		    pg->mdpage.krw_mappings, pg->mdpage.kro_mappings,
 		    pg->mdpage.urw_mappings, pg->mdpage.uro_mappings);
 
