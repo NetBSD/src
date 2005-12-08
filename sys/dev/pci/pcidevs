@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.742 2005/12/07 04:43:05 jonathan Exp $
+$NetBSD: pcidevs,v 1.743 2005/12/08 17:38:11 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -806,6 +806,7 @@ product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
+product ADDTRON RHINEII	0x1320	Rhine II 10/100 Ethernet
 
 /* ADMtek products */
 product ADMTEK AL981	0x0981	AL981 10/100 Ethernet
@@ -1426,6 +1427,7 @@ product DELL CERC_1_5		0x0291	CERC SATA RAID 1.5/6ch
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
+product DELTA RHINEII	0x1320	Rhine II 10/100 Ethernet
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
@@ -2980,6 +2982,7 @@ product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT6306 IEEE 1394 Host Controller
+product VIATECH VT6105M 	0x3053	VT6105M (Rhine III) 10/100 Ethernet
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
