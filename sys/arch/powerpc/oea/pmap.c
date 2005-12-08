@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2005/09/27 08:03:11 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2005/12/08 22:41:44 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2005/09/27 08:03:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2005/12/08 22:41:44 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1942,7 +1942,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				printf(" marked-as-exec");
 			else if (pmapdebug & PMAPDEBUG_EXEC)
 				printf("[pmap_enter: %#lx: marked-as-exec]\n",
-				    pg->phys_addr);
+				    VM_PAGE_TO_PHYS(pg));
 				
 #endif
 		}
@@ -2208,7 +2208,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 */
 	if ((prot & VM_PROT_READ) == 0) {
 		DPRINTFN(EXEC, ("[pmap_page_protect: %#lx: clear-exec]\n",
-		    pg->phys_addr));
+		    VM_PAGE_TO_PHYS(pg)));
 		if (pmap_attr_fetch(pg) & PTE_EXEC) {
 			PMAPCOUNT(exec_uncached_page_protect);
 			pmap_attr_clear(pg, PTE_EXEC);
@@ -2418,13 +2418,13 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	if ((ptebit & PTE_CHG) && (rv & PTE_EXEC)) {
 		if (LIST_EMPTY(pvoh)) {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: clear-exec]\n",
-			    pg->phys_addr));
+			    VM_PAGE_TO_PHYS(pg)));
 			pmap_attr_clear(pg, PTE_EXEC);
 			PMAPCOUNT(exec_uncached_clear_modify);
 		} else {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
-			    pg->phys_addr));
-			pmap_syncicache(pg->phys_addr, PAGE_SIZE);
+			    VM_PAGE_TO_PHYS(pg)));
+			pmap_syncicache(VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
 			PMAPCOUNT(exec_synced_clear_modify);
 		}
 	}
