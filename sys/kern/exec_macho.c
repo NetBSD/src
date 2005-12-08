@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.33 2005/06/25 02:22:57 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.34 2005/12/08 03:06:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.33 2005/06/25 02:22:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.34 2005/12/08 03:06:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,21 +73,8 @@ static int exec_macho_load_vnode(struct proc *, struct exec_package *,
     struct vnode *, struct exec_macho_fat_header *, u_long *, int, int, int);
 
 #ifdef DEBUG_MACHO
-static void exec_macho_print_segment_command
-    (struct exec_macho_segment_command *);
-static void exec_macho_print_fat_header(struct exec_macho_fat_header *);
-static void exec_macho_print_fat_arch(struct exec_macho_fat_arch *);
-static void exec_macho_print_object_header(struct exec_macho_object_header *);
-static void exec_macho_print_load_command(struct exec_macho_load_command *);
-static void exec_macho_print_dylinker_command
-    (struct exec_macho_dylinker_command *);
-static void exec_macho_print_dylib_command(struct exec_macho_dylib_command *);
-static void exec_macho_print_thread_command
-    (struct exec_macho_thread_command *);
-
 static void
-exec_macho_print_segment_command(ls)
-	struct exec_macho_segment_command *ls;
+exec_macho_print_segment_command(struct exec_macho_segment_command *ls)
 {
 	printf("ls.cmd 0x%lx\n", ls->cmd);
 	printf("ls.cmdsize 0x%ld\n", ls->cmdsize);
@@ -103,16 +90,14 @@ exec_macho_print_segment_command(ls)
 }
 
 static void
-exec_macho_print_fat_header(fat)
-	struct exec_macho_fat_header *fat;
+exec_macho_print_fat_header(struct exec_macho_fat_header *fat)
 {
 	printf("fat.magic 0x%x\n", be32toh(fat->magic));
 	printf("fat.nfat_arch %d\n", be32toh(fat->nfat_arch));
 }
 
 static void
-exec_macho_print_fat_arch(arch)
-	struct exec_macho_fat_arch *arch;
+exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch)
 {
 	printf("arch.cputype %x\n", be32toh(arch->cputype));
 	printf("arch.cpusubtype %d\n", be32toh(arch->cpusubtype));
@@ -122,8 +107,7 @@ exec_macho_print_fat_arch(arch)
 }
 
 static void
-exec_macho_print_object_header(hdr)
-	struct exec_macho_object_header *hdr;
+exec_macho_print_object_header(struct exec_macho_object_header *hdr)
 {
 	printf("hdr.magic 0x%lx\n", hdr->magic);
 	printf("hdr.cputype %x\n", hdr->cputype);
@@ -135,16 +119,14 @@ exec_macho_print_object_header(hdr)
 }
 
 static void
-exec_macho_print_load_command(lc)
-	struct exec_macho_load_command *lc;
+exec_macho_print_load_command(struct exec_macho_load_command *lc)
 {
 	printf("lc.cmd %lx\n", lc->cmd);
 	printf("lc.cmdsize %ld\n", lc->cmdsize);
 }
 
 static void
-exec_macho_print_dylinker_command(dy)
-	struct exec_macho_dylinker_command *dy;
+exec_macho_print_dylinker_command(struct exec_macho_dylinker_command *dy)
 {
 	printf("dy.cmd %lx\n", dy->cmd);
 	printf("dy.cmdsize %ld\n", dy->cmdsize);
@@ -153,8 +135,7 @@ exec_macho_print_dylinker_command(dy)
 }
 
 static void
-exec_macho_print_dylib_command(dy)
-	struct exec_macho_dylib_command *dy;
+exec_macho_print_dylib_command(struct exec_macho_dylib_command *dy)
 {
 	printf("dy.cmd %lx\n", dy->cmd);
 	printf("dy.cmdsize %ld\n", dy->cmdsize);
@@ -167,8 +148,7 @@ exec_macho_print_dylib_command(dy)
 }
 
 static void
-exec_macho_print_thread_command(th)
-	struct exec_macho_thread_command *th;
+exec_macho_print_thread_command(struct exec_macho_thread_command *th)
 {
 	printf("th.cmd %lx\n", th->cmd);
 	printf("th.cmdsize %ld\n", th->cmdsize);
@@ -178,12 +158,8 @@ exec_macho_print_thread_command(th)
 #endif /* DEBUG_MACHO */
 
 static int
-exec_macho_load_segment(epp, vp, foff, ls, type)
-	struct exec_package *epp;
-	struct vnode *vp;
-	u_long foff;
-	struct exec_macho_segment_command *ls;
-	int type;
+exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
+    u_long foff, struct exec_macho_segment_command *ls, int type)
 {
 	int flags;
 	struct exec_macho_emul_arg *emea;
@@ -256,12 +232,8 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 
 
 static int
-exec_macho_load_dylinker(p, epp, dy, entry, depth)
-	struct proc *p;
-	struct exec_package *epp;
-	struct exec_macho_dylinker_command *dy;
-	u_long *entry;
-	int depth;
+exec_macho_load_dylinker(struct proc *p, struct exec_package *epp,
+    struct exec_macho_dylinker_command *dy, u_long *entry, int depth)
 {
 	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->name.offset;
@@ -281,11 +253,8 @@ exec_macho_load_dylinker(p, epp, dy, entry, depth)
 }
 
 static int
-exec_macho_load_dylib(p, epp, dy, depth)
-	struct proc *p;
-	struct exec_package *epp;
-	struct exec_macho_dylib_command *dy;
-	int depth;
+exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
+    struct exec_macho_dylib_command *dy, int depth)
 {
 	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
@@ -305,8 +274,7 @@ exec_macho_load_dylib(p, epp, dy, depth)
 }
 
 static u_long
-exec_macho_load_thread(th)
-	struct exec_macho_thread_command *th;
+exec_macho_load_thread(struct exec_macho_thread_command *th)
 {
 #ifdef DEBUG_MACHO
 	exec_macho_print_thread_command(th);
@@ -319,14 +287,8 @@ exec_macho_load_thread(th)
  * for the dynamic linker and library recursive loading.
  */
 static int
-exec_macho_load_file(p, epp, path, entry, type, recursive, depth)
-	struct proc *p;
-	struct exec_package *epp;
-	const char *path;
-	u_long *entry;
-	int type;
-	int recursive;
-	int depth;
+exec_macho_load_file(struct proc *p, struct exec_package *epp,
+    const char *path, u_long *entry, int type, int recursive, int depth)
 {
 	int error;
 	struct nameidata nd;
@@ -405,13 +367,9 @@ bad:
  * the entry point.
  */
 static int
-exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
-	struct proc *p;
-	struct exec_package *epp;
-	struct vnode *vp;
-	struct exec_macho_fat_header *fat;
-	u_long *entry;
-	int type;
+exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
+    struct vnode *vp, struct exec_macho_fat_header *fat, u_long *entry,
+    int type, int recursive, int depth)
 {
 	u_long aoffs, offs;
 	struct exec_macho_fat_arch arch;
@@ -597,9 +555,7 @@ bad:
  * text, data, bss, and stack segments.
  */
 int
-exec_macho_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 {
 	struct exec_macho_fat_header *fat = epp->ep_hdr;
 	struct exec_macho_emul_arg *emea;
