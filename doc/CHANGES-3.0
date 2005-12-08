@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.335 2005/12/07 20:13:55 riz Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.336 2005/12/08 08:14:43 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -14748,4 +14748,9 @@ distrib/notes/xen/whatis			patch
 	Update the port-specific install notes to correct egregious
 	out-of-dateness.
 	[tsutsui, ticket #1038]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 3.0_RC6.
 
