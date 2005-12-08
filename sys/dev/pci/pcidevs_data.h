@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.742 2005/12/07 04:44:47 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.743 2005/12/08 17:38:34 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.742 2005/12/07 04:43:05 jonathan Exp
+ *	NetBSD: pcidevs,v 1.743 2005/12/08 17:38:11 xtraeme Exp
  */
 
 /*
@@ -2948,6 +2948,10 @@ static const struct pci_product pci_products[] = {
 	    "8139 Ethernet",
 	},
 	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
+	    "Rhine II 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
 	    "AL981 10/100 Ethernet",
 	},
@@ -4946,6 +4950,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    "8139 Ethernet",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
+	    "Rhine II 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
@@ -9984,6 +9992,10 @@ static const struct pci_product pci_products[] = {
 	    "VT6306 IEEE 1394 Host Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
+	    "VT6105M (Rhine III) 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
 	    "VT82C686A SMBus Controller",
 	},
@@ -10596,4 +10608,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2067;
+const int pci_nproducts = 2070;
