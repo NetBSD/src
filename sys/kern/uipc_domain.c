@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.54 2005/09/07 18:06:04 elad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.55 2005/12/08 03:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.54 2005/09/07 18:06:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55 2005/12/08 03:10:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -67,7 +67,7 @@ u_int	pfslowtimo_now;
 u_int	pffasttimo_now;
 
 void
-domaininit()
+domaininit(void)
 {
 	__link_set_decl(domains, struct domain);
 	struct domain * const * dpp;
