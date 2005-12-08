@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.21 2005/07/06 22:30:42 christos Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.22 2005/12/08 03:05:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.21 2005/07/06 22:30:42 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22 2005/12/08 03:05:40 thorpej Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -64,23 +64,21 @@ struct countsegs_state {
 	int	npsections;
 };
 
-int	ELFNAMEEND(coredump_countsegs)(struct proc *, void *,
-	    struct uvm_coredump_state *);
+static int	ELFNAMEEND(coredump_countsegs)(struct proc *, void *,
+		    struct uvm_coredump_state *);
 
 struct writesegs_state {
 	Elf_Phdr *psections;
 	off_t	secoff;
 };
 
-int	ELFNAMEEND(coredump_writeseghdrs)(struct proc *, void *,
-	    struct uvm_coredump_state *);
-int	ELFNAMEEND(coredump_writesegs)(struct proc *, void *,
-	    struct uvm_coredump_state *);
+static int	ELFNAMEEND(coredump_writeseghdrs)(struct proc *, void *,
+		    struct uvm_coredump_state *);
 
-int	ELFNAMEEND(coredump_notes)(struct proc *, struct lwp *, void *,
-	    size_t *);
-int	ELFNAMEEND(coredump_note)(struct proc *, struct lwp *, void *,
-	    size_t *);
+static int	ELFNAMEEND(coredump_notes)(struct proc *, struct lwp *, void *,
+		    size_t *);
+static int	ELFNAMEEND(coredump_note)(struct proc *, struct lwp *, void *,
+		    size_t *);
 
 #define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
 #define	elfround(x)	roundup((x), ELFROUNDSIZE)
@@ -237,7 +235,7 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	return (error);
 }
 
-int
+static int
 ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
@@ -247,7 +245,7 @@ ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
 	return (0);
 }
 
-int
+static int
 ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
@@ -302,7 +300,7 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 	return (0);
 }
 
-int
+static int
 ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
     void *iocookie, size_t *sizep)
 {
@@ -389,7 +387,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 	return (0);
 }
 
-int
+static int
 ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
     size_t *sizep)
 {
