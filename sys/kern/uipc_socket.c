@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.112 2005/10/21 17:40:03 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.113 2005/12/08 03:13:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.112 2005/10/21 17:40:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.113 2005/12/08 03:13:18 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -105,13 +105,13 @@ int		somaxconn = SOMAXCONN;
 #ifdef SOSEND_COUNTERS
 #include <sys/device.h>
 
-struct evcnt sosend_loan_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+static struct evcnt sosend_loan_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "sosend", "loan big");
-struct evcnt sosend_copy_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+static struct evcnt sosend_copy_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "sosend", "copy big");
-struct evcnt sosend_copy_small = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+static struct evcnt sosend_copy_small = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "sosend", "copy small");
-struct evcnt sosend_kvalimit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+static struct evcnt sosend_kvalimit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "sosend", "kva limit");
 
 #define	SOSEND_COUNTER_INCR(ev)		(ev)->ev_count++
@@ -142,25 +142,23 @@ int use_sosend_loan = 0;
 int use_sosend_loan = 1;
 #endif
 
-struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
-struct mbuf *so_pendfree;
+static struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
+static struct mbuf *so_pendfree;
 
 #ifndef SOMAXKVA
 #define	SOMAXKVA (16 * 1024 * 1024)
 #endif
 int somaxkva = SOMAXKVA;
-int socurkva;
-int sokvawaiters;
+static int socurkva;
+static int sokvawaiters;
 
 #define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
 static size_t sodopendfree(struct socket *);
 static size_t sodopendfreel(struct socket *);
-static __inline vsize_t sokvareserve(struct socket *, vsize_t);
-static __inline void sokvaunreserve(vsize_t);
 
-static __inline vsize_t
+static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
 {
 	int s;
@@ -200,7 +198,7 @@ sokvareserve(struct socket *so, vsize_t len)
 	return len;
 }
 
-static __inline void
+static void
 sokvaunreserve(vsize_t len)
 {
 	int s;
