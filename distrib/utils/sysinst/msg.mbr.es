@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.3 2005/10/06 06:46:03 xtraeme Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.4 2005/12/08 16:51:45 xtraeme Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,25 +41,24 @@
 /* NB: Lines ending in spaces force line breaks */
 
 message fullpart
-{Vamos a instalar NetBSD en el disco %s.
+{Se va a instalar NetBSD en el disco %s.
 
 NetBSD requiere una sola partición en la tabla de particiones MBR del disco,
-que es partida adecuadamente por el disklabel de NetBSD.
-NetBSD también puede acceder a sistemas de archivos en otras particiones MBR.
+que es subsiguientemente dividida por el disklabel de NetBSD.
+NetBSD también puede acceder a sistemas de ficheros de otras particiones MBR.
 
-Si selecciona 'Usar todo el disco' entonces el contenido previo del
-disco será sobreescrito y una sola partición MBR sera usada para cubrir
-todo el disco.
-Si quiere instalar mas de un sistema operativo entonces edite la
-tabla de particiones MBR y cree una partición para NetBSD.
+Si selecciona 'Usar todo el disco', se sobreescribirá el contenido anterior
+del disco, y se usará una sola partición MBR para cubrir todo el disco. 
+Si desea instalar más de un sistema operativo, edite la tabla de particiones
+MBR y cree una partición para NetBSD.
 
-Unos pocos MB son necesarios para una instalación basica, pero deberá
-alojar espacio extra para programas adicionales y ficheros de usuario.
-Proporcione al menos 5GB si quiere construir el propio NetBSD.
+Para una instalación básica bastan unos pocos cientos de MB, pero deberá
+dejar espacio extra para programas adicionales y los ficheros de usuario. 
+Proporcione al menos 5 GB si quiere construir el propio NetBSD.
 }
 
 message Select_your_choice
-{¿Que desearía hacer?}
+{¿Que le gustaría hacer?}
 message Use_only_part_of_the_disk
 {Editar la tabla de particiones MBR}
 message Use_the_entire_disk
@@ -83,36 +82,36 @@ message part_row_used
 {%10d %10d %c%c%c}
 
 message noactivepart
-{No ha marcado una partición activa. Esto podría causar que su sistema
-no arrancara correctamente. ¿Debería estar la partición NetBSD marcada
-como activa?}
+{No ha marcado ninguna partición como activa. Esto podría provocar que su
+sistema no arrancase correctamente. ¿Debe marcarse como activa la partición
+NetBSD del disco?}
 
 message setbiosgeom
 {
-Será preguntado por la geometria.
-Por favor introduzca el número de sectores por pista (maximo 63)
-y número de cabezales (maximo 256) que la BIOS usa para acceder al disco.
-El número de cilindros será calculado desde el tamaño del disco.
+Se le va a preguntar por la geometría.
+Por favor, introduzca el número de sectores por pista (máximo 63)
+y el número de cabezas (máximo 256) que usa el BIOS para acceder al disco. 
+El número de cilindros se calculará a partir del tamaño del disco.
 
 }
 
 message nobiosgeom
-{sysinst no ha podido determinar la geometría del disco de la BIOS.
-La geometría fisica es de %d cilindros %d sectores %d cabezales\n}
+{sysinst no ha podido determinar automáticamente la geometría BIOS del disco. 
+La geometría física es de %d cilindros %d sectores %d cabezas\n}
 
 message biosguess
 {Usando la información ya en disco, mi mejor estimación para la geometría
-de la BIOS es de %d cilindros %d sectores %d cabezales\n}
+de la BIOS es de %d cilindros %d sectores %d cabezas\n}
 
 message realgeom
-{geom real: % cil, %d cabez, %d sec  (NB: solo para comparación)\n}
+{geom real: %d cil, %d cabezas, %d sec  (NB: solo para comparación)\n}
 
 message biosgeom
 {geom BIOS: %d cil, %d cabez, %d sec\n}
 
 message ovrwrite
-{Actualmente su disco tiene una partición no-NetBSD. ¿Realmente quiere
-sobreescribir dicha partición con NetBSD?
+{Su disco tiene actualmente una partición que no es de NetBSD. ¿Realmente
+quiere sobreescribir dicha partición con NetBSD?
 }
 
 message Partition_OK
@@ -134,13 +133,13 @@ message ptn_install
 message bootmenu
 {  bootmenu: %s}
 message boot_dflt
-{   defecto: %s}
+{   predef.: %s}
 .endif
 
-message get_ptn_size {%stamaño (maximo %d %s)}
-message Invalid_numeric {Número inválido: }
+message get_ptn_size {%stamaño (máximo %d %s)}
+message Invalid_numeric {Número no válido: }
 message Too_large {Demasiado grande: }
-message Space_allocated {Espacio ubicado: }
+message Space_allocated {Espacio asignado: }
 message ptn_starts {Espacio en %d..%d %s (tamaño %d %s)\n}
 message get_ptn_start {%s%sInicio (en %s)}
 message get_ptn_id {Tipo de partición (0..255)}
@@ -148,10 +147,10 @@ message No_free_space {Sin espacio libre}
 message Only_one_extended_ptn {Solamente puede haber una partición extendida}
 
 message editparttable
-{La tabla de particiones MBR es mostrada a continuación. 
+{Se muestra a continuación la tabla de particiones MBR actual. 
 Opcn: a => Partición activa,
 .if BOOTSEL
-d => defecto bootselect,
+d => bootselect predefinido,
 .endif
 I => Instalar aquí. 
 Seleccione la partición que desee editar:
@@ -178,15 +177,15 @@ message nobsdpart
 {No hay ninguna partición NetBSD en la tabla de particiones MBR.}
 
 message multbsdpart
-{Hay multiples particiones NetBSD en la tabla de particiones MBR.
-Debería seleccionar la opción "instalar" en la que quiera usar. }
+{Hay varias particiones NetBSD en la tabla de particiones MBR.
+Debería marcar la opción "instalar" en la que quiera usar. }
 
 message dofdisk
 {Configurando la tabla de particiones DOS ...
 }
 
 message wmbrfail
-{Reescritura de MBR fallida. No puedo continuar.}
+{Reescritura de MBR fallida. No se puede continuar.}
 
 .if 0
 .if BOOTSEL
@@ -194,7 +193,7 @@ message Set_timeout_value
 {Elija el tiempo de espera}
 
 message bootseltimeout
-{Tiempo de espera del menu: %d\n}
+{Tiempo de espera del menú: %d\n}
 
 .endif
 .endif
