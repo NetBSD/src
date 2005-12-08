@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2005/12/08 22:41:44 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2005/12/08 22:41:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -2514,7 +2514,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	int idx, s;
 
 	PMPRINTF(("pmap_page_protect: pa 0x%lx prot %x: ",
-	    pg->phys_addr, prot));
+	    VM_PAGE_TO_PHYS(pg), prot));
 
 	/*
 	 * Since this routine only downgrades protection, if the
@@ -2636,7 +2636,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 	volatile pte_t *pt;
 	int s, idx;
 
-	PMPRINTF(("pmap_query_bit: pa 0x%lx %s? - ", pg->phys_addr,
+	PMPRINTF(("pmap_query_bit: pa 0x%lx %s? - ", VM_PAGE_TO_PHYS(pg),
 	    (ptebit == SH5_PTEL_M) ? "modified" : "referenced"));
 
 	if ((ptel_t)pmap_attr_fetch(pg) & ptebit) {
@@ -2719,7 +2719,7 @@ pmap_clear_bit(struct vm_page *pg, ptel_t ptebit)
 	int rv = 0;
 	int s, idx;
 
-	PMPRINTF(("pmap_clear_bit: pa 0x%lx %s - ", pg->phys_addr,
+	PMPRINTF(("pmap_clear_bit: pa 0x%lx %s - ", VM_PAGE_TO_PHYS(pg),
 	    (ptebit == SH5_PTEL_M) ? "modified" : "referenced"));
 
 	s = splvm();

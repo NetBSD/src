@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.12 2004/10/30 18:08:34 thorpej Exp $ */
+/* $NetBSD: if_aumac.c,v 1.13 2005/12/08 22:41:44 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.12 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.13 2005/12/08 22:41:44 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -284,7 +284,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	    &pglist, 1, 0))
 		return;
 
-	bufaddr = TAILQ_FIRST(&pglist)->phys_addr;
+	bufaddr = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	vbufaddr = (void *)MIPS_PHYS_TO_KSEG0(bufaddr);
 
 	for (i = 0; i < AUMAC_NTXDESC; i++) {
