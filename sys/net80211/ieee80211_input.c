@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.52 2005/12/08 20:19:49 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.53 2005/12/08 23:08:39 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.52 2005/12/08 20:19:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.53 2005/12/08 23:08:39 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2059,10 +2059,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 					ieee80211_new_state(ic,
 					    IEEE80211_S_SCAN, 0);
 					return;
-				} else {
-					ieee80211_new_state(ic,
-					    IEEE80211_S_RUN, 0);
 				}
+				ieee80211_new_state(ic, IEEE80211_S_RUN, 0);
 			} else {
 				/*
 				 * Record tsf for potential resync.
