@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.102 2005/11/09 17:54:12 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.103 2005/12/08 03:11:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.102 2005/11/09 17:54:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.103 2005/12/08 03:11:14 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -106,10 +106,10 @@ int	max_datalen;
 
 static int mb_ctor(void *, void *, int);
 
-void	*mclpool_alloc(struct pool *, int);
-void	mclpool_release(struct pool *, void *);
+static void	*mclpool_alloc(struct pool *, int);
+static void	mclpool_release(struct pool *, void *);
 
-struct pool_allocator mclpool_allocator = {
+static struct pool_allocator mclpool_allocator = {
 	mclpool_alloc, mclpool_release, 0,
 };
 
@@ -123,7 +123,7 @@ static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
 #define	M_COPYBACK0_COW		0x0004	/* do copy-on-write */
 #define	M_COPYBACK0_EXTEND	0x0008	/* extend chain */
 
-const char mclpool_warnmsg[] =
+static const char mclpool_warnmsg[] =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
 
 MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
@@ -341,7 +341,7 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 #endif /* MBUFTRACE */
 }
 
-void *
+static void *
 mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
@@ -349,7 +349,7 @@ mclpool_alloc(struct pool *pp, int flags)
 	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
 
-void
+static void
 mclpool_release(struct pool *pp, void *v)
 {
 
