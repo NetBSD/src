@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.20 2005/12/04 19:15:21 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.21 2005/12/08 03:12:31 thorpej Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.20 2005/12/04 19:15:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.21 2005/12/08 03:12:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 }
 
 /* Unlink and free a packet tag chain, starting from given tag. */
-__inline void
+void
 m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 {
 	struct m_tag *p, *q;
