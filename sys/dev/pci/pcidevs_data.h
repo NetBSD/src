@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.743 2005/12/08 17:38:34 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.744 2005/12/09 10:46:00 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.743 2005/12/08 17:38:11 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.744 2005/12/09 10:45:28 xtraeme Exp
  */
 
 /*
@@ -2120,6 +2120,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Bluesteel Networks",
 	},
 	{
+	    PCI_VENDOR_VMWARE,
+	    "VMware",
+	},
+	{
 	    PCI_VENDOR_AGILENT,
 	    "Agilent Technologies",
 	},
@@ -2324,7 +2328,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 571;
+const int pci_nvendors = 572;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -10460,6 +10464,14 @@ static const struct pci_product pci_products[] = {
 	    "82C925",
 	},
 	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
+	    "Virtual SVGA",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
+	    "Virtual SVGA II",
+	},
+	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
 	    "P9000",
 	},
@@ -10608,4 +10620,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2070;
+const int pci_nproducts = 2072;
