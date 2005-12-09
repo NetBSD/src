@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.5 2005/12/08 03:08:12 thorpej Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.6 2005/12/09 01:06:15 he Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.5 2005/12/08 03:08:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.6 2005/12/09 01:06:15 he Exp $");
 
 #include "opt_ptm.h"
 
@@ -380,9 +380,9 @@ bad:
 	ffree(fp);
 	return error;
 }
-#endif
 
 const struct cdevsw ptm_cdevsw = {
 	ptmopen, ptmclose, noread, nowrite, ptmioctl,
 	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
 };
+#endif
