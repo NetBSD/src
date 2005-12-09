@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.1,v 1.20 2003/08/07 09:05:02 agc Exp $
+.\"	$NetBSD: chmod.1,v 1.21 2005/12/09 20:27:02 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd October 11, 2000
+.Dd December 9, 2005
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -266,6 +266,7 @@ clear all mode bits for group and others.
 set the group bits equal to the user bits, but clear the group write bit.
 .El
 .Sh SEE ALSO
+.Xr chflags 1 ,
 .Xr install 1 ,
 .Xr chmod 2 ,
 .Xr stat 2 ,
