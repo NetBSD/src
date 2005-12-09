@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.745 2005/12/08 17:38:34 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.746 2005/12/09 10:46:00 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.743 2005/12/08 17:38:11 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.744 2005/12/09 10:45:28 xtraeme Exp
  */
 
 /*
@@ -577,6 +577,7 @@
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
+#define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_AGILENT	0x15bc		/* Agilent Technologies */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -3110,6 +3111,10 @@
 #define	PCI_PRODUCT_VLSI_82C147	0x0105		/* 82C147 */
 #define	PCI_PRODUCT_VLSI_82C975	0x0200		/* 82C975 */
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
+
+/* VMware products */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL2	0x0405		/* Virtual SVGA II */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
