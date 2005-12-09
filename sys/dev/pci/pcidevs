@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.743 2005/12/08 17:38:11 xtraeme Exp $
+$NetBSD: pcidevs,v 1.744 2005/12/09 10:45:28 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -570,6 +570,7 @@ vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
+vendor VMWARE		0x15ad	VMware
 vendor AGILENT		0x15bc	Agilent Technologies
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
@@ -3103,6 +3104,10 @@ product VLSI 82C535	0x0104	82C535
 product VLSI 82C147	0x0105	82C147
 product VLSI 82C975	0x0200	82C975
 product VLSI 82C925	0x0280	82C925
+
+/* VMware products */
+product VMWARE VIRTUAL  0x0710	Virtual SVGA
+product VMWARE VIRTUAL2 0x0405	Virtual SVGA II
 
 /* Weitek products */
 product WEITEK P9000	0x9001	P9000
