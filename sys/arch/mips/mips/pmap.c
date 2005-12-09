@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.161 2005/11/25 11:50:55 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.162 2005/12/09 20:50:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2005/11/25 11:50:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2005/12/09 20:50:25 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -585,7 +585,7 @@ pmap_create(void)
 #ifdef PARANOIADIAG
 	for (i = 0; i < PMAP_SEGTABSIZE; i++)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
-			panic("pmap_pinit: pm_segtab != 0");
+			panic("pmap_create: pm_segtab != 0");
 #endif
 	pmap->pm_asid = PMAP_ASID_RESERVED;
 	pmap->pm_asidgen = pmap_asid_generation;
@@ -630,7 +630,7 @@ pmap_destroy(pmap)
 #ifdef PARANOIADIAG
 			for (j = 0; j < NPTEPG; j++) {
 				if ((pte+j)->pt_entry)
-					panic("pmap_release: segmap not empty");
+					panic("pmap_destroy: segmap not empty");
 			}
 #endif
 
@@ -2000,7 +2000,7 @@ again:
 #endif
 		npv = (pv_entry_t) pmap_pv_alloc();
 		if (npv == NULL)
-			panic("pmap_enter: pmap_pv_alloc() failed");
+			panic("pmap_enter_pv: pmap_pv_alloc() failed");
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_flags = pv->pv_flags;
