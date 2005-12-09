@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.8 2003/08/07 11:16:20 agc Exp $	*/
+/*	$NetBSD: tipout.c,v 1.9 2005/12/09 03:15:42 gavan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.8 2003/08/07 11:16:20 agc Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.9 2005/12/09 03:15:42 gavan Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -142,8 +142,8 @@ tipout()
 	for (omask = 0;; sigsetmask(omask)) {
 		cnt = read(FD, buf, BUFSIZ);
 		if (cnt <= 0) {
-			/* lost carrier */
-			if (cnt < 0 && errno == EIO) {
+			/* lost carrier || EOF */
+			if ((cnt < 0 && errno == EIO) || (cnt == 0)) {
 				sigblock(sigmask(SIGTERM));
 				intTERM(0);
 				/*NOTREACHED*/
