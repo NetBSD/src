@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 2005/12/07 09:10:15 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.24 2005/12/09 23:34:02 elad Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -512,3 +512,20 @@ pseudo-device	ksyms			# /dev/ksyms
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

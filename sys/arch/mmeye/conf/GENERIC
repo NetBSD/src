@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2005/12/07 09:10:16 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.76 2005/12/09 23:34:02 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 maxusers	16		# estimated number of users
 
@@ -237,3 +237,20 @@ pseudo-device	ksyms			# /dev/ksyms
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

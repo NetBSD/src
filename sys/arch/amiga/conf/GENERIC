@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2005/12/07 12:42:39 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.231 2005/12/09 23:34:01 elad Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.231 $"
 
 
 maxusers	8
@@ -510,3 +510,20 @@ pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 pseudo-device	nsmb			# experimental - SMB requester
 
 config	netbsd root on ? type ?
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5
