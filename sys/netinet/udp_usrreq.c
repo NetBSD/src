@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.143 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.144 2005/12/09 15:36:34 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.143 2005/11/15 18:39:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.144 2005/12/09 15:36:34 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -153,13 +153,13 @@ struct	udpstat udpstat;
 
 #ifdef INET
 #ifdef IPSEC_NAT_T
-static int udp4_espinudp (struct mbuf *, int, struct sockaddr *,
+static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
 	struct socket *);
 #endif
 static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
 	struct socket *);
 static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
-	struct mbuf *, int);
+	struct mbuf **, int);
 static int udp4_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 #endif
 #ifdef INET6
@@ -401,7 +401,10 @@ udp_input(struct mbuf *m, ...)
 	bcopy(&ip->ip_dst, &dst.sin_addr, sizeof(dst.sin_addr));
 	dst.sin_port = uh->uh_dport;
 
-	n = udp4_realinput(&src, &dst, m, iphlen);
+	if ((n = udp4_realinput(&src, &dst, &m, iphlen)) == -1) {
+		udpstat.udps_hdrops++;
+		return;
+	}
 #ifdef INET6
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
 		struct sockaddr_in6 src6, dst6;
@@ -708,13 +711,14 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 #ifdef INET
 static int
 udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
-	struct mbuf *m, int off /* offset of udphdr */)
+	struct mbuf **mp, int off /* offset of udphdr */)
 {
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in_addr *src4, *dst4;
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
+	struct mbuf *m = *mp;
 
 	rcvcnt = 0;
 	off += sizeof(struct udphdr);	/* now, offset of payload */
@@ -802,12 +806,26 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
 
-			if (udp4_espinudp(m, off, sa, inp->inp_socket) != 0) {
+			switch(udp4_espinudp(mp, off, sa, inp->inp_socket)) {
+			case -1: 	/* Error, m was freeed */
+				rcvcnt = -1;
+				goto bad;
+				break;
+
+			case 1:		/* ESP over UDP */
 				rcvcnt++;
 				goto bad;
-			}
+				break;
 
-			/* Normal UDP processing will take place */
+			case 0: 	/* plain UDP */
+			default: 	/* Unexpected */
+				/* 
+				 * Normal UDP processing will take place 
+				 * m may have changed.
+				 */
+				m = *mp;
+				break;
+			}
 		}
 #endif
 
@@ -1397,10 +1415,11 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
  * Returns:
  * 1 if the packet was processed
  * 0 if normal UDP processing should take place
+ * -1 if an error occurent and m was freed
  */
 static int
-udp4_espinudp(m, off, src, so)
-	struct mbuf *m;
+udp4_espinudp(mp, off, src, so)
+	struct mbuf **mp;
 	int off;
 	struct sockaddr *src;
 	struct socket *so;
@@ -1416,6 +1435,7 @@ udp4_espinudp(m, off, src, so)
 	struct m_tag *tag;
 	struct udphdr *udphdr;
 	u_int16_t sport, dport;
+	struct mbuf *m = *mp;
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
@@ -1426,10 +1446,11 @@ udp4_espinudp(m, off, src, so)
 		minlen = m->m_pkthdr.len;
 
 	if (m->m_len < minlen) {
-		if ((m = m_pullup(m, minlen)) == NULL) {
+		if ((*mp = m_pullup(m, minlen)) == NULL) {
 			printf("udp4_espinudp: m_pullup failed\n");
-			return 0;
+			return -1;
 		}
+		m = *mp;
 	}
 
 	len = m->m_len - off;
