@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.24 2005/08/05 09:21:25 elad Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.25 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -89,4 +89,4 @@ extern struct	icmpstat icmpstat;
 #endif
 #endif /* _KERNEL_ */
 
-#endif /* _NETINET_ICMP_VAR_H_ */
+#endif /* !_NETINET_ICMP_VAR_H_ */

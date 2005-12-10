@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.22 2005/06/02 04:40:46 riz Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.23 2005/12/10 23:36:23 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -193,4 +193,4 @@ extern const int tcp_backoff[];
 void	tcp_timer_init(void);
 #endif
 
-#endif /* _NETINET_TCP_TIMER_H_ */
+#endif /* !_NETINET_TCP_TIMER_H_ */

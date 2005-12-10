@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.47 2005/08/28 21:01:53 rpaulo Exp $	*/
+/*	$NetBSD: in6.h,v 1.48 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -61,12 +61,12 @@
  *	@(#)in.h	8.3 (Berkeley) 1/3/94
  */
 
+#ifndef _NETINET6_IN6_H_
+#define _NETINET6_IN6_H_
+
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
 #endif
-
-#ifndef _NETINET6_IN6_H_
-#define _NETINET6_IN6_H_
 
 /*
  * Identification of the network protocol stack
