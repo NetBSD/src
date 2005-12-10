@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.24 2005/12/10 12:11:43 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.25 2005/12/10 12:37:30 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -77,9 +77,9 @@ struct veriexec_uinfo {
 #define	VERIEXEC_UNTRUSTED	0x10 /* Untrusted storage */
 
 /* Operations for /dev/veriexec. */
-#define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
-#define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
-#define VERIEXEC_DELETE _IOW('S', 0x3, struct veriexec_delete_params)
+#define VERIEXEC_LOAD		_IOW('S', 0x1, struct veriexec_params)
+#define VERIEXEC_TABLESIZE	_IOW('S', 0x2, struct veriexec_sizing_params)
+#define VERIEXEC_DELETE		_IOW('S', 0x3, struct veriexec_delete_params)
 
 /* Verified exec sysctl objects. */
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
