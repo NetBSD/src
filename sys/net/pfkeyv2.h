@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.24 2005/10/29 15:05:13 yamt Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.25 2005/12/10 23:21:39 elad Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -435,4 +435,4 @@ struct sadb_x_nat_t_frag {
 
 #endif /* __PFKEY_V2_H */
 
-#endif /* _NET_PFKEYV2_H_ */
+#endif /* !_NET_PFKEYV2_H_ */

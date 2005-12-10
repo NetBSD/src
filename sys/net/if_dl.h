@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.16 2005/05/31 01:47:24 christos Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.17 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,4 +89,4 @@ __END_DECLS
 
 #endif /* !_KERNEL */
 
-#endif /* _NET_IF_DL_H_ */
+#endif /* !_NET_IF_DL_H_ */

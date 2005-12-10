@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
+/* $NetBSD: zlib.h,v 1.10 2005/12/10 23:21:39 elad Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -30,8 +30,8 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifndef _ZLIB_H
-#define _ZLIB_H
+#ifndef _NET_ZLIB_H_
+#define _NET_ZLIB_H_
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.9 2005/05/29 21:22:53 christos Exp $ */
+/* @(#) $Id: zlib.h,v 1.10 2005/12/10 23:21:39 elad Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -1195,5 +1195,5 @@ ZEXTERN const uLongf * ZEXPORT get_crc_table    __P((void));
 }
 #endif
 
-#endif /* _ZLIB_H */
+#endif /* !_NET_ZLIB_H_ */
 /* -- zlib.h */

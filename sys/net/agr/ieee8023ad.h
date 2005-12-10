@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_H_)
+#ifndef _NET_AGR_IEEE8023AD_H_
 #define	_NET_AGR_IEEE8023AD_H_
 
 /*
@@ -36,4 +36,4 @@
 int ieee8023ad_marker_input(struct ifnet *, struct mbuf *);
 int ieee8023ad_lacp_input(struct ifnet *, struct mbuf *);
 
-#endif /* !defined(_NET_AGR_IEEE8023AD_H_) */
+#endif /* !_NET_AGR_IEEE8023AD_H_ */

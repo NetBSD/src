@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.h,v 1.2 2005/03/11 13:28:25 tron Exp $	*/
+/*	$NetBSD: if_stf.h,v 1.3 2005/12/10 23:21:38 elad Exp $	*/
 /*	$KAME: if_stf.h,v 1.3 2000/03/25 07:23:33 sumikawa Exp $	*/
 
 /*
@@ -39,4 +39,4 @@
 
 void in_stf_input __P((struct mbuf *, ...));
 
-#endif /* _NET_IF_STF_H_ */
+#endif /* !_NET_IF_STF_H_ */

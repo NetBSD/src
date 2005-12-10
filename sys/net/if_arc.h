@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.16 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.17 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -124,4 +124,4 @@ char	*arc_sprintf __P((u_int8_t *));
 int	arc_isphds __P((int));
 #endif
 
-#endif /* _NET_IF_ARC_H_ */
+#endif /* !_NET_IF_ARC_H_ */
