@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.11 2005/06/10 13:22:42 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.12 2005/12/10 23:44:08 elad Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -358,4 +358,4 @@ INITFN void tcpsignature_attach(void);
 
 INITFN void ipsec_attach(void);
 #endif /* _KERNEL */
-#endif /* _NETIPSEC_IPSEC_H_ */
+#endif /* !_NETIPSEC_IPSEC_H_ */
