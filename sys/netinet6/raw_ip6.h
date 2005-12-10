@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.h,v 1.2 2005/08/28 21:04:09 rpaulo Exp $	*/
+/*	$NetBSD: raw_ip6.h,v 1.3 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -62,4 +62,4 @@ struct rip6stat {
 extern struct rip6stat rip6stat;
 #endif
 
-#endif
+#endif /* !_NETINET6_RAW_IP6_H_ */

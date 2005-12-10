@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.12 2004/04/18 21:00:35 matt Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.13 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,4 +56,4 @@ typedef u_int32_t n_time;		/* ms since 00:00 GMT, byte rev */
 n_time	 iptime (void);
 #endif
 
-#endif /* _NETINET_IN_SYSTM_H_ */
+#endif /* !_NETINET_IN_SYSTM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.39 2005/02/28 09:27:07 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.40 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -418,4 +418,4 @@ int nd6_setdefaultiface __P((int));
 
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_ND6_H_ */
+#endif /* !_NETINET6_ND6_H_ */

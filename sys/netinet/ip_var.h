@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.73 2005/11/22 17:52:38 yamt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.74 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -293,4 +293,4 @@ ip_newid(void)
 
 #endif  /* _KERNEL */
 
-#endif /* _NETINET_IP_VAR_H_ */
+#endif /* !_NETINET_IP_VAR_H_ */

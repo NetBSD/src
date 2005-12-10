@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_var.h,v 1.6 2003/06/06 08:13:44 itojun Exp $	*/
+/*	$NetBSD: mld6_var.h,v 1.7 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -50,4 +50,4 @@ void	mld6_stop_listening __P((struct in6_multi *));
 void	mld6_fasttimeo __P((void));
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_MLD6_VAR_H_ */
+#endif /* !_NETINET6_MLD6_VAR_H_ */

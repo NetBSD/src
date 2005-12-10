@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.40 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.41 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -147,4 +147,4 @@ extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
 	struct route *, int, struct ip_moptions *, int *);
 #endif
 
-#endif /* _NETINET_IN_PCB_H_ */
+#endif /* !_NETINET_IN_PCB_H_ */

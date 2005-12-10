@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.130 2005/09/06 02:41:14 rpaulo Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.131 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -899,4 +899,4 @@ int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);
 #endif
 
-#endif /* _NETINET_TCP_VAR_H_ */
+#endif /* !_NETINET_TCP_VAR_H_ */

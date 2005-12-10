@@ -1,4 +1,4 @@
-/*	$NetBSD: x25isr.h,v 1.1 2000/07/02 17:34:01 sommerfeld Exp $	*/
+/*	$NetBSD: x25isr.h,v 1.2 2005/12/10 23:31:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,4 +41,4 @@
 
 void ccittintr __P((void));
 
-#endif /* _NETCCITT_X25ISR_H_ */
+#endif /* !_NETCCITT_X25ISR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.9 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.10 2005/12/10 23:36:23 elad Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -70,4 +70,4 @@ int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
 #endif
 
-#endif /*_NETINET_IP_ENCAP_H_*/
+#endif /* !_NETINET_IP_ENCAP_H_ */
