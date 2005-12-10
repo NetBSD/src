@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2005/10/04 22:56:20 cube Exp $
+# $NetBSD: Makefile,v 1.4 2005/12/10 13:36:01 cube Exp $
 
 # Those configurations only have to be understood by config(1) without
 # errors.
 
-SIMPLE_SUCCESS=	SHADOW_INSTANCE LOOP
+SIMPLE_SUCCESS=	SHADOW_INSTANCE LOOP LOOP2
 SIMPLE_FAILURE=	POSTPONED_ORPHAN
 
 SIMPLE=	${SIMPLE_SUCCESS} ${SIMPLE_FAILURE}
