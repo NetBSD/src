@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrioctl.h,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_agrioctl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IF_AGRIOCTL_H_)
+#ifndef _NET_AGR_IF_AGRIOCTL_H_
 #define	_NET_AGR_IF_AGRIOCTL_H_
 
 /*
@@ -71,4 +71,4 @@ struct agrportlist {
 	/* struct agrportinfo apl_ports[]; */
 };
 
-#endif /* _NET_AGR_IF_AGRIOCTL_H_ */
+#endif /* !_NET_AGR_IF_AGRIOCTL_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.6 2005/11/20 09:39:04 dyoung Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.7 2005/12/10 23:26:35 elad Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -129,4 +129,4 @@ struct ieee80211_node_walk {
 #define	IEEE80211_NODE_SYSCTL_F_SCAN	0x00000004	/* this node is in
 							 * the scan table
 							 */
-#endif /* _NET80211_IEEE80211_SYSCTL_H_ */
+#endif /* !_NET80211_IEEE80211_SYSCTL_H_ */

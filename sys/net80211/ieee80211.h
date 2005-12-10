@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.15 2005/11/18 16:40:08 skrll Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.16 2005/12/10 23:26:35 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -677,4 +677,4 @@ struct ieee80211_duration {
 				 IEEE80211_DUR_DIFS)
 
 
-#endif /* _NET80211_IEEE80211_H_ */
+#endif /* !_NET80211_IEEE80211_H_ */
