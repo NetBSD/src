@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155 2005/12/08 22:41:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.156 2005/12/10 21:19:57 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2005/12/10 21:19:57 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -489,7 +489,7 @@ static boolean_t	pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
 static struct pv_entry *pmap_find_pv(struct vm_page *, pmap_t, vaddr_t);
-static struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
+static struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t, int);
 static u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 			    u_int, u_int);
 
@@ -755,7 +755,7 @@ pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
  * => we return the removed pve
  */
 static struct pv_entry *
-pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
+pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va, int skip_wired)
 {
 	struct pv_entry *pve, **prevptr;
 
@@ -767,11 +767,14 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 
 	while (pve) {
 		if (pve->pv_pmap == pm && pve->pv_va == va) {	/* match? */
-			NPDEBUG(PDB_PVDUMP,
-			    printf("pmap_remove_pv: pm %p, pg %p, flags 0x%x\n", pm, pg, pve->pv_flags));
+			NPDEBUG(PDB_PVDUMP, printf("pmap_remove_pv: pm %p, pg "
+			    "%p, flags 0x%x\n", pm, pg, pve->pv_flags));
+			if (pve->pv_flags & PVF_WIRED) {
+				if (skip_wired)
+					return (NULL);
+				--pm->pm_stats.wired_count;
+			}
 			*prevptr = pve->pv_next;		/* remove it! */
-			if (pve->pv_flags & PVF_WIRED)
-			    --pm->pm_stats.wired_count;
 			if (pm == pmap_kernel()) {
 				if (pve->pv_flags & PVF_WRITE)
 					pg->mdpage.krw_mappings--;
@@ -2069,7 +2072,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				 * must remove it from the PV list
 				 */
 				simple_lock(&opg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(opg, pm, va);
+				pve = pmap_remove_pv(opg, pm, va, 0);
 				pmap_vac_me_harder(opg, pm, 0);
 				simple_unlock(&opg->mdpage.pvh_slock);
 				oflags = pve->pv_flags;
@@ -2130,7 +2133,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * at this address.
 			 */
 			simple_lock(&opg->mdpage.pvh_slock);
-			pve = pmap_remove_pv(opg, pm, va);
+			pve = pmap_remove_pv(opg, pm, va, 0);
 			pmap_vac_me_harder(opg, pm, 0);
 			simple_unlock(&opg->mdpage.pvh_slock);
 			oflags = pve->pv_flags;
@@ -2244,7 +2247,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #define	PMAP_REMOVE_CLEAN_LIST_SIZE	3
 
 void
-pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
+pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 {
 	struct l2_bucket *l2b;
 	vaddr_t next_bucket;
@@ -2256,8 +2259,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
 	u_int mappings, is_exec, is_refd;
 
-	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
-	    pm, sva, eva));
+	NPDEBUG(PDB_REMOVE, printf("pmap_do_remove: pmap=%p sva=%08lx "
+	    "eva=%08lx\n", pm, sva, eva));
 
 	/*
 	 * we lock in the pmap => pv_head direction
@@ -2289,9 +2292,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		}
 
 		ptep = &l2b->l2b_kva[l2pte_index(sva)];
-		mappings = 0;
 
-		while (sva < next_bucket) {
+		for (mappings = 0; sva < next_bucket; sva += PAGE_SIZE, ptep++){
 			struct vm_page *pg;
 			pt_entry_t pte;
 			paddr_t pa;
@@ -2299,15 +2301,10 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			pte = *ptep;
 
 			if (pte == 0) {
-				/*
-				 * Nothing here, move along
-				 */
-				sva += PAGE_SIZE;
-				ptep++;
+				/* Nothing here, move along */
 				continue;
 			}
 
-			pm->pm_stats.resident_count--;
 			pa = l2pte_pa(pte);
 			is_exec = 0;
 			is_refd = 1;
@@ -2320,7 +2317,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 				struct pv_entry *pve;
 				simple_lock(&pg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(pg, pm, sva);
+				pve = pmap_remove_pv(pg, pm, sva, skip_wired);
 				pmap_vac_me_harder(pg, pm, 0);
 				simple_unlock(&pg->mdpage.pvh_slock);
 				if (pve != NULL) {
@@ -2331,15 +2328,27 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 						   PV_BEEN_REFD(pve->pv_flags);
 					}
 					pool_put(&pmap_pv_pool, pve);
+				} else
+				if (skip_wired) {
+					/* The mapping is wired. Skip it */
+					continue;
 				}
+			} else
+			if (skip_wired) {
+				/* Unmanaged pages are always wired. */
+				continue;
 			}
 
+			mappings++;
+
 			if (!l2pte_valid(pte)) {
+				/*
+				 * Ref/Mod emulation is still active for this
+				 * mapping, therefore it is has not yet been
+				 * accessed. No need to frob the cache/tlb.
+				 */
 				*ptep = 0;
 				PTE_SYNC_CURRENT(pm, ptep);
-				sva += PAGE_SIZE;
-				ptep++;
-				mappings++;
 				continue;
 			}
 
@@ -2378,10 +2387,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 						pmap_tlb_flushD_SE(pm, sva);
 				}
 			}
-
-			sva += PAGE_SIZE;
-			ptep++;
-			mappings++;
 		}
 
 		/*
@@ -2423,6 +2428,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		}
 
 		pmap_free_l2_bucket(pm, l2b, mappings);
+		pm->pm_stats.resident_count -= mappings;
 	}
 
 	pmap_release_pmap_lock(pm);
@@ -2982,10 +2988,11 @@ out:
 void
 pmap_collect(pmap_t pm)
 {
-	/*
-	 * Nothing to do.
-	 * We don't even need to free-up the process' L1.
-	 */
+
+	pmap_idcache_wbinv_all(pm);
+	pm->pm_remove_all = TRUE;
+	pmap_do_remove(pm, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 1);
+	pmap_update(pm);
 }
 
 /*
