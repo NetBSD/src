@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.11 2005/06/26 10:39:21 mlelstv Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.12 2005/12/10 23:21:38 elad Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -90,4 +90,4 @@ void gif_delete_tunnel __P((struct ifnet *));
 int gif_encapcheck __P((struct mbuf *, int, int, void *));
 #endif
 
-#endif /* _NET_IF_GIF_H_ */
+#endif /* !_NET_IF_GIF_H_ */

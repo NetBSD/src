@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.14 2005/11/27 05:35:52 thorpej Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.15 2005/12/10 23:21:38 elad Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -67,4 +67,4 @@ int	stripstart __P((struct tty *));
 int	striptioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif /* _KERNEL */
 
-#endif /* _NET_IF_STRIPVAR_H_ */
+#endif /* !_NET_IF_STRIPVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.23 2005/08/04 19:30:47 rpaulo Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.24 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -135,4 +135,4 @@ struct bpf_if {
 int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
 #endif
 
-#endif /* _NET_BPFDESC_H_ */
+#endif /* !_NET_BPFDESC_H_ */

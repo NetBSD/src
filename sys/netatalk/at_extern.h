@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.9 2005/05/29 21:52:30 christos Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.10 2005/12/10 23:29:05 elad Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -65,4 +65,4 @@ struct ddpcb  *
 int     ddp_route	__P((struct mbuf *, struct route *));
 
 
-#endif /* _NETATALK_AT_EXTERN_H_ */
+#endif /* !_NETATALK_AT_EXTERN_H_ */

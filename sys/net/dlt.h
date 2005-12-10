@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.9 2004/09/28 03:34:21 dyoung Exp $	*/
+/*	$NetBSD: dlt.h,v 1.10 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -126,4 +126,4 @@
 #define	DLT_RAWAF_AF(x)		((x) & 0x0000ffff)
 #define	DLT_IS_RAWAF(x)		(((x) & 0xffff0000) == DLT_RAWAF_MASK)
 
-#endif /* _NET_DLT_H_ */
+#endif /* !_NET_DLT_H_ */
