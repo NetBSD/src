@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.19 2005/10/05 13:58:49 wiz Exp $
+.\" $NetBSD: veriexecctl.8,v 1.20 2005/12/10 02:10:00 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.19 2005/10/05 13:58:49 wiz Exp $
+.\"	$Id: veriexecctl.8,v 1.20 2005/12/10 02:10:00 elad Exp $
 .\"
-.Dd October 4, 2005
+.Dd December 10, 2005
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -40,6 +40,8 @@
 .Sh SYNOPSIS
 .Nm
 .Cm load Ar signatures
+.Nm
+.Cm delete Op file | mount_point
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,6 +58,11 @@ This operation is only available if kern.veriexec.strict is zero.
 Once loaded the kernel can then validate executed programs
 or files against the loaded fingerprints and report when fingerprints
 do not match.
+.It Cm delete Op file | mount_point
+Delete the specified file from the Veriexec table it is stored in.
+If the argument is a mount_point (or a directory), the device id for
+it is fetched and the entire Veriexec table that refers to it is
+removed.
 .El
 .Sh SIGNATURES
 The
