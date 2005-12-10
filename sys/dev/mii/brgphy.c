@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.24 2005/12/08 03:16:43 jonathan Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.25 2005/12/10 03:03:34 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.24 2005/12/08 03:16:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.25 2005/12/10 03:03:34 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,9 @@ static const struct mii_phydesc brgphys[] = {
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5704,
 	  MII_STR_BROADCOM_BCM5704 },
+
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5705,
+	  MII_STR_BROADCOM_BCM5705 },
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5714,
 	  MII_STR_BROADCOM_BCM5714 },
