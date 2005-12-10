@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.14 2005/12/04 19:15:21 christos Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.15 2005/12/10 23:44:08 elad Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NETIPSEC_OSDEP_H
-#define NETIPSEC_OSDEP_H
+#ifndef _NETIPSEC_OSDEP_H_
+#define _NETIPSEC_OSDEP_H_
 
 #ifdef _KERNEL
 /*
@@ -341,4 +341,4 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * FreeBSD uses splimp() where (for networking) NetBSD would use splnet().
  */
 #endif /* _KERNEL */
-#endif /* NETIPSEC_OSDEP_H */
+#endif /* !_NETIPSEC_OSDEP_H_ */
