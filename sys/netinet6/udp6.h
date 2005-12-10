@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6.h,v 1.6 2001/12/18 03:04:05 itojun Exp $	*/
+/*	$NetBSD: udp6.h,v 1.7 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: udp6.h,v 1.4 2001/02/10 00:57:54 itojun Exp $	*/
 
 /*
@@ -35,4 +35,4 @@
 
 #include <netinet/udp.h>
 
-#endif /* _NETINET6_UDP6_H_ */
+#endif /* !_NETINET6_UDP6_H_ */

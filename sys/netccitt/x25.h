@@ -1,4 +1,4 @@
-/*	$NetBSD: x25.h,v 1.13 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: x25.h,v 1.14 2005/12/10 23:31:41 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993
@@ -221,4 +221,4 @@ int pk_rtattach __P((struct socket *, struct mbuf *));
 int x25_rtattach __P((struct pklcd *, struct rtentry *));
 #endif
 
-#endif /* _NETCCITT_X25_H_ */
+#endif /* !_NETCCITT_X25_H_ */

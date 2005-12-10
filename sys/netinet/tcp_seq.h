@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.15 2005/04/05 01:07:17 kurahone Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.16 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -67,4 +67,4 @@
 extern tcp_seq	 tcp_iss_seq;		/* tcp initial seq # */
 #endif
 
-#endif /* _NETINET_TCP_SEQ_H_ */
+#endif /* !_NETINET_TCP_SEQ_H_ */

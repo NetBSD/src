@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.11 2005/02/12 12:31:07 manu Exp $	*/
+/*	$NetBSD: udp.h,v 1.12 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,4 +58,4 @@ struct udphdr {
 /* Maximum UDP fragment size for ESP over UDP */
 #define UDP_ENCAP_ESPINUDP_MAXFRAGLEN	552
 
-#endif /* _NETINET_UDP_H_ */
+#endif /* !_NETINET_UDP_H_ */

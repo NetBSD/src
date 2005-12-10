@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.20 2005/07/21 17:32:11 riz Exp $	*/
+/*	$NetBSD: tcp.h,v 1.21 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -118,4 +118,5 @@ struct tcphdr {
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
 /* Bits 0x04, 0x08 reserved for FreeBSD compatibility: TCP_NOPUSH, TCP_NOOPT */
 #define TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
-#endif /* _NETINET_TCP_H_ */
+
+#endif /* !_NETINET_TCP_H_ */
