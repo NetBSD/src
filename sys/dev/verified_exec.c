@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $\n$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $\n$NetBSD: verified_exec.c,v 1.28 2005/12/10 02:10:00 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -173,6 +173,10 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 
 	case VERIEXEC_LOAD:
 		error = veriexec_load((struct veriexec_params *)data, p);
+		break;
+
+	case VERIEXEC_DELETE:
+		error = veriexec_delete((struct veriexec_delete_params *)data);
 		break;
 
 	default:
@@ -337,4 +341,59 @@ veriexec_load(struct veriexec_params *params, struct proc *p)
 	error = veriexec_hashadd(tbl, e);
 
 	return (error);
+}
+
+int
+veriexec_delete(struct veriexec_delete_params *params)
+{
+	struct veriexec_hashtbl *tbl;
+	struct veriexec_hash_entry *vhe;
+
+	/* Delete an entire table */
+	if (params->ino == 0) {
+		struct veriexec_hashhead *tbl_list;
+		u_long i;
+
+		tbl = veriexec_tblfind(params->dev);
+		if (tbl == NULL)
+			return (ENOENT);
+
+		/* Remove all entries from the table and lists */
+		tbl_list = tbl->hash_tbl;
+		for (i = 0; i < tbl->hash_size; i++) {
+			while (LIST_FIRST(&tbl_list[i]) != NULL) {
+				vhe = LIST_FIRST(&tbl_list[i]);
+				if (vhe->fp != NULL)
+					free(vhe->fp, M_TEMP);
+				if (vhe->page_fp != NULL)
+					free(vhe->page_fp, M_TEMP);
+				LIST_REMOVE(vhe, entries);
+				free(vhe, M_TEMP);
+			}
+		}
+
+		/* Remove hash table and sysctl node */
+		hashdone(tbl->hash_tbl, M_TEMP);
+		LIST_REMOVE(tbl, hash_list);
+		sysctl_destroyv(__UNCONST(veriexec_count_node), params->dev,
+				CTL_EOL);
+	} else {
+		tbl = veriexec_tblfind(params->dev);
+		if (tbl == NULL)
+			return (ENOENT);
+
+		vhe = veriexec_lookup(params->dev, params->ino);
+		if (vhe != NULL) {
+			if (vhe->fp != NULL)
+				free(vhe->fp, M_TEMP);
+			if (vhe->page_fp != NULL)
+				free(vhe->page_fp, M_TEMP);
+			LIST_REMOVE(vhe, entries);
+			free(vhe, M_TEMP);
+
+			tbl->hash_count--;
+		}
+	}
+
+	return (0);
 }

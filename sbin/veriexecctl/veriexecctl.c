@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.17 2005/10/05 13:48:48 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.18 2005/12/10 02:10:00 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -236,6 +236,29 @@ main(int argc, char **argv)
 	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
 		filename = argv[1];
 		fingerprint_load(argv[1]);
+	} else if (argc == 2 && strcasecmp(argv[0], "delete") == 0) {
+		struct veriexec_delete_params dp;
+		struct stat sb;
+
+		/* Get device and inode */
+		if (stat(argv[1], &sb) == -1)
+			err(1, "Can't stat `%s'", argv[1]);
+
+		/*
+		 * If it's a regular file, remove it. If it's a directory,
+		 * remove the entire table. If it's neither, abort.
+		 */
+		if (S_ISDIR(sb.st_mode))
+			dp.ino = 0;
+		else if (S_ISREG(sb.st_mode))
+			dp.ino = sb.st_ino;
+		else
+			errx(1, "`%s' is not a regular file or directory.", argv[1]);
+
+		dp.dev = sb.st_dev;
+
+		if (ioctl(gfd, VERIEXEC_DELETE, &dp) == -1)
+			err(1, "Error deleting `%s'", argv[1]);
 	} else
 		usage();
 
