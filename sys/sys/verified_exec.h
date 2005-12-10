@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.21 2005/10/07 18:07:46 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.22 2005/12/10 01:04:17 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -205,6 +205,8 @@ int veriexec_renamechk(struct vnode *, const char *, const char *);
 void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct vattr *,
 		     struct proc *, int, int, int);
+int veriexec_newtable(struct veriexec_sizing_params *);
+int veriexec_load(struct veriexec_params *, struct proc *);
 
 #endif /* _KERNEL */
 
