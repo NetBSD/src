@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.228 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.229 2005/12/10 21:17:21 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.228 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.229 2005/12/10 21:17:21 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -103,7 +103,14 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.228 2005/10/15 17:29:25 yamt Exp $");
 #define CD_FRAMES	75
 #define CD_SECS		60
 
-struct cd_toc {
+#define CD_TOC_FORM	0	/* formatted TOC, exposed to userland     */
+#define CD_TOC_MSINFO	1	/* multi-session info			  */
+#define CD_TOC_RAW	2	/* raw TOC as on disc, unprocessed	  */
+#define CD_TOC_PMA	3	/* PMA, used as intermediate (rare use)   */
+#define CD_TOC_ATIP	4	/* pressed space of recordable		  */
+#define CD_TOC_CDTEXT	5	/* special CD-TEXT, rarely used		  */
+
+struct cd_formatted_toc {
 	struct ioc_toc_header header;
 	struct cd_toc_entry entries[MAXTRACK+1]; /* One extra for the */
 						 /* leadout */
@@ -125,9 +132,9 @@ static int	cd_pause(struct cd_softc *, int);
 static int	cd_reset(struct cd_softc *);
 static int	cd_read_subchannel(struct cd_softc *, int, int, int,
 		    struct cd_sub_channel_info *, int, int);
-static int	cd_read_toc_f0(struct cd_softc *, int, int, void *, int, int, int);
+static int	cd_read_toc(struct cd_softc *, int, int, int, void *, int, int, int);
 static int	cd_get_parms(struct cd_softc *, int);
-static int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
+static int	cd_load_toc(struct cd_softc *, int, struct cd_formatted_toc *, int);
 static int	cdreadmsaddr(struct cd_softc *, int *);
 
 static int	dvd_auth(struct cd_softc *, dvd_authinfo *);
@@ -1094,10 +1101,10 @@ cdreadmsaddr(struct cd_softc *cd, int *addr)
 {
 	struct scsipi_periph *periph = cd->sc_periph;
 	int error;
-	struct cd_toc toc;
+	struct cd_formatted_toc toc;
 	struct cd_toc_entry *cte;
 
-	error = cd_read_toc_f0(cd, 0, 0, &toc,
+	error = cd_read_toc(cd, CD_TOC_FORM, 0, 0, &toc,
 	    sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
 	    XS_CTL_DATA_ONSTACK,
 	    0x40 /* control word for "get MS info" */);
@@ -1341,7 +1348,7 @@ bad:
 		/* READ TOC format 0 command, static header */
 		struct ioc_toc_header th;
 
-		if ((error = cd_read_toc_f0(cd, 0, 0, &th, sizeof(th),
+		if ((error = cd_read_toc(cd, CD_TOC_FORM, 0, 0, &th, sizeof(th),
 		    XS_CTL_DATA_ONSTACK, 0)) != 0)
 			return (error);
 		if (cd->sc_periph->periph_quirks & PQUIRK_LITTLETOC)
@@ -1353,7 +1360,7 @@ bad:
 	}
 	case CDIOREADTOCENTRYS: {
 		/* READ TOC format 0 command, entries */
-		struct cd_toc toc;
+		struct cd_formatted_toc toc;
 		struct ioc_read_toc_entry *te =
 		    (struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
@@ -1366,8 +1373,9 @@ bad:
 		if (len > sizeof(toc.entries) ||
 		    len < sizeof(struct cd_toc_entry))
 			return (EINVAL);
-		error = cd_read_toc_f0(cd, te->address_format, te->starting_track,
-		    &toc, len + sizeof(struct ioc_toc_header),
+		error = cd_read_toc(cd, CD_TOC_FORM, te->address_format,
+		    te->starting_track, &toc,
+		    len + sizeof(struct ioc_toc_header),
 		    XS_CTL_DATA_ONSTACK, 0);
 		if (error)
 			return (error);
@@ -1704,15 +1712,16 @@ static int
 cd_play_tracks(struct cd_softc *cd, int strack, int sindex, int etrack,
     int eindex)
 {
-	struct cd_toc toc;
-	int error;
+	struct cd_formatted_toc toc;
+	int flags, error;
 
 	if (!etrack)
 		return (EIO);
 	if (strack > etrack)
 		return (EINVAL);
 
-	if ((error = cd_load_toc(cd, &toc, XS_CTL_DATA_ONSTACK)) != 0)
+	flags = XS_CTL_DATA_ONSTACK;
+	if ((error = cd_load_toc(cd, CD_TOC_FORM, &toc, flags)) != 0)
 		return (error);
 
 	if (++etrack > (toc.header.ending_track+1))
@@ -1808,7 +1817,7 @@ cd_read_subchannel(struct cd_softc *cd, int mode, int format, int track,
  * Read table of contents
  */
 static int
-cd_read_toc_f0(struct cd_softc *cd, int mode, int start, void *data, int len,
+cd_read_toc(struct cd_softc *cd, int respf, int mode, int start, void *data, int len,
     int flags, int control)
 {
 	struct scsipi_read_toc cmd;
@@ -1825,7 +1834,7 @@ cd_read_toc_f0(struct cd_softc *cd, int mode, int start, void *data, int len,
 	cmd.opcode = READ_TOC;
 	if (mode == CD_MSF_FORMAT)
 		cmd.addr_mode |= CD_MSF;
-	cmd.resp_format = 0;
+	cmd.resp_format = respf;
 	cmd.from_track = start;
 	_lto2b(ntoc, cmd.data_len);
 	cmd.control = control;
@@ -1836,18 +1845,18 @@ cd_read_toc_f0(struct cd_softc *cd, int mode, int start, void *data, int len,
 }
 
 static int
-cd_load_toc(struct cd_softc *cd, struct cd_toc *toc, int flags)
+cd_load_toc(struct cd_softc *cd, int respf, struct cd_formatted_toc *toc, int flags)
 {
 	int ntracks, len, error;
 
-	if ((error = cd_read_toc_f0(cd, 0, 0, toc, sizeof(toc->header),
+	if ((error = cd_read_toc(cd, respf, 0, 0, toc, sizeof(toc->header),
 	    flags, 0)) != 0)
 		return (error);
 
 	ntracks = toc->header.ending_track - toc->header.starting_track + 1;
 	len = (ntracks + 1) * sizeof(struct cd_toc_entry) +
 	    sizeof(toc->header);
-	if ((error = cd_read_toc_f0(cd, CD_MSF_FORMAT, 0, toc, len,
+	if ((error = cd_read_toc(cd, respf, CD_MSF_FORMAT, 0, toc, len,
 	    flags, 0)) != 0)
 		return (error);
 	return (0);
