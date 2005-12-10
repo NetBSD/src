@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.26 2005/11/25 12:02:09 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.26 2005/11/25 12:02:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.26 2005/11/25 12:02:09 elad Exp $\n$NetBSD: verified_exec.c,v 1.26 2005/11/25 12:02:09 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $\n$NetBSD: verified_exec.c,v 1.27 2005/12/10 01:04:17 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -156,11 +156,7 @@ int
 veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 		  int flags __unused, struct proc *p)
 {
-	struct veriexec_hashtbl *tbl;
-	struct nameidata nid;
-	struct vattr va;
 	int error = 0;
-	u_long hashmask;
 
 	if (veriexec_strict > 0) {
 		printf("Veriexec: veriexecioctl: Strict mode, modifying "
@@ -170,147 +166,18 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data,
 	}
 	
 	switch (cmd) {
-	case VERIEXEC_TABLESIZE: {
-		struct veriexec_sizing_params *params =
-			(struct veriexec_sizing_params *) data;
-		u_char node_name[16];
-
-		/* Check for existing table for device. */
-		if (veriexec_tblfind(params->dev) != NULL)
-			return (EEXIST);
-
-		/* Allocate and initialize a Veriexec hash table. */
-		tbl = malloc(sizeof(struct veriexec_hashtbl), M_TEMP,
-			     M_WAITOK);
-		tbl->hash_size = params->hash_size;
-		tbl->hash_dev = params->dev;
-		tbl->hash_tbl = hashinit(params->hash_size, HASH_LIST, M_TEMP,
-					 M_WAITOK, &hashmask);
-		tbl->hash_count = 0;
-
-		LIST_INSERT_HEAD(&veriexec_tables, tbl, hash_list);
-
-		snprintf(node_name, sizeof(node_name), "dev_%u",
-			 tbl->hash_dev);
-
-		sysctl_createv(NULL, 0, &veriexec_count_node, NULL,
-			       CTLFLAG_READONLY, CTLTYPE_QUAD, node_name,
-			       NULL, NULL, 0, &tbl->hash_count, 0,
-			       tbl->hash_dev, CTL_EOL);
-
+	case VERIEXEC_TABLESIZE:
+		error = veriexec_newtable((struct veriexec_sizing_params *)
+					  data);
 		break;
-		}
 
-	case VERIEXEC_LOAD: {
-		struct veriexec_params *params =
-			(struct veriexec_params *) data;
-		struct veriexec_hash_entry *hh;
-		struct veriexec_hash_entry *e;
-
-		NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, p);
-		error = namei(&nid);
-		if (error)
-			return (error);
-
-		/* Add only regular files. */
-		if (nid.ni_vp->v_type != VREG) {
-			printf("Veriexec: veriexecioctl: Not adding \"%s\": "
-			    "Not a regular file.\n", params->file);
-			vrele(nid.ni_vp);
-			return (EINVAL);
-		}
-
-		/* Get attributes for device and inode. */
-		error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
-		if (error)
-			return (error);
-
-		/* Release our reference to the vnode. (namei) */
-		vrele(nid.ni_vp);
-
-		/* Get table for the device. */
-		tbl = veriexec_tblfind((dev_t)va.va_fsid);
-		if (tbl == NULL) {
-			return (EINVAL);
-		}
-
-		hh = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
-		if (hh != NULL) {
-			/*
-			 * Duplicate entry means something is wrong in
-			 * the signature file. Just give collision info
-			 * and return.
-			 */
-			printf("veriexec: Duplicate entry. [%s, %ld:%llu] "
-			       "old[type=0x%02x, algorithm=%s], "
-			       "new[type=0x%02x, algorithm=%s] "
-			       "(%s fingerprint)\n",
-			       params->file, va.va_fsid,
-			       (unsigned long long)va.va_fileid,
-			       hh->type, hh->ops->type,
-			       params->type, params->fp_type,
-			       (((hh->ops->hash_len != params->size) ||
-				(memcmp(hh->fp, params->fingerprint,
-					min(hh->ops->hash_len, params->size))
-					!= 0)) ? "different" : "same"));
-
-			return (0);
-		}
-
-		e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
-		e->inode = (ino_t)va.va_fileid;
-		e->type = params->type;
-		e->status = FINGERPRINT_NOTEVAL;
-		e->page_fp = NULL;
-		e->page_fp_status = PAGE_FP_NONE;
-		e->npages = 0;
-		e->last_page_size = 0;
-		if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
-			free(e, M_TEMP);
-			printf("Veriexec: veriexecioctl: Invalid or unknown "
-			       "fingerprint type \"%s\" for file \"%s\" "
-			       "(dev=%ld, inode=%llu)\n", params->fp_type,
-			       params->file, va.va_fsid, 
-			       (unsigned long long)va.va_fileid);
-			return(EINVAL);
-		}
-
-		/*
-		 * Just a bit of a sanity check - require the size of
-		 * the fp to be passed in, check this against the expected
-		 * size.  Of course userland could lie deliberately, this
-		 * really only protects against the obvious fumble of
-		 * changing the fp type but not updating the fingerprint
-		 * string.
-		 */
-		if (e->ops->hash_len != params->size) {
-			printf("Veriexec: veriexecioctl: Inconsistent "
-			       "fingerprint size for type \"%s\" for file "
-			       "\"%s\" (dev=%ld, inode=%llu), size was %u "
-			       "was expecting %zu\n", params->fp_type,
-			       params->file, va.va_fsid,
-			       (unsigned long long)va.va_fileid,
-			       params->size, e->ops->hash_len);
-			free(e, M_TEMP);
-			return(EINVAL);
-		}
-			
-		e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
-		memcpy(e->fp, params->fingerprint, e->ops->hash_len);
-
-		veriexec_report("New entry.", params->file, &va, NULL,
-				REPORT_VERBOSE_HIGH, REPORT_NOALARM,
-				REPORT_NOPANIC);
-
-		error = veriexec_hashadd(tbl, e);
-
+	case VERIEXEC_LOAD:
+		error = veriexec_load((struct veriexec_params *)data, p);
 		break;
-		}
 
 	default:
 		/* Invalid operation. */
 		error = ENODEV;
-
 		break;
 	}
 
@@ -328,3 +195,146 @@ veriexec_drvinit(void *unused __unused)
 
 SYSINIT(veriexec, SI_SUB_PSEUDO, SI_ORDER_ANY, veriexec_drvinit, NULL);
 #endif
+
+int
+veriexec_newtable(struct veriexec_sizing_params *params)
+{
+	struct veriexec_hashtbl *tbl;
+	u_char node_name[16];
+	u_long hashmask;
+
+	/* Check for existing table for device. */
+	if (veriexec_tblfind(params->dev) != NULL)
+		return (EEXIST);
+
+	/* Allocate and initialize a Veriexec hash table. */
+	tbl = malloc(sizeof(*tbl), M_TEMP, M_WAITOK);
+	tbl->hash_size = params->hash_size;
+	tbl->hash_dev = params->dev;
+	tbl->hash_tbl = hashinit(params->hash_size, HASH_LIST, M_TEMP,
+				 M_WAITOK, &hashmask);
+	tbl->hash_count = 0;
+
+	LIST_INSERT_HEAD(&veriexec_tables, tbl, hash_list);
+
+	snprintf(node_name, sizeof(node_name), "dev_%u",
+		 tbl->hash_dev);
+
+	sysctl_createv(NULL, 0, &veriexec_count_node, NULL,
+		       CTLFLAG_READONLY, CTLTYPE_QUAD, node_name,
+		       NULL, NULL, 0, &tbl->hash_count, 0,
+		       tbl->hash_dev, CTL_EOL);
+
+	return (0);
+}
+
+int
+veriexec_load(struct veriexec_params *params, struct proc *p)
+{
+	struct veriexec_hashtbl *tbl;
+	struct veriexec_hash_entry *hh;
+	struct veriexec_hash_entry *e;
+	struct nameidata nid;
+	struct vattr va;
+	int error;
+
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, p);
+	error = namei(&nid);
+	if (error)
+		return (error);
+
+	/* Add only regular files. */
+	if (nid.ni_vp->v_type != VREG) {
+		printf("Veriexec: veriexecioctl: Not adding \"%s\": "
+		    "Not a regular file.\n", params->file);
+		vrele(nid.ni_vp);
+		return (EINVAL);
+	}
+
+	/* Get attributes for device and inode. */
+	error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
+	if (error)
+		return (error);
+
+	/* Release our reference to the vnode. (namei) */
+	vrele(nid.ni_vp);
+
+	/* Get table for the device. */
+	tbl = veriexec_tblfind(va.va_fsid);
+	if (tbl == NULL) {
+		return (EINVAL);
+	}
+
+	hh = veriexec_lookup(va.va_fsid, va.va_fileid);
+	if (hh != NULL) {
+		/*
+		 * Duplicate entry means something is wrong in
+		 * the signature file. Just give collision info
+		 * and return.
+		 */
+		printf("veriexec: Duplicate entry. [%s, %ld:%llu] "
+		       "old[type=0x%02x, algorithm=%s], "
+		       "new[type=0x%02x, algorithm=%s] "
+		       "(%s fingerprint)\n",
+		       params->file, va.va_fsid,
+		       (unsigned long long)va.va_fileid,
+		       hh->type, hh->ops->type,
+		       params->type, params->fp_type,
+		       (((hh->ops->hash_len != params->size) ||
+			(memcmp(hh->fp, params->fingerprint,
+				min(hh->ops->hash_len, params->size))
+				!= 0)) ? "different" : "same"));
+
+			return (0);
+	}
+
+	e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
+	e->inode = va.va_fileid;
+	e->type = params->type;
+	e->status = FINGERPRINT_NOTEVAL;
+	e->page_fp = NULL;
+	e->page_fp_status = PAGE_FP_NONE;
+	e->npages = 0;
+	e->last_page_size = 0;
+	if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
+		free(e, M_TEMP);
+		printf("Veriexec: veriexecioctl: Invalid or unknown "
+		       "fingerprint type \"%s\" for file \"%s\" "
+		       "(dev=%ld, inode=%llu)\n", params->fp_type,
+		       params->file, va.va_fsid, 
+		       (unsigned long long)va.va_fileid);
+		return(EINVAL);
+	}
+
+	/*
+	 * Just a bit of a sanity check - require the size of
+	 * the fp to be passed in, check this against the expected
+	 * size.  Of course userland could lie deliberately, this
+	 * really only protects against the obvious fumble of
+	 * changing the fp type but not updating the fingerprint
+	 * string.
+	 */
+	if (e->ops->hash_len != params->size) {
+		printf("Veriexec: veriexecioctl: Inconsistent "
+		       "fingerprint size for type \"%s\" for file "
+		       "\"%s\" (dev=%ld, inode=%llu), size was %u "
+		       "was expecting %zu\n", params->fp_type,
+		       params->file, va.va_fsid,
+		       (unsigned long long)va.va_fileid,
+		       params->size, e->ops->hash_len);
+
+		free(e, M_TEMP);
+		return(EINVAL);
+	}
+			
+	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
+	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
+
+	veriexec_report("New entry.", params->file, &va, NULL,
+			REPORT_VERBOSE_HIGH, REPORT_NOALARM,
+			REPORT_NOPANIC);
+
+	error = veriexec_hashadd(tbl, e);
+
+	return (error);
+}
