@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.23 2005/12/10 02:10:00 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.24 2005/12/10 12:11:43 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -29,11 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *
- * Definitions for the Verified Executables kernel function.
- *
- */
 #ifndef _SYS_VERIFIED_EXEC_H_
 #define _SYS_VERIFIED_EXEC_H_
 
@@ -45,7 +40,7 @@
 #include <uvm/uvm_page.h>
 
 /* Max length of the fingerprint type string, including terminating \0 char */
-#define VERIEXEC_TYPE_MAXLEN 9
+#define	VERIEXEC_TYPE_MAXLEN	9
 
 struct veriexec_params  {
 	unsigned char type;
@@ -65,15 +60,23 @@ struct veriexec_delete_params {
 	ino_t ino;
 };
 
-/*
- * Types of veriexec inodes we can have. Ordered from less strict to
- * most strict -- this is enforced if a duplicate entry is loaded.
- */
+/* augmented storage for copying to userspace */
+struct veriexec_uinfo {
+	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
+	unsigned char type;
+	unsigned char status;
+	unsigned char *fp;
+	size_t fp_buflen;
+	size_t fp_len;
+};
+
+/* Flags for a Veriexec entry. These can be OR'd together. */
 #define VERIEXEC_DIRECT		0x01 /* Direct execution (exec) */
 #define VERIEXEC_INDIRECT	0x02 /* Indirect execution (#!) */
 #define VERIEXEC_FILE		0x04 /* Plain file (open) */
 #define	VERIEXEC_UNTRUSTED	0x10 /* Untrusted storage */
 
+/* Operations for /dev/veriexec. */
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
 #define VERIEXEC_DELETE _IOW('S', 0x3, struct veriexec_delete_params)
@@ -102,9 +105,8 @@ extern const struct sysctlnode *veriexec_count_node;
 /*
  * Operations vector for verified exec, this defines the characteristics
  * for the fingerprint type.
+ * Function types: init, update, final.
  */
-
-/* Function types: init, update, final. */
 typedef void (*VERIEXEC_INIT_FN)(void *);
 typedef void (*VERIEXEC_UPDATE_FN)(void *, u_char *, u_int);
 typedef void (*VERIEXEC_FINAL_FN)(u_char *, void *);
@@ -119,22 +121,18 @@ struct veriexec_fp_ops {
 	LIST_ENTRY(veriexec_fp_ops) entries;
 };
 
-/*
- * list structure definitions - needed in kern_exec.c
- */
-
 /* An entry in the per-device hash table. */
 struct veriexec_hash_entry {
-        ino_t         inode;                        /* Inode number. */
-        unsigned char type;                         /* Entry type. */
+	ino_t inode;				    /* Inode number. */
+	unsigned char type;			    /* Entry type. */
 	unsigned char status;			    /* Evaluation status. */
 	unsigned char page_fp_status;		    /* Per-page FP status. */
-        unsigned char *fp;                          /* Fingerprint. */
+	unsigned char *fp;			    /* Fingerprint. */
 	void *page_fp;				    /* Per-page fingerprints */
 	size_t npages;			    	    /* Number of pages. */
-	size_t last_page_size;
-	struct veriexec_fp_ops *ops;                /* Fingerprint ops vector*/
-        LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
+	size_t last_page_size;			    /* To support < PAGE_SIZE */
+	struct veriexec_fp_ops *ops;		    /* Fingerprint ops vector*/
+	LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
 };
 
 /* Valid status field values. */
@@ -147,38 +145,38 @@ struct veriexec_hash_entry {
 #define	PAGE_FP_READY	1	/* per-page fingerprints ready for use. */
 #define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
-LIST_HEAD(veriexec_hashhead, veriexec_hash_entry) *hash_tbl;
+LIST_HEAD(veriexec_hashhead, veriexec_hash_entry);
 
 /* Veriexec hash table information. */
 struct veriexec_hashtbl {
-        struct veriexec_hashhead *hash_tbl;
-        size_t hash_size;       /* Number of slots in the table. */
-        dev_t hash_dev;         /* Device ID the hash table refers to. */
+	struct veriexec_hashhead *hash_tbl;
+	size_t hash_size;	/* Number of slots in the table. */
+	dev_t hash_dev;		/* Device ID the hash table refers to. */
 	uint64_t hash_count;	/* # of fingerprinted files in table. */
-        LIST_ENTRY(veriexec_hashtbl) hash_list;
+	LIST_ENTRY(veriexec_hashtbl) hash_list;
 };
 
-/* Global list of hash tables. */
+/* Global list of hash tables, one per device. */
 LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 
 /* Mask to ensure bounded access to elements in the hash table. */
-#define VERIEXEC_HASH_MASK(tbl)    ((tbl)->hash_size - 1)
+#define VERIEXEC_HASH_MASK(tbl)		((tbl)->hash_size - 1)
 
 /* Readable values for veriexec_report(). */
-#define	REPORT_NOVERBOSE	0
-#define	REPORT_VERBOSE		1
-#define	REPORT_VERBOSE_HIGH	2
-#define	REPORT_NOPANIC		0
-#define	REPORT_PANIC		1
-#define	REPORT_NOALARM		0
-#define	REPORT_ALARM		1
+#define	REPORT_NOVERBOSE	0	/* Always print */
+#define	REPORT_VERBOSE		1	/* Print when verbose >= 1 */
+#define	REPORT_VERBOSE_HIGH	2	/* Print when verbose >= 2 (debug) */
+#define	REPORT_NOPANIC		0	/* Normal report */
+#define	REPORT_PANIC		1	/* Use panic() */
+#define	REPORT_NOALARM		0	/* Normal report */
+#define	REPORT_ALARM		1	/* Alarm - also print pid/uid/.. */
 
 /*
  * Hashing function: Takes an inode number modulus the mask to give back
  * an index into the hash table.
  */
-#define VERIEXEC_HASH(tbl, inode)  \
-        (hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
+#define VERIEXEC_HASH(tbl, inode)	\
+	(hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
 	 & VERIEXEC_HASH_MASK(tbl))
 
 /* Initialize a fingerprint ops struct. */
