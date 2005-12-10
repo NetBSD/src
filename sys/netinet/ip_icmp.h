@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.21 2005/10/23 18:38:53 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.22 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -187,4 +187,4 @@ void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
 #endif
 
 
-#endif /* _NETINET_IP_ICMP_H_ */
+#endif /* !_NETINET_IP_ICMP_H_ */

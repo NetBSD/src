@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.39 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.40 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -609,4 +609,4 @@ int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
 void in6_clearscope __P((struct in6_addr *));
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_IN6_VAR_H_ */
+#endif /* !_NETINET6_IN6_VAR_H_ */

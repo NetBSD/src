@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.h,v 1.12 2005/06/06 06:06:50 martin Exp $	*/
+/*	$NetBSD: in_gif.h,v 1.13 2005/12/10 23:36:23 elad Exp $	*/
 /*	$KAME: in_gif.h,v 1.6 2001/07/25 00:55:48 itojun Exp $	*/
 
 /*
@@ -54,4 +54,4 @@ struct etherip_header {
 #define ETHERIP_VER_RSVD_MASK   0xf0
 #define ETHERIP_VERSION         0x03
 
-#endif /*_NETINET_IN_GIF_H_*/
+#endif /* !_NETINET_IN_GIF_H_ */

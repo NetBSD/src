@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.h,v 1.8 2002/06/08 21:22:31 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.9 2005/12/10 23:39:56 elad Exp $	*/
 /*	$KAME: in6_ifattach.h,v 1.8 2000/04/12 03:51:30 itojun Exp $	*/
 
 /*
@@ -39,4 +39,4 @@ void in6_ifdetach __P((struct ifnet *));
 int in6_nigroup(struct ifnet *, const char *, int, struct sockaddr_in6 *);
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_IN6_IFATTACH_H_ */
+#endif /* !_NETINET6_IN6_IFATTACH_H_ */
