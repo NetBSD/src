@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2005/11/13 17:24:31 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2005/12/10 13:39:47 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1658,11 +1658,17 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 		if (!active) {
 			struct cdd_params cdd = { d, at, parent };
 			/* Look for a matching dead devi */
-			if (ht_enumerate(deaddevitab, check_dead_devi, &cdd))
+			if (ht_enumerate(deaddevitab, check_dead_devi, &cdd) &&
+			    d != parent)
 				/*
 				 * That device had its instances removed.
 				 * Continue the loop marking descendants
 				 * with DEVI_IGNORED instead of DEVI_ACTIVE.
+				 *
+				 * There is one special case for devices that
+				 * are their own parent:  if that instance is
+				 * removed (e.g., no uhub* at uhub?), we don't
+				 * have to continue looping.
 				 */
 				active = DEVI_IGNORED;
 			else
