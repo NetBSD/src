@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.7 2005/11/18 16:40:08 skrll Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.8 2005/12/10 23:26:35 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -229,4 +229,4 @@ void	ieee80211_notify_replay_failure(struct ieee80211com *,
 void	ieee80211_notify_michael_failure(struct ieee80211com *,
 		const struct ieee80211_frame *, u_int keyix);
 #endif /* defined(__KERNEL__) || defined(_KERNEL) */
-#endif /* _NET80211_IEEE80211_CRYPTO_H_ */
+#endif /* !_NET80211_IEEE80211_CRYPTO_H_ */

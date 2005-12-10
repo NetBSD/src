@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.21 2005/11/18 16:40:09 skrll Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.22 2005/12/10 23:26:35 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -424,4 +424,4 @@ void	ieee80211_note_frame(struct ieee80211com *ic,
 #define	ieee80211_msg(_ic, _m)		0
 #endif
 
-#endif /* _NET80211_IEEE80211_VAR_H_ */
+#endif /* !_NET80211_IEEE80211_VAR_H_ */

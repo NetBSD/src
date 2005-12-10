@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.13 2005/02/26 22:45:09 perry Exp $       */
+/*      $NetBSD: if_atm.h,v 1.14 2005/12/10 23:21:38 elad Exp $       */
 
 /*
  *
@@ -166,4 +166,4 @@ struct pvcsif {
 struct ifnet *pvcsif_alloc __P((void));
 #endif
 #endif /* ATM_PVCEXT */
-#endif /* _NET_IF_ATM_H_ */
+#endif /* !_NET_IF_ATM_H_ */

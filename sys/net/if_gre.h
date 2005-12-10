@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14 2005/02/26 22:45:09 perry Exp $ */
+/*	$NetBSD: if_gre.h,v 1.15 2005/12/10 23:21:38 elad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_IF_GRE_H
-#define _NET_IF_GRE_H
+#ifndef _NET_IF_GRE_H_
+#define _NET_IF_GRE_H_
 
 #include <sys/queue.h>
 
@@ -157,4 +157,4 @@ int	gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 u_int16_t gre_in_cksum(u_short *, u_int);
 #endif /* _KERNEL */
 
-#endif
+#endif /* !_NET_IF_GRE_H_ */

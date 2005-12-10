@@ -1,4 +1,4 @@
-/*	$NetBSD: phase2.h,v 1.1 1997/04/02 21:31:12 christos Exp $	*/
+/*	$NetBSD: phase2.h,v 1.2 2005/12/10 23:29:05 elad Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -37,4 +37,4 @@
 #define SIOCPHASE1	_IOW('i', 100, struct ifreq)	/* AppleTalk phase 1 */
 #define SIOCPHASE2	_IOW('i', 101, struct ifreq)	/* AppleTalk phase 2 */
 
-#endif /* _NETATALK_PHASE2_H_ */
+#endif /* !_NETATALK_PHASE2_H_ */

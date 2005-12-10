@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.8 2005/12/04 19:15:21 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.9 2005/12/10 23:26:35 elad Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -272,4 +272,4 @@ void	ieee80211_init(void);
 	__link_set_add_text(ieee80211_funcs, name);		\
 	static void name(void)
 
-#endif /* _NET80211_IEEE80211_NETBSD_H_ */
+#endif /* !_NET80211_IEEE80211_NETBSD_H_ */

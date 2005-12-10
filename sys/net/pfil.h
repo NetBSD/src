@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.24 2004/07/27 12:22:59 yamt Exp $	*/
+/*	$NetBSD: pfil.h,v 1.25 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -131,4 +131,4 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 extern struct pfil_head if_pfil; /* packet filtering hook for interfaces */
 #endif
 
-#endif /* _NET_PFIL_H_ */
+#endif /* !_NET_PFIL_H_ */

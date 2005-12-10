@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.10 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.11 2005/12/10 23:21:38 elad Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -283,8 +283,8 @@
  *	others: M_COPY_PKTHDR is available as usual.
  */
 
-#ifndef __NET_NET_OSDEP_H_DEFINED_
-#define __NET_NET_OSDEP_H_DEFINED_
+#ifndef _NET_NET_OSDEP_H_
+#define _NET_NET_OSDEP_H_
 #ifdef _KERNEL
 
 #define if_name(ifp)	((ifp)->if_xname)
@@ -294,4 +294,4 @@
 #endif
 
 #endif /*_KERNEL*/
-#endif /*__NET_NET_OSDEP_H_DEFINED_ */
+#endif /* !_NET_NET_OSDEP_H_ */

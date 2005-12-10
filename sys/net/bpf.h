@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.47 2005/12/05 21:46:00 rpaulo Exp $	*/
+/*	$NetBSD: bpf.h,v 1.48 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -269,4 +269,4 @@ u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
  */
 #define BPF_MEMWORDS 16
 
-#endif /* _NET_BPF_H_ */
+#endif /* !_NET_BPF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.39 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.40 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -301,4 +301,4 @@ __END_DECLS
 
 #endif /* _STANDALONE */
 
-#endif /* _NET_IF_ETHER_H_ */
+#endif /* !_NET_IF_ETHER_H_ */

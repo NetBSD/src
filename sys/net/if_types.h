@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.23 2004/06/22 12:50:41 itojun Exp $	*/
+/*	$NetBSD: if_types.h,v 1.24 2005/12/10 23:21:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -263,4 +263,5 @@
 #define IFT_FAITH	0xf2
 #define IFT_PFLOG	0xf5		/* Packet filter logging */
 #define IFT_PFSYNC	0xf6		/* Packet filter state syncing */
-#endif /* _NET_IF_TYPES_H_ */
+
+#endif /* !_NET_IF_TYPES_H_ */
