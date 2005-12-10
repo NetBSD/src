@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.22 2005/12/10 01:04:17 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.23 2005/12/10 02:10:00 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -60,6 +60,11 @@ struct veriexec_sizing_params {
 	size_t hash_size;
 };
 
+struct veriexec_delete_params {
+	dev_t dev;
+	ino_t ino;
+};
+
 /*
  * Types of veriexec inodes we can have. Ordered from less strict to
  * most strict -- this is enforced if a duplicate entry is loaded.
@@ -71,6 +76,7 @@ struct veriexec_sizing_params {
 
 #define VERIEXEC_LOAD _IOW('S', 0x1, struct veriexec_params)
 #define VERIEXEC_TABLESIZE _IOW('S', 0x2, struct veriexec_sizing_params)
+#define VERIEXEC_DELETE _IOW('S', 0x3, struct veriexec_delete_params)
 
 /* Verified exec sysctl objects. */
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
@@ -207,6 +213,7 @@ void veriexec_report(const u_char *, const u_char *, struct vattr *,
 		     struct proc *, int, int, int);
 int veriexec_newtable(struct veriexec_sizing_params *);
 int veriexec_load(struct veriexec_params *, struct proc *);
+int veriexec_delete(struct veriexec_delete_params *);
 
 #endif /* _KERNEL */
 
