@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.8 2005/10/05 13:48:48 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.9 2005/12/10 02:10:00 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexec.4,v 1.8 2005/10/05 13:48:48 elad Exp $
+.\"	$Id: veriexec.4,v 1.9 2005/12/10 02:10:00 elad Exp $
 .\"
-.Dd October 4, 2005
+.Dd December 10, 2005
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -100,12 +100,18 @@ fingerprint, this is used by the kernel to provide a simple sanity check
 on the fingerprint passed.
 Lastly, the fingerprint is a pointer to an
 array of characters that comprise the fingerprint for the file.
+.It Dv VERIEXEC_DELETE Fa struct veriexec_delete_params
+Removes either an entry or an entire table from Veriexec.
+To remove a single entry, both device id and inode number must be provided.
+If only a device id is provided and inode is zero, the entire table for
+the specified device will be removed.
 .El
 .Pp
 Note that the requests
-.Dv VERIEXEC_TABLESIZE
+.Dv VERIEXEC_TABLESIZE ,
+.Dv VERIEXEC_LOAD ,
 and
-.Dv VERIEXEC_LOAD
+.Dv VERIEXEC_DELETE
 are not permitted once the veriexec strict level has been raised past 0
 by setting
 .Dv kern.veriexec.strict
