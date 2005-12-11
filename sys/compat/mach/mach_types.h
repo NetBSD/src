@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.22 2005/02/26 23:10:20 perry Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.23 2005/12/11 12:20:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.

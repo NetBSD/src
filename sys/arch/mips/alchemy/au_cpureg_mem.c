@@ -1,4 +1,4 @@
-/* $NetBSD: au_cpureg_mem.c,v 1.2 2003/07/15 02:43:34 lukem Exp $ */
+/* $NetBSD: au_cpureg_mem.c,v 1.3 2005/12/11 12:18:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.2 2003/07/15 02:43:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.3 2005/12/11 12:18:06 christos Exp $");
 
 #include <sys/param.h>
 

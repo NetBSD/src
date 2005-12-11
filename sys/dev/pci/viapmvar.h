@@ -1,4 +1,4 @@
-/*	$NetBSD: viapmvar.h,v 1.3 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: viapmvar.h,v 1.4 2005/12/11 12:22:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson

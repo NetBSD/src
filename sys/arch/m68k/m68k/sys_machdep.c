@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2004/08/28 22:06:28 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC.MP,v 1.1 2003/11/15 04:03:00 petrov Exp $
+# $NetBSD: GENERIC.MP,v 1.2 2005/12/11 12:19:08 christos Exp $
 #
 # GENERIC Sparc64 kernel configuration with multiprocessor support.
 #
 
 include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 	"GENERIC.MP-$Revision: 1.1 $"
+#ident 	"GENERIC.MP-$Revision: 1.2 $"
 
 include 	"arch/sparc64/conf/std.sparc64-64"
 

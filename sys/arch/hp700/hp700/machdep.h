@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2005/05/01 19:00:29 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 

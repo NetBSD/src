@@ -1,4 +1,4 @@
-/*	$NetBSD: hp98265reg.h,v 1.1 2003/08/01 01:18:45 tsutsui Exp $	*/
+/*	$NetBSD: hp98265reg.h,v 1.2 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

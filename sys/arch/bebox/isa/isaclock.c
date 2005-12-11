@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.11 2005/06/10 16:41:38 jmc Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.12 2005/12/11 12:17:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.11 2005/06/10 16:41:38 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.12 2005/12/11 12:17:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

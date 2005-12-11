@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbdvar.h,v 1.2 2004/01/17 21:49:24 bjh21 Exp $	*/
+/*	$NetBSD: rpckbdvar.h,v 1.3 2005/12/11 12:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

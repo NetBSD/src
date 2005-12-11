@@ -1,4 +1,4 @@
-/*	$NetBSD: eisareg.h,v 1.6 2005/05/17 04:14:57 christos Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.7 2005/12/11 12:21:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou

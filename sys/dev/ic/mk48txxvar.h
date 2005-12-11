@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.1 2003/11/01 22:41:42 tsutsui Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.2 2005/12/11 12:21:27 christos Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

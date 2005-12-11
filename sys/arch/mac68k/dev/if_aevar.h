@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aevar.h,v 1.9 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: if_aevar.h,v 1.10 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet

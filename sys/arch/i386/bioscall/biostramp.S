@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.12 2004/07/04 03:21:53 mycroft Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.13 2005/12/11 12:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

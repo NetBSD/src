@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.3 2005/08/22 11:04:10 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.4 2005/12/11 12:19:50 christos Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.3 2005/08/22 11:04:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.4 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

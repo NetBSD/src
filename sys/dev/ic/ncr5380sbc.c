@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.56 2005/06/02 14:03:20 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.57 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.56 2005/06/02 14:03:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.57 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_ddb.h"
 

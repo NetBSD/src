@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32reg.h,v 1.1 2004/08/26 14:13:46 itohy Exp $	*/
+/*	$NetBSD: ninjascsi32reg.h,v 1.2 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.24 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.25 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.24 2005/01/15 16:01:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.25 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_inet.h"
 

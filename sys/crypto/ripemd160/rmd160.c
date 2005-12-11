@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.5 2005/09/11 16:11:22 elad Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.6 2005/12/11 12:20:53 christos Exp $	*/
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.5 2005/09/11 16:11:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.6 2005/12/11 12:20:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

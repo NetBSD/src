@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.139 2005/08/10 13:07:21 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.140 2005/12/11 12:24:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.139 2005/08/10 13:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.140 2005/12/11 12:24:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

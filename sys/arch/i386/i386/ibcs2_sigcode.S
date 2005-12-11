@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.S,v 1.2 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.S,v 1.3 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

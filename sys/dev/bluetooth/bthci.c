@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.16 2005/07/02 07:50:34 dsainty Exp $	*/
+/*	$NetBSD: bthci.c,v 1.17 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.16 2005/07/02 07:50:34 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.17 2005/12/11 12:21:15 christos Exp $");
 
 #include "bthcidrv.h"
 

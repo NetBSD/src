@@ -1,4 +1,4 @@
-/* $NetBSD: radio_if.h,v 1.3 2005/02/27 00:26:58 perry Exp $ */
+/* $NetBSD: radio_if.h,v 1.4 2005/12/11 12:20:53 christos Exp $ */
 /* $OpenBSD: radio_if.h,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio_if.h,v 1.6 2001/10/18 16:51:36 pva Exp $ */
 

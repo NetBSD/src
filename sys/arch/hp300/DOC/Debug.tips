@@ -1,4 +1,4 @@
-$NetBSD: Debug.tips,v 1.4 2004/05/16 15:44:10 wiz Exp $
+$NetBSD: Debug.tips,v 1.5 2005/12/11 12:17:13 christos Exp $
 
 NOTE: this description applies to the hp300 system with the old BSD
 virtual memory system.  It has not been updated to reflect the new,

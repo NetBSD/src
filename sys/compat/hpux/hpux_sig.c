@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.28 2005/09/14 13:49:50 he Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.29 2005/12/11 12:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.28 2005/09/14 13:49:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.29 2005/12/11 12:20:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.10 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.11 2005/12/11 12:25:20 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

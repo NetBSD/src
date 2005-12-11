@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.9 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: altivec.h,v 1.10 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

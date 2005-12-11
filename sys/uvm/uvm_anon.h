@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.22 2005/09/17 14:38:40 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.23 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.19 2005/06/03 11:38:56 tsutsui Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.20 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

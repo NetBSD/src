@@ -1,4 +1,4 @@
-/*	$NetBSD: dioreg.h,v 1.5 2005/01/02 12:03:12 tsutsui Exp $	*/
+/*	$NetBSD: dioreg.h,v 1.6 2005/12/11 12:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

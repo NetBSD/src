@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.8 2003/08/07 16:31:28 agc Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.9 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

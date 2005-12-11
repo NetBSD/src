@@ -1,3 +1,3 @@
-/*	$NetBSD: openfirm.h,v 1.12 2004/03/21 14:25:51 pk Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.13 2005/12/11 12:19:10 christos Exp $	*/
 
 #include <sparc/openfirm.h>

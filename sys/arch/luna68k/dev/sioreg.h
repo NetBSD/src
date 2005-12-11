@@ -1,4 +1,4 @@
-/* $NetBSD: sioreg.h,v 1.2 2003/08/07 16:28:04 agc Exp $ */
+/* $NetBSD: sioreg.h,v 1.3 2005/12/11 12:17:52 christos Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

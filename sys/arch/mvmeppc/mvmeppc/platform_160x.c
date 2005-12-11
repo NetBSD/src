@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.4 2003/07/28 21:45:14 scw Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.5 2005/12/11 12:18:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.4 2003/07/28 21:45:14 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5 2005/12/11 12:18:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

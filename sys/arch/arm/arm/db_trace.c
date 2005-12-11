@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2005/05/30 17:39:17 he Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2005/12/11 12:16:41 christos Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9 2005/05/30 17:39:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>

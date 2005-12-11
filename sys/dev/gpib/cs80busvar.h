@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80busvar.h,v 1.2 2004/04/19 12:44:10 wiz Exp $	*/
+/*	$NetBSD: cs80busvar.h,v 1.3 2005/12/11 12:21:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

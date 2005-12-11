@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.3 2003/07/25 10:12:43 scw Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.3 2003/07/25 10:12:43 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

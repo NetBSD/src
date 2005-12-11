@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.4 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.4 2005/02/19 15:37:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.5 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

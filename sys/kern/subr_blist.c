@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.7 2005/05/29 22:24:15 christos Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.8 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.7 2005/05/29 22:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.8 2005/12/11 12:24:30 christos Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif

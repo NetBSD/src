@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.38 2005/01/02 12:22:18 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.39 2005/12/11 12:21:27 christos Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.38 2005/01/02 12:22:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.39 2005/12/11 12:21:27 christos Exp $");
 
 #ifdef DDB
 #define	integrate

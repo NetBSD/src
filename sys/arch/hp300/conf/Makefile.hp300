@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.86 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.hp300,v 1.87 2005/12/11 12:17:13 christos Exp $
 
 # Makefile for NetBSD
 #

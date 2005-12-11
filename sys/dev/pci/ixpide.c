@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.5 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.5 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

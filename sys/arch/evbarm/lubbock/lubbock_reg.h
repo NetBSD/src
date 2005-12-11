@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_reg.h,v 1.3 2005/03/17 16:22:56 bsh Exp $ */
+/*	$NetBSD: lubbock_reg.h,v 1.4 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.

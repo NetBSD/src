@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/12/09 15:46:01 jmc Exp $
+#	$NetBSD: Makefile,v 1.11 2005/12/11 12:17:00 christos Exp $
 
 #
 # Note that the directory 'tostools' should never show up...

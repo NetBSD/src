@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pdp10,v 1.8 2005/09/17 14:38:39 yamt Exp $
+#	$NetBSD: majors.pdp10,v 1.9 2005/12/11 12:18:34 christos Exp $
 #
 # Device majors for pdp10
 #

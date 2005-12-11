@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.16 2005/01/23 22:24:39 matt Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.17 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.16 2005/01/23 22:24:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.17 2005/12/11 12:24:54 christos Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"

@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.1 2005/09/27 02:34:02 jmcneill Exp $
+# $NetBSD: files.gpio,v 1.2 2005/12/11 12:21:22 christos Exp $
 
 define	gpio {pin, mask}
 

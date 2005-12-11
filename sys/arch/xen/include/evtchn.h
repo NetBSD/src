@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.10 2005/09/10 18:24:35 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.11 2005/12/11 12:19:48 christos Exp $	*/
 
 /*
  *

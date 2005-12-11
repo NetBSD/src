@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.39 2005/11/27 05:35:52 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.40 2005/12/11 12:24:51 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.39 2005/11/27 05:35:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.40 2005/12/11 12:24:51 christos Exp $");
 
 #include "ppp.h"
 
@@ -137,7 +137,7 @@ int	pppclose __P((struct tty *tp, int flag));
 int	pppread __P((struct tty *tp, struct uio *uio, int flag));
 int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data, int flag,
-		       struct proc *));
+		       struct lwp *));
 int	pppinput __P((int c, struct tty *tp));
 int	pppstart __P((struct tty *tp));
 
@@ -446,15 +446,16 @@ pppwrite(tp, uio, flag)
  */
 /* ARGSUSED */
 int
-ppptioctl(tp, cmd, data, flag, p)
+ppptioctl(tp, cmd, data, flag, l)
     struct tty *tp;
     u_long cmd;
     caddr_t data;
     int flag;
-    struct proc *p;
+    struct lwp *l;
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
     int error, s;
+    struct proc *p = l->l_proc;
 
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return (EPASSTHROUGH);

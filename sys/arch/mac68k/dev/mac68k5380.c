@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.42 2005/06/16 22:43:36 jmc Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.43 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.42 2005/06/16 22:43:36 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.43 2005/12/11 12:18:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

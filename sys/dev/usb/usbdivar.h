@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.74 2005/04/30 14:38:40 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.75 2005/12/11 12:24:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*

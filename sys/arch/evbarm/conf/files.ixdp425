@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.5 2003/10/08 14:55:04 scw Exp $
+#	$NetBSD: files.ixdp425,v 1.6 2005/12/11 12:17:06 christos Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #

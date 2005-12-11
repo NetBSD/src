@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.

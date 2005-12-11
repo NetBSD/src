@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.7 2005/06/09 09:15:28 he Exp $ */
+/* $NetBSD: podulebus.h,v 1.8 2005/12/11 12:23:28 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

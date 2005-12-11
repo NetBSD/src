@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.7 2003/11/04 14:04:04 jdolecek Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.8 2005/12/11 12:19:30 christos Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.

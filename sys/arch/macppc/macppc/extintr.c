@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.53 2005/12/11 12:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.52 2005/06/03 18:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.53 2005/12/11 12:18:06 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

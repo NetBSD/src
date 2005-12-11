@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.7 2003/08/18 15:45:28 dsl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.8 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

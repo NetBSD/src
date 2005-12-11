@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.2 2005/07/04 17:50:09 drochner Exp $ */
+/*	$NetBSD: if_ral_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $ */
 /*	$OpenBSD: if_ral_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $  */
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.2 2005/07/04 17:50:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $");
 
 #include "bpfilter.h"
 

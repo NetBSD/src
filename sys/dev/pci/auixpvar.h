@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.3 2005/01/12 15:54:34 kent Exp $*/
+/* $NetBSD: auixpvar.h,v 1.4 2005/12/11 12:22:48 christos Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>

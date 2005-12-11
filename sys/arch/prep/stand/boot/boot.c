@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2004/06/23 17:28:24 kleink Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:18:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

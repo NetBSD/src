@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.5 2005/10/15 17:29:26 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.6 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.5 2005/10/15 17:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.6 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

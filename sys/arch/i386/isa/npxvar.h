@@ -1,4 +1,4 @@
-/*	$NetBSD: npxvar.h,v 1.3 2003/08/07 16:28:02 agc Exp $	*/
+/*	$NetBSD: npxvar.h,v 1.4 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

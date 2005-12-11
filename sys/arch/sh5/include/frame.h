@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

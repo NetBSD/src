@@ -1,4 +1,4 @@
-/*	$NetBSD: dfmpy.c,v 1.2 2003/07/15 02:29:41 lukem Exp $	*/
+/*	$NetBSD: dfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
 
 /*	$OpenBSD: dfmpy.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfmpy.c,v 1.2 2003/07/15 02:29:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"

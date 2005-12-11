@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER.MP,v 1.4 2004/06/14 01:28:00 lukem Exp $
+#	$NetBSD: SWINGER.MP,v 1.5 2005/12/11 12:17:41 christos Exp $
 #
 #	SWINGER.MP -- Swinger, plus enable Multiprocessor support.
 #

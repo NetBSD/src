@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.37 2005/07/10 19:04:00 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.38 2005/12/11 12:21:25 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.37 2005/07/10 19:04:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.38 2005/12/11 12:21:25 christos Exp $");
 
 #include "bpfilter.h"
 

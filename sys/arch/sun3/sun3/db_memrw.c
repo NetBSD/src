@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.25 2005/06/03 15:07:52 tsutsui Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.26 2005/12/11 12:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.25 2005/06/03 15:07:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.26 2005/12/11 12:19:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

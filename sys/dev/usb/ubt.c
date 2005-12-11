@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.12 2005/05/11 10:02:28 augustss Exp $	*/
+/*	$NetBSD: ubt.c,v 1.13 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.12 2005/05/11 10:02:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.13 2005/12/11 12:24:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

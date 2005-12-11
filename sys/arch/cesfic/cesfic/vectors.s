@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.2 2003/09/22 14:27:05 cl Exp $
+|	$NetBSD: vectors.s,v 1.3 2005/12/11 12:17:04 christos Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993

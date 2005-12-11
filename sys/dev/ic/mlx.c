@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.36 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: mlx.c,v 1.37 2005/12/11 12:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.36 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.37 2005/12/11 12:21:27 christos Exp $");
 
 #include "ld.h"
 
@@ -711,7 +711,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
  * Accept an open operation on the control device.
  */
 int
-mlxopen(dev_t dev, int flag, int mode, struct proc *p)
+mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -730,7 +730,7 @@ mlxopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode, struct proc *p)
+mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -743,7 +743,7 @@ mlxclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;

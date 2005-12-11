@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.5 2005/04/22 14:49:49 yamt Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.6 2005/12/11 12:23:22 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris

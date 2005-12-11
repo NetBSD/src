@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39spi.c,v 1.3 2005/08/26 13:19:36 drochner Exp $	*/
+/*	$NetBSD: tx39spi.c,v 1.4 2005/12/11 12:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.3 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.4 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

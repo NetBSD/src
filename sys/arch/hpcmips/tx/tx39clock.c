@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.17 2005/06/07 12:10:44 he Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.18 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.17 2005/06/07 12:10:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.18 2005/12/11 12:17:34 christos Exp $");
 
 #include "opt_tx39clock_debug.h"
 

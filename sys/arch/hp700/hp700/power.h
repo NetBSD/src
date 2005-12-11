@@ -1,4 +1,4 @@
-/* $NetBSD: power.h,v 1.1 2005/01/31 18:17:35 jkunz Exp $ */
+/* $NetBSD: power.h,v 1.2 2005/12/11 12:17:24 christos Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.51 2005/08/25 22:33:18 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.52 2005/12/11 12:17:47 christos Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.51 2005/08/25 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.52 2005/12/11 12:17:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

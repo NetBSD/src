@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2003/08/07 16:31:23 agc Exp $ */
+/*	$NetBSD: disklabel.h,v 1.4 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

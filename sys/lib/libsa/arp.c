@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.26 2005/06/13 12:11:07 junyoung Exp $	*/
+/*	$NetBSD: arp.c,v 1.27 2005/12/11 12:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

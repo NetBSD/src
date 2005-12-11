@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.8 2005/09/13 01:42:32 christos Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.9 2005/12/11 12:20:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.8 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.9 2005/12/11 12:20:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

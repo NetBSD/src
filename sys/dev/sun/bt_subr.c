@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.8 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.9 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.8 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.9 2005/12/11 12:23:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

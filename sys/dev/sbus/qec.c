@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.33 2005/05/30 22:17:47 christos Exp $ */
+/*	$NetBSD: qec.c,v 1.34 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.33 2005/05/30 22:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.34 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.28 2005/11/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: specdev.h,v 1.29 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

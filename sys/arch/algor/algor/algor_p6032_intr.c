@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.6 2003/07/14 22:57:47 lukem Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.7 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.6 2003/07/14 22:57:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.7 2005/12/11 12:16:08 christos Exp $");
 
 #include "opt_ddb.h"
 

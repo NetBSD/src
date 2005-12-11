@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.11 2005/08/20 20:09:25 abs Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.12 2005/12/11 12:16:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.

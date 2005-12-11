@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2004/07/01 12:44:26 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2004/07/01 12:44:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2005/12/11 12:19:00 christos Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"

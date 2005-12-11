@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.8 2005/02/02 13:26:06 christos Exp $	 */
+/* $NetBSD: if_bce.c,v 1.9 2005/12/11 12:22:49 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.

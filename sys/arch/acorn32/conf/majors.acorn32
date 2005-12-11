@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.19 2005/09/17 14:38:38 yamt Exp $
+#	$NetBSD: majors.acorn32,v 1.20 2005/12/11 12:16:05 christos Exp $
 #
 # Device majors for acorn32
 #

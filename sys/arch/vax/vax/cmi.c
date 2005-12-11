@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.8 2003/07/15 02:15:03 lukem Exp $ */
+/*	$NetBSD: cmi.c,v 1.9 2005/12/11 12:19:36 christos Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.8 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.9 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

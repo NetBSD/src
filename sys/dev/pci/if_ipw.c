@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.13 2005/07/06 23:44:15 dyoung Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.14 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.13 2005/07/06 23:44:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.14 2005/12/11 12:22:49 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver

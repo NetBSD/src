@@ -1,4 +1,4 @@
-/* $NetBSD: radiovar.h,v 1.3 2004/10/29 12:57:16 yamt Exp $ */
+/* $NetBSD: radiovar.h,v 1.4 2005/12/11 12:20:53 christos Exp $ */
 /* $OpenBSD: radiovar.h,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiovar.h,v 1.3 2001/09/29 17:10:16 pva Exp $ */
 

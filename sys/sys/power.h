@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.3 2004/05/03 07:41:47 kochi Exp $	*/
+/*	$NetBSD: power.h,v 1.4 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

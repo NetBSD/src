@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2003/10/13 06:15:00 lukem Exp $
+# $NetBSD: Makefile,v 1.3 2005/12/11 12:17:48 christos Exp $
 
 PROG=	bootxx_msdos
 FS=	dosfs

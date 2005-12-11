@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2003/09/04 07:51:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2005/12/11 12:24:49 christos Exp $
 
 S!=	cd ${.CURDIR}/../../..;pwd
 

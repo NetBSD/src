@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.211 2005/11/12 02:27:48 chs Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.212 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.211 2005/11/12 02:27:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.212 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -930,7 +930,7 @@ trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
+			ktrpsig(l, signum, SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, ksi);
 #endif
 		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
@@ -1862,7 +1862,7 @@ postsig(int signum)
 	if (action == SIG_DFL) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, action,
+			ktrpsig(l, signum, action,
 			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
 			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
 			    NULL);
@@ -1901,7 +1901,7 @@ postsig(int signum)
 		ksi = ksiginfo_get(p, signum);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, action,
+			ktrpsig(l, signum, action,
 			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
 			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
 			    ksi);
@@ -2055,7 +2055,7 @@ sigexit(struct lwp *l, int signum)
 }
 
 struct coredump_iostate {
-	struct proc *io_proc;
+	struct lwp *io_lwp;
 	struct vnode *io_vp;
 	struct ucred *io_cred;
 	off_t io_offset;
@@ -2070,7 +2070,7 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 	error = vn_rdwr(UIO_WRITE, io->io_vp, __UNCONST(data), len,
 	    io->io_offset, segflg,
 	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL,
-	    segflg == UIO_USERSPACE ? io->io_proc : NULL);
+	    segflg == UIO_USERSPACE ? io->io_lwp : NULL);
 	if (error)
 		return (error);
 
@@ -2131,7 +2131,7 @@ restart:
 	if ((error = build_corename(p, name, pattern, sizeof(name))) != 0)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
 	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
@@ -2139,7 +2139,7 @@ restart:
 
 	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
 		VOP_UNLOCK(vp, 0);
-		if ((error = vn_close(vp, FWRITE, cred, p)) != 0)
+		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
 			return (error);
 		if ((error = vn_start_write(NULL, &mp,
 		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
@@ -2149,17 +2149,17 @@ restart:
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
+	    VOP_GETATTR(vp, &vattr, cred, l) || vattr.va_nlink != 1) {
 		error = EINVAL;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	VOP_LEASE(vp, p, cred, LEASE_WRITE);
-	VOP_SETATTR(vp, &vattr, cred, p);
+	VOP_LEASE(vp, l, cred, LEASE_WRITE);
+	VOP_SETATTR(vp, &vattr, cred, l);
 	p->p_acflag |= ACORE;
 
-	io.io_proc = p;
+	io.io_lwp = l;
 	io.io_vp = vp;
 	io.io_cred = cred;
 	io.io_offset = 0;
@@ -2169,7 +2169,7 @@ restart:
  out:
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
-	error1 = vn_close(vp, FWRITE, cred, p);
+	error1 = vn_close(vp, FWRITE, cred, l);
 	if (error == 0)
 		error = error1;
 	return (error);

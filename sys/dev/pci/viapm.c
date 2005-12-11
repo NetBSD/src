@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.13 2004/09/14 18:57:35 drochner Exp $	*/
+/*	$NetBSD: viapm.c,v 1.14 2005/12/11 12:22:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.13 2004/09/14 18:57:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.14 2005/12/11 12:22:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

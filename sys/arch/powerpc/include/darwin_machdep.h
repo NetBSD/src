@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.8 2005/06/25 06:29:49 christos Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.9 2005/12/11 12:18:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.

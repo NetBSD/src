@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.2 2003/12/13 23:04:37 ad Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.2 2003/12/13 23:04:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.3 2005/12/11 12:18:36 christos Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"

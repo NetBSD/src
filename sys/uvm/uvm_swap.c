@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.96 2005/10/15 17:29:32 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.97 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.96 2005/10/15 17:29:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.97 2005/12/11 12:25:29 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -228,8 +228,8 @@ static void		 swaplist_insert(struct swapdev *,
 					 struct swappri *, int);
 static void		 swaplist_trim(void);
 
-static int swap_on(struct proc *, struct swapdev *);
-static int swap_off(struct proc *, struct swapdev *);
+static int swap_on(struct lwp *, struct swapdev *);
+static int swap_off(struct lwp *, struct swapdev *);
 
 static void uvm_swap_stats_locked(int, struct swapent *, int, register_t *);
 
@@ -540,7 +540,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			space = UIO_USERSPACE;
 			where = (char *)SCARG(uap, arg);
 		}
-		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, p);
+		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, l);
 		if ((error = namei(&nd)))
 			goto out;
 		vp = nd.ni_vp;
@@ -620,7 +620,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 * if swap_on is a success, it will clear the SWF_FAKE flag
 		 */
 
-		if ((error = swap_on(p, sdp)) != 0) {
+		if ((error = swap_on(l, sdp)) != 0) {
 			simple_lock(&uvm.swap_data_lock);
 			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
@@ -653,7 +653,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		/*
 		 * do the real work.
 		 */
-		error = swap_off(p, sdp);
+		error = swap_off(l, sdp);
 		break;
 
 	default:
@@ -748,9 +748,10 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
  *	if needed.
  */
 static int
-swap_on(struct proc *p, struct swapdev *sdp)
+swap_on(struct lwp *l, struct swapdev *sdp)
 {
 	struct vnode *vp;
+	struct proc *p = l->l_proc;
 	int error, npages, nblocks, size;
 	long addr;
 	u_long result;
@@ -779,7 +780,7 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, l)))
 			return (error);
 	}
 
@@ -806,11 +807,11 @@ swap_on(struct proc *p, struct swapdev *sdp)
 		break;
 
 	case VREG:
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
-		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
+		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat, l)) != 0)
 			goto bad;
 
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
@@ -949,7 +950,7 @@ bad:
 		blist_destroy(sdp->swd_blist);
 	}
 	if (vp != rootvp) {
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, l);
 	}
 	return (error);
 }
@@ -960,8 +961,9 @@ bad:
  * => swap data should be locked, we will unlock.
  */
 static int
-swap_off(struct proc *p, struct swapdev *sdp)
+swap_off(struct lwp *l, struct swapdev *sdp)
 {
+	struct proc *p = l->l_proc;
 	int npages = sdp->swd_npages;
 	int error = 0;
 
@@ -1005,7 +1007,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	 */
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, l);
 	}
 
 	simple_lock(&uvm.swap_data_lock);

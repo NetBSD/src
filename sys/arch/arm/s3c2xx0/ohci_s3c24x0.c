@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.2 2003/08/29 12:38:48 bsh Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.3 2005/12/11 12:16:51 christos Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.2 2003/08/29 12:38:48 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

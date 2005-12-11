@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.161 2005/09/24 15:52:03 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.162 2005/12/11 12:24:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.161 2005/09/24 15:52:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.162 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -637,7 +637,7 @@ if_detach(ifp)
 			if (pr->pr_usrreq != NULL) {
 				(void) (*pr->pr_usrreq)(&so,
 				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *) ifp, curproc);
+				    (struct mbuf *) ifp, curlwp);
 				purged = 1;
 			}
 		}
@@ -685,7 +685,7 @@ if_detach(ifp)
 			    pr->pr_flags & PR_PURGEIF)
 				(void) (*pr->pr_usrreq)(&so,
 				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *) ifp, curproc);
+				    (struct mbuf *) ifp, curlwp);
 		}
 	}
 
@@ -1385,11 +1385,11 @@ ifunit(name)
  * Interface ioctls.
  */
 int
-ifioctl(so, cmd, data, p)
+ifioctl(so, cmd, data, l)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1411,8 +1411,8 @@ ifioctl(so, cmd, data, p)
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
-		if (p) {
-			error = suser(p->p_ucred, &p->p_acflag);
+		if (l) {
+			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 			if (error)
 				return error;
 		}
@@ -1449,8 +1449,8 @@ ifioctl(so, cmd, data, p)
 	case SIOCS80211POWER:
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
-		if (p) {
-			error = suser(p->p_ucred, &p->p_acflag);
+		if (l) {
+			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 			if (error)
 				return error;
 		}
@@ -1625,11 +1625,11 @@ ifioctl(so, cmd, data, p)
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, cmd, data, p);
+		error = compat_ifioctl(so, cmd, data, l);
 #else
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, p));
+		    (struct mbuf *)ifp, l));
 #endif
 		break;
 	}

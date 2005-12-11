@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.17 2005/12/11 12:19:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.17 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.13 2003/12/24 22:57:22 manu Exp $ */
+/*	$NetBSD: darwin_signal.h,v 1.14 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

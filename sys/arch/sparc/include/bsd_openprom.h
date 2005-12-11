@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.22 2005/05/31 00:54:05 christos Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.23 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

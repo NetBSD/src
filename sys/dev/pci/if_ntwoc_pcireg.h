@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pcireg.h,v 1.4 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_ntwoc_pcireg.h,v 1.5 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises

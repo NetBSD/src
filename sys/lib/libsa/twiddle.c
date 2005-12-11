@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.5 2003/08/07 16:32:31 agc Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.6 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

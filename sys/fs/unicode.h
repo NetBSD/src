@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.2 2004/12/27 18:14:36 jdolecek Exp $ */
+/* $NetBSD: unicode.h,v 1.3 2005/12/11 12:24:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.

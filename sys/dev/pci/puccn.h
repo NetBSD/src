@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.h,v 1.3 2003/07/08 10:06:32 itojun Exp $ */
+/*	$NetBSD: puccn.h,v 1.4 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Derived from  pci.c

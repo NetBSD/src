@@ -1,4 +1,4 @@
-/*	 $NetBSD: bold8x16.h,v 1.11 2005/06/28 00:44:22 thorpej Exp $ */
+/*	 $NetBSD: bold8x16.h,v 1.12 2005/12/11 12:24:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.1 2005/01/29 11:37:18 scw Exp $	*/
+/*	$NetBSD: dmac.c,v 1.2 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.1 2005/01/29 11:37:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.2 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

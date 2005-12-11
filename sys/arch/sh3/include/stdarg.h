@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.7 2005/01/05 23:39:51 uwe Exp $ */
+/* $NetBSD: stdarg.h,v 1.8 2005/12/11 12:18:58 christos Exp $ */
 
 #ifndef _SH3_STDARG_H_
 #define	_SH3_STDARG_H_

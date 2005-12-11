@@ -1,4 +1,4 @@
-/*	$NetBSD: int2reg.h,v 1.3 2004/07/06 23:56:13 sekiya Exp $	*/
+/*	$NetBSD: int2reg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA

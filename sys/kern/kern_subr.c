@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.119 2005/08/28 20:58:14 reinoud Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.120 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.119 2005/08/28 20:58:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.120 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -138,7 +138,8 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-	struct proc *p = uio->uio_procp;
+	struct lwp *l;
+	struct proc *p;
 	int hold_count;
 
 	hold_count = KERNEL_LOCK_RELEASE_ALL();
@@ -168,6 +169,9 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
+			l = uio->uio_lwp;
+			p = l ? l->l_proc : NULL;
+
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
@@ -279,7 +283,7 @@ copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
-	uio.uio_procp = NULL;
+	uio.uio_lwp = NULL;
 
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
@@ -315,7 +319,7 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
-	uio.uio_procp = NULL;
+	uio.uio_lwp = NULL;
 
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
@@ -1314,7 +1318,7 @@ trace_enter(struct lwp *l, register_t code,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, realcode, callp, args);
+		ktrsyscall(l, code, realcode, callp, args);
 #endif /* KTRACE */
 
 #ifdef SYSTRACE
@@ -1346,7 +1350,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, code, error, rval);
+		ktrsysret(l, code, error, rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif /* KTRACE */

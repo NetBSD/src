@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.5 2004/07/19 03:12:31 chs Exp $	*/
+/*	$NetBSD: ras.h,v 1.6 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.

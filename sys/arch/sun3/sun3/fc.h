@@ -1,4 +1,4 @@
-/*	$NetBSD: fc.h,v 1.3 2003/08/07 16:29:57 agc Exp $	*/
+/*	$NetBSD: fc.h,v 1.4 2005/12/11 12:19:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

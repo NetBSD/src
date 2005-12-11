@@ -1,4 +1,4 @@
-/* $NetBSD: timervar.h,v 1.3 2005/10/30 05:27:14 tsutsui Exp $ */
+/* $NetBSD: timervar.h,v 1.4 2005/12/11 12:16:37 christos Exp $ */
 /* NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp  */
 
 /*

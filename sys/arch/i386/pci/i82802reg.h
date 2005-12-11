@@ -1,4 +1,4 @@
-/*	$NetBSD: i82802reg.h,v 1.2 2004/02/19 12:23:47 uebayasi Exp $	*/
+/*	$NetBSD: i82802reg.h,v 1.3 2005/12/11 12:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff

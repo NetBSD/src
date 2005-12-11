@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
- *	$NetBSD: parioctl.h,v 1.3 2004/05/08 08:40:08 minoura Exp $
+ *	$NetBSD: parioctl.h,v 1.4 2005/12/11 12:19:44 christos Exp $
  */
 
 #ifndef _X68K_PARIOCTL_H_

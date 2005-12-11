@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.25 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.26 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.26 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.8 2003/10/25 22:34:57 simonb Exp $
+#	$NetBSD: files.pb1000,v 1.9 2005/12/11 12:17:11 christos Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.4 2004/09/13 15:14:12 drochner Exp $	*/
+/*	$NetBSD: elb.c,v 1.5 2005/12/11 12:17:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.4 2004/09/13 15:14:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.5 2005/12/11 12:17:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.4 2005/02/04 12:15:22 skrll Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
 
 /*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 

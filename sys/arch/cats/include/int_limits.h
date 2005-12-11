@@ -1,3 +1,3 @@
-/*	$NetBSD: int_limits.h,v 1.4 2004/05/08 21:51:47 kleink Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.5 2005/12/11 12:17:04 christos Exp $	*/
 
 #include <arm/int_limits.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.2 2004/12/29 06:31:32 joff Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.3 2005/12/11 12:16:45 christos Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *

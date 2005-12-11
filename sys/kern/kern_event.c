@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.24 2005/10/23 01:33:32 cube Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.24 2005/10/23 01:33:32 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,20 +57,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.24 2005/10/23 01:33:32 cube Exp $")
 static void	kqueue_wakeup(struct kqueue *kq);
 
 static int	kqueue_scan(struct file *, size_t, struct kevent *,
-    const struct timespec *, struct proc *, register_t *,
+    const struct timespec *, struct lwp *, register_t *,
     const struct kevent_ops *);
 static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 		    struct ucred *cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
 		    struct ucred *cred, int flags);
 static int	kqueue_ioctl(struct file *fp, u_long com, void *data,
-		    struct proc *p);
+		    struct lwp *l);
 static int	kqueue_fcntl(struct file *fp, u_int com, void *data,
-		    struct proc *p);
-static int	kqueue_poll(struct file *fp, int events, struct proc *p);
+		    struct lwp *l);
+static int	kqueue_poll(struct file *fp, int events, struct lwp *l);
 static int	kqueue_kqfilter(struct file *fp, struct knote *kn);
-static int	kqueue_stat(struct file *fp, struct stat *sp, struct proc *p);
-static int	kqueue_close(struct file *fp, struct proc *p);
+static int	kqueue_stat(struct file *fp, struct stat *sp, struct lwp *l);
+static int	kqueue_close(struct file *fp, struct lwp *l);
 
 static const struct fileops kqueueops = {
 	kqueue_read, kqueue_write, kqueue_ioctl, kqueue_fcntl, kqueue_poll,
@@ -78,7 +78,7 @@ static const struct fileops kqueueops = {
 };
 
 static void	knote_attach(struct knote *kn, struct filedesc *fdp);
-static void	knote_drop(struct knote *kn, struct proc *p,
+static void	knote_drop(struct knote *kn, struct lwp *l,
 		    struct filedesc *fdp);
 static void	knote_enqueue(struct knote *kn);
 static void	knote_dequeue(struct knote *kn);
@@ -622,7 +622,7 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 		fdp->fd_knlistsize = 0;	/* this process has a kq */
 	kq->kq_fdp = fdp;
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);		/* falloc() does FILE_USE() */
+	FILE_UNUSE(fp, l);		/* falloc() does FILE_USE() */
 	return (error);
 }
 
@@ -717,7 +717,7 @@ kevent1(struct lwp *l, register_t *retval, int fd,
 			kevp = &kq->kq_kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
 			/* register each knote */
-			error = kqueue_register(kq, kevp, p);
+			error = kqueue_register(kq, kevp, l);
 			if (error) {
 				if (nevents != 0) {
 					kevp->flags = EV_ERROR;
@@ -744,9 +744,9 @@ kevent1(struct lwp *l, register_t *retval, int fd,
 	}
 
 	/* actually scan through the events */
-	error = kqueue_scan(fp, nevents, eventlist, timeout, p, retval, keops);
+	error = kqueue_scan(fp, nevents, eventlist, timeout, l, retval, keops);
  done:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -754,7 +754,7 @@ kevent1(struct lwp *l, register_t *retval, int fd,
  * Register a given kevent kev onto the kqueue
  */
 int
-kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
+kqueue_register(struct kqueue *kq, struct kevent *kev, struct lwp *l)
 {
 	const struct kfilter *kfilter;
 	struct filedesc	*fdp;
@@ -839,7 +839,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 			knote_attach(kn, fdp);
 			if ((error = kfilter->filtops->f_attach(kn)) != 0) {
-				knote_drop(kn, p, fdp);
+				knote_drop(kn, l, fdp);
 				goto done;
 			}
 		} else {
@@ -862,7 +862,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 	} else if (kev->flags & EV_DELETE) {	/* delete knote */
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p, fdp);
+		knote_drop(kn, l, fdp);
 		goto done;
 	}
 
@@ -886,7 +886,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
  done:
 	if (fp != NULL)
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -898,9 +898,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
  */
 static int
 kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
-    const struct timespec *tsp, struct proc *p, register_t *retval,
+    const struct timespec *tsp, struct lwp *l, register_t *retval,
     const struct kevent_ops *keops)
 {
+	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timeval	atv;
@@ -1011,7 +1012,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			kn->kn_status &= ~KN_QUEUED;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
-			knote_drop(kn, p, p->p_fd);
+			knote_drop(kn, l, p->p_fd);
 			s = splsched();
 		} else if (kn->kn_flags & EV_CLEAR) {
 			/* clear state after retrieval */
@@ -1095,7 +1096,7 @@ kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
  */
 /*ARGSUSED*/
 static int
-kqueue_ioctl(struct file *fp, u_long com, void *data, struct proc *p)
+kqueue_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 {
 	struct kfilter_mapping	*km;
 	const struct kfilter	*kfilter;
@@ -1143,7 +1144,7 @@ kqueue_ioctl(struct file *fp, u_long com, void *data, struct proc *p)
  */
 /*ARGSUSED*/
 static int
-kqueue_fcntl(struct file *fp, u_int com, void *data, struct proc *p)
+kqueue_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 {
 
 	return (ENOTTY);
@@ -1154,7 +1155,7 @@ kqueue_fcntl(struct file *fp, u_int com, void *data, struct proc *p)
  * Determine if kqueue has events pending.
  */
 static int
-kqueue_poll(struct file *fp, int events, struct proc *p)
+kqueue_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct kqueue	*kq;
 	int		revents;
@@ -1165,7 +1166,7 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
 		if (kq->kq_count) {
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			selrecord(p, &kq->kq_sel);
+			selrecord(l, &kq->kq_sel);
 		}
 	}
 	return (revents);
@@ -1176,7 +1177,7 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
  * Returns dummy info, with st_size being number of events pending.
  */
 static int
-kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
+kqueue_stat(struct file *fp, struct stat *st, struct lwp *l)
 {
 	struct kqueue	*kq;
 
@@ -1193,8 +1194,9 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
  * Cleans up kqueue.
  */
 static int
-kqueue_close(struct file *fp, struct proc *p)
+kqueue_close(struct file *fp, struct lwp *l)
 {
+	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
 	struct filedesc	*fdp;
 	struct knote	**knp, *kn, *kn0;
@@ -1209,7 +1211,7 @@ kqueue_close(struct file *fp, struct proc *p)
 			kn0 = SLIST_NEXT(kn, kn_link);
 			if (kq == kn->kn_kq) {
 				kn->kn_fop->f_detach(kn);
-				FILE_UNUSE(kn->kn_fp, p);
+				FILE_UNUSE(kn->kn_fp, l);
 				pool_put(&knote_pool, kn);
 				*knp = kn0;
 			} else {
@@ -1300,13 +1302,13 @@ knote(struct klist *list, long hint)
  * Remove all knotes from a specified klist
  */
 void
-knote_remove(struct proc *p, struct klist *list)
+knote_remove(struct lwp *l, struct klist *list)
 {
 	struct knote *kn;
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p, p->p_fd);
+		knote_drop(kn, l, l->l_proc->p_fd);
 	}
 }
 
@@ -1314,14 +1316,14 @@ knote_remove(struct proc *p, struct klist *list)
  * Remove all knotes referencing a specified fd
  */
 void
-knote_fdclose(struct proc *p, int fd)
+knote_fdclose(struct lwp *l, int fd)
 {
 	struct filedesc	*fdp;
 	struct klist	*list;
 
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	list = &fdp->fd_knlist[fd];
-	knote_remove(p, list);
+	knote_remove(l, list);
 }
 
 /*
@@ -1387,7 +1389,7 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
  * while calling FILE_UNUSE and free.
  */
 static void
-knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
+knote_drop(struct knote *kn, struct lwp *l, struct filedesc *fdp)
 {
 	struct klist	*list;
 
@@ -1400,7 +1402,7 @@ knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
 	if (kn->kn_fop->f_isfd)
-		FILE_UNUSE(kn->kn_fp, p);
+		FILE_UNUSE(kn->kn_fp, l);
 	pool_put(&knote_pool, kn);
 }
 

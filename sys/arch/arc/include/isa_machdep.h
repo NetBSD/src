@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.10 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.11 2005/12/11 12:16:39 christos Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*

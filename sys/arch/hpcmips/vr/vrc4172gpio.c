@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.10 2005/12/11 12:17:34 christos Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.10 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

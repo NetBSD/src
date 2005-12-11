@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.22 2005/05/31 00:50:28 christos Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.23 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.22 2005/05/31 00:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.23 2005/12/11 12:19:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

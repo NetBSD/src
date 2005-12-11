@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.19 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */

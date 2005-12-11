@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.16 2005/04/11 18:26:48 jmcneill Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.17 2005/12/11 12:21:25 christos Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*

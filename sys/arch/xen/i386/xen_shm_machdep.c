@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.11 2005/07/19 11:09:52 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.12 2005/12/11 12:19:48 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

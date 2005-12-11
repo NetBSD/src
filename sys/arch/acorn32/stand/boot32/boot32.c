@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.19 2004/05/26 23:13:03 abs Exp $	*/
+/*	$NetBSD: boot32.c,v 1.20 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk

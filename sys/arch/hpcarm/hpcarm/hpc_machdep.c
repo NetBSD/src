@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.74 2005/10/23 15:06:35 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.75 2005/12/11 12:17:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.74 2005/10/23 15:06:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.75 2005/12/11 12:17:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

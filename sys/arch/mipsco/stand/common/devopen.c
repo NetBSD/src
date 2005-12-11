@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2003/08/07 16:28:38 agc Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2005/12/11 12:18:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

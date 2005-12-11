@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425reg.h,v 1.5 2003/10/24 10:04:01 scw Exp $ */
+/*	$NetBSD: ixdp425reg.h,v 1.6 2005/12/11 12:17:09 christos Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcireg.h,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.7 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

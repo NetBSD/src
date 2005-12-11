@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.3 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.3 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

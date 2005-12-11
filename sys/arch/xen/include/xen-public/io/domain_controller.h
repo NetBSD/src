@@ -1,4 +1,4 @@
-/* $NetBSD: domain_controller.h,v 1.3 2005/03/10 19:47:08 bouyer Exp $ */
+/* $NetBSD: domain_controller.h,v 1.4 2005/12/11 12:19:50 christos Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser

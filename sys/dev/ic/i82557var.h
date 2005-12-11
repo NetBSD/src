@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.34 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.35 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.11 2004/01/04 11:33:29 jdolecek Exp $ */
+/*      $NetBSD: cpu.h,v 1.12 2005/12/11 12:16:36 christos Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.

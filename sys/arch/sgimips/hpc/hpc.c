@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.33 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: hpc.c,v 1.34 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.33 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.34 2005/12/11 12:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

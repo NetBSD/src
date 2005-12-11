@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1 2005/05/15 22:20:23 fvdl Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.2 2005/12/11 12:19:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1 2005/05/15 22:20:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.2 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

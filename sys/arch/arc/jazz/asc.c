@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 2005/11/06 11:09:17 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.17 2005/12/11 12:16:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 2005/11/06 11:09:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

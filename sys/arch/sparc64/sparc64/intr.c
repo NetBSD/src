@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.47 2003/11/09 16:41:52 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.48 2005/12/11 12:19:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2003/11/09 16:41:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2005/12/11 12:19:14 christos Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"

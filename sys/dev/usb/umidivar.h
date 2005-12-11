@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.7 2003/12/05 06:05:53 gson Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8 2005/12/11 12:24:01 christos Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

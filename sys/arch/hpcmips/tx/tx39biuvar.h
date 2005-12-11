@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biuvar.h,v 1.3 2005/07/30 22:40:34 nakayama Exp $ */
+/*	$NetBSD: tx39biuvar.h,v 1.4 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

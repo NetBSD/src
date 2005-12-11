@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.1 2005/06/20 02:11:57 briggs Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1 2005/06/20 02:11:57 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

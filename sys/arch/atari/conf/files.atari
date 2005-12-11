@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.107 2004/12/07 04:33:24 chs Exp $
+#	$NetBSD: files.atari,v 1.108 2005/12/11 12:16:54 christos Exp $
 
 maxpartitions 16
 

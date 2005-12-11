@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.9 2005/06/09 13:47:28 he Exp $	*/
+/*	$NetBSD: prom.h,v 1.10 2005/12/11 12:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

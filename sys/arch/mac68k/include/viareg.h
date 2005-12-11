@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.13 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.14 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,

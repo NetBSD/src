@@ -1,4 +1,4 @@
-/*	$NetBSD: elbvar.h,v 1.2 2003/07/25 11:44:20 scw Exp $	*/
+/*	$NetBSD: elbvar.h,v 1.3 2005/12/11 12:17:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

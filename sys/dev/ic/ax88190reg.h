@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190reg.h,v 1.2 2003/10/22 00:12:36 christos Exp $	*/
+/*	$NetBSD: ax88190reg.h,v 1.3 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: plx9060var.h,v 1.2 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: plx9060var.h,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.

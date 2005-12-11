@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.43 2005/02/03 21:08:58 perry Exp $	*/
+/*	$NetBSD: mms.c,v 1.44 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.43 2005/02/03 21:08:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.44 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ CFATTACH_DECL(mms, sizeof(struct mms_softc),
     mmsprobe, mmsattach, NULL, NULL);
 
 int	mms_enable(void *);
-int	mms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	mms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	mms_disable(void *);
 
 const struct wsmouse_accessops mms_accessops = {
@@ -189,7 +189,7 @@ mms_disable(void *v)
 }
 
 int
-mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 #if 0
 	struct mms_softc *sc = v;

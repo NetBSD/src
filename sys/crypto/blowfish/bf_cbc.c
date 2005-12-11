@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_cbc.c,v 1.11 2005/05/30 04:13:14 christos Exp $	*/
+/*	$NetBSD: bf_cbc.c,v 1.12 2005/12/11 12:20:48 christos Exp $	*/
 
 /* crypto/bf/bf_cbc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.11 2005/05/30 04:13:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.12 2005/12/11 12:20:48 christos Exp $");
 
 #include <sys/types.h>
 

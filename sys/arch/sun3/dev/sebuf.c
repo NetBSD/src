@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.13 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.14 2005/12/11 12:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.13 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.14 2005/12/11 12:19:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

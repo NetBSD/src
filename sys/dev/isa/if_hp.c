@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.38 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.39 2005/12/11 12:22:02 christos Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.38 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.39 2005/12/11 12:22:02 christos Exp $");
 
 #include "hp.h"
 #if NHP > 0

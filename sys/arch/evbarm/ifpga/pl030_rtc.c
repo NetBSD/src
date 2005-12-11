@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.6 2003/07/15 00:24:59 lukem Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.7 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.6 2003/07/15 00:24:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.7 2005/12/11 12:17:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

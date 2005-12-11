@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2005/08/19 02:03:57 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2005/12/11 12:19:56 christos Exp $
 
 LIB=		compat
 NOPIC=		# defined

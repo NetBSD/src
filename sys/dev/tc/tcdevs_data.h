@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdevs_data.h,v 1.21 2005/02/27 15:34:22 perry Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.22 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

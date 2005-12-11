@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.2 2005/09/11 20:26:15 macallan Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.2 2005/09/11 20:26:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.3 2005/12/11 12:21:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

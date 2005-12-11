@@ -1,7 +1,7 @@
-/* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.4 2005/12/11 12:19:47 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

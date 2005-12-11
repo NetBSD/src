@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.h,v 1.2 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: svr4_32_ipc.h,v 1.3 2005/12/11 12:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.

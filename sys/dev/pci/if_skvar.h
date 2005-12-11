@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $ */
+/* $NetBSD: if_skvar.h,v 1.7 2005/12/11 12:22:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

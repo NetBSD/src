@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.13 2005/05/29 22:10:28 christos Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.14 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

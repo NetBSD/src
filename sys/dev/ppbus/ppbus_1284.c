@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.7 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.8 2005/12/11 12:23:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.7 2005/02/27 00:27:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.8 2005/12/11 12:23:28 christos Exp $");
 
 #include "opt_ppbus_1284.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.13 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.14 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System

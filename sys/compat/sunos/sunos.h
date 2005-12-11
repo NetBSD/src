@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.19 2005/08/19 02:03:58 christos Exp $	*/
+/*	$NetBSD: sunos.h,v 1.20 2005/12/11 12:20:23 christos Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.3 2005/08/26 13:19:37 drochner Exp $	 */
+/* $NetBSD: ioc.c,v 1.4 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.3 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.4 2005/12/11 12:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

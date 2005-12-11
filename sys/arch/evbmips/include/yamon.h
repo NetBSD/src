@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.3 2005/06/09 21:43:13 he Exp $	*/
+/*	$NetBSD: yamon.h,v 1.4 2005/12/11 12:17:11 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

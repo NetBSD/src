@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.52 2005/12/11 12:18:02 christos Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.52 2005/12/11 12:18:02 christos Exp $");
 
 #include "opt_adb.h"
 

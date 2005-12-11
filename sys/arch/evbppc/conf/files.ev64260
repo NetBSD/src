@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.7 2004/09/13 14:38:37 drochner Exp $
+#	$NetBSD: files.ev64260,v 1.8 2005/12/11 12:17:11 christos Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #

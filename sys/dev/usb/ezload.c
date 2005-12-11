@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.9 2005/05/30 04:55:35 christos Exp $	*/
+/*	$NetBSD: ezload.c,v 1.10 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.9 2005/05/30 04:55:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.10 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

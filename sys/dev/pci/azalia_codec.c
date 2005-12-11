@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4 2005/12/11 12:22:48 christos Exp $");
 
 #include <sys/null.h>
 #include <sys/systm.h>

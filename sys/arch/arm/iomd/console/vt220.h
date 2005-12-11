@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.h,v 1.2 2005/06/09 09:23:39 he Exp $ */
+/* $NetBSD: vt220.h,v 1.3 2005/12/11 12:16:50 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson

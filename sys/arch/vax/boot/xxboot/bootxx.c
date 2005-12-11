@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.20 2005/06/27 11:28:51 junyoung Exp $	*/
+/* $NetBSD: bootxx.c,v 1.21 2005/12/11 12:19:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.

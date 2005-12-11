@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.16 2004/08/17 23:20:10 drochner Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.17 2005/12/11 12:19:10 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green

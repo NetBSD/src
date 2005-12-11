@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.4 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.5 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.

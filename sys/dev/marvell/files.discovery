@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.9 2005/02/01 20:59:15 matt Exp $
+#	$NetBSD: files.discovery,v 1.10 2005/12/11 12:22:16 christos Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.

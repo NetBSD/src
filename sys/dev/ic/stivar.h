@@ -1,4 +1,4 @@
-/* $NetBSD: stivar.h,v 1.1 2004/08/26 16:48:06 jkunz Exp $ */
+/* $NetBSD: stivar.h,v 1.2 2005/12/11 12:21:28 christos Exp $ */
 
 /*	$OpenBSD: stivar.h,v 1.15 2003/12/16 06:07:13 mickey Exp $	*/
 

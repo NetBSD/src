@@ -1,4 +1,4 @@
-#	$NetBSD: std.playstation2,v 1.7 2005/09/17 09:44:08 yamt Exp $
+#	$NetBSD: std.playstation2,v 1.8 2005/12/11 12:18:34 christos Exp $
 
 machine playstation2 mips
 include		"conf/std"	# MI standard options

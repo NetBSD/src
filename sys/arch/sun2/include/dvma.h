@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.5 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: dvma.h,v 1.6 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

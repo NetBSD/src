@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.14 2005/03/24 22:34:39 jmcneill Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.15 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.14 2005/03/24 22:34:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.15 2005/12/11 12:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

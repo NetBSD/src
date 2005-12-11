@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.2 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.3 2005/12/11 12:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.2 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.3 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

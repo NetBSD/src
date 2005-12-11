@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169var.h,v 1.2 2005/01/13 14:24:24 kanaoka Exp $	*/
+/*	$NetBSD: rtl8169var.h,v 1.3 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.5 2004/09/14 20:32:48 drochner Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.6 2005/12/11 12:17:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.5 2004/09/14 20:32:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

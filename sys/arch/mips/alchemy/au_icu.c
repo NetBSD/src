@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.10 2005/06/09 21:42:33 he Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.11 2005/12/11 12:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.10 2005/06/09 21:42:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.11 2005/12/11 12:18:06 christos Exp $");
 
 #include "opt_ddb.h"
 

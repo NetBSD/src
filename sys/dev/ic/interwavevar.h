@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.14 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.15 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.

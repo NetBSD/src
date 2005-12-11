@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930var.h,v 1.4 2005/02/27 00:27:00 perry Exp $ */
+/* $NetBSD: am79c930var.h,v 1.5 2005/12/11 12:21:25 christos Exp $ */
 /* $FreeBSD$ */
 
 /*-

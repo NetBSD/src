@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2005/06/05 13:49:26 he Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 2005/12/11 12:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

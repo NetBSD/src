@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.119 2005/05/31 19:26:22 drochner Exp $	*/
+/*	$NetBSD: umass.c,v 1.120 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.119 2005/05/31 19:26:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.120 2005/12/11 12:24:01 christos Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"

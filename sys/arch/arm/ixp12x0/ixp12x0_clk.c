@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.9 2005/06/04 21:19:23 he Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.10 2005/12/11 12:16:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.9 2005/06/04 21:19:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.10 2005/12/11 12:16:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

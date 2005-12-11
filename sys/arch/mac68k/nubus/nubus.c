@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.60 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.60 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

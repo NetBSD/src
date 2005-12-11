@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.30 2005/09/13 01:42:32 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.31 2005/12/11 12:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.30 2005/09/13 01:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.31 2005/12/11 12:20:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

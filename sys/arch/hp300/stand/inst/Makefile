@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/10/02 13:53:49 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 2005/12/11 12:17:23 christos Exp $
 
 PROGAOUT=	inst
 PROGSOURCE=	inst.c

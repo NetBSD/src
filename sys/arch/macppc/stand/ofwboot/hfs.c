@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.c,v 1.4 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: hfs.c,v 1.5 2005/12/11 12:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.

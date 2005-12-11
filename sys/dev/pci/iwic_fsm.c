@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_fsm.c,v 1.2 2005/07/09 02:05:09 christos Exp $	*/
+/*	$NetBSD: iwic_fsm.c,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_fsm.c,v 1.2 2005/07/09 02:05:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_fsm.c,v 1.3 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

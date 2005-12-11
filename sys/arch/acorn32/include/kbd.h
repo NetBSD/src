@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.2 2004/05/08 21:04:06 jmc Exp $	*/
+/*	$NetBSD: kbd.h,v 1.3 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

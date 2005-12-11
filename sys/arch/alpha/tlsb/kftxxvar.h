@@ -1,4 +1,4 @@
-/* $NetBSD: kftxxvar.h,v 1.4 2005/06/02 13:17:45 drochner Exp $ */
+/* $NetBSD: kftxxvar.h,v 1.5 2005/12/11 12:16:21 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob

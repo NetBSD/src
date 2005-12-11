@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxvar.h,v 1.3 2005/06/04 04:40:57 tsutsui Exp $ */
+/*	$NetBSD: xboxvar.h,v 1.4 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

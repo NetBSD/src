@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.47 2005/09/09 14:50:58 drochner Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.47 2005/09/09 14:50:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

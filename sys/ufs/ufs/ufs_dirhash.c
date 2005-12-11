@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.6 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.7 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.

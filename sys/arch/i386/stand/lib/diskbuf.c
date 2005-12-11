@@ -1,4 +1,4 @@
-/*	$NetBSD: diskbuf.c,v 1.5 2005/06/28 21:00:41 junyoung Exp $	*/
+/*	$NetBSD: diskbuf.c,v 1.6 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996

@@ -1,4 +1,4 @@
-/* $NetBSD: kbdvar.h,v 1.1 2005/06/01 18:50:34 jandberg Exp $ */
+/* $NetBSD: kbdvar.h,v 1.2 2005/12/11 12:16:28 christos Exp $ */
 
 /* 
  * Public domain.

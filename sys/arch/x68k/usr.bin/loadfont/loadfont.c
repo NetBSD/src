@@ -3,11 +3,11 @@
  * from: amiga/stand/loadkmap/loadkmap.c
  * Copyright 1993 by Masaru Oki
  *
- *	$NetBSD: loadfont.c,v 1.5 2003/07/15 01:44:54 lukem Exp $
+ *	$NetBSD: loadfont.c,v 1.6 2005/12/11 12:19:45 christos Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: loadfont.c,v 1.5 2003/07/15 01:44:54 lukem Exp $");
+__RCSID("$NetBSD: loadfont.c,v 1.6 2005/12/11 12:19:45 christos Exp $");
 
 #include <stdio.h>
 #include <sys/file.h>

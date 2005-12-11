@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.52 2005/11/05 09:46:07 tsutsui Exp $
+#	$NetBSD: files.mips,v 1.53 2005/12/11 12:18:09 christos Exp $
 #
 
 defflag	opt_cputype.h		NOFPU

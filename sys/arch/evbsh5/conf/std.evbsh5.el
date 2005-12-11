@@ -1,4 +1,4 @@
-#	$NetBSD: std.evbsh5.el,v 1.3 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.evbsh5.el,v 1.4 2005/12/11 12:17:13 christos Exp $
 #
 # Options/devices that all Little Endian evbsh5s should have
 #

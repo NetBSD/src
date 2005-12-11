@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.17 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.18 2005/12/11 12:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

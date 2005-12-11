@@ -1,3 +1,3 @@
-/*	$NetBSD: bus_private.h,v 1.1 2005/04/16 08:53:09 yamt Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.2 2005/12/11 12:16:25 christos Exp $	*/
 
 #include <x86/bus_private.h>

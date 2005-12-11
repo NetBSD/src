@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.14 2005/04/01 11:59:38 yamt Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.15 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.16 2005/12/11 06:25:32 christos Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.17 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -445,8 +445,10 @@ struct smbiod {
 	SIMPLEQ_HEAD(, smb_rq)
 				iod_rqlist;	/* list of outstanding requests */
 	int			iod_muxwant;
+#ifdef __NetBSD__
+	struct lwp *		iod_l;
+#else
 	struct proc *		iod_p;
-#ifndef __NetBSD__
 	struct thread *		iod_td;
 #endif
 	struct smb_cred		iod_scred;

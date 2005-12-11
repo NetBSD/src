@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.h,v 1.6 2005/03/05 17:34:06 chs Exp $	*/
+/*	$NetBSD: pram.h,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan

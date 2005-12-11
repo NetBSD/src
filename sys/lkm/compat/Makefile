@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2004/09/14 22:12:06 thorpej Exp $
+# $NetBSD: Makefile,v 1.22 2005/12/11 12:24:47 christos Exp $
 
 .if (${MACHINE_ARCH} == "sparc64")
 SUBDIR+=	netbsd32 sunos32 svr4 svr4_32

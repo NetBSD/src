@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.5 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.6 2005/12/11 12:22:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.

@@ -1,4 +1,4 @@
-/* $NetBSD: tgareg.h,v 1.5 2005/02/27 00:27:34 perry Exp $ */
+/* $NetBSD: tgareg.h,v 1.6 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

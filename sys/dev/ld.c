@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.38 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.39 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.38 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.39 2005/12/11 12:20:53 christos Exp $");
 
 #include "rnd.h"
 
@@ -272,7 +272,7 @@ ldshutdown(void *cookie)
 
 /* ARGSUSED */
 static int
-ldopen(dev_t dev, int flags, int fmt, struct proc *p)
+ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int error, unit, part;
@@ -322,7 +322,7 @@ ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 /* ARGSUSED */
 static int
-ldclose(dev_t dev, int flags, int fmt, struct proc *p)
+ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int error, part, unit;
@@ -375,7 +375,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 
 /* ARGSUSED */
 static int
-ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
+ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int part, unit, error;
@@ -520,7 +520,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&sc->sc_dk, dkwl, p));
+		return (dkwedge_list(&sc->sc_dk, dkwl, l));
 	    }
 
 	default:

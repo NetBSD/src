@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.24 2005/06/19 23:46:32 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.25 2005/12/11 12:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.

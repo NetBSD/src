@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.49 2004/08/17 23:20:10 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.50 2005/12/11 12:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.49 2004/08/17 23:20:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50 2005/12/11 12:19:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

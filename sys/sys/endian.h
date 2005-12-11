@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.15 2005/02/03 19:16:10 perry Exp $	*/
+/*	$NetBSD: endian.h,v 1.16 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993

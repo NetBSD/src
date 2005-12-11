@@ -1,4 +1,4 @@
-/*	$NetBSD: i8237reg.h,v 1.7 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: i8237reg.h,v 1.8 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Intel 8237 DMA Controller

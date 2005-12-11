@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_scan.l,v 1.4 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: aicasm_scan.l,v 1.5 2005/12/11 12:22:18 christos Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.4 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

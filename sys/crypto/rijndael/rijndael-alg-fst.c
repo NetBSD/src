@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.6 2003/07/15 11:00:40 itojun Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.7 2005/12/11 12:20:52 christos Exp $	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.10 2003/07/15 10:47:16 itojun Exp $	*/
 /**
  * rijndael-alg-fst.c
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-alg-fst.c,v 1.6 2003/07/15 11:00:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-alg-fst.c,v 1.7 2005/12/11 12:20:52 christos Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL

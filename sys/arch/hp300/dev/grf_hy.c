@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.25 2005/06/03 11:52:50 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.26 2005/12/11 12:17:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25 2005/06/03 11:52:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26 2005/12/11 12:17:14 christos Exp $");
 
 #include "opt_compat_hpux.h"
 

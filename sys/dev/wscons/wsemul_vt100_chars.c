@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.10 2004/07/28 12:34:05 jmmv Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.11 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.10 2004/07/28 12:34:05 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.11 2005/12/11 12:24:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

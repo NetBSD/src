@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cy693_reg.h,v 1.8 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide_cy693_reg.h,v 1.9 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.

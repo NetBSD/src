@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.52 2005/06/06 20:20:09 pooka Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.53 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52 2005/06/06 20:20:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.53 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"

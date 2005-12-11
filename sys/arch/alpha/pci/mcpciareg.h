@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.5 2004/02/13 11:36:09 wiz Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.6 2005/12/11 12:16:17 christos Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob

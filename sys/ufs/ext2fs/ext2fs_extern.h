@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.29 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.30 2005/12/11 12:25:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -73,7 +73,7 @@ struct m_ext2fs;
 struct inode;
 struct mount;
 struct nameidata;
-struct proc;
+struct lwp;
 struct statvfs;
 struct timeval;
 struct ucred;
@@ -145,13 +145,13 @@ void ext2fs_reinit(void);
 void ext2fs_done(void);
 int ext2fs_mountroot(void);
 int ext2fs_mount(struct mount *, const char *, void *, struct nameidata *,
-		   struct proc *);
-int ext2fs_reload(struct mount *, struct ucred *, struct proc *);
-int ext2fs_mountfs(struct vnode *, struct mount *, struct proc *);
-int ext2fs_unmount(struct mount *, int, struct proc *);
-int ext2fs_flushfiles(struct mount *, int, struct proc *);
-int ext2fs_statvfs(struct mount *, struct statvfs *, struct proc *);
-int ext2fs_sync(struct mount *, int, struct ucred *, struct proc *);
+		   struct lwp *);
+int ext2fs_reload(struct mount *, struct ucred *, struct lwp *);
+int ext2fs_mountfs(struct vnode *, struct mount *, struct lwp *);
+int ext2fs_unmount(struct mount *, int, struct lwp *);
+int ext2fs_flushfiles(struct mount *, int, struct lwp *);
+int ext2fs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int ext2fs_sync(struct mount *, int, struct ucred *, struct lwp *);
 int ext2fs_vget(struct mount *, ino_t, struct vnode **);
 int ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int ext2fs_vptofh(struct vnode *, struct fid *);

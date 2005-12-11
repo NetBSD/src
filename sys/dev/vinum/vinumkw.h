@@ -29,7 +29,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumkw.h,v 1.2 2005/06/26 22:32:47 christos Exp $
+ * $Id: vinumkw.h,v 1.3 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

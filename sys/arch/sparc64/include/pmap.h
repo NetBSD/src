@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2005/02/25 17:29:04 heas Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2005/12/11 12:19:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

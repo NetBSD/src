@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.9 2004/08/12 16:04:20 mycroft Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.10 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

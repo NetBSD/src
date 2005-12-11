@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.2 2005/12/11 12:19:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1 2004/03/14 18:18:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 2005/12/11 12:19:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

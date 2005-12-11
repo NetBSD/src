@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.11 2005/02/15 05:56:34 lukem Exp $	*/
+/*	$NetBSD: twereg.h,v 1.12 2005/12/11 12:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

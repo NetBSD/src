@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.10 2005/10/30 05:27:14 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.11 2005/12/11 12:16:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.10 2005/10/30 05:27:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.11 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

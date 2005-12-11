@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.4 2003/10/23 20:46:40 scw Exp $ */
+/*      $NetBSD: memcmp.S,v 1.5 2005/12/11 12:24:42 christos Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.4 2003/10/23 20:46:40 scw Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.5 2005/12/11 12:24:42 christos Exp $")
 
 ENTRY(memcmp)
 	mov	ip, r0

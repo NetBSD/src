@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.9 2005/07/03 22:22:50 he Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.10 2005/12/11 12:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

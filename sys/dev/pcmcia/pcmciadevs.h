@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.215 2005/11/07 16:39:16 tsutsui Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.216 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

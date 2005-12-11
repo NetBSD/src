@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.3 2004/02/13 11:36:09 wiz Exp $ */
+/* $NetBSD: a12cvar.h,v 1.4 2005/12/11 12:16:17 christos Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.

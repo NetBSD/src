@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.15 2005/08/26 13:19:36 drochner Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.16 2005/12/11 12:17:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.15 2005/08/26 13:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.16 2005/12/11 12:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

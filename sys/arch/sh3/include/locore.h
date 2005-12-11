@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.9 2003/10/01 21:51:15 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

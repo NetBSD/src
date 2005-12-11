@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.39 2005/09/25 19:47:17 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.40 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.39 2005/09/25 19:47:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.40 2005/12/11 12:23:37 christos Exp $");
 
 #include <sys/errno.h>
 

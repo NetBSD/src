@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.4 2003/07/14 22:57:48 lukem Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.5 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.4 2003/07/14 22:57:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.5 2005/12/11 12:16:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

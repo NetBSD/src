@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.41 2003/08/07 16:30:07 agc Exp $	*/
+/*	$NetBSD: if_de.c,v 1.42 2005/12/11 12:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.41 2003/08/07 16:30:07 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.42 2005/12/11 12:19:34 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

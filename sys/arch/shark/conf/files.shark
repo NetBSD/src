@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.9 2005/01/09 15:39:59 tsutsui Exp $
+#	$NetBSD: files.shark,v 1.10 2005/12/11 12:19:02 christos Exp $
 #
 # First try for arm-specific configuration info
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.10 2005/10/15 17:29:11 yamt Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.11 2005/12/11 12:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.h,v 1.2 2004/05/11 22:44:24 wiz Exp $	*/
+/*	$NetBSD: apmbios.h,v 1.3 2005/12/11 12:21:14 christos Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.11 2005/05/02 14:52:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.12 2005/12/11 12:21:02 christos Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"

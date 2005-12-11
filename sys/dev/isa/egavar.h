@@ -1,4 +1,4 @@
-/* $NetBSD: egavar.h,v 1.3 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: egavar.h,v 1.4 2005/12/11 12:22:02 christos Exp $ */
 
 /*
  * Copyright (c) 1999

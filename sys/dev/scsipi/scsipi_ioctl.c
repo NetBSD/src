@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.55 2005/11/01 20:44:04 martin Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.56 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.55 2005/11/01 20:44:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.56 2005/12/11 12:23:50 christos Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -299,7 +299,7 @@ bad:
  */
 int
 scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+    caddr_t addr, int flag, struct lwp *l)
 {
 	int error;
 
@@ -340,7 +340,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_procp = p;
+			si->si_uio.uio_lwp = l;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
@@ -351,7 +351,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_bp.b_data = 0;
 			si->si_bp.b_bcount = 0;
 			si->si_bp.b_dev = dev;
-			si->si_bp.b_proc = p;
+			si->si_bp.b_proc = l->l_proc;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}

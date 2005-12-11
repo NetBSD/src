@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.12 2005/09/13 04:13:25 christos Exp $
+#	$NetBSD: files.ufs,v 1.13 2005/12/11 12:25:25 christos Exp $
 
 deffs					FFS
 deffs					EXT2FS

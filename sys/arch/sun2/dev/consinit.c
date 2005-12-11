@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2005/06/03 22:02:30 tsutsui Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2005/12/11 12:19:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matthew Fredette
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/06/03 22:02:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2005/12/11 12:19:16 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

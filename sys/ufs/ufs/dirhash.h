@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.3 2005/08/23 08:05:13 christos Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.4 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.

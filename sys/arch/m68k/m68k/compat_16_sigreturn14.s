@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_sigreturn14.s,v 1.1 2003/09/22 14:18:41 cl Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.2 2005/12/11 12:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

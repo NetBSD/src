@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.72 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_el.c,v 1.73 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.73 2005/12/11 12:22:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

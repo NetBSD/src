@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.65 2005/10/15 17:29:10 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.66 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.65 2005/10/15 17:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 
 /*ARGSUSED*/
 int
-fdopen(dev_t dev, int flags, int devtype, struct proc *p)
+fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc *sc;
 	int wasopen, fwork, error, s;
@@ -526,7 +526,7 @@ done:
 
 /*ARGSUSED*/
 int
-fdclose(dev_t dev, int flags, int devtype, struct proc *p)
+fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc *sc;
 	int s;
@@ -548,7 +548,7 @@ fdclose(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
 	int error, wlab;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdiovar.h,v 1.1 2005/08/14 03:50:34 joff Exp $	*/
+/*	$NetBSD: tsdiovar.h,v 1.2 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off

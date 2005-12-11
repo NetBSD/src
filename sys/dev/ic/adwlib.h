@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.18 2005/02/27 00:27:00 perry Exp $        */
+/*      $NetBSD: adwlib.h,v 1.19 2005/12/11 12:21:25 christos Exp $        */
 
 /*
  * Definitions for low level routines and data structures

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.32 2005/10/15 17:29:11 yamt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.33 2005/12/11 12:19:37 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.32 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.33 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ rdsize(dev_t dev)
  *
  */
 int
-rdopen(dev_t dev, int flag, int fmt, struct proc *p)
+rdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rdsoftc *rd;
 	int unit, part;
@@ -663,7 +663,7 @@ rdopen(dev_t dev, int flag, int fmt, struct proc *p)
  *
  */
 int
-rdclose(dev_t dev, int flag, int fmt, struct proc *p)
+rdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rdsoftc *rd;
 	int part;
@@ -689,7 +689,7 @@ rdclose(dev_t dev, int flag, int fmt, struct proc *p)
  *
  */
 int
-rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct rdsoftc *rd = rd_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rd->sc_disk.dk_label;

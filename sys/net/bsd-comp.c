@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.12 2003/08/07 16:32:48 agc Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.13 2005/12/11 12:24:51 christos Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.12 2003/08/07 16:32:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.13 2005/12/11 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

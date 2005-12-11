@@ -1,4 +1,4 @@
-/*	$NetBSD: esmreg.h,v 1.5 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: esmreg.h,v 1.6 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@NetBSD.org>

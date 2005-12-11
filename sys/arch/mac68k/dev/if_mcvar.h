@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.9 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.10 2005/12/11 12:18:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>

@@ -1,4 +1,4 @@
-#	$NetBSD: std.lubbock,v 1.4 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.lubbock,v 1.5 2005/12/11 12:17:07 christos Exp $
 #
 # standard NetBSD/evbarm for LUBBOCK options
 

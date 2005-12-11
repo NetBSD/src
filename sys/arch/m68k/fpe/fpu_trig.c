@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.2 2003/07/15 02:43:11 lukem Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.3 2005/12/11 12:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.2 2003/07/15 02:43:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.3 2005/12/11 12:17:52 christos Exp $");
 
 #include "fpu_emulate.h"
 

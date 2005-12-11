@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.19 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.20 2005/12/11 12:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.

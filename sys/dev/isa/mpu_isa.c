@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.14 2005/12/11 12:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.14 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

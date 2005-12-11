@@ -1,4 +1,4 @@
-/*	$NetBSD: opmvar.h,v 1.2 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: opmvar.h,v 1.3 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.

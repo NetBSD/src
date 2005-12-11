@@ -1,4 +1,4 @@
-/*       $NetBSD: frame.h,v 1.13 2003/10/27 00:16:42 christos Exp $        */
+/*       $NetBSD: frame.h,v 1.14 2005/12/11 12:19:10 christos Exp $        */
 
 #include <sparc/frame.h>
 

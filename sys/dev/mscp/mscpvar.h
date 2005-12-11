@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.13 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.14 2005/12/11 12:22:47 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

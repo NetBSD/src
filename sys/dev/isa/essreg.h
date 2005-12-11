@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.15 2005/01/13 15:01:27 kent Exp $	*/
+/*	$NetBSD: essreg.h,v 1.16 2005/12/11 12:22:02 christos Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.15 $ (SHARK) $Date: 2005/01/13 15:01:27 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.16 $ (SHARK) $Date: 2005/12/11 12:22:02 $
 **
 **++
 **

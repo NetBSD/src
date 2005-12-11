@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.55 2005/04/25 15:02:07 lukem Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.56 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55 2005/04/25 15:02:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.56 2005/12/11 12:19:00 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"

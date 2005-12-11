@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.3 2005/06/10 22:08:39 he Exp $	*/
+/*	$NetBSD: write.c,v 1.4 2005/12/11 12:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

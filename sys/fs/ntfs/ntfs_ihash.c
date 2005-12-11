@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.2 2003/08/07 16:31:39 agc Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.3 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.2 2003/08/07 16:31:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.3 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

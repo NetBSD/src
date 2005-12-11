@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.92 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: i82365.c,v 1.93 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.92 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.93 2005/12/11 12:21:26 christos Exp $");
 
 #define	PCICDEBUG
 

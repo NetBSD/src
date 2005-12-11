@@ -1,4 +1,4 @@
-/*	$NetBSD: des.h,v 1.6 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: des.h,v 1.7 2005/12/11 12:20:52 christos Exp $	*/
 /*	$KAME: des.h,v 1.7 2000/09/18 20:59:21 itojun Exp $	*/
 
 /* lib/des/des.h */

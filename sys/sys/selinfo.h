@@ -1,4 +1,4 @@
-/*	$NetBSD: selinfo.h,v 1.1 2005/03/17 20:39:17 kleink Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

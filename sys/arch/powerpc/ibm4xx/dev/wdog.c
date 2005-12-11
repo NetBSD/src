@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.7 2003/07/15 02:54:44 lukem Exp $ */
+/* $NetBSD: wdog.c,v 1.8 2005/12/11 12:18:42 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.7 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.8 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

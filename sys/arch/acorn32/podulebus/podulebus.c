@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.19 2005/08/26 13:19:34 drochner Exp $ */
+/* $NetBSD: podulebus.c,v 1.20 2005/12/11 12:16:05 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.19 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

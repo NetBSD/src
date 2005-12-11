@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.4 2005/06/03 07:03:22 skrll Exp $ */
+/* $NetBSD: i82596var.h,v 1.5 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.

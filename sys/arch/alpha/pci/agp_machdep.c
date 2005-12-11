@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_machdep.c,v 1.2 2003/07/14 23:25:39 lukem Exp $	*/
+/*	$NetBSD: agp_machdep.c,v 1.3 2005/12/11 12:16:17 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.2 2003/07/14 23:25:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.3 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

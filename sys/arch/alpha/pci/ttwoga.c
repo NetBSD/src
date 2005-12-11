@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.9 2004/09/14 19:57:37 drochner Exp $ */
+/* $NetBSD: ttwoga.c,v 1.10 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.9 2004/09/14 19:57:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.10 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: image.S,v 1.3 2005/02/26 10:45:29 bsh Exp $	*/
+/*	$NetBSD: image.S,v 1.4 2005/12/11 12:17:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

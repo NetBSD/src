@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.4 2005/02/17 02:21:28 briggs Exp $	*/
+/*	$NetBSD: kcore.h,v 1.5 2005/12/11 12:18:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.

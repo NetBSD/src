@@ -1,4 +1,4 @@
-#	$NetBSD: TOASTER,v 1.1 2005/08/14 04:35:45 joff Exp $
+#	$NetBSD: TOASTER,v 1.2 2005/12/11 12:17:06 christos Exp $
 #
 #	TOASTER - kernel for the NetBSD/toaster demo first unveiled during
 #       LinuxWorld Expo 2005

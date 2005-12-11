@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_reg.h,v 1.4 2005/02/20 20:04:46 heas Exp $ */
+/*	$NetBSD: kbd_reg.h,v 1.5 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

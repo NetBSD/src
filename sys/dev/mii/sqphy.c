@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.36 2005/02/27 00:27:31 perry Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.37 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.36 2005/02/27 00:27:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.37 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

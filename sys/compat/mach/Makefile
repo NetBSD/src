@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/02/26 23:10:19 perry Exp $
+#	$NetBSD: Makefile,v 1.7 2005/12/11 12:20:20 christos Exp $
 
 SYSCALL_DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
 SYSCALL_OBJS=	mach_sysent.c mach_syscalls.c mach_syscall.h mach_syscallargs.h

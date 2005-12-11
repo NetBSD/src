@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.39 2003/08/07 16:29:09 agc Exp $	*/
+/*	$NetBSD: fb.c,v 1.40 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.39 2003/08/07 16:29:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.40 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

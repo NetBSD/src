@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.24 2005/11/12 23:25:46 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.25 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.24 2005/11/12 23:25:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.25 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,7 @@ p9100_shutdown(arg)
 }
 
 int
-p9100open(dev_t dev, int flags, int mode, struct proc *p)
+p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -531,7 +531,7 @@ p9100open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;

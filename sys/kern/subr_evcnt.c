@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.3 2005/02/26 21:34:55 perry Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.3 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_ddb.h"
 

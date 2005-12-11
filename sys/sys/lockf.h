@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.16 2005/03/20 19:13:57 christos Exp $	*/
+/*	$NetBSD: lockf.h,v 1.17 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

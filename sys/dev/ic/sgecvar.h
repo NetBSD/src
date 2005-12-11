@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.5 2005/02/27 00:27:02 perry Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.6 2005/12/11 12:21:28 christos Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *

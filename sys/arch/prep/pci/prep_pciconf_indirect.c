@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.4 2003/07/15 02:54:51 lukem Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.4 2003/07/15 02:54:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $");
 
 #include "opt_openpic.h"
 

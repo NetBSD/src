@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.28 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.29 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.28 2005/06/03 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.29 2005/12/11 12:18:53 christos Exp $");
 
 #include "bpfilter.h"
 

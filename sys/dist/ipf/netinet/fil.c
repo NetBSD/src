@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.19 2005/07/10 09:22:56 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.20 2005/12/11 12:24:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.19 2005/07/10 09:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.20 2005/12/11 12:24:20 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.57 2005/03/28 10:47:50 darrenr Exp";

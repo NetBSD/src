@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.4 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.5 2005/12/11 12:24:25 christos Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.10 2004/04/09 19:30:41 frantzen Exp $ */
 
 /*

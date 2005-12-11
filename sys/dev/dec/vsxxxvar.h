@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxxvar.h,v 1.2 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: vsxxxvar.h,v 1.3 2005/12/11 12:21:20 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.

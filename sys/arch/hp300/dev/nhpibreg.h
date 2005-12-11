@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpibreg.h,v 1.6 2003/08/07 16:27:33 agc Exp $	*/
+/*	$NetBSD: nhpibreg.h,v 1.7 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

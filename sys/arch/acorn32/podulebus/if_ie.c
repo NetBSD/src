@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.13 2003/07/14 22:48:26 lukem Exp $ */
+/* $NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.13 2003/07/14 22:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.13 2003/07/14 22:48:26 lukem Exp $");
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.13 2003/07/14 22:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.14 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

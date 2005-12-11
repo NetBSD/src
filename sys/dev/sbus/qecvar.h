@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.8 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.9 2005/12/11 12:23:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

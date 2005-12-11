@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.31 2004/02/13 11:36:10 wiz Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.32 2005/12/11 12:16:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

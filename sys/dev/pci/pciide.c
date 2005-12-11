@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.212 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide.c,v 1.213 2005/12/11 12:22:50 christos Exp $	*/
 
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.212 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.213 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 

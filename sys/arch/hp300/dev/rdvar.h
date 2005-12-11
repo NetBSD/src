@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.16 2005/10/15 17:29:10 yamt Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.17 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

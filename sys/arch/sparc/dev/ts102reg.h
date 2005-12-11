@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102reg.h,v 1.3 2003/06/18 17:50:23 miod Exp $	*/
-/*	$NetBSD: ts102reg.h,v 1.8 2005/07/06 11:40:27 macallan Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.9 2005/12/11 12:19:05 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

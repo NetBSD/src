@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.5 2005/08/14 02:58:40 joff Exp $ */
+/* $NetBSD: tslcd.c,v 1.6 2005/12/11 12:17:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.5 2005/08/14 02:58:40 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.6 2005/12/11 12:17:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

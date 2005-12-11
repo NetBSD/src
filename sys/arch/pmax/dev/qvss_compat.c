@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.36 2005/06/01 18:21:43 drochner Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.37 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.36 2005/06/01 18:21:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.37 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

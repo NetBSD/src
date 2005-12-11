@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.87 2005/12/11 12:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86 2005/05/29 21:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.87 2005/12/11 12:25:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.1 2005/05/19 21:16:29 manu Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.2 2005/12/11 12:20:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.1 2005/05/19 21:16:29 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.2 2005/12/11 12:20:14 christos Exp $");
 
 const int linux_to_native_signo[LINUX__NSIG] = {
 	0,		/* 0 */

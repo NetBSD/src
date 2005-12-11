@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumparser.c,v 1.2 2005/06/26 22:33:31 christos Exp $
+ * $Id: vinumparser.c,v 1.3 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

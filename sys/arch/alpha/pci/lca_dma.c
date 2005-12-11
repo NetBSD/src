@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.16 2004/07/02 19:54:22 mycroft Exp $ */
+/* $NetBSD: lca_dma.c,v 1.17 2005/12/11 12:16:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.16 2004/07/02 19:54:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.17 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

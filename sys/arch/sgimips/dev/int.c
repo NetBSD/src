@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.10 2005/10/18 11:31:12 tsutsui Exp $	*/
+/*	$NetBSD: int.c,v 1.11 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.10 2005/10/18 11:31:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.11 2005/12/11 12:18:52 christos Exp $");
 
 #include "opt_cputype.h"
 

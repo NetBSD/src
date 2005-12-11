@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2410,v 1.2 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.smdk2410,v 1.3 2005/12/11 12:17:07 christos Exp $
 #
 # standard NetBSD/evbarm for SMDK2410 options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.2 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: i82586.h,v 1.3 2005/12/11 12:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225reg.h,v 1.1 2005/02/26 10:49:53 bsh Exp $ */
+/*	$NetBSD: gb225reg.h,v 1.2 2005/12/11 12:17:08 christos Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec corp.  All rights reserved.

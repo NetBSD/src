@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.5 2005/06/03 18:58:40 martin Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 

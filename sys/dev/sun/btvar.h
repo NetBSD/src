@@ -1,4 +1,4 @@
-/*	$NetBSD: btvar.h,v 1.2 2003/08/07 16:31:22 agc Exp $ */
+/*	$NetBSD: btvar.h,v 1.3 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1993

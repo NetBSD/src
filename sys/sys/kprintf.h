@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.6 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993

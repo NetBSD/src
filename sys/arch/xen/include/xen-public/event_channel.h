@@ -1,4 +1,4 @@
-/* $NetBSD: event_channel.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: event_channel.h,v 1.3 2005/12/11 12:19:49 christos Exp $ */
 
 /*
  * Copyright (c) 2003-2004, K A Fraser.

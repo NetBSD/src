@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.16 2003/07/15 01:19:48 lukem Exp $	*/
+/*	$NetBSD: dma.c,v 1.17 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.16 2003/07/15 01:19:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.17 2005/12/11 12:16:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

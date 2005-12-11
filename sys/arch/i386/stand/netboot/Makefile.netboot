@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.netboot,v 1.5 2003/10/09 10:56:13 dsl Exp $
+#	$NetBSD: Makefile.netboot,v 1.6 2005/12/11 12:17:49 christos Exp $
 
 NOMAN=	# defined
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.9 2005/09/18 14:30:15 christos Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.10 2005/12/11 12:19:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.9 2005/09/18 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.10 2005/12/11 12:19:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.9 2003/10/27 13:44:20 junyoung Exp $ */
+/*	$NetBSD: bioscall.h,v 1.10 2005/12/11 12:17:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.

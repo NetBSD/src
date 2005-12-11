@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.10 2004/12/30 09:48:30 tsutsui Exp $	*/
+/*	$NetBSD: mmu.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.10 2004/12/30 09:48:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.11 2005/12/11 12:19:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: blist.h,v 1.6 2005/04/06 13:13:05 yamt Exp $	*/
+/*	$NetBSD: blist.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.

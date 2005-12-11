@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467_ki2c.c,v 1.1 2005/08/10 14:20:44 macallan Exp $	*/
+/*	$NetBSD: adt7467_ki2c.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.1 2005/08/10 14:20:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

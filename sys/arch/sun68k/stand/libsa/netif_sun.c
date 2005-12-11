@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.4 2005/01/26 20:34:50 he Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5 2005/12/11 12:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services_names.c,v 1.14 2005/02/26 23:58:20 perry Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.15 2005/12/11 12:20:20 christos Exp $ */
 
 /*
  * Mach services names. This file is not built
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.14 2005/02/26 23:58:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.15 2005/12/11 12:20:20 christos Exp $");
 
 struct mach_service_name {
 	int srv_id;

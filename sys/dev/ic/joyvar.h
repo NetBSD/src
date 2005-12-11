@@ -1,4 +1,4 @@
-/*	$NetBSD: joyvar.h,v 1.4 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: joyvar.h,v 1.5 2005/12/11 12:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi

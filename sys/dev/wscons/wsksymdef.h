@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.54 2005/06/08 09:11:09 martin Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.55 2005/12/11 12:24:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

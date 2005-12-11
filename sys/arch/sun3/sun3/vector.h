@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.14 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: vector.h,v 1.15 2005/12/11 12:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

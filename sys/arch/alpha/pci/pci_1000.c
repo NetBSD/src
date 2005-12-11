@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.15 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: pci_1000.c,v 1.16 2005/12/11 12:16:17 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.15 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.16 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

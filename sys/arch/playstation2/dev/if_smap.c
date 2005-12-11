@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.7 2005/12/11 12:18:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.7 2005/12/11 12:18:35 christos Exp $");
 
 #include "debug_playstation2.h"
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.98 2005/05/31 04:03:11 christos Exp $
+# $NetBSD: Makefile.sun3,v 1.99 2005/12/11 12:19:20 christos Exp $
 
 # Makefile for NetBSD
 #

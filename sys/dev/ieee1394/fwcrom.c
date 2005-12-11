@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.

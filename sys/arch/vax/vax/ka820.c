@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.42 2005/07/20 17:48:17 he Exp $	*/
+/*	$NetBSD: ka820.c,v 1.43 2005/12/11 12:19:36 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.42 2005/07/20 17:48:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.43 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

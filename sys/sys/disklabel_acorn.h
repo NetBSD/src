@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_acorn.h,v 1.5 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.6 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

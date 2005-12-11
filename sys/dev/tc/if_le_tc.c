@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.17 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.17 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $");
 
 #include "opt_inet.h"
 

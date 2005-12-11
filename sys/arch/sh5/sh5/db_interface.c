@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2005/06/03 15:18:38 he Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2005/06/03 15:18:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2005/12/11 12:19:02 christos Exp $");
 
 #include "opt_ddb.h"
 

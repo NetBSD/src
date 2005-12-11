@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 2005/12/11 12:18:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 2004/08/21 11:03:51 rearnsha Exp $	*/
+/*	$NetBSD: trap.h,v 1.7 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

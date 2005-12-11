@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.6 2005/04/01 11:59:26 yamt Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.7 2005/12/11 12:17:12 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.6 2005/04/01 11:59:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.7 2005/12/11 12:17:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

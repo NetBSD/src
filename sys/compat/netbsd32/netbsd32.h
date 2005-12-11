@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.47 2005/10/24 15:28:09 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.48 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

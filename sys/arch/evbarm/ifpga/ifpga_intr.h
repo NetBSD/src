@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.3 2004/08/07 11:08:58 rearnsha Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.4 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.

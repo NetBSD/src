@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.4 2005/08/26 13:19:34 drochner Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.5 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.4 2005/08/26 13:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.5 2005/12/11 12:16:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

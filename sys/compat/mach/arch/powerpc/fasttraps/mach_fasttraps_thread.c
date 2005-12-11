@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_thread.c,v 1.7 2004/07/03 09:44:04 manu Exp $ */
+/*	$NetBSD: mach_fasttraps_thread.c,v 1.8 2005/12/11 12:20:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.7 2004/07/03 09:44:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.8 2005/12/11 12:20:21 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

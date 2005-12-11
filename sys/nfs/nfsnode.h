@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.54 2005/01/26 10:30:58 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.55 2005/12/11 12:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

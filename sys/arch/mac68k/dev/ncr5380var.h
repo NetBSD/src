@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.3 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.4 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.

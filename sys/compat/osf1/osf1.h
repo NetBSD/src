@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.26 2005/02/26 23:10:21 perry Exp $ */
+/* $NetBSD: osf1.h,v 1.27 2005/12/11 12:20:23 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

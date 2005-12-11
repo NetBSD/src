@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.3 2003/08/21 23:15:18 he Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris

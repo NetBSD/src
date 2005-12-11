@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.46 2005/05/02 15:34:32 yamt Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.47 2005/12/11 12:24:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.46 2005/05/02 15:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.47 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

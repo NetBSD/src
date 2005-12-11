@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.67 2005/10/25 16:37:50 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.68 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.67 2005/10/25 16:37:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.68 2005/12/11 12:21:15 christos Exp $");
 
 #include "opt_cardbus.h"
 

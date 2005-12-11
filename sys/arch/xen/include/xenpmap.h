@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.9 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.10 2005/12/11 12:19:48 christos Exp $	*/
 
 /*
  *

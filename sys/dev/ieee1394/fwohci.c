@@ -1,4 +1,5 @@
-/*	$NetBSD: fwohci.c,v 1.90 2005/07/20 15:11:57 drochner Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.91 2005/12/11 12:22:02 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -56,7 +57,8 @@
 #include <sys/endian.h>
 #include <sys/ktr.h>
 
-#include <machine/bus.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.91 2005/12/11 12:22:02 christos Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */

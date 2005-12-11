@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.9 2005/10/02 21:39:41 bouyer Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.10 2005/12/11 12:19:48 christos Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.S,v 1.4 2003/11/01 13:02:04 jdolecek Exp $ */
+/*	$NetBSD: str.S,v 1.5 2005/12/11 12:19:34 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

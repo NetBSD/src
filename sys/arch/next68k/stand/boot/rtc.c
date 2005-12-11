@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.3 2005/01/19 01:58:21 chs Exp $        */
+/*      $NetBSD: rtc.c,v 1.4 2005/12/11 12:18:29 christos Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.

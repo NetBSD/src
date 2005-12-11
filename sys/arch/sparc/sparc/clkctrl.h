@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.h,v 1.1 2005/09/25 00:06:14 macallan Exp $	*/
+/*	$NetBSD: clkctrl.h,v 1.2 2005/12/11 12:19:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz

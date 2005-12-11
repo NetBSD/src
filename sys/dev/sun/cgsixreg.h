@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.6 2005/05/16 14:29:11 macallan Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.7 2005/12/11 12:23:56 christos Exp $ */
 
 /*
  * Copyright (c) 1993

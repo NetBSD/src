@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.8 2005/06/03 23:56:55 rjs Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.9 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.8 2005/06/03 23:56:55 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.9 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 2004/03/24 16:34:29 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2005/12/11 12:17:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997

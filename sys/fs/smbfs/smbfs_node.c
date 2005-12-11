@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.25 2005/08/30 19:04:51 xtraeme Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.26 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.25 2005/08/30 19:04:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.26 2005/12/11 12:24:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,8 @@ smbfs_inactive(v)
 		struct vnode *a_vp;
 		struct thread *a_td;
 	} */ *ap = v;
-	struct proc *p = ap->a_p;
-	struct ucred *cred = p->p_ucred;
+	struct lwp *l = ap->a_l;
+	struct ucred *cred = l->l_proc->p_ucred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
@@ -285,8 +285,8 @@ smbfs_inactive(v)
 	if ((np->n_flag & NOPEN) != 0) {
 		struct smb_share *ssp = np->n_mount->sm_share;
 
-		smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		smb_makescred(&scred, p, cred);
+		smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+		smb_makescred(&scred, l, cred);
 
 		if (vp->v_type == VDIR && np->n_dirseq) {
 			smbfs_findclose(np->n_dirseq, &scred);

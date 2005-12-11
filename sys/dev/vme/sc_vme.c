@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.11 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.12 2005/12/11 12:24:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.11 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.12 2005/12/11 12:24:07 christos Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.10 2005/08/30 22:01:12 xtraeme Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.11 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

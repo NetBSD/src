@@ -1,4 +1,4 @@
-/*	$NetBSD: chiptotime.c,v 1.2 2005/06/28 21:03:02 junyoung Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.3 2005/12/11 12:18:19 christos Exp $ */
 
 #include <sys/types.h>
 

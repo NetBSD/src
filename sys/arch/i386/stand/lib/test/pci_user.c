@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_user.c,v 1.2 2004/03/24 16:54:18 drochner Exp $	*/
+/*	$NetBSD: pci_user.c,v 1.3 2005/12/11 12:17:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.14 2005/09/17 14:38:38 yamt Exp $
+#	$NetBSD: majors.evbsh3,v 1.15 2005/12/11 12:17:13 christos Exp $
 #
 # Device majors for evbsh3
 #

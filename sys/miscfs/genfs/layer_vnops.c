@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.25 2005/08/30 20:08:01 xtraeme Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.25 2005/08/30 20:08:01 xtraeme Exp $
+ *	$Id: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $
+ *	$Id: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.25 2005/08/30 20:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +494,7 @@ layer_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -537,7 +538,7 @@ layer_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
@@ -557,7 +558,7 @@ layer_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	mode_t mode = ap->a_mode;
@@ -730,7 +731,7 @@ layer_fsync(v)
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (ap->a_flags & FSYNC_RECLAIM) {
@@ -747,7 +748,7 @@ layer_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -858,7 +859,7 @@ layer_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(vp->v_mount);

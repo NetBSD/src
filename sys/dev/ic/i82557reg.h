@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.17 2005/05/29 22:10:28 christos Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.18 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.

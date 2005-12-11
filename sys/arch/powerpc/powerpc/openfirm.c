@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.15 2005/06/02 17:07:30 matt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.16 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.15 2005/06/02 17:07:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.16 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.23 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.24 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.23 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.24 2005/12/11 12:16:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>

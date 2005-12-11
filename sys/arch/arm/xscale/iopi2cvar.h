@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2cvar.h,v 1.1 2003/10/06 16:06:06 thorpej Exp $	*/
+/*	$NetBSD: iopi2cvar.h,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

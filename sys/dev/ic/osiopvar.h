@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.8 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.9 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.

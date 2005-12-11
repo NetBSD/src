@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.15 2005/08/11 13:01:38 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16 2005/12/11 12:24:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -444,8 +444,8 @@ int ipldetach()
  */
 int iplioctl(dev, cmd, data, mode
 #if (NetBSD >= 199511)
-, p)
-struct proc *p;
+, l)
+struct lwp *l;
 #else
 )
 #endif
@@ -667,9 +667,9 @@ void *ifp;
  */
 int iplopen(dev, flags
 #if (NetBSD >= 199511)
-, devtype, p)
+, devtype, l)
 int devtype;
-struct proc *p;
+struct lwp *l;
 #else
 )
 #endif
@@ -688,9 +688,9 @@ int flags;
 
 int iplclose(dev, flags
 #if (NetBSD >= 199511)
-, devtype, p)
+, devtype, l)
 int devtype;
-struct proc *p;
+struct lwp *l;
 #else
 )
 #endif

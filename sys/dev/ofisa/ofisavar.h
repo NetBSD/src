@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.5 2005/02/04 02:10:44 perry Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright 1998

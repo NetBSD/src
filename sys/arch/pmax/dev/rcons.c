@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.62 2005/11/27 05:35:52 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.63 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.62 2005/11/27 05:35:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.63 2005/12/11 12:18:36 christos Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -314,10 +314,10 @@ rasterconsoleattach (n)
 
 /* ARGSUSED */
 int
-rconsopen(dev, flag, mode, p)
+rconsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp = &rcons_tty [0];
  	/*static int firstopen = 1;*/
@@ -336,7 +336,7 @@ rconsopen(dev, flag, mode, p)
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE &&
-		   suser(p->p_ucred, &p->p_acflag) != 0)
+		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	status = (*tp->t_linesw->l_open)(dev, tp);
@@ -345,10 +345,10 @@ rconsopen(dev, flag, mode, p)
 
 /* ARGSUSED */
 int
-rconsclose(dev, flag, mode, p)
+rconsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp = &rcons_tty [0];
 
@@ -384,15 +384,15 @@ rconswrite(dev, uio, flag)
 }
 
 int
-rconspoll(dev, events, p)
+rconspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 
 	tp = &rcons_tty [0];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -405,20 +405,20 @@ rconstty(dev)
 }
 
 int
-rconsioctl(dev, cmd, data, flag, p)
+rconsioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int error;
 
 	tp = &rcons_tty [0];
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return (error);
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 #ifdef notyet

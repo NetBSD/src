@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwipvar.h,v 1.1 2005/07/11 15:29:05 kiyohara Exp $	*/
+/*	$NetBSD: if_fwipvar.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson

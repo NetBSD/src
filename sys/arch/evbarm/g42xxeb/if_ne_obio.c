@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_obio.c,v 1.1 2005/02/26 10:49:53 bsh Exp $ */
+/*	$NetBSD: if_ne_obio.c,v 1.2 2005/12/11 12:17:08 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.1 2005/02/26 10:49:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.2 2005/12/11 12:17:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.3 2003/11/18 22:46:33 gavan Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.4 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.79 2005/12/11 12:24:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.79 2005/12/11 12:24:52 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -145,7 +145,7 @@ rt_adjustcount(int af, int cnt)
 /*ARGSUSED*/
 int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct rawcb *rp = sotorawcb(so);
@@ -167,12 +167,12 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * and send "safe" commands to the routing socket.
 	 */
 	if (req == PRU_ATTACH) {
-		if (p == 0)
+		if (l == 0)
 			error = EACCES;
 		else
 			error = raw_attach(so, (int)(long)nam);
 	} else
-		error = raw_usrreq(so, req, m, nam, control, p);
+		error = raw_usrreq(so, req, m, nam, control, l);
 
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {

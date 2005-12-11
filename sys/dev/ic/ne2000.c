@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46 2005/02/26 10:29:20 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.47 2005/12/11 12:21:28 christos Exp $");
 
 #include "opt_ipkdb.h"
 

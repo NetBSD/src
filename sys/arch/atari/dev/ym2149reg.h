@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149reg.h,v 1.4 2005/06/04 14:30:10 he Exp $	*/
+/*	$NetBSD: ym2149reg.h,v 1.5 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.

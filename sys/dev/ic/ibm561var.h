@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561var.h,v 1.3 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: ibm561var.h,v 1.4 2005/12/11 12:21:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

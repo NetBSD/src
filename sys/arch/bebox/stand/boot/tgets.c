@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: tgets.c,v 1.6 2005/12/11 12:17:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

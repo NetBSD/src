@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.7 2003/12/29 06:33:57 sekiya Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.8 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni

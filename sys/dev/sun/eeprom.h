@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.1 2005/06/19 20:23:48 thorpej Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.2 2005/12/11 12:23:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

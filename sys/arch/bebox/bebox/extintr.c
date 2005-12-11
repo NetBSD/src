@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.22 2005/06/10 16:41:38 jmc Exp $	*/
+/*	$NetBSD: extintr.c,v 1.23 2005/12/11 12:17:02 christos Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.22 2005/06/10 16:41:38 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2005/12/11 12:17:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

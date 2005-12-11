@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.3 2005/01/11 04:23:15 kent Exp $ */
+/*	$NetBSD: ebusvar.h,v 1.4 2005/12/11 12:21:20 christos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green

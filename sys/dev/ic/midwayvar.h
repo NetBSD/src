@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.15 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.16 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  *

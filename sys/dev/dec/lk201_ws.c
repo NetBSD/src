@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.6 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.7 2005/12/11 12:21:20 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.6 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.7 2005/12/11 12:21:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

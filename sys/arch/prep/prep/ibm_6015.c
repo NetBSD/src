@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6015.c,v 1.2 2005/01/13 23:57:04 kleink Exp $	*/
+/*	$NetBSD: ibm_6015.c,v 1.3 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

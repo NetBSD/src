@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.16 2005/09/17 14:38:40 yamt Exp $
+#	$NetBSD: majors.sh5,v 1.17 2005/12/11 12:19:00 christos Exp $
 #
 # Device majors for sh5
 #

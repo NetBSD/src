@@ -1,4 +1,4 @@
-/*	$NetBSD: teliosio.c,v 1.1 2005/07/30 22:40:33 nakayama Exp $	*/
+/*	$NetBSD: teliosio.c,v 1.2 2005/12/11 12:17:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Takeshi Nakayama.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: teliosio.c,v 1.1 2005/07/30 22:40:33 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: teliosio.c,v 1.2 2005/12/11 12:17:33 christos Exp $");
 
 #include "apmdev.h"
 

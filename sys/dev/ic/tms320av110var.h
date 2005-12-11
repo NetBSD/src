@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.5 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.6 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

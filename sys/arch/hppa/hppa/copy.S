@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.4 2005/12/11 12:17:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

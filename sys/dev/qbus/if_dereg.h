@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dereg.h,v 1.3 2003/08/07 16:31:14 agc Exp $	*/
+/*	$NetBSD: if_dereg.h,v 1.4 2005/12/11 12:23:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.

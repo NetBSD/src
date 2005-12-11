@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.h,v 1.7 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.h,v 1.8 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

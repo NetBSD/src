@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2 2003/07/15 02:43:38 lukem Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.3 2005/12/11 12:18:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_syscall.c,v 1.2 2003/07/15 02:43:38 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_syscall.c,v 1.3 2005/12/11 12:18:09 christos Exp $");
 
 #define EMULNAME(x)	__CONCAT(linux_,x)
 #define SYSCALL_SHIFT	4000

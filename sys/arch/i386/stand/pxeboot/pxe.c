@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.7 2005/06/14 18:25:16 tron Exp $	*/
+/*	$NetBSD: pxe.c,v 1.8 2005/12/11 12:17:49 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

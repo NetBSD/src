@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.12 2005/05/31 21:08:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.13 2005/12/11 12:21:02 christos Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

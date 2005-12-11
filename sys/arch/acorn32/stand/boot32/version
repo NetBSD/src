@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2004/05/26 23:13:05 abs Exp $
+$NetBSD: version,v 1.10 2005/12/11 12:16:08 christos Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup

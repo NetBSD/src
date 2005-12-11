@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.107 2005/02/03 21:08:58 perry Exp $	*/
+/*	$NetBSD: npx.c,v 1.108 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107 2005/02/03 21:08:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.108 2005/12/11 12:17:43 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x

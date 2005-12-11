@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.7 2003/09/29 21:04:53 matt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.8 2005/12/11 12:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.7 2003/09/29 21:04:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.8 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

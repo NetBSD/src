@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 2003/11/10 08:51:52 wiz Exp $ */
+/*	$NetBSD: if_le.c,v 1.8 2005/12/11 12:19:30 christos Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.

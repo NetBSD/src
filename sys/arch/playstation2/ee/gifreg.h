@@ -1,4 +1,4 @@
-/*	$NetBSD: gifreg.h,v 1.2 2003/12/04 13:05:17 keihan Exp $	*/
+/*	$NetBSD: gifreg.h,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

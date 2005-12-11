@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.9 2005/09/06 21:40:38 kleink Exp $ */
+/* $NetBSD: sbjcn.c,v 1.10 2005/12/11 12:18:12 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.9 2005/09/06 21:40:38 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10 2005/12/11 12:18:12 christos Exp $");
 
 #define	SBJCN_DEBUG
 

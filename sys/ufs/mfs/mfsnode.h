@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.17 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.18 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

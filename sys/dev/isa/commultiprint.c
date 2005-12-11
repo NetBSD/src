@@ -1,4 +1,4 @@
-/* $NetBSD: commultiprint.c,v 1.1 2004/09/14 17:19:34 drochner Exp $ */
+/* $NetBSD: commultiprint.c,v 1.2 2005/12/11 12:22:02 christos Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

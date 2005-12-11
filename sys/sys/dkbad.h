@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.h,v 1.13 2003/08/07 16:34:02 agc Exp $	*/
+/*	$NetBSD: dkbad.h,v 1.14 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993, 1994

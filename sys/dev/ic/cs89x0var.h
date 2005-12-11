@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.8 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.9 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright 1997

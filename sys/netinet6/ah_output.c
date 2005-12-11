@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.25 2005/05/29 21:43:51 christos Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.26 2005/12/11 12:25:02 christos Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.25 2005/05/29 21:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.26 2005/12/11 12:25:02 christos Exp $");
 
 #include "opt_inet.h"
 

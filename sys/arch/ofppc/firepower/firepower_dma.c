@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_dma.c,v 1.2 2003/07/15 02:46:31 lukem Exp $	*/
+/*	$NetBSD: firepower_dma.c,v 1.3 2005/12/11 12:18:29 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower_dma.c,v 1.2 2003/07/15 02:46:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower_dma.c,v 1.3 2005/12/11 12:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

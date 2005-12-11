@@ -1,4 +1,4 @@
-/*	$NetBSD: fsr.h,v 1.2 2003/08/07 16:29:49 agc Exp $ */
+/*	$NetBSD: fsr.h,v 1.3 2005/12/11 12:19:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

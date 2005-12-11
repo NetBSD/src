@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.7 2005/02/27 00:27:34 perry Exp $ */
+/*	$NetBSD: puccn.c,v 1.8 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.7 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.8 2005/12/11 12:22:50 christos Exp $");
 
 #include "opt_kgdb.h"
 

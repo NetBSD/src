@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.69 2005/06/07 13:45:11 peter Exp $	*/
+/*	$NetBSD: atavar.h,v 1.70 2005/12/11 12:21:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.

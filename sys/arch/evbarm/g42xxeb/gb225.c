@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.3 2005/08/26 13:19:35 drochner Exp $ */
+/*	$NetBSD: gb225.c,v 1.4 2005/12/11 12:17:08 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
