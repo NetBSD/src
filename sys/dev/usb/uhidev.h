@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.3.6.3 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.3.6.4 2005/12/11 10:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ struct uhidev_attach_arg {
 	struct uhidev_softc *parent;
 	int reportid;
 	int reportsize;
-	int matchlvl;
 };
 
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);

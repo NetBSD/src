@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.20.16.4 2005/11/10 14:11:36 skrll Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.20.16.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.20.16.4 2005/11/10 14:11:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.20.16.5 2005/12/11 10:29:35 christos Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -714,7 +714,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, caddr_t channel)
 		}
 #endif
 		tpcb->tp_nlproto = nl_protosw + tpcb->tp_netservice;
-		error = (*tpcb->tp_nlproto->nlp_pcbconn) (tpcb->tp_npcb, m);
+		error = (*tpcb->tp_nlproto->nlp_pcbconn) (tpcb->tp_npcb, m, NULL);
 	}
 	if (error)
 		goto done;

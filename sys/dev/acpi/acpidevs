@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.3.2.1 2005/03/04 16:40:54 skrll Exp $
+# $NetBSD: acpidevs,v 1.3.2.2 2005/12/11 10:28:47 christos Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -17,6 +17,7 @@ PNP0004	Cyrix SLiC MP interrupt controller
 PNP0100	AT Timer
 PNP0101	EISA Timer
 PNP0102	MCA Timer
+PNP0103	HPET Timer
 # --DMA--
 PNP0200	AT DMA Controller
 PNP0201	EISA DMA Controller
@@ -107,6 +108,7 @@ PNP0A03	PCI Bus
 PNP0A04	VESA/VL Bus
 PNP0A05	Generic ACPI Bus
 PNP0A06	Generic ACPI Extended-IO Bus (EIO bus)
+PNP0A08	ACPI Three-wire Device Bus
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
@@ -173,6 +175,7 @@ PNP0F21	Reserved by Microsoft Input Device Group
 PNP0F22	Reserved by Microsoft Input Device Group
 PNP0F23	Reserved by Microsoft Input Device Group
 PNP0FFF	Reserved by Microsoft Systems
+SYN1003	Synaptics PS/2-style Touchpad
 # ***** Network Adapters - PNP8xxx ***********************
 PNP8001	Novell/Anthem NE3200
 PNP8004	Compaq NE3200
@@ -298,6 +301,7 @@ PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
 PNP8389		Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
+NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
 PNPA002	Future Domain 16-700 compatible controller
 PNPA003	Panasonic proprietary CD-ROM adapter (SBPro/SB16)

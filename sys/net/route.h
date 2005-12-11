@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.35.2.6 2005/11/10 14:10:33 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.35.2.7 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -322,4 +322,4 @@ int	 rtrequest(int, const struct sockaddr *,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 #endif /* _KERNEL */
-#endif /* _NET_ROUTE_H_ */
+#endif /* !_NET_ROUTE_H_ */

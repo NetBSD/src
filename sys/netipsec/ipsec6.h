@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.3.4.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.3.4.5 2005/12/11 10:29:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -104,4 +104,4 @@ extern int ipsec6_output_tunnel __P((struct ipsec_output_state *,
 	struct secpolicy *, int));
 #endif /*_KERNEL*/
 
-#endif /*_NETIPSEC_IPSEC6_H_*/
+#endif /* !_NETIPSEC_IPSEC6_H_ */

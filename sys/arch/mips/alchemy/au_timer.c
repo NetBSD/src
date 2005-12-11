@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.1.12.4 2005/03/04 16:38:48 skrll Exp $ */
+/* $NetBSD: au_timer.c,v 1.1.12.5 2005/12/11 10:28:20 christos Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.1.12.4 2005/03/04 16:38:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.1.12.5 2005/12/11 10:28:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <mips/locore.h>

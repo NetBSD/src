@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.2.2.4 2005/03/04 16:40:54 skrll Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.2.2.5 2005/12/11 10:28:47 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.4 2005/02/27 00:26:58 perry Exp
+ *	# NetBSD: acpidevs,v 1.8 2005/11/12 11:53:30 rpaulo Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -39,6 +39,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0102",
 	    "MCA Timer",
+	},
+	{
+	    "PNP0103",
+	    "HPET Timer",
 	},
 	{
 	    "PNP0200",
@@ -369,6 +373,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Generic ACPI Extended-IO Bus (EIO bus)",
 	},
 	{
+	    "PNP0A08",
+	    "ACPI Three-wire Device Bus",
+	},
+	{
 	    "PNP0800",
 	    "AT-style speaker sound",
 	},
@@ -619,6 +627,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0FFF",
 	    "Reserved by Microsoft Systems",
+	},
+	{
+	    "SYN1003",
+	    "Synaptics PS/2-style Touchpad",
 	},
 	{
 	    "PNP8001",
@@ -1115,6 +1127,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP8390",
 	    "Generic network adapter",
+	},
+	{
+	    "NSC6001",
+	    "NSC IrDA Fast Infrared Port",
 	},
 	{
 	    "PNPA002",

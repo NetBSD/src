@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.4.8.4 2005/04/01 14:27:08 skrll Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.4.8.5 2005/12/11 10:28:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.4.8.4 2005/04/01 14:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.4.8.5 2005/12/11 10:28:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,8 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	pa = trunc_page((bpa - busbase) + physbase);
 	endpa = round_page(((bpa - busbase) + physbase) + size);
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return (ENOMEM);
 

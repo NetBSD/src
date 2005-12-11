@@ -1,4 +1,4 @@
-/*	$NetBSD: x25acct.h,v 1.6.46.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: x25acct.h,v 1.6.46.4 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,6 +73,9 @@
  *	@(#)x25acct.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETCCITT_X25ACCT_H_
+#define _NETCCITT_X25ACCT_H_
+
 /*
  * Format of X.25 accounting record written
  * to X25ACCTF whenever a circuit is closed.
@@ -103,3 +106,5 @@ struct	x25acct {
 	long	x25acct_txcnt;		/* packets transmitted */
 	long	x25acct_rxcnt;		/* packets received */
 };
+
+#endif /* !_NETCCITT_X25ACCT_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65.6.13 2005/11/10 13:57:27 skrll Exp $
+#	$NetBSD: INSTALL,v 1.65.6.14 2005/12/11 10:28:20 christos Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -43,9 +43,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	APPLE_UFS	# Apple UFS support in FFS
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

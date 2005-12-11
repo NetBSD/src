@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.2.4.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: key_var.h,v 1.2.4.5 2005/12/11 10:29:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_var.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_var.h,v 1.11 2001/09/12 23:05:07 sakane Exp $	*/
 
@@ -90,4 +90,4 @@
 #define _KEYBUF(key) ((u_int8_t *)((u_int8_t*)(key) + sizeof(struct sadb_key)))
 #endif /*_KERNEL*/
 
-#endif /* _NETIPSEC_KEY_VAR_H_ */
+#endif /* !_NETIPSEC_KEY_VAR_H_ */

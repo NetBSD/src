@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.13.16.2 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.13.16.3 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -310,4 +310,4 @@
 
 #define	ETHERTYPE_MAX		0xFFFF	/* Maximum valid ethernet type, reserved */
 
-#endif /* _NET_ETHERTYPES_H_ */
+#endif /* !_NET_ETHERTYPES_H_ */

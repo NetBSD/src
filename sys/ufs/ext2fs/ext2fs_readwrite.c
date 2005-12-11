@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.9 2005/11/10 14:12:31 skrll Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.29.2.10 2005/12/11 10:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.9 2005/11/10 14:12:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.29.2.10 2005/12/11 10:29:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,8 @@ ext2fs_read(void *v)
 		goto out;
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ext2fs_size(ip) - uio->uio_offset,
 			    uio->uio_resid);
@@ -149,7 +151,7 @@ ext2fs_read(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_READ);
+			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -305,7 +307,7 @@ ext2fs_write(void *v)
 			if (error)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UBC_WRITE);
+			    &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

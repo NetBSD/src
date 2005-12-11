@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.4.10.1 2005/03/04 16:53:44 skrll Exp $
+ *	$Id: i4b_global.h,v 1.4.10.2 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_GLOBAL_H_
-#define _I4B_GLOBAL_H_
+#ifndef _NETISDN_I4B_GLOBAL_H_
+#define _NETISDN_I4B_GLOBAL_H_
 
 /*---------------------------------------------------------------------------*
  *	hiding OS differences in the kernel
@@ -146,4 +146,4 @@
 #define	CMRLEDS_B1	8	/* second B channel is in use */
 #define	CMRLEDS_B1_IN	16	/* second B channel handles an incoming call */
 
-#endif /* _I4B_GLOBAL_H_ */
+#endif /* !_NETISDN_I4B_GLOBAL_H_ */

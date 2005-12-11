@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.h,v 1.7.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_trace.h,v 1.7.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -174,4 +174,4 @@ int             tp_Tracen = 0;
 
 #endif				/* TPPT */
 
-#endif				/* _NETISO_TP_TRACE_H_ */
+#endif /* !_NETISO_TP_TRACE_H_ */

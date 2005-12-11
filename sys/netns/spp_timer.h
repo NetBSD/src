@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_timer.h,v 1.7.22.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: spp_timer.h,v 1.7.22.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)spp_timer.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_SPP_TIMER_H_
+#define _NETNS_SPP_TIMER_H_
 
 /*
  * Definitions of the SPP timers.  These timers are counted
@@ -118,3 +121,5 @@ const char * const spptimers[] =
 #ifdef _KERNEL
 extern const int spp_backoff[];
 #endif
+
+#endif /* !_NETNS_SPP_TIMER_H_ */

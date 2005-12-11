@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.13.24.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: iso.h,v 1.13.24.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -198,4 +198,4 @@ __END_DECLS
 
 #endif /* _KERNEL */
 
-#endif /* _NETISO_ISO_H_ */
+#endif /* !_NETISO_ISO_H_ */

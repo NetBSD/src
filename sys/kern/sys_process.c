@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.83.2.8 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.83.2.9 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.8 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.9 2005/12/11 10:29:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.8 2005/03/04 16:52:00 skrll E
  * Process debugging system call.
  */
 int
-sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ptrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ptrace_args /* {
 		syscallarg(int) req;
@@ -590,10 +587,9 @@ sys_ptrace(l, v, retval)
 }
 
 int
-process_doregs(curl, l, uio)
-	struct lwp *curl;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_doregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 	struct proc *p = l->l_proc;
@@ -638,8 +634,7 @@ process_doregs(curl, l, uio)
 }
 
 int
-process_validregs(l)
-	struct lwp *l;
+process_validregs(struct lwp *l)
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
@@ -650,10 +645,9 @@ process_validregs(l)
 }
 
 int
-process_dofpregs(curl, l, uio)
-	struct lwp *curl;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_dofpregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 	struct proc *p = l->l_proc;
@@ -698,8 +692,7 @@ process_dofpregs(curl, l, uio)
 }
 
 int
-process_validfpregs(l)
-	struct lwp *l;
+process_validfpregs(struct lwp *l)
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
@@ -710,10 +703,9 @@ process_validfpregs(l)
 }
 
 int
-process_domem(curl, l, uio)
-	struct lwp *curl;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_domem(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
 	struct proc *p = l->l_proc;	/* traced */
 	struct vmspace *vm;
@@ -763,9 +755,7 @@ process_domem(curl, l, uio)
  *	t	The process who's memory/registers will be read/written.
  */
 int
-process_checkioperm(l, t)
-	struct lwp *l;
-	struct proc *t;
+process_checkioperm(struct lwp *l, struct proc *t)
 {
 	struct proc *p = l->l_proc;
 	int error;

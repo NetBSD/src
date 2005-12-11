@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.28.2.4 2005/11/10 13:59:08 skrll Exp $ */
+/*	$NetBSD: cache.h,v 1.28.2.5 2005/12/11 10:28:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -157,7 +157,7 @@ extern u_long dvma_cachealign;
  * Routines for dealing with the cache.
  */
 void	sun4_cache_enable(void);
-void	ms1_cache_enable(void);	
+void	ms1_cache_enable(void);
 void	viking_cache_enable(void);
 void	hypersparc_cache_enable(void);
 void	swift_cache_enable(void);

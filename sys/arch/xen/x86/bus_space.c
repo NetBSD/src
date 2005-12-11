@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.4.5 2005/04/01 14:29:11 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.4.6 2005/12/11 10:28:46 christos Exp $	*/
 /*	NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.5 2005/04/01 14:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.6 2005/12/11 10:28:46 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -299,7 +299,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
 		va = (vaddr_t)ISA_HOLE_VADDR(pa);
 	} else {
-		va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+		va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 		if (va == 0)
 			return (ENOMEM);
 	}

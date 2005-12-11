@@ -27,7 +27,7 @@
  *      i4b_l2fsm.h - layer 2 FSM
  *      -------------------------
  *
- *	$Id: i4b_l2fsm.h,v 1.1.1.1.26.1 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l2fsm.h,v 1.1.1.1.26.2 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_L2FSM_H_
-#define _I4B_L2FSM_H_
+#ifndef _NETISDN_I4B_L2FSM_H_
+#define _NETISDN_I4B_L2FSM_H_
 
 enum Q921_states {
 	ST_TEI_UNAS,	/* TEI unassigned */
@@ -80,5 +80,4 @@ enum Q921_events {
 	N_EVENTS
 };
 
-#endif /* _I4B_L2FSM_H_ */
-
+#endif /* !_NETISDN_I4B_L2FSM_H_ */

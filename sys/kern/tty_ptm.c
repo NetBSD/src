@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.2.2.4 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.2.2.5 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.2.2.4 2004/12/18 09:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.2.2.5 2005/12/11 10:29:12 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -81,20 +81,12 @@ static int pty_alloc_slave(struct lwp *, int *, dev_t);
 
 void ptmattach(int);
 
-dev_type_open(ptmopen);
-dev_type_close(ptmclose);
-dev_type_ioctl(ptmioctl);
-
-const struct cdevsw ptm_cdevsw = {
-	ptmopen, ptmclose, noread, nowrite, ptmioctl,
-	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
-};
-
 dev_t
 pty_makedev(char ms, int minor)
 {
 	return makedev(ms == 't' ? pts_major : ptc_major, minor);
 }
+
 
 static dev_t
 pty_getfree(void)
@@ -330,7 +322,7 @@ ptmattach(int n)
 #endif
 }
 
-int
+static int
 /*ARGSUSED*/
 ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -350,14 +342,14 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 }
 
-int
+static int
 /*ARGSUSED*/
 ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return (0);
 }
 
-int
+static int
 /*ARGSUSED*/
 ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
@@ -391,4 +383,9 @@ bad:
 	ffree(fp);
 	return error;
 }
+
+const struct cdevsw ptm_cdevsw = {
+	ptmopen, ptmclose, noread, nowrite, ptmioctl,
+	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
+};
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.33.2.6 2005/11/10 14:00:15 skrll Exp $	*/
+/*	$NetBSD: mha.c,v 1.33.2.7 2005/12/11 10:28:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.6 2005/11/10 14:00:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.7 2005/12/11 10:28:38 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -906,7 +906,7 @@ mha_done(struct mha_softc *sc, struct acb *acb)
 			switch (xs->status) {
 			case SCSI_CHECK:
 				xs->resid = acb->dleft;
-				/* FALLTHOUGH */
+				/* FALLTHROUGH */
 			case SCSI_BUSY:
 				xs->error = XS_BUSY;
 				break;

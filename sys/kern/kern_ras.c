@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.5.2.4 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.5.2.5 2005/12/11 10:29:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5.2.4 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5.2.5 2005/12/11 10:29:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -63,9 +63,6 @@ int ras_debug = 0;
 #else
 #define DPRINTF(x)	/* nothing */
 #endif
-
-int ras_install(struct proc *, caddr_t, size_t);
-int ras_purge(struct proc *, caddr_t, size_t);
 
 /*
  * Check the specified address to see if it is within the
@@ -188,11 +185,13 @@ ras_purgeall(struct proc *p)
 	return (0);
 }
 
+#if defined(__HAVE_RAS)
+
 /*
  * Install the new sequence.  If it already exists, return
  * an error.
  */
-int
+static int
 ras_install(struct proc *p, caddr_t addr, size_t len)
 {
 	struct ras *rp;
@@ -235,7 +234,7 @@ again:
  * Nuke the specified sequence.  Both address and len must
  * match, otherwise we return an error.
  */
-int
+static int
 ras_purge(struct proc *p, caddr_t addr, size_t len)
 {
 	struct ras *rp;
@@ -255,6 +254,8 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 
 	return (error);
 }
+
+#endif /* defined(__HAVE_RAS) */
 
 /*ARGSUSED*/
 int

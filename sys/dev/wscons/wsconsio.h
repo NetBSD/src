@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.58.2.5 2005/11/10 14:08:43 skrll Exp $ */
+/* $NetBSD: wsconsio.h,v 1.58.2.6 2005/12/11 10:29:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -72,6 +72,8 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
 #define	WSCONS_EVENT_SCREEN_SWITCH	12	/* New screen number */
 #define	WSCONS_EVENT_ASCII		13	/* key code is already ascii */
+#define	WSCONS_EVENT_MOUSE_DELTA_W	14	/* W delta amount */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	15	/* W location */
 
 
 /*

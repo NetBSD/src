@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_seq.h,v 1.6.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_seq.h,v 1.6.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -113,4 +113,4 @@ SOFTWARE.
 #define IN_SWINDOW(tpcb, seq, lwe, uwe)\
 	( SEQ_GT(tpcb, seq, lwe) && SEQ_LEQ(tpcb, seq, uwe) )
 
-#endif				/* _NETISO_TP_SEQ_H_ */
+#endif /* !_NETISO_TP_SEQ_H_ */

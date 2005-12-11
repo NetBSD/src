@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.18.2.11 2005/11/10 13:48:22 skrll Exp $
+# $NetBSD: BASIL,v 1.18.2.12 2005/12/11 10:28:13 christos Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.18.2.11 $"
+#ident 		"BASIL-$Revision: 1.18.2.12 $"
 
 maxusers 64
 
@@ -56,7 +56,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocol suite

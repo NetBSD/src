@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.13.6.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.13.6.4 2005/12/11 10:28:17 christos Exp $	*/
 
-#ifndef _MACHINE_TYPES_H_
-#define	_MACHINE_TYPES_H_
+#ifndef _HP300_TYPES_H_
+#define	_HP300_TYPES_H_
 
 #include <m68k/types.h>
 
@@ -12,4 +12,4 @@
 #define	__HAVE_RAS
 #endif
 
-#endif
+#endif /* !_HP300_TYPES_H_ */

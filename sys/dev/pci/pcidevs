@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.542.2.17 2005/11/10 14:06:02 skrll Exp $
+$NetBSD: pcidevs,v 1.542.2.18 2005/12/11 10:28:58 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -570,6 +570,7 @@ vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
+vendor VMWARE		0x15ad	VMware
 vendor AGILENT		0x15bc	Agilent Technologies
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
@@ -698,9 +699,9 @@ product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
 product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 
 /* 3ware products */
-product 3WARE ESCALADE		0x1000	Escalade IDE RAID
-product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID 7000/8000 series
-product 3WARE ESCALADE_9K	0x1001	Escalade IDE RAID 9000 series
+product 3WARE ESCALADE		0x1000	Escalade ATA RAID Controller
+product 3WARE ESCALADE_ASIC	0x1001	Escalade ATA RAID 7000/8000 series Controller
+product 3WARE ATARAID_9K	0x1002	ATA RAID 9000 series Controller
 
 /* AboCom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100 Ethernet
@@ -806,6 +807,7 @@ product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
+product ADDTRON RHINEII	0x1320	Rhine II 10/100 Ethernet
 
 /* ADMtek products */
 product ADMTEK AL981	0x0981	AL981 10/100 Ethernet
@@ -1153,6 +1155,7 @@ product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
 /* Belkin products */
+product BELKIN F5D6001		0x6001	F5D6001
 product BELKIN F5D6020V3	0x6020	F5D6020v3 802.11b
 
 /* Stallion products */
@@ -1184,13 +1187,21 @@ product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM5705K	0x1654	BCM5705K 10/100/1000 Ethernet
 product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
 product BROADCOM BCM5705_ALT	0x165e	BCM5705 10/100/1000 Ethernet
+product BROADCOM BCM5714	0x1668	BCM5714 1000baseT Ethernet
+product BROADCOM BCM5714S	0x1669	BCM5714S 1000baseX Ethernet
+product BROADCOM BCM5715	0x1678	BCM5715 1000baseT Ethernet
+product BROADCOM BCM5715S	0x1679	BCM5715S 1000baseX Ethernet
 product BROADCOM BCM5721	0x1659	BCM5721 10/100/1000 Ethernet
 product BROADCOM BCM5750	0x1676	BCM5750 10/100/1000 Ethernet
 product BROADCOM BCM5751	0x1677	BCM5751 10/100/1000 Ethernet
+product BROADCOM BCM5752	0x1600	BCM5752 10/100/1000 Ethernet
 product BROADCOM BCM5750M	0x167c	BCM5750M 10/100/1000 Ethernet
 product BROADCOM BCM5751M	0x167d	BCM5751M 10/100/1000 Ethernet
+product BROADCOM BCM5780	0x166a	BCM5780 1000baseT Ethernet
+product BROADCOM BCM5780S	0x166b	BCM5782S 1000baseX Ethernet
 product BROADCOM BCM5782	0x1696	BCM5782 10/100/1000 Ethernet
 product BROADCOM BCM5788	0x169c	BCM5788 10/100/1000 Ethernet
+product BROADCOM BCM5789	0x169d	BCM5789 10/100/1000 Ethernet
 product BROADCOM BCM4401_B0	0x170c	BCM4401-B0 10/100 Ethernet
 product BROADCOM BCM5901	0x170d	BCM5901 10/100 Ethernet
 product BROADCOM BCM5901A2	0x170e	BCM5901A 10/100 Ethernet
@@ -1422,6 +1433,7 @@ product DELL CERC_1_5		0x0291	CERC SATA RAID 1.5/6ch
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
+product DELTA RHINEII	0x1320	Rhine II 10/100 Ethernet
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
@@ -1885,6 +1897,7 @@ product INTEL 6300ESB_EHCI	0x25ad	6300ESB USB EHCI Controller
 product INTEL 6300ESB_PCIX	0x25ae	6300ESB PCI-X Bridge
 product INTEL 6300ESB_RAID	0x25b0	6300ESB SATA RAID Controller
 product INTEL 82801FB_LPC	0x2640	82801FB LPC Interface Bridge
+product INTEL 82801FBM_LPC	0x2641	82801FBM ICH6M LPC Interface Bridge
 product INTEL 82801FB_SATA	0x2651	82801FB Serial ATA Controller
 product INTEL 82801FR_SATA	0x2652	82801FR Serial ATA Controller
 product INTEL 82801FBM_SATA	0x2653	82801FBM Serial ATA Controller
@@ -1895,6 +1908,7 @@ product INTEL 82801FB_USB_3	0x265b	82801FB/FR USB UHCI Controller
 product INTEL 82801FB_EHCI	0x265c	82801FB/FR USB EHCI Controller
 product INTEL 82801FB_EXP_0	0x2660	82801FB/FR PCI Express Port #0
 product INTEL 82801FB_EXP_1	0x2662	82801FB/FR PCI Express Port #1
+product INTEL 82801FB_EXP_2	0x2664	82801FB/FR PCI Express Port #2
 product INTEL 82801FB_HDA	0x2668	82801FB/FR High Definition Audio Controller
 product INTEL 82801FB_SMB	0x266a	82801FB/FR SMBus Controller
 product INTEL 82801FB_ACM	0x266d	82801FB/FR AC'97 Modem Controller
@@ -2461,6 +2475,8 @@ product PROMISE PDC20618	0x6626	PDC20618 dual Ultra/133 IDE controller
 product PROMISE PDC20619	0x6629	PDC20619 dual Ultra/133 IDE controller
 product PROMISE PDC20620	0x6620	PDC20620 dual Ultra/133 IDE controller
 product PROMISE PDC20621	0x6621	PDC20621 dual Ultra/133 IDE controller
+product PROMISE PDC40718	0x3d17	PDC40718 SATA/300 IDE controller
+product PROMISE PDC40719	0x3515	PDC40719 SATA/300 IDE controller
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
@@ -2800,6 +2816,9 @@ product TI	PCI4451LYNX	0x8027	PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus B
 product TI	PCI4510LYNX	0x8029	PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI4520LYNX	0x802A	PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product	TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
+product	TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
+product	TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	ACX100		0x8400	ACX100 802.11b
@@ -2969,6 +2988,7 @@ product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT6306 IEEE 1394 Host Controller
+product VIATECH VT6105M 	0x3053	VT6105M (Rhine III) 10/100 Ethernet
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
@@ -3089,6 +3109,10 @@ product VLSI 82C535	0x0104	82C535
 product VLSI 82C147	0x0105	82C147
 product VLSI 82C975	0x0200	82C975
 product VLSI 82C925	0x0280	82C925
+
+/* VMware products */
+product VMWARE VIRTUAL  0x0710	Virtual SVGA
+product VMWARE VIRTUAL2 0x0405	Virtual SVGA II
 
 /* Weitek products */
 product WEITEK P9000	0x9001	P9000

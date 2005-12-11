@@ -1,4 +1,4 @@
-/*	$NetBSD: idp.h,v 1.6.54.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: idp.h,v 1.6.54.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -31,6 +31,9 @@
  *	@(#)idp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETNS_IDP_H_
+#define _NETNS_IDP_H_
+
 /*
  * Definitions for NS(tm) Internet Datagram Protocol
  */
@@ -42,3 +45,5 @@ struct idp {
 	struct ns_addr	idp_dna;	/* Destination Network Address */
 	struct ns_addr	idp_sna;	/* Source Network Address */
 };
+
+#endif /* !_NETNS_IDP_H_ */

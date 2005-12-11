@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.34.2.5 2004/11/14 08:16:13 skrll Exp $	*/
+/*	$NetBSD: if_media.h,v 1.34.2.6 2005/12/11 10:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -591,4 +591,4 @@ int get_media_options(int, const char *, char **);
 int lookup_media_word(struct ifmedia_description *, int, const char *);
 #endif /* _KERNEL */
 
-#endif	/* _NET_IF_MEDIA_H_ */
+#endif /* !_NET_IF_MEDIA_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.6.2.6 2005/11/10 14:11:36 skrll Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.6.2.7 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NETISO_TP_VAR_H_
+#define _NETISO_TP_VAR_H_
 
 #ifdef _KERNEL
 struct isopcb;
@@ -196,3 +199,5 @@ int find_error_reason (struct x25_packet *);
 #endif
 
 #endif
+
+#endif /* !_NETISO_TP_VAR_H_ */

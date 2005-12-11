@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.1.2.4 2005/11/10 14:06:01 skrll Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.1.2.5 2005/12/11 10:28:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.1.2.4 2005/11/10 14:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.1.2.5 2005/12/11 10:28:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ static const struct rtw_pci_product {
 } rtw_pci_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180,
 	  "Realtek RTL8180 802.11 MAC/BBP" },
+	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6001,
+	  "Belkin F5D6001" },
 
 	{ 0,				0,				NULL },
 };

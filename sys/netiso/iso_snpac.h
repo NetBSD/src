@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.h,v 1.9.64.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: iso_snpac.h,v 1.9.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,6 +58,9 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#ifndef _NETISO_ISO_SNPAC_H_
+#define _NETISO_ISO_SNPAC_H_
+
 #define	MAX_SNPALEN		8	/* curiously equal to sizeof x.121 (
 					 * plus 1 for nibble len) addr */
 struct snpa_req {
@@ -103,3 +106,5 @@ struct llinfo_llc {
 
 #define	SIOCSSTYPE 	_IOW('a', 39, struct systype_req)	/* set system type */
 #define	SIOCGSTYPE 	_IOR('a', 40, struct systype_req)	/* get system type */
+
+#endif /* !_NETISO_ISO_SNPAC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.4.2.6 2005/11/10 14:09:27 skrll Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.4.2.7 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -35,6 +35,9 @@
  *
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  */
+
+#ifndef _ISOFS_CD9660_CD9660_NODE_H_
+#define _ISOFS_CD9660_CD9660_NODE_H_
 
 #include <miscfs/genfs/genfs_node.h>
 
@@ -102,6 +105,7 @@ struct iso_node {
 #define VTOI(vp) ((struct iso_node *)(vp)->v_data)
 #define ITOV(ip) ((ip)->i_vnode)
 
+#ifdef _KERNEL
 /*
  * Prototypes for ISOFS vnode operations
  */
@@ -129,6 +133,7 @@ int	cd9660_strategy(void *);
 int	cd9660_print(void *);
 int	cd9660_islocked(void *);
 int	cd9660_pathconf(void *);
+int	cd9660_setattr(void *);
 
 int	cd9660_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void	cd9660_defattr(struct iso_directory_record *,
@@ -146,3 +151,5 @@ int	cd9660_vget_internal(struct mount *, ino_t, struct vnode **, int,
 struct iso_dnode *iso_dmap(dev_t, ino_t, int);
 void iso_dunmap(dev_t);
 #endif
+#endif /* _KERNEL */
+#endif /* _ISOFS_CD9660_CD9660_NODE_H_ */

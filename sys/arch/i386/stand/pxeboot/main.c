@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.2.1 2005/11/10 13:57:09 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.7.2.2 2005/12/11 10:28:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -36,6 +36,10 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/reboot.h>
+#include <sys/bootblock.h>
+
 #include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>
@@ -43,13 +47,13 @@
 #include <libi386.h>
 #include "pxeboot.h"
 
+extern struct x86_boot_params boot_params;
+
 int errno;
 int debug;
 
 extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
 		bootprog_maker[];
-
-#define TIMEOUT 5
 
 int	main(void);
 
@@ -124,7 +128,7 @@ main(void)
 	printf("Press return to boot now, any other key for boot menu\n");
 	printf("Starting in ");
 
-	c = awaitkey(TIMEOUT, 1);
+	c = awaitkey(boot_params.bp_timeout, 1);
 	if ((c != '\r') && (c != '\n') && (c != '\0')) {
 		printf("type \"?\" or \"help\" for help.\n");
 		bootmenu();	/* does not return */

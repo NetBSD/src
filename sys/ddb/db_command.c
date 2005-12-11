@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.71.2.4 2005/11/10 14:03:00 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.71.2.5 2005/12/11 10:28:47 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.71.2.4 2005/11/10 14:03:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.71.2.5 2005/12/11 10:28:47 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +128,7 @@ static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static const struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "procs",	db_show_all_procs,	0, NULL },
+	{ "pools",	db_show_all_pools,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
@@ -201,6 +203,12 @@ static const struct db_command db_command_table[] = {
 };
 
 static const struct db_command	*db_last_command = NULL;
+#if defined(DDB_COMMANDONENTER)
+char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = ___STRING(DDB_COMMANDONENTER);
+#else /* defined(DDB_COMMANDONENTER) */
+char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = "";
+#endif /* defined(DDB_COMMANDONENTER) */
+#define	DB_LINE_SEP	';'
 
 /*
  * Utility routine - discard tokens through end-of-line.
@@ -226,6 +234,27 @@ db_error(s)
 	longjmp(db_recover);
 }
 
+static void
+db_execute_commandlist(const char *cmdlist)
+{
+	const char *cmd = cmdlist;
+	const struct db_command	*dummy = NULL;
+
+	while (*cmd != '\0') {
+		const char *ep = cmd;
+
+		while (*ep != '\0' && *ep != DB_LINE_SEP) {
+			ep++;
+		}
+		db_set_line(cmd, ep);
+		db_command(&dummy, db_command_table);
+		cmd = ep;
+		if (*cmd == DB_LINE_SEP) {
+			cmd++;
+		}
+	}
+}
+
 void
 db_command_loop(void)
 {
@@ -243,6 +272,8 @@ db_command_loop(void)
 	savejmp = db_recover;
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
+
+	db_execute_commandlist(db_cmd_on_enter);
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)

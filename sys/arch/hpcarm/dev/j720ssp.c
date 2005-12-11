@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.17.2.5 2005/11/10 13:56:14 skrll Exp $ */
+/* $NetBSD: j720ssp.c,v 1.17.2.6 2005/12/11 10:28:18 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.5 2005/11/10 13:56:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.6 2005/12/11 10:28:18 christos Exp $");
 
 #include "apm.h"
 
@@ -703,6 +703,7 @@ j720lcdparam(ctx, type, id, msg)
 		default:
 			return 0;
 		}
+		break;
 
 	default:
 		return 0;

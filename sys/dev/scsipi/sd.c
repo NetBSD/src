@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.202.2.12 2005/11/10 14:07:47 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.202.2.13 2005/12/11 10:29:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.12 2005/11/10 14:07:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.13 2005/12/11 10:29:05 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1128,8 +1128,12 @@ bad:
 		return (0);
 
 	case DIOCLOCK:
-		return (scsipi_prevent(periph,
-		    (*(int *)addr) ? SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
+		if (periph->periph_flags & PERIPH_REMOVABLE)
+			return (scsipi_prevent(periph,
+			    (*(int *)addr) ?
+			    SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
+		else
+			return (ENOTTY);
 
 	case DIOCEJECT:
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
@@ -1351,6 +1355,23 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	 */
 	if (periph->periph_flags & PERIPH_RECOVERING)
 		return (retval);
+
+	/*
+	 * Ignore errors from accessing illegal fields (e.g. trying to
+	 * lock the door of a digicam, which doesn't have a door that
+	 * can be locked) for the SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL command.
+	 */
+	if (xs->cmd->opcode == SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL &&
+	    SSD_SENSE_KEY(sense->flags) == SKEY_ILLEGAL_REQUEST &&
+	    sense->asc == 0x24 &&
+	    sense->ascq == 0x00) { /* Illegal field in CDB */
+		scsipi_printaddr(periph);
+		printf("no door lock\n");
+		periph->periph_flags &= ~PERIPH_REMOVABLE;
+		return 0;
+	}
+
+
 
 	/*
 	 * If the device is not open yet, let the generic code handle it.

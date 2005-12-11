@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.11.2.4 2005/11/10 13:58:33 skrll Exp $	*/
+/*	$NetBSD: crime.c,v 1.11.2.5 2005/12/11 10:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.11.2.4 2005/11/10 13:58:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.11.2.5 2005/12/11 10:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,6 +139,9 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 
 	/* reset CRIME CPU & memory error registers */
 	crime_bus_reset();
+
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_CONTROL, 0);
 
 	baseline = bus_space_read_8(crm_iot, crm_ioh, CRIME_TIME) & CRIME_TIME_MASK;
 	cps = mips3_cp0_count_read();

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6.2.9 2005/11/10 14:09:26 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6.2.10 2005/12/11 10:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.9 2005/11/10 14:09:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.10 2005/12/11 10:29:10 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -264,7 +264,9 @@ adosfs_read(v)
 	 */
 
 	if (vp->v_type == VREG && IS_FFS(amp)) {
+		const int advice = IO_ADV_DECODE(sp->a_ioflag);
 		error = 0;
+
 		while (uio->uio_resid > 0) {
 			void *win;
 			int flags;
@@ -275,7 +277,7 @@ adosfs_read(v)
 				break;
 			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);

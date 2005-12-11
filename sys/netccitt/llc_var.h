@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.12.18.5 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.12.18.6 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,9 @@
  *
  *	@(#)llc_var.h	8.2 (Berkeley) 2/9/95
  */
+
+#ifndef _NETCCITT_LLC_VAR_H_
+#define _NETCCITT_LLC_VAR_H_
 
 struct llc;
 
@@ -719,3 +722,5 @@ void llc_trace __P((struct llc_linkcb *, int, const char *));
 void llc_timer __P((void));
 
 #endif
+
+#endif /* !_NETCCITT_LLC_VAR_H_ */

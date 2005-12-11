@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.27.2.6 2005/11/10 13:58:15 skrll Exp $
+#	$NetBSD: Makefile.powerpc,v 1.27.2.7 2005/12/11 10:28:24 christos Exp $
 #
 # Makefile for NetBSD
 #
@@ -74,12 +74,6 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 TEXTADDR?=	0x100000
 LINKFORMAT=	-N
 ENTRYPOINT=	__start
-
-.if defined(NEED_SYMTAB)
-SYSTEM_LD_TAIL_EXTRA=; \
-		echo ${DBSYM} $@; \
-		${DBSYM} $@
-.endif
 
 .if defined(NEED_SREC)
 SYSTEM_LD_TAIL_EXTRA+=; \

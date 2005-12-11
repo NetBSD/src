@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.81.2.4 2005/11/10 13:59:08 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.81.2.5 2005/12/11 10:28:36 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.81.2.4 2005/11/10 13:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.81.2.5 2005/12/11 10:28:36 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -83,11 +83,11 @@ EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
 
 
-void	strayintr __P((struct clockframe *));
+void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
-void	bogusintr __P((struct clockframe *));
+void	bogusintr(struct clockframe *);
 #endif
-void	softnet __P((void *));
+void	softnet(void *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -95,8 +95,7 @@ void	softnet __P((void *));
  * XXXSMP: We are holding the kernel lock at entry & exit.
  */
 void
-strayintr(fp)
-	struct clockframe *fp;
+strayintr(struct clockframe *fp)
 {
 	static int straytime, nstray;
 	char bits[64];
@@ -123,8 +122,7 @@ strayintr(fp)
  * the IPR was set.
  */
 void
-bogusintr(fp)
-	struct clockframe *fp;
+bogusintr(struct clockframe *fp)
 {
 	char bits[64];
 
@@ -139,7 +137,7 @@ bogusintr(fp)
  * Get module ID of interrupt target.
  */
 u_int
-getitr()
+getitr(void)
 {
 #if defined(MULTIPROCESSOR)
 	u_int v;
@@ -179,8 +177,7 @@ setitr(u_int mid)
  * Process software network interrupts.
  */
 void
-softnet(fp)
-	void *fp;
+softnet(void *fp)
 {
 	int n, s;
 
@@ -203,13 +200,13 @@ softnet(fp)
 }
 
 #if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
-void	nmi_hard __P((void));
-void	nmi_soft __P((struct trapframe *));
+void	nmi_hard(void);
+void	nmi_soft(struct trapframe *);
 
-int	(*memerr_handler) __P((void));
-int	(*sbuserr_handler) __P((void));
-int	(*vmeerr_handler) __P((void));
-int	(*moduleerr_handler) __P((void));
+int	(*memerr_handler)(void);
+int	(*sbuserr_handler)(void);
+int	(*vmeerr_handler)(void);
+int	(*moduleerr_handler)(void);
 
 #if defined(MULTIPROCESSOR)
 volatile int nmi_hard_wait = 0;
@@ -218,13 +215,13 @@ int drop_into_rom_on_fatal = 1;
 #endif
 
 void
-nmi_hard()
+nmi_hard(void)
 {
 	/*
 	 * A level 15 hard interrupt.
 	 */
 	int fatal = 0;
-	u_int32_t si;
+	uint32_t si;
 	char bits[64];
 	u_int afsr, afva;
 
@@ -266,7 +263,7 @@ nmi_hard()
 	/*
 	 * Examine pending system interrupts.
 	 */
-	si = *((u_int32_t *)ICR_SI_PEND);
+	si = *((uint32_t *)ICR_SI_PEND);
 	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(),
 		bitmask_snprintf(si, SINTR_BITS, bits, sizeof(bits)));
 
@@ -312,12 +309,11 @@ nmi_hard()
  * Non-maskable soft interrupt level 15 handler
  */
 void
-nmi_soft(tf)
-	struct trapframe *tf;
+nmi_soft(struct trapframe *tf)
 {
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
-		u_int8_t msg = *(u_int8_t *)cpuinfo.mailbox;
+		uint8_t msg = *(uint8_t *)cpuinfo.mailbox;
 		switch (msg) {
 		case OPENPROM_MBX_STOP:
 		case OPENPROM_MBX_WD:
@@ -361,7 +357,8 @@ nmi_soft(tf)
 /*
  * Respond to an xcall() request from another CPU.
  */
-static void xcallintr(void *v)
+static void
+xcallintr(void *v)
 {
 
 	/* Tally */
@@ -374,7 +371,7 @@ static void xcallintr(void *v)
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		if (p->func)
-			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2); 
+			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2);
 		break;
 	    }
 	}
@@ -496,11 +493,12 @@ struct intrhand *intrhand[15] = {
  * Soft interrupts use a separate set of handler chains.
  * This is necessary since soft interrupt handlers do not return a value
  * and therefore cannot be mixed with hardware interrupt handlers on a
- * shared handler chain. 
+ * shared handler chain.
  */
 struct intrhand *sintrhand[15] = { NULL };
 
-static void ih_insert(struct intrhand **head, struct intrhand *ih)
+static void
+ih_insert(struct intrhand **head, struct intrhand *ih)
 {
 	struct intrhand **p, *q;
 	/*
@@ -513,7 +511,8 @@ static void ih_insert(struct intrhand **head, struct intrhand *ih)
 	ih->ih_next = NULL;
 }
 
-static void ih_remove(struct intrhand **head, struct intrhand *ih)
+static void
+ih_remove(struct intrhand **head, struct intrhand *ih)
 {
 	struct intrhand **p, *q;
 
@@ -532,7 +531,8 @@ extern int sparc_interrupt4m[];
 extern int sparc_interrupt44c[];
 
 #ifdef DIAGNOSTIC
-static void check_tv(int level)
+static void
+check_tv(int level)
 {
 	struct trapvec *tv;
 	int displ;
@@ -627,11 +627,8 @@ uninst_fasttrap(int level)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, classipl, ih, vec)
-	int level;
-	int classipl;
-	struct intrhand *ih;
-	void (*vec)(void);
+intr_establish(int level, int classipl,
+	       struct intrhand *ih, void (*vec)(void))
 {
 	int s = splhigh();
 
@@ -672,10 +669,9 @@ intr_establish(level, classipl, ih, vec)
 }
 
 void
-intr_disestablish(level, ih)
-	int level;
-	struct intrhand *ih;
+intr_disestablish(int level, struct intrhand *ih)
 {
+
 	ih_remove(&intrhand[level], ih);
 }
 
@@ -683,8 +679,8 @@ intr_disestablish(level, ih)
  * This is a softintr cookie.  NB that sic_pilreq MUST be the
  * first element in the struct, because the softintr_schedule()
  * macro in intr.h casts cookies to int * to get it.  On a
- * sun4m, sic_pilreq is an actual processor interrupt level that 
- * is passed to raise(), and on a sun4 or sun4c sic_pilreq is a 
+ * sun4m, sic_pilreq is an actual processor interrupt level that
+ * is passed to raise(), and on a sun4 or sun4c sic_pilreq is a
  * bit to set in the interrupt enable register with ienab_bis().
  */
 struct softintr_cookie {
@@ -697,7 +693,7 @@ struct softintr_cookie {
  * softintr_init(): initialise the MI softintr system.
  */
 void
-softintr_init()
+softintr_init(void)
 {
 
 	softnet_cookie = softintr_establish(IPL_SOFTNET, softnet, NULL);
@@ -712,10 +708,7 @@ softintr_init()
  * software interrupt.
  */
 void *
-softintr_establish(level, fun, arg)
-	int level; 
-	void (*fun) __P((void *));
-	void *arg;
+softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct softintr_cookie *sic;
 	struct intrhand *ih;
@@ -749,7 +742,7 @@ softintr_establish(level, fun, arg)
 	sic->sic_pil = pil;
 	sic->sic_pilreq = pilreq;
 	ih = &sic->sic_hand;
-	ih->ih_fun = (int (*) __P((void *)))fun;
+	ih->ih_fun = (int (*)(void *))fun;
 	ih->ih_arg = arg;
 
 	/*
@@ -775,8 +768,7 @@ softintr_establish(level, fun, arg)
  * software interrupt.
  */
 void
-softintr_disestablish(cookie)
-	void *cookie;
+softintr_disestablish(void *cookie)
 {
 	struct softintr_cookie *sic = cookie;
 
@@ -786,8 +778,7 @@ softintr_disestablish(cookie)
 
 #if 0
 void
-softintr_schedule(cookie)
-	void *cookie;
+softintr_schedule(void *cookie)
 {
 	struct softintr_cookie *sic = cookie;
 	if (CPU_ISSUN4M || CPU_ISSUN4D) {
@@ -808,14 +799,14 @@ softintr_schedule(cookie)
  * Called by interrupt stubs, etc., to lock/unlock the kernel.
  */
 void
-intr_lock_kernel()
+intr_lock_kernel(void)
 {
 
 	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 }
 
 void
-intr_unlock_kernel()
+intr_unlock_kernel(void)
 {
 
 	KERNEL_UNLOCK();

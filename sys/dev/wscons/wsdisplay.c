@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.75.2.6 2005/11/10 14:08:43 skrll Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.75.2.7 2005/12/11 10:29:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.75.2.6 2005/11/10 14:08:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.75.2.7 2005/12/11 10:29:10 christos Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -1342,7 +1342,6 @@ wsdisplay_stat_inject(struct device *dev, u_int type, int value)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *) dev;
 	struct wseventvar *evar;
 	struct wscons_event *ev;
-	struct timeval thistime;
 	int put;
 
 	evar = &sc->evar;
@@ -1362,8 +1361,7 @@ wsdisplay_stat_inject(struct device *dev, u_int type, int value)
 	}
 	ev->type = type;
 	ev->value = value;
-	microtime(&thistime);
-	TIMEVAL_TO_TIMESPEC(&thistime, &ev->time);
+	nanotime(&ev->time);
 	evar->put = put;
 	WSEVENT_WAKEUP(evar);
 

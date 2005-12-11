@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.4.2.4 2005/11/10 14:12:12 skrll Exp $	*/
+/*	$NetBSD: savar.h,v 1.4.2.5 2005/12/11 10:29:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
  * Internal data usd by the scheduler activation implementation
  */
 
-#ifndef _SYS_SAVAR_H
-#define _SYS_SAVAR_H
+#ifndef _SYS_SAVAR_H_
+#define _SYS_SAVAR_H_
 
 #include <sys/lock.h>
 #include <sys/tree.h>
@@ -146,4 +146,4 @@ void	sa_unblock_userret(struct lwp *);
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
-#endif /* !_SYS_SAVAR_H */
+#endif /* !_SYS_SAVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.8.28.3 2004/09/21 13:37:15 skrll Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.8.28.4 2005/12/11 10:29:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,4 +57,4 @@ struct tcpiphdr {
 #define	ti_sum		ti_t.th_sum
 #define	ti_urp		ti_t.th_urp
 
-#endif /* _NETINET_TCPIP_H_ */
+#endif /* !_NETINET_TCPIP_H_ */

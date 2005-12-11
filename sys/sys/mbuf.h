@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84.2.9 2005/11/10 14:12:12 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84.2.10 2005/12/11 10:29:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -853,6 +853,7 @@ int	m_mballoc(int, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
 struct	mbuf *m_copyback_cow(struct mbuf *, int, int, const void *, int);
 int 	m_makewritable(struct mbuf **, int, int, int);
+struct	mbuf *m_getcl(int, int, int);
 void	m_copydata(struct mbuf *, int, int, void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);

@@ -1,4 +1,4 @@
-#	$NetBSD: VME172,v 1.15.6.7 2005/11/10 13:57:47 skrll Exp $
+#	$NetBSD: VME172,v 1.15.6.8 2005/12/11 10:28:21 christos Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -32,7 +32,7 @@ file-system 	CD9660
 
 #options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET

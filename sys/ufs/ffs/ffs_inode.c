@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.59.2.6 2005/11/10 14:12:31 skrll Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.59.2.7 2005/12/11 10:29:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.59.2.6 2005/11/10 14:12:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.59.2.7 2005/12/11 10:29:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -179,6 +179,12 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
 	off_t osize;
 	int sync;
 	struct ufsmount *ump = oip->i_ump;
+
+	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
+	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {
+		KASSERT(oip->i_size == 0);
+		return 0;
+	}
 
 	if (length < 0)
 		return (EINVAL);
