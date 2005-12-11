@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.7.14.5 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.7.14.6 2005/12/11 10:28:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -53,8 +53,10 @@ struct esiop_slot {
 struct esiop_xfer {
 	struct siop_common_xfer siop_tables;
 	u_int32_t tlq; /* target/lun/tag loaded in scratchC by script */
-		      /* will also containt scratcha at end of command */
+	u_int32_t saved_offset;/* contains scratchA if script saved an offset */
 } __attribute__((__packed__));
+
+#define ESIOP_XFER(cmd, m) (((struct esiop_xfer *)((cmd)->cmd_tables))->m)
 
 /*
  * This describes a command handled by the SCSI controller

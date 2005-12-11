@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.25.2.8 2005/11/10 14:03:00 skrll Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.25.2.9 2005/12/11 10:28:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.8 2005/11/10 14:03:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.9 2005/12/11 10:28:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.8 2005/11/10 14:03:00 skrll Exp $"
 #include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/pool.h>
 
 #include <machine/db_machdep.h>
 
@@ -225,6 +226,13 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 			}
 		}
 	}
+}
+
+void
+db_show_all_pools(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+{
+
+	pool_printall(modif, db_printf);
 }
 
 void

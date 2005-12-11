@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.2.2.7 2005/11/10 14:09:26 skrll Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.2.2.8 2005/12/11 10:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ADOSFS_ADOSFS_H_
+#define  _ADOSFS_ADOSFS_H_
 /*
  * Arguments to mount amigados filesystems.
  */
@@ -180,3 +182,4 @@ extern int (**adosfs_vnodeop_p) __P((void *));
 SYSCTL_SETUP_PROTO(sysctl_vfs_adosfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _ADOSFS_ADOSFS_H_ */

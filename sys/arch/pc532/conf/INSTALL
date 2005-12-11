@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30.6.7 2005/11/10 13:58:09 skrll Exp $
+#	$NetBSD: INSTALL,v 1.30.6.8 2005/12/11 10:28:24 christos Exp $
 #
 # INSTALL -- install kernel
 #
@@ -29,8 +29,7 @@ file-system 	NFS				# Network File System client
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 options 	KMEMSTATS			# saves about 50k
 options 	INET				# IP + ICMP + TCP + UDP

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.h,v 1.5.6.3 2004/09/21 13:37:12 skrll Exp $ */
+/*	$NetBSD: ip_gre.h,v 1.5.6.4 2005/12/11 10:29:24 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NETINET_IP_GRE_H_
+#define _NETINET_IP_GRE_H_
+
 #ifdef _KERNEL
 void gre_input(struct mbuf *, ...);
 void gre_mobile_input(struct mbuf *, ...);
 #endif /* _KERNEL */
+
+#endif /* !_NETINET_IP_GRE_H_ */

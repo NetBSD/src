@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.14.2.9 2005/11/10 13:48:21 skrll Exp $
+#	$NetBSD: P4032,v 1.14.2.10 2005/12/11 10:28:12 christos Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.14.2.9 $"
+#ident 		"P4032-$Revision: 1.14.2.10 $"
 
 maxusers 32
 
@@ -47,7 +47,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocol suite

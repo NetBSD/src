@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.14.2.6 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.14.2.7 2005/12/11 10:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.6 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.7 2005/12/11 10:29:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,6 @@ USB_MATCH(uhidev)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
-	if (uaa->matchlvl)
-		return (uaa->matchlvl);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
@@ -344,16 +342,10 @@ int
 uhidevsubmatch(struct device *parent, struct cfdata *cf,
 	       const int *locs, void *aux)
 {
-	struct uhidev_attach_arg *uha = aux;
-
 	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
 	    cf->cf_loc[UHIDBUSCF_REPORTID] != locs[UHIDBUSCF_REPORTID])
 		return (0);
 
-	if (cf->cf_loc[UHIDBUSCF_REPORTID] == locs[UHIDBUSCF_REPORTID])
-		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
-	else
-		uha->matchlvl = 0;
 	return (config_match(parent, cf, aux));
 }
 

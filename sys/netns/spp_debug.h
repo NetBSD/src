@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.h,v 1.7.10.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: spp_debug.h,v 1.7.10.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -31,6 +31,9 @@
  *	@(#)spp_debug.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETNS_SPP_DEBUG_H_
+#define _NETNS_SPP_DEBUG_H_
+
 struct	spp_debug {
 	u_long	sd_time;
 	short	sd_act;
@@ -57,3 +60,5 @@ extern int sppconsdebug;
 #endif
 
 #define	SPP_NDEBUG 100
+
+#endif /* !_NETNS_SPP_DEBUG_H_ */

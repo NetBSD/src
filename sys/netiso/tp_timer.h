@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.h,v 1.6.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_timer.h,v 1.6.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -82,4 +82,4 @@ SOFTWARE.
     { if((p)->tp_timer[w] > (t)) (p)->tp_timer[w] = (t);}
 #endif				/* TP_DEBUG_TIMERS */
 
-#endif				/* _NETISO_TP_TIMER_H_ */
+#endif /* !_NETISO_TP_TIMER_H_ */

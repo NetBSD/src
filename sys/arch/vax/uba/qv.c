@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.11.6.3 2004/09/21 13:23:56 skrll Exp $	*/
+/*	$NetBSD: qv.c,v 1.11.6.4 2005/12/11 10:28:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.11.6.3 2004/09/21 13:23:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.11.6.4 2005/12/11 10:28:38 christos Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -967,7 +967,7 @@ qvstart(tp)
 		if (unit == QVKEYBOARD)
 #ifdef CONS_HACK
 			if( tp0->t_state & TS_ISOPEN ){
-				(*linesw[tp0->t_line].l_rint)(c, tp0);
+				(*tp0->t_linesw->l_rint)(c, tp0);
 			} else
 #endif
 				qvputchar( c & 0xff );

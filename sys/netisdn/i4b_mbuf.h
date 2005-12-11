@@ -27,7 +27,7 @@
  *	i4b - mbuf handling support routines
  *	--------------------------------------
  *
- *	$Id: i4b_mbuf.h,v 1.1.1.1.26.1 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_mbuf.h,v 1.1.1.1.26.2 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_MBUF_H_
-#define _I4B_MBUF_H_
+#ifndef _NETISDN_I4B_MBUF_H_
+#define _NETISDN_I4B_MBUF_H_
 
 /* layer 1 / layer 2 comunication: 3rd ph_data_req parameter */
 #define MBUF_DONTFREE	0
@@ -52,6 +52,6 @@ struct mbuf *i4b_Bgetmbuf( int );
 void i4b_Bfreembuf( struct mbuf *m );
 void i4b_Bcleanifq( struct ifqueue * );
 
-#endif /* _I4B_MBUF_H_ */
+#endif /* !_NETISDN_I4B_MBUF_H_ */
 
 /* EOF */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.6 2005/12/11 10:28:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.6 2005/12/11 10:28:13 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -66,7 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.5 2005/11/10 13:50:24 skrll Exp $"
 
 void syscall_intern(struct proc *);
 static void syscall_plain(struct trapframe *);
+#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(struct trapframe *);
+#endif
 
 void
 child_return(void *arg)
@@ -194,7 +196,9 @@ syscall_plain(struct trapframe *frame)
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
+#ifndef COMPAT_LINUX
 		frame->tf_rdx = rval[1];
+#endif
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -221,6 +225,7 @@ syscall_plain(struct trapframe *frame)
 	userret(l);
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
 static void
 syscall_fancy(struct trapframe *frame)
 {
@@ -299,7 +304,9 @@ out:
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
+#ifndef COMPAT_LINUX
 		frame->tf_rdx = rval[1];
+#endif
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -324,3 +331,4 @@ out:
 
 	userret(l);
 }
+#endif

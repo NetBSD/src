@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.80.2.10 2005/11/10 14:10:25 skrll Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.80.2.11 2005/12/11 10:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.10 2005/11/10 14:10:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.11 2005/12/11 10:29:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -70,11 +70,7 @@ static void filt_genfsdetach(struct knote *);
 static int filt_genfsread(struct knote *, long);
 static int filt_genfsvnode(struct knote *, long);
 
-
-#define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
-int genfs_rapages = MAX_READ_AHEAD; /* # of pages in each chunk of readahead */
-int genfs_racount = 2;		/* # of page chunks to readahead */
-int genfs_raskip = 2;		/* # of busy page chunks allowed to skip */
+#define MAX_READ_PAGES	16 	/* XXXUBC 16 */
 
 int
 genfs_poll(void *v)
@@ -455,7 +451,7 @@ genfs_getpages(void *v)
 	struct vnode *devvp;
 	struct genfs_node *gp = VTOG(vp);
 	struct uvm_object *uobj = &vp->v_uobj;
-	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_AHEAD];
+	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
@@ -468,8 +464,10 @@ genfs_getpages(void *v)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
 	    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
 
+	KASSERT(vp->v_type == VREG || vp->v_type == VBLK);
+
 	/* XXXUBC temp limit */
-	if (*ap->a_count > MAX_READ_AHEAD) {
+	if (*ap->a_count > MAX_READ_PAGES) {
 		panic("genfs_getpages: too many pages");
 	}
 
@@ -603,7 +601,7 @@ genfs_getpages(void *v)
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
 		raoffset = origoffset + (orignpages << PAGE_SHIFT);
 		npages += ridx;
-		goto raout;
+		goto out;
 	}
 
 	/*
@@ -817,9 +815,6 @@ genfs_getpages(void *v)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
-		if (devvp->v_type == VBLK) {
-			bp->b_dev = devvp->v_rdev;
-		}
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
@@ -833,7 +828,8 @@ genfs_getpages(void *v)
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp->b_vp, bp);
+
+		VOP_STRATEGY(devvp, bp);
 	}
 
 loopdone:
@@ -892,41 +888,6 @@ loopdone:
 	}
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	simple_lock(&uobj->vmobjlock);
-
-	/*
-	 * see if we want to start any readahead.
-	 * XXXUBC for now, just read the next 128k on 64k boundaries.
-	 * this is pretty nonsensical, but it is 50% faster than reading
-	 * just the next 64k.
-	 */
-
-raout:
-	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
-	    PAGE_SHIFT <= 16) {
-		off_t rasize;
-		int rapages, err, j, skipped;
-
-		/* XXXUBC temp limit, from above */
-		rapages = MIN(MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD),
-		    genfs_rapages);
-		rasize = rapages << PAGE_SHIFT;
-		for (j = skipped = 0; j < genfs_racount; j++) {
-
-			if (raoffset >= memeof)
-				break;
-
-			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
-			    VM_PROT_READ, 0, PGO_NOTIMESTAMP);
-			simple_lock(&uobj->vmobjlock);
-			if (err) {
-				if (err != EBUSY ||
-				    skipped++ == genfs_raskip)
-					break;
-			}
-			raoffset += rasize;
-			rapages = rasize >> PAGE_SHIFT;
-		}
-	}
 
 	/*
 	 * we're almost done!  release the pages...
@@ -1150,13 +1111,13 @@ genfs_putpages(void *v)
 	    (vp->v_flag & VONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
-	curmp.uobject = uobj;
-	curmp.offset = (voff_t)-1;
-	curmp.flags = PG_BUSY;
-	endmp.uobject = uobj;
-	endmp.offset = (voff_t)-1;
-	endmp.flags = PG_BUSY;
 	if (by_list) {
+		curmp.uobject = uobj;
+		curmp.offset = (voff_t)-1;
+		curmp.flags = PG_BUSY;
+		endmp.uobject = uobj;
+		endmp.offset = (voff_t)-1;
+		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
 		PHOLD(l);
@@ -1565,9 +1526,6 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
-		if (devvp->v_type == VBLK) {
-			bp->b_dev = devvp->v_rdev;
-		}
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
@@ -1581,7 +1539,8 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			BIO_SETPRIO(bp, BPRIO_TIMENONCRITICAL);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp->b_vp, bp);
+
+		VOP_STRATEGY(devvp, bp);
 	}
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
@@ -1687,6 +1646,9 @@ genfs_compat_getpages(void *v)
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= vp->v_size) {
 		simple_unlock(&uobj->vmobjlock);
 		return (EINVAL);
+	}
+	if ((ap->a_flags & PGO_SYNCIO) == 0) {
+		return 0;
 	}
 	npages = orignpages;
 	uvn_findpages(uobj, origoffset, &npages, pgs, UFP_ALL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.5.2.2 2005/11/10 14:00:40 skrll Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.5.2.3 2005/12/11 10:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.2.2 2005/11/10 14:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.5.2.3 2005/12/11 10:28:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

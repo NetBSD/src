@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_var.h,v 1.10.10.4 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: hd_var.h,v 1.10.10.5 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -72,6 +72,9 @@
  *
  *	@(#)hd_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETCCITT_HD_VAR_H_
+#define _NETCCITT_HD_VAR_H_
 
 /*
  *
@@ -180,3 +183,5 @@ struct mbuf *hd_remove __P((struct hdtxq *));
 void hd_timer __P((void));
 
 #endif
+
+#endif /* !_NETCCITT_HD_VAR_H_ */

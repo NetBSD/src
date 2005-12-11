@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.9 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.9.22.1 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -94,4 +94,4 @@ void    fddi_ifattach __P((struct ifnet *));
 #endif
 #endif
 
-#endif
+#endif /* !_NET_IF_FDDI_H_ */

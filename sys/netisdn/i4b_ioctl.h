@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.7.10.4 2005/03/04 16:53:44 skrll Exp $
+ *	$Id: i4b_ioctl.h,v 1.7.10.5 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_IOCTL_H_
-#define _I4B_IOCTL_H_
+#ifndef _NETISDN_I4B_IOCTL_H_
+#define _NETISDN_I4B_IOCTL_H_
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #ifndef _MACHINE_TYPES_H_
@@ -625,4 +625,4 @@ struct isdn_diagnostic_request {
 
 #define	I4B_ACTIVE_DIAGNOSTIC	_IOW('4', 102, struct isdn_diagnostic_request)
 
-#endif /* _I4B_IOCTL_H_ */
+#endif /* !_NETISDN_I4B_IOCTL_H_ */

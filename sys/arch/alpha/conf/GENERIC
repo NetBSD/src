@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230.2.13 $"
+#ident 		"GENERIC-$Revision: 1.230.2.14 $"
 
 maxusers 32
 
@@ -87,7 +87,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -611,7 +611,8 @@ wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
@@ -652,3 +653,20 @@ pseudo-device	wsmux			# mouse and keyboad multiplexing
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

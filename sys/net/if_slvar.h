@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.24.22.5 2005/03/04 16:52:58 skrll Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.24.22.6 2005/12/11 10:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,14 +81,14 @@ struct sl_softc {
 
 #ifdef _KERNEL
 void	slattach __P((void));
-void	slclose __P((struct tty *));
-void	slinput __P((int, struct tty *));
+int	slclose __P((struct tty *, int));
+int	slinput __P((int, struct tty *));
 int	slioctl __P((struct ifnet *, u_long, caddr_t));
 int	slopen __P((dev_t, struct tty *));
 int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
-void	slstart __P((struct tty *));
-int	sltioctl __P((struct tty *, u_long, caddr_t, int));
+int	slstart __P((struct tty *));
+int	sltioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
 #endif /* _KERNEL */
 
-#endif /* _NET_IF_SLVAR_H_ */
+#endif /* !_NET_IF_SLVAR_H_ */

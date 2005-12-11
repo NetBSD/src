@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.7.2.3 2004/09/21 13:25:17 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.7.2.4 2005/12/11 10:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _ALPHA_LINUX_MACHDEP_H
 #define _ALPHA_LINUX_MACHDEP_H
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 
 /*
  * The Linux sigcontext, pretty much a standard alpha trapframe.

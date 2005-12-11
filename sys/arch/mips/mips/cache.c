@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19.2.7 2005/11/10 13:57:33 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.19.2.8 2005/12/11 10:28:20 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.7 2005/11/10 13:57:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.8 2005/12/11 10:28:20 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -502,8 +502,8 @@ primary_cache_is_2way:
 
 		mips3_get_cache_config(csizebase);
 
-		if (mips_picache_size > PAGE_SIZE ||
-		    mips_pdcache_size > PAGE_SIZE)
+		if ((mips_picache_size / mips_picache_ways) > PAGE_SIZE ||
+		    (mips_pdcache_size / mips_pdcache_ways) > PAGE_SIZE)
 			mips_cache_virtual_alias = 1;
 
 		switch (mips_picache_line_size) {
@@ -598,8 +598,7 @@ primary_cache_is_2way:
 		mips_pdcache_size = CACHE_R5900_SIZE_D;
 		mips_pdcache_line_size = CACHE_R5900_LSIZE_D;
 		mips_cache_alias_mask =
-		    ((mips_pdcache_size / mips_pdcache_ways) - 1) &
-		    ~(PAGE_SIZE - 1);
+		    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 		mips_cache_prefer_mask =
 		    max(mips_pdcache_size, mips_picache_size) - 1;
 		mips_cache_virtual_alias = 1;
@@ -906,7 +905,7 @@ mips3_get_cache_config(int csizebase)
 	    MIPS3_CONFIG_DB);
 
 	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~(PAGE_SIZE - 1);
+	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 
@@ -955,7 +954,7 @@ mips4_get_cache_config(int csizebase)
 	mips_pdcache_line_size = 32;	/* 32 Byte */
 
 	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~(PAGE_SIZE - 1);
+	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 }

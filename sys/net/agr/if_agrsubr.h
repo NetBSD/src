@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.h,v 1.1.4.2 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: if_agrsubr.h,v 1.1.4.3 2005/12/11 10:29:22 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IF_AGRSUBR_H_)
+#ifndef _NET_AGR_IF_AGRSUBR_H_
 #define	_NET_AGR_IF_AGRSUBR_H_
 
 struct agr_mc_entry;
@@ -49,4 +49,4 @@ int agr_configmulti_ifreq(struct agr_softc *, struct agr_multiaddrs *,
 
 int agr_port_getmedia(struct agr_port *, u_int *, u_int *);
 
-#endif /* !defined(_NET_AGR_IF_AGRSUBR_H_) */
+#endif /* !_NET_AGR_IF_AGRSUBR_H_ */

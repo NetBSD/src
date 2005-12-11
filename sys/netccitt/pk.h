@@ -1,4 +1,4 @@
-/*	$NetBSD: pk.h,v 1.9.6.4 2005/03/04 16:53:18 skrll Exp $	*/
+/*	$NetBSD: pk.h,v 1.9.6.5 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993
@@ -245,4 +245,5 @@ struct data_packet {
 
 #define MAXRESTARTCOLLISIONS	10
 
-#endif /* _NETCCITT_PK_H_ */
+#endif /* !_NETCCITT_PK_H_ */
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.1.2.5 2005/11/10 14:09:43 skrll Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.1.2.6 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -70,6 +70,9 @@
  *
  *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
+
+#ifndef _FS_PTYFS_PTYFS_H_
+#define _FS_PTYFS_PTYFS_H_
 
 #ifdef _KERNEL
 /*
@@ -160,3 +163,4 @@ int	ptyfs_root(struct mount *, struct vnode **);
 SYSCTL_SETUP_PROTO(sysctl_vfs_ptyfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
+#endif /* _FS_PTYFS_PTYFS_H_ */

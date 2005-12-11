@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_impl.h,v 1.1.4.2 2005/04/01 14:31:50 skrll Exp $	*/
+/*	$NetBSD: ieee8023ad_impl.h,v 1.1.4.3 2005/12/11 10:29:22 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_INT_H_)
+#ifndef _NET_AGR_IEEE8023AD_INT_H_
 #define	_NET_AGR_IEEE8023AD_INT_H_
 
 struct ieee8023ad_softc {
@@ -53,4 +53,4 @@ struct agr_port *ieee8023ad_select_tx_port(struct agr_softc *, struct mbuf *);
 void ieee8023ad_lacp_porttick(struct agr_softc *, struct agr_port *);
 void ieee8023ad_lacp_portstate(struct agr_port *);
 
-#endif /* !defined(_NET_AGR_IEEE8023AD_INT_H_) */
+#endif /* !_NET_AGR_IEEE8023AD_INT_H_ */

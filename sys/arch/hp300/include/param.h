@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43.2.5 2005/11/10 13:56:09 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.43.2.6 2005/12/11 10:28:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,8 +76,8 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PARAM_H_
-#define	_MACHINE_PARAM_H_
+#ifndef	_HP300_PARAM_H_
+#define	_HP300_PARAM_H_
 
 /*
  * Machine dependent constants for HP9000 series 300.
@@ -144,4 +144,4 @@ void	_delay(u_int);
 	((unsigned)(v) & ~HPMMMASK)
 #endif
 
-#endif	/* !_MACHINE_PARAM_H_ */
+#endif	/* !_HP300_PARAM_H_ */

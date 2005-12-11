@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore.h,v 1.1.4.3 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: filecore.h,v 1.1.4.4 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -70,6 +70,10 @@
  * the functions necessary to access fields of filecore file system
  * structures.
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
+
 
 #define FILECORE_BOOTBLOCK_BLKN	6
 #define FILECORE_BOOTBLOCK_SIZE	0x200

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.2.4.5 2005/03/04 16:53:44 skrll Exp $	*/
+/*	$NetBSD: key.h,v 1.2.4.6 2005/12/11 10:29:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -116,4 +116,4 @@ MALLOC_DECLARE(M_SECA);
 #endif /* MALLOC_DECLARE */
 
 #endif /* defined(_KERNEL) */
-#endif /* _NETIPSEC_KEY_H_ */
+#endif /* !_NETIPSEC_KEY_H_ */

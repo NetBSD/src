@@ -1,6 +1,9 @@
-/* $NetBSD: drvctlio.h,v 1.1.2.4 2004/09/21 13:38:45 skrll Exp $ */
+/* $NetBSD: drvctlio.h,v 1.1.2.5 2005/12/11 10:29:36 christos Exp $ */
 
 /* This interface is experimental and may change. */
+
+#ifndef _SYS_DRVCTLIO_H_ 
+#define _SYS_DRVCTLIO_H_ 
 
 #define DRVCTLDEV "/dev/drvctl"
 
@@ -17,3 +20,5 @@ struct devrescanargs {
 
 #define DRVDETACHDEV _IOW('D', 123, struct devdetachargs)
 #define DRVRESCANBUS _IOW('D', 124, struct devrescanargs)
+
+#endif /* _SYS_DRVCTLIO_H_ */

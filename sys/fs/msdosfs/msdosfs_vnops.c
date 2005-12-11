@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.5.2.7 2005/11/10 14:09:27 skrll Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.5.2.8 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5.2.7 2005/11/10 14:09:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5.2.8 2005/12/11 10:29:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,6 +481,8 @@ msdosfs_read(v)
 		return (0);
 
 	if (vp->v_type == VREG) {
+		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(dep->de_FileSize - uio->uio_offset,
 				      uio->uio_resid);
@@ -488,7 +490,7 @@ msdosfs_read(v)
 			if (bytelen == 0)
 				break;
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+					&bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 			ubc_release(win, flags);
@@ -644,7 +646,8 @@ msdosfs_write(v)
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
-		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
+		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UVM_ADV_NORMAL,
+		    UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);

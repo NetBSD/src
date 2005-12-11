@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile.arc.inc,v 1.10.2.5 2005/11/10 13:55:00 skrll Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.10.2.6 2005/12/11 10:28:14 christos Exp $
 
 CFLAGS+=	-mips2
 AFLAGS+=	-mips2
-
-SYSTEM_LD_TAIL_EXTRA=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true

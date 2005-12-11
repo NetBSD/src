@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL_WALNUT,v 1.2.2.4 2005/01/24 08:34:12 skrll Exp $
+# 	$NetBSD: INSTALL_WALNUT,v 1.2.2.5 2005/12/11 10:28:17 christos Exp $
 
 include "arch/evbppc/conf/WALNUT"
 
-#ident 		"INSTALL_WALNUT-$Revision: 1.2.2.4 $"
+#ident 		"INSTALL_WALNUT-$Revision: 1.2.2.5 $"
 
 # DEBUG options turned on:
 
@@ -13,7 +13,6 @@ options 	DIAGNOSTIC
 #options 	SYSCALL_DEBUG
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

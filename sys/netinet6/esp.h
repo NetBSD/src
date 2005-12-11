@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.20.6.3 2004/09/21 13:37:32 skrll Exp $	*/
+/*	$NetBSD: esp.h,v 1.20.6.4 2005/12/11 10:29:32 christos Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -115,4 +115,4 @@ extern int esp_auth __P((struct mbuf *, size_t, size_t,
 	struct secasvar *, u_char *));
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_ESP_H_ */
+#endif /* !_NETINET6_ESP_H_ */

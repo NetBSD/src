@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.3.2.5 2005/11/10 14:09:27 skrll Exp $	*/
+/*	$NetBSD: denode.h,v 1.3.2.6 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,8 @@
  *
  * October 1992
  */
+#ifndef _MSDOSFS_DENODE_H_
+#define _MSDOSFS_DENODE_H_
 
 #include <miscfs/genfs/genfs_node.h>
 
@@ -306,3 +308,4 @@ void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);
 #endif	/* _KERNEL */
+#endif /* _MSDOSFS_DENODE_H_ */

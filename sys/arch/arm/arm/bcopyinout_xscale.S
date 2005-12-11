@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.3.4.4 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.3.4.5 2005/12/11 10:28:14 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.3.4.4 2004/09/21 13:13:08 skrll Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.3.4.5 2005/12/11 10:28:14 christos Exp $")	
 
 	.text
 	.align	0
@@ -982,6 +982,7 @@ ENTRY(kcopy)
 	sub	r2, r2, ip
 	rsbs	ip, ip, #0x03
 	addne	pc, pc, ip, lsl #3
+	nop
 	ldrb	ip, [r0], #0x01
 	strb	ip, [r1], #0x01
 	ldrb	ip, [r0], #0x01

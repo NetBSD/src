@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.19.6.7 2005/11/10 13:58:09 skrll Exp $
+#	$NetBSD: SALMON,v 1.19.6.8 2005/12/11 10:28:24 christos Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -48,7 +48,7 @@ file-system	PTYFS			# /dev/pts/N support
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server
 #options 	FASTLINKS		# fast symbolic links in FFS
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 # networking options
 #eptions 	GATEWAY			# packet forwarding

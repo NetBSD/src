@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.h,v 1.3 2003/03/23 12:17:49 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.3.2.1 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -196,4 +196,4 @@ int  smb_dev2share(int fd, int mode, struct smb_cred *scred,
 
 #endif /* _KERNEL */
 
-#endif /* _NETSMB_DEV_H_ */
+#endif /* !_NETSMB_DEV_H_ */

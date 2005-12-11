@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_rrip.h,v 1.1.4.4 2005/11/10 14:09:27 skrll Exp $	*/
+/*	$NetBSD: iso_rrip.h,v 1.1.4.5 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,6 +36,8 @@
  *	@(#)iso_rrip.h	8.2 (Berkeley) 1/23/94
  */
 
+#ifndef _ISOFS_CD9660_ISO_RRIP_H_
+#define _ISOFS_CD9660_ISO_RRIP_H_
 
 /*
  *	Analyze function flag (similar to RR field bits)
@@ -79,3 +81,5 @@ int cd9660_rrip_getsymname(struct iso_directory_record *isodir,
 			       struct iso_mnt *imp);
 int cd9660_rrip_offset(struct iso_directory_record *isodir,
 			   struct iso_mnt *imp);
+
+#endif /* _ISOFS_CD9660_ISO_RRIP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.15.2.4 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: ip6.h,v 1.15.2.5 2005/12/11 10:29:24 christos Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -316,4 +316,4 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 #endif /*_KERNEL*/
 
-#endif /* not _NETINET_IP6_H_ */
+#endif /* !_NETINET_IP6_H_ */

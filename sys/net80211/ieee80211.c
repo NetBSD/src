@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.31.2.7 2005/11/10 14:10:51 skrll Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.31.2.8 2005/12/11 10:29:22 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
-#else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.31.2.7 2005/11/10 14:10:51 skrll Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.31.2.8 2005/12/11 10:29:22 christos Exp $");
 #endif
 
 /*
@@ -151,6 +152,10 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	struct ieee80211_channel *c;
 	int i;
 
+#ifdef __NetBSD__
+	ieee80211_init();
+#endif /* __NetBSD__ */
+
 	ether_ifattach(ifp, ic->ic_myaddr);
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11,
@@ -195,6 +200,10 @@ ieee80211_ifattach(struct ieee80211com *ic)
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_TURBO_A;
 			if (IEEE80211_IS_CHAN_108G(c))
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_TURBO_G;
+			if (ic->ic_curchan == NULL) {
+				/* arbitrarily pick the first channel */
+				ic->ic_curchan = &ic->ic_channels[i];
+			}
 		}
 	}
 	/* validate ic->ic_curmode */
@@ -210,12 +219,14 @@ ieee80211_ifattach(struct ieee80211com *ic)
 #endif
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
 
-	if (ic->ic_lintval == 0)
-		ic->ic_lintval = IEEE80211_BINTVAL_DEFAULT;
-	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
+	if (ic->ic_bintval == 0)
+		ic->ic_bintval = IEEE80211_BINTVAL_DEFAULT;
+	ic->ic_bmisstimeout = 7*ic->ic_bintval;	/* default 7 beacons */
 	ic->ic_dtim_period = IEEE80211_DTIM_DEFAULT;
 	IEEE80211_BEACON_LOCK_INIT(ic, "beacon");
 
+	if (ic->ic_lintval == 0)
+		ic->ic_lintval = ic->ic_bintval;
 	ic->ic_txpowlimit = IEEE80211_TXPOWER_MAX;
 
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
@@ -707,7 +718,7 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	/*
 	 * Calculate a current rate if possible.
 	 */
-	if (ic->ic_fixed_rate != -1) {
+	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * A fixed rate is set, report that.
 		 */

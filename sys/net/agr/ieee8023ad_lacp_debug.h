@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.h,v 1.1.4.3 2005/11/10 14:10:50 skrll Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.h,v 1.1.4.4 2005/12/11 10:29:22 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NET_AGR_IEEE8023AD_LACP_DEBUG_H_)
+#ifndef _NET_AGR_IEEE8023AD_LACP_DEBUG_H_
 #define	_NET_AGR_IEEE8023AD_LACP_DEBUG_H_
 
 #define	LACP_DEBUG
@@ -66,4 +66,4 @@ void lacp_dprintf(const struct lacp_port *, const char *, ...)
 #define LACP_DPRINTF(a) /* nothing */
 #endif
 
-#endif /* _NET_AGR_IEEE8023AD_LACP_DEBUG_H_ */
+#endif /* !_NET_AGR_IEEE8023AD_LACP_DEBUG_H_ */

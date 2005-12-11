@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.9.2.1 2005/03/04 16:40:20 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.9.2.2 2005/12/11 10:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9.2.1 2005/03/04 16:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9.2.2 2005/12/11 10:28:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.9.2.1 2005/03/04 16:40:20 s
 #include <sys/syscallargs.h>
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/sys/shm.h>
 
 static __inline void
 netbsd32_ipc_perm14_to_native(struct netbsd32_ipc_perm14 *, struct ipc_perm *);

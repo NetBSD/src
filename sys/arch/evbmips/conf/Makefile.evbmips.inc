@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.evbmips.inc,v 1.1 2002/03/07 14:43:57 simonb Exp $
+#	$NetBSD: Makefile.evbmips.inc,v 1.1.18.1 2005/12/11 10:28:16 christos Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true; \
 	echo ${STRIP} -O srec -o $@.srec $@; \
 	${STRIP} -O srec -o $@.srec $@
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.srec@}

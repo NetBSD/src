@@ -1,4 +1,4 @@
-/*	$NetBSD: pim_var.h,v 1.1.2.4 2004/09/21 16:20:19 skrll Exp $	*/
+/*	$NetBSD: pim_var.h,v 1.1.2.5 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2000
@@ -78,4 +78,4 @@ extern struct pimstat pimstat;
 void	pim_input(struct mbuf *, ...);
 #endif
 
-#endif /* _NETINET_PIM_VAR_H_ */
+#endif /* !_NETINET_PIM_VAR_H_ */

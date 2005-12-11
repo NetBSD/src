@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.104.2.6 2005/11/10 14:08:06 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.104.2.7 2005/12/11 10:29:06 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.6 2005/11/10 14:08:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.7 2005/12/11 10:29:06 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -1221,18 +1221,6 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	     )
 	   )
 		return 0;
-	if (cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
-	    cf->uhubcf_vendor == uaa->vendor &&
-	    cf->uhubcf_product != UHUB_UNK_PRODUCT &&
-	    cf->uhubcf_product == uaa->product) {
-		/* We have a vendor&product locator match */
-		if (cf->uhubcf_release != UHUB_UNK_RELEASE &&
-		    cf->uhubcf_release == uaa->release)
-			uaa->matchlvl = UMATCH_VENDOR_PRODUCT_REV;
-		else
-			uaa->matchlvl = UMATCH_VENDOR_PRODUCT;
-	} else
-		uaa->matchlvl = 0;
 	return (config_match(parent, cf, aux));
 }
 

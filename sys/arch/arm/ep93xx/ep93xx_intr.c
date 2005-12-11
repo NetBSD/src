@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.3.4.3 2005/11/10 13:55:16 skrll Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.3.4.4 2005/12/11 10:28:15 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.3.4.3 2005/11/10 13:55:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.3.4.4 2005/12/11 10:28:15 christos Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX

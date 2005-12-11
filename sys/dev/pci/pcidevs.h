@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.543.2.17 2005/11/10 14:06:02 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.543.2.18 2005/12/11 10:28:58 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.734 2005/11/01 22:00:56 abs Exp
+ *	NetBSD: pcidevs,v 1.745 2005/12/10 19:03:22 jonathan Exp
  */
 
 /*
@@ -577,6 +577,7 @@
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
+#define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_AGILENT	0x15bc		/* Agilent Technologies */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -705,9 +706,9 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x000a		/* GLINT Permedia 3 */
 
 /* 3ware products */
-#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
-#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID 7000/8000 series */
-#define	PCI_PRODUCT_3WARE_ESCALADE_9K	0x1001		/* Escalade IDE RAID 9000 series */
+#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade ATA RAID Controller */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade ATA RAID 7000/8000 series Controller */
+#define	PCI_PRODUCT_3WARE_ATARAID_9K	0x1002		/* ATA RAID 9000 series Controller */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
@@ -813,6 +814,7 @@
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
+#define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* Rhine II 10/100 Ethernet */
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 10/100 Ethernet */
@@ -1160,6 +1162,7 @@
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
 /* Belkin products */
+#define	PCI_PRODUCT_BELKIN_F5D6001	0x6001		/* F5D6001 */
 #define	PCI_PRODUCT_BELKIN_F5D6020V3	0x6020		/* F5D6020v3 802.11b */
 
 /* Stallion products */
@@ -1191,13 +1194,21 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5705K	0x1654		/* BCM5705K 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705M	0x165d		/* BCM5705M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705_ALT	0x165e		/* BCM5705 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5714	0x1668		/* BCM5714 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5714S	0x1669		/* BCM5714S 1000baseX Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5715	0x1678		/* BCM5715 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5715S	0x1679		/* BCM5715S 1000baseX Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5721	0x1659		/* BCM5721 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5750	0x1676		/* BCM5750 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5751	0x1677		/* BCM5751 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5752	0x1600		/* BCM5752 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5750M	0x167c		/* BCM5750M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5751M	0x167d		/* BCM5751M 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5780	0x166a		/* BCM5780 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5780S	0x166b		/* BCM5782S 1000baseX Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5782	0x1696		/* BCM5782 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5788	0x169c		/* BCM5788 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5789	0x169d		/* BCM5789 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM4401_B0	0x170c		/* BCM4401-B0 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901	0x170d		/* BCM5901 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901A2	0x170e		/* BCM5901A 10/100 Ethernet */
@@ -1429,6 +1440,7 @@
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
+#define	PCI_PRODUCT_DELTA_RHINEII	0x1320		/* Rhine II 10/100 Ethernet */
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
@@ -1892,6 +1904,7 @@
 #define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_RAID	0x25b0		/* 6300ESB SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801FBM_LPC	0x2641		/* 82801FBM ICH6M LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FR_SATA	0x2652		/* 82801FR Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FBM_SATA	0x2653		/* 82801FBM Serial ATA Controller */
@@ -1902,6 +1915,7 @@
 #define	PCI_PRODUCT_INTEL_82801FB_EHCI	0x265c		/* 82801FB/FR USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_EXP_0	0x2660		/* 82801FB/FR PCI Express Port #0 */
 #define	PCI_PRODUCT_INTEL_82801FB_EXP_1	0x2662		/* 82801FB/FR PCI Express Port #1 */
+#define	PCI_PRODUCT_INTEL_82801FB_EXP_2	0x2664		/* 82801FB/FR PCI Express Port #2 */
 #define	PCI_PRODUCT_INTEL_82801FB_HDA	0x2668		/* 82801FB/FR High Definition Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_SMB	0x266a		/* 82801FB/FR SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_ACM	0x266d		/* 82801FB/FR AC'97 Modem Controller */
@@ -2468,6 +2482,8 @@
 #define	PCI_PRODUCT_PROMISE_PDC20619	0x6629		/* PDC20619 dual Ultra/133 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20620	0x6620		/* PDC20620 dual Ultra/133 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20621	0x6621		/* PDC20621 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC40718	0x3d17		/* PDC40718 SATA/300 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC40719	0x3515		/* PDC40719 SATA/300 IDE controller */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
@@ -2807,6 +2823,9 @@
 #define	PCI_PRODUCT_TI_PCI4510LYNX	0x8029		/* PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI4520LYNX	0x802A		/* PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI7410LYNX	0x802B		/* PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCI7x21/7x11 Cardbus Controller */
+#define	PCI_PRODUCT_TI_PCI72111FW	0x8032		/* PCI7x21/7x11 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
 #define	PCI_PRODUCT_TI_ACX100	0x8400		/* ACX100 802.11b */
@@ -2976,6 +2995,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT6306 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_VIATECH_VT6105M	0x3053		/* VT6105M (Rhine III) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233/VT8235 AC-97 Audio Controller */
@@ -3096,6 +3116,10 @@
 #define	PCI_PRODUCT_VLSI_82C147	0x0105		/* 82C147 */
 #define	PCI_PRODUCT_VLSI_82C975	0x0200		/* 82C975 */
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
+
+/* VMware products */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL2	0x0405		/* Virtual SVGA II */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */

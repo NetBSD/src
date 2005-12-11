@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.15.2.5 2005/11/10 14:11:36 skrll Exp $	*/
+/*	$NetBSD: clnp.h,v 1.15.2.6 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -54,8 +54,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-#ifndef _NETISO_CLNP_H
-#define _NETISO_CLNP_H
+#ifndef _NETISO_CLNP_H_
+#define _NETISO_CLNP_H_
 
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
@@ -545,4 +545,4 @@ struct troll    trollctl;
 
 #endif /* _KERNEL */
 
-#endif /* !_NETISO_CLNP_H */
+#endif /* !_NETISO_CLNP_H_ */

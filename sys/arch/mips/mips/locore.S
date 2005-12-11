@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.155.2.4 2005/03/04 16:38:48 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.155.2.5 2005/12/11 10:28:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -758,37 +758,6 @@ LEAF(_splnone)
 	j	ra
 	nop
 END(_splnone)
-
-#if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
-/*
- * Insert 'p' after 'q'.
- *	_insque(p, q)
- *		caddr_t p, q;
- */
-LEAF(_insque)
-	lw	v0, 0(a1)		# v0 = q->next
-	sw	a1, 4(a0)		# p->prev = q
-	sw	v0, 0(a0)		# p->next = q->next
-	sw	a0, 4(v0)		# q->next->prev = p
-	j	ra
-	sw	a0, 0(a1)		# q->next = p
-END(_insque)
-
-/*
- * Remove item 'p' from queue.
- *	_remque(p)
- *		caddr_t p;
- */
-LEAF(_remque)
-	lw	v0, 0(a0)		# v0 = p->next
-	lw	v1, 4(a0)		# v1 = p->prev
-	nop
-	sw	v0, 0(v1)		# p->prev->next = p->next
-	j	ra
-	sw	v1, 4(v0)		# p->next->prev = p->prev
-END(_remque)
-#endif
-
 
 /*
  * u_int32_t mips_cp0_cause_read(void)

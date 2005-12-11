@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.2.6.2 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.2.6.3 2005/12/11 10:29:24 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_NETINET_IN_OFFLOAD_H_)
+#ifndef _NETINET_IN_OFFLOAD_H_
 #define	_NETINET_IN_OFFLOAD_H_
 
 /*
@@ -45,4 +45,4 @@ int tcp4_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
 extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
 extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
 
-#endif /* !defined(_NETINET_IN_OFFLOAD_H_) */
+#endif /* !_NETINET_IN_OFFLOAD_H_ */

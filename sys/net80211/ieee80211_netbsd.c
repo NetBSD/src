@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.7.6.2 2005/11/10 14:10:51 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.7.6.3 2005/12/11 10:29:22 christos Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,13 +28,13 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.6 2005/01/22 20:29:23 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.6.2 2005/11/10 14:10:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.6.3 2005/12/11 10:29:22 christos Exp $");
 #endif
 
 /*
- * IEEE 802.11 support (FreeBSD-specific code)
+ * IEEE 802.11 support (NetBSD-specific code)
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.6.2 2005/11/10 14:10:51 skr
 #include <sys/mbuf.h>   
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
 
 #include <machine/stdarg.h>
 
@@ -59,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.7.6.2 2005/11/10 14:10:51 skr
 #define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
 
 static void ieee80211_sysctl_fill_node(struct ieee80211_node *,
-    struct ieee80211_node_sysctl *, int, struct ieee80211_channel *, int);
+    struct ieee80211_node_sysctl *, int, const struct ieee80211_channel *,
+    uint32_t);
 static struct ieee80211_node *ieee80211_node_walknext(
     struct ieee80211_node_walk *);
 static struct ieee80211_node *ieee80211_node_walkfirst(
@@ -69,6 +71,29 @@ static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
 #endif
+
+typedef void (*ieee80211_setup_func)(void);
+
+__link_set_decl(ieee80211_funcs, ieee80211_setup_func);
+
+static void
+ieee80211_init0(void)
+{
+	ieee80211_setup_func * const *ieee80211_setup, f;
+
+        __link_set_foreach(ieee80211_setup, ieee80211_funcs) {
+		f = (void*)*ieee80211_setup;
+		(*f)();
+	}
+}
+
+void
+ieee80211_init(void)
+{
+	static ONCE_DECL(ieee80211_init_once);
+
+	RUN_ONCE(&ieee80211_init_once, ieee80211_init0);
+}
 
 static int
 ieee80211_sysctl_inact(SYSCTLFN_ARGS)
@@ -295,11 +320,11 @@ ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 static void
 ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
     struct ieee80211_node_sysctl *ns, int ifindex,
-    struct ieee80211_channel *chan0, int is_bss)
+    const struct ieee80211_channel *chan0, uint32_t flags)
 {
 	ns->ns_ifindex = ifindex;
 	ns->ns_capinfo = ni->ni_capinfo;
-	ns->ns_flags = (is_bss) ? IEEE80211_NODE_SYSCTL_F_BSS : 0;
+	ns->ns_flags = flags;
 	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
 	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
 	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
@@ -341,6 +366,7 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 	struct ieee80211_node_sysctl ns;
 	char *dp;
 	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
+	uint32_t flags;
 	size_t len, needed, eltsize, out_size;
 	int error, s, saw_bss = 0, nelt;
 
@@ -390,11 +416,18 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 
 		if (saw_bss && ni == ic->ic_bss)
 			continue;
-		else if (ni == ic->ic_bss)
+		else if (ni == ic->ic_bss) {
 			saw_bss = 1;
+			flags = IEEE80211_NODE_SYSCTL_F_BSS;
+		} else
+			flags = 0;
+		if (ni->ni_table == &ic->ic_scan)
+			flags |= IEEE80211_NODE_SYSCTL_F_SCAN;
+		else if (ni->ni_table == &ic->ic_sta)
+			flags |= IEEE80211_NODE_SYSCTL_F_STA;
 		if (len >= eltsize) {
 			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
-			    &ic->ic_channels[0], ni == ic->ic_bss);
+			    &ic->ic_channels[0], flags);
 			error = copyout(&ns, dp, out_size);
 			if (error)
 				goto cleanup;
@@ -472,28 +505,6 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 
 	va_end(ap);
 	return;
-}
-
-struct mbuf *
-m_getcl(int how, int type, int flags)
-{
-	struct mbuf *m;
-
-	if ((flags & M_PKTHDR) != 0)
-		MGETHDR(m, how, type);
-	else
-		MGET(m, how, type);
-
-	if (m == NULL)
-		return NULL;
-
-	MCLGET(m, flags);
-
-	if ((m->m_flags & M_EXT) == 0) {
-		m_free(m);
-		return NULL;
-	}
-	return m;
 }
 
 /*
@@ -579,6 +590,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 	if (m != NULL) {
 		m->m_data += sizeof(struct ieee80211_frame);
 		*frm = m->m_data;
+		IASSERT((uintptr_t)*frm % 4 == 0, ("bad beacon boundary"));
 	}
 	return m;
 }
@@ -661,9 +673,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 	struct ifnet *ifp = ic->ic_ifp;
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
-		"[%s] %s replay detected <rsc %ju, csc %ju, keyix %u>\n",
-		ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
-		(intmax_t) rsc, (intmax_t) k->wk_keyrsc, k->wk_keyix);
+	    "[%s] %s replay detected <rsc %ju, csc %ju, keyix %u rxkeyix %u>\n",
+	    ether_sprintf(wh->i_addr2), k->wk_cipher->ic_name,
+	    (intmax_t) rsc, (intmax_t) k->wk_keyrsc,
+	    k->wk_keyix, k->wk_rxkeyix);
 
 	if (ifp != NULL) {		/* NB: for cipher test modules */
 		struct ieee80211_replay_event iev;
@@ -671,7 +684,10 @@ ieee80211_notify_replay_failure(struct ieee80211com *ic,
 		IEEE80211_ADDR_COPY(iev.iev_dst, wh->i_addr1);
 		IEEE80211_ADDR_COPY(iev.iev_src, wh->i_addr2);
 		iev.iev_cipher = k->wk_cipher->ic_cipher;
-		iev.iev_keyix = k->wk_keyix;
+		if (k->wk_rxkeyix != IEEE80211_KEYIX_NONE)
+			iev.iev_keyix = k->wk_rxkeyix;
+		else
+			iev.iev_keyix = k->wk_keyix;
 		iev.iev_keyrsc = k->wk_keyrsc;
 		iev.iev_rsc = rsc;
 		rt_ieee80211msg(ifp, RTM_IEEE80211_REPLAY, &iev, sizeof(iev));

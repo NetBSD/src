@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.59.2.6 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.59.2.7 2005/12/11 10:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.6 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.7 2005/12/11 10:29:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,13 +127,16 @@ USB_DECLARE_DRIVER(uhid);
 int
 uhid_match(struct device *parent, struct cfdata *match, void *aux)
 {
+#ifdef UHID_DEBUG
 	struct uhidev_attach_arg *uha = aux;
+#endif
 
 	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
 
-	if (uha->matchlvl)
-		return (uha->matchlvl);
-	return (UMATCH_IFACECLASS_GENERIC);
+	if (match->cf_flags & 1)
+		return (UMATCH_HIGHEST);
+	else
+		return (UMATCH_IFACECLASS_GENERIC);
 }
 
 void

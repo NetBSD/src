@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.10 2005/11/10 14:12:12 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.11 2005/12/11 10:29:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -344,7 +344,7 @@ struct proclist_desc {
 MALLOC_DECLARE(M_EMULDATA);
 MALLOC_DECLARE(M_PROC);
 MALLOC_DECLARE(M_SESSION);
-MALLOC_DECLARE(M_SUBPROC);
+MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*
  * We use process IDs <= PID_MAX until there are > 16k processes.

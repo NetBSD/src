@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.5.2.5 2005/04/01 14:27:09 skrll Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.5.2.6 2005/12/11 10:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5.2.5 2005/04/01 14:27:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5.2.6 2005/12/11 10:28:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	offset = bpa & PAGE_MASK;
 	startpa = trunc_page(bpa);
 		
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return (ENOMEM);
 

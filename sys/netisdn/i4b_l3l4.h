@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l3l4.h,v 1.13.10.4 2005/03/04 16:53:45 skrll Exp $	*/
+/*	$NetBSD: i4b_l3l4.h,v 1.13.10.5 2005/12/11 10:29:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.13.10.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l3l4.h,v 1.13.10.5 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -37,8 +37,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_L3L4_H_
-#define _I4B_L3L4_H_
+#ifndef _NETISDN_I4B_L3L4_H_
+#define _NETISDN_I4B_L3L4_H_
 
 #define T303VAL	(hz*4)			/* 4 seconds timeout		*/
 #define T305VAL	(hz*30)			/* 30 seconds timeout		*/
@@ -295,4 +295,4 @@ void isdn_isdnif_ready(int isdnif);
 struct isdn_l3_driver *isdn_find_l3_by_isdnif(int isdnif);
 int isdn_count_isdnif(int *max_isdnif);
 
-#endif /* _I4B_Q931_H_ */
+#endif /* !_NETISDN_I4B_Q931_H_ */

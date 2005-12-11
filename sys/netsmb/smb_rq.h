@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.9.2.3 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.9.2.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,6 +35,10 @@
  */
 #ifndef _NETSMB_SMB_RQ_H_
 #define	_NETSMB_SMB_RQ_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 #ifndef MB_MSYSTEM
 #include <netsmb/mchain.h>

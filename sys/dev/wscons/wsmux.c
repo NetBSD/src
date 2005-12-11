@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.33.2.6 2005/11/10 14:08:44 skrll Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.33.2.7 2005/12/11 10:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.6 2005/11/10 14:08:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33.2.7 2005/12/11 10:29:10 christos Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -410,7 +410,6 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	int s, put, get, n;
 	struct wseventvar *evar;
 	struct wscons_event *ev;
-	struct timeval thistime;
 	struct wsmux_device_list *l;
 
 	DPRINTF(("wsmux_do_ioctl: %s: enter sc=%p, cmd=%08lx\n",
@@ -440,8 +439,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		if (put >= WSEVENT_QSIZE)
 			put = 0;
 		*ev = *(struct wscons_event *)data;
-		microtime(&thistime);
-		TIMEVAL_TO_TIMESPEC(&thistime, &ev->time);
+		nanotime(&ev->time);
 		evar->put = put;
 		WSEVENT_WAKEUP(evar);
 		splx(s);

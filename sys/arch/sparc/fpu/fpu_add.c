@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.3.64.3 2004/09/21 13:22:14 skrll Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.3.64.4 2005/12/11 10:28:27 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.3.64.3 2004/09/21 13:22:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.3.64.4 2005/12/11 10:28:27 christos Exp $");
 
 #include <sys/types.h>
 #ifdef DIAGNOSTIC
@@ -62,8 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.3.64.3 2004/09/21 13:22:14 skrll Exp $
 #include <sparc/fpu/fpu_extern.h>
 
 struct fpn *
-fpu_add(fe)
-	register struct fpemu *fe;
+fpu_add(struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
 	register u_int r0, r1, r2, r3;

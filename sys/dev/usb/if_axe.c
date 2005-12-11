@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.6.2.4 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.6.2.5 2005/12/11 10:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.4 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.5 2005/12/11 10:29:05 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -286,18 +286,20 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (val)
 		sc->axe_phyaddrs[0] = phy;
 
-	return (val);
+	return (le16toh(val));
 }
 
 Static void
-axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
+axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int aval)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	usbd_status		err;
+	u_int16_t		val;
 
 	if (sc->axe_dying)
 		return;
 
+	val = htole16(aval);
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
@@ -379,6 +381,7 @@ axe_setmulti(struct axe_softc *sc)
 	ifp = GET_IFP(sc);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, (void *)&rxmode);
+	rxmode = le16toh(rxmode);
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 	allmulti:
@@ -836,7 +839,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    USBDEVNAME(sc->axe_dev), usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -923,7 +926,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->axe_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_TX]);
 		splx(s);
 		return;
 	}
@@ -1231,7 +1234,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
-				rxmode |= AXE_RXCMD_PROMISC;
+				rxmode = le16toh(rxmode) | AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
 
@@ -1241,7 +1244,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sc->axe_if_flags & IFF_PROMISC) {
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
-				rxmode &= ~AXE_RXCMD_PROMISC;
+				rxmode = le16toh(rxmode) & ~AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
 				axe_setmulti(sc);

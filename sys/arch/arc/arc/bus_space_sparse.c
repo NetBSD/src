@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.8.2.5 2005/04/01 14:26:50 skrll Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.8.2.6 2005/12/11 10:28:14 christos Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.5 2005/04/01 14:26:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.6 2005/12/11 10:28:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 	} else {
 		vaddr_t va,
 		    vaddr = uvm_km_alloc(kernel_map, (vsize_t)(end - start), 0,
-		    UVM_KMF_VAONLY);
+		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 
 		if (vaddr == 0)
 			panic("arc_sparse_bus_space_compose_handle: "

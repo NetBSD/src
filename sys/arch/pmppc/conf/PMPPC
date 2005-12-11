@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.15.2.9 2005/11/10 13:58:15 skrll Exp $
+#	$NetBSD: PMPPC,v 1.15.2.10 2005/12/11 10:28:24 christos Exp $
 #
 #	PMPPC
 #
@@ -80,7 +80,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

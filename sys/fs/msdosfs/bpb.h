@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.1.4.3 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: bpb.h,v 1.1.4.4 2005/12/11 10:29:10 christos Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -15,6 +15,9 @@
  *
  * October 1992
  */
+
+#ifndef _MSDOSFS_BPB_H_
+#define _MSDOSFS_BPB_H_
 
 /*
  * BIOS Parameter Block (BPB) for DOS 3.3
@@ -211,3 +214,4 @@ struct fsinfo {
 	u_int8_t fsifill3[508];
 	u_int8_t fsisig4[4];
 };
+#endif /* _MSDOSFS_BPB_H_ */

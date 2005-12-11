@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.4.2.2 2005/11/10 14:00:59 skrll Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.4.2.3 2005/12/11 10:28:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -112,5 +112,6 @@ __END_DECLS
 
 #define LINUX_UNAME_ARCH machine_arch
 #define LINUX_NPTL
+#define LINUX_LARGEFILE64
 
 #endif /* _AMD64_LINUX_MACHDEP_H */

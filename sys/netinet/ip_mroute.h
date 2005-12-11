@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.21.2.4 2005/03/04 16:53:29 skrll Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.21.2.5 2005/12/11 10:29:24 christos Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -351,4 +351,4 @@ int	ip_mforward(struct mbuf *, struct ifnet *);
 
 #endif /* _KERNEL */
 
-#endif /* _NETINET_IP_MROUTE_H_ */
+#endif /* !_NETINET_IP_MROUTE_H_ */

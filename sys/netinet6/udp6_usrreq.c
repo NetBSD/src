@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.55.2.8 2005/11/10 14:11:25 skrll Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.55.2.9 2005/12/11 10:29:32 christos Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.55.2.8 2005/11/10 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.55.2.9 2005/12/11 10:29:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -338,7 +338,7 @@ udp6_usrreq(so, req, m, addr6, control, l)
 			break;
 		}
 		s = splsoftnet();
-		error = in6_pcbconnect(in6p, addr6);
+		error = in6_pcbconnect(in6p, addr6, p);
 		splx(s);
 		if (error == 0)
 			soisconnected(so);

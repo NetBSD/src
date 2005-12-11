@@ -1,5 +1,7 @@
-/*	$NetBSD: null.h,v 1.4.30.3 2004/09/21 13:38:48 skrll Exp $	*/
+/*	$NetBSD: null.h,v 1.4.30.4 2005/12/11 10:29:36 christos Exp $	*/
 
+#ifndef _SYS_NULL_H_
+#define _SYS_NULL_H_
 #ifndef	NULL
 #if !defined(__GNUG__) || __GNUG__ < 2 || (__GNUG__ == 2 && __GNUC_MINOR__ < 90)
 #if !defined(__cplusplus)
@@ -11,3 +13,4 @@
 #define	NULL	__null
 #endif
 #endif
+#endif /* _SYS_NULL_H_ */

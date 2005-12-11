@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.3.2.7 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.3.2.8 2005/12/11 10:29:05 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3.2.7 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3.2.8 2005/12/11 10:29:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1087,7 +1087,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		       usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_tx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}
@@ -1134,7 +1134,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_rx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.26.2.10 2005/11/10 13:48:20 skrll Exp $
+# 	$NetBSD: GENERIC,v 1.26.2.11 2005/12/11 10:28:12 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.26.2.10 $"
+#ident		"GENERIC-$Revision: 1.26.2.11 $"
 
 # estimated number of users
 maxusers	32
@@ -73,7 +73,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 
@@ -378,3 +378,20 @@ makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

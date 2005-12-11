@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.8.2.3 2004/09/21 13:21:13 skrll Exp $ */
+/* $NetBSD: systemsw.c,v 1.8.2.4 2005/12/11 10:28:25 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.8.2.3 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.8.2.4 2005/12/11 10:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.8.2.3 2004/09/21 13:21:13 skrll Exp $
 static void	clock_init_triv(void *);
 static uint32_t	clkread_triv(void);
 static void	cpu_intr_triv(uint32_t, uint32_t, uint32_t, uint32_t);
-static void	cpu_setsoftintr_triv(void);
 static void	delay_triv(u_long);
 static void	inittodr_triv(void *, time_t);
 static void	microtime_triv(struct timeval *);
@@ -56,7 +55,6 @@ static void	resettodr_triv(void *);
 /* system function switch */
 struct systemsw systemsw = {
 	cpu_intr_triv,
-	cpu_setsoftintr_triv,
 	microtime_triv,
 	clkread_triv,
 	delay_triv,
@@ -157,13 +155,6 @@ cpu_intr_triv(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	panic("cpu_intr_triv");
-}
-
-void
-cpu_setsoftintr_triv(void)
-{
-
-	panic("cpu_setsoftintr_triv");
 }
 
 void

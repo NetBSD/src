@@ -1,6 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.71.2.9 2005/11/10 13:56:32 skrll Exp $
-#
-#	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
+#	$NetBSD: INSTALL_TINY,v 1.71.2.10 2005/12/11 10:28:19 christos Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -126,8 +124,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -483,7 +480,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices

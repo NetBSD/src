@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.4.2.8 2005/11/10 14:09:27 skrll Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.4.2.9 2005/12/11 10:29:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -68,6 +68,9 @@
 /*
  * Definitions used in the kernel for Acorn Filecore file system support.
  */
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
 #ifndef	FILECOREMNT_ROOT
 #define	FILECOREMNT_ROOT	0

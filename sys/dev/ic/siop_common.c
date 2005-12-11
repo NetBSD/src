@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.32.2.4 2005/03/04 16:41:33 skrll Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.32.2.5 2005/12/11 10:28:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.32.2.4 2005/03/04 16:41:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.32.2.5 2005/12/11 10:28:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ siop_wdtr_neg(siop_cmd)
 				sc->targets[target]->id |= (SCNTL3_EWS << 24);
 				break;
 			}
-		/* FALLTHROUH */
+		/* FALLTHROUGH */
 		default:
 			/*
  			 * hum, we got more than what we can handle, shouldn't

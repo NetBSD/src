@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.18.2.8 2005/11/10 13:48:22 skrll Exp $
+# $NetBSD: RAWHIDE,v 1.18.2.9 2005/12/11 10:28:13 christos Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -30,7 +30,7 @@ file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET
 options 	GATEWAY

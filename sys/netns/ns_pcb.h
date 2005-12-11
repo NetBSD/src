@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.h,v 1.9.10.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_pcb.h,v 1.9.10.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)ns_pcb.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_NS_PCB_H_
+#define _NETNS_NS_PCB_H_
 
 /*
  * Ns protocol interface control block.
@@ -75,3 +78,5 @@ struct nspcb {
 #ifdef _KERNEL
 extern	struct	nspcb nspcb;			/* head of list */
 #endif
+
+#endif /* !_NETNS_NS_PCB_H_ */

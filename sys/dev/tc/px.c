@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19.2.7 2005/11/10 14:08:05 skrll Exp $	*/
+/* 	$NetBSD: px.c,v 1.19.2.8 2005/12/11 10:29:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.7 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.8 2005/12/11 10:29:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ px_init(struct stic_info *si, int bootstrap)
 		if (uvm_pglistalloc(PX_BUF_SIZE, 0, 8192*1024, PX_BUF_ALIGN,
 		    0, &pglist, 1, 0) != 0)
 			panic("px_init: allocation failure");
-		bpa = TAILQ_FIRST(&pglist)->phys_addr;
+		bpa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	}
 
 	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.11.2.4 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.11.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -31,6 +31,9 @@
  *	@(#)idp_var.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETNS_IDP_VAR_H_
+#define _NETNS_IDP_VAR_H_
+
 /*
  * IDP Kernel Structures and Variables
  */
@@ -58,3 +61,5 @@ int idp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
 int idp_raw_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
 			struct mbuf *, struct lwp *);
 #endif
+
+#endif /* !_NETNS_IDP_VAR_H_ */

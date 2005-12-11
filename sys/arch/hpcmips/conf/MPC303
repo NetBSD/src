@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.22.2.9 2005/11/10 13:56:14 skrll Exp $
+# 	$NetBSD: MPC303,v 1.22.2.10 2005/12/11 10:28:18 christos Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22.2.9 $"
+#ident 		"GENERIC-$Revision: 1.22.2.10 $"
 
 maxusers	16
 
@@ -75,8 +75,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

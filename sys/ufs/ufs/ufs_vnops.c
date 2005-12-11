@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102.2.14 2005/11/10 14:12:39 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102.2.15 2005/12/11 10:29:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.14 2005/11/10 14:12:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.15 2005/12/11 10:29:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -435,19 +435,22 @@ ufs_setattr(void *v)
 		switch (vp->v_type) {
 		case VDIR:
 			return (EISDIR);
-		case VLNK:
+		case VCHR:
+		case VBLK:
+		case VFIFO:
+			break;
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				 return (EROFS);
 			if ((ip->i_flags & SF_SNAPSHOT) != 0)
 				return (EPERM);
+			error = UFS_TRUNCATE(vp, vap->va_size, 0, cred, l);
+			if (error)
+				return (error);
 			break;
 		default:
-			break;
+			return (EOPNOTSUPP);
 		}
-		error = UFS_TRUNCATE(vp, vap->va_size, 0, cred, l);
-		if (error)
-			return (error);
 	}
 	ip = VTOI(vp);
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||

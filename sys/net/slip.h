@@ -1,4 +1,4 @@
-/*	$NetBSD: slip.h,v 1.7.48.3 2004/09/21 13:36:43 skrll Exp $	*/
+/*	$NetBSD: slip.h,v 1.7.48.4 2005/12/11 10:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -51,4 +51,4 @@
 #define	SLIPDIR_IN	0		/* incoming */
 #define	SLIPDIR_OUT	1		/* outgoing */
 
-#endif /* _NET_SLIP_H_ */
+#endif /* !_NET_SLIP_H_ */

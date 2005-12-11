@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77.2.8 2005/11/10 14:12:32 skrll Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.77.2.9 2005/12/11 10:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.8 2005/11/10 14:12:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.9 2005/12/11 10:29:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -222,6 +222,12 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	int obufsize, odb;
 	int usepc;
 	struct ufsmount *ump = oip->i_ump;
+
+	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
+	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {
+		KASSERT(oip->i_size == 0);
+		return 0;
+	}
 
 	if (length < 0)
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.3.2.2 2005/11/10 13:50:24 skrll Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.3.2.3 2005/12/11 10:28:13 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.2 2005/11/10 13:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.3 2005/12/11 10:28:13 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -77,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.2 2005/11/10 13:50:24 skrll 
 
 void linux_syscall_intern(struct proc *);
 static void linux_syscall_plain(struct trapframe *);
+#if defined(KTRACE) || defined(SYSTRACE)
 static void linux_syscall_fancy(struct trapframe *);
+#endif
 
 void
 linux_syscall_intern(struct proc *p)
@@ -193,6 +195,7 @@ linux_syscall_plain(struct trapframe *frame)
 	userret(l);
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
 static void
 linux_syscall_fancy(struct trapframe *frame)
 {
@@ -281,3 +284,4 @@ out:
 
 	userret(l);
 }
+#endif

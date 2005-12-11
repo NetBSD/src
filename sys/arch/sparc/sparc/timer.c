@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.17.2.3 2004/09/21 13:22:39 skrll Exp $ */
+/*	$NetBSD: timer.c,v 1.17.2.4 2005/12/11 10:28:37 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.17.2.3 2004/09/21 13:22:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.17.2.4 2005/12/11 10:28:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,8 +81,7 @@ static struct intrhand level14;
  * sun4/sun4c/sun4m common timer attach code
  */
 void
-timerattach(cntreg, limreg)
-	volatile int *cntreg, *limreg;
+timerattach(volatile int *cntreg, volatile int *limreg)
 {
 
 	/*
@@ -146,7 +145,7 @@ timerattach(cntreg, limreg)
 static int
 timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
-#if defined(SUN4) || defined(SUN4M) 
+#if defined(SUN4) || defined(SUN4M)
 	union obio_attach_args *uoba = aux;
 #endif
 #if defined(SUN4)
@@ -222,6 +221,7 @@ timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 static void
 timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
+
 #if defined(SUN4C)
 	timerattach_mainbus_4c(parent, self, aux);
 #endif /* SUN4C */

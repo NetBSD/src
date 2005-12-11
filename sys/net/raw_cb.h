@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.15.2.4 2004/09/21 13:36:42 skrll Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.15.2.5 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -71,4 +71,4 @@ void	raw_setpeeraddr __P((struct rawcb *, struct mbuf *));
 
 #endif /* _KERNEL */
 
-#endif /* _NET_RAW_CB_H_ */
+#endif /* !_NET_RAW_CB_H_ */

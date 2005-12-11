@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.81.2.10 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.81.2.11 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.10 2005/11/10 14:11:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.11 2005/12/11 10:29:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -387,7 +387,7 @@ tcp_usrreq(struct socket *so, int req,
 				if (error)
 					break;
 			}
-			error = in_pcbconnect(inp, nam);
+			error = in_pcbconnect(inp, nam, p);
 		}
 #endif
 #ifdef INET6
@@ -398,7 +398,7 @@ tcp_usrreq(struct socket *so, int req,
 				if (error)
 					break;
 			}
-			error = in6_pcbconnect(in6p, nam);
+			error = in6_pcbconnect(in6p, nam, p);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))

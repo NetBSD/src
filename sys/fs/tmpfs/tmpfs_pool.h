@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.h,v 1.3.6.2 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: tmpfs_pool.h,v 1.3.6.3 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_TMPFS_POOL_H_)
-#define _TMPFS_POOL_H
+#ifndef _FS_TMPFS_TMPFS_POOL_H_
+#define _FS_TMPFS_TMPFS_POOL_H_
 
 #if !defined(_KERNEL)
-#  error "This file is not meant to be included by userland."
+#error not supposed to be exposed to userland.
 #endif
 
 /* --------------------------------------------------------------------- */
@@ -116,4 +116,4 @@ void	tmpfs_str_pool_destroy(struct tmpfs_str_pool *);
 char *	tmpfs_str_pool_get(struct tmpfs_str_pool *, size_t, int);
 void	tmpfs_str_pool_put(struct tmpfs_str_pool *, char *, size_t);
 
-#endif /* !defined(_TMPFS_POOL_H_) */
+#endif /* _FS_TMPFS_TMPFS_POOL_H_ */

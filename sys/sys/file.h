@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.9 2005/02/15 21:33:41 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.10 2005/12/11 10:29:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,7 +59,8 @@ struct knote;
 struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
-	int		f_iflags;	/* internal flags */
+	int		f_iflags;	/* internal flags; FIF_* */
+	int		f_advice;	/* access pattern hint; UVM_ADV_* */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */

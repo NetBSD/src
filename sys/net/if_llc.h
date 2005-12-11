@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.13.22.3 2004/09/21 13:36:38 skrll Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.13.22.4 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -153,4 +153,4 @@ struct frmrinfo {
 #define LLC_SNAP_LSAP	0xaa
 #define LLC_ISO_LSAP	0xfe
 
-#endif /* _NET_IF_LLC_H_ */
+#endif /* !_NET_IF_LLC_H_ */

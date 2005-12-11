@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_space.c,v 1.1.4.3 2005/04/01 14:26:51 skrll Exp $ */
+/*	$NetBSD: ep93xx_space.c,v 1.1.4.4 2005/12/11 10:28:15 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.1.4.3 2005/04/01 14:26:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.1.4.4 2005/12/11 10:28:15 christos Exp $");
 
 /*
  * bus_space I/O functions for ep93xx
@@ -156,7 +156,8 @@ ep93xx_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	startpa = trunc_page(bpa);
 
 	/* Get some VM.  */
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return ENOMEM;
 

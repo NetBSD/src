@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158.2.12 2005/11/10 13:57:27 skrll Exp $
+# $NetBSD: GENERIC,v 1.158.2.13 2005/12/11 10:28:20 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158.2.12 $"
+#ident 		"GENERIC-$Revision: 1.158.2.13 $"
 
 maxusers	32
 
@@ -115,7 +115,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	APPLE_UFS	# Apple UFS support in FFS
@@ -492,8 +492,9 @@ audio*	at uaudio?
 midi*	at eap?			# 137[01] MIDI port
 #midi*	at mpu?			# MPU 401
 
-#pseudo-device 	crypto			# opencrypto framework
+#pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)
+#pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	vnd		4	# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
@@ -534,3 +535,20 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

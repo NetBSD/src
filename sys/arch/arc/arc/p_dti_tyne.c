@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.4.2.6 2005/11/10 13:55:00 skrll Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.4.2.7 2005/12/11 10:28:14 christos Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.4.2.6 2005/11/10 13:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.4.2.7 2005/12/11 10:28:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,8 @@ p_dti_tyne_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
-	arc_wired_enter_page(TYNE_V_BOUNCE, TYNE_P_BOUNCE, TYNE_S_BOUNCE);
+	arc_wired_enter_page(TYNE_V_BOUNCE, TYNE_P_BOUNCE,
+	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_256K));
 
 	arc_wired_enter_page(TYNE_V_ISA_IO, TYNE_P_ISA_IO, TYNE_S_ISA_IO);
 	arc_wired_enter_page(TYNE_V_ISA_MEM, TYNE_P_ISA_MEM, TYNE_S_ISA_MEM);

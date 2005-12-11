@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.7 2005/11/10 14:01:07 skrll Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.8 2005/12/11 10:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.7 2005/11/10 14:01:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.8 2005/12/11 10:28:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,7 @@ linux_sys_stime(l, v, retval)
 		linux_time_t *t;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct timeval atv;
+	struct timespec ats;
 	linux_time_t tt;
 	int error;
 
@@ -403,10 +403,10 @@ linux_sys_stime(l, v, retval)
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
 		return error;
 
-	atv.tv_sec = tt;
-	atv.tv_usec = 0;
+	ats.tv_sec = tt;
+	ats.tv_nsec = 0;
 
-	if ((error = settime(&atv)))
+	if ((error = settime(p, &ats)))
 		return (error);
 
 	return 0;

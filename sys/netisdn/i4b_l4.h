@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.7.8.4 2005/03/04 16:53:45 skrll Exp $
+ *	$Id: i4b_l4.h,v 1.7.8.5 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_L4_H_
-#define _I4B_L4_H_
+#ifndef _NETISDN_I4B_L4_H_
+#define _NETISDN_I4B_L4_H_
 
 extern void i4bputqueue ( struct mbuf *m );
 extern void i4bputqueue_hipri(struct mbuf *m);
@@ -72,4 +72,4 @@ extern void T400_start ( call_desc_t *cd );
 extern void T400_stop ( call_desc_t *cd );
 extern void update_controller_leds(struct isdn_l3_driver *d);
 
-#endif /* _I4B_L4_H_ */
+#endif /* !_NETISDN_I4B_L4_H_ */

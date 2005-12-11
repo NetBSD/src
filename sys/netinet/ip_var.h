@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.56.2.6 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.56.2.7 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -178,8 +178,6 @@ struct ipflow {
 #include "opt_mbuftrace.h"
 #endif
 
-#include <sys/protosw.h>
-
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
@@ -295,4 +293,4 @@ ip_newid(void)
 
 #endif  /* _KERNEL */
 
-#endif /* _NETINET_IP_VAR_H_ */
+#endif /* !_NETINET_IP_VAR_H_ */

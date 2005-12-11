@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.6.2.9 2005/11/10 13:56:04 skrll Exp $
+#	$NetBSD: EV64260,v 1.6.2.10 2005/12/11 10:28:17 christos Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -100,7 +100,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

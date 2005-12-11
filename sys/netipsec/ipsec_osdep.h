@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.10.2.6 2005/11/10 14:11:35 skrll Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.10.2.7 2005/12/11 10:29:32 christos Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NETIPSEC_OSDEP_H
-#define NETIPSEC_OSDEP_H
+#ifndef _NETIPSEC_OSDEP_H_
+#define _NETIPSEC_OSDEP_H_
 
 #ifdef _KERNEL
 /*
@@ -116,33 +116,10 @@ read_random(void *bufp, u_int len)
 
 /*
  * 5. Fast mbuf-cluster allocation.
- * FreeBSD 4.6 introduce m_getcl(), which performs `fast' allocation
- * mbuf clusters from a cache of recently-freed clusters. (If the  cache
- * is empty, new clusters are allocated en-masse).
- *   On NetBSD, for now, implement the `cache' as an inline  function
- *using normal NetBSD mbuf/cluster allocation macros. Replace this
- * with fast-cache code, if and when NetBSD implements one.
  */
-#ifdef __NetBSD__
-static __inline struct mbuf *
-m_getcl(int how, short type, int flags)
-{
-	struct mbuf *mp;
-	if (flags & M_PKTHDR)
-		MGETHDR(mp, how, type);
-	else
-		MGET(mp, how,  type);
-	if (mp == NULL)
-		return NULL;
-
-	MCLGET(mp, how);
-	if ((mp->m_flags & M_EXT) == 0) {
-		m_free(mp);
-		mp = NULL;
-	}
-	return mp;
-}
-#endif /* __NetBSD__ */
+/*
+ * nothing.
+ */
 
 /*
  * 6. Network output macros
@@ -364,4 +341,4 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * FreeBSD uses splimp() where (for networking) NetBSD would use splnet().
  */
 #endif /* _KERNEL */
-#endif /* NETIPSEC_OSDEP_H */
+#endif /* !_NETIPSEC_OSDEP_H_ */

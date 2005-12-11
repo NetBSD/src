@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.12.22.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.12.22.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NETNS_NS_VAR_H_
+#define _NETNS_NS_VAR_H_
 
 #ifdef _KERNEL
 extern	long ns_pexseq;
@@ -108,3 +111,5 @@ void ns_rtchange (struct nspcb *);
 struct nspcb *ns_pcblookup (const struct ns_addr *, u_short, int);
 
 #endif
+
+#endif /* !_NETNS_NS_VAR_H_ */

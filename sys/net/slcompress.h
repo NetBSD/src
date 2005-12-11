@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.12.48.5 2005/03/04 16:53:00 skrll Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.12.48.6 2005/12/11 10:29:19 christos Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -166,4 +166,4 @@ int	sl_uncompress_tcp __P((u_char **, int, u_int, struct slcompress *));
 int	sl_uncompress_tcp_core __P((u_char *, int, int, u_int,
   	    struct slcompress *, u_char **, u_int *));
 
-#endif /* _NET_SLCOMPRESS_H_ */
+#endif /* !_NET_SLCOMPRESS_H_ */

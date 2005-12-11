@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.14.2.5 2005/11/10 14:06:01 skrll Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.14.2.6 2005/12/11 10:28:58 christos Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,13 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.14.2.5 2005/11/10 14:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.14.2.6 2005/12/11 10:28:58 christos Exp $");
 
 #include "rnd.h"
-#include "opencrypto.h"
 
-#if NRND == 0 || NOPENCRYPTO == 0
-#error hifn7751 requires rnd and opencrypto pseudo-devices
+#if NRND == 0
+#error hifn7751 requires rnd pseudo-devices
 #endif
 
 

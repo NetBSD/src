@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.17 2005/11/10 14:06:03 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.18 2005/12/11 10:28:58 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.734 2005/11/01 22:00:56 abs Exp
+ *	NetBSD: pcidevs,v 1.745 2005/12/10 19:03:22 jonathan Exp
  */
 
 /*
@@ -2120,6 +2120,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Bluesteel Networks",
 	},
 	{
+	    PCI_VENDOR_VMWARE,
+	    "VMware",
+	},
+	{
 	    PCI_VENDOR_AGILENT,
 	    "Agilent Technologies",
 	},
@@ -2324,7 +2328,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 571;
+const int pci_nvendors = 572;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -2589,15 +2593,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
-	    "Escalade IDE RAID",
+	    "Escalade ATA RAID Controller",
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
-	    "Escalade IDE RAID 7000/8000 series",
+	    "Escalade ATA RAID 7000/8000 series Controller",
 	},
 	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_9K,
-	    "Escalade IDE RAID 9000 series",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ATARAID_9K,
+	    "ATA RAID 9000 series Controller",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -2946,6 +2950,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 	    "8139 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
+	    "Rhine II 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
@@ -4128,6 +4136,10 @@ static const struct pci_product pci_products[] = {
 	    "Primary Rate T1 ISDN Interface",
 	},
 	{
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001,
+	    "F5D6001",
+	},
+	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
 	    "F5D6020v3 802.11b",
 	},
@@ -4220,6 +4232,22 @@ static const struct pci_product pci_products[] = {
 	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714,
+	    "BCM5714 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714S,
+	    "BCM5714S 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715,
+	    "BCM5715 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715S,
+	    "BCM5715S 1000baseX Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721,
 	    "BCM5721 10/100/1000 Ethernet",
 	},
@@ -4232,6 +4260,10 @@ static const struct pci_product pci_products[] = {
 	    "BCM5751 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752,
+	    "BCM5752 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M,
 	    "BCM5750M 10/100/1000 Ethernet",
 	},
@@ -4240,12 +4272,24 @@ static const struct pci_product pci_products[] = {
 	    "BCM5751M 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780,
+	    "BCM5780 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780S,
+	    "BCM5782S 1000baseX Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
 	    "BCM5782 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5788,
 	    "BCM5788 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5789,
+	    "BCM5789 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401_B0,
@@ -4930,6 +4974,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    "8139 Ethernet",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
+	    "Rhine II 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
@@ -6464,6 +6512,10 @@ static const struct pci_product pci_products[] = {
 	    "82801FB LPC Interface Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC,
+	    "82801FBM ICH6M LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
 	    "82801FB Serial ATA Controller",
 	},
@@ -6502,6 +6554,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_1,
 	    "82801FB/FR PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_2,
+	    "82801FB/FR PCI Express Port #2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_HDA,
@@ -8312,6 +8368,14 @@ static const struct pci_product pci_products[] = {
 	    "PDC20621 dual Ultra/133 IDE controller",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40718,
+	    "PDC40718 SATA/300 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40719,
+	    "PDC40719 SATA/300 IDE controller",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    "ISP1020",
 	},
@@ -9372,6 +9436,18 @@ static const struct pci_product pci_products[] = {
 	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111CB,
+	    "PCI7x21/7x11 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FW,
+	    "PCI7x21/7x11 IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FM,
+	    "PCI7x21/7x11 Integrated FlashMedia Controller",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,
 	    "PCI6515A Cardbus Controller",
 	},
@@ -9940,6 +10016,10 @@ static const struct pci_product pci_products[] = {
 	    "VT6306 IEEE 1394 Host Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
+	    "VT6105M (Rhine III) 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
 	    "VT82C686A SMBus Controller",
 	},
@@ -10404,6 +10484,14 @@ static const struct pci_product pci_products[] = {
 	    "82C925",
 	},
 	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
+	    "Virtual SVGA",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
+	    "Virtual SVGA II",
+	},
+	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
 	    "P9000",
 	},
@@ -10552,4 +10640,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2056;
+const int pci_nproducts = 2077;

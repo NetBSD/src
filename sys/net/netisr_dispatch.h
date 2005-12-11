@@ -1,4 +1,7 @@
-/* $NetBSD: netisr_dispatch.h,v 1.10.6.1 2005/03/04 16:52:59 skrll Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.10.6.2 2005/12/11 10:29:19 christos Exp $ */
+
+#ifndef _NET_NETISR_DISPATCH_H_
+#define _NET_NETISR_DISPATCH_H_
 
 /*
  * netisr_dispatch: This file is included by the
@@ -57,3 +60,5 @@
 #if NPPP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 	DONETISR(NETISR_PPP,pppnetisr);
 #endif
+
+#endif /* !_NET_NETISR_DISPATCH_H_ */

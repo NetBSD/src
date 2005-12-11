@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.154.2.7 2005/11/10 14:09:45 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.154.2.8 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.7 2005/11/10 14:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.8 2005/12/11 10:29:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -946,10 +946,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		memcpy(t, &tp->t_termios, sizeof(struct termios));
 		break;
 	}
-	case TIOCGETD:			/* get line discipline */
+	case TIOCGETD:			/* get line discipline (old) */
 		*(int *)data = tp->t_linesw->l_no;
 		break;
-	case TIOCGLINED:
+	case TIOCGLINED:		/* get line discipline (new) */
 		(void)strncpy((char *)data, tp->t_linesw->l_name,
 		    TTLINEDNAMELEN - 1);
 		break;
@@ -1068,24 +1068,17 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	}
-	case TIOCSETD: {		/* set line discipline */
-		int t = *(int *)data;
-
-		if (t < 0)
-			return (EINVAL);
-		if (t >= nlinesw)
-			return (ENXIO);
-		lp = linesw[t];
+	case TIOCSETD:			/* set line discipline (old) */
+		lp = ttyldisc_lookup_bynum(*(int *)data);
 		goto setldisc;
-	}
-	case TIOCSLINED: {		/* set line discipline */
+
+	case TIOCSLINED: {		/* set line discipline (new) */
 		char *name = (char *)data;
 		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
 		name[TTLINEDNAMELEN - 1] = '\0';
 		lp = ttyldisc_lookup(name);
-
  setldisc:
 		if (lp == NULL)
 			return (ENXIO);
@@ -1098,10 +1091,15 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			if (error) {
 				(void)(*tp->t_linesw->l_open)(device, tp);
 				splx(s);
+				ttyldisc_release(lp);
 				return (error);
 			}
+			ttyldisc_release(tp->t_linesw);
 			tp->t_linesw = lp;
 			splx(s);
+		} else {
+			/* Drop extra reference. */
+			ttyldisc_release(lp);
 		}
 		break;
 	}
@@ -2509,16 +2507,6 @@ ttysleep(struct tty *tp, void *chan, int pri, const char *wmesg, int timo)
 }
 
 /*
- * Initialise the global tty list.
- */
-void
-tty_init(void)
-{
-
-	ttyldisc_init();
-}
-
-/*
  * Attach a tty to the tty list.
  *
  * This should be called ONLY once per real tty (including pty's).
@@ -2575,7 +2563,7 @@ ttymalloc(void)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
-	tp->t_linesw = linesw[0];
+	tp->t_linesw = ttyldisc_default();
 	return (tp);
 }
 
@@ -2590,6 +2578,7 @@ ttyfree(struct tty *tp)
 {
 
 	callout_stop(&tp->t_rstrt_ch);
+	ttyldisc_release(tp->t_linesw);
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);

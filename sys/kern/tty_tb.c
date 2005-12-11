@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.28.12.5 2005/11/10 14:09:45 skrll Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.28.12.6 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.5 2005/11/10 14:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.6 2005/12/11 10:29:12 christos Exp $");
 
 #include "tb.h"
 
@@ -109,24 +109,35 @@ struct tb {
 
 
 int	tbopen(dev_t, struct tty *);
-void	tbclose(struct tty *);
-int	tbread(struct tty *, struct uio *);
-void	tbinput(int, struct tty *);
-int	tbtioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+int	tbclose(struct tty *, int);
+int	tbread(struct tty *, struct uio *, int);
+int	tbinput(int, struct tty *);
+int	tbtioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 void	tbattach(int);
+
+static struct linesw tablet_disc = {
+	.l_name = "tablet",
+	.l_open = tbopen,
+	.l_close = tbclose,
+	.l_read = tbread,
+	.l_write = ttyerrio,
+	.l_ioctl = tbtioctl,
+	.l_rint = tbinput,
+	.l_start = ttstart,
+	.l_modem = nullmodem,
+	.l_poll = ttyerrpoll
+};
 
 /*
  * Open as tablet discipline; called on discipline change.
  */
 /*ARGSUSED*/
 int
-tbopen(dev, tp)
-	dev_t dev;
-	struct tty *tp;
+tbopen(dev_t dev, struct tty *tp)
 {
 	struct tb *tbp;
 
-	if (tp->t_linesw->l_no == TABLDISC)
+	if (tp->t_linesw == &tablet_disc)
 		return (ENODEV);
 	ttywflush(tp);
 	for (tbp = tb; tbp < &tb[NTB]; tbp++)
@@ -146,13 +157,12 @@ tbopen(dev, tp)
 /*
  * Line discipline change or last device close.
  */
-void
-tbclose(tp)
-	struct tty *tp;
+int
+tbclose(struct tty *tp, int flag)
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc);
+	return (tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curlwp));
 }
 
 /*
@@ -160,9 +170,7 @@ tbclose(tp)
  * Characters have been buffered in a buffer and decoded.
  */
 int
-tbread(tp, uio)
-	struct tty *tp;
-	struct uio *uio;
+tbread(struct tty *tp, struct uio *uio, int flag)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
@@ -184,16 +192,14 @@ tbread(tp, uio)
  * This routine could be expanded in-line in the receiver
  * interrupt routine to make it run as fast as possible.
  */
-void
-tbinput(c, tp)
-	int c;
-	struct tty *tp;
+int
+tbinput(int c, struct tty *tp)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 
 	if (tc->tbc_recsize == 0 || tc->tbc_decode == 0)	/* paranoid? */
-		return;
+		return (0);
 	/*
 	 * Locate sync bit/byte or reset input buffer.
 	 */
@@ -207,16 +213,15 @@ tbinput(c, tp)
 	 */
 	if (++tbp->tbinbuf == tc->tbc_recsize)
 		(*tc->tbc_decode)(tc, tbp->cbuf, &tbp->tbpos);
+
+	return (0);
 }
 
 /*
  * Decode GTCO 8 byte format (high res, tilt, and pressure).
  */
 static void
-gtcodecode(tc, cp, u)
-	const struct tbconf *tc;
-	char *cp;
-	union tbpos *u;
+gtcodecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct gtcopos *pos = &u->gtcopos;
 	pos->pressure = *cp >> 2;
@@ -236,10 +241,7 @@ gtcodecode(tc, cp, u)
  * Decode old Hitachi 5 byte format (low res).
  */
 static void
-tbolddecode(tc, cp, u)
-	const struct tbconf *tc;
-	char *cp;
-	union tbpos *u;
+tbolddecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
 	char byte;
@@ -262,10 +264,7 @@ tbolddecode(tc, cp, u)
  * Decode new Hitach 5-byte format (low res).
  */
 static void
-tblresdecode(tc, cp, u)
-	const struct tbconf *tc;
-	char *cp;
-	union tbpos *u;
+tblresdecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
 
@@ -284,10 +283,7 @@ tblresdecode(tc, cp, u)
  * Decode new Hitach 6-byte format (high res).
  */
 static void
-tbhresdecode(tc, cp, u)
-	const struct tbconf *tc;
-	char *cp;
-	union tbpos *u;
+tbhresdecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
 	char byte;
@@ -309,10 +305,7 @@ tbhresdecode(tc, cp, u)
  * Polhemus decode.
  */
 static void
-poldecode(tc, cp, u)
-	const struct tbconf *tc;
-	char *cp;
-	union tbpos *u;
+poldecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct polpos *pos = &u->polpos;
 
@@ -329,12 +322,7 @@ poldecode(tc, cp, u)
 
 /*ARGSUSED*/
 int
-tbtioctl(tp, cmd, data, flag, p)
-	struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+tbtioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 
@@ -398,8 +386,9 @@ tbtioctl(tp, cmd, data, flag, p)
 }
 
 void
-tbattach(dummy)
-       int dummy;
+tbattach(int dummy)
 {
-    /* stub to handle side effect of new config */
+
+	if (ttyldisc_attach(&tablet_disc) != 0)
+		panic("tbattach");
 }

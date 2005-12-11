@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.1.2.4 2005/03/04 16:41:33 skrll Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.1.2.5 2005/12/11 10:28:51 christos Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -195,7 +195,7 @@
 #define RTW_INTR_TX	(RTW_INTR_TLPDER|RTW_INTR_TLPDOK|RTW_INTR_THPDER|\
 			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK|\
 			 RTW_INTR_TBDER|RTW_INTR_TBDOK)
-#define RTW_INTR_BEACON	(RTW_INTR_BCNINT)
+#define RTW_INTR_BEACON	(RTW_INTR_BCNINT|RTW_INTR_TBDER|RTW_INTR_TBDOK)
 #define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW|RTW_INTR_RXFOVW|RTW_INTR_RDU)
 
 #define	RTW_TCR		0x40	/* Transmit Configuration Register, 32b */
@@ -779,6 +779,8 @@
 /* Start all queues. */
 #define	RTW_TPPOLL_ALL	(RTW_TPPOLL_BQ | RTW_TPPOLL_HPQ | \
 			 RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ)
+/* Check all queues' activity. */
+#define	RTW_TPPOLL_ACTIVE	RTW_TPPOLL_ALL
 /* Stop all queues. */
 #define	RTW_TPPOLL_SALL	(RTW_TPPOLL_SBQ | RTW_TPPOLL_SHPQ | \
 			 RTW_TPPOLL_SNPQ | RTW_TPPOLL_SLPQ)

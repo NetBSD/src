@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.2.4.3 2005/11/10 14:06:01 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.2.4.4 2005/12/11 10:28:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -83,6 +83,8 @@ struct iwi_tx_data {
 struct iwi_tx_ring {
 	bus_dmamap_t		desc_map;
 	bus_dma_segment_t	desc_seg;
+	bus_addr_t		csr_ridx;
+	bus_addr_t		csr_widx;
 	struct iwi_tx_desc	*desc;
 	struct iwi_tx_data	*data;
 	int			count;
@@ -102,12 +104,21 @@ struct iwi_rx_ring {
 	int			cur;
 };
 
+struct iwi_node {
+	struct ieee80211_node	in_node;
+	int			in_station;
+#define IWI_MAX_IBSSNODE	32
+};
+
 struct iwi_softc {
 	struct device		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	void			(*sc_node_free)(struct ieee80211_node *);
+
+	uint32_t		sc_unr;
 
 	struct iwi_firmware	fw;
 	uint32_t		flags;
@@ -119,7 +130,7 @@ struct iwi_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct iwi_cmd_ring	cmdq;
-	struct iwi_tx_ring	txq;
+	struct iwi_tx_ring	txq[WME_NUM_AC];
 	struct iwi_rx_ring	rxq;
 
 	struct resource		*irq;
@@ -137,6 +148,7 @@ struct iwi_softc {
 	int			antenna;
 	int			dwelltime;
 	int			bluetooth;
+	int			nictype;
 
 	int			sc_tx_timer;
 

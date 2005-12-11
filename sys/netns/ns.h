@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.16.10.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns.h,v 1.16.10.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)ns.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_NS_H_
+#define _NETNS_NS_H_
 
 /*
  * Constants and Structures defined by the Xerox Network Software
@@ -148,3 +151,5 @@ extern char *ns_ntoa __P((struct ns_addr));
 __END_DECLS
 
 #endif
+
+#endif /* !_NETNS_NS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.17.2.3 2005/11/12 17:00:57 skrll Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.17.2.4 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.17.2.3 2005/11/12 17:00:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.17.2.4 2005/12/11 10:29:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -548,7 +548,8 @@ tmpfs_read(void *v)
 		if (len == 0)
 			break;
 
-		win = ubc_alloc(uobj, uio->uio_offset, &len, UBC_READ);
+		win = ubc_alloc(uobj, uio->uio_offset, &len, UVM_ADV_NORMAL,
+		    UBC_READ);
 		error = uiomove(win, len, uio);
 		ubc_release(win, flags);
 	}
@@ -611,7 +612,8 @@ tmpfs_write(void *v)
 		if (len == 0)
 			break;
 
-		win = ubc_alloc(uobj, uio->uio_offset, &len, UBC_WRITE);
+		win = ubc_alloc(uobj, uio->uio_offset, &len, UVM_ADV_NORMAL,
+		    UBC_WRITE);
 		error = uiomove(win, len, uio);
 		ubc_release(win, flags);
 	}

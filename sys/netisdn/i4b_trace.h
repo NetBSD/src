@@ -27,7 +27,7 @@
  *	i4b_trace.h - header file for trace data read device
  *	----------------------------------------------------
  *
- *	$Id: i4b_trace.h,v 1.2.22.4 2005/03/04 16:53:46 skrll Exp $
+ *	$Id: i4b_trace.h,v 1.2.22.5 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -35,8 +35,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-#ifndef _I4B_TRACE_H_
-#define _I4B_TRACE_H_
+#ifndef _NETISDN_I4B_TRACE_H_
+#define _NETISDN_I4B_TRACE_H_
 
 /*---------------------------------------------------------------------------*
  *	structure of the header at the beginning of every trace mbuf
@@ -89,4 +89,4 @@ typedef struct {
 #define	I4B_TRC_SETA	_IOW('T', 1, i4b_trace_setupa_t) /* set analyze mode */
 #define	I4B_TRC_RESETA	_IOW('T', 2, int)	/* reset analyze mode	*/
 
-#endif /* _I4B_TRACE_H_ */
+#endif /* !_NETISDN_I4B_TRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.19.6.5 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.19.6.6 2005/12/11 10:29:05 christos Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.19.6.5 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.19.6.6 2005/12/11 10:29:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -534,7 +534,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_RX]);
 		goto done;
 	}
 
@@ -624,7 +624,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->sc_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_TX]);
 		splx(s);
 		return;
 	}
@@ -840,7 +840,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_intr_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_RX]);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2003/02/12 08:19:02 martin Exp $
+# $NetBSD: GENERIC,v 1.50.2.1 2005/12/11 10:28:37 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 	"GENERIC-$Revision: 1.50 $"
+#ident 	"GENERIC-$Revision: 1.50.2.1 $"
 
 include 	"arch/sparc64/conf/std.sparc64-64"
 

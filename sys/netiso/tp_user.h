@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_user.h,v 1.6.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_user.h,v 1.6.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,10 +61,10 @@ SOFTWARE.
  * These are the values a real-live user ;-) needs.
  */
 
-#include <sys/types.h>
-
 #ifndef _NETISO_TP_USER_H_
 #define _NETISO_TP_USER_H_
+
+#include <sys/types.h>
 
 struct tp_conn_param {
 	/* PER CONNECTION parameters */
@@ -158,4 +158,4 @@ struct tp_disc_reason {
  */
 
 
-#endif				/* _NETISO_TP_USER_H_ */
+#endif /* !_NETISO_TP_USER_H_ */

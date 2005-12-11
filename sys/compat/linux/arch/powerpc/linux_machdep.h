@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5.6.1 2005/03/04 16:40:02 skrll Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.6.2 2005/12/11 10:28:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _POWERPC_LINUX_MACHDEP_H
 #define _POWERPC_LINUX_MACHDEP_H
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 
 /*
  * From Linux's include/asm-ppc/ptrace.h

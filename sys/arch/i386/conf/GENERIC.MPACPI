@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.3.2.17 2005/11/10 13:56:32 skrll Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.3.2.18 2005/12/11 10:28:18 christos Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3.2.17 $"
+#ident 		"GENERIC-$Revision: 1.3.2.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -159,7 +159,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -320,6 +320,9 @@ wss* 		at acpi?		# NeoMagic 256AV in wss mode
 # Sony Vaio jog dial
 #spic* 		at acpi?		# Sony Programmable I/O Controller
 #wsmouse* 	at spic?
+
+# Sony LCD brightness etc.
+#sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 #vald* at acpi?
@@ -1174,7 +1177,8 @@ include	"arch/i386/conf/GENERIC.local"
 
 # Pseudo-Devices
 
-pseudo-device 	crypto		# opencrypto framework
+pseudo-device 	crypto		# /dev/crypto device
+pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

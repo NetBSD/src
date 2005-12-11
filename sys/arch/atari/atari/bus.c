@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35.2.7 2005/04/01 14:27:08 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.35.2.8 2005/12/11 10:28:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35.2.7 2005/04/01 14:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35.2.8 2005/12/11 10:28:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ bus_space_handle_t	*bshp;
 		return (0);
 	}
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -719,12 +720,14 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr, offset;
 	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	offset = t->_displacement;
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);

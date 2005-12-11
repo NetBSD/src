@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.37.2.6 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.37.2.7 2005/12/11 10:29:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.6 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.7 2005/12/11 10:29:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,8 @@ struct	fileops socketops = {
 
 /* ARGSUSED */
 int
-soo_read(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+soo_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_receive)(so, (struct mbuf **)0,
@@ -70,12 +66,8 @@ soo_read(fp, offset, uio, cred, flags)
 
 /* ARGSUSED */
 int
-soo_write(fp, offset, uio, cred, flags)
-	struct file *fp;
-	off_t *offset;
-	struct uio *uio;
-	struct ucred *cred;
-	int flags;
+soo_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+    int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_send)(so, (struct mbuf *)0,
@@ -83,11 +75,7 @@ soo_write(fp, offset, uio, cred, flags)
 }
 
 int
-soo_ioctl(fp, cmd, data, l)
-	struct file *fp;
-	u_long cmd;
-	void *data;
-	struct lwp *l;
+soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	struct proc *p = l->l_proc;
@@ -163,11 +151,7 @@ soo_ioctl(fp, cmd, data, l)
 }
 
 int
-soo_fcntl(fp, cmd, data, l)
-	struct file *fp;
-	u_int cmd;
-	void *data;
-	struct lwp *l;
+soo_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
 	if (cmd == F_SETFL)
 		return (0);
@@ -176,10 +160,7 @@ soo_fcntl(fp, cmd, data, l)
 }
 
 int
-soo_poll(fp, events, l)
-	struct file *fp;
-	int events;
-	struct lwp *l;
+soo_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	int revents = 0;
@@ -214,10 +195,7 @@ soo_poll(fp, events, l)
 }
 
 int
-soo_stat(fp, ub, l)
-	struct file *fp;
-	struct stat *ub;
-	struct lwp *l;
+soo_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 
@@ -229,9 +207,7 @@ soo_stat(fp, ub, l)
 
 /* ARGSUSED */
 int
-soo_close(fp, l)
-	struct file *fp;
-	struct lwp *l;
+soo_close(struct file *fp, struct lwp *l)
 {
 	int error = 0;
 

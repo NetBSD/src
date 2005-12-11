@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.11.18.3 2004/09/21 13:37:13 skrll Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.11.18.4 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -97,4 +97,4 @@ const char * const tcpstates[] = {
 extern const char * const tcpstates[];
 #endif
 
-#endif /* _NETINET_TCP_FSM_H_ */
+#endif /* !_NETINET_TCP_FSM_H_ */

@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.69.2.13 2005/11/10 13:59:17 skrll Exp $
+# 	$NetBSD: GENERIC32,v 1.69.2.14 2005/12/11 10:28:37 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69.2.13 $"
+#ident 		"GENERIC-$Revision: 1.69.2.14 $"
 
 maxusers	64
 
@@ -169,7 +169,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -490,14 +490,16 @@ tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Lucent/Intersil WaveLAN/IEEE
+wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
-# XXX: only nsphy "tested"
+# XXX: only nsphy and igphy "tested"
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
@@ -804,7 +806,8 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 
 ### Other pseudo-devices
 
-pseudo-device 	crypto			# opencrypto framework
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
@@ -822,3 +825,21 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5
+

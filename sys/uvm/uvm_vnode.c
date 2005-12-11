@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.62.2.6 2005/11/10 14:12:40 skrll Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.62.2.7 2005/12/11 10:29:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,10 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.6 2005/11/10 14:12:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.7 2005/12/11 10:29:42 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -72,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.6 2005/11/10 14:12:40 skrll Exp
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_readahead.h>
 
 /*
  * functions
@@ -294,11 +296,50 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
+#if defined(READAHEAD_STATS)
+	int orignpages = *npagesp;
+#endif /* defined(READAHEAD_STATS) */
+
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
+
+	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
+		simple_unlock(&vp->v_interlock);
+		vn_ra_allocctx(vp);
+		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
+		    *npagesp << PAGE_SHIFT);
+		simple_lock(&vp->v_interlock);
+	}
+
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
+
+#if defined(READAHEAD_STATS)
+	if (((flags & PGO_LOCKED) != 0 && *npagesp > 0) ||
+	    ((flags & (PGO_LOCKED|PGO_SYNCIO)) == PGO_SYNCIO && error == 0)) {
+		int i;
+
+		if ((flags & PGO_LOCKED) == 0) {
+			simple_lock(&uobj->vmobjlock);
+		}
+		for (i = 0; i < orignpages; i++) {
+			struct vm_page *pg = pps[i];
+
+			if (pg == NULL || pg == PGO_DONTCARE) {
+				continue;
+			}
+			if ((pg->flags & PG_SPECULATIVE) != 0) {
+				pg->flags &= ~PG_SPECULATIVE;
+				uvm_ra_hit.ev_count++;
+			}
+		}
+		if ((flags & PGO_LOCKED) == 0) {
+			simple_unlock(&uobj->vmobjlock);
+		}
+	}
+#endif /* defined(READAHEAD_STATS) */
+
 	return error;
 }
 
@@ -477,7 +518,8 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	while (len) {
 		vsize_t bytelen = len;
 
-		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UBC_WRITE);
+		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UVM_ADV_NORMAL,
+		    UBC_WRITE);
 		memset(win, 0, bytelen);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);

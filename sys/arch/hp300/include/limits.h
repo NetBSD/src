@@ -1,9 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 1998/01/09 22:23:47 perry Exp $	*/
-
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+/*	$NetBSD: limits.h,v 1.8.48.1 2005/12/11 10:28:17 christos Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/limits.h>
-
-#endif /* _MACHINE_LIMITS_H_ */

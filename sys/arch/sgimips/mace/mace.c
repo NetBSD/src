@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.4.2.5 2005/11/10 13:58:37 skrll Exp $	*/
+/*	$NetBSD: mace.c,v 1.4.2.6 2005/12/11 10:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.4.2.5 2005/11/10 13:58:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.4.2.6 2005/12/11 10:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 		}
 
 	crime_intr_mask(intr);
-	aprint_normal("mace: established interrupt %d (level %x)\n",
+	aprint_debug("mace: established interrupt %d (level %x)\n",
 	    intr, level);
 	return (void *)&maceintrtab[i];
 }
@@ -324,7 +324,7 @@ mace_intr_disestablish(void *cookie)
 			break;
 	if (i == MACE_NINTR)
 		crime_intr_unmask(intr);
-	aprint_normal("mace: disestablished interrupt %d (level %x)\n",
+	aprint_debug("mace: disestablished interrupt %d (level %x)\n",
 	    intr, level);
 }
 

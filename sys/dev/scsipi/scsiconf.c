@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.207.2.8 2005/11/10 14:07:47 skrll Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.207.2.9 2005/12/11 10:29:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.8 2005/11/10 14:07:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.9 2005/12/11 10:29:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,7 +904,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 				    ~(PERIPH_CAP_SYNC |
 				      PERIPH_CAP_WIDE16 |
 				      PERIPH_CAP_WIDE32);
-				/* FALLTHOUGH */
+				/* FALLTHROUGH */
 			case SID_CLOCKING_SD_DT:
 				periph->periph_cap |= PERIPH_CAP_DT;
 				break;

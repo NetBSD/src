@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_pcb.h,v 1.7.64.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: cons_pcb.h,v 1.7.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_CONS_PCB_H_
+#define _NETISO_CONS_PCB_H_
 
 /*
  * protocol control block for the connection oriented network service
@@ -195,3 +198,5 @@ struct e_clear_data {
 #ifdef _KERNEL
 #define IncStat(XYZ) cons_stat.XYZ++
 #endif				/* _KERNEL */
+
+#endif /* !_NETISO_CONS_PCB_H_ */

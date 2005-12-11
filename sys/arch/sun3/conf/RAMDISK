@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.35.6.6 2005/11/10 13:59:38 skrll Exp $
+#	$NetBSD: RAMDISK,v 1.35.6.7 2005/12/11 10:28:38 christos Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -28,7 +28,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 # May need these to get miniroot image.
 file-system	NFS		# Sun NFS client support
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #file-system	PTYFS		# /dev/pts/N support
 
 # Networking options

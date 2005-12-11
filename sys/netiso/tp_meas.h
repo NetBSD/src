@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.h,v 1.6.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_meas.h,v 1.6.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,10 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_TP_MEAS_H_
+#define _NETISO_TP_MEAS_H_
+
 #ifdef TP_PERF_MEAS
 #define tpmeas(a, b, t, c, d, e) \
 	Tpmeas((u_int)(a), (u_int)(b), t, (u_int)(c), (u_int)(d), (u_int)(e))
@@ -90,3 +94,5 @@ extern struct tp_Meas tp_Meas[];
 #define TPtime_close		0x09
 
 #endif				/* TP_PERF_MEAS */
+
+#endif /* !_NETISO_TP_MEAS_H_ */
