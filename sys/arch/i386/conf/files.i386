@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.273 2005/11/07 11:42:34 yamt Exp $
+#	$NetBSD: files.i386,v 1.274 2005/12/11 02:11:50 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -457,6 +457,11 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpi with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
+
+# Sony Misc (brightness etc.)
+device	sony
+attach	sony at acpi with sony_acpi
+file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpi with npx_acpi
