@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.6 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: sa.h,v 1.7 2005/12/11 20:06:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@ typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 #define SA_UPCALL_SIGEV			5
 #define SA_UPCALL_USER 			6
 #define SA_UPCALL_NUPCALLS		7
+
+#define SA_UPCALL_STRINGS "newproc", "preempted", "blocked", "unblocked", \
+    "signal", "sigev", "user"
 
 #define SA_FLAG_PREEMPT	0x0001	/* Generate upcalls on a vanilla preempt() */
 
