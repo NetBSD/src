@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fts.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_fts.c,v 1.2 2005/12/11 04:12:58 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -43,5 +43,7 @@ __warn_references(fts_read,
 __warn_references(fts_set,
     "warning: reference to compatibility fts_set();"
     " include <fts.h> for correct reference")
+
+#define	__FTS_COMPAT_TAILINGSLASH
 
 #include "gen/fts.c"
