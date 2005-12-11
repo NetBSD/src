@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.40 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: dhu.c,v 1.41 2005/12/11 23:17:10 christos Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.40 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.41 2005/12/11 23:17:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,7 @@ dhuopen(dev, flag, mode, l)
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) &&
-		   suser(p->p_ucred, &p->p_acflag) != 0)
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)
