@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts13.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat___fts13.c,v 1.2 2005/12/11 04:12:58 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -46,5 +46,7 @@ __warn_references(__fts_set13,
 
 #include <fts.h>
 #include <compat/include/fts.h>
+
+#define	__FTS_COMPAT_TAILINGSLASH
 
 #include "gen/fts.c"
