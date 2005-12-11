@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.50 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.51 2005/12/11 23:05:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.50 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.51 2005/12/11 23:05:24 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.50 2005/12/11 12:24:51 christos Exp
 #define ARC_IPMTU	1500
 #endif
 
-static struct mbuf *arc_defrag __P((struct ifnet *, struct mbuf *));
+static struct mbuf *arc_defrag(struct ifnet *, struct mbuf *);
 
 /*
  * RC1201 requires us to have this configurable. We have it only per
@@ -104,9 +104,9 @@ u_int8_t  arcbroadcastaddr = 0;
 #define senderr(e) { error = (e); goto bad;}
 #define SIN(s) ((struct sockaddr_in *)s)
 
-static	int arc_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void arc_input __P((struct ifnet *, struct mbuf *));
+static	int arc_output(struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *);
+static	void arc_input(struct ifnet *, struct mbuf *);
 
 /*
  * ARCnet output routine.
@@ -114,11 +114,8 @@ static	void arc_input __P((struct ifnet *, struct mbuf *));
  * Assumes that ifp is actually pointer to arccom structure.
  */
 static int
-arc_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	struct mbuf		*m, *m1, *mcopy;
 	struct rtentry		*rt;
@@ -362,10 +359,8 @@ bad:
  * NULL. frees imcoming mbuf as necessary.
  */
 
-__inline struct mbuf *
-arc_defrag(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+static struct mbuf *
+arc_defrag(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arc_header *ah, *ah1;
 	struct arccom *ac;
@@ -513,8 +508,7 @@ outofseq:
  * Easiest is to assume that everybody else uses that, too.
  */
 int
-arc_isphds(type)
-	u_int8_t type;
+arc_isphds(uint8_t type)
 {
 	return (type != ARCTYPE_IP_OLD &&
 		type != ARCTYPE_ARP_OLD &&
@@ -527,9 +521,7 @@ arc_isphds(type)
  * the ARCnet header.
  */
 static void
-arc_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+arc_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arc_header *ah;
 	struct ifqueue *inq;
@@ -613,8 +605,7 @@ arc_input(ifp, m)
  * Convert Arcnet address to printable (loggable) representation.
  */
 char *
-arc_sprintf(ap)
-	u_int8_t *ap;
+arc_sprintf(uint8_t *ap)
 {
 	static char arcbuf[3];
 	char *cp = arcbuf;
@@ -629,9 +620,7 @@ arc_sprintf(ap)
  * Register (new) link level address.
  */
 void
-arc_storelladdr(ifp, lla)
-	struct ifnet *ifp;
-	u_int8_t lla;
+arc_storelladdr(struct ifnet *ifp, uint8_t lla)
 {
 
 	*(LLADDR(ifp->if_sadl)) = lla;
@@ -642,9 +631,7 @@ arc_storelladdr(ifp, lla)
  * Perform common duties while attaching to interface list
  */
 void
-arc_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	u_int8_t lla;
+arc_ifattach(struct ifnet *ifp, uint8_t lla)
 {
 	struct arccom *ac;
 

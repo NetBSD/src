@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.57 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.58 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.57 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.58 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -204,9 +204,9 @@ extern struct ifqueue pkintrq;
 
 #define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
 
-static	int fddi_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void fddi_input __P((struct ifnet *, struct mbuf *));
+static	int fddi_output(struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *);
+static	void fddi_input(struct ifnet *, struct mbuf *);
 
 /*
  * FDDI output routine.
@@ -214,11 +214,8 @@ static	void fddi_input __P((struct ifnet *, struct mbuf *));
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-fddi_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+fddi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t etype;
 	int error = 0, hdrcmplt = 0;
@@ -570,9 +567,7 @@ bad:
  * the fddi header.
  */
 static void
-fddi_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+fddi_input(struct ifnet *ifp, struct mbuf *m)
 {
 #if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	struct ifqueue *inq;
@@ -813,9 +808,7 @@ fddi_input(ifp, m)
  * Perform common duties while attaching to interface list
  */
 void
-fddi_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	caddr_t lla;
+fddi_ifattach(struct ifnet *ifp, caddr_t lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
