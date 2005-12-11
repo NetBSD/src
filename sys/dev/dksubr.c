@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.19 2005/12/11 12:20:53 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.20 2005/12/11 23:42:33 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.19 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.20 2005/12/11 23:42:33 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    {
 	    	struct dkwedge_list *dkwl = (void *)data;
 
-		return (dkwedge_list(&dksc->sc_dkdev, dkwl, p));
+		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
 	    }
 
 	default:
