@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.15 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: smb.h,v 1.16 2005/12/11 00:06:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -40,6 +40,10 @@
 
 #ifndef _NETSMB_SMB_H_
 #define _NETSMB_SMB_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 #define	SMB_TCP_PORT	139
 /*
@@ -526,4 +530,4 @@ enum smb_dialects {
 
 typedef u_int16_t	smbfh;
 
-#endif /* _NETSMB_SMB_H_ */
+#endif /* !_NETSMB_SMB_H_ */
