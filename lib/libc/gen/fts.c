@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.28 2005/11/18 16:48:48 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.29 2005/12/11 04:12:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.28 2005/11/18 16:48:48 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.29 2005/12/11 04:12:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -236,7 +236,7 @@ int
 fts_close(FTS *sp)
 {
 	FTSENT *freep, *p;
-	int saved_errno;
+	int saved_errno = 0;
 
 	_DIAGASSERT(sp != NULL);
 
@@ -265,21 +265,22 @@ fts_close(FTS *sp)
 
 	/* Return to original directory, save errno if necessary. */
 	if (!ISSET(FTS_NOCHDIR)) {
-		saved_errno = fchdir(sp->fts_rfd) ? errno : 0;
+		if (fchdir(sp->fts_rfd) == -1)
+			saved_errno = errno;
 		(void)close(sp->fts_rfd);
-		/* Set errno and return. */
-		if (saved_errno) {
-			errno = saved_errno;
-			return (-1);
-		}
 	}
 
 	/* Free up the stream pointer. */
 	free(sp);
-	/* ISSET() is illegal after this, since the macro touches sp */
+	if (saved_errno) {
+		errno = saved_errno;
+		return -1;
+	}
 
-	return (0);
+	return 0;
 }
+
+#if !defined(__FTS_COMPAT_TAILINGSLASH)
 
 /*
  * Special case of "/" at the end of the path so that slashes aren't
@@ -288,6 +289,21 @@ fts_close(FTS *sp)
 #define	NAPPEND(p)							\
 	(p->fts_path[p->fts_pathlen - 1] == '/'				\
 	    ? p->fts_pathlen - 1 : p->fts_pathlen)
+
+#else /* !defined(__FTS_COMPAT_TAILINGSLASH) */
+
+/*
+ * compatibility with the old behaviour.
+ *
+ * Special case a root of "/" so that slashes aren't appended which would
+ * cause paths to be written as "//foo".
+ */
+
+#define	NAPPEND(p)							\
+	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&	\
+	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
+
+#endif /* !defined(__FTS_COMPAT_TAILINGSLASH) */
 
 FTSENT *
 fts_read(FTS *sp)
