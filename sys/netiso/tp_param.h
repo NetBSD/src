@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.15 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.16 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -353,4 +353,4 @@ extern int      tp_rttadd, tp_rttdiv;
 #endif /* tp_NSTATES  */
 #endif /* _KERNEL */
 
-#endif /* _NETISO_TP_PARAM_H_ */
+#endif /* !_NETISO_TP_PARAM_H_ */

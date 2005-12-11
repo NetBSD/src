@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_stat.h,v 1.8 2003/08/07 16:33:41 agc Exp $	*/
+/*	$NetBSD: tp_stat.h,v 1.9 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -279,4 +279,4 @@ struct tp_pmeas {
 
 #define  DOPERF(tpcb)  (tpcb->tp_perf_on && tpcb->tp_p_meas)
 
-#endif				/* _NETISO_TP_STAT_H_ */
+#endif /* !_NETISO_TP_STAT_H_ */

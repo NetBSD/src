@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.15 2004/04/22 01:01:41 matt Exp $	*/
+/*	$NetBSD: iso.h,v 1.16 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -198,4 +198,4 @@ __END_DECLS
 
 #endif /* _KERNEL */
 
-#endif /* _NETISO_ISO_H_ */
+#endif /* !_NETISO_ISO_H_ */

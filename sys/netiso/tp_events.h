@@ -1,4 +1,7 @@
-/*	$NetBSD: tp_events.h,v 1.5 1996/02/13 22:10:58 christos Exp $	*/
+/*	$NetBSD: tp_events.h,v 1.6 2005/12/11 00:01:36 elad Exp $	*/
+
+#ifndef _NETISO_TP_EVENTS_H_
+#define _NETISO_TP_EVENTS_H_
 
 struct tp_event {
 	int             ev_number;
@@ -98,3 +101,5 @@ struct tp_event {
 };				/* end struct event */
 
 #define tp_NEVENTS 0x19
+
+#endif /* !_NETISO_TP_EVENTS_H_ */

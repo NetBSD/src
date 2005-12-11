@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_tpdu.h,v 1.10 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: tp_tpdu.h,v 1.11 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -275,4 +275,4 @@ struct tpdu {
 	union tpdu_fixed_rest _tpdufr;
 };
 
-#endif /* _NETISO_TP_TPDU_H_ */
+#endif /* !_NETISO_TP_TPDU_H_ */
