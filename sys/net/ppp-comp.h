@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.12 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.13 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -66,32 +66,32 @@ struct compressor {
 	int	compress_proto;	/* CCP compression protocol number */
 
 	/* Allocate space for a compressor (transmit side) */
-	void	*(*comp_alloc) __P((u_char *, int));
+	void	*(*comp_alloc)(u_char *, int);
 	/* Free space used by a compressor */
-	void	(*comp_free) __P((void *));
+	void	(*comp_free)(void *);
 	/* Initialize a compressor */
-	int	(*comp_init) __P((void *, u_char *, int, int, int, int));
+	int	(*comp_init)(void *, u_char *, int, int, int, int);
 	/* Reset a compressor */
-	void	(*comp_reset) __P((void *));
+	void	(*comp_reset)(void *);
 	/* Compress a packet */
-	int	(*compress) __P((void *, PACKETPTR *, PACKETPTR, int, int));
+	int	(*compress)(void *, PACKETPTR *, PACKETPTR, int, int);
 	/* Return compression statistics */
-	void	(*comp_stat) __P((void *, struct compstat *));
+	void	(*comp_stat)(void *, struct compstat *);
 
 	/* Allocate space for a decompressor (receive side) */
-	void	*(*decomp_alloc) __P((u_char *, int));
+	void	*(*decomp_alloc)(u_char *, int);
 	/* Free space used by a decompressor */
-	void	(*decomp_free) __P((void *));
+	void	(*decomp_free)(void *);
 	/* Initialize a decompressor */
-	int	(*decomp_init) __P((void *, u_char *, int, int, int, int, int));
+	int	(*decomp_init)(void *, u_char *, int, int, int, int, int);
 	/* Reset a decompressor */
-	void	(*decomp_reset) __P((void *));
+	void	(*decomp_reset)(void *);
 	/* Decompress a packet. */
-	int	(*decompress) __P((void *, PACKETPTR, PACKETPTR *));
+	int	(*decompress)(void *, PACKETPTR, PACKETPTR *);
 	/* Update state for an incompressible packet received */
-	void	(*incomp) __P((void *, PACKETPTR));
+	void	(*incomp)(void *, PACKETPTR);
 	/* Return decompression statistics */
-	void	(*decomp_stat) __P((void *, struct compstat *));
+	void	(*decomp_stat)(void *, struct compstat *);
 };
 #endif /* PACKETPTR */
 

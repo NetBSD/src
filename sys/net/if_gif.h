@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.12 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.13 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -79,15 +79,15 @@ struct gif_softc {
 #define	GIF_MTU_MAX	(8192)	/* Maximum MTU */
 
 /* Prototypes */
-void gifattach0 __P((struct gif_softc *));
-void gif_input __P((struct mbuf *, int, struct ifnet *));
-int gif_output __P((struct ifnet *, struct mbuf *,
-		    struct sockaddr *, struct rtentry *));
-int gif_ioctl __P((struct ifnet *, u_long, caddr_t));
-int gif_set_tunnel __P((struct ifnet *, struct sockaddr *, struct sockaddr *));
-void gif_delete_tunnel __P((struct ifnet *));
+void	gifattach0(struct gif_softc *);
+void	gif_input(struct mbuf *, int, struct ifnet *);
+int	gif_output(struct ifnet *, struct mbuf *,
+		   struct sockaddr *, struct rtentry *);
+int	gif_ioctl(struct ifnet *, u_long, caddr_t);
+int	gif_set_tunnel(struct ifnet *, struct sockaddr *, struct sockaddr *);
+void	gif_delete_tunnel(struct ifnet *);
 #ifdef GIF_ENCAPCHECK
-int gif_encapcheck __P((struct mbuf *, int, int, void *));
+int	gif_encapcheck(struct mbuf *, int, int, void *);
 #endif
 
 #endif /* !_NET_IF_GIF_H_ */

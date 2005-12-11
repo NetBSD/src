@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.15 2005/12/10 23:21:38 elad Exp $ */
+/*	$NetBSD: if_gre.h,v 1.16 2005/12/11 23:05:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,9 +151,6 @@ extern int ip_gre_ttl;
 LIST_HEAD(gre_softc_head, gre_softc);
 extern struct gre_softc_head gre_softc_list;
 
-int	gre_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *));
 u_int16_t gre_in_cksum(u_short *, u_int);
 #endif /* _KERNEL */
 

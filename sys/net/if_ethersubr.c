@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.127 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.128 2005/12/11 23:05:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.127 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.128 2005/12/11 23:05:24 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -196,9 +196,9 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 
 #define SIN(x) ((struct sockaddr_in *)x)
 
-static	int ether_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void ether_input __P((struct ifnet *, struct mbuf *));
+static	int ether_output(struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *);
+static	void ether_input(struct ifnet *, struct mbuf *);
 
 /*
  * Ethernet output routine.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.22 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.23 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -172,6 +172,6 @@ struct ppp_rawin {
 #endif
 
 #if defined(_KERNEL) || defined(KERNEL)
-void pppattach __P((void));
+void	pppattach(void);
 #endif
 #endif /* !_NET_IF_PPP_H_ */

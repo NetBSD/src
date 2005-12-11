@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.77 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.77 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -69,35 +69,36 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.77 2005/12/11 12:24:51 christos Exp $")
 int	tundebug = 0;
 
 extern int ifqmaxlen;
-void	tunattach __P((int));
-LIST_HEAD(, tun_softc) tun_softc_list;
-LIST_HEAD(, tun_softc) tunz_softc_list;
+void	tunattach(int);
+
+static LIST_HEAD(, tun_softc) tun_softc_list;
+static LIST_HEAD(, tun_softc) tunz_softc_list;
 static struct simplelock tun_softc_lock;
 
-int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		       struct rtentry *rt));
-int	tun_clone_create __P((struct if_clone *, int));
-int	tun_clone_destroy __P((struct ifnet *));
+static int	tun_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		       struct rtentry *rt);
+static int	tun_clone_create(struct if_clone *, int);
+static int	tun_clone_destroy(struct ifnet *);
 
-struct if_clone tun_cloner =
+static struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
-static void tunattach0 __P((struct tun_softc *));
-static void tuninit __P((struct tun_softc *));
+static void tunattach0(struct tun_softc *);
+static void tuninit(struct tun_softc *);
 #ifdef ALTQ
-static void tunstart __P((struct ifnet *));
+static void tunstart(struct ifnet *);
 #endif
-static struct tun_softc *tun_find_unit __P((dev_t));
-static struct tun_softc *tun_find_zunit __P((int));
+static struct tun_softc *tun_find_unit(dev_t);
+static struct tun_softc *tun_find_zunit(int);
 
-dev_type_open(tunopen);
-dev_type_close(tunclose);
-dev_type_read(tunread);
-dev_type_write(tunwrite);
-dev_type_ioctl(tunioctl);
-dev_type_poll(tunpoll);
-dev_type_kqfilter(tunkqfilter);
+static dev_type_open(tunopen);
+static dev_type_close(tunclose);
+static dev_type_read(tunread);
+static dev_type_write(tunwrite);
+static dev_type_ioctl(tunioctl);
+static dev_type_poll(tunpoll);
+static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
 	tunopen, tunclose, tunread, tunwrite, tunioctl,
@@ -105,8 +106,7 @@ const struct cdevsw tun_cdevsw = {
 };
 
 void
-tunattach(unused)
-	int unused;
+tunattach(int unused)
 {
 
 	simple_lock_init(&tun_softc_lock);
@@ -121,8 +121,7 @@ tunattach(unused)
  * Returns with tp locked (if found).
  */
 static struct tun_softc *
-tun_find_unit(dev)
-	dev_t dev;
+tun_find_unit(dev_t dev)
 {
 	struct tun_softc *tp;
 	int unit = minor(dev);
@@ -144,8 +143,7 @@ tun_find_unit(dev)
  * Remove tp from list and return it unlocked (if found).
  */
 static struct tun_softc *
-tun_find_zunit(unit)
-	int unit;
+tun_find_zunit(int unit)
 {
 	struct tun_softc *tp;
 
@@ -164,10 +162,8 @@ tun_find_zunit(unit)
 	return (tp);
 }
 
-int
-tun_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int
+tun_clone_create(struct if_clone *ifc, int unit)
 {
 	struct tun_softc *tp;
 
@@ -195,9 +191,8 @@ tun_clone_create(ifc, unit)
 	return (0);
 }
 
-void
-tunattach0(tp)
-	struct tun_softc *tp;
+static void
+tunattach0(struct tun_softc *tp)
 {
 	struct ifnet *ifp;
 
@@ -228,9 +223,8 @@ tunattach0(tp)
 #endif
 }
 
-int
-tun_clone_destroy(ifp)
-	struct ifnet *ifp;
+static int
+tun_clone_destroy(struct ifnet *ifp)
 {
 	struct tun_softc *tp = (void *)ifp;
 	int s, zombie = 0;
@@ -277,11 +271,8 @@ tun_clone_destroy(ifp)
  * tunnel open - must be superuser & the device must be
  * configured in
  */
-int
-tunopen(dev, flag, mode, l)
-	dev_t	dev;
-	int	flag, mode;
-	struct lwp *l;
+static int
+tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct proc 	*p = l->l_proc;
 	struct ifnet	*ifp;
@@ -323,11 +314,7 @@ out_nolock:
  * routing info
  */
 int
-tunclose(dev, flag, mode, l)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct lwp *l;
+tunclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int	s;
 	struct tun_softc *tp;
@@ -383,8 +370,7 @@ out_nolock:
  * Call at splnet() with tp locked.
  */
 static void
-tuninit(tp)
-	struct tun_softc *tp;
+tuninit(struct tun_softc *tp)
 {
 	struct ifnet	*ifp = &tp->tun_if;
 	struct ifaddr	*ifa;
@@ -418,11 +404,8 @@ tuninit(tp)
 /*
  * Process an ioctl request.
  */
-int
-tun_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t	data;
+static int
+tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	int		error = 0, s;
 	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
@@ -484,12 +467,9 @@ tun_ioctl(ifp, cmd, data)
 /*
  * tun_output - queue packets from higher level ready to put out.
  */
-int
-tun_output(ifp, m0, dst, rt)
-	struct ifnet   *ifp;
-	struct mbuf    *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+static int
+tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	int		s;
@@ -573,12 +553,7 @@ out:
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev, cmd, data, flag, l)
-	dev_t		dev;
-	u_long		cmd;
-	caddr_t		data;
-	int		flag;
-	struct lwp	*l;
+tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tun_softc *tp;
 	int s, error = 0;
@@ -673,10 +648,7 @@ out_nolock:
  * least as much of a packet as can be read.
  */
 int
-tunread(dev, uio, ioflag)
-	dev_t		dev;
-	struct uio	*uio;
-	int		ioflag;
+tunread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -768,10 +740,7 @@ out_nolock:
  * the cdevsw write interface - an atomic write is a packet - or else!
  */
 int
-tunwrite(dev, uio, ioflag)
-	dev_t		dev;
-	struct uio	*uio;
-	int		ioflag;
+tunwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -915,8 +884,7 @@ out0:
  * Should be called at splnet.
  */
 static void
-tunstart(ifp)
-	struct ifnet *ifp;
+tunstart(struct ifnet *ifp)
 {
 	struct tun_softc *tp = ifp->if_softc;
 
@@ -944,10 +912,7 @@ tunstart(ifp)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunpoll(dev, events, l)
-	dev_t		dev;
-	int		events;
-	struct lwp	*l;
+tunpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;

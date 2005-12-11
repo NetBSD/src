@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.21 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.22 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.21 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.22 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -76,9 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.21 2005/12/11 12:24:51 christos E
 #define	llc_snap	llc_un.type_snap
 #endif
 
-static	int hippi_output __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-static	void hippi_input __P((struct ifnet *, struct mbuf *));
+static int	hippi_output(struct ifnet *, struct mbuf *,
+			     struct sockaddr *, struct rtentry *);
+static void	hippi_input(struct ifnet *, struct mbuf *);
 
 /*
  * HIPPI output routine.
@@ -88,11 +88,8 @@ static	void hippi_input __P((struct ifnet *, struct mbuf *));
  */
 
 static int
-hippi_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t htype;
 	u_int32_t ifield = 0;
@@ -241,9 +238,7 @@ hippi_output(ifp, m0, dst, rt0)
  */
 
 static void
-hippi_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+hippi_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	struct llc *l;
@@ -314,9 +309,7 @@ hippi_input(ifp, m)
 
 #ifdef INET
 void
-hippi_ip_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+hippi_ip_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	int s;
@@ -338,9 +331,7 @@ hippi_ip_input(ifp, m)
  * Perform common duties while attaching to interface list
  */
 void
-hippi_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	caddr_t lla;
+hippi_ifattach(struct ifnet *ifp, caddr_t lla)
 {
 
 	ifp->if_type = IFT_HIPPI;

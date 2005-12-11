@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.63 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.64 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.63 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -223,10 +223,10 @@ struct if_clone strip_cloner =
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	stripnetisr(void);
 #endif
-void	stripintr(void *);
+static void	stripintr(void *);
 
-static int stripinit __P((struct strip_softc *));
-static 	struct mbuf *strip_btom __P((struct strip_softc *, int));
+static int	stripinit(struct strip_softc *);
+static struct mbuf *strip_btom(struct strip_softc *, int);
 
 /*
  * STRIP header: '*' + modem address (dddd-dddd) + '*' + mactype ('SIP0')
@@ -255,23 +255,23 @@ struct st_header {
  * different STRIP implementations: *BSD, Linux, etc.
  *
  */
-static u_char* UnStuffData __P((u_char *src, u_char *end, u_char
-				*dest, u_long dest_length));
+static u_char* UnStuffData(u_char *src, u_char *end, u_char
+				*dest, u_long dest_length);
 
-static u_char* StuffData __P((u_char *src, u_long length, u_char *dest,
-			      u_char **code_ptr_ptr));
+static u_char* StuffData(u_char *src, u_long length, u_char *dest,
+			      u_char **code_ptr_ptr);
 
-static void RecvErr __P((const char *msg, struct strip_softc *sc));
-static void RecvErr_Message __P((struct strip_softc *strip_info,
-				u_char *sendername, const u_char *msg));
-void	strip_resetradio __P((struct strip_softc *sc, struct tty *tp));
-void	strip_proberadio __P((struct strip_softc *sc, struct tty *tp));
-void	strip_watchdog __P((struct ifnet *ifp));
-void	strip_sendbody __P((struct strip_softc *sc, struct mbuf *m));
-int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
-void	strip_send __P((struct strip_softc *sc, struct mbuf *m0));
+static void RecvErr(const char *msg, struct strip_softc *sc);
+static void RecvErr_Message(struct strip_softc *strip_info,
+				u_char *sendername, const u_char *msg);
+void	strip_resetradio(struct strip_softc *sc, struct tty *tp);
+void	strip_proberadio(struct strip_softc *sc, struct tty *tp);
+void	strip_watchdog(struct ifnet *ifp);
+void	strip_sendbody(struct strip_softc *sc, struct mbuf *m);
+int	strip_newpacket(struct strip_softc *sc, u_char *ptr, u_char *end);
+void	strip_send(struct strip_softc *sc, struct mbuf *m0);
 
-void	strip_timeout __P((void *x));
+void	strip_timeout(void *x);
 
 #ifdef DEBUG
 #define DPRINTF(x)	printf x
@@ -329,6 +329,15 @@ void	strip_timeout __P((void *x));
 
 #define RADIO_PROBE_TIMEOUT(sc) \
 	 ((sc)-> sc_statetimo > time.tv_sec)
+
+static int	stripclose(struct tty *, int);
+static int	stripinput(int, struct tty *);
+static int	stripioctl(struct ifnet *, u_long, caddr_t);
+static int	stripopen(dev_t, struct tty *);
+static int	stripoutput(struct ifnet *,
+		    struct mbuf *, struct sockaddr *, struct rtentry *);
+static int	stripstart(struct tty *);
+static int	striptioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 
 static struct linesw strip_disc = {
 	.l_name = "strip",
@@ -406,8 +415,7 @@ strip_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-stripinit(sc)
-	struct strip_softc *sc;
+stripinit(struct strip_softc *sc)
 {
 	u_char *p;
 
@@ -464,9 +472,7 @@ stripinit(sc)
  */
 /* ARGSUSED */
 int
-stripopen(dev, tp)
-	dev_t dev;
-	struct tty *tp;
+stripopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct strip_softc *sc;
@@ -549,10 +555,8 @@ stripopen(dev, tp)
  * Line specific close routine.
  * Detach the tty from the strip unit.
  */
-int
-stripclose(tp, flag)
-	struct tty *tp;
-	int flag;
+static int
+stripclose(struct tty *tp, int flag)
 {
 	struct strip_softc *sc;
 	int s;
@@ -621,12 +625,7 @@ stripclose(tp, flag)
  */
 /* ARGSUSED */
 int
-striptioctl(tp, cmd, data, flag, l)
-	struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 
@@ -646,9 +645,7 @@ striptioctl(tp, cmd, data, flag, l)
  * byte-stuff (escape) it, and enqueue it on the tty send queue.
  */
 void
-strip_sendbody(sc, m)
-	struct strip_softc  *sc;
-	struct mbuf *m;
+strip_sendbody(struct strip_softc *sc, struct mbuf *m)
 {
 	struct tty *tp = sc->sc_ttyp;
 	u_char *dp = sc->sc_txbuf;
@@ -689,9 +686,7 @@ strip_sendbody(sc, m)
  * Send a STRIP packet.  Must be called at spltty().
  */
 void
-strip_send(sc, m0)
-	struct strip_softc *sc;
-	struct mbuf *m0;
+strip_send(struct strip_softc *sc, struct mbuf *m0)
 {
 	struct tty *tp = sc->sc_ttyp;
 	struct st_header *hdr;
@@ -744,11 +739,8 @@ strip_send(sc, m0)
  * ordering gets trashed.  It can be done for all packets in stripintr().
  */
 int
-stripoutput(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	struct strip_softc *sc = ifp->if_softc;
 	struct ip *ip;
@@ -910,8 +902,7 @@ stripoutput(ifp, m, dst, rt)
  *
  */
 int
-stripstart(tp)
-	struct tty *tp;
+stripstart(struct tty *tp)
 {
 	struct strip_softc *sc = tp->t_sc;
 
@@ -947,9 +938,7 @@ stripstart(tp)
  * Copy data buffer to mbuf chain; add ifnet pointer.
  */
 static struct mbuf *
-strip_btom(sc, len)
-	struct strip_softc *sc;
-	int len;
+strip_btom(struct strip_softc *sc, int len)
 {
 	struct mbuf *m;
 
@@ -987,9 +976,7 @@ strip_btom(sc, len)
  * an mbuf, and put it on the protocol input queue.
 */
 int
-stripinput(c, tp)
-	int c;
-	struct tty *tp;
+stripinput(int c, struct tty *tp)
 {
 	struct strip_softc *sc;
 	struct mbuf *m;
@@ -1109,7 +1096,7 @@ stripnetisr(void)
 }
 #endif
 
-void
+static void
 stripintr(void *arg)
 {
 	struct strip_softc *sc = arg;
@@ -1326,10 +1313,7 @@ stripintr(void *arg)
  * Process an ioctl request.
  */
 int
-stripioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+stripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr;
@@ -1388,9 +1372,7 @@ stripioctl(ifp, cmd, data)
  * Must be called at spltty().
  */
 void
-strip_resetradio(sc, tp)
-	struct strip_softc *sc;
-	struct tty *tp;
+strip_resetradio(struct strip_softc *sc, struct tty *tp)
 {
 #if 0
 	static ttychar_t InitString[] =
@@ -1438,9 +1420,7 @@ strip_resetradio(sc, tp)
  * should be caled at spl >= spltty.
  */
 void
-strip_proberadio(sc, tp)
-	struct strip_softc *sc;
-	struct tty *tp;
+strip_proberadio(struct strip_softc *sc, struct tty *tp)
 {
 
 	int overflow;
@@ -1478,8 +1458,7 @@ static const char *strip_statenames[] = {
  * Will be needed to make strip work on ptys.
  */
 void
-strip_timeout(x)
-    void *x;
+strip_timeout(void *x)
 {
     struct strip_softc *sc = (struct strip_softc *) x;
     struct tty *tp =  sc->sc_ttyp;
@@ -1514,8 +1493,7 @@ strip_timeout(x)
  * so we send a probe on its behalf.
  */
 void
-strip_watchdog(ifp)
-	struct ifnet *ifp;
+strip_watchdog(struct ifnet *ifp)
 {
 	struct strip_softc *sc = ifp->if_softc;
 	struct tty *tp =  sc->sc_ttyp;
@@ -1608,9 +1586,7 @@ strip_watchdog(ifp)
  * Process a received packet.
  */
 int
-strip_newpacket(sc, ptr, end)
-	struct strip_softc *sc;
-	u_char *ptr, *end;
+strip_newpacket(struct strip_softc *sc, u_char *ptr, u_char *end)
 {
 	int len = ptr - end;
 	u_char *name, *name_end;
@@ -1955,9 +1931,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
  * from the STRIP driver.
  */
 static void
-RecvErr(msg, sc)
-	const char *msg;
-	struct strip_softc *sc;
+RecvErr(const char *msg, struct strip_softc *sc)
 {
 #define MAX_RecErr	80
 	u_char *ptr = sc->sc_pktstart;
@@ -1990,10 +1964,8 @@ RecvErr(msg, sc)
  * Parse an error message from the radio.
  */
 static void
-RecvErr_Message(strip_info, sendername, msg)
-	struct strip_softc *strip_info;
-	u_char *sendername;
-	const u_char *msg;
+RecvErr_Message(struct strip_softc *strip_info, u_char *sendername,
+    const u_char *msg)
 {
 	static const char ERR_001[] = "001"; /* Not in StarMode! */
 	static const char ERR_002[] = "002"; /* Remap handle */

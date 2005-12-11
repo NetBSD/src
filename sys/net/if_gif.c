@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.55 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.56 2005/12/11 23:05:25 thorpej Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.55 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.56 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -91,26 +91,26 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.55 2005/12/11 12:24:51 christos Exp $")
 
 #include <net/net_osdep.h>
 
-void gifattach __P((int));
+void	gifattach(int);
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void gifnetisr __P((void));
+static void	gifnetisr(void);
 #endif
-void gifintr __P((void *));
-void gif_start __P((struct ifnet *));
+static void	gifintr(void *);
+static void	gif_start(struct ifnet *);
 #ifdef ISO
-static struct mbuf *gif_eon_encap __P((struct mbuf *));
-static struct mbuf *gif_eon_decap __P((struct ifnet *, struct mbuf *));
+static struct mbuf *gif_eon_encap(struct mbuf *);
+static struct mbuf *gif_eon_decap(struct ifnet *, struct mbuf *);
 #endif
 
 /*
  * gif global variable definitions
  */
-LIST_HEAD(, gif_softc) gif_softc_list;
+LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
 
-int	gif_clone_create __P((struct if_clone *, int));
-int	gif_clone_destroy __P((struct ifnet *));
+static int	gif_clone_create(struct if_clone *, int);
+static int	gif_clone_destroy(struct ifnet *);
 
-struct if_clone gif_cloner =
+static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
 
 #ifndef MAX_GIF_NEST
@@ -128,18 +128,15 @@ static int max_gif_nesting = MAX_GIF_NEST;
 
 /* ARGSUSED */
 void
-gifattach(count)
-	int count;
+gifattach(int count)
 {
 
 	LIST_INIT(&gif_softc_list);
 	if_clone_attach(&gif_cloner);
 }
 
-int
-gif_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+static int
+gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 
@@ -156,8 +153,7 @@ gif_clone_create(ifc, unit)
 }
 
 void
-gifattach0(sc)
-	struct gif_softc *sc;
+gifattach0(struct gif_softc *sc)
 {
 
 	sc->encap_cookie4 = sc->encap_cookie6 = NULL;
@@ -178,9 +174,8 @@ gifattach0(sc)
 #endif
 }
 
-int
-gif_clone_destroy(ifp)
-	struct ifnet *ifp;
+static int
+gif_clone_destroy(struct ifnet *ifp)
 {
 	struct gif_softc *sc = (void *) ifp;
 
@@ -203,9 +198,8 @@ gif_clone_destroy(ifp)
 	return (0);
 }
 
-void
-gif_start(ifp)
-	struct ifnet *ifp;
+static void
+gif_start(struct ifnet *ifp)
 {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(((struct gif_softc*)ifp)->gif_si);
@@ -217,11 +211,7 @@ gif_start(ifp)
 
 #ifdef GIF_ENCAPCHECK
 int
-gif_encapcheck(m, off, proto, arg)
-	struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
+gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;
@@ -289,11 +279,8 @@ gif_encapcheck(m, off, proto, arg)
 #endif
 
 int
-gif_output(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;	/* added in net2 */
+gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
@@ -376,8 +363,8 @@ gif_output(ifp, m, dst, rt)
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void
-gifnetisr()
+static void
+gifnetisr(void)
 {
 	struct gif_softc *sc;
 
@@ -388,9 +375,8 @@ gifnetisr()
 }
 #endif
 
-void
-gifintr(arg)
-	void *arg;
+static void
+gifintr(void *arg)
 {
 	struct gif_softc *sc;
 	struct ifnet *ifp;
@@ -467,10 +453,7 @@ gifintr(arg)
 }
 
 void
-gif_input(m, af, ifp)
-	struct mbuf *m;
-	int af;
-	struct ifnet *ifp;
+gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 {
 	int s, isr;
 	struct ifqueue *ifq = NULL;
@@ -577,10 +560,7 @@ gif_input(m, af, ifp)
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */
 int
-gif_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
@@ -834,10 +814,7 @@ gif_ioctl(ifp, cmd, data)
 }
 
 int
-gif_set_tunnel(ifp, src, dst)
-	struct ifnet *ifp;
-	struct sockaddr *src;
-	struct sockaddr *dst;
+gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
 	struct gif_softc *sc = (struct gif_softc *)ifp;
 	struct gif_softc *sc2;
@@ -955,8 +932,7 @@ gif_set_tunnel(ifp, src, dst)
 }
 
 void
-gif_delete_tunnel(ifp)
-	struct ifnet *ifp;
+gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = (struct gif_softc *)ifp;
 	int s;
