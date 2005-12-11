@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.42 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.43 2005/12/11 20:07:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -210,7 +210,7 @@ struct ktr_mool {
 };
 
 /*
- * KTR_SAUPCALL - schedular activiated upcall.
+ * KTR_SAUPCALL - scheduler activated upcall.
  */
 #define	KTR_SAUPCALL	13
 struct ktr_saupcall {
