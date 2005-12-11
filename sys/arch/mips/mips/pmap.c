@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148.2.7 2005/11/10 13:57:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148.2.8 2005/12/11 10:28:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.7 2005/11/10 13:57:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.8 2005/12/11 10:28:21 christos Exp $");
 
 /*
  *	Manages physical address maps.
@@ -294,7 +294,7 @@ mips_flushcache_allpvh(paddr_t pa)
  *	firstaddr is the first unused kseg0 address (not page aligned).
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	vsize_t bufsz;
 
@@ -489,7 +489,7 @@ pmap_steal_memory(size, vstartp, vendp)
  *	system needs to map virtual memory.
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	vsize_t		s;
 	int		bank;
@@ -538,7 +538,7 @@ pmap_init()
  *	is bounded by that size.
  */
 pmap_t
-pmap_create()
+pmap_create(void)
 {
 	pmap_t pmap;
 	int i;
@@ -585,7 +585,7 @@ pmap_create()
 #ifdef PARANOIADIAG
 	for (i = 0; i < PMAP_SEGTABSIZE; i++)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
-			panic("pmap_pinit: pm_segtab != 0");
+			panic("pmap_create: pm_segtab != 0");
 #endif
 	pmap->pm_asid = PMAP_ASID_RESERVED;
 	pmap->pm_asidgen = pmap_asid_generation;
@@ -630,7 +630,7 @@ pmap_destroy(pmap)
 #ifdef PARANOIADIAG
 			for (j = 0; j < NPTEPG; j++) {
 				if ((pte+j)->pt_entry)
-					panic("pmap_release: segmap not empty");
+					panic("pmap_destroy: segmap not empty");
 			}
 #endif
 
@@ -2000,7 +2000,7 @@ again:
 #endif
 		npv = (pv_entry_t) pmap_pv_alloc();
 		if (npv == NULL)
-			panic("pmap_enter: pmap_pv_alloc() failed");
+			panic("pmap_enter_pv: pmap_pv_alloc() failed");
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_flags = pv->pv_flags;

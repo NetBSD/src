@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78.2.5 2005/11/10 13:55:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78.2.6 2005/12/11 10:28:14 christos Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.5 2005/11/10 13:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.6 2005/12/11 10:28:14 christos Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -568,6 +568,8 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
+
+	arc_bus_space_malloc_set_safe();
 }
 
 int	waittime = -1;

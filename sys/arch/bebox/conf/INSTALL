@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23.6.7 2005/11/10 13:55:33 skrll Exp $
+#	$NetBSD: INSTALL,v 1.23.6.8 2005/12/11 10:28:15 christos Exp $
 #
 # First try for BEBOX config file
 #
@@ -66,8 +66,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 #options 	NFSSERVER
 

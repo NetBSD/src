@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.7.2.6 2005/11/10 14:08:05 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.7.2.7 2005/12/11 10:29:05 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7.2.6 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7.2.7 2005/12/11 10:29:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -973,7 +973,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		       usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_tx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}
@@ -1020,7 +1020,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_rx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}

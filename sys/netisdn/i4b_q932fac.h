@@ -27,7 +27,7 @@
  *	i4b_q932fac.h - Q932 facility handling header file
  *	--------------------------------------------------
  *
- *	$Id: i4b_q932fac.h,v 1.1.1.1.26.1 2005/03/04 16:53:46 skrll Exp $
+ *	$Id: i4b_q932fac.h,v 1.1.1.1.26.2 2005/12/11 10:29:32 christos Exp $
  *
  * $FreeBSD$
  *
@@ -54,6 +54,9 @@
  *		1992, 3rd Edition (ISBN 3-89238-062-7) (german !)
  *
  *---------------------------------------------------------------------------*/
+
+#ifndef _NETISDN_I4B_Q932FAC_H_
+#define _NETISDN_I4B_Q932FAC_H_
 
 /* protocols */
 #define FAC_PROTO_ROP		0x11
@@ -167,3 +170,4 @@ enum states {
 
 /* EOF */
 
+#endif /* !_NETISDN_I4B_Q932FAC_H_ */

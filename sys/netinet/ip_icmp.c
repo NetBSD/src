@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.74.2.7 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.74.2.8 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.7 2005/11/10 14:11:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.8 2005/12/11 10:29:24 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -333,7 +333,6 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 	icp->icmp_code = code;
 	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
-	nip = &icp->icmp_ip;
 
 	/*
 	 * Now, copy old ip header (without options)

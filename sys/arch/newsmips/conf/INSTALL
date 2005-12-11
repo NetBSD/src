@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17.2.8 2005/11/10 13:57:54 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.17.2.9 2005/12/11 10:28:23 christos Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -46,8 +46,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocols

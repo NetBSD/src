@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1.2.9 2005/11/10 13:57:09 skrll Exp $
+#	$NetBSD: GENERIC,v 1.1.2.10 2005/12/11 10:28:19 christos Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -60,7 +60,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER
 #options 	SOFTDEP
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 
@@ -149,7 +149,7 @@ options 	PERFCTRS	# performance counters
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=240000
+options 	SYMTAB_SPACE=270000
 
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
@@ -512,3 +512,20 @@ pseudo-device	ksyms			# /dev/ksyms
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# Veriexec
+#options VERIFIED_EXEC
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

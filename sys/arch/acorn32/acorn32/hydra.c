@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.16.2.2 2005/11/10 13:48:20 skrll Exp $	*/
+/*	$NetBSD: hydra.c,v 1.16.2.3 2005/12/11 10:28:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.16.2.2 2005/11/10 13:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.16.2.3 2005/12/11 10:28:12 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	KASSERT(!TAILQ_EMPTY(&bootpglist));
-	sc->sc_bootpage_pa = TAILQ_FIRST(&bootpglist)->phys_addr;
+	sc->sc_bootpage_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&bootpglist));
 	sc->sc_bootpage_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY);
 	if (sc->sc_bootpage_va == 0) {

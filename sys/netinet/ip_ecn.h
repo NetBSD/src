@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.9.16.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.9.16.4 2005/12/11 10:29:24 christos Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.6 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
@@ -56,4 +56,4 @@ extern void ip6_ecn_ingress (int, u_int32_t *, const u_int32_t *);
 extern void ip6_ecn_egress (int, const u_int32_t *, u_int32_t *);
 #endif
 #endif
-#endif
+#endif /* !_NETINET_IP_ECN_H_ */

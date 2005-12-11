@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.2.2.5 2005/03/04 16:53:44 skrll Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.2.2.6 2005/12/11 10:29:32 christos Exp $ */
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -128,4 +128,4 @@ struct newipsecstat {
 	{ "esp_randpad", CTLTYPE_INT }, \
 }
 
-#endif /*_NETIPSEC_IPSEC_VAR_H_*/
+#endif /* !_NETIPSEC_IPSEC_VAR_H_ */

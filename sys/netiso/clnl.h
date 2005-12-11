@@ -1,4 +1,4 @@
-/*	$NetBSD: clnl.h,v 1.6.64.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: clnl.h,v 1.6.64.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,7 +57,13 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_CLNL_H_
+#define _NETISO_CLNL_H_
+
 struct clnl_protosw {
 	/* input routine */
 	void            (*clnl_input) (struct mbuf *, ...);
 };
+
+#endif /* !_NETISO_CLNL_H_ */

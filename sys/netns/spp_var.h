@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.12.2.4 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.12.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)spp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETNS_SPP_VAR_H_
+#define _NETNS_SPP_VAR_H_
 
 /*
  * Sp control block, one per connection
@@ -241,3 +244,5 @@ short xnsCbug;
 #define	SSEQ_GT(a,b)	(((short)((a)-(b))) > 0)
 #define	SSEQ_GEQ(a,b)	(((short)((a)-(b))) >= 0)
 #endif
+
+#endif /* !_NETNS_SPP_VAR_H_ */

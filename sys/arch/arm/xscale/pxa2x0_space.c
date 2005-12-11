@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.3.2.4 2005/04/01 14:27:08 skrll Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.3.2.5 2005/12/11 10:28:15 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.3.2.4 2005/04/01 14:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.3.2.5 2005/12/11 10:28:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,8 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (! va)
 		return(ENOMEM);
 

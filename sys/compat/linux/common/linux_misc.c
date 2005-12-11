@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.11 2005/11/10 14:01:07 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.12 2005/12/11 10:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.11 2005/11/10 14:01:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.12 2005/12/11 10:28:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1614,10 +1614,17 @@ linux_sys_sysinfo(l, v, retval)
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
 }
 
+#ifdef LINUX_LARGEFILE64
+#define bsd_to_linux_rlimit1(l, b, f) \
+    (l)->f = ((b)->f == RLIM_INFINITY || \
+	     ((b)->f & 0x8000000000000000UL) != 0) ? \
+    LINUX_RLIM_INFINITY : (b)->f
+#else
 #define bsd_to_linux_rlimit1(l, b, f) \
     (l)->f = ((b)->f == RLIM_INFINITY || \
 	     ((b)->f & 0xffffffff00000000ULL) != 0) ? \
     LINUX_RLIM_INFINITY : (int32_t)(b)->f
+#endif
 #define bsd_to_linux_rlimit(l, b) \
     bsd_to_linux_rlimit1(l, b, rlim_cur); \
     bsd_to_linux_rlimit1(l, b, rlim_max)
@@ -1668,13 +1675,21 @@ linux_sys_getrlimit(l, v, retval)
 {
 	struct linux_sys_getrlimit_args /* {
 		syscallarg(int) which;
+#ifdef LINUX_LARGEFILE64
+		syscallarg(struct rlimit *) rlp;
+#else
 		syscallarg(struct orlimit *) rlp;
+#endif
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
+#ifdef LINUX_LARGEFILE64
+	struct rlimit orl;
+#else
 	struct orlimit orl;
+#endif
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
@@ -1686,6 +1701,7 @@ linux_sys_getrlimit(l, v, retval)
 	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
 		return error;
 	bsd_to_linux_rlimit(&orl, &rl);
+
 	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
 }
 
@@ -1697,13 +1713,21 @@ linux_sys_setrlimit(l, v, retval)
 {
 	struct linux_sys_setrlimit_args /* {
 		syscallarg(int) which;
+#ifdef LINUX_LARGEFILE64
+		syscallarg(struct rlimit *) rlp;
+#else
 		syscallarg(struct orlimit *) rlp;
+#endif
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
+#ifdef LINUX_LARGEFILE64
+	struct rlimit orl;
+#else
 	struct orlimit orl;
+#endif
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));

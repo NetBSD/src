@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9.2.8 2005/11/10 13:58:50 skrll Exp $
+#	$NetBSD: OFWGENCFG,v 1.9.2.9 2005/12/11 10:28:26 christos Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -58,7 +58,7 @@ file-system	KERNFS		# /kern
 #options 	NFSSERVER
 options 	NFS_BOOT_DHCP	# NFS booting via DHCP
 options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 

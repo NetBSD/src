@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.19.2.4 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.19.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -185,4 +185,4 @@ void snpac_rtrequest (int, struct iso_addr *, struct iso_addr *,
 void snpac_addrt (struct ifnet *, struct iso_addr *, struct iso_addr *,
 	             struct iso_addr *);
 #endif /* _KERNEL */
-#endif /* _NETISO_ISO_VAR_H_ */
+#endif /* !_NETISO_ISO_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.6 2005/11/10 14:12:40 skrll Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.7 2005/12/11 10:29:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,9 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.6 2005/11/10 14:12:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.7 2005/12/11 10:29:42 christos Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -569,6 +570,13 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * if the page is not swap-backed, call the object's
 			 * pager to flush and free the page.
 			 */
+
+#if defined(READAHEAD_STATS)
+			if ((p->flags & PG_SPECULATIVE) != 0) {
+				p->flags &= ~PG_SPECULATIVE;
+				uvm_ra_miss.ev_count++;
+			}
+#endif /* defined(READAHEAD_STATS) */
 
 			if ((p->pqflags & PQ_SWAPBACKED) == 0) {
 				uvm_unlock_pageq();

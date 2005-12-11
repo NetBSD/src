@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.16.6.4 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.16.6.5 2005/12/11 10:29:19 christos Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -158,4 +158,4 @@ int	pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *));
 #endif /* _KERNEL */
 
-#endif /* _NET_IF_PPPVAR_H_ */
+#endif /* !_NET_IF_PPPVAR_H_ */

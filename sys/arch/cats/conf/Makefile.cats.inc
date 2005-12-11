@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.13.2.3 2004/09/21 13:14:26 skrll Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.13.2.4 2005/12/11 10:28:15 christos Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -22,8 +22,6 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${DBSYM} $@ || true"; \
-	${DBSYM} $@ || true; \
 	echo \
 	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.18.6.3 2004/09/21 13:37:31 skrll Exp $	*/
+/*	$NetBSD: ah.h,v 1.18.6.4 2005/12/11 10:29:32 christos Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -104,4 +104,4 @@ extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
 
 #endif /* _KERNEL */
 
-#endif /* _NETINET6_AH_H_ */
+#endif /* !_NETINET6_AH_H_ */

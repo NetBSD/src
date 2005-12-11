@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.5.2.6 2005/11/10 14:01:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.5.2.7 2005/12/11 10:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5.2.6 2005/11/10 14:01:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5.2.7 2005/12/11 10:28:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -386,21 +386,14 @@ netbsd32_settimeofday(l, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timeval atv32;
 	struct timeval atv;
+	struct timespec ats;
 	int error;
 	struct proc *p = l->l_proc;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
 	/* Verify all parameters before changing time. */
-	if (SCARG(uap, tv) &&
-	    (error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)), &atv32,
-	    sizeof(atv32))))
-		return (error);
-	netbsd32_to_timeval(&atv32, &atv);
-	if (SCARG(uap, tv))
-		if ((error = settime(&atv)))
-			return (error);
-	/* don't bother copying the tz in, we don't use it. */
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return error;
+
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
@@ -408,7 +401,17 @@ netbsd32_settimeofday(l, v, retval)
 	if (SCARG(uap, tzp))
 		printf("pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", p->p_pid);
-	return (0);
+
+	if (SCARG(uap, tv) == 0)
+		return 0;
+
+	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)), &atv32,
+	    sizeof(atv32))) != 0)
+		return error;
+
+	netbsd32_to_timeval(&atv32, &atv);
+	TIMEVAL_TO_TIMESPEC(&atv, &ats);
+	return settime(p, &ats);
 }
 
 int
@@ -483,7 +486,6 @@ netbsd32_clock_gettime(l, v, retval)
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */ *uap = v;
 	clockid_t clock_id;
-	struct timeval atv;
 	struct timespec ats;
 	struct netbsd32_timespec ts32;
 
@@ -491,8 +493,7 @@ netbsd32_clock_gettime(l, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	microtime(&atv);
-	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+	nanotime(&ats);
 	netbsd32_from_timespec(&ats, &ts32);
 
 	return copyout(&ts32, (caddr_t)NETBSD32PTR64(SCARG(uap, tp)),
@@ -511,7 +512,6 @@ netbsd32_clock_settime(l, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timespec ts32;
 	clockid_t clock_id;
-	struct timeval atv;
 	struct timespec ats;
 	int error;
 	struct proc *p = l->l_proc;
@@ -528,11 +528,7 @@ netbsd32_clock_settime(l, v, retval)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &ats);
-	TIMESPEC_TO_TIMEVAL(&atv,&ats);
-	if ((error = settime(&atv)))
-		return (error);
-
-	return 0;
+	return settime(p, &ats);
 }
 
 int

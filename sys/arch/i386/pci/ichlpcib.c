@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.6.2.7 2005/11/10 13:56:53 skrll Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.6.2.8 2005/12/11 10:28:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.7 2005/11/10 13:56:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.8 2005/12/11 10:28:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,6 +118,9 @@ lpcibmatch(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_INTEL_82801DB_LPC:	/* ICH4 */
 		case PCI_PRODUCT_INTEL_82801DB_ISA:	/* ICH4-M */
 		case PCI_PRODUCT_INTEL_82801EB_LPC:	/* ICH5 */
+		case PCI_PRODUCT_INTEL_82801FB_LPC:	/* ICH6 */
+		case PCI_PRODUCT_INTEL_82801FBM_LPC:	/* ICH6-M */
+		case PCI_PRODUCT_INTEL_82801G_LPC:	/* ICH7 */
 			return 10;	/* prior to pcib */
 		}
 	}

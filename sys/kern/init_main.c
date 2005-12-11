@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221.2.9 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.10 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.9 2005/11/10 14:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.10 2005/12/11 10:29:11 christos Exp $");
 
-#include "fs_nfs.h"
-#include "opt_nfsserver.h"
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
@@ -87,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.9 2005/11/10 14:09:44 skrll Ex
 #include "opt_rootfs_magiclinks.h"
 #include "opt_verified_exec.h"
 
-#include "opencrypto.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -138,9 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.9 2005/11/10 14:09:44 skrll Ex
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
-#if NOPENCRYPTO > 0
-#include <opencrypto/cryptodev.h>	/* XXX really the framework */
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -153,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.9 2005/11/10 14:09:44 skrll Ex
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 #endif
+#include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
 #include <sys/sa.h>
@@ -208,9 +203,6 @@ main(void)
 	int s, error;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
-#if defined(NFSSERVER) || defined(NFS)
-	extern void nfs_init(void);
-#endif
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -262,24 +254,14 @@ main(void)
 	 * The following things must be done before autoconfiguration.
 	 */
 	evcnt_init();		/* initialize event counters */
-	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
-#endif
-#if NOPENCRYPTO > 0
-	/* Initialize crypto subsystem before configuring crypto hardware. */
-	(void)crypto_init();
 #endif
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
 
 	/* Initialize process and pgrp structures. */
 	procinit();
-
-#ifdef LKM
-	/* Initialize the LKM system. */
-	lkm_init();
-#endif
 
 	/* Initialize signal-related data structures. */
 	signal_init();
@@ -295,9 +277,6 @@ main(void)
 	rqinit();
 
 	/* Initialize the file systems. */
-#if defined(NFSSERVER) || defined(NFS)
-	nfs_init();			/* initialize server/shared data */
-#endif
 #ifdef NVNODE_IMPLICIT
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
@@ -372,10 +351,6 @@ main(void)
 
 	/* Initialize system accouting. */
 	acct_init();
-
-#ifdef SYSTRACE
-	systrace_init();
-#endif
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);

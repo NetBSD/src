@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.62.2.6 2005/11/10 14:09:45 skrll Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.62.2.7 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62.2.6 2005/11/10 14:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62.2.7 2005/12/11 10:29:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,6 @@ int
 unp_attach(struct socket *so)
 {
 	struct unpcb *unp;
-	struct timeval tv;
 	int error;
 
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -552,8 +551,7 @@ unp_attach(struct socket *so)
 	memset((caddr_t)unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &unp->unp_ctime);
+	nanotime(&unp->unp_ctime);
 	return (0);
 }
 

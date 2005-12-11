@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.20.2.6 2005/11/10 14:08:05 skrll Exp $ */
+/* $NetBSD: bba.c,v 1.20.2.7 2005/12/11 10:29:05 christos Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20.2.6 2005/11/10 14:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20.2.7 2005/12/11 10:29:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ bba_allocm(void *addr, int direction, size_t size,
 	int w;
 	int state;
 
-	DPRINTF(("bba_allocm: size = %d\n", size));
+	DPRINTF(("bba_allocm: size = %zu\n", size));
 	asc = addr;
 	sc = addr;
 	state = 0;
@@ -373,7 +373,7 @@ size_t
 bba_round_buffersize(void *addr, int direction, size_t size)
 {
 
-	DPRINTF(("bba_round_buffersize: size=%d\n", size));
+	DPRINTF(("bba_round_buffersize: size=%zu\n", size));
 	return size > BBA_DMABUF_SIZE ? BBA_DMABUF_SIZE :
 	    roundup(size, IOASIC_DMA_BLOCKSIZE);
 }

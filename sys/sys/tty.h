@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.61.2.6 2005/04/01 14:32:11 skrll Exp $	*/
+/*	$NetBSD: tty.h,v 1.61.2.7 2005/12/11 10:29:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -36,15 +36,15 @@
  *	@(#)tty.h	8.7 (Berkeley) 1/9/95
  */
 
+#ifndef _SYS_TTY_H_
+#define _SYS_TTY_H_
+
 #include <sys/termios.h>
 #include <sys/select.h>
 #include <sys/selinfo.h>	/* For struct selinfo. */
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
-
-#ifndef _SYS_TTY_H_
-#define _SYS_TTY_H_
 
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
@@ -250,7 +250,6 @@ int	 ttysleep(struct tty *, void *, int, const char *, int);
 int	 ttywait(struct tty *);
 int	 ttywflush(struct tty *);
 
-void	 tty_init(void);
 void	 tty_attach(struct tty *);
 void	 tty_detach(struct tty *);
 struct tty

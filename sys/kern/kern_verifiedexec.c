@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.5 2005/11/10 14:09:45 skrll Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.6 2005/12/11 10:29:12 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.5 2005/11/10 14:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.6 2005/12/11 10:29:12 christos Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -414,7 +414,6 @@ veriexec_verify(struct proc *p, struct vnode *vp, struct vattr *va,
 		return (0);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
-	/* XXX: va_fsid is long, dev_t is uint32_t. */
 	vhe = veriexec_lookup((dev_t)va->va_fsid, (ino_t)va->va_fileid);
 	if (ret != NULL)
 		*ret = vhe;
@@ -542,7 +541,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	if (error)
 		goto bad;
 
-	pmap_kenter_pa(kva, pg->phys_addr, VM_PROT_READ);
+	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
 
 	page_fp = (u_char *) vhe->page_fp + (vhe->ops->hash_len * idx);
 
@@ -666,7 +665,6 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 		return (EPERM);
 	}
 
-	/* XXX: dev_t is 32bit, long can be 64bit. */
 	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
 	if (vhe != NULL) {
 		if (veriexec_strict >= 2) {

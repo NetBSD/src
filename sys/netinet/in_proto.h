@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.h,v 1.1.10.2 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: in_proto.h,v 1.1.10.3 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,4 +36,4 @@
 
 extern const struct protosw inetsw[];
 
-#endif /* _NETINET_IN_PROTO_H_ */
+#endif /* !_NETINET_IN_PROTO_H_ */

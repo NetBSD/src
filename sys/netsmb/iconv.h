@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.4.2.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: iconv.h,v 1.4.2.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,8 +33,8 @@
  *
  * $FreeBSD: src/sys/sys/iconv.h,v 1.5 2002/07/15 13:34:50 markm Exp $
  */
-#ifndef _SYS_ICONV_H_
-#define _SYS_ICONV_H_
+#ifndef _NETSMB_ICONV_H_
+#define _NETSMB_ICONV_H_
 
 #define	ICONV_CSNMAXLEN		31	/* maximum length of charset name */
 #define	ICONV_CNVNMAXLEN	31	/* maximum length of converter name */
@@ -158,4 +158,4 @@ int iconv_converter_handler(module_t, int, void *);
 
 #endif /* !_KERNEL */
 
-#endif /* !_SYS_ICONV_H_ */
+#endif /* !_NETSMB_ICONV_H_ */

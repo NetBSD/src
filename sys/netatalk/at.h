@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.4.24.4 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: at.h,v 1.4.24.5 2005/12/11 10:29:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -102,4 +102,4 @@ extern struct domain atalkdomain;
 extern const struct protosw atalksw[];
 #endif
 
-#endif	/* _NETATALK_AT_H_ */
+#endif	/* !_NETATALK_AT_H_ */

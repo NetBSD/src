@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.32.6.5 2005/11/10 13:57:33 skrll Exp $
+#	$NetBSD: Makefile.mips,v 1.32.6.6 2005/12/11 10:28:20 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -59,6 +59,9 @@ LD+=		-m elf64bmip
 ##
 ## (3) libkern and compat
 ##
+.if !empty(IDENT:M-DLKM)
+KERN_AS=	obj
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

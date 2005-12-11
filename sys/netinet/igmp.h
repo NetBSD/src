@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.8.28.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: igmp.h,v 1.8.28.4 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,4 +126,4 @@ struct igmp {
  */
 #define	IGMP_AGE_THRESHOLD	540
 
-#endif /* _NETINET_IGMP_H_ */
+#endif /* !_NETINET_IGMP_H_ */

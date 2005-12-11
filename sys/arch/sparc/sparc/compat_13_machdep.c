@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3.2.4 2005/11/10 13:59:08 skrll Exp $ */
+/*	$NetBSD: compat_13_machdep.c,v 1.3.2.5 2005/12/11 10:28:36 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3.2.4 2005/11/10 13:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3.2.5 2005/12/11 10:28:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,10 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3.2.4 2005/11/10 13:59:08 sk
  */
 /* ARGSUSED */
 int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;

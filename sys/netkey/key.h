@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11.6.4 2005/11/10 14:11:55 skrll Exp $	*/
+/*	$NetBSD: key.h,v 1.11.6.5 2005/12/11 10:29:35 christos Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -94,4 +94,4 @@ u_int16_t key_portfromsaddr __P((struct sockaddr *));
 #endif
 
 #endif /* defined(_KERNEL) */
-#endif /* _NETKEY_KEY_H_ */
+#endif /* !_NETKEY_KEY_H_ */

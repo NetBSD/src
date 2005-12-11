@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.21.2.4 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.21.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.4 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.5 2005/12/11 10:29:35 christos Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -344,7 +344,7 @@ cltp_usrreq(so, req, m, nam, control, l)
 		break;
 
 	case PRU_CONNECT:
-		error = iso_pcbconnect(isop, nam);
+		error = iso_pcbconnect(isop, nam, p);
 		if (error)
 			break;
 		soisconnected(so);
@@ -379,7 +379,7 @@ cltp_usrreq(so, req, m, nam, control, l)
 				error = EISCONN;
 				goto die;
 			}
-			error = iso_pcbconnect(isop, nam);
+			error = iso_pcbconnect(isop, nam, p);
 			if (error) {
 			die:
 				m_freem(m);

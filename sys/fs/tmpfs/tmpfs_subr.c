@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.13.2.3 2005/11/12 17:00:57 skrll Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.13.2.4 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13.2.3 2005/11/12 17:00:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.13.2.4 2005/12/11 10:29:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -919,40 +919,24 @@ out:
  * Remember to remove TMPFS_PAGES_RESERVED from the returned value to avoid
  * excessive memory usage.
  *
- * XXX: This function is used every time TMPFS_PAGES_MAX is called to gather
- * the amount of free memory, something that happens during _each_
- * object allocation.  The time it takes to run this function so many
- * times is not negligible, so this value should be stored as an
- * aggregate somewhere, possibly within UVM (we cannot do it ourselves
- * because we can't get notifications on memory usage changes).
  */
 size_t
 tmpfs_mem_info(boolean_t total)
 {
-	int i, sec;
-	register_t retval;
 	size_t size;
-	struct swapent *sep;
-
-	sec = uvmexp.nswapdev;
-	sep = (struct swapent *)malloc(sizeof(struct swapent) * sec, M_TEMP,
-	    M_WAITOK);
-	KASSERT(sep != NULL);
-	uvm_swap_stats(SWAP_STATS, sep, sec, &retval);
-	KASSERT(retval == sec);
 
 	size = 0;
-	if (total) {
-		for (i = 0; i < sec; i++)
-			size += dbtob(sep[i].se_nblks) / PAGE_SIZE;
-	} else {
-		for (i = 0; i < sec; i++)
-			size += dbtob(sep[i].se_nblks - sep[i].se_inuse) /
-			    PAGE_SIZE;
+	size += uvmexp.swpgavail;
+	if (!total) {
+		size -= uvmexp.swpgonly;
 	}
 	size += uvmexp.free;
-
-	free(sep, M_TEMP);
+	size += uvmexp.filepages;
+	if (size > uvmexp.wired) {
+		size -= uvmexp.wired;
+	} else {
+		size = 0;
+	}
 
 	return size;
 }
@@ -1141,8 +1125,6 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 	case VDIR:
 		return EISDIR;
 
-	case VLNK:
-		/* FALLTHROUGH */
 	case VREG:
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
@@ -1152,17 +1134,15 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
 		/* FALLTHROUGH */
 	case VCHR:
 		/* FALLTHROUGH */
-	case VSOCK:
-		/* FALLTHROUGH */
 	case VFIFO:
 		/* Allow modifications of special files even if in the file
 		 * system is mounted read-only (we are not modifying the
 		 * files themselves, but the objects they represent). */
-		break;
+		return 0;
 
 	default:
 		/* Anything else is unsupported. */
-		return EINVAL;
+		return EOPNOTSUPP;
 	}
 
 	/* Immutable or append-only files cannot be modified, either. */

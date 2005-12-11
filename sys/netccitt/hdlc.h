@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlc.h,v 1.7.46.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: hdlc.h,v 1.7.46.4 2005/12/11 10:29:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,6 +72,9 @@
  *
  *	@(#)hdlc.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETCCITT_HDLC_H_
+#define _NETCCITT_HDLC_H_
 
 #ifndef ORDER4
 #ifndef CCITT_TYPES_DEFINED
@@ -188,3 +191,5 @@ struct	Hdlc_frame {
 
 #define TX 0
 #define RX 1
+
+#endif /* !_NETCCITT_HDLC_H_ */

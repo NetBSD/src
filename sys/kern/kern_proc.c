@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.64.2.5 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.64.2.6 2005/12/11 10:29:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.5 2005/11/10 14:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.6 2005/12/11 10:29:11 christos Exp $");
 
 #include "opt_kstack.h"
 
@@ -204,8 +204,6 @@ POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
 POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
     &pool_allocator_nointr);
 POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
-    &pool_allocator_nointr);
-POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.4.2.3 2004/09/21 13:22:39 skrll Exp $	*/
+/*	$NetBSD: timervar.h,v 1.4.2.4 2005/12/11 10:28:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,8 @@ void	timer_init_4m(void);
 void	timerattach_obio_4m(struct device *, struct device *, void *);
 #endif /* SUN4M */
 
-/* Imported from clock.c: */ 
-extern int statvar, statmin, statint; 
+/* Imported from clock.c: */
+extern int statvar, statmin, statint;
 extern int timerblurb;
 extern void (*timer_init)(void);
 

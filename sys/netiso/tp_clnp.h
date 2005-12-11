@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_clnp.h,v 1.7.10.3 2004/09/21 13:38:01 skrll Exp $	*/
+/*	$NetBSD: tp_clnp.h,v 1.7.10.4 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -84,4 +84,4 @@ extern struct isopcb   tp_isopcb;
 #endif
 /* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif				/* _NETISO_TP_CLNP_H_ */
+#endif /* !_NETISO_TP_CLNP_H_ */

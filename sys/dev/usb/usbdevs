@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.332.2.11 2005/11/10 14:08:06 skrll Exp $
+$NetBSD: usbdevs,v 1.332.2.12 2005/12/11 10:29:06 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ vendor TATUNG		0x04cd	Tatung Co. Of America
 vendor SCANLOGIC	0x04ce	ScanLogic
 vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
+vendor HOLTEK		0x04d9	Holtek Semiconductor
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
@@ -234,6 +235,7 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
 vendor AVANCELOGIC	0x0680	Avance Logic
+vendor SIEMENS2		0x0681	Siemens
 vendor MINOLTA		0x0686	Minolta
 vendor CHPRODUCTS	0x068e	CH Products
 vendor HAGIWARA		0x0693	Hagiwara Sys-Com
@@ -386,7 +388,7 @@ vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
 vendor ACDC		0x0d7e	American Computer & Digital Components
-vendor ABC		0x0d8c	ABC
+vendor CMEDIA		0x0d8c	C-Media Electronics Inc.
 vendor MSI		0x0db0	Micro Star
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
@@ -959,6 +961,9 @@ product HAWKING UF100		0x400c	10/100 USB Ethernet
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
 product HITACHI DVDCAM_USB	0x001e	DVDCAM USB HS Interface
 
+/* Holtek Semiconductor products */
+product HOLTEK MOP35		0x0499	MOP-35
+
 /* Hosiden Corporation products */
 product	HOSIDEN PPP		0x0011	ParaParaParadise Controller
 
@@ -1273,7 +1278,7 @@ product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
-product MELCO KG54AI		0x006d	WLI-U2-KG54-AI WLAN
+product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1681,6 +1686,9 @@ product SHUTTLE SCM		0x1010	SCM Micro
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
 product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
+
+/* Siemens Info products */
+product SIEMENS2 MC75		0x0034	Wireless Modules MC75
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA

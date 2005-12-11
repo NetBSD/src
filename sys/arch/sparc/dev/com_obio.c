@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.14.2.3 2004/09/21 13:22:01 skrll Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.14.2.4 2005/12/11 10:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.14.2.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.14.2.4 2005/12/11 10:28:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,18 +103,15 @@ struct com_obio_softc {
 	struct evcnt osc_intrcnt;	/* interrupt counting */
 };
 
-static int com_obio_match __P((struct device *, struct cfdata *, void *));
-static void com_obio_attach __P((struct device *, struct device *, void *));
-static void com_obio_cleanup __P((void *));
+static int com_obio_match(struct device *, struct cfdata *, void *);
+static void com_obio_attach(struct device *, struct device *, void *);
+static void com_obio_cleanup(void *);
 
 CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
     com_obio_match, com_obio_attach, NULL, NULL);
 
 static int
-com_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -170,9 +167,7 @@ com_obio_match(parent, cf, aux)
 }
 
 static void
-com_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_obio_softc *osc = (void *)self;
 	struct com_softc *sc = &osc->osc_com;
@@ -239,8 +234,7 @@ com_obio_attach(parent, self, aux)
 }
 
 static void
-com_obio_cleanup(arg)
-	void *arg;
+com_obio_cleanup(void *arg)
 {
 	struct com_softc *sc = arg;
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.22.2.9 2005/11/10 13:57:54 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.22.2.10 2005/12/11 10:28:21 christos Exp $
 
 #	config for bootable floppy kernel
 #
@@ -69,8 +69,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocols

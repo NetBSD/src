@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.32.24.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.32.24.4 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,4 +77,4 @@ void revarprequest(struct ifnet *);
 int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 #endif
 
-#endif /* _NETINET_IF_INARP_H_ */
+#endif /* !_NETINET_IF_INARP_H_ */

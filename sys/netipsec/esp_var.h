@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_var.h,v 1.2.2.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: esp_var.h,v 1.2.2.5 2005/12/11 10:29:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/esp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_esp.h,v 1.37 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -76,4 +76,4 @@ struct espstat {
 extern	int esp_enable;
 extern	struct espstat espstat;
 #endif /* _KERNEL */
-#endif /*_NETIPSEC_ESP_VAR_H_*/
+#endif /* !_NETIPSEC_ESP_VAR_H_ */

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.13.2.8 2005/11/10 13:56:14 skrll Exp $
+# $NetBSD: VR41XX,v 1.13.2.9 2005/12/11 10:28:18 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.13.2.8 $"
+#ident 		"GENERIC-$Revision: 1.13.2.9 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -88,8 +88,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-options 	FFS_NO_SNAPSHOT	# No FFS snapshots
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

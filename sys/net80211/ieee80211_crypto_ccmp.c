@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.3.6.2 2005/11/10 14:10:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.3.6.3 2005/12/11 10:29:22 christos Exp $");
 #endif
 
 /*
@@ -630,3 +630,8 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 	return 1;
 }
 #undef CCMP_DECRYPT
+
+IEEE80211_CRYPTO_SETUP(ccmp_register)
+{
+	ieee80211_crypto_register(&ccmp);
+}

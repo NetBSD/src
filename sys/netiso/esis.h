@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.14.2.5 2005/11/10 14:11:36 skrll Exp $	*/
+/*	$NetBSD: esis.h,v 1.14.2.6 2005/12/11 10:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_ESIS_H_
+#define _NETISO_ESIS_H_
 
 #include <machine/endian.h>
 
@@ -143,3 +146,5 @@ void isis_input (struct mbuf *, ...);
 int isis_output (struct mbuf *, ...);
 void *esis_ctlinput (int, struct sockaddr *, void *);
 #endif /* _KERNEL */
+
+#endif /* !_NETISO_ESIS_H_ */

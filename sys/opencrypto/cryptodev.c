@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.10.4.7 2005/11/10 14:12:12 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10.4.8 2005/12/11 10:29:36 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.7 2005/11/10 14:12:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.8 2005/12/11 10:29:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,3 +756,16 @@ struct cdevsw crypto_cdevsw = {
 	/* kqfilter */	nokqfilter,
 };
 
+#ifdef __NetBSD__
+/*
+ * Pseudo-device initialization routine for /dev/crypto
+ */
+void	cryptoattach(int);
+
+void
+cryptoattach(int num)
+{
+
+	/* nothing to do */
+}
+#endif /* __NetBSD__ */

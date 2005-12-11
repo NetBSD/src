@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.3.26.1 2005/11/10 14:10:32 skrll Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.3.26.2 2005/12/11 10:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,4 +124,4 @@ void ieee1394_drain(struct ifnet *);
 void ieee1394_watchdog(struct ifnet *);
 #endif /* _KERNEL */
 
-#endif /* _NET_IF_IEEE1394_H_ */
+#endif /* !_NET_IF_IEEE1394_H_ */

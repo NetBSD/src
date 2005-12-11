@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.9.2.12 2005/11/10 13:55:51 skrll Exp $
+#	$NetBSD: SMDK2410,v 1.9.2.13 2005/12/11 10:28:16 christos Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -61,7 +61,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
-#options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 

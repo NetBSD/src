@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.31.2.4 2005/01/17 19:30:19 skrll Exp $	*/
+/*	$NetBSD: ofw.c,v 1.31.2.5 2005/12/11 10:28:26 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.31.2.4 2005/01/17 19:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.31.2.5 2005/12/11 10:28:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1213,7 +1213,7 @@ ofw_callbackhandler(v)
 			args->nreturns = 2;
 			return;
 		} 
-		args_n_results[nargs + 2] = alloclist.tqh_first->phys_addr;
+		args_n_results[nargs + 2] = VM_PAGE_TO_PHYS(alloclist.tqh_first);
 #if 0
 		printf("(succeeded: pa = 0x%lx)\n", args_n_results[nargs + 2]);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.4.22.1 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.4.22.2 2005/12/11 10:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -155,4 +155,4 @@ struct mbuf *	eco_inputframe(struct ifnet *, struct mbuf *);
 void	eco_inputidle(struct ifnet *);
 #endif
 
-#endif
+#endif /* !_NET_IF_ECO_H_ */

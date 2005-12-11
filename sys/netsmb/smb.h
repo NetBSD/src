@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.12.2.4 2005/03/04 16:54:19 skrll Exp $	*/
+/*	$NetBSD: smb.h,v 1.12.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -526,4 +526,4 @@ enum smb_dialects {
 
 typedef u_int16_t	smbfh;
 
-#endif /* _NETSMB_SMB_H_ */
+#endif /* !_NETSMB_SMB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.14.2.4 2004/10/31 07:22:23 skrll Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.14.2.5 2005/12/11 10:29:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -33,6 +33,9 @@
  *
  * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.8 2002/09/16 10:50:38 bp Exp
  */
+
+#ifndef _NETSMB_SMB_CONN_H_
+#define _NETSMB_SMB_CONN_H_
 
 /*
  * Two levels of connection hierarchy
@@ -468,3 +471,5 @@ int  smb_iod_waitrq(struct smb_rq *rqp);
 int  smb_iod_removerq(struct smb_rq *rqp);
 
 #endif /* _KERNEL */
+
+#endif /* !_NETSMB_SMB_CONN_H_ */

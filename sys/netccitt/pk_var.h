@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.16.10.5 2005/11/10 14:11:07 skrll Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.16.10.6 2005/12/11 10:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,9 @@
  *
  *	@(#)pk_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETCCITT_PK_VAR_H_
+#define _NETCCITT_PK_VAR_H_
 
 /*
  *
@@ -277,3 +280,5 @@ extern struct mbuf_cache pk_output_cache;
 extern const char	*pk_name[], *pk_state[];
 extern int	pk_t20, pk_t21, pk_t22, pk_t23;
 #endif
+
+#endif /* !_NETCCITT_PK_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19.2.7 2005/04/01 14:27:26 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19.2.8 2005/12/11 10:28:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.7 2005/04/01 14:27:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.8 2005/12/11 10:28:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,6 +634,8 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	/*
 	 * If we're only mapping 1 segment, use KSEG0 or KSEG1, to avoid
@@ -649,7 +651,7 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);

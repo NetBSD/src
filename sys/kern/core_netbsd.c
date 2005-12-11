@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.5.2.6 2005/11/10 14:09:44 skrll Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.5.2.7 2005/12/11 10:29:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.5.2.6 2005/11/10 14:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.5.2.7 2005/12/11 10:29:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,10 @@ struct coredump_state {
 	struct CORENAME(core) core;
 };
 
-int	CORENAME(coredump_countsegs_netbsd)(struct proc *, void *,
-	    struct uvm_coredump_state *);
-int	CORENAME(coredump_writesegs_netbsd)(struct proc *, void *,
-	    struct uvm_coredump_state *);
+static int	CORENAME(coredump_countsegs_netbsd)(struct proc *, void *,
+		    struct uvm_coredump_state *);
+static int	CORENAME(coredump_writesegs_netbsd)(struct proc *, void *,
+		    struct uvm_coredump_state *);
 
 int
 CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
@@ -131,7 +131,7 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 	    CORENAME(coredump_writesegs_netbsd), &cs);
 }
 
-int
+static int
 CORENAME(coredump_countsegs_netbsd)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
@@ -143,7 +143,7 @@ CORENAME(coredump_countsegs_netbsd)(struct proc *p, void *iocookie,
 	return (0);
 }
 
-int
+static int
 CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
