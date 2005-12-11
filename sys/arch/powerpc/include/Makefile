@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2005/02/17 02:14:23 briggs Exp $
+#	$NetBSD: Makefile,v 1.33 2005/12/11 12:18:43 christos Exp $
 
 INCSDIR?= /usr/include/powerpc
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.14 2005/08/26 13:19:37 drochner Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.15 2005/12/11 12:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.14 2005/08/26 13:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.15 2005/12/11 12:19:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

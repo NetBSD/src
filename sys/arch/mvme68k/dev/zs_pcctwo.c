@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.10 2003/12/04 12:42:54 keihan Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.11 2005/12/11 12:18:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.10 2003/12/04 12:42:54 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.11 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

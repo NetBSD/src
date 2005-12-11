@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.41 2005/12/11 12:18:31 christos Exp $	*/
 
 /*
  *

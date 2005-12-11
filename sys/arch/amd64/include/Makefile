@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/07/02 17:02:24 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2005/12/11 12:16:25 christos Exp $
 
 INCSDIR= /usr/include/amd64
 

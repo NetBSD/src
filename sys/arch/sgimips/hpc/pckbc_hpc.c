@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.4 2004/02/19 01:03:45 bjh21 Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.5 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.4 2004/02/19 01:03:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.5 2005/12/11 12:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

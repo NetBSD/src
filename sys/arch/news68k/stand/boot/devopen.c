@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7 2005/06/23 19:44:01 junyoung Exp $	*/
+/*	$NetBSD: devopen.c,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.

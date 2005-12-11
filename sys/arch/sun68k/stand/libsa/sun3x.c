@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.7 2005/01/26 20:32:27 he Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.8 2005/12/11 12:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

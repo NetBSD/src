@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.8 2005/07/23 12:18:41 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.9 2005/12/11 12:24:50 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.

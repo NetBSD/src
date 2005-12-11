@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_compare.c,v 1.5 2003/08/07 16:29:37 agc Exp $ */
+/*	$NetBSD: fpu_compare.c,v 1.6 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.5 2003/08/07 16:29:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.6 2005/12/11 12:19:05 christos Exp $");
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcconsvar.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: pcconsvar.h,v 1.4 2005/12/11 12:16:39 christos Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 

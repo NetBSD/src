@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.11 2005/08/19 02:04:03 christos Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.12 2005/12/11 12:24:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1993

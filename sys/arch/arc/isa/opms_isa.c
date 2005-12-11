@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: opms_isa.c,v 1.8 2005/12/11 12:16:39 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

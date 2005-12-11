@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2005/10/30 15:49:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2005/12/11 12:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2005/10/30 15:49:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2005/12/11 12:18:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -197,7 +197,7 @@ int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
-int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int	cpu_exec_aout_makecmds __P((struct lwp *, struct exec_package *));
 void	straytrap __P((int, u_short));
 
 /*
@@ -1182,8 +1182,8 @@ mvme68k_abort(cp)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-    struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+    struct lwp *l;
     struct exec_package *epp;
 {
     return ENOEXEC;

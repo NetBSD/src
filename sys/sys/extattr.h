@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.2 2005/07/10 22:04:20 thorpej Exp $	*/
+/*	$NetBSD: extattr.h,v 1.3 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -55,7 +55,7 @@ struct lwp;
 struct ucred;
 struct vnode;
 int	extattr_check_cred(struct vnode *, int, struct ucred *,
-	    struct proc *, int);
+	    struct lwp *, int);
 
 #else
 

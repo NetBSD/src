@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.13 2005/01/13 15:01:27 kent Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.14 2005/12/11 12:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.13 2005/01/13 15:01:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.14 2005/12/11 12:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

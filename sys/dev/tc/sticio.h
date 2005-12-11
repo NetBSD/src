@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.2 2005/02/27 00:27:49 perry Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.3 2005/12/11 12:24:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.45 2005/04/25 15:02:03 lukem Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.46 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.45 2005/04/25 15:02:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46 2005/12/11 12:16:41 christos Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"

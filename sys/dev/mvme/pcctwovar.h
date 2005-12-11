@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.2 2005/06/03 08:49:03 scw Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.3 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.

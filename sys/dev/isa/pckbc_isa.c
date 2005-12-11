@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.16 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.17 2005/12/11 12:22:03 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.16 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.17 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.10 2005/06/27 11:03:25 ragge Exp $	*/
+/*	$NetBSD: ka53.c,v 1.11 2005/12/11 12:19:36 christos Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.10 2005/06/27 11:03:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.11 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

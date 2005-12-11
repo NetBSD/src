@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2005/01/16 21:35:59 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2005/12/11 12:18:43 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

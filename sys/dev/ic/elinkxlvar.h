@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.16 2005/02/06 03:15:14 kim Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.17 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.5 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.6 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

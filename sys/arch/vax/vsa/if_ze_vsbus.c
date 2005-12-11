@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.10 2003/11/10 08:51:52 wiz Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.11 2005/12/11 12:19:37 christos Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.10 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.11 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>

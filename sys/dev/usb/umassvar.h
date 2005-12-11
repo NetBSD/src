@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.23 2004/03/22 14:55:42 tls Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.24 2005/12/11 12:24:01 christos Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>

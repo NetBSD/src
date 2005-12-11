@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.3 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.3 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

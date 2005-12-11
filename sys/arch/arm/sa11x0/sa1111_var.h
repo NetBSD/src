@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.7 2005/08/26 13:19:35 drochner Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

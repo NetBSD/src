@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/11/25 08:09:15 jmc Exp $
+#	$NetBSD: Makefile,v 1.5 2005/12/11 12:17:04 christos Exp $
 
 PROG=		elf2pef
 CPPFLAGS=	-I${.CURDIR}

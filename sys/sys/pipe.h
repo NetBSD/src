@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.17 2005/10/29 12:31:07 yamt Exp $ */
+/* $NetBSD: pipe.h,v 1.18 2005/12/11 12:25:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson

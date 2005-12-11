@@ -1,4 +1,4 @@
-/*	$NetBSD: eventvar.h,v 1.5 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: eventvar.h,v 1.6 2005/12/11 12:25:20 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.17 2005/05/30 04:41:57 christos Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.18 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.54 2005/11/02 12:39:14 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.55 2005/12/11 12:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.54 2005/11/02 12:39:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.55 2005/12/11 12:25:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.42 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: route.h,v 1.43 2005/12/11 12:24:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -283,7 +283,7 @@ struct socket;
 void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
 void	 rt_ieee80211msg(struct ifnet *, int, void *, size_t);
 void	 rt_ifmsg(struct ifnet *);
@@ -313,7 +313,7 @@ struct rtentry *
 void	 rtfree(struct rtentry *);
 int	 rt_getifa(struct rt_addrinfo *);
 int	 rtinit(struct ifaddr *, int, int);
-int	 rtioctl(u_long, caddr_t, struct proc *);
+int	 rtioctl(u_long, caddr_t, struct lwp *);
 void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
 	    struct rtentry **);

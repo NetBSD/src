@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.8 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.8 2005/12/11 12:19:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

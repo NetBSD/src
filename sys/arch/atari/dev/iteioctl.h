@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.5 2004/05/19 08:44:20 he Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.6 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

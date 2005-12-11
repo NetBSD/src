@@ -1,4 +1,4 @@
-/*	$NetBSD: srtbegin.S,v 1.6 2003/07/22 04:57:24 briggs Exp $	*/
+/*	$NetBSD: srtbegin.S,v 1.7 2005/12/11 12:17:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

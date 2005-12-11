@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2003/08/13 11:32:23 ragge Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2005/12/11 12:24:45 christos Exp $
 #
 #	The rest of the lib routines are in machine/macros.h
 #

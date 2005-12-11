@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10 2003/07/14 22:13:10 lukem Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.11 2005/12/11 12:17:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2003/07/14 22:13:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.11 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"

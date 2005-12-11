@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.6 2005/02/04 02:10:45 perry Exp $ */
+/* $NetBSD: universe_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.6 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

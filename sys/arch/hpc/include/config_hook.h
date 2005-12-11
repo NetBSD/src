@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.5 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001

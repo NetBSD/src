@@ -1,4 +1,4 @@
-/* $NetBSD: upcvar.h,v 1.3 2005/02/27 00:27:03 perry Exp $ */
+/* $NetBSD: upcvar.h,v 1.4 2005/12/11 12:21:29 christos Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.

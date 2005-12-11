@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.22 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: sockio.h,v 1.23 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994

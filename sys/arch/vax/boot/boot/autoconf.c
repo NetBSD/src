@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2003/12/08 07:33:12 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22 2005/12/11 12:19:30 christos Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.

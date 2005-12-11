@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.39 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: mii.c,v 1.40 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.39 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.40 2005/12/11 12:22:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

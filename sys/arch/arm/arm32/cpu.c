@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 2005/07/20 14:38:11 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.61 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2005/07/20 14:38:11 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>

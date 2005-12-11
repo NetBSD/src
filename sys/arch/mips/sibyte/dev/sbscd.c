@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.11 2005/08/26 11:49:13 drochner Exp $ */
+/* $NetBSD: sbscd.c,v 1.12 2005/12/11 12:18:13 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.11 2005/08/26 11:49:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.12 2005/12/11 12:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

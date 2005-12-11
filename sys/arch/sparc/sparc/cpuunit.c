@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.11 2004/06/27 18:24:46 pk Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.12 2005/12/11 12:19:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.11 2004/06/27 18:24:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.12 2005/12/11 12:19:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

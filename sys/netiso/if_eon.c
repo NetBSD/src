@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.47 2005/05/30 22:14:52 christos Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.48 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47 2005/05/30 22:14:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.48 2005/12/11 12:25:12 christos Exp $");
 
 #include "opt_eon.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.s,v 1.3 2003/10/14 00:28:19 christos Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.s,v 1.4 2005/12/11 12:19:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green

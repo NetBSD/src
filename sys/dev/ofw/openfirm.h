@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.20 2005/05/31 00:47:05 christos Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.21 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

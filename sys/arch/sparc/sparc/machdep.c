@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 2005/11/24 13:08:34 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.263 2005/12/11 12:19:08 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2005/12/11 12:19:08 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1324,7 +1324,7 @@ stackdump(void)
 }
 
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 
 	return (ENOEXEC);

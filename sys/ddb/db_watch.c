@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.21 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.22 2005/12/11 12:20:53 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.21 2005/06/01 12:25:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.22 2005/12/11 12:20:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

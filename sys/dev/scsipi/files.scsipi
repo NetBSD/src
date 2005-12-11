@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.40 2005/04/15 19:20:24 drochner Exp $
+#	$NetBSD: files.scsipi,v 1.41 2005/12/11 12:23:50 christos Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide

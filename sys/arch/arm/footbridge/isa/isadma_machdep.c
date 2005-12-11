@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.6 2003/07/30 17:28:20 he Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7 2005/12/11 12:16:46 christos Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.6 2003/07/30 17:28:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7 2005/12/11 12:16:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

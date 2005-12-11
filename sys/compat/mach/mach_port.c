@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.56 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_port.c,v 1.57 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.56 2005/02/26 23:10:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.57 2005/12/11 12:20:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

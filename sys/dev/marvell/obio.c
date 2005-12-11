@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 2005/12/11 12:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7 2005/12/11 12:22:16 christos Exp $");
 
 #include "opt_marvell.h"
 

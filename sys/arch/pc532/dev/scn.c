@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.66 2005/10/02 15:07:41 chs Exp $ */
+/*	$NetBSD: scn.c,v 1.67 2005/12/11 12:18:31 christos Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.66 2005/10/02 15:07:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.67 2005/12/11 12:18:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1076,11 +1076,11 @@ scnattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-scnopen(dev, flag, mode, p)
+scnopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit = DEV_UNIT(dev);
@@ -1144,7 +1144,7 @@ scnopen(dev, flag, mode, p)
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
 		if (tp->t_state & TS_XCLUDE &&
-		    suser(p->p_ucred, &p->p_acflag) != 0) {
+		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {
@@ -1224,11 +1224,11 @@ scnopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-scnclose(dev, flag, mode, p)
+scnclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc = SOFTC(unit);
@@ -1289,15 +1289,15 @@ scnwrite(dev, uio, flag)
 }
 
 int
-scnpoll(dev, events, p)
+scnpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -1675,23 +1675,23 @@ opbits(sc, tioc_bits)
 }
 
 int
-scnioctl(dev, cmd, data, flag, p)
+scnioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t	data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc = SOFTC(unit);
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1789,7 +1789,7 @@ scnioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS:{
 			int     userbits, driverbits = 0;
 
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 			if (error != 0)
 				return (EPERM);
 

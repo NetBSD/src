@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_maxine.c,v 1.7 2005/01/02 22:34:57 mhitch Exp $	*/
+/*	$NetBSD: tc_maxine.c,v 1.8 2005/12/11 12:18:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.7 2005/01/02 22:34:57 mhitch Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.8 2005/12/11 12:18:41 christos Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.58 2005/05/30 04:32:38 christos Exp $	*/
+/*	$NetBSD: seagate.c,v 1.59 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.58 2005/05/30 04:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.59 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

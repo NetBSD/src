@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.22 2005/04/14 20:06:15 matt Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.23 2005/12/11 12:17:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

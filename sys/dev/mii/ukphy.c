@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.25 2005/12/11 12:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.25 2005/12/11 12:22:42 christos Exp $");
 
 #include "opt_mii.h"
 

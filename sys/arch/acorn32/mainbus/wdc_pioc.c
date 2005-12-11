@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.19 2004/09/28 22:12:06 reinoud Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.20 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.19 2004/09/28 22:12:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.20 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

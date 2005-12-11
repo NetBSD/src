@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.6 2004/07/04 13:11:43 chris Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.7 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.

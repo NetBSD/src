@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax_wscons,v 1.2 2005/02/25 16:12:25 tsutsui Exp $
+#	$NetBSD: files.pmax_wscons,v 1.3 2005/12/11 12:18:36 christos Exp $
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"

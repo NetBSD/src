@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.9 2005/05/22 15:54:47 christos Exp $	*/
+/*	$NetBSD: llparse.c,v 1.10 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.10 2005/12/11 12:25:16 christos Exp $");
 
 #include "xebec.h"
 #include "llparse.h"

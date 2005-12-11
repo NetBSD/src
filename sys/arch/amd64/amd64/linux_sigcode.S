@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.1 2005/05/03 16:26:28 manu Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.2 2005/12/11 12:16:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.

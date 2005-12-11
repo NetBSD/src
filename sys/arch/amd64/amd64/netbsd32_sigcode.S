@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.5 2004/03/26 18:44:36 drochner Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.6 2005/12/11 12:16:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.17 2005/06/03 13:47:05 tsutsui Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.18 2005/12/11 12:18:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.17 2005/06/03 13:47:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.18 2005/12/11 12:18:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

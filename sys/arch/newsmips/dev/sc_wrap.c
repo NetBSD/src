@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.27 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.28 2005/12/11 12:18:24 christos Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.27 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.28 2005/12/11 12:18:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

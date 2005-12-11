@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.14 2005/07/11 15:37:04 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.14 2005/07/11 15:37:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

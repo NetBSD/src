@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.4 2003/09/24 11:57:44 mycroft Exp $ */
+/*	$NetBSD: s3c24x0_intr.h,v 1.5 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.

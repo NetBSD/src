@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
 
 #ifndef _IYONIX_PARAM_H_
 #define _IYONIX_PARAM_H_

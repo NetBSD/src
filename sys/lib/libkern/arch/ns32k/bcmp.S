@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.3 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.4 2005/12/11 12:24:44 christos Exp $	*/
 
 /*
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcmp.S,v 1.3 2005/02/26 22:58:56 perry Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.4 2005/12/11 12:24:44 christos Exp $")
 #endif
 
 /*

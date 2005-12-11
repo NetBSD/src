@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.27 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.28 2005/12/11 12:19:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.27 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.28 2005/12/11 12:19:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 }
 
 int 
-bw2open(dev_t dev, int flags, int mode, struct proc *p)
+bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -295,7 +295,7 @@ bw2open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-bw2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+bw2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 

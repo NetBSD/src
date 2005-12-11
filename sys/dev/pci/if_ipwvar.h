@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.6 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.7 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004

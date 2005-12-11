@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aha.c,v 1.48 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.48 2005/12/11 12:21:25 christos Exp $");
 
 #include "opt_ddb.h"
 

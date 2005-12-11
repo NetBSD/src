@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.9 2004/04/11 06:52:38 kochi Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.10 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.9 2004/04/11 06:52:38 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.10 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

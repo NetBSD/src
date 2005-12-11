@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.18 2004/03/27 00:59:55 he Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.19 2005/12/11 12:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

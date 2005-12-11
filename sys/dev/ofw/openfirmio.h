@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.h,v 1.5 2003/08/07 16:31:10 agc Exp $ */
+/*	$NetBSD: openfirmio.h,v 1.6 2005/12/11 12:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

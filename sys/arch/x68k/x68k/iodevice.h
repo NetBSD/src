@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.8 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.9 2005/12/11 12:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki

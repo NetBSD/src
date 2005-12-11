@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.6 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.7 2005/12/11 12:16:03 christos Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*

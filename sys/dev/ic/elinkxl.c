@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.85 2005/10/23 20:03:04 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.85 2005/10/23 20:03:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

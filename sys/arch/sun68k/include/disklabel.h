@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2005/12/11 12:19:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou

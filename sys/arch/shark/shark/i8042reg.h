@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.3 2003/10/22 10:04:43 agc Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.4 2005/12/11 12:19:05 christos Exp $     */
 
 /*
  * Copyright 1997

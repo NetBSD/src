@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.8 2005/01/14 03:41:45 kent Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.9 2005/12/11 12:22:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak

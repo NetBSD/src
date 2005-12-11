@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.57 2005/03/04 22:40:32 nathanw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.58 2005/12/11 12:18:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

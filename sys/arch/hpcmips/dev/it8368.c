@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $ */
+/*	$NetBSD: it8368.c,v 1.20 2005/12/11 12:17:33 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.19 2005/06/28 18:30:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.20 2005/12/11 12:17:33 christos Exp $");
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 

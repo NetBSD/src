@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.18 2005/08/30 22:24:11 xtraeme Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.19 2005/12/11 12:19:50 christos Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.18 2005/08/30 22:24:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.19 2005/12/11 12:19:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

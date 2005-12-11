@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sii3112_reg.h,v 1.2 2003/12/20 03:51:27 thorpej Exp $	*/
+/*	$NetBSD: pciide_sii3112_reg.h,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

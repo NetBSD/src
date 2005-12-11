@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.28 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.29 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.28 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.29 2005/12/11 12:22:48 christos Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x

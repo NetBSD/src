@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.2 2005/05/29 21:19:41 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.3 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

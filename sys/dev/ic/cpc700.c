@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.10 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.11 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.10 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.11 2005/12/11 12:21:26 christos Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"

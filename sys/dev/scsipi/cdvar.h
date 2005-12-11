@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.25 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.26 2005/12/11 12:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

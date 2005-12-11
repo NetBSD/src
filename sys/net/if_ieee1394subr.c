@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.30 2005/08/06 14:09:54 kiyohara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.31 2005/12/11 12:24:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.30 2005/08/06 14:09:54 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.31 2005/12/11 12:24:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

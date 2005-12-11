@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.3 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.3 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.4 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/systm.h>
 

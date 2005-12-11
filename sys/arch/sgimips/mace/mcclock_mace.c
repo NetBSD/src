@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.3 2004/01/19 10:28:28 sekiya Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.4 2005/12/11 12:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.3 2004/01/19 10:28:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.4 2005/12/11 12:18:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.7 2004/03/09 20:14:27 jdc Exp $	*/
+/*	$NetBSD: installboot.h,v 1.8 2005/12/11 12:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens

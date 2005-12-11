@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2004/12/13 02:31:56 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2005/12/11 12:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2004/12/13 02:31:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

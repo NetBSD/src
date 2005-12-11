@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.20 2005/04/17 14:46:49 toshii Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.21 2005/12/11 12:24:01 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 

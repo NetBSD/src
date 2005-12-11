@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.6 2005/10/15 17:29:10 yamt Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.6 2005/10/15 17:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.7 2005/12/11 12:17:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -620,7 +620,7 @@ mmem_printerror(const char *head, int rd, int blk, uint32_t code)
 }
 
 int
-mmemopen(dev_t dev, int flags, int devtype, struct proc *p)
+mmemopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	int diskunit, unit, part, labelpart;
 	struct mmem_softc *sc;
@@ -649,7 +649,7 @@ mmemopen(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 int
-mmemclose(dev_t dev, int flags, int devtype, struct proc *p)
+mmemclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	int diskunit, unit, part, labelpart;
 	struct mmem_softc *sc;
@@ -916,7 +916,7 @@ mmemwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int diskunit, unit, part;
 	struct mmem_softc *sc;
@@ -936,7 +936,7 @@ mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	default:
 		/* generic maple ioctl */
 		return maple_unit_ioctl(sc->sc_parent, sc->sc_unit, cmd, data,
-		    flag, p);
+		    flag, l);
 	}
 
 	return 0;

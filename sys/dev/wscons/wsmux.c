@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.39 2005/11/11 07:07:42 simonb Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.40 2005/12/11 12:24:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.39 2005/11/11 07:07:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.40 2005/12/11 12:24:12 christos Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -110,8 +110,8 @@ static int wsmux_evsrc_set_display(struct device *, struct wsevsrc *);
 #endif
 
 static int wsmux_do_displayioctl(struct device *dev, u_long cmd,
-				 caddr_t data, int flag, struct proc *p);
-static int wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct proc *);
+				 caddr_t data, int flag, struct lwp *l);
+static int wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct lwp *);
 
 static int wsmux_add_mux(int, struct wsmux_softc *);
 
@@ -191,7 +191,7 @@ wsmux_getmux(int n)
  * open() of the pseudo device from device table.
  */
 int
-wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
+wsmuxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct wsmux_softc *sc;
 	struct wseventvar *evar;
@@ -228,7 +228,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	evar = &sc->sc_base.me_evar;
 	wsevent_init(evar);
-	evar->io = p;
+	evar->io = l->l_proc;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
 #endif
@@ -300,7 +300,7 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
  * close() of the pseudo device from device table.
  */
 int
-wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
+wsmuxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
@@ -390,11 +390,11 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
  * ioctl of the pseudo device from device table.
  */
 int
-wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int u = WSMUXDEV(minor(dev));
 
-	return wsmux_do_ioctl(&wsmuxdevs[u]->sc_base.me_dv, cmd, data, flag, p);
+	return wsmux_do_ioctl(&wsmuxdevs[u]->sc_base.me_dv, cmd, data, flag, l);
 }
 
 /*
@@ -402,7 +402,7 @@ wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  */
 int
 wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
-	       struct proc *p)
+	       struct lwp *lwp)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
@@ -547,7 +547,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			continue;
 		}
 #endif
-		error = wsevsrc_ioctl(me, cmd, data, flag, p);
+		error = wsevsrc_ioctl(me, cmd, data, flag, lwp);
 		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n",
 			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname,
 			 error));
@@ -569,7 +569,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
  * poll() of the pseudo device from device table.
  */
 int
-wsmuxpoll(dev_t dev, int events, struct proc *p)
+wsmuxpoll(dev_t dev, int events, struct lwp *l)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
@@ -586,7 +586,7 @@ wsmuxpoll(dev_t dev, int events, struct proc *p)
 		return (POLLHUP);
 	}
 
-	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+	return (wsevent_poll(sc->sc_base.me_evp, events, l));
 }
 
 /*
@@ -767,7 +767,7 @@ wsmux_detach_sc(struct wsevsrc *me)
  */
 int
 wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
-		      struct proc *p)
+		      struct lwp *l)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
@@ -798,7 +798,7 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 #endif
 		if (me->me_ops->ddispioctl != NULL) {
-			error = wsevsrc_display_ioctl(me, cmd, data, flag, p);
+			error = wsevsrc_display_ioctl(me, cmd, data, flag, l);
 			DPRINTF(("wsmux_displayioctl: me=%p dev=%s ==> %d\n",
 				 me, me->me_dv.dv_xname, error));
 			if (!error)

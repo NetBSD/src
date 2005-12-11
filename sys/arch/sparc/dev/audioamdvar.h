@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamdvar.h,v 1.3 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: audioamdvar.h,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann

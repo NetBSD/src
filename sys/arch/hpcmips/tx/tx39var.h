@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.12 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: tx39var.h,v 1.13 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.

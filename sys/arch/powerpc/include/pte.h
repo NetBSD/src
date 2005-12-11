@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 2005/01/16 21:35:59 chs Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 2005/12/11 12:18:43 christos Exp $	*/
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.58 2003/08/07 16:28:32 agc Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.59 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

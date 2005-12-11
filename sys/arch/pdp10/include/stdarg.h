@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.2 2004/03/19 08:46:25 kleink Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

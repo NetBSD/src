@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.8 2005/03/26 09:51:02 tsutsui Exp $	*/
+/*	$NetBSD: cache.h,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

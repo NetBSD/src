@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.25 2005/05/10 20:28:35 jdc Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.26 2005/12/11 12:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.25 2005/05/10 20:28:35 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.26 2005/12/11 12:16:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

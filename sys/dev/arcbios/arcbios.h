@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.9 2005/06/03 18:58:40 martin Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.10 2005/12/11 12:21:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

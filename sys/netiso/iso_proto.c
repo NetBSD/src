@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.17 2005/01/23 18:41:57 matt Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.18 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.17 2005/01/23 18:41:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.18 2005/12/11 12:25:12 christos Exp $");
 
 
 #include <sys/param.h>

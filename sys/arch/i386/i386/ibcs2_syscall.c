@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.28 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.27 2005/07/01 18:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.28 2005/12/11 12:17:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

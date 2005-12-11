@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.21 2005/06/08 02:00:53 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.22 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

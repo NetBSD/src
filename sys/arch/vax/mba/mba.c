@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.34 2005/10/15 17:29:11 yamt Exp $ */
+/*	$NetBSD: mba.c,v 1.35 2005/12/11 12:19:35 christos Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.34 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.35 2005/12/11 12:19:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

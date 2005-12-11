@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sgimips.inc,v 1.9 2005/02/28 23:44:58 sekiya Exp $
+#	$NetBSD: Makefile.sgimips.inc,v 1.10 2005/12/11 12:18:52 christos Exp $
 
 WANT_ECOFF?=no
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

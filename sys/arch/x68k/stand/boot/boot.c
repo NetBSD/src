@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2005/09/18 16:12:34 nsmrtks Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:19:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto

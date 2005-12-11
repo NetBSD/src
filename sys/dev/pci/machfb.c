@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.35 2005/10/03 11:22:06 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.36 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.35 2005/10/03 11:22:06 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.36 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ static struct wsscreen_list mach64_screenlist = {
 	_mach64_scrlist
 };
 
-static int	mach64_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	mach64_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	mach64_mmap(void *, off_t, int);
 static int	mach64_alloc_screen(void *, const struct wsscreen_descr *,
 				    void **, int *, int *, long *);
@@ -1593,7 +1593,7 @@ mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mach64_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;

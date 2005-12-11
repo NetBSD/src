@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
+/* $NetBSD: wsevent.c,v 1.17 2005/12/11 12:24:12 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.17 2005/12/11 12:24:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -183,7 +183,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 }
 
 int
-wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
+wsevent_poll(struct wseventvar *ev, int events, struct lwp *l)
 {
 	int revents = 0;
 	int s = splwsevent();
@@ -192,7 +192,7 @@ wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 		if (ev->get != ev->put)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &ev->sel);
+			selrecord(l, &ev->sel);
 	}
 
 	splx(s);

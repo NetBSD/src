@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.45 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.46 2005/12/11 12:16:17 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.45 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.46 2005/12/11 12:16:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

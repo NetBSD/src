@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.8 2005/04/01 11:59:31 yamt Exp $ */
+/* $NetBSD: kvm86.c,v 1.9 2005/12/11 12:17:41 christos Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.8 2005/04/01 11:59:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.9 2005/12/11 12:17:41 christos Exp $");
 
 #include "opt_multiprocessor.h"
 

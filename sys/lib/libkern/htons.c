@@ -1,4 +1,4 @@
-/*	$NetBSD: htons.c,v 1.11 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: htons.c,v 1.12 2005/12/11 12:24:37 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: htons.c,v 1.11 2003/12/04 13:57:31 keihan Exp $");
+__RCSID("$NetBSD: htons.c,v 1.12 2005/12/11 12:24:37 christos Exp $");
 #endif
 
 #include <sys/types.h>

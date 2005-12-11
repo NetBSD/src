@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2004/11/14 15:45:02 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2005/12/11 12:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2004/11/14 15:45:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2005/12/11 12:17:36 christos Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"

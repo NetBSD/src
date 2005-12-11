@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.h,v 1.6 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.7 2005/12/11 12:22:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

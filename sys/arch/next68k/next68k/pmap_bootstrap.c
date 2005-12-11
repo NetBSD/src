@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.19 2005/04/01 11:59:33 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.20 2005/12/11 12:18:29 christos Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.19 2005/04/01 11:59:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.20 2005/12/11 12:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>

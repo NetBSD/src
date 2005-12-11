@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2005/05/16 21:17:11 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.23 2005/12/11 12:20:14 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S

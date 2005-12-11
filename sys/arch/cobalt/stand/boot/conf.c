@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2005/06/23 19:44:00 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

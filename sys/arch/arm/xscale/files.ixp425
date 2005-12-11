@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp425,v 1.7 2004/05/01 19:09:14 thorpej Exp $
+#       $NetBSD: files.ixp425,v 1.8 2005/12/11 12:16:51 christos Exp $
 #
 # Configuration info for Intel IXP4xx CPU support
 #

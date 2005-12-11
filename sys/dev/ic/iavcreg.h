@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcreg.h,v 1.1 2003/09/25 15:53:26 pooka Exp $	*/
+/*	$NetBSD: iavcreg.h,v 1.2 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.

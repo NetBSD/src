@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.h,v 1.4 2005/08/19 02:03:57 christos Exp $	*/
+/*	$NetBSD: aoutm68k_stat.h,v 1.5 2005/12/11 12:19:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

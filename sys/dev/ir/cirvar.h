@@ -1,4 +1,4 @@
-/*	$NetBSD: cirvar.h,v 1.5 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: cirvar.h,v 1.6 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

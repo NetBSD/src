@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 2003/07/15 03:35:49 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2003/07/15 03:35:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $");
 
 #include "opt_openpic.h"
 

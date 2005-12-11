@@ -1,4 +1,4 @@
-#	$NetBSD: files.ieee1394,v 1.8 2005/07/11 15:37:00 kiyohara Exp $
+#	$NetBSD: files.ieee1394,v 1.9 2005/12/11 12:22:02 christos Exp $
 
 file	dev/ieee1394/fwohci.c	fwohci
 

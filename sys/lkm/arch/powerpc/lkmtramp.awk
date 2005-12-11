@@ -1,4 +1,4 @@
-#	$NetBSD: lkmtramp.awk,v 1.2 2004/01/16 00:35:48 matt Exp $
+#	$NetBSD: lkmtramp.awk,v 1.3 2005/12/11 12:24:47 christos Exp $
 #
 BEGIN {
 	print "#include <machine/asm.h>"

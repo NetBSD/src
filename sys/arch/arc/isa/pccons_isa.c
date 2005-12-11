@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.8 2005/12/11 12:16:39 christos Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

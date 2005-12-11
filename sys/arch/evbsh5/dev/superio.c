@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.15 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: superio.c,v 1.16 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: superio.c,v 1.15 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: superio.c,v 1.16 2005/12/11 12:17:13 christos Exp $");
 
 #include "locators.h"
 #include "com.h"

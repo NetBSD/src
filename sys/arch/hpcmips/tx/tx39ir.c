@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.7 2003/07/15 02:29:33 lukem Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.8 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.7 2003/07/15 02:29:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.8 2005/12/11 12:17:34 christos Exp $");
 
 #undef TX39IRDEBUG
 

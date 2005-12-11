@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.8 2005/06/20 11:04:15 sekiya Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.9 2005/12/11 12:17:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.10 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.11 2005/12/11 12:20:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.h,v 1.8 2003/12/09 12:13:44 manu Exp $ */
+/*	$NetBSD: mach_notify.h,v 1.9 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

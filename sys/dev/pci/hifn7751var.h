@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.6 2005/10/15 08:58:15 tls Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.7 2005/12/11 12:22:49 christos Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*

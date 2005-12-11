@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.54 2005/11/29 22:52:02 yamt Exp $	*/
+/*	$NetBSD: file.h,v 1.55 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@ MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
 
 struct proc;
+struct lwp;
 struct uio;
 struct iovec;
 struct stat;
@@ -79,13 +80,13 @@ struct file {
 		int	(*fo_write)	(struct file *, off_t *, struct uio *,
 					    struct ucred *, int);
 		int	(*fo_ioctl)	(struct file *, u_long, void *,
-					    struct proc *);
+					    struct lwp *);
 		int	(*fo_fcntl)	(struct file *, u_int, void *,
-					    struct proc *);
-		int	(*fo_poll)	(struct file *, int, struct proc *);
+					    struct lwp *);
+		int	(*fo_poll)	(struct file *, int, struct lwp *);
 		int	(*fo_stat)	(struct file *, struct stat *,
-					    struct proc *);
-		int	(*fo_close)	(struct file *, struct proc *);
+					    struct lwp *);
+		int	(*fo_close)	(struct file *, struct lwp *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
 	} *f_ops;
 	off_t		f_offset;
@@ -126,14 +127,14 @@ do {									\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
-#define	FILE_UNUSE_WLOCK(fp, p, havelock)				\
+#define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
 		simple_lock(&(fp)->f_slock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
 		simple_unlock(&(fp)->f_slock);				\
 		/* Will drop usecount */				\
-		(void) closef((fp), (p));				\
+		(void) closef((fp), (l));				\
 		break;							\
 	} else {							\
 		(fp)->f_usecount--;					\
@@ -141,8 +142,8 @@ do {									\
 	}								\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
-#define	FILE_UNUSE(fp, p)		FILE_UNUSE_WLOCK(fp, p, 0)
-#define	FILE_UNUSE_HAVELOCK(fp, p)	FILE_UNUSE_WLOCK(fp, p, 1)
+#define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
+#define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
 
 /*
  * Flags for fo_read and fo_write.
@@ -156,28 +157,28 @@ extern int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 
-int	dofileread(struct proc *, int, struct file *, void *, size_t,
+int	dofileread(struct lwp *, int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
-int	dofilewrite(struct proc *, int, struct file *, const void *,
+int	dofilewrite(struct lwp *, int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	dofilereadv(struct proc *, int, struct file *,
+int	dofilereadv(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
-int	dofilewritev(struct proc *, int, struct file *,
+int	dofilewritev(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);
 void	fownsignal(pid_t, int, int, int, void *);
 
-int	fdclone(struct proc *, struct file *, int, int, const struct fileops *,
+int	fdclone(struct lwp *, struct file *, int, int, const struct fileops *,
     void *);
 
 /* Commonly used fileops */
-int	fnullop_fcntl(struct file *, u_int, void *, struct proc *);
-int	fnullop_poll(struct file *, int, struct proc *);
+int	fnullop_fcntl(struct file *, u_int, void *, struct lwp *);
+int	fnullop_poll(struct file *, int, struct lwp *);
 int	fnullop_kqfilter(struct file *, struct knote *);
-int	fbadop_stat(struct file *, struct stat *, struct proc *);
+int	fbadop_stat(struct file *, struct stat *, struct lwp *);
 
 #endif /* _KERNEL */
 

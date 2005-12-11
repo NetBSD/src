@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.15 2005/09/17 14:38:40 yamt Exp $
+#	$NetBSD: majors.sun3,v 1.16 2005/12/11 12:19:20 christos Exp $
 #
 # Device majors for sun3/sun3x
 #

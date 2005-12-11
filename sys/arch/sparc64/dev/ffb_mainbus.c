@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.7 2005/05/04 14:38:44 martin Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.8 2005/12/11 12:19:09 christos Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.7 2005/05/04 14:38:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.8 2005/12/11 12:19:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

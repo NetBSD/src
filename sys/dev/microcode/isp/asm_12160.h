@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_12160.h,v 1.5 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: asm_12160.h,v 1.6 2005/12/11 12:22:27 christos Exp $	*/
 /* @(#)asm_12160.h 1.4 */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.

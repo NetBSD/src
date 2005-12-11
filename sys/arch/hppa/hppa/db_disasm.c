@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2005/06/03 15:21:35 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.8 2005/12/11 12:17:37 christos Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2005/06/03 15:21:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8 2005/12/11 12:17:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

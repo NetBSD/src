@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.h,v 1.2 2005/08/19 02:04:03 christos Exp $	*/
+/*	$NetBSD: svr4_32_socket.h,v 1.3 2005/12/11 12:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

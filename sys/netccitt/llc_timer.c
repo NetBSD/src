@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_timer.c,v 1.9 2005/02/26 22:45:10 perry Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.10 2005/12/11 12:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_timer.c,v 1.9 2005/02/26 22:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_timer.c,v 1.10 2005/12/11 12:24:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

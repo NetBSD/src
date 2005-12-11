@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.6 2005/12/11 12:24:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -147,7 +147,7 @@ struct ptyfs_args {
 
 int ptyfs_freevp(struct vnode *);
 int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int,
-    struct proc *);
+    struct lwp *);
 void ptyfs_hashinit(void);
 void ptyfs_hashreinit(void);
 void ptyfs_hashdone(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.24 2005/04/16 07:53:35 yamt Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.25 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.24 2005/04/16 07:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.25 2005/12/11 12:17:41 christos Exp $");
 
 #include "ioapic.h"
 

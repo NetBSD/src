@@ -1,4 +1,4 @@
-/* $NetBSD: i82596reg.h,v 1.1 2004/03/12 11:37:17 jkunz Exp $ */
+/* $NetBSD: i82596reg.h,v 1.2 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.

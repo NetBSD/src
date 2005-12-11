@@ -1,4 +1,4 @@
-/* $NetBSD: iocreg.h,v 1.1 2003/12/15 10:23:52 sekiya Exp $	 */
+/* $NetBSD: iocreg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya

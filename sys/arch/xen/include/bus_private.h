@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.3 2005/08/22 11:09:39 bouyer Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.4 2005/12/11 12:19:48 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,

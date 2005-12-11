@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.2 2003/07/18 19:20:57 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

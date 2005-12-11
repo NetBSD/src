@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.83 2005/10/29 14:16:45 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.84 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.

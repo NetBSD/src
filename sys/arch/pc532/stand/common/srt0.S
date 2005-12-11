@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.2 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: srt0.S,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.

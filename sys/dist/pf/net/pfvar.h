@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.9 2005/07/01 12:37:35 peter Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.10 2005/12/11 12:24:25 christos Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*

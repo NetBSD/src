@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.14 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.14 2005/12/11 12:19:00 christos Exp $")
 
 
 /*

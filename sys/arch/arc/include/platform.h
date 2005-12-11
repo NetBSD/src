@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.7 2005/06/03 12:30:53 tsutsui Exp $	*/
+/*	$NetBSD: platform.h,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*

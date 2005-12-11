@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.13 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.cesfic,v 1.14 2005/12/11 12:17:05 christos Exp $
 
 # Makefile for NetBSD
 #

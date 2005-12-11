@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiovar.h,v 1.1 2005/01/23 19:22:22 shige Exp $	*/
+/*	$NetBSD: gpiovar.h,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

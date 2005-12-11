@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.3 2005/12/11 12:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.

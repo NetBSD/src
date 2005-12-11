@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.6 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2004/06/15 07:41:36 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2005/12/11 12:17:40 christos Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #

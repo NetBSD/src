@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.26 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: mon.h,v 1.27 2005/12/11 12:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

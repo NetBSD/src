@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.7 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.8 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

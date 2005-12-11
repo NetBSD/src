@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_vector.S,v 1.1 2003/07/30 18:54:23 bsh Exp $	*/
+/*	$NetBSD: s3c2800_vector.S,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

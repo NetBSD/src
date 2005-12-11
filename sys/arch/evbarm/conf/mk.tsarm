@@ -1,4 +1,4 @@
-#	$NetBSD: mk.tsarm,v 1.1 2004/12/23 04:34:03 joff Exp $
+#	$NetBSD: mk.tsarm,v 1.2 2005/12/11 12:17:07 christos Exp $
 
 SYSTEM_FIRST_OBJ=	tsarm_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/tsarm/tsarm_start.S

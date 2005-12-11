@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.2 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.3 2005/12/11 12:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.2 2005/02/27 00:27:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.3 2005/12/11 12:22:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

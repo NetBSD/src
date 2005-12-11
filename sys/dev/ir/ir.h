@@ -1,4 +1,4 @@
-/*	$NetBSD: ir.h,v 1.3 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: ir.h,v 1.4 2005/12/11 12:22:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

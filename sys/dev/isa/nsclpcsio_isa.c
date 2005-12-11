@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.12 2005/10/11 15:58:38 drochner Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.13 2005/12/11 12:22:03 christos Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.12 2005/10/11 15:58:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.13 2005/12/11 12:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

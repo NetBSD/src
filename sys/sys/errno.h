@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.36 2005/01/02 18:54:51 thorpej Exp $	*/
+/*	$NetBSD: errno.h,v 1.37 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

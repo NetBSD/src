@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: zsms.c,v 1.12 2005/12/11 12:24:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.11 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.12 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
     zsms_match, zsms_attach, NULL, NULL);
 
 static int  zsms_enable(void *);
-static int  zsms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int  zsms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void zsms_disable(void *);
 
 const struct wsmouse_accessops zsms_accessops = {
@@ -222,12 +222,12 @@ zsms_disable(v)
 }
 
 static int
-zsms_ioctl(v, cmd, data, flag, p)
+zsms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	if (cmd == WSMOUSEIO_GTYPE) {

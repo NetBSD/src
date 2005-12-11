@@ -1,4 +1,4 @@
-/* $NetBSD: bt459reg.h,v 1.3 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: bt459reg.h,v 1.4 2005/12/11 12:21:26 christos Exp $ */
 
 /*
  * Mach Operating System

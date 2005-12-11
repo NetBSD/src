@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.3 2003/08/31 22:40:49 fvdl Exp $	*/
+/*	$NetBSD: udp.c,v 1.4 2005/12/11 12:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

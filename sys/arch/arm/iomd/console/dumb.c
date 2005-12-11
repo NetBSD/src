@@ -1,4 +1,4 @@
-/*	$NetBSD: dumb.c,v 1.4 2004/08/06 14:39:18 skrll Exp $	*/
+/*	$NetBSD: dumb.c,v 1.5 2005/12/11 12:16:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumb.c,v 1.4 2004/08/06 14:39:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumb.c,v 1.5 2005/12/11 12:16:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

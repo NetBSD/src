@@ -1,4 +1,4 @@
-/* $NetBSD: dom0_ops.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: dom0_ops.h,v 1.3 2005/12/11 12:19:49 christos Exp $ */
 /*
  * Copyright (c) 2002-2003, B Dragovic
  * Copyright (c) 2002-2004, K Fraser

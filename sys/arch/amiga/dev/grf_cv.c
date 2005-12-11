@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.38 2005/06/13 21:34:16 jmc Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.39 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.38 2005/06/13 21:34:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.39 2005/12/11 12:16:28 christos Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0

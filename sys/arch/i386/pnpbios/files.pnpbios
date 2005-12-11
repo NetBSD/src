@@ -1,4 +1,4 @@
-# $NetBSD: files.pnpbios,v 1.15 2004/08/30 15:05:17 drochner Exp $
+# $NetBSD: files.pnpbios,v 1.16 2005/12/11 12:17:47 christos Exp $
 
 defflag	PNPBIOSVERBOSE
 

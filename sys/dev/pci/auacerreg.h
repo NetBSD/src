@@ -1,4 +1,4 @@
-/*	$NetBSD: auacerreg.h,v 1.2 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: auacerreg.h,v 1.3 2005/12/11 12:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

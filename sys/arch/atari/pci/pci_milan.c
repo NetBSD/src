@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.5 2003/07/15 01:19:55 lukem Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.6 2005/12/11 12:16:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.5 2003/07/15 01:19:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.6 2005/12/11 12:16:59 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

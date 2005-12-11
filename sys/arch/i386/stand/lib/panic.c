@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.6 2004/03/24 16:46:28 drochner Exp $	 */
+/*	$NetBSD: panic.c,v 1.7 2005/12/11 12:17:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1996

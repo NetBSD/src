@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.29 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: dvma.c,v 1.30 2005/12/11 12:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.30 2005/12/11 12:19:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

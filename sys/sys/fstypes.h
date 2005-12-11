@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.6 2005/09/23 12:10:33 jmmv Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993

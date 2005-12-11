@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.17 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.18 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.17 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.18 2005/12/11 12:21:26 christos Exp $");
 
 #include "opt_inet.h"
 

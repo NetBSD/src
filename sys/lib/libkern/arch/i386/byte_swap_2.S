@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.3 2003/08/07 16:32:13 agc Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_2.S,v 1.3 2003/08/07 16:32:13 agc Exp $")
+	RCSID("$NetBSD: byte_swap_2.S,v 1.4 2005/12/11 12:24:42 christos Exp $")
 #endif
 
 _ENTRY(_C_LABEL(bswap16))

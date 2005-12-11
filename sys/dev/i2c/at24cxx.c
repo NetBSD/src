@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.2 2004/03/11 15:11:53 christos Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

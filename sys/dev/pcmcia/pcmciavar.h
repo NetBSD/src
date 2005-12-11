@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.30 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.31 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

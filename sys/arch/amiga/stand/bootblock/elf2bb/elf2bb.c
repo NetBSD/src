@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.10 2004/12/04 16:23:31 chs Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.11 2005/12/11 12:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

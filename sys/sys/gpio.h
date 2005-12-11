@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.1 2005/09/27 02:35:09 jmcneill Exp $ */
+/* $NetBSD: gpio.h,v 1.2 2005/12/11 12:25:20 christos Exp $ */
 /*	$OpenBSD: gpio.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>

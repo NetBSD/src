@@ -1,4 +1,4 @@
-/*	$NetBSD: sr_601.h,v 1.2 2004/06/06 21:23:53 kleink Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.3 2005/12/11 12:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.

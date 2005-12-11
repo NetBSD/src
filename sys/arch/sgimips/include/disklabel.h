@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2005/06/12 19:46:17 dyoung Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2005/12/11 12:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

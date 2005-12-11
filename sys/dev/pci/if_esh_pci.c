@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.18 2005/05/30 04:35:22 christos Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.19 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.18 2005/05/30 04:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.19 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

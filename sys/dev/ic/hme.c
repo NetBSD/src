@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.52 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.51 2005/05/02 15:34:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.52 2005/12/11 12:21:26 christos Exp $");
 
 /* #define HMEDEBUG */
 

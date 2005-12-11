@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcmips,v 1.18 2005/09/17 09:44:06 yamt Exp $
+#	$NetBSD: std.hpcmips,v 1.19 2005/12/11 12:17:33 christos Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips

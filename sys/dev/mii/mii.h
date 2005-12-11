@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.12 2005/02/27 00:27:31 perry Exp $	*/
+/*	$NetBSD: mii.h,v 1.13 2005/12/11 12:22:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

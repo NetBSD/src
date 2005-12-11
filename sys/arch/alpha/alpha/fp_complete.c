@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.7 2003/12/04 13:05:15 keihan Exp $ */
+/* $NetBSD: fp_complete.c,v 1.8 2005/12/11 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.7 2003/12/04 13:05:15 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.8 2005/12/11 12:16:10 christos Exp $");
 
 #include "opt_compat_osf1.h"
 

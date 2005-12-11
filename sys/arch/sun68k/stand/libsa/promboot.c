@@ -1,4 +1,4 @@
-/*	$NetBSD: promboot.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: promboot.c,v 1.4 2005/12/11 12:19:29 christos Exp $	*/
 
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.17 2004/07/01 17:43:52 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.17 2004/07/01 17:43:52 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

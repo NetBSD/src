@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.8 2003/12/08 14:41:11 scw Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.9 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2003

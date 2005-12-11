@@ -1,4 +1,4 @@
-/* $NetBSD: ses.h,v 1.2 2005/02/27 00:27:48 perry Exp $ */
+/* $NetBSD: ses.h,v 1.3 2005/12/11 12:23:51 christos Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.

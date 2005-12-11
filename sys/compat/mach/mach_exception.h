@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.5 2005/06/25 08:28:34 christos Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.6 2005/12/11 12:20:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

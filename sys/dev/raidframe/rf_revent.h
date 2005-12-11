@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.h,v 1.9 2005/02/05 23:35:33 oster Exp $	*/
+/*	$NetBSD: rf_revent.h,v 1.10 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

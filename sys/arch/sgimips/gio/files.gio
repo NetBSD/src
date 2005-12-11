@@ -1,4 +1,4 @@
-# $NetBSD: files.gio,v 1.6 2004/07/06 23:51:40 sekiya Exp $
+# $NetBSD: files.gio,v 1.7 2005/12/11 12:18:53 christos Exp $
 
 device	gio {[slot = -1], [addr = -1]}
 attach	gio at giobus

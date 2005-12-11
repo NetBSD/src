@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.27 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: drsc.c,v 1.28 2005/12/11 12:16:28 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.27 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.28 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

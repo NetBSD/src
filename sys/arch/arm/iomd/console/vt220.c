@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.6 2005/06/09 09:23:39 he Exp $	*/
+/*	$NetBSD: vt220.c,v 1.7 2005/12/11 12:16:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.6 2005/06/09 09:23:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.7 2005/12/11 12:16:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

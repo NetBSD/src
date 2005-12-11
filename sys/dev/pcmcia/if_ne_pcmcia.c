@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.140 2005/05/30 04:28:49 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.141 2005/12/11 12:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.140 2005/05/30 04:28:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.141 2005/12/11 12:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

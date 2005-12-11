@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.3 2003/10/06 00:04:55 he Exp $	*/
+/*	$NetBSD: com.c,v 1.4 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997

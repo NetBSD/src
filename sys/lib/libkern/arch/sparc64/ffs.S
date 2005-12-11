@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: ffs.S,v 1.5 2005/12/11 12:24:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #ifdef notdef
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: ffs.S,v 1.4 2005/02/26 22:58:56 perry Exp $"
+	.asciz "$NetBSD: ffs.S,v 1.5 2005/12/11 12:24:45 christos Exp $"
 #endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2003/08/07 16:27:16 agc Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2005/12/11 12:17:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

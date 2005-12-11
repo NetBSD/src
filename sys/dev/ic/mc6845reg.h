@@ -1,4 +1,4 @@
-/* $NetBSD: mc6845reg.h,v 1.3 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: mc6845reg.h,v 1.4 2005/12/11 12:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1998

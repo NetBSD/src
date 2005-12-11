@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.12 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.13 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.12 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.13 2005/12/11 12:19:02 christos Exp $");
 
 #include "opt_pci.h"
 

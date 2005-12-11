@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.5 2004/03/24 17:29:14 drochner Exp $	*/
+/*	$NetBSD: tftp.h,v 1.6 2005/12/11 12:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1996

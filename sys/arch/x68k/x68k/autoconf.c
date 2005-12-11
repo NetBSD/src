@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 2005/07/03 10:22:25 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 2005/12/11 12:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2005/07/03 10:22:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2005/12/11 12:19:45 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"

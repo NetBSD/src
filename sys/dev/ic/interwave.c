@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.26 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: interwave.c,v 1.27 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.26 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.27 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
 #
 # -- SCPH-18000 used by uch@NetBSD.org
 #
-# 	$NetBSD: AGATE,v 1.8 2004/07/15 03:53:51 atatat Exp $
+# 	$NetBSD: AGATE,v 1.9 2005/12/11 12:18:34 christos Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"

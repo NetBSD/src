@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.6 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.7 2005/12/11 12:18:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood

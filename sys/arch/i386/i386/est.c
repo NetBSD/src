@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.10 2005/10/12 04:20:59 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.11 2005/12/11 12:17:41 christos Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.10 2005/10/12 04:20:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.11 2005/12/11 12:17:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

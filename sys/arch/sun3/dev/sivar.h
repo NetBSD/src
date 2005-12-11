@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.7 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: sivar.h,v 1.8 2005/12/11 12:19:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

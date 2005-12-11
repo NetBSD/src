@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2005/01/19 01:58:21 chs Exp $ */
+/*	$NetBSD: mem.c,v 1.23 2005/12/11 12:18:29 christos Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2005/12/11 12:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.12 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: utsname.h,v 1.13 2005/12/11 12:25:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994

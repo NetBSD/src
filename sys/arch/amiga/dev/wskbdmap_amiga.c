@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_amiga.c,v 1.7 2004/01/04 19:20:43 jandberg Exp $ */
+/*	$NetBSD: wskbdmap_amiga.c,v 1.8 2005/12/11 12:16:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.7 2004/01/04 19:20:43 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.8 2005/12/11 12:16:28 christos Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

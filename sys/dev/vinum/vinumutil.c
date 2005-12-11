@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumutil.c,v 1.3 2005/07/05 22:20:47 he Exp $
+ * $Id: vinumutil.c,v 1.4 2005/12/11 12:24:07 christos Exp $
  * $FreeBSD$
  */
 

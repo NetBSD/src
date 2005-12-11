@@ -1,4 +1,4 @@
-/*	$NetBSD: grfreg.h,v 1.3 2003/08/07 16:27:31 agc Exp $	*/
+/*	$NetBSD: grfreg.h,v 1.4 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

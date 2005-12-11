@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.10 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.11 2005/12/11 12:21:25 christos Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.

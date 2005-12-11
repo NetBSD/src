@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus_intr.s,v 1.3 2004/09/14 11:27:22 drochner Exp $ */
+/* $NetBSD: pci_eb64plus_intr.s,v 1.4 2005/12/11 12:16:17 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus_intr.s,v 1.3 2004/09/14 11:27:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus_intr.s,v 1.4 2005/12/11 12:16:17 christos Exp $");
 
 	.text
 LEAF(eb64plus_intr_enable,1)

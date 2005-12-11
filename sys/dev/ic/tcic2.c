@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.22 2005/08/25 22:33:19 drochner Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.23 2005/12/11 12:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.22 2005/08/25 22:33:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.23 2005/12/11 12:21:28 christos Exp $");
 
 #undef	TCICDEBUG
 

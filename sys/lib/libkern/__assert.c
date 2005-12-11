@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.7 2005/03/12 16:39:41 dsl Exp $	*/
+/*	$NetBSD: __assert.c,v 1.8 2005/12/11 12:24:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou

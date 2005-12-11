@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.50 2003/08/13 11:34:24 ragge Exp $	*/
+/*	$NetBSD: libkern.h,v 1.51 2005/12/11 12:24:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

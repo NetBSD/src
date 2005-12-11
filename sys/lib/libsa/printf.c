@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.16 2003/08/07 16:32:29 agc Exp $	*/
+/*	$NetBSD: printf.c,v 1.17 2005/12/11 12:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

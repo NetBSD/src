@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030var.h,v 1.1 2005/08/10 14:18:28 macallan Exp $	*/
+/*	$NetBSD: adm1030var.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -35,7 +35,7 @@
 #define ADM1030VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.1 2005/08/10 14:18:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.2 2005/12/11 12:21:22 christos Exp $");
 
 #include <dev/i2c/i2cvar.h>
 

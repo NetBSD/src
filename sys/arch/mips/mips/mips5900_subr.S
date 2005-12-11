@@ -1,4 +1,4 @@
-/*	$NetBSD: mips5900_subr.S,v 1.3 2005/11/05 10:39:26 tsutsui Exp $	*/
+/*	$NetBSD: mips5900_subr.S,v 1.4 2005/12/11 12:18:09 christos Exp $	*/
 
 #undef MIPS1
 /* #undef MIPS3 */

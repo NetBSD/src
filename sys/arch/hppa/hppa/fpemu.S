@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.S,v 1.2 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: fpemu.S,v 1.3 2005/12/11 12:17:37 christos Exp $	*/
 
 /*	$OpenBSD: fpemu.S,v 1.4 2001/03/29 02:18:45 mickey Exp $	*/
 

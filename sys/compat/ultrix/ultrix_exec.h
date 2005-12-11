@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_exec.h,v 1.4 2004/04/21 07:05:07 simonb Exp $	*/
+/*	$NetBSD: ultrix_exec.h,v 1.5 2005/12/11 12:20:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,4 +34,4 @@
 
 extern const struct emul emul_ultrix;
 
-int ultrix_exec_ecoff_probe(struct proc *, struct exec_package *);
+int ultrix_exec_ecoff_probe(struct lwp *, struct exec_package *);

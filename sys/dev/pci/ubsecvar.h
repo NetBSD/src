@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.1 2003/08/01 00:08:56 jonathan Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.2 2005/12/11 12:22:51 christos Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*

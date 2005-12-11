@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.1 2005/10/23 01:33:32 cube Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.2 2005/12/11 12:20:22 christos Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.1 2005/10/23 01:33:32 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.2 2005/12/11 12:20:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

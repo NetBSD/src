@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.1 2005/11/05 09:50:50 tsutsui Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.2 2005/12/11 12:16:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.1 2005/11/05 09:50:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.2 2005/12/11 12:16:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -38,7 +38,7 @@
  *	@(#)kbd.h	8.1 (Berkeley) 6/11/93
  *
  *	from: Header: kbd.h,v 1.5 92/11/26 01:15:33 torek Exp  (LBL)
- *	$NetBSD: kbd.h,v 1.3 2003/08/07 16:30:26 agc Exp $
+ *	$NetBSD: kbd.h,v 1.4 2005/12/11 12:19:44 christos Exp $
  */
 
 /*

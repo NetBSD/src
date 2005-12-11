@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.22 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.23 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

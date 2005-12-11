@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.4 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.5 2005/12/11 12:21:27 christos Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.5 2005/12/11 12:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

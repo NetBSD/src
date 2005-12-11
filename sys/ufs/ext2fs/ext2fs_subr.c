@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.18 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.19 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.18 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.19 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

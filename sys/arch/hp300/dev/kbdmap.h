@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.11 2005/06/02 16:00:16 tsutsui Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.12 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

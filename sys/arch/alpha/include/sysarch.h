@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.10 2003/09/11 09:40:11 kleink Exp $ */
+/* $NetBSD: sysarch.h,v 1.11 2005/12/11 12:16:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

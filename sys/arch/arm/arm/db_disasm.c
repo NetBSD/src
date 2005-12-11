@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2003/07/15 00:24:38 lukem Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4 2003/07/15 00:24:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.5 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>

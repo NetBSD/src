@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.3 2003/10/27 01:05:08 cl Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.4 2005/12/11 12:17:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

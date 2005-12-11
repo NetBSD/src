@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock_machdep.c,v 1.5 2005/05/29 21:36:40 christos Exp $ */
+/* 	$NetBSD: lock_machdep.c,v 1.6 2005/12/11 12:19:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.5 2005/05/29 21:36:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.6 2005/12/11 12:19:47 christos Exp $");
 
 /*
  * Machine-dependent spin lock operations.

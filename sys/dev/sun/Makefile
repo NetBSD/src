@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/06/20 02:01:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2005/12/11 12:23:56 christos Exp $
 
 INCSDIR= /usr/include/dev/sun
 

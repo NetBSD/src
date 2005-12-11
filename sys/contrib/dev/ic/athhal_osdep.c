@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal_osdep.c,v 1.5 2005/10/19 09:04:23 dyoung Exp $
+ * $Id: athhal_osdep.c,v 1.6 2005/12/11 12:20:47 christos Exp $
  */
 #include "opt_athhal.h"
 

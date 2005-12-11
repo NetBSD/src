@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.8 2005/06/13 21:34:17 jmc Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.9 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

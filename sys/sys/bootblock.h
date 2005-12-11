@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.37 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.38 2005/12/11 12:25:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.

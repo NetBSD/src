@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.6 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: main.h,v 1.7 2005/12/11 12:25:16 christos Exp $	*/
 
 #define TRUE 1
 #define FALSE 0

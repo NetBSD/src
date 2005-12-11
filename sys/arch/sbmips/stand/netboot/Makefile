@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/03/14 13:06:39 simonb Exp $
+# $NetBSD: Makefile,v 1.3 2005/12/11 12:18:51 christos Exp $
 
 PROG = netboot
 

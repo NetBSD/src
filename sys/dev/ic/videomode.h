@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.h,v 1.3 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: videomode.h,v 1.4 2005/12/11 12:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young

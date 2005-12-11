@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360reg.h,v 1.2 2003/11/17 11:16:10 wiz Exp $	*/
+/*	$NetBSD: aic6360reg.h,v 1.3 2005/12/11 12:21:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.

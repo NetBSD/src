@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.5 2003/11/07 10:41:55 he Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.5 2003/11/07 10:41:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
 
 #include "opt_lockdebug.h"
 

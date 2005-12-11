@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sprintf.c,v 1.3 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.4 2005/12/11 12:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tcreg.h,v 1.7 2003/08/07 16:27:30 agc Exp $	*/
+/*	$NetBSD: grf_tcreg.h,v 1.8 2005/12/11 12:17:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

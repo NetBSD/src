@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.17 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.18 2005/12/11 12:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.17 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.18 2005/12/11 12:20:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

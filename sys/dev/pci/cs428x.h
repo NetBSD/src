@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.9 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.

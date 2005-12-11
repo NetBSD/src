@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.8 2005/06/04 21:18:18 he Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.9 2005/12/11 12:16:51 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited

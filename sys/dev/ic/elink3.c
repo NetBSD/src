@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.112 2005/05/30 04:43:46 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.113 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.112 2005/05/30 04:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.113 2005/12/11 12:21:26 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

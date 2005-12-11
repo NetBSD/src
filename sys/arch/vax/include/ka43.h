@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.h,v 1.6 2005/01/14 11:47:43 ragge Exp $ */
+/*	$NetBSD: ka43.h,v 1.7 2005/12/11 12:19:34 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

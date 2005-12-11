@@ -1,4 +1,4 @@
-/*	$NetBSD: spectrum24t_cf.h,v 1.2 2005/02/27 00:27:29 perry Exp $	*/
+/*	$NetBSD: spectrum24t_cf.h,v 1.3 2005/12/11 12:22:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Symbol Technologies Inc. -- http://www.symbol.com

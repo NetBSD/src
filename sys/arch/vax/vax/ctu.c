@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.22 2005/10/15 17:29:11 yamt Exp $ */
+/*	$NetBSD: ctu.c,v 1.23 2005/12/11 12:19:36 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.22 2005/10/15 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.23 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ ctuinit(void)
 }
 
 int
-ctuopen(dev_t dev, int oflags, int devtype, struct proc *p)
+ctuopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	int error;
 
@@ -174,7 +174,7 @@ ctuopen(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 int
-ctuclose(dev_t dev, int oflags, int devtype, struct proc *p)
+ctuclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	struct buf *bp;
 	int s = spl7();

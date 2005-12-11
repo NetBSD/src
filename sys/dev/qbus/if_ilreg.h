@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ilreg.h,v 1.4 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: if_ilreg.h,v 1.5 2005/12/11 12:23:29 christos Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.

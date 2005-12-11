@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.47 2005/09/06 21:40:37 kleink Exp $	*/
+/*	$NetBSD: ite.c,v 1.48 2005/12/11 12:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.47 2005/09/06 21:40:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48 2005/12/11 12:16:54 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -415,10 +415,10 @@ iteinit(dev)
 }
 
 int
-iteopen(dev, mode, devtype, p)
+iteopen(dev, mode, devtype, l)
 	dev_t dev;
 	int mode, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ite_softc *ip;
 	struct tty *tp;
@@ -442,7 +442,7 @@ iteopen(dev, mode, devtype, p)
 	else tp = ip->tp;
 
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && suser(p->p_ucred, &p->p_acflag) != 0)
+	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);
@@ -488,10 +488,10 @@ bad:
 }
 
 int
-iteclose(dev, flag, mode, p)
+iteclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 
@@ -533,17 +533,17 @@ itewrite(dev, uio, flag)
 }
 
 int
-itepoll(dev, events, p)
+itepoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -554,12 +554,12 @@ itetty(dev)
 }
 
 int
-iteioctl(dev, cmd, addr, flag, p)
+iteioctl(dev, cmd, addr, flag, l)
 	dev_t		dev;
 	u_long		cmd;
 	int		flag;
 	caddr_t		addr;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct iterepeat	*irp;
 	struct ite_softc	*ip;
@@ -575,11 +575,11 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	KDASSERT(tp);
 
-	error = (*tp->t_linesw->l_ioctl) (tp, cmd, addr, flag, p);
+	error = (*tp->t_linesw->l_ioctl) (tp, cmd, addr, flag, l);
 	if(error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, addr, flag, p);
+	error = ttioctl(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -644,7 +644,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		kbd_bell_gparms(&ib->volume, &ib->pitch, &ib->msec);
 		return 0;
 	}
-	return (ip->itexx_ioctl)(ip, cmd, addr, flag, p);
+	return (ip->itexx_ioctl)(ip, cmd, addr, flag, l);
 }
 
 void
@@ -760,7 +760,7 @@ int	unit;
 	 * Now make it visible
 	 */
 	(*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, VIOCDISPLAY, NULL,
-			       0, NOPROC);
+			       0, NOLWP);
 
 	/*
 	 * Make sure the cursor's there too....

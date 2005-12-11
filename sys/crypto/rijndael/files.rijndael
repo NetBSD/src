@@ -1,4 +1,4 @@
-#	$NetBSD: files.rijndael,v 1.4 2003/08/26 14:24:05 thorpej Exp $
+#	$NetBSD: files.rijndael,v 1.5 2005/12/11 12:20:52 christos Exp $
 
 define	rijndael
 

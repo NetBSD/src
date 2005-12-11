@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.9 2005/05/22 15:54:47 christos Exp $	*/
+/*	$NetBSD: sets.c,v 1.10 2005/12/11 12:25:16 christos Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.10 2005/12/11 12:25:16 christos Exp $");
 
 #include "main.h"
 #include "malloc.h"

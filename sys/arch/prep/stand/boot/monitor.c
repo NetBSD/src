@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.2 2003/10/06 06:41:45 he Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

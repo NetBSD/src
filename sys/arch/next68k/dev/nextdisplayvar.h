@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplayvar.h,v 1.3 2005/01/19 01:58:21 chs Exp $ */
+/* $NetBSD: nextdisplayvar.h,v 1.4 2005/12/11 12:18:25 christos Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.

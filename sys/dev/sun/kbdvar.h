@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.17 2005/05/16 18:28:28 martin Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.18 2005/12/11 12:23:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: awacs.c,v 1.24 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.24 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>

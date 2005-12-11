@@ -1,4 +1,4 @@
-/* $NetBSD: bpfilter.h,v 1.1 2004/08/18 13:12:07 drochner Exp $ */
+/* $NetBSD: bpfilter.h,v 1.2 2005/12/11 12:24:48 christos Exp $ */
 
 /* This is a hack. */
 

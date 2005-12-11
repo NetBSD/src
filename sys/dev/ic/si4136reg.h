@@ -1,4 +1,4 @@
-/* $NetBSD: si4136reg.h,v 1.1 2004/02/17 21:20:55 dyoung Exp $ */
+/* $NetBSD: si4136reg.h,v 1.2 2005/12/11 12:21:28 christos Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.

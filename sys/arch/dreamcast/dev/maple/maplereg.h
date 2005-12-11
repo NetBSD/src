@@ -1,4 +1,4 @@
-/*	$NetBSD: maplereg.h,v 1.4 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: maplereg.h,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt

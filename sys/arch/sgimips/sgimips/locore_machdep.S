@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.4 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.26 2005/02/26 10:29:20 bsh Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.27 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet

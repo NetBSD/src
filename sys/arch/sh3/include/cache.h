@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.5 2005/06/29 16:31:51 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

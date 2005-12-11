@@ -1,4 +1,5 @@
-/*	$NetBSD: fwohcivar.h,v 1.24 2005/07/11 15:37:00 kiyohara Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.25 2005/12/11 12:22:02 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi SHimokawa

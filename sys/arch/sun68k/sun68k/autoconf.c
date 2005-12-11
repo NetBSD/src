@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2005/08/26 13:19:38 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2005/12/11 12:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2005/08/26 13:19:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2005/12/11 12:19:29 christos Exp $");
 
 #include "opt_kgdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.1 2004/12/24 10:34:27 joff Exp $	*/
+/*	$NetBSD: epcom.c,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off

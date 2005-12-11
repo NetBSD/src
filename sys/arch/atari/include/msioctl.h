@@ -1,4 +1,4 @@
-/*	$NetBSD: msioctl.h,v 1.2 2004/09/03 14:07:57 leo Exp $	*/
+/*	$NetBSD: msioctl.h,v 1.3 2005/12/11 12:16:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman

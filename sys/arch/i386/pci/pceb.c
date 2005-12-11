@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.15 2005/02/03 21:35:44 perry Exp $	*/
+/*	$NetBSD: pceb.c,v 1.16 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.15 2005/02/03 21:35:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.16 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

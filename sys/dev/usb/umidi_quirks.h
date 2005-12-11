@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.4 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

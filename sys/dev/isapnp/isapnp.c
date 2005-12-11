@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.47 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.48 2005/12/11 12:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.47 2005/08/26 12:42:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.48 2005/12/11 12:22:16 christos Exp $");
 
 #include "isadma.h"
 

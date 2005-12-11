@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0266.h,v 1.2 2004/12/11 03:32:27 tsutsui Exp $	*/
+/*	$NetBSD: dmac_0266.h,v 1.3 2005/12/11 12:18:23 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.

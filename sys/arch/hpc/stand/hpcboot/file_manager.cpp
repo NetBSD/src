@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.5 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.6 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.

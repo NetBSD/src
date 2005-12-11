@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.3 2005/10/22 15:12:28 nonaka Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.4 2005/12/11 12:21:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka

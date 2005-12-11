@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.52 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.53 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.

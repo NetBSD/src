@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2004/03/19 08:07:22 jmc Exp $
+$NetBSD: README,v 1.5 2005/12/11 12:17:28 christos Exp $
 
 How to use
 	'make all' uudecode all binaries.

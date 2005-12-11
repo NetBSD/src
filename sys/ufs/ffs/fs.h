@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.45 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: fs.h,v 1.46 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

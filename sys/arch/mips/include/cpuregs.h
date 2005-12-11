@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.67 2005/11/05 18:17:36 tsutsui Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.68 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

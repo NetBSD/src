@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.12 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.13 2005/12/11 12:19:20 christos Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.

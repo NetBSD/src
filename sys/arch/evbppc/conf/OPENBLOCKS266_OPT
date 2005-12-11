@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.1 2005/09/10 04:34:39 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.2 2005/12/11 12:17:11 christos Exp $
 #
 
 include         "arch/evbppc/conf/OPENBLOCKS266"

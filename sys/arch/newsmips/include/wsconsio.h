@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsio.h,v 1.1 2004/08/01 18:53:17 uch Exp $	*/
+/*	$NetBSD: wsconsio.h,v 1.2 2005/12/11 12:18:24 christos Exp $	*/
 
 #ifndef _NEWSMIPS_WSCONSIO_H_
 #define	_NEWSMIPS_WSCONSIO_H_

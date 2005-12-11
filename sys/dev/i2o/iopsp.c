@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.19 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.20 2005/12/11 12:21:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.19 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.20 2005/12/11 12:21:23 christos Exp $");
 
 #include "opt_i2o.h"
 

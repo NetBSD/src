@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2005/04/01 11:59:34 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2005/04/01 11:59:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2005/12/11 12:19:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

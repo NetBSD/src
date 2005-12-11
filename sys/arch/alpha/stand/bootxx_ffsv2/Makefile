@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/08/20 20:15:57 abs Exp $
+# $NetBSD: Makefile,v 1.2 2005/12/11 12:16:20 christos Exp $
 
 PROG = bootxx_ffsv2
 CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=ffsv2 \

@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.4 2005/04/01 11:59:37 yamt Exp $ */
+/* $NetBSD: sti.c,v 1.5 2005/12/11 12:21:28 christos Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.4 2005/04/01 11:59:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.5 2005/12/11 12:21:28 christos Exp $");
 
 #include "wsdisplay.h"
 
@@ -74,7 +74,7 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_alloc_attr
 };
 
-int sti_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int sti_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t sti_mmap(void *, off_t, int);
 int sti_alloc_screen(void *, const struct wsscreen_descr *,
 	void **, int *, int *, long *);
@@ -582,7 +582,7 @@ sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b)
 }
 
 int
-sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sti_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;

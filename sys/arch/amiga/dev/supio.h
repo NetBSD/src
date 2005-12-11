@@ -1,4 +1,4 @@
-/*	$NetBSD: supio.h,v 1.6 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: supio.h,v 1.7 2005/12/11 12:16:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

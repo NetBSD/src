@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.14 2004/04/11 16:57:44 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.15 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

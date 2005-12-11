@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.15 2005/01/02 12:03:13 tsutsui Exp $	*/
+/*	$NetBSD: leds.c,v 1.16 2005/12/11 12:17:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.15 2005/01/02 12:03:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.16 2005/12/11 12:17:18 christos Exp $");
 
 #include <sys/param.h>
 

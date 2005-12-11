@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.25 2005/02/27 00:27:44 perry Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.26 2005/12/11 12:23:37 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

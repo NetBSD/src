@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.37 2005/01/17 05:26:02 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.38 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

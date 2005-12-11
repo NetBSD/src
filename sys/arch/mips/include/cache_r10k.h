@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.h,v 1.2 2003/11/01 04:42:56 shin Exp $	*/
+/*	$NetBSD: cache_r10k.h,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 KIYOHARA Takashi <kiyohara@kk.iij4u.or.jp>

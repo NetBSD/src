@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.12 2004/12/24 14:55:50 shige Exp $ */
+/* $NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.12 2004/12/24 14:55:50 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.2 2005/07/04 17:50:10 drochner Exp $ */
+/*	$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp $ */
 /*	$OpenBSD: if_ral_pci.c,v 1.4 2005/02/22 10:41:30 damien Exp $  */
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.2 2005/07/04 17:50:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.3 2005/12/11 12:22:49 christos Exp $");
 
 #include "bpfilter.h"
 

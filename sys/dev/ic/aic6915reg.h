@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915reg.h,v 1.3 2005/07/07 19:02:11 thorpej Exp $	*/
+/*	$NetBSD: aic6915reg.h,v 1.4 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

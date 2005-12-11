@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.5 2005/02/26 22:58:59 perry Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.6 2005/12/11 12:24:49 christos Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.5 2005/02/26 22:58:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.6 2005/12/11 12:24:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

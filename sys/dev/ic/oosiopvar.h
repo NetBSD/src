@@ -1,4 +1,4 @@
-/* $NetBSD: oosiopvar.h,v 1.3 2005/01/02 12:22:19 tsutsui Exp $ */
+/* $NetBSD: oosiopvar.h,v 1.4 2005/12/11 12:21:28 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.

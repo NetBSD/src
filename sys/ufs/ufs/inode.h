@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.45 2005/09/27 06:48:56 yamt Exp $	*/
+/*	$NetBSD: inode.h,v 1.46 2005/12/11 12:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993

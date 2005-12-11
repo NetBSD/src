@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2005/05/15 21:42:01 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2005/12/11 12:16:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2005/05/15 21:42:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2005/12/11 12:16:21 christos Exp $");
 
 #if 0
 #include "opt_user_ldt.h"

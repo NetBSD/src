@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasicvar.h,v 1.4 2005/02/04 02:10:48 perry Exp $ */
+/* $NetBSD: zs_ioasicvar.h,v 1.5 2005/12/11 12:24:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.31 2005/06/23 23:51:42 rpaulo Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.32 2005/12/11 12:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.

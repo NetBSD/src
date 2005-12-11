@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.63 2005/11/02 12:39:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.64 2005/12/11 12:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.63 2005/11/02 12:39:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64 2005/12/11 12:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ ext2fs_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -231,7 +231,7 @@ ext2fs_access(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -271,7 +271,7 @@ ext2fs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -326,13 +326,13 @@ ext2fs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	int error;
 
 	/*
@@ -348,7 +348,7 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)))
+			(error = suser(cred, &l->l_proc->p_acflag)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
@@ -379,7 +379,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
 		if (error)
 			return (error);
 	}
@@ -399,7 +399,7 @@ ext2fs_setattr(void *v)
 		default:
 			break;
 		}
-		error = ext2fs_truncate(vp, vap->va_size, 0, cred, p);
+		error = ext2fs_truncate(vp, vap->va_size, 0, cred, l->l_proc);
 		if (error)
 			return (error);
 	}
@@ -408,9 +408,9 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)) &&
+			(error = suser(cred, &l->l_proc->p_acflag)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
+			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -426,7 +426,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, p);
+		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -718,10 +718,10 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
         	if (!error && tvp)
                 	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
-			    tcnp->cn_proc);
+			    tcnp->cn_lwp);
         	if (error) {
                 	VOP_UNLOCK(fvp, 0);
                 	error = EACCES;
@@ -778,7 +778,7 @@ abortit:
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -907,7 +907,7 @@ abortit:
 			if (--xp->i_e2fs_nlink != 0)
 				panic("rename: linked directory");
 			error = ext2fs_truncate(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_proc);
+			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
 		}
 		xp->i_flag |= IN_CHANGE;
 		VN_KNOTE(tvp, NOTE_DELETE);
@@ -1205,7 +1205,7 @@ ext2fs_rmdir(void *v)
 	 */
 	ip->i_e2fs_nlink -= 2;
 	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-	    cnp->cn_proc);
+	    cnp->cn_lwp->l_proc);
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1326,7 +1326,7 @@ ext2fs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    ap->a_p->p_ucred, ap->a_p);
+		    ap->a_l->l_proc->p_ucred, ap->a_l);
 	}
 
 	return error;
@@ -1469,7 +1469,7 @@ ext2fs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
+	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);

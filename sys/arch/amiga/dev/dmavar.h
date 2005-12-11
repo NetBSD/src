@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.10 2003/08/07 16:26:40 agc Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.11 2005/12/11 12:16:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

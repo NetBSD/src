@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 2005/06/03 21:38:05 matt Exp $	*/
+/*	$NetBSD: zs.c,v 1.34 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.33 2005/06/03 21:38:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.34 2005/12/11 12:18:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

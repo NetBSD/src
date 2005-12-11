@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 2004/08/07 12:04:05 rearnsha Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 2005/12/11 12:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2004/08/07 12:04:05 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2005/12/11 12:16:03 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>

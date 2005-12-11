@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.8 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.9 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.8 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.9 2005/12/11 12:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

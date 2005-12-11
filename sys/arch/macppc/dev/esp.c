@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.19 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.19 2005/12/11 12:18:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

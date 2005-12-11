@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.15 2005/01/22 15:36:09 chs Exp $ */
+/*	$NetBSD: dma.c,v 1.16 2005/12/11 12:19:20 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.15 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.16 2005/12/11 12:19:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

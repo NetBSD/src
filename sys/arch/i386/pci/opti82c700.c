@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.6 2005/12/11 12:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.6 2005/12/11 12:17:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

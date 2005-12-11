@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.9 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.10 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995

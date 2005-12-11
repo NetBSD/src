@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.13 2004/06/30 21:37:49 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.14 2005/12/11 12:19:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

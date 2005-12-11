@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.10 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: edvar.h,v 1.11 2005/12/11 12:22:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

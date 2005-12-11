@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.15 2005/05/31 04:03:11 christos Exp $
+#	$NetBSD: Makefile.sh5,v 1.16 2005/12/11 12:19:00 christos Exp $
 
 # Makefile for NetBSD/sh5
 #

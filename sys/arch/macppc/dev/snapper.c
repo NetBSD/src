@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.6 2005/08/10 14:32:08 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-

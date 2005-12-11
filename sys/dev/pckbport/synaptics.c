@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.7 2005/10/26 17:20:19 rpaulo Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.8 2005/12/11 12:23:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford

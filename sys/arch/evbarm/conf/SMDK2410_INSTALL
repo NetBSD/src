@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410_INSTALL,v 1.1 2005/02/27 02:25:09 bsh Exp $
+#	$NetBSD: SMDK2410_INSTALL,v 1.2 2005/12/11 12:17:06 christos Exp $
 #
 #	SMDK2410_INSTALL -- SMDK2410 kernel with installation-sized
 #	ramdisk

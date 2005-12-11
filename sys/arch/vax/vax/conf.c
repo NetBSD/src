@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.64 2004/03/19 20:15:21 mhitch Exp $	*/
+/*	$NetBSD: conf.c,v 1.65 2005/12/11 12:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.64 2004/03/19 20:15:21 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65 2005/12/11 12:19:36 christos Exp $");
 
 #include "opt_cputype.h"
 

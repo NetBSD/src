@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacreg.h,v 1.1 2004/04/08 21:02:57 uwe Exp $ */
+/*	$NetBSD: dmacreg.h,v 1.2 2005/12/11 12:18:58 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov

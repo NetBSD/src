@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.8 2003/07/15 02:43:46 lukem Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.9 2005/12/11 12:18:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.8 2003/07/15 02:43:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.9 2005/12/11 12:18:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

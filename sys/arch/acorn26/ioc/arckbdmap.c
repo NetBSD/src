@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdmap.c,v 1.4 2003/07/14 22:48:22 lukem Exp $ */
+/* $NetBSD: arckbdmap.c,v 1.5 2005/12/11 12:16:04 christos Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbdmap.c,v 1.4 2003/07/14 22:48:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbdmap.c,v 1.5 2005/12/11 12:16:04 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

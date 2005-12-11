@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.9 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep_arm.c,v 1.10 2005/12/11 12:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.9 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.10 2005/12/11 12:16:41 christos Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_kbd_map.c,v 1.2 2003/07/14 22:48:24 lukem Exp $	*/
+/*	$NetBSD: rpc_kbd_map.c,v 1.3 2005/12/11 12:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpc_kbd_map.c,v 1.2 2003/07/14 22:48:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_kbd_map.c,v 1.3 2005/12/11 12:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

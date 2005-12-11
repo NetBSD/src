@@ -1,4 +1,4 @@
-/*	$NetBSD: openpromio.h,v 1.5 2004/04/23 09:20:20 hannken Exp $ */
+/*	$NetBSD: openpromio.h,v 1.6 2005/12/11 12:19:05 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

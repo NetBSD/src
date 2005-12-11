@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.60 2005/06/02 14:35:08 he Exp $
+#	$NetBSD: files.powerpc,v 1.61 2005/12/11 12:18:42 christos Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE

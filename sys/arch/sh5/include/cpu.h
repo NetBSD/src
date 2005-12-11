@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2004/09/25 22:08:48 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2005/12/11 12:19:00 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.4 2003/07/14 22:57:48 lukem Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.5 2005/12/11 12:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.4 2003/07/14 22:57:48 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.5 2005/12/11 12:16:08 christos Exp $");
 
 #include <sys/extent.h>
 

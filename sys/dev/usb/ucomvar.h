@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.12 2005/08/26 12:42:11 drochner Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.13 2005/12/11 12:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

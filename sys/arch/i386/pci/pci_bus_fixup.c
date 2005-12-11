@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.5 2005/06/20 11:04:46 sekiya Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.6 2005/12/11 12:17:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.5 2005/06/20 11:04:46 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.6 2005/12/11 12:17:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

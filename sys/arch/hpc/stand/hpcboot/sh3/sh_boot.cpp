@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.8 2004/08/13 15:50:09 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.9 2005/12/11 12:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.

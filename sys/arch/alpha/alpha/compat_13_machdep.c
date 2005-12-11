@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.12 2005/09/14 17:52:24 martin Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.13 2005/12/11 12:16:10 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.12 2005/09/14 17:52:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13 2005/12/11 12:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

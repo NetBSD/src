@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2005/12/11 12:17:37 christos Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 

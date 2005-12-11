@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.16 2003/09/22 14:27:03 cl Exp $	*/
+/*	$NetBSD: vectors.s,v 1.17 2005/12/11 12:16:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.

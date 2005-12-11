@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.9 2005/06/03 15:56:49 rearnsha Exp $ */
+/*	$NetBSD: intmmu.S,v 1.10 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd

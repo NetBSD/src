@@ -1,7 +1,7 @@
-/*	$NetBSD: openpic.c,v 1.5 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: openpic.c,v 1.6 2005/12/11 12:18:46 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic.c,v 1.5 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openpic.c,v 1.6 2005/12/11 12:18:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.1 2004/01/28 09:09:14 jdolecek Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.2 2005/12/11 12:17:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.1 2004/01/28 09:09:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.2 2005/12/11 12:17:47 christos Exp $");
 
 #include "opt_atppc.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.29 2005/12/11 12:18:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28 2005/06/07 12:14:13 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.29 2005/12/11 12:18:03 christos Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG

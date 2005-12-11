@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.30 2005/12/11 12:19:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2005/12/11 12:19:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: bt485var.h,v 1.2 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: bt485var.h,v 1.3 2005/12/11 12:21:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

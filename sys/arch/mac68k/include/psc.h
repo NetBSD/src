@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.h,v 1.6 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: psc.h,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>

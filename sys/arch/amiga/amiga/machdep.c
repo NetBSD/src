@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2005/10/30 15:49:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 2005/12/11 12:16:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2005/10/30 15:49:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2005/12/11 12:16:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1564,8 +1564,8 @@ nmihand(frame)
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -1576,7 +1576,7 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(p, epp));
+		return(exec_aout_prep_zmagic(l, epp));
 #endif
 	return(error);
 }

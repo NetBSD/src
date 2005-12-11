@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583var.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: pcf8583var.h,v 1.2 2005/12/11 12:21:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

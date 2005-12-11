@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.95 2005/09/12 16:21:31 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.95 2005/09/12 16:21:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96 2005/12/11 12:24:29 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"

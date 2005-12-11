@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2005/06/26 19:55:45 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2005/12/11 12:18:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2005/06/26 19:55:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2005/12/11 12:18:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

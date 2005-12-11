@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.4 2004/03/10 15:17:01 nonaka Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

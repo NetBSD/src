@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_start.S,v 1.4 2004/02/12 23:26:48 scw Exp $ */
+/*	$NetBSD: ixdp425_start.S,v 1.5 2005/12/11 12:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003

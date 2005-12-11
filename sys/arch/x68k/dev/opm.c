@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: opm.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.4 2004/03/04 23:42:38 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.5 2005/12/11 12:19:34 christos Exp $	*/
 
 #define	__INFINITY	1.0E+39F
 

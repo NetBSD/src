@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.20 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: idprom.h,v 1.21 2005/12/11 12:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

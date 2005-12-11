@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.5 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: memset.S,v 1.6 2005/12/11 12:24:44 christos Exp $	*/
 
 /*
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.5 2005/02/26 22:58:56 perry Exp $")
+	RCSID("$NetBSD: memset.S,v 1.6 2005/12/11 12:24:44 christos Exp $")
 # if defined(BZERO)
 	RCSID("$Masqueraded: as bzero $")
 # endif

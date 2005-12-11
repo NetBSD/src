@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.2 2003/08/09 08:01:49 igy Exp $ */
+/* $NetBSD: start.S,v 1.3 2005/12/11 12:17:34 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.

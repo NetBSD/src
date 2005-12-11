@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.3 2004/09/20 17:31:57 drochner Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
 
 /*
  * Copyright 1997

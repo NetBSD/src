@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.9 2004/07/06 14:04:51 mycroft Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.10 2005/12/11 12:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.c,v 1.3 2003/07/14 15:47:03 lukem Exp $	*/
+/*	$NetBSD: bluetooth.c,v 1.4 2005/12/11 12:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bluetooth.c,v 1.3 2003/07/14 15:47:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bluetooth.c,v 1.4 2005/12/11 12:21:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

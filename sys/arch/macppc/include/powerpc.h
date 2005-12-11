@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.4 2004/10/23 17:07:39 thorpej Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.5 2005/12/11 12:18:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.

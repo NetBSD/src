@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/08/20 15:42:03 elad Exp $
+# $NetBSD: Makefile,v 1.2 2005/12/11 12:20:53 christos Exp $
 
 INCSDIR= /usr/include/crypto
 

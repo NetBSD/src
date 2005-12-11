@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.15 2005/09/13 03:23:34 christos Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.16 2005/12/11 12:19:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2005/09/13 03:23:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16 2005/12/11 12:19:14 christos Exp $");
 
 #include "opt_ddb.h"
 

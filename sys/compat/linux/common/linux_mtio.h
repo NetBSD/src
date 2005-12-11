@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mtio.h,v 1.1 2005/02/28 22:11:32 soren Exp $ */
+/* $NetBSD: linux_mtio.h,v 1.2 2005/12/11 12:20:19 christos Exp $ */
 
 /*
  * Copyright (c) 2005 Soren S. Jorvang.  All rights reserved.

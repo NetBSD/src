@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2005/04/01 11:59:36 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2005/12/11 12:19:48 christos Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2005/04/01 11:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2005/12/11 12:19:48 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_prctl.h,v 1.1 2005/05/03 16:26:29 manu Exp $ */
+/*	$NetBSD: linux_prctl.h,v 1.2 2005/12/11 12:20:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.

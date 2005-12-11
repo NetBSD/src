@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.60 2005/02/27 00:27:34 perry Exp $ */
+/* $NetBSD: tga.c,v 1.61 2005/12/11 12:22:50 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.60 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.61 2005/12/11 12:22:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ unsigned tga_getdotclock(struct tga_devconfig *dc);
 
 struct tga_devconfig tga_console_dc;
 
-int tga_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int tga_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t tga_mmap(void *, off_t, int);
 static void tga_copyrows(void *, int, int, int);
 static void tga_copycols(void *, int, int, int, int);
@@ -528,12 +528,12 @@ tga_config_interrupts (d)
 }
 
 int
-tga_ioctl(v, cmd, data, flag, p)
+tga_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tga_softc *sc = v;
 	struct tga_devconfig *dc = sc->sc_dc;

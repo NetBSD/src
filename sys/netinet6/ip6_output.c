@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.92 2005/09/23 21:21:58 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.93 2005/12/11 12:25:02 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.92 2005/09/23 21:21:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.93 2005/12/11 12:25:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

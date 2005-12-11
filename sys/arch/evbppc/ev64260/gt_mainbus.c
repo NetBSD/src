@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.11 2004/03/20 01:55:00 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.12 2005/12/11 12:17:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.11 2004/03/20 01:55:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.12 2005/12/11 12:17:12 christos Exp $");
 
 #include "opt_ev64260.h"
 

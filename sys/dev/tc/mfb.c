@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.43 2005/02/27 00:27:49 perry Exp $ */
+/* $NetBSD: mfb.c,v 1.44 2005/12/11 12:24:00 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.43 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ static const struct wsscreen_list mfb_screenlist = {
 	sizeof(_mfb_scrlist) / sizeof(struct wsscreen_descr *), _mfb_scrlist
 };
 
-static int	mfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	mfbioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	mfbmmap(void *, off_t, int);
 
 static int	mfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -328,12 +328,12 @@ mfb_common_init(ri)
 }
 
 static int
-mfbioctl(v, cmd, data, flag, p)
+mfbioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;

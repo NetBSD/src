@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.19 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.20 2005/12/11 12:16:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.19 2005/06/02 17:45:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.20 2005/12/11 12:16:45 christos Exp $");
 
 /* Include header files */
 

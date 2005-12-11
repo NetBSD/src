@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.3 2005/06/01 13:01:35 scw Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.4 2005/12/11 12:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.

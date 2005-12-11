@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.6 2005/05/02 14:53:04 kochi Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.7 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.6 2005/05/02 14:53:04 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.7 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

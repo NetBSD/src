@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.4 2004/02/24 15:24:35 wiz Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.5 2005/12/11 12:17:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl

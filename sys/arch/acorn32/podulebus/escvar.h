@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.5 2003/11/10 08:51:51 wiz Exp $ */
+/* $NetBSD: escvar.h,v 1.6 2005/12/11 12:16:05 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk

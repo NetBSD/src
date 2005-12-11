@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.6 2005/01/20 21:03:26 drochner Exp $ */
+/* $NetBSD: frame.h,v 1.7 2005/12/11 12:16:16 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

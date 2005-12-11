@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.13 2003/08/07 16:31:01 agc Exp $	*/
+/*	$NetBSD: comreg.h,v 1.14 2005/12/11 12:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

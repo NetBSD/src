@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2004/12/30 20:38:37 joff Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2005/12/11 12:16:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.

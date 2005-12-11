@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.4 2004/04/11 06:52:38 kochi Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.5 2005/12/11 12:21:02 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.4 2004/04/11 06:52:38 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5 2005/12/11 12:21:02 christos Exp $");
 
 #include <sys/types.h>
 

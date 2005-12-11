@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvff.c,v 1.3 2003/11/01 18:23:38 matt Exp $	*/
+/*	$NetBSD: fcnvff.c,v 1.4 2005/12/11 12:17:40 christos Exp $	*/
 
 /*	$OpenBSD: fcnvff.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcnvff.c,v 1.3 2003/11/01 18:23:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcnvff.c,v 1.4 2005/12/11 12:17:40 christos Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"

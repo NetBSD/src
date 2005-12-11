@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.16 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: mcclock.c,v 1.17 2005/12/11 12:21:20 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.16 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.17 2005/12/11 12:21:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

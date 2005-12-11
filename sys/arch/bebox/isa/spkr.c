@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.13 2003/07/15 01:26:32 lukem Exp $	*/
+/*	$NetBSD: spkr.c,v 1.14 2005/12/11 12:17:04 christos Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.13 2003/07/15 01:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14 2005/12/11 12:17:04 christos Exp $");
 
 #include "spkr.h"
 #if NSPKR > 0

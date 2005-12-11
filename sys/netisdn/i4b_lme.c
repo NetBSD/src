@@ -27,7 +27,7 @@
  *	i4b_lme.c - layer management entity
  *	-------------------------------------
  *
- *	$Id: i4b_lme.c,v 1.8 2005/06/01 18:07:04 drochner Exp $
+ *	$Id: i4b_lme.c,v 1.9 2005/12/11 12:25:06 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.8 2005/06/01 18:07:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.9 2005/12/11 12:25:06 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"

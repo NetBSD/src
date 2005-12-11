@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_debug.h,v 1.15 2005/02/27 00:27:48 perry Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.16 2005/12/11 12:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

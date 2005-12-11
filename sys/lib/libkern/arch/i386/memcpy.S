@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.5 2004/04/15 09:20:29 yamt Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.6 2005/12/11 12:24:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.5 2004/04/15 09:20:29 yamt Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.6 2005/12/11 12:24:42 christos Exp $")
 #endif
 
 	/*

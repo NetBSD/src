@@ -1,4 +1,4 @@
-/*	$NetBSD: diodevs.h,v 1.10 2003/11/23 01:59:25 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.11 2005/12/11 12:17:13 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

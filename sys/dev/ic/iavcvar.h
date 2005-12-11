@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcvar.h,v 1.2 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: iavcvar.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.

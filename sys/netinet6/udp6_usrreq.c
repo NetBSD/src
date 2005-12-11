@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.71 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.72 2005/12/11 12:25:02 christos Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.71 2005/11/15 18:39:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.72 2005/12/11 12:25:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -257,16 +257,18 @@ extern	int udp6_sendspace;
 extern	int udp6_recvspace;
 
 int
-udp6_usrreq(so, req, m, addr6, control, p)
+udp6_usrreq(so, req, m, addr6, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *addr6, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct	in6pcb *in6p = sotoin6pcb(so);
+	struct	proc *p;
 	int	error = 0;
 	int	s;
 
+	p = l ? l->l_proc : NULL;
 	/*
 	 * MAPPED_ADDR implementation info:
 	 *  Mapped addr support for PRU_CONTROL is not necessary.

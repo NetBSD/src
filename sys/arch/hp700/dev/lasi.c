@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.9 2005/01/28 17:38:50 jkunz Exp $	*/
+/*	$NetBSD: lasi.c,v 1.10 2005/12/11 12:17:24 christos Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.9 2005/01/28 17:38:50 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
 
 #undef LASIDEBUG
 

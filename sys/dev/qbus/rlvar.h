@@ -1,4 +1,4 @@
-/*	$NetBSD: rlvar.h,v 1.5 2005/10/15 17:29:25 yamt Exp $	*/
+/*	$NetBSD: rlvar.h,v 1.6 2005/12/11 12:23:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.5 2005/10/15 17:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.6 2005/12/11 12:23:29 christos Exp $");
 
 struct rlc_softc {
 	struct device sc_dev;

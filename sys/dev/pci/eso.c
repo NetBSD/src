@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.40 2005/01/26 21:28:55 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40 2005/01/26 21:28:55 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $");
 
 #include "mpu.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.22 2005/02/27 00:27:49 perry Exp $ */
+/* $NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.22 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

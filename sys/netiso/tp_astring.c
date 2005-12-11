@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_astring.c,v 1.6 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_astring.c,v 1.7 2005/12/11 12:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_astring.c,v 1.6 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_astring.c,v 1.7 2005/12/11 12:25:12 christos Exp $");
 
 const char * const tp_sstring[] = {
 	"ST_ERROR(0x0)",

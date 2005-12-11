@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.2 2005/06/03 12:48:25 scw Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

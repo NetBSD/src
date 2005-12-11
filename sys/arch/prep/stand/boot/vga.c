@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.3 2003/10/06 06:41:45 he Exp $	*/
+/*	$NetBSD: vga.c,v 1.4 2005/12/11 12:18:48 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

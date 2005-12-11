@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2003/12/06 14:02:40 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2005/12/11 12:18:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.

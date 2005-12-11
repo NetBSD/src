@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.255 2005/11/29 22:52:02 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.256 2005/12/11 12:24:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.255 2005/11/29 22:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.256 2005/12/11 12:24:30 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -175,9 +175,9 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 void insmntque(struct vnode *, struct mount *);
 int getdevvp(dev_t, struct vnode **, enum vtype);
 
-void vclean(struct vnode *, int, struct proc *);
+void vclean(struct vnode *, int, struct lwp *);
 
-static struct vnode *getcleanvnode(struct proc *);
+static struct vnode *getcleanvnode(struct lwp *);
 
 #ifdef DEBUG
 void printlockedvnodes(void);
@@ -197,14 +197,14 @@ vntblinit(void)
 }
 
 int
-vfs_drainvnodes(long target, struct proc *p)
+vfs_drainvnodes(long target, struct lwp *l)
 {
 
 	simple_lock(&vnode_free_list_slock);
 	while (numvnodes > target) {
 		struct vnode *vp;
 
-		vp = getcleanvnode(p);
+		vp = getcleanvnode(l);
 		if (vp == NULL)
 			return EBUSY; /* give up */
 		pool_put(&vnode_pool, vp);
@@ -220,7 +220,7 @@ vfs_drainvnodes(long target, struct proc *p)
  * grab a vnode from freelist and clean it.
  */
 struct vnode *
-getcleanvnode(struct proc *p)
+getcleanvnode(struct lwp *l)
 {
 	struct vnode *vp;
 	struct mount *mp;
@@ -264,7 +264,7 @@ try_nextlist:
 	vp->v_lease = NULL;
 
 	if (vp->v_type != VBAD)
-		vgonel(vp, p);
+		vgonel(vp, l);
 	else
 		simple_unlock(&vp->v_interlock);
 	vn_finished_write(mp, 0);
@@ -295,7 +295,7 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp)
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
 		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
-		    && mp->mnt_unmounter == curproc)
+		    && mp->mnt_unmounter == curlwp)
 			return (EDEADLK);
 		if (interlkp)
 			simple_unlock(interlkp);
@@ -491,7 +491,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 {
 	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	static int toggle;
 	struct vnode *vp;
 	int error = 0, tryalloc;
@@ -552,7 +552,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		 *	LIST_INIT(&vp->v_dnclist);
 		 */
 	} else {
-		vp = getcleanvnode(p);
+		vp = getcleanvnode(l);
 		/*
 		 * Unless this is a bad time of the month, at most
 		 * the first NCPUS items on the free list are
@@ -691,7 +691,7 @@ vwakeup(struct buf *bp)
  * buffers from being queued.
  */
 int
-vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
+vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct lwp *l,
     int slpflag, int slptimeo)
 {
 	struct buf *bp, *nbp;
@@ -707,7 +707,7 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 	}
 
 	if (flags & V_SAVE) {
-		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, p);
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, l);
 		if (error)
 		        return (error);
 #ifdef DIAGNOSTIC
@@ -1077,7 +1077,7 @@ getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 struct vnode *
 checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 {
-	struct proc *p = curproc;       /* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct vnode *vp;
 	struct vnode **vpp;
 
@@ -1096,7 +1096,7 @@ loop:
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&spechash_slock);
 		if (vp->v_usecount == 0) {
-			vgonel(vp, p);
+			vgonel(vp, l);
 			goto loop;
 		}
 		/*
@@ -1143,7 +1143,7 @@ loop:
 	simple_unlock(&spechash_slock);
 	VOP_UNLOCK(vp, 0);
 	simple_lock(&vp->v_interlock);
-	vclean(vp, 0, p);
+	vclean(vp, 0, l);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
 	vp->v_vnlock = &vp->v_lock;
@@ -1240,7 +1240,7 @@ vget(struct vnode *vp, int flags)
 void
 vput(struct vnode *vp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1274,7 +1274,7 @@ vput(struct vnode *vp)
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
 	simple_unlock(&vp->v_interlock);
-	VOP_INACTIVE(vp, p);
+	VOP_INACTIVE(vp, l);
 }
 
 /*
@@ -1284,7 +1284,7 @@ vput(struct vnode *vp)
 void
 vrele(struct vnode *vp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1317,7 +1317,7 @@ vrele(struct vnode *vp)
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
-		VOP_INACTIVE(vp, p);
+		VOP_INACTIVE(vp, l);
 }
 
 #ifdef DIAGNOSTIC
@@ -1427,7 +1427,7 @@ struct ctldebug debug1 = { "busyprt", &busyprt };
 int
 vflush(struct mount *mp, struct vnode *skipvp, int flags)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct vnode *vp, *nvp;
 	int busy = 0;
 
@@ -1465,7 +1465,7 @@ loop:
 		 */
 		if (vp->v_usecount == 0) {
 			simple_unlock(&mntvnode_slock);
-			vgonel(vp, p);
+			vgonel(vp, l);
 			simple_lock(&mntvnode_slock);
 			continue;
 		}
@@ -1477,9 +1477,9 @@ loop:
 		if (flags & FORCECLOSE) {
 			simple_unlock(&mntvnode_slock);
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
-				vgonel(vp, p);
+				vgonel(vp, l);
 			} else {
-				vclean(vp, 0, p);
+				vclean(vp, 0, l);
 				vp->v_op = spec_vnodeop_p;
 				insmntque(vp, (struct mount *)0);
 			}
@@ -1503,7 +1503,7 @@ loop:
  * Disassociate the underlying file system from a vnode.
  */
 void
-vclean(struct vnode *vp, int flags, struct proc *p)
+vclean(struct vnode *vp, int flags, struct lwp *l)
 {
 	struct mount *mp;
 	int active;
@@ -1559,10 +1559,10 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 		struct vnode *vq, *vx;
 
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		error = vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 		vn_finished_write(mp, V_LOWER);
 		if (error)
-			error = vinvalbuf(vp, 0, NOCRED, p, 0, 0);
+			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 		KASSERT(error == 0);
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
 
@@ -1617,7 +1617,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
 	if (active) {
-		VOP_INACTIVE(vp, p);
+		VOP_INACTIVE(vp, l);
 	} else {
 		/*
 		 * Any other processes trying to obtain this lock must first
@@ -1628,7 +1628,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	/*
 	 * Reclaim the vnode.
 	 */
-	if (VOP_RECLAIM(vp, p))
+	if (VOP_RECLAIM(vp, l))
 		panic("vclean: cannot reclaim, vp %p", vp);
 	if (active) {
 		/*
@@ -1687,14 +1687,14 @@ vclean(struct vnode *vp, int flags, struct proc *p)
  * Release the passed interlock if the vnode will be recycled.
  */
 int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct proc *p)
+vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 {
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount == 0) {
 		if (inter_lkp)
 			simple_unlock(inter_lkp);
-		vgonel(vp, p);
+		vgonel(vp, l);
 		return (1);
 	}
 	simple_unlock(&vp->v_interlock);
@@ -1708,17 +1708,17 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct proc *p)
 void
 vgone(struct vnode *vp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 
 	simple_lock(&vp->v_interlock);
-	vgonel(vp, p);
+	vgonel(vp, l);
 }
 
 /*
  * vgone, with the vp interlock held.
  */
 void
-vgonel(struct vnode *vp, struct proc *p)
+vgonel(struct vnode *vp, struct lwp *l)
 {
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
@@ -1738,7 +1738,7 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * Clean out the filesystem specific data.
 	 */
 
-	vclean(vp, DOCLOSE, p);
+	vclean(vp, DOCLOSE, l);
 	KASSERT((vp->v_flag & VONWORKLST) == 0);
 
 	/*
@@ -2167,7 +2167,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
  * will avoid needing to worry about dependencies.
  */
 void
-vfs_unmountall(struct proc *p)
+vfs_unmountall(struct lwp *l)
 {
 	struct mount *mp, *nmp;
 	int allerror, error;
@@ -2189,7 +2189,7 @@ vfs_unmountall(struct proc *p)
 			lockmgr(&syncer_lock, LK_RELEASE, NULL);
 			continue;
 		}
-		if ((error = dounmount(mp, MNT_FORCE, p)) != 0) {
+		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
 			allerror = 1;
@@ -2248,7 +2248,7 @@ vfs_shutdown(void)
 	vnshutdown();
 #endif
 	/* Unmount file systems. */
-	vfs_unmountall(p);
+	vfs_unmountall(l);
 }
 
 /*
@@ -2278,7 +2278,7 @@ vfs_mountroot(void)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
 	        if (bdevvp(rootdev, &rootvp))
 	                panic("vfs_mountroot: can't get vnode for rootdev");
-		error = VOP_OPEN(rootvp, FREAD, FSCRED, curproc);
+		error = VOP_OPEN(rootvp, FREAD, FSCRED, curlwp);
 		if (error) {
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
@@ -2326,7 +2326,7 @@ vfs_mountroot(void)
 
 done:
 	if (error && root_device->dv_class == DV_DISK) {
-		VOP_CLOSE(rootvp, FREAD, FSCRED, curproc);
+		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
 		vrele(rootvp);
 	}
 	return (error);
@@ -2451,7 +2451,7 @@ vfs_reinit(void)
 int
 vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	int error;
 
 	while ((mp->mnt_iflag & IMNT_SUSPEND)) {
@@ -2469,7 +2469,7 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 			0, &mp->mnt_slock);
 	simple_unlock(&mp->mnt_slock);
 
-	error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_ucred, l);
 	if (error) {
 		vfs_write_resume(mp);
 		return error;
@@ -2527,7 +2527,7 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 
 int
 set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
-    struct mount *mp, struct proc *p)
+    struct mount *mp, struct lwp *l)
 {
 	int error;
 	size_t size;
@@ -2538,7 +2538,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {
-		struct cwdinfo *cwdi = p->p_cwdi;
+		struct cwdinfo *cwdi = l->l_proc->p_cwdi;
 		fun = (ukon == UIO_SYSSPACE) ? copystr : copyinstr;
 		if (cwdi->cwdi_rdir != NULL) {
 			size_t len;
@@ -2551,7 +2551,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
 			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
-			    path, MAXPATHLEN / 2, 0, p);
+			    path, MAXPATHLEN / 2, 0, l);
 			if (error) {
 				free(path, M_TEMP);
 				return error;
@@ -2690,7 +2690,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\n");
 
 	if (mp->mnt_unmounter) {
-		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->p_pid);
+		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
 	}
 	(*pr)("wcnt = %d, writeopcountupper = %d, writeopcountupper = %d\n",
 		mp->mnt_wcnt,mp->mnt_writeopcountupper,mp->mnt_writeopcountlower);

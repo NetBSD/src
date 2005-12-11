@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.11 2005/01/23 17:27:03 chs Exp $	*/
+/*	$NetBSD: isr.h,v 1.12 2005/12/11 12:16:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.

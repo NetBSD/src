@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.24 2005/05/30 22:17:47 christos Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.25 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.24 2005/05/30 22:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.25 2005/12/11 12:23:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.17 2003/08/07 16:29:15 agc Exp $	*/
+/*	$NetBSD: start.S,v 1.18 2005/12/11 12:18:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

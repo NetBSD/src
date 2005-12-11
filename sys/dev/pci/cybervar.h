@@ -1,4 +1,4 @@
-/*	$NetBSD: cybervar.h,v 1.1 2004/02/03 19:51:39 fredb Exp $	*/
+/*	$NetBSD: cybervar.h,v 1.2 2005/12/11 12:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
