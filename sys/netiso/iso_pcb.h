@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.12 2005/11/16 20:44:19 dsl Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.13 2005/12/11 00:01:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_ISO_PCB_H_
+#define _NETISO_ISO_PCB_H_
 
 #define	MAXX25CRUDLEN	16	/* 16 bytes of call request user data */
 
@@ -124,3 +127,5 @@ void iso_pcbnotify (struct isopcb *, struct sockaddr_iso *, int,
 struct isopcb  *iso_pcblookup (struct isopcb *, int, caddr_t,
 				   struct sockaddr_iso *);
 #endif
+
+#endif /* !_NETISO_ISO_PCB_H_ */
