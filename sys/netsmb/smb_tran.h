@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_tran.h,v 1.4 2003/06/29 22:32:11 fvdl Exp $	*/
+/*	$NetBSD: smb_tran.h,v 1.5 2005/12/11 00:06:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,6 +36,10 @@
 
 #ifndef _NETSMB_SMB_TRAN_H_
 #define	_NETSMB_SMB_TRAN_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 #include <sys/socket.h>
 
@@ -88,4 +92,4 @@ struct smb_tran_desc {
 #define	SMB_TRAN_SETPARAM(vcp,par,data)	(vcp)->vc_tdesc->tr_setparam(vcp, par, data)
 #define	SMB_TRAN_FATAL(vcp, error)	(vcp)->vc_tdesc->tr_fatal(vcp, error)
 
-#endif /* _NETSMB_SMB_TRAN_H_ */
+#endif /* !_NETSMB_SMB_TRAN_H_ */
