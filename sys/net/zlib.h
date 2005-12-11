@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.10 2005/12/10 23:21:39 elad Exp $ */
+/* $NetBSD: zlib.h,v 1.11 2005/12/11 19:15:38 christos Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.10 2005/12/10 23:21:39 elad Exp $ */
+/* @(#) $Id: zlib.h,v 1.11 2005/12/11 19:15:38 christos Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -321,9 +321,11 @@ typedef uLong FAR uLongf;
 #   pragma map(inflate_trees_free,"INTRFR")
 #endif
 
-#endif /* _ZCONF_H */
+#endif /* !_ZCONF_H */
 /* --- zconf.h */
 
+#ifndef _ZLIB_H
+#define _ZLIB_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1194,6 +1196,7 @@ ZEXTERN const uLongf * ZEXPORT get_crc_table    __P((void));
 #ifdef __cplusplus
 }
 #endif
+#endif /* !_ZLIB_H */
 
 #endif /* !_NET_ZLIB_H_ */
 /* -- zlib.h */
