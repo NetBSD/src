@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.12 2005/12/11 23:26:31 reinoud Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.13 2005/12/11 23:34:27 simonb Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -285,4 +285,3 @@ struct cd_audio_page {
 #define	LEFT_PORT	0
 #define	RIGHT_PORT	1
 };
-
