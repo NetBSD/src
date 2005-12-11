@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.94 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.95 2005/12/11 23:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.94 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.95 2005/12/11 23:05:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -187,10 +187,19 @@ struct if_clone sl_cloner =
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	slnetisr(void);
 #endif
-void	slintr(void *);
+static void	slintr(void *);
 
-static int slinit __P((struct sl_softc *));
-static struct mbuf *sl_btom __P((struct sl_softc *, int));
+static int	slinit(struct sl_softc *);
+static struct mbuf *sl_btom(struct sl_softc *, int);
+
+static int	slclose(struct tty *, int);
+static int	slinput(int, struct tty *);
+static int	slioctl(struct ifnet *, u_long, caddr_t);
+static int	slopen(dev_t, struct tty *);
+static int	sloutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+			 struct rtentry *);
+static int	slstart(struct tty *);
+static int	sltioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 
 static struct linesw slip_disc = {
 	.l_name = "slip",
@@ -204,6 +213,8 @@ static struct linesw slip_disc = {
 	.l_modem = nullmodem,
 	.l_poll = ttyerrpoll
 };
+
+void	slattach(void);
 
 void
 slattach(void)
@@ -261,8 +272,7 @@ sl_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-slinit(sc)
-	struct sl_softc *sc;
+slinit(struct sl_softc *sc)
 {
 
 	if (sc->sc_mbuf == NULL) {
@@ -286,10 +296,8 @@ slinit(sc)
  * Attach the given tty to the first available sl unit.
  */
 /* ARGSUSED */
-int
-slopen(dev, tp)
-	dev_t dev;
-	struct tty *tp;
+static int
+slopen(dev_t dev, struct tty *tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct sl_softc *sc;
@@ -364,10 +372,8 @@ slopen(dev, tp)
  * Line specific close routine.
  * Detach the tty from the sl unit.
  */
-int
-slclose(tp, flag)
-	struct tty *tp;
-	int flag;
+static int
+slclose(struct tty *tp, int flag)
 {
 	struct sl_softc *sc;
 	int s;
@@ -417,13 +423,8 @@ slclose(tp, flag)
  * Provide a way to get the sl unit number.
  */
 /* ARGSUSED */
-int
-sltioctl(tp, cmd, data, flag, l)
-	struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+static int
+sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
 
@@ -444,12 +445,9 @@ sltioctl(tp, cmd, data, flag, l)
  * will cause us to not compress "background" packets, because
  * ordering gets trashed.  It can be done for all packets in slintr().
  */
-int
-sloutput(ifp, m, dst, rtp)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rtp;
+static int
+sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;
 	struct ip *ip;
@@ -528,9 +526,8 @@ sloutput(ifp, m, dst, rtp)
  * to send from the interface queue and map it to
  * the interface before starting output.
  */
-int
-slstart(tp)
-	struct tty *tp;
+static int
+slstart(struct tty *tp)
 {
 	struct sl_softc *sc = tp->t_sc;
 
@@ -566,9 +563,7 @@ slstart(tp)
  * Copy data buffer to mbuf chain; add ifnet pointer.
  */
 static struct mbuf *
-sl_btom(sc, len)
-	struct sl_softc *sc;
-	int len;
+sl_btom(struct sl_softc *sc, int len)
 {
 	struct mbuf *m;
 
@@ -600,10 +595,8 @@ sl_btom(sc, len)
 /*
  * tty interface receiver interrupt.
  */
-int
-slinput(c, tp)
-	int c;
-	struct tty *tp;
+static int
+slinput(int c, struct tty *tp)
 {
 	struct sl_softc *sc;
 	struct mbuf *m;
@@ -723,7 +716,7 @@ slnetisr(void)
 }
 #endif
 
-void
+static void
 slintr(void *arg)
 {
 	struct sl_softc *sc = arg;
@@ -1020,11 +1013,8 @@ slintr(void *arg)
 /*
  * Process an ioctl request.
  */
-int
-slioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+static int
+slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
