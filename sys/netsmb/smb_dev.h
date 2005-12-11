@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.h,v 1.4 2005/12/11 00:06:21 elad Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.5 2005/12/11 06:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,10 +35,6 @@
  */
 #ifndef _NETSMB_DEV_H_
 #define _NETSMB_DEV_H_
-
-#ifndef _KERNEL
-#error not supposed to be exposed to userland.
-#endif /* !_KERNEL */
 
 #ifndef _KERNEL
 #include <sys/types.h>
