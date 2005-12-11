@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.12 2004/03/21 10:09:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.13 2005/12/11 00:06:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -37,8 +37,8 @@
 #define _NETSMB_SMB_SUBR_H_
 
 #ifndef _KERNEL
-#error "This file shouldn't be included from userland programs"
-#endif
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 MALLOC_DECLARE(M_SMBTEMP);
 

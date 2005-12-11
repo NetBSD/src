@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.7 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: natm.h,v 1.8 2005/12/11 00:03:00 elad Exp $	*/
 
 /*
  *
@@ -154,4 +154,4 @@ void	natmintr __P((void));
 
 #endif
 
-#endif /* _NETNATM_NATM_H_ */
+#endif /* !_NETNATM_NATM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbios.h,v 1.5 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: netbios.h,v 1.6 2005/12/11 00:06:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,6 +35,10 @@
  */
 #ifndef _NETSMB_NETBIOS_H_
 #define	_NETSMB_NETBIOS_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 /*
  * make this file dirty...

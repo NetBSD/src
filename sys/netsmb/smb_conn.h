@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.14 2003/06/29 22:32:09 fvdl Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.15 2005/12/11 00:06:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -33,6 +33,13 @@
  *
  * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.8 2002/09/16 10:50:38 bp Exp
  */
+
+#ifndef _NETSMB_SMB_CONN_H_
+#define _NETSMB_SMB_CONN_H_
+
+#ifndef _KERNEL
+#error not supposed to be exposed to userland.
+#endif /* !_KERNEL */
 
 /*
  * Two levels of connection hierarchy
@@ -466,3 +473,5 @@ int  smb_iod_waitrq(struct smb_rq *rqp);
 int  smb_iod_removerq(struct smb_rq *rqp);
 
 #endif /* _KERNEL */
+
+#endif /* !_NETSMB_SMB_CONN_H_ */
