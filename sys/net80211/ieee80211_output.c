@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.39 2005/11/18 16:40:09 skrll Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.40 2005/12/11 00:55:42 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.39 2005/11/18 16:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.40 2005/12/11 00:55:42 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -774,7 +774,7 @@ ieee80211_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
  *     of first/only fragment
  *
  * dn: 802.11 Duration fields (RTS/Data), PLCP Length, Service fields
- *     of first/only fragment
+ *     of last fragment
  */
 int
 ieee80211_compute_duration(struct ieee80211_frame_min *wh, int len,
